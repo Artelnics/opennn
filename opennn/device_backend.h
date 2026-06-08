@@ -1,0 +1,57 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   D E V I C E   B A C K E N D
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#pragma once
+
+#include "pch.h"
+#include "types.h"
+
+namespace opennn::device
+{
+
+enum class CopyKind
+{
+    HostToHost,
+    HostToDevice,
+    DeviceToHost,
+    DeviceToDevice
+};
+
+bool is_cuda_build() noexcept;
+bool has_cuda_device() noexcept;
+int cuda_compute_capability() noexcept;
+pair<size_t, size_t> memory_info();
+
+void* allocate(Device, Index);
+void deallocate(Device, void*, Index);
+
+void set_zero(void*, Index, Device);
+void set_zero_async(void*, Index, cudaStream_t = nullptr);
+
+CopyKind copy_kind(Device, Device);
+void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
+void synchronize(cudaStream_t = nullptr);
+void check_last_error();
+
+cudaStream_t create_stream(unsigned);
+void destroy_stream(cudaStream_t);
+
+void* allocate_pinned_host(Index);
+void free_pinned_host(void*);
+
+cudaEvent_t create_event(unsigned);
+cudaEvent_t create_event();
+void destroy_event(cudaEvent_t);
+void record_event(cudaEvent_t, cudaStream_t);
+void synchronize_event(cudaEvent_t);
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

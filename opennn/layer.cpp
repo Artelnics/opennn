@@ -82,8 +82,8 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
         {
             if (shape.empty()) { views.emplace_back(); continue; }
 
-            if (!is_aligned(pointer))
-                throw runtime_error(format("Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name()));
+            throw_if(!is_aligned(pointer),
+                     format("Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name()));
 
             views.emplace_back(pointer, shape, Type::FP32, device);
             pointer += get_aligned_size(shape.size());

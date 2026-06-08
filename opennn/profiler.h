@@ -7,9 +7,7 @@
 #include <string>
 #include <vector>
 
-#ifdef OPENNN_HAS_CUDA
-#include <cuda_runtime.h>
-#endif
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -76,32 +74,22 @@ class ScopedTimer
 {
     string key_;
     chrono::steady_clock::time_point t0_;
-#ifdef OPENNN_HAS_CUDA
     bool sync_gpu_;
-#endif
+
 public:
     ScopedTimer(string key, bool sync_gpu = true)
         : key_(move(key))
-#ifdef OPENNN_HAS_CUDA
         , sync_gpu_(sync_gpu)
-#endif
     {
-#ifndef OPENNN_HAS_CUDA
-        (void)sync_gpu;
-#endif
         if (!enabled()) return;
-#ifdef OPENNN_HAS_CUDA
-        if (sync_gpu_) cudaDeviceSynchronize();
-#endif
+        if (sync_gpu_) device::synchronize();
         t0_ = chrono::steady_clock::now();
     }
 
     ~ScopedTimer()
     {
         if (!enabled()) return;
-#ifdef OPENNN_HAS_CUDA
-        if (sync_gpu_) cudaDeviceSynchronize();
-#endif
+        if (sync_gpu_) device::synchronize();
         const auto end_time = chrono::steady_clock::now();
         const double elapsed_ms = chrono::duration<double, milli>(end_time - t0_).count();
         global_stats().add(key_, elapsed_ms);

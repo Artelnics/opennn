@@ -116,9 +116,7 @@ void NeuralNetwork::compile()
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
-#ifdef OPENNN_HAS_CUDA
     parameters_bf16.resize_bytes(0, Device::CUDA);
-#endif
 
     link_parameters();
 
@@ -131,8 +129,8 @@ void NeuralNetwork::compile()
 
 void NeuralNetwork::validate_type(LayerType type) const
 {
-    if (type == LayerType::Bounding)
-        throw runtime_error("No layers can be added after a bounding layer.\n");
+    throw_if(type == LayerType::Bounding,
+             "No layers can be added after a bounding layer.\n");
 }
 
 bool NeuralNetwork::has(const string& name) const
@@ -252,26 +250,25 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
         if (variables[i].is_categorical())
         {
             const size_t num_cats = variables[i].get_categories_number();
-            if (name_index + num_cats > total)
-                throw runtime_error(format("set_variable_names: not enough names for categorical variable {} (need {}, have {}).",
-                                           i, num_cats, total - name_index));
+            throw_if(name_index + num_cats > total,
+                     format("set_variable_names: not enough names for categorical variable {} (need {}, have {}).",
+                            i, num_cats, total - name_index));
             variables[i].categories.assign(new_names.begin() + name_index,
                                            new_names.begin() + name_index + num_cats);
             name_index += num_cats;
         }
         else
         {
-            if (name_index >= total)
-                throw runtime_error(format("set_variable_names: not enough names for scalar variable {}.",
-                                           i));
+            throw_if(name_index >= total,
+                     format("set_variable_names: not enough names for scalar variable {}.", i));
             variables[i].name = new_names[name_index];
             ++name_index;
         }
     }
 
-    if (name_index != total)
-        throw runtime_error(format("set_variable_names: received {} names but variables expected {}.",
-                                   total, name_index));
+    throw_if(name_index != total,
+             format("set_variable_names: received {} names but variables expected {}.",
+                    total, name_index));
 }
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
@@ -333,10 +330,10 @@ static void validate_source_indices(const vector<Index>& sources, Index layer_in
     for (Index src : sources)
     {
         if (src < 0) continue;  // sentinel for external input
-        if (src >= layers_count || src >= layer_index)
-            throw runtime_error("NeuralNetwork::set_source_layers: source index "
-                                + to_string(src) + " is not a previous layer for layer "
-                                + to_string(layer_index) + ".");
+        throw_if(src >= layers_count || src >= layer_index,
+                 "NeuralNetwork::set_source_layers: source index "
+                 + to_string(src) + " is not a previous layer for layer "
+                 + to_string(layer_index) + ".");
     }
 }
 
@@ -354,11 +351,11 @@ static void validate_source_arity(const Layer& layer,
 
 void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_layers)
 {
-    if (ssize(new_source_layers) != ssize(layers))
-        throw runtime_error("NeuralNetwork::set_source_layers: outer size ("
-                            + to_string(new_source_layers.size())
-                            + ") must match layers count ("
-                            + to_string(layers.size()) + ").");
+    throw_if(ssize(new_source_layers) != ssize(layers),
+             "NeuralNetwork::set_source_layers: outer size ("
+             + to_string(new_source_layers.size())
+             + ") must match layers count ("
+             + to_string(layers.size()) + ").");
 
     for (Index i = 0; i < ssize(new_source_layers); ++i)
     {
@@ -371,9 +368,9 @@ void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_la
 
 void NeuralNetwork::set_source_layers(const Index layer_index, const vector<Index>& new_sources)
 {
-    if (layer_index < 0 || layer_index >= ssize(layers))
-        throw runtime_error("NeuralNetwork::set_source_layers: layer index "
-                            + to_string(layer_index) + " out of range.");
+    throw_if(layer_index < 0 || layer_index >= ssize(layers),
+             "NeuralNetwork::set_source_layers: layer index "
+             + to_string(layer_index) + " out of range.");
 
     validate_source_indices(new_sources, layer_index, ssize(layers));
     validate_source_arity(*layers[layer_index], new_sources, layer_index);
@@ -467,8 +464,8 @@ Index NeuralNetwork::get_first_trainable_layer_index() const
     auto it = ranges::find_if(layers,
                               [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    if (it == layers.end())
-        throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
+    throw_if(it == layers.end(),
+             "The neural network has no trainable layers: get_first_trainable_layer_index.");
 
     first_trainable_cache_ = distance(layers.begin(), it);
     return first_trainable_cache_;
@@ -499,35 +496,34 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
 
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
-    if (new_parameters.size() == 0)
-        throw runtime_error("NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
+    throw_if(new_parameters.size() == 0,
+             "NeuralNetwork::set_parameters: refusing to apply an empty parameter vector.");
 
     const Index expected_size = get_parameters_size();
-    if (expected_size > 0 && new_parameters.size() != expected_size)
-        throw runtime_error("NeuralNetwork::set_parameters: size mismatch (got "
-                            + to_string(new_parameters.size())
-                            + ", expected " + to_string(expected_size)
-                            + "). Make sure the network is compiled with the same "
-                            + "architecture as the one that produced this snapshot.");
+    throw_if(expected_size > 0 && new_parameters.size() != expected_size,
+             "NeuralNetwork::set_parameters: size mismatch (got "
+             + to_string(new_parameters.size())
+             + ", expected " + to_string(expected_size)
+             + "). Make sure the network is compiled with the same "
+             + "architecture as the one that produced this snapshot.");
 
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
-#ifdef OPENNN_HAS_CUDA
     if (parameters.device_type == Device::CUDA)
     {
         parameters.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
         {
             cudaStream_t stream = Backend::get_compute_stream();
-            CHECK_CUDA(cudaMemcpyAsync(parameters.data, new_parameters.data(), byte_count,
-                                       cudaMemcpyHostToDevice, stream));
-            CHECK_CUDA(cudaStreamSynchronize(stream));
+            device::copy_async(parameters.data, new_parameters.data(), byte_count,
+                               device::CopyKind::HostToDevice,
+                               stream);
+            device::synchronize(stream);
         }
         cast_parameters_to_bf16();
         link_parameters();
         return;
     }
-#endif
 
     parameters.resize_bytes(byte_count, Device::CPU);
     if (byte_count > 0)
@@ -541,33 +537,31 @@ void NeuralNetwork::set_states(const VectorR& new_states)
 
     if (expected_size == 0)
     {
-        if (new_states.size() != 0)
-            throw runtime_error("NeuralNetwork::set_states: network has no state buffer.");
+        throw_if(new_states.size() != 0, "NeuralNetwork::set_states: network has no state buffer.");
         return;
     }
 
-    if (new_states.size() != expected_size)
-        throw runtime_error("NeuralNetwork::set_states: size mismatch (got "
-                            + to_string(new_states.size())
-                            + ", expected " + to_string(expected_size) + ").");
+    throw_if(new_states.size() != expected_size,
+             "NeuralNetwork::set_states: size mismatch (got "
+             + to_string(new_states.size())
+             + ", expected " + to_string(expected_size) + ").");
 
     const Index byte_count = new_states.size() * Index(sizeof(float));
 
-#ifdef OPENNN_HAS_CUDA
     if (states.device_type == Device::CUDA)
     {
         states.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
         {
             cudaStream_t stream = Backend::get_compute_stream();
-            CHECK_CUDA(cudaMemcpyAsync(states.data, new_states.data(), byte_count,
-                                       cudaMemcpyHostToDevice, stream));
-            CHECK_CUDA(cudaStreamSynchronize(stream));
+            device::copy_async(states.data, new_states.data(), byte_count,
+                               device::CopyKind::HostToDevice,
+                               stream);
+            device::synchronize(stream);
         }
         link_states();
         return;
     }
-#endif
 
     states.resize_bytes(byte_count, Device::CPU);
     if (byte_count > 0)
@@ -578,37 +572,29 @@ void NeuralNetwork::set_states(const VectorR& new_states)
 
 void NeuralNetwork::set_parameters_random()
 {
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
-#endif
 
     for (const auto& layer : layers)
         for (Operator* op : layer->get_operators())
             op->set_parameters_random();
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device) copy_parameters_device();
-#endif
 }
 
 void NeuralNetwork::set_parameters_glorot()
 {
     const Index layers_number = get_layers_number();
 
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
-#endif
 
     #pragma omp parallel for
     for (int i = 0; i < layers_number; ++i)
         for (Operator* op : layers[i]->get_operators())
             op->set_parameters_glorot();
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device) copy_parameters_device();
-#endif
 }
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
@@ -625,20 +611,18 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
-#ifdef OPENNN_HAS_CUDA
     if (is_gpu())
     {
         const MatrixR result_matrix = calculate_outputs_device(input_views, forward_propagation);
         const TensorView out = forward_propagation.get_outputs();
-        if (out.shape.rank < 3)
-            throw runtime_error(format("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
-                                       out.shape.rank));
+        throw_if(out.shape.rank < 3,
+                 format("calculate_outputs(Tensor3, Tensor3): expected rank-3 output, got rank {}",
+                        out.shape.rank));
         Tensor3 result(out.shape[0], out.shape[1], out.shape[2]);
         memcpy(result.data(), result_matrix.data(),
                     size_t(result.size()) * sizeof(float));
         return result;
     }
-#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -652,10 +636,8 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     const Index batch_size = input_views[0].shape[0];
     ForwardPropagation forward_propagation(batch_size, this);
 
-#ifdef OPENNN_HAS_CUDA
     if (is_gpu())
         return calculate_outputs_device(input_views, forward_propagation);
-#endif
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -681,8 +663,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
 {
-    if (parameters.size_in_floats() != get_aligned_size(get_parameter_specs()))
-        throw runtime_error("Network shapes changed since compile(); call compile() again.");
+    throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
+             "Network shapes changed since compile(); call compile() again.");
 
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
     const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
@@ -697,16 +679,16 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       Index last_layer_index) const
 {
     const auto pick_input = [&](size_t input_index) -> const TensorView& {
-        if (input_index >= input_view.size())
-            throw runtime_error(format("NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
-                                       input_index, input_view.size()));
+        throw_if(input_index >= input_view.size(),
+                 format("NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
+                        input_index, input_view.size()));
         return input_view[input_index];
     };
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {
         const vector<Index>& sources = source_layers[i];
-        auto& input_slot = forward_propagation.views[i][0];
+        auto& input_slot = forward_propagation.input_views[i];
 
         for (size_t source_index = 0; source_index < sources.size(); ++source_index)
         {
@@ -768,8 +750,8 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     Tensor3 image = load_image(image_path);
 
     const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
-    if (!scaling_layer || scaling_layer->get_input_shape().rank != 3)
-        throw runtime_error("Expected 4D image Scaling layer.");
+    throw_if(!scaling_layer || scaling_layer->get_input_shape().rank != 3,
+             "Expected 4D image Scaling layer.");
 
     const Index height = scaling_layer->get_input_shape()[0];
     const Index width = scaling_layer->get_input_shape()[1];
@@ -779,8 +761,8 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Index current_width = image.dimension(1);
     const Index current_channels = image.dimension(2);
 
-    if (current_channels != channels)
-        throw runtime_error(format("Different channels number {}\n", image_path.string()));
+    throw_if(current_channels != channels,
+             format("Different channels number {}\n", image_path.string()));
 
     if (current_height != height || current_width != width)
         image = resize_image(image, height, width);
@@ -799,11 +781,11 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-    if (layers[0]->get_type() != LayerType::Embedding)
-        throw runtime_error("First layer must be Embedding for text processing.\n");
+    throw_if(layers[0]->get_type() != LayerType::Embedding,
+             "First layer must be Embedding for text processing.\n");
 
-    if (input_variables.empty() || input_variables[0].categories.empty())
-        throw runtime_error("input_variables[0] does not contain the vocabulary.\n");
+    throw_if(input_variables.empty() || input_variables[0].categories.empty(),
+             "input_variables[0] does not contain the vocabulary.\n");
 
     const Index batch_size = input_documents.size();
     const auto* embedding_layer = dynamic_cast<const Embedding*>(get_layer(0).get());
@@ -847,11 +829,9 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_states_host();
-#endif
 
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -927,10 +907,8 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.close_element();
     printer.close_element();
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_states_device();
-#endif
 }
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
@@ -950,8 +928,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     }
 
     const Json* layers_container = neural_network_element->first_child("Layers");
-    if (!layers_container)
-        throw runtime_error("layers container is nullptr.");
+    throw_if(!layers_container, "layers container is nullptr.");
 
     const Index layers_number = read_json_index(layers_container, "LayersNumber");
 
@@ -972,10 +949,10 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             const string& tag_name = item.object_value[0].first;
 
             unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
-            if (!layer)
-                throw runtime_error(format("Layer '{}' not found in Registry. "
-                                           "Ensure the layer file is linked and REGISTER macro is used.",
-                                           tag_name));
+            throw_if(!layer,
+                     format("Layer '{}' not found in Registry. "
+                            "Ensure the layer file is linked and REGISTER macro is used.",
+                            tag_name));
 
             JsonDocument layer_doc;
             layer_doc.root = item;
@@ -996,10 +973,10 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 const string text   = read_json_string(&entry, "Text");
                 if (text.empty()) continue;
 
-                if (layer_index < 0 || layer_index >= ssize(layers))
-                    throw runtime_error("NeuralNetwork::from_JSON: SourceLayer index "
-                                        + to_string(layer_index) + " out of range (have "
-                                        + to_string(layers.size()) + " layers).");
+                throw_if(layer_index < 0 || layer_index >= ssize(layers),
+                         "NeuralNetwork::from_JSON: SourceLayer index "
+                         + to_string(layer_index) + " out of range (have "
+                         + to_string(layers.size()) + " layers).");
 
                 set_source_layers(layer_index, string_to_source_indices(text));
             }
@@ -1035,31 +1012,25 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* parameters_element = neural_network_element->first_child("Parameters");
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
-    if (!parameters_text.empty())
+    if (parameters_text.empty()) return;
+
+    VectorR json_parameters;
+    string_to_vector(parameters_text, json_parameters);
+
+    if (json_parameters.size() <= 0) return;
+
+    if (json_parameters.size() != parameters.size_in_floats())
     {
-        VectorR json_parameters;
-        string_to_vector(parameters_text, json_parameters);
-
-        if (json_parameters.size() > 0)
-        {
-            if (json_parameters.size() != parameters.size_in_floats())
-            {
-                cout << "Warning: JSON parameter size (" << json_parameters.size()
-                     << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
-            }
-
-            const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
-
-#ifdef OPENNN_HAS_CUDA
-            const bool was_on_device = (parameters.device_type == Device::CUDA);
-            if (was_on_device) copy_parameters_host();
-#endif
-            std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
-#ifdef OPENNN_HAS_CUDA
-            if (was_on_device) copy_parameters_device();
-#endif
-        }
+        cout << "Warning: JSON parameter size (" << json_parameters.size()
+             << ") differs from Compiled size (" << parameters.size_in_floats() << ").\n";
     }
+
+    const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
+
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+    std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+    if (was_on_device) copy_parameters_device();
 }
 
 void NeuralNetwork::save(const filesystem::path& file_name) const
@@ -1083,22 +1054,22 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error("Cannot open parameters data file.\n");
+    throw_if(!file.is_open(), "Cannot open parameters data file.\n");
 
     const Index params_size = parameters.size_in_floats();
     const float* params_data = parameters.as<float>();
     VectorR params_host_snapshot;
-#ifdef OPENNN_HAS_CUDA
     if (parameters.device_type == Device::CUDA)
     {
         params_host_snapshot.resize(params_size);
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-        CHECK_CUDA(cudaMemcpy(params_host_snapshot.data(), params_data,
-                              params_size * sizeof(float), cudaMemcpyDeviceToHost));
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(params_host_snapshot.data(), params_data,
+                           params_size * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
         params_data = params_host_snapshot.data();
     }
-#endif
     const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
     file << parameters_view << "\n";
 
@@ -1109,56 +1080,46 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 {
     ofstream file(file_name, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open binary file for writing: {}\n", file_name.string()));
 
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_parameters_host();
-#endif
 
     const Index parameters_number = parameters.size_in_floats();
 
     file.write(reinterpret_cast<const char*>(parameters.as<float>()),
                parameters_number * sizeof(float));
 
-    if (!file)
-        throw runtime_error(format("Error writing binary file: {}\n", file_name.string()));
+    throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
     file.close();
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_parameters_device();
-#endif
 }
 
 void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
 {
     ofstream file(file_name, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open binary file for writing: {}\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open binary file for writing: {}\n", file_name.string()));
 
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (states.device_type == Device::CUDA);
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_states_host();
-#endif
 
     if (states.bytes > 0)
         file.write(reinterpret_cast<const char*>(states.data), states.bytes);
 
-    if (!file)
-        throw runtime_error(format("Error writing binary file: {}\n", file_name.string()));
+    throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
     file.close();
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device)
         const_cast<NeuralNetwork*>(this)->copy_states_device();
-#endif
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)
@@ -1178,29 +1139,24 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
     ifstream file(file_name, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open binary file: {}\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open binary file: {}\n", file_name.string()));
 
     const Index parameters_number = parameters.size_in_floats();
     const uintmax_t file_bytes = filesystem::file_size(file_name);
     const uintmax_t expected_bytes = uintmax_t(parameters_number) * sizeof(float);
-    if (file_bytes != expected_bytes)
-        throw runtime_error(format("NeuralNetwork::load_parameters_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
-                                   file_name.string(),
-                                   file_bytes,
-                                   expected_bytes));
+    throw_if(file_bytes != expected_bytes,
+             format("NeuralNetwork::load_parameters_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
+                    file_name.string(),
+                    file_bytes,
+                    expected_bytes));
 
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
-#endif
     file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device) copy_parameters_device();
-#endif
 
-    if (!file)
-        throw runtime_error(format("Error reading binary file: {}", file_name.string()));
+    throw_if(!file, format("Error reading binary file: {}", file_name.string()));
 
 }
 
@@ -1208,34 +1164,29 @@ void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
 {
     ifstream file(file_name, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open binary file: {}\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open binary file: {}\n", file_name.string()));
 
     const uintmax_t file_bytes = filesystem::file_size(file_name);
-    if (file_bytes != uintmax_t(states.bytes))
-        throw runtime_error(format("NeuralNetwork::load_states_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
-                                   file_name.string(),
-                                   file_bytes,
-                                   states.bytes));
+    throw_if(file_bytes != uintmax_t(states.bytes),
+             format("NeuralNetwork::load_states_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
+                    file_name.string(),
+                    file_bytes,
+                    states.bytes));
 
-#ifdef OPENNN_HAS_CUDA
     const bool was_on_device = (states.device_type == Device::CUDA);
     if (was_on_device)
         copy_states_host();
-#endif
 
     if (states.bytes > 0)
         file.read(reinterpret_cast<char*>(states.data), states.bytes);
 
-#ifdef OPENNN_HAS_CUDA
     if (was_on_device)
         copy_states_device();
     else
-#endif
         link_states();
 
-    if (!file)
-        throw runtime_error(format("Error reading binary file: {}", file_name.string()));
+    throw_if(!file, format("Error reading binary file: {}", file_name.string()));
 }
 
 void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
@@ -1244,8 +1195,8 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
 
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open {} file.\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open {} file.\n", file_name.string()));
 
     const vector<string> output_names = get_output_feature_names();
 
@@ -1272,8 +1223,8 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
 
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open {} file.\n", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open {} file.\n", file_name.string()));
 
     const vector<string> output_names = get_output_feature_names();
     const vector<string> input_names = get_input_feature_names();
@@ -1306,11 +1257,9 @@ void NeuralNetwork::link_parameters()
 {
     float* fp32_base = parameters.as<float>();
 
-#ifdef OPENNN_HAS_CUDA
     bfloat16* bf16_base = (parameters.device_type == Device::CUDA && !parameters_bf16.empty())
         ? parameters_bf16.as<bfloat16>()
         : nullptr;
-#endif
 
     Index offset = 0;
 
@@ -1331,21 +1280,19 @@ void NeuralNetwork::link_parameters()
             const Index aligned = get_aligned_size(shape.size());
             float* const fp32_slot = fp32_base + offset;
 
-            if (!is_aligned(fp32_slot))
-                throw runtime_error("NeuralNetwork::link_parameters: unaligned parameter memory.");
+            throw_if(!is_aligned(fp32_slot),
+                     "NeuralNetwork::link_parameters: unaligned parameter memory.");
 
             void* slot_ptr = fp32_slot;
             Type view_type = Type::FP32;
             Device view_device = parameters.device_type;
 
-#ifdef OPENNN_HAS_CUDA
             if (slot_dtype == Type::BF16 && bf16_base != nullptr)
             {
                 slot_ptr = bf16_base + offset;
                 view_type = Type::BF16;
                 view_device = Device::CUDA;
             }
-#endif
 
             param_views.emplace_back(slot_ptr, shape, view_type, view_device);
             offset += aligned;
@@ -1451,11 +1398,11 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
         if (source.device == Device::CUDA) continue;
 
         input_buffers[i].resize_bytes(source.byte_size(), Device::CUDA);
-        CHECK_CUDA(cudaMemcpyAsync(input_buffers[i].data,
-                                   input_views_cpu[i].data,
-                                   source.byte_size(),
-                                   cudaMemcpyHostToDevice,
-                                   stream));
+        device::copy_async(input_buffers[i].data,
+                           input_views_cpu[i].data,
+                           source.byte_size(),
+                           device::CopyKind::HostToDevice,
+                           stream);
         input_views_gpu[i].data = input_buffers[i].data;
         input_views_gpu[i].device = Device::CUDA;
     }
@@ -1472,6 +1419,39 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
                               result.data(), stream);
 
     return result;
+}
+
+#else
+
+void NeuralNetwork::copy_parameters_device()
+{
+    throw runtime_error("NeuralNetwork::copy_parameters_device requires CUDA support.");
+}
+
+void NeuralNetwork::cast_parameters_to_bf16()
+{
+    throw runtime_error("NeuralNetwork::cast_parameters_to_bf16 requires CUDA support.");
+}
+
+void NeuralNetwork::copy_parameters_host()
+{
+    link_parameters();
+}
+
+void NeuralNetwork::copy_states_device()
+{
+    throw runtime_error("NeuralNetwork::copy_states_device requires CUDA support.");
+}
+
+void NeuralNetwork::copy_states_host()
+{
+    link_states(Device::CPU);
+}
+
+MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
+                                                ForwardPropagation&)
+{
+    throw runtime_error("NeuralNetwork::calculate_outputs_device requires CUDA support.");
 }
 
 #endif

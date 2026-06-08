@@ -36,14 +36,188 @@ ActivationFunction activation_function_from_string(const string& name)
     return activation_function_map().from_string(name, ActivationFunction::Identity);
 }
 
+#ifdef OPENNN_HAS_CUDA
+
+cudnnTensorDescriptor_t TensorView::get_descriptor() const
+{
+    if (!descriptor_handle && !shape.empty())
+        set_descriptor(shape);
+    return descriptor_handle.get();
+}
+
+void TensorView::set_descriptor(const Shape& descriptor_shape) const
+{
+    // NHWC layout: rank < 4 leading dims default to 1.
+    int batch_count = 1, channels = 1, height = 1, width = 1;
+    const size_t rank = descriptor_shape.rank;
+    if (rank >= 1) channels    = static_cast<int>(descriptor_shape[rank - 1]);
+    if (rank >= 2) batch_count = static_cast<int>(descriptor_shape[0]);
+    if (rank >= 3) width       = static_cast<int>(descriptor_shape[rank - 2]);
+    if (rank >= 4) height      = static_cast<int>(descriptor_shape[rank - 3]);
+
+    if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
+        return;
+
+    if (!descriptor_handle)
+    {
+        cudnnTensorDescriptor_t raw_desc;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
+
+        descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
+            cudnnDestroyTensorDescriptor(descriptor);
+        });
+    }
+
+    CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(type),
+                                           batch_count, channels, height, width));
+}
+
+static bool uses_cuda_fill(const TensorView& view)
+{
+    cudaPointerAttributes attr{};
+    const cudaError_t err = cudaPointerGetAttributes(&attr, view.data);
+    const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
+    if (err != cudaSuccess) cudaGetLastError();
+    return gpu_data;
+}
+
+static void fill_cuda(const TensorView& view, float value)
+{
+    if (value == 0.0f)
+    {
+        device::set_zero(view.data, view.byte_size(), Device::CUDA);
+        return;
+    }
+
+    CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
+                               view.get_descriptor(), view.data, &value));
+}
+
+static void initialize_cuda_backend(cudaStream_t& compute_stream,
+                                    cublasHandle_t& cublas_handle,
+                                    cublasLtHandle_t& cublas_lt_handle,
+                                    cudnnHandle_t& cudnn_handle,
+                                    cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+{
+    if (!device::has_cuda_device())
+    {
+        cerr << "OpenNN: no CUDA device available; running on CPU.\n";
+        return;
+    }
+
+    compute_stream = device::create_stream(cudaStreamNonBlocking);
+
+    CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
+    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
+
+    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
+                                           CUDNN_OP_TENSOR_ADD,
+                                           CUDNN_DATA_FLOAT,
+                                           CUDNN_NOT_PROPAGATE_NAN));
+}
+
+static void destroy_cuda_backend(cudaStream_t& compute_stream,
+                                 cublasHandle_t& cublas_handle,
+                                 cublasLtHandle_t& cublas_lt_handle,
+                                 cudnnHandle_t& cudnn_handle,
+                                 cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+{
+    if (operator_sum_descriptor)
+    {
+        cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
+        operator_sum_descriptor = nullptr;
+    }
+
+    if (cublas_lt_handle)
+    {
+        cublasLtDestroy(cublas_lt_handle);
+        cublas_lt_handle = nullptr;
+    }
+
+    if (cublas_handle)
+    {
+        cublasDestroy(cublas_handle);
+        cublas_handle = nullptr;
+    }
+
+    if (cudnn_handle)
+    {
+        cudnnDestroy(cudnn_handle);
+        cudnn_handle = nullptr;
+    }
+
+    device::destroy_stream(compute_stream);
+    compute_stream = nullptr;
+}
+
+#else
+
+cudnnTensorDescriptor_t TensorView::get_descriptor() const
+{
+    throw runtime_error("TensorView::get_descriptor requires CUDA support.");
+}
+
+void TensorView::set_descriptor(const Shape&) const
+{
+    throw runtime_error("TensorView::set_descriptor requires CUDA support.");
+}
+
+static bool uses_cuda_fill(const TensorView& view)
+{
+    return view.device == Device::CUDA;
+}
+
+static void fill_cuda(const TensorView&, float)
+{
+    throw runtime_error("TensorView::fill requires CUDA support for CUDA tensors.");
+}
+
+static void initialize_cuda_backend(cudaStream_t&,
+                                    cublasHandle_t&,
+                                    cublasLtHandle_t&,
+                                    cudnnHandle_t&,
+                                    cudnnOpTensorDescriptor_t&)
+{
+}
+
+static void destroy_cuda_backend(cudaStream_t&,
+                                 cublasHandle_t&,
+                                 cublasLtHandle_t&,
+                                 cudnnHandle_t&,
+                                 cudnnOpTensorDescriptor_t&)
+{
+}
+
+#endif
+
+void TensorView::fill(float value)
+{
+    if (!data) return;
+
+    if (uses_cuda_fill(*this))
+    {
+        fill_cuda(*this, value);
+        return;
+    }
+
+    assert(type == Type::FP32);
+    float* data_pointer = static_cast<float*>(data);
+    std::fill(data_pointer, data_pointer + size(), value);
+}
+
 string shape_to_string(const Shape& shape, const string& separator)
 {
     const Index size = shape.rank;
 
     ostringstream buffer;
 
-    if (size == 0)
-        throw runtime_error("Dimensions size must be greater than 0.\n");
+    throw_if(size == 0,
+             "Dimensions size must be greater than 0.\n");
 
     for (Index i = 0; i < size; ++i)
         buffer << shape[i] << separator;
@@ -55,8 +229,8 @@ Shape string_to_shape(const string& text, const string& separator)
 {
     Shape result;
 
-    if (text.empty())
-        throw runtime_error("Input string must not be empty.\n");
+    throw_if(text.empty(),
+             "Input string must not be empty.\n");
 
     stringstream stream(text);
     string token;
@@ -118,41 +292,20 @@ void fill_tensor_data(const MatrixR& matrix,
 Backend::Backend()
 {
     set_threads_number(0);
-
-#ifdef OPENNN_HAS_CUDA
-    int device_count = 0;
-    const cudaError_t status = cudaGetDeviceCount(&device_count);
-    if (status != cudaSuccess || device_count == 0)
-    {
-        cudaGetLastError();
-        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
-             << "); running on CPU.\n";
-        return;
-    }
-
-    CHECK_CUDA(cudaStreamCreateWithFlags(&compute_stream, cudaStreamNonBlocking));
-
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
-#endif
+    initialize_cuda_backend(compute_stream,
+                            cublas_handle,
+                            cublas_lt_handle,
+                            cudnn_handle,
+                            operator_sum_descriptor);
 }
 
 Backend::~Backend()
 {
-#ifdef OPENNN_HAS_CUDA
-    if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-    if (cublas_lt_handle) cublasLtDestroy(cublas_lt_handle);
-    if (cublas_handle) cublasDestroy(cublas_handle);
-    if (cudnn_handle) cudnnDestroy(cudnn_handle);
-    if (compute_stream) cudaStreamDestroy(compute_stream);
-#endif
+    destroy_cuda_backend(compute_stream,
+                         cublas_handle,
+                         cublas_lt_handle,
+                         cudnn_handle,
+                         operator_sum_descriptor);
 }
 
 void Backend::set_threads_number(int num_threads)
@@ -183,8 +336,6 @@ ThreadPoolDevice* Backend::get_thread_pool_device()
     return thread_pool_device.get();
 }
 
-#ifdef OPENNN_HAS_CUDA
-
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
                                cudaStream_t stream)
@@ -193,20 +344,22 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
 
     if (src_dtype == Type::FP32)
     {
-        CHECK_CUDA(cudaMemcpyAsync(host_dst, device_src,
-                                   element_count * sizeof(float),
-                                   cudaMemcpyDeviceToHost, stream));
-        CHECK_CUDA(cudaStreamSynchronize(stream));
+        device::copy_async(host_dst, device_src,
+                           element_count * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
         return;
     }
 
     if (src_dtype == Type::BF16)
     {
         vector<uint16_t> staging(static_cast<size_t>(element_count));
-        CHECK_CUDA(cudaMemcpyAsync(staging.data(), device_src,
-                                   element_count * sizeof(uint16_t),
-                                   cudaMemcpyDeviceToHost, stream));
-        CHECK_CUDA(cudaStreamSynchronize(stream));
+        device::copy_async(staging.data(), device_src,
+                           element_count * Index(sizeof(uint16_t)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
         for (Index i = 0; i < element_count; ++i)
         {
             const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
@@ -217,8 +370,6 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
 
     throw runtime_error("copy_device_to_host_float: unsupported dtype.");
 }
-
-#endif
 
 }
 

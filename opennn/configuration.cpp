@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "configuration.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -19,25 +20,6 @@ void Configuration::set(Device new_device,
     cache_valid = false;
 }
 
-#ifdef OPENNN_HAS_CUDA
-static bool has_cuda_gpu()
-{
-    int count = 0;
-    const cudaError_t error = cudaGetDeviceCount(&count);
-    if (error != cudaSuccess) { cudaGetLastError(); return false; }
-    return count > 0;
-}
-static int cuda_compute_capability()
-{
-    cudaDeviceProp prop{};
-    if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) { cudaGetLastError(); return -1; }
-    return prop.major * 10 + prop.minor;
-}
-#else
-static bool has_cuda_gpu()           { return false; }
-static int  cuda_compute_capability() { return -1; }
-#endif
-
 const Configuration::Resolved& Configuration::resolve_slow() const
 {
     Resolved resolved;
@@ -47,21 +29,21 @@ const Configuration::Resolved& Configuration::resolve_slow() const
         switch (device)
         {
         case Auto:
-            resolved.device = has_cuda_gpu() ? CUDA : CPU;
+            resolved.device = device::has_cuda_device() ? CUDA : CPU;
             break;
         case CPU:
             resolved.device = CPU;
             break;
         case CUDA:
-            if (!has_cuda_gpu())
-                throw runtime_error("Configuration: CUDA requested but no GPU detected.");
+            throw_if(!device::has_cuda_device(),
+                     "Configuration: CUDA requested but no GPU detected.");
             resolved.device = CUDA;
             break;
         }
     }
 
     const bool gpu = (resolved.device == Device::CUDA);
-    const int  compute_capability = gpu ? cuda_compute_capability() : -1;
+    const int  compute_capability = gpu ? device::cuda_compute_capability() : -1;
     const bool bf16_capable = gpu && (compute_capability >= 80);
 
     auto resolve_dtype = [&](Type requested) -> Type
@@ -72,10 +54,8 @@ const Configuration::Resolved& Configuration::resolve_slow() const
         case Auto: return bf16_capable ? BF16 : FP32;
         case FP32: return FP32;
         case BF16:
-            if (!gpu)
-                throw runtime_error("Configuration: BF16 requires CUDA.");
-            if (!bf16_capable)
-                throw runtime_error("Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
+            throw_if(!gpu, "Configuration: BF16 requires CUDA.");
+            throw_if(!bf16_capable, "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
             return BF16;
         }
         return FP32;

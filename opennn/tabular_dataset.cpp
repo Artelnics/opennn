@@ -25,10 +25,10 @@ const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad
 
 void TabularDataset::set_data(const MatrixR& new_data)
 {
-    if (new_data.rows() != get_samples_number())
-        throw runtime_error("Rows number is not equal to samples number");
-    if (new_data.cols() != get_features_number())
-        throw runtime_error("Columns number is not equal to variables number");
+    throw_if(new_data.rows() != get_samples_number(),
+             "Rows number is not equal to samples number");
+    throw_if(new_data.cols() != get_features_number(),
+             "Columns number is not equal to variables number");
 
     data = new_data;
     set_matrix_storage();
@@ -134,8 +134,8 @@ void TabularDataset::save_data() const
 {
     ofstream file(data_path);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open matrix data file: {}\n", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open matrix data file: {}\n", data_path.string()));
 
     file.precision(20);
 
@@ -161,16 +161,16 @@ void TabularDataset::save_data() const
             file << data(i, j) << (j == features_number - 1 ? "\n" : separator_string);
     }
 
-    if (!file)
-        throw runtime_error(format("Failed to write matrix data file: {}", data_path.string()));
+    throw_if(!file,
+             format("Failed to write matrix data file: {}", data_path.string()));
 }
 
 void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open data binary file: {}", binary_data_file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open data binary file: {}", binary_data_file_name.string()));
 
     const Index columns_number = data.cols();
     const Index rows_number = data.rows();
@@ -180,16 +180,16 @@ void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_n
     file.write(reinterpret_cast<const char*>(&rows_number), sizeof(Index));
     file.write(reinterpret_cast<const char*>(data.data()), total_elements * sizeof(float));
 
-    if (!file)
-        throw runtime_error(format("Failed to write data binary file: {}", binary_data_file_name.string()));
+    throw_if(!file,
+             format("Failed to write data binary file: {}", binary_data_file_name.string()));
 }
 
 void TabularDataset::load_data_binary()
 {
     ifstream file(data_path, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Failed to open file: {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Failed to open file: {}", data_path.string()));
 
     Index columns_number = 0;
     Index rows_number = 0;
@@ -197,23 +197,23 @@ void TabularDataset::load_data_binary()
     file.read(reinterpret_cast<char*>(&columns_number), sizeof(Index));
     file.read(reinterpret_cast<char*>(&rows_number), sizeof(Index));
 
-    if (!file || columns_number < 0 || rows_number < 0)
-        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
+    throw_if(!file || columns_number < 0 || rows_number < 0,
+             format("Invalid binary data header: {}", data_path.string()));
 
     const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
                                    + uintmax_t(rows_number) * uintmax_t(columns_number) * uintmax_t(sizeof(float));
     const uintmax_t file_bytes = filesystem::file_size(data_path);
-    if (file_bytes != expected_bytes)
-        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
-                                   data_path.string(),
-                                   file_bytes,
-                                   expected_bytes));
+    throw_if(file_bytes != expected_bytes,
+             format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                    data_path.string(),
+                    file_bytes,
+                    expected_bytes));
 
     data.resize(rows_number, columns_number);
     file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
 
-    if (!file)
-        throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
+    throw_if(!file,
+             format("Failed to read binary data file: {}", data_path.string()));
 
     set_matrix_storage();
 }
@@ -221,19 +221,28 @@ void TabularDataset::load_data_binary()
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
                                  float* input_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+    if (storage_mode == StorageMode::BinaryFile)
+        fill_from_binary_cache(sample_indices, input_indices, input_data, contiguous);
+    else
+        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
                                   float* decoder_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
+    if (storage_mode == StorageMode::BinaryFile)
+        fill_from_binary_cache(sample_indices, decoder_indices, decoder_data, contiguous);
+    else
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
                                   float* target_data, bool, int contiguous) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
+    if (storage_mode == StorageMode::BinaryFile)
+        fill_from_binary_cache(sample_indices, target_indices, target_data, contiguous);
+    else
+        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()
@@ -259,9 +268,9 @@ void TabularDataset::infer_variable_types_from_data()
                 variable.categories = { "0", "1" };
             }
         }
-        else if (variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
-            if (variable.get_categories_number() == 1)
-                variable.set(variable.name, "None", VariableType::Constant);
+        else if ((variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
+              && variable.get_categories_number() == 1)
+            variable.set(variable.name, "None", VariableType::Constant);
 
         feature_index += advance;
     }
@@ -818,6 +827,12 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     set_has_ids(read_json_bool(src, "HasSamplesId"));
     set_missing_values_label(read_json_string(src, "MissingValuesLabel"));
     set_codification(read_json_string(src, "Codification"));
+    if (src->has("StorageMode"))
+    {
+        set_storage_mode(read_json_string(src, "StorageMode"));
+        if (storage_mode == StorageMode::BinaryFile)
+            read_binary_header();
+    }
 
     variables_from_JSON(require_json_field(root, "Variables"));
     samples_from_JSON(require_json_field(root, "Samples"));
@@ -1056,8 +1071,8 @@ void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index
     {
         const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
 
-        if (timestamp == -1)
-            throw runtime_error("Date format is unsupported or date is prior to 1970.");
+        throw_if(timestamp == -1,
+                 "Date format is unsupported or date is prior to 1970.");
 
         data(sample_index, feature_index) = timestamp;
     }
@@ -1110,22 +1125,22 @@ void TabularDataset::read_csv()
     CsvReader::Result parsed = CsvReader(cfg).read(data_path);
     vector<vector<string_view>>& raw_file_content = parsed.rows;
 
-    if (raw_file_content.empty())
-        throw runtime_error(format("File {} is empty or contains no valid data rows.", data_path.string()));
+    throw_if(raw_file_content.empty(),
+             format("File {} is empty or contains no valid data rows.", data_path.string()));
 
     read_data_file_preview(raw_file_content);
 
     vector<string_view> header_tokens = raw_file_content[0];
     if (has_header)
     {
-        if (has_numbers(header_tokens))
-            throw runtime_error("Some header names are numeric.");
+        throw_if(has_numbers(header_tokens),
+                 "Some header names are numeric.");
 
         raw_file_content.erase(raw_file_content.begin());
     }
 
-    if (raw_file_content.empty())
-        throw runtime_error("Data file only contains a header.");
+    throw_if(raw_file_content.empty(),
+             "Data file only contains a header.");
 
     const Index samples_number = raw_file_content.size();
 
@@ -1176,8 +1191,8 @@ void TabularDataset::read_csv()
 
     const Index columns_number = ssize(header_tokens);
     const Index id_offset = has_sample_ids ? 1 : 0;
-    if (columns_number <= id_offset)
-        throw runtime_error("Data file contains no variables.");
+    throw_if(columns_number <= id_offset,
+             "Data file contains no variables.");
 
     const Index variables_number = columns_number - id_offset;
     variables.resize(variables_number);
@@ -1250,8 +1265,8 @@ void TabularDataset::read_csv()
         {
             const Variable& variable = variables[variable_index];
             const size_t token_index = variable_index + id_offset;
-            if (token_index >= tokens.size())
-                throw runtime_error(format("Row {} has fewer columns than expected ({}).", sample_index, tokens.size()));
+            throw_if(token_index >= tokens.size(),
+                     format("Row {} has fewer columns than expected ({}).", sample_index, tokens.size()));
             const string_view token = tokens[token_index];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
@@ -1330,28 +1345,27 @@ void TabularDataset::missing_values_to_JSON(JsonWriter &printer) const
 
 void TabularDataset::missing_values_from_JSON(const Json *missing_values_element)
 {
-    if (!missing_values_element)
-        throw runtime_error("Missing values element is nullptr.\n");
+    throw_if(!missing_values_element,
+             "Missing values element is nullptr.\n");
 
     missing_values_number = read_json_index(missing_values_element, "MissingValuesNumber");
 
-    if (missing_values_number > 0)
-    {
-        set_missing_values_method(read_json_string(missing_values_element, "MissingValuesMethod"));
+    if (missing_values_number <= 0) return;
 
-        const string variables_string = read_json_string_fallback(missing_values_element,
-            {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
+    set_missing_values_method(read_json_string(missing_values_element, "MissingValuesMethod"));
 
-        const vector<string> tokens = get_tokens(variables_string, " ");
+    const string variables_string = read_json_string_fallback(missing_values_element,
+        {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
 
-        variables_missing_values_number.resize(tokens.size());
-        for (size_t i = 0; i < tokens.size(); ++i)
-            if (!tokens[i].empty())
-                variables_missing_values_number(i) = stoi(tokens[i]);
+    const vector<string> tokens = get_tokens(variables_string, " ");
 
-        rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
-            {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
-    }
+    variables_missing_values_number.resize(tokens.size());
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (!tokens[i].empty())
+            variables_missing_values_number(i) = stoi(tokens[i]);
+
+    rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
+        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
 }
 
 void TabularDataset::impute_missing_values_unuse()
@@ -1607,9 +1621,9 @@ void TabularDataset::set_variable_scalers(const vector<string>& new_scalers)
 {
     const size_t variables_number = get_variables_number();
 
-    if (new_scalers.size() != variables_number)
-        throw runtime_error(format("Size of variable scalers({}) has to be the same as variables numbers({}).\n",
-                                   new_scalers.size(), variables_number));
+    throw_if(new_scalers.size() != variables_number,
+             format("Size of variable scalers({}) has to be the same as variables numbers({}).\n",
+                    new_scalers.size(), variables_number));
 
     for (size_t i = 0; i < variables_number; ++i)
         variables[i].set_scaler(new_scalers[i]);
@@ -1678,7 +1692,8 @@ void TabularDataset::to_JSON(JsonWriter& printer) const
         {"HasHeader", to_string(has_header)},
         {"HasSamplesId", to_string(has_sample_ids)},
         {"MissingValuesLabel", missing_values_label},
-        {"Codification", get_codification_string()}
+        {"Codification", get_codification_string()},
+        {"StorageMode", get_storage_mode_string()}
     });
     printer.close_element();
 

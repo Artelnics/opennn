@@ -50,27 +50,29 @@ struct Operator
 
     TensorView& get_input(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][input_slots[slot_index]][0];
+        const size_t slot = input_slots[slot_index];
+        return slot == 0 ? fp.input_views[layer][0] : fp.forward_slots[layer][slot];
     }
 
-    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
+    vector<TensorView>& get_inputs(ForwardPropagation& fp, size_t layer, size_t = 0) const noexcept
     {
-        return fp.views[layer][input_slots[slot_index]];
+        return fp.input_views[layer];
     }
 
     TensorView& get_output(ForwardPropagation& fp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return fp.views[layer][output_slots[slot_index]][0];
+        return fp.forward_slots[layer][output_slots[slot_index]];
     }
 
     TensorView& get_output_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][output_delta_slots[slot_index]];
+        const size_t slot = output_delta_slots[slot_index];
+        return slot == 0 ? bp.layer_output_deltas[layer] : bp.backward_slots[layer][slot];
     }
 
     TensorView& get_input_delta(BackPropagation& bp, size_t layer, size_t slot_index = 0) const noexcept
     {
-        return bp.delta_views[layer][input_delta_slots[slot_index]];
+        return bp.backward_slots[layer][input_delta_slots[slot_index]];
     }
 };
 
@@ -263,8 +265,7 @@ private:
                bool is_training);
     // GPU entry points are declared unconditionally (CPU builds get a throwing
     // stub in operators.cpp under #else) so that callers and the link step are
-    // identical with or without CUDA. Only the CUDA-only scratch state stays
-    // behind #ifdef OPENNN_HAS_CUDA.
+    // identical with or without CUDA.
     void apply_gpu(const TensorView& input,
                    TensorView& hidden_states,
                    TensorView& activation_derivatives,
@@ -286,13 +287,11 @@ private:
                          TensorView& delta_scratch,
                          TensorView& next_carry_scratch,
                          TensorView& step_in_delta_scratch) const;
-#ifdef OPENNN_HAS_CUDA
     mutable Buffer step_input_buf      {Device::CUDA};   // (batch, in_features)
     mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
     mutable Buffer step_seq_delta_buf  {Device::CUDA};   // (batch, out_features) - sequence-mode backward scratch
-#endif
 };
 
 struct BatchNormOp : Operator
@@ -392,7 +391,6 @@ struct ConvolutionOp : Operator
 
     cudnnActivationDescriptor_t fused_activation = nullptr;
 
-#ifdef OPENNN_HAS_CUDA
     cudnnFilterDescriptor_t      kernel_descriptor      = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
@@ -403,7 +401,6 @@ struct ConvolutionOp : Operator
     size_t cudnn_workspace_size_ = 0;
 
     Index planned_batch_size = 0;
-#endif
 
     void set(Index input_h, Index input_w,
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
@@ -446,9 +443,7 @@ private:
                          TensorView& input_delta) const;
     void apply_delta_gpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
-#ifdef OPENNN_HAS_CUDA
     void plan_convolution_algorithms(const TensorView& input, const TensorView& output);
-#endif
 
     array<pair<Index, Index>, 4> nhwc_padding() const;
 };
@@ -669,9 +664,7 @@ struct PoolOp : Operator
 
     Method method = Max;
 
-#ifdef OPENNN_HAS_CUDA
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-#endif
 
     void set(Index input_h, Index input_w, Index input_c,
              Index pool_h, Index pool_w,
@@ -954,11 +947,9 @@ private:
                          TensorView& input_delta,
                          bool return_seq) const;
 
-#ifdef OPENNN_HAS_CUDA
     void ensure_cudnn_setup_(Index batch_size) const;
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
-#endif
 
     mutable Buffer weight_space_buf    {Device::CUDA};
     mutable Buffer dweight_space_buf   {Device::CUDA};
@@ -969,7 +960,6 @@ private:
     mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
     mutable Buffer seq_lengths_dev_buf {Device::CUDA};
 
-#ifdef OPENNN_HAS_CUDA
     mutable cudnnRNNDescriptor_t      rnn_desc      = nullptr;
     mutable cudnnRNNDataDescriptor_t  x_data_desc   = nullptr;
     mutable cudnnRNNDataDescriptor_t  y_data_desc   = nullptr;
@@ -977,7 +967,6 @@ private:
     mutable cudnnTensorDescriptor_t   c_desc        = nullptr;
     mutable cudnnDropoutDescriptor_t  dropout_desc  = nullptr;
     mutable Buffer dropout_states_buf{Device::CUDA};
-#endif
 
     mutable Index cached_batch_size = -1;
     mutable Index cached_time_steps = -1;

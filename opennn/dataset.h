@@ -116,6 +116,7 @@ public:
 
     const filesystem::path& get_data_path() const { return data_path; }
     StorageMode get_storage_mode() const { return storage_mode; }
+    string get_storage_mode_string() const;
 
     const Separator& get_separator() const { return separator; }
     string get_separator_string() const;
@@ -141,7 +142,7 @@ public:
     void set_variables(const vector<Variable>& new_variables)
     {
         variables = new_variables;
-        invalidate_data_buffer();
+        mark_data_changed();
     }
 
     void set_default_variable_names();
@@ -163,7 +164,7 @@ public:
     void set_variables_number(const Index new_size)
     {
         variables.resize(new_size);
-        invalidate_data_buffer();
+        mark_data_changed();
     }
 
     void set_feature_names(const vector<string>&);
@@ -173,7 +174,8 @@ public:
     void set_shape(const string&, const Shape&);
     virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
     void set_data_path(const filesystem::path& new_data_path);
-    void set_storage_mode(StorageMode);
+    virtual void set_storage_mode(StorageMode);
+    virtual void set_storage_mode(const string&);
     void use_binary_data_file(const filesystem::path&);
 
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
@@ -246,12 +248,7 @@ public:
                               bool is_training,
                               int contiguous = -1) const;
 
-    virtual bool supports_dense_feature_gather() const { return false; }
     virtual bool supports_bf16_inputs() const { return true; }
-
-#ifdef OPENNN_HAS_CUDA
-    bool prepare_device_data_buffer() const;
-#endif
 
     void fill_batch(Batch&,
                     const vector<Index>& sample_indices,
@@ -272,23 +269,18 @@ protected:
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
 
-    bool try_fill_binary_tensor(const vector<Index>&,
+    void fill_from_binary_cache(const vector<Index>&,
                                 const vector<Index>&,
                                 float*,
                                 int contiguous = -1) const;
     void read_binary_header() const;
     const vector<float>& load_binary_data_cache() const;
     void set_matrix_storage();
-    void mark_data_changed() const { invalidate_data_buffer(); }
-    void invalidate_data_buffer() const;
+    void mark_data_changed() const;
 
-#ifdef OPENNN_HAS_CUDA
-    bool try_fill_from_device_data_buffer(Batch&,
-                                          const vector<Index>& sample_indices,
-                                          const vector<Index>& input_indices,
-                                          const vector<Index>& decoder_indices,
-                                          const vector<Index>& target_indices) const;
-#endif
+    StorageMode storage_mode = StorageMode::Matrix;
+
+    MatrixR data;
 
     Shape input_shape;
     Shape target_shape;
@@ -300,16 +292,12 @@ protected:
     vector<Variable> variables;
 
     filesystem::path data_path;
-    StorageMode storage_mode = StorageMode::Matrix;
+    
     mutable Index binary_rows_number = 0;
     mutable Index binary_columns_number = 0;
 
     mutable vector<float> binary_data_cache;
     mutable mutex binary_cache_mutex;
-
-    mutable Buffer data_buffer{Device::CUDA};
-    mutable Shape data_buffer_shape;
-    mutable mutex data_buffer_mutex;
 
     Separator separator = Separator::Comma;
     bool has_header = false;

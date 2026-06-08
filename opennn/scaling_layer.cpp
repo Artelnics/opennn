@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "device_backend.h"
 #include "scaling_layer.h"
 #include "math_utilities.h"
 #include "forward_propagation.h"
@@ -67,9 +68,9 @@ void Scaling::set_input_shape(const Shape& new_input_shape)
 
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    if (ssize(new_descriptives) != ssize(descriptives))
-        throw runtime_error(format("Scaling::set_descriptives: size mismatch (expected {}, got {}).",
-                                   descriptives.size(), new_descriptives.size()));
+    throw_if(ssize(new_descriptives) != ssize(descriptives),
+             format("Scaling::set_descriptives: size mismatch (expected {}, got {}).",
+                    descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -85,9 +86,9 @@ void Scaling::set_min_max_range(float new_min, float new_max)
 
 void Scaling::set_scalers(const vector<string>& scalers_str)
 {
-    if (ssize(scalers_str) != ssize(scalers))
-        throw runtime_error(format("Scaling::set_scalers: size mismatch (expected {}, got {}).",
-                                   scalers.size(), scalers_str.size()));
+    throw_if(ssize(scalers_str) != ssize(scalers),
+             format("Scaling::set_scalers: size mismatch (expected {}, got {}).",
+                    scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -141,14 +142,13 @@ void Scaling::refresh_op_storage(Device device)
         staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
     }
 
-#ifdef OPENNN_HAS_CUDA
     if (device == Device::CUDA)
     {
-        CHECK_CUDA(cudaMemcpy(op_storage.data, staging.data(),
-                              size_t(bytes), cudaMemcpyHostToDevice));
+        opennn::device::copy_async(op_storage.data, staging.data(),
+                                   bytes,
+                                   opennn::device::CopyKind::HostToDevice);
     }
     else
-#endif
     {
         memcpy(op_storage.data, staging.data(), size_t(bytes));
     }
@@ -173,9 +173,9 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         if (!scaling_layer_element->has(field)) return;
         VectorR values;
         string_to_vector(read_json_string(scaling_layer_element, field), values);
-        if (values.size() != ssize(descriptives))
-            throw runtime_error(format("Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
-                                       field, values.size(), descriptives.size()));
+        throw_if(values.size() != ssize(descriptives),
+                 format("Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                        field, values.size(), descriptives.size()));
         for (Index i = 0; i < values.size(); ++i)
             descriptives[size_t(i)].*member = values(i);
     };
@@ -189,9 +189,9 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
     {
         const vector<string> tokens = get_tokens(
             read_json_string(scaling_layer_element, "Scalers"), " ");
-        if (ssize(tokens) != ssize(scalers))
-            throw runtime_error(format("Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
-                                       tokens.size(), scalers.size()));
+        throw_if(ssize(tokens) != ssize(scalers),
+                 format("Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
+                        tokens.size(), scalers.size()));
         ranges::transform(tokens, scalers.begin(), string_to_scaler_method);
     }
 
@@ -224,8 +224,8 @@ string Scaling::write_expression(const vector<string>& input_names,
                                  const vector<string>& /*output_names*/) const
 {
     const Index outputs_number = get_outputs_number();
-    if (outputs_number == 0 || ssize(scalers) != outputs_number)
-        throw runtime_error("Scaling::write_expression: layer not configured.");
+    throw_if(outputs_number == 0 || ssize(scalers) != outputs_number,
+             "Scaling::write_expression: layer not configured.");
 
     ostringstream buffer;
     buffer.precision(10);

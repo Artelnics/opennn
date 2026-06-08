@@ -43,43 +43,6 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection->set(training_strategy);
 }
 
-void ModelSelection::check() const
-{
-    // Optimization algorithm
-
-    if (!training_strategy)
-        throw runtime_error("training strategy is not set.");
-
-    // Loss
-
-    const Loss* loss = training_strategy->get_loss();
-
-    if (!loss)
-        throw runtime_error("loss is not set.");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
-
-    if (neural_network->is_empty())
-        throw runtime_error("Multilayer Dense is empty.\n");
-
-    // Dataset
-
-    const Dataset* dataset = loss->get_dataset();
-
-    if (!dataset)
-        throw runtime_error("dataset is not set.");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    if (validation_samples_number == 0)
-        throw runtime_error("Number of validation samples is zero.\n");
-}
-
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     return neurons_selection->perform_neurons_selection();
@@ -125,8 +88,8 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 
     const Json* neurons_selection_method_element = neurons_selection_element->first_child(selection_method.c_str());
 
-    if (!neurons_selection_method_element)
-        throw runtime_error(format("{} element is nullptr.\n", selection_method));
+    throw_if(!neurons_selection_method_element,
+             format("{} element is nullptr.\n", selection_method));
 
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
@@ -139,8 +102,8 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 
     const Json* inputs_selection_method_element = inputs_selection_element->first_child(inputs_method.c_str());
 
-    if (!inputs_selection_method_element)
-        throw runtime_error(format("{} element is nullptr.\n", inputs_method));
+    throw_if(!inputs_selection_method_element,
+             format("{} element is nullptr.\n", inputs_method));
 
     set_inputs_selection(inputs_method);
     inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
@@ -150,8 +113,7 @@ void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

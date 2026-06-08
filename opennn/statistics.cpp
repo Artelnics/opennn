@@ -26,14 +26,6 @@ Descriptives::Descriptives(float new_minimum,
 {
 }
 
-VectorR Descriptives::to_tensor() const
-{
-    VectorR descriptives_tensor(4);
-    descriptives_tensor << minimum, maximum, mean, standard_deviation;
-
-    return descriptives_tensor;
-}
-
 void Descriptives::set(const float new_minimum, float new_maximum,
                        float new_mean, float new_standard_deviation)
 {
@@ -78,21 +70,6 @@ void BoxPlot::set(float new_minimum,
     maximum = new_maximum;
 }
 
-void Descriptives::save(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open descriptives data file.\n");
-
-    file << "Minimum: " << minimum << "\n"
-         << "Maximum: " << maximum << "\n"
-         << "Mean: " << mean << "\n"
-         << "Standard deviation: " << standard_deviation << "\n";
-
-    file.close();
-}
-
 Histogram::Histogram(const Index bins_number)
 {
     centers.resize(bins_number);
@@ -133,29 +110,6 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
         if (isnan(value)) continue;
 
         const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), bins_number - 1);
-
-        frequencies(corresponding_bin)++;
-    }
-}
-
-Histogram::Histogram(const VectorR& probability_data)
-{
-    const size_t bins_number = 10;
-    const float data_minimum = 0.0f;
-    const float data_maximum = maximum(probability_data) > 1.0f ? 100.0f : 1.0f;
-
-    const float step = (data_maximum - data_minimum) / float(bins_number);
-    const float inv_step = 1.0f / step;
-
-    centers = VectorR::LinSpaced(bins_number, data_minimum + 0.5f * step, data_maximum - 0.5f * step);
-    frequencies = VectorR::Zero(bins_number);
-
-    for (Index i = 0; i < probability_data.size(); ++i)
-    {
-        const float value = probability_data(i);
-        if (isnan(value)) continue;
-
-        const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), Index(bins_number) - 1);
 
         frequencies(corresponding_bin)++;
     }
@@ -252,20 +206,6 @@ Index Histogram::calculate_frequency(const float value) const
     if (get_bins_number() == 0) return 0;
 
     return frequencies[calculate_bin(value)];
-}
-
-void Histogram::save(const filesystem::path& histogram_file_name) const
-{
-    const Index bins_number = centers.size();
-    ofstream histogram_file(histogram_file_name);
-
-    histogram_file << "centers,frequencies" << "\n";
-
-    for (Index i = 0; i < bins_number; ++i)
-        histogram_file << centers(i) << ","
-                       << frequencies(i) << "\n";
-
-    histogram_file.close();
 }
 
 float minimum(const MatrixR& matrix)
@@ -758,17 +698,7 @@ Descriptives vector_descriptives(const VectorR& x)
 
     const float mean = (count > 0) ? valid.mean() : 0.0f;
 
-    float standard_deviation = 0;
-
-    if (count > 1)
-    {
-        const auto valid_d = valid.cast<double>();
-        const double sum = valid_d.sum();
-        const double squared_sum = valid_d.squaredNorm();
-        standard_deviation = sqrt(float((squared_sum - sum * sum / count) / (count - 1)));
-    }
-
-    return Descriptives(min, max, mean, standard_deviation);
+    return Descriptives(min, max, mean, standard_deviation(valid));
 }
 
 vector<Descriptives> descriptives(const MatrixR& matrix)
@@ -958,36 +888,10 @@ float mean(const MatrixR& matrix, Index column_index)
 
 VectorR median(const MatrixR& matrix)
 {
-    const Index columns_number = matrix.cols();
+    VectorR medians(matrix.cols());
 
-    VectorR medians(columns_number);
-
-    for (Index j = 0; j < columns_number; ++j)
-    {
-        const auto column = matrix.col(j);
-
-        const Index valid_count = column.array().isFinite().count();
-
-        if (valid_count == 0)
-        {
-            medians(j) = QUIET_NAN;
-            continue;
-        }
-
-        VectorR valid_values(valid_count);
-
-        Index k = 0;
-
-        for (Index i = 0; i < column.size(); ++i)
-            if (isfinite(column(i)))
-                valid_values(k++) = column(i);
-
-        sort(valid_values.data(), valid_values.data() + valid_count);
-
-        medians(j) = (valid_count % 2 == 0)
-            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
-            : valid_values(valid_count / 2);
-    }
+    for (Index j = 0; j < matrix.cols(); ++j)
+        medians(j) = median(VectorR(matrix.col(j)));
 
     return medians;
 }
@@ -1020,31 +924,7 @@ VectorR median(const MatrixR& matrix, const VectorI& column_indices)
     VectorR medians(column_indices_size);
 
     for (Index j = 0; j < column_indices_size; ++j)
-    {
-        const Index column_index = column_indices(j);
-        const VectorR column = matrix.col(column_index);
-
-        const Index valid_count = column.array().isFinite().count();
-
-        if (valid_count == 0)
-        {
-            medians(j) = QUIET_NAN;
-            continue;
-        }
-
-        VectorR valid_values(valid_count);
-        Index k = 0;
-
-        for (Index i = 0; i < column.size(); ++i)
-            if (isfinite(column(i)))
-                valid_values(k++) = column(i);
-
-        sort(valid_values.data(), valid_values.data() + valid_count);
-
-        medians(j) = (valid_count % 2 == 0)
-            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
-            : valid_values(valid_count / 2);
-    }
+        medians(j) = median(VectorR(matrix.col(column_indices(j))));
 
     return medians;
 }
@@ -1053,39 +933,19 @@ VectorR median(const MatrixR& matrix,
                const vector<Index>& row_indices,
                const vector<Index>& column_indices)
 {
-    const Index row_indices_size = row_indices.size();
-    const Index column_indices_size = column_indices.size();
+    const Index row_indices_size = ssize(row_indices);
+    const Index column_indices_size = ssize(column_indices);
 
     VectorR medians(column_indices_size);
 
     for (Index j = 0; j < column_indices_size; ++j)
     {
-        const Index column_index = column_indices[j];
-
-        const Index valid_count = count_if(row_indices.data(), row_indices.data() + row_indices_size,
-            [&](Index r) { return isfinite(matrix(r, column_index)); });
-
-        if (valid_count == 0)
-        {
-            medians(j) = QUIET_NAN;
-            continue;
-        }
-
-        VectorR valid_values(valid_count);
-        Index idx = 0;
+        VectorR column(row_indices_size);
 
         for (Index i = 0; i < row_indices_size; ++i)
-        {
-            const float value = matrix(row_indices[i], column_index);
-            if (isfinite(value))
-                valid_values(idx++) = value;
-        }
+            column(i) = matrix(row_indices[i], column_indices[j]);
 
-        sort(valid_values.data(), valid_values.data() + valid_count);
-
-        medians(j) = (valid_count % 2 == 0)
-            ? (valid_values(valid_count / 2 - 1) + valid_values(valid_count / 2)) / 2.0f
-            : valid_values(valid_count / 2);
+        medians(j) = median(column);
     }
 
     return medians;
@@ -1161,9 +1021,9 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     if (block.size() == 0)
         return starting_matrix;
 
-    if (starting_matrix.cols() != block.cols())
-        throw runtime_error(format("append_rows: Column mismatch ({} vs {})",
-                                   starting_matrix.cols(), block.cols()));
+    throw_if(starting_matrix.cols() != block.cols(),
+             format("append_rows: Column mismatch ({} vs {})",
+                    starting_matrix.cols(), block.cols()));
 
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 
@@ -1178,8 +1038,8 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     const Index rows_unfiltered = outputs.rows();
     const Index variables_to_filter = outputs.cols();
 
-    if (minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
-        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
+    throw_if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter,
+             "build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
 
     vector<Index> feasible_rows;
     feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));

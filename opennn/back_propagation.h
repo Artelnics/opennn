@@ -32,7 +32,8 @@ struct BackPropagation
     vector<vector<TensorView>> gradient_views;
 
     Buffer delta_pool;
-    vector<vector<TensorView>> delta_views;
+    vector<TensorView> layer_output_deltas;
+    vector<vector<TensorView>> backward_slots;
 
     vector<vector<pair<size_t, size_t>>> consumer_edges;
 

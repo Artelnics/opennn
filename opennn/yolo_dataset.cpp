@@ -102,8 +102,8 @@ vector<string> read_yolo_classes(const filesystem::path& labels_directory)
             continue;
 
         ifstream file(entry.path());
-        if (!file)
-            throw runtime_error(format("Cannot open YOLO classes file: {}", entry.path().string()));
+        throw_if(!file,
+                 format("Cannot open YOLO classes file: {}", entry.path().string()));
 
         vector<string> classes;
         string line;
@@ -132,8 +132,8 @@ vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
 
         istringstream stream(line);
         YoloDataset::Box box;
-        if (!(stream >> box.class_id >> box.x >> box.y >> box.w >> box.h))
-            throw runtime_error(format("Invalid YOLO label line in {}: {}", label_path.string(), line));
+        throw_if(!(stream >> box.class_id >> box.x >> box.y >> box.w >> box.h),
+                 format("Invalid YOLO label line in {}: {}", label_path.string(), line));
 
         if (box.x < 0.0f || box.x > 1.0f || box.y < 0.0f || box.y > 1.0f
         ||  box.w < 0.0f || box.w > 1.0f || box.h < 0.0f || box.h > 1.0f)
@@ -764,8 +764,8 @@ struct VocAnnotation
 VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
 {
     ifstream file(xml_path);
-    if (!file)
-        throw runtime_error(format("Cannot open VOC annotation: {}", xml_path.string()));
+    throw_if(!file,
+             format("Cannot open VOC annotation: {}", xml_path.string()));
 
     stringstream buffer;
     buffer << file.rdbuf();
@@ -776,8 +776,8 @@ VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
     annotation.width  = stof(read_voc_tag(size_block, "width"));
     annotation.height = stof(read_voc_tag(size_block, "height"));
 
-    if (annotation.width <= 0.0f || annotation.height <= 0.0f)
-        throw runtime_error(format("VOC annotation has invalid size: {}", xml_path.string()));
+    throw_if(annotation.width <= 0.0f || annotation.height <= 0.0f,
+             format("VOC annotation has invalid size: {}", xml_path.string()));
 
     // Each <object> block contains a <name> and a <bndbox>.
     size_t cursor = 0;
@@ -785,8 +785,8 @@ VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
     while ((cursor = xml.find(obj_open, cursor)) != string::npos)
     {
         const size_t obj_end = xml.find("</object>", cursor);
-        if (obj_end == string::npos)
-            throw runtime_error(format("Unterminated <object> in {}", xml_path.string()));
+        throw_if(obj_end == string::npos,
+                 format("Unterminated <object> in {}", xml_path.string()));
 
         const string obj = xml.substr(cursor, obj_end - cursor);
         const string bbox = read_voc_tag(obj, "bndbox");
@@ -821,19 +821,19 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
                                        const string& image_set,
                                        const filesystem::path& output_labels_dir)
 {
-    if (!filesystem::is_directory(voc_root))
-        throw runtime_error(format("VOC root is not a directory: {}", voc_root.string()));
+    throw_if(!filesystem::is_directory(voc_root),
+             format("VOC root is not a directory: {}", voc_root.string()));
 
     const filesystem::path image_set_path =
         voc_root / "ImageSets" / "Main" / (image_set + ".txt");
-    if (!filesystem::is_regular_file(image_set_path))
-        throw runtime_error(format("VOC image-set file not found: {}",
-                                   image_set_path.string()));
+    throw_if(!filesystem::is_regular_file(image_set_path),
+             format("VOC image-set file not found: {}",
+                    image_set_path.string()));
 
     const filesystem::path annotations_dir = voc_root / "Annotations";
-    if (!filesystem::is_directory(annotations_dir))
-        throw runtime_error(format("VOC Annotations dir not found: {}",
-                                   annotations_dir.string()));
+    throw_if(!filesystem::is_directory(annotations_dir),
+             format("VOC Annotations dir not found: {}",
+                    annotations_dir.string()));
 
     filesystem::create_directories(output_labels_dir);
 
@@ -845,9 +845,9 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     // Write the classes file (matches read_yolo_classes' .names lookup).
     ofstream names_file(output_labels_dir / "voc.names");
-    if (!names_file)
-        throw runtime_error(format("Cannot write VOC names file in {}",
-                                   output_labels_dir.string()));
+    throw_if(!names_file,
+             format("Cannot write VOC names file in {}",
+                    output_labels_dir.string()));
     for (const string& name : classes)
         names_file << name << '\n';
     names_file.close();
@@ -868,8 +868,8 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
         ofstream out(out_path);
-        if (!out)
-            throw runtime_error(format("Cannot write YOLO label: {}", out_path.string()));
+        throw_if(!out,
+                 format("Cannot write YOLO label: {}", out_path.string()));
 
         for (const VocBox& box : ann.boxes)
         {
@@ -961,14 +961,15 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
                       Index new_boxes_per_cell,
                       const vector<array<float, 2>>& new_anchors)
 {
-    if (new_input_shape.rank != 3)
-        throw runtime_error("YoloDataset: input_shape must be rank 3.");
-    if (new_grid_size <= 0 || new_boxes_per_cell <= 0)
-        throw runtime_error("YoloDataset: grid_size and boxes_per_cell must be positive.");
+    throw_if(new_input_shape.rank != 3,
+             "YoloDataset: input_shape must be rank 3.");
+    throw_if(new_grid_size <= 0 || new_boxes_per_cell <= 0,
+             "YoloDataset: grid_size and boxes_per_cell must be positive.");
 
     images_directory = new_images_dir;
     labels_directory = new_labels_dir;
     data_path = images_directory;
+    storage_mode = StorageMode::BinaryFile;
     input_shape = new_input_shape;
     grid_size = new_grid_size;
     boxes_per_cell = new_boxes_per_cell;
@@ -978,10 +979,23 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     image_cache_path = images_directory / ".cache" / "yolo_images.bin";
     target_cache_path = images_directory / ".cache" / "yolo_targets.bin";
     boxes_cache_path = images_directory / ".cache" / "yolo_boxes.bin";
+    images_ram.clear();
+    targets_ram.clear();
 
     image_filenames = list_files(images_directory, has_image_extension);
 
     open_or_build_cache(new_anchors);
+}
+
+void YoloDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    Dataset::set_storage_mode(new_storage_mode);
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+    {
+        images_ram.clear();
+        targets_ram.clear();
+    }
 }
 
 void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_anchors)
@@ -1105,8 +1119,8 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
     vector<filesystem::path> image_paths = list_files(images_directory, has_image_extension);
-    if (image_paths.empty())
-        throw runtime_error(format("YoloDataset: no images found in {}", images_directory.string()));
+    throw_if(image_paths.empty(),
+             format("YoloDataset: no images found in {}", images_directory.string()));
 
     vector<vector<Box>> labels(image_paths.size());
     Index max_class_id = -1;
@@ -1133,8 +1147,8 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     for (size_t i = 0; i < image_paths.size(); ++i)
     {
         Tensor3 image = load_image(image_paths[i]);
-        if (image.dimension(2) != input_shape[2])
-            throw runtime_error(format("YoloDataset: channel mismatch in {}", image_paths[i].string()));
+        throw_if(image.dimension(2) != input_shape[2],
+                 format("YoloDataset: channel mismatch in {}", image_paths[i].string()));
 
         float scale = 1.0f;
         Index offset_x = 0;
@@ -1167,8 +1181,8 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     image_writer.finish_with_rename(image_cache_path);
 
     classes_number = class_names.empty() ? max_class_id + 1 : ssize(class_names);
-    if (classes_number <= 0)
-        throw runtime_error("YoloDataset: cannot infer classes_number.");
+    throw_if(classes_number <= 0,
+             "YoloDataset: cannot infer classes_number.");
 
     if (class_names.empty())
     {
@@ -1181,8 +1195,8 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
         ? calculate_yolo_anchors(labels, boxes_per_cell)
         : requested_anchors;
 
-    if (ssize(anchors) != boxes_per_cell)
-        throw runtime_error("YoloDataset: anchors size must equal boxes_per_cell.");
+    throw_if(ssize(anchors) != boxes_per_cell,
+             "YoloDataset: anchors size must equal boxes_per_cell.");
 
     target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
 
@@ -1301,17 +1315,17 @@ void YoloDataset::setup_metadata(Index new_samples_number)
 
 void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
 {
-    if (new_shape.rank != 3)
-        throw runtime_error("YoloDataset::set_runtime_input_shape: rank must be 3.");
-    if (new_shape[2] != cache_input_shape[2])
-        throw runtime_error("YoloDataset::set_runtime_input_shape: channel count must match the cache.");
-    if (new_shape[0] <= 0 || new_shape[1] <= 0)
-        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W must be positive.");
-    if (new_shape[0] > cache_input_shape[0] || new_shape[1] > cache_input_shape[1])
-        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W cannot exceed the cache letterbox size.");
+    throw_if(new_shape.rank != 3,
+             "YoloDataset::set_runtime_input_shape: rank must be 3.");
+    throw_if(new_shape[2] != cache_input_shape[2],
+             "YoloDataset::set_runtime_input_shape: channel count must match the cache.");
+    throw_if(new_shape[0] <= 0 || new_shape[1] <= 0,
+             "YoloDataset::set_runtime_input_shape: H/W must be positive.");
+    throw_if(new_shape[0] > cache_input_shape[0] || new_shape[1] > cache_input_shape[1],
+             "YoloDataset::set_runtime_input_shape: H/W cannot exceed the cache letterbox size.");
     const Index stride = 32;
-    if (new_shape[0] % stride != 0 || new_shape[1] % stride != 0)
-        throw runtime_error("YoloDataset::set_runtime_input_shape: H/W must be multiples of 32.");
+    throw_if(new_shape[0] % stride != 0 || new_shape[1] % stride != 0,
+             "YoloDataset::set_runtime_input_shape: H/W must be multiples of 32.");
 
     input_shape = new_shape;
     grid_size = new_shape[0] / stride;
@@ -1323,18 +1337,18 @@ void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
 void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
                                         const vector<vector<array<float, 2>>>& per_head_anchors)
 {
-    if (grid_sizes.empty() || grid_sizes.size() != per_head_anchors.size())
-        throw runtime_error("YoloDataset::set_multi_scale_heads: head counts must match and be non-zero.");
+    throw_if(grid_sizes.empty() || grid_sizes.size() != per_head_anchors.size(),
+             "YoloDataset::set_multi_scale_heads: head counts must match and be non-zero.");
 
     const Index per_head = ssize(per_head_anchors[0]);
-    if (per_head <= 0)
-        throw runtime_error("YoloDataset::set_multi_scale_heads: each head needs at least one anchor.");
+    throw_if(per_head <= 0,
+             "YoloDataset::set_multi_scale_heads: each head needs at least one anchor.");
     for (const auto& a : per_head_anchors)
-        if (ssize(a) != per_head)
-            throw runtime_error("YoloDataset::set_multi_scale_heads: all heads must have the same boxes_per_head.");
+        throw_if(ssize(a) != per_head,
+                 "YoloDataset::set_multi_scale_heads: all heads must have the same boxes_per_head.");
     for (Index g : grid_sizes)
-        if (g <= 0)
-            throw runtime_error("YoloDataset::set_multi_scale_heads: grid sizes must be positive.");
+        throw_if(g <= 0,
+                 "YoloDataset::set_multi_scale_heads: grid sizes must be positive.");
 
     head_grid_sizes = grid_sizes;
     head_anchors = per_head_anchors;
@@ -1350,13 +1364,13 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
 
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 {
-    if (sample_index < 0 || sample_index >= samples_number)
-        throw runtime_error("YoloDataset box sample index is out of range.");
+    throw_if(sample_index < 0 || sample_index >= samples_number,
+             "YoloDataset box sample index is out of range.");
 
     const uint64_t begin = boxes_offsets[size_t(sample_index)];
     const uint64_t end   = boxes_offsets[size_t(sample_index) + 1];
-    if (end < begin)
-        throw runtime_error("YoloDataset box cache offsets are invalid.");
+    throw_if(end < begin,
+             "YoloDataset box cache offsets are invalid.");
 
     const uint64_t count = end - begin;
 
@@ -1378,6 +1392,44 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
     }
 }
 
+void YoloDataset::load_images_to_ram() const
+{
+    if (!images_ram.empty()) return;
+    if (samples_number == 0 || cache_image_record_bytes == 0) return;
+
+    throw_if(!image_cache_reader.is_open(),
+             "YoloDataset::load_images_to_ram: image cache is not open.");
+
+    images_ram.resize(size_t(samples_number) * size_t(cache_image_record_bytes));
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        const uint64_t offset = sizeof(YoloImageCacheHeader)
+                              + uint64_t(i) * uint64_t(cache_image_record_bytes);
+        image_cache_reader.read_at(images_ram.data() + size_t(i) * size_t(cache_image_record_bytes),
+                                   size_t(cache_image_record_bytes),
+                                   offset);
+    }
+}
+
+void YoloDataset::load_targets_to_ram() const
+{
+    if (!targets_ram.empty()) return;
+    if (samples_number == 0 || cache_target_record_floats == 0) return;
+
+    throw_if(!target_cache_reader.is_open(),
+             "YoloDataset::load_targets_to_ram: target cache is not open.");
+
+    targets_ram.resize(size_t(samples_number) * size_t(cache_target_record_floats));
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        const uint64_t offset = target_data_offset
+                              + uint64_t(i) * uint64_t(cache_target_record_floats) * sizeof(float);
+        target_cache_reader.read_at(targets_ram.data() + size_t(i) * size_t(cache_target_record_floats),
+                                    size_t(cache_target_record_floats) * sizeof(float),
+                                    offset);
+    }
+}
+
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
@@ -1388,9 +1440,13 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const float scale = 1.0f / 255.0f;
 
     const bool augment = is_training && augmentation.enabled;
+    const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.fetch_add(1, std::memory_order_relaxed) + 1
         : 0;
+
+    if (matrix_storage)
+        load_images_to_ram();
 
     AugmentationConfig cfg = augmentation;
 
@@ -1410,13 +1466,22 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             pixels.resize(size_t(cache_image_record_bytes));
 
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= samples_number)
-                throw runtime_error("YoloDataset input sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= samples_number,
+                     "YoloDataset input sample index is out of range.");
 
             const uint64_t offset = sizeof(YoloImageCacheHeader)
                 + uint64_t(sample_index) * uint64_t(cache_image_record_bytes);
 
-            image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
+            if (matrix_storage)
+            {
+                copy_n(images_ram.data() + size_t(sample_index) * size_t(cache_image_record_bytes),
+                       pixels.size(),
+                       pixels.data());
+            }
+            else
+            {
+                image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
+            }
 
             const uint8_t* image_bytes = pixels.data();
 
@@ -1458,8 +1523,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void YoloDataset::fill_targets(const vector<Index>& sample_indices,
@@ -1471,6 +1536,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
 
     const bool augment = is_training && augmentation.enabled;
+    const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.load(std::memory_order_relaxed)
         : 0;
@@ -1480,6 +1546,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale();
 
+    if (matrix_storage && !reencode)
+        load_targets_to_ram();
+
     string omp_error;
 
     #pragma omp parallel for
@@ -1488,8 +1557,8 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         try
         {
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= samples_number)
-                throw runtime_error("YoloDataset target sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= samples_number,
+                     "YoloDataset target sample index is out of range.");
 
             if (reencode)
             {
@@ -1519,9 +1588,18 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                 const uint64_t offset = target_data_offset
                     + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float);
 
-                target_cache_reader.read_at(target_data + i * target_record_floats,
-                                            size_t(cache_target_record_floats) * sizeof(float),
-                                            offset);
+                if (matrix_storage)
+                {
+                    copy_n(targets_ram.data() + size_t(sample_index) * size_t(cache_target_record_floats),
+                           cache_target_record_floats,
+                           target_data + i * target_record_floats);
+                }
+                else
+                {
+                    target_cache_reader.read_at(target_data + i * target_record_floats,
+                                                size_t(cache_target_record_floats) * sizeof(float),
+                                                offset);
+                }
             }
         }
         catch (const exception& e)
@@ -1531,8 +1609,8 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void YoloDataset::to_JSON(JsonWriter& printer) const
@@ -1542,6 +1620,7 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"ImagesPath", images_directory.string()},
         {"LabelsPath", labels_directory.string()},
+        {"StorageMode", get_storage_mode_string()},
         {"Height", to_string(input_shape[0])},
         {"Width", to_string(input_shape[1])},
         {"Channels", to_string(input_shape[2])},
@@ -1566,6 +1645,10 @@ void YoloDataset::from_JSON(const JsonDocument& document)
          read_json_index(source, "Channels")},
         read_json_index(source, "GridSize"),
         read_json_index(source, "BoxesPerCell"));
+
+    set_storage_mode(source->has("StorageMode")
+                   ? read_json_string(source, "StorageMode")
+                   : "BinaryFile");
 }
 
 }

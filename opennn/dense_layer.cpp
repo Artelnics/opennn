@@ -147,8 +147,8 @@ void Dense::set_activation_function(const string& name)
 
 void Dense::set_momentum(float new_momentum)
 {
-    if (new_momentum < 0.0f || new_momentum >= 1.0f)
-        throw runtime_error("Batch normalization momentum must be in [0,1).");
+    throw_if(new_momentum < 0.0f || new_momentum >= 1.0f,
+             "Batch normalization momentum must be in [0,1).");
 
     batch_norm.momentum = new_momentum;
     if (batch_norm.active())

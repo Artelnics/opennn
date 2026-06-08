@@ -54,11 +54,6 @@ Index Convolutional::get_output_width() const
         : (input_width - kernel_width) / column_stride + 1;
 }
 
-pair<Index, Index> Convolutional::get_padding() const
-{
-    return { get_padding_height(), get_padding_width() };
-}
-
 Index Convolutional::get_padding_height() const
 {
     if (!use_padding) return 0;
@@ -107,8 +102,9 @@ void Convolutional::update_convolution_operator()
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
 
-    convolution.output_slots = batch_norm.active() ? vector<size_t>{ConvolutionView}
-                                                   : vector<size_t>{Output};
+    convolution.output_slots = batch_norm.active() 
+        ? vector<size_t>{ConvolutionView}
+        : vector<size_t>{Output};
 
     if (batch_norm.active())
     {
@@ -133,30 +129,27 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    if (new_kernel_shape.rank != 4)
-        throw runtime_error("Kernel shape must be 4");
+    throw_if(new_kernel_shape.rank != 4, "Kernel shape must be 4");
 
-    if (new_stride_shape.rank != 2)
-        throw runtime_error("Stride shape must be 2");
+    throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
 
-    if (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1])
-        throw runtime_error("kernel shape cannot be bigger than input shape");
+    throw_if(new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1],
+             "kernel shape cannot be bigger than input shape");
 
-    if (new_kernel_shape[2] != new_input_shape[2])
-        throw runtime_error("kernel_channels must match input_channels dimension");
+    throw_if(new_kernel_shape[2] != new_input_shape[2],
+             "kernel_channels must match input_channels dimension");
 
-    if (new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1])
-        throw runtime_error("Stride shape cannot be bigger than input shape");
+    throw_if(new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1],
+             "Stride shape cannot be bigger than input shape");
 
-    if (new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0)
-        throw runtime_error("Stride must be positive.");
+    throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
 
-    if (new_convolution_type != "Valid" && new_convolution_type != "Same")
-        throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
+    throw_if(new_convolution_type != "Valid" && new_convolution_type != "Same",
+             "Convolution type must be 'Valid' or 'Same'.");
 
-    if (new_convolution_type == "Same"
-        && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0))
-        throw runtime_error("Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
+    throw_if(new_convolution_type == "Same"
+             && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0),
+             "Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
 
     input_height    = new_input_shape[0];
     input_width     = new_input_shape[1];
@@ -182,8 +175,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.rank != 3)
-        throw runtime_error("Input shape rank must be 3.");
+    throw_if(new_input_shape.rank != 3, "Input shape rank must be 3.");
 
     input_height = new_input_shape[0];
     input_width = new_input_shape[1];
@@ -194,8 +186,7 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
 
 void Convolutional::set_row_stride(const Index new_stride_row)
 {
-    if (new_stride_row <= 0)
-        throw runtime_error("Row stride must be positive.");
+    throw_if(new_stride_row <= 0, "Row stride must be positive.");
 
     row_stride = new_stride_row;
 
@@ -204,8 +195,7 @@ void Convolutional::set_row_stride(const Index new_stride_row)
 
 void Convolutional::set_column_stride(const Index new_stride_column)
 {
-    if (new_stride_column <= 0)
-        throw runtime_error("Column stride must be positive.");
+    throw_if(new_stride_column <= 0, "Column stride must be positive.");
 
     column_stride = new_stride_column;
 
@@ -214,8 +204,8 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
-    if (new_convolution_type != "Valid" && new_convolution_type != "Same")
-        throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
+    throw_if(new_convolution_type != "Valid" && new_convolution_type != "Same",
+             "Convolution type must be 'Valid' or 'Same'.");
 
     use_padding = (new_convolution_type == "Same");
 
@@ -226,8 +216,8 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 {
     const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
 
-    if (function == ActivationOp::Function::Softmax)
-        throw runtime_error("Softmax is not a valid activation for a convolutional layer.");
+    throw_if(function == ActivationOp::Function::Softmax,
+             "Softmax is not a valid activation for a convolutional layer.");
 
     activation.set_function(function);
 }
@@ -252,8 +242,8 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     column_stride   = stride_shape[1];
 
     const string convolution_type = read_json_string(convolutional_layer_element, "Convolution");
-    if (convolution_type != "Valid" && convolution_type != "Same")
-        throw runtime_error("Convolution type must be 'Valid' or 'Same'.");
+    throw_if(convolution_type != "Valid" && convolution_type != "Same",
+             "Convolution type must be 'Valid' or 'Same'.");
     use_padding = (convolution_type == "Same");
 
     const bool has_batch_norm = read_json_bool(convolutional_layer_element, "BatchNormalization");

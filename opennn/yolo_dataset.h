@@ -79,6 +79,8 @@ public:
              Index grid_size = 13,
              Index boxes_per_cell = 5,
              const vector<array<float, 2>>& anchors = {});
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -162,6 +164,11 @@ private:
     void build_cache(const vector<array<float, 2>>& requested_anchors);
     void setup_metadata(Index new_samples_number);
     void read_sample_boxes(Index sample_index, vector<Box>& out) const;
+    void load_images_to_ram() const;
+    void load_targets_to_ram() const;
+
+    mutable vector<uint8_t> images_ram;
+    mutable vector<float> targets_ram;
 };
 
 }

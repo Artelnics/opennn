@@ -17,6 +17,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "batch.h"
+#include "device_backend.h"
 #include "neural_network.h"
 #include "profiler.h"
 #include "string_utilities.h"
@@ -38,6 +39,35 @@
 
 namespace opennn
 {
+
+#ifdef OPENNN_HAS_CUDA
+
+static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, float max_norm)
+{
+    static Buffer squared_norm_device(Device::CUDA);
+    squared_norm_device.grow_to(Index(sizeof(float)));
+    float* const squared_norm_ptr = squared_norm_device.as<float>();
+
+    cublasHandle_t handle = Backend::get_cublas_handle();
+    CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
+    CHECK_CUBLAS(cublasSdot(handle,
+                            to_int(gradient_size),
+                            gradient.as<float>(), 1,
+                            gradient.as<float>(), 1,
+                            squared_norm_ptr));
+    CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+
+    clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
+}
+
+#else
+
+static void clip_gradient_norm_device(Buffer&, Index, float)
+{
+    throw runtime_error("clip_gradient_norm_device requires CUDA support.");
+}
+
+#endif
 
 struct BatchFillSession
 {
@@ -129,33 +159,28 @@ bool profile_enabled_from_env()
 
 void sync_cuda_for_debug(bool on_gpu)
 {
-#ifdef OPENNN_HAS_CUDA
     static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
     if (on_gpu && enabled)
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-#else
-    (void)on_gpu;
-#endif
+        device::synchronize(Backend::get_compute_stream());
 }
 
-#ifdef OPENNN_HAS_CUDA
 bool cuda_sync_each_batch()
 {
     static const bool enabled = env_flag_enabled("OPENNN_CUDA_SYNC_EACH_BATCH");
     return enabled;
 }
-#endif
 
-#ifdef OPENNN_HAS_CUDA
 struct DeviceEpochMetrics
 {
     Buffer values{Device::CUDA};
 
     void reset()
     {
+        if (!device::is_cuda_build()) return;
+
         values.grow_to(2 * Index(sizeof(float)));
-        CHECK_CUDA(cudaMemsetAsync(values.data, 0, 2 * sizeof(float),
-                                   Backend::get_compute_stream()));
+        device::set_zero_async(values.data, 2 * Index(sizeof(float)),
+                               Backend::get_compute_stream());
     }
 
     float* error_sum() { return values.as<float>(); }
@@ -163,13 +188,16 @@ struct DeviceEpochMetrics
 
     Optimizer::EpochStats read(Index batches_number, bool include_accuracy)
     {
-        float host[2] = {0.0f, 0.0f};
-        CHECK_CUDA(cudaMemcpyAsync(host, values.data, sizeof(host),
-                                   cudaMemcpyDeviceToHost,
-                                   Backend::get_compute_stream()));
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-
         Optimizer::EpochStats stats;
+        if (!device::is_cuda_build()) return stats;
+
+        float host[2] = {0.0f, 0.0f};
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(host, values.data, Index(sizeof(host)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
+
         if (batches_number > 0)
         {
             stats.error = host[0] / float(batches_number);
@@ -178,7 +206,6 @@ struct DeviceEpochMetrics
         return stats;
     }
 };
-#endif
 
 }
 
@@ -241,8 +268,7 @@ void Optimizer::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);
@@ -293,16 +319,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     const int pool_size = get_batch_pool_size(neural_network);
     const auto& config = neural_network.get_config();
-    const bool use_device_data_buffer = neural_network.is_gpu()
-                                     && dataset.supports_dense_feature_gather()
-                                     && !neural_network.has(LayerType::Recurrent)
-                                     && !neural_network.has(LayerType::LongShortTermMemory)
-                                     && !env_flag_enabled("OPENNN_DISABLE_DATA_BUFFER");
-
-#ifdef OPENNN_HAS_CUDA
-    if (use_device_data_buffer)
-        dataset.prepare_device_data_buffer();
-#endif
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -311,7 +327,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config));
-            pool.back()->use_device_data_buffer = use_device_data_buffer;
             queue.push(pool.back().get());
         }
     };
@@ -431,16 +446,13 @@ void Optimizer::apply_effective_num_workers(const NeuralNetwork& neural_network)
 
 Index Optimizer::get_maximum_batch_size() const
 {
-    if (!loss)
-        throw runtime_error("Optimizer::get_maximum_batch_size: loss is not set.");
+    throw_if(!loss, "Optimizer::get_maximum_batch_size: loss is not set.");
 
     const Dataset* dataset = loss->get_dataset();
     const NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (!dataset)
-        throw runtime_error("Optimizer::get_maximum_batch_size: dataset is not set.");
-    if (!neural_network)
-        throw runtime_error("Optimizer::get_maximum_batch_size: neural network is not set.");
+    throw_if(!dataset, "Optimizer::get_maximum_batch_size: dataset is not set.");
+    throw_if(!neural_network, "Optimizer::get_maximum_batch_size: neural network is not set.");
 
     const Index training_samples_number = dataset->get_samples_number("Training");
     if (training_samples_number <= 0) return 0;
@@ -453,27 +465,22 @@ Index Optimizer::get_maximum_batch_size() const
     Index available_bytes = 0;
     if (on_gpu)
     {
-#ifdef OPENNN_HAS_CUDA
-        size_t free_bytes = 0, total_bytes = 0;
-        CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
+        const size_t free_bytes = device::memory_info().first;
         available_bytes = Index(free_bytes);
-#else
-        throw runtime_error("Optimizer::get_maximum_batch_size: CUDA not compiled in.");
-#endif
     }
     else
     {
 #if defined(__linux__) || defined(__unix__)
         const long pages = sysconf(_SC_AVPHYS_PAGES);
         const long page_size = sysconf(_SC_PAGE_SIZE);
-        if (pages <= 0 || page_size <= 0)
-            throw runtime_error("Optimizer::get_maximum_batch_size: sysconf failed to query available RAM.");
+        throw_if(pages <= 0 || page_size <= 0,
+                 "Optimizer::get_maximum_batch_size: sysconf failed to query available RAM.");
         available_bytes = Index(pages) * Index(page_size);
 #elif defined(_WIN32)
         MEMORYSTATUSEX status;
         status.dwLength = sizeof(status);
-        if (!GlobalMemoryStatusEx(&status))
-            throw runtime_error("Optimizer::get_maximum_batch_size: GlobalMemoryStatusEx failed.");
+        throw_if(!GlobalMemoryStatusEx(&status),
+                 "Optimizer::get_maximum_batch_size: GlobalMemoryStatusEx failed.");
         available_bytes = Index(status.ullAvailPhys);
 #else
         throw runtime_error("Optimizer::get_maximum_batch_size: no portable API to query available RAM on this platform.");
@@ -497,9 +504,9 @@ Index Optimizer::get_maximum_batch_size() const
     fixed_bytes += parameters_aligned_size * Index(sizeof(float));
     fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
-    if (fixed_bytes >= budget)
-        throw runtime_error(format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
-                                   fixed_bytes / (1ull << 20), budget / (1ull << 20)));
+    throw_if(fixed_bytes >= budget,
+             format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
+                    fixed_bytes / (1ull << 20), budget / (1ull << 20)));
 
     const Index dynamic_budget = budget - fixed_bytes;
 
@@ -556,10 +563,10 @@ Index Optimizer::get_maximum_batch_size() const
         return total;
     };
 
-    if (bytes_for_batch(1) > dynamic_budget)
-        throw runtime_error(format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
-                                   "Need {} MiB, available {} MiB.",
-                                   bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
+    throw_if(bytes_for_batch(1) > dynamic_budget,
+             format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
+                    "Need {} MiB, available {} MiB.",
+                    bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
 
     Index lo = 1;
     Index hi = training_samples_number;
@@ -720,8 +727,8 @@ void Optimizer::set_scaling()
         }
     }
 
-    if (ssize(unscaling_layer_descriptives) != unscaling_outputs)
-        throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
+    throw_if(ssize(unscaling_layer_descriptives) != unscaling_outputs,
+             "Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
     unscaling_layer->set_descriptives(unscaling_layer_descriptives);
     unscaling_layer->set_scalers(unscaling_layer_scalers);
@@ -907,8 +914,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
 
     ofstream file(file_name);
 
-    if (!file)
-        throw runtime_error(format("TrainingResults::save: cannot open {}", file_name.string()));
+    throw_if(!file, format("TrainingResults::save: cannot open {}", file_name.string()));
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";
@@ -1005,12 +1011,10 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 
     if (total_bytes > 0)
     {
-#ifdef OPENNN_HAS_CUDA
         if (device == Device::CUDA)
-            CHECK_CUDA(cudaMemsetAsync(data.data, 0, total_bytes, Backend::get_compute_stream()));
+            opennn::device::set_zero_async(data.data, total_bytes, Backend::get_compute_stream());
         else
-#endif
-        data.setZero();
+            data.setZero();
     }
 
     views.clear();
@@ -1034,48 +1038,36 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 
 void Optimizer::setup_device_training()
 {
-#ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
     if (!neural_network->is_gpu()) return;
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
-#endif
 }
 
 void Optimizer::teardown_device_training()
 {
-#ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
     if (!neural_network->is_gpu()) return;
 
-    CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
+    device::synchronize(Backend::get_compute_stream());
 
     neural_network->copy_parameters_host();
     neural_network->copy_states_host();
-#endif
 }
 
 void Optimizer::prefetch_batch(Batch& batch)
 {
-#ifdef OPENNN_HAS_CUDA
     if (!batch.uses_cuda()) return;
     if (!batch.needs_device_copy) return;
 
     batch.copy_device_async(Backend::get_compute_stream());
-#else
-    (void)batch;
-#endif
 }
 
 void Optimizer::sync_device(bool on_gpu)
 {
-#ifdef OPENNN_HAS_CUDA
     if (on_gpu && (has_recurrent_layers_ || cuda_sync_each_batch()))
-        CHECK_CUDA(cudaStreamSynchronize(Backend::get_compute_stream()));
-#else
-    (void)on_gpu;
-#endif
+        device::synchronize(Backend::get_compute_stream());
 }
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
@@ -1083,26 +1075,11 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
-#ifdef OPENNN_HAS_CUDA
     if (gradient.device_type == Device::CUDA)
     {
-        static Buffer squared_norm_device(Device::CUDA);
-        squared_norm_device.grow_to(Index(sizeof(float)));
-        float* const squared_norm_ptr = squared_norm_device.as<float>();
-
-        cublasHandle_t handle = Backend::get_cublas_handle();
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSdot(handle,
-                                to_int(gradient_size),
-                                gradient.as<float>(), 1,
-                                gradient.as<float>(), 1,
-                                squared_norm_ptr));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
-
-        clip_gradient_norm_cuda(gradient_size, gradient.as<float>(), squared_norm_ptr, max_norm, GRADIENT_NORM_EPS);
+        clip_gradient_norm_device(gradient, gradient_size, max_norm);
         return;
     }
-#endif
 
     VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
     const float gradient_norm = gradient_view.norm();
@@ -1140,13 +1117,9 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         back_propagation.loss = stats.error + back_propagation.regularization;
     };
 
-#ifdef OPENNN_HAS_CUDA
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
     DeviceEpochMetrics device_metrics;
     if (use_device_metrics) device_metrics.reset();
-#else
-    const bool use_device_metrics = false;
-#endif
 
     const bool profile_this = profile_enabled_from_env();
     if (profile_this)
@@ -1263,7 +1236,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
         {
             PROFILE_SCOPE("step:bwd_total");
-#ifdef OPENNN_HAS_CUDA
             if (use_device_metrics)
             {
                 if (!loss->back_propagate_device_metrics(*current_batch,
@@ -1274,7 +1246,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                     throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
             }
             else
-#endif
             {
                 loss->back_propagate(*current_batch, forward_propagation, back_propagation);
             }
@@ -1308,7 +1279,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     session->rethrow_if_error();
 
-#ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)
     {
         stats = device_metrics.read(batches_number, is_classification);
@@ -1317,7 +1287,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         set_epoch_loss();
     }
     else
-#endif
     {
         stats.error /= float(batches_number);
         if (is_classification) stats.accuracy /= float(batches_number);
@@ -1357,13 +1326,9 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
     has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
     const bool on_gpu = neural_network->is_gpu();
 
-#ifdef OPENNN_HAS_CUDA
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
     DeviceEpochMetrics device_metrics;
     if (use_device_metrics) device_metrics.reset();
-#else
-    const bool use_device_metrics = false;
-#endif
 
     if (!on_gpu)
     {
@@ -1417,7 +1382,6 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
         neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
         sync_cuda_for_debug(on_gpu);
         Loss::EvaluationResult eval;
-#ifdef OPENNN_HAS_CUDA
         if (use_device_metrics)
         {
             if (!loss->calculate_error_device_metrics(*current_batch,
@@ -1427,7 +1391,6 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
                 throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
         }
         else
-#endif
         {
             eval = loss->calculate_error(*current_batch, forward_propagation);
         }
@@ -1446,11 +1409,9 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
 
     session->rethrow_if_error();
 
-#ifdef OPENNN_HAS_CUDA
     if (use_device_metrics)
         stats = device_metrics.read(batches_number, is_classification);
     else
-#endif
     {
         stats.error /= float(batches_number);
         if (is_classification) stats.accuracy /= float(batches_number);

@@ -45,14 +45,25 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 {
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
 }
 
+void LanguageDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    Dataset::set_storage_mode(new_storage_mode);
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+        data.resize(0, 0);
+}
+
 Index LanguageDataset::get_samples_number() const
 {
-    return Index(offsets_table.size());
+    return storage_mode == StorageMode::Matrix
+        ? Index(data.rows())
+        : Index(offsets_table.size());
 }
 
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
@@ -61,6 +72,7 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
     maximum_vocabulary_size = new_maximum_vocabulary_size;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
@@ -74,6 +86,7 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
     separator = Dataset::Separator::Tab;
     maximum_vocabulary_size = new_maximum_vocabulary_size;
     minimum_token_frequency = new_minimum_token_frequency;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
@@ -90,14 +103,20 @@ VectorI LanguageDataset::calculate_target_distribution() const
 
     for (Index sample = 0; sample < samples_number; ++sample)
     {
-        const auto& offsets = offsets_table[size_t(sample)];
-        const int64_t tgt_off = offsets[2];
-        const int64_t tgt_len = offsets[3];
-        if (tgt_len < 1) continue;
-
         int32_t token = 0;
-        cache_reader.read_at(&token, sizeof(token),
-                             cache_data_offset + uint64_t(tgt_off) * sizeof(int32_t));
+
+        if (storage_mode == StorageMode::Matrix)
+        {
+            // Single-token target lives in the first target column of data.
+            token = int32_t(data(sample, maximum_input_sequence_length));
+        }
+        else
+        {
+            const auto& offsets = offsets_table[size_t(sample)];
+            if (offsets[3] < 1) continue;
+            cache_reader.read_at(&token, sizeof(token),
+                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+        }
         (token < 1) ? negatives++ : positives++;
     }
 
@@ -241,12 +260,54 @@ void LanguageDataset::read_txt()
         target_shape = { get_maximum_target_sequence_length() };
     }
 
-    if (!try_load_binary_cache(samples_number))
+    const bool has_decoder = !decoder_shape.empty();
+
+    if (storage_mode == StorageMode::Matrix)
+    {
+        // Matrix mode never touches the .bin: encode the documents and lay the
+        // padded token sequences out in the base data matrix (samples x features).
+        vector<vector<Index>> input_indices;
+        vector<vector<Index>> target_indices;
+        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
+
+        const Index decoder_offset = maximum_input_sequence_length;
+        const Index target_offset = has_decoder
+            ? decoder_offset + maximum_target_sequence_length
+            : maximum_input_sequence_length;
+
+        data.resize(samples_number, ssize(variables));
+        data.setZero();   // PAD_INDEX == 0
+
+        for (Index i = 0; i < samples_number; ++i)
+        {
+            const vector<Index>& in = input_indices[size_t(i)];
+            const Index in_n = min(ssize(in), maximum_input_sequence_length);
+            for (Index j = 0; j < in_n; ++j)
+                data(i, j) = float(in[size_t(j)]);
+
+            const vector<Index>& tgt = target_indices[size_t(i)];
+            const Index tgt_n = min(ssize(tgt), maximum_target_sequence_length);
+            for (Index j = 0; j < tgt_n; ++j)
+                data(i, target_offset + j) = float(tgt[size_t(j)]);
+
+            if (has_decoder)
+            {
+                data(i, decoder_offset) = START_INDEX;
+                const Index dec_n = min(ssize(tgt), maximum_target_sequence_length - 1);
+                for (Index j = 0; j < dec_n; ++j)
+                    data(i, decoder_offset + 1 + j) = float(tgt[size_t(j)]);
+            }
+        }
+
+        offsets_table.clear();
+        cache_reader.close();
+    }
+    else if (!try_load_binary_cache(samples_number))
     {
         vector<vector<Index>> input_indices;
         vector<vector<Index>> target_indices;
         encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
-        write_binary_cache(input_indices, target_indices, /*has_decoder=*/!decoder_shape.empty());
+        write_binary_cache(input_indices, target_indices, has_decoder);
     }
 
     sample_roles.resize(samples_number);
@@ -328,12 +389,12 @@ void LanguageDataset::load_documents(string& buffer,
 {
     ifstream file(data_path, ios::binary | ios::ate);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file {}", data_path.string()));
 
     const auto file_size = file.tellg();
-    if (file_size < 0)
-        throw runtime_error(format("Cannot determine file size for {}", data_path.string()));
+    throw_if(file_size < 0,
+             format("Cannot determine file size for {}", data_path.string()));
 
     file.seekg(0);
 
@@ -341,8 +402,8 @@ void LanguageDataset::load_documents(string& buffer,
     if (file_size > 0)
         file.read(buffer.data(), file_size);
 
-    if (!file)
-        throw runtime_error(format("Cannot read file {}", data_path.string()));
+    throw_if(!file,
+             format("Cannot read file {}", data_path.string()));
 
     for (char& c : buffer)
         c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
@@ -375,8 +436,8 @@ void LanguageDataset::load_documents(string& buffer,
 
         if (fields.size() != 2)
         {
-            if (strict_field_count)
-                throw runtime_error("Line must contain two fields: input and target.");
+            throw_if(strict_field_count,
+                     "Line must contain two fields: input and target.");
             continue;
         }
 
@@ -397,7 +458,8 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
         {"Separator", get_separator_name()},
         {"HasHeader", to_string(has_header)},
         {"HasSamplesId", to_string(has_sample_ids)},
-        {"Codification", get_codification_string()}
+        {"Codification", get_codification_string()},
+        {"StorageMode", get_storage_mode_string()}
     });
     printer.close_element();
 
@@ -433,6 +495,9 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_codification(read_json_string(data_source_element, "Codification"));
+    set_storage_mode(data_source_element->has("StorageMode")
+                   ? read_json_string(data_source_element, "StorageMode")
+                   : "BinaryFile");
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
@@ -502,8 +567,8 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
         for (Index sample = 0; sample < samples_number; ++sample)
         {
             const vector<string_view>& sample_tokens = target_document_tokens[sample];
-            if (sample_tokens.empty())
-                throw runtime_error("Unknown target value");
+            throw_if(sample_tokens.empty(),
+                     "Unknown target value");
 
             const string_view token = sample_tokens[0];
 
@@ -681,11 +746,17 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
 }
 
 void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
-                                  const vector<Index>& /*input_indices*/,
+                                  const vector<Index>& input_indices,
                                   float* input_data,
                                   bool /*is_training*/,
-                                  int /*contiguous*/) const
+                                  int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_input_sequence_length;
 
@@ -699,8 +770,8 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
         try
         {
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset input sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset input sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[1]), seq_len);
@@ -721,16 +792,22 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
-                                   const vector<Index>& /*target_indices*/,
+                                   const vector<Index>& target_indices,
                                    float* target_data,
                                    bool /*is_training*/,
-                                   int /*contiguous*/) const
+                                   int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 
@@ -744,8 +821,8 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
         try
         {
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset target sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset target sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[3]), seq_len);
@@ -766,16 +843,23 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
-                                   const vector<Index>& /*decoder_indices*/,
+                                   const vector<Index>& decoder_indices,
                                    float* decoder_data,
                                    bool /*is_training*/,
-                                   int /*contiguous*/) const
+                                   int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        // Decoder columns already hold [START, target shifted] (see read_txt).
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 
@@ -791,8 +875,8 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
             decoder_data[i * seq_len] = START_INDEX;
 
             const Index sample_index = sample_indices[size_t(i)];
-            if (sample_index < 0 || sample_index >= ssize(offsets_table))
-                throw runtime_error("LanguageDataset decoder sample index is out of range.");
+            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+                     "LanguageDataset decoder sample index is out of range.");
 
             const auto& offsets = offsets_table[size_t(sample_index)];
             const Index n = min(Index(offsets[3]), seq_len - 1);
@@ -813,8 +897,8 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
         }
     }
 
-    if (!omp_error.empty())
-        throw runtime_error(omp_error);
+    throw_if(!omp_error.empty(),
+             omp_error);
 }
 
 }

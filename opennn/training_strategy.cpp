@@ -121,17 +121,13 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::train()
 {
-    if (!get_neural_network())
-        throw runtime_error("neural network is not set.");
+    throw_if(!get_neural_network(), "neural network is not set.");
 
-    if (!get_dataset())
-        throw runtime_error("dataset is not set.");
+    throw_if(!get_dataset(), "dataset is not set.");
 
-    if (!loss->get_neural_network() || !loss->get_dataset())
-        throw runtime_error("loss is not set.");
+    throw_if(!loss->get_neural_network() || !loss->get_dataset(), "loss is not set.");
 
-    if (!optimizer->get_loss())
-        throw runtime_error("optimizer is not set.");
+    throw_if(!optimizer->get_loss(), "optimizer is not set.");
 
     return optimizer->train();
 }
@@ -177,8 +173,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* loss_method_element = loss_element->first_child(loss_method.c_str());
 
-    if (!loss_method_element)
-        throw runtime_error(format("{} element is nullptr.\n", loss_method));
+    throw_if(!loss_method_element, format("{} element is nullptr.\n", loss_method));
 
     set_loss(loss_method);
     loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
@@ -193,8 +188,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* optimization_method_element = optimization_algorithm_element->first_child(optimization_method.c_str());
 
-    if (!optimization_method_element)
-        throw runtime_error(format("{} element is nullptr.\n", optimization_method));
+    throw_if(!optimization_method_element, format("{} element is nullptr.\n", optimization_method));
 
     set_optimization_algorithm(optimization_method);
     optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
@@ -215,8 +209,7 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

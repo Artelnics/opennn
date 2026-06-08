@@ -13,21 +13,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-vector<Index> string_to_channels(const string& text)
-{
-    istringstream stream(text);
-    vector<Index> channels;
-    Index value = 0;
-    while (stream >> value)
-        channels.push_back(value);
-    return channels;
-}
-
-}
-
 Concatenate::Concatenate(const Shape& new_input_shape,
                          const vector<Index>& per_input_channels,
                          const string& new_label)
@@ -88,7 +73,11 @@ void Concatenate::configure_operator()
 
 void Concatenate::read_JSON_body(const Json* root)
 {
-    const vector<Index> channels = string_to_channels(read_json_string(root, "InputChannels"));
+    istringstream stream(read_json_string(root, "InputChannels"));
+    vector<Index> channels;
+    for (Index value; stream >> value; )
+        channels.push_back(value);
+
     set(input_shape, channels, label);
 }
 

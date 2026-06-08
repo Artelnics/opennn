@@ -270,9 +270,9 @@ struct Parser
             AstPtr inner_node = parse_expression();
             const Token closing_token = lexer.consume();
 
-            if (closing_token.kind != Token::Kind::RightParen)
-                throw runtime_error(format("FormulaParser: expected ')' at position {}",
-                                           closing_token.position));
+            throw_if(closing_token.kind != Token::Kind::RightParen,
+                     format("FormulaParser: expected ')' at position {}",
+                            closing_token.position));
 
             return inner_node;
         }
@@ -298,8 +298,8 @@ struct Parser
                 }
 
                 const Token closing_token = lexer.consume();
-                if (closing_token.kind != Token::Kind::RightParen)
-                    throw runtime_error(format("FormulaParser: expected ')' in call to '{}'", token.text));
+                throw_if(closing_token.kind != Token::Kind::RightParen,
+                         format("FormulaParser: expected ')' in call to '{}'", token.text));
 
                 return function_node;
             }
@@ -531,15 +531,15 @@ void validate_function_arities(const Ast& node)
 
         if (unary_iterator != unary_functions.end())
         {
-            if (arguments_count != unary_iterator->second)
-                throw runtime_error(format("FormulaParser: function '{}' expects {} argument, got {}",
-                                           function_name, unary_iterator->second, arguments_count));
+            throw_if(arguments_count != unary_iterator->second,
+                     format("FormulaParser: function '{}' expects {} argument, got {}",
+                            function_name, unary_iterator->second, arguments_count));
         }
         else if (binary_iterator != binary_functions.end())
         {
-            if (arguments_count != binary_iterator->second)
-                throw runtime_error(format("FormulaParser: function '{}' expects {} arguments, got {}",
-                                           function_name, binary_iterator->second, arguments_count));
+            throw_if(arguments_count != binary_iterator->second,
+                     format("FormulaParser: function '{}' expects {} arguments, got {}",
+                            function_name, binary_iterator->second, arguments_count));
         }
         else
         {
@@ -705,16 +705,16 @@ CompiledFormula compile_formula(const string& expression,
                                 const vector<NamedColumn>& inputs,
                                 const vector<NamedColumn>& outputs)
 {
-    if (expression.empty())
-        throw runtime_error("FormulaParser: empty expression");
+    throw_if(expression.empty(),
+             "FormulaParser: empty expression");
 
     Lexer lexer(expression);
     Parser parser(lexer, inputs, outputs);
 
     AstPtr ast = parser.parse_expression();
 
-    if (lexer.peek().kind != Token::Kind::End)
-        throw runtime_error(format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
+    throw_if(lexer.peek().kind != Token::Kind::End,
+             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
 
     validate_function_arities(*ast);
 
@@ -724,9 +724,9 @@ CompiledFormula compile_formula(const string& expression,
     set<Index> output_references;
     collect_variable_references(*ast, input_references, output_references);
 
-    if (input_references.empty() && output_references.empty())
-        throw runtime_error(format("FormulaParser: expression '{}' references no input or output variables",
-                                   expression));
+    throw_if(input_references.empty() && output_references.empty(),
+             format("FormulaParser: expression '{}' references no input or output variables",
+                    expression));
 
     result.input_indices.assign(input_references.begin(), input_references.end());
     result.output_indices.assign(output_references.begin(), output_references.end());

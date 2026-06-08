@@ -131,8 +131,8 @@ VectorR cross_correlations(const VectorR& x,
                            const VectorR& y,
                            Index maximum_past_time_steps)
 {
-    if (y.size() != x.size())
-        throw runtime_error("Both vectors must have the same size.\n");
+    throw_if(y.size() != x.size(),
+             "Both vectors must have the same size.\n");
 
     VectorR cross_correlation(maximum_past_time_steps);
 
@@ -180,8 +180,8 @@ MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 Correlation linear_correlation(const VectorR& x,
                                const VectorR& y)
 {
-    if (x.size() != y.size())
-        throw runtime_error("Y size must be equal to X size.\n");
+    throw_if(x.size() != y.size(),
+             "Y size must be equal to X size.\n");
 
     if (is_constant(x) || is_constant(y))
         return Correlation();

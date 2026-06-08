@@ -355,12 +355,12 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index data_rows_number = data.rows();
 
     for (const Index sample_index : sample_indices)
-        if (sample_index < 0 || sample_index >= data_rows_number)
-            throw runtime_error("TimeSeriesDataset input sample index is out of range.");
+        throw_if(sample_index < 0 || sample_index >= data_rows_number,
+                 "TimeSeriesDataset input sample index is out of range.");
 
     for (const Index input_index : input_indices)
-        if (input_index < 0 || input_index >= data.cols())
-            throw runtime_error("TimeSeriesDataset input feature index is out of range.");
+        throw_if(input_index < 0 || input_index >= data.cols(),
+                 "TimeSeriesDataset input feature index is out of range.");
 
     TensorMap3 inputs(input_data, batch_size, past_time_steps, inputs_number);
 
@@ -394,12 +394,12 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     const Index target_columns = ssize(target_indices);
 
     for (const Index sample_index : sample_indices)
-        if (sample_index < 0 || sample_index >= total_rows_in_data)
-            throw runtime_error("TimeSeriesDataset target sample index is out of range.");
+        throw_if(sample_index < 0 || sample_index >= total_rows_in_data,
+                 "TimeSeriesDataset target sample index is out of range.");
 
     for (const Index target_index : target_indices)
-        if (target_index < 0 || target_index >= data.cols())
-            throw runtime_error("TimeSeriesDataset target feature index is out of range.");
+        throw_if(target_index < 0 || target_index >= data.cols(),
+                 "TimeSeriesDataset target feature index is out of range.");
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
@@ -431,18 +431,13 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     }
 }
 
-void TimeSeriesDataset::fill_gaps()
-{
-    throw runtime_error("TimeSeriesDataset::fill_gaps: not implemented.");
-}
-
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const
 {
     const Index samples_number = get_samples_number();
 
-    if (past_time_steps > samples_number)
-        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
-                                   past_time_steps, samples_number));
+    throw_if(past_time_steps > samples_number,
+             format("Past time steps ({}) is greater than samples number ({}) \n",
+                    past_time_steps, samples_number));
 
     const Index variables_number = get_variables_number();
 
@@ -516,9 +511,9 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 {
     const Index samples_number = get_samples_number();
 
-    if (past_time_steps > samples_number)
-        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
-                                   past_time_steps, samples_number));
+    throw_if(past_time_steps > samples_number,
+             format("Past time steps ({}) is greater than samples number ({}) \n",
+                    past_time_steps, samples_number));
 
     const Index variables_number = get_variables_number();
 
@@ -608,9 +603,9 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
 {
     const Index samples_number = get_samples_number();
 
-    if (past_time_steps > samples_number)
-        throw runtime_error(format("Past time steps ({}) is greater than samples number ({}) \n",
-                                   past_time_steps, samples_number));
+    throw_if(past_time_steps > samples_number,
+             format("Past time steps ({}) is greater than samples number ({}) \n",
+                    past_time_steps, samples_number));
 
     vector<Index> numeric_vars_indices;
 

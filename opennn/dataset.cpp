@@ -115,7 +115,6 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
         lock_guard<mutex> lock(binary_cache_mutex);
         binary_data_cache.clear();
     }
-    invalidate_data_buffer();
 }
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
@@ -126,21 +125,46 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
         binary_data_cache.clear();
     }
 
-    if (storage_mode == StorageMode::BinaryFile)
-        read_binary_header();
-    else
+    if (storage_mode == StorageMode::Matrix)
     {
         binary_rows_number = 0;
         binary_columns_number = 0;
     }
+}
 
-    invalidate_data_buffer();
+string Dataset::get_storage_mode_string() const
+{
+    switch (storage_mode)
+    {
+    case StorageMode::Matrix:     return "Matrix";
+    case StorageMode::BinaryFile: return "BinaryFile";
+    }
+
+    return "Matrix";
+}
+
+void Dataset::set_storage_mode(const string& new_storage_mode)
+{
+    if (new_storage_mode == "Matrix")
+    {
+        set_storage_mode(StorageMode::Matrix);
+        return;
+    }
+
+    if (new_storage_mode == "BinaryFile")
+    {
+        set_storage_mode(StorageMode::BinaryFile);
+        return;
+    }
+
+    throw runtime_error(format("Unknown dataset storage mode: {}", new_storage_mode));
 }
 
 void Dataset::use_binary_data_file(const filesystem::path& binary_data_file_name)
 {
     set_data_path(binary_data_file_name);
     set_storage_mode(StorageMode::BinaryFile);
+    read_binary_header();
 
     if (sample_roles.empty())
         sample_roles.resize(binary_rows_number, SampleRole::Training);
@@ -409,7 +433,7 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
     else
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
 
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 vector<Index> Dataset::get_feature_indices(const string& variable_role) const
@@ -561,14 +585,14 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
 {
     const size_t new_variables_roles_size = new_variables_roles.size();
 
-    if (new_variables_roles_size != variables.size())
-        throw runtime_error(format("Size of variables uses ({}) must be equal to variables size ({}).\n",
-                                   new_variables_roles_size, variables.size()));
+    throw_if(new_variables_roles_size != variables.size(),
+             format("Size of variables uses ({}) must be equal to variables size ({}).\n",
+                    new_variables_roles_size, variables.size()));
 
     for (size_t i = 0; i < new_variables_roles.size(); ++i)
         variables[i].set_role(new_variables_roles[i]);
 
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 void Dataset::set_variable_indices(const vector<Index>& input_variables,
@@ -599,7 +623,7 @@ void Dataset::set_input_variables_unused()
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
     variables[index].set_role(new_role);
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 void Dataset::set_variable_role(const string& name, const string& new_role)
@@ -610,7 +634,7 @@ void Dataset::set_variable_role(const string& name, const string& new_role)
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 {
     variables[index].type = new_type;
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 void Dataset::set_variable_type(const string& name, const VariableType& new_type)
@@ -623,7 +647,7 @@ void Dataset::set_variable_types(const VariableType& new_type)
     for (auto& variable : variables)
         variable.type = new_type;
 
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 void Dataset::set_feature_names(const vector<string>& new_variables_names)
@@ -643,9 +667,9 @@ void Dataset::set_variable_names(const vector<string>& new_names)
     const Index new_names_size = new_names.size();
     const Index variables_number = get_variables_number();
 
-    if (new_names_size != variables_number)
-        throw runtime_error(format("Size of names ({}) is not equal to variables number ({}).\n",
-                                   new_names.size(), variables_number));
+    throw_if(new_names_size != variables_number,
+             format("Size of names ({}) is not equal to variables number ({}).\n",
+                    new_names.size(), variables_number));
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = get_trimmed(new_names[i]);
@@ -659,7 +683,7 @@ void Dataset::set_variable_roles(const string& variable_role)
                 ? "None"
                 : variable_role);
 
-    invalidate_data_buffer();
+    mark_data_changed();
 }
 
 static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
@@ -703,8 +727,8 @@ Index Dataset::get_variable_index(const string& variable_name) const
     auto it = ranges::find_if(variables,
                               [&](const Variable& v) { return v.name == variable_name; });
 
-    if (it == variables.end())
-        throw runtime_error(format("Cannot find {}\n", variable_name));
+    throw_if(it == variables.end(),
+             format("Cannot find {}\n", variable_name));
 
     return distance(variables.begin(), it);
 }
@@ -838,8 +862,8 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
 
 void Dataset::variables_from_JSON(const Json *variables_element)
 {
-    if (!variables_element)
-        throw runtime_error("Variables element is nullptr.\n");
+    throw_if(!variables_element,
+             "Variables element is nullptr.\n");
 
     set_variables_number(read_json_index(variables_element, "VariablesNumber"));
 
@@ -868,28 +892,28 @@ void Dataset::variables_from_JSON(const Json *variables_element)
 
 void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 {
-    if (!preview_data_element)
-        throw runtime_error("Preview data element is nullptr.\n ");
+    throw_if(!preview_data_element,
+             "Preview data element is nullptr.\n ");
 
-    if (const Index preview_size = read_json_index(preview_data_element, "PreviewSize"); preview_size > 0)
+    const Index preview_size = read_json_index(preview_data_element, "PreviewSize");
+    if (preview_size <= 0) return;
+
+    data_file_preview.resize(preview_size);
+
+    for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
     {
-        data_file_preview.resize(preview_size);
-
-        for_json_items(preview_data_element, "Row", preview_size, [&](Index i, const Json* row)
-        {
-            const string text = read_json_string(row, "Text");
-            if (!text.empty())
-                data_file_preview[i] = get_tokens(text, ",");
-        });
-    }
+        const string text = read_json_string(row, "Text");
+        if (!text.empty())
+            data_file_preview[i] = get_tokens(text, ",");
+    });
 }
 
 void Dataset::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file: {}", file_name.string()));
 
     JsonWriter document;
 
@@ -931,8 +955,8 @@ void Dataset::check_separators(string_view line) const
         const bool has_any_separator = ranges::any_of(separator_map,
             [&](const auto& entry) { return line.find(get<1>(entry)) != string_view::npos; });
 
-        if (has_any_separator)
-            throw runtime_error(format("Separator '{}' not found in line {}.\n", separator_string, line));
+        throw_if(has_any_separator,
+                 format("Separator '{}' not found in line {}.\n", separator_string, line));
 
         return;
     }
@@ -950,9 +974,9 @@ void Dataset::check_separators(string_view line) const
     for (const auto& [sep, str, name] : separator_map)
     {
         if (sep == separator || sep == Separator::Space) continue;
-        if (line.find(str) != string_view::npos)
-            throw runtime_error(format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
-                                       name, str, data_path.string(), separator_name, separator_string));
+        throw_if(line.find(str) != string_view::npos,
+                 format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
+                        name, str, data_path.string(), separator_name, separator_string));
     }
 }
 
@@ -990,27 +1014,13 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& target_indices,
                          bool is_training) const
 {
-#ifdef OPENNN_HAS_CUDA
-    if (batch.use_device_data_buffer
-        && batch.uses_cuda()
-        && try_fill_from_device_data_buffer(batch,
-                                            sample_indices,
-                                            input_indices,
-                                            decoder_indices,
-                                            target_indices))
-    {
-        batch.needs_device_copy = false;
-        return;
-    }
-#endif
-
-    batch.current_sample_count = ssize(sample_indices);
+    batch.current_sample_count = sample_indices.size();
 
     const bool on_gpu = batch.uses_cuda();
 
-    float* const input_buffer   = on_gpu ? batch.inputs_host  : batch.input.as<float>();
-    float* const decoder_buffer = on_gpu ? batch.decoder_host : batch.decoder.as<float>();
-    float* const target_buffer  = on_gpu ? batch.targets_host : batch.target.as<float>();
+    float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
+    float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();
+    float* const target_buffer  = on_gpu ? batch.target.host  : batch.target.buffer.as<float>();
 
     if (batch.input_contiguous < 0 && !input_indices.empty())
         batch.input_contiguous = is_contiguous(input_indices) ? 1 : 0;
@@ -1019,34 +1029,12 @@ void Dataset::fill_batch(Batch& batch,
     if (batch.target_contiguous < 0 && !target_indices.empty())
         batch.target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    using FillTensor = void (Dataset::*)(const vector<Index>&,
-                                         const vector<Index>&,
-                                         float*,
-                                         bool,
-                                         int) const;
+    fill_inputs(sample_indices, input_indices, input_buffer, is_training, batch.input_contiguous);
 
-    auto fill_from_storage = [&](const vector<Index>& feature_indices,
-                                 float* output,
-                                 int contiguous,
-                                 FillTensor fill_tensor)
-    {
-        if (!try_fill_binary_tensor(sample_indices,
-                                    feature_indices,
-                                    output,
-                                    contiguous))
-            (this->*fill_tensor)(sample_indices,
-                                 feature_indices,
-                                 output,
-                                 is_training,
-                                 contiguous);
-    };
+    if (!batch.decoder.shape.empty())
+        fill_decoder(sample_indices, decoder_indices, decoder_buffer, is_training, batch.decoder_contiguous);
 
-    fill_from_storage(input_indices, input_buffer, batch.input_contiguous, &Dataset::fill_inputs);
-
-    if (!batch.decoder_shape.empty())
-        fill_from_storage(decoder_indices, decoder_buffer, batch.decoder_contiguous, &Dataset::fill_decoder);
-
-    fill_from_storage(target_indices, target_buffer, batch.target_contiguous, &Dataset::fill_targets);
+    fill_targets(sample_indices, target_indices, target_buffer, is_training, batch.target_contiguous);
 
     batch.needs_device_copy = true;
 }
@@ -1055,17 +1043,17 @@ void Dataset::read_binary_header() const
 {
     ifstream file(data_path, ios::binary);
 
-    if (!file.is_open())
-        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Failed to open binary data file: {}", data_path.string()));
 
     file.read(reinterpret_cast<char*>(&binary_columns_number), sizeof(Index));
     file.read(reinterpret_cast<char*>(&binary_rows_number), sizeof(Index));
 
-    if (!file)
-        throw runtime_error(format("Failed to read binary data header: {}", data_path.string()));
+    throw_if(!file,
+             format("Failed to read binary data header: {}", data_path.string()));
 
-    if (binary_columns_number < 0 || binary_rows_number < 0)
-        throw runtime_error(format("Invalid binary data header: {}", data_path.string()));
+    throw_if(binary_columns_number < 0 || binary_rows_number < 0,
+             format("Invalid binary data header: {}", data_path.string()));
 }
 
 const vector<float>& Dataset::load_binary_data_cache() const
@@ -1079,18 +1067,18 @@ const vector<float>& Dataset::load_binary_data_cache() const
         read_binary_header();
 
     ifstream file(data_path, ios::binary);
-    if (!file.is_open())
-        throw runtime_error(format("Failed to open binary data file: {}", data_path.string()));
+    throw_if(!file.is_open(),
+             format("Failed to open binary data file: {}", data_path.string()));
 
     const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
     const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
                                    + uintmax_t(element_count) * uintmax_t(sizeof(float));
     const uintmax_t file_bytes = filesystem::file_size(data_path);
-    if (file_bytes != expected_bytes)
-        throw runtime_error(format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
-                                   data_path.string(),
-                                   file_bytes,
-                                   expected_bytes));
+    throw_if(file_bytes != expected_bytes,
+             format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
+                    data_path.string(),
+                    file_bytes,
+                    expected_bytes));
 
     binary_data_cache.resize(element_count);
 
@@ -1107,13 +1095,12 @@ const vector<float>& Dataset::load_binary_data_cache() const
     return binary_data_cache;
 }
 
-bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
+void Dataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                                      const vector<Index>& feature_indices,
                                      float* output,
                                      int contiguous_hint) const
 {
-    if (storage_mode != StorageMode::BinaryFile) return false;
-    if (sample_indices.empty() || feature_indices.empty()) return true;
+    if (sample_indices.empty() || feature_indices.empty()) return;
 
     const vector<float>& data = load_binary_data_cache();
 
@@ -1126,21 +1113,21 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
     const Index first_column = feature_indices.front();
     if (contiguous)
     {
-        if (first_column < 0 || first_column + features_number > columns_number)
-            throw runtime_error("Binary data feature index is out of range.");
+        throw_if(first_column < 0 || first_column + features_number > columns_number,
+                 "Binary data feature index is out of range.");
     }
     else
     {
         for (const Index feature_index : feature_indices)
-            if (feature_index < 0 || feature_index >= columns_number)
-                throw runtime_error("Binary data feature index is out of range.");
+            throw_if(feature_index < 0 || feature_index >= columns_number,
+                     "Binary data feature index is out of range.");
     }
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
         const Index row = sample_indices[size_t(i)];
-        if (row < 0 || row >= binary_rows_number)
-            throw runtime_error("Binary data row index is out of range.");
+        throw_if(row < 0 || row >= binary_rows_number,
+                 "Binary data row index is out of range.");
 
         float* const dst = output + i * features_number;
         const float* const src_row = data.data() + size_t(row) * size_t(columns_number);
@@ -1155,8 +1142,6 @@ bool Dataset::try_fill_binary_tensor(const vector<Index>& sample_indices,
                 dst[j] = src_row[feature_indices[size_t(j)]];
         }
     }
-
-    return true;
 }
 
 void Dataset::set_matrix_storage()
@@ -1168,98 +1153,18 @@ void Dataset::set_matrix_storage()
         lock_guard<mutex> lock(binary_cache_mutex);
         binary_data_cache.clear();
     }
-    invalidate_data_buffer();
 }
 
-void Dataset::invalidate_data_buffer() const
+void Dataset::mark_data_changed() const
 {
-    lock_guard<mutex> lock(data_buffer_mutex);
-    data_buffer_shape.clear();
-    data_buffer.resize_bytes(0, Device::CUDA);
+    lock_guard<mutex> lock(binary_cache_mutex);
+    binary_data_cache.clear();
 }
-
-#ifdef OPENNN_HAS_CUDA
-
-bool Dataset::prepare_device_data_buffer() const
-{
-    lock_guard<mutex> lock(data_buffer_mutex);
-
-    if (!supports_dense_feature_gather()) return false;
-
-    const Index rows  = get_samples_number();
-    const Index features = get_features_number();
-    if (rows == 0 || features == 0) return false;
-
-    if (data_buffer_shape == Shape{rows, features}
-        && data_buffer.device_type == Device::CUDA
-        && !data_buffer.empty())
-        return true;
-
-    data_buffer_shape.clear();
-    data_buffer.resize_bytes(0, Device::CUDA);
-
-    const Index buffer_bytes = rows * features * Index(sizeof(float));
-
-    size_t free_bytes = 0;
-    size_t total_bytes = 0;
-    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
-    const Index margin = Index(512) << 20;
-    if (buffer_bytes + margin > Index(free_bytes)) return false;
-
-    vector<Index> sample_indices(static_cast<size_t>(rows));
-    iota(sample_indices.begin(), sample_indices.end(), Index(0));
-
-    vector<Index> feature_indices(static_cast<size_t>(features));
-    iota(feature_indices.begin(), feature_indices.end(), Index(0));
-
-    vector<float> host_data(size_t(rows) * size_t(features));
-    if (!try_fill_binary_tensor(sample_indices, feature_indices, host_data.data()))
-        fill_inputs(sample_indices, feature_indices, host_data.data(),
-                    /*is_training=*/false);
-
-    data_buffer.resize_bytes(Index(host_data.size()) * Index(sizeof(float)), Device::CUDA);
-
-    cudaStream_t stream = Backend::get_compute_stream();
-    CHECK_CUDA(cudaMemcpyAsync(data_buffer.data, host_data.data(),
-                               host_data.size() * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK_CUDA(cudaStreamSynchronize(stream));
-
-    data_buffer_shape = {rows, features};
-    return true;
-}
-
-bool Dataset::try_fill_from_device_data_buffer(Batch& batch,
-                                               const vector<Index>& sample_indices,
-                                               const vector<Index>& input_indices,
-                                               const vector<Index>& decoder_indices,
-                                               const vector<Index>& target_indices) const
-{
-    if (!decoder_indices.empty()) return false;
-
-    if (!prepare_device_data_buffer())
-        return false;
-
-    for (const Index sample_index : sample_indices)
-    {
-        if (sample_index < 0 || sample_index >= data_buffer_shape[0])
-            return false;
-    }
-
-    batch.gather_device_async(sample_indices,
-                              data_buffer.as<float>(),
-                              data_buffer_shape[1],
-                              input_indices,
-                              target_indices);
-
-    return true;
-}
-
-#endif
 
 void Dataset::samples_from_JSON(const Json *samples_element)
 {
-    if (!samples_element)
-        throw runtime_error("Samples element is nullptr.\n");
+    throw_if(!samples_element,
+             "Samples element is nullptr.\n");
 
     const Index samples_number = read_json_index(samples_element, "SamplesNumber");
 

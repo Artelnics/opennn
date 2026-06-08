@@ -73,8 +73,8 @@ void unscale_minimum_maximum(MatrixMap matrix,
                              float min_range,
                              float max_range)
 {
-    if (max_range - min_range < EPSILON)
-        throw runtime_error("The range values are not valid.");
+    throw_if(max_range - min_range < EPSILON,
+             "The range values are not valid.");
 
     matrix.col(column_index).array() =
         (matrix.col(column_index).array() - min_range) / (max_range - min_range)

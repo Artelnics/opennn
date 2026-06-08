@@ -118,12 +118,12 @@ const Json* require_json_field(const Json* root, const string& field);
 template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
 {
-    if (!parent || !parent->is_object())
-        throw runtime_error(format("Missing JSON parent for: {}", tag));
+    throw_if(!parent || !parent->is_object(),
+             format("Missing JSON parent for: {}", tag));
 
     const Json* arr = parent->find(tag);
-    if (!arr || !arr->is_array() || long(arr->array_value.size()) != count)
-        throw runtime_error(format("Missing or wrong-size JSON array: {}", tag));
+    throw_if(!arr || !arr->is_array() || long(arr->array_value.size()) != count,
+             format("Missing or wrong-size JSON array: {}", tag));
 
     for (long i = 0; i < count; i++)
         func(i, &arr->array_value[size_t(i)]);

@@ -156,8 +156,8 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
                                                   const float low,
                                                   const float up)
 {
-    if (!neural_network)
-        throw runtime_error("ResponseOptimization: set_formula_constraint requires a neural network to be set first");
+    throw_if(!neural_network,
+             "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
 
     FormulaConstraint formula_constraint;
     formula_constraint.expression = expression;
@@ -317,8 +317,8 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
 
     const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
 
-    if (variables_uncheked.size() != descriptives_uncheked.size())
-        throw runtime_error("ResponseOptimization: Variable count and Descriptives count mismatch.");
+    throw_if(variables_uncheked.size() != descriptives_uncheked.size(),
+             "ResponseOptimization: Variable count and Descriptives count mismatch.");
 
     vector<Variable> filtered_vars;
     vector<Descriptives> filtered_desc;
@@ -392,9 +392,9 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
 
     const size_t variables_number = variables.size();
 
-    if (descriptives.size() != variables_number)
-        throw runtime_error("ResponseOptimization: Descriptives count (" + to_string(descriptives.size()) +
-                            ") does not match variables count (" + to_string(variables_number) + ") for " + role);
+    throw_if(descriptives.size() != variables_number,
+             "ResponseOptimization: Descriptives count (" + to_string(descriptives.size()) +
+             ") does not match variables count (" + to_string(variables_number) + ") for " + role);
 
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
@@ -417,8 +417,8 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 {
     const Index objectives_number = response_optimization.get_objectives_number();
 
-    if (objectives_number == 0)
-        throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
+    throw_if(objectives_number == 0,
+             "No Objectives found, make sure to set Minimize or Maximize to any variable");
 
     objective_sources.resize(2, objectives_number);
 
@@ -584,12 +584,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
                     allowed_categories.push_back(i);
 
-            if (allowed_categories.empty())
-            {
-                throw runtime_error("ResponseOptimization: variable '"
-                                    + variables[input_variable].name +
-                                    "' has every category constrained out — cannot generate inputs.");
-            }
+            throw_if(allowed_categories.empty(),
+                     "ResponseOptimization: variable '"
+                     + variables[input_variable].name +
+                     "' has every category constrained out — cannot generate inputs.");
 
             for(Index i = 0; i < effective_evaluations; ++i)
                 random_inputs(i, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
@@ -796,8 +794,8 @@ MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 {
     if (is_forecasting)
     {
-        if(fixed_history.size() == 0)
-            throw runtime_error("ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
+        throw_if(fixed_history.size() == 0,
+                 "ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
 
         const Tensor3 formatted_input = combine_input(input);
 
@@ -1050,18 +1048,18 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
     const bool early_stop_triggered = (consecutive_low_ratio_attempts >= 2);
     const Index final_feasible_count = feasible_result.first.rows();
 
-    if (final_feasible_count == 0)
-        throw runtime_error("ResponseOptimization: formula constraints appear infeasible — "
-                            "no feasible points found after adaptive oversampling up to "
-                            + to_string(current_evaluations) + " evaluations.");
+    throw_if(final_feasible_count == 0,
+             "ResponseOptimization: formula constraints appear infeasible — "
+             "no feasible points found after adaptive oversampling up to "
+             + to_string(current_evaluations) + " evaluations.");
 
-    if (early_stop_triggered)
-        throw runtime_error("ResponseOptimization: formula constraints are too tight — "
-                            "feasibility ratio stayed below "
-                            + to_string(low_ratio_threshold)
-                            + " over consecutive oversampling attempts (up to "
-                            + to_string(current_evaluations) + " evaluations, "
-                            + to_string(final_feasible_count) + " feasible points found).");
+    throw_if(early_stop_triggered,
+             "ResponseOptimization: formula constraints are too tight — "
+             "feasibility ratio stayed below "
+             + to_string(low_ratio_threshold)
+             + " over consecutive oversampling attempts (up to "
+             + to_string(current_evaluations) + " evaluations, "
+             + to_string(final_feasible_count) + " feasible points found).");
 
     return feasible_result;
 }
@@ -1521,19 +1519,16 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
         ? VectorR::Ones(objectives_number)
         : importance_scale;
 
-    if (scale.size() != objectives_number)
-        throw runtime_error("Importance scale size must match objectives number.\n");
+    throw_if(scale.size() != objectives_number, "Importance scale size must match objectives number.\n");
 
-    if (scale.minCoeff() < float(0))
-        throw runtime_error("Importance scale must be non-negative.\n");
+    throw_if(scale.minCoeff() < float(0), "Importance scale must be non-negative.\n");
 
-    if (scale.maxCoeff() == float(0))
-        throw runtime_error("Importance scale must contain at least one non-zero entry.\n");
+    throw_if(scale.maxCoeff() == float(0), "Importance scale must contain at least one non-zero entry.\n");
 
     const Index inputs_number = neural_network->get_inputs_number();
 
-    if (pareto_front.cols() < inputs_number)
-        throw runtime_error("Pareto front has fewer columns than the number of input features.\n");
+    throw_if(pareto_front.cols() < inputs_number,
+             "Pareto front has fewer columns than the number of input features.\n");
 
     const MatrixR pareto_inputs  = pareto_front.leftCols(inputs_number);
     const MatrixR pareto_outputs = pareto_front.rightCols(pareto_front.cols() - inputs_number);
@@ -1578,8 +1573,7 @@ MatrixR ResponseOptimization::perform_response_optimization() const
 {
     const Index objectives_number = get_objectives_number();
 
-    if (objectives_number == 0)
-        throw runtime_error("No objectives found\n");
+    throw_if(objectives_number == 0, "No objectives found\n");
 
     return (objectives_number == 1)
         ? perform_single_objective_optimization()

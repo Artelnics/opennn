@@ -159,12 +159,12 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
     if (last_trainable_dense < 0) return;
 
-    if (trainable_dense_count > 1)
-        throw runtime_error("LevenbergMarquardtAlgorithm: only networks with a single "
-                            "trainable Dense layer are supported. Found "
-                            + to_string(trainable_dense_count) + " trainable Dense "
-                            "layers. Use AdaptiveMomentEstimation, SGD, or "
-                            "QuasiNewtonMethod instead.");
+    throw_if(trainable_dense_count > 1,
+             "LevenbergMarquardtAlgorithm: only networks with a single "
+             "trainable Dense layer are supported. Found "
+             + to_string(trainable_dense_count) + " trainable Dense "
+             "layers. Use AdaptiveMomentEstimation, SGD, or "
+             "QuasiNewtonMethod instead.");
 
     const Index parameter_offset = transform_reduce(
         layers.begin(), layers.begin() + last_trainable_dense, Index(0), plus<>{},
@@ -205,10 +205,10 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
     const Index num_neurons = layer->get_outputs_number();
     const Index num_inputs  = layer->get_input_shape()[0];
 
-    const MatrixMap inputs  = forward_propagation.views[layer_index][0][0].as_matrix();
+    const MatrixMap inputs  = forward_propagation.input_views[layer_index][0].as_matrix();
 
-    const size_t output_slot = forward_propagation.views[layer_index].size() - 1;
-    const MatrixMap outputs  = forward_propagation.views[layer_index][output_slot][0].as_matrix();
+    const size_t output_slot = forward_propagation.forward_slots[layer_index].size() - 1;
+    const MatrixMap outputs  = forward_propagation.forward_slots[layer_index][output_slot].as_matrix();
 
     const MatrixR act_deriv = activation_derivative(layer->get_activation_function(), outputs);
 
@@ -232,18 +232,18 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (neural_network->is_gpu())
-        throw runtime_error("LevenbergMarquardtAlgorithm does not support GPU training: "
-                            "its Jacobian and gradient computation map device pointers as host memory. "
-                            "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+    throw_if(neural_network->is_gpu(),
+             "LevenbergMarquardtAlgorithm does not support GPU training: "
+             "its Jacobian and gradient computation map device pointers as host memory. "
+             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
 
     const string loss_name = loss->get_name();
-    if (loss_name == "MinkowskiError")
-        throw runtime_error("Levenberg-Marquardt algorithm cannot work with Minkowski error.");
-    if (loss_name == "CrossEntropy")
-        throw runtime_error("Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
-    if (loss_name == "WeightedSquaredError")
-        throw runtime_error("Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
+    throw_if(loss_name == "MinkowskiError",
+             "Levenberg-Marquardt algorithm cannot work with Minkowski error.");
+    throw_if(loss_name == "CrossEntropy",
+             "Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
+    throw_if(loss_name == "WeightedSquaredError",
+             "Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
 
     damping_parameter = initial_damping_parameter;
 

@@ -44,7 +44,6 @@ public:
     Index get_row_stride() const { return row_stride; }
     Index get_column_stride() const { return column_stride; }
 
-    pair<Index, Index> get_padding() const;
     Index get_padding_height() const;
     Index get_padding_width() const;
 

@@ -74,6 +74,21 @@
 #include <cuda_bf16.h>
 #include <nvtx3/nvToolsExt.h>
 
+#include "../opennn/kernel.cuh"
+
+template <typename T>
+void check_cuda_status(T status, const char* msg,
+                       std::source_location loc = std::source_location::current())
+{
+    if (status != 0)
+        throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
+                                 " in " + loc.file_name() + ":" + std::to_string(loc.line()));
+}
+
+#define CHECK_CUDA(x)   check_cuda_status(x, "CUDA")
+#define CHECK_CUBLAS(x) check_cuda_status(x, "CuBLAS")
+#define CHECK_CUDNN(x)  check_cuda_status(x, "cuDNN")
+
 #else
 
 // CPU-only stubs.
@@ -84,6 +99,9 @@ using cudaEvent_t      = void*;
 using cublasHandle_t   = void*;
 using cublasLtHandle_t = void*;
 using cudnnHandle_t    = void*;
+using cublasLtMatmulDesc_t   = void*;
+using cublasLtMatrixLayout_t = void*;
+struct cublasLtMatmulAlgo_t {};
 
 // Scalar / opaque types
 struct __nv_bfloat16 {};
@@ -113,25 +131,8 @@ using cudnnPoolingDescriptor_t     = void*;
 using cudnnActivationDescriptor_t  = void*;
 using cudnnDropoutDescriptor_t     = void*;
 using cudnnOpTensorDescriptor_t    = void*;
-
-#endif
-
-#ifdef OPENNN_HAS_CUDA
-
-#include "../opennn/kernel.cuh"
-
-template <typename T>
-void check_cuda_status(T status, const char* msg,
-                       std::source_location loc = std::source_location::current())
-{
-    if (status != 0)
-        throw std::runtime_error(std::string(msg) + " Error: " + std::to_string(static_cast<int>(status)) +
-                                 " in " + loc.file_name() + ":" + std::to_string(loc.line()));
-}
-
-#define CHECK_CUDA(x)   check_cuda_status(x, "CUDA")
-#define CHECK_CUBLAS(x) check_cuda_status(x, "CuBLAS")
-#define CHECK_CUDNN(x)  check_cuda_status(x, "cuDNN")
+using cudnnRNNDescriptor_t         = void*;
+using cudnnRNNDataDescriptor_t     = void*;
 
 #endif
 

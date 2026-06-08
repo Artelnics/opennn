@@ -38,7 +38,7 @@ const Json* Json::find(const string& key) const
 const Json& Json::at(const string& key) const
 {
     const Json* v = find(key);
-    if (!v) throw runtime_error(format("JSON: missing key '{}'", key));
+    throw_if(!v, format("JSON: missing key '{}'", key));
     return *v;
 }
 
@@ -399,15 +399,15 @@ Json Json::parse(const string& text)
     Parser p(text);
     Json v = p.parse_value();
     p.skip_ws();
-    if (p.position != text.size())
-        throw runtime_error("JSON parse: trailing data");
+    throw_if(p.position != text.size(),
+             "JSON parse: trailing data");
     return v;
 }
 void JsonDocument::load(const filesystem::path& path)
 {
     ifstream in(path);
-    if (!in.is_open())
-        throw runtime_error(format("Cannot open JSON file: {}", path.string()));
+    throw_if(!in.is_open(),
+             format("Cannot open JSON file: {}", path.string()));
     stringstream ss;
     ss << in.rdbuf();
     root = Json::parse(ss.str());
@@ -416,8 +416,8 @@ void JsonDocument::load(const filesystem::path& path)
 void JsonDocument::save(const filesystem::path& path, int indent) const
 {
     ofstream out(path);
-    if (!out.is_open())
-        throw runtime_error(format("Cannot open JSON file: {}", path.string()));
+    throw_if(!out.is_open(),
+             format("Cannot open JSON file: {}", path.string()));
     out << root.dump(indent);
 }
 
@@ -468,8 +468,8 @@ void JsonWriter::begin_array(const string& name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
     if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
-    if (!parent->is_object())
-        throw runtime_error("JsonWriter::begin_array: parent is not an object");
+    throw_if(!parent->is_object(),
+             "JsonWriter::begin_array: parent is not an object");
     parent->object_value.emplace_back(name, Json::make_array());
     stack.push_back(&parent->object_value.back().second);
     name_stack.push_back(name);
@@ -484,8 +484,8 @@ void JsonWriter::end_array()
 
 void JsonWriter::begin_array_object()
 {
-    if (stack.empty() || !stack.back()->is_array())
-        throw runtime_error("JsonWriter::begin_array_object: not in array");
+    throw_if(stack.empty() || !stack.back()->is_array(),
+             "JsonWriter::begin_array_object: not in array");
     Json* parent = stack.back();
     parent->array_value.push_back(Json::make_object());
     stack.push_back(&parent->array_value.back());
@@ -503,8 +503,8 @@ void JsonWriter::add_field(const string& name, const string& value)
 {
     Json* parent = stack.empty() ? &root : stack.back();
     if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
-    if (!parent->is_object())
-        throw runtime_error("JsonWriter::add_field on non-object");
+    throw_if(!parent->is_object(),
+             "JsonWriter::add_field on non-object");
     parent->set(name, Json(value));
 }
 
@@ -544,7 +544,7 @@ bool read_json_bool(const Json* root, const string& field)
 {
     if (!root) return false;
     const Json* v = root->find(field);
-    return v ? v->as_bool() : false;
+    return v && v->as_bool();
 }
 
 string read_json_string(const Json* root, const string& field)
@@ -568,9 +568,9 @@ string read_json_string_fallback(const Json* root,
 
 const Json* require_json_field(const Json* root, const string& field)
 {
-    if (!root) throw runtime_error(format("JSON: missing root for field '{}'", field));
+    throw_if(!root, format("JSON: missing root for field '{}'", field));
     const Json* v = root->find(field);
-    if (!v) throw runtime_error(format("JSON: missing required field '{}'", field));
+    throw_if(!v, format("JSON: missing required field '{}'", field));
     return v;
 }
 
@@ -584,7 +584,7 @@ JsonDocument load_json_file(const filesystem::path& file_name)
 const Json* get_json_root(const JsonDocument& document, const string& tag)
 {
     const Json* v = document.first_child(tag);
-    if (!v) throw runtime_error(format("JSON: missing root tag '{}'", tag));
+    throw_if(!v, format("JSON: missing root tag '{}'", tag));
     return v;
 }
 

@@ -41,6 +41,8 @@ public:
 
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
 
     Index get_samples_number() const override;
     using Dataset::get_samples_number;

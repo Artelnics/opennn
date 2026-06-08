@@ -9,7 +9,8 @@
 #pragma once
 
 #include "pch.h"
-#include "configuration.h"
+#include "tensor_types.h"
+#include "device_backend.h"
 #include "enum_map.h"
 
 namespace opennn
@@ -55,26 +56,26 @@ struct Shape
 
     Shape(size_t new_rank, Index value) : rank(new_rank)
     {
-        if (new_rank > MaxRank)
-            throw runtime_error(format("Shape: rank {} exceeds MaxRank={}.",
-                                       new_rank, MaxRank));
+        throw_if(new_rank > MaxRank,
+                 format("Shape: rank {} exceeds MaxRank={}.",
+                        new_rank, MaxRank));
         fill_n(dims, rank, value);
     }
 
     Shape(initializer_list<Index> list) : rank(list.size())
     {
-        if (list.size() > MaxRank)
-            throw runtime_error(format("Shape: initializer rank {} exceeds MaxRank={}.",
-                                       list.size(), MaxRank));
+        throw_if(list.size() > MaxRank,
+                 format("Shape: initializer rank {} exceeds MaxRank={}.",
+                        list.size(), MaxRank));
         copy_n(list.begin(), rank, dims);
     }
 
     template<typename It>
     Shape(It first, It last) : rank(size_t(distance(first, last)))
     {
-        if (rank > MaxRank)
-            throw runtime_error(format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
-                                       rank, MaxRank));
+        throw_if(rank > MaxRank,
+                 format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
+                        rank, MaxRank));
         copy_n(first, rank, dims);
     }
 
@@ -83,8 +84,8 @@ struct Shape
     const Index& operator[](size_t i) const noexcept { return dims[i]; }
     Index&                     operator[](size_t i)       noexcept { return dims[i]; }
 
-    Index&                     back()       { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
-    const Index& back() const { if (rank == 0) throw runtime_error("Shape::back() on empty"); return dims[rank - 1]; }
+    Index&                     back()       { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
+    const Index& back() const { throw_if(rank == 0, "Shape::back() on empty"); return dims[rank - 1]; }
 
     bool empty() const noexcept { return rank == 0; }
 
@@ -138,10 +139,12 @@ inline Index get_aligned_size(const vector<vector<TensorSpec>>& specs)
         [](const auto& s) { return get_aligned_size(s); });
 }
 
+inline Index get_aligned_bytes(const TensorSpec& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); }
+
 inline Index get_aligned_bytes(const vector<TensorSpec>& specs)
 {
     return transform_reduce(specs.begin(), specs.end(), Index(0), plus<>{},
-        [](const auto& spec) { return get_aligned_bytes(spec.shape.size(), spec.dtype); });
+        [](const TensorSpec& spec) { return get_aligned_bytes(spec); });
 }
 
 inline Index get_aligned_bytes(const vector<vector<TensorSpec>>& specs)
@@ -187,7 +190,7 @@ struct Buffer
         device_type = new_device_type;
         if (new_bytes == 0) return;
 
-        data = alloc(new_device_type, new_bytes);
+        data = device::allocate(new_device_type, new_bytes);
         bytes = new_bytes;
     }
 
@@ -206,41 +209,21 @@ struct Buffer
 
     void setZero()
     {
-        if (!data) return;
-#ifdef OPENNN_HAS_CUDA
-        if (device_type == Device::CUDA)
-        {
-            CHECK_CUDA(cudaMemset(data, 0, bytes));
-            return;
-        }
-#endif
-        memset(data, 0, static_cast<size_t>(bytes));
+        device::set_zero(data, bytes, device_type);
     }
 
-#ifdef OPENNN_HAS_CUDA
     void migrate_to(Device target, cudaStream_t stream = nullptr)
     {
         if (device_type == target || !data) return;
 
-        void* fresh = alloc(target, bytes);
-        const cudaMemcpyKind kind = (target == Device::CUDA)
-            ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToHost;
+        void* fresh = device::allocate(target, bytes);
+        device::copy_async(fresh, data, bytes, device::copy_kind(device_type, target), stream);
+        if (stream) device::synchronize(stream);
 
-        if (stream)
-        {
-            CHECK_CUDA(cudaMemcpyAsync(fresh, data, bytes, kind, stream));
-            CHECK_CUDA(cudaStreamSynchronize(stream));
-        }
-        else
-        {
-            CHECK_CUDA(cudaMemcpy(fresh, data, bytes, kind));
-        }
-
-        dealloc(device_type, data, bytes);
+        device::deallocate(device_type, data, bytes);
         data = fresh;
         device_type = target;
     }
-#endif
 
     explicit Buffer(Device new_device_type = Device::CPU) noexcept : device_type(new_device_type) {}
     Buffer(const Buffer&) = delete;
@@ -259,25 +242,9 @@ struct Buffer
     }
 
 private:
-    static void* alloc([[maybe_unused]] Device device_type, Index byte_count)
-    {
-#ifdef OPENNN_HAS_CUDA
-        if (device_type == Device::CUDA) { void* device_pointer = nullptr; CHECK_CUDA(cudaMalloc(&device_pointer, byte_count)); return device_pointer; }
-#endif
-        return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
-    }
-
-    static void dealloc([[maybe_unused]] Device device_type, void* pointer, Index byte_count)
-    {
-#ifdef OPENNN_HAS_CUDA
-        if (device_type == Device::CUDA) { cudaFree(pointer); return; }
-#endif
-        Eigen::aligned_allocator<uint8_t>{}.deallocate(static_cast<uint8_t*>(pointer), static_cast<size_t>(byte_count));
-    }
-
     void free_buffer()
     {
-        if (data) dealloc(device_type, data, bytes);
+        if (data) device::deallocate(device_type, data, bytes);
         data = nullptr;
         bytes = 0;
     }
@@ -387,47 +354,14 @@ struct TensorView
 
     void fill(float value);
     void setZero() { fill(0.0f); }
-
-#ifdef OPENNN_HAS_CUDA
     void set_zero_async() const;
 
     mutable shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
 
-    cudnnTensorDescriptor_t get_descriptor() const
-    {
-        if (!descriptor_handle && !shape.empty())
-            set_descriptor(shape);
-        return descriptor_handle.get();
-    }
+    cudnnTensorDescriptor_t get_descriptor() const;
 
 private:
-    void set_descriptor(const Shape& shape) const
-    {
-        // NHWC layout: rank < 4 leading dims default to 1.
-        int batch_count = 1, channels = 1, height = 1, width = 1;
-        const size_t rank = shape.rank;
-        if (rank >= 1) channels    = static_cast<int>(shape[rank - 1]);
-        if (rank >= 2) batch_count = static_cast<int>(shape[0]);
-        if (rank >= 3) width       = static_cast<int>(shape[rank - 2]);
-        if (rank >= 4) height      = static_cast<int>(shape[rank - 3]);
-
-        if (batch_count <= 0 || channels <= 0 || height <= 0 || width <= 0)
-            return;
-
-        if (!descriptor_handle)
-        {
-            cudnnTensorDescriptor_t raw_desc;
-            CHECK_CUDNN(cudnnCreateTensorDescriptor(&raw_desc));
-
-            descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t descriptor) {
-                cudnnDestroyTensorDescriptor(descriptor);
-            });
-        }
-
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, to_cudnn(type), batch_count, channels, height, width));
-    }
-
-#endif
+    void set_descriptor(const Shape& shape) const;
 
 };
 
@@ -436,13 +370,6 @@ inline TensorView& view_at_slot_or(vector<TensorView>& views,
                                    TensorView& fallback)
 {
     return i < slots.size() ? views[slots[i]] : fallback;
-}
-
-inline TensorView& view_at_slot_or(vector<vector<TensorView>>& views,
-                                   const vector<size_t>& slots, size_t i,
-                                   TensorView& fallback)
-{
-    return i < slots.size() ? views[slots[i]][0] : fallback;
 }
 
 template<typename T, size_t N>
@@ -467,14 +394,12 @@ size_t hash_combine(const Vs&... values)
     return h;
 }
 
-#ifdef OPENNN_HAS_CUDA
-
 struct CudaStream
 {
     cudaStream_t handle = nullptr;
 
     CudaStream() = default;
-    explicit CudaStream(unsigned flags) { CHECK_CUDA(cudaStreamCreateWithFlags(&handle, flags)); }
+    explicit CudaStream(unsigned flags) { handle = device::create_stream(flags); }
 
     CudaStream(const CudaStream&) = delete;
     CudaStream& operator=(const CudaStream&) = delete;
@@ -491,12 +416,13 @@ struct CudaStream
     void create(unsigned flags)
     {
         destroy();
-        CHECK_CUDA(cudaStreamCreateWithFlags(&handle, flags));
+        handle = device::create_stream(flags);
     }
 
     void destroy() noexcept
     {
-        if (handle) { cudaStreamDestroy(handle); handle = nullptr; }
+        device::destroy_stream(handle);
+        handle = nullptr;
     }
 
     operator cudaStream_t() const noexcept { return handle; }
@@ -509,7 +435,7 @@ struct CudaEvent
     cudaEvent_t handle = nullptr;
 
     CudaEvent() = default;
-    explicit CudaEvent(unsigned flags) { CHECK_CUDA(cudaEventCreateWithFlags(&handle, flags)); }
+    explicit CudaEvent(unsigned flags) { handle = device::create_event(flags); }
 
     CudaEvent(const CudaEvent&) = delete;
     CudaEvent& operator=(const CudaEvent&) = delete;
@@ -523,22 +449,27 @@ struct CudaEvent
 
     ~CudaEvent() { destroy(); }
 
+    void create()
+    {
+        destroy();
+        handle = device::create_event();
+    }
+
     void create(unsigned flags)
     {
         destroy();
-        CHECK_CUDA(cudaEventCreateWithFlags(&handle, flags));
+        handle = device::create_event(flags);
     }
 
     void destroy() noexcept
     {
-        if (handle) { cudaEventDestroy(handle); handle = nullptr; }
+        device::destroy_event(handle);
+        handle = nullptr;
     }
 
     operator cudaEvent_t() const noexcept { return handle; }
     explicit operator bool() const noexcept { return handle != nullptr; }
 };
-
-#endif // OPENNN_HAS_CUDA
 
 class Backend
 {
@@ -573,42 +504,10 @@ inline ThreadPoolDevice& get_device()
     return *Backend::instance().get_thread_pool_device();
 }
 
-inline void TensorView::fill(float value)
-{
-    if (!data) return;
-
-#ifdef OPENNN_HAS_CUDA
-
-    cudaPointerAttributes attr{};
-    const cudaError_t err = cudaPointerGetAttributes(&attr, data);
-    const bool gpu_data = (err == cudaSuccess) && (attr.type == cudaMemoryTypeDevice);
-    if (err != cudaSuccess) cudaGetLastError();
-
-    if (gpu_data)
-    {
-        if (value == 0.0f)
-        {
-            CHECK_CUDA(cudaMemset(data, 0, byte_size()));
-            return;
-        }
-
-        CHECK_CUDNN(cudnnSetTensor(Backend::get_cudnn_handle(),
-                                   get_descriptor(), data, &value));
-        return;
-    }
-#endif
-
-    assert(type == Type::FP32);
-    float* data_pointer = static_cast<float*>(data);
-    std::fill(data_pointer, data_pointer + size(), value);
-}
-
-#ifdef OPENNN_HAS_CUDA
-
 inline void TensorView::set_zero_async() const
 {
     if (!data || byte_size() == 0) return;
-    CHECK_CUDA(cudaMemsetAsync(data, 0, byte_size(), Backend::get_compute_stream()));
+    device::set_zero_async(data, byte_size(), Backend::get_compute_stream());
 }
 
 inline const float one = 1.0f;
@@ -617,8 +516,6 @@ inline const float zero = 0.0f;
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
                                cudaStream_t stream);
-
-#endif
 
 }
 

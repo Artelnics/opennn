@@ -151,11 +151,11 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
 
 void check_yolo_loss(const Dataset* dataset, const NeuralNetwork* neural_network)
 {
-    if (neural_network && neural_network->is_gpu())
-        throw runtime_error("YOLO loss GPU implementation not available yet.");
+    throw_if(neural_network && neural_network->is_gpu(),
+             "YOLO loss GPU implementation not available yet.");
 
-    if (!dynamic_cast<const YoloDataset*>(dataset))
-        throw runtime_error("YOLO loss requires YoloDataset.");
+    throw_if(!dynamic_cast<const YoloDataset*>(dataset),
+             "YOLO loss requires YoloDataset.");
 }
 
 bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
@@ -384,7 +384,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.views[size_t(detection_idx)].back()[0];
+        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -433,7 +433,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.views[size_t(detection_idx)].back()[0];
+        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -446,7 +446,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
         Shape head_target_shape = Shape({batch_size}).append(head_shape);
         TensorView head_target_view(head_target.data(), head_target_shape, Type::FP32);
 
-        TensorView& head_delta = bp.delta_views[size_t(detection_idx)][0];
+        TensorView& head_delta = bp.layer_output_deltas[size_t(detection_idx)];
         yolo_gradient_kernel(head_output, head_target_view, head_delta, boxes_per_head, classes_number, sigmoid_classes, inv_batch);
 
         head_offset += head_floats;
@@ -562,8 +562,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     EvaluationResult result;
 
     float* workspace_device = nullptr;
-#ifdef OPENNN_HAS_CUDA
-    const bool on_gpu = neural_network && neural_network->is_gpu();
+    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     if (on_gpu)
     {
         const Index workspace_floats = (error == Error::CrossEntropy3d)
@@ -572,7 +571,6 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         errors_device.grow_to(workspace_floats * Index(sizeof(float)));
         workspace_device = errors_device.as<float>();
     }
-#endif
 
     using enum Error;
     switch (error)
@@ -624,15 +622,16 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     return result;
 }
 
-#ifdef OPENNN_HAS_CUDA
-
 bool Loss::supports_device_epoch_metrics() const
 {
-    return neural_network
+    return device::is_cuda_build()
+        && neural_network
         && neural_network->is_gpu()
         && error != Error::MinkowskiError
         && error != Error::Yolo;
 }
+
+#ifdef OPENNN_HAS_CUDA
 
 bool Loss::calculate_error_device_metrics(const Batch& batch,
                                           const ForwardPropagation& forward_propagation,
@@ -807,6 +806,25 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     add_regularization_gradient(back_propagation);
 
     return true;
+}
+
+#else
+
+bool Loss::calculate_error_device_metrics(const Batch&,
+                                          const ForwardPropagation&,
+                                          float*,
+                                          float*) const
+{
+    return false;
+}
+
+bool Loss::back_propagate_device_metrics(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&,
+                                         float*,
+                                         float*) const
+{
+    return false;
 }
 
 #endif

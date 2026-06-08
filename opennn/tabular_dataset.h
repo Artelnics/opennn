@@ -164,11 +164,7 @@ public:
                       bool is_training,
                       int contiguous = -1) const override;
 
-    bool supports_dense_feature_gather() const override { return true; }
-
 protected:
-
-    MatrixR data;
 
     string missing_values_label = "NA";
     MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;

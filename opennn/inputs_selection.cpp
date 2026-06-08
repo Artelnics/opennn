@@ -19,41 +19,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-void InputsSelection::check() const
-{
-    if (!training_strategy)
-        throw runtime_error("training strategy is not set.");
-
-    // Loss
-
-    const Loss* loss = training_strategy->get_loss();
-
-    if (!loss)
-        throw runtime_error("loss is not set.");
-
-    // Neural network
-
-    const NeuralNetwork* neural_network = loss->get_neural_network();
-
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
-
-    if (neural_network->is_empty())
-        throw runtime_error("Neural network is empty.\n");
-
-    // Dataset
-
-    const Dataset* dataset = loss->get_dataset();
-
-    if (!dataset)
-        throw runtime_error("dataset is not set.");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    if (validation_samples_number == 0)
-        throw runtime_error("Number of validation samples is zero.\n");
-}
-
 InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
 {
     set(maximum_epochs);
@@ -123,8 +88,7 @@ void InputsSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
 
     JsonWriter printer;
     to_JSON(printer);

@@ -80,9 +80,9 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
 
         DWORD read_bytes = 0;
         const BOOL ok = ::ReadFile(handle_, dst + total, chunk, &read_bytes, &ov);
-        if (!ok || read_bytes == 0)
-            throw runtime_error(format("FileReader::read_at: ReadFile failed (offset={}, n={}).",
-                                       current, chunk));
+        throw_if(!ok || read_bytes == 0,
+                 format("FileReader::read_at: ReadFile failed (offset={}, n={}).",
+                        current, chunk));
         total += read_bytes;
     }
 }
@@ -91,8 +91,8 @@ uint64_t FileReader::file_size() const
 {
     throw_if(!is_open(), "FileReader::file_size: file not open.");
     LARGE_INTEGER size{};
-    if (!::GetFileSizeEx(handle_, &size))
-        throw runtime_error("FileReader::file_size: GetFileSizeEx failed.");
+    throw_if(!::GetFileSizeEx(handle_, &size),
+             "FileReader::file_size: GetFileSizeEx failed.");
     return uint64_t(size.QuadPart);
 }
 
@@ -105,9 +105,9 @@ void FileReader::open(const filesystem::path& path)
     close();
 
     fd_ = ::open(path.c_str(), O_RDONLY);
-    if (fd_ < 0)
-        throw runtime_error(format("FileReader: cannot open {} (errno={}).",
-                                   path.string(), errno));
+    throw_if(fd_ < 0,
+             format("FileReader: cannot open {} (errno={}).",
+                    path.string(), errno));
 }
 
 void FileReader::close()
@@ -136,9 +136,9 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
             throw runtime_error(format("FileReader::read_at: pread failed (errno={}, offset={}).",
                                        errno, offset + total));
         }
-        if (n == 0)
-            throw runtime_error(format("FileReader::read_at: unexpected EOF at offset {}.",
-                                       offset + total));
+        throw_if(n == 0,
+                 format("FileReader::read_at: unexpected EOF at offset {}.",
+                        offset + total));
         total += size_t(n);
     }
 }
@@ -147,8 +147,8 @@ uint64_t FileReader::file_size() const
 {
     throw_if(!is_open(), "FileReader::file_size: file not open.");
     struct stat st{};
-    if (::fstat(fd_, &st) != 0)
-        throw runtime_error("FileReader::file_size: fstat failed.");
+    throw_if(::fstat(fd_, &st) != 0,
+             "FileReader::file_size: fstat failed.");
     return uint64_t(st.st_size);
 }
 
@@ -173,8 +173,8 @@ void FileWriter::open(const filesystem::path& tmp_path)
     filesystem::create_directories(tmp_path.parent_path());
 
     stream_.open(tmp_path, ios::binary | ios::trunc);
-    if (!stream_.is_open())
-        throw runtime_error(format("FileWriter: cannot open {}", tmp_path.string()));
+    throw_if(!stream_.is_open(),
+             format("FileWriter: cannot open {}", tmp_path.string()));
 }
 
 bool FileWriter::is_open() const { return stream_.is_open(); }
@@ -191,24 +191,12 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
     throw_if(!stream_.is_open(), "FileWriter::finish: not open.");
     stream_.flush();
     stream_.close();
-    if (!stream_.good() && !stream_.eof() && stream_.fail())
-        throw runtime_error("FileWriter::finish: flush/close failed.");
+    throw_if(!stream_.good() && !stream_.eof() && stream_.fail(),
+             "FileWriter::finish: flush/close failed.");
 
     atomic_rename(tmp_path_, final_path);
     finalized_ = true;
     tmp_path_.clear();
-}
-
-void FileWriter::abort()
-{
-    if (stream_.is_open()) stream_.close();
-    if (!tmp_path_.empty())
-    {
-        error_code ec;
-        filesystem::remove(tmp_path_, ec);
-        tmp_path_.clear();
-    }
-    finalized_ = true;
 }
 
 
@@ -221,9 +209,9 @@ void atomic_rename(const filesystem::path& from, const filesystem::path& to)
         throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {}",
                                    from.string(), to.string()));
 #else
-    if (::rename(from.c_str(), to.c_str()) != 0)
-        throw runtime_error(format("atomic_rename: rename failed for {} -> {} (errno={}).",
-                                   from.string(), to.string(), errno));
+    throw_if(::rename(from.c_str(), to.c_str()) != 0,
+             format("atomic_rename: rename failed for {} -> {} (errno={}).",
+                    from.string(), to.string(), errno));
 #endif
 }
 
@@ -296,13 +284,13 @@ void CsvReader::parse(Result& out) const
 
 CsvReader::Result CsvReader::read(const filesystem::path& path) const
 {
-    if (path.empty())
-        throw runtime_error("Data path is empty.\n");
+    throw_if(path.empty(),
+             "Data path is empty.\n");
 
     ifstream file(path, ios::binary | ios::ate);
 
-    if (!file.is_open())
-        throw runtime_error(format("Cannot open file {}\n", path.string()));
+    throw_if(!file.is_open(),
+             format("Cannot open file {}\n", path.string()));
 
     const auto file_size = file.tellg();
     file.seekg(0);
@@ -312,14 +300,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     if (file_size > 0)
         file.read(result.buffer.data(), file_size);
 
-    parse(result);
-    return result;
-}
-
-CsvReader::Result CsvReader::read_string(string_view csv_text) const
-{
-    Result result;
-    result.buffer.assign(csv_text);
     parse(result);
     return result;
 }

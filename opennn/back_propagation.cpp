@@ -25,13 +25,11 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     batch_size = new_batch_size;
     loss_pointer = new_loss;
 
-    if (!loss_pointer)
-        throw runtime_error("loss is not set.");
+    throw_if(!loss_pointer, "loss is not set.");
 
     neural_network = loss_pointer->get_neural_network();
 
-    if (!neural_network)
-        throw runtime_error("neural network is not set.");
+    throw_if(!neural_network, "neural network is not set.");
 
     error = 0.0f;
     accuracy = 0.0f;
@@ -75,9 +73,9 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         Index      layer;
         size_t     slot;
         TensorSpec spec;
-        Index      birth;
-        Index      death;
-        Index      offset = -1;
+        Index      first_step;
+        Index      last_step;
+        Index      byte_offset = -1;
     };
 
     const auto& layers = neural_network->get_layers();
@@ -89,14 +87,14 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         ? neural_network->get_training_type()
         : Type::FP32;
 
-    vector<DeltaEntry> deltas;
+    vector<DeltaEntry> delta_entries;
 
-    const Index max_step = last_trainable_layer_index - first_trainable_layer_index;
+    const Index last_backward_step = last_trainable_layer_index - first_trainable_layer_index;
 
     const Shape output_delta_shape = Shape({batch_size}).append(layers[last_trainable_layer_index]->get_output_shape());
 
     if (output_delta_shape.size() != 0)
-        deltas.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0, 0});
+        delta_entries.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0, 0});
 
     for (Index layer_index = first_trainable_layer_index; layer_index <= last_trainable_layer_index; ++layer_index)
     {
@@ -108,14 +106,14 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
             const auto& [shape, dtype] = specs[j];
             if (shape.size() == 0) continue;
 
-            const Index birth = last_trainable_layer_index - layer_index;
+            const Index first_step = last_trainable_layer_index - layer_index;
             const Index source_layer = (j < sources.size()) ? sources[j] : Index(-1);
             const bool source_layer_is_trainable = source_layer >= first_trainable_layer_index
                                                 && source_layer <= last_trainable_layer_index;
 
-            const Index death = source_layer_is_trainable ? last_trainable_layer_index - source_layer : birth;
+            const Index last_step = source_layer_is_trainable ? last_trainable_layer_index - source_layer : first_step;
 
-            deltas.push_back({layer_index, j + 1, {shape, dtype}, birth, death});
+            delta_entries.push_back({layer_index, j + 1, {shape, dtype}, first_step, last_step});
         }
     }
 
@@ -123,105 +121,104 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     {
         const auto& edges = consumer_edges[layer_index];
 
-        if (edges.empty()) continue;
-        if (edges.size() == 1) continue;
+        const bool has_multiple_consumers = edges.size() > 1;
+        const bool is_detached_detection_layer = layers[layer_index]->get_type() == LayerType::Detection
+                                              && edges.empty();
+
+        if (!has_multiple_consumers && !is_detached_detection_layer) continue;
 
         const Shape output_shape = layers[layer_index]->get_output_shape();
         if (output_shape.empty()) continue;
 
         const Shape delta_shape = Shape({batch_size}).append(output_shape);
-        const Index step = last_trainable_layer_index - layer_index;
+        const Index last_step = last_trainable_layer_index - layer_index;
+        const Index first_step = is_detached_detection_layer ? Index(0) : last_step;
 
-        deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, step, step});
+        delta_entries.push_back({layer_index, 0, {delta_shape, compute_dtype}, first_step, last_step});
     }
 
-    for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
+    vector<vector<size_t>> entries_starting_at_backward_step(size_t(last_backward_step + 1));
+    vector<vector<size_t>> entries_ending_at_backward_step(size_t(last_backward_step + 1));
+
+    for (size_t entry_index = 0; entry_index < delta_entries.size(); ++entry_index)
     {
-        if (layers[layer_index]->get_type() != LayerType::Detection) continue;
-        if (!consumer_edges[layer_index].empty()) continue;
-
-        const Shape output_shape = layers[layer_index]->get_output_shape();
-        if (output_shape.empty()) continue;
-
-        const Shape delta_shape = Shape({batch_size}).append(output_shape);
-        const Index step = last_trainable_layer_index - layer_index;
-
-        deltas.push_back({layer_index, 0, {delta_shape, compute_dtype}, 0, step});
+        entries_starting_at_backward_step[size_t(delta_entries[entry_index].first_step)].push_back(entry_index);
+        entries_ending_at_backward_step[size_t(delta_entries[entry_index].last_step)].push_back(entry_index);
     }
 
-    vector<vector<size_t>> births_by_step(size_t(max_step + 1));
-    vector<vector<size_t>> deaths_by_step(size_t(max_step + 1));
-
-    for (size_t id = 0; id < deltas.size(); ++id)
-    {
-        births_by_step[size_t(deltas[id].birth)].push_back(id);
-        deaths_by_step[size_t(deltas[id].death)].push_back(id);
-    }
-
-    vector<pair<Index, Index>> free_list = {{0, numeric_limits<Index>::max()}};
+    vector<pair<Index, Index>> free_blocks = {{0, numeric_limits<Index>::max()}};
     Index peak_bytes = 0;
 
-    for (Index step = 0; step <= max_step; ++step)
+    for (Index backward_step = 0; backward_step <= last_backward_step; ++backward_step)
     {
-        for (size_t id : births_by_step[size_t(step)])
+        for (size_t entry_index : entries_starting_at_backward_step[size_t(backward_step)])
         {
-            const Index bytes = get_aligned_bytes(deltas[id].spec.shape.size(), deltas[id].spec.dtype);
-            Index offset = Index(-1);
+            const Index entry_bytes = get_aligned_bytes(delta_entries[entry_index].spec);
+            Index byte_offset = Index(-1);
 
-            auto it = ranges::find_if(free_list, [bytes](const auto& block) { return block.second >= bytes; });
+            auto it = ranges::find_if(free_blocks, [entry_bytes](const auto& block) { return block.second >= entry_bytes; });
 
-            if (it != free_list.end())
+            if (it != free_blocks.end())
             {
-                offset = it->first;
-                if (it->second == bytes)
-                    free_list.erase(it);
+                byte_offset = it->first;
+
+                if (it->second == entry_bytes)
+                    free_blocks.erase(it);
                 else
                 {
-                    it->first  += bytes;
-                    it->second -= bytes;
+                    it->first  += entry_bytes;
+                    it->second -= entry_bytes;
                 }
             }
 
-            deltas[id].offset = offset;
-            peak_bytes = max(peak_bytes, offset + bytes);
+            delta_entries[entry_index].byte_offset = byte_offset;
+            peak_bytes = max(peak_bytes, byte_offset + entry_bytes);
         }
 
-        for (size_t id : deaths_by_step[size_t(step)])
+        for (size_t entry_index : entries_ending_at_backward_step[size_t(backward_step)])
         {
-            const Index bytes = get_aligned_bytes(deltas[id].spec.shape.size(), deltas[id].spec.dtype);
+            const Index entry_bytes = get_aligned_bytes(delta_entries[entry_index].spec);
 
-            auto it = ranges::lower_bound(free_list, deltas[id].offset, {}, &pair<Index, Index>::first);
+            auto it = ranges::lower_bound(free_blocks, delta_entries[entry_index].byte_offset, {}, &pair<Index, Index>::first);
 
-            it = free_list.insert(it, {deltas[id].offset, bytes});
+            it = free_blocks.insert(it, {delta_entries[entry_index].byte_offset, entry_bytes});
 
-            if (it + 1 != free_list.end() && it->first + it->second == (it + 1)->first)
+            if (it + 1 != free_blocks.end() && it->first + it->second == (it + 1)->first)
             {
                 it->second += (it + 1)->second;
-                free_list.erase(it + 1);
+                free_blocks.erase(it + 1);
             }
 
-            if (it != free_list.begin() && (it - 1)->first + (it - 1)->second == it->first)
+            if (it != free_blocks.begin() && (it - 1)->first + (it - 1)->second == it->first)
             {
                 (it - 1)->second += it->second;
-                free_list.erase(it);
+                free_blocks.erase(it);
             }
         }
     }
 
-    delta_views.resize(layers_number);
+    layer_output_deltas.assign(size_t(layers_number), TensorView{});
+    backward_slots.assign(size_t(layers_number), {});
     for (Index i = 0; i < layers_number; ++i)
-        delta_views[i].resize(backward_specs[i].size() + 1);
+        backward_slots[i].assign(backward_specs[i].size() + 1, TensorView{});
 
     delta_pool.resize_bytes(peak_bytes, neural_network->get_device());
     delta_pool.setZero();
 
     uint8_t* const base = delta_pool.as<uint8_t>();
 
-    for (const auto& delta : deltas)
-        delta_views[delta.layer][delta.slot] = TensorView(base + delta.offset,
-                                                          delta.spec.shape,
-                                                          delta.spec.dtype,
-                                                          delta_pool.device_type);
+    for (const auto& entry : delta_entries)
+    {
+        TensorView delta_view(base + entry.byte_offset,
+                              entry.spec.shape,
+                              entry.spec.dtype,
+                              delta_pool.device_type);
+
+        if (entry.slot == 0)
+            layer_output_deltas[entry.layer] = delta_view;
+        else
+            backward_slots[entry.layer][entry.slot] = delta_view;
+    }
 
     for (Index i = first_trainable_layer_index; i < last_trainable_layer_index; ++i)
     {
@@ -230,10 +227,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
         const auto& [consumer_layer, input_position] = edges.front();
         const size_t slot = input_position + 1;
-        const auto& consumer_deltas = delta_views[consumer_layer];
+        const auto& consumer_deltas = backward_slots[consumer_layer];
 
         if (slot < consumer_deltas.size() && !consumer_deltas[slot].empty())
-            delta_views[i][0] = consumer_deltas[slot];
+            layer_output_deltas[i] = consumer_deltas[slot];
     }
 }
 
@@ -242,14 +239,15 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     const auto& edges = consumer_edges[layer_index];
     if (edges.size() <= 1) return;
 
-    TensorView& destination = delta_views[layer_index][0];
+    TensorView& destination = layer_output_deltas[layer_index];
     if (!destination.data) return;
 
     destination.setZero();
 
     for (const auto& [consumer_layer, input_position] : edges)
     {
-        const TensorView& source = delta_views[consumer_layer][1 + input_position];
+        const TensorView& source = backward_slots[consumer_layer][1 + input_position];
+
         if (!source.data || source.size() != destination.size()) continue;
 
         add(destination, source, destination);
@@ -258,12 +256,12 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
 
 TensorView& BackPropagation::get_output_delta()
 {
-    return delta_views[neural_network->get_last_trainable_layer_index()][0];
+    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 const TensorView& BackPropagation::get_output_delta() const
 {
-    return delta_views[neural_network->get_last_trainable_layer_index()][0];
+    return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
 void BackPropagation::print() const

@@ -60,12 +60,12 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
     const string path_str = path.string();
 
     ifstream file(path, ios::binary | ios::ate);
-    if (!file)
-        throw runtime_error(format("Cannot open image file: {}", path_str));
+    throw_if(!file,
+             format("Cannot open image file: {}", path_str));
 
     const streamsize size = file.tellg();
-    if (size < 8)
-        throw runtime_error(format("File too small to be an image: {}", path_str));
+    throw_if(size < 8,
+             format("File too small to be an image: {}", path_str));
 
     file.seekg(0, ios::beg);
 
@@ -74,8 +74,8 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
         buffer.reserve(byte_count);
     buffer.resize(byte_count);
 
-    if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-        throw runtime_error(format("Error reading image file: {}", path_str));
+    throw_if(!file.read(reinterpret_cast<char*>(buffer.data()), size),
+             format("Error reading image file: {}", path_str));
 }
 
 bool has_png_signature(const vector<uint8_t>& buffer)
@@ -99,22 +99,22 @@ uint32_t read_be32(const uint8_t* p)
 
 BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
 {
-    if (buffer.size() < 54)
-        throw runtime_error(format("File too small to be a BMP: {}", path_str));
+    throw_if(buffer.size() < 54,
+             format("File too small to be a BMP: {}", path_str));
 
     auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
-    if (read_u16(0) != 0x4D42)
-        throw runtime_error(format("Not a BMP file (invalid signature 'BM'): {}", path_str));
+    throw_if(read_u16(0) != 0x4D42,
+             format("Not a BMP file (invalid signature 'BM'): {}", path_str));
 
     BmpHeader h;
     h.bfOffBits = read_u32(10);
     const uint32_t biSize = read_u32(14);
 
-    if (biSize != 40)
-        throw runtime_error(format("Unsupported BMP DIB header size in file: {}", path_str));
+    throw_if(biSize != 40,
+             format("Unsupported BMP DIB header size in file: {}", path_str));
 
     const int32_t biWidth = read_s32(18);
     const int32_t biHeight_signed = read_s32(22);
@@ -123,24 +123,24 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     const uint32_t biCompression = read_u32(30);
     const uint32_t biClrUsed = read_u32(46);
 
-    if (biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0)
-        throw runtime_error(format("Invalid or unsupported BMP format in file: {}", path_str));
-    if (h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32)
-        throw runtime_error(format("Unsupported BMP bit count: {}", h.biBitCount));
+    throw_if(biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0,
+             format("Invalid or unsupported BMP format in file: {}", path_str));
+    throw_if(h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32,
+             format("Unsupported BMP bit count: {}", h.biBitCount));
 
     h.is_grayscale = false;
 
     if (h.biBitCount == 8)
     {
         const uint32_t num_palette_colors = biClrUsed ? biClrUsed : 256;
-        if (num_palette_colors > 256)
-            throw runtime_error("Invalid palette size for 8-bit BMP.");
+        throw_if(num_palette_colors > 256,
+                 "Invalid palette size for 8-bit BMP.");
 
         h.palette.resize(num_palette_colors);
         h.is_grayscale = true;
 
-        if (size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size())
-            throw runtime_error(format("Corrupted BMP: palette exceeds file size: {}", path_str));
+        throw_if(size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size(),
+                 format("Corrupted BMP: palette exceeds file size: {}", path_str));
 
         uint32_t pal_offset = 14 + biSize;
         for (uint32_t i = 0; i < num_palette_colors; ++i)
@@ -162,16 +162,15 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     h.bytes_per_pixel = (h.biBitCount == 32) ? 4 : (h.biBitCount == 24) ? 3 : 1;
     h.row_stride = ((h.width * h.bytes_per_pixel + 3) / 4) * 4;
 
-    if (h.bfOffBits + h.row_stride * h.height > Index(buffer.size()))
-        throw runtime_error("Corrupted BMP: Pixel data exceeds file size.");
+    throw_if(h.bfOffBits + h.row_stride * h.height > Index(buffer.size()),
+             "Corrupted BMP: Pixel data exceeds file size.");
 
     return h;
 }
 
-void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float* dst, bool divide_by_255)
+void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float* dst)
 {
     const uint8_t* pixel_data = buffer.data() + h.bfOffBits;
-    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
 
     for (Index y = 0; y < h.height; ++y)
     {
@@ -185,9 +184,9 @@ void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float*
             {
                 const uint8_t* p = row_ptr + x * h.bytes_per_pixel;
                 const Index pi = row_start_index + x * h.channels;
-                dst[pi + 0] = float(p[2]) * scale;
-                dst[pi + 1] = float(p[1]) * scale;
-                dst[pi + 2] = float(p[0]) * scale;
+                dst[pi + 0] = float(p[2]);
+                dst[pi + 1] = float(p[1]);
+                dst[pi + 2] = float(p[0]);
             }
         }
         else if (h.biBitCount == 8)
@@ -195,7 +194,7 @@ void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float*
             if (h.channels == 1)
             {
                 for (Index x = 0; x < h.width; ++x)
-                    dst[row_start_index + x] = float(h.palette[row_ptr[x]].red) * scale;
+                    dst[row_start_index + x] = float(h.palette[row_ptr[x]].red);
             }
             else
             {
@@ -203,9 +202,9 @@ void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float*
                 {
                     const RGBQuad& c = h.palette[row_ptr[x]];
                     const Index pi = row_start_index + x * 3;
-                    dst[pi + 0] = float(c.red) * scale;
-                    dst[pi + 1] = float(c.green) * scale;
-                    dst[pi + 2] = float(c.blue) * scale;
+                    dst[pi + 0] = float(c.red);
+                    dst[pi + 1] = float(c.green);
+                    dst[pi + 2] = float(c.blue);
                 }
             }
         }
@@ -228,8 +227,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
                            vector<uint8_t>& compressed,
                            const string& path_str)
 {
-    if (!has_png_signature(buffer))
-        throw runtime_error(format("Not a PNG file: {}", path_str));
+    throw_if(!has_png_signature(buffer),
+             format("Not a PNG file: {}", path_str));
 
     compressed.clear();
 
@@ -242,8 +241,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         const uint32_t length = read_be32(buffer.data() + pos);
         pos += 4;
 
-        if (pos + 4 + size_t(length) + 4 > buffer.size())
-            throw runtime_error(format("Corrupted PNG chunk in file: {}", path_str));
+        throw_if(pos + 4 + size_t(length) + 4 > buffer.size(),
+                 format("Corrupted PNG chunk in file: {}", path_str));
 
         const string_view type(reinterpret_cast<const char*>(buffer.data() + pos), 4);
         pos += 4;
@@ -251,8 +250,8 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
 
         if (type == "IHDR")
         {
-            if (length != 13)
-                throw runtime_error(format("Invalid PNG IHDR in file: {}", path_str));
+            throw_if(length != 13,
+                     format("Invalid PNG IHDR in file: {}", path_str));
 
             h.width = Index(read_be32(data));
             h.height = Index(read_be32(data + 4));
@@ -296,11 +295,11 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         pos += size_t(length) + 4;
     }
 
-    if (!saw_ihdr || compressed.empty())
-        throw runtime_error(format("Incomplete PNG file: {}", path_str));
+    throw_if(!saw_ihdr || compressed.empty(),
+             format("Incomplete PNG file: {}", path_str));
 
-    if (h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0))
-        throw runtime_error(format("PNG palette missing or invalid in file: {}", path_str));
+    throw_if(h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0),
+             format("PNG palette missing or invalid in file: {}", path_str));
 
     return h;
 }
@@ -319,8 +318,8 @@ void inflate_png_data_into(const vector<uint8_t>& compressed,
     const int zlib_status = uncompress(inflated.data(), &actual_size,
                                        compressed.data(), uLong(compressed.size()));
 
-    if (zlib_status != Z_OK || actual_size != expected_size)
-        throw runtime_error(format("Cannot decompress PNG image: {}", path_str));
+    throw_if(zlib_status != Z_OK || actual_size != expected_size,
+             format("Cannot decompress PNG image: {}", path_str));
 }
 
 void unfilter_png_rows_into(const vector<uint8_t>& inflated,
@@ -363,8 +362,7 @@ void unfilter_png_rows_into(const vector<uint8_t>& inflated,
 
 static void decode_png_grayscale(const PngHeader& h,
                                  const uint8_t* unfiltered,
-                                 float* dst,
-                                 float scale)
+                                 float* dst)
 {
     for (Index y = 0; y < h.height; ++y)
     {
@@ -375,7 +373,7 @@ static void decode_png_grayscale(const PngHeader& h,
             const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
             const Index out = (y * h.width + x) * h.channels;
 
-            dst[out] = float(p[0]) * scale;
+            dst[out] = float(p[0]);
         }
     }
 }
@@ -383,8 +381,7 @@ static void decode_png_grayscale(const PngHeader& h,
 
 static void decode_png_truecolor(const PngHeader& h,
                                  const uint8_t* unfiltered,
-                                 float* dst,
-                                 float scale)
+                                 float* dst)
 {
     for (Index y = 0; y < h.height; ++y)
     {
@@ -395,9 +392,9 @@ static void decode_png_truecolor(const PngHeader& h,
             const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
             const Index out = (y * h.width + x) * h.channels;
 
-            dst[out + 0] = float(p[0]) * scale;
-            dst[out + 1] = float(p[1]) * scale;
-            dst[out + 2] = float(p[2]) * scale;
+            dst[out + 0] = float(p[0]);
+            dst[out + 1] = float(p[1]);
+            dst[out + 2] = float(p[2]);
         }
     }
 }
@@ -405,8 +402,7 @@ static void decode_png_truecolor(const PngHeader& h,
 
 static void decode_png_palette(const PngHeader& h,
                                const uint8_t* unfiltered,
-                               float* dst,
-                               float scale)
+                               float* dst)
 {
     for (Index y = 0; y < h.height; ++y)
     {
@@ -418,12 +414,12 @@ static void decode_png_palette(const PngHeader& h,
             const Index out = (y * h.width + x) * h.channels;
 
             const size_t pal = size_t(p[0]) * 3;
-            if (pal + 2 >= h.palette.size())
-                throw runtime_error("PNG palette index out of range.");
+            throw_if(pal + 2 >= h.palette.size(),
+                     "PNG palette index out of range.");
 
-            dst[out + 0] = float(h.palette[pal + 0]) * scale;
-            dst[out + 1] = float(h.palette[pal + 1]) * scale;
-            dst[out + 2] = float(h.palette[pal + 2]) * scale;
+            dst[out + 0] = float(h.palette[pal + 0]);
+            dst[out + 1] = float(h.palette[pal + 1]);
+            dst[out + 2] = float(h.palette[pal + 2]);
         }
     }
 }
@@ -432,7 +428,6 @@ static void decode_png_palette(const PngHeader& h,
 void decode_png_pixels(const PngHeader& h,
                        const vector<uint8_t>& compressed,
                        float* dst,
-                       bool divide_by_255,
                        const string& path_str)
 {
     thread_local vector<uint8_t> inflated;
@@ -441,24 +436,22 @@ void decode_png_pixels(const PngHeader& h,
     inflate_png_data_into(compressed, h, inflated, path_str);
     unfilter_png_rows_into(inflated, h, unfiltered, path_str);
 
-    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
-
     switch (h.color_type)
     {
         case 0:
-            decode_png_grayscale(h, unfiltered.data(), dst, scale);
+            decode_png_grayscale(h, unfiltered.data(), dst);
             break;
         case 2:
-            decode_png_truecolor(h, unfiltered.data(), dst, scale);
+            decode_png_truecolor(h, unfiltered.data(), dst);
             break;
         case 3:
-            decode_png_palette(h, unfiltered.data(), dst, scale);
+            decode_png_palette(h, unfiltered.data(), dst);
             break;
         case 4:
-            decode_png_grayscale(h, unfiltered.data(), dst, scale);
+            decode_png_grayscale(h, unfiltered.data(), dst);
             break;
         case 6:
-            decode_png_truecolor(h, unfiltered.data(), dst, scale);
+            decode_png_truecolor(h, unfiltered.data(), dst);
             break;
     }
 }
@@ -493,7 +486,6 @@ bool has_jpeg_signature(const vector<uint8_t>& buffer)
 
 JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
                               float* dst,
-                              bool divide_by_255,
                               const string& path_for_error)
 {
     jpeg_decompress_struct cinfo{};
@@ -514,8 +506,8 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
     jpeg_create_decompress(&cinfo);
     jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
 
-    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
-        throw runtime_error(format("JPEG: missing or corrupt header in {}", path_for_error));
+    throw_if(jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK,
+             format("JPEG: missing or corrupt header in {}", path_for_error));
 
     cinfo.out_color_space = (cinfo.num_components == 1) ? JCS_GRAYSCALE : JCS_RGB;
     jpeg_start_decompress(&cinfo);
@@ -524,7 +516,6 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
     header.width = cinfo.output_width;
     header.channels = cinfo.output_components;
 
-    const float scale = divide_by_255 ? (1.0f / 255.0f) : 1.0f;
     const size_t row_bytes = size_t(header.width) * size_t(header.channels);
     vector<uint8_t> row(row_bytes);
     JSAMPROW row_ptr = row.data();
@@ -535,7 +526,7 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
         jpeg_read_scanlines(&cinfo, &row_ptr, 1);
         float* dst_row = dst + y * row_bytes;
         Map<Array<float, Dynamic, 1>>(dst_row, Index(row_bytes)) =
-            Map<const Array<uint8_t, Dynamic, 1>>(row.data(), Index(row_bytes)).cast<float>() * scale;
+            Map<const Array<uint8_t, Dynamic, 1>>(row.data(), Index(row_bytes)).cast<float>();
     }
 
     jpeg_finish_decompress(&cinfo);
@@ -566,7 +557,7 @@ Tensor3 load_image(const filesystem::path& path)
         const BmpHeader h = parse_bmp_header(buffer, path.string());
 
         Tensor3 image(h.height, h.width, h.channels);
-        decode_bmp_pixels(buffer, h, image.data(), false);
+        decode_bmp_pixels(buffer, h, image.data());
 
         return image;
     }
@@ -577,7 +568,7 @@ Tensor3 load_image(const filesystem::path& path)
         const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
 
         Tensor3 image(h.height, h.width, h.channels);
-        decode_png_pixels(h, compressed, image.data(), false, path.string());
+        decode_png_pixels(h, compressed, image.data(), path.string());
 
         return image;
     }
@@ -605,7 +596,7 @@ Tensor3 load_image(const filesystem::path& path)
         jpeg_destroy_decompress(&cinfo);
 
         Tensor3 image(height, width, channels);
-        decode_jpeg_pixels(buffer, image.data(), false, path.string());
+        decode_jpeg_pixels(buffer, image.data(), path.string());
         return image;
     }
 
@@ -616,8 +607,7 @@ void load_image(const filesystem::path& path,
                 float* dst,
                 Index expected_height,
                 Index expected_width,
-                Index expected_channels,
-                bool divide_by_255)
+                Index expected_channels)
 {
     thread_local vector<uint8_t> buffer;
 
@@ -634,25 +624,22 @@ void load_image(const filesystem::path& path,
         width = h.width;
         channels = h.channels;
 
-        if (channels != expected_channels)
-            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+        throw_if(channels != expected_channels,
+                 format("Channel mismatch in image: {}", path.string()));
 
         if (height == expected_height && width == expected_width)
         {
-            decode_bmp_pixels(buffer, h, dst, divide_by_255);
+            decode_bmp_pixels(buffer, h, dst);
             return;
         }
 
         Tensor3 temp(height, width, channels);
-        decode_bmp_pixels(buffer, h, temp.data(), false);
+        decode_bmp_pixels(buffer, h, temp.data());
 
         const Tensor3 resized = resize_image(temp, expected_height, expected_width);
         const Index pixels = expected_height * expected_width * expected_channels;
 
-        if (divide_by_255)
-            Map<Array<float, Dynamic, 1>>(dst, pixels) = Map<const Array<float, Dynamic, 1>>(resized.data(), pixels) / 255.0f;
-        else
-            copy_n(resized.data(), pixels, dst);
+        copy_n(resized.data(), pixels, dst);
 
         return;
     }
@@ -665,30 +652,27 @@ void load_image(const filesystem::path& path,
         width = h.width;
         channels = h.channels;
 
-        if (channels != expected_channels)
-            throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+        throw_if(channels != expected_channels,
+                 format("Channel mismatch in image: {}", path.string()));
 
         if (height == expected_height && width == expected_width)
         {
-            decode_png_pixels(h, compressed, dst, divide_by_255, path.string());
+            decode_png_pixels(h, compressed, dst, path.string());
             return;
         }
 
         Tensor3 temp(height, width, channels);
-        decode_png_pixels(h, compressed, temp.data(), false, path.string());
+        decode_png_pixels(h, compressed, temp.data(), path.string());
 
         const Tensor3 resized = resize_image(temp, expected_height, expected_width);
         const Index pixels = expected_height * expected_width * expected_channels;
 
-        if (divide_by_255)
-            Map<Array<float, Dynamic, 1>>(dst, pixels) = Map<const Array<float, Dynamic, 1>>(resized.data(), pixels) / 255.0f;
-        else
-            copy_n(resized.data(), pixels, dst);
+        copy_n(resized.data(), pixels, dst);
         return;
     }
 
-    if (!has_jpeg_signature(buffer))
-        throw runtime_error(format("Unsupported image file: {}", path.string()));
+    throw_if(!has_jpeg_signature(buffer),
+             format("Unsupported image file: {}", path.string()));
 
     Index jh = 0, jw = 0, jc = 0;
     {
@@ -711,26 +695,22 @@ void load_image(const filesystem::path& path,
         jpeg_destroy_decompress(&cinfo);
     }
 
-    if (jc != expected_channels)
-        throw runtime_error(format("Channel mismatch in image: {}", path.string()));
+    throw_if(jc != expected_channels,
+             format("Channel mismatch in image: {}", path.string()));
 
     if (jh == expected_height && jw == expected_width)
     {
-        decode_jpeg_pixels(buffer, dst, divide_by_255, path.string());
+        decode_jpeg_pixels(buffer, dst, path.string());
         return;
     }
 
     Tensor3 temp(jh, jw, jc);
-    decode_jpeg_pixels(buffer, temp.data(), false, path.string());
+    decode_jpeg_pixels(buffer, temp.data(), path.string());
 
     const Tensor3 resized = resize_image(temp, expected_height, expected_width);
     const Index pixels = expected_height * expected_width * expected_channels;
 
-    if (divide_by_255)
-        Map<Array<float, Dynamic, 1>>(dst, pixels) =
-            Map<const Array<float, Dynamic, 1>>(resized.data(), pixels) / 255.0f;
-    else
-        copy_n(resized.data(), pixels, dst);
+    copy_n(resized.data(), pixels, dst);
 }
 
 Tensor3 resize_image(const Tensor3& input_image,

@@ -58,8 +58,6 @@ public:
 
     void finish_with_rename(const filesystem::path& final_path);
 
-    void abort();
-
 private:
     filesystem::path tmp_path_;
     ofstream stream_;
@@ -88,7 +86,6 @@ public:
     explicit CsvReader(Config c) : config(std::move(c)) {}
 
     Result read(const filesystem::path& path) const;
-    Result read_string(string_view csv_text) const;
 
 private:
 

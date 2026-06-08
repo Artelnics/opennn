@@ -161,10 +161,10 @@ TrainingResults QuasiNewtonMethod::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    if (neural_network->is_gpu())
-        throw runtime_error("QuasiNewtonMethod does not support GPU training: "
-                            "its update path maps device pointers as host memory. "
-                            "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+    throw_if(neural_network->is_gpu(),
+             "QuasiNewtonMethod does not support GPU training: "
+             "its update path maps device pointers as host memory. "
+             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
 
     TrainingResults results(maximum_epochs + 1);
 
