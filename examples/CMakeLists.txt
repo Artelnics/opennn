@@ -30,5 +30,6 @@ add_subdirectory(melanoma_cancer)
 add_subdirectory(translation)
 add_subdirectory(yolo)
 add_subdirectory(capacity_benchmark)
+add_subdirectory(training_speed_benchmark)
 
 
