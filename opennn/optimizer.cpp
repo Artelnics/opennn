@@ -1334,6 +1334,74 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         return stats;
     }
 
+    // CUDA-graph fast loop: when the step is captured and the dataset is gathered
+    // on-device, the batch-fill worker pipeline (built to overlap host CSV fills)
+    // is pure overhead. Run a tight single-threaded loop instead: gather the
+    // batch into the fixed device buffers, then capture-or-replay the step.
+    {
+        static const bool cuda_graph_requested = env_flag_enabled("OPENNN_CUDA_GRAPH");
+        const bool fixed = fixed_device_batch && fixed_device_batch->uses_cuda();
+        if (cuda_graph_requested && fixed && use_device_metrics && bool(graph_update))
+        {
+            cudaStream_t stream = Backend::get_compute_stream();
+            Batch* fill_batch = empty_queue.pop();
+            const Index progress_step = max(Index(1), batches_number / 200);
+            if (show_progress) display_progress_bar(0, int(batches_number));
+
+            for (Index iteration = 0; iteration < batches_number; ++iteration)
+            {
+                fill_batch->fill(batches[iteration],
+                                 input_feature_indices, decoder_feature_indices,
+                                 target_feature_indices, /*is_training=*/true);
+                // Gather on the compute stream so it serializes with the step:
+                // the next gather cannot overwrite the fixed buffers until the
+                // current step has finished reading them. The gather is tiny, so
+                // foregoing transfer/compute overlap costs nothing here.
+                fill_batch->upload_to_device_batch_async(*fixed_device_batch, stream);
+
+                auto run_compute_step = [&]()
+                {
+                    neural_network->forward_propagate(fixed_device_batch->get_inputs(),
+                                                      forward_propagation, true);
+                    if (!loss->back_propagate_device_metrics(*fixed_device_batch,
+                                                             forward_propagation, back_propagation,
+                                                             device_metrics.error_sum(),
+                                                             is_classification ? device_metrics.accuracy_sum() : nullptr))
+                        throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+                    graph_update(back_propagation);
+                };
+
+                if (!training_graph_captured)
+                {
+                    run_compute_step();
+                    device::synchronize(stream);
+                    device::begin_graph_capture(stream);
+                    run_compute_step();
+                    training_graph_exec = device::end_graph_capture(stream);
+                    training_graph_captured = true;
+                }
+                else
+                {
+                    device::launch_graph(training_graph_exec, stream);
+                }
+                fixed_device_batch->record_h2d_done(Backend::get_compute_stream());
+
+                if (show_progress
+                    && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+                    display_progress_bar(int(iteration + 1), int(batches_number));
+            }
+            device::synchronize(stream);
+            if (show_progress) cout << "\n";
+            empty_queue.push(fill_batch);
+
+            stats = device_metrics.read(batches_number, is_classification);
+            back_propagation.error = stats.error;
+            back_propagation.accuracy = stats.accuracy;
+            set_epoch_loss();
+            return stats;
+        }
+    }
+
     WorkerProfileCounters worker_profile;
     auto session = start_batch_workers(empty_queue,
                                        batches,
