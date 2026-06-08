@@ -105,7 +105,7 @@ original setup.
 
 ## Reproducing
 
-The programs and driver are in [`docs/benchmarks/capacity/`](.):
+The programs and driver are in [`docs/benchmarks/capacity/`](capacity/):
 
 * `generate_rosenbrock.c` — streams a Rosenbrock CSV of any size to disk.
 * `opennn_capacity.cpp` — loads a CSV into a `TabularDataset`, trains one Adam epoch,
