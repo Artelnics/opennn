@@ -225,14 +225,15 @@ TrainingResults AdaptiveMomentEstimation::train()
     };
 
 #ifdef OPENNN_HAS_CUDA
-    // CUDA-graph mode: pre-allocate the device-resident Adam scalars (at warmup,
-    // before allocations are frozen), route the captured update to the
-    // capturable path, and reset any prior graph.
+    // Prepare the capturable update path so train_epoch can run a CUDA graph if
+    // it chooses to (train_epoch owns the OPENNN_CUDA_GRAPH gate). The
+    // device-resident Adam scalars are allocated here, at warmup, before
+    // allocations are frozen. Any graph from a prior run is discarded.
     training_graph_captured = false;
     if (training_graph_exec) { device::destroy_graph(training_graph_exec); training_graph_exec = nullptr; }
     graph_update = nullptr;
 
-    if (on_gpu && getenv("OPENNN_CUDA_GRAPH"))
+    if (on_gpu)
     {
         optimization_data.graph_step.resize_bytes(Index(sizeof(int)), Device::CUDA);
         optimization_data.graph_step.setZero();   // step starts at 0; kernel does ++ to 1
