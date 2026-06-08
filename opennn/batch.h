@@ -105,12 +105,13 @@ struct Batch
 
     // GPU-resident gather (prototype): when the dataset is device-resident, the
     // batch's row indices are stashed here (host int32) so the H2D step can
-    // gather rows on-device instead of copying a host-staged batch.
-    bool          device_gather = false;
-    vector<int>   gather_row_indices;
-    Buffer        gather_indices_device{Device::CUDA};
-    vector<Index> input_column_indices;
-    vector<Index> target_column_indices;
+    // gather rows on-device instead of copying a host-staged batch. The feature
+    // blocks are contiguous, so only their starting column is needed.
+    bool        device_gather = false;
+    vector<int> gather_row_indices;
+    Buffer      gather_indices_device{Device::CUDA};
+    Index       input_col_offset = 0;
+    Index       target_col_offset = 0;
 
 };
 

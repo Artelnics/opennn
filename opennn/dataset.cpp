@@ -1059,8 +1059,8 @@ void Dataset::fill_batch(Batch& batch,
         batch.gather_row_indices.resize(sample_indices.size());
         for (size_t i = 0; i < sample_indices.size(); ++i)
             batch.gather_row_indices[i] = int(sample_indices[i]);
-        batch.input_column_indices = input_indices;
-        batch.target_column_indices = target_indices;
+        batch.input_col_offset  = input_indices.empty()  ? 0 : input_indices.front();
+        batch.target_col_offset = target_indices.empty() ? 0 : target_indices.front();
         batch.needs_device_copy = true;
         return;
     }

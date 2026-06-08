@@ -220,8 +220,6 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     {
         const float* matrix = dataset->get_device_data();
         const Index matrix_cols = dataset->get_data_columns();
-        const Index input_col0  = input_column_indices.empty()  ? 0 : input_column_indices.front();
-        const Index target_col0 = target_column_indices.empty() ? 0 : target_column_indices.front();
 
         // Upload this batch's row indices (small: current_batch_size ints).
         // The buffer is pre-sized at warmup; never resize inside the loop.
@@ -234,7 +232,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         if (!destination.fp32_staging.empty())
         {
             gather_rows_cuda(matrix, idx, destination.fp32_staging.as<float>(),
-                             current_batch_size, input.features_number, matrix_cols, input_col0, stream);
+                             current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
             cast_fp32_to_bf16_cuda(input_values_count,
                                    destination.fp32_staging.as<float>(),
                                    destination.input.buffer.as<bfloat16>(),
@@ -243,11 +241,11 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         else
         {
             gather_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
-                             current_batch_size, input.features_number, matrix_cols, input_col0, stream);
+                             current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
         }
 
         gather_rows_cuda(matrix, idx, destination.target.buffer.as<float>(),
-                         current_batch_size, target.features_number, matrix_cols, target_col0, stream);
+                         current_batch_size, target.features_number, matrix_cols, target_col_offset, stream);
 
         record_h2d_done(stream);
         return;

@@ -282,7 +282,7 @@ protected:
 
     MatrixR data;
 
-    // Optional device-resident mirror of `data` (prototype, opt-in).
+    // Device-resident mirror of `data` (empty unless device residency is on).
     Buffer data_device{Device::CUDA};
 
     Shape input_shape;
