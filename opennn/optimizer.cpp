@@ -1216,6 +1216,9 @@ void Optimizer::sync_device(bool on_gpu)
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
+    // A non-positive norm disables clipping (skips the per-step norm reduction).
+    if (max_norm <= 0.0f) return;
+
     const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 

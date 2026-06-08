@@ -65,6 +65,7 @@ int main(int argc, char* argv[])
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(batch);
         adam->set_display_period(1000000);   // silence per-epoch printing
+        adam->set_gradient_clip_norm(0.0f);  // match PyTorch/TF default (no clipping)
 
         // Warmup: a couple of epochs to absorb kernel/cuDNN autotuning.
         adam->set_maximum_epochs(2);
