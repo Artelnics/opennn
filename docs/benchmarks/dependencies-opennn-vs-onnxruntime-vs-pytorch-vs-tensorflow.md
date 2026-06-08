@@ -1,4 +1,4 @@
-# Dependencies & install friction: OpenNN vs PyTorch vs TensorFlow (Linux)
+# Dependencies & install friction: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
@@ -7,8 +7,8 @@ question of **getting it onto the machine**: how many packages must be installed
 files land on disk, and — the real test for a locked-down or air-gapped target — whether the
 deployed artifact runs at all on a clean system with nothing pre-installed.
 
-This note compares what it takes to deploy a trained model with OpenNN versus PyTorch on
-Linux x86_64.
+This note compares what it takes to deploy a trained model with OpenNN versus ONNX Runtime,
+PyTorch, and TensorFlow on Linux x86_64.
 
 ## The numbers
 
@@ -69,8 +69,8 @@ one file trains and runs the model itself.
   900 MB package tree, especially where a package manager isn't available.
 * **Containers:** an OpenNN image can be `FROM scratch` + one binary; a PyTorch image needs a
   Python base layer and the full dependency tree, dominating image size and build time.
-* **Supply-chain surface:** 0 third-party packages versus 11 transitive dependencies is a
-  smaller set of things to vet, pin, and keep patched.
+* **Supply-chain surface:** 0 third-party packages versus a 6-to-33-package dependency tree is
+  a smaller set of things to vet, pin, and keep patched.
 * **Reproducibility:** a single self-contained binary has no "works on my machine" dependency
   drift.
 

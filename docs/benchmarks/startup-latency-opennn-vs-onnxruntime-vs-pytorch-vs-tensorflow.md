@@ -1,4 +1,4 @@
-# Startup latency: OpenNN vs PyTorch vs TensorFlow (Linux)
+# Startup latency: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
@@ -54,7 +54,7 @@ OpenNN is a native executable with the library statically linked in: the OS maps
 and jumps to `main`. There is no interpreter to boot and no large shared library to load and
 initialize. PyTorch pays for the Python runtime plus the load-time initialization of
 `libtorch` (the same large library measured in the
-[CPU size benchmark](size-cpu-opennn-vs-pytorch-vs-tensorflow.md)) on every process start.
+[CPU size benchmark](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)) on every process start.
 
 ## Why it matters
 
@@ -80,11 +80,13 @@ initialize. PyTorch pays for the Python runtime plus the load-time initializatio
 
 ## Reproducing
 
-The two equivalent programs are in [`docs/benchmarks/startup/`](startup/):
-`opennn_startup.cpp` (build it against the OpenNN library) and `pytorch_startup.py`. Time each
-end-to-end and take the median after a few warm-up runs, e.g.:
+The equivalent programs are in [`docs/benchmarks/startup/`](startup/):
+`opennn_startup.cpp` (build it against the OpenNN library), `onnxruntime_startup.py`,
+`pytorch_startup.py`, and `tensorflow_startup.py`. Time each end-to-end and take the median
+after a few warm-up runs, e.g.:
 
 ```bash
-hyperfine --warmup 3 ./opennn_startup 'python pytorch_startup.py'
+hyperfine --warmup 3 ./opennn_startup 'python onnxruntime_startup.py' \
+  'python pytorch_startup.py' 'python tensorflow_startup.py'
 # or a simple loop with: t0=$(date +%s.%N); ./opennn_startup; t1=$(date +%s.%N)
 ```
