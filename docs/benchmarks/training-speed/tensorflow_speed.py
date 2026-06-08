@@ -33,12 +33,21 @@ def main():
     features = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
     epochs = int(sys.argv[3]) if len(sys.argv) > 3 else 30
     batch = int(sys.argv[4]) if len(sys.argv) > 4 else 1000
+    # Precision: bf16 (mixed_bfloat16 policy, default), tf32 (fp32 with tensor
+    # cores), or fp32 (strict, tensor cores off).
+    precision = sys.argv[5] if len(sys.argv) > 5 else "bf16"
 
     gpus = tf.config.list_physical_devices("GPU")
     assert gpus, "CUDA GPU required"
     print(f"gpus={[g.name for g in gpus]}")
 
-    tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
+    if precision == "bf16":
+        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
+    else:
+        tf.keras.mixed_precision.set_global_policy("float32")
+    # TF32 tensor cores: on for bf16/tf32, off for strict fp32.
+    tf.config.experimental.enable_tensor_float_32_execution(precision in ("bf16", "tf32"))
+    print(f"precision={precision}")
     tf.random.set_seed(42)
 
     x_np, y_np = rosenbrock(samples, features)

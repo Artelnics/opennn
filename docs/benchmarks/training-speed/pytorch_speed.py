@@ -35,15 +35,21 @@ def main():
     features = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
     epochs = int(sys.argv[3]) if len(sys.argv) > 3 else 30
     batch = int(sys.argv[4]) if len(sys.argv) > 4 else 1000
+    # Precision: bf16 (autocast mixed precision, default), tf32 (fp32 math on
+    # tensor cores), or fp32 (strict IEEE, tensor cores off).
+    precision = sys.argv[5] if len(sys.argv) > 5 else "bf16"
 
     assert torch.cuda.is_available(), "CUDA GPU required"
     device = "cuda"
     torch.manual_seed(42)
 
-    # Throughput knobs.
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
+    # Tensor-core (TF32) math is allowed for bf16 and tf32 modes, off for strict fp32.
+    allow_tf32 = precision in ("bf16", "tf32")
+    torch.backends.cuda.matmul.allow_tf32 = allow_tf32
+    torch.backends.cudnn.allow_tf32 = allow_tf32
     torch.backends.cudnn.benchmark = True
+    use_autocast = precision == "bf16"
+    print(f"precision={precision} autocast={use_autocast} tf32={allow_tf32}")
 
     x, y = rosenbrock_dataset(samples, features, device=device)
     print(f"device={torch.cuda.get_device_name(0)}")
@@ -61,10 +67,14 @@ def main():
     # Fuse the step for throughput; bf16 autocast for mixed precision.
     # Default compile mode (not max-autotune) to keep the warmup memory spike
     # modest on a 6 GB GPU where the dataset already occupies most of VRAM.
+    import contextlib
+
     @torch.compile
     def train_step(xb, yb):
         optimizer.zero_grad(set_to_none=True)
-        with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+               if use_autocast else contextlib.nullcontext())
+        with ctx:
             pred = model(xb)
             loss = loss_fn(pred, yb)
         loss.backward()
