@@ -1348,6 +1348,21 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             const Index progress_step = max(Index(1), batches_number / 200);
             if (show_progress) display_progress_bar(0, int(batches_number));
 
+            // The step that gets captured: forward + on-device-metric backward +
+            // capturable Adam, all reading the fixed device buffers. No host sync,
+            // so it can be recorded once and replayed.
+            const auto run_compute_step = [&]()
+            {
+                neural_network->forward_propagate(fixed_device_batch->get_inputs(),
+                                                  forward_propagation, true);
+                if (!loss->back_propagate_device_metrics(*fixed_device_batch,
+                                                         forward_propagation, back_propagation,
+                                                         device_metrics.error_sum(),
+                                                         is_classification ? device_metrics.accuracy_sum() : nullptr))
+                    throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+                graph_update(back_propagation);
+            };
+
             for (Index iteration = 0; iteration < batches_number; ++iteration)
             {
                 fill_batch->fill(batches[iteration],
@@ -1359,20 +1374,10 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                 // foregoing transfer/compute overlap costs nothing here.
                 fill_batch->upload_to_device_batch_async(*fixed_device_batch, stream);
 
-                auto run_compute_step = [&]()
-                {
-                    neural_network->forward_propagate(fixed_device_batch->get_inputs(),
-                                                      forward_propagation, true);
-                    if (!loss->back_propagate_device_metrics(*fixed_device_batch,
-                                                             forward_propagation, back_propagation,
-                                                             device_metrics.error_sum(),
-                                                             is_classification ? device_metrics.accuracy_sum() : nullptr))
-                        throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-                    graph_update(back_propagation);
-                };
-
                 if (!training_graph_captured)
                 {
+                    // First batch runs the step once (the real update) while
+                    // priming lazy init, then re-records it for later replays.
                     run_compute_step();
                     device::synchronize(stream);
                     device::begin_graph_capture(stream);
@@ -1384,7 +1389,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                 {
                     device::launch_graph(training_graph_exec, stream);
                 }
-                fixed_device_batch->record_h2d_done(Backend::get_compute_stream());
 
                 if (show_progress
                     && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
@@ -1413,14 +1417,6 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
     const bool use_fixed_device_batch = fixed_device_batch && fixed_device_batch->uses_cuda();
     bool fixed_device_batch_in_use = false;
-
-    // CUDA-graph mode: capture the fwd+bwd+update kernel sequence once and replay
-    // it each step, eliminating per-step launch/sync overhead. Requires a fixed
-    // device batch (stable buffer addresses), on-device epoch metrics (no host
-    // sync in the captured region), and a graph-capable update (graph_update).
-    static const bool cuda_graph_requested = env_flag_enabled("OPENNN_CUDA_GRAPH");
-    const bool graph_mode = cuda_graph_requested && use_fixed_device_batch
-        && use_device_metrics && bool(graph_update);
 
     Batch* next_batch = nullptr;
     auto issue_device_input = [&](Batch& batch)
@@ -1475,89 +1471,41 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         if (on_gpu) current_batch->wait_h2d_on_compute_stream();
         Batch& compute_batch = compute_batch_for(*current_batch);
 
-        // The captured kernel sequence (fwd + device-metric bwd + capturable
-        // update) reads from the fixed device batch and writes the on-device
-        // error sum; it contains no host sync, so it can be replayed each step.
-        auto run_compute_step = [&]()
         {
+            PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
+        }
+        sync_cuda_for_debug(on_gpu);
 
-            if (!loss->back_propagate_device_metrics(compute_batch,
-                                                     forward_propagation,
-                                                     back_propagation,
-                                                     device_metrics.error_sum(),
-                                                     is_classification ? device_metrics.accuracy_sum() : nullptr))
-                throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-
-            graph_update(back_propagation);
-        };
-
-        if (graph_mode)
         {
-            // Host-only timing: a GPU-syncing PROFILE_SCOPE is illegal during
-            // capture, so measure only the host cost of issuing the replay.
-            PROFILE_SCOPE_HOST("step:graph_replay");
-            cudaStream_t stream = Backend::get_compute_stream();
-            if (!training_graph_captured)
+            PROFILE_SCOPE("step:bwd_total");
+            if (use_device_metrics)
             {
-                // First batch: run the step once uncaptured (this counts as the
-                // batch's real update) while also priming any lazy init —
-                // cuBLASLt algo selection, the capturable-Adam kernels — that
-                // would otherwise perform a host sync forbidden during capture.
-                run_compute_step();
-                device::synchronize(stream);
-
-                // Re-capture the identical sequence for replay on later batches.
-                // Capturing records the kernels without executing them, so this
-                // does not advance training; only the launches below do.
-                device::begin_graph_capture(stream);
-                run_compute_step();
-                training_graph_exec = device::end_graph_capture(stream);
-                training_graph_captured = true;
+                if (!loss->back_propagate_device_metrics(compute_batch,
+                                                          forward_propagation,
+                                                          back_propagation,
+                                                          device_metrics.error_sum(),
+                                                          is_classification ? device_metrics.accuracy_sum() : nullptr))
+                    throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
             }
             else
             {
-                device::launch_graph(training_graph_exec, stream);
+                loss->back_propagate(compute_batch, forward_propagation, back_propagation);
             }
         }
-        else
+        sync_cuda_for_debug(on_gpu);
+
+        if (!use_device_metrics)
         {
-            {
-                PROFILE_SCOPE("step:fwd_total");
-                neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
-            }
-            sync_cuda_for_debug(on_gpu);
-
-            {
-                PROFILE_SCOPE("step:bwd_total");
-                if (use_device_metrics)
-                {
-                    if (!loss->back_propagate_device_metrics(compute_batch,
-                                                              forward_propagation,
-                                                              back_propagation,
-                                                              device_metrics.error_sum(),
-                                                              is_classification ? device_metrics.accuracy_sum() : nullptr))
-                        throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-                }
-                else
-                {
-                    loss->back_propagate(compute_batch, forward_propagation, back_propagation);
-                }
-            }
-            sync_cuda_for_debug(on_gpu);
-
-            if (!use_device_metrics)
-            {
-                stats.error += back_propagation.error;
-                if (is_classification) stats.accuracy += back_propagation.accuracy;
-            }
-
-            {
-                PROFILE_SCOPE("step:optim_total");
-                update(back_propagation);
-            }
-            sync_cuda_for_debug(on_gpu);
+            stats.error += back_propagation.error;
+            if (is_classification) stats.accuracy += back_propagation.accuracy;
         }
+
+        {
+            PROFILE_SCOPE("step:optim_total");
+            update(back_propagation);
+        }
+        sync_cuda_for_debug(on_gpu);
 
         mark_fixed_device_batch_used();
 
