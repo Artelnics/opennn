@@ -102,6 +102,34 @@ protected:
     void setup_device_training();
     void teardown_device_training();
 
+    class CudaAllocationGrowthGuard
+    {
+    public:
+        explicit CudaAllocationGrowthGuard(bool);
+        ~CudaAllocationGrowthGuard();
+
+        CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
+        CudaAllocationGrowthGuard& operator=(const CudaAllocationGrowthGuard&) = delete;
+
+    private:
+        bool active = false;
+        bool previous = false;
+    };
+
+    void warmup_device_training(bool tracks_accuracy,
+                                ForwardPropagation& training_forward_propagation,
+                                BackPropagation& training_back_propagation,
+                                ThreadSafeQueue<Batch*>& training_empty_queue,
+                                const vector<vector<Index>>& training_batches,
+                                const vector<Index>& input_feature_indices,
+                                const vector<Index>& decoder_feature_indices,
+                                const vector<Index>& target_feature_indices,
+                                const function<void(BackPropagation&)>& update,
+                                ForwardPropagation* validation_forward_propagation = nullptr,
+                                ThreadSafeQueue<Batch*>* validation_empty_queue = nullptr,
+                                const vector<vector<Index>>* validation_batches = nullptr,
+                                Batch* fixed_training_batch = nullptr);
+
     void prefetch_batch(Batch& batch);
 
     void sync_device(bool on_gpu);
@@ -121,6 +149,7 @@ protected:
 
         vector<unique_ptr<Batch>> training_pool;
         vector<unique_ptr<Batch>> validation_pool;
+        unique_ptr<Batch> fixed_training_batch;
 
         bool validation_uses_training_pool = false;
 
@@ -158,7 +187,8 @@ protected:
                            const vector<Index>& decoder_feature_indices,
                            const vector<Index>& target_feature_indices,
                            const function<void(BackPropagation&)>& update,
-                           bool show_progress = true);
+                           bool show_progress = true,
+                           Batch* fixed_device_batch = nullptr);
 
     EpochStats evaluate_epoch(bool tracks_accuracy,
                               ForwardPropagation& forward_propagation,

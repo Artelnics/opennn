@@ -174,19 +174,24 @@ bool cuda_sync_each_batch()
 
 struct DeviceEpochMetrics
 {
-    Buffer values{Device::CUDA};
+    static Buffer& values()
+    {
+        thread_local Buffer buffer{Device::CUDA};
+        return buffer;
+    }
 
     void reset()
     {
         if (!device::is_cuda_build()) return;
 
-        values.grow_to(2 * Index(sizeof(float)));
-        device::set_zero_async(values.data, 2 * Index(sizeof(float)),
+        Buffer& metric_values = values();
+        metric_values.grow_to(2 * Index(sizeof(float)));
+        device::set_zero_async(metric_values.data, 2 * Index(sizeof(float)),
                                Backend::get_compute_stream());
     }
 
-    float* error_sum() { return values.as<float>(); }
-    float* accuracy_sum() { return values.as<float>() + 1; }
+    float* error_sum() { return values().as<float>(); }
+    float* accuracy_sum() { return values().as<float>() + 1; }
 
     Optimizer::EpochStats read(Index batches_number, bool include_accuracy)
     {
@@ -195,7 +200,7 @@ struct DeviceEpochMetrics
 
         float host[2] = {0.0f, 0.0f};
         cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(host, values.data, Index(sizeof(host)),
+        device::copy_async(host, values().data, Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
@@ -336,6 +341,9 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
     fill_pool(pools.training_empty_queue,
               pools.training_pool,
               training_batch_size);
+
+    if (neural_network.is_gpu() && device::is_cuda_build())
+        pools.fixed_training_batch = make_unique<Batch>(training_batch_size, &dataset, config);
 
     pools.validation_uses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
@@ -798,6 +806,132 @@ void Optimizer::set_unscaling()
         dataset->unscale_features("Target", unscaled_targets_descriptives);
 }
 
+Optimizer::CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
+    : active(enabled && device::is_cuda_build())
+{
+    if (active)
+    {
+        previous = device::cuda_allocation_growth_forbidden();
+        device::set_cuda_allocation_growth_forbidden(true);
+    }
+}
+
+Optimizer::CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard()
+{
+    if (active)
+        device::set_cuda_allocation_growth_forbidden(previous);
+}
+
+void Optimizer::warmup_device_training(
+    bool tracks_accuracy,
+    ForwardPropagation& training_forward_propagation,
+    BackPropagation& training_back_propagation,
+    ThreadSafeQueue<Batch*>& training_empty_queue,
+    const vector<vector<Index>>& training_batches,
+    const vector<Index>& input_feature_indices,
+    const vector<Index>& decoder_feature_indices,
+    const vector<Index>& target_feature_indices,
+    const function<void(BackPropagation&)>& update,
+    ForwardPropagation* validation_forward_propagation,
+    ThreadSafeQueue<Batch*>* validation_empty_queue,
+    const vector<vector<Index>>* validation_batches,
+    Batch* fixed_training_batch)
+{
+    NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
+    if (!device::is_cuda_build() || !neural_network || !neural_network->is_gpu()) return;
+    if (training_batches.empty()) return;
+
+    cudaStream_t stream = Backend::get_compute_stream();
+
+    const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
+    const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
+
+    Buffer parameters_snapshot{Device::CUDA};
+    Buffer states_snapshot{Device::CUDA};
+
+    if (parameters_bytes > 0)
+    {
+        parameters_snapshot.resize_bytes(parameters_bytes, Device::CUDA);
+        device::copy_async(parameters_snapshot.data,
+                           neural_network->get_parameters_data(),
+                           parameters_bytes,
+                           device::CopyKind::DeviceToDevice,
+                           stream);
+    }
+
+    if (states_bytes > 0)
+    {
+        states_snapshot.resize_bytes(states_bytes, Device::CUDA);
+        device::copy_async(states_snapshot.data,
+                           neural_network->get_states_data(),
+                           states_bytes,
+                           device::CopyKind::DeviceToDevice,
+                           stream);
+    }
+
+    auto restore_model_state = [&]()
+    {
+        if (parameters_bytes > 0)
+        {
+            device::copy_async(neural_network->get_parameters_data(),
+                               parameters_snapshot.data,
+                               parameters_bytes,
+                               device::CopyKind::DeviceToDevice,
+                               stream);
+            neural_network->cast_parameters_to_bf16();
+        }
+
+        if (states_bytes > 0)
+        {
+            device::copy_async(neural_network->get_states_data(),
+                               states_snapshot.data,
+                               states_bytes,
+                               device::CopyKind::DeviceToDevice,
+                               stream);
+        }
+
+        device::synchronize(stream);
+    };
+
+    const bool has_validation_warmup = validation_forward_propagation
+                                    && validation_empty_queue
+                                    && validation_batches
+                                    && !validation_batches->empty();
+
+    try
+    {
+        train_epoch(tracks_accuracy,
+                    training_forward_propagation,
+                    training_back_propagation,
+                    training_empty_queue,
+                    vector<vector<Index>>{training_batches.front()},
+                    input_feature_indices,
+                    decoder_feature_indices,
+                    target_feature_indices,
+                    update,
+                    false,
+                    fixed_training_batch);
+
+        if (has_validation_warmup)
+        {
+            evaluate_epoch(tracks_accuracy,
+                           *validation_forward_propagation,
+                           *validation_empty_queue,
+                           vector<vector<Index>>{validation_batches->front()},
+                           input_feature_indices,
+                           decoder_feature_indices,
+                           target_feature_indices);
+        }
+
+        restore_model_state();
+    }
+    catch (...)
+    {
+        restore_model_state();
+        throw;
+    }
+}
+
 bool Optimizer::check_stopping_condition(TrainingResults& results,
                                           const Index epoch,
                                           const float elapsed_time,
@@ -1098,7 +1232,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                   const vector<Index>& decoder_feature_indices,
                                   const vector<Index>& target_feature_indices,
                                   const function<void(BackPropagation&)>& update,
-                                  bool show_progress)
+                                  bool show_progress,
+                                  Batch* fixed_device_batch)
 {
     EpochStats stats;
 
@@ -1200,41 +1335,65 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                        /*is_training=*/true,
                                        profile_this ? &worker_profile : nullptr);
 
+    const bool use_fixed_device_batch = fixed_device_batch && fixed_device_batch->uses_cuda();
+    bool fixed_device_batch_in_use = false;
+
     Batch* next_batch = nullptr;
+    auto issue_device_input = [&](Batch& batch)
+    {
+        if (use_fixed_device_batch)
+        {
+            PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
+            if (fixed_device_batch_in_use)
+                device::stream_wait_event(Backend::get_transfer_stream(), fixed_device_batch->h2d_done_event);
+
+            batch.upload_to_device_batch_async(*fixed_device_batch, Backend::get_transfer_stream());
+            return;
+        }
+
+        PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
+        prefetch_batch(batch);
+    };
+
+    auto fetch_and_issue = [&](Index iteration)
     {
         PROFILE_SCOPE_HOST("step:wait_fill");
-        next_batch = session->wait(0);
-    }
+        next_batch = session->wait(iteration);
+        issue_device_input(*next_batch);
+    };
+
+    auto compute_batch_for = [&](Batch& batch) -> Batch&
     {
-        PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-        prefetch_batch(*next_batch);
-    }
+        return use_fixed_device_batch ? *fixed_device_batch : batch;
+    };
+
+    auto mark_fixed_device_batch_used = [&]()
+    {
+        if (!use_fixed_device_batch) return;
+
+        device::record_event(fixed_device_batch->h2d_done_event, Backend::get_compute_stream());
+        fixed_device_batch_in_use = true;
+    };
 
     const Index progress_step = max(Index(1), batches_number / 200);
     if (show_progress) display_progress_bar(0, int(batches_number));
+
+    fetch_and_issue(0);
 
     for (Index iteration = 0; iteration < batches_number; ++iteration)
     {
         Batch* current_batch = next_batch;
         next_batch = nullptr;
 
-        if (iteration + 1 < batches_number)
-        {
-            {
-                PROFILE_SCOPE_HOST("step:wait_fill");
-                next_batch = session->wait(iteration + 1);
-            }
-            {
-                PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-                prefetch_batch(*next_batch);
-            }
-        }
+        if (!use_fixed_device_batch && iteration + 1 < batches_number)
+            fetch_and_issue(iteration + 1);
 
         if (on_gpu) current_batch->wait_h2d_on_compute_stream();
+        Batch& compute_batch = compute_batch_for(*current_batch);
 
         {
             PROFILE_SCOPE("step:fwd_total");
-            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
+            neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
         }
         sync_cuda_for_debug(on_gpu);
 
@@ -1242,7 +1401,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             PROFILE_SCOPE("step:bwd_total");
             if (use_device_metrics)
             {
-                if (!loss->back_propagate_device_metrics(*current_batch,
+                if (!loss->back_propagate_device_metrics(compute_batch,
                                                           forward_propagation,
                                                           back_propagation,
                                                           device_metrics.error_sum(),
@@ -1251,7 +1410,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             }
             else
             {
-                loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+                loss->back_propagate(compute_batch, forward_propagation, back_propagation);
             }
         }
         sync_cuda_for_debug(on_gpu);
@@ -1268,12 +1427,17 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         }
         sync_cuda_for_debug(on_gpu);
 
+        mark_fixed_device_batch_used();
+
         {
             PROFILE_SCOPE("step:sync_device");
             sync_device(on_gpu);
         }
 
         empty_queue.push(current_batch);
+
+        if (use_fixed_device_batch && iteration + 1 < batches_number)
+            fetch_and_issue(iteration + 1);
 
         if (show_progress
             && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
