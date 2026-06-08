@@ -109,27 +109,11 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 void Dataset::set_data_path(const filesystem::path& new_data_path)
 {
     data_path = new_data_path;
-    binary_rows_number = 0;
-    binary_columns_number = 0;
-    {
-        lock_guard<mutex> lock(binary_cache_mutex);
-        binary_data_cache.clear();
-    }
 }
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
-    {
-        lock_guard<mutex> lock(binary_cache_mutex);
-        binary_data_cache.clear();
-    }
-
-    if (storage_mode == StorageMode::Matrix)
-    {
-        binary_rows_number = 0;
-        binary_columns_number = 0;
-    }
 }
 
 string Dataset::get_storage_mode_string() const
@@ -160,16 +144,21 @@ void Dataset::set_storage_mode(const string& new_storage_mode)
     throw runtime_error(format("Unknown dataset storage mode: {}", new_storage_mode));
 }
 
-void Dataset::use_binary_data_file(const filesystem::path& binary_data_file_name)
+void Dataset::set_data(const MatrixR& new_data)
 {
-    set_data_path(binary_data_file_name);
-    set_storage_mode(StorageMode::BinaryFile);
-    read_binary_header();
+    throw_if(new_data.rows() != get_samples_number(),
+             "Rows number is not equal to samples number");
+    throw_if(new_data.cols() != get_features_number(),
+             "Columns number is not equal to variables number");
 
-    if (sample_roles.empty())
-        sample_roles.resize(binary_rows_number, SampleRole::Training);
+    data = new_data;
+    set_storage_mode(StorageMode::Matrix);
+}
 
-    resize_data_from_JSON(0);
+void Dataset::set_data_constant(float new_value)
+{
+    data.setConstant(new_value);
+    mark_data_changed();
 }
 
 Index Dataset::get_samples_number(const string& sample_role) const
@@ -309,7 +298,7 @@ vector<Index> Dataset::get_feature_dimensions() const
         if (!variable.is_used())
             continue;
 
-        feature_dimensions[i] = variable.feature_count();
+        feature_dimensions[i] = variable.get_feature_count();
 
         ++i;
     }
@@ -376,7 +365,7 @@ vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
     feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.feature_count(); })));
+                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
 
     for (const auto& variable : variables)
     {
@@ -395,7 +384,7 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
 
     vector<string> feature_names;
     feature_names.reserve(size_t(transform_reduce(vars.begin(), vars.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.feature_count(); })));
+                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
 
     for (const auto& variable : vars)
     {
@@ -417,7 +406,7 @@ Shape Dataset::get_shape(const string& variable_role) const
     if (role == VariableRole::Target)  return target_shape;
     if (role == VariableRole::Decoder) return decoder_shape;
 
-    throw invalid_argument("get_shape: Invalid variable role string: " + variable_role);
+    throw runtime_error("get_shape: Invalid variable role string: " + variable_role);
 }
 
 void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
@@ -431,7 +420,7 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
     else if (role == VariableRole::Decoder)
         decoder_shape = new_shape;
     else
-        throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
+        throw runtime_error("set_shape: Invalid variable role string: " + variable_role);
 
     mark_data_changed();
 }
@@ -447,9 +436,9 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 
     for (const Variable& variable : variables)
     {
-        const Index count = variable.feature_count();
+        const Index count = variable.get_feature_count();
 
-        if (!role_matches(variable.role, role_type))
+        if (!role_applies_to(variable.role, role_type))
         {
             feature_index += count;
             continue;
@@ -470,7 +459,7 @@ vector<Index> Dataset::get_variable_indices(const string& variable_role) const
     indices.reserve(get_variables_number(variable_role));
 
     for (size_t i = 0; i < variables.size(); ++i)
-        if (role_matches(variables[i].role, role_type))
+        if (role_applies_to(variables[i].role, role_type))
             indices.push_back(i);
 
     return indices;
@@ -506,7 +495,7 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
     names.reserve(get_variables_number(variable_role));
 
     for (const Variable& variable : variables)
-        if (role_matches(variable.role, role_type))
+        if (role_applies_to(variable.role, role_type))
             names.push_back(variable.name);
 
     return names;
@@ -517,7 +506,7 @@ Index Dataset::get_variables_number(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     return ranges::count_if(variables,
-                            [role_type](const Variable& v) { return role_matches(v.role, role_type); });
+                            [role_type](const Variable& v) { return role_applies_to(v.role, role_type); });
 }
 
 Index Dataset::get_used_variables_number() const
@@ -536,7 +525,7 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     ranges::copy_if(variables, back_inserter(this_variables),
-                    [role_type](const Variable& var) { return role_matches(var.role, role_type); });
+                    [role_type](const Variable& var) { return role_applies_to(var.role, role_type); });
 
     return this_variables;
 }
@@ -544,7 +533,7 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
 Index Dataset::get_features_number() const
 {
     return accumulate(variables.begin(), variables.end(), 0,
-                      [](Index sum, const Variable& var) { return sum + var.feature_count(); });
+                      [](Index sum, const Variable& var) { return sum + var.get_feature_count(); });
 }
 
 Index Dataset::get_features_number(const string& variable_role) const
@@ -552,7 +541,7 @@ Index Dataset::get_features_number(const string& variable_role) const
     const VariableRole role_type = string_to_variable_role(variable_role);
 
     return transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-        [&](const Variable& v) { return role_matches(v.role, role_type) ? v.feature_count() : Index(0); });
+        [&](const Variable& v) { return role_applies_to(v.role, role_type) ? v.get_feature_count() : Index(0); });
 }
 
 vector<Index> Dataset::get_used_feature_indices() const
@@ -566,7 +555,7 @@ vector<Index> Dataset::get_used_feature_indices() const
 
     for (const Variable& variable : variables)
     {
-        const Index count = variable.feature_count();
+        const Index count = variable.get_feature_count();
 
         if (variable.role == VariableRole::None || variable.role == VariableRole::Time)
         {
@@ -622,6 +611,9 @@ void Dataset::set_input_variables_unused()
 
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
+    throw_if(index < 0 || index >= ssize(variables),
+             format("Dataset::set_variable_role: index {} out of range [0, {}).",
+                    index, variables.size()));
     variables[index].set_role(new_role);
     mark_data_changed();
 }
@@ -633,6 +625,9 @@ void Dataset::set_variable_role(const string& name, const string& new_role)
 
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 {
+    throw_if(index < 0 || index >= ssize(variables),
+             format("Dataset::set_variable_type: index {} out of range [0, {}).",
+                    index, variables.size()));
     variables[index].type = new_type;
     mark_data_changed();
 }
@@ -673,6 +668,18 @@ void Dataset::set_variable_names(const vector<string>& new_names)
 
     for (Index i = 0; i < variables_number; ++i)
         variables[i].name = get_trimmed(new_names[i]);
+}
+
+void Dataset::set_variables(const vector<Variable>& new_variables)
+{
+    variables = new_variables;
+    mark_data_changed();
+}
+
+void Dataset::set_variables_number(const Index new_size)
+{
+    variables.resize(new_size);
+    mark_data_changed();
 }
 
 void Dataset::set_variable_roles(const string& variable_role)
@@ -741,7 +748,7 @@ Index Dataset::get_variable_index(const Index feature_index) const
 
     for (Index i = 0; i < variables_number; ++i)
     {
-        features_seen += variables[i].feature_count();
+        features_seen += variables[i].get_feature_count();
 
         if (feature_index < features_seen)
             return i;
@@ -765,9 +772,9 @@ vector<vector<Index>> Dataset::get_feature_indices() const
 vector<Index> Dataset::get_feature_indices(const Index variable_index) const
 {
     const Index index = transform_reduce(variables.begin(), variables.begin() + variable_index,
-        Index(0), plus<>{}, [](const Variable& v) { return v.feature_count(); });
+        Index(0), plus<>{}, [](const Variable& v) { return v.get_feature_count(); });
 
-    vector<Index> indices(variables[variable_index].feature_count());
+    vector<Index> indices(variables[variable_index].get_feature_count());
     iota(indices.begin(), indices.end(), index);
 
     return indices;
@@ -878,7 +885,7 @@ void Dataset::variables_from_JSON(const Json *variables_element)
 
         if (variable.is_categorical() || variable.is_binary())
         {
-            const Json* categories_element = el->first_child("Categories");
+            const Json* categories_element = el->find("Categories");
 
             if (categories_element)
                 variable.categories = get_tokens(read_json_string(el, "Categories"), ";");
@@ -1037,128 +1044,6 @@ void Dataset::fill_batch(Batch& batch,
     fill_targets(sample_indices, target_indices, target_buffer, is_training, batch.target_contiguous);
 
     batch.needs_device_copy = true;
-}
-
-void Dataset::read_binary_header() const
-{
-    ifstream file(data_path, ios::binary);
-
-    throw_if(!file.is_open(),
-             format("Failed to open binary data file: {}", data_path.string()));
-
-    file.read(reinterpret_cast<char*>(&binary_columns_number), sizeof(Index));
-    file.read(reinterpret_cast<char*>(&binary_rows_number), sizeof(Index));
-
-    throw_if(!file,
-             format("Failed to read binary data header: {}", data_path.string()));
-
-    throw_if(binary_columns_number < 0 || binary_rows_number < 0,
-             format("Invalid binary data header: {}", data_path.string()));
-}
-
-const vector<float>& Dataset::load_binary_data_cache() const
-{
-    lock_guard<mutex> lock(binary_cache_mutex);
-
-    if (!binary_data_cache.empty())
-        return binary_data_cache;
-
-    if (binary_rows_number == 0 || binary_columns_number == 0)
-        read_binary_header();
-
-    ifstream file(data_path, ios::binary);
-    throw_if(!file.is_open(),
-             format("Failed to open binary data file: {}", data_path.string()));
-
-    const size_t element_count = size_t(binary_rows_number) * size_t(binary_columns_number);
-    const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
-                                   + uintmax_t(element_count) * uintmax_t(sizeof(float));
-    const uintmax_t file_bytes = filesystem::file_size(data_path);
-    throw_if(file_bytes != expected_bytes,
-             format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
-                    data_path.string(),
-                    file_bytes,
-                    expected_bytes));
-
-    binary_data_cache.resize(element_count);
-
-    file.seekg(streamoff(2 * sizeof(Index)), ios::beg);
-    file.read(reinterpret_cast<char*>(binary_data_cache.data()),
-              streamsize(element_count * sizeof(float)));
-
-    if (!file)
-    {
-        binary_data_cache.clear();
-        throw runtime_error(format("Failed to read binary data file: {}", data_path.string()));
-    }
-
-    return binary_data_cache;
-}
-
-void Dataset::fill_from_binary_cache(const vector<Index>& sample_indices,
-                                     const vector<Index>& feature_indices,
-                                     float* output,
-                                     int contiguous_hint) const
-{
-    if (sample_indices.empty() || feature_indices.empty()) return;
-
-    const vector<float>& data = load_binary_data_cache();
-
-    const Index columns_number = binary_columns_number;
-    const Index features_number = ssize(feature_indices);
-    const bool contiguous = contiguous_hint >= 0
-                          ? static_cast<bool>(contiguous_hint)
-                          : is_contiguous(feature_indices);
-
-    const Index first_column = feature_indices.front();
-    if (contiguous)
-    {
-        throw_if(first_column < 0 || first_column + features_number > columns_number,
-                 "Binary data feature index is out of range.");
-    }
-    else
-    {
-        for (const Index feature_index : feature_indices)
-            throw_if(feature_index < 0 || feature_index >= columns_number,
-                     "Binary data feature index is out of range.");
-    }
-
-    for (Index i = 0; i < ssize(sample_indices); ++i)
-    {
-        const Index row = sample_indices[size_t(i)];
-        throw_if(row < 0 || row >= binary_rows_number,
-                 "Binary data row index is out of range.");
-
-        float* const dst = output + i * features_number;
-        const float* const src_row = data.data() + size_t(row) * size_t(columns_number);
-
-        if (contiguous)
-        {
-            copy_n(src_row + first_column, features_number, dst);
-        }
-        else
-        {
-            for (Index j = 0; j < features_number; ++j)
-                dst[j] = src_row[feature_indices[size_t(j)]];
-        }
-    }
-}
-
-void Dataset::set_matrix_storage()
-{
-    storage_mode = StorageMode::Matrix;
-    binary_rows_number = 0;
-    binary_columns_number = 0;
-    {
-        lock_guard<mutex> lock(binary_cache_mutex);
-        binary_data_cache.clear();
-    }
-}
-
-void Dataset::mark_data_changed() const
-{
-    lock_guard<mutex> lock(binary_cache_mutex);
-    binary_data_cache.clear();
 }
 
 void Dataset::samples_from_JSON(const Json *samples_element)

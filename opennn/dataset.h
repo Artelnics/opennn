@@ -132,6 +132,10 @@ public:
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }
 
+    const MatrixR& get_data() const { return data; }
+    void set_data(const MatrixR&);
+    void set_data_constant(float);
+
     void set_default();
     void set_sample_roles(const string&);
 
@@ -139,11 +143,7 @@ public:
 
     void set_sample_roles(const vector<string>&);
     void set_sample_roles(const vector<Index>&, const string&);
-    void set_variables(const vector<Variable>& new_variables)
-    {
-        variables = new_variables;
-        mark_data_changed();
-    }
+    void set_variables(const vector<Variable>& new_variables);
 
     void set_default_variable_names();
 
@@ -161,11 +161,7 @@ public:
     void set_variable_types(const VariableType&);
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index new_size)
-    {
-        variables.resize(new_size);
-        mark_data_changed();
-    }
+    void set_variables_number(const Index new_size);
 
     void set_feature_names(const vector<string>&);
 
@@ -173,10 +169,9 @@ public:
 
     void set_shape(const string&, const Shape&);
     virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
-    void set_data_path(const filesystem::path& new_data_path);
+    virtual void set_data_path(const filesystem::path& new_data_path);
     virtual void set_storage_mode(StorageMode);
     virtual void set_storage_mode(const string&);
-    void use_binary_data_file(const filesystem::path&);
 
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
     void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
@@ -269,14 +264,9 @@ protected:
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
 
-    void fill_from_binary_cache(const vector<Index>&,
-                                const vector<Index>&,
-                                float*,
-                                int contiguous = -1) const;
-    void read_binary_header() const;
-    const vector<float>& load_binary_data_cache() const;
-    void set_matrix_storage();
-    void mark_data_changed() const;
+    // Hook for derived datasets to invalidate any cached data when variables or
+    // samples change. Base does nothing; TabularDataset clears its binary cache.
+    virtual void mark_data_changed() const {}
 
     StorageMode storage_mode = StorageMode::Matrix;
 
@@ -292,12 +282,6 @@ protected:
     vector<Variable> variables;
 
     filesystem::path data_path;
-    
-    mutable Index binary_rows_number = 0;
-    mutable Index binary_columns_number = 0;
-
-    mutable vector<float> binary_data_cache;
-    mutable mutex binary_cache_mutex;
 
     Separator separator = Separator::Comma;
     bool has_header = false;

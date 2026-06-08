@@ -14,28 +14,44 @@
 namespace opennn
 {
 
-LtMatmulPlan& LtMatmulPlan::operator=(LtMatmulPlan&& other) noexcept
-{
-    std::swap(op_desc, other.op_desc);
-    std::swap(a_desc,  other.a_desc);
-    std::swap(b_desc,  other.b_desc);
-    std::swap(cd_desc, other.cd_desc);
-    std::swap(algo,    other.algo);
-    std::swap(algo_valid, other.algo_valid);
-    std::swap(workspace_size, other.workspace_size);
-    return *this;
-}
-
-LtMatmulPlan::~LtMatmulPlan()
-{
-    cublasLtMatrixLayoutDestroy(cd_desc);
-    cublasLtMatrixLayoutDestroy(b_desc);
-    cublasLtMatrixLayoutDestroy(a_desc);
-    cublasLtMatmulDescDestroy(op_desc);
-}
-
 namespace
 {
+    struct LtMatmulPlan
+    {
+        cublasLtMatmulDesc_t   op_desc = nullptr;
+        cublasLtMatrixLayout_t a_desc  = nullptr;
+        cublasLtMatrixLayout_t b_desc  = nullptr;
+        cublasLtMatrixLayout_t cd_desc = nullptr;
+        cublasLtMatmulAlgo_t   algo{};
+        bool                   algo_valid = false;
+        size_t                 workspace_size = 0;
+
+        LtMatmulPlan() = default;
+        LtMatmulPlan(const LtMatmulPlan&) = delete;
+        LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
+        LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = std::move(other); }
+
+        LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
+        {
+            std::swap(op_desc, other.op_desc);
+            std::swap(a_desc,  other.a_desc);
+            std::swap(b_desc,  other.b_desc);
+            std::swap(cd_desc, other.cd_desc);
+            std::swap(algo,    other.algo);
+            std::swap(algo_valid, other.algo_valid);
+            std::swap(workspace_size, other.workspace_size);
+            return *this;
+        }
+
+        ~LtMatmulPlan()
+        {
+            cublasLtMatrixLayoutDestroy(cd_desc);
+            cublasLtMatrixLayoutDestroy(b_desc);
+            cublasLtMatrixLayoutDestroy(a_desc);
+            cublasLtMatmulDescDestroy(op_desc);
+        }
+    };
+
     struct LtMatmulPlanKey
     {
         int m;
@@ -60,61 +76,95 @@ namespace
         }
     };
 
-    Buffer cublas_lt_workspace_(Device::CUDA);
+    struct CudaGemmThreadState
+    {
+        Buffer cublas_lt_workspace{Device::CUDA};
 
-    Buffer bf16_input_(Device::CUDA);
-    Buffer bf16_gradient_(Device::CUDA);
-    Buffer fp32_upcast_(Device::CUDA);
+        Buffer bf16_input{Device::CUDA};
+        Buffer bf16_gradient{Device::CUDA};
+        Buffer fp32_upcast{Device::CUDA};
 
-    Buffer cudnn_conv_workspace_(Device::CUDA);
+        Buffer cudnn_conv_workspace{Device::CUDA};
 
-    unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans_;
-}
+        unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
+    };
 
-namespace scratch
-{
+    CudaGemmThreadState& thread_state()
+    {
+        thread_local CudaGemmThreadState state;
+        return state;
+    }
 
-static void wait_before_realloc(Buffer& buffer, Index new_bytes)
-{
-    if (new_bytes > buffer.bytes && buffer.data)
-        device::synchronize(Backend::get_compute_stream());
+    constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
+
+    cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
+    {
+        return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
+            ? CUBLAS_COMPUTE_32F
+            : CUBLAS_COMPUTE_DTYPE;
+    }
+
+    struct LtMatmulPreferenceGuard
+    {
+        cublasLtMatmulPreference_t pref = nullptr;
+        LtMatmulPreferenceGuard() { CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref)); }
+        ~LtMatmulPreferenceGuard() { cublasLtMatmulPreferenceDestroy(pref); }
+    };
+
+    bool env_flag_enabled(const char* name) noexcept
+    {
+        const char* value = getenv(name);
+        return value
+            && (strcmp(value, "1") == 0
+                || strcmp(value, "true") == 0
+                || strcmp(value, "TRUE") == 0
+                || strcmp(value, "on") == 0
+                || strcmp(value, "ON") == 0);
+    }
+
+    bool scratch_growth_forbidden() noexcept
+    {
+        return device::cuda_allocation_growth_forbidden()
+            || env_flag_enabled("OPENNN_CUDA_NO_SCRATCH_GROWTH");
+    }
+
+    template <typename T>
+    T* ensure_scratch(Buffer& buffer, Index n)
+    {
+        if (n * Index(sizeof(T)) > buffer.bytes && buffer.data)
+        {
+            throw_if(scratch_growth_forbidden(),
+                     "ensure_scratch: buffer growth while scratch growth is forbidden "
+                     "(warmup incomplete before CUDA graph capture).");
+            device::synchronize(Backend::get_compute_stream());
+        }
+        return buffer.ensure<T>(n);
+    }
 }
 
 void* ensure_cublas_lt_workspace(size_t min_bytes)
 {
-    const Index bytes = Index(min_bytes);
-    wait_before_realloc(cublas_lt_workspace_, bytes);
-    return cublas_lt_workspace_.ensure<uint8_t>(bytes);
+    return ensure_scratch<uint8_t>(thread_state().cublas_lt_workspace, Index(min_bytes));
 }
 
 bfloat16* ensure_bf16_input_scratch(Index n)
 {
-    const Index bytes = n * Index(sizeof(bfloat16));
-    wait_before_realloc(bf16_input_, bytes);
-    return bf16_input_.ensure<bfloat16>(n);
+    return ensure_scratch<bfloat16>(thread_state().bf16_input, n);
 }
 
 bfloat16* ensure_bf16_gradient_scratch(Index n)
 {
-    const Index bytes = n * Index(sizeof(bfloat16));
-    wait_before_realloc(bf16_gradient_, bytes);
-    return bf16_gradient_.ensure<bfloat16>(n);
+    return ensure_scratch<bfloat16>(thread_state().bf16_gradient, n);
 }
 
 float* ensure_fp32_upcast_scratch(Index n)
 {
-    const Index bytes = n * Index(sizeof(float));
-    wait_before_realloc(fp32_upcast_, bytes);
-    return fp32_upcast_.ensure<float>(n);
+    return ensure_scratch<float>(thread_state().fp32_upcast, n);
 }
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)
 {
-    const Index bytes = Index(min_bytes);
-    wait_before_realloc(cudnn_conv_workspace_, bytes);
-    return cudnn_conv_workspace_.ensure<uint8_t>(bytes);
-}
-
+    return ensure_scratch<uint8_t>(thread_state().cudnn_conv_workspace, Index(min_bytes));
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
@@ -123,14 +173,14 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
     if (input.type == Type::FP32 && target_type == Type::BF16)
     {
-        bfloat16* dst = scratch::ensure_bf16_input_scratch(input.size());
+        bfloat16* dst = ensure_bf16_input_scratch(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
         return dst;
     }
 
     if (input.type == Type::BF16 && target_type == Type::FP32)
     {
-        float* dst = scratch::ensure_fp32_upcast_scratch(input.size());
+        float* dst = ensure_fp32_upcast_scratch(input.size());
         cast_bf16_to_fp32_cuda(input.size(), input.as<bfloat16>(), dst);
         return dst;
     }
@@ -138,14 +188,7 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
-cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type)
-{
-    return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-        ? CUBLAS_COMPUTE_32F
-        : CUBLAS_COMPUTE_DTYPE;
-}
-
-const LtMatmulPlan& get_lt_gemm_plan(
+static const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
     cublasOperation_t transB,
@@ -156,8 +199,13 @@ const LtMatmulPlan& get_lt_gemm_plan(
     const LtMatmulPlanKey key{m, n, k,
                               int(transA), int(transB), int(epilogue),
                               int(io_dtype), int(out_dtype)};
-    auto it = lt_gemm_plans_.find(key);
-    if (it != lt_gemm_plans_.end()) return it->second;
+    auto& plans = thread_state().lt_gemm_plans;
+    auto it = plans.find(key);
+    if (it != plans.end()) return it->second;
+
+    throw_if(scratch_growth_forbidden(),
+             "get_lt_gemm_plan: new GEMM plan requested while scratch growth is forbidden "
+             "(unseen shape during CUDA graph capture; warmup incomplete).");
 
     LtMatmulPlan plan;
 
@@ -182,22 +230,17 @@ const LtMatmulPlan& get_lt_gemm_plan(
     CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_desc,  io_dtype,  b_rows, b_cols, b_rows));
     CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.cd_desc, out_dtype, m, n, m));
 
-    cublasLtMatmulPreference_t pref = nullptr;
-    CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
-    const size_t search_bytes = cublas_lt_workspace_search_bytes();
-    CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref,
-        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &search_bytes, sizeof(search_bytes)));
+    LtMatmulPreferenceGuard pref;
+    CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref.pref,
+        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+        &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
     cublasLtMatmulHeuristicResult_t heuristic = {};
     int returned_results = 0;
-    const cublasStatus_t heuristic_status =
-        cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
-                                       plan.op_desc,
-                                       plan.a_desc, plan.b_desc, plan.cd_desc, plan.cd_desc,
-                                       pref, 1, &heuristic, &returned_results);
-    const cublasStatus_t destroy_status = cublasLtMatmulPreferenceDestroy(pref);
-    CHECK_CUBLAS(heuristic_status);
-    CHECK_CUBLAS(destroy_status);
+    CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
+                                                plan.op_desc,
+                                                plan.a_desc, plan.b_desc, plan.cd_desc, plan.cd_desc,
+                                                pref.pref, 1, &heuristic, &returned_results));
 
     if (returned_results > 0)
     {
@@ -206,16 +249,24 @@ const LtMatmulPlan& get_lt_gemm_plan(
         plan.workspace_size = heuristic.workspaceSize;
 
         // Grow the global scratch buffer to fit this plan's chosen algorithm.
-        scratch::ensure_cublas_lt_workspace(plan.workspace_size);
+        ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
-    return lt_gemm_plans_.emplace(key, std::move(plan)).first->second;
+    return plans.emplace(key, std::move(plan)).first->second;
 }
 
-void run_lt_matmul(const LtMatmulPlan& plan,
-                   const void* a_data, const void* b_data, void* c_data,
-                   const void* bias_pointer)
+void run_lt_matmul_cached(
+    int m, int n, int k,
+    cublasOperation_t transA,
+    cublasOperation_t transB,
+    cublasLtEpilogue_t epilogue,
+    const void* a_data, const void* b_data, void* c_data,
+    const void* bias_pointer,
+    cudaDataType_t io_dtype,
+    cudaDataType_t out_dtype)
 {
+    const LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.op_desc,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
 
@@ -228,7 +279,7 @@ void run_lt_matmul(const LtMatmulPlan& plan,
                                 c_data, plan.cd_desc,
                                 c_data, plan.cd_desc,
                                 plan.algo_valid ? &plan.algo : nullptr,
-                                scratch::ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
+                                ensure_cublas_lt_workspace(plan.workspace_size), plan.workspace_size,
                                 Backend::get_compute_stream()));
 }
 
@@ -254,22 +305,21 @@ void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int m, int n, int k,
-                               const void* A, int lda, long long stride_a,
-                               const void* B, int ldb, long long stride_b,
-                               void* C, int ldc, long long stride_c,
+                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
+                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
+                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
                                int batch_count,
-                               cudaDataType_t io_dtype,
                                float alpha, float beta)
 {
-    const cublasComputeType_t compute = gemm_compute_type(io_dtype);
+    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
     CHECK_CUBLAS(cublasGemmStridedBatchedEx(Backend::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,
                                             &alpha,
-                                            A, io_dtype, lda, stride_a,
-                                            B, io_dtype, ldb, stride_b,
+                                            A, Atype, lda, stride_a,
+                                            B, Btype, ldb, stride_b,
                                             &beta,
-                                            C, io_dtype, ldc, stride_c,
+                                            C, Ctype, ldc, stride_c,
                                             batch_count,
                                             compute,
                                             CUBLAS_GEMM_DEFAULT));
@@ -280,23 +330,6 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
 #else
 
 namespace opennn
-{
-
-LtMatmulPlan& LtMatmulPlan::operator=(LtMatmulPlan&& other) noexcept
-{
-    std::swap(op_desc, other.op_desc);
-    std::swap(a_desc,  other.a_desc);
-    std::swap(b_desc,  other.b_desc);
-    std::swap(cd_desc, other.cd_desc);
-    std::swap(algo,    other.algo);
-    std::swap(algo_valid, other.algo_valid);
-    std::swap(workspace_size, other.workspace_size);
-    return *this;
-}
-
-LtMatmulPlan::~LtMatmulPlan() = default;
-
-namespace scratch
 {
 
 void* ensure_cublas_lt_workspace(size_t)
@@ -324,35 +357,21 @@ void* ensure_cudnn_conv_workspace(size_t)
     throw runtime_error("ensure_cudnn_conv_workspace requires CUDA support.");
 }
 
-}
-
 const void* data_for_gemm_dtype(const TensorView&, Type)
 {
     throw runtime_error("data_for_gemm_dtype requires CUDA support.");
 }
 
-cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type)
+void run_lt_matmul_cached(int, int, int,
+                          cublasOperation_t,
+                          cublasOperation_t,
+                          cublasLtEpilogue_t,
+                          const void*, const void*, void*,
+                          const void*,
+                          cudaDataType_t,
+                          cudaDataType_t)
 {
-    return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-        ? CUBLAS_COMPUTE_32F
-        : CUBLAS_COMPUTE_DTYPE;
-}
-
-const LtMatmulPlan& get_lt_gemm_plan(int, int, int,
-                                     cublasOperation_t,
-                                     cublasOperation_t,
-                                     cublasLtEpilogue_t,
-                                     cudaDataType_t,
-                                     cudaDataType_t)
-{
-    throw runtime_error("get_lt_gemm_plan requires CUDA support.");
-}
-
-void run_lt_matmul(const LtMatmulPlan&,
-                   const void*, const void*, void*,
-                   const void*)
-{
-    throw runtime_error("run_lt_matmul requires CUDA support.");
+    throw runtime_error("run_lt_matmul_cached requires CUDA support.");
 }
 
 void gemm_cuda(cublasOperation_t, cublasOperation_t,
@@ -367,11 +386,10 @@ void gemm_cuda(cublasOperation_t, cublasOperation_t,
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                int, int, int,
-                               const void*, int, long long,
-                               const void*, int, long long,
-                               void*, int, long long,
+                               const void*, cudaDataType_t, int, long long,
+                               const void*, cudaDataType_t, int, long long,
+                               void*, cudaDataType_t, int, long long,
                                int,
-                               cudaDataType_t,
                                float, float)
 {
     throw runtime_error("gemm_strided_batched_cuda requires CUDA support.");

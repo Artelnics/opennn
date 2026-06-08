@@ -23,23 +23,6 @@ const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad
 
 }
 
-void TabularDataset::set_data(const MatrixR& new_data)
-{
-    throw_if(new_data.rows() != get_samples_number(),
-             "Rows number is not equal to samples number");
-    throw_if(new_data.cols() != get_features_number(),
-             "Columns number is not equal to variables number");
-
-    data = new_data;
-    set_matrix_storage();
-}
-
-void TabularDataset::set_data_constant(float new_value)
-{
-    data.setConstant(new_value);
-    mark_data_changed();
-}
-
 void TabularDataset::set(const Index new_samples_number,
                          const Shape& new_input_shape,
                          const Shape& new_target_shape)
@@ -56,7 +39,7 @@ void TabularDataset::set(const Index new_samples_number,
 
     target_shape = { new_targets_number };
     data.resize(new_samples_number, new_features_number);
-    set_matrix_storage();
+    set_storage_mode(StorageMode::Matrix);
     variables.resize(new_features_number);
 
     set_default();
@@ -99,7 +82,7 @@ VectorR TabularDataset::get_sample_data(Index index) const { return data.row(ind
 MatrixR TabularDataset::get_variable_data(Index variable_index) const
 {
     const Index start_column = get_feature_indices(variable_index)[0];
-    return data.block(0, start_column, data.rows(), variables[variable_index].feature_count());
+    return data.block(0, start_column, data.rows(), variables[variable_index].get_feature_count());
 }
 
 MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Index>& row_indices) const
@@ -215,7 +198,96 @@ void TabularDataset::load_data_binary()
     throw_if(!file,
              format("Failed to read binary data file: {}", data_path.string()));
 
-    set_matrix_storage();
+    set_storage_mode(StorageMode::Matrix);
+}
+
+void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    Dataset::set_storage_mode(new_storage_mode);
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+    {
+        data.resize(0, 0);
+    }
+    else
+    {
+        binary_rows_number = 0;
+        binary_columns_number = 0;
+        cache_reader.close();
+    }
+}
+
+void TabularDataset::read_binary_header() const
+{
+    if (!cache_reader.is_open())
+        cache_reader.open(cache_path);
+
+    Index header[2] = {0, 0};
+    cache_reader.read_at(header, sizeof(header), 0);
+
+    binary_columns_number = header[0];
+    binary_rows_number = header[1];
+
+    throw_if(binary_columns_number < 0 || binary_rows_number < 0,
+             format("Invalid binary data header: {}", cache_path.string()));
+}
+
+void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
+                                            const vector<Index>& feature_indices,
+                                            float* output,
+                                            int contiguous_hint) const
+{
+    if (sample_indices.empty() || feature_indices.empty()) return;
+
+    const Index columns_number = binary_columns_number;
+    const Index features_number = ssize(feature_indices);
+    const bool contiguous = contiguous_hint >= 0
+                          ? static_cast<bool>(contiguous_hint)
+                          : is_contiguous(feature_indices);
+
+    const Index first_column = feature_indices.front();
+    if (contiguous)
+    {
+        throw_if(first_column < 0 || first_column + features_number > columns_number,
+                 "Binary data feature index is out of range.");
+    }
+    else
+    {
+        for (const Index feature_index : feature_indices)
+            throw_if(feature_index < 0 || feature_index >= columns_number,
+                     "Binary data feature index is out of range.");
+    }
+
+    for (const Index row : sample_indices)
+        throw_if(row < 0 || row >= binary_rows_number,
+                 "Binary data row index is out of range.");
+
+    // Header is {Index columns, Index rows}; row-major float matrix follows.
+    constexpr uint64_t header_bytes = 2 * sizeof(Index);
+
+    for (Index i = 0; i < ssize(sample_indices); ++i)
+    {
+        const Index row = sample_indices[size_t(i)];
+        float* const dst = output + i * features_number;
+
+        if (contiguous)
+        {
+            const uint64_t offset = header_bytes
+                + (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
+            cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
+        }
+        else
+        {
+            thread_local vector<float> row_buffer;
+            row_buffer.resize(size_t(columns_number));
+
+            const uint64_t offset = header_bytes + uint64_t(row) * uint64_t(columns_number) * sizeof(float);
+            cache_reader.read_at(row_buffer.data(), size_t(columns_number) * sizeof(float), offset);
+
+            for (Index j = 0; j < features_number; ++j)
+                dst[j] = row_buffer[size_t(feature_indices[size_t(j)])];
+        }
+    }
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
@@ -254,7 +326,7 @@ void TabularDataset::infer_variable_types_from_data()
     for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
     {
         Variable& variable = variables[variable_index];
-        const Index advance = variable.feature_count();
+        const Index advance = variable.get_feature_count();
 
         if (variable.type == VariableType::Numeric)
         {
@@ -280,9 +352,10 @@ void TabularDataset::set_binary_variables() { infer_variable_types_from_data(); 
 
 void TabularDataset::resize_data_from_JSON(Index samples_number)
 {
-    if (variables.empty()) data.resize(0, 0);
-    else data = MatrixR::Zero(samples_number, get_features_number());
-    mark_data_changed();
+    if (storage_mode == StorageMode::BinaryFile || variables.empty())
+        data.resize(0, 0);
+    else
+        data = MatrixR::Zero(samples_number, get_features_number());
 }
 
 TabularDataset::TabularDataset(const Index new_samples_number,
@@ -321,8 +394,6 @@ void TabularDataset::set(const filesystem::path& new_data_path,
 
     read_csv();
 
-    set_matrix_storage();
-
     set_default_variable_scalers();
 
     set_default_variable_roles();
@@ -357,7 +428,7 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
 
         for (Index j = 0; j < target_variables_number; ++j)
         {
-            const float correlation_value = correlations(i, j).r;
+            const float correlation_value = correlations(i, j).coefficient;
 
             if (!isnan(correlation_value) && abs(correlation_value) >= minimum_correlation)
             {
@@ -398,7 +469,7 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
         {
             if (i == j) continue;
 
-            const float abs_r = abs(correlations(i, j).r);
+            const float abs_r = abs(correlations(i, j).coefficient);
             if (!isnan(abs_r))
             {
                 if (abs_r >= maximum_correlation)
@@ -420,7 +491,7 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
             if (to_be_removed[i] || to_be_removed[j])
                 continue;
 
-            const float r = correlations(i, j).r;
+            const float r = correlations(i, j).coefficient;
 
             if (!isnan(r) && abs(r) >= maximum_correlation)
             {
@@ -466,7 +537,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
     {
         if (variable.role == VariableRole::None)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             continue;
         }
 
@@ -560,7 +631,7 @@ vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
             && variable.role != VariableRole::None)
             box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
-        feature_index += variable.feature_count();
+        feature_index += variable.get_feature_count();
     }
 
     return box_plots;
@@ -692,8 +763,8 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
             correlations(i, j) = correlation_function(input_i, input_j);
 
-            if (correlations(i, j).r > 1.0f - EPSILON)
-                correlations(i, j).r = 1.0f;
+            if (correlations(i, j).coefficient > 1.0f - EPSILON)
+                correlations(i, j).coefficient = 1.0f;
 
             correlations(j, i) = correlations(i, j);
         }
@@ -831,7 +902,11 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     {
         set_storage_mode(read_json_string(src, "StorageMode"));
         if (storage_mode == StorageMode::BinaryFile)
+        {
+            // The .bin was produced by a prior read_csv; reopen it and stream from disk.
+            cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
             read_binary_header();
+        }
     }
 
     variables_from_JSON(require_json_field(root, "Variables"));
@@ -919,55 +994,54 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
         if (variable.role == VariableRole::None)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             continue;
         }
 
         if (variable.is_categorical() || variable.is_binary() || variable.type == VariableType::DateTime)
         {
-            feature_index += variable.feature_count();
+            feature_index += variable.get_feature_count();
             ++used_feature_index;
             continue;
         }
-        else
+
+        // Numeric variable: feature_count is always 1, so feature_index advances by 1 below.
+        const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
+
+        if (interquartile_range < EPSILON)
         {
-            const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
-
-            if (interquartile_range < EPSILON)
-            {
-                ++feature_index;
-                ++used_feature_index;
-                continue;
-            }
-
-            const float lower = box_plots[i].first_quartile - cleaning_parameter * interquartile_range;
-            const float upper = box_plots[i].third_quartile + cleaning_parameter * interquartile_range;
-
-            Index variables_outliers = 0;
-
-            for (Index j = 0; j < samples_number; ++j)
-            {
-                const Index sample_index = sample_indices[j];
-                const float value = data(sample_index, feature_index);
-
-                if (value < lower || value > upper)
-                {
-                    return_values[0][j] = 1;
-                    ++variables_outliers;
-
-                    if (replace_with_nan)
-                    {
-                        data(sample_index, feature_index) = QUIET_NAN;
-                        data_changed = true;
-                    }
-                }
-            }
-
-            return_values[1][used_feature_index] = variables_outliers;
-
             ++feature_index;
             ++used_feature_index;
+            continue;
         }
+
+        const float lower = box_plots[i].first_quartile - cleaning_parameter * interquartile_range;
+        const float upper = box_plots[i].third_quartile + cleaning_parameter * interquartile_range;
+
+        Index variables_outliers = 0;
+
+        for (Index j = 0; j < samples_number; ++j)
+        {
+            const Index sample_index = sample_indices[j];
+            const float value = data(sample_index, feature_index);
+
+            if (value < lower || value > upper)
+            {
+                return_values[0][j] = 1;
+                ++variables_outliers;
+
+                if (replace_with_nan)
+                {
+                    data(sample_index, feature_index) = QUIET_NAN;
+                    data_changed = true;
+                }
+            }
+        }
+
+        return_values[1][used_feature_index] = variables_outliers;
+
+        ++feature_index;
+        ++used_feature_index;
     }
 
     if (data_changed)
@@ -1110,6 +1184,49 @@ void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
         else
             data(sample_index, feature_index) = parse_float_or_nan(token);
     }
+}
+
+DateFormat infer_dataset_date_format(const vector<Variable>& variables,
+                                     const vector<vector<string_view>>& sample_rows,
+                                     bool has_sample_ids,
+                                     const string& missing_values_label)
+{
+    static const regex date_re(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)");
+
+    const size_t id_offset = has_sample_ids ? 1 : 0;
+
+    for (size_t col_index = 0; col_index < variables.size(); ++col_index)
+    {
+        if (variables[col_index].type != VariableType::DateTime)
+            continue;
+
+        const size_t token_index = col_index + id_offset;
+
+        for (const vector<string_view>& row : sample_rows)
+        {
+            if (token_index >= row.size())
+                continue;
+
+            const string_view token = row[token_index];
+
+            if (token.empty() || token == missing_values_label)
+                continue;
+
+            cmatch date_parts;
+            if (regex_match(token.data(), token.data() + token.size(), date_parts, date_re))
+            {
+                const int part1 = stoi(date_parts[1].str());
+                const int part2 = stoi(date_parts[2].str());
+
+                if (part1 > 12)
+                    return Dmy;
+                if (part2 > 12)
+                    return Mdy;
+            }
+        }
+    }
+
+    return Auto;
 }
 
 }
@@ -1294,7 +1411,21 @@ void TabularDataset::read_csv()
 
     infer_variable_types_from_data();
     split_samples_random();
-    mark_data_changed();
+
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        // Offload the parsed matrix to a .bin and stream batches from disk (like ImageDataset).
+        cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
+        filesystem::create_directories(cache_path.parent_path());
+
+        binary_columns_number = data.cols();
+        binary_rows_number = data.rows();
+
+        save_data_binary(cache_path);
+
+        data.resize(0, 0);
+        cache_reader.open(cache_path);
+    }
 }
 
 static const vector<pair<TabularDataset::MissingValuesMethod, string>> missing_values_method_map = {
@@ -1362,10 +1493,10 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
     variables_missing_values_number.resize(tokens.size());
     for (size_t i = 0; i < tokens.size(); ++i)
         if (!tokens[i].empty())
-            variables_missing_values_number(i) = stoi(tokens[i]);
+            variables_missing_values_number(i) = parse_int(tokens[i], "VariablesMissingValuesNumber");
 
-    rows_missing_values_number = stol(read_json_string_fallback(missing_values_element,
-        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
+    rows_missing_values_number = parse_long(read_json_string_fallback(missing_values_element,
+        {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}), "SamplesMissingValuesNumber");
 }
 
 void TabularDataset::impute_missing_values_unuse()
@@ -1605,7 +1736,7 @@ vector<string> TabularDataset::get_feature_scalers(const string& variable_role) 
     scalers.reserve(get_features_number(variable_role));
 
     for (const Variable& var : role_variables)
-        scalers.insert(scalers.end(), var.feature_count(), scaler_method_to_string(var.scaler));
+        scalers.insert(scalers.end(), var.get_feature_count(), scaler_method_to_string(var.scaler));
 
     return scalers;
 }
@@ -1635,49 +1766,6 @@ void TabularDataset::set_default_variable_scalers()
         variable.scaler = (variable.type == VariableType::Numeric)
                                   ? ScalerMethod::MeanStandardDeviation
                                   : ScalerMethod::MinimumMaximum;
-}
-
-DateFormat TabularDataset::infer_dataset_date_format(const vector<Variable>& variables,
-                                                      const vector<vector<string_view>>& sample_rows,
-                                                      bool has_sample_ids,
-                                                      const string& missing_values_label)
-{
-    static const regex date_re(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)");
-
-    const size_t id_offset = has_sample_ids ? 1 : 0;
-
-    for (size_t col_index = 0; col_index < variables.size(); ++col_index)
-    {
-        if (variables[col_index].type != VariableType::DateTime)
-            continue;
-
-        const size_t token_index = col_index + id_offset;
-
-        for (const vector<string_view>& row : sample_rows)
-        {
-            if (token_index >= row.size())
-                continue;
-
-            const string_view token = row[token_index];
-
-            if (token.empty() || token == missing_values_label)
-                continue;
-
-            cmatch date_parts;
-            if (regex_match(token.data(), token.data() + token.size(), date_parts, date_re))
-            {
-                const int part1 = stoi(date_parts[1].str());
-                const int part2 = stoi(date_parts[2].str());
-
-                if (part1 > 12)
-                    return DMY;
-                if (part2 > 12)
-                    return MDY;
-            }
-        }
-    }
-
-    return AUTO;
 }
 
 void TabularDataset::to_JSON(JsonWriter& printer) const

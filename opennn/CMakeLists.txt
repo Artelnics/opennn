@@ -21,7 +21,25 @@ if(NOT OpenNN_BUILD_VISION)
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
-add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
+# A static lib is an archive of every TU's objects, so the heavy Eigen / STL /
+# cuDNN-frontend template instantiations are duplicated across all 72 objects
+# (the linker only dedups them when building an exe/dll). A shared lib dedups
+# at link time into one much smaller binary. Default OFF to keep the proven
+# static build; enable with -DOpenNN_BUILD_SHARED=ON.
+option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
+if(OpenNN_BUILD_SHARED)
+    set(_opennn_lib_type SHARED)
+else()
+    set(_opennn_lib_type STATIC)
+endif()
+
+add_library(opennn ${_opennn_lib_type} ${CPP_SOURCES} ${HEADER_FILES})
+
+# The headers carry no __declspec(dllexport), so let CMake auto-generate the
+# export table from every symbol when building the DLL on Windows.
+if(OpenNN_BUILD_SHARED AND WIN32)
+    set_target_properties(opennn PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 if(NOT OpenNN_BUILD_VISION)
     target_compile_definitions(opennn PUBLIC OPENNN_NO_VISION)
@@ -34,21 +52,100 @@ endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
-# ZLIB is only needed by the PNG support in image_dataset / image_utilities,
-# which are themselves excluded when the slim opennn_core lib is requested.
-# Make the dependency conditional so tabular-only builds (which is how the
-# IDC_benchmark and baseline_trainer consumers wire opennn in) do not need
-# a system ZLIB install. Use -l<name> instead of the ZLIB::ZLIB imported
-# target so Flatpak-host .so files with epoch-zero mtimes don't make GNU
-# make fail with "No rule to make target" (same workaround as JPEG below).
 if(OpenNN_BUILD_VISION)
-    find_package(ZLIB REQUIRED)
-    target_link_libraries(opennn PUBLIC z)
-endif()
+    include(FetchContent)
 
-if(OpenNN_BUILD_VISION)
-    find_package(JPEG REQUIRED)
-    target_link_libraries(opennn PUBLIC jpeg)
+    # ZLIB is only needed by the PNG support in image_dataset /
+    # image_utilities, which are excluded when the slim opennn_core lib is
+    # requested. Keep system packages preferred, but fetch a pinned fallback so
+    # Windows/CUDA builds do not require a separate zlib install.
+    find_package(ZLIB QUIET)
+    if(ZLIB_FOUND)
+        target_include_directories(opennn PUBLIC ${ZLIB_INCLUDE_DIRS})
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            # Avoid imported-target absolute paths that can trip GNU make when
+            # sysroot files have epoch-zero mtimes.
+            target_link_libraries(opennn PUBLIC z)
+        elseif(TARGET ZLIB::ZLIB)
+            target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
+        else()
+            target_link_libraries(opennn PUBLIC ${ZLIB_LIBRARIES})
+        endif()
+    else()
+        FetchContent_Declare(
+            opennn_zlib
+            URL https://zlib.net/fossils/zlib-1.3.2.tar.gz
+            URL_HASH SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(opennn_zlib)
+        target_include_directories(opennn SYSTEM PUBLIC
+            ${opennn_zlib_SOURCE_DIR}
+            ${opennn_zlib_BINARY_DIR})
+        target_link_libraries(opennn PUBLIC zlibstatic)
+    endif()
+
+    find_package(JPEG QUIET)
+    if(JPEG_FOUND)
+        target_include_directories(opennn PUBLIC ${JPEG_INCLUDE_DIRS})
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_link_libraries(opennn PUBLIC jpeg)
+        elseif(TARGET JPEG::JPEG)
+            target_link_libraries(opennn PUBLIC JPEG::JPEG)
+        else()
+            target_link_libraries(opennn PUBLIC ${JPEG_LIBRARIES})
+        endif()
+    else()
+        include(ExternalProject)
+        set(_opennn_jpeg_install_dir
+            ${CMAKE_BINARY_DIR}/_deps/opennn_libjpeg_turbo-install)
+        set(_opennn_jpeg_include_dir
+            ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR})
+        set(_opennn_jpeg_lib_dir
+            ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR})
+        if(MSVC)
+            set(_opennn_jpeg_library ${_opennn_jpeg_lib_dir}/jpeg-static.lib)
+        else()
+            set(_opennn_jpeg_library
+                ${_opennn_jpeg_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}jpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
+        endif()
+
+        file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
+
+        set(_opennn_jpeg_cmake_args
+            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+            -DENABLE_SHARED=OFF
+            -DENABLE_STATIC=ON
+            -DWITH_JAVA=OFF
+            -DWITH_SIMD=OFF
+            -DWITH_TESTS=OFF
+            -DWITH_TURBOJPEG=OFF)
+
+        if(MSVC)
+            list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
+        endif()
+
+        ExternalProject_Add(
+            opennn_libjpeg_turbo_ep
+            URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.1.4.tar.gz
+            URL_HASH SHA256=3a581ad5a3060cee69487aae0bc71a1f3be94b89f92215e32b43742ec4a5055c
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+            INSTALL_DIR ${_opennn_jpeg_install_dir}
+            CMAKE_ARGS ${_opennn_jpeg_cmake_args}
+            BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
+            INSTALL_COMMAND
+                ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component include
+                COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component lib
+            BUILD_BYPRODUCTS ${_opennn_jpeg_library}
+        )
+        add_library(opennn_jpeg STATIC IMPORTED GLOBAL)
+        add_dependencies(opennn_jpeg opennn_libjpeg_turbo_ep)
+        set_target_properties(opennn_jpeg PROPERTIES
+            IMPORTED_LOCATION ${_opennn_jpeg_library})
+        add_dependencies(opennn opennn_libjpeg_turbo_ep)
+        target_include_directories(opennn SYSTEM PUBLIC ${_opennn_jpeg_include_dir})
+        target_link_libraries(opennn PUBLIC opennn_jpeg)
+    endif()
 endif()
 
 # stdc++fs is only needed on GCC < 9; modern toolchains have std::filesystem
@@ -56,6 +153,23 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
     target_link_libraries(opennn PUBLIC stdc++fs)
+endif()
+
+# libstdc++'s parallel algorithms (std::execution::par, used in image_dataset.cpp)
+# are implemented on top of Intel TBB, so GCC/Clang builds must link it. MSVC's
+# parallel STL has no such dependency. PUBLIC so consumers inherit the link.
+if(NOT MSVC)
+    find_package(TBB QUIET)
+    if(TBB_FOUND)
+        target_link_libraries(opennn PUBLIC TBB::tbb)
+    else()
+        # Fall back to a plain libtbb only if it actually exists; otherwise rely on
+        # libstdc++'s serial fallback (linking a missing -ltbb breaks the build).
+        find_library(TBB_LIBRARY tbb)
+        if(TBB_LIBRARY)
+            target_link_libraries(opennn PUBLIC ${TBB_LIBRARY})
+        endif()
+    endif()
 endif()
 
 target_include_directories(opennn PUBLIC

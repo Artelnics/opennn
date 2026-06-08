@@ -246,11 +246,11 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
     set_maximum_neurons(read_json_index(root_element, "MaximumNeurons"));
     set_neurons_increment(read_json_index(root_element, "NeuronsIncrement"));
     set_trials_number(read_json_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_json_type(root_element,
+    set_validation_error_goal(read_json_float(root_element,
         root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
     set_maximum_validation_failures(read_json_index(root_element,
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
-    set_maximum_time(read_json_type(root_element, "MaximumTime"));
+    set_maximum_time(read_json_float(root_element, "MaximumTime"));
 }
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");

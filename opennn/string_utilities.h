@@ -3,8 +3,8 @@
 //
 //   S T R I N G S
 //
-//   Artificial Intelligence Techniques, SL
-//   artelnics artelnics.com
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #pragma once
 
@@ -28,14 +28,18 @@ namespace opennn
     bool is_numeric_string(string_view);
     bool is_date_time_string(string_view);
 
-    enum DateFormat {AUTO, DMY, MDY, YMD};
+    enum DateFormat {Auto, Dmy, Mdy, Ymd};
 
-    time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = AUTO);
+    time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = Auto);
 
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
     string get_trimmed(const string&);
+
+    float parse_float(const string&, const string& context);
+    int   parse_int  (const string&, const string& context);
+    long  parse_long (const string&, const string& context);
 
     bool has_numbers(const vector<string>&);
     bool has_numbers(const vector<string_view>&);

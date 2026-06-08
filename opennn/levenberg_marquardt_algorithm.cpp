@@ -506,8 +506,8 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "LevenbergMarquardt");
 
-    set_damping_parameter_factor(read_json_type(root_element, "DampingParameterFactor"));
-    set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
+    set_damping_parameter_factor(read_json_float(root_element, "DampingParameterFactor"));
+    set_minimum_loss_decrease(read_json_float(root_element, "MinimumLossDecrease"));
     read_common_json(root_element);
 }
 

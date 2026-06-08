@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.12.1
+  GIT_TAG        v1.17.0
   GIT_SHALLOW    TRUE
 )
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
@@ -24,7 +24,7 @@ add_executable(run_tests test.cpp
 		correlations_test.cpp
 		cross_entropy_error_3d_test.cpp
 		cross_entropy_error_test.cpp
-		data_set_test.cpp
+		dataset_test.cpp
 		dense_layer_test.cpp
 		embedding_layer_test.cpp
 		flatten_layer_test.cpp
@@ -52,7 +52,7 @@ add_executable(run_tests test.cpp
 		stochastic_gradient_descent_test.cpp
 		tensors_test.cpp
 		testing_analysis_test.cpp
-		time_series_data_set_test.cpp
+		time_series_dataset_test.cpp
 		training_strategy_test.cpp
 		transformer_test.cpp
 		unscaling_layer_test.cpp

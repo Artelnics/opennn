@@ -57,7 +57,7 @@ void TestingAnalysis::print_linear_correlations() const
     const Index targets_number = linear_correlations.size();
 
     for (Index i = 0; i < targets_number; ++i)
-        cout << targets_name[i] << " correlation: " << linear_correlations[i].r << "\n";
+        cout << targets_name[i] << " correlation: " << linear_correlations[i].coefficient << "\n";
 }
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const

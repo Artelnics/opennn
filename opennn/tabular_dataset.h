@@ -11,6 +11,7 @@
 #include "dataset.h"
 #include "correlations.h"
 #include "statistics.h"
+#include "io_utilities.h"
 
 namespace opennn
 {
@@ -23,14 +24,14 @@ public:
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
     TabularDataset(const Index = 0,
-                        const Shape& = {0},
-                        const Shape& = {0});
+                   const Shape& = {0},
+                   const Shape& = {0});
 
     TabularDataset(const filesystem::path&,
-                        const string&,
-                        bool = true,
-                        bool = false,
-                        const Codification& = Codification::UTF8);
+                   const string&,
+                   bool = true,
+                   bool = false,
+                   const Codification& = Codification::UTF8);
 
     Index get_samples_number() const override
     {
@@ -38,10 +39,8 @@ public:
              ? binary_rows_number
              : data.rows();
     }
-    const MatrixR& get_data() const { return data; }
-    void set_data(const MatrixR&);
-    void set_data_constant(float);
 
+    using Dataset::get_data;
     MatrixR get_data(const string&, const string&) const;
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
@@ -61,6 +60,9 @@ public:
              const Codification& = Codification::UTF8);
     void set(const filesystem::path&);
 
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
+
     vector<string> get_feature_scalers(const string&) const;
 
     void set_variable_scalers(const string&);
@@ -68,8 +70,6 @@ public:
     void set_default_variable_scalers();
 
     void set_gmt(const Index new_gmt) { gmt = new_gmt; }
-
-    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string_view>>&, bool, const string&);
 
     MissingValuesMethod get_missing_values_method() const { return missing_values_method; }
     string get_missing_values_method_string() const;
@@ -179,6 +179,20 @@ protected:
 
     void infer_variable_types_from_data();
     void resize_data_from_JSON(Index) override;
+
+    // Binary (.bin) tabular storage: header is {Index columns, Index rows} then a
+    // row-major float matrix. In BinaryFile mode the base data matrix stays empty
+    // and batches are streamed straight from disk per row (like ImageDataset).
+    void read_binary_header() const;
+    void fill_from_binary_cache(const vector<Index>&,
+                                const vector<Index>&,
+                                float*,
+                                int contiguous = -1) const;
+
+    filesystem::path cache_path;
+    mutable FileReader cache_reader;
+    mutable Index binary_rows_number = 0;
+    mutable Index binary_columns_number = 0;
 
     void infer_column_types(const vector<vector<string_view>>&);
 

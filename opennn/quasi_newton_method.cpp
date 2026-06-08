@@ -366,7 +366,7 @@ void QuasiNewtonMethod::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "QuasiNewtonMethod");
 
-    set_minimum_loss_decrease(read_json_type(root_element, "MinimumLossDecrease"));
+    set_minimum_loss_decrease(read_json_float(root_element, "MinimumLossDecrease"));
     read_common_json(root_element);
 }
 

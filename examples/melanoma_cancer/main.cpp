@@ -35,7 +35,7 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset("../data/melanoma_cancer_data");
+        ImageDataset image_dataset("../data");
 
         image_dataset.split_samples_random(0.8, 0.0, 0.2);
 

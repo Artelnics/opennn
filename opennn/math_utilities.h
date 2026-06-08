@@ -13,8 +13,6 @@
 
 namespace opennn
 {
-void pad(const TensorView& input, TensorView& output);
-
 void bound(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
 
 void scale(const TensorView& input,

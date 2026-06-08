@@ -237,12 +237,12 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     augmentation.reflection_axis_x = read_json_bool(data_source_element, "RandomReflectionAxisX");
     augmentation.reflection_axis_y = read_json_bool(data_source_element, "RandomReflectionAxisY");
-    augmentation.rotation_minimum = read_json_type(data_source_element, "RandomRotationMinimum");
-    augmentation.rotation_maximum = read_json_type(data_source_element, "RandomRotationMaximum");
-    augmentation.horizontal_translation_minimum = read_json_type(data_source_element, "RandomHorizontalTranslationMinimum");
-    augmentation.horizontal_translation_maximum = read_json_type(data_source_element, "RandomHorizontalTranslationMaximum");
-    augmentation.vertical_translation_minimum = read_json_type(data_source_element, "RandomVerticalTranslationMinimum");
-    augmentation.vertical_translation_maximum = read_json_type(data_source_element, "RandomVerticalTranslationMaximum");
+    augmentation.rotation_minimum = read_json_float(data_source_element, "RandomRotationMinimum");
+    augmentation.rotation_maximum = read_json_float(data_source_element, "RandomRotationMaximum");
+    augmentation.horizontal_translation_minimum = read_json_float(data_source_element, "RandomHorizontalTranslationMinimum");
+    augmentation.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
+    augmentation.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
+    augmentation.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
     augmentation.enabled = data_source_element->has("RandomAugmentation")
                          ? read_json_bool(data_source_element, "RandomAugmentation")
                          : has_augmentation_transform(augmentation);

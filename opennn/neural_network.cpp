@@ -148,7 +148,7 @@ static vector<string> get_feature_names_from(const vector<Variable>& variables)
 {
     vector<string> feature_names;
     feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.feature_count(); })));
+                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
 
     for (const auto& variable : variables)
     {
@@ -917,7 +917,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    if (const Json* inputs_element = neural_network_element->first_child("Inputs"); inputs_element)
+    if (const Json* inputs_element = neural_network_element->find("Inputs"); inputs_element)
     {
         const Index inputs_number = read_json_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
@@ -927,7 +927,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         });
     }
 
-    const Json* layers_container = neural_network_element->first_child("Layers");
+    const Json* layers_container = neural_network_element->find("Layers");
     throw_if(!layers_container, "layers container is nullptr.");
 
     const Index layers_number = read_json_index(layers_container, "LayersNumber");
@@ -983,7 +983,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         }
     }
 
-    if (const Json* outputs_element = neural_network_element->first_child("Outputs"); outputs_element)
+    if (const Json* outputs_element = neural_network_element->find("Outputs"); outputs_element)
     {
         const Index outputs_number = read_json_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);
@@ -1010,7 +1010,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
         }
     }
 
-    const Json* parameters_element = neural_network_element->first_child("Parameters");
+    const Json* parameters_element = neural_network_element->find("Parameters");
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
     if (parameters_text.empty()) return;
 

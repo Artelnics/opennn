@@ -199,10 +199,14 @@ using TensorMap4 = TensorMap<Tensor<float, 4, Layout | AlignedMax>, AlignedMax>;
 template <int Rank>
 using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMax>;
 
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "json.h"
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

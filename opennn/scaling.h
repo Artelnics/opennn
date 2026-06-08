@@ -3,7 +3,7 @@
 //
 //   S C A L I N G   H E A D E R
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #pragma once

@@ -22,7 +22,15 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ON)
+# MSVC 19.5x (VS 2026) crashes (C1001 in the LTCG "Generating code" pass) when
+# optimizing the YOLO gradient loop in loss.cpp under whole-program LTO, so
+# default LTO OFF there; it works on GCC/Clang. Override with -DOpenNN_ENABLE_LTO=ON.
+if(MSVC)
+    set(_opennn_lto_default OFF)
+else()
+    set(_opennn_lto_default ON)
+endif()
+option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for OpenNN release builds" ${_opennn_lto_default})
 if(OpenNN_ENABLE_LTO)
     check_ipo_supported(RESULT OPENNN_LTO_OK)
     if(OPENNN_LTO_OK)
@@ -144,12 +152,12 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
     # Required for SDPA / Flash Attention. Fetched at configure time; pinned
-    # to v1.12.1 (the version the project was previously vendoring as a submodule).
+    # to v1.22.1 (the newest release compatible with cuDNN 9.20).
     include(FetchContent)
     FetchContent_Declare(
         cudnn_frontend
         GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
-        GIT_TAG        v1.12.1
+        GIT_TAG        v1.22.1
         GIT_SHALLOW    TRUE
     )
     set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
@@ -166,7 +174,7 @@ include(FetchContent)
 FetchContent_Declare(
     eigen
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-    GIT_TAG        3.4.0
+    GIT_TAG        5.0.1
     GIT_SHALLOW    TRUE
 )
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
@@ -176,13 +184,8 @@ FetchContent_MakeAvailable(eigen)
 
 add_subdirectory(opennn)
 
-option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
-if(OpenNN_BUILD_BLANK)
-    add_subdirectory(blank)
-endif()
-
 if(OPENNN_HAS_CUDA)
-    add_subdirectory(blank_cuda)
+    option(OpenNN_BUILD_BLANK_CUDA "Build OpenNN CUDA blank example" ON)
 endif()
 
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)

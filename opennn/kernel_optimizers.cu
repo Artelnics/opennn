@@ -92,7 +92,7 @@ void adam_update_cuda(
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const float sqrt_bias_correction_2 = sqrtf(bias_correction_2);
 
     const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
@@ -109,7 +109,7 @@ void adam_update_cuda(
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    adam_update_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH(adam_update_kernel<<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(
         n_vec,
         total,
         parameters,
@@ -122,7 +122,7 @@ void adam_update_cuda(
         beta_2,
         one_minus_beta_2,
         effective_lr,
-        effective_eps);
+        effective_eps));
 }
 
 __device__ __forceinline__ void sgd_update_one(
@@ -236,7 +236,7 @@ void sgd_update_cuda(
 {
     if (n == 0 || learning_rate == 0.0f) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
     const bool mirror_aligned = parameters_bf16 == nullptr
         || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
@@ -247,14 +247,14 @@ void sgd_update_cuda(
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    sgd_update_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH(sgd_update_kernel<<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(
         n_vec,
         total,
         parameters,
         velocity,
         gradients,
         parameters_bf16,
-        learning_rate, momentum, nesterov);
+        learning_rate, momentum, nesterov));
 }
 
 __global__ void clip_apply_kernel(const int n,
@@ -280,10 +280,10 @@ void clip_gradient_norm_cuda(const Index n,
                              const float eps)
 {
     if (n == 0) return;
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const int grid = grid_size_for(total);
-    clip_apply_kernel<<<grid, block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, squared_norm, max_norm, eps, gradient);
+    OPENNN_CUDA_LAUNCH(clip_apply_kernel<<<grid, block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, squared_norm, max_norm, eps, gradient));
 }
 
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
@@ -313,15 +313,15 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream)
 {
     if (n == 0) return;
-    if (stream == nullptr) stream = opennn::Backend::get_compute_stream();
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const bool dst_aligned = (reinterpret_cast<std::uintptr_t>(dst) & 0x3) == 0;
     const bool aligned = are_float4_aligned(src) && dst_aligned;
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    cast_fp32_to_bf16_kernel<<<grid_size, block_size, 0, stream>>>(n_vec, total, src, dst);
+    OPENNN_CUDA_LAUNCH(cast_fp32_to_bf16_kernel<<<grid_size, block_size, 0, stream>>>(n_vec, total, src, dst));
 }
 
 __global__ void cast_bf16_to_fp32_kernel(const int n,
@@ -337,7 +337,7 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
 void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
 {
     if (n == 0) return;
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
     const int grid_size = grid_size_for(total);
-    cast_bf16_to_fp32_kernel<<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(total, src, dst);
+    OPENNN_CUDA_LAUNCH(cast_bf16_to_fp32_kernel<<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(total, src, dst));
 }

@@ -94,6 +94,7 @@ struct Batch
     bool        h2d_done_recorded = false;
 
     void wait_h2d_complete();
+    void wait_h2d_on_compute_stream();
 
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;

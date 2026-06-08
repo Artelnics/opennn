@@ -19,6 +19,54 @@ namespace opennn
 class Json;
 class JsonWriter;
 
+template<typename Handle>
+struct CudnnDescriptor
+{
+    Handle handle = nullptr;
+#ifdef OPENNN_HAS_CUDA
+    cudnnStatus_t (*deleter)(Handle) = nullptr;
+#else
+    void (*deleter)(Handle) = nullptr;
+#endif
+
+    CudnnDescriptor() = default;
+
+    CudnnDescriptor(CudnnDescriptor&& other) noexcept
+        : handle(other.handle), deleter(other.deleter)
+    {
+        other.handle = nullptr;
+        other.deleter = nullptr;
+    }
+
+    CudnnDescriptor& operator=(CudnnDescriptor&& other) noexcept
+    {
+        if (this != &other)
+        {
+            reset();
+            handle = other.handle;
+            deleter = other.deleter;
+            other.handle = nullptr;
+            other.deleter = nullptr;
+        }
+        return *this;
+    }
+
+    CudnnDescriptor(const CudnnDescriptor&) = delete;
+    CudnnDescriptor& operator=(const CudnnDescriptor&) = delete;
+
+    ~CudnnDescriptor() { reset(); }
+
+    void reset()
+    {
+        if (handle && deleter) deleter(handle);
+        handle = nullptr;
+        deleter = nullptr;
+    }
+
+    operator Handle() const { return handle; }
+    explicit operator bool() const { return handle != nullptr; }
+};
+
 struct Operator
 {
     virtual ~Operator() = default;
@@ -908,8 +956,6 @@ struct LongShortTermMemoryOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
-    ~LongShortTermMemoryOp();
-
 private:
     void apply(const TensorView& input,
                TensorView& output,
@@ -960,12 +1006,12 @@ private:
     mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
     mutable Buffer seq_lengths_dev_buf {Device::CUDA};
 
-    mutable cudnnRNNDescriptor_t      rnn_desc      = nullptr;
-    mutable cudnnRNNDataDescriptor_t  x_data_desc   = nullptr;
-    mutable cudnnRNNDataDescriptor_t  y_data_desc   = nullptr;
-    mutable cudnnTensorDescriptor_t   h_desc        = nullptr;
-    mutable cudnnTensorDescriptor_t   c_desc        = nullptr;
-    mutable cudnnDropoutDescriptor_t  dropout_desc  = nullptr;
+    mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
+    mutable CudnnDescriptor<cudnnRNNDataDescriptor_t> x_data_desc;
+    mutable CudnnDescriptor<cudnnRNNDataDescriptor_t> y_data_desc;
+    mutable CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
+    mutable CudnnDescriptor<cudnnTensorDescriptor_t>  c_desc;
+    mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
     mutable Buffer dropout_states_buf{Device::CUDA};
 
     mutable Index cached_batch_size = -1;

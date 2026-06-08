@@ -3,7 +3,7 @@
 //
 //  M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S   H E A D E R
 //
-//  Artificial Intelligence Techniques SL
+//   Artificial Intelligence Techniques SL
 //  artelnics@artelnics.com
 
 #pragma once
@@ -72,7 +72,7 @@ public:
     bool  get_sdpa_auto() const { return sdpa_auto; }
     Index get_sdpa_min_sequence_length() const { return sdpa_min_sequence_length; }
 
-    bool select_use_sdpa() const;
+    bool should_use_sdpa() const;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

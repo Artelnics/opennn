@@ -111,6 +111,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
             const bool source_layer_is_trainable = source_layer >= first_trainable_layer_index
                                                 && source_layer <= last_trainable_layer_index;
 
+            const bool is_input_delta = j < sources.size();
+            // Deltas into external or non-trainable sources are not consumed.
+            if (is_input_delta && !source_layer_is_trainable) continue;
+
             const Index last_step = source_layer_is_trainable ? last_trainable_layer_index - source_layer : first_step;
 
             delta_entries.push_back({layer_index, j + 1, {shape, dtype}, first_step, last_step});

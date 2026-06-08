@@ -73,7 +73,7 @@ void Batch::set(const Index new_samples_number,
 
         if (const Index size = samples_number * slot.features_number; size > slot.host_allocated_size)
         {
-            device::free_pinned_host(slot.host);
+            device::deallocate_pinned_host(slot.host);
             slot.host = nullptr;
             slot.host_allocated_size = 0;
             slot.host = static_cast<float*>(
@@ -179,9 +179,9 @@ bool Batch::is_empty() const
 Batch::~Batch()
 {
     wait_h2d_complete();
-    device::free_pinned_host(input.host);
-    device::free_pinned_host(decoder.host);
-    device::free_pinned_host(target.host);
+    device::deallocate_pinned_host(input.host);
+    device::deallocate_pinned_host(decoder.host);
+    device::deallocate_pinned_host(target.host);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -243,6 +243,15 @@ void Batch::wait_h2d_complete()
         device::synchronize_event(h2d_done_event);
         h2d_done_recorded = false;
     }
+}
+
+// Device-side wait: make the compute stream wait for this batch's H2D upload
+// (issued on the transfer stream) before any kernel consumes the data. Does not
+// touch h2d_done_recorded, which the fill worker uses for host-buffer reuse.
+void Batch::wait_h2d_on_compute_stream()
+{
+    if (h2d_done_recorded)
+        device::stream_wait_event(Backend::get_compute_stream(), h2d_done_event);
 }
 
 }

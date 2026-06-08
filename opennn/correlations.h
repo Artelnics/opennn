@@ -25,9 +25,9 @@ struct Correlation
 
     void print() const;
 
-    float a = NAN;
-    float b = NAN;
-    float r = NAN;
+    float intercept = NAN;
+    float slope = NAN;
+    float coefficient = NAN;
 
     float lower_confidence = NAN;
     float upper_confidence = NAN;

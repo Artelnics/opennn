@@ -39,14 +39,10 @@ Shape Normalization3d::get_output_shape() const
 
 vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
-    const Shape normalized_shape = get_compute_device() == Device::CUDA
-        ? Shape{}
-        : Shape{batch_size, sequence_length, embedding_dimension};
-
     return {
         {{batch_size, sequence_length},                      Type::FP32},    // Means
         {{batch_size, sequence_length},                      Type::FP32},    // StandardDeviations
-        {normalized_shape,                                   compute_dtype}, // NormalizedInputs
+        {get_compute_device() == Device::CUDA ? Shape{} : Shape{batch_size, sequence_length, embedding_dimension}, compute_dtype}, // NormalizedInputs
         {{batch_size, sequence_length, embedding_dimension}, compute_dtype}, // Output
     };
 }

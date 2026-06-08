@@ -16,7 +16,6 @@
 #include "json.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
-#include "cuda_dispatch.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -142,7 +141,11 @@ void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t laye
     const TensorView& output_delta = get_output_delta(bp, layer);
 
     for (size_t i = 0; i < input_delta_slots.size(); ++i)
-        copy(output_delta, get_input_delta(bp, layer, i));
+    {
+        TensorView& input_delta = get_input_delta(bp, layer, i);
+        if (!input_delta.empty())
+            copy(output_delta, input_delta);
+    }
 }
 
 void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) const
@@ -292,6 +295,14 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
+    const auto& backward_slots = bp.backward_slots[layer];
+    const bool needs_input_delta = ranges::any_of(input_delta_slots, [&](size_t slot)
+    {
+        return slot < backward_slots.size() && !backward_slots[slot].empty();
+    });
+
+    if (!needs_input_delta) return;
+
     throw_if(output_delta.is_cuda(),
              "ConcatenateOp GPU path is not implemented yet.");
 
@@ -311,6 +322,11 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
                 {
                     const Index in_c = input_channels[i];
                     TensorView& in_delta = get_input_delta(bp, layer, i);
+                    if (in_delta.empty())
+                    {
+                        ch_offset += in_c;
+                        continue;
+                    }
                     float* dst = in_delta.as<float>();
                     const Index in_idx = ((b * height + h) * width + w) * in_c;
                     for (Index c = 0; c < in_c; ++c)
@@ -362,7 +378,7 @@ void DropoutOp::to_JSON(JsonWriter& w) const
 void DropoutOp::from_JSON(const Json* parent)
 {
     if (parent && parent->has("DropoutRate"))
-        set_rate(float(read_json_type(parent, "DropoutRate")));
+        set_rate(float(read_json_float(parent, "DropoutRate")));
 }
 
 cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
@@ -419,6 +435,7 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
     {
         const TensorView& output_delta = get_output_delta(bp, layer);
         TensorView& input_delta        = get_input_delta(bp, layer);
+        if (input_delta.empty()) return;
         copy(output_delta, input_delta);
         apply_delta(outputs, input_delta);
     }
@@ -511,7 +528,7 @@ void BatchNormOp::to_JSON(JsonWriter& w) const
 void BatchNormOp::from_JSON(const Json* parent)
 {
     if (parent && parent->has("Momentum"))
-        momentum = float(read_json_type(parent, "Momentum"));
+        momentum = float(read_json_float(parent, "Momentum"));
 }
 
 void BatchNormOp::load_state_from_JSON(const Json* parent)
@@ -1300,7 +1317,7 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                 if (!first_iter)
                 {
                     const float alpha = 1.0f;
-                    const int   n     = static_cast<int>(batch_size * output_features);
+                    const int   n     = to_int(batch_size * output_features);
                     CHECK_CUBLAS(cublasAxpyEx(Backend::get_cublas_handle(), n,
                                               &alpha, CUDA_R_32F,
                                               next_carry_scratch.data, axpy_dtype, 1,
@@ -1539,9 +1556,10 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
     bias_gradients.setZero();
     weight_gradients.setZero();
 
-    TensorMap4 in_gradient = input_delta.as_tensor<4>();
-    if (input_delta.data && input_delta.size() != 0)
-        in_gradient.setZero();
+    const bool write_input_delta = !input_delta.empty();
+    float* const input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
+    if (write_input_delta)
+        fill_n(input_delta_data, input_delta.size(), 0.0f);
 
     const Index batch_size = output_deltas.dimension(0);
     const Index output_height = output_deltas.dimension(1);
@@ -1573,9 +1591,14 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                                 weight_gradients(kernel_index, kernel_row, kernel_column, channel_index) +=
                                     inputs(image_index, input_row, input_column, channel_index) * delta;
 
-                                if (input_delta.data && input_delta.size() != 0)
-                                    in_gradient(image_index, input_row, input_column, channel_index) +=
+                                if (write_input_delta)
+                                {
+                                    const Index input_index = ((image_index * input_height + input_row)
+                                                              * input_width + input_column)
+                                                            * kernel_channels + channel_index;
+                                    input_delta_data[input_index] +=
                                         kernels(kernel_index, kernel_row, kernel_column, channel_index) * delta;
+                                }
                             }
                         }
                     }
@@ -1642,7 +1665,7 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
         algorithm_filter, &bwd_filter_ws));
 
     cudnn_workspace_size_ = max({fwd_ws, bwd_data_ws, bwd_filter_ws});
-    scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     planned_batch_size = input.shape[0];
 }
@@ -1654,7 +1677,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
     if (input.shape[0] > planned_batch_size)
         plan_convolution_algorithms(input, output);
 
-    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     if (fused_activation)
     {
@@ -1705,11 +1728,11 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        weight_gradient_bf16_scratch = scratch::ensure_bf16_gradient_scratch(weight_gradient.size());
+        weight_gradient_bf16_scratch = ensure_bf16_gradient_scratch(weight_gradient.size());
         weight_gradient_buffer = weight_gradient_bf16_scratch;
     }
 
-    void* ws_ptr = scratch::ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
         &one,
@@ -1725,7 +1748,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        float* const output_delta_fp32 = scratch::ensure_fp32_upcast_scratch(output_delta.size());
+        float* const output_delta_fp32 = ensure_fp32_upcast_scratch(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
                                output_delta.as<bfloat16>(),
                                output_delta_fp32);
@@ -1874,7 +1897,9 @@ void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagati
     merge_heads(head_delta, scratch_4d);
 
     TensorView& input_delta    = backward_slots[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
-    TensorView  input_delta_2d = input_delta.reshape({rows, input_features});
+    TensorView  input_delta_2d = input_delta.empty()
+        ? TensorView{}
+        : input_delta.reshape({rows, input_features});
     const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
 
     combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
@@ -2184,7 +2209,10 @@ void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
                                    const TensorView& source_input)
 {
     const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
-        && TRY_GPU_DISPATCH(source_input, [&](auto tag) {
+        && source_input.is_cuda();
+
+    if (ok)
+        source_input.dispatch([&](auto tag) {
             using T = decltype(tag);
             attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
                                                to_int(k.q_seq),
@@ -2483,18 +2511,22 @@ void AttentionOp::apply_cpu(const TensorView& query,
         const Index embedding_dimension = source_input.shape[2];
         const Index query_sequence_length = attention_weights.shape[2];
 
-        if (!TRY_GPU_DISPATCH(attention_weights, [&](auto tag) {
-            using T = decltype(tag);
-            attention_masks_cuda<T>(to_int(batch_size),
-                                    to_int(heads_number),
-                                    to_int(query_sequence_length),
-                                    to_int(source_sequence_length),
-                                    to_int(embedding_dimension),
-                                    source_input.as<T>(),
-                                    attention_weights.as<T>(),
-                                    reinterpret_cast<T*>(scratch),
-                                    use_causal_mask);
-        }))
+#ifdef OPENNN_HAS_CUDA
+        if (attention_weights.is_cuda())
+            attention_weights.dispatch([&](auto tag) {
+                using T = decltype(tag);
+                attention_masks_cuda<T>(to_int(batch_size),
+                                        to_int(heads_number),
+                                        to_int(query_sequence_length),
+                                        to_int(source_sequence_length),
+                                        to_int(embedding_dimension),
+                                        source_input.as<T>(),
+                                        attention_weights.as<T>(),
+                                        reinterpret_cast<T*>(scratch),
+                                        use_causal_mask);
+            });
+        else
+#endif
         {
             const Index att_rows_per_batch = heads_number * query_sequence_length;
 
@@ -2968,6 +3000,7 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
 
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
@@ -2999,6 +3032,7 @@ void Pool3dOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
 
     if (method == Max)
         max_pooling_3d_backward(get_output(fp, layer, 1), output_delta, input_delta);
@@ -3289,7 +3323,10 @@ void FlatOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_t
 
 void FlatOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
-    copy(get_output_delta(bp, layer), get_input_delta(bp, layer));
+    TensorView& input_delta = get_input_delta(bp, layer);
+    if (input_delta.empty()) return;
+
+    copy(get_output_delta(bp, layer), input_delta);
 }
 
 void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
@@ -3999,7 +4036,8 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
     const float* x = input.as<float>();
     const float* out_delta = output_delta.as<float>();
-    float* in_delta = input_delta.as<float>();
+    const bool write_input_delta = !input_delta.empty();
+    float* in_delta = write_input_delta ? input_delta.as<float>() : nullptr;
 
     const float* f_gate = forget_gate.as<float>();
     const float* i_gate = input_gate.as<float>();
@@ -4100,13 +4138,15 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                     gWg[wh] += xk * dg[h];
                     gWo[wh] += xk * do_gate[h];
 
-                    dx += df[h] * Wf[wh]
-                        + di[h] * Wi[wh]
-                        + dg[h] * Wg[wh]
-                        + do_gate[h] * Wo[wh];
+                    if (write_input_delta)
+                        dx += df[h] * Wf[wh]
+                            + di[h] * Wi[wh]
+                            + dg[h] * Wg[wh]
+                            + do_gate[h] * Wo[wh];
                 }
 
-                in_delta[(b * T + t) * F + k] = dx;
+                if (write_input_delta)
+                    in_delta[(b * T + t) * F + k] = dx;
             }
 
             for (Index j = 0; j < H; ++j)
@@ -4140,16 +4180,6 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-LongShortTermMemoryOp::~LongShortTermMemoryOp()
-{
-    if (rnn_desc)     cudnnDestroyRNNDescriptor(rnn_desc);
-    if (x_data_desc)  cudnnDestroyRNNDataDescriptor(x_data_desc);
-    if (y_data_desc)  cudnnDestroyRNNDataDescriptor(y_data_desc);
-    if (h_desc)       cudnnDestroyTensorDescriptor(h_desc);
-    if (c_desc)       cudnnDestroyTensorDescriptor(c_desc);
-    if (dropout_desc) cudnnDestroyDropoutDescriptor(dropout_desc);
-}
-
 void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 {
     using F_ = ActivationOp::Function;
@@ -4173,10 +4203,15 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 
     if (topology_changed)
     {
-        if (rnn_desc) CHECK_CUDNN(cudnnDestroyRNNDescriptor(rnn_desc));
-        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc));
+        rnn_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc.handle));
+        rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
 
-        if (!dropout_desc) CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc));
+        if (!dropout_desc)
+        {
+            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc.handle));
+            dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
+        }
         size_t dropout_states_bytes = 0;
         CHECK_CUDNN(cudnnDropoutGetStatesSize(
             Backend::get_cudnn_handle(), &dropout_states_bytes));
@@ -4218,10 +4253,12 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
 
     if (data_shape_changed || topology_changed)
     {
-        if (x_data_desc) CHECK_CUDNN(cudnnDestroyRNNDataDescriptor(x_data_desc));
-        if (y_data_desc) CHECK_CUDNN(cudnnDestroyRNNDataDescriptor(y_data_desc));
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&x_data_desc));
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc));
+        x_data_desc.reset();
+        y_data_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&x_data_desc.handle));
+        x_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc.handle));
+        y_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
 
         // seqLengthArray: host int32[batch_size], all entries equal to T.
         seq_lengths_host_buf.grow_to(batch_size * Index(sizeof(int32_t)));
@@ -4246,8 +4283,16 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
             int(T), int(batch_size), int(H),
             seq_h, &zero_pad_fill));
 
-        if (!h_desc) CHECK_CUDNN(cudnnCreateTensorDescriptor(&h_desc));
-        if (!c_desc) CHECK_CUDNN(cudnnCreateTensorDescriptor(&c_desc));
+        if (!h_desc)
+        {
+            CHECK_CUDNN(cudnnCreateTensorDescriptor(&h_desc.handle));
+            h_desc.deleter = &cudnnDestroyTensorDescriptor;
+        }
+        if (!c_desc)
+        {
+            CHECK_CUDNN(cudnnCreateTensorDescriptor(&c_desc.handle));
+            c_desc.deleter = &cudnnDestroyTensorDescriptor;
+        }
         const int dimA[3]    = {1, int(batch_size), int(H)};
         const int strideA[3] = {int(batch_size * H), int(H), 1};
         CHECK_CUDNN(cudnnSetTensorNdDescriptor(h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
@@ -4313,10 +4358,12 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    cudnnTensorDescriptor_t m_desc = nullptr;
-    cudnnTensorDescriptor_t b_desc = nullptr;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc));
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc));
+    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+    m_desc.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+    b_desc.deleter = &cudnnDestroyTensorDescriptor;
 
     for (int lin = 0; lin < 8; ++lin)
     {
@@ -4351,9 +4398,6 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
                                        Backend::get_compute_stream());
         }
     }
-
-    cudnnDestroyTensorDescriptor(m_desc);
-    cudnnDestroyTensorDescriptor(b_desc);
 }
 
 void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
@@ -4380,10 +4424,12 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    cudnnTensorDescriptor_t m_desc = nullptr;
-    cudnnTensorDescriptor_t b_desc = nullptr;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc));
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc));
+    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+    m_desc.deleter = &cudnnDestroyTensorDescriptor;
+    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+    b_desc.deleter = &cudnnDestroyTensorDescriptor;
 
     for (int lin = 0; lin < 8; ++lin)
     {
@@ -4411,9 +4457,6 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
                                device::CopyKind::DeviceToDevice,
                                Backend::get_compute_stream());
     }
-
-    cudnnDestroyTensorDescriptor(m_desc);
-    cudnnDestroyTensorDescriptor(b_desc);
 }
 
 void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
@@ -4624,8 +4667,6 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
 }
 
 #else   // !OPENNN_HAS_CUDA -- stubs that throw if invoked
-
-LongShortTermMemoryOp::~LongShortTermMemoryOp() = default;
 
 void LongShortTermMemoryOp::apply_gpu(const TensorView&, TensorView&, bool) const
 {

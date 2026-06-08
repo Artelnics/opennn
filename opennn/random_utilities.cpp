@@ -3,7 +3,7 @@
 //
 //   R A N D O M   U T I L I T I E S
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include <mutex>

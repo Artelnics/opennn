@@ -3,7 +3,7 @@
 //
 //   S T A T I S T I C S
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "statistics.h"

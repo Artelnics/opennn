@@ -20,10 +20,10 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const float* 
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    binary_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, term_results, targets, outputs, epsilon);
+    OPENNN_CUDA_LAUNCH(binary_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, term_results, targets, outputs, epsilon));
 }
 
 template void binary_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
@@ -53,10 +53,10 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* t
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    binary_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, deltas, targets, outputs, epsilon, scaling_factor);
+    OPENNN_CUDA_LAUNCH(binary_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, deltas, targets, outputs, epsilon, scaling_factor));
 }
 
 template void binary_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float);
@@ -77,10 +77,10 @@ void multiple_cross_entropy_cuda(const Index n, float* term_results, const float
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    multiple_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, term_results, targets, outputs, epsilon);
+    OPENNN_CUDA_LAUNCH(multiple_cross_entropy_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, term_results, targets, outputs, epsilon));
 }
 
 template void multiple_cross_entropy_cuda<float>        (const Index, float*, const float*, const float*,         const float);
@@ -106,10 +106,10 @@ void multiple_cross_entropy_gradient_cuda(const Index n, T* deltas, const float*
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    multiple_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, deltas, targets, outputs, scaling_factor);
+    OPENNN_CUDA_LAUNCH(multiple_cross_entropy_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, deltas, targets, outputs, scaling_factor));
 }
 
 template void multiple_cross_entropy_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float);
@@ -133,10 +133,10 @@ void weighted_squared_error_cuda(const Index n, float* term_results, const float
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    weighted_squared_error_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, term_results, targets, outputs, positives_weight, negatives_weight);
+    OPENNN_CUDA_LAUNCH(weighted_squared_error_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, term_results, targets, outputs, positives_weight, negatives_weight));
 }
 
 template void weighted_squared_error_cuda<float>        (const Index, float*, const float*, const float*,         const float, const float);
@@ -169,10 +169,10 @@ void weighted_squared_error_gradient_cuda(const Index n, T* deltas, const float*
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    weighted_squared_error_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+    OPENNN_CUDA_LAUNCH(weighted_squared_error_gradient_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor));
 }
 
 template void weighted_squared_error_gradient_cuda<float>        (const Index, float*,         const float*, const float*,         const float, const float, const float);
@@ -228,10 +228,10 @@ void cross_entropy_3d_multiple_forward_cuda(const Index n,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    cross_entropy_3d_multiple_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon);
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, vocab_size, outputs, targets, errors, valid_mask, correct_mask, epsilon));
 }
 
 template void cross_entropy_3d_multiple_forward_cuda<float>        (const Index, const int, const float*,         const float*, float*, float*, float*, const float);
@@ -271,10 +271,10 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, vocab_size, outputs, targets, output_deltas, scale_factor);
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, vocab_size, outputs, targets, output_deltas, scale_factor));
 }
 
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
@@ -317,10 +317,10 @@ void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
 {
     if (n == 0) return;
 
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
-    cross_entropy_3d_multiple_backward_device_count_kernel<T><<<grid_size_for(total), block_size, 0, opennn::Backend::get_compute_stream()>>>(
-        total, vocab_size, outputs, targets, output_deltas, active_count_device);
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_device_count_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, vocab_size, outputs, targets, output_deltas, active_count_device));
 }
 
 template void cross_entropy_3d_multiple_backward_device_count_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float*);
@@ -336,7 +336,7 @@ __global__ void accumulate_scaled_metric_kernel(const float* __restrict__ value,
 
 void accumulate_scaled_metric_cuda(const float* value, float scale, float* error_sum)
 {
-    accumulate_scaled_metric_kernel<<<1, 1, 0, opennn::Backend::get_compute_stream()>>>(value, scale, error_sum);
+    OPENNN_CUDA_LAUNCH(accumulate_scaled_metric_kernel<<<1, 1, 0, opennn::device::get_compute_stream()>>>(value, scale, error_sum));
 }
 
 __global__ void accumulate_cross_entropy_3d_metrics_kernel(const float* __restrict__ values,
@@ -360,8 +360,8 @@ void accumulate_cross_entropy_3d_metrics_cuda(const float* values,
                                               float* error_sum,
                                               float* accuracy_sum)
 {
-    accumulate_cross_entropy_3d_metrics_kernel<<<1, 1, 0, opennn::Backend::get_compute_stream()>>>(
-        values, error_sum, accuracy_sum);
+    OPENNN_CUDA_LAUNCH(accumulate_cross_entropy_3d_metrics_kernel<<<1, 1, 0, opennn::device::get_compute_stream()>>>(
+        values, error_sum, accuracy_sum));
 }
 
 template<typename T>
@@ -412,14 +412,14 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
     if (n == 0) return;
 
     constexpr int vec_width = 16 / sizeof(T);
-    const int total = static_cast<int>(n);
+    const int total = checked_int(n);
 
     const bool aligned = are_float4_aligned(deltas, parameters);
 
     const int n_vec = aligned ? (total / vec_width) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, vec_width));
 
-    l1_gradient_kernel<T><<<grid_size, block_size, 0, opennn::Backend::get_compute_stream()>>>(n_vec, total, deltas, parameters, weight);
+    OPENNN_CUDA_LAUNCH(l1_gradient_kernel<T><<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, total, deltas, parameters, weight));
 }
 
 template void l1_gradient_cuda<float>        (const Index, float*,         const float*,         const float);

@@ -32,10 +32,10 @@ struct GIoUResult
 {
     float giou = 0.0f;
     float iou  = 0.0f;
-    float d_cx = 0.0f;
-    float d_cy = 0.0f;
-    float d_w  = 0.0f;
-    float d_h  = 0.0f;
+    float cx_gradient = 0.0f;
+    float cy_gradient = 0.0f;
+    float w_gradient  = 0.0f;
+    float h_gradient  = 0.0f;
 };
 
 GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
@@ -142,10 +142,10 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     const float d_loss_top = loss_grad_corner(d_intersection_top, d_area_top, d_enclosing_top);
     const float d_loss_bottom = loss_grad_corner(d_intersection_bottom, d_area_bottom, d_enclosing_bottom);
 
-    r.d_cx = d_loss_left + d_loss_right;
-    r.d_cy = d_loss_top + d_loss_bottom;
-    r.d_w  = 0.5f * (d_loss_right - d_loss_left);
-    r.d_h  = 0.5f * (d_loss_bottom - d_loss_top);
+    r.cx_gradient = d_loss_left + d_loss_right;
+    r.cy_gradient = d_loss_top + d_loss_bottom;
+    r.w_gradient  = 0.5f * (d_loss_right - d_loss_left);
+    r.h_gradient  = 0.5f * (d_loss_bottom - d_loss_top);
     return r;
 }
 
@@ -256,6 +256,13 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     return result;
 }
 
+// MSVC 19.5x (VS 2026) crashes its optimizer (CL access violation / C1001)
+// generating code for this deeply nested loop when the Eigen-heavy PCH is in
+// scope at /O2. Compile just this function unoptimized on MSVC; it is not on a
+// hot path (CPU YOLO gradient reference kernel).
+#ifdef _MSC_VER
+#pragma optimize("", off)
+#endif
 void yolo_gradient_kernel(const TensorView& output,
                           const TensorView& target,
                           const TensorView& output_delta,
@@ -297,10 +304,10 @@ void yolo_gradient_kernel(const TensorView& output,
                         const GIoUResult g = yolo_loss_giou_grad(output_box, target_box);
 
                         const float scale = lambda_giou * inv_batch;
-                        delta[base + 0] = scale * clamp(g.d_cx, -grad_clip, grad_clip);
-                        delta[base + 1] = scale * clamp(g.d_cy, -grad_clip, grad_clip);
-                        delta[base + 2] = scale * clamp(g.d_w,  -grad_clip, grad_clip);
-                        delta[base + 3] = scale * clamp(g.d_h,  -grad_clip, grad_clip);
+                        delta[base + 0] = scale * clamp(g.cx_gradient, -grad_clip, grad_clip);
+                        delta[base + 1] = scale * clamp(g.cy_gradient, -grad_clip, grad_clip);
+                        delta[base + 2] = scale * clamp(g.w_gradient,  -grad_clip, grad_clip);
+                        delta[base + 3] = scale * clamp(g.h_gradient,  -grad_clip, grad_clip);
                         delta[base + 4] = 2.0f * (out[base + 4] - g.iou) * inv_batch;
 
                         if (sigmoid_classes)
@@ -326,6 +333,9 @@ void yolo_gradient_kernel(const TensorView& output,
                 }
             }
 }
+#ifdef _MSC_VER
+#pragma optimize("", on)
+#endif
 
 void yolo_gradient_cpu(const TensorView& output,
                        const TensorView& target,
@@ -657,17 +667,19 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
 
     auto reduce_abs_and_accumulate = [&](Index n, float scale)
     {
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(n), workspace, 1, results_device));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSasum(handle, to_int(n), workspace, 1, results_device));
+        }
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
 
     auto reduce_dot_and_accumulate = [&](Index n, float scale)
     {
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSdot(handle, to_int(n), workspace, 1, workspace, 1, results_device));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSdot(handle, to_int(n), workspace, 1, workspace, 1, results_device));
+        }
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
 
@@ -731,11 +743,12 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
                 input.as<T>(), target.as<float>(), workspace, valid_mask_device, correct_mask_device, EPSILON);
         });
 
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), workspace,             1, results_device + 0));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,     1, results_device + 1));
-        CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device,   1, results_device + 2));
-        CHECK_CUBLAS(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+        {
+            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), workspace,             1, results_device + 0));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), valid_mask_device,     1, results_device + 1));
+            CHECK_CUBLAS(cublasSasum(handle, to_int(token_count), correct_mask_device,   1, results_device + 2));
+        }
 
         accumulate_cross_entropy_3d_metrics_cuda(results_device, error_sum_device, accuracy_sum_device);
         return true;
@@ -1010,7 +1023,7 @@ void Loss::regularization_from_JSON(const JsonDocument& document)
     set_regularization(read_json_string(root_element, "Type"));
 
     if (root_element->has("RegularizationWeight"))
-        set_regularization_weight(float(read_json_type(root_element, "RegularizationWeight")));
+        set_regularization_weight(float(read_json_float(root_element, "RegularizationWeight")));
 }
 
 void Loss::regularization_to_JSON(JsonWriter& file_stream) const
@@ -1061,18 +1074,18 @@ void Loss::from_JSON(const JsonDocument& document)
     set_error(read_json_string(root, "Method"));
 
     set_regularization(read_json_string(root, "Regularization"));
-    regularization_weight = read_json_type(root, "RegularizationWeight");
+    regularization_weight = read_json_float(root, "RegularizationWeight");
 
-    if (root->first_child("NormalizationCoefficient"))
-        normalization_coefficient = read_json_type(root, "NormalizationCoefficient");
+    if (root->find("NormalizationCoefficient"))
+        normalization_coefficient = read_json_float(root, "NormalizationCoefficient");
 
-    if (root->first_child("PositivesWeight")) {
-        positives_weight = read_json_type(root, "PositivesWeight");
-        negatives_weight = read_json_type(root, "NegativesWeight");
+    if (root->find("PositivesWeight")) {
+        positives_weight = read_json_float(root, "PositivesWeight");
+        negatives_weight = read_json_float(root, "NegativesWeight");
     }
 
-    if (root->first_child("MinkowskiParameter"))
-        minkowski_parameter = read_json_type(root, "MinkowskiParameter");
+    if (root->find("MinkowskiParameter"))
+        minkowski_parameter = read_json_float(root, "MinkowskiParameter");
 }
 
 }

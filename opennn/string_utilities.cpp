@@ -3,7 +3,7 @@
 //
 //   S T R I N G   U T I L I T I E S
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "string_utilities.h"
@@ -13,6 +13,33 @@
 
 namespace opennn
 {
+
+float parse_float(const string& text, const string& context)
+{
+    try { return stof(text); }
+    catch (const exception&)
+    {
+        throw runtime_error(format("{}: invalid numeric value \"{}\".", context, text));
+    }
+}
+
+int parse_int(const string& text, const string& context)
+{
+    try { return stoi(text); }
+    catch (const exception&)
+    {
+        throw runtime_error(format("{}: invalid integer value \"{}\".", context, text));
+    }
+}
+
+long parse_long(const string& text, const string& context)
+{
+    try { return stol(text); }
+    catch (const exception&)
+    {
+        throw runtime_error(format("{}: invalid integer value \"{}\".", context, text));
+    }
+}
 
 vector<string> tokenize(const string& document)
 {
@@ -209,12 +236,12 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     struct tm time_components = {};
     smatch match;
 
-    const bool try_ymd = (format == YMD || format == AUTO);
-    const bool try_dmy = (format == DMY || format == MDY || format == AUTO);
+    const bool try_ymd = (format == Ymd || format == Auto);
+    const bool try_dmy = (format == Dmy || format == Mdy || format == Auto);
 
     auto fill_dmy = [&](int part1, int part2)
     {
-        const bool mdy = (format == MDY) || (format == AUTO && part1 <= 12 && part2 > 12);
+        const bool mdy = (format == Mdy) || (format == Auto && part1 <= 12 && part2 > 12);
         if (mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
         else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
     };
@@ -294,7 +321,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         time_components.tm_year = stoi(match[3]) - 1900;
         return mktime(&time_components);
     }
-    if (format == AUTO && regex_match(date, match, re_hms))
+    if (format == Auto && regex_match(date, match, re_hms))
     {
         time_components.tm_hour = stoi(match[1]) - gmt;
         time_components.tm_min  = stoi(match[2]);

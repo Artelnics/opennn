@@ -30,9 +30,8 @@ bool Json::has(const string& key) const
 const Json* Json::find(const string& key) const
 {
     if (!is_object()) return nullptr;
-    for (const auto& kv : object_value)
-        if (kv.first == key) return &kv.second;
-    return nullptr;
+    auto it = ranges::find(object_value, key, &pair<string, Json>::first);
+    return it != object_value.end() ? &it->second : nullptr;
 }
 
 const Json& Json::at(const string& key) const
@@ -526,7 +525,7 @@ void write_json(JsonWriter& writer,
         writer.add_field(kv.first, kv.second);
 }
 
-float read_json_type(const Json* root, const string& field)
+float read_json_float(const Json* root, const string& field)
 {
     if (!root) return 0.0f;
     const Json* v = root->find(field);

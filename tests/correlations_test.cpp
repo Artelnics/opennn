@@ -42,7 +42,7 @@ TEST_F(CorrelationsTest, SpearmanCorrelation)
     
     Correlation result = linear_correlation_spearman(x, y);
 
-    EXPECT_NEAR(result.r, type(1), EPSILON);
+    EXPECT_NEAR(result.coefficient, type(1), EPSILON);
 
 }
 
@@ -55,20 +55,20 @@ TEST_F(CorrelationsTest, LinearCorrelation)
     VectorR y(10);
     y << type(10), type(20), type(30),type(40),type(50),type(60),type(70),type(80),type(90),type(100);
 
-    EXPECT_NEAR(linear_correlation(x, y).r, type(1), EPSILON);
+    EXPECT_NEAR(linear_correlation(x, y).coefficient, type(1), EPSILON);
     
     y << type(10), type(9), type(8),type(7),type(6),type(5),type(4),type(3),type(2),type(1);
 
-    EXPECT_NEAR(linear_correlation(x, y).r, type(- 1), EPSILON);
+    EXPECT_NEAR(linear_correlation(x, y).coefficient, type(- 1), EPSILON);
     
     // Test
 
     x.setRandom();
     y.setRandom();
 
-    EXPECT_NE(linear_correlation(x, y).r, type(-1));
-    EXPECT_NE(linear_correlation(x, y).r, type( 0));
-    EXPECT_NE(linear_correlation(x, y).r, type( 1));
+    EXPECT_NE(linear_correlation(x, y).coefficient, type(-1));
+    EXPECT_NE(linear_correlation(x, y).coefficient, type( 0));
+    EXPECT_NE(linear_correlation(x, y).coefficient, type( 1));
 }
 
 
@@ -85,7 +85,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     correlation.print();
     //correlation.print(); system("pause");
 
-    EXPECT_LE(abs(correlation.r), type(0.1));
+    EXPECT_LE(abs(correlation.coefficient), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
     // Test
@@ -102,11 +102,11 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     //correlation.print();
 
-    EXPECT_GE(correlation.r, type(0.9));
-    EXPECT_LE(correlation.r, type(1));
+    EXPECT_GE(correlation.coefficient, type(0.9));
+    EXPECT_LE(correlation.coefficient, type(1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
-    EXPECT_NEAR(correlation.r, type(1), EPSILON);
+    EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
 
     // Test
 
@@ -130,7 +130,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     //correlation.print();
 
-    EXPECT_LE(correlation.r, type(1));
+    EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
@@ -145,7 +145,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     //correlation.print();
 
-    EXPECT_LE(abs(correlation.r), type(1));
+    EXPECT_LE(abs(correlation.coefficient), type(1));
 
     // Test
 
@@ -153,7 +153,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    EXPECT_EQ(isnan(correlation.r), true);
+    EXPECT_EQ(isnan(correlation.coefficient), true);
 
     y.setConstant(type(0));
 
@@ -161,7 +161,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    //EXPECT_NEAR(correlation.r, type(1), EPSILON);
+    //EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
     //EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
     // Test
@@ -183,7 +183,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    EXPECT_LE(correlation.r, type(1));
+    EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
@@ -202,7 +202,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    EXPECT_GE(abs(correlation.r), type(-0.95));
+    EXPECT_GE(abs(correlation.coefficient), type(-0.95));
 
     // Test
 
@@ -210,7 +210,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    EXPECT_EQ(isnan(correlation.r), true);
+    EXPECT_EQ(isnan(correlation.coefficient), true);
 
 }
 
@@ -239,9 +239,9 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
 
     solution = type(1);
 
-    EXPECT_NEAR(correlation.r, solution, EPSILON);
-    EXPECT_NEAR(correlation.b, type(4), EPSILON);
-    EXPECT_NEAR(correlation.a, type(0), EPSILON);
+    EXPECT_NEAR(correlation.coefficient, solution, EPSILON);
+    EXPECT_NEAR(correlation.slope, type(4), EPSILON);
+    EXPECT_NEAR(correlation.intercept, type(0), EPSILON);
 }
 
 TEST_F(CorrelationsTest, ExponentialCorrelation)
@@ -266,9 +266,9 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
 
     correlation = exponential_correlation(x, y);
 
-    EXPECT_NEAR(correlation.r, type(1), EPSILON);
-    EXPECT_NEAR(correlation.a, type(1), EPSILON);
-    EXPECT_NEAR(correlation.b, type(0.5), EPSILON);
+    EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
+    EXPECT_NEAR(correlation.intercept, type(1), EPSILON);
+    EXPECT_NEAR(correlation.slope, type(0.5), EPSILON);
 
     // Test missing values
 
@@ -285,9 +285,9 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
 
     correlation = exponential_correlation(x, y);
 
-    EXPECT_NEAR(correlation.r, type(1), type(1.0e-3));
-    EXPECT_NEAR(correlation.b, type(2.5), type(1.0e-6));
-    EXPECT_NEAR(correlation.a, type(1.4), type(1.0e-6));
+    EXPECT_NEAR(correlation.coefficient, type(1), type(1.0e-3));
+    EXPECT_NEAR(correlation.slope, type(2.5), type(1.0e-6));
+    EXPECT_NEAR(correlation.intercept, type(1.4), type(1.0e-6));
 
 }
 
@@ -316,9 +316,9 @@ TEST_F(CorrelationsTest, PowerCorrelation)
 
     // Test
 
-    EXPECT_NEAR(correlation.r, type(1), EPSILON);
-    EXPECT_NEAR(correlation.a, type(1), EPSILON);
-    EXPECT_NEAR(correlation.b, type(2), EPSILON);
+    EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
+    EXPECT_NEAR(correlation.intercept, type(1), EPSILON);
+    EXPECT_NEAR(correlation.slope, type(2), EPSILON);
 
 }
 

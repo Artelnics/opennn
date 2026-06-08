@@ -471,7 +471,10 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 
     buffer << "\n \n \n#include <stdio.h>\n"
               "#include <stdlib.h>\n"
-              "#include <math.h>\n\n";
+              "#include <math.h>\n\n"
+              // C has no max/min; the layer expressions use them for clamping.
+              "static double max(double a, double b) { return a > b ? a : b; }\n"
+              "static double min(double a, double b) { return a < b ? a : b; }\n\n";
 }
 
 void ModelExpression::emit_c_activations(ostringstream& buffer, const string& expression) const
@@ -501,8 +504,18 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
     buffer << "\n";
 
+    // A layer may assign to the same variable on consecutive lines (e.g. the
+    // bounding clamp: `v = max(...)` then `v = min(...)`). Declare each LHS
+    // with `double` only the first time; later assignments reuse it.
+    unordered_set<string> declared;
     for (const string& l : lines)
-        buffer << "\tdouble " << process_body_line(l, input_names, fixed_input_names) << "\n";
+    {
+        const string processed = process_body_line(l, input_names, fixed_input_names);
+        const size_t eq = processed.find('=');
+        const string lhs = eq == string::npos ? "" : get_trimmed(processed.substr(0, eq));
+        const bool first = !lhs.empty() && declared.insert(lhs).second;
+        buffer << "\t" << (first ? "double " : "") << processed << "\n";
+    }
 
     const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::C);
     if (!fixed_outputs.empty())

@@ -55,7 +55,6 @@ public:
     bool is_object() const { return kind == Kind::Object; }
     bool         has(const string& key) const;
     const Json*  find(const string& key) const;
-    const Json*  first_child(const string& key) const { return find(key); }
     const Json&  at(const string& key) const;
     Json&        operator[](const string& key);
     Json& set(const string& key, Json value);
@@ -105,7 +104,7 @@ void add_json_field(JsonWriter& writer,
 
 void write_json(JsonWriter& writer,
                 initializer_list<pair<const char*, string>> props);
-float       read_json_type   (const Json* root, const string& field);
+float       read_json_float   (const Json* root, const string& field);
 long        read_json_index  (const Json* root, const string& field);
 bool        read_json_bool   (const Json* root, const string& field);
 string read_json_string (const Json* root, const string& field);

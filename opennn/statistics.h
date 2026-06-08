@@ -3,7 +3,7 @@
 //
 //   S T A T I S T I C S   H E A D E R
 //
-//   Artificial Intelligence Techniques, SL
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #pragma once
@@ -32,6 +32,15 @@ struct Descriptives
     float standard_deviation = 1.0f;
 
 };
+
+inline VectorR descriptives_field(const vector<Descriptives>& descriptives,
+                                  float Descriptives::* member)
+{
+    VectorR values(ssize(descriptives));
+    for (Index i = 0; i < values.size(); ++i)
+        values(i) = descriptives[size_t(i)].*member;
+    return values;
+}
 
 struct BoxPlot
 {

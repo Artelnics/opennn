@@ -6,11 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#pragma once
+
 #include "pch.h"
 #include "tensor_utilities.h"
 #include "enum_map.h"
-
-#pragma once
 
 namespace opennn
 {
@@ -110,7 +110,7 @@ inline VariableRole string_to_variable_role(const string& name)
     return variable_role_map().from_string(name);
 }
 
-inline bool role_matches(VariableRole actual, VariableRole query)
+inline bool role_applies_to(VariableRole actual, VariableRole query)
 {
     return actual == query
         || (actual == VariableRole::InputTarget && (query == VariableRole::Input || query == VariableRole::Target));
@@ -156,7 +156,7 @@ struct Variable
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return role != VariableRole::None && role != VariableRole::Time; }
 
-    Index feature_count() const { return is_categorical() ? get_categories_number() : 1; }
+    Index get_feature_count() const { return is_categorical() ? get_categories_number() : 1; }
 
     vector<string> get_names() const;
 

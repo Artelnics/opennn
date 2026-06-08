@@ -9,12 +9,95 @@
 #pragma once
 
 #include "pch.h"
-#include "tensor_types.h"
+#include "types.h"
 #include "device_backend.h"
 #include "enum_map.h"
 
 namespace opennn
 {
+
+template<Type T> struct TypeInfo;
+
+template<> struct TypeInfo<Type::FP32>
+{
+    using type = float;
+    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_FLOAT;
+    static constexpr cudaDataType_t  cuda  = CUDA_R_32F;
+    static constexpr Index           bytes = Index(sizeof(float));
+    static constexpr const char*     name  = "FP32";
+};
+
+template<> struct TypeInfo<Type::BF16>
+{
+    using type = bfloat16;
+    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_BFLOAT16;
+    static constexpr cudaDataType_t  cuda  = CUDA_R_16BF;
+    static constexpr Index           bytes = Index(sizeof(bfloat16));
+    static constexpr const char*     name  = "BF16";
+};
+
+template<Type... Supported, typename F>
+void visit_type(Type t, F&& f)
+{
+    bool matched = false;
+    ([&]
+    {
+        if (!matched && t == Supported)
+        {
+            f(TypeInfo<Supported>{});
+            matched = true;
+        }
+    }(), ...);
+    throw_if(!matched, "visit_type: unsupported Type value");
+}
+
+template<Type... Supported, typename F>
+void visit_type_pair(Type t_in, Type t_out, F&& f)
+{
+    visit_type<Supported...>(t_in, [&](auto in_info)
+    {
+        visit_type<Supported...>(t_out, [&](auto out_info)
+        {
+            f(in_info, out_info);
+        });
+    });
+}
+
+[[nodiscard]] inline cudnnDataType_t to_cudnn(Type type) noexcept
+{
+    using enum Type;
+    switch (type)
+    {
+        case Auto: return TypeInfo<FP32>::cudnn;
+        case FP32: return TypeInfo<FP32>::cudnn;
+        case BF16: return TypeInfo<BF16>::cudnn;
+    }
+    return TypeInfo<FP32>::cudnn;
+}
+
+[[nodiscard]] inline cudaDataType_t to_cuda(Type type) noexcept
+{
+    using enum Type;
+    switch (type)
+    {
+        case Auto: return TypeInfo<FP32>::cuda;
+        case FP32: return TypeInfo<FP32>::cuda;
+        case BF16: return TypeInfo<BF16>::cuda;
+    }
+    return TypeInfo<FP32>::cuda;
+}
+
+[[nodiscard]] inline Index type_bytes(Type type) noexcept
+{
+    using enum Type;
+    switch (type)
+    {
+        case Auto: return TypeInfo<FP32>::bytes;
+        case FP32: return TypeInfo<FP32>::bytes;
+        case BF16: return TypeInfo<BF16>::bytes;
+    }
+    return TypeInfo<FP32>::bytes;
+}
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
 
@@ -25,7 +108,12 @@ ActivationFunction activation_function_from_string(const string& name);
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 
-inline int to_int(Index value) { return static_cast<int>(value); }
+inline int to_int(Index value)
+{
+    throw_if(value > Index(numeric_limits<int>::max()) || value < Index(numeric_limits<int>::min()),
+             format("to_int: value {} exceeds int range.", value));
+    return static_cast<int>(value);
+}
 inline float to_type(Index value) { return static_cast<float>(value); }
 
 inline Index align_up(Index value, Index alignment)
@@ -186,6 +274,16 @@ struct Buffer
     void resize_bytes(Index new_bytes, Device new_device_type)
     {
         if (new_bytes == bytes && device_type == new_device_type) return;
+
+        const bool changes_cuda_allocation =
+            (device_type == Device::CUDA && data)
+            || (new_device_type == Device::CUDA && new_bytes > 0);
+        throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
+                 format("CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
+                        "(warmup incomplete before CUDA graph capture).",
+                        bytes,
+                        new_bytes));
+
         free_buffer();
         device_type = new_device_type;
         if (new_bytes == 0) return;
@@ -483,6 +581,7 @@ public:
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
+    static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
     static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
 
 private:
@@ -496,6 +595,7 @@ private:
     cublasLtHandle_t cublas_lt_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
     cudaStream_t compute_stream = nullptr;
+    cudaStream_t transfer_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 };
 
