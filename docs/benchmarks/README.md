@@ -21,6 +21,7 @@ links to the full note with methodology and reproduction steps.
 | [GPU (CNN) deployment](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
 | [Peak memory (training)](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **9 MB** | n/a | 295 MB | 521 MB |
+| [Data capacity (8 GB cap)](capacity/data-capacity-opennn-vs-pytorch.md) | **16M samples** | n/a | 6M samples | 6M samples¹ |
 | [Install size / packages](dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **1 file, 0 pkgs** | 140 MB, 6 pkgs | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
 | [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | — | 834,319 | 1,792,182 |
 | [Standalone code export](code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | n/a | needs a runtime | needs a runtime |
@@ -49,6 +50,9 @@ infers in one self-contained binary.
   native binary starts in tens of milliseconds; `import torch` / `import tensorflow` cost ~1–1.7 s.
 * **[Peak memory](peak-memory-opennn-vs-pytorch-vs-tensorflow.md)** — resident memory for the same small
   training job: ~9 MB vs hundreds of MB of fixed framework overhead.
+* **[Data capacity](capacity/data-capacity-opennn-vs-pytorch.md)** — how much data fits and trains in a
+  fixed RAM budget: OpenNN's memory-mapped, compact-matrix loader trains ~2.7× more samples than the
+  standard `pandas.read_csv` path before running out of memory. ¹TensorFlow uses the same pandas path.
 * **[Dependencies & install friction](dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — one self-contained
   file that runs on a clean machine, vs Python plus a 12–33 package tree.
 * **[Source lines of code](loc-opennn-vs-pytorch-vs-tensorflow.md)** — the size of the native library layer

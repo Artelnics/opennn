@@ -1,0 +1,5 @@
+# Generated test data and sweep working dirs (large, reproducible)
+_data/
+*.csv
+!capacity_results.csv
+*.exe

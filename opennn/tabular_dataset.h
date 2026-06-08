@@ -194,7 +194,7 @@ protected:
     mutable Index binary_rows_number = 0;
     mutable Index binary_columns_number = 0;
 
-    void infer_column_types(const vector<vector<string_view>>&);
+    void infer_column_types(const vector<string_view>&, char);
 
     vector<Index> filter_used_samples_by_column(Index, bool) const;
     void apply_scaler(Index, const string&, const Descriptives&, bool);

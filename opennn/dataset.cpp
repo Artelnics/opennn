@@ -934,22 +934,28 @@ void Dataset::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Dataset::read_data_file_preview(const vector<vector<string_view>>& all_rows)
+void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char separator)
 {
-    if (all_rows.empty())
+    if (all_lines.empty())
         return;
 
     const Index num_first_rows_to_show = 3;
 
     data_file_preview.clear();
 
-    const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_rows.size()));
+    const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_lines.size()));
 
     for (Index i = 0; i < first_rows; ++i)
-        data_file_preview.emplace_back(all_rows[i].begin(), all_rows[i].end());
+    {
+        const vector<string_view> tokens = get_token_views(all_lines[i], separator);
+        data_file_preview.emplace_back(tokens.begin(), tokens.end());
+    }
 
-    if (all_rows.size() > num_first_rows_to_show)
-        data_file_preview.emplace_back(all_rows.back().begin(), all_rows.back().end());
+    if (all_lines.size() > num_first_rows_to_show)
+    {
+        const vector<string_view> tokens = get_token_views(all_lines.back(), separator);
+        data_file_preview.emplace_back(tokens.begin(), tokens.end());
+    }
 }
 
 void Dataset::check_separators(string_view line) const

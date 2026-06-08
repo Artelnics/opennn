@@ -19,11 +19,104 @@
     #include <unistd.h>
     #include <sys/stat.h>
     #include <sys/types.h>
+    #include <sys/mman.h>
     #include <cerrno>
 #endif
 
 namespace opennn
 {
+
+FileMapping::~FileMapping() { reset(); }
+
+FileMapping::FileMapping(FileMapping&& other) noexcept { *this = std::move(other); }
+
+FileMapping& FileMapping::operator=(FileMapping&& other) noexcept
+{
+    if (this != &other)
+    {
+        reset();
+        data_ = other.data_;
+        size_ = other.size_;
+#if defined(_WIN32)
+        file_handle_    = other.file_handle_;
+        mapping_handle_ = other.mapping_handle_;
+        other.file_handle_    = nullptr;
+        other.mapping_handle_ = nullptr;
+#else
+        fd_ = other.fd_;
+        other.fd_ = -1;
+#endif
+        other.data_ = nullptr;
+        other.size_ = 0;
+    }
+    return *this;
+}
+
+#if defined(_WIN32)
+
+bool FileMapping::map(const filesystem::path& path)
+{
+    reset();
+
+    file_handle_ = ::CreateFileW(path.wstring().c_str(), GENERIC_READ, FILE_SHARE_READ,
+                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file_handle_ == INVALID_HANDLE_VALUE) { file_handle_ = nullptr; return false; }
+
+    LARGE_INTEGER file_size;
+    if (!::GetFileSizeEx(file_handle_, &file_size) || file_size.QuadPart == 0)
+    {
+        reset();
+        return false;
+    }
+
+    mapping_handle_ = ::CreateFileMappingW(file_handle_, nullptr, PAGE_READONLY, 0, 0, nullptr);
+    if (!mapping_handle_) { reset(); return false; }
+
+    void* view = ::MapViewOfFile(mapping_handle_, FILE_MAP_READ, 0, 0, 0);
+    if (!view) { reset(); return false; }
+
+    data_ = static_cast<const char*>(view);
+    size_ = static_cast<size_t>(file_size.QuadPart);
+    return true;
+}
+
+void FileMapping::reset()
+{
+    if (data_) { ::UnmapViewOfFile(const_cast<char*>(data_)); data_ = nullptr; }
+    if (mapping_handle_) { ::CloseHandle(mapping_handle_); mapping_handle_ = nullptr; }
+    if (file_handle_ && file_handle_ != INVALID_HANDLE_VALUE) { ::CloseHandle(file_handle_); }
+    file_handle_ = nullptr;
+    size_ = 0;
+}
+
+#else
+
+bool FileMapping::map(const filesystem::path& path)
+{
+    reset();
+
+    fd_ = ::open(path.c_str(), O_RDONLY);
+    if (fd_ < 0) { fd_ = -1; return false; }
+
+    struct stat st;
+    if (::fstat(fd_, &st) != 0 || st.st_size == 0) { reset(); return false; }
+
+    void* addr = ::mmap(nullptr, size_t(st.st_size), PROT_READ, MAP_PRIVATE, fd_, 0);
+    if (addr == MAP_FAILED) { reset(); return false; }
+
+    data_ = static_cast<const char*>(addr);
+    size_ = size_t(st.st_size);
+    return true;
+}
+
+void FileMapping::reset()
+{
+    if (data_) { ::munmap(const_cast<char*>(data_), size_); data_ = nullptr; }
+    if (fd_ >= 0) { ::close(fd_); fd_ = -1; }
+    size_ = 0;
+}
+
+#endif
 
 #if defined(_WIN32)
 
@@ -248,27 +341,19 @@ void strip_quotes_and_quoted_separators(string& buffer)
 
 void CsvReader::parse(Result& out) const
 {
-    string& buffer = out.buffer;
+    out.separator = config.separator;
 
-    if (buffer.size() >= 3
-        && static_cast<unsigned char>(buffer[0]) == 0xEF
-        && static_cast<unsigned char>(buffer[1]) == 0xBB
-        && static_cast<unsigned char>(buffer[2]) == 0xBF)
-        buffer.erase(0, 3);
+    const string_view content = out.content;
+    out.lines.reserve(ranges::count(content, '\n') + 1);
 
-    strip_quotes_and_quoted_separators(buffer);
-
-    out.rows.reserve(ranges::count(buffer, '\n') + 1);
-
-    const string_view buffer_view(buffer);
     size_t line_start = 0;
 
-    while (line_start < buffer_view.size())
+    while (line_start < content.size())
     {
-        size_t line_end = buffer_view.find('\n', line_start);
-        if (line_end == string_view::npos) line_end = buffer_view.size();
+        size_t line_end = content.find('\n', line_start);
+        if (line_end == string_view::npos) line_end = content.size();
 
-        string_view line = buffer_view.substr(line_start, line_end - line_start);
+        string_view line = content.substr(line_start, line_end - line_start);
         line_start = line_end + 1;
 
         if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
@@ -278,8 +363,18 @@ void CsvReader::parse(Result& out) const
 
         if (config.line_validator) config.line_validator(line);
 
-        out.rows.push_back(get_token_views(line, config.separator));
+        // Store the whole line; tokens are produced per-line on demand by the
+        // consumer so we never hold every row's tokens at once.
+        out.lines.push_back(line);
     }
+}
+
+static bool has_bom(string_view s)
+{
+    return s.size() >= 3
+        && static_cast<unsigned char>(s[0]) == 0xEF
+        && static_cast<unsigned char>(s[1]) == 0xBB
+        && static_cast<unsigned char>(s[2]) == 0xBF;
 }
 
 CsvReader::Result CsvReader::read(const filesystem::path& path) const
@@ -287,6 +382,30 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     throw_if(path.empty(),
              "Data path is empty.\n");
 
+    Result result;
+
+    // Zero-copy fast path: memory-map the file and view it directly. Only valid
+    // when no in-place edits are needed — i.e. the file has no quotes (quoted
+    // separators are stripped in place). Quote-free covers all numeric data and
+    // is where capacity matters most.
+    if (result.mapping.map(path))
+    {
+        string_view mapped(result.mapping.data(), result.mapping.size());
+
+        if (mapped.find('"') == string_view::npos)
+        {
+            if (has_bom(mapped)) mapped.remove_prefix(3);
+            result.content = mapped;
+            parse(result);
+            return result;
+        }
+
+        // Quoted file: drop the map and fall through to the copy path, which can
+        // mutate the buffer to strip quoted separators.
+        result.mapping.reset();
+    }
+
+    // Fallback: copy the file into a heap buffer we can edit in place.
     ifstream file(path, ios::binary | ios::ate);
 
     throw_if(!file.is_open(),
@@ -295,11 +414,16 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     const auto file_size = file.tellg();
     file.seekg(0);
 
-    Result result;
     result.buffer.resize(static_cast<size_t>(file_size), '\0');
     if (file_size > 0)
         file.read(result.buffer.data(), file_size);
 
+    if (has_bom(result.buffer))
+        result.buffer.erase(0, 3);
+
+    strip_quotes_and_quoted_separators(result.buffer);
+
+    result.content = result.buffer;
     parse(result);
     return result;
 }
