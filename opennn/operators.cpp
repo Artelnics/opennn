@@ -19,6 +19,7 @@
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -409,6 +410,7 @@ void ActivationOp::set_function(const string& name)
 
 void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
+    PROFILE_SCOPE("op:activation_fwd");
     TensorView& output = get_output(fp, layer);
     if (output.empty()) return;
 
@@ -427,6 +429,7 @@ void ActivationOp::apply_delta(const TensorView& outputs, TensorView& delta) con
 
 void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
+    PROFILE_SCOPE("op:activation_bwd");
     const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
     const TensorView& outputs = fp.forward_slots[layer][slots[0]];
 
@@ -820,6 +823,7 @@ void CombinationOp::set_parameters_glorot()
 
 void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
+    PROFILE_SCOPE("op:combination_fwd");
     apply(get_input(fp, layer), get_output(fp, layer),
           fuse_relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
@@ -840,6 +844,7 @@ void CombinationOp::apply_delta(const TensorView& output_delta,
 
 void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
+    PROFILE_SCOPE("op:combination_bwd");
     auto& backward_slots = bp.backward_slots[layer];
 
     const TensorView& input        = get_input(fp, layer);
