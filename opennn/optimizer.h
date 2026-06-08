@@ -217,6 +217,14 @@ protected:
     int num_workers = 2;
 
     bool has_recurrent_layers_ = false;
+
+    // CUDA-graph capture/replay state. The per-step kernel sequence is captured
+    // once (first batch) and replayed thereafter. Owned across epochs; reset at
+    // train() start/end. graph_update routes the captured update to the
+    // optimizer's capturable path.
+    void* training_graph_exec = nullptr;
+    bool  training_graph_captured = false;
+    function<void(BackPropagation&)> graph_update;
 };
 
 struct OptimizerData
@@ -236,6 +244,13 @@ struct OptimizerData
     VectorR training_direction;
     float initial_learning_rate = 0.0f;
     Index iteration = 0;
+
+    // CUDA-graph mode: the iteration-dependent Adam scalars live on the device
+    // so a single captured graph replays correctly each step. step holds the
+    // iteration counter; effective_lr/eps are filled on-device per replay.
+    Buffer graph_step{Device::CUDA};        // int
+    Buffer graph_effective_lr{Device::CUDA};  // float
+    Buffer graph_effective_eps{Device::CUDA}; // float
 };
 
 struct TrainingResults

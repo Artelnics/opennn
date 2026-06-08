@@ -224,6 +224,27 @@ TrainingResults AdaptiveMomentEstimation::train()
         update_parameters(back_propagation, optimization_data);
     };
 
+#ifdef OPENNN_HAS_CUDA
+    // CUDA-graph mode: pre-allocate the device-resident Adam scalars (at warmup,
+    // before allocations are frozen), route the captured update to the
+    // capturable path, and reset any prior graph.
+    training_graph_captured = false;
+    if (training_graph_exec) { device::destroy_graph(training_graph_exec); training_graph_exec = nullptr; }
+    graph_update = nullptr;
+
+    if (on_gpu && getenv("OPENNN_CUDA_GRAPH"))
+    {
+        optimization_data.graph_step.resize_bytes(Index(sizeof(int)), Device::CUDA);
+        optimization_data.graph_step.setZero();   // step starts at 0; kernel does ++ to 1
+        optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
+        optimization_data.graph_effective_eps.resize_bytes(Index(sizeof(float)), Device::CUDA);
+
+        graph_update = [&](BackPropagation& back_propagation) {
+            update_parameters_capturable(back_propagation, optimization_data);
+        };
+    }
+#endif
+
     const bool needs_cuda_warmup = on_gpu && device::is_cuda_build() && training_batches_number > 0;
 
     if (needs_cuda_warmup)
@@ -471,6 +492,32 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         parameters(i) -= effective_learning_rate * first_moment / (sqrt(second_moment) + effective_epsilon);
     }
+}
+
+void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& back_propagation,
+                                                            OptimizerData& optimization_data) const
+{
+#ifdef OPENNN_HAS_CUDA
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
+
+    adam_update_capturable_cuda(
+        neural_network->get_parameters_size(),
+        neural_network->get_parameters_data(),
+        optimization_data.views[GradientMoment].as<float>(),
+        optimization_data.views[SquareGradientMoment].as<float>(),
+        back_propagation.gradient.as<float>(),
+        beta_1, beta_2, learning_rate, EPSILON,
+        optimization_data.graph_step.as<int>(),
+        optimization_data.graph_effective_lr.as<float>(),
+        optimization_data.graph_effective_eps.as<float>(),
+        neural_network->get_parameters_bf16_data(),
+        Backend::get_compute_stream());
+#else
+    (void)back_propagation; (void)optimization_data;
+    throw runtime_error("update_parameters_capturable requires CUDA support.");
+#endif
 }
 
 void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
