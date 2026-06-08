@@ -1179,6 +1179,11 @@ void Optimizer::setup_device_training()
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
+
+    // Prototype: mirror the dataset onto the GPU so batches are gathered
+    // on-device instead of re-copied from the host each step.
+    if (env_flag_enabled("OPENNN_GPU_RESIDENT_DATA"))
+        loss->get_dataset()->enable_device_residency();
 }
 
 void Optimizer::teardown_device_training()
@@ -1190,6 +1195,9 @@ void Optimizer::teardown_device_training()
 
     neural_network->copy_parameters_host();
     neural_network->copy_states_host();
+
+    if (loss->get_dataset()->is_device_resident())
+        loss->get_dataset()->disable_device_residency();
 }
 
 void Optimizer::prefetch_batch(Batch& batch)

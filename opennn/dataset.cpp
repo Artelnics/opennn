@@ -155,6 +155,22 @@ void Dataset::set_data(const MatrixR& new_data)
     set_storage_mode(StorageMode::Matrix);
 }
 
+void Dataset::enable_device_residency()
+{
+    if (!device::is_cuda_build()) return;
+    if (storage_mode != StorageMode::Matrix) return;
+    if (data.size() == 0) return;
+    if (is_device_resident()) return;
+
+    // data is RowMajor (see Layout), so data.data() is a contiguous
+    // row-major buffer we can mirror verbatim onto the device.
+    const Index bytes = Index(data.size()) * Index(sizeof(float));
+    data_device.resize_bytes(bytes, Device::CUDA);
+    device::copy_async(data_device.data, data.data(), bytes,
+                       device::CopyKind::HostToDevice, Backend::get_compute_stream());
+    device::synchronize(Backend::get_compute_stream());
+}
+
 void Dataset::set_data_constant(float new_value)
 {
     data.setConstant(new_value);
@@ -1030,6 +1046,25 @@ void Dataset::fill_batch(Batch& batch,
     batch.current_sample_count = sample_indices.size();
 
     const bool on_gpu = batch.uses_cuda();
+
+    // GPU-resident fast path (prototype): when the whole matrix lives on the
+    // device, skip the host gather entirely and just stash the row/column
+    // indices so the H2D step can gather on-device. Restricted to the simple
+    // contiguous-feature, no-decoder case (covers tabular regression); anything
+    // else falls through to the host path below.
+    if (on_gpu && is_device_resident() && batch.decoder.shape.empty()
+        && is_contiguous(input_indices) && is_contiguous(target_indices))
+    {
+        batch.device_gather = true;
+        batch.gather_row_indices.resize(sample_indices.size());
+        for (size_t i = 0; i < sample_indices.size(); ++i)
+            batch.gather_row_indices[i] = int(sample_indices[i]);
+        batch.input_column_indices = input_indices;
+        batch.target_column_indices = target_indices;
+        batch.needs_device_copy = true;
+        return;
+    }
+    batch.device_gather = false;
 
     float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();
     float* const decoder_buffer = on_gpu ? batch.decoder.host : batch.decoder.buffer.as<float>();

@@ -500,6 +500,43 @@ void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
     stream_wait_event_impl(stream, event);
 }
 
+#ifdef OPENNN_HAS_CUDA
+
+void begin_graph_capture(cudaStream_t stream)
+{
+    CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
+}
+
+void* end_graph_capture(cudaStream_t stream)
+{
+    cudaGraph_t graph = nullptr;
+    CHECK_CUDA(cudaStreamEndCapture(stream, &graph));
+
+    cudaGraphExec_t exec = nullptr;
+    CHECK_CUDA(cudaGraphInstantiate(&exec, graph, nullptr, nullptr, 0));
+    CHECK_CUDA(cudaGraphDestroy(graph));
+    return static_cast<void*>(exec);
+}
+
+void launch_graph(void* graph_exec, cudaStream_t stream)
+{
+    CHECK_CUDA(cudaGraphLaunch(static_cast<cudaGraphExec_t>(graph_exec), stream));
+}
+
+void destroy_graph(void* graph_exec)
+{
+    if (graph_exec) cudaGraphExecDestroy(static_cast<cudaGraphExec_t>(graph_exec));
+}
+
+#else
+
+void  begin_graph_capture(cudaStream_t) { throw runtime_error("CUDA support is not compiled in."); }
+void* end_graph_capture(cudaStream_t)   { throw runtime_error("CUDA support is not compiled in."); }
+void  launch_graph(void*, cudaStream_t) { throw runtime_error("CUDA support is not compiled in."); }
+void  destroy_graph(void*) {}
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

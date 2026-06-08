@@ -76,6 +76,15 @@ void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
 void stream_wait_event(cudaStream_t, cudaEvent_t);
 
+// CUDA graph capture/replay. begin_capture starts recording stream work; end_capture
+// instantiates an executable graph (returned as an opaque handle); launch_graph
+// replays it; destroy_graph frees it. Handles are void* so this header stays usable
+// from non-CUDA translation units.
+void  begin_graph_capture(cudaStream_t);
+void* end_graph_capture(cudaStream_t);   // returns cudaGraphExec_t as void*
+void  launch_graph(void* graph_exec, cudaStream_t);
+void  destroy_graph(void* graph_exec);
+
 }
 
 // OpenNN: Open Neural Networks Library.

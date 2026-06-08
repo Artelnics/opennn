@@ -103,6 +103,15 @@ struct Batch
     vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
     TensorView target_view_cache;
 
+    // GPU-resident gather (prototype): when the dataset is device-resident, the
+    // batch's row indices are stashed here (host int32) so the H2D step can
+    // gather rows on-device instead of copying a host-staged batch.
+    bool          device_gather = false;
+    vector<int>   gather_row_indices;
+    Buffer        gather_indices_device{Device::CUDA};
+    vector<Index> input_column_indices;
+    vector<Index> target_column_indices;
+
 };
 
 }

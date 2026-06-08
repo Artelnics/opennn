@@ -43,11 +43,25 @@ void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
                      __nv_bfloat16* params_bf16 = nullptr);
 
+// Capturable Adam: bias-correction is computed on-device from a device-resident
+// step counter, so a single captured CUDA graph replays correctly each step.
+void adam_update_capturable_cuda(
+    const Index n, float* parameters, float* m, float* v, const float* gradients,
+    const float beta_1, const float beta_2,
+    const float learning_rate, const float epsilon,
+    int* step_device, float* effective_lr_device, float* effective_eps_device,
+    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
 void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
 void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
+
+void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
+                      const Index n_rows, const Index n_cols,
+                      const Index matrix_cols, const Index col_offset,
+                      cudaStream_t stream = nullptr);
 
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);
