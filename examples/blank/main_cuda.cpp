@@ -317,7 +317,7 @@ int main(int argc, char** argv)
 
         adam->set_batch_size(32);
         adam->set_learning_rate(1.0e-3f);
-        adam->set_num_workers(8);
+        adam->set_workers_number(8);
         adam->set_maximum_epochs(29);
         adam->set_maximum_validation_failures(8);
         adam->set_display_period(1);
@@ -431,7 +431,7 @@ int main(int argc, char** argv)
         sgd->set_initial_decay(0.0202f);
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
-        sgd->set_num_workers(8);
+        sgd->set_workers_number(8);
         sgd->set_maximum_epochs(maximum_epoch);
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
@@ -525,7 +525,7 @@ int main(int argc, char** argv)
         sgd->set_initial_decay(0.0202f);
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
-        sgd->set_num_workers(8);
+        sgd->set_workers_number(8);
         sgd->set_maximum_epochs(100);
         sgd->set_maximum_validation_failures(200);
         sgd->set_display_period(1);
@@ -668,7 +668,7 @@ int main(int argc, char** argv)
 
             adam->set_batch_size(16);
             adam->set_learning_rate(3.0e-6f);
-            adam->set_num_workers(8);
+            adam->set_workers_number(8);
             adam->set_maximum_epochs(48);
             adam->set_maximum_validation_failures(8);
             adam->set_display_period(1);
@@ -1112,7 +1112,7 @@ int main(int argc, char** argv)
 
         adam->set_batch_size(16);
         adam->set_learning_rate(3.0e-4f);
-        adam->set_num_workers(8);
+        adam->set_workers_number(8);
         adam->set_maximum_epochs(39);
         adam->set_maximum_validation_failures(8);
         adam->set_display_period(1);

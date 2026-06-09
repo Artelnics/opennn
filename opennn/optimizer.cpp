@@ -181,7 +181,7 @@ struct DeviceEpochMetrics
     Loss::EvaluationResult read(Index batches_number, bool include_accuracy)
     {
         Loss::EvaluationResult epoch_result;
-        if (!device::is_cuda_build()) return epoch_result;
+        if (!device::is_cuda_build() || batches_number <= 0) return epoch_result;
 
         float host[2] = {0.0f, 0.0f};
         cudaStream_t stream = Backend::get_compute_stream();
@@ -190,11 +190,8 @@ struct DeviceEpochMetrics
                            stream);
         device::synchronize(stream);
 
-        if (batches_number > 0)
-        {
-            epoch_result.error = host[0] / float(batches_number);
-            if (include_accuracy) epoch_result.accuracy = host[1] / float(batches_number);
-        }
+        epoch_result.error = host[0] / float(batches_number);
+        if (include_accuracy) epoch_result.accuracy = host[1] / float(batches_number);
         return epoch_result;
     }
 };
@@ -248,7 +245,8 @@ Optimizer::~Optimizer()
 void Optimizer::reset_graph_capture()
 {
     training_graph_captured = false;
-    if (training_graph_exec) { device::destroy_graph(training_graph_exec); training_graph_exec = nullptr; }
+    device::destroy_graph(training_graph_exec);
+    training_graph_exec = nullptr;
     graph_update = nullptr;
 }
 
@@ -293,10 +291,12 @@ void Optimizer::warn_dropped_samples(Index batch_size,
                                       Index samples_number,
                                       const char* context) const
 {
-    if (!display) return;
-    if (batch_size <= 0 || samples_number <= 0) return;
-    if (batch_size >= samples_number)           return;
-    if (samples_number % batch_size == 0)       return;
+    if (!display
+        || batch_size <= 0
+        || samples_number <= 0
+        || batch_size >= samples_number
+        || samples_number % batch_size == 0)
+        return;
 
     const Index lost = samples_number % batch_size;
     cout << format("Warning: {} batch_size {} does not divide {} samples. "
@@ -319,8 +319,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Index validation_batch_size,
                                   bool has_validation)
 {
-    apply_effective_num_workers(neural_network);
-
     const int pool_size = get_batch_pool_size(neural_network);
     const auto& config = neural_network.get_config();
 
@@ -422,33 +420,28 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
         }
     };
 
-    session->workers.reserve(size_t(num_workers));
-    for (int i = 0; i < num_workers; ++i)
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const int batch_workers_number = get_batch_workers_number(*neural_network);
+
+    session->workers.reserve(size_t(batch_workers_number));
+    for (int i = 0; i < batch_workers_number; ++i)
         session->workers.emplace_back(worker_body);
 
     return session;
 }
 
-int Optimizer::get_effective_num_workers(const NeuralNetwork& neural_network) const
+int Optimizer::get_batch_workers_number(const NeuralNetwork& neural_network) const
 {
-    if (neural_network.is_gpu()
-        && neural_network.has(LayerType::Recurrent)
-        && num_workers > 1)
-        return 1;
-
-    return num_workers;
+    return neural_network.is_gpu() && neural_network.has(LayerType::Recurrent)
+        ? 1
+        : workers_number;
 }
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
     return neural_network.is_gpu()
-        ? max(get_effective_num_workers(neural_network) + 1, 3)
+        ? max(get_batch_workers_number(neural_network) + 1, 3)
         : 1;
-}
-
-void Optimizer::apply_effective_num_workers(const NeuralNetwork& neural_network)
-{
-    num_workers = get_effective_num_workers(neural_network);
 }
 
 Index Optimizer::get_maximum_batch_size() const
@@ -471,8 +464,7 @@ Index Optimizer::get_maximum_batch_size() const
     Index available_bytes = 0;
     if (on_gpu)
     {
-        const size_t free_bytes = device::available_memory();
-        available_bytes = Index(free_bytes);
+        available_bytes = Index(device::available_memory());
     }
     else
     {
@@ -815,8 +807,11 @@ void Optimizer::warmup_device_training(
     Batch* fixed_training_batch)
 {
     NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
-    if (!device::is_cuda_build() || !neural_network || !neural_network->is_gpu()) return;
-    if (training_batches.empty()) return;
+    if (!device::is_cuda_build()
+        || !neural_network
+        || !neural_network->is_gpu()
+        || training_batches.empty())
+        return;
 
     cudaStream_t stream = Backend::get_compute_stream();
 
@@ -1174,8 +1169,7 @@ void Optimizer::teardown_device_training()
 
 void Optimizer::prefetch_batch(Batch& batch)
 {
-    if (!batch.uses_cuda()) return;
-    if (!batch.needs_device_copy) return;
+    if (!batch.uses_cuda() || !batch.needs_device_copy) return;
 
     batch.copy_device_async(Backend::get_transfer_stream());
 }
@@ -1199,7 +1193,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         return;
     }
 
-    VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
+    VectorMap gradient_view(gradient.as<float>(), gradient_size);
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
         gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
@@ -1208,8 +1202,11 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 bool Optimizer::graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const
 {
     static const bool cuda_graph_requested = env_flag_enabled("OPENNN_CUDA_GRAPH");
-    const bool fixed = fixed_device_batch && fixed_device_batch->uses_cuda();
-    return cuda_graph_requested && fixed && use_device_metrics && bool(graph_update);
+    return cuda_graph_requested
+        && fixed_device_batch
+        && fixed_device_batch->uses_cuda()
+        && use_device_metrics
+        && bool(graph_update);
 }
 
 Loss::EvaluationResult Optimizer::run_graph_epoch(
@@ -1489,7 +1486,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
             ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
             cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
-                 << " | num_workers=0\n\n";
+                 << " | workers_number=0\n\n";
             ::opennn::global_stats().clear();
         }
 
@@ -1583,7 +1580,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
         ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
-                  << " | num_workers=" << num_workers << "\n\n";
+                  << " | workers_number=" << get_batch_workers_number(*neural_network) << "\n\n";
         ::opennn::global_stats().clear();
     }
 

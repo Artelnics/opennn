@@ -107,63 +107,6 @@ void check_last_error_impl()
     CHECK_CUDA(cudaPeekAtLastError());
 }
 
-cudaStream_t create_stream_impl(unsigned flags)
-{
-    cudaStream_t stream = nullptr;
-    CHECK_CUDA(cudaStreamCreateWithFlags(&stream, flags));
-    return stream;
-}
-
-void destroy_stream_impl(cudaStream_t stream)
-{
-    cudaStreamDestroy(stream);
-}
-
-void* allocate_pinned_host_impl(Index byte_count)
-{
-    void* host_pointer = nullptr;
-    CHECK_CUDA(cudaMallocHost(&host_pointer, static_cast<size_t>(byte_count)));
-    return host_pointer;
-}
-
-void deallocate_pinned_host_impl(void* pointer)
-{
-    cudaFreeHost(pointer);
-}
-
-cudaEvent_t create_event_impl(unsigned flags)
-{
-    cudaEvent_t event = nullptr;
-    CHECK_CUDA(cudaEventCreateWithFlags(&event, flags));
-    return event;
-}
-
-unsigned default_event_flags_impl()
-{
-    return cudaEventDisableTiming;
-}
-
-void destroy_event_impl(cudaEvent_t event)
-{
-    cudaEventDestroy(event);
-}
-
-void record_event_impl(cudaEvent_t event, cudaStream_t stream)
-{
-    throw_if(!event, "cannot record a null CUDA event.");
-    CHECK_CUDA(cudaEventRecord(event, stream));
-}
-
-void synchronize_event_impl(cudaEvent_t event)
-{
-    CHECK_CUDA(cudaEventSynchronize(event));
-}
-
-void stream_wait_event_impl(cudaStream_t stream, cudaEvent_t event)
-{
-    CHECK_CUDA(cudaStreamWaitEvent(stream, event, 0));
-}
-
 #else
 
 void* allocate_cuda(Index)
@@ -202,53 +145,6 @@ void synchronize_impl(cudaStream_t)
 }
 
 void check_last_error_impl()
-{
-}
-
-cudaStream_t create_stream_impl(unsigned)
-{
-    return nullptr;
-}
-
-void destroy_stream_impl(cudaStream_t)
-{
-}
-
-void* allocate_pinned_host_impl(Index byte_count)
-{
-    void* host_pointer = malloc(static_cast<size_t>(byte_count));
-    if (!host_pointer) throw bad_alloc();
-    return host_pointer;
-}
-
-void deallocate_pinned_host_impl(void* pointer)
-{
-    free(pointer);
-}
-
-cudaEvent_t create_event_impl(unsigned)
-{
-    return nullptr;
-}
-
-unsigned default_event_flags_impl()
-{
-    return 0;
-}
-
-void destroy_event_impl(cudaEvent_t)
-{
-}
-
-void record_event_impl(cudaEvent_t, cudaStream_t)
-{
-}
-
-void synchronize_event_impl(cudaEvent_t)
-{
-}
-
-void stream_wait_event_impl(cudaStream_t, cudaEvent_t)
 {
 }
 
@@ -432,12 +328,23 @@ void check_last_error()
 
 cudaStream_t create_stream(unsigned flags)
 {
-    return create_stream_impl(flags);
+#ifdef OPENNN_HAS_CUDA
+    cudaStream_t stream = nullptr;
+    CHECK_CUDA(cudaStreamCreateWithFlags(&stream, flags));
+    return stream;
+#else
+    (void)flags;
+    return nullptr;
+#endif
 }
 
 void destroy_stream(cudaStream_t stream)
 {
-    if (stream) destroy_stream_impl(stream);
+    if (!stream) return;
+
+#ifdef OPENNN_HAS_CUDA
+    cudaStreamDestroy(stream);
+#endif
 }
 
 void* allocate_pinned_host(Index byte_count)
@@ -446,42 +353,87 @@ void* allocate_pinned_host(Index byte_count)
 
     if (byte_count == 0) return nullptr;
 
-    return allocate_pinned_host_impl(byte_count);
+#ifdef OPENNN_HAS_CUDA
+    void* host_pointer = nullptr;
+    CHECK_CUDA(cudaMallocHost(&host_pointer, static_cast<size_t>(byte_count)));
+    return host_pointer;
+#else
+    void* host_pointer = malloc(static_cast<size_t>(byte_count));
+    if (!host_pointer) throw bad_alloc();
+    return host_pointer;
+#endif
 }
 
 void deallocate_pinned_host(void* pointer)
 {
-    if (pointer) deallocate_pinned_host_impl(pointer);
+    if (!pointer) return;
+
+#ifdef OPENNN_HAS_CUDA
+    cudaFreeHost(pointer);
+#else
+    free(pointer);
+#endif
 }
 
 cudaEvent_t create_event(unsigned flags)
 {
-    return create_event_impl(flags);
+#ifdef OPENNN_HAS_CUDA
+    cudaEvent_t event = nullptr;
+    CHECK_CUDA(cudaEventCreateWithFlags(&event, flags));
+    return event;
+#else
+    (void)flags;
+    return nullptr;
+#endif
 }
 
 cudaEvent_t create_event()
 {
-    return create_event(default_event_flags_impl());
+#ifdef OPENNN_HAS_CUDA
+    return create_event(cudaEventDisableTiming);
+#else
+    return nullptr;
+#endif
 }
 
 void destroy_event(cudaEvent_t event)
 {
-    if (event) destroy_event_impl(event);
+    if (!event) return;
+
+#ifdef OPENNN_HAS_CUDA
+    cudaEventDestroy(event);
+#endif
 }
 
 void record_event(cudaEvent_t event, cudaStream_t stream)
 {
-    record_event_impl(event, stream);
+#ifdef OPENNN_HAS_CUDA
+    throw_if(!event, "cannot record a null CUDA event.");
+    CHECK_CUDA(cudaEventRecord(event, stream));
+#else
+    (void)event;
+    (void)stream;
+#endif
 }
 
 void synchronize_event(cudaEvent_t event)
 {
-    if (event) synchronize_event_impl(event);
+    if (!event) return;
+
+#ifdef OPENNN_HAS_CUDA
+    CHECK_CUDA(cudaEventSynchronize(event));
+#endif
 }
 
 void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
 {
-    if (event) stream_wait_event_impl(stream, event);
+    if (!event) return;
+
+#ifdef OPENNN_HAS_CUDA
+    CHECK_CUDA(cudaStreamWaitEvent(stream, event, 0));
+#else
+    (void)stream;
+#endif
 }
 
 #ifdef OPENNN_HAS_CUDA

@@ -51,7 +51,6 @@ public:
     FileWriter& operator=(FileWriter&&)      = delete;
 
     void open(const filesystem::path& tmp_path);
-    bool is_open() const;
 
     void write(const void* buffer, size_t bytes);
 

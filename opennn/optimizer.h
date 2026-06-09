@@ -55,8 +55,8 @@ public:
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
-    void set_num_workers(int new_num_workers) { num_workers = max(1, new_num_workers); }
-    int  get_num_workers() const { return num_workers; }
+    void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
+    int  get_workers_number() const { return workers_number; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -152,9 +152,8 @@ protected:
         bool is_training,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_effective_num_workers(const NeuralNetwork&) const;
+    int get_batch_workers_number(const NeuralNetwork&) const;
     int get_batch_pool_size(const NeuralNetwork&) const;
-    void apply_effective_num_workers(const NeuralNetwork&);
 
     struct EpochLoopContext;
     Loss::EvaluationResult run_epoch_loop(EpochLoopContext& context);
@@ -206,7 +205,7 @@ protected:
 
     string name;
 
-    int num_workers = 2;
+    int workers_number = 2;
 
     bool has_recurrent_layers_ = false;
 
