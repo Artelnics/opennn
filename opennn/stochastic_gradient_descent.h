@@ -36,6 +36,7 @@ public:
     void set_nesterov(bool);
 
     void update_parameters(BackPropagation&, OptimizerData&, float) const;
+    void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
 
     TrainingResults train() override;
 

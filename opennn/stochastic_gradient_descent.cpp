@@ -173,6 +173,34 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 }
 
+void StochasticGradientDescent::update_parameters_capturable(BackPropagation& back_propagation,
+                                                             OptimizerData& optimization_data) const
+{
+#ifdef OPENNN_HAS_CUDA
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    float* const velocity_ptr = optimization_data.views.empty()
+        ? nullptr
+        : optimization_data.views[Velocity].as<float>();
+
+    // learning_rate is read from device memory (graph_effective_lr), refreshed
+    // once per epoch by the host so the captured graph replays the decay.
+    sgd_update_capturable_cuda(
+        neural_network->get_parameters_size(),
+        neural_network->get_parameters_data(),
+        velocity_ptr,
+        back_propagation.gradient.as<float>(),
+        optimization_data.graph_effective_lr.as<float>(),
+        momentum,
+        nesterov,
+        neural_network->get_parameters_bf16_data(),
+        Backend::get_compute_stream());
+#else
+    (void)back_propagation; (void)optimization_data;
+    throw runtime_error("update_parameters_capturable requires CUDA support.");
+#endif
+}
+
 TrainingResults StochasticGradientDescent::train()
 {
     TrainingResults results(maximum_epochs + 1);
@@ -279,6 +307,25 @@ TrainingResults StochasticGradientDescent::train()
         update_parameters(back_propagation, optimization_data, current_learning_rate);
     };
 
+#ifdef OPENNN_HAS_CUDA
+    // Prepare the capturable update path (mirrors AdaptiveMomentEstimation). The
+    // device-resident learning rate is allocated here, before allocations are
+    // frozen; the host refreshes it once per epoch so a single captured graph
+    // replays the lr decay. Any graph from a prior run is discarded.
+    training_graph_captured = false;
+    if (training_graph_exec) { device::destroy_graph(training_graph_exec); training_graph_exec = nullptr; }
+    graph_update = nullptr;
+
+    if (on_gpu)
+    {
+        optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
+
+        graph_update = [&](BackPropagation& back_propagation) {
+            update_parameters_capturable(back_propagation, optimization_data);
+        };
+    }
+#endif
+
     const bool needs_cuda_warmup = on_gpu && device::is_cuda_build() && training_batches_number > 0;
 
     if (needs_cuda_warmup)
@@ -327,6 +374,17 @@ TrainingResults StochasticGradientDescent::train()
             dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
             current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
+
+#ifdef OPENNN_HAS_CUDA
+            // Refresh the device-resident lr so the captured graph replays this
+            // epoch's decayed value (the kernel reads it by pointer). A kernel
+            // (not a pageable cudaMemcpyAsync) keeps this stream-ordered before
+            // the graph replays that read it.
+            if (graph_update && on_gpu)
+                set_scalar_device_cuda(optimization_data.graph_effective_lr.as<float>(),
+                                       current_learning_rate,
+                                       Backend::get_compute_stream());
+#endif
 
             const EpochStats train_stats = train_epoch(is_token_cross_entropy,
                                                        training_forward_propagation,

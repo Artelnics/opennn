@@ -380,6 +380,145 @@ void sgd_update_cuda(
         learning_rate, momentum, nesterov));
 }
 
+// Capturable SGD: the (per-epoch decayed) learning rate is read from device
+// memory, so a single captured CUDA graph replays correctly; the host only
+// refreshes the device-resident lr once per epoch. momentum/nesterov are
+// constant for the whole run, so they stay host-baked launch arguments.
+__global__ void sgd_update_capturable_kernel(
+    const int n_vec,
+    const int n,
+    float* __restrict__ parameters,
+    float* __restrict__ velocity,
+    const float* __restrict__ gradients,
+    __nv_bfloat16* __restrict__ parameters_bf16,
+    const float* __restrict__ learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    const float lr = *learning_rate;
+
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int stride = blockDim.x * gridDim.x;
+    const bool has_momentum = momentum > 0.0f;
+
+    float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
+    float4* __restrict__ const       v4 = reinterpret_cast<float4*>(velocity);
+    const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
+    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
+
+    if (has_momentum)
+    {
+        for (int i = tid; i < n_vec; i += stride)
+        {
+            float4 P = p4[i];
+            float4 V = v4[i];
+            const float4 G = g4[i];
+
+            sgd_update_one(P.x, V.x, G.x, lr, momentum, nesterov);
+            sgd_update_one(P.y, V.y, G.y, lr, momentum, nesterov);
+            sgd_update_one(P.z, V.z, G.z, lr, momentum, nesterov);
+            sgd_update_one(P.w, V.w, G.w, lr, momentum, nesterov);
+
+            p4[i] = P;
+            v4[i] = V;
+
+            if (bf2)
+            {
+                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+            }
+        }
+
+        const int tail_start = n_vec * 4;
+        for (int i = tail_start + tid; i < n; i += stride)
+        {
+            sgd_update_one(parameters[i], velocity[i], gradients[i],
+                           lr, momentum, nesterov);
+            if (parameters_bf16)
+                parameters_bf16[i] = __float2bfloat16(parameters[i]);
+        }
+    }
+    else
+    {
+        for (int i = tid; i < n_vec; i += stride)
+        {
+            float4 P = p4[i];
+            const float4 G = g4[i];
+
+            P.x -= lr * G.x;
+            P.y -= lr * G.y;
+            P.z -= lr * G.z;
+            P.w -= lr * G.w;
+
+            p4[i] = P;
+
+            if (bf2)
+            {
+                bf2[i * 2 + 0] = __floats2bfloat162_rn(P.x, P.y);
+                bf2[i * 2 + 1] = __floats2bfloat162_rn(P.z, P.w);
+            }
+        }
+
+        const int tail_start = n_vec * 4;
+        for (int i = tail_start + tid; i < n; i += stride)
+        {
+            parameters[i] -= lr * gradients[i];
+            if (parameters_bf16)
+                parameters_bf16[i] = __float2bfloat16(parameters[i]);
+        }
+    }
+}
+
+// Stream-ordered write of a host scalar into device memory. Used to refresh the
+// per-epoch learning rate the capturable SGD graph reads. A kernel (not a
+// pageable cudaMemcpyAsync) guarantees ordering w.r.t. the subsequent graph
+// replay on the same stream.
+__global__ void set_scalar_kernel(float* __restrict__ dst, const float value)
+{
+    if (threadIdx.x == 0 && blockIdx.x == 0) *dst = value;
+}
+
+void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream)
+{
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+    OPENNN_CUDA_LAUNCH(set_scalar_kernel<<<1, 1, 0, stream>>>(dst, value));
+}
+
+void sgd_update_capturable_cuda(
+    const Index n,
+    float* parameters,
+    float* velocity,
+    const float* gradients,
+    const float* learning_rate_device,
+    const float momentum,
+    const bool nesterov,
+    __nv_bfloat16* parameters_bf16,
+    cudaStream_t stream)
+{
+    if (n == 0) return;
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+
+    const int total = checked_int(n);
+
+    const bool mirror_aligned = parameters_bf16 == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+
+    const bool velocity_aligned = velocity == nullptr || is_float4_aligned(velocity);
+    const bool aligned = are_float4_aligned(parameters, gradients) && velocity_aligned && mirror_aligned;
+
+    const int n_vec = aligned ? (total / 4) : 0;
+    const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
+
+    OPENNN_CUDA_LAUNCH(sgd_update_capturable_kernel<<<grid_size, block_size, 0, stream>>>(
+        n_vec,
+        total,
+        parameters,
+        velocity,
+        gradients,
+        parameters_bf16,
+        learning_rate_device, momentum, nesterov));
+}
+
 __global__ void clip_apply_kernel(const int n,
                                   const float* __restrict__ squared_norm,
                                   const float max_norm,

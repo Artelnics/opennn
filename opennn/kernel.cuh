@@ -43,6 +43,16 @@ void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
                      __nv_bfloat16* params_bf16 = nullptr);
 
+// Capturable SGD: the learning rate is read from device memory (refreshed once
+// per epoch by the host), so a single captured CUDA graph replays correctly.
+void sgd_update_capturable_cuda(
+    const Index n, float* parameters, float* velocity, const float* gradients,
+    const float* learning_rate_device, const float momentum, const bool nesterov,
+    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+
+// Stream-ordered write of a host scalar into device memory (per-epoch lr refresh).
+void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream = nullptr);
+
 // Capturable Adam: bias-correction is computed on-device from a device-resident
 // step counter, so a single captured CUDA graph replays correctly each step.
 void adam_update_capturable_cuda(

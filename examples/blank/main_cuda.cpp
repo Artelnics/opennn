@@ -357,9 +357,13 @@ int main(int argc, char** argv)
         const Index batch_size = argc > 1
             ? static_cast<Index>(stoll(argv[1]))
             : Index(100);
+        const Index maximum_epoch = argc > 2
+            ? static_cast<Index>(stoll(argv[2]))
+            : Index(20);
 
         cout << "OpenNN. HIGGS 5x300 DNN GPU FP32 benchmark."
-             << " batch=" << batch_size << endl;
+             << " batch=" << batch_size
+             << " max_epoch=" << maximum_epoch << endl;
 
 #ifdef OPENNN_HAS_CUDA
         Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -428,7 +432,7 @@ int main(int argc, char** argv)
         sgd->set_momentum(0.9f);
         sgd->set_nesterov(false);
         sgd->set_num_workers(8);
-        sgd->set_maximum_epochs(4);
+        sgd->set_maximum_epochs(maximum_epoch);
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
 
@@ -438,6 +442,21 @@ int main(int argc, char** argv)
         const double training_time = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
 
         cout << "\nTotal training time: " << training_time << " s" << endl;
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(10000);
+        const TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        cout << "\nROC analysis:" << endl;
+        cout << "Role: Testing" << endl;
+        cout << "AUC: " << roc_analysis.area_under_curve << endl;
+        cout << "Confidence limit: " << roc_analysis.confidence_limit << endl;
+        cout << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        cout << "\nConfusion matrix at threshold 0.5:\n"
+             << testing_analysis.calculate_confusion(0.5f) << endl;
+        cout << "\nConfusion matrix at optimal threshold:\n"
+             << testing_analysis.calculate_confusion(roc_analysis.optimal_threshold) << endl;
 
         cout << "Bye!" << endl;
         return 0;
