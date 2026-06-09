@@ -48,7 +48,7 @@ TEST(StochasticGradientDescentTest, Train)
     stochastic_gradient_descent.set_maximum_epochs(1);
     stochastic_gradient_descent.set_display(false);
 
-    TrainingResults training_results = stochastic_gradient_descent.train();
+    TrainingResult training_results = stochastic_gradient_descent.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 

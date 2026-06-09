@@ -13,8 +13,6 @@
 namespace opennn
 {
 
-struct GrowingNeuronsResults;
-
 class GrowingNeurons final : public NeuronSelection
 {
 
@@ -26,7 +24,7 @@ public:
 
     void set_neurons_increment(const Index);
 
-    NeuronsSelectionResults perform_neurons_selection() override;
+    NeuronsSelectionResult perform_neurons_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 

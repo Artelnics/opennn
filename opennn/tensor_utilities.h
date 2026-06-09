@@ -63,7 +63,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
-[[nodiscard]] inline cudnnDataType_t to_cudnn(Type type) noexcept
+inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
     using enum Type;
     switch (type)
@@ -75,7 +75,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     return TypeInfo<FP32>::cudnn;
 }
 
-[[nodiscard]] inline cudaDataType_t to_cuda(Type type) noexcept
+inline cudaDataType_t to_cuda(Type type) noexcept
 {
     using enum Type;
     switch (type)
@@ -87,7 +87,7 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     return TypeInfo<FP32>::cuda;
 }
 
-[[nodiscard]] inline Index type_bytes(Type type) noexcept
+inline Index type_bytes(Type type) noexcept
 {
     using enum Type;
     switch (type)

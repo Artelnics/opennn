@@ -12,8 +12,8 @@ namespace opennn
 {
 
 class TrainingStrategy;
-struct TrainingResults;
-struct NeuronsSelectionResults;
+struct TrainingResult;
+struct NeuronsSelectionResult;
 
 class NeuronSelection
 {
@@ -22,10 +22,8 @@ public:
     enum class StoppingCondition {
         MaximumTime,
         ValidationErrorGoal,
-        SelectionErrorGoal = ValidationErrorGoal,
         MaximumEpochs,
         MaximumValidationFailures,
-        MaximumSelectionFailures = MaximumValidationFailures,
         MaximumNeurons
     };
 
@@ -55,7 +53,7 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    virtual NeuronsSelectionResults perform_neurons_selection() = 0;
+    virtual NeuronsSelectionResult perform_neurons_selection() = 0;
 
     string get_name() const
     {
@@ -98,9 +96,9 @@ protected:
     string name;
 };
 
-struct NeuronsSelectionResults
+struct NeuronsSelectionResult
 {
-   NeuronsSelectionResults(const Index maximum_epochs = 0);
+   NeuronsSelectionResult(const Index maximum_epochs = 0);
 
    void resize_history(const Index new_size);
 

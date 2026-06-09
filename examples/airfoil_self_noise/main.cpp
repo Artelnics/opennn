@@ -64,7 +64,7 @@ int main()
         sgd->set_display_period(50);
 
 
-        TrainingResults training_results = training_strategy.train();
+        TrainingResult training_results = training_strategy.train();
 
         // Testing analysis
 

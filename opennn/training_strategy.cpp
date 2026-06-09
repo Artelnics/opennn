@@ -119,7 +119,7 @@ void TrainingStrategy::set_default()
     set_optimization_algorithm("AdaptiveMomentEstimation");
 }
 
-TrainingResults TrainingStrategy::train()
+TrainingResult TrainingStrategy::train()
 {
     throw_if(!get_neural_network(), "neural network is not set.");
 

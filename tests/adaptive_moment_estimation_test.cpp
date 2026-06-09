@@ -31,7 +31,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    const TrainingResults training_results = adaptive_moment_estimation.train();
+    const TrainingResult training_results = adaptive_moment_estimation.train();
 
     EXPECT_EQ(adaptive_moment_estimation.get_loss() == nullptr, true);
 }
@@ -52,7 +52,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
     adaptive_moment_estimation.set_maximum_epochs(1);
     adaptive_moment_estimation.set_display(false);
 
-    const TrainingResults training_results = adaptive_moment_estimation.train();
+    const TrainingResult training_results = adaptive_moment_estimation.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 }
@@ -105,7 +105,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     // adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     // adaptive_moment_estimation.set_maximum_epochs(1000);
     // adaptive_moment_estimation.set_maximum_time(1000.0);
-    // const TrainingResults training_results = adaptive_moment_estimation.train();
+    // const TrainingResult training_results = adaptive_moment_estimation.train();
 
     // EXPECT_EQ(training_results.get_training_error(), training_loss_goal);
 }
@@ -131,7 +131,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     adaptive_moment_estimation.set_maximum_epochs(1);
     adaptive_moment_estimation.set_display(false);
 
-    TrainingResults training_results = adaptive_moment_estimation.train();
+    TrainingResult training_results = adaptive_moment_estimation.train();
     const type error1 = training_results.get_training_error();
 
     adaptive_moment_estimation.set_maximum_epochs(50);
@@ -166,7 +166,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     adaptive_moment_estimation.set_maximum_time(1000.0);
     adaptive_moment_estimation.set_display(false);
 
-    TrainingResults training_results = adaptive_moment_estimation.train();
+    TrainingResult training_results = adaptive_moment_estimation.train();
 
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 

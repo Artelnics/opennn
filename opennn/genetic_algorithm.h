@@ -39,7 +39,7 @@ public:
 
     void set_elitism_size(const Index size) { elitism_size = clamp<Index>(size, 0, get_individuals_number()); }
 
-    InputsSelectionResults perform_input_selection() override;
+    InputsSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 

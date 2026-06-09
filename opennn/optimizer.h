@@ -11,6 +11,7 @@
 #include <functional>
 #include "batch.h"
 #include "json.h"
+#include "loss.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
 
@@ -19,13 +20,12 @@ namespace opennn
 
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
-class Loss;
 class NeuralNetwork;
 struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
-struct TrainingResults;
+struct TrainingResult;
 struct BatchFillSession;
 
 class Optimizer
@@ -33,20 +33,13 @@ class Optimizer
 
 public:
 
-    struct EpochStats
-    {
-        float error = 0.0f;
-        float accuracy = 0.0f;
-    };
-
     Optimizer(Loss* = nullptr);
-    virtual ~Optimizer() = default;
+    virtual ~Optimizer();
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
                                  MaximumValidationErrorIncreases,
-                                 MaximumSelectionErrorIncreases = MaximumValidationErrorIncreases,
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
@@ -70,7 +63,7 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-    virtual TrainingResults train() = 0;
+    virtual TrainingResult train() = 0;
 
     Index get_maximum_batch_size() const;
 
@@ -93,7 +86,7 @@ protected:
     void set_scaling();
     void set_unscaling();
 
-    bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
+    bool check_stopping_condition(TrainingResult&, Index epoch, float elapsed_time,
                                    float training_error, Index validation_failures) const;
 
     void write_common_json(JsonWriter&) const;
@@ -102,22 +95,7 @@ protected:
     void setup_device_training();
     void teardown_device_training();
 
-    class CudaAllocationGrowthGuard
-    {
-    public:
-        explicit CudaAllocationGrowthGuard(bool);
-        ~CudaAllocationGrowthGuard();
-
-        CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
-        CudaAllocationGrowthGuard& operator=(const CudaAllocationGrowthGuard&) = delete;
-
-    private:
-        bool active = false;
-        bool previous = false;
-    };
-
-    void warmup_device_training(bool tracks_accuracy,
-                                ForwardPropagation& training_forward_propagation,
+    void warmup_device_training(ForwardPropagation& training_forward_propagation,
                                 BackPropagation& training_back_propagation,
                                 ThreadSafeQueue<Batch*>& training_empty_queue,
                                 const vector<vector<Index>>& training_batches,
@@ -178,25 +156,39 @@ protected:
     int get_batch_pool_size(const NeuralNetwork&) const;
     void apply_effective_num_workers(const NeuralNetwork&);
 
-    EpochStats train_epoch(bool tracks_accuracy,
-                           ForwardPropagation& forward_propagation,
-                           BackPropagation& back_propagation,
-                           ThreadSafeQueue<Batch*>& empty_queue,
-                           const vector<vector<Index>>& batches,
-                           const vector<Index>& input_feature_indices,
-                           const vector<Index>& decoder_feature_indices,
-                           const vector<Index>& target_feature_indices,
-                           const function<void(BackPropagation&)>& update,
-                           bool show_progress = true,
-                           Batch* fixed_device_batch = nullptr);
+    struct EpochLoopContext;
+    Loss::EvaluationResult run_epoch_loop(EpochLoopContext& context);
 
-    EpochStats evaluate_epoch(bool tracks_accuracy,
-                              ForwardPropagation& forward_propagation,
-                              ThreadSafeQueue<Batch*>& empty_queue,
-                              const vector<vector<Index>>& batches,
-                              const vector<Index>& input_feature_indices,
-                              const vector<Index>& decoder_feature_indices,
-                              const vector<Index>& target_feature_indices);
+    void reset_graph_capture();
+
+    bool graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const;
+    Loss::EvaluationResult run_graph_epoch(ForwardPropagation& forward_propagation,
+                                           BackPropagation& back_propagation,
+                                           ThreadSafeQueue<Batch*>& empty_queue,
+                                           const vector<vector<Index>>& batches,
+                                           const vector<Index>& input_feature_indices,
+                                           const vector<Index>& decoder_feature_indices,
+                                           const vector<Index>& target_feature_indices,
+                                           bool show_progress,
+                                           Batch* fixed_device_batch);
+
+    Loss::EvaluationResult train_epoch(ForwardPropagation& forward_propagation,
+                                       BackPropagation& back_propagation,
+                                       ThreadSafeQueue<Batch*>& empty_queue,
+                                       const vector<vector<Index>>& batches,
+                                       const vector<Index>& input_feature_indices,
+                                       const vector<Index>& decoder_feature_indices,
+                                       const vector<Index>& target_feature_indices,
+                                       const function<void(BackPropagation&)>& update,
+                                       bool show_progress = true,
+                                       Batch* fixed_device_batch = nullptr);
+
+    Loss::EvaluationResult evaluate_epoch(ForwardPropagation& forward_propagation,
+                                          ThreadSafeQueue<Batch*>& empty_queue,
+                                          const vector<vector<Index>>& batches,
+                                          const vector<Index>& input_feature_indices,
+                                          const vector<Index>& decoder_feature_indices,
+                                          const vector<Index>& target_feature_indices);
 
     Loss* loss = nullptr;
 
@@ -253,10 +245,10 @@ struct OptimizerData
     Buffer graph_effective_eps{Device::CUDA}; // float
 };
 
-struct TrainingResults
+struct TrainingResult
 {
-    TrainingResults(const Index = 0);
-    virtual ~TrainingResults() = default;
+    TrainingResult(const Index = 0);
+    virtual ~TrainingResult() = default;
 
     string write_stopping_condition() const;
 

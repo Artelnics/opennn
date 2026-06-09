@@ -111,9 +111,9 @@ void AdaptiveMomentEstimation::set_learning_rate(const float new_learning_rate)
     learning_rate = new_learning_rate;
 }
 
-TrainingResults AdaptiveMomentEstimation::train()
+TrainingResult AdaptiveMomentEstimation::train()
 {
-    TrainingResults results(maximum_epochs + 1);
+    TrainingResult results(maximum_epochs + 1);
 
     if (!loss || !loss->get_neural_network() || !loss->get_dataset())
         return results;
@@ -235,9 +235,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     // it chooses to (train_epoch owns the OPENNN_CUDA_GRAPH gate). The
     // device-resident Adam scalars are allocated here, at warmup, before
     // allocations are frozen. Any graph from a prior run is discarded.
-    training_graph_captured = false;
-    if (training_graph_exec) { device::destroy_graph(training_graph_exec); training_graph_exec = nullptr; }
-    graph_update = nullptr;
+    reset_graph_capture();
 
     if (on_gpu)
     {
@@ -268,8 +266,7 @@ TrainingResults AdaptiveMomentEstimation::train()
             update_parameters(back_propagation, warmup_optimization_data);
         };
 
-        warmup_device_training(is_token_cross_entropy,
-                               training_forward_propagation,
+        warmup_device_training(training_forward_propagation,
                                training_back_propagation,
                                batch_pools.training_empty_queue,
                                training_batches,
@@ -290,7 +287,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     // Main loop
 
     {
-        CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
+        device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
 
         for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
         {
@@ -298,36 +295,34 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-            const EpochStats train_stats = train_epoch(is_token_cross_entropy,
-                                                       training_forward_propagation,
-                                                       training_back_propagation,
-                                                       batch_pools.training_empty_queue,
-                                                       training_batches,
-                                                       input_feature_indices,
-                                                       decoder_feature_indices,
-                                                       target_feature_indices,
-                                                       training_update,
-                                                       should_display(epoch),
-                                                       batch_pools.fixed_training_batch.get());
+            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_forward_propagation,
+                                                                                 training_back_propagation,
+                                                                                 batch_pools.training_empty_queue,
+                                                                                 training_batches,
+                                                                                 input_feature_indices,
+                                                                                 decoder_feature_indices,
+                                                                                 target_feature_indices,
+                                                                                 training_update,
+                                                                                 should_display(epoch),
+                                                                                 batch_pools.fixed_training_batch.get());
 
-            training_error = train_stats.error;
-            training_accuracy = train_stats.accuracy;
+            training_error = training_evaluation_result.error;
+            training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
             if (has_validation)
             {
                 dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-                const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
-                                                            *validation_fp,
-                                                            batch_pools.validation_queue(),
-                                                            validation_batches,
-                                                            input_feature_indices,
-                                                            decoder_feature_indices,
-                                                            target_feature_indices);
+                const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
+                                                                                          batch_pools.validation_queue(),
+                                                                                          validation_batches,
+                                                                                          input_feature_indices,
+                                                                                          decoder_feature_indices,
+                                                                                          target_feature_indices);
 
-                validation_error = val_stats.error;
-                validation_accuracy = val_stats.accuracy;
+                validation_error = validation_evaluation_result.error;
+                validation_accuracy = validation_evaluation_result.accuracy;
                 results.validation_error_history(epoch) = validation_error;
 
                 if(validation_error < best_validation_error)

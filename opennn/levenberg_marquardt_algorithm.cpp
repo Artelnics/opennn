@@ -228,7 +228,7 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
         }
 }
 
-TrainingResults LevenbergMarquardtAlgorithm::train()
+TrainingResult LevenbergMarquardtAlgorithm::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -251,7 +251,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";
 
-    TrainingResults results(maximum_epochs+1);
+    TrainingResult results(maximum_epochs+1);
 
     // Dataset
 

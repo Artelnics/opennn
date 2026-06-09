@@ -538,10 +538,10 @@ void Loss::back_propagate(const Batch& batch,
 
     {
         PROFILE_SCOPE("loss:calculate_error");
-        const EvaluationResult eval = calculate_error(batch, forward_propagation);
-        back_propagation.error                = eval.error;
-        back_propagation.accuracy             = eval.accuracy;
-        back_propagation.active_tokens_count  = eval.active_tokens_count;
+        const EvaluationResult evaluation_result = calculate_error(batch, forward_propagation);
+        back_propagation.error                = evaluation_result.error;
+        back_propagation.accuracy             = evaluation_result.accuracy;
+        back_propagation.active_tokens_count  = evaluation_result.active_tokens_count;
     }
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);

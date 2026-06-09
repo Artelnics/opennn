@@ -43,12 +43,12 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection->set(training_strategy);
 }
 
-NeuronsSelectionResults ModelSelection::perform_neurons_selection()
+NeuronsSelectionResult ModelSelection::perform_neurons_selection()
 {
     return neurons_selection->perform_neurons_selection();
 }
 
-InputsSelectionResults ModelSelection::perform_input_selection()
+InputsSelectionResult ModelSelection::perform_input_selection()
 {
     return inputs_selection->perform_input_selection();
 }

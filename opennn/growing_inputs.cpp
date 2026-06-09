@@ -66,7 +66,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : min(new_maximum_inputs_number, inputs_number);
 }
 
-InputsSelectionResults GrowingInputs::perform_input_selection()
+InputsSelectionResult GrowingInputs::perform_input_selection()
 {
     // Dataset
 
@@ -78,7 +78,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     if (display) cout << "Performing growing input selection..." << "\n";
 
-    InputsSelectionResults input_selection_results(original_input_variables_number);
+    InputsSelectionResult input_selection_results(original_input_variables_number);
 
     // Loss
 
@@ -124,7 +124,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     // Training strategy
 
     Index validation_failures = 0;
-    TrainingResults training_results;
+    TrainingResult training_results;
 
     // Model selection
 

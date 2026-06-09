@@ -41,9 +41,9 @@ void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
     neurons_increment = new_neurons_increment;
 }
 
-NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
+NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
-    NeuronsSelectionResults neuron_selection_results(maximum_epochs);
+    NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
     if (display) cout << "Performing growing neuron selection..." << "\n";
 
@@ -70,7 +70,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     float elapsed_time = 0.0f;
 
-    TrainingResults training_results;
+    TrainingResult training_results;
 
     time(&beginning_time);
 

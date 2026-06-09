@@ -38,7 +38,7 @@ public:
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
     void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , OptimizerData&);
 
-    TrainingResults train() override;
+    TrainingResult train() override;
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;

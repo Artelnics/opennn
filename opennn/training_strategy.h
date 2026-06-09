@@ -17,7 +17,7 @@ namespace opennn
 class Loss;
 class Optimizer;
 
-struct TrainingResults;
+struct TrainingResult;
 
 class TrainingStrategy
 {
@@ -46,7 +46,7 @@ public:
     void set_loss(const string&);
     void set_optimization_algorithm(const string&);
 
-    TrainingResults train();
+    TrainingResult train();
     void from_JSON(const JsonDocument&);
     void to_JSON(JsonWriter&) const;
 

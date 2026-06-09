@@ -15,11 +15,12 @@
 namespace opennn
 {
 
-struct SlotBuffers
+struct BatchSlot
 {
     Buffer buffer;
     Shape  shape;
     Index  features_number = 0;
+    
     float* host = nullptr;
     Index  host_allocated_size = 0;
 };
@@ -76,9 +77,9 @@ struct Batch
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;
 
-    SlotBuffers input;
-    SlotBuffers decoder;
-    SlotBuffers target;
+    BatchSlot input;
+    BatchSlot decoder;
+    BatchSlot target;
 
     int input_contiguous = -1;
     int decoder_contiguous = -1;

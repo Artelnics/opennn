@@ -85,7 +85,7 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_maximum_epochs(1);
     quasi_newton_method.set_display(false);
 
-    TrainingResults training_results = quasi_newton_method.train();
+    TrainingResult training_results = quasi_newton_method.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 

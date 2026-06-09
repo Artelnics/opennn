@@ -61,7 +61,7 @@ public:
    void set_minimum_damping_parameter(const float);
    void set_maximum_damping_parameter(const float);
    void set_minimum_loss_decrease(const float);
-   TrainingResults train() override;
+   TrainingResult train() override;
 
    enum DataSlot { ParameterUpdate };
 

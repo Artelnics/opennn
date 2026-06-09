@@ -189,7 +189,7 @@ void GeneticAlgorithm::evaluate_population()
 
         neural_network->set_parameters_random();
 
-        const TrainingResults training_results = training_strategy->train();
+        const TrainingResult training_results = training_strategy->train();
 
         individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
                                               neural_network->get_parameters_size());
@@ -418,7 +418,7 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-InputsSelectionResults GeneticAlgorithm::perform_input_selection()
+InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 {
     Loss* loss = training_strategy->get_loss();
 
@@ -434,7 +434,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
              "dataset has no validation samples. "
              "The genetic algorithm uses validation error to rank individuals.");
 
-    InputsSelectionResults input_selection_results(maximum_epochs);
+    InputsSelectionResult input_selection_results(maximum_epochs);
 
     if (display) cout << "Performing genetic input selection...\n" << "\n";
 

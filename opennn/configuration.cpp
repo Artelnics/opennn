@@ -12,60 +12,57 @@
 namespace opennn
 {
 
+Configuration& Configuration::instance()
+{
+    static Configuration configuration;
+    return configuration;
+}
+
 void Configuration::set(Device new_device,
                         Type new_training_type)
 {
     device         = new_device;
     training_type  = new_training_type;
-    cache_valid = false;
 }
 
-const Configuration::Resolved& Configuration::resolve_slow() const
+Configuration::Resolved Configuration::resolve() const
 {
     Resolved resolved;
 
+    switch (device)
     {
-        using enum Device;
-        switch (device)
-        {
-        case Auto:
-            resolved.device = device::has_cuda_device() ? CUDA : CPU;
-            break;
-        case CPU:
-            resolved.device = CPU;
-            break;
-        case CUDA:
-            throw_if(!device::has_cuda_device(),
-                     "Configuration: CUDA requested but no GPU detected.");
-            resolved.device = CUDA;
-            break;
-        }
+    case Device::Auto:
+        resolved.device = device::has_cuda_device() ? Device::CUDA : Device::CPU;
+        break;
+    case Device::CPU:
+        resolved.device = Device::CPU;
+        break;
+    case Device::CUDA:
+        throw_if(!device::has_cuda_device(),
+                 "Configuration: CUDA requested but no GPU detected.");
+        resolved.device = Device::CUDA;
+        break;
     }
 
-    const bool gpu = (resolved.device == Device::CUDA);
-    const int  compute_capability = gpu ? device::cuda_compute_capability() : -1;
-    const bool bf16_capable = gpu && (compute_capability >= 80);
-
-    auto resolve_dtype = [&](Type requested) -> Type
+    switch (training_type)
     {
-        using enum Type;
-        switch (requested)
-        {
-        case Auto: return bf16_capable ? BF16 : FP32;
-        case FP32: return FP32;
-        case BF16:
-            throw_if(!gpu, "Configuration: BF16 requires CUDA.");
-            throw_if(!bf16_capable, "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
-            return BF16;
-        }
-        return FP32;
-    };
+    case Type::Auto:
+        resolved.training_type = resolved.device == Device::CUDA && device::cuda_compute_capability() >= 80
+            ? Type::BF16
+            : Type::FP32;
+        break;
+    case Type::FP32:
+        resolved.training_type = Type::FP32;
+        break;
+    case Type::BF16:
+        throw_if(resolved.device != Device::CUDA, "Configuration: BF16 requires CUDA.");
+        throw_if(device::cuda_compute_capability() < 80,
+                 "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
+        resolved.training_type = Type::BF16;
+        break;
+    }
 
-    resolved.training_type = resolve_dtype(training_type);
-
-    cached_resolved = resolved;
-    cache_valid = true;
-    return cached_resolved;
+    return resolved;
 }
 
 }

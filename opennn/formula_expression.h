@@ -86,11 +86,11 @@ struct LinearConstraintSet
 };
 
 
-[[nodiscard]] bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
+bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
 
-[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
-                                                              const Index n_in,
-                                                              const Index n_out);
+LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+                                                const Index n_in,
+                                                const Index n_out);
 
 }
 

@@ -37,7 +37,7 @@ public:
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
     float get_gradient_clip_norm() const { return gradient_clip_norm; }
 
-    TrainingResults train() override;
+    TrainingResult train() override;
 
     void update_parameters(BackPropagation&, OptimizerData&) const;
 

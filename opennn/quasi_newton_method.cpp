@@ -157,7 +157,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     old_learning_rate = learning_rate;
 }
 
-TrainingResults QuasiNewtonMethod::train()
+TrainingResult QuasiNewtonMethod::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -166,7 +166,7 @@ TrainingResults QuasiNewtonMethod::train()
              "its update path maps device pointers as host memory. "
              "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
 
-    TrainingResults results(maximum_epochs + 1);
+    TrainingResult results(maximum_epochs + 1);
 
     if (display) cout << "Training with quasi-Newton method..." << "\n";
 
@@ -291,11 +291,11 @@ TrainingResults QuasiNewtonMethod::train()
 
             // Loss
 
-            const Loss::EvaluationResult eval = loss->calculate_error(validation_batch,
-                                                                       *validation_fp);
-            validation_back_propagation.error = eval.error;
-            validation_back_propagation.accuracy = eval.accuracy;
-            validation_back_propagation.active_tokens_count = eval.active_tokens_count;
+            const Loss::EvaluationResult evaluation_result = loss->calculate_error(validation_batch,
+                                                                                   *validation_fp);
+            validation_back_propagation.error = evaluation_result.error;
+            validation_back_propagation.accuracy = evaluation_result.accuracy;
+            validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
@@ -395,13 +395,13 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         potential_parameters = parameters + training_direction * alpha;
 
         neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        const Loss::EvaluationResult eval = loss->calculate_error(batch, forward_propagation);
+        const Loss::EvaluationResult evaluation_result = loss->calculate_error(batch, forward_propagation);
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
-        const float new_loss = eval.error + candidate_regularization;
+        const float new_loss = evaluation_result.error + candidate_regularization;
 
         if (new_loss <= current_loss + armijo_constant * alpha * training_slope)
         {
-            back_propagation.error = eval.error;
+            back_propagation.error = evaluation_result.error;
             back_propagation.regularization = candidate_regularization;
             return {alpha, new_loss};
         }

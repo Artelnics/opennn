@@ -53,7 +53,7 @@ void Batch::set(const Index new_samples_number,
                          && dataset->supports_bf16_inputs();
     const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 
-    auto setup_buffer = [&](const string& role, SlotBuffers& slot, Index device_elem_bytes)
+    auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
     {
         const Shape& dataset_shape = dataset->get_shape(role);
 

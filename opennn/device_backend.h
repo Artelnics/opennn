@@ -29,6 +29,20 @@ pair<size_t, size_t> memory_info();
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
+class CudaAllocationGrowthGuard
+{
+public:
+    explicit CudaAllocationGrowthGuard(bool);
+    ~CudaAllocationGrowthGuard() noexcept;
+
+    CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
+    CudaAllocationGrowthGuard& operator=(const CudaAllocationGrowthGuard&) = delete;
+
+private:
+    bool active = false;
+    bool previous = false;
+};
+
 void* allocate(Device, Index);
 void deallocate(Device, void*, Index);
 

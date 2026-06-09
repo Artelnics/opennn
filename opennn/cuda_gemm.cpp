@@ -29,18 +29,18 @@ namespace
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
         LtMatmulPlan& operator=(const LtMatmulPlan&) = delete;
-        LtMatmulPlan(LtMatmulPlan&& other) noexcept { *this = std::move(other); }
+        LtMatmulPlan(LtMatmulPlan&& other) noexcept { swap_with(other); }
+        LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept { swap_with(other); return *this; }
 
-        LtMatmulPlan& operator=(LtMatmulPlan&& other) noexcept
+        void swap_with(LtMatmulPlan& other) noexcept
         {
-            std::swap(op_desc, other.op_desc);
-            std::swap(a_desc,  other.a_desc);
-            std::swap(b_desc,  other.b_desc);
-            std::swap(cd_desc, other.cd_desc);
-            std::swap(algo,    other.algo);
-            std::swap(algo_valid, other.algo_valid);
-            std::swap(workspace_size, other.workspace_size);
-            return *this;
+            swap(op_desc, other.op_desc);
+            swap(a_desc,  other.a_desc);
+            swap(b_desc,  other.b_desc);
+            swap(cd_desc, other.cd_desc);
+            swap(algo,    other.algo);
+            swap(algo_valid, other.algo_valid);
+            swap(workspace_size, other.workspace_size);
         }
 
         ~LtMatmulPlan()
@@ -114,12 +114,16 @@ namespace
     bool env_flag_enabled(const char* name) noexcept
     {
         const char* value = getenv(name);
-        return value
-            && (strcmp(value, "1") == 0
-                || strcmp(value, "true") == 0
-                || strcmp(value, "TRUE") == 0
-                || strcmp(value, "on") == 0
-                || strcmp(value, "ON") == 0);
+        if (!value) return false;
+
+        const string_view text(value);
+        constexpr string_view enabled_values[] = {"1", "true", "TRUE", "on", "ON"};
+
+        return ranges::any_of(enabled_values,
+                              [text](string_view enabled_value)
+                              {
+                                  return text == enabled_value;
+                              });
     }
 
     bool scratch_growth_forbidden() noexcept
@@ -140,16 +144,16 @@ namespace
         }
         return buffer.ensure<T>(n);
     }
-}
 
-void* ensure_cublas_lt_workspace(size_t min_bytes)
-{
-    return ensure_scratch<uint8_t>(thread_state().cublas_lt_workspace, Index(min_bytes));
-}
+    void* ensure_cublas_lt_workspace(size_t min_bytes)
+    {
+        return ensure_scratch<uint8_t>(thread_state().cublas_lt_workspace, Index(min_bytes));
+    }
 
-bfloat16* ensure_bf16_input_scratch(Index n)
-{
-    return ensure_scratch<bfloat16>(thread_state().bf16_input, n);
+    bfloat16* ensure_bf16_input_scratch(Index n)
+    {
+        return ensure_scratch<bfloat16>(thread_state().bf16_input, n);
+    }
 }
 
 bfloat16* ensure_bf16_gradient_scratch(Index n)
@@ -188,7 +192,9 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
-static const LtMatmulPlan& get_lt_gemm_plan(
+namespace
+{
+const LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
     cublasOperation_t transB,
@@ -252,7 +258,8 @@ static const LtMatmulPlan& get_lt_gemm_plan(
         ensure_cublas_lt_workspace(plan.workspace_size);
     }
 
-    return plans.emplace(key, std::move(plan)).first->second;
+    return plans.emplace(key, move(plan)).first->second;
+}
 }
 
 void run_lt_matmul_cached(
@@ -331,16 +338,6 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
 
 namespace opennn
 {
-
-void* ensure_cublas_lt_workspace(size_t)
-{
-    throw runtime_error("ensure_cublas_lt_workspace requires CUDA support.");
-}
-
-bfloat16* ensure_bf16_input_scratch(Index)
-{
-    throw runtime_error("ensure_bf16_input_scratch requires CUDA support.");
-}
 
 bfloat16* ensure_bf16_gradient_scratch(Index)
 {

@@ -38,7 +38,7 @@ public:
     void update_parameters(BackPropagation&, OptimizerData&, float) const;
     void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
 
-    TrainingResults train() override;
+    TrainingResult train() override;
 
     void from_JSON(const JsonDocument&) override;
 

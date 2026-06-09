@@ -46,7 +46,7 @@ TEST(GrowingInputsTest, InputSelection)
 
     EXPECT_EQ(growing_inputs.has_training_strategy(), true);
 
-    InputsSelectionResults input_selection_results = growing_inputs.perform_input_selection();
+    InputsSelectionResult input_selection_results = growing_inputs.perform_input_selection();
     EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], 0);
 }
 
@@ -77,7 +77,7 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     growing_inputs.set_display(false);
 
     growing_inputs.set_maximum_inputs_number(1);
-    InputsSelectionResults results = growing_inputs.perform_input_selection();
+    InputsSelectionResult results = growing_inputs.perform_input_selection();
 
     // El índice 0 (input1) debería ser seleccionado
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);

@@ -21,12 +21,16 @@ std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 bool env_flag_enabled(const char* name) noexcept
 {
     const char* value = getenv(name);
-    return value
-        && (strcmp(value, "1") == 0
-            || strcmp(value, "true") == 0
-            || strcmp(value, "TRUE") == 0
-            || strcmp(value, "on") == 0
-            || strcmp(value, "ON") == 0);
+    if (!value) return false;
+
+    const string_view text(value);
+    constexpr string_view enabled_values[] = {"1", "true", "TRUE", "on", "ON"};
+
+    return ranges::any_of(enabled_values,
+                          [text](string_view enabled_value)
+                          {
+                              return text == enabled_value;
+                          });
 }
 
 void throw_if_auto(Device device_type)
@@ -48,44 +52,6 @@ cudaMemcpyKind to_cuda_copy_kind(CopyKind kind)
     }
 
     throw runtime_error("unsupported CUDA copy kind.");
-}
-
-bool compiled_with_cuda() noexcept
-{
-    return true;
-}
-
-bool available_cuda_device() noexcept
-{
-    int count = 0;
-    const cudaError_t error = cudaGetDeviceCount(&count);
-    if (error != cudaSuccess)
-    {
-        cudaGetLastError();
-        return false;
-    }
-
-    return count > 0;
-}
-
-int device_compute_capability() noexcept
-{
-    cudaDeviceProp properties{};
-    if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
-    {
-        cudaGetLastError();
-        return -1;
-    }
-
-    return properties.major * 10 + properties.minor;
-}
-
-pair<size_t, size_t> cuda_memory_info()
-{
-    size_t free_bytes = 0;
-    size_t total_bytes = 0;
-    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
-    return {free_bytes, total_bytes};
 }
 
 void* allocate_cuda(Index byte_count)
@@ -202,26 +168,6 @@ void stream_wait_event_impl(cudaStream_t stream, cudaEvent_t event)
 
 #else
 
-bool compiled_with_cuda() noexcept
-{
-    return false;
-}
-
-bool available_cuda_device() noexcept
-{
-    return false;
-}
-
-int device_compute_capability() noexcept
-{
-    return -1;
-}
-
-pair<size_t, size_t> cuda_memory_info()
-{
-    throw runtime_error("CUDA support is not compiled in.");
-}
-
 void* allocate_cuda(Index)
 {
     throw runtime_error("CUDA support is not compiled in.");
@@ -314,22 +260,56 @@ void stream_wait_event_impl(cudaStream_t, cudaEvent_t)
 
 bool is_cuda_build() noexcept
 {
-    return compiled_with_cuda();
+#ifdef OPENNN_HAS_CUDA
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool has_cuda_device() noexcept
 {
-    return available_cuda_device();
+#ifdef OPENNN_HAS_CUDA
+    int count = 0;
+    const cudaError_t error = cudaGetDeviceCount(&count);
+    if (error != cudaSuccess)
+    {
+        cudaGetLastError();
+        return false;
+    }
+
+    return count > 0;
+#else
+    return false;
+#endif
 }
 
 int cuda_compute_capability() noexcept
 {
-    return device_compute_capability();
+#ifdef OPENNN_HAS_CUDA
+    cudaDeviceProp properties{};
+    if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
+    {
+        cudaGetLastError();
+        return -1;
+    }
+
+    return properties.major * 10 + properties.minor;
+#else
+    return -1;
+#endif
 }
 
 pair<size_t, size_t> memory_info()
 {
-    return cuda_memory_info();
+#ifdef OPENNN_HAS_CUDA
+    size_t free_bytes = 0;
+    size_t total_bytes = 0;
+    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
+    return {free_bytes, total_bytes};
+#else
+    throw runtime_error("CUDA support is not compiled in.");
+#endif
 }
 
 bool cuda_allocation_growth_forbidden() noexcept
@@ -341,6 +321,22 @@ bool cuda_allocation_growth_forbidden() noexcept
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
+CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
+    : active(enabled && is_cuda_build())
+{
+    if (active)
+    {
+        previous = cuda_allocation_growth_forbidden();
+        set_cuda_allocation_growth_forbidden(true);
+    }
+}
+
+CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
+{
+    if (active)
+        set_cuda_allocation_growth_forbidden(previous);
 }
 
 void* allocate(Device device_type, Index byte_count)
@@ -443,9 +439,7 @@ cudaStream_t create_stream(unsigned flags)
 
 void destroy_stream(cudaStream_t stream)
 {
-    if (!stream) return;
-
-    destroy_stream_impl(stream);
+    if (stream) destroy_stream_impl(stream);
 }
 
 void* allocate_pinned_host(Index byte_count)
@@ -459,9 +453,7 @@ void* allocate_pinned_host(Index byte_count)
 
 void deallocate_pinned_host(void* pointer)
 {
-    if (!pointer) return;
-
-    deallocate_pinned_host_impl(pointer);
+    if (pointer) deallocate_pinned_host_impl(pointer);
 }
 
 cudaEvent_t create_event(unsigned flags)
@@ -476,9 +468,7 @@ cudaEvent_t create_event()
 
 void destroy_event(cudaEvent_t event)
 {
-    if (!event) return;
-
-    destroy_event_impl(event);
+    if (event) destroy_event_impl(event);
 }
 
 void record_event(cudaEvent_t event, cudaStream_t stream)
@@ -488,16 +478,12 @@ void record_event(cudaEvent_t event, cudaStream_t stream)
 
 void synchronize_event(cudaEvent_t event)
 {
-    if (!event) return;
-
-    synchronize_event_impl(event);
+    if (event) synchronize_event_impl(event);
 }
 
 void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
 {
-    if (!event) return;
-
-    stream_wait_event_impl(stream, event);
+    if (event) stream_wait_event_impl(stream, event);
 }
 
 #ifdef OPENNN_HAS_CUDA
