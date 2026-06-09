@@ -11,7 +11,7 @@
 #include "pch.h"
 #include "statistics.h"
 #include "variable.h"
-#include "formula_expression.h"
+#include "constraints_utilities.h"
 
 namespace opennn
 {

@@ -608,10 +608,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         }
     }
 
-    repair_affine_inputs(random_inputs,
-                         input_domain.inferior_frontier,
-                         input_domain.superior_frontier,
-                         formula_constraints);
+    repair_inputs(random_inputs,
+                  input_domain.inferior_frontier,
+                  input_domain.superior_frontier,
+                  formula_constraints);
 
     return random_inputs;
 }

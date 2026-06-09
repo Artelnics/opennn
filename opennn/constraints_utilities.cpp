@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   F O R M U L A   E X P R E S S I O N   C L A S S
+//   C O N S T R A I N T S   U T I L I T I E S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "pch.h"
-#include "formula_expression.h"
+#include "constraints_utilities.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 
@@ -637,24 +637,267 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
     }
 }
 
+
+// ---- Symbolic differentiation (drives the nonlinear Gauss-Newton repair) ----
+//
+// We already hold the expression as an AST, so the cleanest way to obtain the
+// Jacobian is to differentiate that AST once at compile time into derivative
+// ASTs, then compile each to its own RPN program. At repair time the Jacobian
+// is just a few evaluate_rpn() calls — no per-point AD graph, no finite
+// differences, and it batches exactly like the constraint itself. The smart
+// constructors below constant-fold on the fly to keep the derivative bytecode
+// small (the classic symbolic-swell mitigation; our formulas are tiny anyway).
+
+AstPtr clone(const Ast& node)
+{
+    auto copy = make_unique<Ast>();
+    copy->kind = node.kind;
+    copy->constant = node.constant;
+    copy->index = node.index;
+    copy->function_name = node.function_name;
+    copy->children.reserve(node.children.size());
+    for (const AstPtr& child : node.children)
+        copy->children.push_back(clone(*child));
+    return copy;
 }
 
 
-float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
+bool is_const(const Ast& node, float& value)
 {
-    if (shape == FormulaShape::Affine)
+    if (node.kind == Ast::Kind::Const) { value = node.constant; return true; }
+    return false;
+}
+
+
+AstPtr make_const(const float value)
+{
+    auto node = make_unique<Ast>();
+    node->kind = Ast::Kind::Const;
+    node->constant = value;
+    return node;
+}
+
+
+AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
+{
+    auto node = make_unique<Ast>();
+    node->kind = kind;
+    node->children.reserve(2);
+    node->children.push_back(move(left));
+    node->children.push_back(move(right));
+    return node;
+}
+
+
+AstPtr make_neg(AstPtr a)
+{
+    float av;
+    if (is_const(*a, av)) return make_const(-av);
+
+    auto node = make_unique<Ast>();
+    node->kind = Ast::Kind::UnaryNeg;
+    node->children.push_back(move(a));
+    return node;
+}
+
+
+AstPtr make_add(AstPtr a, AstPtr b)
+{
+    float av, bv;
+    const bool a_c = is_const(*a, av);
+    const bool b_c = is_const(*b, bv);
+    if (a_c && b_c) return make_const(av + bv);
+    if (a_c && av == 0.0f) return b;
+    if (b_c && bv == 0.0f) return a;
+    return make_binary(Ast::Kind::Add, move(a), move(b));
+}
+
+
+AstPtr make_sub(AstPtr a, AstPtr b)
+{
+    float av, bv;
+    const bool a_c = is_const(*a, av);
+    const bool b_c = is_const(*b, bv);
+    if (a_c && b_c) return make_const(av - bv);
+    if (b_c && bv == 0.0f) return a;
+    if (a_c && av == 0.0f) return make_neg(move(b));
+    return make_binary(Ast::Kind::Sub, move(a), move(b));
+}
+
+
+AstPtr make_mul(AstPtr a, AstPtr b)
+{
+    float av, bv;
+    const bool a_c = is_const(*a, av);
+    const bool b_c = is_const(*b, bv);
+    if (a_c && av == 0.0f) return make_const(0.0f);
+    if (b_c && bv == 0.0f) return make_const(0.0f);
+    if (a_c && b_c) return make_const(av * bv);
+    if (a_c && av == 1.0f) return b;
+    if (b_c && bv == 1.0f) return a;
+    return make_binary(Ast::Kind::Mul, move(a), move(b));
+}
+
+
+AstPtr make_div(AstPtr a, AstPtr b)
+{
+    float av, bv;
+    const bool a_c = is_const(*a, av);
+    const bool b_c = is_const(*b, bv);
+    if (a_c && av == 0.0f) return make_const(0.0f);
+    if (b_c && bv == 1.0f) return a;
+    if (a_c && b_c && bv != 0.0f) return make_const(av / bv);
+    return make_binary(Ast::Kind::Div, move(a), move(b));
+}
+
+
+AstPtr make_pow(AstPtr a, AstPtr b)
+{
+    float bv;
+    if (is_const(*b, bv))
     {
-        float result = affine_constant;
+        if (bv == 0.0f) return make_const(1.0f);
+        if (bv == 1.0f) return a;
+    }
+    float av;
+    if (is_const(*a, av) && is_const(*b, bv)) return make_const(pow(av, bv));
+    return make_binary(Ast::Kind::Pow, move(a), move(b));
+}
 
-        for (const auto& [column, coefficient] : affine_input_terms)
-            result += coefficient * inputs_row(column);
 
-        for (const auto& [column, coefficient] : affine_output_terms)
-            result += coefficient * outputs_row(column);
+AstPtr make_func(const string& name, AstPtr argument)
+{
+    auto node = make_unique<Ast>();
+    node->kind = Ast::Kind::Func;
+    node->function_name = name;
+    node->children.push_back(move(argument));
+    return node;
+}
 
-        return result;
+
+bool is_smooth(const Ast& node)
+{
+    if (node.kind == Ast::Kind::Func
+        && (node.function_name == "min" || node.function_name == "max"))
+        return false;
+
+    for (const AstPtr& child : node.children)
+        if (!is_smooth(*child)) return false;
+
+    return true;
+}
+
+
+AstPtr differentiate(const Ast& node, const Index wrt_input)
+{
+    switch (node.kind)
+    {
+    case Ast::Kind::Const:
+        return make_const(0.0f);
+
+    case Ast::Kind::Input:
+        return make_const(node.index == wrt_input ? 1.0f : 0.0f);
+
+    case Ast::Kind::Output:
+        return make_const(0.0f);
+
+    case Ast::Kind::UnaryNeg:
+        return make_neg(differentiate(*node.children[0], wrt_input));
+
+    case Ast::Kind::Add:
+        return make_add(differentiate(*node.children[0], wrt_input),
+                        differentiate(*node.children[1], wrt_input));
+
+    case Ast::Kind::Sub:
+        return make_sub(differentiate(*node.children[0], wrt_input),
+                        differentiate(*node.children[1], wrt_input));
+
+    case Ast::Kind::Mul:
+    {
+        // (a*b)' = a'*b + a*b'
+        AstPtr da = differentiate(*node.children[0], wrt_input);
+        AstPtr db = differentiate(*node.children[1], wrt_input);
+        return make_add(make_mul(move(da), clone(*node.children[1])),
+                        make_mul(clone(*node.children[0]), move(db)));
     }
 
+    case Ast::Kind::Div:
+    {
+        // (a/b)' = (a'*b - a*b') / b^2
+        AstPtr da = differentiate(*node.children[0], wrt_input);
+        AstPtr db = differentiate(*node.children[1], wrt_input);
+        AstPtr numerator = make_sub(make_mul(move(da), clone(*node.children[1])),
+                                    make_mul(clone(*node.children[0]), move(db)));
+        AstPtr denominator = make_mul(clone(*node.children[1]), clone(*node.children[1]));
+        return make_div(move(numerator), move(denominator));
+    }
+
+    case Ast::Kind::Pow:
+    {
+        float exponent;
+        if (is_const(*node.children[1], exponent))
+        {
+            // (a^c)' = c*a^(c-1)*a'
+            AstPtr da = differentiate(*node.children[0], wrt_input);
+            AstPtr power = make_pow(clone(*node.children[0]), make_const(exponent - 1.0f));
+            return make_mul(make_mul(make_const(exponent), move(power)), move(da));
+        }
+
+        float base;
+        if (is_const(*node.children[0], base))
+        {
+            // (k^b)' = k^b*ln(k)*b'
+            AstPtr db = differentiate(*node.children[1], wrt_input);
+            AstPtr value = make_pow(make_const(base), clone(*node.children[1]));
+            return make_mul(make_mul(move(value), make_const(log(base))), move(db));
+        }
+
+        // General a^b = exp(b*ln a): (a^b)' = a^b*(b'*ln a + b*a'/a)
+        AstPtr da = differentiate(*node.children[0], wrt_input);
+        AstPtr db = differentiate(*node.children[1], wrt_input);
+        AstPtr term1 = make_mul(move(db), make_func("log", clone(*node.children[0])));
+        AstPtr term2 = make_div(make_mul(clone(*node.children[1]), move(da)),
+                                clone(*node.children[0]));
+        AstPtr value = make_pow(clone(*node.children[0]), clone(*node.children[1]));
+        return make_mul(move(value), make_add(move(term1), move(term2)));
+    }
+
+    case Ast::Kind::Func:
+    {
+        const string& name = node.function_name;
+        const Ast& u = *node.children[0];
+        AstPtr du = differentiate(u, wrt_input);
+
+        if (name == "sqrt")   // (sqrt u)' = u'/(2 sqrt u)
+            return make_div(move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
+        if (name == "exp")    // (exp u)' = exp(u) u'
+            return make_mul(make_func("exp", clone(u)), move(du));
+        if (name == "log")    // (log u)' = u'/u
+            return make_div(move(du), clone(u));
+        if (name == "abs")    // (|u|)' = (u/|u|) u'
+            return make_mul(make_div(clone(u), make_func("abs", clone(u))), move(du));
+        if (name == "sin")    // (sin u)' = cos(u) u'
+            return make_mul(make_func("cos", clone(u)), move(du));
+        if (name == "cos")    // (cos u)' = -sin(u) u'
+            return make_neg(make_mul(make_func("sin", clone(u)), move(du)));
+        if (name == "tan")    // (tan u)' = u'/cos^2(u)
+            return make_div(move(du), make_pow(make_func("cos", clone(u)), make_const(2.0f)));
+
+        // min/max are non-smooth and filtered out before differentiate() runs.
+        return make_const(0.0f);
+    }
+    }
+
+    return make_const(0.0f);
+}
+
+}
+
+
+float evaluate_rpn(const vector<RpnOp>& bytecode,
+                   const VectorR& inputs_row,
+                   const VectorR& outputs_row)
+{
     vector<float> evaluation_stack;
     evaluation_stack.reserve(16);
 
@@ -701,6 +944,25 @@ float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& output
     }
 
     return evaluation_stack.back();
+}
+
+
+float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
+{
+    if (shape == FormulaShape::Affine)
+    {
+        float result = affine_constant;
+
+        for (const auto& [column, coefficient] : affine_input_terms)
+            result += coefficient * inputs_row(column);
+
+        for (const auto& [column, coefficient] : affine_output_terms)
+            result += coefficient * outputs_row(column);
+
+        return result;
+    }
+
+    return evaluate_rpn(bytecode, inputs_row, outputs_row);
 }
 
 
@@ -758,6 +1020,25 @@ CompiledFormula compile_formula(const string& expression,
     else
     {
         result.shape = FormulaShape::Nonlinear;
+
+        // For smooth input-only nonlinear constraints, precompile the gradient
+        // (one RPN program per referenced input) so the Gauss-Newton repair can
+        // assemble the Jacobian with plain evaluate_rpn() calls. Non-smooth
+        // (min/max) and output-touching formulas get no gradient and fall back
+        // to rejection.
+        if (result.scope == FormulaScope::InputsOnly && is_smooth(*ast))
+        {
+            result.gradient_available = true;
+            result.input_gradient.reserve(result.input_indices.size());
+
+            for (const Index input_column : result.input_indices)
+            {
+                const AstPtr partial = differentiate(*ast, input_column);
+                vector<RpnOp> program;
+                emit_bytecode(*partial, program);
+                result.input_gradient.emplace_back(input_column, move(program));
+            }
+        }
     }
 
     emit_bytecode(*ast, result.bytecode);
@@ -827,6 +1108,7 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
         case ComparisonOp::LessThan:
             linear_set.upper(i) = up - c - EPSILON;
             break;
+        case ComparisonOp::None:
         default:
             break;
         }
@@ -922,6 +1204,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
+        case ComparisonOp::None:
         default:
             break;
         }
@@ -978,6 +1261,278 @@ void repair_affine_inputs(MatrixR& random_inputs,
     }
 
     random_inputs = augmented_points.leftCols(inputs_number);
+}
+
+
+void repair_single_affine_input(MatrixR& random_inputs,
+                                const VectorR& inferior_frontier,
+                                const VectorR& superior_frontier,
+                                const FormulaConstraint& constraint)
+{
+    const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
+
+    if (terms.empty())
+        return;
+
+    const float constant = constraint.compiled.affine_constant;
+    const float low = constraint.low_bound;
+    const float up  = constraint.up_bound;
+    const Index rows_number = random_inputs.rows();
+
+    vector<Index> columns;
+    vector<float> coefficients;
+    columns.reserve(terms.size());
+    coefficients.reserve(terms.size());
+
+    for (const auto& [column, coefficient] : terms)
+    {
+        columns.push_back(column);
+        coefficients.push_back(coefficient);
+    }
+
+    const Index terms_number = static_cast<Index>(columns.size());
+
+    for (Index r = 0; r < rows_number; ++r)
+    {
+        float expression = constant;
+        for (Index t = 0; t < terms_number; ++t)
+            expression += coefficients[t] * random_inputs(r, columns[t]);
+
+        // Only project violated inequalities (equalities always project).
+        // Leaving satisfied points untouched is what preserves the diversity.
+        float target = 0.0f;
+        switch (constraint.op)
+        {
+        case ComparisonOp::EqualTo:
+            target = low;
+            break;
+        case ComparisonOp::Between:
+            if      (expression < low) target = low;
+            else if (expression > up)  target = up;
+            else continue;
+            break;
+        case ComparisonOp::GreaterEqualTo:
+        case ComparisonOp::GreaterThan:
+            if (expression < low) target = low; else continue;
+            break;
+        case ComparisonOp::LessEqualTo:
+        case ComparisonOp::LessThan:
+            if (expression > up) target = up; else continue;
+            break;
+        case ComparisonOp::None:
+        default:
+            continue;
+        }
+
+        float residual = target - expression;
+
+        // Fresh random sweep order for this row (Fisher-Yates), keeping each
+        // column paired with its coefficient.
+        for (Index sweep = terms_number - 1; sweep > 0; --sweep)
+        {
+            const Index pick = random_integer(0, sweep);
+            swap(columns[sweep], columns[pick]);
+            swap(coefficients[sweep], coefficients[pick]);
+        }
+
+        // Clamp-and-carry: each coordinate absorbs as much of the remaining
+        // residual as its box allows; a single pass is algebraically exact for
+        // one constraint whenever the target is reachable within the box.
+        for (Index t = 0; t < terms_number; ++t)
+        {
+            const float coefficient = coefficients[t];
+            if (coefficient == 0.0f)
+                continue;
+
+            const Index column = columns[t];
+            const float old_value = random_inputs(r, column);
+            const float wanted = old_value + residual / coefficient;
+            const float new_value = min(superior_frontier(column),
+                                        max(inferior_frontier(column), wanted));
+
+            residual -= coefficient * (new_value - old_value);
+            random_inputs(r, column) = new_value;
+
+            if (abs(residual) <= EPSILON)
+                break;
+        }
+    }
+}
+
+
+void repair_nonlinear_inputs(MatrixR& random_inputs,
+                             const VectorR& inferior_frontier,
+                             const VectorR& superior_frontier,
+                             const vector<FormulaConstraint>& formula_constraints,
+                             const Index max_correction_passes)
+{
+    // Smooth input-only constraints we can project. Affine ones (constant
+    // Jacobian) are folded in so the whole input-only set is satisfied jointly;
+    // we only run at all when at least one is genuinely nonlinear.
+    vector<const FormulaConstraint*> constraints;
+    bool any_nonlinear = false;
+
+    for (const FormulaConstraint& constraint : formula_constraints)
+    {
+        if (constraint.uses_callback
+            || constraint.op == ComparisonOp::None
+            || constraint.compiled.scope != FormulaScope::InputsOnly)
+            continue;
+
+        if (constraint.compiled.shape == FormulaShape::Affine
+            && !constraint.compiled.affine_input_terms.empty())
+            constraints.push_back(&constraint);
+        else if (constraint.compiled.shape == FormulaShape::Nonlinear
+                 && constraint.compiled.gradient_available)
+        {
+            constraints.push_back(&constraint);
+            any_nonlinear = true;
+        }
+    }
+
+    if (!any_nonlinear || constraints.empty())
+        return;
+
+    const Index rows_number   = random_inputs.rows();
+    const Index inputs_number = random_inputs.cols();
+    const Index passes        = max(Index(1), max_correction_passes);
+
+    const VectorR empty_outputs;   // input-only constraints never touch outputs
+
+    for (Index r = 0; r < rows_number; ++r)
+    {
+        VectorR point = random_inputs.row(r).transpose();
+
+        for (Index pass = 0; pass < passes; ++pass)
+        {
+            // Active set: residual h and which constraints are currently violated.
+            vector<const FormulaConstraint*> active;
+            vector<float> residuals;
+            active.reserve(constraints.size());
+            residuals.reserve(constraints.size());
+
+            for (const FormulaConstraint* constraint : constraints)
+            {
+                const float value = constraint->compiled.evaluate(point, empty_outputs);
+                const float low = constraint->low_bound;
+                const float up  = constraint->up_bound;
+
+                float residual = 0.0f;
+                bool is_active = false;
+
+                switch (constraint->op)
+                {
+                case ComparisonOp::EqualTo:
+                    residual = value - low; is_active = true; break;
+                case ComparisonOp::Between:
+                    if      (value < low) { residual = value - low; is_active = true; }
+                    else if (value > up)  { residual = value - up;  is_active = true; }
+                    break;
+                case ComparisonOp::GreaterEqualTo:
+                case ComparisonOp::GreaterThan:
+                    if (value < low) { residual = value - low; is_active = true; }
+                    break;
+                case ComparisonOp::LessEqualTo:
+                case ComparisonOp::LessThan:
+                    if (value > up) { residual = value - up; is_active = true; }
+                    break;
+                case ComparisonOp::None:
+                default:
+                    break;
+                }
+
+                if (is_active)
+                {
+                    active.push_back(constraint);
+                    residuals.push_back(residual);
+                }
+            }
+
+            if (active.empty())
+                break;   // every constraint satisfied at this point
+
+            // Residual-based early-exit: an EqualTo constraint is always "active"
+            // but may already be satisfied to tolerance, so stop once the worst
+            // active residual is negligible. This makes a generous pass cap cheap
+            // — easy points converge in a handful of passes, only stiff manifolds
+            // use the full budget.
+            float max_abs_residual = 0.0f;
+            for (const float residual : residuals)
+                max_abs_residual = max(max_abs_residual, abs(residual));
+
+            if (max_abs_residual <= EPSILON)
+                break;
+
+            const Index active_number = static_cast<Index>(active.size());
+
+            MatrixR jacobian = MatrixR::Zero(active_number, inputs_number);
+            VectorR rhs(active_number);
+
+            for (Index i = 0; i < active_number; ++i)
+            {
+                rhs(i) = residuals[i];
+                const CompiledFormula& compiled = active[i]->compiled;
+
+                if (compiled.shape == FormulaShape::Affine)
+                    for (const auto& [column, coefficient] : compiled.affine_input_terms)
+                        jacobian(i, column) = coefficient;
+                else
+                    for (const auto& [column, program] : compiled.input_gradient)
+                        jacobian(i, column) = evaluate_rpn(program, point, empty_outputs);
+            }
+
+            // Gauss-Newton-on-manifold step: point <- point - J^T (J J^T + eps I)^-1 h.
+            MatrixR gram = jacobian * jacobian.transpose();
+            gram.diagonal().array() += EPSILON;
+
+            point -= jacobian.transpose() * gram.ldlt().solve(rhs);
+
+            // Box projection.
+            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
+        }
+
+        random_inputs.row(r) = point.transpose();
+    }
+}
+
+
+void repair_inputs(MatrixR& random_inputs,
+                   const VectorR& inferior_frontier,
+                   const VectorR& superior_frontier,
+                   const vector<FormulaConstraint>& formula_constraints)
+{
+    // Route by the structure of the input-only, non-callback constraints:
+    //   - any nonlinear present  -> Gauss-Newton repair (folds in affine ones)
+    //   - exactly one affine     -> single-pass random sweep (exact, diverse)
+    //   - two or more affine      -> batched Gram + Dykstra projection
+    const FormulaConstraint* single_affine = nullptr;
+    Index affine_number = 0;
+    bool any_nonlinear = false;
+
+    for (const FormulaConstraint& constraint : formula_constraints)
+    {
+        if (constraint.uses_callback
+            || constraint.op == ComparisonOp::None
+            || constraint.compiled.scope != FormulaScope::InputsOnly)
+            continue;
+
+        if (constraint.compiled.shape == FormulaShape::Affine
+            && !constraint.compiled.affine_input_terms.empty())
+        {
+            ++affine_number;
+            single_affine = &constraint;
+        }
+        else if (constraint.compiled.shape == FormulaShape::Nonlinear
+                 && constraint.compiled.gradient_available)
+            any_nonlinear = true;
+    }
+
+    if (any_nonlinear)
+        repair_nonlinear_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
+    else if (affine_number == 1)
+        repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
+    else if (affine_number >= 2)
+        repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
 }
 
 }
