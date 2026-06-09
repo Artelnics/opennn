@@ -1,0 +1,51 @@
+#!/bin/sh
+
+set -u
+set -e
+trap onexit INT
+trap onexit TERM
+trap onexit EXIT
+
+TMPDIR=
+SUDO=
+
+onexit()
+{
+	if [ ! "$TMPDIR" = "" ]; then
+		rm -rf $TMPDIR
+	fi
+}
+
+uid()
+{
+	id | cut -f2 -d = | cut -f1 -d \(;
+}
+
+PKGNAME=libjpeg-turbo
+VERSION=3.1.4
+ARCH=x86_64
+OS=Windows
+PREFIX=C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install
+
+umask 022
+rm -f $PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+TMPDIR=`mktemp -d /tmp/$PKGNAME-build.XXXXXX`
+mkdir -p $TMPDIR/install
+
+DESTDIR=$TMPDIR/install C:/PROGRA~1/MICROS~1/18/COMMUN~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe install
+echo tartest >$TMPDIR/tartest
+GNUTAR=0
+BSDTAR=0
+tar cf $TMPDIR/tartest.tar --owner=root --group=root -C $TMPDIR tartest >/dev/null 2>&1 && GNUTAR=1
+if [ "$GNUTAR" = "1" ]; then
+	tar cf - --owner=root --group=root -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+else
+	tar cf $TMPDIR/tartest.tar --uid 0 --gid 0 -C $TMPDIR tartest >/dev/null 2>&1 && BSDTAR=1
+	if [ "$BSDTAR" = "1" ]; then
+		tar cf - --uid=0 --gid=0 -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+	else
+		tar cf - -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+	fi
+fi
+
+exit

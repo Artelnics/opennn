@@ -75,7 +75,8 @@ void recompile_if_specs_changed(NeuralNetwork& network,
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
-                                           const Shape& output_shape) : NeuralNetwork()
+                                           const Shape& output_shape,
+                                           const string& hidden_activation) : NeuralNetwork()
 {
     const Index complexity_size = complexity_dimensions.rank;
 
@@ -84,7 +85,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
     for (Index i = 0; i < complexity_size; ++i)
         add_layer(make_unique<Dense>(get_output_shape(),
                                        Shape{ complexity_dimensions[i] },
-                                       "Tanh",
+                                       hidden_activation,
                                        false,
                                        format("dense2d_layer_{}", i + 1)));
 

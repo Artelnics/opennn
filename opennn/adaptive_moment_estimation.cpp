@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include <cstring>
+#include <cstdlib>
 #include "registry.h"
 #include "dataset.h"
 #include "forward_propagation.h"
@@ -217,7 +218,12 @@ TrainingResults AdaptiveMomentEstimation::train()
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
     bool stop_training = false;
-    const bool shuffle = !neural_network->has(LayerType::Recurrent)
+    static const bool no_shuffle = [] {
+        const char* v = std::getenv("OPENNN_NO_SHUFFLE");
+        return v && v[0] == '1';
+    }();
+    const bool shuffle = !no_shuffle
+                      && !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
     const auto training_update = [&](BackPropagation& back_propagation) {

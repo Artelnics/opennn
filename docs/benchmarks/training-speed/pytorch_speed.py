@@ -11,7 +11,9 @@
 #   * torch.compile for kernel fusion (uses CUDA graphs under the hood),
 #   * channels-last / contiguous tensors, no Python-side per-sample work.
 #
-#   usage:  python pytorch_speed.py <samples> <features> [epochs] [batch]
+#   usage:  python pytorch_speed.py <samples> <features> [epochs] [batch] [precision] [shuffle] [activation]
+#           shuffle    = "shuffle" to reshuffle every epoch (matches OpenNN), else fixed order
+#           activation = "tanh" (default) or "relu"
 
 import sys
 import time
@@ -38,6 +40,14 @@ def main():
     # Precision: bf16 (autocast mixed precision, default), tf32 (fp32 math on
     # tensor cores), or fp32 (strict IEEE, tensor cores off).
     precision = sys.argv[5] if len(sys.argv) > 5 else "bf16"
+    # Shuffle: when on, draw a fresh GPU-resident permutation each epoch and
+    # index the resident tensors (the fast equivalent of DataLoader(shuffle=True),
+    # no host roundtrip). Matches OpenNN, which reshuffles every epoch by default.
+    shuffle = (sys.argv[6] if len(sys.argv) > 6 else "noshuffle") in ("shuffle", "1", "true")
+    # Hidden activation: tanh (default) or relu. OpenNN fuses bias+ReLU into the
+    # GEMM epilogue; eager PyTorch (no compile on Windows) cannot, so this is a
+    # fair head-to-head on a model both frameworks express identically.
+    activation = (sys.argv[7] if len(sys.argv) > 7 else "tanh").lower()
 
     assert torch.cuda.is_available(), "CUDA GPU required"
     device = "cuda"
@@ -49,15 +59,16 @@ def main():
     torch.backends.cudnn.allow_tf32 = allow_tf32
     torch.backends.cudnn.benchmark = True
     use_autocast = precision == "bf16"
-    print(f"precision={precision} autocast={use_autocast} tf32={allow_tf32}")
+    print(f"precision={precision} autocast={use_autocast} tf32={allow_tf32} shuffle={shuffle} activation={activation}")
 
     x, y = rosenbrock_dataset(samples, features, device=device)
     print(f"device={torch.cuda.get_device_name(0)}")
     print(f"samples={samples} features={features} batch={batch} epochs={epochs}")
 
+    act_layer = torch.nn.ReLU() if activation == "relu" else torch.nn.Tanh()
     model = torch.nn.Sequential(
         torch.nn.Linear(features, features),
-        torch.nn.Tanh(),
+        act_layer,
         torch.nn.Linear(features, 1),
     ).to(device)
 
@@ -93,8 +104,16 @@ def main():
 
     def run_epoch():
         model.train()
-        for s in starts:
-            train_step(x[s:s + batch], y[s:s + batch])
+        if shuffle:
+            # Fresh permutation each epoch, resident on the GPU. Per-batch index
+            # gather (perm[s:s+batch]) is PyTorch's fast shuffle path.
+            perm = torch.randperm(n, device=device)
+            for s in starts:
+                idx = perm[s:s + batch]
+                train_step(x[idx], y[idx])
+        else:
+            for s in starts:
+                train_step(x[s:s + batch], y[s:s + batch])
         torch.cuda.synchronize()
 
     # Warmup (includes torch.compile autotuning, which is slow on first call).

@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage: opennn_speed <csv_path> <features> [epochs] [batch] [fp32|bf16]\n";
+            std::cerr << "usage: opennn_speed <csv_path> <features> [epochs] [batch] [fp32|bf16] [tanh|relu]\n";
             return 2;
         }
 
@@ -40,6 +40,8 @@ int main(int argc, char* argv[])
         const Index timed_epochs = (argc > 3) ? Index(std::stoll(argv[3])) : 30;
         const Index batch = (argc > 4) ? Index(std::stoll(argv[4])) : 1000;
         const std::string precision = (argc > 5) ? argv[5] : "fp32";
+        const std::string activation = (argc > 6) ? argv[6] : "tanh";
+        const std::string hidden_activation = (activation == "relu") ? "ReLU" : "Tanh";
 
         set_seed(42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
@@ -51,11 +53,12 @@ int main(int argc, char* argv[])
 
         std::cout << "samples=" << samples << " features=" << features
                   << " batch=" << batch << " epochs=" << timed_epochs
-                  << " precision=" << precision << "\n";
+                  << " precision=" << precision << " activation=" << activation << "\n";
 
         ApproximationNetwork network(dataset.get_input_shape(),
                                      {features},
-                                     dataset.get_target_shape());
+                                     dataset.get_target_shape(),
+                                     hidden_activation);
 
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("MeanSquaredError");

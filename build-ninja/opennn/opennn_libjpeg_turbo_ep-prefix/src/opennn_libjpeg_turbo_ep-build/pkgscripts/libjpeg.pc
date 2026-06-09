@@ -1,0 +1,10 @@
+prefix=C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install
+exec_prefix=C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install
+libdir=C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib
+includedir=C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/include
+
+Name: libjpeg
+Description: A SIMD-accelerated JPEG codec that provides the libjpeg API
+Version: 3.1.4
+Libs: -L${libdir} -ljpeg
+Cflags: -I${includedir}
