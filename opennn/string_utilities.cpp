@@ -454,11 +454,6 @@ void string_to_vector(const string& input, VectorR& values)
     ranges::copy(buffer, values.data());
 }
 
-bool contains(const vector<string>& data, const string& value)
-{
-    return ranges::find(data, value) != data.end();
-}
-
 bool contains(const vector<string>& data, string_view value)
 {
     return ranges::any_of(data,
@@ -496,7 +491,8 @@ bool env_flag_enabled(const char* name) noexcept
 
     const string_view text(value);
 
-    return ranges::any_of({"1", "true", "on", "yes"},
+    const initializer_list<string_view> enabled_values{"1", "true", "on", "yes"};
+    return ranges::any_of(enabled_values,
                           [text](string_view enabled_value)
                           {
                               return equal_ignoring_case(text, enabled_value);

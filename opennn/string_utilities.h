@@ -102,7 +102,6 @@ namespace opennn
             values(i++) = value;
     }
 
-    bool contains(const vector<string>&, const string&);
     bool contains(const vector<string>&, string_view);
     bool contains(initializer_list<string_view>, string_view);
     bool starts_with_any(string_view, initializer_list<string_view>);

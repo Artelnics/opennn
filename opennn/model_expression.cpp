@@ -906,7 +906,6 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
               "\tdocument.getElementById(id).value = value;\n"
               "}\n\n"
               "</script>\n\n"
-              "<!--script source=\"https:
               "</body>\n\n"
               "</html>\n";
 }
