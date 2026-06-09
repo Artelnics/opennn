@@ -136,10 +136,6 @@ public:
     void set_data(const MatrixR&);
     void set_data_constant(float);
 
-    // GPU-resident data (prototype): upload the whole matrix to the device once
-    // so batches can be gathered on-device instead of re-copied from the host
-    // each step. Opt-in via OPENNN_GPU_RESIDENT_DATA. Only valid for the
-    // in-memory Matrix storage mode with a contiguous float layout.
     void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
     bool is_device_resident() const { return data_device.data != nullptr; }
@@ -274,15 +270,12 @@ protected:
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
 
-    // Hook for derived datasets to invalidate any cached data when variables or
-    // samples change. Base does nothing; TabularDataset clears its binary cache.
     virtual void mark_data_changed() const {}
 
     StorageMode storage_mode = StorageMode::Matrix;
 
     MatrixR data;
 
-    // Device-resident mirror of `data` (empty unless device residency is on).
     Buffer data_device{Device::CUDA};
 
     Shape input_shape;

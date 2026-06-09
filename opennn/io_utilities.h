@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I / O   U T I L I T I E S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -67,9 +66,6 @@ private:
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to);
 
-// Read-only memory map of a whole file. The mapped pages are file-backed and
-// evictable under memory pressure, so they raise the real out-of-memory ceiling
-// versus copying the file into a heap buffer. Move-only; unmaps on destruction.
 class FileMapping
 {
 public:
@@ -81,8 +77,6 @@ public:
     FileMapping(FileMapping&&) noexcept;
     FileMapping& operator=(FileMapping&&) noexcept;
 
-    // Maps the file read-only. Returns false if mapping is unavailable (e.g.
-    // empty file); the caller then falls back to a copied buffer.
     bool map(const filesystem::path& path);
     void reset();
 
@@ -112,13 +106,10 @@ public:
 
     struct Result
     {
-        // Exactly one source is active: a zero-copy memory map (the common,
-        // quote-free case) or a heap copy (BOM/quoted files needing in-place
-        // edits). `content` views whichever is live; `lines` index into it.
         FileMapping         mapping;
         string              buffer;
         string_view         content;
-        vector<string_view> lines;   // whole data lines; tokenize per-line on demand
+        vector<string_view> lines;
         char                separator = ',';
     };
 

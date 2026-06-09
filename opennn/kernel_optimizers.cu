@@ -125,13 +125,6 @@ void adam_update_cuda(
         effective_eps));
 }
 
-// --- Capturable Adam (for CUDA graphs) ---------------------------------------
-//
-// The per-step bias correction depends on the iteration number, which changes
-// every step. To let a single captured graph replay correctly, the iteration
-// lives in device memory and the effective learning rate / epsilon are computed
-// on-device by a 1-thread "prepare" kernel each replay, instead of being baked
-// in as host-computed launch arguments.
 
 __global__ void adam_prepare_kernel(int* __restrict__ step,
                                     float beta_1, float beta_2,
@@ -152,8 +145,6 @@ __global__ void adam_prepare_kernel(int* __restrict__ step,
     *effective_eps = epsilon * sqrt_bc2;
 }
 
-// Adam update that reads the effective lr/eps from device memory (filled by
-// adam_prepare_kernel) rather than from host-computed launch arguments.
 __global__ void adam_update_capturable_kernel(
     const int n_vec,
     const int n,
@@ -236,8 +227,6 @@ void adam_update_capturable_cuda(
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
 
-    // 1) device-side bias-correction prep, 2) the update; both stream-ordered so
-    //    they capture into a graph and replay with the incremented step.
     OPENNN_CUDA_LAUNCH(adam_prepare_kernel<<<1, 1, 0, stream>>>(
         step_device, beta_1, beta_2, learning_rate, epsilon,
         effective_lr_device, effective_eps_device));
@@ -380,10 +369,6 @@ void sgd_update_cuda(
         learning_rate, momentum, nesterov));
 }
 
-// Capturable SGD: the (per-epoch decayed) learning rate is read from device
-// memory, so a single captured CUDA graph replays correctly; the host only
-// refreshes the device-resident lr once per epoch. momentum/nesterov are
-// constant for the whole run, so they stay host-baked launch arguments.
 __global__ void sgd_update_capturable_kernel(
     const int n_vec,
     const int n,
@@ -469,10 +454,6 @@ __global__ void sgd_update_capturable_kernel(
     }
 }
 
-// Stream-ordered write of a host scalar into device memory. Used to refresh the
-// per-epoch learning rate the capturable SGD graph reads. A kernel (not a
-// pageable cudaMemcpyAsync) guarantees ordering w.r.t. the subsequent graph
-// replay on the same stream.
 __global__ void set_scalar_kernel(float* __restrict__ dst, const float value)
 {
     if (threadIdx.x == 0 && blockIdx.x == 0) *dst = value;
@@ -586,13 +567,15 @@ void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
     OPENNN_CUDA_LAUNCH(cast_fp32_to_bf16_kernel<<<grid_size, block_size, 0, stream>>>(n_vec, total, src, dst));
 }
 
-// Gather n_rows rows from a row-major device-resident dataset matrix into a
-// contiguous (n_rows x n_cols) output. Each input row src_row = row_indices[i]
-// contributes columns [col_offset, col_offset + n_cols) from a matrix that is
-// matrix_cols wide. One block row per gathered row; threads stride the columns.
+template<typename TDst>
+__device__ __forceinline__ TDst gather_cast(float value) { return value; }
+template<>
+__device__ __forceinline__ __nv_bfloat16 gather_cast<__nv_bfloat16>(float value) { return __float2bfloat16(value); }
+
+template<typename TDst>
 __global__ void gather_rows_kernel(const float* __restrict__ matrix,
                                    const int* __restrict__ row_indices,
-                                   float* __restrict__ out,
+                                   TDst* __restrict__ out,
                                    const int n_rows,
                                    const int n_cols,
                                    const int matrix_cols,
@@ -602,16 +585,17 @@ __global__ void gather_rows_kernel(const float* __restrict__ matrix,
     if (row >= n_rows) return;
 
     const float* __restrict__ src = matrix + size_t(row_indices[row]) * matrix_cols + col_offset;
-    float* __restrict__ dst = out + size_t(row) * n_cols;
+    TDst* __restrict__ dst = out + size_t(row) * n_cols;
 
     for (int j = threadIdx.x; j < n_cols; j += blockDim.x)
-        dst[j] = src[j];
+        dst[j] = gather_cast<TDst>(src[j]);
 }
 
-void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
-                      const Index n_rows, const Index n_cols,
-                      const Index matrix_cols, const Index col_offset,
-                      cudaStream_t stream)
+template<typename TDst>
+static void gather_rows_launch(const float* matrix, const int* row_indices, TDst* out,
+                               const Index n_rows, const Index n_cols,
+                               const Index matrix_cols, const Index col_offset,
+                               cudaStream_t stream)
 {
     if (n_rows == 0 || n_cols == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
@@ -620,8 +604,24 @@ void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
     const int cols = checked_int(n_cols);
     const int threads = cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
 
-    OPENNN_CUDA_LAUNCH(gather_rows_kernel<<<rows, threads > 0 ? threads : 32, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads > 0 ? threads : 32, 0, stream>>>(
         matrix, row_indices, out, rows, cols, checked_int(matrix_cols), checked_int(col_offset)));
+}
+
+void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
+                      const Index n_rows, const Index n_cols,
+                      const Index matrix_cols, const Index col_offset,
+                      cudaStream_t stream)
+{
+    gather_rows_launch<float>(matrix, row_indices, out, n_rows, n_cols, matrix_cols, col_offset, stream);
+}
+
+void gather_rows_bf16_cuda(const float* matrix, const int* row_indices, __nv_bfloat16* out,
+                           const Index n_rows, const Index n_cols,
+                           const Index matrix_cols, const Index col_offset,
+                           cudaStream_t stream)
+{
+    gather_rows_launch<__nv_bfloat16>(matrix, row_indices, out, n_rows, n_cols, matrix_cols, col_offset, stream);
 }
 
 __global__ void cast_bf16_to_fp32_kernel(const int n,

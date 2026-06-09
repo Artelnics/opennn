@@ -22,14 +22,14 @@ namespace {
 #pragma pack(push, 1)
 struct LangCacheHeader
 {
-    char     magic[8];          // "OPENNNTK" (8 B)
-    uint32_t version;           //           (4 B)
-    uint64_t num_samples;       //           (8 B)
-    uint32_t input_max_len;     //           (4 B)
-    uint32_t target_max_len;    //           (4 B)
-    uint8_t  has_decoder;       //           (1 B)
-    uint8_t  pad[35];           // pad to 64 (35 B)
-};                              // total = 64
+    char     magic[8];
+    uint32_t version;
+    uint64_t num_samples;
+    uint32_t input_max_len;
+    uint32_t target_max_len;
+    uint8_t  has_decoder;
+    uint8_t  pad[35];
+};
 #pragma pack(pop)
 static_assert(sizeof(LangCacheHeader) == 64, "LangCacheHeader must be 64 bytes");
 
@@ -107,7 +107,6 @@ VectorI LanguageDataset::calculate_target_distribution() const
 
         if (storage_mode == StorageMode::Matrix)
         {
-            // Single-token target lives in the first target column of data.
             token = int32_t(data(sample, maximum_input_sequence_length));
         }
         else
@@ -264,8 +263,6 @@ void LanguageDataset::read_txt()
 
     if (storage_mode == StorageMode::Matrix)
     {
-        // Matrix mode never touches the .bin: encode the documents and lay the
-        // padded token sequences out in the base data matrix (samples x features).
         vector<vector<Index>> input_indices;
         vector<vector<Index>> target_indices;
         encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
@@ -276,7 +273,7 @@ void LanguageDataset::read_txt()
             : maximum_input_sequence_length;
 
         data.resize(samples_number, ssize(variables));
-        data.setZero();   // PAD_INDEX == 0
+        data.setZero();
 
         for (Index i = 0; i < samples_number; ++i)
         {
@@ -855,7 +852,6 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
 {
     if (storage_mode == StorageMode::Matrix)
     {
-        // Decoder columns already hold [START, target shifted] (see read_txt).
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
         return;
     }

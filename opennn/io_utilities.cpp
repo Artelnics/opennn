@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I / O   U T I L I T I E S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -189,7 +188,7 @@ uint64_t FileReader::file_size() const
     return uint64_t(size.QuadPart);
 }
 
-#else  // POSIX
+#else
 
 FileReader::~FileReader() { close(); }
 
@@ -363,8 +362,6 @@ void CsvReader::parse(Result& out) const
 
         if (config.line_validator) config.line_validator(line);
 
-        // Store the whole line; tokens are produced per-line on demand by the
-        // consumer so we never hold every row's tokens at once.
         out.lines.push_back(line);
     }
 }
@@ -384,10 +381,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
 
     Result result;
 
-    // Zero-copy fast path: memory-map the file and view it directly. Only valid
-    // when no in-place edits are needed — i.e. the file has no quotes (quoted
-    // separators are stripped in place). Quote-free covers all numeric data and
-    // is where capacity matters most.
     if (result.mapping.map(path))
     {
         string_view mapped(result.mapping.data(), result.mapping.size());
@@ -400,12 +393,9 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
             return result;
         }
 
-        // Quoted file: drop the map and fall through to the copy path, which can
-        // mutate the buffer to strip quoted separators.
         result.mapping.reset();
     }
 
-    // Fallback: copy the file into a heap buffer we can edit in place.
     ifstream file(path, ios::binary | ios::ate);
 
     throw_if(!file.is_open(),

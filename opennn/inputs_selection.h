@@ -77,7 +77,6 @@ protected:
 
     bool display = true;
 
-    // Stopping criteria
 
     float validation_error_goal = 0;
 
@@ -104,11 +103,9 @@ struct InputsSelectionResult
 
     void print() const;
 
-    // Neural network
 
     VectorR optimal_parameters;
 
-    // Loss
 
     VectorR training_error_history;
 
@@ -128,7 +125,6 @@ struct InputsSelectionResult
 
     VectorB optimal_inputs;
 
-    // Model selection
 
     InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
 

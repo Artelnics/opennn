@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -102,7 +101,6 @@ private:
 
    float damping_parameter_factor = 0.0f;
 
-   // Stopping criteria
 
    float minimum_loss_decrease = 0.0f;
 

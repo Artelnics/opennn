@@ -163,7 +163,7 @@ struct Parser
             const Token& next_token = lexer.peek();
 
             if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "+" && next_token.text != "-") break;
+            if (!contains({"+", "-"}, next_token.text)) break;
 
             const string operator_text = lexer.consume().text;
 
@@ -189,7 +189,7 @@ struct Parser
             const Token& next_token = lexer.peek();
 
             if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "*" && next_token.text != "/") break;
+            if (!contains({"*", "/"}, next_token.text)) break;
 
             const string operator_text = lexer.consume().text;
 
@@ -798,7 +798,6 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
         for (const auto& [column, coefficient] : formula_constraint.compiled.affine_output_terms)
             linear_set.A(i, n_in + column) += coefficient;
 
-        // Move the affine constant to the RHS so that A·z is compared to (bound - affine_constant) directly.
         const float c = formula_constraint.compiled.affine_constant;
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;

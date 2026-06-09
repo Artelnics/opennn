@@ -92,7 +92,6 @@ void Detection::read_JSON_body(const Json* root)
 {
     set_anchors(string_to_anchors(read_json_string(root, "Anchors")));
 
-    // Missing → empty → Softmax: keeps Phase 1/2 saved networks loadable.
     set_class_activation(read_json_string(root, "ClassActivation") == "Sigmoid"
                          ? ClassActivation::Sigmoid
                          : ClassActivation::Softmax);

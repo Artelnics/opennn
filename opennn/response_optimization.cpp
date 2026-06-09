@@ -13,6 +13,7 @@
 #include "variable.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -332,10 +333,10 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         const Condition current_cond = get_condition(variables_uncheked[i].name);
 
         if (current_cond.condition == ConditionType::Past)
-            continue; // Skip this variable entirely for optimization purposes
+            continue;
 
         const bool keep = is_input_request ? (var_role == "Input")
-                                           : (var_role == "Target" || var_role == "InputTarget");
+                                           : contains({"Target", "InputTarget"}, var_role);
         if (keep)
         {
             filtered_vars.push_back(variables_uncheked[i]);
@@ -630,7 +631,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 
     for (Index row_index = 0; row_index < rows_number; ++row_index)
     {
-        // Evaluate the current constraint value: f = sum(ai * xi) + c.
 
         float weighted_sum = 0;
 
@@ -639,7 +639,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 
         const float current_value = weighted_sum + affine_constant;
 
-        // Determine the correction target based on the condition float.
 
         float target = current_value;
 
@@ -681,7 +680,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 
         for (Index pass = 0; pass < max_redistribution_passes && abs(residual_error) > EPSILON; ++pass)
         {
-            // Recompute active weighted sum and active sum of squared coefficients.
 
             float active_weighted_sum = 0;
             float active_sum_coefficients_squared = 0;
@@ -730,7 +728,6 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 
                 random_inputs(row_index, column) = clamped_value;
 
-                // Track what this variable actually absorbed (in constraint-space).
 
                 absorbed_correction += coefficient * (clamped_value - old_value);
 
@@ -754,10 +751,10 @@ void ResponseOptimization::apply_affine_input_swap(MatrixR& random_inputs,
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
     const vector<Variable> input_variables = neural_network->get_input_variables();
-    const Index batch_size = input_control.rows(); // 1000
+    const Index batch_size = input_control.rows();
     const Shape input_shape = neural_network->get_input_shape();
-    const Index total_lags = input_shape[0]; // 2
-    const Index total_features = input_shape[1]; // 8
+    const Index total_lags = input_shape[0];
+    const Index total_features = input_shape[1];
 
     Tensor3 input_combined(batch_size, total_lags, total_features);
 
@@ -912,7 +909,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
         const Condition current_condition = get_condition(all_target_variables[column_index].name);
 
         if (current_condition.condition == ConditionType::Past)
-            continue; // not in domain — skip without advancing domain_index
+            continue;
 
         if (!(current_condition.condition == ConditionType::Maximize ||
               current_condition.condition == ConditionType::Minimize ||
@@ -938,7 +935,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
         if (all_formula_constraints_are_linear(formula_constraints))
         {
-            // All-linear shortcut: one matrix product evaluates every constraint for every surviving candidate.
             const Index k     = static_cast<Index>(feasible_indices.size());
             const Index n_in  = inputs.cols();
             const Index n_out = outputs.cols();
@@ -954,7 +950,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
 
             const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
-                                 + Y * linear_set.A.rightCols(n_out).transpose();   // (k, m)
+                                 + Y * linear_set.A.rightCols(n_out).transpose();
 
             for (Index i = 0; i < k; ++i)
             {

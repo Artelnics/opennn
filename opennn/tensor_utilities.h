@@ -315,7 +315,7 @@ struct Buffer
         if (device_type == target || !data) return;
 
         void* fresh = device::allocate(target, bytes);
-        device::copy_async(fresh, data, bytes, device::copy_kind(device_type, target), stream);
+        device::copy_async(fresh, data, bytes, device_type, target, stream);
         if (stream) device::synchronize(stream);
 
         device::deallocate(device_type, data, bytes);
@@ -527,7 +527,6 @@ struct CudaStream
     explicit operator bool()  const noexcept { return handle != nullptr; }
 };
 
-// RAII wrapper around cudaEvent_t. Same rationale as CudaStream.
 struct CudaEvent
 {
     cudaEvent_t handle = nullptr;

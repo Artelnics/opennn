@@ -123,7 +123,6 @@ TrainingResult AdaptiveMomentEstimation::train()
     if (display) cout << "Training with adaptive moment estimation \"Adam\""
                      << (on_gpu ? " CUDA" : "") << " ...\n";
 
-    // Dataset
 
     Dataset* dataset = loss->get_dataset();
 
@@ -161,7 +160,6 @@ TrainingResult AdaptiveMomentEstimation::train()
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
 
-    // Neural network
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -193,7 +191,6 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     setup_device_training();
 
-    // Optimization data
 
     const Index parameters_number = neural_network->get_parameters_size();
 
@@ -231,16 +228,12 @@ TrainingResult AdaptiveMomentEstimation::train()
     };
 
 #ifdef OPENNN_HAS_CUDA
-    // Prepare the capturable update path so train_epoch can run a CUDA graph if
-    // it chooses to (train_epoch owns the OPENNN_CUDA_GRAPH gate). The
-    // device-resident Adam scalars are allocated here, at warmup, before
-    // allocations are frozen. Any graph from a prior run is discarded.
     reset_graph_capture();
 
     if (on_gpu)
     {
         optimization_data.graph_step.resize_bytes(Index(sizeof(int)), Device::CUDA);
-        optimization_data.graph_step.setZero();   // step starts at 0; kernel does ++ to 1
+        optimization_data.graph_step.setZero();
         optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
         optimization_data.graph_effective_eps.resize_bytes(Index(sizeof(float)), Device::CUDA);
 
@@ -284,7 +277,6 @@ TrainingResult AdaptiveMomentEstimation::train()
     time(&beginning_time);
     float elapsed_time = 0.0f;
 
-    // Main loop
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);

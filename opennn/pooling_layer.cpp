@@ -58,8 +58,8 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
         : Shape{};
 
     return {
-        {indices_shape,                           Type::FP32},   // MaximalIndices
-        {Shape{batch_size}.append(out_shape), compute_dtype}, // Output (must be last)
+        {indices_shape,                           Type::FP32},
+        {Shape{batch_size}.append(out_shape), compute_dtype},
     };
 }
 

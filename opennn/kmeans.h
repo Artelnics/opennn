@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   K - M E A N S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -36,7 +35,6 @@ private:
 
     Index clusters_number;
     Index maximum_iterations;
-    //string metric;
 
     MatrixR cluster_centers;
     VectorI rows_cluster_labels;

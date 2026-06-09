@@ -180,9 +180,6 @@ protected:
     void infer_variable_types_from_data();
     void resize_data_from_JSON(Index) override;
 
-    // Binary (.bin) tabular storage: header is {Index columns, Index rows} then a
-    // row-major float matrix. In BinaryFile mode the base data matrix stays empty
-    // and batches are streamed straight from disk per row (like ImageDataset).
     void read_binary_header() const;
     void fill_from_binary_cache(const vector<Index>&,
                                 const vector<Index>&,

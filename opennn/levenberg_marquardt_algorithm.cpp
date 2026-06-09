@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -29,7 +28,6 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     name = "LevenbergMarquardt";
 
-    // Stopping criteria
 
     minimum_loss_decrease = 0.0f;
     training_loss_goal = 0.0f;
@@ -38,11 +36,9 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-    // UTILITIES
 
     display_period = 10;
 
-    // Training parameters
 
     initial_damping_parameter = 1.0e-3f;
     damping_parameter = initial_damping_parameter;
@@ -247,13 +243,11 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     damping_parameter = initial_damping_parameter;
 
-    // Start training
 
     if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";
 
     TrainingResult results(maximum_epochs+1);
 
-    // Dataset
 
     Dataset* dataset = loss->get_dataset();
 
@@ -268,7 +262,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    // Neural network
 
     set_names();
 
@@ -292,7 +285,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
         : nullptr;
 
-    // Loss
 
     loss->set_normalization_coefficient();
 
@@ -314,7 +306,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     optimization_data.set({Shape{parameters_number}});
     optimization_data.potential_parameters.resize(parameters_number);
 
-    // Main loop
 
     for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {

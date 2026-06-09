@@ -41,9 +41,6 @@ public:
 
     void update_parameters(BackPropagation&, OptimizerData&) const;
 
-    // CUDA-graph variant: clip + Adam using device-resident bias correction, so
-    // the launched kernels can be captured once and replayed each step. No host
-    // bias-correction math, no host iteration increment.
     void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
 
     void from_JSON(const JsonDocument&) override;

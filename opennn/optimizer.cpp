@@ -22,9 +22,7 @@
 #include "profiler.h"
 #include "string_utilities.h"
 #include <atomic>
-#include <cctype>
 #include <chrono>
-#include <cstdlib>
 #include <exception>
 #include <mutex>
 #include <thread>
@@ -136,22 +134,9 @@ struct BatchFillSession
     vector<jthread> workers;
 };
 
-// Optimizer
 
 namespace
 {
-
-bool env_flag_enabled(const char* name)
-{
-    const char* value = getenv(name);
-    if (!value) return false;
-
-    string text(value);
-    ranges::transform(text, text.begin(),
-                      [](unsigned char c) { return static_cast<char>(tolower(c)); });
-
-    return text == "1" || text == "true" || text == "on" || text == "yes";
-}
 
 bool profile_enabled_from_env()
 {
@@ -482,12 +467,11 @@ Index Optimizer::get_maximum_batch_size() const
 
     const bool on_gpu = neural_network->is_gpu();
 
-    // Available memory
 
     Index available_bytes = 0;
     if (on_gpu)
     {
-        const size_t free_bytes = device::memory_info().first;
+        const size_t free_bytes = device::available_memory();
         available_bytes = Index(free_bytes);
     }
     else
@@ -620,7 +604,6 @@ void Optimizer::set_scaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    // Scaling layer
 
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
@@ -676,7 +659,6 @@ void Optimizer::set_scaling()
     if (!neural_network->has(LayerType::Unscaling))
         return;
 
-    // Unscaling layer
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -1113,7 +1095,6 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
 
-    // Final validation error
 
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NAN"
@@ -1173,8 +1154,6 @@ void Optimizer::setup_device_training()
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    // Prototype: mirror the dataset onto the GPU so batches are gathered
-    // on-device instead of re-copied from the host each step.
     if (env_flag_enabled("OPENNN_GPU_RESIDENT_DATA"))
         loss->get_dataset()->enable_device_residency();
 }
@@ -1209,7 +1188,6 @@ void Optimizer::sync_device(bool on_gpu)
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
-    // A non-positive norm disables clipping (skips the per-step norm reduction).
     if (max_norm <= 0.0f) return;
 
     const Index gradient_size = gradient.size_in_floats();
@@ -1234,10 +1212,6 @@ bool Optimizer::graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device
     return cuda_graph_requested && fixed && use_device_metrics && bool(graph_update);
 }
 
-// CUDA-graph fast loop: when the step is captured and the dataset is gathered
-// on-device, the batch-fill worker pipeline (built to overlap host CSV fills)
-// is pure overhead. Run a tight single-threaded loop instead: gather the
-// batch into the fixed device buffers, then capture-or-replay the step.
 Loss::EvaluationResult Optimizer::run_graph_epoch(
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
@@ -1261,9 +1235,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const Index progress_step = max(Index(1), batches_number / 200);
     if (show_progress) display_progress_bar(0, int(batches_number));
 
-    // The step that gets captured: forward + on-device-metric backward +
-    // capturable Adam, all reading the fixed device buffers. No host sync,
-    // so it can be recorded once and replayed.
     const auto run_compute_step = [&]()
     {
         neural_network->forward_propagate(fixed_device_batch->get_inputs(),
@@ -1281,16 +1252,10 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         fill_batch->fill(batches[iteration],
                          input_feature_indices, decoder_feature_indices,
                          target_feature_indices, /*is_training=*/true);
-        // Gather on the compute stream so it serializes with the step:
-        // the next gather cannot overwrite the fixed buffers until the
-        // current step has finished reading them. The gather is tiny, so
-        // foregoing transfer/compute overlap costs nothing here.
         fill_batch->upload_to_device_batch_async(*fixed_device_batch, stream);
 
         if (!training_graph_captured)
         {
-            // First batch runs the step once (the real update) while
-            // priming lazy init, then re-records it for later replays.
             run_compute_step();
             device::synchronize(stream);
             device::begin_graph_capture(stream);
@@ -1332,8 +1297,6 @@ struct Optimizer::EpochLoopContext
 
     WorkerProfileCounters* worker_profile = nullptr;
 
-    // Per-batch body: forward + measure (+ update for training), accumulating
-    // the host-side result when device metrics are not in use.
     function<void(Batch& compute_batch, Loss::EvaluationResult& host_result)> step;
 };
 

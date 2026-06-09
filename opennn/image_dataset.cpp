@@ -350,7 +350,6 @@ void ImageDataset::read_images()
 
     if (storage_mode == StorageMode::Matrix)
     {
-        // Decode every image straight into the base data matrix (samples x pixels).
         data.resize(samples_number, pixels_number);
 
         for (Index i = 0; i < samples_number; ++i)
@@ -365,7 +364,6 @@ void ImageDataset::read_images()
     }
     else
     {
-        // BinaryFile: keep raw uint8 pixels in a .bin and read them lazily per batch.
         cache_path = data_path / ".cache" / "images.bin";
 
         const bool cache_valid = filesystem::exists(cache_path)
@@ -448,12 +446,10 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (storage_mode == StorageMode::Matrix)
     {
-        // Pixels live in the base data matrix; copy them like a tabular dataset.
         fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
     }
     else
     {
-        // BinaryFile: read each image's raw uint8 pixels lazily from the .bin.
         string omp_error;
 
         #pragma omp parallel for schedule(dynamic)

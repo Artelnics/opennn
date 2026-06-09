@@ -29,9 +29,9 @@ vector<TensorSpec> Recurrent::get_forward_specs(Index batch_size) const
     const Shape state_history {batch_size, time_steps, output_features};
 
     return {
-        {state_history, compute_dtype},  // Forward::HiddenStates          (batch, time, out)
-        {state_history, compute_dtype},  // Forward::ActivationDerivatives (batch, time, out)
-        {return_sequences ? state_history : Shape{batch_size, output_features}, compute_dtype},  // Forward::Output — last
+        {state_history, compute_dtype},
+        {state_history, compute_dtype},
+        {return_sequences ? state_history : Shape{batch_size, output_features}, compute_dtype},
     };
 }
 
@@ -43,12 +43,12 @@ vector<TensorSpec> Recurrent::get_backward_specs(Index batch_size) const
     const Shape step_out_shape {batch_size, output_features};
 
     return {
-        {Shape{batch_size}.append(get_input_shape()), compute_dtype},  // InputDeltaSlot
-        {step_in_shape,     compute_dtype},  // StepInputScratchSlot
-        {step_out_shape,    compute_dtype},  // StepPrevHScratchSlot
-        {step_out_shape,    compute_dtype},  // DeltaScratchSlot
-        {step_out_shape,    compute_dtype},  // NextCarryScratchSlot
-        {step_in_shape,     compute_dtype},  // StepInDeltaScratchSlot
+        {Shape{batch_size}.append(get_input_shape()), compute_dtype},
+        {step_in_shape,     compute_dtype},
+        {step_out_shape,    compute_dtype},
+        {step_out_shape,    compute_dtype},
+        {step_out_shape,    compute_dtype},
+        {step_in_shape,     compute_dtype},
     };
 }
 

@@ -162,8 +162,6 @@ void Dataset::enable_device_residency()
     if (data.size() == 0) return;
     if (is_device_resident()) return;
 
-    // data is RowMajor (see Layout), so data.data() is a contiguous
-    // row-major buffer we can mirror verbatim onto the device.
     const Index bytes = Index(data.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
     device::copy_async(data_device.data, data.data(), bytes,
@@ -990,16 +988,6 @@ void Dataset::check_separators(string_view line) const
         return;
     }
 
-    // Sanity check: warn only when another *structural* separator (Tab, Comma,
-    // Semicolon) is present in the data line — those almost never appear as
-    // field content and their presence with a different active separator is a
-    // strong signal the user picked the wrong one.
-    //
-    // Space is intentionally excluded: column headers ("Fly ash", "Coarse
-    // Aggr."), quoted string cells ("N,N,N-trimethyloctadecan"), and any
-    // non-numeric text universally contain spaces. Including Space here
-    // rejects most real-world CSVs (UCI, Olympus, HTE screens, etc.) and is
-    // not useful as a separator-mismatch heuristic.
     for (const auto& [sep, str, name] : separator_map)
     {
         if (sep == separator || sep == Separator::Space) continue;
@@ -1047,11 +1035,6 @@ void Dataset::fill_batch(Batch& batch,
 
     const bool on_gpu = batch.uses_cuda();
 
-    // GPU-resident fast path (prototype): when the whole matrix lives on the
-    // device, skip the host gather entirely and just stash the row/column
-    // indices so the H2D step can gather on-device. Restricted to the simple
-    // contiguous-feature, no-decoder case (covers tabular regression); anything
-    // else falls through to the host path below.
     if (on_gpu && is_device_resident() && batch.decoder.shape.empty()
         && is_contiguous(input_indices) && is_contiguous(target_indices))
     {

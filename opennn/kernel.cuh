@@ -32,7 +32,6 @@ __host__ __device__ inline double arg(Integer x) noexcept
 
 using Eigen::Index;
 
-// Optimizer
 
 void adam_update_cuda(const Index, float*, float*, float*, const float*,
                       const float, const float, const float, const float,
@@ -43,18 +42,13 @@ void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
                      __nv_bfloat16* params_bf16 = nullptr);
 
-// Capturable SGD: the learning rate is read from device memory (refreshed once
-// per epoch by the host), so a single captured CUDA graph replays correctly.
 void sgd_update_capturable_cuda(
     const Index n, float* parameters, float* velocity, const float* gradients,
     const float* learning_rate_device, const float momentum, const bool nesterov,
     __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
 
-// Stream-ordered write of a host scalar into device memory (per-epoch lr refresh).
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream = nullptr);
 
-// Capturable Adam: bias-correction is computed on-device from a device-resident
-// step counter, so a single captured CUDA graph replays correctly each step.
 void adam_update_capturable_cuda(
     const Index n, float* parameters, float* m, float* v, const float* gradients,
     const float beta_1, const float beta_2,
@@ -73,6 +67,11 @@ void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
                       const Index matrix_cols, const Index col_offset,
                       cudaStream_t stream = nullptr);
 
+void gather_rows_bf16_cuda(const float* matrix, const int* row_indices, __nv_bfloat16* out,
+                           const Index n_rows, const Index n_cols,
+                           const Index matrix_cols, const Index col_offset,
+                           cudaStream_t stream = nullptr);
+
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);
 
@@ -80,7 +79,6 @@ template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             float scale, TOut* output);
 
-// Errors
 
 template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
@@ -113,12 +111,10 @@ void accumulate_scaled_metric_cuda(const float*, float, float*);
 
 void accumulate_cross_entropy_3d_metrics_cuda(const float*, float*, float*);
 
-// Regularization
 
 template<typename T>
 void l1_gradient_cuda(const Index, T*, const T*, const float);
 
-// Bounding
 
 template<typename TIn, typename TOut>
 void bounding_cuda(const Index n, const int features, const TIn* input, const float* lower, const float* upper, TOut* output);
@@ -141,7 +137,6 @@ void unscale_cuda(const Index n, const int features,
                   float min_range, float max_range,
                   TOut* output);
 
-// Embedding
 
 template<typename T>
 void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
@@ -149,7 +144,6 @@ void embedding_forward_cuda(const Index n, const float* inputs, const float* wei
 template<typename T>
 void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
-// MultiHead Attention
 
 template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
@@ -172,7 +166,6 @@ void attention_sequence_lengths_cuda(const int batch_size,
                                      int32_t* query_lengths,
                                      int32_t* source_lengths);
 
-// Pooling 3D
 
 template<typename T>
 void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F);
@@ -186,7 +179,6 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_grad, const int S, const int F);
 
-// Dropout
 
 template<typename T>
 void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float rate, const unsigned long long seed);
@@ -194,7 +186,6 @@ void dropout_forward_cuda(const Index n, T* output, uint8_t* mask, const float r
 template<typename T>
 void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta, const uint8_t* mask, const float rate);
 
-// Activation
 
 template<typename T>
 void activation_forward_cuda(const Index n, T* data, const int function);
@@ -202,7 +193,6 @@ void activation_forward_cuda(const Index n, T* data, const int function);
 template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function);
 
-// Normalization Layer
 
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
@@ -254,7 +244,6 @@ void rnn_step_fused_forward_cuda(const Index batch,
 template<typename T>
 void rnn_elementwise_multiply_cuda(const Index n, T* dst, const T* a);
 
-// bias_grad[f] += sum over batch of delta[b, f]. bias_grad always FP32.
 template<typename T>
 void rnn_accumulate_bias_grad_cuda(const Index batch, const Index features,
                                    const T* delta, float* bias_grad);

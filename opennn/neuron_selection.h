@@ -106,7 +106,6 @@ struct NeuronsSelectionResult
 
    void print() const;
 
-   // Neural network
 
    VectorI neurons_number_history;
 
@@ -114,7 +113,6 @@ struct NeuronsSelectionResult
 
    VectorR optimal_parameters;
 
-   // Loss
 
    VectorR training_error_history;
 
@@ -124,7 +122,6 @@ struct NeuronsSelectionResult
 
    float optimum_validation_error = 10.0f;
 
-   // Model selection
 
    NeuronSelection::StoppingCondition stopping_condition = NeuronSelection::StoppingCondition::MaximumTime;
 

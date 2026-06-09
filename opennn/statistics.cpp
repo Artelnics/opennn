@@ -529,7 +529,6 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         maximums(0) = min + length;
         centers(0) = (maximums(0) + minimums(0)) /2.0f;
 
-        // Calculate bins center
 
         for (Index i = 1; i < bins_number; ++i)
         {
@@ -539,7 +538,6 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
             centers(i) = (maximums(i) + minimums(i)) /2.0f;
         }
 
-        // Calculate bins frequency
 
         const Index size = new_vector.size();
 
@@ -589,9 +587,8 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     maximums(bin_center-1) = center + length;
     centers(bin_center-1) = center;
 
-    // Calculate bins center
 
-    for (Index i = bin_center; i < bins_number; ++i) // Upper centers
+    for (Index i = bin_center; i < bins_number; ++i)
     {
         minimums(i) = minimums(i - 1) + length;
         maximums(i) = maximums(i - 1) + length;
@@ -599,7 +596,7 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
         centers(i) = (maximums(i) + minimums(i)) /2.0f;
     }
 
-    for (Index i = Index(bin_center)-2; i >= 0; i--) // Lower centers
+    for (Index i = Index(bin_center)-2; i >= 0; i--)
     {
         minimums(i) = minimums(i+1) - length;
         maximums(i) = maximums(i+1) - length;
@@ -607,7 +604,6 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
         centers(i) = (maximums(i) + minimums(i)) /2.0f;
     }
 
-    // Calculate bins frequency
 
     const Index size = vector.size();
 
@@ -645,7 +641,6 @@ Histogram histogram(const VectorB& flags)
 
     VectorR frequencies = VectorR::Zero(2);
 
-    // Calculate bins frequency
 
     const Index size = flags.size();
 

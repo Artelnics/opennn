@@ -80,9 +80,9 @@ struct FormulaConstraint
 
 struct LinearConstraintSet
 {
-    MatrixR A;       // (m_constraints, n_inputs + n_outputs); first n_inputs cols are input coefficients
-    VectorR lower;   // (m_constraints), -infinity for one-sided upper-bound constraints
-    VectorR upper;   // (m_constraints), +infinity for one-sided lower-bound constraints
+    MatrixR A;
+    VectorR lower;
+    VectorR upper;
 };
 
 

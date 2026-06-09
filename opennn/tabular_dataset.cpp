@@ -262,7 +262,6 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
         throw_if(row < 0 || row >= binary_rows_number,
                  "Binary data row index is out of range.");
 
-    // Header is {Index columns, Index rows}; row-major float matrix follows.
     constexpr uint64_t header_bytes = 2 * sizeof(Index);
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
@@ -903,7 +902,6 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         set_storage_mode(read_json_string(src, "StorageMode"));
         if (storage_mode == StorageMode::BinaryFile)
         {
-            // The .bin was produced by a prior read_csv; reopen it and stream from disk.
             cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
             read_binary_header();
         }
@@ -1005,7 +1003,6 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
             continue;
         }
 
-        // Numeric variable: feature_count is always 1, so feature_index advances by 1 below.
         const float interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
         if (interquartile_range < EPSILON)
@@ -1424,7 +1421,6 @@ void TabularDataset::read_csv()
 
     if (storage_mode == StorageMode::BinaryFile)
     {
-        // Offload the parsed matrix to a .bin and stream batches from disk (like ImageDataset).
         cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
         filesystem::create_directories(cache_path.parent_path());
 
@@ -1686,8 +1682,6 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     const size_t rows_to_check = min(size_t(100), total_rows);
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
-    // Tokenize only the sampled rows once, indexed by their position in the
-    // 0..rows_to_check window, so the type pass below can reuse them.
     vector<vector<string_view>> sampled_tokens(rows_to_check);
     for (size_t i = 0; i < rows_to_check; ++i)
         sampled_tokens[i] = get_token_views(sample_lines[row_indices[i]], separator);
@@ -1734,8 +1728,6 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     if (!any_categorical) return;
 
-    // Categorical category collection needs every row; tokenize each line once
-    // here rather than retaining all rows' tokens for the whole load.
     vector<std::set<string>> unique_categories(variables_number);
     for (const string_view line : sample_lines)
     {

@@ -21,7 +21,6 @@ class ModelSelection
 
 public:
 
-    // Constructors
 
     ModelSelection(TrainingStrategy* = nullptr);
     const TrainingStrategy* get_training_strategy() const { return training_strategy; }

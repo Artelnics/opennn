@@ -11,6 +11,7 @@
 #include "convolutional_layer.h"
 #include "neural_network.h"
 #include "loss.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -144,7 +145,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
     throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
 
-    throw_if(new_convolution_type != "Valid" && new_convolution_type != "Same",
+    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
              "Convolution type must be 'Valid' or 'Same'.");
 
     throw_if(new_convolution_type == "Same"
@@ -204,7 +205,7 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
-    throw_if(new_convolution_type != "Valid" && new_convolution_type != "Same",
+    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
              "Convolution type must be 'Valid' or 'Same'.");
 
     use_padding = (new_convolution_type == "Same");
@@ -242,7 +243,7 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     column_stride   = stride_shape[1];
 
     const string convolution_type = read_json_string(convolutional_layer_element, "Convolution");
-    throw_if(convolution_type != "Valid" && convolution_type != "Same",
+    throw_if(!contains({"Valid", "Same"}, convolution_type),
              "Convolution type must be 'Valid' or 'Same'.");
     use_padding = (convolution_type == "Same");
 

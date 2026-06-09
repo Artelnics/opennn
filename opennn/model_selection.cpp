@@ -80,7 +80,6 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "ModelSelection");
 
-    // Neuron selection
 
     const Json* neurons_selection_element = require_json_field(root_element, "NeuronSelection");
 
@@ -94,7 +93,6 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
-    // Input selection
 
     const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
 

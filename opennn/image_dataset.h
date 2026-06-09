@@ -73,14 +73,11 @@ private:
 
     void write_image_cache(const vector<filesystem::path>& paths);
 
-    // Augmentation
     AugmentationSettings augmentation;
 
-    // Scaling
     vector<float> input_scale;
     vector<float> input_offset;
 
-    // .bin cache
     filesystem::path cache_path;
     mutable FileReader cache_reader;
 

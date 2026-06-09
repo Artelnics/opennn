@@ -337,7 +337,6 @@ void GeneticAlgorithm::perform_crossover()
 
     MatrixB new_population(individuals_number, genes_number);
 
-    // Copy elite individuals unchanged (sorted by fitness, highest first)
     if (elitism_size > 0)
     {
         const Index elite_count = min(elitism_size, individuals_number);
@@ -355,7 +354,6 @@ void GeneticAlgorithm::perform_crossover()
             new_population.row(i) = population.row(fitness_indexed[i].second);
     }
 
-    // Fill remaining slots with crossover children
     for (Index i = elitism_size; i < individuals_number; ++i)
     {
         const Index parent_index_1 = get_random_element(selected_individual_indices);
@@ -424,7 +422,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     Dataset* dataset = loss->get_dataset();
 
-    // Validation algorithm
 
     original_input_indices = dataset->get_variable_indices("Input");
     original_target_indices = dataset->get_variable_indices("Target");
@@ -440,12 +437,10 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     initialize_population();
 
-    // Dataset
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    // Neural network
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -463,7 +458,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
         evaluate_population();
 
-        // Optimal individual in population
 
         const Index optimal_individual_index = minimal_index(validation_errors);
 
@@ -513,7 +507,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
                  << "Elapsed time: " << get_time(elapsed_time) << "\n"
                  << "Best generation by validation error: " << best_generation << "\n";
 
-        // Stopping criteria
 
         bool stop = false;
 
@@ -552,7 +545,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_mutation();
     }
 
-    // Set dataset stuff
 
     const vector<Index> optimal_variable_indices = get_true_indices(input_selection_results.optimal_inputs);
 
@@ -565,7 +557,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     const Index optimal_variables_number = dataset->get_features_number("Input");
 
-    // Set neural network stuff
 
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
@@ -586,7 +577,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     }
     else
     {
-        // Parameter count changed after recompile (alignment). Retrain with optimal features.
         if (display) cout << "Retraining with optimal features (parameter layout changed after recompile).\n";
         neural_network->set_parameters_random();
         training_strategy->train();

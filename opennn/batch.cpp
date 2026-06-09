@@ -100,8 +100,6 @@ void Batch::set(const Index new_samples_number,
         : Index(0),
         Device::CUDA);
 
-    // Pre-allocate the GPU-resident gather index buffer at warmup time so the
-    // per-batch upload never resizes inside the (allocation-frozen) train loop.
     if (on_gpu)
         gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
 
@@ -214,15 +212,11 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     const Index input_values_count  = current_batch_size * input.features_number;
     const Index target_values_count = current_batch_size * target.features_number;
 
-    // GPU-resident gather path (prototype): rows are pulled directly from the
-    // device-resident dataset, so there is no host staging buffer to copy.
     if (device_gather && dataset && dataset->is_device_resident())
     {
         const float* matrix = dataset->get_device_data();
         const Index matrix_cols = dataset->get_data_columns();
 
-        // Upload this batch's row indices (small: current_batch_size ints).
-        // The buffer is pre-sized at warmup; never resize inside the loop.
         device::copy_async(gather_indices_device.data, gather_row_indices.data(),
                            current_batch_size * Index(sizeof(int)),
                            device::CopyKind::HostToDevice, stream);
@@ -231,12 +225,8 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
         if (!destination.fp32_staging.empty())
         {
-            gather_rows_cuda(matrix, idx, destination.fp32_staging.as<float>(),
-                             current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
-            cast_fp32_to_bf16_cuda(input_values_count,
-                                   destination.fp32_staging.as<float>(),
-                                   destination.input.buffer.as<bfloat16>(),
-                                   stream);
+            gather_rows_bf16_cuda(matrix, idx, destination.input.buffer.as<bfloat16>(),
+                                  current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
         }
         else
         {
@@ -312,9 +302,6 @@ void Batch::wait_h2d_complete()
     }
 }
 
-// Device-side wait: make the compute stream wait for this batch's H2D upload
-// (issued on the transfer stream) before any kernel consumes the data. Does not
-// touch h2d_done_recorded, which the fill worker uses for host-buffer reuse.
 void Batch::wait_h2d_on_compute_stream()
 {
     if (h2d_done_recorded)

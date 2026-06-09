@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_utilities.h"
+#include "string_utilities.h"
 #include "tensor_utilities.h"
 
 #include <cctype>
@@ -542,8 +543,7 @@ bool is_supported_image_file(const filesystem::path& path)
     ranges::transform(extension, extension.begin(),
                       [](unsigned char c) { return char(std::tolower(c)); });
 
-    return extension == ".bmp" || extension == ".png"
-        || extension == ".jpg" || extension == ".jpeg";
+    return contains({".bmp", ".png", ".jpg", ".jpeg"}, extension);
 }
 
 Tensor3 load_image(const filesystem::path& path)

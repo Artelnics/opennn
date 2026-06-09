@@ -71,7 +71,7 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
-    Index current_sample_count = 0;     // May be < samples_number for the last batch.
+    Index current_sample_count = 0;
     bool needs_device_copy = true;
 
     const Dataset* dataset = nullptr;
@@ -101,13 +101,9 @@ struct Batch
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
 
-    vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
+    vector<TensorView> input_views_cache;
     TensorView target_view_cache;
 
-    // GPU-resident gather (prototype): when the dataset is device-resident, the
-    // batch's row indices are stashed here (host int32) so the H2D step can
-    // gather rows on-device instead of copying a host-staged batch. The feature
-    // blocks are contiguous, so only their starting column is needed.
     bool        device_gather = false;
     vector<int> gather_row_indices;
     Buffer      gather_indices_device{Device::CUDA};

@@ -122,7 +122,6 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     const float d_enclosing_top = -min_grad(predicted_top, ground_top) * enclosing_width;
     const float d_enclosing_bottom =  max_grad(predicted_bottom, ground_bottom) * enclosing_width;
 
-    // Predicted-area derivatives in corner space (p_area = (p_r - p_l)(p_b - p_t)).
     const float d_area_left = -predicted_height;
     const float d_area_right =  predicted_height;
     const float d_area_top = -predicted_width;
@@ -133,7 +132,6 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
         const float d_union = d_area - d_intersection;
         const float d_iou = (union_area > 0.0f) ? ((d_intersection * union_area - intersection_area * d_union) / (union_area * union_area)) : 0.0f;
         const float d_penalty = (enclosing_area > 0.0f) ? ((union_area * d_enclosing - enclosing_area * d_union) / (enclosing_area * enclosing_area)) : 0.0f;
-        // L = 1 - GIoU = 1 - IoU + (C - U)/C  ⇒  dL/dx = -dIoU/dx + d_penalty/dx
         return -d_iou + d_penalty;
     };
 
@@ -212,7 +210,6 @@ float yolo_error_kernel(const TensorView& output,
 
                         if (sigmoid_classes)
                         {
-                            // BCE summed over all classes (independent labels).
                             for (Index c = 0; c < classes_number; ++c)
                             {
                                 const float p = out[base + 5 + c];
@@ -222,7 +219,6 @@ float yolo_error_kernel(const TensorView& output,
                         }
                         else
                         {
-                            // CE over softmax — only the target class contributes.
                             for (Index c = 0; c < classes_number; ++c)
                                 if (tgt[base + 5 + c] > 0.0f)
                                     class_loss -= log(out[base + 5 + c] + EPSILON);
@@ -256,10 +252,6 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     return result;
 }
 
-// MSVC 19.5x (VS 2026) crashes its optimizer (CL access violation / C1001)
-// generating code for this deeply nested loop when the Eigen-heavy PCH is in
-// scope at /O2. Compile just this function unoptimized on MSVC; it is not on a
-// hot path (CPU YOLO gradient reference kernel).
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
@@ -382,7 +374,6 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
     const float* tgt = target_flat.as<float>();
     const Index batch_size = target_flat.shape[0];
 
-    // Per-sample stride in the flat target buffer = sum of per-head floats.
     Index per_sample_floats = 0;
     for (Index idx : detection_indices)
     {
@@ -549,7 +540,6 @@ void Loss::back_propagate(const Batch& batch,
     back_propagation.regularization = 0.0f;
     back_propagation.loss = back_propagation.error;
 
-    // Regularization
 
     add_regularization(back_propagation);
 

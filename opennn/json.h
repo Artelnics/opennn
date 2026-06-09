@@ -95,8 +95,8 @@ public:
 
 private:
     Json                root;
-    vector<Json*>  stack;  // path of containers currently open
-    vector<string> name_stack; // for opened named scalar/object
+    vector<Json*>  stack;
+    vector<string> name_stack;
 };
 void add_json_field(JsonWriter& writer,
                     const string& name,

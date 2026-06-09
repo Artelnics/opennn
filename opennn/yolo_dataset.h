@@ -17,7 +17,7 @@ namespace opennn
 
 struct YoloDetection
 {
-    float center_x = 0.0f;   // pixel coords in the original image
+    float center_x = 0.0f;
     float center_y = 0.0f;
     float width    = 0.0f;
     float height   = 0.0f;
@@ -154,7 +154,6 @@ private:
     vector<array<float, 2>> anchors;
     vector<string> class_names;
 
-    // Multi-scale state — empty by default. See set_multi_scale_heads().
     vector<Index> head_grid_sizes;
     vector<vector<array<float, 2>>> head_anchors;
     Index boxes_per_head = 0;

@@ -76,10 +76,10 @@ public:
 
     bool supports_bf16_inputs() const override { return false; }
 
-    inline static const string PAD_TOKEN   = "[PAD]";     // 0
-    inline static const string UNK_TOKEN   = "[UNK]";     // 1
-    inline static const string START_TOKEN = "[START]";   // 2
-    inline static const string END_TOKEN   = "[END]";     // 3
+    inline static const string PAD_TOKEN   = "[PAD]";
+    inline static const string UNK_TOKEN   = "[UNK]";
+    inline static const string START_TOKEN = "[START]";
+    inline static const string END_TOKEN   = "[END]";
 
     inline static const float UNK_INDEX = 1.0f;
     inline static const float START_INDEX = 2.0f;
@@ -127,7 +127,7 @@ private:
     filesystem::path cache_path;
     mutable FileReader cache_reader;
     uint64_t cache_data_offset = 0;
-    vector<array<int64_t, 4>> offsets_table;   // (in_off, in_len, tgt_off, tgt_len)
+    vector<array<int64_t, 4>> offsets_table;
 };
 
 }

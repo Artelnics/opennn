@@ -311,9 +311,6 @@ private:
                TensorView& activation_derivatives,
                TensorView& output,
                bool is_training);
-    // GPU entry points are declared unconditionally (CPU builds get a throwing
-    // stub in operators.cpp under #else) so that callers and the link step are
-    // identical with or without CUDA.
     void apply_gpu(const TensorView& input,
                    TensorView& hidden_states,
                    TensorView& activation_derivatives,
@@ -335,11 +332,11 @@ private:
                          TensorView& delta_scratch,
                          TensorView& next_carry_scratch,
                          TensorView& step_in_delta_scratch) const;
-    mutable Buffer step_input_buf      {Device::CUDA};   // (batch, in_features)
-    mutable Buffer step_hidden_buf     {Device::CUDA};   // (batch, out_features)
-    mutable Buffer prev_hidden_buf     {Device::CUDA};   // (batch, out_features)
-    mutable Buffer step_derivs_buf     {Device::CUDA};   // (batch, out_features)
-    mutable Buffer step_seq_delta_buf  {Device::CUDA};   // (batch, out_features) - sequence-mode backward scratch
+    mutable Buffer step_input_buf      {Device::CUDA};
+    mutable Buffer step_hidden_buf     {Device::CUDA};
+    mutable Buffer prev_hidden_buf     {Device::CUDA};
+    mutable Buffer step_derivs_buf     {Device::CUDA};
+    mutable Buffer step_seq_delta_buf  {Device::CUDA};
 };
 
 struct BatchNormOp : Operator
@@ -393,8 +390,6 @@ private:
     mutable VectorR delta_scale_scratch;
 
     void apply_inference_cpu(const TensorView& input, TensorView& output);
-    // GPU entry points declared unconditionally; CPU builds get throwing stubs
-    // (operators.cpp, #else branch).
     void apply_inference_gpu(const TensorView& input, TensorView& output);
 
     void apply_training_cpu (const TensorView& input,
@@ -482,9 +477,6 @@ struct ConvolutionOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output);
-    // GPU entry points declared unconditionally; CPU builds get throwing stubs
-    // (operators.cpp, #else branch). cudnnActivationDescriptor_t aliases void*
-    // without CUDA (pch.h). Only the GPU-only algorithm planner stays #ifdef'd.
     void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
@@ -733,8 +725,6 @@ struct PoolOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
-    // GPU entry points declared unconditionally; CPU builds get throwing stubs
-    // (operators.cpp, #else branch).
     void apply_gpu(const TensorView& input, TensorView& output);
 
     void apply_delta_cpu(const TensorView& output_delta,
@@ -1001,9 +991,9 @@ private:
     mutable Buffer dweight_space_buf   {Device::CUDA};
     mutable Buffer workspace_buf       {Device::CUDA};
     mutable Buffer reserve_space_buf   {Device::CUDA};
-    mutable Buffer y_buf               {Device::CUDA};   // (B, T, H) rank-3 y from cuDNN
-    mutable Buffer dy_buf              {Device::CUDA};   // (B, T, H) rank-3 dy for cuDNN
-    mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
+    mutable Buffer y_buf               {Device::CUDA};
+    mutable Buffer dy_buf              {Device::CUDA};
+    mutable Buffer seq_lengths_host_buf{Device::CPU};
     mutable Buffer seq_lengths_dev_buf {Device::CUDA};
 
     mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;

@@ -102,7 +102,7 @@ static void scale_cpu(const TensorView& input,
 
         switch (code)
         {
-        case 1: // MinimumMaximum
+        case 1:
         {
             const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
             if (range < EPSILON)
@@ -112,7 +112,7 @@ static void scale_cpu(const TensorView& input,
                        * (max_range - min_range) + min_range;
             break;
         }
-        case 2: // MeanStandardDeviation
+        case 2:
         {
             const float sd = standard_deviations_vector(feature_index);
             if (sd > EPSILON)
@@ -121,19 +121,19 @@ static void scale_cpu(const TensorView& input,
                 column.setZero();
             break;
         }
-        case 3: // StandardDeviation
+        case 3:
         {
             const float sd = standard_deviations_vector(feature_index);
             column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
             break;
         }
-        case 4: // Logarithm
+        case 4:
             column = column.log();
             break;
-        case 5: // ImageMinMax
+        case 5:
             column /= 255.0f;
             break;
-        default: // None
+        default:
             break;
         }
     }
@@ -186,23 +186,23 @@ static void unscale_cpu(const TensorView& input,
 
         switch (code)
         {
-        case 1: // MinimumMaximum
+        case 1:
             column = (column - min_range) / (max_range - min_range)
                    * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
             break;
-        case 2: // MeanStandardDeviation
+        case 2:
             column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
             break;
-        case 3: // StandardDeviation
+        case 3:
             column *= standard_deviations_vector(feature_index);
             break;
-        case 4: // Logarithm
+        case 4:
             column = column.exp();
             break;
-        case 5: // ImageMinMax
+        case 5:
             column *= 255.0f;
             break;
-        default: // None
+        default:
             break;
         }
     }

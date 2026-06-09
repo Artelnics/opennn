@@ -34,7 +34,7 @@ void set_seed(unsigned seed)
         current_seed = static_cast<long long>(seed);
         reseed_unlocked();
     }
-    srand(seed); // covers Eigen helpers that fall back to libc rand().
+    srand(seed);
 }
 
 long long get_seed()

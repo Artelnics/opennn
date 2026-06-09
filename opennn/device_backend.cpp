@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "device_backend.h"
+#include "string_utilities.h"
 
 #include <atomic>
 
@@ -18,25 +19,22 @@ namespace
 
 std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 
-bool env_flag_enabled(const char* name) noexcept
-{
-    const char* value = getenv(name);
-    if (!value) return false;
-
-    const string_view text(value);
-    constexpr string_view enabled_values[] = {"1", "true", "TRUE", "on", "ON"};
-
-    return ranges::any_of(enabled_values,
-                          [text](string_view enabled_value)
-                          {
-                              return text == enabled_value;
-                          });
-}
-
 void throw_if_auto(Device device_type)
 {
     throw_if(device_type == Device::Auto,
              "device backend expects a resolved device.");
+}
+
+CopyKind copy_kind(Device source, Device target)
+{
+    throw_if_auto(source);
+    throw_if_auto(target);
+
+    if (source == Device::CUDA && target == Device::CUDA) return CopyKind::DeviceToDevice;
+    if (source == Device::CUDA) return CopyKind::DeviceToHost;
+    if (target == Device::CUDA) return CopyKind::HostToDevice;
+
+    return CopyKind::HostToHost;
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -300,13 +298,13 @@ int cuda_compute_capability() noexcept
 #endif
 }
 
-pair<size_t, size_t> memory_info()
+size_t available_memory()
 {
 #ifdef OPENNN_HAS_CUDA
     size_t free_bytes = 0;
     size_t total_bytes = 0;
     CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
-    return {free_bytes, total_bytes};
+    return free_bytes;
 #else
     throw runtime_error("CUDA support is not compiled in.");
 #endif
@@ -362,6 +360,8 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
 {
     if (!pointer) return;
 
+    throw_if_auto(device_type);
+
     if (device_type == Device::CUDA)
     {
         deallocate_cuda(pointer);
@@ -397,18 +397,6 @@ void set_zero_async(void* data, Index byte_count, cudaStream_t stream)
     set_zero_async_impl(data, byte_count, stream);
 }
 
-CopyKind copy_kind(Device source, Device target)
-{
-    throw_if_auto(source);
-    throw_if_auto(target);
-
-    if (source == Device::CUDA && target == Device::CUDA) return CopyKind::DeviceToDevice;
-    if (source == Device::CUDA) return CopyKind::DeviceToHost;
-    if (target == Device::CUDA) return CopyKind::HostToDevice;
-
-    return CopyKind::HostToHost;
-}
-
 void copy_async(void* destination,
                 const void* source,
                 Index byte_count,
@@ -420,6 +408,16 @@ void copy_async(void* destination,
     if (byte_count == 0 || !destination || !source) return;
 
     copy_async_impl(destination, source, byte_count, kind, stream);
+}
+
+void copy_async(void* destination,
+                const void* source,
+                Index byte_count,
+                Device source_device,
+                Device target_device,
+                cudaStream_t stream)
+{
+    copy_async(destination, source, byte_count, copy_kind(source_device, target_device), stream);
 }
 
 void synchronize(cudaStream_t stream)

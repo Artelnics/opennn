@@ -872,9 +872,9 @@ void RecurrentOp::set(Index new_input_features,
 vector<TensorSpec> RecurrentOp::parameter_specs() const
 {
     return {
-        {{output_features},                   weight_type},  // bias
-        {{input_features, output_features},   weight_type},  // input weights
-        {{output_features, output_features},  weight_type},  // recurrent weights
+        {{output_features},                   weight_type},
+        {{input_features, output_features},   weight_type},
+        {{output_features, output_features},  weight_type},
     };
 }
 
@@ -978,8 +978,8 @@ void RecurrentOp::apply(const TensorView& input,
     float*       derivs_data = (is_training && !activation_derivatives.empty())
                                ? activation_derivatives.as<float>() : nullptr;
 
-    const Index in_stride_t = input_features;             // stride between consecutive time steps (one batch row)
-    const Index in_stride_b = time_steps * input_features; // stride between batch rows
+    const Index in_stride_t = input_features;
+    const Index in_stride_b = time_steps * input_features;
     const Index h_stride_t  = output_features;
     const Index h_stride_b  = time_steps * output_features;
 
@@ -1020,7 +1020,7 @@ void RecurrentOp::apply(const TensorView& input,
             step_hidden = step_hidden.array().cwiseMax(0.0f);
             break;
         case F::Identity:
-        case F::Softmax: // Softmax over time is degenerate for an RNN; treat as Identity.
+        case F::Softmax:
             if (is_training)
                 step_derivs.setOnes();
             break;
@@ -1331,7 +1331,7 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                 }
                 delta_src        = static_cast<const Scalar*>(step_seq_delta_buf.data);
                 carry_src        = nullptr;
-                kernel_first_iter = true; // delta_src already carries everything
+                kernel_first_iter = true;
             }
             else
             {
@@ -1417,8 +1417,8 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
 vector<TensorSpec> ConvolutionOp::parameter_specs() const
 {
     return {
-        {{kernels_number}, compute_dtype},                                                       // Bias
-        {{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype},         // Weight
+        {{kernels_number}, compute_dtype},
+        {{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype},
     };
 }
 
@@ -1682,7 +1682,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
     if (input.shape[0] > planned_batch_size)
         plan_convolution_algorithms(input, output);
 
-    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* workspace = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     if (fused_activation)
     {
@@ -1693,7 +1693,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
             kernel_descriptor,        weights.data,
             convolution_descriptor,
             algorithm_forward,
-            ws_ptr, cudnn_workspace_size_,
+            workspace, cudnn_workspace_size_,
             &zero,
             output.get_descriptor(), output.data,
             bias.get_descriptor(),   bias.data,
@@ -1708,7 +1708,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
                                         kernel_descriptor,        weights.data,
                                         convolution_descriptor,
                                         algorithm_forward,
-                                        ws_ptr, cudnn_workspace_size_,
+                                        workspace, cudnn_workspace_size_,
                                         &zero,
                                         output.get_descriptor(), output.data));
 
@@ -1729,15 +1729,15 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
     const bool bf16 = (input.type == Type::BF16);
 
     void* weight_gradient_buffer = weight_gradient.data;
-    bfloat16* weight_gradient_bf16_scratch = nullptr;
+    bfloat16* weight_gradient_bf16_workspace = nullptr;
 
     if (bf16)
     {
-        weight_gradient_bf16_scratch = ensure_bf16_gradient_scratch(weight_gradient.size());
-        weight_gradient_buffer = weight_gradient_bf16_scratch;
+        weight_gradient_bf16_workspace = ensure_bf16_gradient_workspace(weight_gradient.size());
+        weight_gradient_buffer = weight_gradient_bf16_workspace;
     }
 
-    void* ws_ptr = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
+    void* workspace = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
 
     CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
         &one,
@@ -1745,7 +1745,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_filter,
-        ws_ptr, cudnn_workspace_size_,
+        workspace, cudnn_workspace_size_,
         &zero,
         kernel_descriptor, weight_gradient_buffer));
 
@@ -1753,7 +1753,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
     if (bf16)
     {
-        float* const output_delta_fp32 = ensure_fp32_upcast_scratch(output_delta.size());
+        float* const output_delta_fp32 = ensure_bf16_to_fp32_workspace(output_delta.size());
         cast_bf16_to_fp32_cuda(output_delta.size(),
                                output_delta.as<bfloat16>(),
                                output_delta_fp32);
@@ -1768,7 +1768,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         bias_gradient.get_descriptor(), bias_gradient.data));
 
     if (bf16)
-        cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_scratch, weight_gradient.as_float());
+        cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_workspace, weight_gradient.as_float());
 
     if (!input_delta.data || input_delta.size() == 0) return;
 
@@ -1778,7 +1778,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         output_delta.get_descriptor(), output_delta.data,
         convolution_descriptor,
         algorithm_data,
-        ws_ptr, cudnn_workspace_size_,
+        workspace, cudnn_workspace_size_,
         &zero,
         input_delta.get_descriptor(), input_delta.data));
 }
@@ -2016,8 +2016,8 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
     const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
 
     return {
-        {attention_shape, compute_dtype}, // AttentionWeights
-        {dropout_shape,   compute_dtype}, // AttentionWeightsDropped
+        {attention_shape, compute_dtype},
+        {dropout_shape,   compute_dtype},
     };
 }
 
@@ -2604,9 +2604,9 @@ void AttentionOp::apply_gpu(const TensorView& query,
     const bool dropout_in_graph = dropout.active() && is_training;
 
     SDPACache::CacheKey ck{
-        query.shape[0],          // batch_size
-        query.shape[2],          // q_seq
-        key.shape[2],            // src_seq
+        query.shape[0],
+        query.shape[2],
+        key.shape[2],
         heads_number,
         head_dimension,
         query.type,
@@ -2859,7 +2859,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
              "AttentionOp: SDPA backward called without a live SDPA "
              "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
-    const bool dropout_in_graph = dropout.active();   // backward implies training
+    const bool dropout_in_graph = dropout.active();
 
     SDPACache::CacheKey ck{
         query.shape[0],
@@ -2870,7 +2870,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
         query.type,
         dropout_in_graph,
         use_causal_mask,
-        true                    // backward implies training
+        true
     };
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
@@ -3725,18 +3725,18 @@ vector<TensorSpec> LongShortTermMemoryOp::parameter_specs() const
     const Shape recurrent_weight_shape{output_features, output_features};
 
     return {
-        {bias_shape, Type::FP32},             // forget bias
-        {bias_shape, Type::FP32},             // input bias
-        {bias_shape, Type::FP32},             // candidate bias
-        {bias_shape, Type::FP32},             // output bias
-        {input_weight_shape, Type::FP32},     // forget input weights
-        {input_weight_shape, Type::FP32},     // input gate input weights
-        {input_weight_shape, Type::FP32},     // candidate input weights
-        {input_weight_shape, Type::FP32},     // output gate input weights
-        {recurrent_weight_shape, Type::FP32}, // forget recurrent weights
-        {recurrent_weight_shape, Type::FP32}, // input recurrent weights
-        {recurrent_weight_shape, Type::FP32}, // candidate recurrent weights
-        {recurrent_weight_shape, Type::FP32}, // output recurrent weights
+        {bias_shape, Type::FP32},
+        {bias_shape, Type::FP32},
+        {bias_shape, Type::FP32},
+        {bias_shape, Type::FP32},
+        {input_weight_shape, Type::FP32},
+        {input_weight_shape, Type::FP32},
+        {input_weight_shape, Type::FP32},
+        {input_weight_shape, Type::FP32},
+        {recurrent_weight_shape, Type::FP32},
+        {recurrent_weight_shape, Type::FP32},
+        {recurrent_weight_shape, Type::FP32},
+        {recurrent_weight_shape, Type::FP32},
     };
 }
 
@@ -3782,9 +3782,6 @@ void LongShortTermMemoryOp::link_gradients(span<const TensorView> views)
 
 void LongShortTermMemoryOp::set_parameters_random()
 {
-    // Forget bias initialised to 1.0 (Jozefowicz et al., 2015): keeps the
-    // cell state intact by default so the optimizer learns to forget, instead
-    // of starting from sigmoid(0)=0.5 which decays memory 50% per step.
     if (forget_bias.data) forget_bias.fill(1.0f);
     zero_if_linked(input_bias);
     zero_if_linked(candidate_bias);
@@ -3809,8 +3806,6 @@ void LongShortTermMemoryOp::set_parameters_random()
 
 void LongShortTermMemoryOp::set_parameters_glorot()
 {
-    // Forget bias initialised to 1.0 (Jozefowicz et al., 2015) — see notes
-    // in set_parameters_random().
     if (forget_bias.data) forget_bias.fill(1.0f);
     zero_if_linked(input_bias);
     zero_if_linked(candidate_bias);
@@ -4240,8 +4235,8 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
             CUDNN_DEFAULT_MATH,
             int(F),
             int(H),
-            /*projSize=*/ int(H),  // equals hiddenSize when no projection
-            1,                     // numLayers
+            /*projSize=*/ int(H),
+            1,
             dropout_desc,
             CUDNN_RNN_PADDED_IO_ENABLED));
 
@@ -4265,7 +4260,6 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
         CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc.handle));
         y_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
 
-        // seqLengthArray: host int32[batch_size], all entries equal to T.
         seq_lengths_host_buf.grow_to(batch_size * Index(sizeof(int32_t)));
         int32_t* seq_h = seq_lengths_host_buf.as<int32_t>();
         for (Index i = 0; i < batch_size; ++i) seq_h[i] = int32_t(T);
@@ -4316,7 +4310,6 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
         y_buf.grow_to(yh_bytes);
         dy_buf.grow_to(yh_bytes);
 
-        // Pre-build the RNN execution plan for this batch size.
         CHECK_CUDNN(cudnnBuildRNNDynamic(
             Backend::get_cudnn_handle(), rnn_desc, int(batch_size)));
 
@@ -4377,7 +4370,7 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
         CHECK_CUDNN(cudnnGetRNNWeightParams(
             Backend::get_cudnn_handle(),
             rnn_desc,
-            0,                            // pseudoLayer
+            0,
             size_t(weight_space_buf.bytes),
             weight_space_buf.data,
             lin,
@@ -4390,7 +4383,6 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
             transpose_2d_cuda<float>(rows_src, H,
                                      W[lin]->as<float>(), m_addr);
 
-        // Bias: direct copy for slots 0..3; zero for slots 4..7.
         if (b_addr)
         {
             if (B[lin] && B[lin]->data)
@@ -4407,7 +4399,6 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
 
 void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
 {
-    // Inverse of pack_weights_to_cudnn_.
     const TensorView* gW[8] = {
         &input_weight_gradient,
         &forget_weight_gradient,
@@ -4487,7 +4478,6 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
     }
 #endif
 
-    // --- diagnostic gate (define OPENNN_LSTM_GPU_DEBUG to enable) ---
 #ifdef OPENNN_LSTM_GPU_DEBUG
     auto log = [&](const char* tag) {
         device::synchronize(Backend::get_compute_stream());
@@ -4513,7 +4503,7 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
         if (!p) return "NULL";
         cudaPointerAttributes a{};
         if (cudaPointerGetAttributes(&a, p) != cudaSuccess) {
-            cudaGetLastError();  // clear sticky
+            cudaGetLastError();
             return "UNKNOWN";
         }
         switch (a.type) {
@@ -4539,8 +4529,8 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
         seq_lengths_dev_buf.as<int32_t>(),
         x_data_desc, input.data,
         y_data_desc, y_buf.data,
-        h_desc, nullptr, nullptr,        // hx (initial h), hy (final h)
-        c_desc, nullptr, nullptr,        // cx (initial c), cy (final c)
+        h_desc, nullptr, nullptr,
+        c_desc, nullptr, nullptr,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
@@ -4611,7 +4601,6 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
     const Index T = time_steps;
     const size_t y_bytes = size_t(batch_size * T * H) * sizeof(float);
 
-    // Build the rank-3 dy that cuDNN expects.
     if (return_seq)
     {
         device::copy_async(dy_buf.data, output_delta.data, Index(y_bytes),
@@ -4637,9 +4626,9 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
         rnn_desc,
         seq_lengths_dev_buf.as<int32_t>(),
         y_data_desc, y_buf.data, dy_buf.data,
-        x_data_desc, input_delta.data,   // dx
-        h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
-        c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
+        x_data_desc, input_delta.data,
+        h_desc, nullptr, nullptr, nullptr,
+        c_desc, nullptr, nullptr, nullptr,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
@@ -4656,7 +4645,7 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
         CUDNN_WGRAD_MODE_ADD,
         seq_lengths_dev_buf.as<int32_t>(),
         x_data_desc, input.data,
-        h_desc, nullptr,                  // hx
+        h_desc, nullptr,
         y_data_desc, y_buf.data,
         size_t(dweight_space_buf.bytes), dweight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
@@ -4671,7 +4660,7 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
 #endif
 }
 
-#else   // !OPENNN_HAS_CUDA -- stubs that throw if invoked
+#else
 
 void LongShortTermMemoryOp::apply_gpu(const TensorView&, TensorView&, bool) const
 {

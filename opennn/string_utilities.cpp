@@ -8,6 +8,7 @@
 
 #include "string_utilities.h"
 #include <regex>
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 
@@ -202,19 +203,16 @@ bool is_date_time_string(string_view text)
         return false;
 
     const static vector<regex> date_regexes = {
-        // YMD
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))"), // yyyy/mm/dd hh:mm:ss.sss
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))"), // yyyy/mm/dd hh:mm:ss
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))"), // yyyy/mm/dd hh:mm
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))"), // yyyy/mm/dd
-        regex(R"((\d{4})[-/.](\d{1,2}))"), // yyyy/mm
-        // DMY/MDY
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}))"), // dd/mm/yyyy hh:mm:ss
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}))"), // dd/mm/yyyy hh:mm
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))"), // dd/mm/yyyy
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M))"), // dd/mm/yyyy hh:mm:ss AM/PM
-        // HMS
-        regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))") // hh:mm:ss
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))"),
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))"),
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))"),
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))"),
+        regex(R"((\d{4})[-/.](\d{1,2}))"),
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}))"),
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}))"),
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))"),
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M))"),
+        regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))")
     };
 
     return ranges::any_of(date_regexes,
@@ -465,6 +463,44 @@ bool contains(const vector<string>& data, string_view value)
 {
     return ranges::any_of(data,
                           [&](const string& s) { return s == value; });
+}
+
+bool contains(initializer_list<string_view> data, string_view value)
+{
+    return ranges::find(data, value) != data.end();
+}
+
+bool starts_with_any(string_view text, initializer_list<string_view> prefixes)
+{
+    return ranges::any_of(prefixes,
+                          [text](string_view prefix)
+                          {
+                              return text.starts_with(prefix);
+                          });
+}
+
+static bool equal_ignoring_case(string_view left, string_view right) noexcept
+{
+    return left.size() == right.size()
+        && ranges::equal(left, right,
+                         [](unsigned char left_char, unsigned char right_char)
+                         {
+                             return tolower(left_char) == tolower(right_char);
+                         });
+}
+
+bool env_flag_enabled(const char* name) noexcept
+{
+    const char* value = getenv(name);
+    if (!value) return false;
+
+    const string_view text(value);
+
+    return ranges::any_of({"1", "true", "on", "yes"},
+                          [text](string_view enabled_value)
+                          {
+                              return equal_ignoring_case(text, enabled_value);
+                          });
 }
 
 }

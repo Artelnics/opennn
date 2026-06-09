@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "json.h"
+#include "string_utilities.h"
 
 #include <cctype>
 #include <cmath>
@@ -117,7 +118,7 @@ bool Json::as_bool() const
     {
     case Bool:   return bool_value;
     case Number: return number_value != 0.0;
-    case String: return string_value == "1" || string_value == "true";
+    case String: return contains({"1", "true"}, string_value);
     case Null:
     case Array:
     case Object: return false;
@@ -215,7 +216,6 @@ string Json::dump(int indent) const
     return out;
 }
 
-// Parser
 
 namespace {
 
@@ -299,7 +299,6 @@ struct Parser
                         else if (h >= 'A' && h <= 'F') code |= unsigned(h - 'A' + 10);
                         else fail("bad hex in \\u");
                     }
-                    // Minimal UTF-8 encoding (BMP only).
                     if (code < 0x80) out.push_back(char(code));
                     else if (code < 0x800)
                     {

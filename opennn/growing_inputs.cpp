@@ -68,7 +68,6 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
 
 InputsSelectionResult GrowingInputs::perform_input_selection()
 {
-    // Dataset
 
     Dataset* dataset = training_strategy->get_dataset();
     const Index original_input_variables_number = dataset->get_variables_number("Input");
@@ -80,9 +79,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
-    // Loss
 
-//    const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
     float previous_validation_error = MAX;
@@ -117,16 +114,13 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index variable_index = 0;
 
-    // Neural network
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
-    // Training strategy
 
     Index validation_failures = 0;
     TrainingResult training_results;
 
-    // Model selection
 
     time_t beginning_time;
     time_t current_time;
@@ -237,7 +231,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         time(&current_time);
         elapsed_time = float(difftime(current_time, beginning_time));
 
-        // Stopping criteria
 
         if (elapsed_time >= maximum_time)
         {
@@ -275,7 +268,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
 
-    // Set dataset
 
     dataset->set_variable_indices(input_selection_results.optimal_input_variables_indices,
         target_variable_indices);
@@ -299,7 +291,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     set_maximum_inputs_number(dataset->get_variables_number("Input"));
 
-    // Set neural network
 
     if (time_series_dataset)
     {

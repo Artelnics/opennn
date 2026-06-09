@@ -45,11 +45,11 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
     const Shape stats  = Shape{output_features};
 
     return {
-        {batch_norm.active() ? full  : Shape{}, compute_dtype}, // CombinationView (pre-BN)
-        {batch_norm.active() ? stats : Shape{}, Type::FP32   }, // BatchNormMean
-        {batch_norm.active() ? stats : Shape{}, Type::FP32   }, // BatchNormInverseVariance
-        {dropout.active()    ? full  : Shape{}, compute_dtype}, // ActivationView (pre-dropout)
-        {full,                                  compute_dtype}, // Output
+        {batch_norm.active() ? full  : Shape{}, compute_dtype},
+        {batch_norm.active() ? stats : Shape{}, Type::FP32   },
+        {batch_norm.active() ? stats : Shape{}, Type::FP32   },
+        {dropout.active()    ? full  : Shape{}, compute_dtype},
+        {full,                                  compute_dtype},
     };
 }
 

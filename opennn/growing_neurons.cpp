@@ -47,7 +47,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     if (display) cout << "Performing growing neuron selection..." << "\n";
 
-    // Neural network
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
@@ -55,11 +54,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     Index neurons_number = 0;
 
-    // Loss
 
     float previous_validation_error = MAX;
 
-    // Optimization algorithm
 
     Index validation_failures = 0;
 
@@ -74,13 +71,11 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     time(&beginning_time);
 
-    // Main loop
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
         if (display) cout << "\nGrowing neurons epoch: " << epoch << "\n";
 
-        // Neural network
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
@@ -93,7 +88,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
-        // Loss
 
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
@@ -106,16 +100,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
             const float training_error = training_results.get_training_error();
 
-            // Score each candidate size by the best (minimum) validation error it
-            // reached during training, not by get_validation_error() (the final
-            // epoch). Validation early-stopping is off by default
-            // (maximum_validation_failures == INT_MAX) and maximum_epochs is large,
-            // so every candidate trains far past its best-generalizing epoch into
-            // the over-trained / diverged tail. There the final-epoch validation
-            // error grows with model capacity, so comparing final-epoch errors makes
-            // selection collapse to the smallest network and underfit. The best-epoch
-            // value is the size's true achievable generalization and is what neuron
-            // selection must compare.
             const float validation_error = training_results.validation_error_history.size() > 0
                 ? training_results.validation_error_history.minCoeff()
                 : training_results.get_validation_error();
@@ -161,7 +145,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
         elapsed_time = float(difftime(current_time,beginning_time));
 
-        // Stopping criteria
 
         end = true;
 
@@ -200,7 +183,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         }
     }
 
-    // Save neural network
 
     if (display)
         cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";

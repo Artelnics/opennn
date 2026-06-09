@@ -71,7 +71,6 @@ void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";
 
-    // TRAINING OPERATORS
 
     initial_learning_rate = 0.001f;
     initial_decay = 0.001f;
@@ -79,13 +78,11 @@ void StochasticGradientDescent::set_default()
     nesterov = false;
     batch_size = 0;
 
-    // Stopping criteria
 
     training_loss_goal = 0.0f;
     maximum_time = 3600.0f;
     maximum_epochs = 1000;
 
-    // UTILITIES
 
     display_period = 100;
 }
@@ -183,8 +180,6 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         ? nullptr
         : optimization_data.views[Velocity].as<float>();
 
-    // learning_rate is read from device memory (graph_effective_lr), refreshed
-    // once per epoch by the host so the captured graph replays the decay.
     sgd_update_capturable_cuda(
         neural_network->get_parameters_size(),
         neural_network->get_parameters_data(),
@@ -214,7 +209,6 @@ TrainingResult StochasticGradientDescent::train()
     if (display) cout << "Training with stochastic gradient descent (SGD)"
                      << (on_gpu ? " CUDA" : "") << "...\n";
 
-    // Dataset
 
     Dataset* dataset = loss->get_dataset();
 
@@ -251,7 +245,6 @@ TrainingResult StochasticGradientDescent::train()
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
 
-    // Neural network
 
     set_names();
     set_scaling();
@@ -281,7 +274,6 @@ TrainingResult StochasticGradientDescent::train()
 
     setup_device_training();
 
-    // Optimization data
 
     const Index parameters_number = neural_network->get_parameters_size();
     OptimizerData optimization_data;
@@ -308,10 +300,6 @@ TrainingResult StochasticGradientDescent::train()
     };
 
 #ifdef OPENNN_HAS_CUDA
-    // Prepare the capturable update path (mirrors AdaptiveMomentEstimation). The
-    // device-resident learning rate is allocated here, before allocations are
-    // frozen; the host refreshes it once per epoch so a single captured graph
-    // replays the lr decay. Any graph from a prior run is discarded.
     reset_graph_capture();
 
     if (on_gpu)
@@ -359,7 +347,6 @@ TrainingResult StochasticGradientDescent::train()
     time(&beginning_time);
     float elapsed_time = 0.0f;
 
-    // Main loop
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
@@ -373,10 +360,6 @@ TrainingResult StochasticGradientDescent::train()
             current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
 #ifdef OPENNN_HAS_CUDA
-            // Refresh the device-resident lr so the captured graph replays this
-            // epoch's decayed value (the kernel reads it by pointer). A kernel
-            // (not a pageable cudaMemcpyAsync) keeps this stream-ordered before
-            // the graph replays that read it.
             if (graph_update && on_gpu)
                 set_scalar_device_cuda(optimization_data.graph_effective_lr.as<float>(),
                                        current_learning_rate,

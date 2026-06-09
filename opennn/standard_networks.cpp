@@ -26,6 +26,7 @@
 #include "concatenate_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -287,7 +288,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense>(get_output_shape(),
                                    hidden_shape,
                                    "ReLU",
-                                   false,                     // batch_normalization
+                                   false,
                                    "dense_2d_layer_1"));
 
     add_layer(make_unique<Dense>(get_output_shape(),
@@ -393,7 +394,6 @@ ResNet::ResNet(const Shape& input_shape,
         return get_layers_number() - 1;
     };
 
-    // Network assembly
 
     auto scaling_layer = make_unique<Scaling>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
@@ -409,14 +409,12 @@ ResNet::ResNet(const Shape& input_shape,
               {last_index});
     last_index = get_layers_number() - 1;
 
-    // Residual stages.
     for (size_t i = 0; i < blocks_per_stage.size(); ++i)
         for (Index j = 0; j < blocks_per_stage[i]; ++j)
             last_index = use_bottleneck
                 ? add_bottleneck_block(last_index, i, j, initial_filters[i])
                 : add_basic_block(last_index, i, j, initial_filters[i]);
 
-    // Head: global average pool → flatten → softmax classifier.
     const Shape pre_pool = get_layer(last_index)->get_output_shape();
     add_layer(make_unique<Pooling>(pre_pool,
                                    Shape{pre_pool[0], pre_pool[1]},
@@ -498,7 +496,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              "ReLU", stride, "Same", true,
                                              "yolo_conv_6"));
     }
-    else // Backbone::DarknetTiny
+    else
     {
         auto add_residual_block = [&](Index input_index, Index channels,
                                       const string& prefix) -> Index {
@@ -529,7 +527,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             {512, 1},
         };
 
-        // Stem: first layer in the network, no preceding layer to wire from.
         add_layer(make_unique<Convolutional>(input_shape,
                                              Shape{3, 3, input_shape[2], 32},
                                              "ReLU", stride_2, "Same", true,
@@ -595,7 +592,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 "ReLU", stride, true, "fpn_p5_lateral");
             add_detection_head(p5_lateral, anchors_large, "large");
 
-            // P4 = stride 16: Upsample(p5_lateral) ⊕ C4 → conv block → head.
             add_layer(make_unique<Upsample>(
                           get_layer(p5_lateral)->get_output_shape(),
                           /*scale_factor=*/2, "fpn_p5_upsample"),
@@ -605,7 +601,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index c4_channels = get_layer(c4_index)->get_output_shape()[2];
             const Index p5_up_channels = get_layer(p5_up)->get_output_shape()[2];
             add_layer(make_unique<Concatenate>(
-                          // H, W of either input — they match by construction.
                           get_layer(c4_index)->get_output_shape(),
                           vector<Index>{p5_up_channels, c4_channels},
                           "fpn_p4_concat"),
@@ -617,7 +612,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 "ReLU", stride, true, "fpn_p4_lateral");
             add_detection_head(p4_lateral, anchors_medium, "medium");
 
-            // P3 = stride 8: Upsample(p4_lateral) ⊕ C3 → conv block → head.
             add_layer(make_unique<Upsample>(
                           get_layer(p4_lateral)->get_output_shape(),
                           /*scale_factor=*/2, "fpn_p4_upsample"),
@@ -746,7 +740,6 @@ Transformer::Transformer(Index input_sequence_length,
         return get_layers_number() - 1;
     };
 
-    // Input embeddings
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
@@ -764,7 +757,6 @@ Transformer::Transformer(Index input_sequence_length,
     add_layer(move(encoder_embedding), {-2});
     Index current_encoder_index = get_layers_number() - 1;
 
-    // Encoder stack: self-attention block + feed-forward block, each with residual + post-norm.
 
     const Shape encoder_shape{input_sequence_length, embedding_dimension};
 
@@ -794,7 +786,6 @@ Transformer::Transformer(Index input_sequence_length,
 
     const Index encoder_final_output_index = current_encoder_index;
 
-    // Decoder stack: masked self-attention block + cross-attention block + feed-forward block.
 
     const Shape decoder_shape{decoder_sequence_length, embedding_dimension};
 
@@ -802,12 +793,11 @@ Transformer::Transformer(Index input_sequence_length,
     {
         const string suffix = format("_{}", i + 1);
 
-        // Masked self-attention.
         auto decoder_self_attention = make_unique<MultiHeadAttention>(
             decoder_shape, heads_number, "decoder_self_attention" + suffix);
         decoder_self_attention->set(decoder_sequence_length, decoder_sequence_length,
                                     embedding_dimension, heads_number,
-                                    true,  // use_causal_mask
+                                    true,
                                     "decoder_self_attention" + suffix);
         add_layer(move(decoder_self_attention), {current_decoder_index});
         const Index self_attn_index = get_layers_number() - 1;
@@ -817,7 +807,6 @@ Transformer::Transformer(Index input_sequence_length,
             "decoder_self_attention_normalization" + suffix,
             current_decoder_index, self_attn_index);
 
-        // Cross-attention against encoder output.
         add_layer(make_unique<MultiHeadAttention>(decoder_shape, encoder_shape,
                                                   heads_number,
                                                   "cross_attention" + suffix),
@@ -839,7 +828,6 @@ Transformer::Transformer(Index input_sequence_length,
             norm2_index, ff_index);
     }
 
-    // Final token projection.
 
     add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
                                  "Softmax", false, "output_projection"));
@@ -858,11 +846,11 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
         if (!layer) continue;
 
         const string& label = layer->get_label();
-        const bool is_ffn_dense =
-               label.starts_with("encoder_internal_dense")
-            || label.starts_with("encoder_external_dense")
-            || label.starts_with("decoder_internal_dense")
-            || label.starts_with("decoder_external_dense");
+        const bool is_ffn_dense = starts_with_any(label,
+                                                  {"encoder_internal_dense",
+                                                   "encoder_external_dense",
+                                                   "decoder_internal_dense",
+                                                   "decoder_external_dense"});
 
         if (is_ffn_dense)
         {
