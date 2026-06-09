@@ -65,11 +65,15 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
 
     # Fuse the step for throughput; bf16 autocast for mixed precision.
-    # Default compile mode (not max-autotune) to keep the warmup memory spike
-    # modest on a 6 GB GPU where the dataset already occupies most of VRAM.
+    # torch.compile needs a working Triton/host-compiler toolchain; it is the
+    # default but can be disabled (PT_COMPILE=0) where it is unavailable, e.g.
+    # on Windows, leaving eager + AMP + TF32 as the fast path.
     import contextlib
+    import os
 
-    @torch.compile
+    use_compile = os.environ.get("PT_COMPILE", "1") != "0"
+    print(f"compile={use_compile}")
+
     def train_step(xb, yb):
         optimizer.zero_grad(set_to_none=True)
         ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
@@ -80,6 +84,9 @@ def main():
         loss.backward()
         optimizer.step()
         return loss
+
+    if use_compile:
+        train_step = torch.compile(train_step)
 
     n = x.shape[0]
     starts = list(range(0, n - batch + 1, batch))
