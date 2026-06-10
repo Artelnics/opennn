@@ -1408,7 +1408,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
     if (batches_number == 0) return epoch_result;
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
-    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent)
+                         || neural_network->has(LayerType::LongShortTermMemory);
     const bool on_gpu = neural_network->is_gpu();
 
     auto set_epoch_loss = [&]()
@@ -1602,7 +1603,8 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     if (batches_number == 0) return epoch_result;
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
-    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent)
+                         || neural_network->has(LayerType::LongShortTermMemory);
     const bool on_gpu = neural_network->is_gpu();
 
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();

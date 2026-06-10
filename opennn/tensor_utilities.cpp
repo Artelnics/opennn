@@ -105,7 +105,8 @@ static void initialize_cuda_backend(cudaStream_t& compute_stream,
         return;
     }
 
-    compute_stream = device::create_stream(cudaStreamNonBlocking);
+    // Default (blocking) stream: must serialize with legacy stream 0, else recurrent/LSTM training races and diverges.
+    compute_stream = device::create_stream(cudaStreamDefault);
     transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
@@ -299,12 +300,30 @@ void fill_tensor_data(const MatrixR& matrix,
 Backend::Backend()
 {
     set_threads_number(0);
-    initialize_cuda_backend(compute_stream,
-                            transfer_stream,
-                            cublas_handle,
-                            cublas_lt_handle,
-                            cudnn_handle,
-                            operator_sum_descriptor);
+
+#ifdef OPENNN_HAS_CUDA
+    int device_count = 0;
+    const cudaError_t status = cudaGetDeviceCount(&device_count);
+    if (status != cudaSuccess || device_count == 0)
+    {
+        cudaGetLastError();
+        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
+             << "); running on CPU.\n";
+        return;
+    }
+
+    CHECK_CUDA(cudaStreamCreate(&compute_stream));
+
+    CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
+    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
+
+    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+#endif
 }
 
 Backend::~Backend()
@@ -331,7 +350,8 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
-    omp_set_dynamic(0);
+    omp_set_dynamic(1);
+    omp_set_max_active_levels(1);
 }
 
 Backend& Backend::instance()
