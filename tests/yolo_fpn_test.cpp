@@ -146,7 +146,7 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
 
     // Build the network manually: input → 3 stride-2 convs (capturing 3
     // intermediate features) → each gets a 1×1 yolo_logits → Detection.
-    // Mirrors the structural shape of FPN without using Upsample/Concatenate
+    // Mirrors the structural shape of FPN without using Upsample/Concatenation
     // (those are validated separately by the smoke test). This isolates the
     // multi-head loss + pool allocation under test.
     NeuralNetwork neural_network;

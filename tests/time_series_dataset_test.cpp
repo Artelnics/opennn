@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/time_series_dataset.h"
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 
 using namespace opennn;
 

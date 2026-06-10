@@ -274,42 +274,16 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     const Index optimal_processed_variables_number = dataset->get_features_number("Input");
 
-    const Shape optimal_input_shape = time_series_dataset
-        ? Shape{ time_series_dataset->get_past_time_steps(), optimal_processed_variables_number }
-        : Shape{ optimal_processed_variables_number };
-    dataset->set_shape("Input", optimal_input_shape);
-    neural_network->set_input_shape(optimal_input_shape);
-
     if (time_series_dataset && time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
 
-    neural_network->compile();
+    configure_neural_network_inputs(neural_network, dataset, optimal_processed_variables_number);
 
     auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
 
     set_maximum_inputs_number(dataset->get_variables_number("Input"));
-
-
-    if (time_series_dataset)
-    {
-        vector<string> final_feature_names;
-        const vector<string> base_names = dataset->get_variable_names("Input");
-        const Index time_steps = time_series_dataset->get_past_time_steps();
-        final_feature_names.reserve(base_names.size() * time_steps);
-        for (const string& base_name : base_names)
-        {
-            for (Index j = 0; j < time_steps; ++j)
-            {
-                string lag_name = format("{}_lag{}", base_name.empty() ? "variable" : base_name, j);
-                final_feature_names.push_back(lag_name);
-            }
-        }
-        neural_network->set_input_names(final_feature_names);
-    }
-    else
-        neural_network->set_input_names(dataset->get_feature_names("Input"));
 
     if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
     {

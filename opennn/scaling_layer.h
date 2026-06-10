@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-class Scaling final : public Layer
+class Scaling : public Layer
 {
 public:
 
@@ -51,7 +51,9 @@ public:
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;
 
-private:
+protected:
+
+    Scaling(LayerType);
 
     vector<Descriptives> descriptives;
     vector<ScalerMethod> scalers;

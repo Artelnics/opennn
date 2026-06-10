@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "../opennn/image_dataset.h"
-#include "../opennn/image_utilities.h"
+#include "../opennn/image_processing.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/tabular_dataset.h"
 #include "../opennn/standard_networks.h"

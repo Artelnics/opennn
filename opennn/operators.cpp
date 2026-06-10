@@ -11,11 +11,10 @@
 #endif
 
 #include "operators.h"
-#include "cuda_gemm.h"
 #include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
-#include "math_utilities.h"
+#include "tensor_operations.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -246,27 +245,27 @@ void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_d
             }
 }
 
-void ConcatenateOp::set(Index h, Index w, const vector<Index>& per_input_channels)
+void ConcatenationOp::set(Index h, Index w, const vector<Index>& per_input_channels)
 {
     throw_if(per_input_channels.empty(),
-             "Concatenate: needs at least 1 input.");
+             "Concatenation: needs at least 1 input.");
     for (Index c : per_input_channels)
-        throw_if(c <= 0, "Concatenate: per-input channels must be positive.");
+        throw_if(c <= 0, "Concatenation: per-input channels must be positive.");
     height = h;
     width = w;
     input_channels = per_input_channels;
 }
 
-void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void ConcatenationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const vector<TensorView>& inputs = get_inputs(fp, layer);
     TensorView& output = get_output(fp, layer);
 
     throw_if(inputs.size() != input_channels.size(),
-             "Concatenate: input count mismatch.");
+             "Concatenation: input count mismatch.");
 
     throw_if(output.is_cuda(),
-             "ConcatenateOp GPU path is not implemented yet.");
+             "ConcatenationOp GPU path is not implemented yet.");
 
     const Index batch_size = output.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
@@ -292,7 +291,7 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             }
 }
 
-void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+void ConcatenationOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
@@ -305,7 +304,7 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
     if (!needs_input_delta) return;
 
     throw_if(output_delta.is_cuda(),
-             "ConcatenateOp GPU path is not implemented yet.");
+             "ConcatenationOp GPU path is not implemented yet.");
 
     const Index batch_size = output_delta.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
@@ -1343,8 +1342,7 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                 batch_size, output_features, time_steps, t, kernel_first_iter,
                 delta_src, carry_src,
                 activation_derivatives.as<Scalar>(),
-                delta_scratch.as<Scalar>(),
-                bias_gradient.as<float>());
+                delta_scratch.as<Scalar>());
 
             rnn_accumulate_bias_grad_cuda<Scalar>(
                 batch_size, output_features,
@@ -3364,23 +3362,12 @@ void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
         return;
     }
 
-    scale(input, minimums, maximums, means, standard_deviations, scalers,
-          min_range, max_range, output);
-}
-
-void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    if (!minimums.data)
-    {
-        copy(input, output);
-        return;
-    }
-
-    unscale(input, minimums, maximums, means, standard_deviations, scalers,
-            min_range, max_range, output);
+    if (invert)
+        unscale(input, minimums, maximums, means, standard_deviations, scalers,
+                min_range, max_range, output);
+    else
+        scale(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output);
 }
 
 namespace

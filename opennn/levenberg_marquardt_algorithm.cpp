@@ -6,7 +6,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "dataset.h"
 #include "loss.h"
 #include "batch.h"
@@ -351,29 +351,19 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
             cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
         }
 
-        bool stop = false;
-
         if (loss_decrease < minimum_loss_decrease)
         {
             if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-            stop = true;
-        }
-        else
-        {
-            stop = check_stopping_condition(results, epoch, elapsed_time,
-                                            results.training_error_history(epoch),
-                                            validation_failures);
         }
 
-        if (stop)
+        if (check_stopping_condition(results, epoch, elapsed_time,
+                                     results.training_error_history(epoch),
+                                     validation_failures,
+                                     training_back_propagation_lm.loss,
+                                     has_validation))
         {
-            results.loss = training_back_propagation_lm.loss;
             results.loss_decrease = loss_decrease;
-            results.validation_failures = validation_failures;
-            results.resize_training_error_history(epoch+1);
-            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = get_time(elapsed_time);
             break;
         }
 

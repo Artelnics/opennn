@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "yolo_dataset.h"
-#include "image_utilities.h"
+#include "image_processing.h"
 #include "io_utilities.h"
 #include "json.h"
 #include "string_utilities.h"

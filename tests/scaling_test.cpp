@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 #include "../opennn/dataset.h"
 #include "../opennn/tabular_dataset.h"
 

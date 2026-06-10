@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
-#include "image_utilities.h"
-#include "tensor_utilities.h"
+#include "image_processing.h"
+#include "tensor_types.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 #include "io_utilities.h"

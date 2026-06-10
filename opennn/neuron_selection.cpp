@@ -80,8 +80,10 @@ void NeuronsSelectionResult::resize_history(const Index new_size)
 
 string NeuronsSelectionResult::write_stopping_condition() const
 {
+    if (!stopping_condition) return "None";
+
     using enum NeuronSelection::StoppingCondition;
-    switch (stopping_condition)
+    switch (*stopping_condition)
     {
         case MaximumTime:
             return "MaximumTime";

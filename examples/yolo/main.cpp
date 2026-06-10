@@ -274,7 +274,7 @@ int main()
         // const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
         // FPN (YOLO v3): 3 detection heads at strides 32/16/8 with top-down
-        // upsample+concat. Requires Backbone::DarknetTiny and 9 anchors
+        // upsample+concatenation. Requires Backbone::DarknetTiny and 9 anchors
         // (3 per scale, smallest→stride-8, largest→stride-32). Cross-scale
         // NMS for inference is not yet wired — training only.
         const auto head_style = YoloNetwork::HeadStyle::FPN;

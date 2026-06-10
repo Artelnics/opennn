@@ -10,7 +10,7 @@
 #include "loss.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
-#include "math_utilities.h"
+#include "tensor_operations.h"
 
 namespace opennn
 {

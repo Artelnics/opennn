@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E N S O R   U T I L I T I E S   C L A S S   H E A D E R
+//   T E N S O R   T Y P E S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -11,7 +11,6 @@
 #include "pch.h"
 #include "types.h"
 #include "device_backend.h"
-#include "enum_map.h"
 
 namespace opennn
 {
@@ -98,12 +97,6 @@ inline Index type_bytes(Type type) noexcept
     }
     return TypeInfo<FP32>::bytes;
 }
-
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
-
-const EnumMap<ActivationFunction>& activation_function_map();
-const string& activation_function_to_string(ActivationFunction function);
-ActivationFunction activation_function_from_string(const string& name);
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
@@ -490,117 +483,6 @@ size_t hash_combine(const Vs&... values)
     size_t h = 0;
     ((h ^= hash<Vs>{}(values) + 0x9e3779b9 + (h << 6) + (h >> 2)), ...);
     return h;
-}
-
-struct CudaStream
-{
-    cudaStream_t handle = nullptr;
-
-    CudaStream() = default;
-    explicit CudaStream(unsigned flags) { handle = device::create_stream(flags); }
-
-    CudaStream(const CudaStream&) = delete;
-    CudaStream& operator=(const CudaStream&) = delete;
-
-    CudaStream(CudaStream&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
-    CudaStream& operator=(CudaStream&& other) noexcept
-    {
-        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
-        return *this;
-    }
-
-    ~CudaStream() { destroy(); }
-
-    void create(unsigned flags)
-    {
-        destroy();
-        handle = device::create_stream(flags);
-    }
-
-    void destroy() noexcept
-    {
-        device::destroy_stream(handle);
-        handle = nullptr;
-    }
-
-    operator cudaStream_t() const noexcept { return handle; }
-    explicit operator bool()  const noexcept { return handle != nullptr; }
-};
-
-struct CudaEvent
-{
-    cudaEvent_t handle = nullptr;
-
-    CudaEvent() = default;
-    explicit CudaEvent(unsigned flags) { handle = device::create_event(flags); }
-
-    CudaEvent(const CudaEvent&) = delete;
-    CudaEvent& operator=(const CudaEvent&) = delete;
-
-    CudaEvent(CudaEvent&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
-    CudaEvent& operator=(CudaEvent&& other) noexcept
-    {
-        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
-        return *this;
-    }
-
-    ~CudaEvent() { destroy(); }
-
-    void create()
-    {
-        destroy();
-        handle = device::create_event();
-    }
-
-    void create(unsigned flags)
-    {
-        destroy();
-        handle = device::create_event(flags);
-    }
-
-    void destroy() noexcept
-    {
-        device::destroy_event(handle);
-        handle = nullptr;
-    }
-
-    operator cudaEvent_t() const noexcept { return handle; }
-    explicit operator bool() const noexcept { return handle != nullptr; }
-};
-
-class Backend
-{
-public:
-
-    static Backend& instance();
-    ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int num_threads);
-
-    static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
-    static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
-    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
-    static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
-    static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
-    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
-
-private:
-    Backend();
-    ~Backend();
-
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
-
-    cublasHandle_t cublas_handle = nullptr;
-    cublasLtHandle_t cublas_lt_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-    cudaStream_t compute_stream = nullptr;
-    cudaStream_t transfer_stream = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-};
-
-inline ThreadPoolDevice& get_device()
-{
-    return *Backend::instance().get_thread_pool_device();
 }
 
 inline void TensorView::set_zero_async() const

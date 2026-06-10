@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_utilities.h"
-#include "math_utilities.h"
+#include "tensor_types.h"
+#include "tensor_operations.h"
 #include "multihead_attention_layer.h"
 #include "loss.h"
 #include "forward_propagation.h"

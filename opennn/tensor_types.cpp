@@ -1,40 +1,15 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E N S O R S   S O U R C E
+//   T E N S O R   T Y P E S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities.h"
-
-#include <Eigen/Dense>
+#include "tensor_types.h"
 
 namespace opennn
 {
-
-const EnumMap<ActivationFunction>& activation_function_map()
-{
-    static const vector<pair<ActivationFunction, string>> entries = {
-        {ActivationFunction::Identity, "Identity"},
-        {ActivationFunction::Sigmoid,  "Sigmoid"},
-        {ActivationFunction::Tanh,     "Tanh"},
-        {ActivationFunction::ReLU,     "ReLU"},
-        {ActivationFunction::Softmax,  "Softmax"}
-    };
-    static const EnumMap<ActivationFunction> instance{entries};
-    return instance;
-}
-
-const string& activation_function_to_string(ActivationFunction function)
-{
-    return activation_function_map().to_string(function);
-}
-
-ActivationFunction activation_function_from_string(const string& name)
-{
-    return activation_function_map().from_string(name, ActivationFunction::Identity);
-}
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -92,75 +67,6 @@ static void fill_cuda(const TensorView& view, float value)
                                view.get_descriptor(), view.data, &value));
 }
 
-static void initialize_cuda_backend(cudaStream_t& compute_stream,
-                                    cudaStream_t& transfer_stream,
-                                    cublasHandle_t& cublas_handle,
-                                    cublasLtHandle_t& cublas_lt_handle,
-                                    cudnnHandle_t& cudnn_handle,
-                                    cudnnOpTensorDescriptor_t& operator_sum_descriptor)
-{
-    if (!device::has_cuda_device())
-    {
-        cerr << "OpenNN: no CUDA device available; running on CPU.\n";
-        return;
-    }
-
-    // Default (blocking) stream: must serialize with legacy stream 0, else recurrent/LSTM training races and diverges.
-    compute_stream = device::create_stream(cudaStreamDefault);
-    transfer_stream = device::create_stream(cudaStreamNonBlocking);
-
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                                           CUDNN_OP_TENSOR_ADD,
-                                           CUDNN_DATA_FLOAT,
-                                           CUDNN_NOT_PROPAGATE_NAN));
-}
-
-static void destroy_cuda_backend(cudaStream_t& compute_stream,
-                                 cudaStream_t& transfer_stream,
-                                 cublasHandle_t& cublas_handle,
-                                 cublasLtHandle_t& cublas_lt_handle,
-                                 cudnnHandle_t& cudnn_handle,
-                                 cudnnOpTensorDescriptor_t& operator_sum_descriptor)
-{
-    if (operator_sum_descriptor)
-    {
-        cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-        operator_sum_descriptor = nullptr;
-    }
-
-    if (cublas_lt_handle)
-    {
-        cublasLtDestroy(cublas_lt_handle);
-        cublas_lt_handle = nullptr;
-    }
-
-    if (cublas_handle)
-    {
-        cublasDestroy(cublas_handle);
-        cublas_handle = nullptr;
-    }
-
-    if (cudnn_handle)
-    {
-        cudnnDestroy(cudnn_handle);
-        cudnn_handle = nullptr;
-    }
-
-    device::destroy_stream(compute_stream);
-    compute_stream = nullptr;
-
-    device::destroy_stream(transfer_stream);
-    transfer_stream = nullptr;
-}
-
 #else
 
 cudnnTensorDescriptor_t TensorView::get_descriptor() const
@@ -181,24 +87,6 @@ static bool uses_cuda_fill(const TensorView& view)
 static void fill_cuda(const TensorView&, float)
 {
     throw runtime_error("TensorView::fill requires CUDA support for CUDA tensors.");
-}
-
-static void initialize_cuda_backend(cudaStream_t&,
-                                    cudaStream_t&,
-                                    cublasHandle_t&,
-                                    cublasLtHandle_t&,
-                                    cudnnHandle_t&,
-                                    cudnnOpTensorDescriptor_t&)
-{
-}
-
-static void destroy_cuda_backend(cudaStream_t&,
-                                 cudaStream_t&,
-                                 cublasHandle_t&,
-                                 cublasLtHandle_t&,
-                                 cudnnHandle_t&,
-                                 cudnnOpTensorDescriptor_t&)
-{
 }
 
 #endif
@@ -295,84 +183,6 @@ void fill_tensor_data(const MatrixR& matrix,
                 dest_row_ptr[j] = src_row_ptr[column_indices[j]];
         }
     }
-}
-
-Backend::Backend()
-{
-    set_threads_number(0);
-
-#ifdef OPENNN_HAS_CUDA
-    int device_count = 0;
-    const cudaError_t status = cudaGetDeviceCount(&device_count);
-    if (status != cudaSuccess || device_count == 0)
-    {
-        cudaGetLastError();
-        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
-             << "); running on CPU.\n";
-        return;
-    }
-
-    CHECK_CUDA(cudaStreamCreate(&compute_stream));
-
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
-#endif
-}
-
-Backend::~Backend()
-{
-    destroy_cuda_backend(compute_stream,
-                         transfer_stream,
-                         cublas_handle,
-                         cublas_lt_handle,
-                         cudnn_handle,
-                         operator_sum_descriptor);
-}
-
-void Backend::set_threads_number(int num_threads)
-{
-    if (num_threads <= 0)
-    {
-        num_threads = thread::hardware_concurrency();
-        if (num_threads <= 0) num_threads = omp_get_max_threads();
-        if (num_threads <= 0) num_threads = 1;
-    }
-
-    thread_pool = make_unique<ThreadPool>(num_threads);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
-
-    Eigen::setNbThreads(num_threads);
-    omp_set_num_threads(num_threads);
-    omp_set_dynamic(1);
-    omp_set_max_active_levels(1);
-}
-
-Backend& Backend::instance()
-{
-    static Backend device;
-    return device;
-}
-
-namespace device
-{
-
-cudaStream_t get_compute_stream()
-{
-    return Backend::get_compute_stream();
-}
-
-}
-
-ThreadPoolDevice* Backend::get_thread_pool_device()
-{
-    return thread_pool_device.get();
 }
 
 void copy_device_to_host_float(const void* device_src, Type src_dtype,

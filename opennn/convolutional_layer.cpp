@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "convolutional_layer.h"
 #include "neural_network.h"
 #include "loss.h"

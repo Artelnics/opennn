@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   C O N C A T E N A T E   L A Y E R   C L A S S   H E A D E R
+//   C O N C A T E N A T I O N   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,19 +14,19 @@
 namespace opennn
 {
 
-class Concatenate final : public Layer
+class Concatenation final : public Layer
 {
 public:
 
-    Concatenate(const Shape& = {},
-                const vector<Index>& per_input_channels = {},
-                const string& = "concatenate_layer");
+    Concatenation(const Shape& = {},
+                  const vector<Index>& per_input_channels = {},
+                  const string& = "concatenation_layer");
 
     Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
-    Index get_inputs_number() const { return ssize(concatenate.input_channels); }
-    const vector<Index>& get_input_channels() const { return concatenate.input_channels; }
+    Index get_inputs_number() const { return ssize(concatenation.input_channels); }
+    const vector<Index>& get_input_channels() const { return concatenation.input_channels; }
 
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
@@ -38,7 +38,7 @@ public:
 
 private:
 
-    ConcatenateOp concatenate;
+    ConcatenationOp concatenation;
 
     void configure_operator();
 };

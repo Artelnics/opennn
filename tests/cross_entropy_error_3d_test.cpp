@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 #include "../opennn/loss.h"
 #include "../opennn/dense_layer.h"
 #include "../opennn/dataset.h"

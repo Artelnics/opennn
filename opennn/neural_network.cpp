@@ -7,14 +7,14 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "neural_network.h"
 #include "profiler.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
 #include "convolutional_layer.h"
-#include "image_utilities.h"
+#include "image_processing.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"

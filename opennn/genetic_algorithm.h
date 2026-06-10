@@ -57,7 +57,6 @@ private:
     void perform_crossover();
     void perform_mutation();
     vector<Index> get_selected_indices() const;
-    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
 
     Tensor<VectorR, 1> individual_parameters;
 

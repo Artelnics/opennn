@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "response_optimization.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "statistics.h"
 #include "neural_network.h"
 #include "variable.h"
@@ -88,7 +88,7 @@ inline ComparisonOp to_comparison_op(const ResponseOptimization::ConditionType c
 // Exact analytic differentiation of a feedforward surrogate, assembled from the
 // network's PUBLIC getters (no neural-network internals are modified). Forward
 // and the reverse-mode VJP are reproduced layer by layer; the formulas mirror
-// math_utilities scale/unscale/activation, and a self-validation against
+// tensor_operations scale/unscale/activation, and a self-validation against
 // calculate_outputs guards against any drift.
 struct NetworkDifferential
 {

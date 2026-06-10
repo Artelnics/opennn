@@ -205,15 +205,6 @@ void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const Index features, const Index t,
                             const T* src, T* dst);
 
-template<typename TSrc, typename TDst>
-void gather_columns_cuda(const Index batch_size,
-                         const Index output_features,
-                         const Index source_features,
-                         const Index* row_indices,
-                         const Index* column_indices,
-                         const TSrc* source,
-                         TDst* destination);
-
 template<typename T>
 void scatter_time_slice_cuda(const Index batch, const Index time_steps,
                              const Index features, const Index t,
@@ -222,11 +213,6 @@ void scatter_time_slice_cuda(const Index batch, const Index time_steps,
 template<typename T>
 void transpose_2d_cuda(const Index rows, const Index cols,
                        const T* src, T* dst);
-
-template<typename T>
-void rnn_step_bias_activation_cuda(const Index batch, const Index out_features,
-                                   T* hidden, const T* bias,
-                                   T* derivs_or_null, const int activation_id);
 
 template<typename T>
 void rnn_step_fused_forward_cuda(const Index batch,
@@ -257,7 +243,6 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* output_delta,
                                       const T* next_carry,
                                       const T* activation_derivatives,
-                                      T* delta,
-                                      float* bias_grad);
+                                      T* delta);
 
 #endif // KERNEL_CUH

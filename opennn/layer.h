@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "tensor_utilities.h"
-#include "math_utilities.h"
+#include "tensor_types.h"
+#include "tensor_operations.h"
 #include "operators.h"
 #include "random_utilities.h"
 #include "string_utilities.h"
@@ -26,7 +26,7 @@ enum class LayerType
     Activation,
     Addition,
     Bounding,
-    Concatenate,
+    Concatenation,
     Convolutional,
     Dense,
     Detection,
@@ -50,7 +50,8 @@ inline const EnumMap<LayerType>& layer_type_map()
         {LayerType::Activation,         "Activation"},
         {LayerType::Addition,           "Addition"},
         {LayerType::Bounding,           "Bounding"},
-        {LayerType::Concatenate,        "Concatenate"},
+        {LayerType::Concatenation,      "Concatenation"},
+        {LayerType::Concatenation,      "Concatenate"},
         {LayerType::Convolutional,      "Convolutional"},
         {LayerType::Dense,              "Dense"},
         {LayerType::Detection,          "Detection"},

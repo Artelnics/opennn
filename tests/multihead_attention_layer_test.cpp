@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 #include "../opennn/multihead_attention_layer.h"
 #include "../opennn/random_utilities.h"
 #include <iostream>

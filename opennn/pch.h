@@ -46,6 +46,7 @@
 #include <unordered_set>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <random>
 #include <regex>
 #include <cstring>
