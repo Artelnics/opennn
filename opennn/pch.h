@@ -93,6 +93,8 @@ void check_cuda_status(T status, const char* msg,
 
 using cudaStream_t     = void*;
 using cudaEvent_t      = void*;
+using cudaGraph_t      = void*;
+using cudaGraphExec_t  = void*;
 using cublasHandle_t   = void*;
 using cublasLtHandle_t = void*;
 using cudnnHandle_t    = void*;

@@ -8,8 +8,11 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
+#include <optional>
 #include "batch.h"
+#include "device_backend.h"
 #include "json.h"
 #include "loss.h"
 #include "tensor_utilities.h"
@@ -57,6 +60,8 @@ public:
 
     void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
     int  get_workers_number() const { return workers_number; }
+
+    void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -128,6 +133,7 @@ protected:
         vector<unique_ptr<Batch>> training_pool;
         vector<unique_ptr<Batch>> validation_pool;
         unique_ptr<Batch> fixed_training_batch;
+        unique_ptr<Batch> graph_slot;
 
         bool validation_uses_training_pool = false;
 
@@ -160,6 +166,7 @@ protected:
 
     void reset_graph_capture();
 
+    bool cuda_graph_requested() const;
     bool graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const;
     Loss::EvaluationResult run_graph_epoch(ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
@@ -209,9 +216,14 @@ protected:
 
     bool has_recurrent_layers_ = false;
 
-    void* training_graph_exec = nullptr;
-    bool  training_graph_captured = false;
+    // Slot ring for the graph epoch: [0] is the shared fixed device batch, [1]
+    // doubles the buffering so uploads overlap with graph execution. One
+    // instantiated graph per slot (identical topology, different base address).
+    static constexpr int graph_slots_count = 2;
+    array<device::GraphExecHandle, graph_slots_count> training_graph_execs;
+    array<Batch*, graph_slots_count> graph_slots{};
     function<void(BackPropagation&)> graph_update;
+    optional<bool> use_cuda_graph;
 };
 
 struct OptimizerData

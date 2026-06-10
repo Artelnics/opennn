@@ -30,7 +30,7 @@ int main()
 
         set_seed(42);
 
-        Configuration::instance().set(Device::Auto, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
 
         const Index neurons_number = 12;
         const float regularization_weight = float(0.001);

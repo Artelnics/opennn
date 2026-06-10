@@ -237,17 +237,18 @@ Optimizer::Optimizer(Loss* new_loss)
     set(new_loss);
 }
 
-Optimizer::~Optimizer()
-{
-    device::destroy_graph(training_graph_exec);
-}
+Optimizer::~Optimizer() = default;
 
 void Optimizer::reset_graph_capture()
 {
-    training_graph_captured = false;
-    device::destroy_graph(training_graph_exec);
-    training_graph_exec = nullptr;
+    for (device::GraphExecHandle& exec : training_graph_execs)
+        exec.reset();
     graph_update = nullptr;
+}
+
+bool Optimizer::cuda_graph_requested() const
+{
+    return use_cuda_graph.value_or(env_flag_enabled("OPENNN_CUDA_GRAPH"));
 }
 
 void Optimizer::to_JSON(JsonWriter& printer) const
@@ -338,7 +339,14 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
               training_batch_size);
 
     if (neural_network.is_gpu() && device::is_cuda_build())
+    {
         pools.fixed_training_batch = make_unique<Batch>(training_batch_size, &dataset, config);
+
+        if (cuda_graph_requested())
+            pools.graph_slot = make_unique<Batch>(training_batch_size, &dataset, config);
+    }
+
+    graph_slots = {pools.fixed_training_batch.get(), pools.graph_slot.get()};
 
     pools.validation_uses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
@@ -1165,6 +1173,11 @@ void Optimizer::teardown_device_training()
 
     if (loss->get_dataset()->is_device_resident())
         loss->get_dataset()->disable_device_residency();
+
+    // The captured graphs, the update closure and the slot pointers reference
+    // train()-local resources; they must not outlive them.
+    reset_graph_capture();
+    graph_slots = {};
 }
 
 void Optimizer::prefetch_batch(Batch& batch)
@@ -1201,8 +1214,7 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 
 bool Optimizer::graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const
 {
-    static const bool cuda_graph_requested = env_flag_enabled("OPENNN_CUDA_GRAPH");
-    return cuda_graph_requested
+    return cuda_graph_requested()
         && fixed_device_batch
         && fixed_device_batch->uses_cuda()
         && use_device_metrics
@@ -1227,51 +1239,106 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetrics device_metrics;
     device_metrics.reset();
 
-    cudaStream_t stream = Backend::get_compute_stream();
-    Batch* fill_batch = empty_queue.pop();
+    cudaStream_t compute = Backend::get_compute_stream();
+    cudaStream_t transfer = Backend::get_transfer_stream();
+
+    // Slot ring: [0] is the shared fixed device batch, [1] (when allocated)
+    // doubles the buffering so the upload of batch i+1 overlaps with the graph
+    // executing batch i. Each slot gets its own instantiated graph.
+    array<Batch*, graph_slots_count> slots = {fixed_device_batch, nullptr};
+    if (graph_slots[0] == fixed_device_batch && graph_slots[1])
+        slots[1] = graph_slots[1];
+    const int slots_count = slots[1] ? graph_slots_count : 1;
+
+    auto session = start_batch_workers(empty_queue, batches,
+                                       input_feature_indices,
+                                       decoder_feature_indices,
+                                       target_feature_indices,
+                                       /*is_training=*/true,
+                                       nullptr);
+
     const Index progress_step = max(Index(1), batches_number / 200);
     if (show_progress) display_progress_bar(0, int(batches_number));
 
-    const auto run_compute_step = [&]()
+    // The update closure is copied so the eager fallback keeps working for the
+    // rest of the epoch after a capture failure clears the member.
+    const auto run_compute_step = [&, update = graph_update](Batch& slot)
     {
-        neural_network->forward_propagate(fixed_device_batch->get_inputs(),
+        neural_network->forward_propagate(slot.get_inputs(),
                                           forward_propagation, true);
-        if (!loss->back_propagate_device_metrics(*fixed_device_batch,
+        if (!loss->back_propagate_device_metrics(slot,
                                                  forward_propagation, back_propagation,
                                                  device_metrics.error_sum(),
                                                  tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
             throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-        graph_update(back_propagation);
+        update(back_propagation);
     };
 
-    for (Index iteration = 0; iteration < batches_number; ++iteration)
+    Batch* host_batch = nullptr;
+    try
     {
-        fill_batch->fill(batches[iteration],
-                         input_feature_indices, decoder_feature_indices,
-                         target_feature_indices, /*is_training=*/true);
-        fill_batch->upload_to_device_batch_async(*fixed_device_batch, stream);
-
-        if (!training_graph_captured)
+        for (Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            run_compute_step();
-            device::synchronize(stream);
-            device::begin_graph_capture(stream);
-            run_compute_step();
-            training_graph_exec = device::end_graph_capture(stream);
-            training_graph_captured = true;
-        }
-        else
-        {
-            device::launch_graph(training_graph_exec, stream);
-        }
+            const size_t slot_index = size_t(iteration % slots_count);
+            Batch& slot = *slots[slot_index];
+            device::GraphExecHandle& exec = training_graph_execs[slot_index];
 
-        if (show_progress
-            && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
-            display_progress_bar(int(iteration + 1), int(batches_number));
+            host_batch = session->wait(iteration);
+
+            // The graph that last read this slot must finish before the upload
+            // overwrites it (the slot's event is recorded on compute below).
+            if (slot.h2d_done_recorded)
+                device::stream_wait_event(transfer, slot.h2d_done_event);
+
+            host_batch->upload_to_device_batch_async(slot, transfer);
+            host_batch->wait_h2d_on_compute_stream();
+
+            if (exec)
+            {
+                device::launch_graph(exec, compute);
+            }
+            else if (graph_update)
+            {
+                run_compute_step(slot);
+
+                try
+                {
+                    device::synchronize(compute);
+                    device::StreamCapture capture(compute);
+                    run_compute_step(slot);
+                    const device::GraphHandle graph = capture.end();
+                    device::instantiate_or_update(exec, graph.get());
+                }
+                catch (const exception& capture_error)
+                {
+                    reset_graph_capture();
+                    cout << "CUDA graph capture failed (" << capture_error.what()
+                         << "); continuing without graphs.\n";
+                }
+            }
+            else
+            {
+                run_compute_step(slot);
+            }
+
+            slot.record_h2d_done(compute);
+
+            empty_queue.push(host_batch);
+            host_batch = nullptr;
+
+            if (show_progress
+                && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+                display_progress_bar(int(iteration + 1), int(batches_number));
+        }
+        device::synchronize(compute);
     }
-    device::synchronize(stream);
+    catch (...)
+    {
+        if (host_batch) empty_queue.push(host_batch);
+        throw;
+    }
+    session->rethrow_if_error();
     if (show_progress) cout << "\n";
-    empty_queue.push(fill_batch);
 
     Loss::EvaluationResult epoch_result = device_metrics.read(batches_number, tracks_accuracy);
     back_propagation.error = epoch_result.error;

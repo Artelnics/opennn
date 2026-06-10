@@ -90,10 +90,38 @@ void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
 void stream_wait_event(cudaStream_t, cudaEvent_t);
 
-void  begin_graph_capture(cudaStream_t);
-void* end_graph_capture(cudaStream_t);
-void  launch_graph(void* graph_exec, cudaStream_t);
-void  destroy_graph(void* graph_exec);
+void destroy_graph(cudaGraph_t) noexcept;
+void destroy_graph_exec(cudaGraphExec_t) noexcept;
+
+struct GraphDeleter     { void operator()(std::remove_pointer_t<cudaGraph_t>* graph)    const noexcept { destroy_graph(graph); } };
+struct GraphExecDeleter { void operator()(std::remove_pointer_t<cudaGraphExec_t>* exec) const noexcept { destroy_graph_exec(exec); } };
+
+using GraphHandle     = std::unique_ptr<std::remove_pointer_t<cudaGraph_t>,     GraphDeleter>;
+using GraphExecHandle = std::unique_ptr<std::remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
+
+// RAII over a stream-capture window: if the captured body throws before end(),
+// the destructor closes the capture and discards the orphaned graph instead of
+// leaving the stream stuck in capture mode.
+class StreamCapture
+{
+public:
+    explicit StreamCapture(cudaStream_t);
+    ~StreamCapture() noexcept;
+
+    StreamCapture(const StreamCapture&) = delete;
+    StreamCapture& operator=(const StreamCapture&) = delete;
+
+    GraphHandle end();
+
+private:
+    cudaStream_t stream = nullptr;
+    bool finished = false;
+};
+
+// Refreshes an instantiated graph in place via cudaGraphExecUpdate when the
+// topology is unchanged; falls back to a full re-instantiation otherwise.
+void instantiate_or_update(GraphExecHandle&, cudaGraph_t);
+void launch_graph(const GraphExecHandle&, cudaStream_t);
 
 }
 

@@ -271,6 +271,17 @@ TrainingResult AdaptiveMomentEstimation::train()
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr,
                                batch_pools.fixed_training_batch.get());
+
+#ifdef OPENNN_HAS_CUDA
+        // The graph epoch path ignores warmup_update and steps the real
+        // optimization_data (the captured graph references its buffers), so the
+        // warmup leaves step/moments non-zero while the model state is restored.
+        if (graph_update)
+        {
+            optimization_data.data.setZero();
+            optimization_data.graph_step.setZero();
+        }
+#endif
     }
 
     time_t beginning_time;

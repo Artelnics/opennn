@@ -374,7 +374,7 @@ int main(int argc, char** argv)
 
         set_seed(42);
 
-        const filesystem::path dataset_path = "/home/artelnics/Documents/HIGGS.csv";
+        const filesystem::path dataset_path = "/tmp/HIGGS.csv";
 
         TabularDataset dataset(dataset_path, ",", false, false);
 
