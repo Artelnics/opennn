@@ -788,7 +788,10 @@ bool is_smooth(const Ast& node)
 }
 
 
-AstPtr differentiate(const Ast& node, const Index wrt_input)
+// Differentiate w.r.t. one variable: an input (wrt_is_output == false) or an
+// output (wrt_is_output == true) column. Outputs are first-class so the same
+// pass yields both dg/dx and dg/dy for the chain rule through the network.
+AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_index)
 {
     switch (node.kind)
     {
@@ -796,27 +799,27 @@ AstPtr differentiate(const Ast& node, const Index wrt_input)
         return make_const(0.0f);
 
     case Ast::Kind::Input:
-        return make_const(node.index == wrt_input ? 1.0f : 0.0f);
+        return make_const((!wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
 
     case Ast::Kind::Output:
-        return make_const(0.0f);
+        return make_const((wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
 
     case Ast::Kind::UnaryNeg:
-        return make_neg(differentiate(*node.children[0], wrt_input));
+        return make_neg(differentiate(*node.children[0], wrt_is_output, wrt_index));
 
     case Ast::Kind::Add:
-        return make_add(differentiate(*node.children[0], wrt_input),
-                        differentiate(*node.children[1], wrt_input));
+        return make_add(differentiate(*node.children[0], wrt_is_output, wrt_index),
+                        differentiate(*node.children[1], wrt_is_output, wrt_index));
 
     case Ast::Kind::Sub:
-        return make_sub(differentiate(*node.children[0], wrt_input),
-                        differentiate(*node.children[1], wrt_input));
+        return make_sub(differentiate(*node.children[0], wrt_is_output, wrt_index),
+                        differentiate(*node.children[1], wrt_is_output, wrt_index));
 
     case Ast::Kind::Mul:
     {
         // (a*b)' = a'*b + a*b'
-        AstPtr da = differentiate(*node.children[0], wrt_input);
-        AstPtr db = differentiate(*node.children[1], wrt_input);
+        AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
+        AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         return make_add(make_mul(move(da), clone(*node.children[1])),
                         make_mul(clone(*node.children[0]), move(db)));
     }
@@ -824,8 +827,8 @@ AstPtr differentiate(const Ast& node, const Index wrt_input)
     case Ast::Kind::Div:
     {
         // (a/b)' = (a'*b - a*b') / b^2
-        AstPtr da = differentiate(*node.children[0], wrt_input);
-        AstPtr db = differentiate(*node.children[1], wrt_input);
+        AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
+        AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr numerator = make_sub(make_mul(move(da), clone(*node.children[1])),
                                     make_mul(clone(*node.children[0]), move(db)));
         AstPtr denominator = make_mul(clone(*node.children[1]), clone(*node.children[1]));
@@ -838,7 +841,7 @@ AstPtr differentiate(const Ast& node, const Index wrt_input)
         if (is_const(*node.children[1], exponent))
         {
             // (a^c)' = c*a^(c-1)*a'
-            AstPtr da = differentiate(*node.children[0], wrt_input);
+            AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
             AstPtr power = make_pow(clone(*node.children[0]), make_const(exponent - 1.0f));
             return make_mul(make_mul(make_const(exponent), move(power)), move(da));
         }
@@ -847,14 +850,14 @@ AstPtr differentiate(const Ast& node, const Index wrt_input)
         if (is_const(*node.children[0], base))
         {
             // (k^b)' = k^b*ln(k)*b'
-            AstPtr db = differentiate(*node.children[1], wrt_input);
+            AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
             AstPtr value = make_pow(make_const(base), clone(*node.children[1]));
             return make_mul(make_mul(move(value), make_const(log(base))), move(db));
         }
 
         // General a^b = exp(b*ln a): (a^b)' = a^b*(b'*ln a + b*a'/a)
-        AstPtr da = differentiate(*node.children[0], wrt_input);
-        AstPtr db = differentiate(*node.children[1], wrt_input);
+        AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
+        AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr term1 = make_mul(move(db), make_func("log", clone(*node.children[0])));
         AstPtr term2 = make_div(make_mul(clone(*node.children[1]), move(da)),
                                 clone(*node.children[0]));
@@ -866,7 +869,7 @@ AstPtr differentiate(const Ast& node, const Index wrt_input)
     {
         const string& name = node.function_name;
         const Ast& u = *node.children[0];
-        AstPtr du = differentiate(u, wrt_input);
+        AstPtr du = differentiate(u, wrt_is_output, wrt_index);
 
         if (name == "sqrt")   // (sqrt u)' = u'/(2 sqrt u)
             return make_div(move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
@@ -1021,22 +1024,32 @@ CompiledFormula compile_formula(const string& expression,
     {
         result.shape = FormulaShape::Nonlinear;
 
-        // For smooth input-only nonlinear constraints, precompile the gradient
-        // (one RPN program per referenced input) so the Gauss-Newton repair can
-        // assemble the Jacobian with plain evaluate_rpn() calls. Non-smooth
-        // (min/max) and output-touching formulas get no gradient and fall back
-        // to rejection.
-        if (result.scope == FormulaScope::InputsOnly && is_smooth(*ast))
+        // For smooth nonlinear constraints, precompile the gradient (one RPN
+        // program per referenced input AND per referenced output) so both the
+        // input-only Gauss-Newton repair and the output-constraint repair can
+        // assemble Jacobians with plain evaluate_rpn() calls. Output partials
+        // feed the chain rule dg/dy * df/dx through the network. Non-smooth
+        // (min/max) formulas get no gradient and fall back to rejection.
+        if (is_smooth(*ast))
         {
             result.gradient_available = true;
-            result.input_gradient.reserve(result.input_indices.size());
 
+            result.input_gradient.reserve(result.input_indices.size());
             for (const Index input_column : result.input_indices)
             {
-                const AstPtr partial = differentiate(*ast, input_column);
+                const AstPtr partial = differentiate(*ast, false, input_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
                 result.input_gradient.emplace_back(input_column, move(program));
+            }
+
+            result.output_gradient.reserve(result.output_indices.size());
+            for (const Index output_column : result.output_indices)
+            {
+                const AstPtr partial = differentiate(*ast, true, output_column);
+                vector<RpnOp> program;
+                emit_bytecode(*partial, program);
+                result.output_gradient.emplace_back(output_column, move(program));
             }
         }
     }
@@ -1533,6 +1546,186 @@ void repair_inputs(MatrixR& random_inputs,
         repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
     else if (affine_number >= 2)
         repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
+}
+
+
+void repair_output_constraints(MatrixR& inputs,
+                               const VectorR& inferior_frontier,
+                               const VectorR& superior_frontier,
+                               const vector<FormulaConstraint>& formula_constraints,
+                               const SurrogateForward& forward,
+                               const SurrogateVjp& vjp,
+                               const Index max_correction_passes)
+{
+    // Output-touching constraints we can project: not callback, op set, smooth,
+    // and referencing outputs (Mixed or OutputsOnly). Affine-in-(x,y) ones use
+    // their constant terms; nonlinear smooth ones use the compiled gradients.
+    // Input-only constraints are handled pre-evaluation by repair_inputs.
+    vector<const FormulaConstraint*> constraints;
+
+    for (const FormulaConstraint& constraint : formula_constraints)
+    {
+        if (constraint.uses_callback
+            || constraint.op == ComparisonOp::None
+            || constraint.compiled.scope == FormulaScope::InputsOnly)
+            continue;
+
+        const bool affine = (constraint.compiled.shape == FormulaShape::Affine);
+        const bool nonlinear_ready = (constraint.compiled.shape == FormulaShape::Nonlinear
+                                      && constraint.compiled.gradient_available);
+
+        if (affine || nonlinear_ready)
+            constraints.push_back(&constraint);
+    }
+
+    if (constraints.empty())
+        return;
+
+    const Index rows_number   = inputs.rows();
+    const Index inputs_number  = inputs.cols();
+    const Index passes        = max(Index(1), max_correction_passes);
+
+    for (Index r = 0; r < rows_number; ++r)
+    {
+        VectorR point = inputs.row(r).transpose();
+
+        for (Index pass = 0; pass < passes; ++pass)
+        {
+            const VectorR output = forward(point);          // 1 forward, shared by all constraints
+            const Index outputs_number = output.size();
+
+            // Active set: residual and which constraints are currently violated.
+            vector<const FormulaConstraint*> active;
+            vector<float> residuals;
+            active.reserve(constraints.size());
+            residuals.reserve(constraints.size());
+
+            for (const FormulaConstraint* constraint : constraints)
+            {
+                const float value = constraint->compiled.evaluate(point, output);
+                const float low = constraint->low_bound;
+                const float up  = constraint->up_bound;
+
+                float residual = 0.0f;
+                bool is_active = false;
+
+                switch (constraint->op)
+                {
+                case ComparisonOp::EqualTo:
+                    residual = value - low; is_active = true; break;
+                case ComparisonOp::Between:
+                    if      (value < low) { residual = value - low; is_active = true; }
+                    else if (value > up)  { residual = value - up;  is_active = true; }
+                    break;
+                case ComparisonOp::GreaterEqualTo:
+                case ComparisonOp::GreaterThan:
+                    if (value < low) { residual = value - low; is_active = true; }
+                    break;
+                case ComparisonOp::LessEqualTo:
+                case ComparisonOp::LessThan:
+                    if (value > up) { residual = value - up; is_active = true; }
+                    break;
+                case ComparisonOp::None:
+                default:
+                    break;
+                }
+
+                if (is_active)
+                {
+                    active.push_back(constraint);
+                    residuals.push_back(residual);
+                }
+            }
+
+            if (active.empty())
+                break;
+
+            float max_abs_residual = 0.0f;
+            for (const float residual : residuals)
+                max_abs_residual = max(max_abs_residual, abs(residual));
+
+            if (max_abs_residual <= EPSILON)
+                break;
+
+            const Index active_number = static_cast<Index>(active.size());
+
+            MatrixR jacobian = MatrixR::Zero(active_number, inputs_number);
+            VectorR rhs(active_number);
+
+            for (Index i = 0; i < active_number; ++i)
+            {
+                rhs(i) = residuals[i];
+                const CompiledFormula& compiled = active[i]->compiled;
+
+                // dg/dx (direct) and dg/dy (the VJP cotangent seed).
+                VectorR grad_x = VectorR::Zero(inputs_number);
+                VectorR cotangent = VectorR::Zero(outputs_number);
+
+                if (compiled.shape == FormulaShape::Affine)
+                {
+                    for (const auto& [column, coefficient] : compiled.affine_input_terms)
+                        grad_x(column) = coefficient;
+                    for (const auto& [column, coefficient] : compiled.affine_output_terms)
+                        cotangent(column) = coefficient;
+                }
+                else
+                {
+                    for (const auto& [column, program] : compiled.input_gradient)
+                        grad_x(column) = evaluate_rpn(program, point, output);
+                    for (const auto& [column, program] : compiled.output_gradient)
+                        cotangent(column) = evaluate_rpn(program, point, output);
+                }
+
+                // Chain rule: d/dx g(x, f(x)) = dg/dx + (df/dx)^T dg/dy.
+                jacobian.row(i) = (grad_x + vjp(point, cotangent)).transpose();
+            }
+
+            // Gauss-Newton-on-manifold step + box projection.
+            MatrixR gram = jacobian * jacobian.transpose();
+            gram.diagonal().array() += EPSILON;
+
+            point -= jacobian.transpose() * gram.ldlt().solve(rhs);
+            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
+        }
+
+        inputs.row(r) = point.transpose();
+    }
+}
+
+
+void repair_output_constraints(MatrixR& inputs,
+                               const VectorR& inferior_frontier,
+                               const VectorR& superior_frontier,
+                               const vector<FormulaConstraint>& formula_constraints,
+                               const SurrogateForward& forward,
+                               const Index max_correction_passes)
+{
+    const Index inputs_number = inputs.cols();
+
+    // Per-coordinate central-difference step scaled to the box width, floored so
+    // it stays meaningful for degenerate (fixed) coordinates.
+    VectorR step(inputs_number);
+    for (Index j = 0; j < inputs_number; ++j)
+        step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));
+
+    const SurrogateVjp finite_difference_vjp =
+        [&forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
+    {
+        VectorR gradient = VectorR::Zero(inputs_number);
+        for (Index k = 0; k < inputs_number; ++k)
+        {
+            VectorR plus = x, minus = x;
+            plus(k) += step(k);
+            minus(k) -= step(k);
+            const VectorR derivative = (forward(plus) - forward(minus)) / (2.0f * step(k));
+            gradient(k) = derivative.dot(cotangent);
+        }
+        return gradient;
+    };
+
+    repair_output_constraints(inputs, inferior_frontier, superior_frontier,
+                              formula_constraints, forward, finite_difference_vjp,
+                              max_correction_passes);
 }
 
 }

@@ -13,6 +13,8 @@
 #include "variable.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
+#include "dense_layer.h"
+#include "bounding_layer.h"
 
 namespace opennn
 {
@@ -83,10 +85,300 @@ inline ComparisonOp to_comparison_op(const ResponseOptimization::ConditionType c
 
 }
 
+// Exact analytic differentiation of a feedforward surrogate, assembled from the
+// network's PUBLIC getters (no neural-network internals are modified). Forward
+// and the reverse-mode VJP are reproduced layer by layer; the formulas mirror
+// math_utilities scale/unscale/activation, and a self-validation against
+// calculate_outputs guards against any drift.
+struct NetworkDifferential
+{
+    enum class Kind { Scale, Dense, Unscale, Bound };
+
+    struct LayerSnapshot
+    {
+        Kind kind = Kind::Dense;
+        MatrixR weights;                                  // Dense: (in, out)
+        VectorR bias;                                     // Dense: (out)
+        ActivationFunction activation = ActivationFunction::Identity;
+        vector<ScalerMethod> methods;                     // Scale / Unscale: per feature
+        VectorR minimum, maximum, mean, deviation;        // Bound: minimum/maximum reused as lower/upper
+        float min_range = -1.0f, max_range = 1.0f;
+        bool bounding_active = true;
+    };
+
+    vector<LayerSnapshot> layers;
+
+    mutable bool tape_valid = false;
+    mutable VectorR tape_x;
+    mutable vector<VectorR> layer_inputs;
+    mutable vector<VectorR> layer_outputs;
+
+    static float guarded(const float value)
+    {
+        constexpr float floor_value = 1e-12f;
+        if (value > floor_value)  return value;
+        if (value < -floor_value) return value;
+        return floor_value;
+    }
+
+    static VectorR activation_forward(const ActivationFunction function, const VectorR& z)
+    {
+        switch (function)
+        {
+        case ActivationFunction::Identity: return z;
+        case ActivationFunction::Sigmoid:  return (1.0f + (-z.array()).exp()).inverse();
+        case ActivationFunction::Tanh:     return z.array().tanh();
+        case ActivationFunction::ReLU:     return z.array().max(0.0f);
+        case ActivationFunction::Softmax:
+        default: throw runtime_error("NetworkDifferential: unsupported activation");
+        }
+    }
+
+    // Derivative expressed in terms of the post-activation output a = f(z),
+    // matching how the library applies it in back_propagate.
+    static VectorR activation_derivative(const ActivationFunction function, const VectorR& a)
+    {
+        switch (function)
+        {
+        case ActivationFunction::Identity: return VectorR::Ones(a.size());
+        case ActivationFunction::Sigmoid:  return a.array() * (1.0f - a.array());
+        case ActivationFunction::Tanh:     return 1.0f - a.array().square();
+        case ActivationFunction::ReLU:     return (a.array() > 0.0f).cast<float>();
+        case ActivationFunction::Softmax:
+        default: throw runtime_error("NetworkDifferential: unsupported activation");
+        }
+    }
+
+    VectorR scale_forward(const LayerSnapshot& L, const VectorR& in) const
+    {
+        VectorR out(in.size());
+        for (Index j = 0; j < in.size(); ++j)
+        {
+            const float x = in(j);
+            switch (L.methods[j])
+            {
+            case ScalerMethod::None:                  out(j) = x; break;
+            case ScalerMethod::MinimumMaximum:        out(j) = (x - L.minimum(j)) / guarded(L.maximum(j) - L.minimum(j)) * (L.max_range - L.min_range) + L.min_range; break;
+            case ScalerMethod::MeanStandardDeviation: out(j) = (x - L.mean(j)) / guarded(L.deviation(j)); break;
+            case ScalerMethod::StandardDeviation:     out(j) = x / guarded(L.deviation(j)); break;
+            case ScalerMethod::Logarithm:             out(j) = log(x); break;
+            case ScalerMethod::ImageMinMax:           out(j) = x / 255.0f; break;
+            }
+        }
+        return out;
+    }
+
+    VectorR scale_derivative(const LayerSnapshot& L, const VectorR& in) const
+    {
+        VectorR d(in.size());
+        for (Index j = 0; j < in.size(); ++j)
+            switch (L.methods[j])
+            {
+            case ScalerMethod::None:                  d(j) = 1.0f; break;
+            case ScalerMethod::MinimumMaximum:        d(j) = (L.max_range - L.min_range) / guarded(L.maximum(j) - L.minimum(j)); break;
+            case ScalerMethod::MeanStandardDeviation: d(j) = 1.0f / guarded(L.deviation(j)); break;
+            case ScalerMethod::StandardDeviation:     d(j) = 1.0f / guarded(L.deviation(j)); break;
+            case ScalerMethod::Logarithm:             d(j) = 1.0f / guarded(in(j)); break;
+            case ScalerMethod::ImageMinMax:           d(j) = 1.0f / 255.0f; break;
+            }
+        return d;
+    }
+
+    VectorR unscale_forward(const LayerSnapshot& L, const VectorR& in) const
+    {
+        VectorR out(in.size());
+        for (Index j = 0; j < in.size(); ++j)
+        {
+            const float x = in(j);
+            switch (L.methods[j])
+            {
+            case ScalerMethod::None:                  out(j) = x; break;
+            case ScalerMethod::MinimumMaximum:        out(j) = (x - L.min_range) / guarded(L.max_range - L.min_range) * (L.maximum(j) - L.minimum(j)) + L.minimum(j); break;
+            case ScalerMethod::MeanStandardDeviation: out(j) = x * L.deviation(j) + L.mean(j); break;
+            case ScalerMethod::StandardDeviation:     out(j) = x * L.deviation(j); break;
+            case ScalerMethod::Logarithm:             out(j) = exp(x); break;
+            case ScalerMethod::ImageMinMax:           out(j) = x * 255.0f; break;
+            }
+        }
+        return out;
+    }
+
+    VectorR unscale_derivative(const LayerSnapshot& L, const VectorR& in) const
+    {
+        VectorR d(in.size());
+        for (Index j = 0; j < in.size(); ++j)
+            switch (L.methods[j])
+            {
+            case ScalerMethod::None:                  d(j) = 1.0f; break;
+            case ScalerMethod::MinimumMaximum:        d(j) = (L.maximum(j) - L.minimum(j)) / guarded(L.max_range - L.min_range); break;
+            case ScalerMethod::MeanStandardDeviation: d(j) = L.deviation(j); break;
+            case ScalerMethod::StandardDeviation:     d(j) = L.deviation(j); break;
+            case ScalerMethod::Logarithm:             d(j) = exp(in(j)); break;
+            case ScalerMethod::ImageMinMax:           d(j) = 255.0f; break;
+            }
+        return d;
+    }
+
+    // Clamp derivative: 1 strictly inside [lower, upper], 0 where saturated.
+    VectorR bound_derivative(const LayerSnapshot& L, const VectorR& in) const
+    {
+        if (!L.bounding_active) return VectorR::Ones(in.size());
+
+        VectorR d(in.size());
+        for (Index j = 0; j < in.size(); ++j)
+            d(j) = (in(j) > L.minimum(j) && in(j) < L.maximum(j)) ? 1.0f : 0.0f;
+        return d;
+    }
+
+    void build(const NeuralNetwork& network);
+
+    VectorR forward(const VectorR& x) const
+    {
+        const size_t layers_number = layers.size();
+        layer_inputs.assign(layers_number, VectorR());
+        layer_outputs.assign(layers_number, VectorR());
+
+        VectorR activation = x;
+        for (size_t i = 0; i < layers_number; ++i)
+        {
+            layer_inputs[i] = activation;
+            const LayerSnapshot& L = layers[i];
+
+            if (L.kind == Kind::Scale)
+                activation = scale_forward(L, activation);
+            else if (L.kind == Kind::Unscale)
+                activation = unscale_forward(L, activation);
+            else if (L.kind == Kind::Bound)
+                activation = L.bounding_active ? activation.cwiseMax(L.minimum).cwiseMin(L.maximum).eval() : activation;
+            else
+                activation = activation_forward(L.activation, (L.weights.transpose() * activation + L.bias).eval());
+
+            layer_outputs[i] = activation;
+        }
+
+        tape_x = x;
+        tape_valid = true;
+        return activation;
+    }
+
+    VectorR vjp(const VectorR& x, const VectorR& cotangent) const
+    {
+        if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
+            forward(x);
+
+        VectorR carried = cotangent;
+        for (int i = static_cast<int>(layers.size()) - 1; i >= 0; --i)
+        {
+            const LayerSnapshot& L = layers[i];
+
+            if (L.kind == Kind::Scale)
+                carried = (carried.array() * scale_derivative(L, layer_inputs[i]).array()).matrix();
+            else if (L.kind == Kind::Unscale)
+                carried = (carried.array() * unscale_derivative(L, layer_inputs[i]).array()).matrix();
+            else if (L.kind == Kind::Bound)
+                carried = (carried.array() * bound_derivative(L, layer_inputs[i]).array()).matrix();
+            else
+            {
+                const VectorR through_activation = (carried.array() * activation_derivative(L.activation, layer_outputs[i]).array()).matrix();
+                carried = L.weights * through_activation;
+            }
+        }
+        return carried;
+    }
+};
+
+
+void NetworkDifferential::build(const NeuralNetwork& network)
+{
+    layers.clear();
+
+    for (const unique_ptr<Layer>& layer : network.get_layers())
+    {
+        LayerSnapshot snapshot;
+        const LayerType type = layer->get_type();
+
+        if (type == LayerType::Scaling || type == LayerType::Unscaling)
+        {
+            snapshot.kind = (type == LayerType::Scaling) ? Kind::Scale : Kind::Unscale;
+
+            const vector<Descriptives>* descriptives = nullptr;
+            const vector<ScalerMethod>* scalers = nullptr;
+
+            if (type == LayerType::Scaling)
+            {
+                const Scaling* scaling = static_cast<const Scaling*>(layer.get());
+                descriptives = &scaling->get_descriptives();
+                scalers = &scaling->get_scalers();
+                snapshot.min_range = scaling->get_min_range();
+                snapshot.max_range = scaling->get_max_range();
+            }
+            else
+            {
+                const Unscaling* unscaling = static_cast<const Unscaling*>(layer.get());
+                descriptives = &unscaling->get_descriptives();
+                scalers = &unscaling->get_scalers();
+                snapshot.min_range = unscaling->get_min_range();
+                snapshot.max_range = unscaling->get_max_range();
+            }
+
+            const Index features = static_cast<Index>(descriptives->size());
+            snapshot.methods = *scalers;
+            snapshot.minimum.resize(features);
+            snapshot.maximum.resize(features);
+            snapshot.mean.resize(features);
+            snapshot.deviation.resize(features);
+
+            for (Index j = 0; j < features; ++j)
+            {
+                snapshot.minimum(j)   = static_cast<float>((*descriptives)[j].minimum);
+                snapshot.maximum(j)   = static_cast<float>((*descriptives)[j].maximum);
+                snapshot.mean(j)      = static_cast<float>((*descriptives)[j].mean);
+                snapshot.deviation(j) = static_cast<float>((*descriptives)[j].standard_deviation);
+            }
+        }
+        else if (type == LayerType::Dense)
+        {
+            const Dense* dense = static_cast<const Dense*>(layer.get());
+
+            throw_if(dense->get_batch_normalization(),
+                     "NetworkDifferential: batch normalization is not supported");
+
+            const vector<TensorView>& views = dense->get_parameter_views();
+            throw_if(views.size() < 2, "NetworkDifferential: unexpected Dense parameter layout");
+
+            snapshot.kind = Kind::Dense;
+            snapshot.bias = views[0].as_vector();      // [0] = bias (out)
+            snapshot.weights = views[1].as_matrix();   // [1] = weights (in, out)
+            snapshot.activation = dense->get_activation_function();
+
+            throw_if(snapshot.activation == ActivationFunction::Softmax,
+                     "NetworkDifferential: softmax activation is not supported");
+        }
+        else if (type == LayerType::Bounding)
+        {
+            const Bounding* bounding = static_cast<const Bounding*>(layer.get());
+            snapshot.kind = Kind::Bound;
+            snapshot.minimum = bounding->get_lower_bounds();
+            snapshot.maximum = bounding->get_upper_bounds();
+            snapshot.bounding_active =
+                (bounding->get_bounding_method() == Bounding::BoundingMethod::Bounding);
+        }
+        else
+            throw runtime_error("NetworkDifferential: unsupported layer type '"
+                                + layer_type_to_string(type) + "' for analytic Jacobian");
+
+        layers.push_back(move(snapshot));
+    }
+}
+
+
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
     set(new_neural_network);
 }
+
+
+ResponseOptimization::~ResponseOptimization() = default;
 
 
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
@@ -938,7 +1230,38 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
                                                          const Domain& output_domain,
                                                          const Index evaluations_count) const
 {
-    const MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
+    MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
+
+    // Repair constraints that reference the network outputs (no-op when none):
+    // Gauss-Newton onto g(x, f(x)) = c. Prefer the exact analytic Jacobian
+    // (NetworkDifferential); otherwise fall back to a finite-difference VJP over
+    // calculate_outputs. Either way the exact forward drives the residual to
+    // zero, so the repaired points are exact to tolerance.
+    if (network_differential)
+    {
+        repair_output_constraints(random_inputs,
+                                  input_domain.inferior_frontier,
+                                  input_domain.superior_frontier,
+                                  formula_constraints,
+                                  [this](const VectorR& x) { return network_differential->forward(x); },
+                                  [this](const VectorR& x, const VectorR& cotangent) { return network_differential->vjp(x, cotangent); });
+    }
+    else
+    {
+        const SurrogateForward forward = [this](const VectorR& x) -> VectorR
+        {
+            MatrixR single(1, x.size());
+            single.row(0) = x.transpose();
+            return calculate_outputs(single).row(0).transpose();
+        };
+
+        repair_output_constraints(random_inputs,
+                                  input_domain.inferior_frontier,
+                                  input_domain.superior_frontier,
+                                  formula_constraints,
+                                  forward);
+    }
+
     const MatrixR outputs = calculate_outputs(random_inputs);
     evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
     return filter_feasible_points(random_inputs, outputs, output_domain);
@@ -1457,6 +1780,113 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
 }
 
 
+void ResponseOptimization::initialize_network_differential() const
+{
+    network_differential.reset();
+
+    if (!neural_network || is_forecasting)
+        return;
+
+    // Only needed when some constraint references the network outputs.
+    bool has_output_constraint = false;
+    for (const FormulaConstraint& constraint : formula_constraints)
+        if (!constraint.uses_callback
+            && constraint.op != ComparisonOp::None
+            && constraint.compiled.scope != FormulaScope::InputsOnly)
+            has_output_constraint = true;
+
+    if (!has_output_constraint)
+        return;
+
+    auto candidate = make_unique<NetworkDifferential>();
+
+    try { candidate->build(*neural_network); }
+    catch (const exception& error)
+    {
+        cout << "!!! [Warning] Analytic surrogate Jacobian unavailable (" << error.what()
+             << "); falling back to the finite-difference VJP." << endl;
+        return;
+    }
+
+    // Self-validation ("stay in sync"): the analytic forward must match
+    // calculate_outputs over the input domain. Sample within the scaling
+    // descriptives' range when a scaling layer is present.
+    const Index inputs_number = neural_network->get_inputs_number();
+
+    VectorR lower = VectorR::Constant(inputs_number, -1.0f);
+    VectorR upper = VectorR::Constant(inputs_number,  1.0f);
+    if (!candidate->layers.empty() && candidate->layers.front().kind == NetworkDifferential::Kind::Scale)
+    {
+        lower = candidate->layers.front().minimum;
+        upper = candidate->layers.front().maximum;
+    }
+
+    // Validation runs ONCE per optimization (not per evaluation), so it is
+    // negligible against the run. The cheap forward check uses more probes (it
+    // is the drift guard); the costlier VJP check (2*n_in forwards per probe)
+    // uses a few, enough to catch a broken Jacobian.
+    const Index forward_probes = 16;
+    const Index vjp_probes = 4;
+
+    MatrixR probe(forward_probes, inputs_number);
+    set_random_uniform(probe, 0, 1);
+    for (Index j = 0; j < inputs_number; ++j)
+        probe.col(j) = (lower(j) + probe.col(j).array() * (upper(j) - lower(j))).matrix();
+
+    const MatrixR reference = calculate_outputs(probe);
+    const Index outputs_number = reference.cols();
+
+    VectorR fd_step(inputs_number);
+    for (Index j = 0; j < inputs_number; ++j)
+        fd_step(j) = max(1e-4f, 1e-3f * (upper(j) - lower(j)));
+
+    const VectorR cotangent = VectorR::Ones(outputs_number);
+
+    float worst_forward_error = 0.0f;
+    float worst_vjp_error = 0.0f;
+
+    for (Index i = 0; i < forward_probes; ++i)
+    {
+        const VectorR x = probe.row(i).transpose();
+
+        // (a) forward must match the network (cheap; every probe).
+        const VectorR analytic_output = candidate->forward(x);
+        const VectorR truth = reference.row(i).transpose();
+        worst_forward_error = max(worst_forward_error,
+            (analytic_output - truth).cwiseAbs().maxCoeff() / (1.0f + truth.cwiseAbs().maxCoeff()));
+
+        // (b) analytic VJP must match a central-difference VJP (a few probes).
+        if (i >= vjp_probes) continue;
+
+        const VectorR analytic_gradient = candidate->vjp(x, cotangent);
+        VectorR finite_difference_gradient = VectorR::Zero(inputs_number);
+        for (Index k = 0; k < inputs_number; ++k)
+        {
+            MatrixR plus(1, inputs_number), minus(1, inputs_number);
+            plus.row(0) = x.transpose();   minus.row(0) = x.transpose();
+            plus(0, k) += fd_step(k);      minus(0, k) -= fd_step(k);
+            const VectorR forward_plus  = calculate_outputs(plus).row(0).transpose();
+            const VectorR forward_minus = calculate_outputs(minus).row(0).transpose();
+            finite_difference_gradient(k) = cotangent.dot(forward_plus - forward_minus) / (2.0f * fd_step(k));
+        }
+        worst_vjp_error = max(worst_vjp_error,
+            (analytic_gradient - finite_difference_gradient).cwiseAbs().maxCoeff()
+            / (1.0f + analytic_gradient.cwiseAbs().maxCoeff()));
+    }
+
+    if (worst_forward_error < 1e-3f && worst_vjp_error < 2e-2f)
+    {
+        network_differential = move(candidate);
+        cout << "> Analytic surrogate Jacobian active (forward error " << worst_forward_error
+             << ", VJP-vs-finite-difference error " << worst_vjp_error << ")." << endl;
+    }
+    else
+        cout << "!!! [Warning] Analytic surrogate Jacobian failed validation (forward error "
+             << worst_forward_error << ", VJP error " << worst_vjp_error
+             << "); falling back to the finite-difference VJP." << endl;
+}
+
+
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
     const Index objectives_number = get_objectives_number();
@@ -1464,6 +1894,8 @@ MatrixR ResponseOptimization::perform_response_optimization() const
     throw_if(objectives_number == 0, "No objectives found\n");
 
     evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
+
+    initialize_network_differential();   // exact analytic VJP if possible, else finite differences
 
     return (objectives_number == 1)
         ? perform_single_objective_optimization()

@@ -50,13 +50,15 @@ struct CompiledFormula
     vector<pair<Index, float>> affine_output_terms;
     float affine_constant = 0.0f;
 
-    // First-order gradient of the expression w.r.t. each referenced input
-    // column, compiled to bytecode (one RPN program per input). Populated only
-    // for smooth, input-only nonlinear formulas, to drive the Gauss-Newton
-    // projection in repair_nonlinear_inputs. Affine formulas keep their
-    // constant affine_input_terms instead; non-smooth formulas (containing
-    // min/max) leave this empty and gradient_available false.
+    // First-order gradient of the expression, compiled to bytecode (one RPN
+    // program per referenced input / output column). Populated for any smooth
+    // nonlinear formula. input_gradient drives the input-only Gauss-Newton
+    // repair; output_gradient supplies dg/dy for the chain rule dg/dy * df/dx
+    // through the network in the output-constraint repair. Affine formulas keep
+    // their constant affine_*_terms instead; non-smooth formulas (min/max)
+    // leave these empty and gradient_available false.
     vector<pair<Index, vector<RpnOp>>> input_gradient;
+    vector<pair<Index, vector<RpnOp>>> output_gradient;
     bool gradient_available = false;
 
     float evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const;
@@ -151,6 +153,44 @@ void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
                    const vector<FormulaConstraint>& formula_constraints);
+
+// Surrogate callbacks for output-constraint repair (Regime 2 / reverse-mode
+// VJP). The module stays network-agnostic: the caller supplies the forward map
+// and the vector-Jacobian product, so the exact network Jacobian (the weight /
+// activation chain) is reused rather than finite-differenced.
+//   forward(x)        -> y = f(x)                 (n_out)
+//   vjp(x, cotangent) -> (df/dx)^T * cotangent    (n_in), cotangent is n_out
+using SurrogateForward = function<VectorR(const VectorR&)>;
+using SurrogateVjp     = function<VectorR(const VectorR&, const VectorR&)>;
+
+// Per-point Gauss-Newton repair for smooth constraints that reference network
+// outputs (scope Mixed or OutputsOnly). The constraint manifold g(x, f(x)) = c
+// is projected with the chain-rule Jacobian d/dx g = dg/dx + dg/dy * df/dx,
+// where df/dx is supplied exactly by vjp(). Each point alternates a Gauss-Newton
+// step with a box clamp, with a residual early-exit. The surrogate manifold is
+// nonconvex so this is local; points still infeasible after the cap are left for
+// the downstream rejection filter. Input-only constraints are ignored here (they
+// are repaired pre-evaluation by repair_inputs).
+void repair_output_constraints(MatrixR& inputs,
+                               const VectorR& inferior_frontier,
+                               const VectorR& superior_frontier,
+                               const vector<FormulaConstraint>& formula_constraints,
+                               const SurrogateForward& forward,
+                               const SurrogateVjp& vjp,
+                               Index max_correction_passes = 64);
+
+// Same, but without an explicit VJP: the network Jacobian is obtained by a
+// box-scaled central difference over `forward` (the only network access is the
+// public forward map, so no neural-network internals are touched). The repaired
+// points are still exact to tolerance — the exact forward plus Gauss-Newton
+// drive the residual to zero; the finite-difference Jacobian only sets the step
+// direction, not the final feasibility.
+void repair_output_constraints(MatrixR& inputs,
+                               const VectorR& inferior_frontier,
+                               const VectorR& superior_frontier,
+                               const vector<FormulaConstraint>& formula_constraints,
+                               const SurrogateForward& forward,
+                               Index max_correction_passes = 64);
 
 }
 

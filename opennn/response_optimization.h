@@ -19,6 +19,12 @@ namespace opennn
 class NeuralNetwork;
 class Dataset;
 
+// Analytic snapshot of a feedforward surrogate (Scaling / Dense / Unscaling):
+// reproduces forward(x) and the exact reverse-mode input-VJP (df/dx)^T v from
+// the network's public getters, so the output-constraint repair gets an exact,
+// cheap Jacobian. Defined in the .cpp; rebuilt per optimization run.
+struct NetworkDifferential;
+
 class ResponseOptimization
 {
 public:
@@ -80,6 +86,8 @@ public:
     };
 
     ResponseOptimization(NeuralNetwork* = nullptr);
+
+    ~ResponseOptimization();
 
     void set(NeuralNetwork* = nullptr);
 
@@ -171,7 +179,15 @@ private:
                                                                   const Domain& output_domain,
                                                                   Index evaluations_count) const;
 
+    // Rebuilds + self-validates the analytic surrogate Jacobian for the current
+    // network. Leaves network_differential null (finite-difference fallback) when
+    // there is no output constraint, the network is forecasting/unsupported, or
+    // the analytic forward fails to match calculate_outputs.
+    void initialize_network_differential() const;
+
     NeuralNetwork* neural_network = nullptr;
+
+    mutable unique_ptr<NetworkDifferential> network_differential;
 
     map<string, Condition> conditions;
 
