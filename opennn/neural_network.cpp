@@ -184,7 +184,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 
 Index NeuralNetwork::get_layer_index(const string& new_label) const
 {
-    if (new_label == "Dataset" || new_label == "decoder")
+    if (contains({"Dataset", "decoder"}, new_label))
         return -1;
 
     if (new_label == "input")
@@ -329,7 +329,7 @@ static void validate_source_indices(const vector<Index>& sources, Index layer_in
 {
     for (Index src : sources)
     {
-        if (src < 0) continue;  // sentinel for external input
+        if (src < 0) continue;
         throw_if(src >= layers_count || src >= layer_index,
                  "NeuralNetwork::set_source_layers: source index "
                  + to_string(src) + " is not a previous layer for layer "
@@ -807,7 +807,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
         const size_t tokens_number = tokens.size();
 
         if (sequence_length > 0)
-            inputs(i, 0) = 2.0f; // START_INDEX
+            inputs(i, 0) = 2.0f;
 
         for (size_t j = 0; j < tokens_number; ++j)
         {
@@ -817,11 +817,11 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
             inputs(i, 1 + j) = (it != vocabulary_map.end())
                                    ? static_cast<float>(it->second)
-                                   : 1.0f; // UNK_INDEX
+                                   : 1.0f;
         }
 
         if (1 + tokens_number < static_cast<size_t>(sequence_length))
-            inputs(i, 1 + tokens_number) = 3.0f; // END_INDEX
+            inputs(i, 1 + tokens_number) = 3.0f;
     }
 
     return calculate_outputs(inputs);
@@ -847,7 +847,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     printer.open_element("NeuralNetwork");
 
-    // Input
 
     printer.open_element("Inputs");
     add_json_field(printer, "InputsNumber", to_string(inputs_number));
@@ -862,7 +861,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.end_array();
     printer.close_element();
 
-    // Layers
 
     printer.open_element("Layers");
     add_json_field(printer, "LayersNumber", to_string(layers_number));
@@ -890,7 +888,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     printer.close_element();
 
-    // Outputs
 
     printer.open_element("Outputs");
     const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();

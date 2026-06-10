@@ -50,7 +50,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     lm.set_display(false);
     lm.set_maximum_epochs(10);
 
-    TrainingResults results = lm.train();
+    TrainingResult results = lm.train();
 
     EXPECT_GE(results.get_epochs_number(), 1);
     EXPECT_GE(results.get_training_error(), type(0));
@@ -83,7 +83,7 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainReducesError)
     lm.set_display(false);
     lm.set_maximum_epochs(50);
 
-    TrainingResults results = lm.train();
+    TrainingResult results = lm.train();
 
     EXPECT_LE(results.get_training_error(), initial_error + type(0.1));
 }

@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   Q U A S I - N E W T O N   M E T H O D    C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -38,7 +37,7 @@ public:
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
     void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , OptimizerData&);
 
-    TrainingResults train() override;
+    TrainingResult train() override;
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;
@@ -55,11 +54,9 @@ private:
 
     float first_learning_rate = 0.01f;
 
-    // Stopping criteria
 
     float minimum_loss_decrease = EPSILON;
 
-    // Optimizer-specific state (not shared across optimizers, so not in OptimizerData)
 
     float training_slope = 0.0f;
     float learning_rate = 0.0f;

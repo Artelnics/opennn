@@ -1,4 +1,4 @@
-# Deployment size on GPU (CNN): OpenNN vs PyTorch vs TensorFlow (Linux)
+# Deployment size on GPU (CNN): OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64, NVIDIA CUDA.*
 
@@ -21,8 +21,9 @@ is cuBLAS and the CNN parts of cuDNN, nothing else. The result is a GPU deployme
 **~1.3 GB**, about **4× smaller** than libtorch's ~5 GB, for the same convolutional model on
 the same hardware.
 
-This note compares the two for a **CNN**, GPU-accelerated, on Linux x86_64 with CUDA. Both
-sides are the *minimum* a real deployment needs to run the model.
+This note compares OpenNN against ONNX Runtime, PyTorch, and TensorFlow for a **CNN**,
+GPU-accelerated, on Linux x86_64 with CUDA. Each figure is the *minimum* a real deployment
+needs to run the model.
 
 ## The numbers
 

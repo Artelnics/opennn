@@ -1,4 +1,4 @@
-# Deployment size on CPU: OpenNN vs PyTorch vs TensorFlow (Linux)
+# Deployment size on CPU: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
@@ -20,7 +20,8 @@ This is the gap **OpenNN** is built for. Because it is a C++ library that compil
 into your executable — with header-only math and no bundled tensor runtime — an equivalent
 CPU application ships in **~3.2 MB**. Same job, ≈138× less to deploy.
 
-This note compares the two, CPU-only, on Linux x86_64.
+This note compares OpenNN against ONNX Runtime, PyTorch, and TensorFlow, CPU-only, on
+Linux x86_64.
 
 ## The numbers
 

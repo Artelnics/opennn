@@ -15,8 +15,8 @@ namespace opennn
 
 class TrainingStrategy;
 
-struct TrainingResults;
-struct InputsSelectionResults;
+struct TrainingResult;
+struct InputsSelectionResult;
 
 class InputsSelection
 {
@@ -25,11 +25,9 @@ public:
     enum class StoppingCondition {
         MaximumTime,
         ValidationErrorGoal,
-        SelectionErrorGoal = ValidationErrorGoal,
         MaximumInputs,
         MaximumEpochs,
-        MaximumValidationFailures,
-        MaximumSelectionFailures = MaximumValidationFailures
+        MaximumValidationFailures
     };
 
     InputsSelection(TrainingStrategy* = nullptr);
@@ -55,7 +53,7 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    virtual InputsSelectionResults perform_input_selection() = 0;
+    virtual InputsSelectionResult perform_input_selection() = 0;
 
     string get_name() const
     {
@@ -79,7 +77,6 @@ protected:
 
     bool display = true;
 
-    // Stopping criteria
 
     float validation_error_goal = 0;
 
@@ -92,9 +89,9 @@ protected:
     string name;
 };
 
-struct InputsSelectionResults
+struct InputsSelectionResult
 {
-    InputsSelectionResults(const Index = 0);
+    InputsSelectionResult(const Index = 0);
 
     Index get_epochs_number() const;
 
@@ -106,11 +103,9 @@ struct InputsSelectionResults
 
     void print() const;
 
-    // Neural network
 
     VectorR optimal_parameters;
 
-    // Loss
 
     VectorR training_error_history;
 
@@ -130,7 +125,6 @@ struct InputsSelectionResults
 
     VectorB optimal_inputs;
 
-    // Model selection
 
     InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
 

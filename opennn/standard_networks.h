@@ -20,7 +20,8 @@ public:
 
     ApproximationNetwork(const Shape& input_shape,
                          const Shape& complexity_dimensions,
-                         const Shape& output_shape);
+                         const Shape& output_shape,
+                         const string& hidden_activation = "Tanh");
 };
 
 class ClassificationNetwork : public NeuralNetwork

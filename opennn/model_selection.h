@@ -21,7 +21,6 @@ class ModelSelection
 
 public:
 
-    // Constructors
 
     ModelSelection(TrainingStrategy* = nullptr);
     const TrainingStrategy* get_training_strategy() const { return training_strategy; }
@@ -30,9 +29,9 @@ public:
 
     void set_default();
 
-    NeuronsSelectionResults perform_neurons_selection();
+    NeuronsSelectionResult perform_neurons_selection();
 
-    InputsSelectionResults perform_input_selection();
+    InputsSelectionResult perform_input_selection();
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

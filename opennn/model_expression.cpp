@@ -343,14 +343,6 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
     string processed = line;
     replace_all_appearances(processed, "[", "_");
     replace_all_appearances(processed, "]", "_");
-    // Substring substitution for compound LHS identifiers like
-    // `scaled_<raw>` (scaling_layer.cpp emits these with the RAW input
-    // name). The word-aware apply_name_mapping below skips these matches
-    // because the underscore prefix violates the word-boundary check, so
-    // we handle them first as plain substrings. We also try the
-    // space-replaced form because `rename_spaced_var_definitions` runs
-    // before this and pre-transforms multi-word LHS by replacing ' ' with
-    // '_' (so `scaled_Foo bar baz` arrives here as `scaled_Foo_bar_baz`).
     const size_t count = std::min(input_names.size(), fixed_input_names.size());
     for (size_t i = 0; i < count; ++i)
     {
@@ -472,7 +464,6 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
     buffer << "\n \n \n#include <stdio.h>\n"
               "#include <stdlib.h>\n"
               "#include <math.h>\n\n"
-              // C has no max/min; the layer expressions use them for clamping.
               "static double max(double a, double b) { return a > b ? a : b; }\n"
               "static double min(double a, double b) { return a < b ? a : b; }\n\n";
 }
@@ -504,9 +495,6 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
     buffer << "\n";
 
-    // A layer may assign to the same variable on consecutive lines (e.g. the
-    // bounding clamp: `v = max(...)` then `v = min(...)`). Declare each LHS
-    // with `double` only the first time; later assignments reuse it.
     unordered_set<string> declared;
     for (const string& l : lines)
     {
@@ -856,7 +844,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
     }
 
     for (const auto& [name, bodies] : activation_table())
-        if (name == "Identity" || name == "Tanh" || expression.find(name) != string::npos)
+        if (contains({"Identity", "Tanh"}, name) || expression.find(name) != string::npos)
             buffer << bodies.javascript;
     buffer << "\n";
 
@@ -918,7 +906,6 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
               "\tdocument.getElementById(id).value = value;\n"
               "}\n\n"
               "</script>\n\n"
-              "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n\n"
               "</body>\n\n"
               "</html>\n";
 }
@@ -1011,9 +998,6 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
         buffer << "\t\t" << processed_line << "\n";
     }
 
-    // Re-bind raw output names (or their intermediate aliases) to the
-    // fixed/reserved-keyword-safe names so the `outputs = [...]` list
-    // below references defined variables. Mirrors the C/JS emitters.
     const vector<string> output_fixups =
         fix_output_names(expression, output_names, ProgrammingLanguage::Python);
     for (const string& l : output_fixups)
@@ -1084,11 +1068,6 @@ string ModelExpression::replace_reserved_keywords(const string& input)
 
     static const unordered_map<string, string> special_words = {
         {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"},
-        // Python reserved keywords most likely to appear as feature/output
-        // names in domain datasets (yield in chemistry, class/return in
-        // generic ML). Substring-match means "yields" → "yield_s" etc.;
-        // acceptable since the same mapping is applied everywhere the
-        // name is referenced.
         {"yield", "yield_"}, {"class", "class_"}, {"return", "return_"},
         {"lambda", "lambda_"}, {"global", "global_"}
     };

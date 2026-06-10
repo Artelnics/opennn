@@ -28,7 +28,7 @@ public:
     void set_maximum_inputs_number(const Index);
     void set_minimum_inputs_number(const Index);
 
-    InputsSelectionResults perform_input_selection() override;
+    InputsSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 

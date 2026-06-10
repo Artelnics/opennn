@@ -22,14 +22,14 @@ namespace {
 #pragma pack(push, 1)
 struct LangCacheHeader
 {
-    char     magic[8];          // "OPENNNTK" (8 B)
-    uint32_t version;           //           (4 B)
-    uint64_t num_samples;       //           (8 B)
-    uint32_t input_max_len;     //           (4 B)
-    uint32_t target_max_len;    //           (4 B)
-    uint8_t  has_decoder;       //           (1 B)
-    uint8_t  pad[35];           // pad to 64 (35 B)
-};                              // total = 64
+    char     magic[8];
+    uint32_t version;
+    uint64_t num_samples;
+    uint32_t input_max_len;
+    uint32_t target_max_len;
+    uint8_t  has_decoder;
+    uint8_t  pad[35];
+};
 #pragma pack(pop)
 static_assert(sizeof(LangCacheHeader) == 64, "LangCacheHeader must be 64 bytes");
 
@@ -45,14 +45,25 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 {
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
 }
 
+void LanguageDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    Dataset::set_storage_mode(new_storage_mode);
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+        data.resize(0, 0);
+}
+
 Index LanguageDataset::get_samples_number() const
 {
-    return Index(offsets_table.size());
+    return storage_mode == StorageMode::Matrix
+        ? Index(data.rows())
+        : Index(offsets_table.size());
 }
 
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
@@ -61,6 +72,7 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
     maximum_vocabulary_size = new_maximum_vocabulary_size;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
@@ -74,6 +86,7 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
     separator = Dataset::Separator::Tab;
     maximum_vocabulary_size = new_maximum_vocabulary_size;
     minimum_token_frequency = new_minimum_token_frequency;
+    storage_mode = StorageMode::BinaryFile;
 
     if (!data_path.empty())
         read_txt();
@@ -90,14 +103,19 @@ VectorI LanguageDataset::calculate_target_distribution() const
 
     for (Index sample = 0; sample < samples_number; ++sample)
     {
-        const auto& offsets = offsets_table[size_t(sample)];
-        const int64_t tgt_off = offsets[2];
-        const int64_t tgt_len = offsets[3];
-        if (tgt_len < 1) continue;
-
         int32_t token = 0;
-        cache_reader.read_at(&token, sizeof(token),
-                             cache_data_offset + uint64_t(tgt_off) * sizeof(int32_t));
+
+        if (storage_mode == StorageMode::Matrix)
+        {
+            token = int32_t(data(sample, maximum_input_sequence_length));
+        }
+        else
+        {
+            const auto& offsets = offsets_table[size_t(sample)];
+            if (offsets[3] < 1) continue;
+            cache_reader.read_at(&token, sizeof(token),
+                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
+        }
         (token < 1) ? negatives++ : positives++;
     }
 
@@ -241,12 +259,52 @@ void LanguageDataset::read_txt()
         target_shape = { get_maximum_target_sequence_length() };
     }
 
-    if (!try_load_binary_cache(samples_number))
+    const bool has_decoder = !decoder_shape.empty();
+
+    if (storage_mode == StorageMode::Matrix)
     {
         vector<vector<Index>> input_indices;
         vector<vector<Index>> target_indices;
         encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
-        write_binary_cache(input_indices, target_indices, /*has_decoder=*/!decoder_shape.empty());
+
+        const Index decoder_offset = maximum_input_sequence_length;
+        const Index target_offset = has_decoder
+            ? decoder_offset + maximum_target_sequence_length
+            : maximum_input_sequence_length;
+
+        data.resize(samples_number, ssize(variables));
+        data.setZero();
+
+        for (Index i = 0; i < samples_number; ++i)
+        {
+            const vector<Index>& in = input_indices[size_t(i)];
+            const Index in_n = min(ssize(in), maximum_input_sequence_length);
+            for (Index j = 0; j < in_n; ++j)
+                data(i, j) = float(in[size_t(j)]);
+
+            const vector<Index>& tgt = target_indices[size_t(i)];
+            const Index tgt_n = min(ssize(tgt), maximum_target_sequence_length);
+            for (Index j = 0; j < tgt_n; ++j)
+                data(i, target_offset + j) = float(tgt[size_t(j)]);
+
+            if (has_decoder)
+            {
+                data(i, decoder_offset) = START_INDEX;
+                const Index dec_n = min(ssize(tgt), maximum_target_sequence_length - 1);
+                for (Index j = 0; j < dec_n; ++j)
+                    data(i, decoder_offset + 1 + j) = float(tgt[size_t(j)]);
+            }
+        }
+
+        offsets_table.clear();
+        cache_reader.close();
+    }
+    else if (!try_load_binary_cache(samples_number))
+    {
+        vector<vector<Index>> input_indices;
+        vector<vector<Index>> target_indices;
+        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
+        write_binary_cache(input_indices, target_indices, has_decoder);
     }
 
     sample_roles.resize(samples_number);
@@ -397,7 +455,8 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
         {"Separator", get_separator_name()},
         {"HasHeader", to_string(has_header)},
         {"HasSamplesId", to_string(has_sample_ids)},
-        {"Codification", get_codification_string()}
+        {"Codification", get_codification_string()},
+        {"StorageMode", get_storage_mode_string()}
     });
     printer.close_element();
 
@@ -433,6 +492,9 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_codification(read_json_string(data_source_element, "Codification"));
+    set_storage_mode(data_source_element->has("StorageMode")
+                   ? read_json_string(data_source_element, "StorageMode")
+                   : "BinaryFile");
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
@@ -681,11 +743,17 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
 }
 
 void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
-                                  const vector<Index>& /*input_indices*/,
+                                  const vector<Index>& input_indices,
                                   float* input_data,
                                   bool /*is_training*/,
-                                  int /*contiguous*/) const
+                                  int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_input_sequence_length;
 
@@ -726,11 +794,17 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 }
 
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
-                                   const vector<Index>& /*target_indices*/,
+                                   const vector<Index>& target_indices,
                                    float* target_data,
                                    bool /*is_training*/,
-                                   int /*contiguous*/) const
+                                   int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 
@@ -771,11 +845,17 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
-                                   const vector<Index>& /*decoder_indices*/,
+                                   const vector<Index>& decoder_indices,
                                    float* decoder_data,
                                    bool /*is_training*/,
-                                   int /*contiguous*/) const
+                                   int contiguous) const
 {
+    if (storage_mode == StorageMode::Matrix)
+    {
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
+        return;
+    }
+
     const Index batch_size = ssize(sample_indices);
     const Index seq_len = maximum_target_sequence_length;
 

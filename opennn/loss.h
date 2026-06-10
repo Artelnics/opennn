@@ -168,7 +168,6 @@ protected:
 
     Error error = Error::MeanSquaredError;
 
-    // Method-specific parameters
     float normalization_coefficient = 1.0f;
     float positives_weight = 1.0f;
     float negatives_weight = 1.0f;
@@ -177,7 +176,6 @@ protected:
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
 
-    // Regularization
     Regularization regularization_method = Regularization::L2;
     float regularization_weight = 0.001f;
 

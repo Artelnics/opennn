@@ -68,7 +68,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     growing_neurons.set_maximum_neurons(7);
     growing_neurons.set_display(false);
 
-    NeuronsSelectionResults neuron_selection_results = growing_neurons.perform_neurons_selection();
+    NeuronsSelectionResult neuron_selection_results = growing_neurons.perform_neurons_selection();
 
     EXPECT_GE(neuron_selection_results.optimal_neurons_number, 1);
 }
@@ -110,7 +110,7 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
     growing_neurons.set_maximum_neurons(5);
     growing_neurons.set_display(false);
 
-    NeuronsSelectionResults results = growing_neurons.perform_neurons_selection();
+    NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
     EXPECT_EQ(results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumNeurons);
 }
@@ -153,7 +153,7 @@ TEST(GrowingNeuronsTest, StopByTime)
     growing_neurons.set_maximum_time(type(0));
     growing_neurons.set_display(false);
 
-    NeuronsSelectionResults results = growing_neurons.perform_neurons_selection();
+    NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
     EXPECT_EQ(results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumTime);
 }
@@ -183,7 +183,7 @@ TEST(GrowingNeuronsTest, OptimalNeuronsFound)
     growing_neurons.set_maximum_neurons(5);
     growing_neurons.set_display(false);
 
-    NeuronsSelectionResults results = growing_neurons.perform_neurons_selection();
+    NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
     EXPECT_GE(results.optimal_neurons_number, 1);
     EXPECT_LE(results.optimal_neurons_number, 5);
@@ -212,7 +212,7 @@ TEST(GrowingNeuronsTest, NeuronsIncrement)
     growing_neurons.set_maximum_neurons(7);
     growing_neurons.set_display(false);
 
-    NeuronsSelectionResults results = growing_neurons.perform_neurons_selection();
+    NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
     // Con incremento de 2 y minimo 1: prueba 1, 3, 5, 7
     EXPECT_EQ(results.optimal_neurons_number % 2, 1); // siempre impar

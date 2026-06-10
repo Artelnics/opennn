@@ -13,13 +13,9 @@
 namespace opennn
 {
 
-void* ensure_cublas_lt_workspace(size_t min_bytes = 0);
+bfloat16* ensure_bf16_gradient_workspace(Index n_elements);
 
-bfloat16* ensure_bf16_input_scratch(Index n_elements);
-
-bfloat16* ensure_bf16_gradient_scratch(Index n_elements);
-
-float* ensure_fp32_upcast_scratch(Index n_elements);
+float* ensure_bf16_to_fp32_workspace(Index n_elements);
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes);
 

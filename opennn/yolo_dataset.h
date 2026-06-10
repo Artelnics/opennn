@@ -17,7 +17,7 @@ namespace opennn
 
 struct YoloDetection
 {
-    float center_x = 0.0f;   // pixel coords in the original image
+    float center_x = 0.0f;
     float center_y = 0.0f;
     float width    = 0.0f;
     float height   = 0.0f;
@@ -79,6 +79,8 @@ public:
              Index grid_size = 13,
              Index boxes_per_cell = 5,
              const vector<array<float, 2>>& anchors = {});
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -152,7 +154,6 @@ private:
     vector<array<float, 2>> anchors;
     vector<string> class_names;
 
-    // Multi-scale state — empty by default. See set_multi_scale_heads().
     vector<Index> head_grid_sizes;
     vector<vector<array<float, 2>>> head_anchors;
     Index boxes_per_head = 0;
@@ -162,6 +163,11 @@ private:
     void build_cache(const vector<array<float, 2>>& requested_anchors);
     void setup_metadata(Index new_samples_number);
     void read_sample_boxes(Index sample_index, vector<Box>& out) const;
+    void load_images_to_ram() const;
+    void load_targets_to_ram() const;
+
+    mutable vector<uint8_t> images_ram;
+    mutable vector<float> targets_ram;
 };
 
 }

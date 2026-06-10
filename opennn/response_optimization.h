@@ -206,18 +206,6 @@ private:
 
     float relative_tolerance = 1e-6f;
 
-    // Hard cap on the Pareto-front size between iterations. The MO loop's
-    // per-iter cost is dominated by `calculate_pareto` (O(N^2) where N is
-    // the candidate-set size) and the per-Pareto-point local sampling at
-    // the top of the next iter (which scales linearly with the front
-    // size). Once the front reaches this many points, further iterations
-    // are mostly Pareto-maintenance overhead with diminishing-return
-    // refinement, so we stop and return the current front. Set to 0 to
-    // disable. Default 10000 — chosen after the IDC paper's concrete_uci_mo
-    // hyperparameter sweep showed the natural front saturates well below
-    // this on the case-study MO problems (≈5500 points), so the cap is a
-    // safety upper bound that rarely fires; raising it further does not
-    // increase |PF| or strength_max.
     Index max_pareto_number = 10000;
 
     // Optional hard cap on the TOTAL number of surrogate evaluations spent

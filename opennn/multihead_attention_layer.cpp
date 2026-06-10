@@ -63,14 +63,14 @@ vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
     const auto attention_scratch = attention.forward_scratch_specs(batch_size);
 
     return {
-        {{batch_size, heads_number, query_sequence_length, head_dimension},  compute_dtype}, // Query
-        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype}, // Key
-        attention_scratch[0],                                                                   // AttentionWeights
-        attention_scratch[1],                                                                   // AttentionWeightsDropped
-        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype}, // ConcatenatedAttentionOutputs
-        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype}, // Value
-        {{batch_size, max_seq, embedding_dimension},                         compute_dtype}, // TransposeScratch
-        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype}, // Output
+        {{batch_size, heads_number, query_sequence_length, head_dimension},  compute_dtype},
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype},
+        attention_scratch[0],
+        attention_scratch[1],
+        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype},
+        {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype},
+        {{batch_size, max_seq, embedding_dimension},                         compute_dtype},
+        {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype},
     };
 }
 
@@ -79,13 +79,13 @@ vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) cons
     const Index head_dimension = get_head_dimension();
 
     return {
-        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // InputQueryDelta - final dInput query
-        {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype}, // InputSourceDelta - final dInput source
-        attention.backward_scratch_spec(batch_size),                                                // AttentionWeightDelta - empty if SDPA, (B,H,Q,K) otherwise
-        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // ValueHeadDelta - dV, head shape
-        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype}, // ConcatenatedOutputDelta - dConcat, embed shape
-        {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype}, // QueryHeadDelta - dQ, head shape
-        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype}, // KeyHeadDelta - dK, head shape
+        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype},
+        {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype},
+        attention.backward_scratch_spec(batch_size),
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype},
+        {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype},
+        {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype},
+        {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype},
     };
 }
 

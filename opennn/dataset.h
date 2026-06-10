@@ -116,6 +116,7 @@ public:
 
     const filesystem::path& get_data_path() const { return data_path; }
     StorageMode get_storage_mode() const { return storage_mode; }
+    string get_storage_mode_string() const;
 
     const Separator& get_separator() const { return separator; }
     string get_separator_string() const;
@@ -131,6 +132,16 @@ public:
     Shape get_input_shape() const { return input_shape; }
     Shape get_target_shape() const { return target_shape; }
 
+    const MatrixR& get_data() const { return data; }
+    void set_data(const MatrixR&);
+    void set_data_constant(float);
+
+    void enable_device_residency();
+    void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
+    bool is_device_resident() const { return data_device.data != nullptr; }
+    const float* get_device_data() const { return data_device.as<float>(); }
+    Index get_data_columns() const { return data.cols(); }
+
     void set_default();
     void set_sample_roles(const string&);
 
@@ -138,11 +149,7 @@ public:
 
     void set_sample_roles(const vector<string>&);
     void set_sample_roles(const vector<Index>&, const string&);
-    void set_variables(const vector<Variable>& new_variables)
-    {
-        variables = new_variables;
-        invalidate_data_buffer();
-    }
+    void set_variables(const vector<Variable>& new_variables);
 
     void set_default_variable_names();
 
@@ -160,11 +167,7 @@ public:
     void set_variable_types(const VariableType&);
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index new_size)
-    {
-        variables.resize(new_size);
-        invalidate_data_buffer();
-    }
+    void set_variables_number(const Index new_size);
 
     void set_feature_names(const vector<string>&);
 
@@ -172,9 +175,9 @@ public:
 
     void set_shape(const string&, const Shape&);
     virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
-    void set_data_path(const filesystem::path& new_data_path);
-    void set_storage_mode(StorageMode);
-    void use_binary_data_file(const filesystem::path&);
+    virtual void set_data_path(const filesystem::path& new_data_path);
+    virtual void set_storage_mode(StorageMode);
+    virtual void set_storage_mode(const string&);
 
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
     void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
@@ -246,7 +249,6 @@ public:
                               bool is_training,
                               int contiguous = -1) const;
 
-    virtual bool supports_dense_feature_gather() const { return false; }
     virtual bool supports_bf16_inputs() const { return true; }
 
     void fill_batch(Batch&,
@@ -263,27 +265,18 @@ protected:
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
 
-    void read_data_file_preview(const vector<vector<string_view>>&);
+    void read_data_file_preview(const vector<string_view>&, char);
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
 
-    bool try_fill_binary_tensor(const vector<Index>&,
-                                const vector<Index>&,
-                                float*,
-                                int contiguous = -1) const;
-    void read_binary_header() const;
-    const vector<float>& load_binary_data_cache() const;
-    void set_matrix_storage();
-    void mark_data_changed() const { invalidate_data_buffer(); }
-    void invalidate_data_buffer() const;
+    virtual void mark_data_changed() const {}
 
-    bool try_fill_from_device_data_buffer(Batch&,
-                                          const vector<Index>& sample_indices,
-                                          const vector<Index>& input_indices,
-                                          const vector<Index>& decoder_indices,
-                                          const vector<Index>& target_indices) const;
-    bool prepare_device_data_buffer() const;
+    StorageMode storage_mode = StorageMode::Matrix;
+
+    MatrixR data;
+
+    Buffer data_device{Device::CUDA};
 
     Shape input_shape;
     Shape target_shape;
@@ -295,16 +288,6 @@ protected:
     vector<Variable> variables;
 
     filesystem::path data_path;
-    StorageMode storage_mode = StorageMode::Matrix;
-    mutable Index binary_rows_number = 0;
-    mutable Index binary_columns_number = 0;
-
-    mutable vector<float> binary_data_cache;
-    mutable mutex binary_cache_mutex;
-
-    mutable Buffer data_buffer{Device::CUDA};
-    mutable Shape data_buffer_shape;
-    mutable mutex data_buffer_mutex;
 
     Separator separator = Separator::Comma;
     bool has_header = false;

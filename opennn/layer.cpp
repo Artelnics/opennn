@@ -113,7 +113,6 @@ float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views,
 
 void Layer::set_input_shape(const Shape&)
 {
-    // Default no-op: layers override to update geometry when input changes.
 }
 
 void Layer::set_output_shape(const Shape& shape)

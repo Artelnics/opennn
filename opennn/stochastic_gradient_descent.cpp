@@ -14,6 +14,7 @@
 #include "loss.h"
 #include "profiler.h"
 #include "batch.h"
+#include "device_backend.h"
 #include "stochastic_gradient_descent.h"
 
 namespace opennn
@@ -70,7 +71,6 @@ void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";
 
-    // TRAINING OPERATORS
 
     initial_learning_rate = 0.001f;
     initial_decay = 0.001f;
@@ -78,13 +78,11 @@ void StochasticGradientDescent::set_default()
     nesterov = false;
     batch_size = 0;
 
-    // Stopping criteria
 
     training_loss_goal = 0.0f;
     maximum_time = 3600.0f;
     maximum_epochs = 1000;
 
-    // UTILITIES
 
     display_period = 100;
 }
@@ -172,9 +170,35 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 }
 
-TrainingResults StochasticGradientDescent::train()
+void StochasticGradientDescent::update_parameters_capturable(BackPropagation& back_propagation,
+                                                             OptimizerData& optimization_data) const
 {
-    TrainingResults results(maximum_epochs + 1);
+#ifdef OPENNN_HAS_CUDA
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    float* const velocity_ptr = optimization_data.views.empty()
+        ? nullptr
+        : optimization_data.views[Velocity].as<float>();
+
+    sgd_update_capturable_cuda(
+        neural_network->get_parameters_size(),
+        neural_network->get_parameters_data(),
+        velocity_ptr,
+        back_propagation.gradient.as<float>(),
+        optimization_data.graph_effective_lr.as<float>(),
+        momentum,
+        nesterov,
+        neural_network->get_parameters_bf16_data(),
+        Backend::get_compute_stream());
+#else
+    (void)back_propagation; (void)optimization_data;
+    throw runtime_error("update_parameters_capturable requires CUDA support.");
+#endif
+}
+
+TrainingResult StochasticGradientDescent::train()
+{
+    TrainingResult results(maximum_epochs + 1);
 
     if (!loss || !loss->get_neural_network() || !loss->get_dataset())
         return results;
@@ -185,7 +209,6 @@ TrainingResults StochasticGradientDescent::train()
     if (display) cout << "Training with stochastic gradient descent (SGD)"
                      << (on_gpu ? " CUDA" : "") << "...\n";
 
-    // Dataset
 
     Dataset* dataset = loss->get_dataset();
 
@@ -222,7 +245,6 @@ TrainingResults StochasticGradientDescent::train()
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
 
-    // Neural network
 
     set_names();
     set_scaling();
@@ -252,7 +274,6 @@ TrainingResults StochasticGradientDescent::train()
 
     setup_device_training();
 
-    // Optimization data
 
     const Index parameters_number = neural_network->get_parameters_size();
     OptimizerData optimization_data;
@@ -273,85 +294,138 @@ TrainingResults StochasticGradientDescent::train()
     const bool shuffle = !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
-    time_t beginning_time;
-    time(&beginning_time);
-    float elapsed_time = 0.0f;
-
     float current_learning_rate = initial_learning_rate;
     const auto training_update = [&](BackPropagation& back_propagation) {
         update_parameters(back_propagation, optimization_data, current_learning_rate);
     };
 
-    // Main loop
+#ifdef OPENNN_HAS_CUDA
+    reset_graph_capture();
 
-    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    if (on_gpu)
     {
-        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
 
-        dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
+        graph_update = [&](BackPropagation& back_propagation) {
+            update_parameters_capturable(back_propagation, optimization_data);
+        };
+    }
+#endif
 
-        current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
+    const bool needs_cuda_warmup = on_gpu && device::is_cuda_build() && training_batches_number > 0;
 
-        const EpochStats train_stats = train_epoch(is_token_cross_entropy,
-                                                   training_forward_propagation,
-                                                   training_back_propagation,
-                                                   batch_pools.training_empty_queue,
-                                                   training_batches,
-                                                   input_feature_indices,
-                                                   decoder_feature_indices,
-                                                   target_feature_indices,
-                                                   training_update,
-                                                   should_display(epoch));
-
-        training_error = train_stats.error;
-        training_accuracy = train_stats.accuracy;
-        results.training_error_history(epoch) = training_error;
-
+    if (needs_cuda_warmup)
+    {
+        dataset->get_batches(training_sample_indices, training_batch_size, false, training_batches);
         if (has_validation)
+            dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
+
+        OptimizerData warmup_optimization_data;
+        if (momentum > 0.0f)
+            warmup_optimization_data.set({Shape{parameters_number}}, neural_network->get_device());
+        warmup_optimization_data.iteration = 1;
+
+        const auto warmup_update = [&](BackPropagation& back_propagation) {
+            update_parameters(back_propagation, warmup_optimization_data, initial_learning_rate);
+        };
+
+        warmup_device_training(training_forward_propagation,
+                               training_back_propagation,
+                               batch_pools.training_empty_queue,
+                               training_batches,
+                               input_feature_indices,
+                               decoder_feature_indices,
+                               target_feature_indices,
+                               warmup_update,
+                               validation_fp,
+                               has_validation ? &batch_pools.validation_queue() : nullptr,
+                               has_validation ? &validation_batches : nullptr,
+                               batch_pools.fixed_training_batch.get());
+    }
+
+    time_t beginning_time;
+    time(&beginning_time);
+    float elapsed_time = 0.0f;
+
+
+    {
+        device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
+
+        for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
         {
-            dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
+            if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
 
-            const EpochStats val_stats = evaluate_epoch(is_token_cross_entropy,
-                                                        *validation_fp,
-                                                        batch_pools.validation_queue(),
-                                                        validation_batches,
-                                                        input_feature_indices,
-                                                        decoder_feature_indices,
-                                                        target_feature_indices);
+            dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
 
-            validation_error = val_stats.error;
-            validation_accuracy = val_stats.accuracy;
-            results.validation_error_history(epoch) = validation_error;
+            current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
-            if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
-                ++validation_failures;
-        }
+#ifdef OPENNN_HAS_CUDA
+            if (graph_update && on_gpu)
+                set_scalar_device_cuda(optimization_data.graph_effective_lr.as<float>(),
+                                       current_learning_rate,
+                                       Backend::get_compute_stream());
+#endif
 
-        elapsed_time = get_elapsed_time(beginning_time);
+            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_forward_propagation,
+                                                                                 training_back_propagation,
+                                                                                 batch_pools.training_empty_queue,
+                                                                                 training_batches,
+                                                                                 input_feature_indices,
+                                                                                 decoder_feature_indices,
+                                                                                 target_feature_indices,
+                                                                                 training_update,
+                                                                                 should_display(epoch),
+                                                                                 batch_pools.fixed_training_batch.get());
 
-        if (should_display(epoch))
-        {
-            cout << "Training error: " << training_error << "\n";
-            if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
-            if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
-            if (has_validation) cout << "Validation error: " << validation_error << "\n";
-            if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
-            if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
-            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-        }
+            training_error = training_evaluation_result.error;
+            training_accuracy = training_evaluation_result.accuracy;
+            results.training_error_history(epoch) = training_error;
 
-        stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                  results.training_error_history(epoch),
-                                                  validation_failures);
+            if (has_validation)
+            {
+                dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
 
-        if (stop_training)
-        {
-            results.loss = training_back_propagation.loss;
-            results.validation_failures = validation_failures;
-            results.resize_training_error_history(epoch + 1);
-            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = get_time(elapsed_time);
-            break;
+                const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
+                                                                                          batch_pools.validation_queue(),
+                                                                                          validation_batches,
+                                                                                          input_feature_indices,
+                                                                                          decoder_feature_indices,
+                                                                                          target_feature_indices);
+
+                validation_error = validation_evaluation_result.error;
+                validation_accuracy = validation_evaluation_result.accuracy;
+                results.validation_error_history(epoch) = validation_error;
+
+                if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
+                    ++validation_failures;
+            }
+
+            elapsed_time = get_elapsed_time(beginning_time);
+
+            if (should_display(epoch))
+            {
+                cout << "Training error: " << training_error << "\n";
+                if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
+                if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
+                if (has_validation) cout << "Validation error: " << validation_error << "\n";
+                if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
+                if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
+                cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
+            }
+
+            stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                      results.training_error_history(epoch),
+                                                      validation_failures);
+
+            if (stop_training)
+            {
+                results.loss = training_back_propagation.loss;
+                results.validation_failures = validation_failures;
+                results.resize_training_error_history(epoch + 1);
+                results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
+                results.elapsed_time = get_time(elapsed_time);
+                break;
+            }
         }
     }
 

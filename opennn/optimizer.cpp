@@ -22,9 +22,7 @@
 #include "profiler.h"
 #include "string_utilities.h"
 #include <atomic>
-#include <cctype>
 #include <chrono>
-#include <cstdlib>
 #include <exception>
 #include <mutex>
 #include <thread>
@@ -136,22 +134,9 @@ struct BatchFillSession
     vector<jthread> workers;
 };
 
-// Optimizer
 
 namespace
 {
-
-bool env_flag_enabled(const char* name)
-{
-    const char* value = getenv(name);
-    if (!value) return false;
-
-    string text(value);
-    ranges::transform(text, text.begin(),
-                      [](unsigned char c) { return static_cast<char>(tolower(c)); });
-
-    return text == "1" || text == "true" || text == "on" || text == "yes";
-}
 
 bool profile_enabled_from_env()
 {
@@ -174,38 +159,40 @@ bool cuda_sync_each_batch()
 
 struct DeviceEpochMetrics
 {
-    Buffer values{Device::CUDA};
+    static Buffer& values()
+    {
+        thread_local Buffer buffer{Device::CUDA};
+        return buffer;
+    }
 
     void reset()
     {
         if (!device::is_cuda_build()) return;
 
-        values.grow_to(2 * Index(sizeof(float)));
-        device::set_zero_async(values.data, 2 * Index(sizeof(float)),
+        Buffer& metric_values = values();
+        metric_values.grow_to(2 * Index(sizeof(float)));
+        device::set_zero_async(metric_values.data, 2 * Index(sizeof(float)),
                                Backend::get_compute_stream());
     }
 
-    float* error_sum() { return values.as<float>(); }
-    float* accuracy_sum() { return values.as<float>() + 1; }
+    float* error_sum() { return values().as<float>(); }
+    float* accuracy_sum() { return values().as<float>() + 1; }
 
-    Optimizer::EpochStats read(Index batches_number, bool include_accuracy)
+    Loss::EvaluationResult read(Index batches_number, bool include_accuracy)
     {
-        Optimizer::EpochStats stats;
-        if (!device::is_cuda_build()) return stats;
+        Loss::EvaluationResult epoch_result;
+        if (!device::is_cuda_build() || batches_number <= 0) return epoch_result;
 
         float host[2] = {0.0f, 0.0f};
         cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(host, values.data, Index(sizeof(host)),
+        device::copy_async(host, values().data, Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
 
-        if (batches_number > 0)
-        {
-            stats.error = host[0] / float(batches_number);
-            if (include_accuracy) stats.accuracy = host[1] / float(batches_number);
-        }
-        return stats;
+        epoch_result.error = host[0] / float(batches_number);
+        if (include_accuracy) epoch_result.accuracy = host[1] / float(batches_number);
+        return epoch_result;
     }
 };
 
@@ -250,6 +237,19 @@ Optimizer::Optimizer(Loss* new_loss)
     set(new_loss);
 }
 
+Optimizer::~Optimizer()
+{
+    device::destroy_graph(training_graph_exec);
+}
+
+void Optimizer::reset_graph_capture()
+{
+    training_graph_captured = false;
+    device::destroy_graph(training_graph_exec);
+    training_graph_exec = nullptr;
+    graph_update = nullptr;
+}
+
 void Optimizer::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Optimizer");
@@ -291,10 +291,12 @@ void Optimizer::warn_dropped_samples(Index batch_size,
                                       Index samples_number,
                                       const char* context) const
 {
-    if (!display) return;
-    if (batch_size <= 0 || samples_number <= 0) return;
-    if (batch_size >= samples_number)           return;
-    if (samples_number % batch_size == 0)       return;
+    if (!display
+        || batch_size <= 0
+        || samples_number <= 0
+        || batch_size >= samples_number
+        || samples_number % batch_size == 0)
+        return;
 
     const Index lost = samples_number % batch_size;
     cout << format("Warning: {} batch_size {} does not divide {} samples. "
@@ -317,15 +319,8 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Index validation_batch_size,
                                   bool has_validation)
 {
-    apply_effective_num_workers(neural_network);
-
     const int pool_size = get_batch_pool_size(neural_network);
     const auto& config = neural_network.get_config();
-    const bool use_device_data_buffer = neural_network.is_gpu()
-                                     && dataset.supports_dense_feature_gather()
-                                     && !neural_network.has(LayerType::Recurrent)
-                                     && !neural_network.has(LayerType::LongShortTermMemory)
-                                     && !env_flag_enabled("OPENNN_DISABLE_DATA_BUFFER");
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -334,7 +329,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config));
-            pool.back()->use_device_data_buffer = use_device_data_buffer;
             queue.push(pool.back().get());
         }
     };
@@ -342,6 +336,9 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
     fill_pool(pools.training_empty_queue,
               pools.training_pool,
               training_batch_size);
+
+    if (neural_network.is_gpu() && device::is_cuda_build())
+        pools.fixed_training_batch = make_unique<Batch>(training_batch_size, &dataset, config);
 
     pools.validation_uses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
@@ -423,33 +420,28 @@ unique_ptr<BatchFillSession> Optimizer::start_batch_workers(
         }
     };
 
-    session->workers.reserve(size_t(num_workers));
-    for (int i = 0; i < num_workers; ++i)
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const int batch_workers_number = get_batch_workers_number(*neural_network);
+
+    session->workers.reserve(size_t(batch_workers_number));
+    for (int i = 0; i < batch_workers_number; ++i)
         session->workers.emplace_back(worker_body);
 
     return session;
 }
 
-int Optimizer::get_effective_num_workers(const NeuralNetwork& neural_network) const
+int Optimizer::get_batch_workers_number(const NeuralNetwork& neural_network) const
 {
-    if (neural_network.is_gpu()
-        && neural_network.has(LayerType::Recurrent)
-        && num_workers > 1)
-        return 1;
-
-    return num_workers;
+    return neural_network.is_gpu() && neural_network.has(LayerType::Recurrent)
+        ? 1
+        : workers_number;
 }
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
     return neural_network.is_gpu()
-        ? max(get_effective_num_workers(neural_network) + 1, 3)
+        ? max(get_batch_workers_number(neural_network) + 1, 3)
         : 1;
-}
-
-void Optimizer::apply_effective_num_workers(const NeuralNetwork& neural_network)
-{
-    num_workers = get_effective_num_workers(neural_network);
 }
 
 Index Optimizer::get_maximum_batch_size() const
@@ -468,13 +460,11 @@ Index Optimizer::get_maximum_batch_size() const
 
     const bool on_gpu = neural_network->is_gpu();
 
-    // Available memory
 
     Index available_bytes = 0;
     if (on_gpu)
     {
-        const size_t free_bytes = device::memory_info().first;
-        available_bytes = Index(free_bytes);
+        available_bytes = Index(device::available_memory());
     }
     else
     {
@@ -606,7 +596,6 @@ void Optimizer::set_scaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    // Scaling layer
 
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
@@ -662,7 +651,6 @@ void Optimizer::set_scaling()
     if (!neural_network->has(LayerType::Unscaling))
         return;
 
-    // Unscaling layer
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -804,7 +792,117 @@ void Optimizer::set_unscaling()
         dataset->unscale_features("Target", unscaled_targets_descriptives);
 }
 
-bool Optimizer::check_stopping_condition(TrainingResults& results,
+void Optimizer::warmup_device_training(
+    ForwardPropagation& training_forward_propagation,
+    BackPropagation& training_back_propagation,
+    ThreadSafeQueue<Batch*>& training_empty_queue,
+    const vector<vector<Index>>& training_batches,
+    const vector<Index>& input_feature_indices,
+    const vector<Index>& decoder_feature_indices,
+    const vector<Index>& target_feature_indices,
+    const function<void(BackPropagation&)>& update,
+    ForwardPropagation* validation_forward_propagation,
+    ThreadSafeQueue<Batch*>* validation_empty_queue,
+    const vector<vector<Index>>* validation_batches,
+    Batch* fixed_training_batch)
+{
+    NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
+    if (!device::is_cuda_build()
+        || !neural_network
+        || !neural_network->is_gpu()
+        || training_batches.empty())
+        return;
+
+    cudaStream_t stream = Backend::get_compute_stream();
+
+    const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
+    const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
+
+    Buffer parameters_snapshot{Device::CUDA};
+    Buffer states_snapshot{Device::CUDA};
+
+    if (parameters_bytes > 0)
+    {
+        parameters_snapshot.resize_bytes(parameters_bytes, Device::CUDA);
+        device::copy_async(parameters_snapshot.data,
+                           neural_network->get_parameters_data(),
+                           parameters_bytes,
+                           device::CopyKind::DeviceToDevice,
+                           stream);
+    }
+
+    if (states_bytes > 0)
+    {
+        states_snapshot.resize_bytes(states_bytes, Device::CUDA);
+        device::copy_async(states_snapshot.data,
+                           neural_network->get_states_data(),
+                           states_bytes,
+                           device::CopyKind::DeviceToDevice,
+                           stream);
+    }
+
+    auto restore_model_state = [&]()
+    {
+        if (parameters_bytes > 0)
+        {
+            device::copy_async(neural_network->get_parameters_data(),
+                               parameters_snapshot.data,
+                               parameters_bytes,
+                               device::CopyKind::DeviceToDevice,
+                               stream);
+            neural_network->cast_parameters_to_bf16();
+        }
+
+        if (states_bytes > 0)
+        {
+            device::copy_async(neural_network->get_states_data(),
+                               states_snapshot.data,
+                               states_bytes,
+                               device::CopyKind::DeviceToDevice,
+                               stream);
+        }
+
+        device::synchronize(stream);
+    };
+
+    const bool has_validation_warmup = validation_forward_propagation
+                                    && validation_empty_queue
+                                    && validation_batches
+                                    && !validation_batches->empty();
+
+    try
+    {
+        train_epoch(training_forward_propagation,
+                    training_back_propagation,
+                    training_empty_queue,
+                    vector<vector<Index>>{training_batches.front()},
+                    input_feature_indices,
+                    decoder_feature_indices,
+                    target_feature_indices,
+                    update,
+                    false,
+                    fixed_training_batch);
+
+        if (has_validation_warmup)
+        {
+            evaluate_epoch(*validation_forward_propagation,
+                           *validation_empty_queue,
+                           vector<vector<Index>>{validation_batches->front()},
+                           input_feature_indices,
+                           decoder_feature_indices,
+                           target_feature_indices);
+        }
+
+        restore_model_state();
+    }
+    catch (...)
+    {
+        restore_model_state();
+        throw;
+    }
+}
+
+bool Optimizer::check_stopping_condition(TrainingResult& results,
                                           const Index epoch,
                                           const float elapsed_time,
                                           const float training_error,
@@ -855,13 +953,13 @@ void Optimizer::read_common_json(const Json* root_element)
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 }
 
-TrainingResults::TrainingResults(const Index epochs_number)
+TrainingResult::TrainingResult(const Index epochs_number)
 {
     training_error_history = VectorR::Constant(epochs_number, -1.0f);
     validation_error_history = VectorR::Constant(epochs_number, -1.0f);
 }
 
-string TrainingResults::write_stopping_condition() const
+string TrainingResult::write_stopping_condition() const
 {
     using enum Optimizer::StoppingCondition;
     switch (stopping_condition)
@@ -889,40 +987,40 @@ string TrainingResults::write_stopping_condition() const
     }
 }
 
-float TrainingResults::get_training_error() const
+float TrainingResult::get_training_error() const
 {
     return training_error_history(training_error_history.size() - 1);
 }
 
-float TrainingResults::get_validation_error() const
+float TrainingResult::get_validation_error() const
 {
     if (validation_error_history.size() == 0) return 0.0f;
 
     return validation_error_history(validation_error_history.size() - 1);
 }
 
-Index TrainingResults::get_epochs_number() const
+Index TrainingResult::get_epochs_number() const
 {
     return training_error_history.size() - 1;
 }
 
-void TrainingResults::resize_training_error_history(const Index new_size)
+void TrainingResult::resize_training_error_history(const Index new_size)
 {
     training_error_history.conservativeResize(new_size);
 }
 
-void TrainingResults::resize_validation_error_history(const Index new_size)
+void TrainingResult::resize_validation_error_history(const Index new_size)
 {
     validation_error_history.conservativeResize(new_size);
 }
 
-void TrainingResults::save(const filesystem::path& file_name) const
+void TrainingResult::save(const filesystem::path& file_name) const
 {
     const Tensor<string, 2> override_results = write_override_results();
 
     ofstream file(file_name);
 
-    throw_if(!file, format("TrainingResults::save: cannot open {}", file_name.string()));
+    throw_if(!file, format("TrainingResult::save: cannot open {}", file_name.string()));
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";
@@ -930,7 +1028,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
     file.close();
 }
 
-void TrainingResults::print(const string &message) const
+void TrainingResult::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
     const Index final_epoch = epochs_number - 1;
@@ -967,7 +1065,7 @@ void TrainingResults::print(const string &message) const
     cout << "Stopping condition: " << write_stopping_condition() << "\n";
 }
 
-Tensor<string, 2> TrainingResults::write_override_results(const Index precision) const
+Tensor<string, 2> TrainingResult::write_override_results(const Index precision) const
 {
     Tensor<string, 2> override_results(5, 2);
 
@@ -992,7 +1090,6 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
 
-    // Final validation error
 
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NAN"
@@ -1051,6 +1148,9 @@ void Optimizer::setup_device_training()
 
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
+
+    if (env_flag_enabled("OPENNN_GPU_RESIDENT_DATA"))
+        loss->get_dataset()->enable_device_residency();
 }
 
 void Optimizer::teardown_device_training()
@@ -1062,12 +1162,14 @@ void Optimizer::teardown_device_training()
 
     neural_network->copy_parameters_host();
     neural_network->copy_states_host();
+
+    if (loss->get_dataset()->is_device_resident())
+        loss->get_dataset()->disable_device_residency();
 }
 
 void Optimizer::prefetch_batch(Batch& batch)
 {
-    if (!batch.uses_cuda()) return;
-    if (!batch.needs_device_copy) return;
+    if (!batch.uses_cuda() || !batch.needs_device_copy) return;
 
     batch.copy_device_async(Backend::get_transfer_stream());
 }
@@ -1080,6 +1182,8 @@ void Optimizer::sync_device(bool on_gpu)
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
+    if (max_norm <= 0.0f) return;
+
     const Index gradient_size = gradient.size_in_floats();
     if (gradient_size <= 0) return;
 
@@ -1089,28 +1193,220 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
         return;
     }
 
-    VectorMap gradient_view(gradient.as<float>(), gradient.size_in_floats());
+    VectorMap gradient_view(gradient.as<float>(), gradient_size);
     const float gradient_norm = gradient_view.norm();
     if (gradient_norm > max_norm)
         gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
 }
 
-Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
-                                  ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation,
-                                  ThreadSafeQueue<Batch*>& empty_queue,
-                                  const vector<vector<Index>>& batches,
-                                  const vector<Index>& input_feature_indices,
-                                  const vector<Index>& decoder_feature_indices,
-                                  const vector<Index>& target_feature_indices,
-                                  const function<void(BackPropagation&)>& update,
-                                  bool show_progress)
+bool Optimizer::graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const
 {
-    EpochStats stats;
+    static const bool cuda_graph_requested = env_flag_enabled("OPENNN_CUDA_GRAPH");
+    return cuda_graph_requested
+        && fixed_device_batch
+        && fixed_device_batch->uses_cuda()
+        && use_device_metrics
+        && bool(graph_update);
+}
+
+Loss::EvaluationResult Optimizer::run_graph_epoch(
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
+    ThreadSafeQueue<Batch*>& empty_queue,
+    const vector<vector<Index>>& batches,
+    const vector<Index>& input_feature_indices,
+    const vector<Index>& decoder_feature_indices,
+    const vector<Index>& target_feature_indices,
+    bool show_progress,
+    Batch* fixed_device_batch)
+{
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const Index batches_number = Index(batches.size());
+    const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
+
+    DeviceEpochMetrics device_metrics;
+    device_metrics.reset();
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    Batch* fill_batch = empty_queue.pop();
+    const Index progress_step = max(Index(1), batches_number / 200);
+    if (show_progress) display_progress_bar(0, int(batches_number));
+
+    const auto run_compute_step = [&]()
+    {
+        neural_network->forward_propagate(fixed_device_batch->get_inputs(),
+                                          forward_propagation, true);
+        if (!loss->back_propagate_device_metrics(*fixed_device_batch,
+                                                 forward_propagation, back_propagation,
+                                                 device_metrics.error_sum(),
+                                                 tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
+            throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+        graph_update(back_propagation);
+    };
+
+    for (Index iteration = 0; iteration < batches_number; ++iteration)
+    {
+        fill_batch->fill(batches[iteration],
+                         input_feature_indices, decoder_feature_indices,
+                         target_feature_indices, /*is_training=*/true);
+        fill_batch->upload_to_device_batch_async(*fixed_device_batch, stream);
+
+        if (!training_graph_captured)
+        {
+            run_compute_step();
+            device::synchronize(stream);
+            device::begin_graph_capture(stream);
+            run_compute_step();
+            training_graph_exec = device::end_graph_capture(stream);
+            training_graph_captured = true;
+        }
+        else
+        {
+            device::launch_graph(training_graph_exec, stream);
+        }
+
+        if (show_progress
+            && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+            display_progress_bar(int(iteration + 1), int(batches_number));
+    }
+    device::synchronize(stream);
+    if (show_progress) cout << "\n";
+    empty_queue.push(fill_batch);
+
+    Loss::EvaluationResult epoch_result = device_metrics.read(batches_number, tracks_accuracy);
+    back_propagation.error = epoch_result.error;
+    back_propagation.accuracy = epoch_result.accuracy;
+    return epoch_result;
+}
+
+struct Optimizer::EpochLoopContext
+{
+    ThreadSafeQueue<Batch*>* empty_queue = nullptr;
+    const vector<vector<Index>>* batches = nullptr;
+    const vector<Index>* input_feature_indices = nullptr;
+    const vector<Index>* decoder_feature_indices = nullptr;
+    const vector<Index>* target_feature_indices = nullptr;
+
+    bool is_training = true;
+    bool on_gpu = false;
+    bool show_progress = true;
+    Batch* fixed_device_batch = nullptr;
+
+    WorkerProfileCounters* worker_profile = nullptr;
+
+    function<void(Batch& compute_batch, Loss::EvaluationResult& host_result)> step;
+};
+
+Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
+{
+    Loss::EvaluationResult epoch_result;
+
+    const Index batches_number = Index(context.batches->size());
+    const bool on_gpu = context.on_gpu;
+    const bool show_progress = context.show_progress;
+
+    auto session = start_batch_workers(*context.empty_queue,
+                                       *context.batches,
+                                       *context.input_feature_indices,
+                                       *context.decoder_feature_indices,
+                                       *context.target_feature_indices,
+                                       context.is_training,
+                                       context.worker_profile);
+
+    Batch* const fixed_device_batch = context.fixed_device_batch;
+    const bool use_fixed_device_batch = fixed_device_batch && fixed_device_batch->uses_cuda();
+    bool fixed_device_batch_in_use = false;
+
+    Batch* next_batch = nullptr;
+    auto issue_device_input = [&](Batch& batch)
+    {
+        if (use_fixed_device_batch)
+        {
+            PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
+            if (fixed_device_batch_in_use)
+                device::stream_wait_event(Backend::get_transfer_stream(), fixed_device_batch->h2d_done_event);
+
+            batch.upload_to_device_batch_async(*fixed_device_batch, Backend::get_transfer_stream());
+            return;
+        }
+
+        PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
+        prefetch_batch(batch);
+    };
+
+    auto fetch_and_issue = [&](Index iteration)
+    {
+        PROFILE_SCOPE_HOST("step:wait_fill");
+        next_batch = session->wait(iteration);
+        issue_device_input(*next_batch);
+    };
+
+    auto mark_fixed_device_batch_used = [&]()
+    {
+        if (!use_fixed_device_batch) return;
+
+        device::record_event(fixed_device_batch->h2d_done_event, Backend::get_compute_stream());
+        fixed_device_batch_in_use = true;
+    };
+
+    const Index progress_step = max(Index(1), batches_number / 200);
+    if (show_progress) display_progress_bar(0, int(batches_number));
+
+    fetch_and_issue(0);
+
+    for (Index iteration = 0; iteration < batches_number; ++iteration)
+    {
+        Batch* current_batch = next_batch;
+        next_batch = nullptr;
+
+        if (!use_fixed_device_batch && iteration + 1 < batches_number)
+            fetch_and_issue(iteration + 1);
+
+        if (on_gpu) current_batch->wait_h2d_on_compute_stream();
+        Batch& compute_batch = use_fixed_device_batch ? *fixed_device_batch : *current_batch;
+
+        context.step(compute_batch, epoch_result);
+
+        mark_fixed_device_batch_used();
+
+        {
+            PROFILE_SCOPE("step:sync_device");
+            sync_device(on_gpu);
+        }
+
+        context.empty_queue->push(current_batch);
+
+        if (use_fixed_device_batch && iteration + 1 < batches_number)
+            fetch_and_issue(iteration + 1);
+
+        if (show_progress
+            && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+            display_progress_bar(int(iteration + 1), int(batches_number));
+    }
+    if (show_progress) cout << "\n";
+
+    session->rethrow_if_error();
+    return epoch_result;
+}
+
+Loss::EvaluationResult Optimizer::train_epoch(
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
+    ThreadSafeQueue<Batch*>& empty_queue,
+    const vector<vector<Index>>& batches,
+    const vector<Index>& input_feature_indices,
+    const vector<Index>& decoder_feature_indices,
+    const vector<Index>& target_feature_indices,
+    const function<void(BackPropagation&)>& update,
+    bool show_progress,
+    Batch* fixed_device_batch)
+{
+    Loss::EvaluationResult epoch_result;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
-    if (batches_number == 0) return stats;
+    if (batches_number == 0) return epoch_result;
+    const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
     has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
     const bool on_gpu = neural_network->is_gpu();
@@ -1122,7 +1418,7 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                                     Type::FP32,
                                     neural_network->get_device());
         back_propagation.regularization = loss->calculate_regularization(parameters);
-        back_propagation.loss = stats.error + back_propagation.regularization;
+        back_propagation.loss = epoch_result.error + back_propagation.regularization;
     };
 
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
@@ -1164,8 +1460,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
                 loss->back_propagate(*batch, forward_propagation, back_propagation);
             }
 
-            stats.error += back_propagation.error;
-            if (is_classification) stats.accuracy += back_propagation.accuracy;
+            epoch_result.error += back_propagation.error;
+            if (tracks_accuracy) epoch_result.accuracy += back_propagation.accuracy;
 
             {
                 PROFILE_SCOPE("step:optim_total");
@@ -1180,8 +1476,8 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
         if (show_progress) cout << "\n";
         empty_queue.push(batch);
 
-        stats.error /= float(batches_number);
-        if (is_classification) stats.accuracy /= float(batches_number);
+        epoch_result.error /= float(batches_number);
+        if (tracks_accuracy) epoch_result.accuracy /= float(batches_number);
         set_epoch_loss();
 
         if (profile_this)
@@ -1190,57 +1486,42 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
             ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
             cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
-                 << " | num_workers=0\n\n";
+                 << " | workers_number=0\n\n";
             ::opennn::global_stats().clear();
         }
 
-        return stats;
+        return epoch_result;
+    }
+
+    if (graph_epoch_enabled(use_device_metrics, fixed_device_batch))
+    {
+        epoch_result = run_graph_epoch(forward_propagation, back_propagation,
+                                        empty_queue, batches,
+                                        input_feature_indices, decoder_feature_indices,
+                                        target_feature_indices,
+                                        show_progress, fixed_device_batch);
+        set_epoch_loss();
+        return epoch_result;
     }
 
     WorkerProfileCounters worker_profile;
-    auto session = start_batch_workers(empty_queue,
-                                       batches,
-                                       input_feature_indices,
-                                       decoder_feature_indices,
-                                       target_feature_indices,
-                                       /*is_training=*/true,
-                                       profile_this ? &worker_profile : nullptr);
 
-    Batch* next_batch = nullptr;
+    EpochLoopContext context;
+    context.empty_queue = &empty_queue;
+    context.batches = &batches;
+    context.input_feature_indices = &input_feature_indices;
+    context.decoder_feature_indices = &decoder_feature_indices;
+    context.target_feature_indices = &target_feature_indices;
+    context.is_training = true;
+    context.on_gpu = on_gpu;
+    context.show_progress = show_progress;
+    context.fixed_device_batch = fixed_device_batch;
+    context.worker_profile = profile_this ? &worker_profile : nullptr;
+    context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
     {
-        PROFILE_SCOPE_HOST("step:wait_fill");
-        next_batch = session->wait(0);
-    }
-    {
-        PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-        prefetch_batch(*next_batch);
-    }
-
-    const Index progress_step = max(Index(1), batches_number / 200);
-    if (show_progress) display_progress_bar(0, int(batches_number));
-
-    for (Index iteration = 0; iteration < batches_number; ++iteration)
-    {
-        Batch* current_batch = next_batch;
-        next_batch = nullptr;
-
-        if (iteration + 1 < batches_number)
-        {
-            {
-                PROFILE_SCOPE_HOST("step:wait_fill");
-                next_batch = session->wait(iteration + 1);
-            }
-            {
-                PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
-                prefetch_batch(*next_batch);
-            }
-        }
-
-        if (on_gpu) current_batch->wait_h2d_on_compute_stream();
-
         {
             PROFILE_SCOPE("step:fwd_total");
-            neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, true);
+            neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
         }
         sync_cuda_for_debug(on_gpu);
 
@@ -1248,24 +1529,24 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             PROFILE_SCOPE("step:bwd_total");
             if (use_device_metrics)
             {
-                if (!loss->back_propagate_device_metrics(*current_batch,
+                if (!loss->back_propagate_device_metrics(compute_batch,
                                                           forward_propagation,
                                                           back_propagation,
                                                           device_metrics.error_sum(),
-                                                          is_classification ? device_metrics.accuracy_sum() : nullptr))
+                                                          tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
                     throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
             }
             else
             {
-                loss->back_propagate(*current_batch, forward_propagation, back_propagation);
+                loss->back_propagate(compute_batch, forward_propagation, back_propagation);
             }
         }
         sync_cuda_for_debug(on_gpu);
 
         if (!use_device_metrics)
         {
-            stats.error += back_propagation.error;
-            if (is_classification) stats.accuracy += back_propagation.accuracy;
+            host_result.error += back_propagation.error;
+            if (tracks_accuracy) host_result.accuracy += back_propagation.accuracy;
         }
 
         {
@@ -1273,35 +1554,22 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
             update(back_propagation);
         }
         sync_cuda_for_debug(on_gpu);
+    };
 
-        {
-            PROFILE_SCOPE("step:sync_device");
-            sync_device(on_gpu);
-        }
-
-        empty_queue.push(current_batch);
-
-        if (show_progress
-            && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
-            display_progress_bar(int(iteration + 1), int(batches_number));
-    }
-    if (show_progress) cout << "\n";
-
-    session->rethrow_if_error();
+    epoch_result = run_epoch_loop(context);
 
     if (use_device_metrics)
     {
-        stats = device_metrics.read(batches_number, is_classification);
-        back_propagation.error = stats.error;
-        back_propagation.accuracy = stats.accuracy;
-        set_epoch_loss();
+        epoch_result = device_metrics.read(batches_number, tracks_accuracy);
+        back_propagation.error = epoch_result.error;
+        back_propagation.accuracy = epoch_result.accuracy;
     }
     else
     {
-        stats.error /= float(batches_number);
-        if (is_classification) stats.accuracy /= float(batches_number);
-        set_epoch_loss();
+        epoch_result.error /= float(batches_number);
+        if (tracks_accuracy) epoch_result.accuracy /= float(batches_number);
     }
+    set_epoch_loss();
 
     if (profile_this)
     {
@@ -1312,26 +1580,27 @@ Optimizer::EpochStats Optimizer::train_epoch(bool is_classification,
 
         ::opennn::global_stats().print(cout, "Epoch breakdown (training)", epoch_ms);
         cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
-                  << " | num_workers=" << num_workers << "\n\n";
+                  << " | workers_number=" << get_batch_workers_number(*neural_network) << "\n\n";
         ::opennn::global_stats().clear();
     }
 
-    return stats;
+    return epoch_result;
 }
 
-Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
-                                     ForwardPropagation& forward_propagation,
-                                     ThreadSafeQueue<Batch*>& empty_queue,
-                                     const vector<vector<Index>>& batches,
-                                     const vector<Index>& input_feature_indices,
-                                     const vector<Index>& decoder_feature_indices,
-                                     const vector<Index>& target_feature_indices)
+Loss::EvaluationResult Optimizer::evaluate_epoch(
+    ForwardPropagation& forward_propagation,
+    ThreadSafeQueue<Batch*>& empty_queue,
+    const vector<vector<Index>>& batches,
+    const vector<Index>& input_feature_indices,
+    const vector<Index>& decoder_feature_indices,
+    const vector<Index>& target_feature_indices)
 {
-    EpochStats stats;
+    Loss::EvaluationResult epoch_result;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
     const Index batches_number = Index(batches.size());
-    if (batches_number == 0) return stats;
+    if (batches_number == 0) return epoch_result;
+    const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
     has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
     const bool on_gpu = neural_network->is_gpu();
@@ -1354,82 +1623,59 @@ Optimizer::EpochStats Optimizer::evaluate_epoch(bool is_classification,
 
             neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
 
-            const Loss::EvaluationResult eval = loss->calculate_error(*batch, forward_propagation);
+            const Loss::EvaluationResult evaluation_result = loss->calculate_error(*batch, forward_propagation);
 
-            stats.error += eval.error;
-            if (is_classification) stats.accuracy += eval.accuracy;
+            epoch_result.error += evaluation_result.error;
+            if (tracks_accuracy) epoch_result.accuracy += evaluation_result.accuracy;
         }
 
         empty_queue.push(batch);
 
-        stats.error /= float(batches_number);
-        if (is_classification) stats.accuracy /= float(batches_number);
+        epoch_result.error /= float(batches_number);
+        if (tracks_accuracy) epoch_result.accuracy /= float(batches_number);
 
-        return stats;
+        return epoch_result;
     }
 
-    auto session = start_batch_workers(empty_queue,
-                                       batches,
-                                       input_feature_indices,
-                                       decoder_feature_indices,
-                                       target_feature_indices,
-                                       /*is_training=*/false);
-
-    Batch* next_batch = session->wait(0);
-    prefetch_batch(*next_batch);
-
-    for (Index iteration = 0; iteration < batches_number; ++iteration)
+    EpochLoopContext context;
+    context.empty_queue = &empty_queue;
+    context.batches = &batches;
+    context.input_feature_indices = &input_feature_indices;
+    context.decoder_feature_indices = &decoder_feature_indices;
+    context.target_feature_indices = &target_feature_indices;
+    context.is_training = false;
+    context.on_gpu = on_gpu;
+    context.show_progress = false;
+    context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
     {
-        Batch* current_batch = next_batch;
-        next_batch = nullptr;
-
-        if (iteration + 1 < batches_number)
-        {
-            next_batch = session->wait(iteration + 1);
-            prefetch_batch(*next_batch);
-        }
-
-        if (on_gpu) current_batch->wait_h2d_on_compute_stream();
-
-        neural_network->forward_propagate(current_batch->get_inputs(), forward_propagation, false);
+        neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, false);
         sync_cuda_for_debug(on_gpu);
-        Loss::EvaluationResult eval;
+
         if (use_device_metrics)
         {
-            if (!loss->calculate_error_device_metrics(*current_batch,
+            if (!loss->calculate_error_device_metrics(compute_batch,
                                                       forward_propagation,
                                                       device_metrics.error_sum(),
-                                                      is_classification ? device_metrics.accuracy_sum() : nullptr))
+                                                      tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
                 throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
         }
         else
         {
-            eval = loss->calculate_error(*current_batch, forward_propagation);
+            const Loss::EvaluationResult evaluation_result = loss->calculate_error(compute_batch, forward_propagation);
+            host_result.error += evaluation_result.error;
+            if (tracks_accuracy) host_result.accuracy += evaluation_result.accuracy;
         }
         sync_cuda_for_debug(on_gpu);
+    };
 
-        if (!use_device_metrics)
-        {
-            stats.error += eval.error;
-            if (is_classification) stats.accuracy += eval.accuracy;
-        }
-
-        sync_device(on_gpu);
-
-        empty_queue.push(current_batch);
-    }
-
-    session->rethrow_if_error();
+    epoch_result = run_epoch_loop(context);
 
     if (use_device_metrics)
-        stats = device_metrics.read(batches_number, is_classification);
-    else
-    {
-        stats.error /= float(batches_number);
-        if (is_classification) stats.accuracy /= float(batches_number);
-    }
+        return device_metrics.read(batches_number, tracks_accuracy);
 
-    return stats;
+    epoch_result.error /= float(batches_number);
+    if (tracks_accuracy) epoch_result.accuracy /= float(batches_number);
+    return epoch_result;
 }
 
 }

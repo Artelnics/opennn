@@ -60,7 +60,7 @@ void NeuronSelection::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
+NeuronsSelectionResult::NeuronsSelectionResult(const Index maximum_epochs)
 {
     neurons_number_history = VectorI::Zero(maximum_epochs);
 
@@ -71,14 +71,14 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
     optimum_validation_error = MAX;
 }
 
-void NeuronsSelectionResults::resize_history(const Index new_size)
+void NeuronsSelectionResult::resize_history(const Index new_size)
 {
     neurons_number_history.conservativeResize(new_size);
     training_error_history.conservativeResize(new_size);
     validation_error_history.conservativeResize(new_size);
 }
 
-string NeuronsSelectionResults::write_stopping_condition() const
+string NeuronsSelectionResult::write_stopping_condition() const
 {
     using enum NeuronSelection::StoppingCondition;
     switch (stopping_condition)
@@ -103,7 +103,7 @@ string NeuronsSelectionResults::write_stopping_condition() const
     }
 }
 
-void NeuronsSelectionResults::print() const
+void NeuronsSelectionResult::print() const
 {
     cout << "\n"
          << "Neuron Selection Results" << "\n"

@@ -53,23 +53,23 @@ __global__ void scale_kernel(const int n, const int features,
 
         switch (code)
         {
-        case 1: // MinimumMaximum
+        case 1:
         {
             const float range = maximums[f] - minimums[f];
             y = (range < FLT_EPSILON) ? 0.0f
               : (x - minimums[f]) / range * (max_range - min_range) + min_range;
             break;
         }
-        case 2: // MeanStandardDeviation
+        case 2:
             y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
             break;
-        case 3: // StandardDeviation
+        case 3:
             y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;
-        case 4: // Logarithm
+        case 4:
             y = logf(x);
             break;
-        case 5: // ImageMinMax
+        case 5:
             y = x / 255.0f;
             break;
         default:
@@ -123,20 +123,20 @@ __global__ void unscale_kernel(const int n, const int features,
 
         switch (code)
         {
-        case 1: // MinimumMaximum
+        case 1:
             y = (x - min_range) / (max_range - min_range)
                 * (maximums[f] - minimums[f]) + minimums[f];
             break;
-        case 2: // MeanStandardDeviation
+        case 2:
             y = means[f] + x * stds[f];
             break;
-        case 3: // StandardDeviation
+        case 3:
             y = x * stds[f];
             break;
-        case 4: // Logarithm
+        case 4:
             y = expf(x);
             break;
-        case 5: // ImageMinMax
+        case 5:
             y = x * 255.0f;
             break;
         default:
@@ -1284,8 +1284,8 @@ __global__ void rnn_step_fused_forward_kernel(const int batch,
                                               const int activation_id)
 {
     extern __shared__ float smem[];
-    float* sX = smem;                             // [in_features]
-    float* sH = smem + in_features;               // [out_features] when prev_hidden != null
+    float* sX = smem;
+    float* sH = smem + in_features;
 
     const int b = blockIdx.x;
     const int j = threadIdx.x;

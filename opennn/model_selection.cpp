@@ -43,12 +43,12 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection->set(training_strategy);
 }
 
-NeuronsSelectionResults ModelSelection::perform_neurons_selection()
+NeuronsSelectionResult ModelSelection::perform_neurons_selection()
 {
     return neurons_selection->perform_neurons_selection();
 }
 
-InputsSelectionResults ModelSelection::perform_input_selection()
+InputsSelectionResult ModelSelection::perform_input_selection()
 {
     return inputs_selection->perform_input_selection();
 }
@@ -80,7 +80,6 @@ void ModelSelection::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "ModelSelection");
 
-    // Neuron selection
 
     const Json* neurons_selection_element = require_json_field(root_element, "NeuronSelection");
 
@@ -94,7 +93,6 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
-    // Input selection
 
     const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
 

@@ -1,4 +1,4 @@
-# Model export to standalone code: OpenNN vs PyTorch vs TensorFlow (Linux)
+# Model export to standalone code: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (Linux)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-07. Linux x86_64.*
 
@@ -11,10 +11,10 @@ application.
 
 ## The result
 
-| | OpenNN | PyTorch | TensorFlow |
-|---|---|---|---|
-| **Exports the trained model as standalone source?** | **yes — C, Python, JavaScript, PHP** | no | no |
-| **Runs with no ML runtime?** | **yes** (C export needs only a C compiler) | no — needs libtorch or onnxruntime | no — needs the TF / TFLite runtime |
+| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+|---|---|---|---|---|
+| **Exports the trained model as standalone source?** | **yes — C, Python, JavaScript, PHP** | no | no | no |
+| **Runs with no ML runtime?** | **yes** (C export needs only a C compiler) | no — is itself the runtime | no — needs libtorch or onnxruntime | no — needs the TF / TFLite runtime |
 
 OpenNN turns a trained network into a self-contained function in your target language.
 PyTorch's export paths (TorchScript, ONNX) produce a *model file* that still requires a
@@ -52,12 +52,14 @@ PyTorch has no equivalent "export to compilable source." Its two export paths bo
 *serialized model* that needs a runtime to run:
 
 * **TorchScript** (`torch.jit.save` → `.pt`): loaded and executed by `libtorch` — the same
-  ~442 MB CPU runtime measured in the [CPU size benchmark](size-cpu-opennn-vs-pytorch-vs-tensorflow.md).
+  ~442 MB CPU runtime measured in the [CPU size benchmark](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md).
 * **ONNX** (`torch.onnx.export` → `.onnx`): runs under ONNX Runtime or another inference
   engine, which must be installed on the target.
 
 Both are good for portability *between ML runtimes*, but neither lets you drop a trained model
-into a C/JS/PHP codebase, or a device with no ML stack, as plain source.
+into a C/JS/PHP codebase, or a device with no ML stack, as plain source. **ONNX Runtime** is the
+runtime end of that path, not a way off it: it executes the `.onnx` model, so it is itself the
+ML stack you would have to ship — it has no standalone-source export of its own.
 
 **TensorFlow** is the same: its export formats — SavedModel and TFLite (`.tflite`) — are
 serialized models executed by the TensorFlow or TFLite runtime. TFLite targets small devices,

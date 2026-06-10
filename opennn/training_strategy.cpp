@@ -52,7 +52,6 @@ void TrainingStrategy::set_default()
     if (!get_neural_network())
         return;
 
-    // Forecasting
 
     if (neural_network->has(LayerType::Recurrent)
         || neural_network->has(LayerType::LongShortTermMemory))
@@ -62,7 +61,6 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Image Classification
 
     if (neural_network->has(LayerType::Convolutional))
     {
@@ -85,7 +83,6 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Text Classification
 
     if (neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
     {
@@ -95,13 +92,11 @@ void TrainingStrategy::set_default()
         return;
     }
 
-    // Classification
 
     const ActivationOp::Function output_activation = neural_network->get_output_activation();
 
     if (output_activation == ActivationOp::Function::Softmax)
     {
-        // Multi-class
         set_loss("CrossEntropy");
         set_optimization_algorithm("QuasiNewtonMethod");
         return;
@@ -109,7 +104,6 @@ void TrainingStrategy::set_default()
 
     if (output_activation == ActivationOp::Function::Sigmoid)
     {
-        // Binary
         set_loss("WeightedSquaredError");
         set_optimization_algorithm("QuasiNewtonMethod");
         return;
@@ -119,7 +113,7 @@ void TrainingStrategy::set_default()
     set_optimization_algorithm("AdaptiveMomentEstimation");
 }
 
-TrainingResults TrainingStrategy::train()
+TrainingResult TrainingStrategy::train()
 {
     throw_if(!get_neural_network(), "neural network is not set.");
 
@@ -163,11 +157,9 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "TrainingStrategy");
 
-    // Loss
 
     const Json* loss_element = require_json_field(root_element, "Loss");
 
-    // Loss method
 
     const string loss_method = read_json_string(loss_element, "Error");
 
@@ -178,11 +170,9 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     set_loss(loss_method);
     loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
 
-    // Optimization algorithm
 
     const Json* optimization_algorithm_element = require_json_field(root_element, "Optimizer");
 
-    // Optimization method
 
     const string optimization_method = read_json_string(optimization_algorithm_element, "OptimizationMethod");
 
@@ -193,14 +183,12 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     set_optimization_algorithm(optimization_method);
     optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
 
-    // Regularization
 
     const Json* regularization_element = loss_element->find("Regularization");
 
     if (regularization_element)
         loss->regularization_from_JSON(JsonDocument::wrap("Regularization", *regularization_element));
 
-    // Display
 
     optimizer->set_display(read_json_bool(root_element, "Display"));
 }

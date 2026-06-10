@@ -176,7 +176,7 @@ RunResult train_one(NeuralNetwork* nn,
         adam->set_display(false);
 
         const auto t0 = Clock::now();
-        const TrainingResults results = strategy.train();
+        const TrainingResult results = strategy.train();
         const auto t1 = Clock::now();
 
         r.params        = nn->get_parameters_number();

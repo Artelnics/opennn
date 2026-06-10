@@ -47,7 +47,6 @@ void Concatenate::set(const Shape& new_input_shape,
     if (!new_input_shape.empty())
         check_rank(new_input_shape, {3}, "Concatenate", "input");
 
-    // input_shape stores only H, W — channels per input live in the op.
     input_shape = new_input_shape;
     concatenate.input_channels = per_input_channels;
     set_label(new_label);

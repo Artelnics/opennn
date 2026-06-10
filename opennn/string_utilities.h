@@ -10,6 +10,8 @@
 
 #include "pch.h"
 
+#include <initializer_list>
+
 namespace opennn
 {
 
@@ -52,7 +54,6 @@ namespace opennn
 
     string get_first_word(const string&);
 
-    // Vector/tensor string conversion
 
     template <typename T>
     string vector_to_string(const vector<T>& values, const string& separator = " ")
@@ -101,8 +102,10 @@ namespace opennn
             values(i++) = value;
     }
 
-    bool contains(const vector<string>&, const string&);
     bool contains(const vector<string>&, string_view);
+    bool contains(initializer_list<string_view>, string_view);
+    bool starts_with_any(string_view, initializer_list<string_view>);
+    bool env_flag_enabled(const char*) noexcept;
 }
 
 // OpenNN: Open Neural Networks Library.

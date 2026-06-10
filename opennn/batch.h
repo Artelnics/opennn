@@ -15,11 +15,12 @@
 namespace opennn
 {
 
-struct SlotBuffers
+struct BatchSlot
 {
     Buffer buffer;
     Shape  shape;
     Index  features_number = 0;
+    
     float* host = nullptr;
     Index  host_allocated_size = 0;
 };
@@ -70,36 +71,26 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
-    Index current_sample_count = 0;     // May be < samples_number for the last batch.
+    Index current_sample_count = 0;
     bool needs_device_copy = true;
-    bool use_device_data_buffer = false;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;
 
-    SlotBuffers input;
-    SlotBuffers decoder;
-    SlotBuffers target;
+    BatchSlot input;
+    BatchSlot decoder;
+    BatchSlot target;
 
     int input_contiguous = -1;
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
     void copy_device_async(cudaStream_t);
-
-    void gather_device_async(const vector<Index>& row_indices,
-                             const float* source_data,
-                             Index source_features,
-                             const vector<Index>& input_feature_indices,
-                             const vector<Index>& target_feature_indices);
+    void upload_to_device_batch_async(Batch&, cudaStream_t);
 
     void record_h2d_done(cudaStream_t);
 
     Buffer fp32_staging{Device::CUDA};
-    Buffer device_data_row_indices{Device::CUDA};
-    Buffer device_data_input_feature_indices{Device::CUDA};
-    Buffer device_data_target_feature_indices{Device::CUDA};
-    vector<Index> device_data_row_indices_host;
 
     CudaEvent h2d_done_event;
     bool        h2d_done_recorded = false;
@@ -110,8 +101,14 @@ struct Batch
     vector<TensorView> input_views_host_cache;
     TensorView target_view_host_cache;
 
-    vector<TensorView> input_views_cache;       // GPU views; populated only on CUDA mode
+    vector<TensorView> input_views_cache;
     TensorView target_view_cache;
+
+    bool        device_gather = false;
+    vector<int> gather_row_indices;
+    Buffer      gather_indices_device{Device::CUDA};
+    Index       input_col_offset = 0;
+    Index       target_col_offset = 0;
 
 };
 

@@ -34,14 +34,14 @@ vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) cons
     const Shape sequence_shape{batch_size, T, output_features};
 
     return {
-        {sequence_shape,  compute_dtype}, // ForgetGateSlot
-        {sequence_shape,  compute_dtype}, // InputGateSlot
-        {sequence_shape,  compute_dtype}, // CandidateGateSlot
-        {sequence_shape,  compute_dtype}, // OutputGateSlot
-        {sequence_shape,  compute_dtype}, // CellStateSlot
-        {sequence_shape,  compute_dtype}, // HiddenStateSlot
-        {sequence_shape,  compute_dtype}, // CellActivationSlot
-        {return_sequences ? sequence_shape : Shape{batch_size, output_features}, compute_dtype}, // OutputSlot (principal output, last)
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {sequence_shape,  compute_dtype},
+        {return_sequences ? sequence_shape : Shape{batch_size, output_features}, compute_dtype},
     };
 }
 

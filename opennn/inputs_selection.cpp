@@ -19,17 +19,17 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
+InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
 {
     set(maximum_epochs);
 }
 
-Index InputsSelectionResults::get_epochs_number() const
+Index InputsSelectionResult::get_epochs_number() const
 {
     return training_error_history.size();
 }
 
-void InputsSelectionResults::set(const Index maximum_epochs)
+void InputsSelectionResult::set(const Index maximum_epochs)
 {
     training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
     validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
@@ -37,7 +37,7 @@ void InputsSelectionResults::set(const Index maximum_epochs)
     mean_training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
 }
 
-string InputsSelectionResults::write_stopping_condition() const
+string InputsSelectionResult::write_stopping_condition() const
 {
     using enum InputsSelection::StoppingCondition;
     switch (stopping_condition)
@@ -62,7 +62,7 @@ string InputsSelectionResults::write_stopping_condition() const
     }
 }
 
-void InputsSelectionResults::resize_history(const Index new_size)
+void InputsSelectionResult::resize_history(const Index new_size)
 {
     training_error_history.conservativeResize(new_size);
     validation_error_history.conservativeResize(new_size);
@@ -70,7 +70,7 @@ void InputsSelectionResults::resize_history(const Index new_size)
     mean_validation_error_history.conservativeResize(new_size);
 }
 
-void InputsSelectionResults::print() const
+void InputsSelectionResult::print() const
 {
     cout << "\n"
          << "Input Selection Results" << "\n"

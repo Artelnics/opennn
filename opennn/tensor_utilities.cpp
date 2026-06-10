@@ -47,7 +47,6 @@ cudnnTensorDescriptor_t TensorView::get_descriptor() const
 
 void TensorView::set_descriptor(const Shape& descriptor_shape) const
 {
-    // NHWC layout: rank < 4 leading dims default to 1.
     int batch_count = 1, channels = 1, height = 1, width = 1;
     const size_t rank = descriptor_shape.rank;
     if (rank >= 1) channels    = static_cast<int>(descriptor_shape[rank - 1]);

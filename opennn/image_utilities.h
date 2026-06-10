@@ -21,8 +21,7 @@ void load_image(const filesystem::path&,
                 float* dst,
                 Index expected_height,
                 Index expected_width,
-                Index expected_channels,
-                bool divide_by_255 = false);
+                Index expected_channels);
 
 Tensor3 resize_image(const Tensor3&, Index, Index);
 

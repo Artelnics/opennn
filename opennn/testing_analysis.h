@@ -54,7 +54,7 @@ public:
         void print() const;
     };
 
-    struct KolmogorovSmirnovResults
+    struct KolmogorovSmirnovResult
     {
         MatrixR positive_cumulative_gain;
 
@@ -137,7 +137,7 @@ public:
     MatrixR perform_lift_chart_analysis() const;
     MatrixR calculate_lift_chart(const MatrixR&) const;
 
-    KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
+    KolmogorovSmirnovResult perform_Kolmogorov_Smirnov_analysis() const;
     VectorR calculate_maximum_gain(const MatrixR&, const MatrixR&) const;
     vector<Histogram> calculate_output_histogram(const MatrixR&, Index = 10) const;
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;

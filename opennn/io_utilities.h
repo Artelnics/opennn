@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I / O   U T I L I T I E S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -52,7 +51,6 @@ public:
     FileWriter& operator=(FileWriter&&)      = delete;
 
     void open(const filesystem::path& tmp_path);
-    bool is_open() const;
 
     void write(const void* buffer, size_t bytes);
 
@@ -67,6 +65,34 @@ private:
 
 void atomic_rename(const filesystem::path& from, const filesystem::path& to);
 
+class FileMapping
+{
+public:
+    FileMapping() = default;
+    ~FileMapping();
+
+    FileMapping(const FileMapping&)            = delete;
+    FileMapping& operator=(const FileMapping&) = delete;
+    FileMapping(FileMapping&&) noexcept;
+    FileMapping& operator=(FileMapping&&) noexcept;
+
+    bool map(const filesystem::path& path);
+    void reset();
+
+    const char* data() const { return data_; }
+    size_t      size() const { return size_; }
+
+private:
+    const char* data_ = nullptr;
+    size_t      size_ = 0;
+#if defined(_WIN32)
+    void* file_handle_    = nullptr;
+    void* mapping_handle_ = nullptr;
+#else
+    int fd_ = -1;
+#endif
+};
+
 class CsvReader
 {
 public:
@@ -79,8 +105,11 @@ public:
 
     struct Result
     {
-        string                      buffer;
-        vector<vector<string_view>> rows;
+        FileMapping         mapping;
+        string              buffer;
+        string_view         content;
+        vector<string_view> lines;
+        char                separator = ',';
     };
 
     explicit CsvReader(Config c) : config(std::move(c)) {}

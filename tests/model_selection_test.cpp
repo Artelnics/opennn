@@ -72,7 +72,7 @@ TEST(ModelSelectionTest, PerformNeuronsSelection)
     growing_neurons->set_maximum_neurons(5);
     growing_neurons->set_display(false);
 
-    NeuronsSelectionResults results = model_selection.perform_neurons_selection();
+    NeuronsSelectionResult results = model_selection.perform_neurons_selection();
 
     EXPECT_GE(results.optimal_neurons_number, 1);
     EXPECT_LE(results.optimal_neurons_number, 5);

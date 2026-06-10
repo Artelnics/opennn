@@ -98,13 +98,13 @@ private:
                   ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};
     enum Backward {
         OutputDelta,
-        InputQueryDelta,         // final dInput query, embed shape
-        InputSourceDelta,        // final dInput source, embed shape
-        AttentionWeightDelta,    // unfused attention scratch
-        ValueHeadDelta,          // dV, head shape
-        ConcatenatedOutputDelta, // dConcat, embed shape
-        QueryHeadDelta,          // dQ, head shape
-        KeyHeadDelta             // dK, head shape
+        InputQueryDelta,
+        InputSourceDelta,
+        AttentionWeightDelta,
+        ValueHeadDelta,
+        ConcatenatedOutputDelta,
+        QueryHeadDelta,
+        KeyHeadDelta
     };
 };
 

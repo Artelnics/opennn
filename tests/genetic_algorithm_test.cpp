@@ -60,7 +60,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_individuals_number(6);
     genetic_algorithm.set_maximum_epochs(3);
 
-    InputsSelectionResults results = genetic_algorithm.perform_input_selection();
+    InputsSelectionResult results = genetic_algorithm.perform_input_selection();
 
     // Should complete without crashing and produce valid results
     EXPECT_GE(results.get_epochs_number(), 1);

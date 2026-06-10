@@ -1,6 +1,5 @@
 #pragma once
 
-// IntelliSense-only: real builds get OPENNN_HAS_CUDA from CMake.
 #if defined(__INTELLISENSE__) && !defined(OPENNN_HAS_CUDA)
 #define OPENNN_HAS_CUDA
 #endif
@@ -91,9 +90,7 @@ void check_cuda_status(T status, const char* msg,
 
 #else
 
-// CPU-only stubs.
 
-// Runtime / library handles
 using cudaStream_t     = void*;
 using cudaEvent_t      = void*;
 using cublasHandle_t   = void*;
@@ -103,17 +100,14 @@ using cublasLtMatmulDesc_t   = void*;
 using cublasLtMatrixLayout_t = void*;
 struct cublasLtMatmulAlgo_t {};
 
-// Scalar / opaque types
 struct __nv_bfloat16 {};
 struct __half {};
 
-// CUDA / cuBLAS enums
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_8I = 3, CUDA_R_32I = 10, CUDA_R_16BF = 14 };
 enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65, CUBLAS_COMPUTE_32F_FAST_TF32 = 68 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
 enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 132 };
 
-// cuDNN enums
 enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 14 };
 enum cudnnActivationMode_t           { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
 enum cudnnPoolingMode_t              { CUDNN_POOLING_MAX = 0 };
@@ -122,7 +116,6 @@ enum cudnnConvolutionFwdAlgo_t       { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM 
 enum cudnnConvolutionBwdDataAlgo_t   { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
 enum cudnnConvolutionBwdFilterAlgo_t { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
 
-// cuDNN descriptor handles (opaque pointer-typed)
 struct cudnnTensorStruct {};
 using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
 using cudnnFilterDescriptor_t      = void*;

@@ -382,14 +382,14 @@ Index best_anchor_for_box(const YoloDataset::Box& box,
 
 struct AugmentationParams
 {
-    float crop_left;     // pleft / orig_w   (signed, can be negative for padding)
-    float crop_top;      // ptop  / orig_h
-    float crop_right;    // pright / orig_w
-    float crop_bottom;   // pbot  / orig_h
+    float crop_left;
+    float crop_top;
+    float crop_right;
+    float crop_bottom;
     bool flip;
-    float exposure_mul;  // multiply V channel
-    float saturation_mul;// multiply S channel
-    float hue_shift;     // additive on H in [0, 1] (will be wrapped)
+    float exposure_mul;
+    float saturation_mul;
+    float hue_shift;
 };
 
 uint64_t splitmix64(uint64_t x)
@@ -416,7 +416,7 @@ AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
     auto rand_unit = [](uint64_t& rng_state) -> float
     {
         rng_state = splitmix64(rng_state);
-        return float(rng_state >> 40) / float(1u << 24); // [0, 1)
+        return float(rng_state >> 40) / float(1u << 24);
     };
 
     auto rand_signed = [&](uint64_t& rng_state, float range) -> float
@@ -426,7 +426,6 @@ AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
 
     auto rand_scale = [&](uint64_t& rng_state, float max_scale) -> float
     {
-        // multiplier uniform in [1/max_scale, max_scale]
         const float r = rand_unit(rng_state);
         const float t = (r * 2.0f - 1.0f) * log(max_scale);
         return exp(t);
@@ -683,7 +682,6 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
     const Index values_per_box = 5 + classes_number;
     const Index head_channels = boxes_per_head * values_per_box;
 
-    // Zero the whole multi-head buffer first.
     Index total_floats = 0;
     vector<Index> head_offsets(head_grid_sizes.size() + 1, 0);
     for (size_t i = 0; i < head_grid_sizes.size(); ++i)
@@ -699,7 +697,6 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
         if (box.class_id < 0 || box.class_id >= classes_number)
             continue;
 
-        // Best (head, anchor) by w/h IoU across all heads' anchors.
         float best_iou = -1.0f;
         size_t best_head = 0;
         Index best_anchor_in_head = 0;
@@ -743,7 +740,6 @@ string read_voc_tag(const string& xml, const string& tag, size_t from = 0)
     const size_t b = xml.find(close, a + open.size());
     if (b == string::npos) return {};
     string value = xml.substr(a + open.size(), b - a - open.size());
-    // Trim ASCII whitespace.
     const size_t s = value.find_first_not_of(" \t\r\n");
     const size_t e = value.find_last_not_of(" \t\r\n");
     return (s == string::npos) ? string{} : value.substr(s, e - s + 1);
@@ -780,7 +776,6 @@ VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
     throw_if(annotation.width <= 0.0f || annotation.height <= 0.0f,
              format("VOC annotation has invalid size: {}", xml_path.string()));
 
-    // Each <object> block contains a <name> and a <bndbox>.
     size_t cursor = 0;
     const string obj_open = "<object>";
     while ((cursor = xml.find(obj_open, cursor)) != string::npos)
@@ -838,13 +833,11 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     filesystem::create_directories(output_labels_dir);
 
-    // Class name → 0..19 lookup so we don't repeat linear scans per box.
     const vector<string>& classes = voc_class_names();
     unordered_map<string, Index> class_index;
     for (Index i = 0; i < ssize(classes); ++i)
         class_index[classes[size_t(i)]] = i;
 
-    // Write the classes file (matches read_yolo_classes' .names lookup).
     ofstream names_file(output_labels_dir / "voc.names");
     throw_if(!names_file,
              format("Cannot write VOC names file in {}",
@@ -863,7 +856,7 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const filesystem::path xml_path = annotations_dir / (image_id + ".xml");
         if (!filesystem::is_regular_file(xml_path))
-            continue;  // some image-set entries (e.g. test splits) have no annotation
+            continue;
 
         const VocAnnotation ann = parse_voc_xml(xml_path);
 
@@ -876,7 +869,7 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
         {
             const auto it = class_index.find(box.class_name);
             if (it == class_index.end())
-                continue;  // skip non-VOC-canonical classes (extensions, typos)
+                continue;
 
             const float cx = 0.5f * (box.xmin + box.xmax) / ann.width;
             const float cy = 0.5f * (box.ymin + box.ymax) / ann.height;
@@ -920,7 +913,7 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
         const float* row = nms_output + i * 6;
         const float score = row[4];
 
-        if (score <= 0.0f) break;  // NMS writes kept boxes first; first zero terminates
+        if (score <= 0.0f) break;
 
         const float cx_net_px = row[0] * float(network_width);
         const float cy_net_px = row[1] * float(network_height);
@@ -970,6 +963,7 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     images_directory = new_images_dir;
     labels_directory = new_labels_dir;
     data_path = images_directory;
+    storage_mode = StorageMode::BinaryFile;
     input_shape = new_input_shape;
     grid_size = new_grid_size;
     boxes_per_cell = new_boxes_per_cell;
@@ -979,10 +973,23 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     image_cache_path = images_directory / ".cache" / "yolo_images.bin";
     target_cache_path = images_directory / ".cache" / "yolo_targets.bin";
     boxes_cache_path = images_directory / ".cache" / "yolo_boxes.bin";
+    images_ram.clear();
+    targets_ram.clear();
 
     image_filenames = list_files(images_directory, has_image_extension);
 
     open_or_build_cache(new_anchors);
+}
+
+void YoloDataset::set_storage_mode(StorageMode new_storage_mode)
+{
+    Dataset::set_storage_mode(new_storage_mode);
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+    {
+        images_ram.clear();
+        targets_ram.clear();
+    }
 }
 
 void YoloDataset::open_or_build_cache(const vector<array<float, 2>>& requested_anchors)
@@ -1216,7 +1223,6 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 
     target_writer.finish_with_rename(target_cache_path);
 
-    // Boxes side-cache: raw per-sample box lists for on-the-fly augmentation.
     const filesystem::path boxes_tmp_path = boxes_cache_path.string() + ".tmp";
     FileWriter boxes_writer;
     boxes_writer.open(boxes_tmp_path);
@@ -1379,6 +1385,44 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
     }
 }
 
+void YoloDataset::load_images_to_ram() const
+{
+    if (!images_ram.empty()) return;
+    if (samples_number == 0 || cache_image_record_bytes == 0) return;
+
+    throw_if(!image_cache_reader.is_open(),
+             "YoloDataset::load_images_to_ram: image cache is not open.");
+
+    images_ram.resize(size_t(samples_number) * size_t(cache_image_record_bytes));
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        const uint64_t offset = sizeof(YoloImageCacheHeader)
+                              + uint64_t(i) * uint64_t(cache_image_record_bytes);
+        image_cache_reader.read_at(images_ram.data() + size_t(i) * size_t(cache_image_record_bytes),
+                                   size_t(cache_image_record_bytes),
+                                   offset);
+    }
+}
+
+void YoloDataset::load_targets_to_ram() const
+{
+    if (!targets_ram.empty()) return;
+    if (samples_number == 0 || cache_target_record_floats == 0) return;
+
+    throw_if(!target_cache_reader.is_open(),
+             "YoloDataset::load_targets_to_ram: target cache is not open.");
+
+    targets_ram.resize(size_t(samples_number) * size_t(cache_target_record_floats));
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        const uint64_t offset = target_data_offset
+                              + uint64_t(i) * uint64_t(cache_target_record_floats) * sizeof(float);
+        target_cache_reader.read_at(targets_ram.data() + size_t(i) * size_t(cache_target_record_floats),
+                                    size_t(cache_target_record_floats) * sizeof(float),
+                                    offset);
+    }
+}
+
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
@@ -1389,9 +1433,13 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const float scale = 1.0f / 255.0f;
 
     const bool augment = is_training && augmentation.enabled;
+    const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.fetch_add(1, std::memory_order_relaxed) + 1
         : 0;
+
+    if (matrix_storage)
+        load_images_to_ram();
 
     AugmentationConfig cfg = augmentation;
 
@@ -1417,7 +1465,16 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             const uint64_t offset = sizeof(YoloImageCacheHeader)
                 + uint64_t(sample_index) * uint64_t(cache_image_record_bytes);
 
-            image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
+            if (matrix_storage)
+            {
+                copy_n(images_ram.data() + size_t(sample_index) * size_t(cache_image_record_bytes),
+                       pixels.size(),
+                       pixels.data());
+            }
+            else
+            {
+                image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
+            }
 
             const uint8_t* image_bytes = pixels.data();
 
@@ -1472,6 +1529,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
 
     const bool augment = is_training && augmentation.enabled;
+    const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.load(std::memory_order_relaxed)
         : 0;
@@ -1480,6 +1538,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale();
+
+    if (matrix_storage && !reencode)
+        load_targets_to_ram();
 
     string omp_error;
 
@@ -1520,9 +1581,18 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                 const uint64_t offset = target_data_offset
                     + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float);
 
-                target_cache_reader.read_at(target_data + i * target_record_floats,
-                                            size_t(cache_target_record_floats) * sizeof(float),
-                                            offset);
+                if (matrix_storage)
+                {
+                    copy_n(targets_ram.data() + size_t(sample_index) * size_t(cache_target_record_floats),
+                           cache_target_record_floats,
+                           target_data + i * target_record_floats);
+                }
+                else
+                {
+                    target_cache_reader.read_at(target_data + i * target_record_floats,
+                                                size_t(cache_target_record_floats) * sizeof(float),
+                                                offset);
+                }
             }
         }
         catch (const exception& e)
@@ -1543,6 +1613,7 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
     write_json(printer, {
         {"ImagesPath", images_directory.string()},
         {"LabelsPath", labels_directory.string()},
+        {"StorageMode", get_storage_mode_string()},
         {"Height", to_string(input_shape[0])},
         {"Width", to_string(input_shape[1])},
         {"Channels", to_string(input_shape[2])},
@@ -1567,6 +1638,10 @@ void YoloDataset::from_JSON(const JsonDocument& document)
          read_json_index(source, "Channels")},
         read_json_index(source, "GridSize"),
         read_json_index(source, "BoxesPerCell"));
+
+    set_storage_mode(source->has("StorageMode")
+                   ? read_json_string(source, "StorageMode")
+                   : "BinaryFile");
 }
 
 }

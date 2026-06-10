@@ -1,7 +1,6 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   Q U A S I - N E W T O N   M E T H O D   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -27,7 +26,6 @@ void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
 
-    // Stopping criteria
 
     minimum_loss_decrease = 0.0f;
     training_loss_goal = 0.0f;
@@ -36,7 +34,6 @@ void QuasiNewtonMethod::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-    // UTILITIES
 
     display = true;
     display_period = 10;
@@ -157,7 +154,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     old_learning_rate = learning_rate;
 }
 
-TrainingResults QuasiNewtonMethod::train()
+TrainingResult QuasiNewtonMethod::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -166,11 +163,10 @@ TrainingResults QuasiNewtonMethod::train()
              "its update path maps device pointers as host memory. "
              "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
 
-    TrainingResults results(maximum_epochs + 1);
+    TrainingResult results(maximum_epochs + 1);
 
     if (display) cout << "Training with quasi-Newton method..." << "\n";
 
-    // Dataset
 
     const Dataset* dataset = loss->get_dataset();
 
@@ -186,7 +182,6 @@ TrainingResults QuasiNewtonMethod::train()
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    // Neural network
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
@@ -209,7 +204,6 @@ TrainingResults QuasiNewtonMethod::train()
     Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
 
-    // Loss
 
     loss->set_normalization_coefficient();
 
@@ -217,7 +211,6 @@ TrainingResults QuasiNewtonMethod::train()
 
     BackPropagation validation_back_propagation(validation_samples_number, loss);
 
-    // Optimization algorithm
 
     bool stop_training = false;
 
@@ -234,29 +227,26 @@ TrainingResults QuasiNewtonMethod::train()
 
     OptimizerData optimization_data;
     optimization_data.set({
-        Shape{parameters_number},                 // OldParameters
-        Shape{parameters_number},                 // ParameterDifferences
-        Shape{parameters_number},                 // ParameterUpdates
-        Shape{parameters_number},                 // OldGradient
-        Shape{parameters_number},                 // GradientDifference
-        Shape{parameters_number},                 // OldInverseHessianDotGradientDifference
-        Shape{parameters_number},                 // BFGS
-        Shape{parameters_number, parameters_number},  // InverseHessian
-        Shape{parameters_number, parameters_number}   // OldInverseHessian
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number},
+        Shape{parameters_number, parameters_number},
+        Shape{parameters_number, parameters_number}
     });
 
     optimization_data.potential_parameters.resize(parameters_number);
     optimization_data.training_direction.resize(parameters_number);
 
-    // Initialize OldParameters <- current parameters
     optimization_data.views[OldParameters].as_vector() =
         VectorMap(neural_network->get_parameters_data(), parameters_number);
 
-    // Initialize InverseHessian and OldInverseHessian to identity
     optimization_data.views[InverseHessian].as_matrix().setIdentity();
     optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
 
-    // Main loop
 
     for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
     {
@@ -266,7 +256,6 @@ TrainingResults QuasiNewtonMethod::train()
                                           training_forward_propagation,
                                           true);
 
-        // Loss
 
         loss->back_propagate(training_batch,
                              training_forward_propagation,
@@ -274,14 +263,12 @@ TrainingResults QuasiNewtonMethod::train()
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        // Update parameters
 
         update_parameters(training_batch,
                           training_forward_propagation,
                           training_back_propagation,
                           optimization_data);
 
-        // Validation error
 
         if (has_validation)
         {
@@ -289,13 +276,12 @@ TrainingResults QuasiNewtonMethod::train()
                                               *validation_fp,
                                               false);
 
-            // Loss
 
-            const Loss::EvaluationResult eval = loss->calculate_error(validation_batch,
-                                                                       *validation_fp);
-            validation_back_propagation.error = eval.error;
-            validation_back_propagation.accuracy = eval.accuracy;
-            validation_back_propagation.active_tokens_count = eval.active_tokens_count;
+            const Loss::EvaluationResult evaluation_result = loss->calculate_error(validation_batch,
+                                                                                   *validation_fp);
+            validation_back_propagation.error = evaluation_result.error;
+            validation_back_propagation.accuracy = evaluation_result.accuracy;
+            validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
@@ -395,13 +381,13 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
         potential_parameters = parameters + training_direction * alpha;
 
         neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        const Loss::EvaluationResult eval = loss->calculate_error(batch, forward_propagation);
+        const Loss::EvaluationResult evaluation_result = loss->calculate_error(batch, forward_propagation);
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
-        const float new_loss = eval.error + candidate_regularization;
+        const float new_loss = evaluation_result.error + candidate_regularization;
 
         if (new_loss <= current_loss + armijo_constant * alpha * training_slope)
         {
-            back_propagation.error = eval.error;
+            back_propagation.error = evaluation_result.error;
             back_propagation.regularization = candidate_regularization;
             return {alpha, new_loss};
         }

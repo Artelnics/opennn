@@ -25,9 +25,23 @@ enum class CopyKind
 bool is_cuda_build() noexcept;
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
-pair<size_t, size_t> memory_info();
+size_t available_memory();
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
+
+class CudaAllocationGrowthGuard
+{
+public:
+    explicit CudaAllocationGrowthGuard(bool);
+    ~CudaAllocationGrowthGuard() noexcept;
+
+    CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
+    CudaAllocationGrowthGuard& operator=(const CudaAllocationGrowthGuard&) = delete;
+
+private:
+    bool active = false;
+    bool previous = false;
+};
 
 void* allocate(Device, Index);
 void deallocate(Device, void*, Index);
@@ -35,8 +49,8 @@ void deallocate(Device, void*, Index);
 void set_zero(void*, Index, Device);
 void set_zero_async(void*, Index, cudaStream_t = nullptr);
 
-CopyKind copy_kind(Device, Device);
 void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
+void copy_async(void*, const void*, Index, Device, Device, cudaStream_t = nullptr);
 void synchronize(cudaStream_t = nullptr);
 void check_last_error();
 
@@ -75,6 +89,11 @@ void destroy_event(cudaEvent_t);
 void record_event(cudaEvent_t, cudaStream_t);
 void synchronize_event(cudaEvent_t);
 void stream_wait_event(cudaStream_t, cudaEvent_t);
+
+void  begin_graph_capture(cudaStream_t);
+void* end_graph_capture(cudaStream_t);
+void  launch_graph(void* graph_exec, cudaStream_t);
+void  destroy_graph(void* graph_exec);
 
 }
 

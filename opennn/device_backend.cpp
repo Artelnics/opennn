@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "device_backend.h"
+#include "string_utilities.h"
 
 #include <atomic>
 
@@ -18,21 +19,22 @@ namespace
 
 std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 
-bool env_flag_enabled(const char* name) noexcept
-{
-    const char* value = getenv(name);
-    return value
-        && (strcmp(value, "1") == 0
-            || strcmp(value, "true") == 0
-            || strcmp(value, "TRUE") == 0
-            || strcmp(value, "on") == 0
-            || strcmp(value, "ON") == 0);
-}
-
 void throw_if_auto(Device device_type)
 {
     throw_if(device_type == Device::Auto,
              "device backend expects a resolved device.");
+}
+
+CopyKind copy_kind(Device source, Device target)
+{
+    throw_if_auto(source);
+    throw_if_auto(target);
+
+    if (source == Device::CUDA && target == Device::CUDA) return CopyKind::DeviceToDevice;
+    if (source == Device::CUDA) return CopyKind::DeviceToHost;
+    if (target == Device::CUDA) return CopyKind::HostToDevice;
+
+    return CopyKind::HostToHost;
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -48,44 +50,6 @@ cudaMemcpyKind to_cuda_copy_kind(CopyKind kind)
     }
 
     throw runtime_error("unsupported CUDA copy kind.");
-}
-
-bool compiled_with_cuda() noexcept
-{
-    return true;
-}
-
-bool available_cuda_device() noexcept
-{
-    int count = 0;
-    const cudaError_t error = cudaGetDeviceCount(&count);
-    if (error != cudaSuccess)
-    {
-        cudaGetLastError();
-        return false;
-    }
-
-    return count > 0;
-}
-
-int device_compute_capability() noexcept
-{
-    cudaDeviceProp properties{};
-    if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
-    {
-        cudaGetLastError();
-        return -1;
-    }
-
-    return properties.major * 10 + properties.minor;
-}
-
-pair<size_t, size_t> cuda_memory_info()
-{
-    size_t free_bytes = 0;
-    size_t total_bytes = 0;
-    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
-    return {free_bytes, total_bytes};
 }
 
 void* allocate_cuda(Index byte_count)
@@ -143,84 +107,7 @@ void check_last_error_impl()
     CHECK_CUDA(cudaPeekAtLastError());
 }
 
-cudaStream_t create_stream_impl(unsigned flags)
-{
-    cudaStream_t stream = nullptr;
-    CHECK_CUDA(cudaStreamCreateWithFlags(&stream, flags));
-    return stream;
-}
-
-void destroy_stream_impl(cudaStream_t stream)
-{
-    cudaStreamDestroy(stream);
-}
-
-void* allocate_pinned_host_impl(Index byte_count)
-{
-    void* host_pointer = nullptr;
-    CHECK_CUDA(cudaMallocHost(&host_pointer, static_cast<size_t>(byte_count)));
-    return host_pointer;
-}
-
-void deallocate_pinned_host_impl(void* pointer)
-{
-    cudaFreeHost(pointer);
-}
-
-cudaEvent_t create_event_impl(unsigned flags)
-{
-    cudaEvent_t event = nullptr;
-    CHECK_CUDA(cudaEventCreateWithFlags(&event, flags));
-    return event;
-}
-
-unsigned default_event_flags_impl()
-{
-    return cudaEventDisableTiming;
-}
-
-void destroy_event_impl(cudaEvent_t event)
-{
-    cudaEventDestroy(event);
-}
-
-void record_event_impl(cudaEvent_t event, cudaStream_t stream)
-{
-    throw_if(!event, "cannot record a null CUDA event.");
-    CHECK_CUDA(cudaEventRecord(event, stream));
-}
-
-void synchronize_event_impl(cudaEvent_t event)
-{
-    CHECK_CUDA(cudaEventSynchronize(event));
-}
-
-void stream_wait_event_impl(cudaStream_t stream, cudaEvent_t event)
-{
-    CHECK_CUDA(cudaStreamWaitEvent(stream, event, 0));
-}
-
 #else
-
-bool compiled_with_cuda() noexcept
-{
-    return false;
-}
-
-bool available_cuda_device() noexcept
-{
-    return false;
-}
-
-int device_compute_capability() noexcept
-{
-    return -1;
-}
-
-pair<size_t, size_t> cuda_memory_info()
-{
-    throw runtime_error("CUDA support is not compiled in.");
-}
 
 void* allocate_cuda(Index)
 {
@@ -261,75 +148,62 @@ void check_last_error_impl()
 {
 }
 
-cudaStream_t create_stream_impl(unsigned)
-{
-    return nullptr;
-}
-
-void destroy_stream_impl(cudaStream_t)
-{
-}
-
-void* allocate_pinned_host_impl(Index byte_count)
-{
-    void* host_pointer = malloc(static_cast<size_t>(byte_count));
-    if (!host_pointer) throw bad_alloc();
-    return host_pointer;
-}
-
-void deallocate_pinned_host_impl(void* pointer)
-{
-    free(pointer);
-}
-
-cudaEvent_t create_event_impl(unsigned)
-{
-    return nullptr;
-}
-
-unsigned default_event_flags_impl()
-{
-    return 0;
-}
-
-void destroy_event_impl(cudaEvent_t)
-{
-}
-
-void record_event_impl(cudaEvent_t, cudaStream_t)
-{
-}
-
-void synchronize_event_impl(cudaEvent_t)
-{
-}
-
-void stream_wait_event_impl(cudaStream_t, cudaEvent_t)
-{
-}
-
 #endif
 
 }
 
 bool is_cuda_build() noexcept
 {
-    return compiled_with_cuda();
+#ifdef OPENNN_HAS_CUDA
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool has_cuda_device() noexcept
 {
-    return available_cuda_device();
+#ifdef OPENNN_HAS_CUDA
+    int count = 0;
+    const cudaError_t error = cudaGetDeviceCount(&count);
+    if (error != cudaSuccess)
+    {
+        cudaGetLastError();
+        return false;
+    }
+
+    return count > 0;
+#else
+    return false;
+#endif
 }
 
 int cuda_compute_capability() noexcept
 {
-    return device_compute_capability();
+#ifdef OPENNN_HAS_CUDA
+    cudaDeviceProp properties{};
+    if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
+    {
+        cudaGetLastError();
+        return -1;
+    }
+
+    return properties.major * 10 + properties.minor;
+#else
+    return -1;
+#endif
 }
 
-pair<size_t, size_t> memory_info()
+size_t available_memory()
 {
-    return cuda_memory_info();
+#ifdef OPENNN_HAS_CUDA
+    size_t free_bytes = 0;
+    size_t total_bytes = 0;
+    CHECK_CUDA(cudaMemGetInfo(&free_bytes, &total_bytes));
+    return free_bytes;
+#else
+    throw runtime_error("CUDA support is not compiled in.");
+#endif
 }
 
 bool cuda_allocation_growth_forbidden() noexcept
@@ -341,6 +215,22 @@ bool cuda_allocation_growth_forbidden() noexcept
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
+CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
+    : active(enabled && is_cuda_build())
+{
+    if (active)
+    {
+        previous = cuda_allocation_growth_forbidden();
+        set_cuda_allocation_growth_forbidden(true);
+    }
+}
+
+CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
+{
+    if (active)
+        set_cuda_allocation_growth_forbidden(previous);
 }
 
 void* allocate(Device device_type, Index byte_count)
@@ -365,6 +255,8 @@ void* allocate(Device device_type, Index byte_count)
 void deallocate(Device device_type, void* pointer, Index byte_count)
 {
     if (!pointer) return;
+
+    throw_if_auto(device_type);
 
     if (device_type == Device::CUDA)
     {
@@ -401,18 +293,6 @@ void set_zero_async(void* data, Index byte_count, cudaStream_t stream)
     set_zero_async_impl(data, byte_count, stream);
 }
 
-CopyKind copy_kind(Device source, Device target)
-{
-    throw_if_auto(source);
-    throw_if_auto(target);
-
-    if (source == Device::CUDA && target == Device::CUDA) return CopyKind::DeviceToDevice;
-    if (source == Device::CUDA) return CopyKind::DeviceToHost;
-    if (target == Device::CUDA) return CopyKind::HostToDevice;
-
-    return CopyKind::HostToHost;
-}
-
 void copy_async(void* destination,
                 const void* source,
                 Index byte_count,
@@ -424,6 +304,16 @@ void copy_async(void* destination,
     if (byte_count == 0 || !destination || !source) return;
 
     copy_async_impl(destination, source, byte_count, kind, stream);
+}
+
+void copy_async(void* destination,
+                const void* source,
+                Index byte_count,
+                Device source_device,
+                Device target_device,
+                cudaStream_t stream)
+{
+    copy_async(destination, source, byte_count, copy_kind(source_device, target_device), stream);
 }
 
 void synchronize(cudaStream_t stream)
@@ -438,14 +328,23 @@ void check_last_error()
 
 cudaStream_t create_stream(unsigned flags)
 {
-    return create_stream_impl(flags);
+#ifdef OPENNN_HAS_CUDA
+    cudaStream_t stream = nullptr;
+    CHECK_CUDA(cudaStreamCreateWithFlags(&stream, flags));
+    return stream;
+#else
+    (void)flags;
+    return nullptr;
+#endif
 }
 
 void destroy_stream(cudaStream_t stream)
 {
     if (!stream) return;
 
-    destroy_stream_impl(stream);
+#ifdef OPENNN_HAS_CUDA
+    cudaStreamDestroy(stream);
+#endif
 }
 
 void* allocate_pinned_host(Index byte_count)
@@ -454,51 +353,125 @@ void* allocate_pinned_host(Index byte_count)
 
     if (byte_count == 0) return nullptr;
 
-    return allocate_pinned_host_impl(byte_count);
+#ifdef OPENNN_HAS_CUDA
+    void* host_pointer = nullptr;
+    CHECK_CUDA(cudaMallocHost(&host_pointer, static_cast<size_t>(byte_count)));
+    return host_pointer;
+#else
+    void* host_pointer = malloc(static_cast<size_t>(byte_count));
+    if (!host_pointer) throw bad_alloc();
+    return host_pointer;
+#endif
 }
 
 void deallocate_pinned_host(void* pointer)
 {
     if (!pointer) return;
 
-    deallocate_pinned_host_impl(pointer);
+#ifdef OPENNN_HAS_CUDA
+    cudaFreeHost(pointer);
+#else
+    free(pointer);
+#endif
 }
 
 cudaEvent_t create_event(unsigned flags)
 {
-    return create_event_impl(flags);
+#ifdef OPENNN_HAS_CUDA
+    cudaEvent_t event = nullptr;
+    CHECK_CUDA(cudaEventCreateWithFlags(&event, flags));
+    return event;
+#else
+    (void)flags;
+    return nullptr;
+#endif
 }
 
 cudaEvent_t create_event()
 {
-    return create_event(default_event_flags_impl());
+#ifdef OPENNN_HAS_CUDA
+    return create_event(cudaEventDisableTiming);
+#else
+    return nullptr;
+#endif
 }
 
 void destroy_event(cudaEvent_t event)
 {
     if (!event) return;
 
-    destroy_event_impl(event);
+#ifdef OPENNN_HAS_CUDA
+    cudaEventDestroy(event);
+#endif
 }
 
 void record_event(cudaEvent_t event, cudaStream_t stream)
 {
-    record_event_impl(event, stream);
+#ifdef OPENNN_HAS_CUDA
+    throw_if(!event, "cannot record a null CUDA event.");
+    CHECK_CUDA(cudaEventRecord(event, stream));
+#else
+    (void)event;
+    (void)stream;
+#endif
 }
 
 void synchronize_event(cudaEvent_t event)
 {
     if (!event) return;
 
-    synchronize_event_impl(event);
+#ifdef OPENNN_HAS_CUDA
+    CHECK_CUDA(cudaEventSynchronize(event));
+#endif
 }
 
 void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
 {
     if (!event) return;
 
-    stream_wait_event_impl(stream, event);
+#ifdef OPENNN_HAS_CUDA
+    CHECK_CUDA(cudaStreamWaitEvent(stream, event, 0));
+#else
+    (void)stream;
+#endif
 }
+
+#ifdef OPENNN_HAS_CUDA
+
+void begin_graph_capture(cudaStream_t stream)
+{
+    CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
+}
+
+void* end_graph_capture(cudaStream_t stream)
+{
+    cudaGraph_t graph = nullptr;
+    CHECK_CUDA(cudaStreamEndCapture(stream, &graph));
+
+    cudaGraphExec_t exec = nullptr;
+    CHECK_CUDA(cudaGraphInstantiate(&exec, graph, nullptr, nullptr, 0));
+    CHECK_CUDA(cudaGraphDestroy(graph));
+    return static_cast<void*>(exec);
+}
+
+void launch_graph(void* graph_exec, cudaStream_t stream)
+{
+    CHECK_CUDA(cudaGraphLaunch(static_cast<cudaGraphExec_t>(graph_exec), stream));
+}
+
+void destroy_graph(void* graph_exec)
+{
+    if (graph_exec) cudaGraphExecDestroy(static_cast<cudaGraphExec_t>(graph_exec));
+}
+
+#else
+
+void  begin_graph_capture(cudaStream_t) { throw runtime_error("CUDA support is not compiled in."); }
+void* end_graph_capture(cudaStream_t)   { throw runtime_error("CUDA support is not compiled in."); }
+void  launch_graph(void*, cudaStream_t) { throw runtime_error("CUDA support is not compiled in."); }
+void  destroy_graph(void*) {}
+
+#endif
 
 }
 

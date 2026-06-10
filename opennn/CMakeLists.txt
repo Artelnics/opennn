@@ -163,7 +163,12 @@ if(NOT MSVC)
     if(TBB_FOUND)
         target_link_libraries(opennn PUBLIC TBB::tbb)
     else()
-        target_link_libraries(opennn PUBLIC tbb)
+        # Fall back to a plain libtbb only if it actually exists; otherwise rely on
+        # libstdc++'s serial fallback (linking a missing -ltbb breaks the build).
+        find_library(TBB_LIBRARY tbb)
+        if(TBB_LIBRARY)
+            target_link_libraries(opennn PUBLIC ${TBB_LIBRARY})
+        endif()
     endif()
 endif()
 

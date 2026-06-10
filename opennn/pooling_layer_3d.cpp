@@ -37,8 +37,8 @@ vector<TensorSpec> Pooling3d::get_forward_specs(Index batch_size) const
         {(pooling_method == PoolingMethod::MaxPooling)
             ? Shape{batch_size, input_features}
             : Shape{},
-         Type::FP32},                                  // MaximalIndices
-        {{batch_size, input_features}, compute_dtype}, // Output (must be last)
+         Type::FP32},
+        {{batch_size, input_features}, compute_dtype},
     };
 }
 

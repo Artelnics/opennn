@@ -731,7 +731,7 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
     const float Q_1 = area_under_curve/(2.0f - area_under_curve);
     const float Q_2 = (2.0f * area_under_curve * area_under_curve) / (1.0f + area_under_curve);
 
-    constexpr float z_95 = 1.64485f;  // one-sided 95% confidence Z-score
+    constexpr float z_95 = 1.64485f;
     const float auc_squared = area_under_curve * area_under_curve;
     return z_95 * sqrt((area_under_curve * (1.0f - area_under_curve)
                         + (float(total_positives) - 1.0f) * (Q_1 - auc_squared)
@@ -854,11 +854,11 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
     return lift_chart;
 }
 
-TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
+TestingAnalysis::KolmogorovSmirnovResult TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    TestingAnalysis::KolmogorovSmirnovResults Kolmogorov_Smirnov_results;
+    TestingAnalysis::KolmogorovSmirnovResult Kolmogorov_Smirnov_results;
 
     Kolmogorov_Smirnov_results.positive_cumulative_gain = calculate_cumulative_gain(targets, outputs);
     Kolmogorov_Smirnov_results.negative_cumulative_gain = calculate_negative_cumulative_gain(targets, outputs);

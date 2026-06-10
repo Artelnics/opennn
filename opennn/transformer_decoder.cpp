@@ -21,16 +21,16 @@ namespace opennn
 namespace
 {
 
-constexpr float pad_token_id     = 0.0f;
-constexpr float unknown_token_id = 1.0f;
-constexpr float start_token_id   = 2.0f;
-constexpr float end_token_id     = 3.0f;
+constexpr Index pad_token_id     = 0;
+constexpr Index unknown_token_id = 1;
+constexpr Index start_token_id   = 2;
+constexpr Index end_token_id     = 3;
 
 bool is_printable_token(Index token_id)
 {
-    return token_id != static_cast<Index>(pad_token_id)
-        && token_id != static_cast<Index>(start_token_id)
-        && token_id != static_cast<Index>(end_token_id);
+    return token_id != pad_token_id
+        && token_id != start_token_id
+        && token_id != end_token_id;
 }
 
 TransformerDecoder::SamplingConfig greedy_config()
@@ -79,9 +79,9 @@ Index sample_token(VectorR& probabilities,
         vector<pair<float, Index>> indexed(vocabulary_size);
         for (Index i = 0; i < vocabulary_size; ++i) indexed[i] = {probabilities(i), i};
         nth_element(indexed.begin(),
-                         indexed.begin() + config.top_k,
-                         indexed.end(),
-                         [](const auto& a, const auto& b) { return a.first > b.first; });
+                    indexed.begin() + config.top_k,
+                    indexed.end(),
+                    [](const auto& a, const auto& b) { return a.first > b.first; });
         vector<bool> keep(vocabulary_size, false);
         for (Index i = 0; i < config.top_k; ++i) keep[indexed[i].second] = true;
         for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
@@ -102,10 +102,10 @@ Index sample_token(VectorR& probabilities,
                          [](const auto& a, const auto& b) { return a.first > b.first; });
             float cumulative_probability = 0.0f;
             vector<bool> keep(vocabulary_size, false);
-            for (size_t i = 0; i < sorted_probabilities.size(); ++i)
+            for (const auto& [probability, token_id] : sorted_probabilities)
             {
-                cumulative_probability += sorted_probabilities[i].first / total;
-                keep[sorted_probabilities[i].second] = true;
+                cumulative_probability += probability / total;
+                keep[token_id] = true;
                 if (cumulative_probability >= config.top_p) break;
             }
             for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
@@ -167,9 +167,8 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 
     const Index source_bytes = get_aligned_bytes(batch_size * input_sequence_length, Type::FP32);
     const Index target_bytes = get_aligned_bytes(batch_size * decoder_sequence_length, Type::FP32);
-    const Index total_bytes  = source_bytes + target_bytes;
 
-    arena.resize_bytes(total_bytes, Device::CUDA);
+    arena.resize_bytes(source_bytes + target_bytes, Device::CUDA);
 
     char* const base = arena.as<char>();
     source_ids_device = TensorView(base,
@@ -189,8 +188,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 
     inputs = {target_ids_device, source_ids_device};
 
-    const auto& last_layer = transformer.get_layers().back();
-    const Index vocabulary_size = last_layer->get_output_shape().back();
+    const Index vocabulary_size = transformer.get_layers().back()->get_output_shape().back();
     distribution = VectorR::Zero(vocabulary_size);
     bf16_staging.assign(static_cast<size_t>(vocabulary_size), 0);
 }
@@ -212,12 +210,10 @@ void TransformerDecoder::identify_layer_ranges()
              format("TransformerDecoder: layer 1 expected to be 'encoder_embedding', found '{}'.", layers[1]->get_label()));
     encoder_embedding_index = 1;
 
-    const auto& source_layers = transformer.get_source_layers();
     Index first_cross_attention_index = -1;
     for (Index i = 0; i < layers_number; ++i)
     {
-        const string& name = layers[i]->get_label();
-        if (name.starts_with("cross_attention_"))
+        if (layers[i]->get_label().starts_with("cross_attention_"))
         {
             first_cross_attention_index = i;
             break;
@@ -226,7 +222,7 @@ void TransformerDecoder::identify_layer_ranges()
     throw_if(first_cross_attention_index < 0,
              "TransformerDecoder: no 'cross_attention_*' layer found.");
 
-    const vector<Index>& cross_sources = source_layers[first_cross_attention_index];
+    const vector<Index>& cross_sources = transformer.get_source_layers()[first_cross_attention_index];
     throw_if(cross_sources.size() < 2 || cross_sources[1] < 0,
              "TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
 
@@ -251,12 +247,10 @@ void TransformerDecoder::reset_per_prompt_state()
     target_ids(0, 0) = start_token_id;
     history.clear();
 
-    const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
-    constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
     device::copy_async(target_ids_device.data,
                        target_ids.data(),
-                       batch_size * decoder_sequence_length * Index(sizeof(float)),
+                       target_ids_device.byte_size(),
                        device::CopyKind::HostToDevice,
                        stream);
 }
@@ -272,21 +266,23 @@ void TransformerDecoder::encode_source(const string& source)
 
     const vector<string> source_tokens = tokenize(source);
     Index write_index = 1;
-    for (size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; ++i, ++write_index)
+    for (const string& token : source_tokens)
     {
-        const auto it = input_vocabulary_map.find(source_tokens[i]);
+        if (write_index >= input_sequence_length) break;
+
+        const auto it = input_vocabulary_map.find(token);
         source_ids(0, write_index) = (it != input_vocabulary_map.end())
                                          ? static_cast<float>(it->second)
                                          : unknown_token_id;
+        ++write_index;
     }
     if (write_index < input_sequence_length)
         source_ids(0, write_index) = end_token_id;
 
-    constexpr Index batch_size = 1;
     cudaStream_t stream = Backend::get_compute_stream();
     device::copy_async(source_ids_device.data,
                        source_ids.data(),
-                       batch_size * input_sequence_length * Index(sizeof(float)),
+                       source_ids_device.byte_size(),
                        device::CopyKind::HostToDevice,
                        stream);
     transformer.forward_propagate(inputs, *forward_propagation, false,
@@ -350,8 +346,7 @@ string TransformerDecoder::assemble_output_string() const
     for (Index i = 1; i < decoder_sequence_length; ++i)
     {
         const Index token_id = static_cast<Index>(target_ids(0, i));
-        if (token_id == static_cast<Index>(end_token_id) ||
-            token_id == static_cast<Index>(pad_token_id)) break;
+        if (token_id == end_token_id || token_id == pad_token_id) break;
 
         const auto it = output_inverse_vocabulary_map.find(token_id);
         if (it == output_inverse_vocabulary_map.end()) continue;
@@ -405,7 +400,7 @@ string TransformerDecoder::decode(const string& source,
                            device::CopyKind::HostToDevice,
                            stream);
 
-        if (next_token_id == static_cast<Index>(end_token_id))
+        if (next_token_id == end_token_id)
             break;
 
         if (on_token && is_printable_token(next_token_id))
@@ -433,7 +428,7 @@ string TransformerDecoder::decode_to_stream(const string& source,
     return decode(source, config, [&](const string& token)
     {
         const bool is_punctuation = token.size() == 1
-            && string(",.!?;:").find(token[0]) != string::npos;
+            && string_view(",.!?;:").find(token[0]) != string_view::npos;
 
         if (!first_token && !is_punctuation) out << ' ';
         out << token << flush;
@@ -456,8 +451,7 @@ void TransformerDecoder::chat(const SamplingConfig& config)
     while (true)
     {
         cout << "\n> " << flush;
-        if (!getline(cin, prompt_line)) break;
-        if (prompt_line.empty()) break;
+        if (!getline(cin, prompt_line) || prompt_line.empty()) break;
 
         decode_to_stream(prompt_line, config, cout);
         cout << "\n";

@@ -204,7 +204,6 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 {
     const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 
-    // Data file
 
     const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
@@ -219,25 +218,21 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_future_time_steps(parse_int(read_json_string(data_source_element, "StepsAhead"), "StepsAhead"));
     set_codification(read_json_string(data_source_element, "Codification"));
 
-    // Variables
 
     const Json* variables_element = data_set_element->find("Variables");
 
     variables_from_JSON(variables_element);
 
-    // Samples
 
     const Json* samples_element = data_set_element->find("Samples");
 
     samples_from_JSON(samples_element);
 
-    // Missing values
 
     const Json* missing_values_element = data_set_element->find("MissingValues");
 
     missing_values_from_JSON(missing_values_element);
 
-    // Preview data
 
     const Json* preview_data_element = data_set_element->find("PreviewData");
 

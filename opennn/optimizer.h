@@ -11,6 +11,7 @@
 #include <functional>
 #include "batch.h"
 #include "json.h"
+#include "loss.h"
 #include "tensor_utilities.h"
 #include "thread_safe_queue.h"
 
@@ -19,13 +20,12 @@ namespace opennn
 
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
-class Loss;
 class NeuralNetwork;
 struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
-struct TrainingResults;
+struct TrainingResult;
 struct BatchFillSession;
 
 class Optimizer
@@ -33,20 +33,13 @@ class Optimizer
 
 public:
 
-    struct EpochStats
-    {
-        float error = 0.0f;
-        float accuracy = 0.0f;
-    };
-
     Optimizer(Loss* = nullptr);
-    virtual ~Optimizer() = default;
+    virtual ~Optimizer();
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
                                  MaximumValidationErrorIncreases,
-                                 MaximumSelectionErrorIncreases = MaximumValidationErrorIncreases,
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
@@ -62,15 +55,15 @@ public:
 
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
-    void set_num_workers(int new_num_workers) { num_workers = max(1, new_num_workers); }
-    int  get_num_workers() const { return num_workers; }
+    void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
+    int  get_workers_number() const { return workers_number; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-    virtual TrainingResults train() = 0;
+    virtual TrainingResult train() = 0;
 
     Index get_maximum_batch_size() const;
 
@@ -93,7 +86,7 @@ protected:
     void set_scaling();
     void set_unscaling();
 
-    bool check_stopping_condition(TrainingResults&, Index epoch, float elapsed_time,
+    bool check_stopping_condition(TrainingResult&, Index epoch, float elapsed_time,
                                    float training_error, Index validation_failures) const;
 
     void write_common_json(JsonWriter&) const;
@@ -101,6 +94,19 @@ protected:
 
     void setup_device_training();
     void teardown_device_training();
+
+    void warmup_device_training(ForwardPropagation& training_forward_propagation,
+                                BackPropagation& training_back_propagation,
+                                ThreadSafeQueue<Batch*>& training_empty_queue,
+                                const vector<vector<Index>>& training_batches,
+                                const vector<Index>& input_feature_indices,
+                                const vector<Index>& decoder_feature_indices,
+                                const vector<Index>& target_feature_indices,
+                                const function<void(BackPropagation&)>& update,
+                                ForwardPropagation* validation_forward_propagation = nullptr,
+                                ThreadSafeQueue<Batch*>* validation_empty_queue = nullptr,
+                                const vector<vector<Index>>* validation_batches = nullptr,
+                                Batch* fixed_training_batch = nullptr);
 
     void prefetch_batch(Batch& batch);
 
@@ -121,6 +127,7 @@ protected:
 
         vector<unique_ptr<Batch>> training_pool;
         vector<unique_ptr<Batch>> validation_pool;
+        unique_ptr<Batch> fixed_training_batch;
 
         bool validation_uses_training_pool = false;
 
@@ -145,28 +152,42 @@ protected:
         bool is_training,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_effective_num_workers(const NeuralNetwork&) const;
+    int get_batch_workers_number(const NeuralNetwork&) const;
     int get_batch_pool_size(const NeuralNetwork&) const;
-    void apply_effective_num_workers(const NeuralNetwork&);
 
-    EpochStats train_epoch(bool tracks_accuracy,
-                           ForwardPropagation& forward_propagation,
-                           BackPropagation& back_propagation,
-                           ThreadSafeQueue<Batch*>& empty_queue,
-                           const vector<vector<Index>>& batches,
-                           const vector<Index>& input_feature_indices,
-                           const vector<Index>& decoder_feature_indices,
-                           const vector<Index>& target_feature_indices,
-                           const function<void(BackPropagation&)>& update,
-                           bool show_progress = true);
+    struct EpochLoopContext;
+    Loss::EvaluationResult run_epoch_loop(EpochLoopContext& context);
 
-    EpochStats evaluate_epoch(bool tracks_accuracy,
-                              ForwardPropagation& forward_propagation,
-                              ThreadSafeQueue<Batch*>& empty_queue,
-                              const vector<vector<Index>>& batches,
-                              const vector<Index>& input_feature_indices,
-                              const vector<Index>& decoder_feature_indices,
-                              const vector<Index>& target_feature_indices);
+    void reset_graph_capture();
+
+    bool graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const;
+    Loss::EvaluationResult run_graph_epoch(ForwardPropagation& forward_propagation,
+                                           BackPropagation& back_propagation,
+                                           ThreadSafeQueue<Batch*>& empty_queue,
+                                           const vector<vector<Index>>& batches,
+                                           const vector<Index>& input_feature_indices,
+                                           const vector<Index>& decoder_feature_indices,
+                                           const vector<Index>& target_feature_indices,
+                                           bool show_progress,
+                                           Batch* fixed_device_batch);
+
+    Loss::EvaluationResult train_epoch(ForwardPropagation& forward_propagation,
+                                       BackPropagation& back_propagation,
+                                       ThreadSafeQueue<Batch*>& empty_queue,
+                                       const vector<vector<Index>>& batches,
+                                       const vector<Index>& input_feature_indices,
+                                       const vector<Index>& decoder_feature_indices,
+                                       const vector<Index>& target_feature_indices,
+                                       const function<void(BackPropagation&)>& update,
+                                       bool show_progress = true,
+                                       Batch* fixed_device_batch = nullptr);
+
+    Loss::EvaluationResult evaluate_epoch(ForwardPropagation& forward_propagation,
+                                          ThreadSafeQueue<Batch*>& empty_queue,
+                                          const vector<vector<Index>>& batches,
+                                          const vector<Index>& input_feature_indices,
+                                          const vector<Index>& decoder_feature_indices,
+                                          const vector<Index>& target_feature_indices);
 
     Loss* loss = nullptr;
 
@@ -184,9 +205,13 @@ protected:
 
     string name;
 
-    int num_workers = 2;
+    int workers_number = 2;
 
     bool has_recurrent_layers_ = false;
+
+    void* training_graph_exec = nullptr;
+    bool  training_graph_captured = false;
+    function<void(BackPropagation&)> graph_update;
 };
 
 struct OptimizerData
@@ -201,17 +226,20 @@ struct OptimizerData
     Buffer data;
     vector<TensorView> views;
 
-    // Shared state across all optimizers
     VectorR potential_parameters;
     VectorR training_direction;
     float initial_learning_rate = 0.0f;
     Index iteration = 0;
+
+    Buffer graph_step{Device::CUDA};
+    Buffer graph_effective_lr{Device::CUDA};
+    Buffer graph_effective_eps{Device::CUDA};
 };
 
-struct TrainingResults
+struct TrainingResult
 {
-    TrainingResults(const Index = 0);
-    virtual ~TrainingResults() = default;
+    TrainingResult(const Index = 0);
+    virtual ~TrainingResult() = default;
 
     string write_stopping_condition() const;
 

@@ -33,8 +33,7 @@ class ImageDataset : public Dataset
 
 public:
 
-    ImageDataset(const Index = 0, const Shape& = {0, 0, 0}, const Shape& = {0});
-
+    ImageDataset() = default;
     ImageDataset(const filesystem::path&);
 
     Index get_channels_number() const;
@@ -46,16 +45,12 @@ public:
                            float min_range,
                            float max_range);
 
-    Index get_samples_number() const override;
-    using Dataset::get_samples_number;
-
-    void set_image_padding(int new_padding) { padding = new_padding; }
+    using Dataset::set_storage_mode;
+    void set_storage_mode(StorageMode) override;
 
     VectorI calculate_target_distribution() const override;
 
-    void read_bmp(const Shape& new_input_shape = { 0, 0, 0 });
-
-    void set_data_random();
+    void read_images();
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -76,24 +71,19 @@ public:
 
 private:
 
-    bool try_load_image_cache(const Shape& new_input_shape,
-                              const chrono::high_resolution_clock::time_point& start_time);
-
-    Index padding = 0;
+    void write_image_cache(const vector<filesystem::path>& paths);
 
     AugmentationSettings augmentation;
+
     vector<float> input_scale;
     vector<float> input_offset;
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
-    uint64_t record_bytes = 0;
-    uint64_t labels_offset = 0;
+
+    uint64_t pixel_number = 0;
     uint32_t classes_number = 0;
-    vector<int32_t> labels_ram;
-
-    vector<string> labels_tokens;
-
+    vector<int32_t> sample_labels;
 };
 
 }
