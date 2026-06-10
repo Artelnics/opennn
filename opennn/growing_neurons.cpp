@@ -128,15 +128,29 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 continue;
             }
 
+            // Score each candidate size by the best (minimum) validation error it
+            // reached during training, not by get_validation_error() (the final
+            // epoch). Validation early-stopping is off by default and maximum_epochs
+            // is large, so every candidate trains far past its best-generalizing
+            // epoch into the over-trained tail, where the final-epoch validation
+            // error grows with model capacity and makes selection collapse to the
+            // smallest network and underfit. The best-epoch value is the size's true
+            // achievable generalization. (Equivalent to dev-refactor commit
+            // 26cd4634a, adapted to this trials loop. validation_error_history is
+            // trimmed to the real epochs, or size()==0 when there is no validation.)
+            const type trial_validation_error = training_results.validation_error_history.size() > 0
+                ? training_results.validation_error_history.minCoeff()
+                : training_results.get_validation_error();
+
             if(display)
                 cout << "Trial: " << trial+1 << endl
                      << "Training error: " << training_results.get_training_error() << endl
-                     << "Validation error: " << training_results.get_validation_error() << endl;
+                     << "Validation error: " << trial_validation_error << endl;
 
-            if(training_results.get_validation_error() < minimum_validation_error)
+            if(trial_validation_error < minimum_validation_error)
             {
                 minimum_training_error = training_results.get_training_error();
-                minimum_validation_error = training_results.get_validation_error();
+                minimum_validation_error = trial_validation_error;
 
                 neuron_selection_results.training_error_history(epoch) = minimum_training_error;
                 neuron_selection_results.validation_error_history(epoch) = minimum_validation_error;
