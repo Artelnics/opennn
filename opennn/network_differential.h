@@ -18,7 +18,7 @@ class NeuralNetwork;
 
 struct NetworkDifferential
 {
-    enum class Kind { Scale, Dense, Unscale, Bound };
+    enum class Kind { Scale, Dense, Unscale, Bound, Activate };
 
     struct LayerSnapshot
     {
@@ -173,6 +173,8 @@ struct NetworkDifferential
                 activation = unscale_forward(layer, activation);
             else if (layer.kind == Kind::Bound)
                 activation = layer.bounding_active ? activation.cwiseMax(layer.minimum).cwiseMin(layer.maximum).eval() : activation;
+            else if (layer.kind == Kind::Activate)
+                activation = activation_forward(layer.activation, activation);
             else
                 activation = activation_forward(layer.activation, (layer.weights.transpose() * activation + layer.bias).eval());
 
@@ -200,6 +202,8 @@ struct NetworkDifferential
                 carried = (carried.array() * unscale_derivative(layer, layer_inputs[i]).array()).matrix();
             else if (layer.kind == Kind::Bound)
                 carried = (carried.array() * bound_derivative(layer, layer_inputs[i]).array()).matrix();
+            else if (layer.kind == Kind::Activate)
+                carried = (carried.array() * activation_derivative(layer.activation, layer_outputs[i]).array()).matrix();
             else
             {
                 const VectorR through_activation = (carried.array() * activation_derivative(layer.activation, layer_outputs[i]).array()).matrix();

@@ -11,6 +11,7 @@
 #include "statistics.h"
 #include "neural_network.h"
 #include "dense_layer.h"
+#include "activation_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
@@ -80,6 +81,15 @@ void NetworkDifferential::build(const NeuralNetwork& network)
             snapshot.bias = views[0].as_vector();
             snapshot.weights = views[1].as_matrix();
             snapshot.activation = dense->get_activation_function();
+
+            throw_if(snapshot.activation == ActivationFunction::Softmax,
+                     "NetworkDifferential: softmax activation is not supported");
+        }
+        else if (type == LayerType::Activation)
+        {
+            const Activation* activation_layer = static_cast<const Activation*>(layer.get());
+            snapshot.kind = Kind::Activate;
+            snapshot.activation = activation_layer->get_output_activation();
 
             throw_if(snapshot.activation == ActivationFunction::Softmax,
                      "NetworkDifferential: softmax activation is not supported");
