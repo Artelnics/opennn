@@ -1,5 +1,0 @@
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib/jpeg-static.lib
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib/pkgconfig/libjpeg.pc
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfig.cmake
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfigVersion.cmake
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboTargets.cmake

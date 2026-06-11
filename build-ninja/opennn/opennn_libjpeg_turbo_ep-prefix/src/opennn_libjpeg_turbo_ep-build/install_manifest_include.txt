@@ -1,4 +1,0 @@
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/include/jconfig.h
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/include/jerror.h
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/include/jmorecfg.h
-C:/Users/Roberto/Documents/opennn/build-ninja/_deps/opennn_libjpeg_turbo-install/include/jpeglib.h

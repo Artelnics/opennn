@@ -11,13 +11,19 @@
 #include "pch.h"
 #include "statistics.h"
 #include "variable.h"
-#include "formula_expression.h"
+#include "constraints_utilities.h"
 
 namespace opennn
 {
 
 class NeuralNetwork;
 class Dataset;
+
+// Analytic snapshot of a feedforward surrogate (Scaling / Dense / Unscaling):
+// reproduces forward(x) and the exact reverse-mode input-VJP (df/dx)^T v from
+// the network's public getters, so the output-constraint repair gets an exact,
+// cheap Jacobian. Defined in the .cpp; rebuilt per optimization run.
+struct NetworkDifferential;
 
 class ResponseOptimization
 {
@@ -81,6 +87,8 @@ public:
 
     ResponseOptimization(NeuralNetwork* = nullptr);
 
+    ~ResponseOptimization();
+
     void set(NeuralNetwork* = nullptr);
 
     void clear_conditions();
@@ -110,6 +118,8 @@ public:
     void set_evaluations_number(const int new_evaluations_number);
     void set_relative_tolerance(float new_relative_tolerance);
     void set_max_pareto_number(const Index new_max_pareto_number);
+    void set_max_total_evaluations(const Index new_max_total_evaluations);
+    void set_initial_sampling_factor(const Index new_initial_sampling_factor);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
@@ -136,7 +146,8 @@ public:
                                                                 const Domain& output_domain) const;
 
     pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
-                                                                const Domain& output_domain) const;
+                                                                const Domain& output_domain,
+                                                                const Index evaluations_multiplier = 1) const;
 
     pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                   const MatrixR& feasible_outputs,
@@ -161,10 +172,6 @@ private:
     vector<NamedColumn> build_input_columns_for_formula() const;
     vector<NamedColumn> build_output_columns_for_formula() const;
 
-    void apply_affine_input_swap(MatrixR& random_inputs,
-                                 const FormulaConstraint& formula_constraint,
-                                 const Domain& input_domain) const;
-
     bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
 
@@ -172,7 +179,15 @@ private:
                                                                   const Domain& output_domain,
                                                                   Index evaluations_count) const;
 
+    // Rebuilds + self-validates the analytic surrogate Jacobian for the current
+    // network. Leaves network_differential null (finite-difference fallback) when
+    // there is no output constraint, the network is forecasting/unsupported, or
+    // the analytic forward fails to match calculate_outputs.
+    void initialize_network_differential() const;
+
     NeuralNetwork* neural_network = nullptr;
+
+    mutable unique_ptr<NetworkDifferential> network_differential;
 
     map<string, Condition> conditions;
 
@@ -192,6 +207,26 @@ private:
     float relative_tolerance = 1e-6f;
 
     Index max_pareto_number = 10000;
+
+    // Optional hard cap on the TOTAL number of surrogate evaluations spent
+    // across the whole run (initial sampling + every per-Pareto-point local
+    // sampling in every iteration). 0 = unlimited (default; preserves the
+    // original behaviour exactly). When > 0, the MO/SO loop stops launching
+    // new sampling calls once `evaluations_used` reaches this budget, then
+    // returns the best front found so far. Used to run IDC under a matched
+    // surrogate-evaluation budget against population-based baselines.
+    Index max_total_evaluations = 0;
+    mutable Index evaluations_used = 0;
+
+    // Multiplier on the candidate count of the FIRST (initial, full-domain)
+    // multi-objective sampling only: the initial pass draws
+    // evaluations_number * initial_sampling_factor candidates, while every
+    // per-Pareto-point local sampling keeps the base evaluations_number. A
+    // larger initial set gives a broader domain to seed the contraction from.
+    // 1 = unchanged (default; preserves the original behaviour exactly). The
+    // extra initial cost is counted against max_total_evaluations like any
+    // other sampling, so the matched budget still holds.
+    Index initial_sampling_factor = 1;
 
     float deformation_domain_factor = 1.0f;
 

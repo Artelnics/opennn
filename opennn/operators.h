@@ -991,9 +991,10 @@ private:
     mutable Buffer dweight_space_buf   {Device::CUDA};
     mutable Buffer workspace_buf       {Device::CUDA};
     mutable Buffer reserve_space_buf   {Device::CUDA};
-    mutable Buffer y_buf               {Device::CUDA};
-    mutable Buffer dy_buf              {Device::CUDA};
-    mutable Buffer seq_lengths_host_buf{Device::CPU};
+    mutable Buffer y_buf               {Device::CUDA};   // (B, T, H) rank-3 y from cuDNN
+    mutable Buffer dy_buf              {Device::CUDA};   // (B, T, H) rank-3 dy for cuDNN
+    mutable Buffer dx_scratch_buf      {Device::CUDA};   // (B, T, F) dx sink when input_delta is unused
+    mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
     mutable Buffer seq_lengths_dev_buf {Device::CUDA};
 
     mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
@@ -1008,6 +1009,8 @@ private:
     mutable Index cached_time_steps = -1;
     mutable Index cached_input_features  = -1;
     mutable Index cached_output_features = -1;
+
+    mutable vector<float> grad_tls_buf_;
 };
 
 }

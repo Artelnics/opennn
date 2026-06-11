@@ -133,7 +133,7 @@ protected:
         vector<unique_ptr<Batch>> training_pool;
         vector<unique_ptr<Batch>> validation_pool;
         unique_ptr<Batch> fixed_training_batch;
-        unique_ptr<Batch> graph_slot;
+        vector<unique_ptr<Batch>> graph_slot_pool;
 
         bool validation_uses_training_pool = false;
 
@@ -216,12 +216,20 @@ protected:
 
     bool has_recurrent_layers_ = false;
 
-    // Slot ring for the graph epoch: [0] is the shared fixed device batch, [1]
-    // doubles the buffering so uploads overlap with graph execution. One
-    // instantiated graph per slot (identical topology, different base address).
-    static constexpr int graph_slots_count = 2;
-    array<device::GraphExecHandle, graph_slots_count> training_graph_execs;
+    // Slot ring for the graph epoch. The staged (host FP32) path groups
+    // graph_group_size iterations into one mega-graph whose H2D nodes read each
+    // slot's pinned host buffer, and ping-pongs two groups over the ring; the
+    // upload path (device-resident / BF16) uses slots [0..1] with one graph per
+    // slot. Two execs either way (per group parity or per slot).
+    static constexpr int graph_group_size = 8;
+    static constexpr int graph_slots_count = 2 * graph_group_size;
+    array<device::GraphExecHandle, 2> training_graph_execs;
     array<Batch*, graph_slots_count> graph_slots{};
+    // Capture-internal fork/join events so the mega-graph's H2D nodes run on a
+    // forked stream and overlap compute. Replays re-record them; they must not
+    // be used for anything else.
+    array<CudaEvent, 2> graph_fork_events;
+    array<CudaEvent, graph_slots_count> graph_copy_done_events;
     function<void(BackPropagation&)> graph_update;
     optional<bool> use_cuda_graph;
 };

@@ -1440,7 +1440,7 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int batch,
 
     delta[idx] = static_cast<T>(dz);
 
-    atomicAdd(bias_grad + j, dz);
+    (void)bias_grad;
 }
 
 template<typename T>

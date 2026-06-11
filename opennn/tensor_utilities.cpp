@@ -92,36 +92,6 @@ static void fill_cuda(const TensorView& view, float value)
                                view.get_descriptor(), view.data, &value));
 }
 
-static void initialize_cuda_backend(cudaStream_t& compute_stream,
-                                    cudaStream_t& transfer_stream,
-                                    cublasHandle_t& cublas_handle,
-                                    cublasLtHandle_t& cublas_lt_handle,
-                                    cudnnHandle_t& cudnn_handle,
-                                    cudnnOpTensorDescriptor_t& operator_sum_descriptor)
-{
-    if (!device::has_cuda_device())
-    {
-        cerr << "OpenNN: no CUDA device available; running on CPU.\n";
-        return;
-    }
-
-    compute_stream = device::create_stream(cudaStreamNonBlocking);
-    transfer_stream = device::create_stream(cudaStreamNonBlocking);
-
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                                           CUDNN_OP_TENSOR_ADD,
-                                           CUDNN_DATA_FLOAT,
-                                           CUDNN_NOT_PROPAGATE_NAN));
-}
-
 static void destroy_cuda_backend(cudaStream_t& compute_stream,
                                  cudaStream_t& transfer_stream,
                                  cublasHandle_t& cublas_handle,
@@ -180,15 +150,6 @@ static bool uses_cuda_fill(const TensorView& view)
 static void fill_cuda(const TensorView&, float)
 {
     throw runtime_error("TensorView::fill requires CUDA support for CUDA tensors.");
-}
-
-static void initialize_cuda_backend(cudaStream_t&,
-                                    cudaStream_t&,
-                                    cublasHandle_t&,
-                                    cublasLtHandle_t&,
-                                    cudnnHandle_t&,
-                                    cudnnOpTensorDescriptor_t&)
-{
 }
 
 static void destroy_cuda_backend(cudaStream_t&,
@@ -275,15 +236,20 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
 
+    // Small batch fills (e.g. batch_size 100 issued from concurrent worker
+    // threads) lose far more to the OpenMP fork-join and thread
+    // oversubscription than the copy itself costs; run those serially.
+    const bool parallel_fill = rows_number * columns_number >= 65536;
+
     if (contiguous)
     {
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallel_fill)
         for (Index i = 0; i < rows_number; ++i)
             memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
     }
     else
     {
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallel_fill)
         for (Index i = 0; i < rows_number; ++i)
         {
             const Index src_row = row_indices[i];
@@ -299,12 +265,31 @@ void fill_tensor_data(const MatrixR& matrix,
 Backend::Backend()
 {
     set_threads_number(0);
-    initialize_cuda_backend(compute_stream,
-                            transfer_stream,
-                            cublas_handle,
-                            cublas_lt_handle,
-                            cudnn_handle,
-                            operator_sum_descriptor);
+
+#ifdef OPENNN_HAS_CUDA
+    int device_count = 0;
+    const cudaError_t status = cudaGetDeviceCount(&device_count);
+    if (status != cudaSuccess || device_count == 0)
+    {
+        cudaGetLastError();
+        cerr << "OpenNN: no CUDA device available (" << cudaGetErrorString(status)
+             << "); running on CPU.\n";
+        return;
+    }
+
+    CHECK_CUDA(cudaStreamCreate(&compute_stream));
+    transfer_stream = device::create_stream(cudaStreamNonBlocking);
+
+    CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
+    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
+
+    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
+    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+#endif
 }
 
 Backend::~Backend()
@@ -331,7 +316,8 @@ void Backend::set_threads_number(int num_threads)
 
     Eigen::setNbThreads(num_threads);
     omp_set_num_threads(num_threads);
-    omp_set_dynamic(0);
+    omp_set_dynamic(1);
+    omp_set_max_active_levels(1);
 }
 
 Backend& Backend::instance()

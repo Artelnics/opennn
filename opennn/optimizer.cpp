@@ -23,6 +23,7 @@
 #include "string_utilities.h"
 #include <atomic>
 #include <chrono>
+#include <cstring>
 #include <exception>
 #include <mutex>
 #include <thread>
@@ -338,15 +339,21 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
               pools.training_pool,
               training_batch_size);
 
+    graph_slots = {};
+
     if (neural_network.is_gpu() && device::is_cuda_build())
     {
         pools.fixed_training_batch = make_unique<Batch>(training_batch_size, &dataset, config);
+        graph_slots[0] = pools.fixed_training_batch.get();
 
         if (cuda_graph_requested())
-            pools.graph_slot = make_unique<Batch>(training_batch_size, &dataset, config);
+            for (int i = 1; i < graph_slots_count; ++i)
+            {
+                pools.graph_slot_pool.push_back(
+                    make_unique<Batch>(training_batch_size, &dataset, config));
+                graph_slots[size_t(i)] = pools.graph_slot_pool.back().get();
+            }
     }
-
-    graph_slots = {pools.fixed_training_batch.get(), pools.graph_slot.get()};
 
     pools.validation_uses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
@@ -1242,23 +1249,79 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     cudaStream_t compute = Backend::get_compute_stream();
     cudaStream_t transfer = Backend::get_transfer_stream();
 
-    // Slot ring: [0] is the shared fixed device batch, [1] (when allocated)
-    // doubles the buffering so the upload of batch i+1 overlaps with the graph
-    // executing batch i. Each slot gets its own instantiated graph.
-    array<Batch*, graph_slots_count> slots = {fixed_device_batch, nullptr};
-    if (graph_slots[0] == fixed_device_batch && graph_slots[1])
-        slots[1] = graph_slots[1];
-    const int slots_count = slots[1] ? graph_slots_count : 1;
+    // Slot ring: [0] is the shared fixed device batch; the rest come from the
+    // dedicated graph slot pool. The staged path needs the full ring (two
+    // groups of graph_group_size); the upload path uses at most two slots.
+    array<Batch*, graph_slots_count> slots = {};
+    slots[0] = fixed_device_batch;
+    int usable_slots = 1;
+    if (graph_slots[0] == fixed_device_batch)
+        while (usable_slots < graph_slots_count && graph_slots[size_t(usable_slots)])
+        {
+            slots[size_t(usable_slots)] = graph_slots[size_t(usable_slots)];
+            ++usable_slots;
+        }
+
+    const bool profile_this = profile_enabled_from_env();
+    if (profile_this)
+    {
+        ::opennn::enabled() = true;
+        ::opennn::global_stats().clear();
+    }
+    const auto epoch_t0 = chrono::steady_clock::now();
+    WorkerProfileCounters worker_profile;
 
     auto session = start_batch_workers(empty_queue, batches,
                                        input_feature_indices,
                                        decoder_feature_indices,
                                        target_feature_indices,
                                        /*is_training=*/true,
-                                       nullptr);
+                                       profile_this ? &worker_profile : nullptr);
 
     const Index progress_step = max(Index(1), batches_number / 200);
     if (show_progress) display_progress_bar(0, int(batches_number));
+
+    // Host-loaded FP32 data takes the staged path: the H2D copy is captured
+    // INSIDE each slot's graph, reading the slot's own pinned host buffer at a
+    // fixed address. Per iteration the main thread only does a small host
+    // memcpy + one graph launch, instead of several CUDA API calls whose issue
+    // latency starves the GPU. Device-resident (gather) and BF16 batches keep
+    // the upload-outside-the-graph path.
+    const bool staged_h2d = !loss->get_dataset()->is_device_resident()
+                         && fixed_device_batch->fp32_staging.empty();
+
+    const auto stage_into_slot = [](const Batch& source, Batch& slot)
+    {
+        const Index samples = source.current_sample_count;
+        slot.current_sample_count = samples;
+        slot.needs_device_copy = false;
+
+        const auto copy_section = [&](const BatchSlot& from, BatchSlot& to)
+        {
+            if (!from.host || !to.host || from.features_number <= 0) return;
+            memcpy(to.host, from.host,
+                   size_t(samples) * size_t(from.features_number) * sizeof(float));
+        };
+
+        copy_section(source.input,   slot.input);
+        copy_section(source.decoder, slot.decoder);
+        copy_section(source.target,  slot.target);
+    };
+
+    const auto issue_slot_h2d = [](Batch& slot, cudaStream_t stream)
+    {
+        const auto copy_section = [&](BatchSlot& section)
+        {
+            if (!section.host || !section.buffer.data || section.features_number <= 0) return;
+            device::copy_async(section.buffer.data, section.host,
+                               slot.current_sample_count * section.features_number * Index(sizeof(float)),
+                               device::CopyKind::HostToDevice, stream);
+        };
+
+        copy_section(slot.input);
+        copy_section(slot.decoder);
+        copy_section(slot.target);
+    };
 
     // The update closure is copied so the eager fallback keeps working for the
     // rest of the epoch after a capture failure clears the member.
@@ -1277,58 +1340,229 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     Batch* host_batch = nullptr;
     try
     {
-        for (Index iteration = 0; iteration < batches_number; ++iteration)
+        if (staged_h2d
+            && usable_slots == graph_slots_count
+            && batches_number >= Index(graph_group_size))
         {
-            const size_t slot_index = size_t(iteration % slots_count);
-            Batch& slot = *slots[slot_index];
-            device::GraphExecHandle& exec = training_graph_execs[slot_index];
+            // Mega-graph path: each captured graph covers graph_group_size
+            // iterations (H2D from the slots' pinned staging + compute), and
+            // two groups ping-pong over the ring. Per group the host pays one
+            // event sync, M small memcpys and one launch — cheap enough on
+            // WSL's expensive CUDA API to keep the GPU permanently fed.
+            constexpr Index M = Index(graph_group_size);
+            const Index groups = batches_number / M;
+            const Index group_progress_step = max(Index(1), groups / 200);
 
-            host_batch = session->wait(iteration);
-
-            // The graph that last read this slot must finish before the upload
-            // overwrites it (the slot's event is recorded on compute below).
-            if (slot.h2d_done_recorded)
-                device::stream_wait_event(transfer, slot.h2d_done_event);
-
-            host_batch->upload_to_device_batch_async(slot, transfer);
-            host_batch->wait_h2d_on_compute_stream();
-
-            if (exec)
+            for (Index group = 0; group < groups; ++group)
             {
-                device::launch_graph(exec, compute);
-            }
-            else if (graph_update)
-            {
-                run_compute_step(slot);
+                const size_t parity = size_t(group & 1);
+                const size_t base = parity * size_t(M);
+                Batch& event_slot = *slots[base + size_t(M) - 1];
+                device::GraphExecHandle& exec = training_graph_execs[parity];
 
-                try
                 {
-                    device::synchronize(compute);
-                    device::StreamCapture capture(compute);
+                    PROFILE_SCOPE_HOST("step:group_sync");
+                    // The previous same-parity group read these slots' staging;
+                    // it must be complete before the host overwrites it.
+                    if (event_slot.h2d_done_recorded)
+                        device::synchronize_event(event_slot.h2d_done_event);
+                }
+
+                for (Index m = 0; m < M; ++m)
+                {
+                    {
+                        PROFILE_SCOPE_HOST("step:wait_fill");
+                        host_batch = session->wait(group * M + m);
+                    }
+                    {
+                        PROFILE_SCOPE_HOST("step:stage_copy");
+                        stage_into_slot(*host_batch, *slots[base + size_t(m)]);
+                        // Consumed by the host memcpy: recycle immediately.
+                        empty_queue.push(host_batch);
+                        host_batch = nullptr;
+                    }
+                }
+
+                if (exec)
+                {
+                    PROFILE_SCOPE_HOST("step:graph_launch");
+                    device::launch_graph(exec, compute);
+                }
+                else if (graph_update)
+                {
+                    for (Index m = 0; m < M; ++m)
+                    {
+                        Batch& slot = *slots[base + size_t(m)];
+                        issue_slot_h2d(slot, compute);
+                        run_compute_step(slot);
+                    }
+
+                    if (!graph_fork_events[parity])
+                        graph_fork_events[parity].create();
+                    for (Index m = 0; m < M; ++m)
+                        if (!graph_copy_done_events[base + size_t(m)])
+                            graph_copy_done_events[base + size_t(m)].create();
+
+                    // Op-level PROFILE_SCOPEs call device::synchronize(), which
+                    // is illegal inside a capture window (and meaningless there:
+                    // the replayed graph never runs host scopes). Mute while
+                    // recording.
+                    const bool profiler_enabled = ::opennn::enabled();
+                    ::opennn::enabled() = false;
+                    try
+                    {
+                        device::synchronize(compute);
+                        device::StreamCapture capture(compute);
+
+                        // Fork the H2D chain onto the transfer stream inside the
+                        // graph so the copy engine overlaps the compute steps.
+                        device::record_event(graph_fork_events[parity], compute);
+                        device::stream_wait_event(transfer, graph_fork_events[parity]);
+
+                        for (Index m = 0; m < M; ++m)
+                        {
+                            issue_slot_h2d(*slots[base + size_t(m)], transfer);
+                            device::record_event(graph_copy_done_events[base + size_t(m)], transfer);
+                        }
+
+                        for (Index m = 0; m < M; ++m)
+                        {
+                            device::stream_wait_event(compute, graph_copy_done_events[base + size_t(m)]);
+                            run_compute_step(*slots[base + size_t(m)]);
+                        }
+
+                        const device::GraphHandle graph = capture.end();
+                        device::instantiate_or_update(exec, graph.get());
+                    }
+                    catch (const exception& capture_error)
+                    {
+                        reset_graph_capture();
+                        cout << "CUDA graph capture failed (" << capture_error.what()
+                             << "); continuing without graphs.\n";
+                    }
+                    ::opennn::enabled() = profiler_enabled;
+                }
+                else
+                {
+                    for (Index m = 0; m < M; ++m)
+                    {
+                        Batch& slot = *slots[base + size_t(m)];
+                        issue_slot_h2d(slot, compute);
+                        run_compute_step(slot);
+                    }
+                }
+
+                event_slot.record_h2d_done(compute);
+
+                if (show_progress
+                    && ((group + 1) % group_progress_step == 0 || group + 1 == groups))
+                    display_progress_bar(int((group + 1) * M), int(batches_number));
+            }
+
+            // Tail (< M iterations): eager on slot 0 behind a full drain.
+            for (Index iteration = groups * M; iteration < batches_number; ++iteration)
+            {
+                host_batch = session->wait(iteration);
+                Batch& slot = *slots[0];
+                device::synchronize(compute);
+                stage_into_slot(*host_batch, slot);
+                empty_queue.push(host_batch);
+                host_batch = nullptr;
+                issue_slot_h2d(slot, compute);
+                run_compute_step(slot);
+            }
+            if (show_progress) display_progress_bar(int(batches_number), int(batches_number));
+        }
+        else
+        {
+            // Per-iteration path: device-resident gather / BF16 batches keep
+            // their per-slot graphs; tiny staged epochs (e.g. the warmup's
+            // single batch) run eagerly so the mega execs are never mixed with
+            // per-slot ones.
+            const int slots_count = (usable_slots >= 2 && slots[1]) ? 2 : 1;
+
+            for (Index iteration = 0; iteration < batches_number; ++iteration)
+            {
+                const size_t slot_index = size_t(iteration % slots_count);
+                Batch& slot = *slots[slot_index];
+                device::GraphExecHandle& exec = training_graph_execs[slot_index];
+
+                {
+                    PROFILE_SCOPE_HOST("step:wait_fill");
+                    host_batch = session->wait(iteration);
+                }
+
+                if (staged_h2d)
+                {
+                    PROFILE_SCOPE_HOST("step:stage_copy");
+                    // Whatever last read this slot must finish before the host
+                    // overwrites its staging.
+                    if (slot.h2d_done_recorded)
+                        device::synchronize_event(slot.h2d_done_event);
+
+                    stage_into_slot(*host_batch, slot);
+                    empty_queue.push(host_batch);
+                    host_batch = nullptr;
+                }
+                else
+                {
+                    PROFILE_SCOPE_HOST("step:h2d_issue");
+                    // The graph that last read this slot must finish before the
+                    // upload overwrites it (the slot's event is recorded on
+                    // compute below).
+                    if (slot.h2d_done_recorded)
+                        device::stream_wait_event(transfer, slot.h2d_done_event);
+
+                    host_batch->upload_to_device_batch_async(slot, transfer);
+                    host_batch->wait_h2d_on_compute_stream();
+                }
+
+                if (exec && !staged_h2d)
+                {
+                    PROFILE_SCOPE_HOST("step:graph_launch");
+                    device::launch_graph(exec, compute);
+                }
+                else if (graph_update && !staged_h2d)
+                {
                     run_compute_step(slot);
-                    const device::GraphHandle graph = capture.end();
-                    device::instantiate_or_update(exec, graph.get());
+
+                    // See the capture note above: mute op-level profiling.
+                    const bool profiler_enabled = ::opennn::enabled();
+                    ::opennn::enabled() = false;
+                    try
+                    {
+                        device::synchronize(compute);
+                        device::StreamCapture capture(compute);
+                        run_compute_step(slot);
+                        const device::GraphHandle graph = capture.end();
+                        device::instantiate_or_update(exec, graph.get());
+                    }
+                    catch (const exception& capture_error)
+                    {
+                        reset_graph_capture();
+                        cout << "CUDA graph capture failed (" << capture_error.what()
+                             << "); continuing without graphs.\n";
+                    }
+                    ::opennn::enabled() = profiler_enabled;
                 }
-                catch (const exception& capture_error)
+                else
                 {
-                    reset_graph_capture();
-                    cout << "CUDA graph capture failed (" << capture_error.what()
-                         << "); continuing without graphs.\n";
+                    if (staged_h2d) issue_slot_h2d(slot, compute);
+                    run_compute_step(slot);
                 }
+
+                slot.record_h2d_done(compute);
+
+                if (host_batch)
+                {
+                    empty_queue.push(host_batch);
+                    host_batch = nullptr;
+                }
+
+                if (show_progress
+                    && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
+                    display_progress_bar(int(iteration + 1), int(batches_number));
             }
-            else
-            {
-                run_compute_step(slot);
-            }
-
-            slot.record_h2d_done(compute);
-
-            empty_queue.push(host_batch);
-            host_batch = nullptr;
-
-            if (show_progress
-                && ((iteration + 1) % progress_step == 0 || iteration + 1 == batches_number))
-                display_progress_bar(int(iteration + 1), int(batches_number));
         }
         device::synchronize(compute);
     }
@@ -1343,6 +1577,18 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     Loss::EvaluationResult epoch_result = device_metrics.read(batches_number, tracks_accuracy);
     back_propagation.error = epoch_result.error;
     back_propagation.accuracy = epoch_result.accuracy;
+
+    if (profile_this)
+    {
+        worker_profile.publish();
+        const auto epoch_t1 = chrono::steady_clock::now();
+        const double epoch_ms = chrono::duration<double, milli>(epoch_t1 - epoch_t0).count();
+        ::opennn::global_stats().print(cout, "Epoch breakdown (graph training)", epoch_ms);
+        cout << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
+             << " | workers_number=" << get_batch_workers_number(*neural_network) << "\n\n";
+        ::opennn::global_stats().clear();
+    }
+
     return epoch_result;
 }
 
@@ -1475,7 +1721,8 @@ Loss::EvaluationResult Optimizer::train_epoch(
     if (batches_number == 0) return epoch_result;
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
-    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent)
+                         || neural_network->has(LayerType::LongShortTermMemory);
     const bool on_gpu = neural_network->is_gpu();
 
     auto set_epoch_loss = [&]()
@@ -1669,7 +1916,8 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     if (batches_number == 0) return epoch_result;
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
-    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent);
+    has_recurrent_layers_ = neural_network->has(LayerType::Recurrent)
+                         || neural_network->has(LayerType::LongShortTermMemory);
     const bool on_gpu = neural_network->is_gpu();
 
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();
