@@ -179,8 +179,6 @@ inline bool is_binary(const T& tensor)
                   [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
-MatrixR append_rows(const MatrixR&, const MatrixR&);
-
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
 template <typename T>
@@ -215,8 +213,6 @@ inline vector<Index> get_true_indices(const VectorB& flags)
 VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
-
-VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 

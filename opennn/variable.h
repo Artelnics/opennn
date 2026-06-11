@@ -162,4 +162,23 @@ struct Variable
 
 };
 
+
+// Per-variable feature counts and their sum, for a list of variables.
+inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
+{
+    vector<Index> dimensions;
+    dimensions.reserve(variables.size());
+    for (const Variable& variable : variables)
+        dimensions.push_back(variable.get_feature_count());
+    return dimensions;
+}
+
+inline Index get_features_number(const vector<Variable>& variables)
+{
+    Index count = 0;
+    for (const Variable& variable : variables)
+        count += variable.get_feature_count();
+    return count;
+}
+
 }

@@ -885,25 +885,6 @@ VectorI maximal_indices(const MatrixR& matrix)
     matrix.maxCoeff(&result(0), &result(1));
     return result;
 }
-MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
-{
-    if (starting_matrix.size() == 0)
-        return block;
-    if (block.size() == 0)
-        return starting_matrix;
-
-    throw_if(starting_matrix.cols() != block.cols(),
-             format("append_rows: Column mismatch ({} vs {})",
-                    starting_matrix.cols(), block.cols()));
-
-    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
-
-    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
-    final_matrix.bottomRows(block.rows()) = block;
-
-    return final_matrix;
-}
-
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
 {
     const Index rows_unfiltered = outputs.rows();
@@ -951,28 +932,6 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
     ranges::copy_if(data, back_inserter(indices),
                     [bound](Index value) { return value > bound; });
     return indices;
-}
-
-VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
-{
-    const Index rows = matrix.rows();
-
-    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
-
-    vector<pair<float, Index>> pairs(rows);
-
-    for (Index i = 0; i < rows; ++i)
-        pairs[i] = {distances(i), i};
-
-    if (neighbors_number > rows)
-        neighbors_number = rows;
-
-    partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
-
-    VectorI result(neighbors_number);
-    transform(pairs.begin(), pairs.begin() + neighbors_number, result.data(),
-              [](const auto& p) { return p.second; });
-    return result;
 }
 
 VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)

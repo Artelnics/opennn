@@ -12,18 +12,13 @@
 #include "statistics.h"
 #include "variable.h"
 #include "constraint_formulas.h"
+#include "network_differential.h"
 
 namespace opennn
 {
 
 class NeuralNetwork;
 class Dataset;
-
-// Analytic snapshot of a feedforward surrogate (Scaling / Dense / Unscaling):
-// reproduces forward(x) and the exact reverse-mode input-VJP (df/dx)^T v from
-// the network's public getters, so the output-constraint repair gets an exact,
-// cheap Jacobian. Defined in the .cpp; rebuilt per optimization run.
-struct NetworkDifferential;
 
 class ResponseOptimization
 {
