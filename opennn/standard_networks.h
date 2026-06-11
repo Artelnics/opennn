@@ -9,6 +9,7 @@
 #pragma once
 
 #include "neural_network.h"
+#include "pooling_layer.h"
 
 namespace opennn
 {
@@ -114,7 +115,8 @@ public:
 
     TextClassificationNetwork(const Shape& input_shape,
                               const Shape& complexity_dimensions,
-                              const Shape& output_shape);
+                              const Shape& output_shape,
+                              PoolingMethod pooling_method = PoolingMethod::AveragePooling);
 };
 
 class Transformer final : public NeuralNetwork
