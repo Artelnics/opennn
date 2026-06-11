@@ -120,10 +120,13 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     training_slope = gradient.dot(training_direction);
 
+    bool is_gradient_direction = false;
+
     if (training_slope >= 0.0f)
     {
         training_direction = -gradient;
         training_slope = gradient.dot(training_direction);
+        is_gradient_direction = true;
     }
 
     optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
@@ -136,6 +139,22 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         back_propagation,
         optimization_data,
         back_propagation.loss);
+
+    if (learning_rate == 0.0f && !is_gradient_direction)
+    {
+        inverse_hessian.setIdentity();
+        optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
+
+        training_direction = -gradient;
+        training_slope = gradient.dot(training_direction);
+
+        tie(learning_rate, back_propagation.loss) = calculate_directional_point(
+            batch,
+            forward_propagation,
+            back_propagation,
+            optimization_data,
+            back_propagation.loss);
+    }
 
     if (abs(learning_rate) > 0.0f)
     {
@@ -205,9 +224,12 @@ TrainingResult QuasiNewtonMethod::train()
 
     loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_samples_number, loss);
-
+    // Each BackPropagation construction re-links the layers' gradient outputs to
+    // its own buffer; the training one must be constructed last so it is the one
+    // that receives the gradients.
     BackPropagation validation_back_propagation(validation_samples_number, loss);
+
+    BackPropagation training_back_propagation(training_samples_number, loss);
 
 
     Index validation_failures = 0;

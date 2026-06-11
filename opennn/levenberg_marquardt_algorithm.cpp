@@ -117,6 +117,12 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     const VectorMap output = forward_propagation.get_last_trainable_layer_outputs().as_vector();
     const VectorMap target = batch.get_targets().as_vector();
 
+    throw_if(output.size() != target.size() || output.size() != back_propagation_lm.errors.size(),
+             "LevenbergMarquardtAlgorithm: outputs (" + to_string(output.size())
+             + "), targets (" + to_string(target.size())
+             + ") and errors (" + to_string(back_propagation_lm.errors.size())
+             + ") sizes do not match. The dataset target count does not match the network outputs.");
+
     back_propagation_lm.errors.noalias() = output - target;
 }
 
@@ -133,41 +139,6 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
 {
     back_propagation_lm.error = back_propagation_lm.squared_errors.sum()
                               / float(back_propagation_lm.squared_errors.size());
-}
-
-void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
-                                                   const ForwardPropagation& forward_propagation,
-                                                   BackPropagationLM& back_propagation_lm)
-{
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    const auto& layers = neural_network->get_layers();
-
-    back_propagation_lm.squared_errors_jacobian.setZero();
-
-    Index last_trainable_dense = -1;
-    Index trainable_dense_count = 0;
-    for (size_t i = 0; i < layers.size(); ++i)
-        if (layers[i]->get_is_trainable() && dynamic_cast<Dense*>(layers[i].get()))
-        {
-            last_trainable_dense = i;
-            ++trainable_dense_count;
-        }
-
-    if (last_trainable_dense < 0) return;
-
-    throw_if(trainable_dense_count > 1,
-             "LevenbergMarquardtAlgorithm: only networks with a single "
-             "trainable Dense layer are supported. Found "
-             + to_string(trainable_dense_count) + " trainable Dense "
-             "layers. Use AdaptiveMomentEstimation, SGD, or "
-             "QuasiNewtonMethod instead.");
-
-    const Index parameter_offset = transform_reduce(
-        layers.begin(), layers.begin() + last_trainable_dense, Index(0), plus<>{},
-        [](const unique_ptr<Layer>& l) { return l->get_is_trainable() ? l->get_parameters_number() : Index(0); });
-
-    auto* dense = dynamic_cast<Dense*>(layers[last_trainable_dense].get());
-    insert_dense_jacobian(dense, forward_propagation, last_trainable_dense, parameter_offset, back_propagation_lm.squared_errors_jacobian);
 }
 
 static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
@@ -191,37 +162,114 @@ static MatrixR activation_derivative(ActivationOp::Function activation_function,
     return MatrixR::Ones(outputs.rows(), outputs.cols());
 }
 
-void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense* layer,
-                                                        const ForwardPropagation& forward_propagation,
-                                                        Index layer_index,
-                                                        Index parameter_offset,
-                                                        MatrixR& jacobian)
+void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
+                                                   const ForwardPropagation& forward_propagation,
+                                                   BackPropagationLM& back_propagation_lm)
 {
-    const Index batch_size  = forward_propagation.batch_size;
-    const Index num_neurons = layer->get_outputs_number();
-    const Index num_inputs  = layer->get_input_shape()[0];
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    const auto& layers = neural_network->get_layers();
+    const auto& source_layers = neural_network->get_source_layers();
 
-    const MatrixMap inputs  = forward_propagation.input_views[layer_index][0].as_matrix();
+    MatrixR& jacobian = back_propagation_lm.squared_errors_jacobian;
+    jacobian.setZero();
 
-    const size_t output_slot = forward_propagation.forward_slots[layer_index].size() - 1;
-    const MatrixMap outputs  = forward_propagation.forward_slots[layer_index][output_slot].as_matrix();
+    vector<Index> dense_indices;
+    vector<Index> parameter_offsets;
 
-    const MatrixR act_deriv = activation_derivative(layer->get_activation_function(), outputs);
+    Index offset = 0;
+    for (size_t i = 0; i < layers.size(); ++i)
+    {
+        if (!layers[i]->get_is_trainable() || layers[i]->get_parameters_number() == 0) continue;
 
-    const Index bias_aligned  = get_aligned_size(num_neurons);
-    const Index weight_offset = parameter_offset + bias_aligned;
+        const auto* dense = dynamic_cast<const Dense*>(layers[i].get());
+        throw_if(!dense,
+                 "LevenbergMarquardtAlgorithm: only Dense trainable layers are supported. "
+                 "Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod instead.");
 
-    for (Index j = 0; j < num_neurons; ++j)
-        for (Index sample = 0; sample < batch_size; ++sample)
-            jacobian(sample * num_neurons + j, parameter_offset + j) = act_deriv(sample, j);
+        dense_indices.push_back(Index(i));
+        parameter_offsets.push_back(offset);
 
-    for (Index i = 0; i < num_inputs; ++i)
-        for (Index j = 0; j < num_neurons; ++j)
-        {
-            const Index col = weight_offset + i * num_neurons + j;
+        offset += get_aligned_size(dense->get_outputs_number())
+                + get_aligned_size(dense->get_input_shape()[0] * dense->get_outputs_number());
+    }
+
+    if (dense_indices.empty()) return;
+
+    throw_if(offset != neural_network->get_parameters_size(),
+             "LevenbergMarquardtAlgorithm: unsupported parameter layout (only plain Dense "
+             "layers without batch normalization are supported). Use AdaptiveMomentEstimation, "
+             "SGD, or QuasiNewtonMethod instead.");
+
+    for (size_t n = 1; n < dense_indices.size(); ++n)
+        throw_if(source_layers[dense_indices[n]].size() != 1
+                 || source_layers[dense_indices[n]][0] != dense_indices[n - 1],
+                 "LevenbergMarquardtAlgorithm: trainable Dense layers must form a sequential "
+                 "chain. Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod instead.");
+
+    const Index batch_size = forward_propagation.batch_size;
+    const Index last_layer = dense_indices.back();
+    const Index outputs_number = static_cast<const Dense*>(layers[last_layer].get())->get_outputs_number();
+    const Index rows = batch_size * outputs_number;
+
+    // delta(sample * outputs_number + j, k) = d output_j(sample) / d combination_k(sample)
+    // of the layer being processed; rows match the errors vector layout.
+    MatrixR delta = MatrixR::Zero(rows, outputs_number);
+    {
+        const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
+        const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
+        const MatrixR act_deriv = activation_derivative(
+            static_cast<const Dense*>(layers[last_layer].get())->get_activation_function(), outputs);
+
+        for (Index j = 0; j < outputs_number; ++j)
             for (Index sample = 0; sample < batch_size; ++sample)
-                jacobian(sample * num_neurons + j, col) = inputs(sample, i) * act_deriv(sample, j);
-        }
+                delta(sample * outputs_number + j, j) = act_deriv(sample, j);
+    }
+
+    for (Index n = Index(dense_indices.size()) - 1; n >= 0; --n)
+    {
+        const Index layer_index = dense_indices[n];
+        const auto* dense = static_cast<const Dense*>(layers[layer_index].get());
+
+        const Index neurons = dense->get_outputs_number();
+        const Index inputs_number = dense->get_input_shape()[0];
+        const MatrixMap inputs = forward_propagation.input_views[layer_index][0].as_matrix();
+
+        const Index bias_offset = parameter_offsets[n];
+        const Index weight_offset = bias_offset + get_aligned_size(neurons);
+
+        for (Index k = 0; k < neurons; ++k)
+            for (Index row = 0; row < rows; ++row)
+                jacobian(row, bias_offset + k) = delta(row, k);
+
+        for (Index i = 0; i < inputs_number; ++i)
+            for (Index k = 0; k < neurons; ++k)
+            {
+                const Index column = weight_offset + i * neurons + k;
+                for (Index j = 0; j < outputs_number; ++j)
+                    for (Index sample = 0; sample < batch_size; ++sample)
+                        jacobian(sample * outputs_number + j, column) =
+                            inputs(sample, i) * delta(sample * outputs_number + j, k);
+            }
+
+        if (n == 0) break;
+
+        const MatrixMap weights(neural_network->get_parameters_data() + weight_offset,
+                                inputs_number, neurons);
+
+        const auto* previous_dense = static_cast<const Dense*>(layers[dense_indices[n - 1]].get());
+        const MatrixR previous_act_deriv =
+            activation_derivative(previous_dense->get_activation_function(), inputs);
+
+        MatrixR previous_delta(rows, inputs_number);
+        previous_delta.noalias() = delta * weights.transpose();
+
+        for (Index k = 0; k < inputs_number; ++k)
+            for (Index j = 0; j < outputs_number; ++j)
+                for (Index sample = 0; sample < batch_size; ++sample)
+                    previous_delta(sample * outputs_number + j, k) *= previous_act_deriv(sample, k);
+
+        delta = std::move(previous_delta);
+    }
 }
 
 TrainingResult LevenbergMarquardtAlgorithm::train()

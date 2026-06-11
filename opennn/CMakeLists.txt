@@ -194,6 +194,16 @@ if(OpenNN_ENABLE_MKL)
     # Prefer oneAPI's own MKLConfig.cmake when discoverable: it resolves the
     # correct lib/include/redist layout (which differs across oneAPI versions)
     # and exposes MKL::MKL with the runtime DLL dir baked in.
+    # Default to the single-DLL mkl_rt (sdl) with the LP64 interface: mkl_rt
+    # picks LP64 at runtime unless told otherwise, so compiling against
+    # MKLConfig's ilp64 default while running through mkl_rt corrupts every
+    # LAPACK integer argument (e.g. geqp3 pivots used by Levenberg-Marquardt).
+    if(NOT DEFINED MKL_LINK)
+        set(MKL_LINK sdl)
+    endif()
+    if(NOT DEFINED MKL_INTERFACE)
+        set(MKL_INTERFACE lp64)
+    endif()
     find_package(MKL CONFIG QUIET
         HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
 

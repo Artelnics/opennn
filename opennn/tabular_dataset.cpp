@@ -26,8 +26,7 @@ void TabularDataset::set(const Index new_samples_number,
     input_shape = new_input_shape;
 
     const Index new_inputs_number = new_input_shape.size();
-    const Index target_size = new_target_shape.size();
-    const Index new_targets_number = (target_size == 2) ? 1 : target_size;
+    const Index new_targets_number = new_target_shape.size();
     const Index new_features_number = new_inputs_number + new_targets_number;
 
     target_shape = { new_targets_number };

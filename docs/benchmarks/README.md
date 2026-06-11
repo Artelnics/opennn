@@ -17,6 +17,7 @@ links to the full note with methodology and reproduction steps.
 | Benchmark | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
 |---|---:|---:|---:|---:|
 | [Accuracy (R², Rosenbrock)](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | **0.988** | n/a | 0.988 | 0.987 |
+| [Training precision (MSE / time)](precision-opennn-vs-pytorch-vs-tensorflow.md) | **0.109 / 2 s** | n/a | 0.162 / 42 s | 0.156 / 310 s |
 | [CPU runtime size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
 | [GPU (CNN) deployment](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
@@ -41,6 +42,10 @@ infers in one self-contained binary.
 * **[Numerical accuracy](accuracy-opennn-vs-pytorch-vs-tensorflow.md)** — same network, data, and
   optimizer in all three: OpenNN matches PyTorch and TensorFlow (R² ≈ 0.988) on the Rosenbrock
   approximation benchmark. The lean footprint costs nothing in accuracy.
+* **[Training precision](precision-opennn-vs-pytorch-vs-tensorflow.md)** — the Neural Designer
+  blog's precision benchmark reproduced: OpenNN's second-order optimizers (quasi-Newton,
+  Levenberg-Marquardt) reach a ~1.3–1.5× lower MSE than Adam in TensorFlow/PyTorch, 21–155×
+  faster wall-clock.
 * **[Deployment size on CPU](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
 * **[Deployment size on GPU](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the
