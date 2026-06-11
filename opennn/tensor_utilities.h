@@ -484,6 +484,17 @@ inline bool is_contiguous(const vector<Index>& indices)
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, float*, int contiguous = -1);
 
+// Matrix assembly / selection helpers.
+MatrixR append_rows(const MatrixR&, const MatrixR&);       // vertical concatenation
+MatrixR append_columns(const MatrixR&, const MatrixR&);    // horizontal concatenation
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+
+inline array<Index, 3> array_3(const Index first, const Index second, const Index third)
+{
+    return array<Index, 3>({first, second, third});
+}
+
 template<typename... Vs>
 size_t hash_combine(const Vs&... values)
 {

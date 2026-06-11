@@ -390,6 +390,76 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
     throw runtime_error("copy_device_to_host_float: unsupported dtype.");
 }
 
+
+MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
+{
+    if (starting_matrix.size() == 0)
+        return block;
+    if (block.size() == 0)
+        return starting_matrix;
+
+    throw_if(starting_matrix.cols() != block.cols(),
+             format("append_rows: Column mismatch ({} vs {})",
+                    starting_matrix.cols(), block.cols()));
+
+    MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
+
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
+
+    return final_matrix;
+}
+
+
+MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
+{
+    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
+    result.leftCols(first_matrix.cols()) = first_matrix;
+    result.rightCols(second_matrix.cols()) = second_matrix;
+    return result;
+}
+
+
+VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
+{
+    const Index rows = matrix.rows();
+
+    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
+
+    vector<pair<float, Index>> pairs(rows);
+
+    for (Index i = 0; i < rows; ++i)
+        pairs[i] = {distances(i), i};
+
+    if (neighbors_number > rows)
+        neighbors_number = rows;
+
+    partial_sort(pairs.begin(), pairs.begin() + neighbors_number, pairs.end());
+
+    VectorI result(neighbors_number);
+    transform(pairs.begin(), pairs.begin() + neighbors_number, result.data(),
+              [](const auto& p) { return p.second; });
+    return result;
+}
+
+
+vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
+                                                const vector<Index>& selected_indices,
+                                                const Index column_index,
+                                                const float minimum,
+                                                const float maximum)
+{
+    vector<Index> filtered;
+    filtered.reserve(selected_indices.size());
+    for (const Index row_index : selected_indices)
+    {
+        const float value = matrix(row_index, column_index);
+        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+            filtered.push_back(row_index);
+    }
+    return filtered;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -75,7 +75,7 @@ CompiledFormula compile_formula(const string& expression,
                                               const vector<NamedColumn>& outputs);
 
 
-enum class ComparisonOp : uint8_t
+enum class ComparisonOperator : uint8_t
 {
     None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan
 };
@@ -87,7 +87,7 @@ struct FormulaConstraint
     function<float(const VectorR&, const VectorR&)> callback;
     bool uses_callback = false;
 
-    ComparisonOp op = ComparisonOp::None;
+    ComparisonOperator comparison_operator = ComparisonOperator::None;
     float low_bound = 0.0f;
     float up_bound = 0.0f;
 
@@ -191,6 +191,7 @@ void repair_output_constraints(MatrixR& inputs,
                                const vector<FormulaConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                Index max_correction_passes = 64);
+
 
 }
 
