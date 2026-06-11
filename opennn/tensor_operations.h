@@ -83,6 +83,11 @@ void average_pooling_3d_backward(const TensorView& input, const TensorView& outp
 void split_heads(const TensorView& source, TensorView& destination);
 void merge_heads(const TensorView& source, TensorView& destination);
 
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_columns(const MatrixR&, const MatrixR&);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+
 }
 
 // OpenNN: Open Neural Networks Library.

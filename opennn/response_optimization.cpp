@@ -7,14 +7,12 @@
 //   artelnics@artelnics.com
 
 #include "response_optimization.h"
-#include "tensor_types.h"
+#include "tensor_operations.h"
 #include "statistics.h"
 #include "neural_network.h"
 #include "variable.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
-#include "dense_layer.h"
-#include "bounding_layer.h"
 
 namespace opennn
 {
@@ -22,352 +20,21 @@ namespace opennn
 namespace
 {
 
-inline Eigen::array<Index, 3> array_3(const Index first_dimension, const Index second_dimension, const Index third_dimension)
-{
-    return Eigen::array<Index, 3>({first_dimension, second_dimension, third_dimension});
-}
-
-inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
-{
-    vector<Index> dimensions;
-    dimensions.reserve(variables.size());
-    for (const Variable& var : variables)
-        dimensions.push_back(var.get_feature_count());
-    return dimensions;
-}
-
-inline Index get_features_number(const vector<Variable>& variables)
-{
-    Index count = 0;
-    for (const Variable& var : variables)
-        count += var.get_feature_count();
-    return count;
-}
-
-inline MatrixR assemble_matrices(const MatrixR& first_matrix, const MatrixR& second_matrix)
-{
-    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
-    result.leftCols(first_matrix.cols()) = first_matrix;
-    result.rightCols(second_matrix.cols()) = second_matrix;
-    return result;
-}
-
-inline vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
-                                                       const vector<Index>& selected_indices,
-                                                       const Index column_index,
-                                                       const float minimum,
-                                                       const float maximum)
-{
-    vector<Index> filtered;
-    filtered.reserve(selected_indices.size());
-    for (const Index row_index : selected_indices)
-    {
-        const float value = matrix(row_index, column_index);
-        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
-            filtered.push_back(row_index);
-    }
-    return filtered;
-}
-
-inline ComparisonOp to_comparison_op(const ResponseOptimization::ConditionType condition)
+inline ComparisonOperator to_comparison_operator(const ResponseOptimization::ConditionType condition)
 {
     switch (condition)
     {
-    case ResponseOptimization::ConditionType::EqualTo:        return ComparisonOp::EqualTo;
-    case ResponseOptimization::ConditionType::Between:        return ComparisonOp::Between;
-    case ResponseOptimization::ConditionType::GreaterEqualTo: return ComparisonOp::GreaterEqualTo;
-    case ResponseOptimization::ConditionType::LessEqualTo:    return ComparisonOp::LessEqualTo;
-    case ResponseOptimization::ConditionType::GreaterThan:    return ComparisonOp::GreaterThan;
-    case ResponseOptimization::ConditionType::LessThan:       return ComparisonOp::LessThan;
-    default:                                                  return ComparisonOp::None;
+    case ResponseOptimization::ConditionType::EqualTo:        return ComparisonOperator::EqualTo;
+    case ResponseOptimization::ConditionType::Between:        return ComparisonOperator::Between;
+    case ResponseOptimization::ConditionType::GreaterEqualTo: return ComparisonOperator::GreaterEqualTo;
+    case ResponseOptimization::ConditionType::LessEqualTo:    return ComparisonOperator::LessEqualTo;
+    case ResponseOptimization::ConditionType::GreaterThan:    return ComparisonOperator::GreaterThan;
+    case ResponseOptimization::ConditionType::LessThan:       return ComparisonOperator::LessThan;
+    default:                                                  return ComparisonOperator::None;
     }
 }
 
 }
-
-// Exact analytic differentiation of a feedforward surrogate, assembled from the
-// network's PUBLIC getters (no neural-network internals are modified). Forward
-// and the reverse-mode VJP are reproduced layer by layer; the formulas mirror
-// tensor_operations scale/unscale/activation, and a self-validation against
-// calculate_outputs guards against any drift.
-struct NetworkDifferential
-{
-    enum class Kind { Scale, Dense, Unscale, Bound };
-
-    struct LayerSnapshot
-    {
-        Kind kind = Kind::Dense;
-        MatrixR weights;                                  // Dense: (in, out)
-        VectorR bias;                                     // Dense: (out)
-        ActivationFunction activation = ActivationFunction::Identity;
-        vector<ScalerMethod> methods;                     // Scale / Unscale: per feature
-        VectorR minimum, maximum, mean, deviation;        // Bound: minimum/maximum reused as lower/upper
-        float min_range = -1.0f, max_range = 1.0f;
-        bool bounding_active = true;
-    };
-
-    vector<LayerSnapshot> layers;
-
-    mutable bool tape_valid = false;
-    mutable VectorR tape_x;
-    mutable vector<VectorR> layer_inputs;
-    mutable vector<VectorR> layer_outputs;
-
-    static float guarded(const float value)
-    {
-        constexpr float floor_value = 1e-12f;
-        if (value > floor_value)  return value;
-        if (value < -floor_value) return value;
-        return floor_value;
-    }
-
-    static VectorR activation_forward(const ActivationFunction function, const VectorR& z)
-    {
-        switch (function)
-        {
-        case ActivationFunction::Identity: return z;
-        case ActivationFunction::Sigmoid:  return (1.0f + (-z.array()).exp()).inverse();
-        case ActivationFunction::Tanh:     return z.array().tanh();
-        case ActivationFunction::ReLU:     return z.array().max(0.0f);
-        case ActivationFunction::Softmax:
-        default: throw runtime_error("NetworkDifferential: unsupported activation");
-        }
-    }
-
-    // Derivative expressed in terms of the post-activation output a = f(z),
-    // matching how the library applies it in back_propagate.
-    static VectorR activation_derivative(const ActivationFunction function, const VectorR& a)
-    {
-        switch (function)
-        {
-        case ActivationFunction::Identity: return VectorR::Ones(a.size());
-        case ActivationFunction::Sigmoid:  return a.array() * (1.0f - a.array());
-        case ActivationFunction::Tanh:     return 1.0f - a.array().square();
-        case ActivationFunction::ReLU:     return (a.array() > 0.0f).cast<float>();
-        case ActivationFunction::Softmax:
-        default: throw runtime_error("NetworkDifferential: unsupported activation");
-        }
-    }
-
-    VectorR scale_forward(const LayerSnapshot& L, const VectorR& in) const
-    {
-        VectorR out(in.size());
-        for (Index j = 0; j < in.size(); ++j)
-        {
-            const float x = in(j);
-            switch (L.methods[j])
-            {
-            case ScalerMethod::None:                  out(j) = x; break;
-            case ScalerMethod::MinimumMaximum:        out(j) = (x - L.minimum(j)) / guarded(L.maximum(j) - L.minimum(j)) * (L.max_range - L.min_range) + L.min_range; break;
-            case ScalerMethod::MeanStandardDeviation: out(j) = (x - L.mean(j)) / guarded(L.deviation(j)); break;
-            case ScalerMethod::StandardDeviation:     out(j) = x / guarded(L.deviation(j)); break;
-            case ScalerMethod::Logarithm:             out(j) = log(x); break;
-            case ScalerMethod::ImageMinMax:           out(j) = x / 255.0f; break;
-            }
-        }
-        return out;
-    }
-
-    VectorR scale_derivative(const LayerSnapshot& L, const VectorR& in) const
-    {
-        VectorR d(in.size());
-        for (Index j = 0; j < in.size(); ++j)
-            switch (L.methods[j])
-            {
-            case ScalerMethod::None:                  d(j) = 1.0f; break;
-            case ScalerMethod::MinimumMaximum:        d(j) = (L.max_range - L.min_range) / guarded(L.maximum(j) - L.minimum(j)); break;
-            case ScalerMethod::MeanStandardDeviation:
-            case ScalerMethod::StandardDeviation:     d(j) = 1.0f / guarded(L.deviation(j)); break;
-            case ScalerMethod::Logarithm:             d(j) = 1.0f / guarded(in(j)); break;
-            case ScalerMethod::ImageMinMax:           d(j) = 1.0f / 255.0f; break;
-            }
-        return d;
-    }
-
-    VectorR unscale_forward(const LayerSnapshot& L, const VectorR& in) const
-    {
-        VectorR out(in.size());
-        for (Index j = 0; j < in.size(); ++j)
-        {
-            const float x = in(j);
-            switch (L.methods[j])
-            {
-            case ScalerMethod::None:                  out(j) = x; break;
-            case ScalerMethod::MinimumMaximum:        out(j) = (x - L.min_range) / guarded(L.max_range - L.min_range) * (L.maximum(j) - L.minimum(j)) + L.minimum(j); break;
-            case ScalerMethod::MeanStandardDeviation: out(j) = x * L.deviation(j) + L.mean(j); break;
-            case ScalerMethod::StandardDeviation:     out(j) = x * L.deviation(j); break;
-            case ScalerMethod::Logarithm:             out(j) = exp(x); break;
-            case ScalerMethod::ImageMinMax:           out(j) = x * 255.0f; break;
-            }
-        }
-        return out;
-    }
-
-    VectorR unscale_derivative(const LayerSnapshot& L, const VectorR& in) const
-    {
-        VectorR d(in.size());
-        for (Index j = 0; j < in.size(); ++j)
-            switch (L.methods[j])
-            {
-            case ScalerMethod::None:                  d(j) = 1.0f; break;
-            case ScalerMethod::MinimumMaximum:        d(j) = (L.maximum(j) - L.minimum(j)) / guarded(L.max_range - L.min_range); break;
-            case ScalerMethod::MeanStandardDeviation:
-            case ScalerMethod::StandardDeviation:     d(j) = L.deviation(j); break;
-            case ScalerMethod::Logarithm:             d(j) = exp(in(j)); break;
-            case ScalerMethod::ImageMinMax:           d(j) = 255.0f; break;
-            }
-        return d;
-    }
-
-    // Clamp derivative: 1 strictly inside [lower, upper], 0 where saturated.
-    VectorR bound_derivative(const LayerSnapshot& L, const VectorR& in) const
-    {
-        if (!L.bounding_active) return VectorR::Ones(in.size());
-
-        return ((in.array() > L.minimum.array()) && (in.array() < L.maximum.array())).cast<float>().matrix();
-    }
-
-    void build(const NeuralNetwork& network);
-
-    VectorR forward(const VectorR& x) const
-    {
-        const size_t layers_number = layers.size();
-        layer_inputs.assign(layers_number, VectorR());
-        layer_outputs.assign(layers_number, VectorR());
-
-        VectorR activation = x;
-        for (size_t i = 0; i < layers_number; ++i)
-        {
-            layer_inputs[i] = activation;
-            const LayerSnapshot& L = layers[i];
-
-            if (L.kind == Kind::Scale)
-                activation = scale_forward(L, activation);
-            else if (L.kind == Kind::Unscale)
-                activation = unscale_forward(L, activation);
-            else if (L.kind == Kind::Bound)
-                activation = L.bounding_active ? activation.cwiseMax(L.minimum).cwiseMin(L.maximum).eval() : activation;
-            else
-                activation = activation_forward(L.activation, (L.weights.transpose() * activation + L.bias).eval());
-
-            layer_outputs[i] = activation;
-        }
-
-        tape_x = x;
-        tape_valid = true;
-        return activation;
-    }
-
-    VectorR vjp(const VectorR& x, const VectorR& cotangent) const
-    {
-        if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
-            forward(x);
-
-        VectorR carried = cotangent;
-        for (int i = static_cast<int>(layers.size()) - 1; i >= 0; --i)
-        {
-            const LayerSnapshot& L = layers[i];
-
-            if (L.kind == Kind::Scale)
-                carried = (carried.array() * scale_derivative(L, layer_inputs[i]).array()).matrix();
-            else if (L.kind == Kind::Unscale)
-                carried = (carried.array() * unscale_derivative(L, layer_inputs[i]).array()).matrix();
-            else if (L.kind == Kind::Bound)
-                carried = (carried.array() * bound_derivative(L, layer_inputs[i]).array()).matrix();
-            else
-            {
-                const VectorR through_activation = (carried.array() * activation_derivative(L.activation, layer_outputs[i]).array()).matrix();
-                carried = L.weights * through_activation;
-            }
-        }
-        return carried;
-    }
-};
-
-
-void NetworkDifferential::build(const NeuralNetwork& network)
-{
-    layers.clear();
-
-    for (const unique_ptr<Layer>& layer : network.get_layers())
-    {
-        LayerSnapshot snapshot;
-        const LayerType type = layer->get_type();
-
-        if (type == LayerType::Scaling || type == LayerType::Unscaling)
-        {
-            snapshot.kind = (type == LayerType::Scaling) ? Kind::Scale : Kind::Unscale;
-
-            const vector<Descriptives>* descriptives = nullptr;
-            const vector<ScalerMethod>* scalers = nullptr;
-
-            if (type == LayerType::Scaling)
-            {
-                const Scaling* scaling = static_cast<const Scaling*>(layer.get());
-                descriptives = &scaling->get_descriptives();
-                scalers = &scaling->get_scalers();
-                snapshot.min_range = scaling->get_min_range();
-                snapshot.max_range = scaling->get_max_range();
-            }
-            else
-            {
-                const Unscaling* unscaling = static_cast<const Unscaling*>(layer.get());
-                descriptives = &unscaling->get_descriptives();
-                scalers = &unscaling->get_scalers();
-                snapshot.min_range = unscaling->get_min_range();
-                snapshot.max_range = unscaling->get_max_range();
-            }
-
-            const Index features = static_cast<Index>(descriptives->size());
-            snapshot.methods = *scalers;
-            snapshot.minimum.resize(features);
-            snapshot.maximum.resize(features);
-            snapshot.mean.resize(features);
-            snapshot.deviation.resize(features);
-
-            for (Index j = 0; j < features; ++j)
-            {
-                snapshot.minimum(j)   = static_cast<float>((*descriptives)[j].minimum);
-                snapshot.maximum(j)   = static_cast<float>((*descriptives)[j].maximum);
-                snapshot.mean(j)      = static_cast<float>((*descriptives)[j].mean);
-                snapshot.deviation(j) = static_cast<float>((*descriptives)[j].standard_deviation);
-            }
-        }
-        else if (type == LayerType::Dense)
-        {
-            const Dense* dense = static_cast<const Dense*>(layer.get());
-
-            throw_if(dense->get_batch_normalization(),
-                     "NetworkDifferential: batch normalization is not supported");
-
-            const vector<TensorView>& views = dense->get_parameter_views();
-            throw_if(views.size() < 2, "NetworkDifferential: unexpected Dense parameter layout");
-
-            snapshot.kind = Kind::Dense;
-            snapshot.bias = views[0].as_vector();      // [0] = bias (out)
-            snapshot.weights = views[1].as_matrix();   // [1] = weights (in, out)
-            snapshot.activation = dense->get_activation_function();
-
-            throw_if(snapshot.activation == ActivationFunction::Softmax,
-                     "NetworkDifferential: softmax activation is not supported");
-        }
-        else if (type == LayerType::Bounding)
-        {
-            const Bounding* bounding = static_cast<const Bounding*>(layer.get());
-            snapshot.kind = Kind::Bound;
-            snapshot.minimum = bounding->get_lower_bounds();
-            snapshot.maximum = bounding->get_upper_bounds();
-            snapshot.bounding_active =
-                (bounding->get_bounding_method() == Bounding::BoundingMethod::Bounding);
-        }
-        else
-            throw runtime_error("NetworkDifferential: unsupported layer type '"
-                                + layer_type_to_string(type) + "' for analytic Jacobian");
-
-        layers.push_back(move(snapshot));
-    }
-}
-
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
@@ -450,7 +117,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
 
     FormulaConstraint formula_constraint;
     formula_constraint.expression = expression;
-    formula_constraint.op = to_comparison_op(op);
+    formula_constraint.comparison_operator = to_comparison_operator(op);
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
     formula_constraint.uses_callback = false;
@@ -472,7 +139,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
     FormulaConstraint formula_constraint;
     formula_constraint.callback = move(callback);
     formula_constraint.uses_callback = true;
-    formula_constraint.op = to_comparison_op(op);
+    formula_constraint.comparison_operator = to_comparison_operator(op);
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
 
@@ -907,7 +574,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     Tensor3 input_combined(batch_size, total_lags, total_features);
 
-    input_combined.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
+    input_combined.device(get_device()) = fixed_history.broadcast(array<Index, 3>{batch_size, 1, 1});
 
     Index feature_cursor = 0;    
     Index candidate_col_cursor = 0; 
@@ -924,7 +591,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
             TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, dim);
 
-            input_combined.slice(array_3(0, total_lags - 1, feature_cursor), array_3(batch_size, 1, dim)).device(get_device()) = block_tensor;
+            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, dim}).device(get_device()) = block_tensor;
 
             candidate_col_cursor += dim;
         }
@@ -1007,25 +674,25 @@ bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& inpu
 
         bool constraint_satisfied = true;
 
-        switch (formula_constraint.op)
+        switch (formula_constraint.comparison_operator)
         {
-        case ComparisonOp::EqualTo:
+        case ComparisonOperator::EqualTo:
             constraint_satisfied = abs(evaluated_value - low_bound) <= bound_tolerance(low_bound);
             break;
-        case ComparisonOp::Between:
+        case ComparisonOperator::Between:
             constraint_satisfied = (evaluated_value >= low_bound - bound_tolerance(low_bound))
                                 && (evaluated_value <= up_bound + bound_tolerance(up_bound));
             break;
-        case ComparisonOp::GreaterEqualTo:
+        case ComparisonOperator::GreaterEqualTo:
             constraint_satisfied = evaluated_value >= low_bound - bound_tolerance(low_bound);
             break;
-        case ComparisonOp::LessEqualTo:
+        case ComparisonOperator::LessEqualTo:
             constraint_satisfied = evaluated_value <= up_bound + bound_tolerance(up_bound);
             break;
-        case ComparisonOp::GreaterThan:
+        case ComparisonOperator::GreaterThan:
             constraint_satisfied = evaluated_value > low_bound;
             break;
-        case ComparisonOp::LessThan:
+        case ComparisonOperator::LessThan:
             constraint_satisfied = evaluated_value < up_bound;
             break;
         default:
@@ -1403,7 +1070,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     return optimal_set.first.rows() == 0
         ? MatrixR()
-        : assemble_matrices(optimal_set.first, optimal_set.second);
+        : append_columns(optimal_set.first, optimal_set.second);
 }
 
 
@@ -1647,7 +1314,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     cout << "\n> [Optimization Complete] Assembling final results..." << endl;
     cout << "> Total surrogate evaluations used: " << evaluations_used << endl;
 
-    return assemble_matrices(global_pareto_inputs, global_pareto_outputs);
+    return append_columns(global_pareto_inputs, global_pareto_outputs);
 }
 
 
@@ -1731,12 +1398,14 @@ void ResponseOptimization::initialize_network_differential() const
         return;
 
     // Only needed when some constraint references the network outputs.
-    if (ranges::none_of(formula_constraints, [](const FormulaConstraint& constraint)
-        {
-            return !constraint.uses_callback
-                && constraint.op != ComparisonOp::None
-                && constraint.compiled.scope != FormulaScope::InputsOnly;
-        }))
+    bool has_output_constraint = false;
+    for (const FormulaConstraint& constraint : formula_constraints)
+        if (!constraint.uses_callback
+            && constraint.comparison_operator != ComparisonOperator::None
+            && constraint.compiled.scope != FormulaScope::InputsOnly)
+            has_output_constraint = true;
+
+    if (!has_output_constraint)
         return;
 
     auto candidate = make_unique<NetworkDifferential>();

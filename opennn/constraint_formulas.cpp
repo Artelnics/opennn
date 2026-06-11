@@ -1079,29 +1079,29 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
 
-        switch (formula_constraint.op)
+        switch (formula_constraint.comparison_operator)
         {
-        case ComparisonOp::EqualTo:
+        case ComparisonOperator::EqualTo:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             linear_set.upper(i) = low - c + bound_tolerance(low);
             break;
-        case ComparisonOp::Between:
+        case ComparisonOperator::Between:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             linear_set.upper(i) = up  - c + bound_tolerance(up);
             break;
-        case ComparisonOp::GreaterEqualTo:
+        case ComparisonOperator::GreaterEqualTo:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             break;
-        case ComparisonOp::LessEqualTo:
+        case ComparisonOperator::LessEqualTo:
             linear_set.upper(i) = up - c + bound_tolerance(up);
             break;
-        case ComparisonOp::GreaterThan:
+        case ComparisonOperator::GreaterThan:
             linear_set.lower(i) = low - c + EPSILON;
             break;
-        case ComparisonOp::LessThan:
+        case ComparisonOperator::LessThan:
             linear_set.upper(i) = up - c - EPSILON;
             break;
-        case ComparisonOp::None:
+        case ComparisonOperator::None:
         default:
             break;
         }
@@ -1121,7 +1121,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     for (const FormulaConstraint& constraint : formula_constraints)
         if (!constraint.uses_callback
-            && constraint.op != ComparisonOp::None
+            && constraint.comparison_operator != ComparisonOperator::None
             && constraint.compiled.shape == FormulaShape::Affine
             && constraint.compiled.scope == FormulaScope::InputsOnly
             && !constraint.compiled.affine_input_terms.empty())
@@ -1136,7 +1136,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     Index slacks_number = 0;
     for (const FormulaConstraint* constraint : affine_constraints)
-        if (constraint->op != ComparisonOp::EqualTo)
+        if (constraint->comparison_operator != ComparisonOperator::EqualTo)
             ++slacks_number;
 
     const Index augmented_number = inputs_number + slacks_number;
@@ -1165,13 +1165,13 @@ void repair_affine_inputs(MatrixR& random_inputs,
             expression_maximum += max(coefficient * inferior_frontier(column), coefficient * superior_frontier(column));
         }
 
-        switch (constraint.op)
+        switch (constraint.comparison_operator)
         {
-        case ComparisonOp::EqualTo:
+        case ComparisonOperator::EqualTo:
             right_hand_side(i) = low - constant;
             break;
 
-        case ComparisonOp::Between:
+        case ComparisonOperator::Between:
             augmented_matrix(i, inputs_number + slack_index) = -1;
             right_hand_side(i) = low - constant;
             slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
@@ -1179,8 +1179,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOp::GreaterEqualTo:
-        case ComparisonOp::GreaterThan:
+        case ComparisonOperator::GreaterEqualTo:
+        case ComparisonOperator::GreaterThan:
             augmented_matrix(i, inputs_number + slack_index) = -1;
             right_hand_side(i) = low - constant;
             slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
@@ -1188,8 +1188,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOp::LessEqualTo:
-        case ComparisonOp::LessThan:
+        case ComparisonOperator::LessEqualTo:
+        case ComparisonOperator::LessThan:
             augmented_matrix(i, inputs_number + slack_index) = 1;
             right_hand_side(i) = up - constant;
             slack_inferior(slack_index) = max(0.0f, up - expression_maximum);
@@ -1197,7 +1197,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOp::None:
+        case ComparisonOperator::None:
         default:
             break;
         }
@@ -1285,25 +1285,25 @@ void repair_single_affine_input(MatrixR& random_inputs,
         // Only project violated inequalities (equalities always project).
         // Leaving satisfied points untouched is what preserves the diversity.
         float target = 0.0f;
-        switch (constraint.op)
+        switch (constraint.comparison_operator)
         {
-        case ComparisonOp::EqualTo:
+        case ComparisonOperator::EqualTo:
             target = low;
             break;
-        case ComparisonOp::Between:
+        case ComparisonOperator::Between:
             if      (expression < low) target = low;
             else if (expression > up)  target = up;
             else continue;
             break;
-        case ComparisonOp::GreaterEqualTo:
-        case ComparisonOp::GreaterThan:
+        case ComparisonOperator::GreaterEqualTo:
+        case ComparisonOperator::GreaterThan:
             if (expression < low) target = low; else continue;
             break;
-        case ComparisonOp::LessEqualTo:
-        case ComparisonOp::LessThan:
+        case ComparisonOperator::LessEqualTo:
+        case ComparisonOperator::LessThan:
             if (expression > up) target = up; else continue;
             break;
-        case ComparisonOp::None:
+        case ComparisonOperator::None:
         default:
             continue;
         }
@@ -1356,7 +1356,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
     for (const FormulaConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
-            || constraint.op == ComparisonOp::None
+            || constraint.comparison_operator == ComparisonOperator::None
             || constraint.compiled.scope != FormulaScope::InputsOnly)
             continue;
 
@@ -1401,23 +1401,23 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
                 float residual = 0.0f;
                 bool is_active = false;
 
-                switch (constraint->op)
+                switch (constraint->comparison_operator)
                 {
-                case ComparisonOp::EqualTo:
+                case ComparisonOperator::EqualTo:
                     residual = value - low; is_active = true; break;
-                case ComparisonOp::Between:
+                case ComparisonOperator::Between:
                     if      (value < low) { residual = value - low; is_active = true; }
                     else if (value > up)  { residual = value - up;  is_active = true; }
                     break;
-                case ComparisonOp::GreaterEqualTo:
-                case ComparisonOp::GreaterThan:
+                case ComparisonOperator::GreaterEqualTo:
+                case ComparisonOperator::GreaterThan:
                     if (value < low) { residual = value - low; is_active = true; }
                     break;
-                case ComparisonOp::LessEqualTo:
-                case ComparisonOp::LessThan:
+                case ComparisonOperator::LessEqualTo:
+                case ComparisonOperator::LessThan:
                     if (value > up) { residual = value - up; is_active = true; }
                     break;
-                case ComparisonOp::None:
+                case ComparisonOperator::None:
                 default:
                     break;
                 }
@@ -1493,7 +1493,7 @@ void repair_inputs(MatrixR& random_inputs,
     for (const FormulaConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
-            || constraint.op == ComparisonOp::None
+            || constraint.comparison_operator == ComparisonOperator::None
             || constraint.compiled.scope != FormulaScope::InputsOnly)
             continue;
 
@@ -1534,7 +1534,7 @@ void repair_output_constraints(MatrixR& inputs,
     for (const FormulaConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
-            || constraint.op == ComparisonOp::None
+            || constraint.comparison_operator == ComparisonOperator::None
             || constraint.compiled.scope == FormulaScope::InputsOnly)
             continue;
 
@@ -1577,23 +1577,23 @@ void repair_output_constraints(MatrixR& inputs,
                 float residual = 0.0f;
                 bool is_active = false;
 
-                switch (constraint->op)
+                switch (constraint->comparison_operator)
                 {
-                case ComparisonOp::EqualTo:
+                case ComparisonOperator::EqualTo:
                     residual = value - low; is_active = true; break;
-                case ComparisonOp::Between:
+                case ComparisonOperator::Between:
                     if      (value < low) { residual = value - low; is_active = true; }
                     else if (value > up)  { residual = value - up;  is_active = true; }
                     break;
-                case ComparisonOp::GreaterEqualTo:
-                case ComparisonOp::GreaterThan:
+                case ComparisonOperator::GreaterEqualTo:
+                case ComparisonOperator::GreaterThan:
                     if (value < low) { residual = value - low; is_active = true; }
                     break;
-                case ComparisonOp::LessEqualTo:
-                case ComparisonOp::LessThan:
+                case ComparisonOperator::LessEqualTo:
+                case ComparisonOperator::LessThan:
                     if (value > up) { residual = value - up; is_active = true; }
                     break;
-                case ComparisonOp::None:
+                case ComparisonOperator::None:
                 default:
                     break;
                 }
