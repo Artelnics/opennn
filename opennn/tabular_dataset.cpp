@@ -538,6 +538,7 @@ vector<Histogram> TabularDataset::calculate_variable_distributions(const Index b
         {
 
         case Numeric:
+        case Integer:
         case Constant:
         {
             VectorR variable_data(used_samples_number);
@@ -619,7 +620,7 @@ vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
     {
         const Variable& variable = variables[i];
 
-        if ((variable.type == VariableType::Numeric || variable.type == VariableType::Binary)
+        if ((variable.type == VariableType::Numeric || variable.type == VariableType::Binary || variable.type == VariableType::Integer)
             && variable.role != VariableRole::None)
             box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
@@ -1394,6 +1395,7 @@ void TabularDataset::read_csv()
             case Constant:
                 break;
             case Numeric:
+            case Integer:
                 parse_numeric_token(data, sample_index, feature_indices[0], token, missing_values_label);
                 break;
             case DateTime:
@@ -1776,7 +1778,7 @@ void TabularDataset::set_variable_scalers(const vector<string>& new_scalers)
 void TabularDataset::set_default_variable_scalers()
 {
     for (Variable& variable : variables)
-        variable.scaler = (variable.type == VariableType::Numeric)
+        variable.scaler = (variable.type == VariableType::Numeric || variable.type == VariableType::Integer)
                                   ? ScalerMethod::MeanStandardDeviation
                                   : ScalerMethod::MinimumMaximum;
 }

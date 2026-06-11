@@ -553,9 +553,222 @@ TEST(ResponseOptimizationFormula, TimeRoleScaffoldIsAvailable)
     ResponseOptimization opt(setup.network.get());
 
     opt.set_time_role("x2", ResponseOptimization::TimeType::PastBatch);
-    opt.clear_constraints("x2");
+    opt.clear_time_roles("x2");
+    opt.clear_time_roles();
 
     SUCCEED();
+}
+
+
+TEST(ResponseOptimizationClear, GranularClearsResetOnlyTheirOwnState)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" });
+
+    ResponseOptimization opt(setup.network.get());
+
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_objective("x1", ResponseOptimization::Sense::Maximize);
+    opt.set_constraint("x2", ComparisonOperator::Between, float(2), float(4));
+    opt.set_time_role("x2", ResponseOptimization::TimeType::PastBatch);
+
+    EXPECT_EQ(opt.get_objectives_number(), 2);
+
+    // Clearing one collection (by name or wholesale) must leave the others intact.
+    opt.clear_objectives("x1");
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.clear_objectives();
+    EXPECT_EQ(opt.get_objectives_number(), 0);
+
+    opt.clear_constraints();
+    opt.clear_time_roles();
+    SUCCEED();
+}
+
+
+// -----------------------------------------------------------------------------
+// ResponseOptimization: integer decision variables
+// -----------------------------------------------------------------------------
+
+TEST(ResponseOptimizationInteger, IntegerVariableYieldsIntegralResults)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
+            << "integer x1 must be integral, got " << results(i, 0);
+        EXPECT_GE(results(i, 0), float(0) - float(1e-3));
+        EXPECT_LE(results(i, 0), float(10) + float(1e-3));
+    }
+}
+
+
+TEST(ResponseOptimizationInteger, IntegerBoxConstraintStaysIntegral)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", ComparisonOperator::Between, float(2), float(8));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(800);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3));
+        EXPECT_GE(results(i, 0), float(2) - float(1e-3));
+        EXPECT_LE(results(i, 0), float(8) + float(1e-3));
+    }
+}
+
+
+TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    // The affine repair projects points onto x1 + x2 <= 5; the post-repair
+    // re-round must keep the integer variable x1 on the lattice.
+    opt.set_formula_constraint("x1 + x2",
+                               ComparisonOperator::LessEqualTo,
+                               float(0), float(5));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
+            << "integer x1 not integral after repair at row " << i;
+        EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// AllowedSet: membership constraints (x in {values})
+// -----------------------------------------------------------------------------
+
+TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
+{
+    // x1 may only take {1, 5, 9}; it is referenced by no formula, so it is sampled
+    // directly from the set within a single solve (no branching). Every returned x1
+    // must be one of the allowed values.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", vector<float>{ float(1), float(5), float(9) });
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        const float x1 = results(i, 0);
+        const float distance = min(min(abs(x1 - float(1)), abs(x1 - float(5))), abs(x1 - float(9)));
+        EXPECT_LT(distance, float(1e-2)) << "x1 = " << x1 << " is not in {1,5,9}";
+    }
+}
+
+
+TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
+{
+    // x1 + x2 must equal one of {3, 7}. This expression membership branches into two
+    // EqualTo equality subproblems; the aggregated result must satisfy one of them.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x1 + x2", vector<float>{ float(3), float(7) });
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        const float sum = results(i, 0) + results(i, 1);
+        const float distance = min(abs(sum - float(3)), abs(sum - float(7)));
+        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {3,7}";
+    }
+}
+
+
+TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleValue)
+{
+    // x1 in {2, 8} AND x1 + x2 <= 5, with x2 in [0,10]. x1 is referenced by the
+    // formula, so it branches: the x1=2 branch is feasible (x2 <= 3) while the x1=8
+    // branch is infeasible (needs x2 <= -3) and is skipped. Every result must come
+    // from the surviving branch.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", vector<float>{ float(2), float(8) });
+    opt.set_formula_constraint("x1 + x2",
+                               ComparisonOperator::LessEqualTo,
+                               float(0), float(5));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(800);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 0), float(2), float(1e-2)) << "row " << i << " x1 not on the feasible branch";
+        EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
+    }
 }
 
 

@@ -77,7 +77,7 @@ CompiledFormula compile_formula(const string& expression,
 
 enum class ComparisonOperator : uint8_t
 {
-    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan
+    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet
 };
 
 
@@ -90,6 +90,11 @@ struct FormulaConstraint
     ComparisonOperator comparison_operator = ComparisonOperator::None;
     float low_bound = 0.0f;
     float up_bound = 0.0f;
+
+    // Membership target for ComparisonOperator::AllowedSet (expr in {values}).
+    // ResponseOptimization expands it into one EqualTo branch per value before any
+    // repair/filter runs, so the solver layers below never see AllowedSet directly.
+    vector<float> allowed_values;
 
     CompiledFormula compiled;
 };

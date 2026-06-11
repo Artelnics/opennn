@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-enum class VariableType { None, Numeric, Binary, Categorical, DateTime, Constant };
+enum class VariableType { None, Numeric, Binary, Integer, Categorical, DateTime, Constant };
 
 inline const EnumMap<VariableType>& variable_type_map()
 {
@@ -23,6 +23,7 @@ inline const EnumMap<VariableType>& variable_type_map()
         {VariableType::None,        "None"},
         {VariableType::Numeric,     "Numeric"},
         {VariableType::Binary,      "Binary"},
+        {VariableType::Integer,     "Integer"},
         {VariableType::Categorical, "Categorical"},
         {VariableType::DateTime,    "DateTime"},
         {VariableType::Constant,    "Constant"}
@@ -153,6 +154,7 @@ struct Variable
     void to_JSON(JsonWriter&) const;
 
     bool is_binary() const { return type == VariableType::Binary; }
+    bool is_integer() const { return type == VariableType::Integer; }
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return role != VariableRole::None && role != VariableRole::Time; }
 

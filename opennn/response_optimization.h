@@ -34,6 +34,10 @@ public:
         float low_bound;
         float up_bound;
 
+        // Membership target for ComparisonOperator::AllowedSet (the variable may
+        // only take one of these values / category indices).
+        vector<float> allowed_values;
+
         VariableConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
             : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
@@ -91,7 +95,15 @@ public:
     void clear_constraints();
     void clear_constraints(const string& name);
 
+    void clear_objectives();
+    void clear_objectives(const string& name);
+
+    void clear_time_roles();
+    void clear_time_roles(const string& name);
+
     void set_constraint(const string& name, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
+
+    void set_constraint(const string& name, const vector<float>& allowed_values);
 
     void set_objective(const string& name, const Sense sense);
 
@@ -105,12 +117,15 @@ public:
                                 ComparisonOperator comparison,
                                 float low = 0.0f, float up = 0.0f);
 
+    void set_formula_constraint(const string& expression, const vector<float>& allowed_values);
+
     void clear_formula_constraints();
 
     void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
 
     void set_fixed_history(const Tensor3& history);
+    void clear_fixed_history();
 
     void set_iterations(const int iterations);
     void set_zoom_factor(float new_zoom_factor);
@@ -162,7 +177,18 @@ public:
 
     MatrixR perform_multiobjective_optimization() const;
 
-    MatrixR perform_response_optimization() const;
+    // Runs one optimization with the constraints exactly as configured. AllowedSet
+    // membership is resolved one level up, in perform_response_optimization, which
+    // branches over the allowed values (each a separate EqualTo equality solve) and
+    // aggregates; this is the per-branch worker.
+    MatrixR solve_once() const;
+
+    // Entry point. With no AllowedSet membership it is a single solve_once(); with
+    // AllowedSet constraints it expands the cartesian product of allowed values into
+    // equality branches (equal evaluation-budget quota each), then returns the global
+    // Pareto front over the union. Not const: it temporarily rewrites the constraints
+    // per branch and restores them.
+    MatrixR perform_response_optimization();
 
     Index get_objectives_number() const;
 

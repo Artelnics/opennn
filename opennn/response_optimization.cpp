@@ -38,6 +38,17 @@ void ResponseOptimization::set_constraint(const string& name, const ComparisonOp
 }
 
 
+void ResponseOptimization::set_constraint(const string& name, const vector<float>& allowed_values)
+{
+    throw_if(allowed_values.empty(),
+             "ResponseOptimization: AllowedSet constraint for '" + name + "' needs at least one value");
+
+    VariableConstraint constraint(ComparisonOperator::AllowedSet);
+    constraint.allowed_values = allowed_values;
+    constraints[name] = move(constraint);
+}
+
+
 void ResponseOptimization::set_objective(const string& name, const Sense sense)
 {
     objectives[name] = sense;
@@ -119,6 +130,29 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 }
 
 
+void ResponseOptimization::set_formula_constraint(const string& expression, const vector<float>& allowed_values)
+{
+    throw_if(!neural_network,
+             "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
+
+    throw_if(allowed_values.empty(),
+             "ResponseOptimization: AllowedSet formula constraint needs at least one value");
+
+    FormulaConstraint formula_constraint;
+    formula_constraint.expression = expression;
+    formula_constraint.comparison_operator = ComparisonOperator::AllowedSet;
+    formula_constraint.allowed_values = allowed_values;
+    formula_constraint.uses_callback = false;
+
+    const vector<NamedColumn> input_columns = build_columns_for_formula(neural_network->get_input_variables(), true);
+    const vector<NamedColumn> output_columns = build_columns_for_formula(neural_network->get_output_variables(), false);
+
+    formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+
+    formula_constraints.push_back(move(formula_constraint));
+}
+
+
 void ResponseOptimization::clear_formula_constraints()
 {
     formula_constraints.clear();
@@ -140,15 +174,35 @@ void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 void ResponseOptimization::clear_constraints()
 {
     constraints.clear();
-    objectives.clear();
-    time_roles.clear();
 }
 
 
 void ResponseOptimization::clear_constraints(const string& name)
 {
     constraints.erase(name);
+}
+
+
+void ResponseOptimization::clear_objectives()
+{
+    objectives.clear();
+}
+
+
+void ResponseOptimization::clear_objectives(const string& name)
+{
     objectives.erase(name);
+}
+
+
+void ResponseOptimization::clear_time_roles()
+{
+    time_roles.clear();
+}
+
+
+void ResponseOptimization::clear_time_roles(const string& name)
+{
     time_roles.erase(name);
 }
 
@@ -191,6 +245,13 @@ void ResponseOptimization::set_fixed_history(const Tensor3& history)
 {
     fixed_history = history;
     is_forecasting = true;
+}
+
+
+void ResponseOptimization::clear_fixed_history()
+{
+    fixed_history = Tensor3();
+    is_forecasting = false;
 }
 
 
@@ -485,6 +546,20 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
             case ComparisonOperator::GreaterThan:
                 inferior = max(inferior, constraint.low_bound);
                 break;
+            case ComparisonOperator::AllowedSet:
+                if (!constraint.allowed_values.empty())
+                {
+                    float lowest = constraint.allowed_values.front();
+                    float highest = constraint.allowed_values.front();
+                    for (const float value : constraint.allowed_values)
+                    {
+                        lowest = min(lowest, value);
+                        highest = max(highest, value);
+                    }
+                    inferior = max(inferior, lowest);
+                    superior = min(superior, highest);
+                }
+                break;
             default:
                 break;
             }
@@ -499,8 +574,48 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
                 superior_frontier(feature_index + j) = (j == category_index) ? 1.0 : 0.0;
             }
         }
+        else if(constraint.comparison == ComparisonOperator::AllowedSet)
+        {
+            for(Index j = 0; j < feature_dimension; ++j)
+            {
+                bool allowed = false;
+                for (const float value : constraint.allowed_values)
+                    if (static_cast<Index>(llround(value)) == j) { allowed = true; break; }
+
+                inferior_frontier(feature_index + j) = 0.0;
+                superior_frontier(feature_index + j) = allowed ? 1.0 : 0.0;
+            }
+        }
 
         feature_index += feature_dimension;
+    }
+}
+
+
+static void round_discrete_inputs(MatrixR& inputs,
+                                  const vector<Variable>& variables,
+                                  const VectorR& inferior_frontier,
+                                  const VectorR& superior_frontier)
+{
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
+
+    Index feature_index = 0;
+
+    for(size_t i = 0; i < variables.size(); ++i)
+    {
+        const VariableType type = variables[i].type;
+
+        if(type == VariableType::Binary)
+            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(0.0f).min(1.0f);
+        else if(type == VariableType::Integer)
+        {
+            const float minimum = ceil(inferior_frontier(feature_index));
+            const float maximum = floor(superior_frontier(feature_index));
+
+            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(minimum).min(maximum);
+        }
+
+        feature_index += feature_dimensions[i];
     }
 }
 
@@ -526,8 +641,47 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
         if(categories_number == 1)
         {
-            if (variables[input_variable].type == VariableType::Binary)
+            const VariableConstraint constraint = get_constraint(variables[input_variable].name);
+            const VariableType type = variables[input_variable].type;
+
+            if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
+            {
+                const float inferior = input_domain.inferior_frontier(current_feature_index);
+                const float superior = input_domain.superior_frontier(current_feature_index);
+
+                vector<float> candidates;
+                candidates.reserve(constraint.allowed_values.size());
+                for (const float value : constraint.allowed_values)
+                    if (value >= inferior - EPSILON && value <= superior + EPSILON)
+                        candidates.push_back(value);
+
+                if (candidates.empty())
+                {
+                    const float center = 0.5f * (inferior + superior);
+                    float nearest = constraint.allowed_values.front();
+                    for (const float value : constraint.allowed_values)
+                        if (abs(value - center) < abs(nearest - center)) nearest = value;
+                    candidates.push_back(nearest);
+                }
+
+                for (Index i = 0; i < effective_evaluations; ++i)
+                    random_inputs(i, current_feature_index) = candidates[random_integer(0, candidates.size() - 1)];
+            }
+            else if (type == VariableType::Binary)
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
+            else if (type == VariableType::Integer)
+            {
+                const float minimum = ceil(input_domain.inferior_frontier(current_feature_index));
+                const float maximum = floor(input_domain.superior_frontier(current_feature_index));
+
+                throw_if(maximum < minimum,
+                         "ResponseOptimization: integer variable '" + variables[input_variable].name
+                         + "' has no integer value within its range.");
+
+                random_inputs.col(current_feature_index).array()
+                    = (random_inputs.col(current_feature_index).array() * (maximum - minimum + 1.0f) + (minimum - 0.5f))
+                      .round().max(minimum).min(maximum);
+            }
             else
             {
                 const float inferior = input_domain.inferior_frontier(current_feature_index);
@@ -565,6 +719,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                   input_domain.inferior_frontier,
                   input_domain.superior_frontier,
                   formula_constraints);
+
+    round_discrete_inputs(random_inputs, variables,
+                          input_domain.inferior_frontier,
+                          input_domain.superior_frontier);
 
     return random_inputs;
 }
@@ -1544,7 +1702,7 @@ void ResponseOptimization::initialize_network_differential() const
 }
 
 
-MatrixR ResponseOptimization::perform_response_optimization() const
+MatrixR ResponseOptimization::solve_once() const
 {
     const Index objectives_number = get_objectives_number();
 
@@ -1557,6 +1715,173 @@ MatrixR ResponseOptimization::perform_response_optimization() const
     return (objectives_number == 1)
         ? perform_single_objective_optimization()
         : perform_multiobjective_optimization();
+}
+
+
+MatrixR ResponseOptimization::perform_response_optimization()
+{
+    // An AllowedSet (expr in {v1..vk}) is solved by BRANCHING: each value becomes an
+    // EqualTo equality subproblem the existing machinery already handles. We only
+    // branch what cannot be sampled directly: every formula AllowedSet, and any
+    // input-variable scalar AllowedSet referenced by a formula (pinning it lets the
+    // formula repair adjust the rest). Free scalar inputs and categorical subsets are
+    // drawn straight from the set inside a single solve, so they are not branched.
+
+    struct BranchAxis
+    {
+        bool is_formula = false;
+        string variable_name;
+        Index formula_index = 0;
+        vector<float> values;
+    };
+
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    const vector<Variable>& output_variables = neural_network->get_output_variables();
+
+    const vector<NamedColumn> input_columns = build_columns_for_formula(input_variables, true);
+
+    bool any_callback_formula = false;
+    for (const FormulaConstraint& formula_constraint : formula_constraints)
+        if (formula_constraint.uses_callback)
+            any_callback_formula = true;
+
+    auto input_column_of = [&](const string& name) -> Index
+    {
+        for (const NamedColumn& column : input_columns)
+            if (column.name == name) return column.column_index;
+        return -1;
+    };
+
+    auto input_referenced_by_formula = [&](const Index column) -> bool
+    {
+        if (any_callback_formula) return true;
+        for (const FormulaConstraint& formula_constraint : formula_constraints)
+            for (const Index referenced : formula_constraint.compiled.input_indices)
+                if (referenced == column) return true;
+        return false;
+    };
+
+    auto feature_count_of = [&](const string& name) -> Index
+    {
+        for (const Variable& variable : input_variables)  if (variable.name == name) return variable.get_feature_count();
+        for (const Variable& variable : output_variables) if (variable.name == name) return variable.get_feature_count();
+        return 1;
+    };
+
+    auto is_input_name = [&](const string& name) -> bool
+    {
+        for (const Variable& variable : input_variables) if (variable.name == name) return true;
+        return false;
+    };
+
+    vector<BranchAxis> axes;
+
+    for (const auto& [name, constraint] : constraints)
+    {
+        if (constraint.comparison != ComparisonOperator::AllowedSet || constraint.allowed_values.empty())
+            continue;
+
+        const bool scalar = (feature_count_of(name) == 1);
+
+        if (!scalar)
+            continue;   // categorical subset -> handled by the Domain mask + sampler
+
+        if (is_input_name(name) && !input_referenced_by_formula(input_column_of(name)))
+            continue;   // free scalar input -> sampled directly from the set
+
+        axes.push_back({false, name, 0, constraint.allowed_values});
+    }
+
+    for (Index j = 0; j < static_cast<Index>(formula_constraints.size()); ++j)
+        if (formula_constraints[j].comparison_operator == ComparisonOperator::AllowedSet
+            && !formula_constraints[j].allowed_values.empty())
+            axes.push_back({true, string(), j, formula_constraints[j].allowed_values});
+
+    if (axes.empty())
+        return solve_once();
+
+    Index branches_number = 1;
+    for (const BranchAxis& axis : axes)
+        branches_number *= static_cast<Index>(axis.values.size());
+
+    cout << "> AllowedSet: " << axes.size() << " membership axis(es) -> "
+         << branches_number << " equality branch(es)." << endl;
+
+    const map<string, VariableConstraint> saved_constraints = constraints;
+    const vector<FormulaConstraint> saved_formula_constraints = formula_constraints;
+    const Index saved_budget = max_total_evaluations;
+
+    const Index per_branch_budget = (saved_budget > 0)
+        ? max(Index(1), saved_budget / branches_number)
+        : 0;
+
+    MatrixR combined;
+
+    vector<Index> radix(axes.size(), 0);
+
+    for (Index branch = 0; branch < branches_number; ++branch)
+    {
+        for (size_t a = 0; a < axes.size(); ++a)
+        {
+            const float value = axes[a].values[radix[a]];
+
+            if (axes[a].is_formula)
+            {
+                FormulaConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
+                formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
+                formula_constraint.low_bound = value;
+                formula_constraint.up_bound = value;
+            }
+            else
+                constraints[axes[a].variable_name] = VariableConstraint(ComparisonOperator::EqualTo, value, value);
+        }
+
+        max_total_evaluations = per_branch_budget;
+
+        cout << "\n=== AllowedSet branch " << branch + 1 << " / " << branches_number << " ===" << endl;
+
+        try
+        {
+            const MatrixR branch_result = solve_once();
+            if (branch_result.rows() > 0)
+                combined = (combined.rows() == 0) ? branch_result : append_rows(combined, branch_result);
+        }
+        catch (const exception& error)
+        {
+            cout << "!!! [AllowedSet] branch " << branch + 1 << " skipped: " << error.what() << endl;
+        }
+
+        constraints = saved_constraints;
+        formula_constraints = saved_formula_constraints;
+        max_total_evaluations = saved_budget;
+
+        for (size_t a = 0; a < axes.size(); ++a)
+        {
+            if (++radix[a] < static_cast<Index>(axes[a].values.size())) break;
+            radix[a] = 0;
+        }
+    }
+
+    if (combined.rows() == 0)
+        return MatrixR();
+
+    // Aggregate the per-branch results into one global Pareto front (for a single
+    // objective this collapses to the best point across branches).
+    const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
+
+    const MatrixR aggregated_inputs  = combined.leftCols(input_features);
+    const MatrixR aggregated_outputs = combined.rightCols(combined.cols() - input_features);
+
+    const Objectives objectives(*this);
+    MatrixR objective_matrix = objectives.extract(aggregated_inputs, aggregated_outputs);
+    objectives.normalize(objective_matrix);
+
+    const auto [pareto_inputs, pareto_outputs] = calculate_pareto(aggregated_inputs, aggregated_outputs, objective_matrix);
+
+    cout << "\n> AllowedSet: aggregated " << combined.rows() << " branch point(s) -> "
+         << pareto_inputs.rows() << " on the global front." << endl;
+
+    return append_columns(pareto_inputs, pareto_outputs);
 }
 
 }
