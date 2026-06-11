@@ -20,11 +20,6 @@ namespace opennn
 namespace
 {
 
-inline Eigen::array<Index, 3> array_3(const Index first_dimension, const Index second_dimension, const Index third_dimension)
-{
-    return Eigen::array<Index, 3>({first_dimension, second_dimension, third_dimension});
-}
-
 inline ComparisonOperator to_comparison_operator(const ResponseOptimization::ConditionType condition)
 {
     switch (condition)
@@ -588,7 +583,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     Tensor3 input_combined(batch_size, total_lags, total_features);
 
-    input_combined.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
+    input_combined.device(get_device()) = fixed_history.broadcast(array<Index, 3>{batch_size, 1, 1});
 
     Index feature_cursor = 0;    
     Index candidate_col_cursor = 0; 
@@ -605,7 +600,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
             TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, dim);
 
-            input_combined.slice(array_3(0, total_lags - 1, feature_cursor), array_3(batch_size, 1, dim)).device(get_device()) = block_tensor;
+            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, dim}).device(get_device()) = block_tensor;
 
             candidate_col_cursor += dim;
         }
