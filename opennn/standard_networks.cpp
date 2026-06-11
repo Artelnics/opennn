@@ -663,12 +663,14 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
-                                                     const Shape& output_shape) : NeuralNetwork()
+                                                     const Shape& output_shape,
+                                                     PoolingMethod pooling_method) : NeuralNetwork()
 {
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
     const Index heads_number = complexity_dimensions[0];
+    const Index hidden_neurons = complexity_dimensions.rank > 1 ? complexity_dimensions[1] : 64;
 
     auto embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
                                                   embedding_dimension,
@@ -682,9 +684,9 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer"));
 
-    add_layer(make_unique<Pooling3d>(get_output_shape(), PoolingMethod::AveragePooling));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
-    add_layer(make_unique<Dense>(get_output_shape(), Shape({64}), "ReLU", false, "hidden_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "hidden_layer"));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                  output_shape,
