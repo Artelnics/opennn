@@ -164,15 +164,20 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
 
+    // Small batch fills (e.g. batch_size 100 issued from concurrent worker
+    // threads) lose far more to the OpenMP fork-join and thread
+    // oversubscription than the copy itself costs; run those serially.
+    const bool parallel_fill = rows_number * columns_number >= 65536;
+
     if (contiguous)
     {
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallel_fill)
         for (Index i = 0; i < rows_number; ++i)
             memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
     }
     else
     {
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallel_fill)
         for (Index i = 0; i < rows_number; ++i)
         {
             const Index src_row = row_indices[i];

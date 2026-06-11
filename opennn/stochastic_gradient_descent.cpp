@@ -305,6 +305,7 @@ TrainingResult StochasticGradientDescent::train()
     if (on_gpu)
     {
         optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
+        optimization_data.graph_effective_lr.setZero();
 
         graph_update = [&](BackPropagation& back_propagation) {
             update_parameters_capturable(back_propagation, optimization_data);
@@ -341,6 +342,14 @@ TrainingResult StochasticGradientDescent::train()
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr,
                                batch_pools.fixed_training_batch.get());
+
+#ifdef OPENNN_HAS_CUDA
+        // The graph epoch path ignores warmup_update and steps the real
+        // optimization_data (the captured graph references its buffers), so the
+        // warmup leaves the velocity non-zero while the model state is restored.
+        if (graph_update && momentum > 0.0f)
+            optimization_data.data.setZero();
+#endif
     }
 
     time_t beginning_time;

@@ -125,6 +125,7 @@ struct BatchPools
     vector<unique_ptr<Batch>> training_pool;
     vector<unique_ptr<Batch>> validation_pool;
     unique_ptr<Batch> fixed_training_batch;
+    vector<unique_ptr<Batch>> graph_slot_pool;
 
     bool validation_uses_training_pool = false;
 

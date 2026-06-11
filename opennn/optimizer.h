@@ -8,8 +8,11 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
+#include <optional>
 #include "batch.h"
+#include "device_backend.h"
 #include "json.h"
 #include "loss.h"
 #include "tensor_types.h"
@@ -50,6 +53,8 @@ public:
 
     void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
     int  get_workers_number() const { return workers_number; }
+
+    void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -145,6 +150,7 @@ protected:
 
     void reset_graph_capture();
 
+    bool cuda_graph_requested() const;
     bool graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const;
     Loss::EvaluationResult run_graph_epoch(ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
@@ -192,9 +198,22 @@ protected:
 
     bool has_recurrent_layers_ = false;
 
-    void* training_graph_exec = nullptr;
-    bool  training_graph_captured = false;
+    // Slot ring for the graph epoch. The staged (host FP32) path groups
+    // graph_group_size iterations into one mega-graph whose H2D nodes read each
+    // slot's pinned host buffer, and ping-pongs two groups over the ring; the
+    // upload path (device-resident / BF16) uses slots [0..1] with one graph per
+    // slot. Two execs either way (per group parity or per slot).
+    static constexpr int graph_group_size = 8;
+    static constexpr int graph_slots_count = 2 * graph_group_size;
+    array<device::GraphExecHandle, 2> training_graph_execs;
+    array<Batch*, graph_slots_count> graph_slots{};
+    // Capture-internal fork/join events so the mega-graph's H2D nodes run on a
+    // forked stream and overlap compute. Replays re-record them; they must not
+    // be used for anything else.
+    array<CudaEvent, 2> graph_fork_events;
+    array<CudaEvent, graph_slots_count> graph_copy_done_events;
     function<void(BackPropagation&)> graph_update;
+    optional<bool> use_cuda_graph;
 };
 
 }

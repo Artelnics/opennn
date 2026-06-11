@@ -394,38 +394,71 @@ void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
 
 #ifdef OPENNN_HAS_CUDA
 
-void begin_graph_capture(cudaStream_t stream)
+StreamCapture::StreamCapture(cudaStream_t new_stream)
+    : stream(new_stream)
 {
     CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
 }
 
-void* end_graph_capture(cudaStream_t stream)
+GraphHandle StreamCapture::end()
 {
     cudaGraph_t graph = nullptr;
     CHECK_CUDA(cudaStreamEndCapture(stream, &graph));
-
-    cudaGraphExec_t exec = nullptr;
-    CHECK_CUDA(cudaGraphInstantiate(&exec, graph, nullptr, nullptr, 0));
-    CHECK_CUDA(cudaGraphDestroy(graph));
-    return static_cast<void*>(exec);
+    finished = true;
+    return GraphHandle(graph);
 }
 
-void launch_graph(void* graph_exec, cudaStream_t stream)
+StreamCapture::~StreamCapture() noexcept
 {
-    CHECK_CUDA(cudaGraphLaunch(static_cast<cudaGraphExec_t>(graph_exec), stream));
+    if (finished) return;
+
+    cudaGraph_t orphan = nullptr;
+    cudaStreamEndCapture(stream, &orphan);
+    if (orphan) cudaGraphDestroy(orphan);
+    cudaGetLastError();
 }
 
-void destroy_graph(void* graph_exec)
+void instantiate_or_update(GraphExecHandle& exec, cudaGraph_t graph)
 {
-    if (graph_exec) cudaGraphExecDestroy(static_cast<cudaGraphExec_t>(graph_exec));
+    if (exec)
+    {
+        cudaGraphExecUpdateResultInfo update_info{};
+        if (cudaGraphExecUpdate(exec.get(), graph, &update_info) == cudaSuccess)
+            return;
+
+        cudaGetLastError();
+        exec.reset();
+    }
+
+    cudaGraphExec_t raw = nullptr;
+    CHECK_CUDA(cudaGraphInstantiate(&raw, graph, nullptr, nullptr, 0));
+    exec.reset(raw);
+}
+
+void launch_graph(const GraphExecHandle& exec, cudaStream_t stream)
+{
+    CHECK_CUDA(cudaGraphLaunch(exec.get(), stream));
+}
+
+void destroy_graph(cudaGraph_t graph) noexcept
+{
+    if (graph) cudaGraphDestroy(graph);
+}
+
+void destroy_graph_exec(cudaGraphExec_t exec) noexcept
+{
+    if (exec) cudaGraphExecDestroy(exec);
 }
 
 #else
 
-void  begin_graph_capture(cudaStream_t) { throw_cuda_unavailable(); }
-void* end_graph_capture(cudaStream_t)   { throw_cuda_unavailable(); }
-void  launch_graph(void*, cudaStream_t) { throw_cuda_unavailable(); }
-void  destroy_graph(void*) {}
+StreamCapture::StreamCapture(cudaStream_t) { throw_cuda_unavailable(); }
+StreamCapture::~StreamCapture() noexcept {}
+GraphHandle StreamCapture::end() { throw_cuda_unavailable(); }
+void instantiate_or_update(GraphExecHandle&, cudaGraph_t) { throw_cuda_unavailable(); }
+void launch_graph(const GraphExecHandle&, cudaStream_t) { throw_cuda_unavailable(); }
+void destroy_graph(cudaGraph_t) noexcept {}
+void destroy_graph_exec(cudaGraphExec_t) noexcept {}
 
 #endif
 
