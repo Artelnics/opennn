@@ -27,13 +27,6 @@ namespace opennn
 
     vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
-    bool is_numeric_string(string_view);
-    bool is_date_time_string(string_view);
-
-    enum DateFormat {Auto, Dmy, Mdy, Ymd};
-
-    time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = Auto);
-
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
@@ -42,9 +35,6 @@ namespace opennn
     float parse_float(const string&, const string& context);
     int   parse_int  (const string&, const string& context);
     long  parse_long (const string&, const string& context);
-
-    bool has_numbers(const vector<string>&);
-    bool has_numbers(const vector<string_view>&);
 
     void replace(string&, const string&, const string&);
 

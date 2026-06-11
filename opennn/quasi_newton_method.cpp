@@ -167,7 +167,6 @@ TrainingResult QuasiNewtonMethod::train()
 
     if (display) cout << "Training with quasi-Newton method..." << "\n";
 
-
     const Dataset* dataset = loss->get_dataset();
 
     const bool has_validation = dataset->has_validation();
@@ -308,24 +307,17 @@ TrainingResult QuasiNewtonMethod::train()
         {
             if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-            stop_training = true;
         }
-        else
-        {
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures);
-        }
+
+        stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                  results.training_error_history(epoch),
+                                                  validation_failures,
+                                                  training_back_propagation.loss,
+                                                  has_validation);
 
         if (stop_training)
         {
-            results.loss = training_back_propagation.loss;
             results.loss_decrease = loss_decrease;
-            results.validation_failures = validation_failures;
-            results.resize_training_error_history(epoch+1);
-            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-            results.elapsed_time = get_time(elapsed_time);
-
             break;
         }
 

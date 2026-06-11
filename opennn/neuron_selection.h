@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "pch.h"
+
 namespace opennn
 {
 
@@ -123,7 +125,7 @@ struct NeuronsSelectionResult
    float optimum_validation_error = 10.0f;
 
 
-   NeuronSelection::StoppingCondition stopping_condition = NeuronSelection::StoppingCondition::MaximumTime;
+   optional<NeuronSelection::StoppingCondition> stopping_condition;
 
    string elapsed_time;
 };

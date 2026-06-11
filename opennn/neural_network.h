@@ -10,7 +10,7 @@
 
 #include "configuration.h"
 #include "layer.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "variable.h"
 
 namespace opennn

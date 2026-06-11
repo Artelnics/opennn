@@ -112,7 +112,8 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
 
     NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
-    EXPECT_EQ(results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumNeurons);
+    ASSERT_TRUE(results.stopping_condition);
+    EXPECT_EQ(*results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumNeurons);
 }
 
 
@@ -155,7 +156,8 @@ TEST(GrowingNeuronsTest, StopByTime)
 
     NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
-    EXPECT_EQ(results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumTime);
+    ASSERT_TRUE(results.stopping_condition);
+    EXPECT_EQ(*results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumTime);
 }
 
 

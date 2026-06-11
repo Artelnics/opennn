@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "correlations.h"
 #include "tabular_dataset.h"
 #include "scaling_layer.h"

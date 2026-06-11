@@ -13,7 +13,7 @@
 #include "standard_networks.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
-#include "error_utilities.h"
+#include "error_functions.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -1101,66 +1101,6 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const MatrixR
                                                                    const vector<string>& labels) const
 {
     return classify_samples(targets, outputs, labels, false);
-}
-
-void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    file << "sample_name,actual_class,predicted_class,probability" << "\n";
-
-    for (Index i = 0; i < samples.dimension(0); ++i)
-        file << samples(i, 0) << "," << samples(i, 1) << ","
-             << samples(i, 2) << "," << samples(i, 3) << "\n";
-
-    file.close();
-}
-
-void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
-{
-    const VectorR probabilities = extract_probabilities(samples);
-
-    ofstream file(file_name);
-
-    file << "minimum,maximum,mean,std" << "\n"
-         << probabilities.minCoeff() << ","
-         << probabilities.maxCoeff() << ","
-         << probabilities.mean() << ","
-         << standard_deviation(probabilities);
-}
-
-VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
-{
-    VectorR probabilities(samples.dimension(0));
-
-    for (Index i = 0; i < probabilities.size(); ++i)
-        probabilities(i) = float(::atof(samples(i, 3).c_str()));
-
-    return probabilities;
-}
-
-void TestingAnalysis::save_well_classified_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                   const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
-}
-
-void TestingAnalysis::save_misclassified_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                 const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
-}
-
-void TestingAnalysis::save_well_classified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
-                                                              const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_statistics_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
-}
-
-void TestingAnalysis::save_misclassified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
-                                                            const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_statistics_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
 }
 
 vector<VectorR> TestingAnalysis::calculate_error_autocorrelation(const Index maximum_past_time_steps) const

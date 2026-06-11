@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "time_series_dataset.h"
+#include "neural_network.h"
 #include "optimizer.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
@@ -17,6 +19,38 @@ namespace opennn
 InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
+}
+
+void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
+{
+    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    const Shape input_shape = time_series_dataset
+        ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
+        : Shape{ input_features_number };
+    neural_network->set_input_shape(input_shape);
+    dataset->set_shape("Input", input_shape);
+
+    if (time_series_dataset)
+    {
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        const vector<string> base_names = dataset->get_variable_names("Input");
+
+        vector<string> final_feature_names;
+        final_feature_names.reserve(base_names.size() * past_time_steps);
+
+        for (const string& base_name : base_names)
+            for (Index j = 0; j < past_time_steps; ++j)
+                final_feature_names.push_back(format("{}_lag{}", base_name.empty() ? "variable" : base_name, j));
+
+        neural_network->set_input_names(final_feature_names);
+    }
+    else
+    {
+        neural_network->set_input_names(dataset->get_feature_names("Input"));
+    }
+
+    neural_network->compile();
 }
 
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
@@ -39,8 +73,10 @@ void InputsSelectionResult::set(const Index maximum_epochs)
 
 string InputsSelectionResult::write_stopping_condition() const
 {
+    if (!stopping_condition) return "None";
+
     using enum InputsSelection::StoppingCondition;
-    switch (stopping_condition)
+    switch (*stopping_condition)
     {
     case MaximumTime:
         return "MaximumTime";

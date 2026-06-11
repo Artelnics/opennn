@@ -7,26 +7,17 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "device_backend.h"
 #include "string_utilities.h"
-#include "tensor_utilities.h"
-#include "math_utilities.h"
-#include "neural_network.h"
 #include "unscaling_layer.h"
 #include "json.h"
 
 namespace opennn
 {
 
-VectorR Unscaling::get_minimums()            const { return descriptives_field(descriptives, &Descriptives::minimum); }
-VectorR Unscaling::get_maximums()            const { return descriptives_field(descriptives, &Descriptives::maximum); }
-VectorR Unscaling::get_means()               const { return descriptives_field(descriptives, &Descriptives::mean); }
-VectorR Unscaling::get_standard_deviations() const { return descriptives_field(descriptives, &Descriptives::standard_deviation); }
-
 Unscaling::Unscaling(const Shape& new_input_shape, const string& new_label)
-    : Layer(LayerType::Unscaling, false)
+    : Scaling(LayerType::Unscaling)
 {
-    operators = {&unscale_op};
+    scale_op.invert = true;
     set(new_input_shape.dim_or_zero(0), new_label);
 }
 
@@ -48,104 +39,6 @@ void Unscaling::set_input_shape(const Shape& new_input_shape)
 
 void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
 {
-}
-
-void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
-{
-    throw_if(ssize(new_descriptives) != ssize(descriptives),
-             format("Unscaling::set_descriptives: size mismatch (expected {}, got {}).",
-                    descriptives.size(), new_descriptives.size()));
-    descriptives = new_descriptives;
-    op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
-}
-
-void Unscaling::set_min_max_range(float new_min, float new_max)
-{
-    min_range = new_min;
-    max_range = new_max;
-    unscale_op.min_range = new_min;
-    unscale_op.max_range = new_max;
-}
-
-void Unscaling::set_scalers(const vector<string>& scalers_str)
-{
-    throw_if(ssize(scalers_str) != ssize(scalers),
-             format("Unscaling::set_scalers: size mismatch (expected {}, got {}).",
-                    scalers.size(), scalers_str.size()));
-    ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
-    op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
-}
-
-void Unscaling::set_scalers(const string& scaler)
-{
-    const ScalerMethod method = string_to_scaler_method(scaler);
-    ranges::fill(scalers, method);
-    op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
-}
-
-float* Unscaling::link_states(float* pointer, Device device)
-{
-    refresh_op_storage(device);
-    return pointer;
-}
-
-void Unscaling::refresh_op_storage(Device device)
-{
-    op_storage_device = device;
-
-    const Index features = ssize(descriptives);
-    const Index bytes    = 5 * features * Index(sizeof(float));
-
-    const bool needs = op_storage_dirty
-                    || op_storage.bytes       != bytes
-                    || op_storage.device_type != device;
-    if (!needs) return;
-
-    op_storage.resize_bytes(bytes, device);
-    unscale_op.min_range = min_range;
-    unscale_op.max_range = max_range;
-
-    if (features == 0)
-    {
-        unscale_op.minimums = unscale_op.maximums = unscale_op.means =
-            unscale_op.standard_deviations = unscale_op.scalers = TensorView();
-        op_storage_dirty = false;
-        return;
-    }
-
-    vector<float> staging(size_t(5 * features));
-    for (Index i = 0; i < features; ++i)
-    {
-        staging[size_t(0 * features + i)] = descriptives[size_t(i)].minimum;
-        staging[size_t(1 * features + i)] = descriptives[size_t(i)].maximum;
-        staging[size_t(2 * features + i)] = descriptives[size_t(i)].mean;
-        staging[size_t(3 * features + i)] = descriptives[size_t(i)].standard_deviation;
-        staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
-    }
-
-    if (device == Device::CUDA)
-    {
-        opennn::device::copy_async(op_storage.data, staging.data(),
-                                   bytes,
-                                   opennn::device::CopyKind::HostToDevice);
-    }
-    else
-    {
-        memcpy(op_storage.data, staging.data(), size_t(bytes));
-    }
-
-    float* const base = op_storage.as<float>();
-    const Shape shape{features};
-    unscale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32, device);
-    unscale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32, device);
-    unscale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
-    unscale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);
-    unscale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32, device);
-
-    op_storage_dirty = false;
 }
 
 void Unscaling::read_JSON_body(const Json* root_element)
@@ -266,3 +159,7 @@ string Unscaling::write_expression(const vector<string>& input_names,
 REGISTER(Layer, Unscaling, "Unscaling")
 
 }
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

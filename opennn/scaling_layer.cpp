@@ -9,7 +9,7 @@
 #include "registry.h"
 #include "device_backend.h"
 #include "scaling_layer.h"
-#include "math_utilities.h"
+#include "tensor_operations.h"
 #include "forward_propagation.h"
 #include "string_utilities.h"
 #include "json.h"
@@ -18,10 +18,15 @@ namespace opennn
 {
 
 Scaling::Scaling(const Shape& new_input_shape)
-    : Layer(LayerType::Scaling, false)
+    : Scaling(LayerType::Scaling)
+{
+    set(new_input_shape);
+}
+
+Scaling::Scaling(LayerType layer_type)
+    : Layer(layer_type, false)
 {
     operators = {&scale_op};
-    set(new_input_shape);
 }
 
 VectorR Scaling::get_minimums()            const { return descriptives_field(descriptives, &Descriptives::minimum); }
@@ -55,8 +60,8 @@ void Scaling::set_input_shape(const Shape& new_input_shape)
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     throw_if(ssize(new_descriptives) != ssize(descriptives),
-             format("Scaling::set_descriptives: size mismatch (expected {}, got {}).",
-                    descriptives.size(), new_descriptives.size()));
+             format("{}::set_descriptives: size mismatch (expected {}, got {}).",
+                    get_name(), descriptives.size(), new_descriptives.size()));
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -73,8 +78,8 @@ void Scaling::set_min_max_range(float new_min, float new_max)
 void Scaling::set_scalers(const vector<string>& scalers_str)
 {
     throw_if(ssize(scalers_str) != ssize(scalers),
-             format("Scaling::set_scalers: size mismatch (expected {}, got {}).",
-                    scalers.size(), scalers_str.size()));
+             format("{}::set_scalers: size mismatch (expected {}, got {}).",
+                    get_name(), scalers.size(), scalers_str.size()));
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);

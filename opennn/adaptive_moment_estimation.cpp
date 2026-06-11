@@ -295,7 +295,6 @@ TrainingResult AdaptiveMomentEstimation::train()
                                                                                  decoder_feature_indices,
                                                                                  target_feature_indices,
                                                                                  training_update,
-                                                                                 should_display(epoch),
                                                                                  batch_pools.fixed_training_batch.get());
 
             training_error = training_evaluation_result.error;
@@ -323,43 +322,30 @@ TrainingResult AdaptiveMomentEstimation::train()
                     best_epoch = epoch;
                     validation_failures = 0;
 
-                    const Index parameters_size = neural_network->get_parameters_size();
-                    if(Index(best_parameters.size()) != parameters_size)
-                        best_parameters.resize(parameters_size);
+                    const tuple<vector<float>&, const float*, Index> snapshots[] = {
+                        {best_parameters, neural_network->get_parameters_data(), neural_network->get_parameters_size()},
+                        {best_states,     neural_network->get_states_data(),     neural_network->get_states_buffer_size()}
+                    };
 
-                    const float* parameters_source = neural_network->get_parameters_data();
-                    const size_t parameters_bytes = size_t(parameters_size) * sizeof(float);
-                    if (neural_network->is_gpu() && device::is_cuda_build())
+                    for (const auto& [destination, source, size] : snapshots)
                     {
-                        cudaStream_t stream = Backend::get_compute_stream();
-                        device::copy_async(best_parameters.data(), parameters_source,
-                                           Index(parameters_bytes),
-                                           device::CopyKind::DeviceToHost,
-                                           stream);
-                        device::synchronize(stream);
-                    }
-                    else
-                        memcpy(best_parameters.data(), parameters_source, parameters_bytes);
+                        if (size == 0) continue;
 
-                    const Index states_size = neural_network->get_states_buffer_size();
-                    if (states_size > 0)
-                    {
-                        if (Index(best_states.size()) != states_size)
-                            best_states.resize(states_size);
+                        if (Index(destination.size()) != size)
+                            destination.resize(size);
 
-                        const float* states_source = neural_network->get_states_data();
-                        const size_t states_bytes = size_t(states_size) * sizeof(float);
+                        const size_t bytes = size_t(size) * sizeof(float);
                         if (neural_network->is_gpu() && device::is_cuda_build())
                         {
                             cudaStream_t stream = Backend::get_compute_stream();
-                            device::copy_async(best_states.data(), states_source,
-                                               Index(states_bytes),
+                            device::copy_async(destination.data(), source,
+                                               Index(bytes),
                                                device::CopyKind::DeviceToHost,
                                                stream);
                             device::synchronize(stream);
                         }
                         else
-                            memcpy(best_states.data(), states_source, states_bytes);
+                            memcpy(destination.data(), source, bytes);
                     }
                 }
                 else
@@ -368,36 +354,24 @@ TrainingResult AdaptiveMomentEstimation::train()
 
             elapsed_time = get_elapsed_time(beginning_time);
 
-            if (should_display(epoch))
-            {
-                cout << "Training error: " << training_error << "\n";
-                if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
-                if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
-                if (has_validation) cout << "Validation error: " << validation_error << "\n";
-                if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
-                if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
-                cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-            }
+            display_epoch_results(epoch, training_error, training_accuracy,
+                                  validation_error, validation_accuracy,
+                                  has_validation, is_token_cross_entropy, elapsed_time);
 
             stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                       results.training_error_history(epoch),
-                                                      validation_failures);
+                                                      validation_failures,
+                                                      training_back_propagation.loss,
+                                                      has_validation);
 
-            if (stop_training)
-            {
-                results.loss = training_back_propagation.loss;
-                results.validation_failures = validation_failures;
-                results.resize_training_error_history(epoch + 1);
-                results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-                results.elapsed_time = get_time(elapsed_time);
-                break;
-            }
+            if (stop_training) break;
         }
     }
 
     teardown_device_training();
 
-    if(results.stopping_condition == StoppingCondition::MaximumValidationErrorIncreases
+    if(results.stopping_condition
+       && *results.stopping_condition == StoppingCondition::MaximumValidationErrorIncreases
        && !best_parameters.empty()
        && Index(best_parameters.size()) == neural_network->get_parameters_size())
     {

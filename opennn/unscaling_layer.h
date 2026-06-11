@@ -8,16 +8,12 @@
 
 #pragma once
 
-#include "layer.h"
-#include "operators.h"
-#include "scaling.h"
-#include "statistics.h"
-#include "variable.h"
+#include "scaling_layer.h"
 
 namespace opennn
 {
 
-class Unscaling final : public Layer
+class Unscaling final : public Scaling
 {
 public:
 
@@ -26,49 +22,16 @@ public:
     Shape get_input_shape()  const override { return { Index(scalers.size()) }; }
     Shape get_output_shape() const override { return { Index(scalers.size()) }; }
 
-    const vector<Descriptives>& get_descriptives() const { return descriptives; }
-    const vector<ScalerMethod>& get_scalers()      const { return scalers; }
-
-    VectorR get_minimums()            const;
-    VectorR get_maximums()            const;
-    VectorR get_means()               const;
-    VectorR get_standard_deviations() const;
-
-    float get_min_range() const { return min_range; }
-    float get_max_range() const { return max_range; }
-
     void set(Index = 0, const string& = "unscaling_layer");
 
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override;
-
-    void set_descriptives(const vector<Descriptives>&);
-    void set_min_max_range(float min, float max);
-    void set_scalers(const vector<string>&);
-    void set_scalers(const string&);
-
-    float* link_states(float*, Device) override;
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
     string write_expression(const vector<string>& input_names,
                             const vector<string>& output_names) const override;
-
-private:
-
-    vector<Descriptives> descriptives;
-    vector<ScalerMethod> scalers;
-    float min_range = -1.0f;
-    float max_range = 1.0f;
-
-    Buffer op_storage;
-    Device op_storage_device = Device::CPU;
-    bool   op_storage_dirty = true;
-
-    UnscaleOp unscale_op;
-
-    void refresh_op_storage(Device device);
 };
 
 }

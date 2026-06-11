@@ -9,7 +9,7 @@
 #include "language_dataset.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "io_utilities.h"
 
 #include <fstream>
@@ -35,9 +35,6 @@ static_assert(sizeof(LangCacheHeader) == 64, "LangCacheHeader must be 64 bytes")
 
 constexpr uint32_t LANG_CACHE_VERSION = 1;
 constexpr const char LANG_CACHE_MAGIC[8] = {'O','P','E','N','N','N','T','K'};
-
-const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
-const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
 }
 
@@ -742,22 +739,24 @@ bool LanguageDataset::try_load_binary_cache(Index expected_samples)
     }
 }
 
-void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
-                                  const vector<Index>& input_indices,
-                                  float* input_data,
-                                  bool /*is_training*/,
-                                  int contiguous) const
+void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
+                                     const vector<Index>& variable_indices,
+                                     float* output_data,
+                                     int contiguous,
+                                     Index sequence_length,
+                                     Index offsets_index,
+                                     Index shift,
+                                     const char* context) const
 {
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+        fill_tensor_data(data, sample_indices, variable_indices, output_data, contiguous);
         return;
     }
 
     const Index batch_size = ssize(sample_indices);
-    const Index seq_len = maximum_input_sequence_length;
 
-    fill_n(input_data, batch_size * seq_len, 0.0f);
+    fill_n(output_data, batch_size * sequence_length, 0.0f);
 
     string omp_error;
 
@@ -766,21 +765,23 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         try
         {
+            if (shift > 0) output_data[i * sequence_length] = START_INDEX;
+
             const Index sample_index = sample_indices[size_t(i)];
             throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
-                     "LanguageDataset input sample index is out of range.");
+                     format("LanguageDataset {} sample index is out of range.", context));
 
             const auto& offsets = offsets_table[size_t(sample_index)];
-            const Index n = min(Index(offsets[1]), seq_len);
+            const Index n = min(Index(offsets[size_t(offsets_index + 1)]), sequence_length - shift);
             if (n <= 0) continue;
 
             thread_local vector<int32_t> buf;
             buf.resize(size_t(n));
             cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                                 cache_data_offset + uint64_t(offsets[0]) * sizeof(int32_t));
+                                 cache_data_offset + uint64_t(offsets[size_t(offsets_index)]) * sizeof(int32_t));
 
             for (Index j = 0; j < n; ++j)
-                input_data[i * seq_len + j] = float(buf[size_t(j)]);
+                output_data[i * sequence_length + shift + j] = float(buf[size_t(j)]);
         }
         catch (const exception& e)
         {
@@ -791,6 +792,16 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     throw_if(!omp_error.empty(),
              omp_error);
+}
+
+void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
+                                  const vector<Index>& input_indices,
+                                  float* input_data,
+                                  bool /*is_training*/,
+                                  int contiguous) const
+{
+    fill_sequences(sample_indices, input_indices, input_data, contiguous,
+                   maximum_input_sequence_length, 0, 0, "input");
 }
 
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
@@ -799,49 +810,8 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    bool /*is_training*/,
                                    int contiguous) const
 {
-    if (storage_mode == StorageMode::Matrix)
-    {
-        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
-        return;
-    }
-
-    const Index batch_size = ssize(sample_indices);
-    const Index seq_len = maximum_target_sequence_length;
-
-    fill_n(target_data, batch_size * seq_len, 0.0f);
-
-    string omp_error;
-
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        try
-        {
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
-                     "LanguageDataset target sample index is out of range.");
-
-            const auto& offsets = offsets_table[size_t(sample_index)];
-            const Index n = min(Index(offsets[3]), seq_len);
-            if (n <= 0) continue;
-
-            thread_local vector<int32_t> buf;
-            buf.resize(size_t(n));
-            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
-
-            for (Index j = 0; j < n; ++j)
-                target_data[i * seq_len + j] = float(buf[size_t(j)]);
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
-        }
-    }
-
-    throw_if(!omp_error.empty(),
-             omp_error);
+    fill_sequences(sample_indices, target_indices, target_data, contiguous,
+                   maximum_target_sequence_length, 2, 0, "target");
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
@@ -850,51 +820,8 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    bool /*is_training*/,
                                    int contiguous) const
 {
-    if (storage_mode == StorageMode::Matrix)
-    {
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
-        return;
-    }
-
-    const Index batch_size = ssize(sample_indices);
-    const Index seq_len = maximum_target_sequence_length;
-
-    fill_n(decoder_data, batch_size * seq_len, 0.0f);
-
-    string omp_error;
-
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        try
-        {
-            decoder_data[i * seq_len] = START_INDEX;
-
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
-                     "LanguageDataset decoder sample index is out of range.");
-
-            const auto& offsets = offsets_table[size_t(sample_index)];
-            const Index n = min(Index(offsets[3]), seq_len - 1);
-            if (n <= 0) continue;
-
-            thread_local vector<int32_t> buf;
-            buf.resize(size_t(n));
-            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
-
-            for (Index j = 0; j < n; ++j)
-                decoder_data[i * seq_len + 1 + j] = float(buf[size_t(j)]);
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
-        }
-    }
-
-    throw_if(!omp_error.empty(),
-             omp_error);
+    fill_sequences(sample_indices, decoder_indices, decoder_data, contiguous,
+                   maximum_target_sequence_length, 2, 1, "decoder");
 }
 
 }

@@ -10,7 +10,7 @@
 
 #include "correlations.h"
 #include "statistics.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "enum_map.h"
 #include "string_utilities.h"
 #include "variable.h"

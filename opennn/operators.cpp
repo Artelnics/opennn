@@ -11,11 +11,10 @@
 #endif
 
 #include "operators.h"
-#include "cuda_gemm.h"
 #include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
-#include "math_utilities.h"
+#include "tensor_operations.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -246,27 +245,27 @@ void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_d
             }
 }
 
-void ConcatenateOp::set(Index h, Index w, const vector<Index>& per_input_channels)
+void ConcatenationOp::set(Index h, Index w, const vector<Index>& per_input_channels)
 {
     throw_if(per_input_channels.empty(),
-             "Concatenate: needs at least 1 input.");
+             "Concatenation: needs at least 1 input.");
     for (Index c : per_input_channels)
-        throw_if(c <= 0, "Concatenate: per-input channels must be positive.");
+        throw_if(c <= 0, "Concatenation: per-input channels must be positive.");
     height = h;
     width = w;
     input_channels = per_input_channels;
 }
 
-void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void ConcatenationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const vector<TensorView>& inputs = get_inputs(fp, layer);
     TensorView& output = get_output(fp, layer);
 
     throw_if(inputs.size() != input_channels.size(),
-             "Concatenate: input count mismatch.");
+             "Concatenation: input count mismatch.");
 
     throw_if(output.is_cuda(),
-             "ConcatenateOp GPU path is not implemented yet.");
+             "ConcatenationOp GPU path is not implemented yet.");
 
     const Index batch_size = output.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
@@ -292,7 +291,7 @@ void ConcatenateOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             }
 }
 
-void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+void ConcatenationOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
 {
     const TensorView& output_delta = get_output_delta(bp, layer);
 
@@ -305,7 +304,7 @@ void ConcatenateOp::back_propagate(ForwardPropagation&, BackPropagation& bp, siz
     if (!needs_input_delta) return;
 
     throw_if(output_delta.is_cuda(),
-             "ConcatenateOp GPU path is not implemented yet.");
+             "ConcatenationOp GPU path is not implemented yet.");
 
     const Index batch_size = output_delta.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
@@ -1343,6 +1342,10 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                 batch_size, output_features, time_steps, t, kernel_first_iter,
                 delta_src, carry_src,
                 activation_derivatives.as<Scalar>(),
+                delta_scratch.as<Scalar>());
+
+            rnn_accumulate_bias_grad_cuda<Scalar>(
+                batch_size, output_features,
                 delta_scratch.as<Scalar>(),
                 bias_gradient.as<float>());
 
@@ -3359,23 +3362,12 @@ void ScaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_
         return;
     }
 
-    scale(input, minimums, maximums, means, standard_deviations, scalers,
-          min_range, max_range, output);
-}
-
-void UnscaleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
-{
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-
-    if (!minimums.data)
-    {
-        copy(input, output);
-        return;
-    }
-
-    unscale(input, minimums, maximums, means, standard_deviations, scalers,
-            min_range, max_range, output);
+    if (invert)
+        unscale(input, minimums, maximums, means, standard_deviations, scalers,
+                min_range, max_range, output);
+    else
+        scale(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output);
 }
 
 namespace
@@ -3896,6 +3888,81 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
+    static const bool lstm_scalar = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    if (!lstm_scalar && H >= 64)
+    {
+        const MatrixMap Wf_m = forget_weights.as_matrix();
+        const MatrixMap Wi_m = input_weights.as_matrix();
+        const MatrixMap Wg_m = candidate_weights.as_matrix();
+        const MatrixMap Wo_m = output_weights.as_matrix();
+        const MatrixMap Uf_m = forget_recurrent_weights.as_matrix();
+        const MatrixMap Ui_m = input_recurrent_weights.as_matrix();
+        const MatrixMap Ug_m = candidate_recurrent_weights.as_matrix();
+        const MatrixMap Uo_m = output_recurrent_weights.as_matrix();
+        const VectorMap bf_m = forget_bias.as_vector();
+        const VectorMap bi_m = input_bias.as_vector();
+        const VectorMap bg_m = candidate_bias.as_vector();
+        const VectorMap bo_m = output_bias.as_vector();
+
+        MatrixR step_in(batch_size, F);
+        MatrixR prev_h(batch_size, H);
+        MatrixR Zf(batch_size, H), Zi(batch_size, H), Zg(batch_size, H), Zo(batch_size, H);
+
+        for (Index t = 0; t < T; ++t)
+        {
+            for (Index b = 0; b < batch_size; ++b)
+                std::memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
+
+            Zf.noalias() = step_in * Wf_m;  Zf.rowwise() += bf_m.transpose();
+            Zi.noalias() = step_in * Wi_m;  Zi.rowwise() += bi_m.transpose();
+            Zg.noalias() = step_in * Wg_m;  Zg.rowwise() += bg_m.transpose();
+            Zo.noalias() = step_in * Wo_m;  Zo.rowwise() += bo_m.transpose();
+
+            if (t > 0)
+            {
+                Zf.noalias() += prev_h * Uf_m;
+                Zi.noalias() += prev_h * Ui_m;
+                Zg.noalias() += prev_h * Ug_m;
+                Zo.noalias() += prev_h * Uo_m;
+            }
+
+            for (Index b = 0; b < batch_size; ++b)
+            {
+                const Index step = (b * T + t) * H;
+                const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
+
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float f = lstm_activate(recurrent_activation_function, Zf(b, h));
+                    const float i = lstm_activate(recurrent_activation_function, Zi(b, h));
+                    const float g = lstm_activate(activation_function, Zg(b, h));
+                    const float o = lstm_activate(recurrent_activation_function, Zo(b, h));
+                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                    const float a = lstm_activate(activation_function, c);
+                    const float h_value = o * a;
+
+                    f_gate[step + h] = f;
+                    i_gate[step + h] = i;
+                    g_gate[step + h] = g;
+                    o_gate[step + h] = o;
+                    cells[step + h] = c;
+                    cell_act[step + h] = a;
+                    hidden[step + h] = h_value;
+                    if (return_sequences) y[step + h] = h_value;
+                }
+            }
+
+            for (Index b = 0; b < batch_size; ++b)
+                std::memcpy(prev_h.data() + b * H, hidden + (b * T + t) * H, H * sizeof(float));
+        }
+
+        if (!return_sequences)
+            for (Index b = 0; b < batch_size; ++b)
+                copy_n(hidden + (b * T + T - 1) * H, H, y + b * H);
+
+        return;
+    }
+
     #pragma omp parallel for
     for (Index b = 0; b < batch_size; ++b)
     {
@@ -4072,6 +4139,114 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
     float* gUg = candidate_recurrent_weight_gradient.as<float>();
     float* gUo = output_recurrent_weight_gradient.as<float>();
 
+    static const bool lstm_scalar_bwd = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    if (!lstm_scalar_bwd && H >= 64)
+    {
+        const MatrixMap Wf_m = forget_weights.as_matrix();
+        const MatrixMap Wi_m = input_weights.as_matrix();
+        const MatrixMap Wg_m = candidate_weights.as_matrix();
+        const MatrixMap Wo_m = output_weights.as_matrix();
+        const MatrixMap Uf_m = forget_recurrent_weights.as_matrix();
+        const MatrixMap Ui_m = input_recurrent_weights.as_matrix();
+        const MatrixMap Ug_m = candidate_recurrent_weights.as_matrix();
+        const MatrixMap Uo_m = output_recurrent_weights.as_matrix();
+
+        MatrixMap gWf_m = forget_weight_gradient.as_matrix();
+        MatrixMap gWi_m = input_weight_gradient.as_matrix();
+        MatrixMap gWg_m = candidate_weight_gradient.as_matrix();
+        MatrixMap gWo_m = output_weight_gradient.as_matrix();
+        MatrixMap gUf_m = forget_recurrent_weight_gradient.as_matrix();
+        MatrixMap gUi_m = input_recurrent_weight_gradient.as_matrix();
+        MatrixMap gUg_m = candidate_recurrent_weight_gradient.as_matrix();
+        MatrixMap gUo_m = output_recurrent_weight_gradient.as_matrix();
+        VectorMap gbf_v = forget_bias_gradient.as_vector();
+        VectorMap gbi_v = input_bias_gradient.as_vector();
+        VectorMap gbg_v = candidate_bias_gradient.as_vector();
+        VectorMap gbo_v = output_bias_gradient.as_vector();
+
+        MatrixR step_in(batch_size, F), prev_h(batch_size, H), c_prev_m(batch_size, H);
+        MatrixR DF(batch_size, H), DI(batch_size, H), DG(batch_size, H), DO(batch_size, H);
+        MatrixR DX(batch_size, F);
+        MatrixR dh_next(batch_size, H), dc_next(batch_size, H);
+        dh_next.setZero();
+        dc_next.setZero();
+
+        for (Index t = T; t-- > 0;)
+        {
+            for (Index b = 0; b < batch_size; ++b)
+                std::memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
+
+            if (t > 0)
+                for (Index b = 0; b < batch_size; ++b)
+                {
+                    std::memcpy(prev_h.data()   + b * H, hidden + (b * T + t - 1) * H, H * sizeof(float));
+                    std::memcpy(c_prev_m.data() + b * H, cells  + (b * T + t - 1) * H, H * sizeof(float));
+                }
+
+            if (return_sequences)
+                for (Index b = 0; b < batch_size; ++b)
+                    for (Index h = 0; h < H; ++h)
+                        dh_next(b, h) += out_delta[(b * T + t) * H + h];
+            else if (t == T - 1)
+                for (Index b = 0; b < batch_size; ++b)
+                    for (Index h = 0; h < H; ++h)
+                        dh_next(b, h) += out_delta[b * H + h];
+
+            for (Index b = 0; b < batch_size; ++b)
+            {
+                const Index step = (b * T + t) * H;
+                for (Index h = 0; h < H; ++h)
+                {
+                    const float f = f_gate[step + h];
+                    const float i = i_gate[step + h];
+                    const float g = g_gate[step + h];
+                    const float o = o_gate[step + h];
+                    const float a = cell_act[step + h];
+
+                    const float dc = dh_next(b, h) * o * lstm_derivative_from_output(activation_function, a) + dc_next(b, h);
+
+                    DO(b, h) = dh_next(b, h) * a * lstm_derivative_from_output(recurrent_activation_function, o);
+                    DF(b, h) = dc * (t > 0 ? c_prev_m(b, h) : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
+                    DI(b, h) = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
+                    DG(b, h) = dc * i * lstm_derivative_from_output(activation_function, g);
+                    dc_next(b, h) = dc * f;
+                }
+            }
+
+            gbf_v += DF.colwise().sum().transpose();
+            gbi_v += DI.colwise().sum().transpose();
+            gbg_v += DG.colwise().sum().transpose();
+            gbo_v += DO.colwise().sum().transpose();
+
+            gWf_m.noalias() += step_in.transpose() * DF;
+            gWi_m.noalias() += step_in.transpose() * DI;
+            gWg_m.noalias() += step_in.transpose() * DG;
+            gWo_m.noalias() += step_in.transpose() * DO;
+
+            DX.noalias()  = DF * Wf_m.transpose();
+            DX.noalias() += DI * Wi_m.transpose();
+            DX.noalias() += DG * Wg_m.transpose();
+            DX.noalias() += DO * Wo_m.transpose();
+            for (Index b = 0; b < batch_size; ++b)
+                std::memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
+
+            if (t > 0)
+            {
+                gUf_m.noalias() += prev_h.transpose() * DF;
+                gUi_m.noalias() += prev_h.transpose() * DI;
+                gUg_m.noalias() += prev_h.transpose() * DG;
+                gUo_m.noalias() += prev_h.transpose() * DO;
+
+                dh_next.noalias()  = DF * Uf_m.transpose();
+                dh_next.noalias() += DI * Ui_m.transpose();
+                dh_next.noalias() += DG * Ug_m.transpose();
+                dh_next.noalias() += DO * Uo_m.transpose();
+            }
+        }
+
+        return;
+    }
+
     float* dh_next_all = hidden_delta_scratch.as<float>();
     float* dc_next_all = cell_delta_scratch.as<float>();
     float* df_all = forget_delta_scratch.as<float>();
@@ -4079,8 +4254,36 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
     float* dg_all = candidate_delta_scratch.as<float>();
     float* do_all = output_delta_scratch.as<float>();
 
+    const int nthreads = omp_get_max_threads();
+
+    const Index bias_sz = 4 * H;
+    const Index w_sz    = 4 * F * H;
+    const Index u_sz    = 4 * H * H;
+    const Index per_thread_sz = bias_sz + w_sz + u_sz;
+
+    grad_tls_buf_.assign(size_t(nthreads) * size_t(per_thread_sz), 0.0f);
+
+    #pragma omp parallel for
     for (Index b = 0; b < batch_size; ++b)
     {
+        const int tid = omp_get_thread_num();
+        float* tls_base = grad_tls_buf_.data() + size_t(tid) * size_t(per_thread_sz);
+
+        float* tls_gbf = tls_base;
+        float* tls_gbi = tls_gbf + H;
+        float* tls_gbg = tls_gbi + H;
+        float* tls_gbo = tls_gbg + H;
+
+        float* tls_gWf = tls_base + bias_sz;
+        float* tls_gWi = tls_gWf + F * H;
+        float* tls_gWg = tls_gWi + F * H;
+        float* tls_gWo = tls_gWg + F * H;
+
+        float* tls_gUf = tls_base + bias_sz + w_sz;
+        float* tls_gUi = tls_gUf + H * H;
+        float* tls_gUg = tls_gUi + H * H;
+        float* tls_gUo = tls_gUg + H * H;
+
         float* dh_next = dh_next_all + b * H;
         float* dc_next = dc_next_all + b * H;
         float* df = df_all + b * H;
@@ -4119,10 +4322,10 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                 dg[h] = dc * i * lstm_derivative_from_output(activation_function, g);
                 dc_next[h] = dc * f;
 
-                gbf[h] += df[h];
-                gbi[h] += di[h];
-                gbg[h] += dg[h];
-                gbo[h] += do_gate[h];
+                tls_gbf[h] += df[h];
+                tls_gbi[h] += di[h];
+                tls_gbg[h] += dg[h];
+                tls_gbo[h] += do_gate[h];
             }
 
             for (Index k = 0; k < F; ++k)
@@ -4133,10 +4336,10 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                 for (Index h = 0; h < H; ++h)
                 {
                     const Index wh = k * H + h;
-                    gWf[wh] += xk * df[h];
-                    gWi[wh] += xk * di[h];
-                    gWg[wh] += xk * dg[h];
-                    gWo[wh] += xk * do_gate[h];
+                    tls_gWf[wh] += xk * df[h];
+                    tls_gWi[wh] += xk * di[h];
+                    tls_gWg[wh] += xk * dg[h];
+                    tls_gWo[wh] += xk * do_gate[h];
 
                     if (write_input_delta)
                         dx += df[h] * Wf[wh]
@@ -4160,10 +4363,10 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
                     if (h_prev)
                     {
-                        gUf[uh] += hp * df[h];
-                        gUi[uh] += hp * di[h];
-                        gUg[uh] += hp * dg[h];
-                        gUo[uh] += hp * do_gate[h];
+                        tls_gUf[uh] += hp * df[h];
+                        tls_gUi[uh] += hp * di[h];
+                        tls_gUg[uh] += hp * dg[h];
+                        tls_gUo[uh] += hp * do_gate[h];
                     }
 
                     dh_prev += df[h] * Uf[uh]
@@ -4174,6 +4377,42 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
                 dh_next[j] = dh_prev;
             }
+        }
+    }
+
+    for (int tid = 0; tid < nthreads; ++tid)
+    {
+        const float* base = grad_tls_buf_.data() + size_t(tid) * size_t(per_thread_sz);
+
+        const float* t_gbf = base;
+        const float* t_gbi = t_gbf + H;
+        const float* t_gbg = t_gbi + H;
+        const float* t_gbo = t_gbg + H;
+
+        const float* t_gWf = base + bias_sz;
+        const float* t_gWi = t_gWf + F * H;
+        const float* t_gWg = t_gWi + F * H;
+        const float* t_gWo = t_gWg + F * H;
+
+        const float* t_gUf = base + bias_sz + w_sz;
+        const float* t_gUi = t_gUf + H * H;
+        const float* t_gUg = t_gUi + H * H;
+        const float* t_gUo = t_gUg + H * H;
+
+        for (Index h = 0; h < H; ++h)
+        {
+            gbf[h] += t_gbf[h]; gbi[h] += t_gbi[h];
+            gbg[h] += t_gbg[h]; gbo[h] += t_gbo[h];
+        }
+        for (Index k = 0; k < F * H; ++k)
+        {
+            gWf[k] += t_gWf[k]; gWi[k] += t_gWi[k];
+            gWg[k] += t_gWg[k]; gWo[k] += t_gWo[k];
+        }
+        for (Index k = 0; k < H * H; ++k)
+        {
+            gUf[k] += t_gUf[k]; gUi[k] += t_gUi[k];
+            gUg[k] += t_gUg[k]; gUo[k] += t_gUo[k];
         }
     }
 }
@@ -4621,14 +4860,23 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
     log("before cudnnRNNBackwardData_v8");
 #endif
 
+    // cuDNN always writes dx; when the previous layer needs no gradient
+    // (input_delta unlinked) give it a scratch sink sized (B, T, F).
+    void* dx_data = input_delta.data;
+    if (!dx_data || input_delta.empty())
+    {
+        dx_scratch_buf.grow_to(batch_size * T * input_features * Index(sizeof(float)));
+        dx_data = dx_scratch_buf.data;
+    }
+
     CHECK_CUDNN(cudnnRNNBackwardData_v8(
         Backend::get_cudnn_handle(),
         rnn_desc,
         seq_lengths_dev_buf.as<int32_t>(),
         y_data_desc, y_buf.data, dy_buf.data,
-        x_data_desc, input_delta.data,
-        h_desc, nullptr, nullptr, nullptr,
-        c_desc, nullptr, nullptr, nullptr,
+        x_data_desc, dx_data,   // dx
+        h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
+        c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));

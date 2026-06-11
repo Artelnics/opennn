@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "response_optimization.h"
-#include "tensor_utilities.h"
+#include "tensor_operations.h"
 #include "statistics.h"
 #include "neural_network.h"
 #include "variable.h"

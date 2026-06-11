@@ -1,14 +1,14 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   E R R O R   U T I L I T I E S   H E A D E R
+//   E R R O R   F U N C T I O N S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #pragma once
 
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 
 namespace opennn
 {

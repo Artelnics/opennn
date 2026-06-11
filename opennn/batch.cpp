@@ -308,4 +308,11 @@ void Batch::wait_h2d_on_compute_stream()
         device::stream_wait_event(Backend::get_compute_stream(), h2d_done_event);
 }
 
+ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
+{
+    return validation_uses_training_pool
+        ? training_empty_queue
+        : validation_empty_queue;
+}
+
 }

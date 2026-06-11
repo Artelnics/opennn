@@ -17,7 +17,7 @@ set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_utilities|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_processing|yolo_dataset)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
@@ -56,7 +56,7 @@ if(OpenNN_BUILD_VISION)
     include(FetchContent)
 
     # ZLIB is only needed by the PNG support in image_dataset /
-    # image_utilities, which are excluded when the slim opennn_core lib is
+    # image_processing, which are excluded when the slim opennn_core lib is
     # requested. Keep system packages preferred, but fetch a pinned fallback so
     # Windows/CUDA builds do not require a separate zlib install.
     find_package(ZLIB QUIET)
@@ -180,31 +180,76 @@ target_include_directories(opennn PUBLIC
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
 if(OpenNN_ENABLE_MKL)
-    if(OpenNN_MKL_ROOT)
+    # Allow OpenNN_MKL_ROOT, the MKLROOT env var (set by oneAPI's setvars), or
+    # ONEAPI_ROOT to point at the install. Single-DLL mkl_rt is used everywhere:
+    # it picks threading/interface layers at runtime, so we link one import lib.
+    if(NOT OpenNN_MKL_ROOT)
+        if(DEFINED ENV{MKLROOT})
+            set(OpenNN_MKL_ROOT "$ENV{MKLROOT}")
+        elseif(DEFINED ENV{ONEAPI_ROOT} AND EXISTS "$ENV{ONEAPI_ROOT}/mkl/latest")
+            set(OpenNN_MKL_ROOT "$ENV{ONEAPI_ROOT}/mkl/latest")
+        endif()
+    endif()
+
+    # Prefer oneAPI's own MKLConfig.cmake when discoverable: it resolves the
+    # correct lib/include/redist layout (which differs across oneAPI versions)
+    # and exposes MKL::MKL with the runtime DLL dir baked in.
+    find_package(MKL CONFIG QUIET
+        HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
+
+    if(MKL_FOUND)
+        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+        target_link_libraries(opennn PUBLIC MKL::MKL)
+        message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
+    else()
+        # Manual discovery. Headers and the mkl_rt import library have
+        # platform- and layout-specific names and locations.
+        if(NOT OpenNN_MKL_ROOT)
+            if(WIN32)
+                message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but MKL was not found. "
+                    "Run oneAPI's setvars.bat (sets MKLROOT) or pass -DOpenNN_MKL_ROOT=<mkl>.")
+            else()
+                set(OpenNN_MKL_ROOT "/usr")
+            endif()
+        endif()
+
         set(_opennn_mkl_include "${OpenNN_MKL_ROOT}/include")
         if(EXISTS "${_opennn_mkl_include}/mkl/mkl.h")
             set(_opennn_mkl_include "${_opennn_mkl_include}/mkl")
         endif()
-        set(_opennn_mkl_lib_dir "${OpenNN_MKL_ROOT}/lib")
-        if(EXISTS "${OpenNN_MKL_ROOT}/lib/x86_64-linux-gnu/libmkl_rt.so")
-            set(_opennn_mkl_lib_dir "${OpenNN_MKL_ROOT}/lib/x86_64-linux-gnu")
+
+        # Candidate lib dirs cover oneAPI (lib/), classic (lib/intel64/), and
+        # Debian's multiarch layout.
+        find_library(_opennn_mkl_rt
+            NAMES mkl_rt
+            HINTS "${OpenNN_MKL_ROOT}"
+            PATH_SUFFIXES lib lib/intel64 lib/x86_64-linux-gnu lib/intel64/gcc4.8
+            NO_DEFAULT_PATH)
+
+        if(NOT EXISTS "${_opennn_mkl_include}/mkl.h")
+            message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but mkl.h was not found under "
+                "${OpenNN_MKL_ROOT}. Set OpenNN_MKL_ROOT to the MKL prefix.")
         endif()
-    else()
-        set(_opennn_mkl_include "/usr/include/mkl")
-        set(_opennn_mkl_lib_dir "/usr/lib/x86_64-linux-gnu")
-    endif()
+        if(NOT _opennn_mkl_rt)
+            message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but the mkl_rt library was not found under "
+                "${OpenNN_MKL_ROOT}. Set OpenNN_MKL_ROOT to the MKL prefix.")
+        endif()
 
-    if(NOT EXISTS "${_opennn_mkl_include}/mkl.h")
-        message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but mkl.h was not found. Set OpenNN_MKL_ROOT.")
-    endif()
-    if(NOT EXISTS "${_opennn_mkl_lib_dir}/libmkl_rt.so")
-        message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but libmkl_rt.so was not found. Set OpenNN_MKL_ROOT.")
-    endif()
+        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+        target_include_directories(opennn SYSTEM PUBLIC "${_opennn_mkl_include}")
+        target_link_libraries(opennn PUBLIC "${_opennn_mkl_rt}")
 
-    target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
-    target_include_directories(opennn SYSTEM PUBLIC "${_opennn_mkl_include}")
-    target_link_libraries(opennn PUBLIC "${_opennn_mkl_lib_dir}/libmkl_rt.so" pthread m dl)
-    target_link_options(opennn PUBLIC "-Wl,-rpath,${_opennn_mkl_lib_dir}")
+        if(NOT WIN32)
+            # mkl_rt dlopen()s its layer libraries at runtime; pthread/m/dl and an
+            # rpath to the lib dir are needed so they resolve. On Windows the
+            # matching mkl_rt.dll must instead be on PATH at run time (it lives in
+            # the oneAPI redist/bin dir, added by setvars.bat).
+            get_filename_component(_opennn_mkl_lib_dir "${_opennn_mkl_rt}" DIRECTORY)
+            target_link_libraries(opennn PUBLIC pthread m dl)
+            target_link_options(opennn PUBLIC "-Wl,-rpath,${_opennn_mkl_lib_dir}")
+        endif()
+        message(STATUS "OpenNN: MKL backend via manual discovery (${_opennn_mkl_rt})")
+    endif()
 endif()
 
 if(APPLE)

@@ -8,8 +8,8 @@
 
 #include "registry.h"
 #include "device_backend.h"
-#include "tensor_utilities.h"
-#include "math_utilities.h"
+#include "tensor_types.h"
+#include "tensor_operations.h"
 #include "bounding_layer.h"
 #include "neural_network.h"
 #include "forward_propagation.h"

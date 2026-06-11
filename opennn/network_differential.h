@@ -10,6 +10,7 @@
 
 #include "pch.h"
 #include "variable.h"
+#include "tensor_operations.h"
 
 namespace opennn
 {

@@ -9,19 +9,12 @@
 #include "tabular_dataset.h"
 #include "io_utilities.h"
 #include "scaling.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "random_utilities.h"
 #include <regex>
 
 namespace opennn
 {
-
-namespace {
-
-const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
-const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
-
-}
 
 void TabularDataset::set(const Index new_samples_number,
                          const Shape& new_input_shape,
@@ -1240,11 +1233,11 @@ void TabularDataset::read_csv()
 {
     const string separator_string = get_separator_string();
 
-    CsvReader::Config cfg;
-    cfg.separator = separator_string.empty() ? ',' : separator_string[0];
-    cfg.line_validator = [this](string_view line) { check_separators(line); };
+    CsvReader::Configuration configuration;
+    configuration.separator = separator_string.empty() ? ',' : separator_string[0];
+    configuration.line_validator = [this](string_view line) { check_separators(line); };
 
-    CsvReader::Result parsed = CsvReader(cfg).read(data_path);
+    CsvReader::Result parsed = CsvReader(configuration).read(data_path);
     const char separator = parsed.separator;
     vector<string_view>& lines = parsed.lines;
 

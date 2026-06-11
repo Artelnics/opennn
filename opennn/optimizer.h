@@ -12,8 +12,9 @@
 #include "batch.h"
 #include "json.h"
 #include "loss.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "thread_safe_queue.h"
+#include "training_result.h"
 
 namespace opennn
 {
@@ -25,9 +26,6 @@ struct Buffer;
 struct ForwardPropagation;
 struct BackPropagation;
 
-struct TrainingResult;
-struct BatchFillSession;
-
 class Optimizer
 {
 
@@ -36,12 +34,7 @@ public:
     Optimizer(Loss* = nullptr);
     virtual ~Optimizer();
 
-    enum class StoppingCondition{None,
-                                 MinimumLossDecrease,
-                                 LossGoal,
-                                 MaximumValidationErrorIncreases,
-                                 MaximumEpochsNumber,
-                                 MaximumTime};
+    using StoppingCondition = opennn::StoppingCondition;
 
     const Loss* get_loss() const { return loss; }
 
@@ -87,7 +80,8 @@ protected:
     void set_unscaling();
 
     bool check_stopping_condition(TrainingResult&, Index epoch, float elapsed_time,
-                                   float training_error, Index validation_failures) const;
+                                   float training_error, Index validation_failures,
+                                   float training_loss, bool has_validation) const;
 
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
@@ -116,23 +110,14 @@ protected:
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
+    void display_epoch_results(Index epoch, float training_error, float training_accuracy,
+                               float validation_error, float validation_accuracy,
+                               bool has_validation, bool is_token_cross_entropy,
+                               float elapsed_time) const;
+
     void warn_dropped_samples(Index batch_size,
                               Index samples_number,
                               const char* context) const;
-
-    struct BatchPools
-    {
-        ThreadSafeQueue<Batch*> training_empty_queue;
-        ThreadSafeQueue<Batch*> validation_empty_queue;
-
-        vector<unique_ptr<Batch>> training_pool;
-        vector<unique_ptr<Batch>> validation_pool;
-        unique_ptr<Batch> fixed_training_batch;
-
-        bool validation_uses_training_pool = false;
-
-        ThreadSafeQueue<Batch*>& validation_queue();
-    };
 
     void setup_batch_pools(BatchPools&,
                            Dataset&,
@@ -143,7 +128,7 @@ protected:
 
     struct WorkerProfileCounters;
 
-    unique_ptr<BatchFillSession> start_batch_workers(
+    unique_ptr<BatchPrefetchSession> start_batch_prefetch(
         ThreadSafeQueue<Batch*>& empty_queue,
         const vector<vector<Index>>& batches,
         const vector<Index>& input_feature_indices,
@@ -168,7 +153,6 @@ protected:
                                            const vector<Index>& input_feature_indices,
                                            const vector<Index>& decoder_feature_indices,
                                            const vector<Index>& target_feature_indices,
-                                           bool show_progress,
                                            Batch* fixed_device_batch);
 
     Loss::EvaluationResult train_epoch(ForwardPropagation& forward_propagation,
@@ -179,7 +163,6 @@ protected:
                                        const vector<Index>& decoder_feature_indices,
                                        const vector<Index>& target_feature_indices,
                                        const function<void(BackPropagation&)>& update,
-                                       bool show_progress = true,
                                        Batch* fixed_device_batch = nullptr);
 
     Loss::EvaluationResult evaluate_epoch(ForwardPropagation& forward_propagation,
@@ -212,70 +195,6 @@ protected:
     void* training_graph_exec = nullptr;
     bool  training_graph_captured = false;
     function<void(BackPropagation&)> graph_update;
-};
-
-struct OptimizerData
-{
-    OptimizerData() = default;
-    virtual ~OptimizerData() = default;
-
-    virtual void print() const;
-
-    void set(const vector<Shape>& slot_shapes, Device device = Device::CPU);
-
-    Buffer data;
-    vector<TensorView> views;
-
-    VectorR potential_parameters;
-    VectorR training_direction;
-    float initial_learning_rate = 0.0f;
-    Index iteration = 0;
-
-    Buffer graph_step{Device::CUDA};
-    Buffer graph_effective_lr{Device::CUDA};
-    Buffer graph_effective_eps{Device::CUDA};
-};
-
-struct TrainingResult
-{
-    TrainingResult(const Index = 0);
-    virtual ~TrainingResult() = default;
-
-    string write_stopping_condition() const;
-
-    float get_training_error() const;
-
-    float get_validation_error() const;
-
-    Index get_epochs_number() const;
-
-    void save(const filesystem::path&) const;
-
-    void print(const string& message = {}) const;
-
-    Optimizer::StoppingCondition stopping_condition = Optimizer::StoppingCondition::None;
-
-    Tensor<string, 2> write_override_results(const Index = 3) const;
-
-    void resize_training_error_history(const Index);
-
-    void resize_validation_error_history(const Index);
-
-    VectorR training_error_history;
-
-    VectorR validation_error_history;
-
-    string elapsed_time;
-
-    float loss = NAN;
-
-    Index validation_failures = 0;
-
-    bool restored_best_parameters = false;
-
-    Index restored_epoch = -1;
-
-    float loss_decrease = 0.0f;
 };
 
 }

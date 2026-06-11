@@ -25,6 +25,55 @@
 namespace opennn
 {
 
+namespace
+{
+
+void atomic_rename(const filesystem::path& from, const filesystem::path& to)
+{
+#if defined(_WIN32)
+    if (!::MoveFileExW(from.wstring().c_str(),
+                       to.wstring().c_str(),
+                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {}",
+                                   from.string(), to.string()));
+#else
+    throw_if(::rename(from.c_str(), to.c_str()) != 0,
+             format("atomic_rename: rename failed for {} -> {} (errno={}).",
+                    from.string(), to.string(), errno));
+#endif
+}
+
+void strip_quotes_and_quoted_separators(string& buffer)
+{
+    if (buffer.find('"') == string::npos) return;
+
+    size_t write = 0;
+    bool in_quote = false;
+
+    for (const char c : buffer)
+    {
+        if (c == '"')
+        {
+            in_quote = !in_quote;
+            continue;
+        }
+
+        if (in_quote && (c == ',' || c == ';')) continue;
+
+        buffer[write++] = c;
+    }
+
+    buffer.resize(write);
+}
+
+bool has_bom(string_view s)
+{
+    constexpr string_view bom = "\xEF\xBB\xBF";
+    return s.starts_with(bom);
+}
+
+}
+
 FileMapping::~FileMapping() { reset(); }
 
 FileMapping::FileMapping(FileMapping&& other) noexcept { *this = std::move(other); }
@@ -284,55 +333,9 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
     tmp_path_.clear();
 }
 
-
-void atomic_rename(const filesystem::path& from, const filesystem::path& to)
-{
-#if defined(_WIN32)
-    if (!::MoveFileExW(from.wstring().c_str(),
-                       to.wstring().c_str(),
-                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {}",
-                                   from.string(), to.string()));
-#else
-    throw_if(::rename(from.c_str(), to.c_str()) != 0,
-             format("atomic_rename: rename failed for {} -> {} (errno={}).",
-                    from.string(), to.string(), errno));
-#endif
-}
-
-
-
-namespace
-{
-
-void strip_quotes_and_quoted_separators(string& buffer)
-{
-    if (buffer.find('"') == string::npos) return;
-
-    size_t write = 0;
-    bool in_quote = false;
-
-    for (const char c : buffer)
-    {
-        if (c == '"')
-        {
-            in_quote = !in_quote;
-            continue;
-        }
-
-        if (in_quote && (c == ',' || c == ';')) continue;
-
-        buffer[write++] = c;
-    }
-
-    buffer.resize(write);
-}
-
-}
-
 void CsvReader::parse(Result& out) const
 {
-    out.separator = config.separator;
+    out.separator = configuration.separator;
 
     const string_view content = out.content;
     out.lines.reserve(ranges::count(content, '\n') + 1);
@@ -352,16 +355,10 @@ void CsvReader::parse(Result& out) const
 
         if (line.empty()) continue;
 
-        if (config.line_validator) config.line_validator(line);
+        if (configuration.line_validator) configuration.line_validator(line);
 
         out.lines.push_back(line);
     }
-}
-
-static bool has_bom(string_view s)
-{
-    constexpr string_view bom = "\xEF\xBB\xBF";
-    return s.starts_with(bom);
 }
 
 CsvReader::Result CsvReader::read(const filesystem::path& path) const
@@ -406,6 +403,163 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     result.content = result.buffer;
     parse(result);
     return result;
+}
+
+const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
+
+bool is_numeric_string(string_view text)
+{
+    if (text.empty()) return false;
+
+    double value;
+    const char* first = text.data();
+    const char* last  = first + text.size();
+    auto [ptr, ec] = from_chars(first, last, value);
+
+    if (ec != errc{} || ptr == first) return false;
+
+    const size_t consumed = static_cast<size_t>(ptr - first);
+
+    return consumed == text.size()
+        || (text.find('%') != string_view::npos && consumed + 1 == text.size());
+}
+
+static const regex re_ymd_hms_ms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))");
+static const regex re_ymd_hms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))");
+static const regex re_ymd_hm(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))");
+static const regex re_ymd(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))");
+static const regex re_ym(R"((\d{4})[-/.](\d{1,2}))");
+static const regex re_dmy_hms(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)");
+static const regex re_dmy_hm(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))");
+static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
+static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
+
+bool is_date_time_string(string_view text)
+{
+    if (is_numeric_string(text))
+        return false;
+
+    const auto matches = [&](const regex& date_regex)
+    {
+        return regex_match(text.begin(), text.end(), date_regex);
+    };
+
+    return matches(re_ymd_hms_ms) || matches(re_ymd_hms) || matches(re_ymd_hm)
+        || matches(re_ymd) || matches(re_ym)
+        || matches(re_dmy_hms) || matches(re_dmy_hm) || matches(re_dmy)
+        || matches(re_hms);
+}
+
+bool has_numbers(const vector<string>& string_list)
+{
+    return ranges::any_of(string_list, is_numeric_string);
+}
+
+bool has_numbers(const vector<string_view>& string_list)
+{
+    return ranges::any_of(string_list, is_numeric_string);
+}
+
+time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
+{
+    struct tm time_components = {};
+    smatch match;
+
+    const bool try_ymd = (format == Ymd || format == Auto);
+    const bool try_dmy = (format == Dmy || format == Mdy || format == Auto);
+
+    auto fill_dmy = [&](int part1, int part2)
+    {
+        const bool mdy = (format == Mdy) || (format == Auto && part1 <= 12 && part2 > 12);
+        if (mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
+        else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
+    };
+
+    if (try_ymd && regex_match(date, match, re_ymd_hms_ms))
+    {
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
+    }
+    if (try_ymd && regex_match(date, match, re_ymd_hms))
+    {
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
+    }
+    if (try_ymd && regex_match(date, match, re_ymd_hm))
+    {
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        return mktime(&time_components);
+    }
+    if (try_ymd && regex_match(date, match, re_ymd))
+    {
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = stoi(match[3]);
+        return mktime(&time_components);
+    }
+    if (try_ymd && regex_match(date, match, re_ym))
+    {
+        time_components.tm_year = stoi(match[1]) - 1900;
+        time_components.tm_mon  = stoi(match[2]) - 1;
+        time_components.tm_mday = 1;
+        return mktime(&time_components);
+    }
+    if (try_dmy && regex_match(date, match, re_dmy_hms))
+    {
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
+
+        int hour = stoi(match[4]);
+        if (match[8].matched)
+        {
+            const string ampm = match[8].str();
+            if (ampm == "PM" && hour < 12) hour += 12;
+            if (ampm == "AM" && hour == 12) hour = 0;
+        }
+
+        time_components.tm_hour = hour - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        time_components.tm_sec  = stoi(match[6]);
+        return mktime(&time_components);
+    }
+    if (try_dmy && regex_match(date, match, re_dmy_hm))
+    {
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
+        time_components.tm_hour = stoi(match[4]) - gmt;
+        time_components.tm_min  = stoi(match[5]);
+        return mktime(&time_components);
+    }
+    if (try_dmy && regex_match(date, match, re_dmy))
+    {
+        fill_dmy(stoi(match[1]), stoi(match[2]));
+        time_components.tm_year = stoi(match[3]) - 1900;
+        return mktime(&time_components);
+    }
+    if (format == Auto && regex_match(date, match, re_hms))
+    {
+        time_components.tm_hour = stoi(match[1]) - gmt;
+        time_components.tm_min  = stoi(match[2]);
+        time_components.tm_sec  = stoi(match[3]);
+        return mktime(&time_components);
+    }
+
+    return -1;
 }
 
 }

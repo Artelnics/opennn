@@ -9,8 +9,13 @@
 #pragma once
 
 #include "configuration.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "dataset.h"
+#include "thread_safe_queue.h"
+
+#include <atomic>
+#include <mutex>
+#include <thread>
 
 namespace opennn
 {
@@ -110,6 +115,87 @@ struct Batch
     Index       input_col_offset = 0;
     Index       target_col_offset = 0;
 
+};
+
+struct BatchPools
+{
+    ThreadSafeQueue<Batch*> training_empty_queue;
+    ThreadSafeQueue<Batch*> validation_empty_queue;
+
+    vector<unique_ptr<Batch>> training_pool;
+    vector<unique_ptr<Batch>> validation_pool;
+    unique_ptr<Batch> fixed_training_batch;
+
+    bool validation_uses_training_pool = false;
+
+    ThreadSafeQueue<Batch*>& validation_queue();
+};
+
+struct BatchPrefetchSession
+{
+    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, Index batches_number)
+        : empty_queue(queue),
+          ready_batches(size_t(batches_number))
+    {
+        for (atomic<Batch*>& batch : ready_batches)
+            batch.store(nullptr, memory_order_relaxed);
+    }
+
+    ~BatchPrefetchSession()
+    {
+        for (jthread& thread : threads)
+            thread.request_stop();
+
+        empty_queue.close();
+
+        threads.clear();
+
+        empty_queue.reopen();
+    }
+
+    BatchPrefetchSession(const BatchPrefetchSession&) = delete;
+    BatchPrefetchSession& operator=(const BatchPrefetchSession&) = delete;
+
+    Batch* wait(Index iteration)
+    {
+        Batch* batch = nullptr;
+        while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))
+        {
+            rethrow_if_error();
+            this_thread::yield();
+        }
+
+        return batch;
+    }
+
+    void capture_current_exception()
+    {
+        lock_guard<mutex> elock(error_mutex);
+        if (!worker_error)
+            worker_error = current_exception();
+        error_pending.store(true, memory_order_release);
+    }
+
+    void rethrow_if_error()
+    {
+        if (!error_pending.load(memory_order_acquire)) return;
+
+        exception_ptr e;
+        {
+            lock_guard<mutex> elock(error_mutex);
+            swap(e, worker_error);
+            error_pending.store(false, memory_order_release);
+        }
+        if (e) rethrow_exception(e);
+    }
+
+    ThreadSafeQueue<Batch*>& empty_queue;
+    vector<atomic<Batch*>> ready_batches;
+    atomic<Index> next_iteration{0};
+    mutex error_mutex;
+    exception_ptr worker_error;
+    atomic<bool> error_pending{false};
+    vector<jthread> threads;
 };
 
 }

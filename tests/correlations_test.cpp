@@ -3,7 +3,7 @@
 
 
 #include "../opennn/correlations.h"
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 #include "../opennn/statistics.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"

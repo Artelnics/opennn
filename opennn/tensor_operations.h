@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M A T H   U T I L I T I E S   H E A D E R
+//   T E N S O R   O P E R A T I O N S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -9,10 +9,18 @@
 #pragma once
 
 #include "pch.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
+#include "enum_map.h"
 
 namespace opennn
 {
+
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
+
+const EnumMap<ActivationFunction>& activation_function_map();
+const string& activation_function_to_string(ActivationFunction function);
+ActivationFunction activation_function_from_string(const string& name);
+
 void bound(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
 
 void scale(const TensorView& input,
@@ -74,6 +82,16 @@ void average_pooling_3d_backward(const TensorView& input, const TensorView& outp
 
 void split_heads(const TensorView& source, TensorView& destination);
 void merge_heads(const TensorView& source, TensorView& destination);
+
+MatrixR append_rows(const MatrixR&, const MatrixR&);
+MatrixR append_columns(const MatrixR&, const MatrixR&);
+VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
+
+inline array<Index, 3> array_3(const Index first, const Index second, const Index third)
+{
+    return array<Index, 3>({first, second, third});
+}
 
 }
 

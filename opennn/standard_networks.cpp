@@ -23,7 +23,7 @@
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "upsample_layer.h"
-#include "concatenate_layer.h"
+#include "concatenation_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
 #include "string_utilities.h"
@@ -600,15 +600,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index c4_channels = get_layer(c4_index)->get_output_shape()[2];
             const Index p5_up_channels = get_layer(p5_up)->get_output_shape()[2];
-            add_layer(make_unique<Concatenate>(
+            add_layer(make_unique<Concatenation>(
                           get_layer(c4_index)->get_output_shape(),
                           vector<Index>{p5_up_channels, c4_channels},
-                          "fpn_p4_concat"),
+                          "fpn_p4_concatenation"),
                       {p5_up, c4_index});
-            const Index p4_concat = get_layers_number() - 1;
+            const Index p4_concatenation = get_layers_number() - 1;
 
-            const Index p4_lateral = add_conv(p4_concat,
-                Shape{1, 1, get_layer(p4_concat)->get_output_shape()[2], 256},
+            const Index p4_lateral = add_conv(p4_concatenation,
+                Shape{1, 1, get_layer(p4_concatenation)->get_output_shape()[2], 256},
                 "ReLU", stride, true, "fpn_p4_lateral");
             add_detection_head(p4_lateral, anchors_medium, "medium");
 
@@ -620,15 +620,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index c3_channels = get_layer(c3_index)->get_output_shape()[2];
             const Index p4_up_channels = get_layer(p4_up)->get_output_shape()[2];
-            add_layer(make_unique<Concatenate>(
+            add_layer(make_unique<Concatenation>(
                           get_layer(c3_index)->get_output_shape(),
                           vector<Index>{p4_up_channels, c3_channels},
-                          "fpn_p3_concat"),
+                          "fpn_p3_concatenation"),
                       {p4_up, c3_index});
-            const Index p3_concat = get_layers_number() - 1;
+            const Index p3_concatenation = get_layers_number() - 1;
 
-            const Index p3_lateral = add_conv(p3_concat,
-                Shape{1, 1, get_layer(p3_concat)->get_output_shape()[2], 128},
+            const Index p3_lateral = add_conv(p3_concatenation,
+                Shape{1, 1, get_layer(p3_concatenation)->get_output_shape()[2], 128},
                 "ReLU", stride, true, "fpn_p3_lateral");
             add_detection_head(p3_lateral, anchors_small, "small");
 

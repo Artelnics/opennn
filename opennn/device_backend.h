@@ -95,6 +95,159 @@ void* end_graph_capture(cudaStream_t);
 void  launch_graph(void* graph_exec, cudaStream_t);
 void  destroy_graph(void* graph_exec);
 
+cudaStream_t get_compute_stream();
+
+}
+
+namespace opennn
+{
+
+struct CudaStream
+{
+    cudaStream_t handle = nullptr;
+
+    CudaStream() = default;
+    explicit CudaStream(unsigned flags) { handle = device::create_stream(flags); }
+
+    CudaStream(const CudaStream&) = delete;
+    CudaStream& operator=(const CudaStream&) = delete;
+
+    CudaStream(CudaStream&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
+    CudaStream& operator=(CudaStream&& other) noexcept
+    {
+        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
+        return *this;
+    }
+
+    ~CudaStream() { destroy(); }
+
+    void create(unsigned flags)
+    {
+        destroy();
+        handle = device::create_stream(flags);
+    }
+
+    void destroy() noexcept
+    {
+        device::destroy_stream(handle);
+        handle = nullptr;
+    }
+
+    operator cudaStream_t() const noexcept { return handle; }
+    explicit operator bool()  const noexcept { return handle != nullptr; }
+};
+
+struct CudaEvent
+{
+    cudaEvent_t handle = nullptr;
+
+    CudaEvent() = default;
+    explicit CudaEvent(unsigned flags) { handle = device::create_event(flags); }
+
+    CudaEvent(const CudaEvent&) = delete;
+    CudaEvent& operator=(const CudaEvent&) = delete;
+
+    CudaEvent(CudaEvent&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
+    CudaEvent& operator=(CudaEvent&& other) noexcept
+    {
+        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
+        return *this;
+    }
+
+    ~CudaEvent() { destroy(); }
+
+    void create()
+    {
+        destroy();
+        handle = device::create_event();
+    }
+
+    void create(unsigned flags)
+    {
+        destroy();
+        handle = device::create_event(flags);
+    }
+
+    void destroy() noexcept
+    {
+        device::destroy_event(handle);
+        handle = nullptr;
+    }
+
+    operator cudaEvent_t() const noexcept { return handle; }
+    explicit operator bool() const noexcept { return handle != nullptr; }
+};
+
+class Backend
+{
+public:
+
+    static Backend& instance();
+    ThreadPoolDevice* get_thread_pool_device();
+    void set_threads_number(int num_threads);
+
+    static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
+    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
+    static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
+    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
+
+private:
+    Backend();
+    ~Backend();
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+    cublasHandle_t cublas_handle = nullptr;
+    cublasLtHandle_t cublas_lt_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+    cudaStream_t compute_stream = nullptr;
+    cudaStream_t transfer_stream = nullptr;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+};
+
+inline ThreadPoolDevice& get_device()
+{
+    return *Backend::instance().get_thread_pool_device();
+}
+
+struct TensorView;
+
+bfloat16* ensure_bf16_gradient_workspace(Index n_elements);
+
+float* ensure_bf16_to_fp32_workspace(Index n_elements);
+
+void* ensure_cudnn_conv_workspace(size_t min_bytes);
+
+const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
+
+void run_lt_matmul_cached(
+    int m, int n, int k,
+    cublasOperation_t transA,
+    cublasOperation_t transB,
+    cublasLtEpilogue_t epilogue,
+    const void* a_data, const void* b_data, void* c_data,
+    const void* bias_pointer,
+    cudaDataType_t io_dtype  = CUDA_R_32F,
+    cudaDataType_t out_dtype = CUDA_R_32F);
+
+void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
+               int m, int n, int k,
+               const void* A, cudaDataType_t Atype, int lda,
+               const void* B, cudaDataType_t Btype, int ldb,
+               void* C, cudaDataType_t Ctype, int ldc,
+               float alpha = 1.0f, float beta = 0.0f);
+
+void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
+                               int m, int n, int k,
+                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
+                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
+                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
+                               int batch_count,
+                               float alpha = 1.0f, float beta = 0.0f);
+
 }
 
 // OpenNN: Open Neural Networks Library.

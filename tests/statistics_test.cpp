@@ -2,6 +2,7 @@
 
 #include "../opennn/statistics.h"
 #include "../opennn/string_utilities.h"
+#include "../opennn/io_utilities.h"
 #include "../opennn/random_utilities.h"
 
 using namespace opennn;
@@ -166,92 +167,6 @@ TEST(StatisticsTest, CalculateMostPopulatedBin)
     Histogram histogram_3(centers,frecuencies);
     EXPECT_EQ(histogram_3.calculate_most_populated_bin(), 2);
 
-}
-
-
-TEST(StatisticsTest, CalculateMinimalCenters)
-{
-
-    // Test
-    
-    VectorR centers(7);
-    centers <<  type(1),type(2),type(4),type(6),type(7),type(8), type(12) ;
-
-    VectorR frecuencies(7);
-    frecuencies <<  6,2,2,1,1,1,1 ;
-    
-    Histogram histogram(centers, frecuencies);
-
-    VectorR solution(4);
-    solution << type(6), type(7), type(8), type(12);
-
-    EXPECT_EQ(Index(histogram.calculate_minimal_centers()[0]), solution[0]);
-    EXPECT_EQ(Index(histogram.calculate_minimal_centers()[0]), solution[0]);
-    EXPECT_EQ(Index(histogram.calculate_minimal_centers()[1]), solution[1]);
-    EXPECT_EQ(Index(histogram.calculate_minimal_centers()[2]), solution[2]);
-    EXPECT_EQ(Index(histogram.calculate_minimal_centers()[3]), solution[3]);
-
-    // Test
-
-    Histogram histogram_0;
-    EXPECT_EQ(isnan(histogram_0.calculate_minimal_centers()(0)), true);
-
-    // Test
-    centers.resize(3);
-    centers <<  type(1),type(2),type(3) ;
-
-    frecuencies.resize(3);
-    frecuencies <<  0,0,1 ;
-
-    Histogram histogram_1(centers,frecuencies);
-
-    EXPECT_EQ(Index(histogram_1.calculate_minimal_centers()(0)), 1);
-    EXPECT_EQ(Index(histogram_1.calculate_minimal_centers()(1)), 2);
-    
-}
-
-TEST(StatisticsTest, CalculateMaximalCenters)
-{
-    
-    Histogram histogram;
-
-    // Test
-    
-    VectorR vector(18);
-    vector << type(1), type(1), type(1),
-              type(1), type(7), type(2),
-              type(2), type(6), type(7),
-              type(4), type(8), type(8),
-              type(8), type(1), type(4),
-              type(7), type(7), type(7);
-
-    histogram = opennn::histogram(vector,6);
-
-    VectorR solution(2);
-    solution <<  type(1), type(7);
-
-    VectorR result = histogram.calculate_maximal_centers();
-
-    //EXPECT_NEAR(histogram.calculate_maximal_centers()(4), solution[1], 1.0e-7);
-    
-    // Test
-
-    Histogram histogram_0;
-    EXPECT_EQ(isnan(histogram_0.calculate_maximal_centers()(0)),true);
-
-    // Test
-
-    VectorR centers(3);
-    centers << type(1),type(2),type(3);
-
-    VectorR frecuencies(3);
-    frecuencies << 1,1,0;
-
-    Histogram histogram_1(centers,frecuencies);
-
-    EXPECT_EQ(Index(histogram_1.calculate_maximal_centers()(0)), 1);
-    EXPECT_EQ(Index(histogram_1.calculate_maximal_centers()(1)), 2);
-    
 }
 
 

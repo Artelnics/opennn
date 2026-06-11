@@ -243,8 +243,15 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
                                                           const T* __restrict__ outputs,
                                                           const float* __restrict__ targets,
                                                           T* __restrict__ output_deltas,
-                                                          const float scale_factor)
+                                                          float scale_factor,
+                                                          const float* __restrict__ active_count_device)
 {
+    if (active_count_device)
+    {
+        const float active_count = active_count_device[0];
+        scale_factor = active_count > 0.0f ? 1.0f / active_count : 0.0f;
+    }
+
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
         const int token_index = idx / vocab_size;
@@ -274,38 +281,11 @@ void cross_entropy_3d_multiple_backward_cuda(const Index n,
     const int total = checked_int(n);
 
     OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
-        total, vocab_size, outputs, targets, output_deltas, scale_factor));
+        total, vocab_size, outputs, targets, output_deltas, scale_factor, nullptr));
 }
 
 template void cross_entropy_3d_multiple_backward_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float);
 template void cross_entropy_3d_multiple_backward_cuda<__nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, __nv_bfloat16*, const float);
-
-template<typename T>
-__global__ void cross_entropy_3d_multiple_backward_device_count_kernel(const int n,
-                                                                       const int vocab_size,
-                                                                       const T* __restrict__ outputs,
-                                                                       const float* __restrict__ targets,
-                                                                       T* __restrict__ output_deltas,
-                                                                       const float* __restrict__ active_count_device)
-{
-    const float active_count = active_count_device ? active_count_device[0] : 0.0f;
-    const float scale_factor = active_count > 0.0f ? 1.0f / active_count : 0.0f;
-
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
-    {
-        const int token_index = idx / vocab_size;
-        const int class_index = idx % vocab_size;
-        const int target_class = static_cast<int>(targets[token_index]);
-
-        if (target_class <= 0 || target_class >= vocab_size)
-        {
-            output_deltas[idx] = static_cast<T>(0.0f);
-            continue;
-        }
-
-        output_deltas[idx] = static_cast<T>((static_cast<float>(outputs[idx]) - (class_index == target_class ? 1.0f : 0.0f)) * scale_factor);
-    }
-}
 
 template<typename T>
 void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
@@ -319,8 +299,8 @@ void cross_entropy_3d_multiple_backward_device_count_cuda(const Index n,
 
     const int total = checked_int(n);
 
-    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_device_count_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
-        total, vocab_size, outputs, targets, output_deltas, active_count_device));
+    OPENNN_CUDA_LAUNCH(cross_entropy_3d_multiple_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+        total, vocab_size, outputs, targets, output_deltas, 0.0f, active_count_device));
 }
 
 template void cross_entropy_3d_multiple_backward_device_count_cuda<float>        (const Index, const int, const float*,         const float*, float*,         const float*);
