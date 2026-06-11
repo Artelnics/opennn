@@ -171,6 +171,12 @@ void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 }
 
 
+void ResponseOptimization::set_category_exploration_ratio(float new_ratio)
+{
+    category_exploration_ratio = new_ratio;
+}
+
+
 void ResponseOptimization::clear_constraints()
 {
     constraints.clear();
@@ -294,6 +300,18 @@ void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_e
 void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_sampling_factor)
 {
     initial_sampling_factor = max(Index(1), new_initial_sampling_factor);
+}
+
+
+void ResponseOptimization::set_branch_pruning(const bool new_prune_branches)
+{
+    prune_branches = new_prune_branches;
+}
+
+
+Index ResponseOptimization::get_evaluations_used() const
+{
+    return evaluations_used;
 }
 
 
@@ -708,8 +726,29 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                      + variables[input_variable].name +
                      "' has every category constrained out — cannot generate inputs.");
 
+            vector<Index>& frequencies = category_frequencies[variables[input_variable].name];
+            if(Index(frequencies.size()) != categories_number)
+                frequencies.assign(categories_number, 0);
+
+            const Index exploration_count = llround(category_exploration_ratio * effective_evaluations);
+
             for(Index i = 0; i < effective_evaluations; ++i)
-                random_inputs(i, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
+            {
+                Index chosen;
+
+                if(i < exploration_count)
+                {
+                    chosen = allowed_categories[0];
+                    for(const Index category : allowed_categories)
+                        if(frequencies[category] < frequencies[chosen])
+                            chosen = category;
+                }
+                else
+                    chosen = allowed_categories[random_integer(0, allowed_categories.size() - 1)];
+
+                random_inputs(i, current_feature_index + chosen) = 1.0;
+                frequencies[chosen]++;
+            }
 
             current_feature_index += categories_number;
         }
@@ -1077,6 +1116,14 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
                                   forward);
     }
 
+    // The output-coupled repair moves points continuously: re-snap Integer and
+    // Binary coordinates to their grid (no-op when nothing was repaired); any
+    // manifold residual this introduces is handled by the feasibility filter.
+    round_discrete_inputs(random_inputs,
+                          get_variables_and_descriptives("Input").first,
+                          input_domain.inferior_frontier,
+                          input_domain.superior_frontier);
+
     const MatrixR outputs = calculate_outputs(random_inputs);
     evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
     return filter_feasible_points(random_inputs, outputs, output_domain);
@@ -1206,6 +1253,14 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     for (Index i = 0; i < max_iterations; i++)
     {
+        if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
+        {
+            cout << "> [Budget cap] Reached " << evaluations_used
+                 << " surrogate evaluations (budget=" << max_total_evaluations
+                 << "). Stopping at iteration " << i + 1 << "." << endl;
+            break;
+        }
+
         auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
 
         if (feasible_outputs.size() > 0 && !feasible_outputs.allFinite())
@@ -1702,6 +1757,44 @@ void ResponseOptimization::initialize_network_differential() const
 }
 
 
+// A branch is dropped when every one of its points is dominated (beyond `margin`) by
+// some incumbent point. Objectives are normalized so higher is better; the margin is
+// generous early (noisy small-budget probes) and tightens each round.
+static bool branch_is_dominated(const MatrixR& branch_objective,
+                                const MatrixR& incumbent_objective,
+                                const Index objectives_number,
+                                const float margin)
+{
+    if (incumbent_objective.rows() == 0)
+        return false;
+
+    for (Index i = 0; i < branch_objective.rows(); ++i)
+    {
+        bool point_dominated = false;
+
+        for (Index q = 0; q < incumbent_objective.rows() && !point_dominated; ++q)
+        {
+            bool all_greater_equal = true;
+            bool some_greater = false;
+
+            for (Index k = 0; k < objectives_number; ++k)
+            {
+                const float difference = incumbent_objective(q, k) - branch_objective(i, k);
+                if (difference < -margin) { all_greater_equal = false; break; }
+                if (difference >  margin) some_greater = true;
+            }
+
+            point_dominated = all_greater_equal && some_greater;
+        }
+
+        if (!point_dominated)
+            return false;   // a non-dominated point keeps the branch alive
+    }
+
+    return true;
+}
+
+
 MatrixR ResponseOptimization::solve_once() const
 {
     const Index objectives_number = get_objectives_number();
@@ -1709,6 +1802,7 @@ MatrixR ResponseOptimization::solve_once() const
     throw_if(objectives_number == 0, "No objectives found\n");
 
     evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
+    category_frequencies.clear();
 
     initialize_network_differential();   // exact analytic VJP if possible, else finite differences
 
@@ -1804,84 +1898,198 @@ MatrixR ResponseOptimization::perform_response_optimization()
     for (const BranchAxis& axis : axes)
         branches_number *= static_cast<Index>(axis.values.size());
 
-    cout << "> AllowedSet: " << axes.size() << " membership axis(es) -> "
-         << branches_number << " equality branch(es)." << endl;
+    cout << "> AllowedSet: " << axes.size() << " membership axis(es) -> " << branches_number
+         << (prune_branches ? " equality branch(es) (budgeted: successive-halving + dominated-drop)."
+                            : " equality branch(es) (exhaustive).") << endl;
+
+    // Materialise each branch's value assignment (one value per axis) by mixed-radix.
+    vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
+    {
+        vector<Index> radix(axes.size(), 0);
+        for (Index branch = 0; branch < branches_number; ++branch)
+        {
+            for (size_t a = 0; a < axes.size(); ++a)
+                branch_values[branch][a] = axes[a].values[radix[a]];
+
+            for (size_t a = 0; a < axes.size(); ++a)
+            {
+                if (++radix[a] < static_cast<Index>(axes[a].values.size())) break;
+                radix[a] = 0;
+            }
+        }
+    }
 
     const map<string, VariableConstraint> saved_constraints = constraints;
     const vector<FormulaConstraint> saved_formula_constraints = formula_constraints;
     const Index saved_budget = max_total_evaluations;
 
-    const Index per_branch_budget = (saved_budget > 0)
-        ? max(Index(1), saved_budget / branches_number)
-        : 0;
+    const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
 
-    MatrixR combined;
+    const Objectives objectives(*this);
+    const Index objectives_number = static_cast<Index>(objectives.utopian_and_sense.cols());
 
-    vector<Index> radix(axes.size(), 0);
+    Index spent = 0;
 
-    for (Index branch = 0; branch < branches_number; ++branch)
+    // Pin every AllowedSet to this branch's values (AllowedSet -> EqualTo(value)), solve
+    // under the evaluation cap, then restore. Returns an empty matrix for an infeasible
+    // branch (caught) and accumulates the evaluations the branch spent.
+    auto solve_branch = [&](const vector<float>& values, const Index cap) -> MatrixR
     {
         for (size_t a = 0; a < axes.size(); ++a)
         {
-            const float value = axes[a].values[radix[a]];
-
             if (axes[a].is_formula)
             {
                 FormulaConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
-                formula_constraint.low_bound = value;
-                formula_constraint.up_bound = value;
+                formula_constraint.low_bound = values[a];
+                formula_constraint.up_bound = values[a];
             }
             else
-                constraints[axes[a].variable_name] = VariableConstraint(ComparisonOperator::EqualTo, value, value);
+                constraints[axes[a].variable_name] = VariableConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
         }
 
-        max_total_evaluations = per_branch_budget;
+        max_total_evaluations = cap;
 
-        cout << "\n=== AllowedSet branch " << branch + 1 << " / " << branches_number << " ===" << endl;
+        MatrixR result;
+        try { result = solve_once(); }
+        catch (const exception& error) { cout << "    (branch infeasible: " << error.what() << ")" << endl; }
 
-        try
-        {
-            const MatrixR branch_result = solve_once();
-            if (branch_result.rows() > 0)
-                combined = (combined.rows() == 0) ? branch_result : append_rows(combined, branch_result);
-        }
-        catch (const exception& error)
-        {
-            cout << "!!! [AllowedSet] branch " << branch + 1 << " skipped: " << error.what() << endl;
-        }
+        spent += evaluations_used;
 
         constraints = saved_constraints;
         formula_constraints = saved_formula_constraints;
         max_total_evaluations = saved_budget;
 
-        for (size_t a = 0; a < axes.size(); ++a)
+        return result;
+    };
+
+    // Normalized objective matrix (higher = better) for a result, always in the original
+    // full-set reference frame so branch qualities are comparable.
+    auto objective_of = [&](const MatrixR& result) -> MatrixR
+    {
+        MatrixR matrix = objectives.extract(result.leftCols(input_features),
+                                            result.rightCols(result.cols() - input_features));
+        objectives.normalize(matrix);
+        return matrix;
+    };
+
+    MatrixR incumbent;
+    MatrixR incumbent_objective;
+
+    auto merge_into_incumbent = [&](const MatrixR& result)
+    {
+        if (result.rows() == 0)
+            return;
+
+        incumbent = (incumbent.rows() == 0) ? result : append_rows(incumbent, result);
+
+        MatrixR matrix = objective_of(incumbent);
+        const auto [front_inputs, front_outputs] = calculate_pareto(incumbent.leftCols(input_features),
+                                                                    incumbent.rightCols(incumbent.cols() - input_features),
+                                                                    matrix);
+        incumbent = append_columns(front_inputs, front_outputs);
+        incumbent_objective = objective_of(incumbent);
+    };
+
+    // Exhaustive (switch off, or a single branch): every branch to completion under an
+    // equal budget quota, then the global front. Zero-regret; the original behaviour.
+    if (!prune_branches || branches_number == 1)
+    {
+        const Index per_branch_budget = (saved_budget > 0) ? max(Index(1), saved_budget / branches_number) : 0;
+
+        for (Index branch = 0; branch < branches_number; ++branch)
         {
-            if (++radix[a] < static_cast<Index>(axes[a].values.size())) break;
-            radix[a] = 0;
+            cout << "\n=== AllowedSet branch " << branch + 1 << " / " << branches_number << " ===" << endl;
+            merge_into_incumbent(solve_branch(branch_values[branch], per_branch_budget));
         }
+
+        evaluations_used = spent;
+        cout << "\n> AllowedSet: " << incumbent.rows() << " point(s) on the global front." << endl;
+        return incumbent;
     }
 
-    if (combined.rows() == 0)
-        return MatrixR();
+    // Budgeted: successive halving over branches. Round 0's small cap is the feasibility
+    // probe (infeasible -> empty -> dropped); each round re-paretoes the incumbent, drops
+    // every branch it dominates (beyond a shrinking margin), and the top 1/eta survivors
+    // by reward get the next, larger slice. The remaining budget is spread over the
+    // remaining rounds so the user's total cap is respected.
+    const Index eta = 3;
 
-    // Aggregate the per-branch results into one global Pareto front (for a single
-    // objective this collapses to the best point across branches).
-    const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
+    Index rounds_number = 1;
+    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + eta - 1) / eta)
+        ++rounds_number;
 
-    const MatrixR aggregated_inputs  = combined.leftCols(input_features);
-    const MatrixR aggregated_outputs = combined.rightCols(combined.cols() - input_features);
+    const Index notional_total = branches_number * evaluations_number * max(Index(1), max_iterations);
 
-    const Objectives objectives(*this);
-    MatrixR objective_matrix = objectives.extract(aggregated_inputs, aggregated_outputs);
-    objectives.normalize(objective_matrix);
+    vector<Index> live(branches_number);
+    iota(live.begin(), live.end(), 0);
 
-    const auto [pareto_inputs, pareto_outputs] = calculate_pareto(aggregated_inputs, aggregated_outputs, objective_matrix);
+    float drop_margin = 0.1f;
 
-    cout << "\n> AllowedSet: aggregated " << combined.rows() << " branch point(s) -> "
-         << pareto_inputs.rows() << " on the global front." << endl;
+    for (Index round = 0; round < rounds_number && static_cast<Index>(live.size()) > 1; ++round)
+    {
+        const Index pool = (saved_budget > 0)
+            ? max(Index(0), saved_budget - spent) / (rounds_number - round)
+            : notional_total / rounds_number;
 
-    return append_columns(pareto_inputs, pareto_outputs);
+        if (saved_budget > 0 && pool == 0)
+            break;
+
+        const Index cap = max(evaluations_number, pool / static_cast<Index>(live.size()));
+
+        cout << "\n=== AllowedSet round " << round + 1 << " / " << rounds_number
+             << ": " << live.size() << " live branch(es), <= " << cap << " evals each ===" << endl;
+
+        vector<float> reward(live.size(), -1e30f);
+        vector<MatrixR> round_objective(live.size());
+        vector<bool> feasible(live.size(), false);
+
+        for (size_t i = 0; i < live.size(); ++i)
+        {
+            const MatrixR result = solve_branch(branch_values[live[i]], cap);
+            merge_into_incumbent(result);
+
+            if (result.rows() > 0)
+            {
+                feasible[i] = true;
+                round_objective[i] = objective_of(result);
+                reward[i] = round_objective[i].rowwise().sum().maxCoeff();
+            }
+        }
+
+        vector<size_t> survivors;
+        for (size_t i = 0; i < live.size(); ++i)
+            if (feasible[i] && !branch_is_dominated(round_objective[i], incumbent_objective, objectives_number, drop_margin))
+                survivors.push_back(i);
+
+        sort(survivors.begin(), survivors.end(),
+             [&](const size_t a, const size_t b) { return reward[a] > reward[b]; });
+
+        const Index keep = max(Index(1), (static_cast<Index>(survivors.size()) + eta - 1) / eta);
+        if (static_cast<Index>(survivors.size()) > keep)
+            survivors.resize(static_cast<size_t>(keep));
+
+        vector<Index> next_live;
+        next_live.reserve(survivors.size());
+        for (const size_t i : survivors)
+            next_live.push_back(live[i]);
+
+        live = move(next_live);
+        drop_margin *= 0.5f;
+    }
+
+    // Finalist polish: spend whatever budget remains on the survivor(s).
+    const Index polish_cap = (saved_budget > 0) ? max(Index(0), saved_budget - spent) : 0;
+    if (saved_budget == 0 || polish_cap > 0)
+        for (const Index branch : live)
+            merge_into_incumbent(solve_branch(branch_values[branch], polish_cap));
+
+    evaluations_used = spent;
+
+    cout << "\n> AllowedSet: spent ~" << spent << " evaluations -> "
+         << incumbent.rows() << " point(s) on the global front." << endl;
+
+    return incumbent;
 }
 
 }

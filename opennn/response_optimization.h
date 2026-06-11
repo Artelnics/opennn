@@ -123,6 +123,7 @@ public:
 
     void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
+    void set_category_exploration_ratio(float new_ratio);
 
     void set_fixed_history(const Tensor3& history);
     void clear_fixed_history();
@@ -135,6 +136,8 @@ public:
     void set_max_total_evaluations(const Index new_max_total_evaluations);
     void set_initial_sampling_factor(const Index new_initial_sampling_factor);
 
+    void set_branch_pruning(const bool new_prune_branches);
+
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
 
@@ -143,6 +146,8 @@ public:
     pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
 
     vector<float> get_utopian_point() const;
+
+    const map<string, vector<Index>>& get_category_frequencies() const { return category_frequencies; }
 
     pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
                                                          const VectorR& importance_scale = VectorR()) const;
@@ -192,6 +197,10 @@ public:
 
     Index get_objectives_number() const;
 
+    // Total surrogate evaluations spent by the last perform_response_optimization(),
+    // summed across AllowedSet branches. Lets budgeted runs verify the cap was honored.
+    Index get_evaluations_used() const;
+
 private:
 
     vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
@@ -229,6 +238,7 @@ private:
 
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
+    float category_exploration_ratio = 0.1f;
 
     Index evaluations_number = 2000;
 
@@ -252,6 +262,11 @@ private:
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
 
+    // Per-category cumulative sample counts for each categorical input (keyed by
+    // variable name), so a fraction of each categorical draw can be steered to the
+    // least-sampled category. Reset at the start of every solve_once run.
+    mutable map<string, vector<Index>> category_frequencies;
+
     // Multiplier on the candidate count of the FIRST (initial, full-domain)
     // multi-objective sampling only: the initial pass draws
     // evaluations_number * initial_sampling_factor candidates, while every
@@ -261,6 +276,13 @@ private:
     // extra initial cost is counted against max_total_evaluations like any
     // other sampling, so the matched budget still holds.
     Index initial_sampling_factor = 1;
+
+    // AllowedSet branch handling. true (default) = budgeted: branches are raced under
+    // successive halving (cheap feasibility probe first, then the global-incumbent
+    // dominated branches are dropped and the survivors get progressively more of the
+    // evaluation budget). false = exhaustive: every branch is solved to completion with
+    // an equal budget quota, then aggregated (the original behaviour, zero-regret).
+    bool prune_branches = true;
 
     float deformation_domain_factor = 1.0f;
 

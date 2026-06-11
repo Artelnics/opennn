@@ -682,6 +682,37 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
 }
 
 
+TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    // The mixed constraint routes through repair_output_constraints, which moves
+    // points continuously; the post-repair re-snap must keep x1 on the lattice.
+    opt.set_formula_constraint("y + 0.1*x2",
+                               ComparisonOperator::LessEqualTo,
+                               float(0), float(1));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
+            << "integer x1 not integral after output repair at row " << i;
+}
+
+
 // -----------------------------------------------------------------------------
 // AllowedSet: membership constraints (x in {values})
 // -----------------------------------------------------------------------------
@@ -769,6 +800,118 @@ TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleVal
         EXPECT_NEAR(results(i, 0), float(2), float(1e-2)) << "row " << i << " x1 not on the feasible branch";
         EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
     }
+}
+
+
+TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBudget)
+{
+    // Four-way membership x1+x2 in {2,4,6,8} under a capped budget with pruning on
+    // (default): successive halving probes all four cheaply, races them down, and
+    // finishes the winner. The result must still satisfy membership, and the total
+    // evaluations must stay near the cap (a per-branch sampling overshoot aside).
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(500);
+    const Index budget = 8000;
+    opt.set_max_total_evaluations(budget);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        const float sum = results(i, 0) + results(i, 1);
+        const float distance = min(min(abs(sum - float(2)), abs(sum - float(4))),
+                                   min(abs(sum - float(6)), abs(sum - float(8))));
+        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {2,4,6,8}";
+    }
+
+    EXPECT_GT(opt.get_evaluations_used(), 0);
+    EXPECT_LE(opt.get_evaluations_used(), budget + 4 * 500)
+        << "successive-halving overspent its budget";
+}
+
+
+TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
+{
+    // The same four-way membership with pruning switched OFF: every branch is solved to
+    // completion and the global front aggregated. Membership must still hold.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
+    opt.set_branch_pruning(false);
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(400);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        const float sum = results(i, 0) + results(i, 1);
+        const float distance = min(min(abs(sum - float(2)), abs(sum - float(4))),
+                                   min(abs(sum - float(6)), abs(sum - float(8))));
+        EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {2,4,6,8}";
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// ResponseOptimization: categorical sample-frequency tracking + under-used exploration
+// -----------------------------------------------------------------------------
+
+TEST(ResponseOptimizationCategory, ExplorationSamplesEveryCategoryAndTracksFrequency)
+{
+    // One categorical input "color" with 4 categories. calculate_random_inputs runs
+    // no network forward pass, so the input shape is set to the variable count (1) to
+    // satisfy get_variables_and_descriptives; the categorical still expands to 4
+    // one-hot sampling columns internally.
+    auto network = make_unique<ApproximationNetwork>(Shape{ 1 }, Shape{ 3 }, Shape{ 1 });
+
+    Variable color;
+    color.name = "color";
+    color.set_role("Input");
+    color.type = VariableType::Categorical;
+    color.set_categories({ "red", "green", "blue", "yellow" });
+    network->set_input_variables({ color });
+
+    Variable target;
+    target.name = "y";
+    target.set_role("Target");
+    target.type = VariableType::Numeric;
+    network->set_output_variables({ target });
+
+    ResponseOptimization opt(network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    const ResponseOptimization::Domain input_domain = opt.get_original_domain("Input");
+    opt.calculate_random_inputs(input_domain, 1000);
+
+    const map<string, vector<Index>>& frequencies = opt.get_category_frequencies();
+    ASSERT_EQ(frequencies.count("color"), 1u);
+
+    const vector<Index>& color_frequencies = frequencies.at("color");
+    ASSERT_EQ(Index(color_frequencies.size()), 4);
+
+    Index total = 0;
+    for (Index i = 0; i < 4; ++i)
+    {
+        EXPECT_GT(color_frequencies[i], 0) << "category " << i << " was never sampled";
+        total += color_frequencies[i];
+    }
+    EXPECT_EQ(total, 1000);
 }
 
 
