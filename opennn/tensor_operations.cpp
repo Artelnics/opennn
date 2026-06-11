@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_operations.h"
+#include "cpu_math_backend.h"
 #include "device_backend.h"
 #include "random_utilities.h"
 #include "profiler.h"
@@ -343,6 +344,8 @@ void softmax(TensorView& output)
 
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
+    if (cpu_math::try_activation_forward(output, function)) return;
+
     auto a = output.as_vector().array();
 
     using enum ActivationFunction;
@@ -447,6 +450,8 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                         TensorView& output, cublasLtEpilogue_t epilogue)
 {
+    if (cpu_math::try_linear_forward(input, weights, bias, output, epilogue)) return;
+
     output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + bias.as_vector().transpose();
 

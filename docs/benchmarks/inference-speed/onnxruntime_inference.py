@@ -13,6 +13,7 @@
 
 import sys
 import time
+import os
 
 import numpy as np
 import onnxruntime as ort
@@ -33,7 +34,11 @@ def main():
     x = rosenbrock(samples, features)
     print(f"samples={samples} features={features} batch={batch} reps={reps}")
 
-    session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+    options = ort.SessionOptions()
+    if os.environ.get("ORT_INTRA_OP_THREADS"):
+        options.intra_op_num_threads = int(os.environ["ORT_INTRA_OP_THREADS"])
+
+    session = ort.InferenceSession(model_path, sess_options=options, providers=["CPUExecutionProvider"])
     input_name = session.get_inputs()[0].name
 
     starts = list(range(0, samples - batch + 1, batch))

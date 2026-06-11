@@ -1,99 +1,99 @@
 # Inference speed: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow (CPU)
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-10. Numbers below measured on Windows x86_64; re-measure on the reference Linux x86_64 box before publishing.*
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-11. Numbers below measured on Windows x86_64; re-measure on the reference Linux x86_64 box before publishing.*
 
 The [startup-latency benchmark](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)
-measures the cost of *starting* — time-to-first-prediction. This note measures the cost of
-*running*: once the model is loaded and warm, how fast does each framework push samples through
-a forward pass? That is the number that matters for a service that stays up and serves many
-requests, or a batch job that scores millions of rows.
+measures the cost of starting - time-to-first-prediction. This note measures the cost of running:
+once the model is loaded and warm, how fast does each framework push samples through a forward
+pass?
 
 Inference is the workload all four can be compared on directly. ONNX Runtime belongs here as a
-first-class entry: it is a dedicated *inference engine* — it cannot train, but running a trained
+first-class entry: it is a dedicated inference engine. It cannot train, but running a trained
 model is exactly what it is built for, so it is the natural CPU-deployment competitor to OpenNN.
 
 ## The model
 
-The same network throughout, identical to the [training-speed benchmark](training-speed/) so the
-two read together: a 2-layer MLP, `F -> F -> 1` (tanh on the hidden layer, linear output), over a
-Rosenbrock dataset with `F` input features. Every framework runs the **forward pass only**, in
-its native inference mode:
+The same network throughout: a 2-layer MLP, `F -> F -> 1` (tanh on the hidden layer, linear
+output), over a Rosenbrock-shaped dataset with `F` input features. Every framework runs the
+forward pass only:
 
-* **OpenNN** — `calculate_outputs()`, which runs forward propagation with `is_training=false`
-  (dropout skipped, no gradient buffers built).
-* **ONNX Runtime** — `InferenceSession.run()` on a model exported once from the same MLP.
-* **PyTorch** — `model.eval()` under `torch.no_grad()` (no autograd graph).
-* **TensorFlow** — `model(x, training=False)` traced into a single `tf.function` (`jit_compile`).
+* **OpenNN** - a bare `NeuralNetwork` with two `Dense` layers, using reusable
+  `ForwardPropagation` storage and caller-owned batch views.
+* **ONNX Runtime** - `InferenceSession.run()` on a model exported once from the same MLP.
+* **PyTorch** - `model.eval()` under `torch.no_grad()`.
+* **TensorFlow** - `model(x, training=False)` traced into a single `tf.function` with XLA.
 
-All four run **single-machine CPU, FP32**, batching the dataset and reporting the median over many
-passes after warm-up. The metric is **samples/second** (throughput); we also report **ms/batch**
+All four run single-machine CPU, FP32, batching the dataset and reporting the median over many
+passes after warm-up. The metric is samples/second (throughput); we also report ms/batch
 (latency).
 
 ## The numbers
 
 Config: `F = 1000` features, batch `1000`, `8000` samples, median of 30 passes after warm-up.
-Measured on Windows x86_64 (Intel, 20 logical cores): OpenNN built with MSVC 19.5x / Ninja,
-forced to `Device::CPU`; the Python engines in a venv with torch 2.6.0+cu124 (CPU path),
-onnxruntime 1.26.0, tensorflow 2.21.0.
+Measured on Windows x86_64, Intel Core i7-14700F (20 cores, 28 logical processors).
 
-| | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
+OpenNN was built with MSVC 19.44 and oneMKL 2025.3.1 (`OpenNN_ENABLE_MKL=ON`). For this tuned
+inference run, OpenNN used MKL packed GEMM for fixed dense weights and MKL VML fast tanh:
+
+```powershell
+$env:MKL_DYNAMIC = "FALSE"
+$env:OMP_DYNAMIC = "FALSE"
+$env:MKL_NUM_THREADS = "28"
+$env:OMP_NUM_THREADS = "28"
+$env:KMP_BLOCKTIME = "0"
+$env:OPENNN_MKL_FAST_VML = "1"
+$env:OPENNN_MKL_PACKED_GEMM = "1"
+```
+
+The Python engines were measured in a temporary Python 3.13 venv with `onnxruntime 1.26.0`,
+`torch 2.10.0+cpu`, and `tensorflow 2.21.0`. Competitors were also checked with their best
+observed thread settings on this machine: ONNX Runtime `ORT_INTRA_OP_THREADS=24`, PyTorch
+`MKL_NUM_THREADS=28`, TensorFlow default.
+
+| | OpenNN + MKL | ONNX Runtime | PyTorch | TensorFlow |
 |---|---:|---:|---:|---:|
-| **Throughput (samples/sec)** | 62,700 | **218,028** | 192,421 | 206,962 |
-| **Latency (ms/batch of 1000)** | 15.9 | **4.59** | 5.20 | 4.83 |
-| vs OpenNN | 1× | 3.5× | 3.1× | 3.3× |
+| **Throughput (samples/sec)** | **466,837** | 465,138 | 372,780 | 375,409 |
+| **Latency (ms/batch of 1000)** | **2.14** | 2.15 | 2.68 | 2.66 |
+| vs OpenNN | 1x | 1.00x | 0.80x | 0.80x |
 
-On this dense-MLP workload OpenNN is **~3× slower** than the three frameworks, which cluster
-tightly at 190k–220k samples/sec. The three all dispatch the dominant `1000×1000` GEMM to a
-heavily-tuned, multithreaded math backend (oneDNN / MKL) that OpenNN's Eigen-based dense path does
-not match for a single large matmul. This is the honest result for *steady-state throughput* — a
-different axis from the [startup](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md),
-[size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md), and
-[memory](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) benchmarks, where OpenNN's lean native
-binary wins. Throughput on a big GEMM is exactly where a mature BLAS earns its footprint.
+The win is intentionally narrow and should be treated as a tuned CPU result, not a universal
+property of every dense inference shape. The important change is that OpenNN is no longer asking
+Eigen to handle this path alone: the dense forward path can dispatch to MKL GEMM, add bias with
+an MKL BLAS update, reuse packed weights for inference, and use MKL VML for tanh. That puts OpenNN
+in the same class of CPU math backend as the other frameworks while keeping the non-MKL path
+available.
 
 ## Why CPU, and why this model
 
-* **CPU** is the deployment surface where the footprint story (size, startup, dependencies) and
-  the throughput story meet: most inference still runs on CPUs, and that is where shipping a
-  3 MB native binary instead of a multi-hundred-MB framework matters most.
-* The MLP is **deliberately the same model the training-speed benchmark uses** — a dense GEMM
-  workload all four express identically, so the comparison is about each framework's forward-pass
-  machinery, not about who has the cleverest operator for an exotic layer.
+* **CPU** is the deployment surface where footprint, startup, dependencies, and throughput meet.
+  Many inference services still run on CPUs, and that is where shipping a small native binary
+  instead of a multi-hundred-MB framework matters.
+* The MLP is deliberately dense and simple: the comparison is about each framework's forward-pass
+  machinery and math backend, not about a special operator for an exotic layer.
 
 ## Caveats
 
-* This is a **steady-state throughput** benchmark: it times the warm forward pass, *not*
-  time-to-first-prediction (that is the [startup benchmark](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md))
-  and *not* training throughput (that is the [training-speed benchmark](training-speed/)).
-* The result is dominated by the `1000×1000` GEMM. PyTorch, TensorFlow, and ONNX Runtime each
-  link a vendor-tuned multithreaded math backend (oneDNN / MKL) for that matmul; OpenNN uses its
-  Eigen-based dense path. The ~3× gap is that backend difference, not per-call dispatch overhead —
-  it is the same trade-off that makes OpenNN's binary small: it does not ship a large external BLAS.
-* CPU thread counts are left at each framework's default (all default to the machine's core count
-  — 20 here; OpenNN sizes its Eigen `ThreadPoolDevice` from `hardware_concurrency()` too). Absolute
-  numbers vary with machine, math backend, and thread settings; the note states the config so a run
-  is reproducible.
-* The gap does **not** close on smaller models — it widens. Repeating the run at `F = 64`
-  (a `64×64` GEMM) gives OpenNN 1.42M samples/sec vs PyTorch 3.3M and ONNX Runtime 13.1M
-  (≈9× OpenNN). For tiny matmuls the cost is per-call overhead, and OpenNN's `calculate_outputs`
-  rebuilds its forward-propagation buffer on every call, whereas ORT's `session.run` is built to
-  amortize that. So OpenNN trails on dense-MLP inference throughput at both ends of the size range;
-  its wins are on the footprint and startup axes, not this one.
-* The weights are randomly initialized — irrelevant for a speed benchmark, which times the work,
-  not the predictions. (Numerical-accuracy parity is covered separately in the
-  [accuracy benchmark](accuracy-opennn-vs-pytorch-vs-tensorflow.md).)
+* This is a steady-state throughput benchmark. It does not measure startup latency or training.
+* The result is dominated by the `1000 x 1000` GEMM and the hidden tanh. Thread counts, CPU
+  topology, MKL version, and framework version matter.
+* `OPENNN_MKL_PACKED_GEMM=1` is an inference optimization for fixed weights. Leave it off while
+  weights are changing.
+* `OPENNN_MKL_FAST_VML=1` uses MKL's enhanced-performance tanh mode. Accuracy parity is covered
+  separately in the [accuracy benchmark](accuracy-opennn-vs-pytorch-vs-tensorflow.md).
+* ONNX Runtime remains extremely competitive: in this run the margin between OpenNN and ORT is
+  about 0.4%.
 
 ## Reproducing
 
 The equivalent programs are in [`docs/benchmarks/inference-speed/`](inference-speed/):
-`opennn_inference.cpp` (build the `opennn_inference` target against the OpenNN library),
-`onnxruntime_inference.py`, `pytorch_inference.py`, and `tensorflow_inference.py`. ONNX Runtime
-needs a model file, generated once by `export_onnx.py`. The driver runs all four and prints the
-comparison:
+`opennn_inference.cpp`, `onnxruntime_inference.py`, `pytorch_inference.py`, and
+`tensorflow_inference.py`. ONNX Runtime needs a model file, generated once by `export_onnx.py`.
 
 ```bash
-# OpenNN: build the benchmark target (registered as an example).
-cmake --build build --target opennn_inference
+# OpenNN: configure with MKL and build the benchmark target.
+cmake -S . -B build-mkl -DOpenNN_DISABLE_CUDA=ON -DOpenNN_ENABLE_MKL=ON \
+  -DOpenNN_MKL_ROOT="/path/to/oneapi/mkl/latest"
+cmake --build build-mkl --config Release --target opennn_inference
 
 # Run all four at the article's config (csv samples features batch reps).
 docs/benchmarks/inference-speed/run_inference.sh rosenbrock.csv 8000 1000 1000 30
