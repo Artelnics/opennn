@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include "tensor_utilities.h"
+#include "tensor_types.h"
+#include "tensor_operations.h"
 #include "enum_map.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -150,7 +151,7 @@ private:
     void apply_delta(const TensorView& output_delta, TensorView& input_delta) const;
 };
 
-struct ConcatenateOp : Operator
+struct ConcatenationOp : Operator
 {
     Index height = 0;
     Index width = 0;
@@ -796,20 +797,8 @@ struct BoundOp : Operator
 
 struct ScaleOp : Operator
 {
-    float min_range = -1.0f;
-    float max_range = 1.0f;
+    bool invert = false;
 
-    TensorView minimums;
-    TensorView maximums;
-    TensorView means;
-    TensorView standard_deviations;
-    TensorView scalers;
-
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-};
-
-struct UnscaleOp : Operator
-{
     float min_range = -1.0f;
     float max_range = 1.0f;
 

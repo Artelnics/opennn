@@ -1,14 +1,15 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I M A G E S   C L A S S
+//   I M A G E   P R O C E S S I N G
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "image_utilities.h"
+#include "image_processing.h"
+#include "io_utilities.h"
 #include "string_utilities.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 
 #include <cctype>
 #include <csetjmp>
@@ -58,25 +59,15 @@ struct PngHeader
 
 void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
 {
-    const string path_str = path.string();
+    FileReader file;
+    file.open(path);
 
-    ifstream file(path, ios::binary | ios::ate);
-    throw_if(!file,
-             format("Cannot open image file: {}", path_str));
-
-    const streamsize size = file.tellg();
+    const uint64_t size = file.file_size();
     throw_if(size < 8,
-             format("File too small to be an image: {}", path_str));
+             format("File too small to be an image: {}", path.string()));
 
-    file.seekg(0, ios::beg);
-
-    const size_t byte_count = static_cast<size_t>(size);
-    if (buffer.capacity() < byte_count)
-        buffer.reserve(byte_count);
-    buffer.resize(byte_count);
-
-    throw_if(!file.read(reinterpret_cast<char*>(buffer.data()), size),
-             format("Error reading image file: {}", path_str));
+    buffer.resize(size_t(size));
+    file.read_at(buffer.data(), size_t(size), 0);
 }
 
 bool has_png_signature(const vector<uint8_t>& buffer)

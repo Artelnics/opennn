@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 
 namespace opennn
 {

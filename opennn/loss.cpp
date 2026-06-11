@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "batch.h"
 #include "dataset.h"
 #include "tabular_dataset.h"
@@ -14,7 +14,7 @@
 #include "yolo_dataset.h"
 #include "detection_layer.h"
 #include "neural_network.h"
-#include "error_utilities.h"
+#include "error_functions.h"
 #include "profiler.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -677,21 +677,16 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     switch (error)
     {
     case MeanSquaredError:
-        input.dispatch([&](auto tag)
-        {
-            using TIn = decltype(tag);
-            diff_to_fp32_cuda<TIn>(input.size(), input.as<TIn>(), target.as_float(), workspace);
-        });
-        reduce_dot_and_accumulate(input.size(), 1.0f / static_cast<float>(2 * input.shape[0]));
-        return true;
-
     case NormalizedSquaredError:
         input.dispatch([&](auto tag)
         {
             using TIn = decltype(tag);
             diff_to_fp32_cuda<TIn>(input.size(), input.as<TIn>(), target.as_float(), workspace);
         });
-        reduce_dot_and_accumulate(input.size(), 1.0f / (2.0f * (normalization_coefficient + EPSILON)));
+        reduce_dot_and_accumulate(input.size(),
+                                  error == MeanSquaredError
+                                      ? 1.0f / static_cast<float>(2 * input.shape[0])
+                                      : 1.0f / (2.0f * (normalization_coefficient + EPSILON)));
         return true;
 
     case WeightedSquaredError:

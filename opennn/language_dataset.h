@@ -89,6 +89,15 @@ public:
 
 private:
 
+    void fill_sequences(const vector<Index>& sample_indices,
+                        const vector<Index>& variable_indices,
+                        float* output_data,
+                        int contiguous,
+                        Index sequence_length,
+                        Index offsets_index,
+                        Index shift,
+                        const char* context) const;
+
     void update_input_vocabulary_map();
     void update_target_vocabulary_maps();
 

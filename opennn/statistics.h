@@ -87,10 +87,6 @@ struct Histogram
 
     Index calculate_most_populated_bin() const;
 
-    VectorR calculate_minimal_centers() const;
-
-    VectorR calculate_maximal_centers() const;
-
     Index calculate_bin(const float) const;
 
     Index calculate_frequency(const float) const;
@@ -106,11 +102,9 @@ struct Histogram
 float minimum(const MatrixR&);
 float minimum(const VectorR&);
 float minimum(const VectorR&, const vector<Index>&);
-VectorR column_minimums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
 float maximum(const MatrixR&);
 float maximum(const VectorR&);
 float maximum(const VectorR&, const vector<Index>&);
-VectorR column_maximums(const Tensor2&, const vector<Index>& = {}, const vector<Index>& = {});
 float range(const VectorR&);
 float mean(const VectorR&);
 float mean(const MatrixR&, Index);
@@ -137,7 +131,6 @@ Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
-VectorI total_frequencies(const vector<Histogram>&);
 Index minimal_index(const VectorR&);
 VectorI minimal_indices(const VectorR&, Index);
 VectorI minimal_indices(const MatrixR&);
@@ -187,18 +180,6 @@ inline bool is_binary(const T& tensor)
 }
 
 MatrixR append_rows(const MatrixR&, const MatrixR&);
-
-template<typename T>
-vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
-{
-    vector<T> result;
-    result.reserve(indices.size());
-
-    ranges::transform(indices, back_inserter(result),
-                      [&data](Index i) { return data[i]; });
-
-    return result;
-}
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 #include "random_utilities.h"
 
 #include <Eigen/Dense>
@@ -146,42 +146,6 @@ Index Histogram::calculate_most_populated_bin() const
     return max_index;
 }
 
-VectorR Histogram::calculate_minimal_centers() const
-{
-    if (frequencies.size() == 0)
-        return VectorR::Constant(1, NAN);
-
-    const Index minimum_frequency = calculate_minimum_frequency();
-    const Index count = (frequencies.array() == minimum_frequency).count();
-
-    VectorR minimal_centers(count);
-    Index index = 0;
-
-    for (Index i = 0; i < frequencies.size(); ++i)
-        if (frequencies(i) == minimum_frequency)
-            minimal_centers(index++) = centers(i);
-
-    return minimal_centers;
-}
-
-VectorR Histogram::calculate_maximal_centers() const
-{
-    if (frequencies.size() == 0)
-        return VectorR::Constant(1, NAN);
-
-    const Index maximum_frequency = calculate_maximum_frequency();
-    const Index count = (frequencies.array() == maximum_frequency).count();
-
-    VectorR maximal_centers(count);
-    Index index = 0;
-
-    for (Index i = 0; i < frequencies.size(); ++i)
-        if (frequencies(i) == maximum_frequency)
-            maximal_centers(index++) = centers(i);
-
-    return maximal_centers;
-}
-
 Index Histogram::calculate_bin(const float value) const
 {
     const Index bins_number = get_bins_number();
@@ -252,44 +216,6 @@ float maximum(const VectorR& data, const vector<Index>& indices)
             maximum = data(index);
 
     return maximum;
-}
-
-VectorR column_maximums(const MatrixR& matrix,
-                        const vector<Index>& row_indices,
-                        const vector<Index>& column_indices)
-{
-    vector<Index> used_column_indices = column_indices;
-    if (used_column_indices.empty())
-    {
-        used_column_indices.resize(matrix.cols());
-        iota(used_column_indices.begin(), used_column_indices.end(), 0);
-    }
-
-    vector<Index> used_row_indices = row_indices;
-    if (used_row_indices.empty())
-    {
-        used_row_indices.resize(matrix.rows());
-        iota(used_row_indices.begin(), used_row_indices.end(), 0);
-    }
-
-    const Index row_indices_size = used_row_indices.size();
-    const Index column_indices_size = used_column_indices.size();
-
-    VectorR maximums(column_indices_size);
-
-    for (Index j = 0; j < column_indices_size; ++j)
-    {
-        const Index column_index = used_column_indices[j];
-
-        VectorR column(row_indices_size);
-
-        for (Index i = 0; i < row_indices_size; ++i)
-            column(i) = matrix(used_row_indices[i], column_index);
-
-        maximums(j) = maximum(column);
-    }
-
-    return maximums;
 }
 
 float mean(const VectorR& vector)
@@ -656,18 +582,6 @@ Histogram histogram(const VectorB& flags)
     return histogram;
 }
 
-VectorI total_frequencies(const Tensor<Histogram, 1>& histograms)
-{
-    const Index histograms_number = histograms.size();
-
-    VectorI total_frequencies(histograms_number);
-
-    for (Index i = 0; i < histograms_number; ++i)
-        total_frequencies(i) = histograms(i).frequencies(i);
-
-    return total_frequencies;
-}
-
 vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 {
     const Index columns_number = matrix.cols();
@@ -781,44 +695,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     }
 
     return descriptives_results;
-}
-
-VectorR column_minimums(const MatrixR& matrix,
-                        const vector<Index>& row_indices,
-                        const vector<Index>& column_indices)
-{
-    vector<Index> used_column_indices = column_indices;
-    if (used_column_indices.empty())
-    {
-        used_column_indices.resize(matrix.cols());
-        iota(used_column_indices.begin(), used_column_indices.end(), 0);
-    }
-
-    vector<Index> used_row_indices = row_indices;
-    if (used_row_indices.empty())
-    {
-        used_row_indices.resize(matrix.rows());
-        iota(used_row_indices.begin(), used_row_indices.end(), 0);
-    }
-
-    const Index row_indices_size = used_row_indices.size();
-    const Index column_indices_size = used_column_indices.size();
-
-    VectorR minimums(column_indices_size);
-
-    for (Index j = 0; j < column_indices_size; ++j)
-    {
-        const Index column_index = used_column_indices[j];
-
-        VectorR column(row_indices_size);
-
-        for (Index i = 0; i < row_indices_size; ++i)
-            column(i) = matrix(used_row_indices[i], column_index);
-
-        minimums(j) = minimum(column);
-    }
-
-    return minimums;
 }
 
 float range(const VectorR& vector)

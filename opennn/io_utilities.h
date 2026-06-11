@@ -62,9 +62,6 @@ private:
     bool finalized_ = false;
 };
 
-
-void atomic_rename(const filesystem::path& from, const filesystem::path& to);
-
 class FileMapping
 {
 public:
@@ -97,7 +94,7 @@ class CsvReader
 {
 public:
 
-    struct Config
+    struct Configuration
     {
         char separator = ',';
         function<void(string_view)> line_validator;
@@ -112,16 +109,32 @@ public:
         char                separator = ',';
     };
 
-    explicit CsvReader(Config c) : config(std::move(c)) {}
+    explicit CsvReader(Configuration new_configuration)
+        : configuration(std::move(new_configuration))
+    {
+    }
 
     Result read(const filesystem::path& path) const;
 
 private:
 
-    Config config;
+    Configuration configuration;
 
     void parse(Result& out) const;
 };
+
+bool is_numeric_string(string_view);
+bool is_date_time_string(string_view);
+
+bool has_numbers(const vector<string>&);
+bool has_numbers(const vector<string_view>&);
+
+extern const vector<string> positive_words;
+extern const vector<string> negative_words;
+
+enum DateFormat {Auto, Dmy, Mdy, Ymd};
+
+time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = Auto);
 
 }
 

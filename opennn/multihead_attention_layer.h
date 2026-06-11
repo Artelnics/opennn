@@ -10,7 +10,7 @@
 
 #include "layer.h"
 #include "operators.h"
-#include "math_utilities.h"
+#include "tensor_operations.h"
 
 namespace opennn
 {

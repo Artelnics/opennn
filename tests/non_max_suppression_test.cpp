@@ -2,7 +2,7 @@
 
 #include "../opennn/non_max_suppression_layer.h"
 #include "../opennn/neural_network.h"
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 
 using namespace opennn;
 

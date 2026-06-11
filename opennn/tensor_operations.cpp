@@ -1,19 +1,41 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M A T H   U T I L I T I E S   S O U R C E
+//   T E N S O R   O P E R A T I O N S   S O U R C E
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "math_utilities.h"
+#include "tensor_operations.h"
 #include "device_backend.h"
 #include "random_utilities.h"
-#include "cuda_gemm.h"
 #include "profiler.h"
 
 namespace opennn
 {
+
+const EnumMap<ActivationFunction>& activation_function_map()
+{
+    static const vector<pair<ActivationFunction, string>> entries = {
+        {ActivationFunction::Identity, "Identity"},
+        {ActivationFunction::Sigmoid,  "Sigmoid"},
+        {ActivationFunction::Tanh,     "Tanh"},
+        {ActivationFunction::ReLU,     "ReLU"},
+        {ActivationFunction::Softmax,  "Softmax"}
+    };
+    static const EnumMap<ActivationFunction> instance{entries};
+    return instance;
+}
+
+const string& activation_function_to_string(ActivationFunction function)
+{
+    return activation_function_map().to_string(function);
+}
+
+ActivationFunction activation_function_from_string(const string& name)
+{
+    return activation_function_map().from_string(name, ActivationFunction::Identity);
+}
 
 #define OPENNN_GPU_OPS(X) \
     X(bound_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&)) \

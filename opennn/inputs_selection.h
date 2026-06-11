@@ -14,6 +14,8 @@ namespace opennn
 {
 
 class TrainingStrategy;
+class NeuralNetwork;
+class Dataset;
 
 struct TrainingResult;
 struct InputsSelectionResult;
@@ -71,6 +73,8 @@ public:
 
 protected:
 
+    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index input_features_number);
+
     TrainingStrategy* training_strategy = nullptr;
 
     Index trials_number = 1;
@@ -126,7 +130,7 @@ struct InputsSelectionResult
     VectorB optimal_inputs;
 
 
-    InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+    optional<InputsSelection::StoppingCondition> stopping_condition;
 
     string elapsed_time;
 };

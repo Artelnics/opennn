@@ -1114,48 +1114,6 @@ void gather_time_slice_cuda(const Index batch,
 template void gather_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
 template void gather_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
 
-template<typename TSrc, typename TDst>
-__global__ void gather_columns_kernel(const int batch_size,
-                                      const int output_features,
-                                      const int source_features,
-                                      const Index* __restrict__ row_indices,
-                                      const Index* __restrict__ column_indices,
-                                      const TSrc* __restrict__ source,
-                                      TDst* __restrict__ destination)
-{
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = batch_size * output_features;
-    if (idx >= total) return;
-
-    const int b = idx / output_features;
-    const int f = idx - b * output_features;
-    const Index source_row = row_indices[b];
-    const Index source_column = column_indices[f];
-    destination[idx] = static_cast<TDst>(source[source_row * Index(source_features) + source_column]);
-}
-
-template<typename TSrc, typename TDst>
-void gather_columns_cuda(const Index batch_size,
-                         const Index output_features,
-                         const Index source_features,
-                         const Index* row_indices,
-                         const Index* column_indices,
-                         const TSrc* source,
-                         TDst* destination)
-{
-    if (batch_size == 0 || output_features == 0) return;
-    const int total = checked_int(batch_size * output_features);
-    OPENNN_CUDA_LAUNCH(gather_columns_kernel<TSrc, TDst><<<grid_size_for(total), block_size, 0,
-                                        opennn::device::get_compute_stream()>>>(
-        checked_int(batch_size),
-        checked_int(output_features),
-        checked_int(source_features),
-        row_indices, column_indices, source, destination));
-}
-
-template void gather_columns_cuda<float, float>        (const Index, const Index, const Index, const Index*, const Index*, const float*, float*);
-template void gather_columns_cuda<float, __nv_bfloat16>(const Index, const Index, const Index, const Index*, const Index*, const float*, __nv_bfloat16*);
-
 template<typename T>
 __global__ void scatter_time_slice_kernel(const int batch,
                                           const int time_steps,
@@ -1227,48 +1185,6 @@ void transpose_2d_cuda(const Index rows,
 
 template void transpose_2d_cuda<float>        (const Index, const Index, const float*,         float*);
 template void transpose_2d_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
-
-template<typename T>
-__global__ void rnn_step_bias_activation_kernel(const int total,
-                                                const int out_features,
-                                                T* __restrict__ hidden,
-                                                const T* __restrict__ bias,
-                                                T* derivs,
-                                                const int activation_id)
-{
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= total) return;
-
-    const int f = idx % out_features;
-    float z = static_cast<float>(hidden[idx]) + static_cast<float>(bias[f]);
-
-    float h;
-    float dh;
-    rnn_activation(activation_id, z, h, dh);
-
-    hidden[idx] = static_cast<T>(h);
-    if (derivs) derivs[idx] = static_cast<T>(dh);
-}
-
-template<typename T>
-void rnn_step_bias_activation_cuda(const Index batch,
-                                   const Index out_features,
-                                   T* hidden,
-                                   const T* bias,
-                                   T* derivs_or_null,
-                                   const int activation_id)
-{
-    if (batch == 0 || out_features == 0) return;
-    const int total = checked_int(batch * out_features);
-    OPENNN_CUDA_LAUNCH(rnn_step_bias_activation_kernel<T><<<grid_size_for(total), block_size, 0,
-                                         opennn::device::get_compute_stream()>>>(
-        total,
-        checked_int(out_features),
-        hidden, bias, derivs_or_null, activation_id));
-}
-
-template void rnn_step_bias_activation_cuda<float>        (const Index, const Index, float*,         const float*,         float*,         const int);
-template void rnn_step_bias_activation_cuda<__nv_bfloat16>(const Index, const Index, __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int);
 
 template<typename T>
 __global__ void rnn_step_fused_forward_kernel(const int batch,
@@ -1419,8 +1335,7 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int batch,
                                                    const T* __restrict__ output_delta,
                                                    const T* __restrict__ next_carry,
                                                    const T* __restrict__ activation_derivatives,
-                                                   T* __restrict__ delta,
-                                                   float* __restrict__ bias_grad)
+                                                   T* __restrict__ delta)
 {
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
     const int total = batch * out_features;
@@ -1439,8 +1354,6 @@ __global__ void rnn_step_fused_backward_pre_kernel(const int batch,
     const float dz = dh * sigma_prime;
 
     delta[idx] = static_cast<T>(dz);
-
-    (void)bias_grad;
 }
 
 template<typename T>
@@ -1452,8 +1365,7 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* output_delta,
                                       const T* next_carry,
                                       const T* activation_derivatives,
-                                      T* delta,
-                                      float* bias_grad)
+                                      T* delta)
 {
     if (batch == 0 || out_features == 0) return;
 
@@ -1470,8 +1382,8 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
         first_iter,
         output_delta, next_carry,
         activation_derivatives,
-        delta, bias_grad));
+        delta));
 }
 
-template void rnn_step_fused_backward_pre_cuda<float>        (const Index, const Index, const Index, const Index, const bool, const float*,         const float*,         const float*,         float*,         float*);
-template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, float*);
+template void rnn_step_fused_backward_pre_cuda<float>        (const Index, const Index, const Index, const Index, const bool, const float*,         const float*,         const float*,         float*);
+template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);

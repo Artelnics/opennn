@@ -383,7 +383,6 @@ TrainingResult StochasticGradientDescent::train()
                                                                                  decoder_feature_indices,
                                                                                  target_feature_indices,
                                                                                  training_update,
-                                                                                 should_display(epoch),
                                                                                  batch_pools.fixed_training_batch.get());
 
             training_error = training_evaluation_result.error;
@@ -411,30 +410,17 @@ TrainingResult StochasticGradientDescent::train()
 
             elapsed_time = get_elapsed_time(beginning_time);
 
-            if (should_display(epoch))
-            {
-                cout << "Training error: " << training_error << "\n";
-                if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
-                if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
-                if (has_validation) cout << "Validation error: " << validation_error << "\n";
-                if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
-                if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
-                cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-            }
+            display_epoch_results(epoch, training_error, training_accuracy,
+                                  validation_error, validation_accuracy,
+                                  has_validation, is_token_cross_entropy, elapsed_time);
 
             stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                       results.training_error_history(epoch),
-                                                      validation_failures);
+                                                      validation_failures,
+                                                      training_back_propagation.loss,
+                                                      has_validation);
 
-            if (stop_training)
-            {
-                results.loss = training_back_propagation.loss;
-                results.validation_failures = validation_failures;
-                results.resize_training_error_history(epoch + 1);
-                results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-                results.elapsed_time = get_time(elapsed_time);
-                break;
-            }
+            if (stop_training) break;
         }
     }
 

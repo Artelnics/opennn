@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   C O N S T R A I N T S   U T I L I T I E S   C L A S S
+//   C O N S T R A I N T   F O R M U L A S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "pch.h"
-#include "constraints_utilities.h"
+#include "constraint_formulas.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 

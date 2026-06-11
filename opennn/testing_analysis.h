@@ -159,13 +159,6 @@ public:
 
     void save_multiple_classification_tests(const filesystem::path&) const;
 
-    void save_well_classified_samples(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_misclassified_samples(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_well_classified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_misclassified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
     vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
 
     vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
@@ -187,11 +180,6 @@ private:
     MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;
 
     Tensor<string, 2> classify_samples(const MatrixR&, const MatrixR&, const vector<string>&, bool match) const;
-
-    static VectorR extract_probabilities(const Tensor<string, 2>&);
-
-    void save_classified_samples_csv(const Tensor<string, 2>&, const filesystem::path&) const;
-    void save_classified_samples_statistics_csv(const Tensor<string, 2>&, const filesystem::path&) const;
 
     NeuralNetwork* neural_network = nullptr;
 

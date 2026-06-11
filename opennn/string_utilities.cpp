@@ -9,37 +9,52 @@
 #include "string_utilities.h"
 #include <regex>
 #include <cctype>
-#include <cerrno>
 #include <cstdlib>
 
 namespace opennn
 {
 
-float parse_float(const string& text, const string& context)
+namespace
 {
-    try { return stof(text); }
+
+template <typename T, typename Parser>
+T parse_value(const string& text,
+              const string& context,
+              string_view value_kind,
+              Parser parser)
+{
+    try { return parser(text); }
     catch (const exception&)
     {
-        throw runtime_error(format("{}: invalid numeric value \"{}\".", context, text));
+        throw runtime_error(format("{}: invalid {} value \"{}\".", context, value_kind, text));
     }
+}
+
+bool equal_ignoring_case(string_view left, string_view right) noexcept
+{
+    return left.size() == right.size()
+        && ranges::equal(left, right,
+                         [](unsigned char left_char, unsigned char right_char)
+                         {
+                             return tolower(left_char) == tolower(right_char);
+                         });
+}
+
+}
+
+float parse_float(const string& text, const string& context)
+{
+    return parse_value<float>(text, context, "numeric", [](const string& value) { return stof(value); });
 }
 
 int parse_int(const string& text, const string& context)
 {
-    try { return stoi(text); }
-    catch (const exception&)
-    {
-        throw runtime_error(format("{}: invalid integer value \"{}\".", context, text));
-    }
+    return parse_value<int>(text, context, "integer", [](const string& value) { return stoi(value); });
 }
 
 long parse_long(const string& text, const string& context)
 {
-    try { return stol(text); }
-    catch (const exception&)
-    {
-        throw runtime_error(format("{}: invalid integer value \"{}\".", context, text));
-    }
+    return parse_value<long>(text, context, "integer", [](const string& value) { return stol(value); });
 }
 
 vector<string> tokenize(const string& document)
@@ -106,6 +121,8 @@ vector<string_view> tokenize_views(string_view document)
 
 vector<string> get_tokens(const string& text, const string& separator)
 {
+    if (separator.empty()) return {text};
+
     vector<string> tokens;
 
     const size_t sep_len = separator.length();
@@ -180,158 +197,10 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     return vector_result;
 }
 
-bool is_numeric_string(string_view text)
-{
-    if (text.empty()) return false;
-
-    double value;
-    const char* first = text.data();
-    const char* last  = first + text.size();
-    auto [ptr, ec] = from_chars(first, last, value);
-
-    if (ec != errc{} || ptr == first) return false;
-
-    const size_t consumed = static_cast<size_t>(ptr - first);
-
-    return consumed == text.size()
-        || (text.find('%') != string_view::npos && consumed + 1 == text.size());
-}
-
-bool is_date_time_string(string_view text)
-{
-    if (is_numeric_string(text))
-        return false;
-
-    const static vector<regex> date_regexes = {
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))"),
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))"),
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))"),
-        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))"),
-        regex(R"((\d{4})[-/.](\d{1,2}))"),
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}))"),
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}))"),
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))"),
-        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M))"),
-        regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))")
-    };
-
-    return ranges::any_of(date_regexes,
-                          [&](const regex& date_regex) { return regex_match(text.begin(), text.end(), date_regex); });
-}
-
-time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
-{
-    static const regex re_ymd_hms_ms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))");
-    static const regex re_ymd_hms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))");
-    static const regex re_ymd_hm(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))");
-    static const regex re_ymd(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))");
-    static const regex re_ym(R"((\d{4})[-/.](\d{1,2}))");
-    static const regex re_dmy_hms(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)");
-    static const regex re_dmy_hm(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))");
-    static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
-    static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
-
-    struct tm time_components = {};
-    smatch match;
-
-    const bool try_ymd = (format == Ymd || format == Auto);
-    const bool try_dmy = (format == Dmy || format == Mdy || format == Auto);
-
-    auto fill_dmy = [&](int part1, int part2)
-    {
-        const bool mdy = (format == Mdy) || (format == Auto && part1 <= 12 && part2 > 12);
-        if (mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
-        else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
-    };
-
-    if (try_ymd && regex_match(date, match, re_ymd_hms_ms))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ymd_hms))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ymd_hm))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ymd))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ym))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = 1;
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy_hms))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
-
-        int hour = stoi(match[4]);
-        if (match[8].matched)
-        {
-            const string ampm = match[8].str();
-            if (ampm == "PM" && hour < 12) hour += 12;
-            if (ampm == "AM" && hour == 12) hour = 0;
-        }
-
-        time_components.tm_hour = hour - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy_hm))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
-        return mktime(&time_components);
-    }
-    if (format == Auto && regex_match(date, match, re_hms))
-    {
-        time_components.tm_hour = stoi(match[1]) - gmt;
-        time_components.tm_min  = stoi(match[2]);
-        time_components.tm_sec  = stoi(match[3]);
-        return mktime(&time_components);
-    }
-
-    return -1;
-}
-
 void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
 {
+    if (to_replace.empty()) return;
+
     size_t start_pos = 0;
 
     while ((start_pos = text.find(to_replace, start_pos)) != string::npos)
@@ -353,6 +222,8 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 
 void replace_all_appearances(string& text, const string& to_replace, const string& replace_with)
 {
+    if (to_replace.empty()) return;
+
     string buffer;
     size_t position = 0;
     size_t previous_position;
@@ -389,18 +260,10 @@ string get_trimmed(const string& text)
     return (start < end) ? string(start, end) : string();
 }
 
-bool has_numbers(const vector<string>& string_list)
-{
-    return ranges::any_of(string_list, is_numeric_string);
-}
-
-bool has_numbers(const vector<string_view>& string_list)
-{
-    return ranges::any_of(string_list, is_numeric_string);
-}
-
 void replace(string& source, const string& find_what, const string& replace_with)
 {
+    if (find_what.empty()) return;
+
     size_t position = 0;
 
     while ((position = source.find(find_what, position)) != string::npos)
@@ -472,16 +335,6 @@ bool starts_with_any(string_view text, initializer_list<string_view> prefixes)
                           {
                               return text.starts_with(prefix);
                           });
-}
-
-static bool equal_ignoring_case(string_view left, string_view right) noexcept
-{
-    return left.size() == right.size()
-        && ranges::equal(left, right,
-                         [](unsigned char left_char, unsigned char right_char)
-                         {
-                             return tolower(left_char) == tolower(right_char);
-                         });
 }
 
 bool env_flag_enabled(const char* name) noexcept

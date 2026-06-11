@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   E R R O R   U T I L I T I E S   S O U R C E
+//   E R R O R   F U N C T I O N S   S O U R C E
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "error_utilities.h"
+#include "error_functions.h"
 #include "device_backend.h"
 
 namespace opennn

@@ -8,7 +8,7 @@
 
 #include "variable.h"
 #include "string_utilities.h"
-#include "tensor_utilities.h"
+#include "tensor_types.h"
 
 namespace opennn
 {

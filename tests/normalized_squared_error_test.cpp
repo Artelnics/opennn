@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "../opennn/tensor_utilities.h"
+#include "../opennn/tensor_types.h"
 #include "../opennn/dataset.h"
 #include "../opennn/tabular_dataset.h"
 #include "../opennn/dense_layer.h"
