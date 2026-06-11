@@ -431,19 +431,15 @@ void decode_png_pixels(const PngHeader& h,
     switch (h.color_type)
     {
         case 0:
+        case 4:
             decode_png_grayscale(h, unfiltered.data(), dst);
             break;
         case 2:
+        case 6:
             decode_png_truecolor(h, unfiltered.data(), dst);
             break;
         case 3:
             decode_png_palette(h, unfiltered.data(), dst);
-            break;
-        case 4:
-            decode_png_grayscale(h, unfiltered.data(), dst);
-            break;
-        case 6:
-            decode_png_truecolor(h, unfiltered.data(), dst);
             break;
     }
 }

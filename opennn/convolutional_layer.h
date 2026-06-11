@@ -32,9 +32,9 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_input_height() const;
-    Index get_input_width() const;
-    Index get_input_channels() const;
+    Index get_input_height() const { return input_height; }
+    Index get_input_width() const { return input_width; }
+    Index get_input_channels() const { return input_channels; }
 
     Index get_kernel_height() const { return kernel_height; }
     Index get_kernel_width() const { return kernel_width; }

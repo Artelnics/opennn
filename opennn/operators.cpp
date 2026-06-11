@@ -574,29 +574,20 @@ void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    if (is_training)
+    if (!is_training)
     {
-        TensorView& mean         = get_output(fp, layer, 1);
-        TensorView& inv_variance = get_output(fp, layer, 2);
+        if (input.is_cuda()) apply_inference_gpu(input, output);
+        else                 apply_inference_cpu(input, output);
+        return;
+    }
 
-        if (input.is_cuda())
-        {
-            apply_training_gpu(input, mean, inv_variance, output);
-            invalidate_inference_cache();
-            return;
-        }
-        apply_training_cpu(input, mean, inv_variance, output);
-        invalidate_inference_cache();
-    }
-    else
-    {
-        if (input.is_cuda())
-        {
-            apply_inference_gpu(input, output);
-            return;
-        }
-        apply_inference_cpu(input, output);
-    }
+    TensorView& mean         = get_output(fp, layer, 1);
+    TensorView& inv_variance = get_output(fp, layer, 2);
+
+    if (input.is_cuda()) apply_training_gpu(input, mean, inv_variance, output);
+    else                 apply_training_cpu(input, mean, inv_variance, output);
+
+    invalidate_inference_cache();
 }
 
 void BatchNormOp::apply_delta(const TensorView& input,
@@ -1398,7 +1389,7 @@ void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const Te
 
 void ConvolutionOp::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
-                      [[maybe_unused]] Index new_row_stride, [[maybe_unused]] Index new_column_stride,
+                      Index new_row_stride, Index new_column_stride,
                       Index new_padding_h, Index new_padding_w,
                       Type new_compute_dtype)
 {
@@ -1926,10 +1917,8 @@ void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
 
     if (use_causal_mask && query_sequence_length > 0 && source_sequence_length > 0)
     {
-        causal_mask.resize(query_sequence_length, source_sequence_length);
-        for (Index row = 0; row < query_sequence_length; ++row)
-            for (Index column = 0; column < source_sequence_length; ++column)
-                causal_mask(row, column) = (column > row) ? NEG_INFINITY : 0.0f;
+        causal_mask = MatrixR::NullaryExpr(query_sequence_length, source_sequence_length,
+            [](Index row, Index column) { return column > row ? NEG_INFINITY : 0.0f; });
     }
     else
     {
@@ -2196,14 +2185,6 @@ void build_sdpa_graph_common(cudnn_frontend::graph::Graph& graph, Type dtype)
          .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
          .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
 }
-void require_attention_scratch(const TensorView& attention_weights, const string& context)
-{
-    throw_if(attention_weights.empty(),
-             format("Attention: {} — set_dropout_rate must be called before compiling the network on GPU "
-                    "(see Attention::forward_scratch_specs).",
-                    context));
-}
-
 void finalize_sdpa_graph(cudnn_frontend::graph::Graph& graph, cudnnHandle_t handle, const string& tag)
 {
     sdpa_check(graph.validate(),                                                tag + " validate");

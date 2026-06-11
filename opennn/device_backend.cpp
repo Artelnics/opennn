@@ -472,15 +472,11 @@ cudaStream_t get_compute_stream()
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-static void initialize_cuda_backend(cudaStream_t& compute_stream,
-                                    cudaStream_t& transfer_stream,
-                                    cublasHandle_t& cublas_handle,
-                                    cublasLtHandle_t& cublas_lt_handle,
-                                    cudnnHandle_t& cudnn_handle,
-                                    cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+Backend::Backend()
 {
+    set_threads_number(0);
+
+#ifdef OPENNN_HAS_CUDA
     int device_count = 0;
     const cudaError_t status = cudaGetDeviceCount(&device_count);
     if (status != cudaSuccess || device_count == 0)
@@ -507,15 +503,12 @@ static void initialize_cuda_backend(cudaStream_t& compute_stream,
                                            CUDNN_OP_TENSOR_ADD,
                                            CUDNN_DATA_FLOAT,
                                            CUDNN_NOT_PROPAGATE_NAN));
+#endif
 }
 
-static void destroy_cuda_backend(cudaStream_t& compute_stream,
-                                 cudaStream_t& transfer_stream,
-                                 cublasHandle_t& cublas_handle,
-                                 cublasLtHandle_t& cublas_lt_handle,
-                                 cudnnHandle_t& cudnn_handle,
-                                 cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+Backend::~Backend()
 {
+#ifdef OPENNN_HAS_CUDA
     if (operator_sum_descriptor)
     {
         cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
@@ -545,49 +538,7 @@ static void destroy_cuda_backend(cudaStream_t& compute_stream,
 
     device::destroy_stream(transfer_stream);
     transfer_stream = nullptr;
-}
-
-#else
-
-static void initialize_cuda_backend(cudaStream_t&,
-                                    cudaStream_t&,
-                                    cublasHandle_t&,
-                                    cublasLtHandle_t&,
-                                    cudnnHandle_t&,
-                                    cudnnOpTensorDescriptor_t&)
-{
-}
-
-static void destroy_cuda_backend(cudaStream_t&,
-                                 cudaStream_t&,
-                                 cublasHandle_t&,
-                                 cublasLtHandle_t&,
-                                 cudnnHandle_t&,
-                                 cudnnOpTensorDescriptor_t&)
-{
-}
-
 #endif
-
-Backend::Backend()
-{
-    set_threads_number(0);
-    initialize_cuda_backend(compute_stream,
-                            transfer_stream,
-                            cublas_handle,
-                            cublas_lt_handle,
-                            cudnn_handle,
-                            operator_sum_descriptor);
-}
-
-Backend::~Backend()
-{
-    destroy_cuda_backend(compute_stream,
-                         transfer_stream,
-                         cublas_handle,
-                         cublas_lt_handle,
-                         cudnn_handle,
-                         operator_sum_descriptor);
 }
 
 void Backend::set_threads_number(int num_threads)

@@ -197,20 +197,6 @@ void LanguageDataset::read_txt()
 
         variables.resize(features_number);
 
-        ranges::for_each(variables | views::take(maximum_input_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Input; });
-
-        ranges::for_each(variables
-                         | views::drop(maximum_input_sequence_length)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Target; });
-
-        if (!variables.empty())
-            variables[0].categories = input_vocabulary;
-
-        for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = format("token_{}", i + 1);
-
         input_shape = { get_maximum_input_sequence_length() };
         target_shape = { get_maximum_target_sequence_length() };
         decoder_shape.clear();
@@ -219,37 +205,10 @@ void LanguageDataset::read_txt()
     {
         maximum_target_sequence_length = maximum_target_document_tokens + 1;
 
-        const Index decoder_offset = maximum_input_sequence_length;
-        const Index target_offset = decoder_offset + maximum_target_sequence_length;
         const Index features_number = maximum_input_sequence_length
                                       + 2 * maximum_target_sequence_length;
 
         variables.resize(features_number);
-
-        ranges::for_each(variables | views::take(maximum_input_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Input; });
-
-        ranges::for_each(variables
-                         | views::drop(decoder_offset)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Decoder; });
-
-        ranges::for_each(variables
-                         | views::drop(target_offset)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Target; });
-
-        if (!variables.empty())
-            variables[0].categories = input_vocabulary;
-
-        for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = format("input_token_{}", i + 1);
-
-        for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[decoder_offset + i].name = format("decoder_token_{}", i + 1);
-
-        for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[target_offset + i].name = format("target_token_{}", i + 1);
 
         input_shape = { get_maximum_input_sequence_length() };
         decoder_shape = { get_maximum_target_sequence_length() };

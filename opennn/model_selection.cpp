@@ -7,12 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "dataset.h"
-#include "loss.h"
 #include "model_selection.h"
-#include "training_strategy.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

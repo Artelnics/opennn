@@ -291,19 +291,9 @@ void TimeSeriesDataset::impute_missing_values_unuse()
     #pragma omp parallel for
     for (Index i = 0; i < num_sequences; ++i)
     {
-        bool sequence_is_invalid = false;
+        const auto first = row_has_nan.begin() + i;
 
-        for (Index j = 0; j <= lags; ++j)
-        {
-            const Index current_row = i + j;
-            if (row_has_nan[current_row])
-            {
-                sequence_is_invalid = true;
-                break;
-            }
-        }
-
-        if (sequence_is_invalid)
+        if (any_of(first, first + lags + 1, [](bool value) { return value; }))
             set_sample_role(i, "None");
     }
 
@@ -436,45 +426,18 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
     const Index variables_number = get_variables_number();
 
-    const Index input_variables_number = get_variables_number("Input");
-    const Index target_variables_number = get_variables_number("Target");
-
-    Index input_target_variables_number = input_variables_number;
-
     const vector<Index> input_variable_indices = get_variable_indices("Input");
     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
-    for (Index i = 0; i < target_variables_number; ++i)
-        if (variables[target_variable_indices[i]].role != VariableRole::InputTarget)
-            ++input_target_variables_number;
+    const Index extra_targets = ranges::count_if(target_variable_indices,
+        [&](Index index) { return variables[index].role != VariableRole::InputTarget; });
 
-    Index input_target_numeric_variables_number = 0;
-
-    int target_index = 0;
-
-    for (Index i = 0; i < input_target_variables_number; ++i)
-    {
-        if (i < input_variables_number)
-        {
-            const Index variable_index = input_variable_indices[i];
-
-            const VariableType input_variable_type = variables[variable_index].type;
-
-            if (input_variable_type == VariableType::Numeric)
-                ++input_target_numeric_variables_number;
-        }
-        else
-        {
-            const Index variable_index = target_variable_indices[target_index];
-
-            const VariableType& target_variable_type = variables[variable_index].type;
-
-            if (target_variable_type == VariableType::Numeric)
-                ++input_target_numeric_variables_number;
-
-            ++target_index;
-        }
-    }
+    const Index input_target_numeric_variables_number =
+        ranges::count_if(input_variable_indices,
+                         [&](Index index) { return variables[index].type == VariableType::Numeric; })
+      + count_if(target_variable_indices.begin(),
+                 target_variable_indices.begin() + extra_targets,
+                 [&](Index index) { return variables[index].type == VariableType::Numeric; });
 
     const Index new_past_time_steps =
         ((samples_number <= past_time_steps) && past_time_steps > 2) ? past_time_steps - 2 :
@@ -512,40 +475,15 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     const Index variables_number = get_variables_number();
 
-    const Index input_variables_number = get_variables_number("Input");
-    const Index target_variables_number = get_variables_number("Target");
-
-    const Index input_target_variables_number = input_variables_number + target_variables_number;
-
     const vector<Index> input_variable_indices = get_variable_indices("Input");
     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
-    Index input_target_numeric_variables_number = 0;
-    int target_index = 0;
-
-    for (Index i = 0; i < input_target_variables_number; ++i)
-    {
-        if (i < input_variables_number)
-        {
-            const Index variable_index = input_variable_indices[i];
-
-            const VariableType input_variable_type = variables[variable_index].type;
-
-            if (input_variable_type == VariableType::Numeric)
-                ++input_target_numeric_variables_number;
-        }
-        else
-        {
-            const Index variable_index = target_variable_indices[target_index];
-
-            const VariableType target_variable_type = variables[variable_index].type;
-
-            if (target_variable_type == VariableType::Numeric && variables[variable_index].role != VariableRole::InputTarget)
-                ++input_target_numeric_variables_number;
-
-            ++target_index;
-        }
-    }
+    const Index input_target_numeric_variables_number =
+        ranges::count_if(input_variable_indices,
+                         [&](Index index) { return variables[index].type == VariableType::Numeric; })
+      + ranges::count_if(target_variable_indices,
+                         [&](Index index) { return variables[index].type == VariableType::Numeric
+                                                && variables[index].role != VariableRole::InputTarget; });
 
     const Index new_past_time_steps = (samples_number == past_time_steps) ? (past_time_steps - 2)
                                 : (samples_number == past_time_steps + 1) ? (past_time_steps - 1)

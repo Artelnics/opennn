@@ -8,8 +8,6 @@
 
 #include "registry.h"
 #include "activation_layer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

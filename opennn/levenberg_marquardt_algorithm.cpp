@@ -275,11 +275,10 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
-    unique_ptr<ForwardPropagation> validation_forward_propagation;
-
-    if (has_validation && validation_samples_number != training_samples_number)
-        validation_forward_propagation = make_unique<ForwardPropagation>(
-            validation_samples_number, neural_network);
+    const unique_ptr<ForwardPropagation> validation_forward_propagation =
+        (has_validation && validation_samples_number != training_samples_number)
+            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network)
+            : nullptr;
 
     ForwardPropagation* validation_fp = has_validation
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
@@ -400,8 +399,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     MatrixR& hessian = back_propagation_lm.hessian;
 
     VectorR& potential_parameters = optimization_data.potential_parameters;
-    VectorMap parameter_updates(optimization_data.views[ParameterUpdate].as<float>(),
-                                optimization_data.views[ParameterUpdate].size());
+    VectorMap parameter_updates = optimization_data.views[ParameterUpdate].as_vector();
 
     bool success = false;
 
@@ -446,14 +444,12 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
             break;
         }
-        else
-        {
-            hessian.diagonal().array() -= damping_parameter;
 
-            damping_parameter = clamp(damping_parameter * damping_parameter_factor,
-                                      minimum_damping_parameter,
-                                      maximum_damping_parameter);
-        }
+        hessian.diagonal().array() -= damping_parameter;
+
+        damping_parameter = clamp(damping_parameter * damping_parameter_factor,
+                                  minimum_damping_parameter,
+                                  maximum_damping_parameter);
 
     } while (damping_parameter < maximum_damping_parameter);
 

@@ -10,8 +10,6 @@
 #include "batch.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
-#include <cstdlib>
-#include <regex>
 
 namespace opennn
 {

@@ -923,20 +923,10 @@ VectorI TabularDataset::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        const Index target_index = target_feature_indices[0];
+        const auto target_column = data.col(target_feature_indices[0]).head(samples_number).array();
 
-        Index positives = 0;
-        Index negatives = 0;
-
-        for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
-        {
-            const float value = data(sample_index, target_index);
-            if (!isnan(value))
-                (value < 0.5f) ? negatives++ : positives++;
-        }
-
-        class_distribution(0) = negatives;
-        class_distribution(1) = positives;
+        class_distribution(0) = (target_column < 0.5f).count();
+        class_distribution(1) = (target_column >= 0.5f).count();
     }
     else
     {
@@ -1050,10 +1040,7 @@ void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
     vector<Index> flat_outliers;
-    const size_t outliers_count = static_cast<size_t>(transform_reduce(
-        outliers_indices.begin(), outliers_indices.end(), Index(0), plus<>{},
-        [](const vector<Index>& indices) { return static_cast<Index>(indices.size()); }));
-    flat_outliers.reserve(outliers_count);
+    flat_outliers.reserve(outliers_indices[0].size() + outliers_indices[1].size());
 
     for (const auto& per_feature : outliers_indices)
         flat_outliers.insert(flat_outliers.end(), per_feature.begin(), per_feature.end());
@@ -1315,13 +1302,7 @@ void TabularDataset::read_csv()
     variables.resize(variables_number);
 
     if (has_header)
-    {
-        vector<string> names;
-        names.reserve(variables_number);
-        for (Index i = 0; i < variables_number; ++i)
-            names.emplace_back(header_tokens[i + id_offset]);
-        set_variable_names(names);
-    }
+        set_variable_names(vector<string>(header_tokens.begin() + id_offset, header_tokens.end()));
     else
         set_default_variable_names();
 

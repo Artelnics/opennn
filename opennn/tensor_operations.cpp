@@ -644,7 +644,7 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
         if (scale_embedding)
             output_mat.row(i) *= sqrt(to_type(embedding_dimension));
 
-        if (add_positional_encoding && token_id > 0)
+        if (add_positional_encoding)
             output_mat.row(i) += positional_encoding.as_matrix().row(i % sequence_length);
     }
 }

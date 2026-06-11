@@ -271,7 +271,6 @@ void yolo_gradient_kernel(const TensorView& output,
     const Index batch_size = output.shape[0];
     const Index grid_size = output.shape[1];
     const Index channels = output.shape[3];
-    (void)batch_size;
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -714,9 +713,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     case CrossEntropy3d:
     {
         const Index vocabulary_size = input.shape.back();
-        const Index sequence_length = input.shape[input.get_rank() - 2];
-        const Index batch_size = input.size() / (sequence_length * vocabulary_size);
-        const Index token_count = batch_size * sequence_length;
+        const Index token_count = input.size() / vocabulary_size;
 
         float* valid_mask_device = workspace + token_count;
         float* correct_mask_device = workspace + 2 * token_count;
@@ -759,39 +756,31 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     TensorView& input_delta = back_propagation.get_output_delta();
 
-    if (error == Error::CrossEntropy3d)
-    {
-        if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
-            return false;
+    if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
+        return false;
 
+    using enum Error;
+    switch (error)
+    {
+    case CrossEntropy3d:
         cross_entropy_3d_gradient_device_count(input, target, input_delta, metric_results_device.as<float>() + 1);
-    }
-    else
-    {
-        if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
-            return false;
-
-        using enum Error;
-        switch (error)
-        {
-        case MeanSquaredError:
-            mean_squared_error_gradient(input, target, input_delta);
-            break;
-        case NormalizedSquaredError:
-            normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
-            break;
-        case WeightedSquaredError:
-            weighted_squared_error_gradient(input, target, positives_weight, negatives_weight,
-                                            get_weighted_coefficient(batch), input_delta);
-            break;
-        case CrossEntropy:
-            cross_entropy_gradient(input, target, input_delta);
-            break;
-        case CrossEntropy3d:
-        case MinkowskiError:
-        case Yolo:
-            return false;
-        }
+        break;
+    case MeanSquaredError:
+        mean_squared_error_gradient(input, target, input_delta);
+        break;
+    case NormalizedSquaredError:
+        normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
+        break;
+    case WeightedSquaredError:
+        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight,
+                                        get_weighted_coefficient(batch), input_delta);
+        break;
+    case CrossEntropy:
+        cross_entropy_gradient(input, target, input_delta);
+        break;
+    case MinkowskiError:
+    case Yolo:
+        return false;
     }
 
     back_propagation.error = 0.0f;
@@ -945,7 +934,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     back_propagate_layers(forward_propagation, back_propagation);
 }
 
-static const vector<pair<Loss::Error, string>> error_map = {
+static const vector<pair<Loss::Error, string>> error_entries = {
     {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
@@ -956,20 +945,17 @@ static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::Yolo,                   "YoloError"}
 };
 
+static const EnumMap<Loss::Error> error_map{error_entries};
+
 void Loss::set_error(const Error& new_error)
 {
     error = new_error;
-
-    for (const auto& [error_value, error_name] : error_map)
-        if (error_value == error) { name = error_name; return; }
+    name = error_map.to_string(new_error);
 }
 
 void Loss::set_error(const string& new_name)
 {
-    for (const auto& [error_value, error_name] : error_map)
-        if (error_name == new_name) { set_error(error_value); return; }
-
-    throw runtime_error(format("Unknown loss method: {}", new_name));
+    set_error(error_map.from_string(new_name));
 }
 
 void Loss::add_regularization_gradient(const TensorView& gradient) const

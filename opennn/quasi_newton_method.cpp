@@ -46,8 +46,8 @@ void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_da
     VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
     VectorMap gradient_difference = optimization_data.views[GradientDifference].as_vector();
 
-    VectorMap old_inverse_hessian_dot_gradient_difference(
-        optimization_data.views[OldInverseHessianDotGradientDifference].as<float>(), parameters_number);
+    VectorMap old_inverse_hessian_dot_gradient_difference =
+        optimization_data.views[OldInverseHessianDotGradientDifference].as_vector();
 
     MatrixMap old_inverse_hessian = optimization_data.views[OldInverseHessian].as_matrix();
     MatrixMap inverse_hessian     = optimization_data.views[InverseHessian].as_matrix();
@@ -184,11 +184,10 @@ TrainingResult QuasiNewtonMethod::train()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
-    unique_ptr<ForwardPropagation> validation_forward_propagation;
-
-    if (has_validation && validation_samples_number != training_samples_number)
-        validation_forward_propagation = make_unique<ForwardPropagation>(
-            validation_samples_number, neural_network);
+    const unique_ptr<ForwardPropagation> validation_forward_propagation =
+        (has_validation && validation_samples_number != training_samples_number)
+            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network)
+            : nullptr;
 
     ForwardPropagation* validation_fp = has_validation
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
@@ -210,8 +209,6 @@ TrainingResult QuasiNewtonMethod::train()
 
     BackPropagation validation_back_propagation(validation_samples_number, loss);
 
-
-    bool stop_training = false;
 
     Index validation_failures = 0;
 
@@ -309,13 +306,11 @@ TrainingResult QuasiNewtonMethod::train()
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
-        stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                  results.training_error_history(epoch),
-                                                  validation_failures,
-                                                  training_back_propagation.loss,
-                                                  has_validation);
-
-        if (stop_training)
+        if (check_stopping_condition(results, epoch, elapsed_time,
+                                     results.training_error_history(epoch),
+                                     validation_failures,
+                                     training_back_propagation.loss,
+                                     has_validation))
         {
             results.loss_decrease = loss_decrease;
             break;

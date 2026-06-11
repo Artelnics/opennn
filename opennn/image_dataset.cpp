@@ -283,7 +283,7 @@ void ImageDataset::read_images()
         "ImageDataset: image classification requires at least two class folders.");
 
     vector<filesystem::path> paths;
-    vector<Index> labels;
+    vector<int32_t> labels;
 
     for (Index i = 0; i < folders_number; ++i)
     {
@@ -296,7 +296,7 @@ void ImageDataset::read_images()
         for (auto& p : folder_files)
         {
             paths.emplace_back(std::move(p));
-            labels.push_back(i);
+            labels.push_back(int32_t(i));
         }
     }
 
@@ -340,9 +340,7 @@ void ImageDataset::read_images()
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    sample_labels.resize(size_t(samples_number));
-    for (Index i = 0; i < samples_number; ++i)
-        sample_labels[size_t(i)] = int32_t(labels[size_t(i)]);
+    sample_labels = std::move(labels);
 
     sample_roles.assign(samples_number, SampleRole::Training);
 

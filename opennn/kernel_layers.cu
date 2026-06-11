@@ -291,22 +291,24 @@ void embedding_backward_cuda(const Index n, const float* inputs, const T* output
 template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
 template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
 
+// Both head reshapes are the same permutation [B, P, Q, D] -> [B, Q, P, D]:
+// split_heads uses (P=S, Q=H) and merge_heads (P=H, Q=S).
 template<typename T>
-__global__ void split_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
+__global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const int d = i % D;
-        const int h = (i / D) % H;
-        const int s = (i / (D * H)) % S;
-        const int b = i / (D * H * S);
+        const int q = (i / D) % Q;
+        const int p = (i / (D * Q)) % P;
+        const int b = i / (D * Q * P);
 
-        out[((int64_t(b) * H + h) * S + s) * D + d] = in[i];
+        out[((int64_t(b) * Q + q) * P + p) * D + d] = in[i];
     }
 }
 
 template<typename T>
-__global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
+__global__ void swap_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D_vec)
 {
     const float4* const in_v  = reinterpret_cast<const float4*>(in);
     float4* const       out_v = reinterpret_cast<float4*>(out);
@@ -314,11 +316,11 @@ __global__ void split_heads_vec_kernel(const int n_vec, const T* __restrict__ in
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
     {
         const int d = i % D_vec;
-        const int h = (i / D_vec) % H;
-        const int s = (i / (D_vec * H)) % S;
-        const int b = i / (D_vec * H * S);
+        const int q = (i / D_vec) % Q;
+        const int p = (i / (D_vec * Q)) % P;
+        const int b = i / (D_vec * Q * P);
 
-        out_v[((int64_t(b) * H + h) * S + s) * D_vec + d] = in_v[i];
+        out_v[((int64_t(b) * Q + q) * P + p) * D_vec + d] = in_v[i];
     }
 }
 
@@ -332,48 +334,17 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
         const int n_vec     = checked_int(n / vec_width);
-        OPENNN_CUDA_LAUNCH(split_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec));
+        OPENNN_CUDA_LAUNCH(swap_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec));
     }
     else
     {
         const int total = checked_int(n);
-        OPENNN_CUDA_LAUNCH(split_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, H, D));
+        OPENNN_CUDA_LAUNCH(swap_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, H, D));
     }
 }
 
 template void split_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);
 template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, __nv_bfloat16*, const int, const int, const int);
-
-template<typename T>
-__global__ void merge_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int d = i % D;
-        const int s = (i / D) % S;
-        const int h = (i / (D * S)) % H;
-        const int b = i / (D * S * H);
-
-        out[((int64_t(b) * S + s) * H + h) * D + d] = in[i];
-    }
-}
-
-template<typename T>
-__global__ void merge_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int S, const int H, const int D_vec)
-{
-    const float4* const in_v  = reinterpret_cast<const float4*>(in);
-    float4* const       out_v = reinterpret_cast<float4*>(out);
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
-    {
-        const int d = i % D_vec;
-        const int s = (i / D_vec) % S;
-        const int h = (i / (D_vec * S)) % H;
-        const int b = i / (D_vec * S * H);
-
-        out_v[((int64_t(b) * S + s) * H + h) * D_vec + d] = in_v[i];
-    }
-}
 
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
@@ -385,12 +356,12 @@ void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int
         const int vec_width = static_cast<int>(16 / sizeof(T));
         const int D_vec     = D / vec_width;
         const int n_vec     = checked_int(n / vec_width);
-        OPENNN_CUDA_LAUNCH(merge_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, S, H, D_vec));
+        OPENNN_CUDA_LAUNCH(swap_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, H, S, D_vec));
     }
     else
     {
         const int total = checked_int(n);
-        OPENNN_CUDA_LAUNCH(merge_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, S, H, D));
+        OPENNN_CUDA_LAUNCH(swap_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, H, S, D));
     }
 }
 

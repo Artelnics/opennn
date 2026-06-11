@@ -677,15 +677,10 @@ void Optimizer::set_unscaling()
     auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
                                        const VectorR& means, const VectorR& std_devs)
     {
-        const Index descriptives_count = minimums.size();
-        vector<Descriptives> descriptives(descriptives_count);
-        for (Index i = 0; i < descriptives_count; ++i)
-        {
-            descriptives[i].minimum = minimums[i];
-            descriptives[i].maximum = maximums[i];
-            descriptives[i].mean = means[i];
-            descriptives[i].standard_deviation = std_devs[i];
-        }
+        vector<Descriptives> descriptives;
+        descriptives.reserve(minimums.size());
+        for (Index i = 0; i < minimums.size(); ++i)
+            descriptives.emplace_back(minimums[i], maximums[i], means[i], std_devs[i]);
         return descriptives;
     };
 

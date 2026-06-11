@@ -8,9 +8,6 @@
 
 #include "registry.h"
 #include "addition_layer.h"
-#include "tensor_operations.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

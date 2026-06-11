@@ -7,11 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_types.h"
 #include "convolutional_layer.h"
-#include "neural_network.h"
-#include "loss.h"
-#include "string_utilities.h"
 
 namespace opennn
 {
@@ -72,12 +68,6 @@ Index Convolutional::get_padding_width() const
 
     return (total_padding + 1) / 2;
 }
-
-Index Convolutional::get_input_height() const { return input_height; }
-
-Index Convolutional::get_input_width() const { return input_width; }
-
-Index Convolutional::get_input_channels() const { return input_channels; }
 
 vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
 {

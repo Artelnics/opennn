@@ -8,9 +8,6 @@
 
 #include "registry.h"
 #include "dense_layer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
-#include "random_utilities.h"
 
 namespace opennn
 {

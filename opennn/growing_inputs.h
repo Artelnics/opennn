@@ -20,13 +20,13 @@ public:
 
     GrowingInputs(TrainingStrategy* = nullptr);
 
-    Index get_minimum_inputs_number() const override;
-    Index get_maximum_inputs_number() const override;
+    Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
+    Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
 
     void set_default();
 
     void set_maximum_inputs_number(const Index);
-    void set_minimum_inputs_number(const Index);
+    void set_minimum_inputs_number(const Index new_minimum_inputs_number) { minimum_inputs_number = new_minimum_inputs_number; }
 
     InputsSelectionResult perform_input_selection() override;
 

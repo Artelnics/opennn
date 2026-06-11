@@ -11,8 +11,6 @@
 #include "optimizer.h"
 #include "training_strategy.h"
 #include "adaptive_moment_estimation.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 #include "dense_layer.h"
 
 namespace opennn

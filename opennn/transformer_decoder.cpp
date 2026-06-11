@@ -54,9 +54,8 @@ Index sample_token(VectorR& probabilities,
 
     if (config.temperature == 0.0f)
     {
-        Index best = 0;
-        for (Index i = 1; i < vocabulary_size; ++i)
-            if (probabilities(i) > probabilities(best)) best = i;
+        Index best;
+        probabilities.maxCoeff(&best);
         return best;
     }
 
@@ -115,9 +114,8 @@ Index sample_token(VectorR& probabilities,
     const float sum = probabilities.sum();
     if (sum <= 0.0f)
     {
-        Index best = 0;
-        for (Index i = 1; i < vocabulary_size; ++i)
-            if (original(i) > original(best)) best = i;
+        Index best;
+        original.maxCoeff(&best);
         return best;
     }
 

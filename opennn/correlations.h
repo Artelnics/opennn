@@ -19,8 +19,6 @@ struct Correlation
 
     enum class Form{Identity, Sigmoid, Logarithmic, Exponential, Power};
 
-    Correlation() {}
-
     void set_perfect();
 
     void print() const;

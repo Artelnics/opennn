@@ -9,11 +9,7 @@
 #include "registry.h"
 #include "device_backend.h"
 #include "tensor_types.h"
-#include "tensor_operations.h"
 #include "bounding_layer.h"
-#include "neural_network.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 #include "string_utilities.h"
 #include "json.h"
 

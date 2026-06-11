@@ -529,66 +529,9 @@ VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targe
 
 MatrixI TestingAnalysis::calculate_confusion(const float decision_threshold) const
 {
-    check();
+    const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
-
-    const Index current_batch_size = (batch_size <= 0 || batch_size > ssize(testing_indices))
-                                         ? (testing_indices.empty() ? 1 : testing_indices.size())
-                                         : batch_size;
-
-    vector<vector<Index>> testing_batches;
-    dataset->get_batches(testing_indices, current_batch_size, false, testing_batches);
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    const Shape input_shape = dataset->get_shape("Input");
-
-    const Index outputs_number = neural_network->get_outputs_number();
-    const Index confusion_matrix_size = (outputs_number == 1) ? 3 : (outputs_number + 1);
-
-    MatrixI total_confusion_matrix = MatrixI::Zero(confusion_matrix_size, confusion_matrix_size);
-
-    Index input_elem_count = 1;
-    for (size_t i = 0; i < input_shape.rank; ++i) input_elem_count *= input_shape[i];
-
-    const Index targets_number = ssize(target_feature_indices);
-
-    for (const vector<Index>& current_batch_indices : testing_batches)
-    {
-        if (current_batch_indices.empty()) continue;
-        const Index batch_n = current_batch_indices.size();
-
-        MatrixR batch_targets(batch_n, targets_number);
-        dataset->fill_targets(current_batch_indices, target_feature_indices,
-                              batch_targets.data(), /*is_training=*/false);
-
-        MatrixR batch_outputs;
-        if (input_shape.rank == 1)
-        {
-            MatrixR batch_inputs(batch_n, input_shape[0]);
-            dataset->fill_inputs(current_batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false);
-            batch_outputs = neural_network->calculate_outputs(batch_inputs);
-        }
-        else if (input_shape.rank == 3)
-        {
-            Tensor4 inputs_4d(batch_n, input_shape[0], input_shape[1], input_shape[2]);
-            dataset->fill_inputs(current_batch_indices, input_feature_indices,
-                                 inputs_4d.data(), /*is_training=*/false);
-            batch_outputs = neural_network->calculate_outputs(inputs_4d);
-        }
-        else
-            return {};
-
-        total_confusion_matrix += calculate_confusion(batch_targets, batch_outputs, decision_threshold);
-    }
-
-    if (!testing_indices.empty())
-        total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
-
-    return total_confusion_matrix;
+    return calculate_confusion(targets, outputs, decision_threshold);
 }
 
 MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,

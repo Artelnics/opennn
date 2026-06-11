@@ -64,38 +64,17 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
 
 inline cudnnDataType_t to_cudnn(Type type) noexcept
 {
-    using enum Type;
-    switch (type)
-    {
-        case Auto: return TypeInfo<FP32>::cudnn;
-        case FP32: return TypeInfo<FP32>::cudnn;
-        case BF16: return TypeInfo<BF16>::cudnn;
-    }
-    return TypeInfo<FP32>::cudnn;
+    return type == Type::BF16 ? TypeInfo<Type::BF16>::cudnn : TypeInfo<Type::FP32>::cudnn;
 }
 
 inline cudaDataType_t to_cuda(Type type) noexcept
 {
-    using enum Type;
-    switch (type)
-    {
-        case Auto: return TypeInfo<FP32>::cuda;
-        case FP32: return TypeInfo<FP32>::cuda;
-        case BF16: return TypeInfo<BF16>::cuda;
-    }
-    return TypeInfo<FP32>::cuda;
+    return type == Type::BF16 ? TypeInfo<Type::BF16>::cuda : TypeInfo<Type::FP32>::cuda;
 }
 
 inline Index type_bytes(Type type) noexcept
 {
-    using enum Type;
-    switch (type)
-    {
-        case Auto: return TypeInfo<FP32>::bytes;
-        case FP32: return TypeInfo<FP32>::bytes;
-        case BF16: return TypeInfo<BF16>::bytes;
-    }
-    return TypeInfo<FP32>::bytes;
+    return type == Type::BF16 ? TypeInfo<Type::BF16>::bytes : TypeInfo<Type::FP32>::bytes;
 }
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;

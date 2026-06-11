@@ -78,11 +78,6 @@ constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
 
-bool has_image_extension(const filesystem::path& path)
-{
-    return is_supported_image_file(path);
-}
-
 vector<filesystem::path> list_files(const filesystem::path& directory,
                                     bool (*predicate)(const filesystem::path&))
 {
@@ -211,7 +206,7 @@ uint64_t hash_sources(const filesystem::path& images_dir,
             mix_u64(uint64_t(mtime.time_since_epoch().count()));
     };
 
-    vector<filesystem::path> image_paths = list_files(images_dir, has_image_extension);
+    vector<filesystem::path> image_paths = list_files(images_dir, is_supported_image_file);
     mix_u64(uint64_t(image_paths.size()));
 
     for (const auto& image_path : image_paths)
@@ -330,10 +325,8 @@ Tensor3 letterbox_image(const Tensor3& image,
 
     const Tensor3 resized = resize_image(image, scaled_height, scaled_width);
 
-    for (Index y = 0; y < scaled_height; ++y)
-        for (Index x = 0; x < scaled_width; ++x)
-            for (Index c = 0; c < channels; ++c)
-                output(y + offset_y, x + offset_x, c) = resized(y, x, c);
+    output.slice(array<Index, 3>{offset_y, offset_x, 0},
+                 array<Index, 3>{scaled_height, scaled_width, channels}) = resized;
 
     return output;
 }
@@ -976,7 +969,7 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     images_ram.clear();
     targets_ram.clear();
 
-    image_filenames = list_files(images_directory, has_image_extension);
+    image_filenames = list_files(images_directory, is_supported_image_file);
 
     open_or_build_cache(new_anchors);
 }
@@ -1112,7 +1105,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
 void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
-    vector<filesystem::path> image_paths = list_files(images_directory, has_image_extension);
+    vector<filesystem::path> image_paths = list_files(images_directory, is_supported_image_file);
     throw_if(image_paths.empty(),
              format("YoloDataset: no images found in {}", images_directory.string()));
 
@@ -1159,12 +1152,9 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
         for (const Box& box : labels[i])
             max_class_id = max(max_class_id, box.class_id);
 
-        for (Index p = 0; p < image_record_bytes; ++p)
-        {
-            const float v = prepared.data()[p];
-            const int iv = int(v < 0.0f ? 0.0f : (v > 255.0f ? 255.0f : v) + 0.5f);
-            pixels[size_t(p)] = uint8_t(iv);
-        }
+        Map<Array<uint8_t, Dynamic, 1>>(pixels.data(), image_record_bytes) =
+            (Map<const Array<float, Dynamic, 1>>(prepared.data(), image_record_bytes)
+                .max(0.0f).min(255.0f) + 0.5f).cast<uint8_t>();
 
         image_writer.write(pixels.data(), pixels.size());
 
@@ -1394,14 +1384,7 @@ void YoloDataset::load_images_to_ram() const
              "YoloDataset::load_images_to_ram: image cache is not open.");
 
     images_ram.resize(size_t(samples_number) * size_t(cache_image_record_bytes));
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        const uint64_t offset = sizeof(YoloImageCacheHeader)
-                              + uint64_t(i) * uint64_t(cache_image_record_bytes);
-        image_cache_reader.read_at(images_ram.data() + size_t(i) * size_t(cache_image_record_bytes),
-                                   size_t(cache_image_record_bytes),
-                                   offset);
-    }
+    image_cache_reader.read_at(images_ram.data(), images_ram.size(), sizeof(YoloImageCacheHeader));
 }
 
 void YoloDataset::load_targets_to_ram() const
@@ -1413,14 +1396,9 @@ void YoloDataset::load_targets_to_ram() const
              "YoloDataset::load_targets_to_ram: target cache is not open.");
 
     targets_ram.resize(size_t(samples_number) * size_t(cache_target_record_floats));
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        const uint64_t offset = target_data_offset
-                              + uint64_t(i) * uint64_t(cache_target_record_floats) * sizeof(float);
-        target_cache_reader.read_at(targets_ram.data() + size_t(i) * size_t(cache_target_record_floats),
-                                    size_t(cache_target_record_floats) * sizeof(float),
-                                    offset);
-    }
+    target_cache_reader.read_at(targets_ram.data(),
+                                targets_ram.size() * sizeof(float),
+                                target_data_offset);
 }
 
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -1505,9 +1483,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 image_bytes = resized_pixels.data();
             }
 
-            float* dst = input_data + i * image_record_bytes;
-            for (Index p = 0; p < image_record_bytes; ++p)
-                dst[p] = float(image_bytes[size_t(p)]) * scale;
+            Map<Array<float, Dynamic, 1>>(input_data + i * image_record_bytes, image_record_bytes) =
+                Map<const Array<uint8_t, Dynamic, 1>>(image_bytes, image_record_bytes).cast<float>() * scale;
         }
         catch (const exception& e)
         {

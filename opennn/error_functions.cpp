@@ -63,14 +63,11 @@ static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
                                                         const float* active_tokens_count_device)
 {
     const Index vocabulary_size = input.shape.back();
-    const Index sequence_length = input.shape[input.get_rank() - 2];
-    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
     input.dispatch([&](auto tag) {
         using T = decltype(tag);
-        const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
         cross_entropy_3d_multiple_backward_device_count_cuda<T>(
-            total, to_int(vocabulary_size),
+            static_cast<size_t>(input.size()), to_int(vocabulary_size),
             input.as<T>(), target.as<float>(), input_delta.as<T>(),
             active_tokens_count_device);
     });
@@ -285,7 +282,6 @@ void minkowski_error(const TensorView& input, const TensorView& target, float po
     throw_if(workspace_device,
              "minkowski_error: GPU implementation not available.");
 
-    (void)workspace_device;
     const Index batch_size = input.shape[0];
     error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / to_type(power * batch_size);
 }
@@ -312,14 +308,12 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
                       Index& active_tokens_out, Index& correct_tokens_out, float* errors_device)
 {
     const Index vocabulary_size = input.shape.back();
-    const Index sequence_length = input.shape[input.get_rank() - 2];
-    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda()) {
         input.dispatch([&](auto tag) {
             using T = decltype(tag);
-            const size_t token_count = batch_size * sequence_length;
+            const size_t token_count = static_cast<size_t>(input.size() / vocabulary_size);
 
             float* valid_mask_device   = errors_device + token_count;
             float* correct_mask_device = errors_device + 2 * token_count;
@@ -362,7 +356,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
 
     (void)errors_device;
 
-    const Index token_count = batch_size * sequence_length;
+    const Index token_count = input.size() / vocabulary_size;
     const MatrixMap outputs_flat = input.as_flat_matrix();
     const VectorMap targets_flat = target.as_vector();
 
@@ -394,20 +388,17 @@ void cross_entropy_3d_gradient(const TensorView& input, const TensorView& target
                                Index active_tokens_count)
 {
     const Index vocabulary_size = input.shape.back();
-    const Index sequence_length = input.shape[input.get_rank() - 2];
-    const Index batch_size = input.size() / (sequence_length * vocabulary_size);
 
     if (input.is_cuda()) {
         input.dispatch([&](auto tag) {
             using T = decltype(tag);
             const float scale = active_tokens_count > 0 ? 1.0f / static_cast<float>(active_tokens_count) : 0.0f;
-            const size_t total = static_cast<size_t>(batch_size) * sequence_length * vocabulary_size;
-            cross_entropy_3d_multiple_backward_cuda<T>(total, to_int(vocabulary_size),
+            cross_entropy_3d_multiple_backward_cuda<T>(static_cast<size_t>(input.size()), to_int(vocabulary_size),
                 input.as<T>(), target.as<float>(), input_delta.as<T>(), scale);
         });
         return;
     }
-    const Index token_count = batch_size * sequence_length;
+    const Index token_count = input.size() / vocabulary_size;
     MatrixMap gradients_flat = input_delta.as_flat_matrix();
     const MatrixMap outputs_flat = input.as_flat_matrix();
     const VectorMap targets_flat = target.as_vector();

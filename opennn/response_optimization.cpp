@@ -176,7 +176,7 @@ struct NetworkDifferential
             {
             case ScalerMethod::None:                  d(j) = 1.0f; break;
             case ScalerMethod::MinimumMaximum:        d(j) = (L.max_range - L.min_range) / guarded(L.maximum(j) - L.minimum(j)); break;
-            case ScalerMethod::MeanStandardDeviation: d(j) = 1.0f / guarded(L.deviation(j)); break;
+            case ScalerMethod::MeanStandardDeviation:
             case ScalerMethod::StandardDeviation:     d(j) = 1.0f / guarded(L.deviation(j)); break;
             case ScalerMethod::Logarithm:             d(j) = 1.0f / guarded(in(j)); break;
             case ScalerMethod::ImageMinMax:           d(j) = 1.0f / 255.0f; break;
@@ -211,7 +211,7 @@ struct NetworkDifferential
             {
             case ScalerMethod::None:                  d(j) = 1.0f; break;
             case ScalerMethod::MinimumMaximum:        d(j) = (L.maximum(j) - L.minimum(j)) / guarded(L.max_range - L.min_range); break;
-            case ScalerMethod::MeanStandardDeviation: d(j) = L.deviation(j); break;
+            case ScalerMethod::MeanStandardDeviation:
             case ScalerMethod::StandardDeviation:     d(j) = L.deviation(j); break;
             case ScalerMethod::Logarithm:             d(j) = exp(in(j)); break;
             case ScalerMethod::ImageMinMax:           d(j) = 255.0f; break;
@@ -224,10 +224,7 @@ struct NetworkDifferential
     {
         if (!L.bounding_active) return VectorR::Ones(in.size());
 
-        VectorR d(in.size());
-        for (Index j = 0; j < in.size(); ++j)
-            d(j) = (in(j) > L.minimum(j) && in(j) < L.maximum(j)) ? 1.0f : 0.0f;
-        return d;
+        return ((in.array() > L.minimum.array()) && (in.array() < L.maximum.array())).cast<float>().matrix();
     }
 
     void build(const NeuralNetwork& network);
@@ -589,25 +586,20 @@ float ResponseOptimization::get_deformation_domain_factor()
 
 Index ResponseOptimization::get_objectives_number() const
 {
-    Index objectives_number = 0;
-
-    for (const auto& [_, constraints] : conditions)
-        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-            objectives_number++;
-
-    return objectives_number;
+    return ranges::count_if(conditions, [](const auto& entry)
+    {
+        const ConditionType condition = entry.second.condition;
+        return condition == ConditionType::Maximize || condition == ConditionType::Minimize;
+    });
 }
 
 vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
 {
-    if (role == "Input")
-    {
-        if (neural_network->has("Scaling"))
-            return static_cast<Scaling*>(neural_network->get_first("Scaling"))->get_descriptives();
-    }
-    else if (role == "Target")
-        if (neural_network->has("Unscaling"))
-            return static_cast<Unscaling*>(neural_network->get_first("Unscaling"))->get_descriptives();
+    if (role == "Input" && neural_network->has("Scaling"))
+        return static_cast<Scaling*>(neural_network->get_first("Scaling"))->get_descriptives();
+
+    if (role == "Target" && neural_network->has("Unscaling"))
+        return static_cast<Unscaling*>(neural_network->get_first("Unscaling"))->get_descriptives();
 
     throw runtime_error("ResponseOptimization: Required Scaling/Unscaling layer for role '" + role + "' not found.");
 }
@@ -813,16 +805,12 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
                 superior = min(superior, condition.up_bound);
                 break;
             case ConditionType::GreaterEqualTo:
+            case ConditionType::GreaterThan:
                 inferior = max(inferior, condition.low_bound);
                 break;
             case ConditionType::LessEqualTo:
-                superior = min(superior, condition.up_bound);
-                break;
             case ConditionType::LessThan:
                 superior = min(superior, condition.up_bound);
-                break;
-            case ConditionType::GreaterThan:
-                inferior = max(inferior, condition.low_bound);
                 break;
             default:
                 break;
@@ -911,7 +899,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
-    const vector<Variable> input_variables = neural_network->get_input_variables();
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
     const Index batch_size = input_control.rows(); // 1000
     const Shape input_shape = neural_network->get_input_shape();
     const Index total_lags = input_shape[0]; // 2
@@ -1101,13 +1089,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const Index n_in  = inputs.cols();
             const Index n_out = outputs.cols();
 
-            MatrixR X(k, n_in);
-            MatrixR Y(k, n_out);
-            for (Index i = 0; i < k; ++i)
-            {
-                X.row(i) = inputs.row(feasible_indices[i]);
-                Y.row(i) = outputs.row(feasible_indices[i]);
-            }
+            const MatrixR X = inputs(feasible_indices, Eigen::placeholders::all);
+            const MatrixR Y = outputs(feasible_indices, Eigen::placeholders::all);
 
             const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
 
@@ -1141,18 +1124,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     if (feasible_indices.empty())
         return {MatrixR(), MatrixR()};
 
-    const Index feasible_count = static_cast<Index>(feasible_indices.size());
-
-    MatrixR feasible_inputs(feasible_count, inputs.cols());
-    MatrixR feasible_outputs(feasible_count, outputs.cols());
-
-    for (Index i = 0; i < feasible_count; ++i)
-    {
-        feasible_inputs.row(i) = inputs.row(feasible_indices[i]);
-        feasible_outputs.row(i) = outputs.row(feasible_indices[i]);
-    }
-
-    return {feasible_inputs, feasible_outputs};
+    return {inputs(feasible_indices, Eigen::placeholders::all), outputs(feasible_indices, Eigen::placeholders::all)};
 }
 
 
@@ -1358,16 +1330,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , (int)subset_dimension);
 
-    MatrixR nearest_inputs(subset_dimension, feasible_inputs.cols());
-    MatrixR nearest_outputs(subset_dimension, feasible_outputs.cols());
-
-    for(Index i = 0; i < subset_dimension; ++i)
-    {
-        nearest_inputs.row(i) = feasible_inputs.row(nearest_rows(i));
-        nearest_outputs.row(i) = feasible_outputs.row(nearest_rows(i));
-    }
-
-    return {nearest_inputs, nearest_outputs};
+    return {feasible_inputs(nearest_rows, Eigen::placeholders::all), feasible_outputs(nearest_rows, Eigen::placeholders::all)};
 }
 
 
@@ -1487,18 +1450,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
         if (non_dominated[i] == 1)
             non_dominated_indices.push_back(i);
 
-    const Index pareto_size = static_cast<Index>(non_dominated_indices.size());
-
-    MatrixR pareto_inputs(pareto_size, inputs.cols());
-    MatrixR pareto_outputs(pareto_size, outputs.cols());
-
-    for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
-    {       
-        pareto_inputs.row(i) = inputs.row(non_dominated_indices[i]);
-        pareto_outputs.row(i) = outputs.row(non_dominated_indices[i]);
-    }
-
-    return {pareto_inputs, pareto_outputs};
+    return {inputs(non_dominated_indices, Eigen::placeholders::all), outputs(non_dominated_indices, Eigen::placeholders::all)};
 }
 
 
@@ -1683,7 +1635,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         previous_holes_magnitude = current_hole;
         previous_area_covered = current_boundary;
 
-        input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
         input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
         const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
@@ -1704,14 +1655,9 @@ vector<float> ResponseOptimization::get_utopian_point() const
 {
     const Objectives objectives(*this);
 
-    const Index objectives_number = objectives.utopian_and_senses.cols();
+    const auto utopian_row = objectives.utopian_and_senses.row(0);
 
-    vector<float> utopian_point(static_cast<size_t>(objectives_number));
-
-    for (Index j = 0; j < objectives_number; ++j)
-        utopian_point[static_cast<size_t>(j)] = objectives.utopian_and_senses(0, j);
-
-    return utopian_point;
+    return vector<float>(utopian_row.begin(), utopian_row.end());
 }
 
 
@@ -1766,11 +1712,8 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
         normalized_utopian(j) = (sense > float(0)) ? float(1) : float(0);
     }
 
-    for (Index j = 0; j < objectives_number; ++j)
-    {
-        objective_matrix.col(j) *= scale(j);
-        normalized_utopian(j)   *= scale(j);
-    }
+    objective_matrix.array().rowwise() *= scale.transpose().array();
+    normalized_utopian.array() *= scale.array();
 
     const VectorI nearest = get_nearest_points(objective_matrix, normalized_utopian, 1);
 
@@ -1788,14 +1731,12 @@ void ResponseOptimization::initialize_network_differential() const
         return;
 
     // Only needed when some constraint references the network outputs.
-    bool has_output_constraint = false;
-    for (const FormulaConstraint& constraint : formula_constraints)
-        if (!constraint.uses_callback
-            && constraint.op != ComparisonOp::None
-            && constraint.compiled.scope != FormulaScope::InputsOnly)
-            has_output_constraint = true;
-
-    if (!has_output_constraint)
+    if (ranges::none_of(formula_constraints, [](const FormulaConstraint& constraint)
+        {
+            return !constraint.uses_callback
+                && constraint.op != ComparisonOp::None
+                && constraint.compiled.scope != FormulaScope::InputsOnly;
+        }))
         return;
 
     auto candidate = make_unique<NetworkDifferential>();

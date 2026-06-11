@@ -31,12 +31,10 @@ Shape Concatenation::get_output_shape() const
 
 vector<TensorSpec> Concatenation::get_backward_specs(Index batch_size) const
 {
-    const size_t n = static_cast<size_t>(ssize(concatenation.input_channels));
     vector<TensorSpec> specs;
-    specs.reserve(n);
-    for (size_t i = 0; i < n; ++i)
-        specs.push_back({ Shape{batch_size, input_shape[0], input_shape[1], concatenation.input_channels[i]},
-                          compute_dtype });
+    specs.reserve(concatenation.input_channels.size());
+    for (const Index channels : concatenation.input_channels)
+        specs.push_back({ Shape{batch_size, input_shape[0], input_shape[1], channels}, compute_dtype });
     return specs;
 }
 
@@ -44,8 +42,7 @@ void Concatenation::set(const Shape& new_input_shape,
                         const vector<Index>& per_input_channels,
                         const string& new_label)
 {
-    if (!new_input_shape.empty())
-        check_rank(new_input_shape, {3}, "Concatenation", "input");
+    check_rank(new_input_shape, {3}, "Concatenation", "input");
 
     input_shape = new_input_shape;
     concatenation.input_channels = per_input_channels;

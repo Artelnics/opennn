@@ -579,8 +579,6 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     set_confidence_interval(correlation, inputs.rows());
 
-    correlation.form = Correlation::Form::Sigmoid;
-
     return correlation;
 }
 

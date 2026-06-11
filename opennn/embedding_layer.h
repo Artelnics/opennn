@@ -51,8 +51,6 @@ private:
 
     EmbeddingLookupOp embedding_lookup;
     DropoutOp         dropout;
-
-    enum Backward {OutputDelta};
 };
 
 }

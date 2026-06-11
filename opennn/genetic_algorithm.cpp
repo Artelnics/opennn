@@ -106,8 +106,6 @@ void GeneticAlgorithm::initialize_population_random()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    population.setConstant(false);
-
     VectorB individual_genes(genes_number);
 
     for (Index i = 0; i < individuals_number; ++i)
@@ -132,8 +130,6 @@ void GeneticAlgorithm::initialize_population_correlations()
     const Index genes_number = get_genes_number();
 
     VectorB individual_genes(genes_number);
-
-    population.setConstant(false);
 
     const VectorR correlations_rank = dataset->calculate_correlations_rank().cast<float>().array() + 1.0f;
 
@@ -175,11 +171,9 @@ void GeneticAlgorithm::evaluate_population()
 
     for (Index i = 0; i < individuals_number; ++i)
     {
-        const VectorB individual = population.row(i);
-
         if (display) cout << "\nIndividual " << i + 1 << "\n";
 
-        const vector<Index> individual_variables_indices = get_true_indices(individual);
+        const vector<Index> individual_variables_indices = get_true_indices(population.row(i));
 
         dataset->set_variable_indices(individual_variables_indices, original_target_indices);
 
@@ -508,33 +502,36 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
                  << "Best generation by validation error: " << best_generation << "\n";
 
 
-        bool stop = false;
-
         if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
             if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << input_selection_results.optimum_validation_error << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::ValidationErrorGoal;
-            stop = true;
         }
         else if (elapsed_time >= maximum_time)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
-            stop = true;
         }
         else if (epoch >= maximum_epochs - 1)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
-            stop = true;
         }
 
-        if (stop)
+        if (input_selection_results.stopping_condition)
         {
             input_selection_results.elapsed_time = get_time(elapsed_time);
             input_selection_results.resize_history(epoch + 1);
             break;
         }
+
+        assign_fitness();
+
+        perform_selection();
+
+        perform_crossover();
+
+        perform_mutation();
 
         assign_fitness();
 

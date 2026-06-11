@@ -7,9 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "string_utilities.h"
-#include <regex>
 #include <cctype>
-#include <cstdlib>
 
 namespace opennn
 {

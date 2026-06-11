@@ -9,8 +9,6 @@
 #include "registry.h"
 #include "device_backend.h"
 #include "scaling_layer.h"
-#include "tensor_operations.h"
-#include "forward_propagation.h"
 #include "string_utilities.h"
 #include "json.h"
 
@@ -46,8 +44,6 @@ void Scaling::set(const Shape& new_input_shape)
     min_range = -1.0f;
     max_range = 1.0f;
     op_storage_dirty = true;
-
-    if (input_shape.empty()) return;
 
     check_rank(input_shape, {1, 2, 3}, "Scaling", "input");
 }

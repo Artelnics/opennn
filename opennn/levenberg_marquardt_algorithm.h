@@ -7,16 +7,13 @@
 
 #pragma once
 
-#include "layer.h"
-#include "batch.h"
-#include "dense_layer.h"
 #include "optimizer.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
 
 class NeuralNetwork;
+class Dense;
 struct ForwardPropagation;
 
 struct BackPropagationLM

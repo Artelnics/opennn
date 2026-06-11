@@ -58,10 +58,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(specs[j]);
         }
-    }
 
-    for (size_t i = 0; i < layers_number; ++i)
-    {
+        // validate_source_indices guarantees source < i, so its slots are already assigned.
         const vector<Index>& sources = source_layers[i];
         input_views[i].resize(sources.size());
 

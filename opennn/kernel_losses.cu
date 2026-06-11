@@ -37,10 +37,7 @@ __global__ void binary_cross_entropy_gradient_kernel(
     const T* __restrict__ outputs,
     const float epsilon, const float scaling_factor)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
-
-    for (int i = tid; i < n; i += stride)
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const float out = static_cast<float>(outputs[i]);
         const float tgt = targets[i];
@@ -94,10 +91,7 @@ __global__ void multiple_cross_entropy_gradient_kernel(
     const T* __restrict__ outputs,
     const float scaling_factor)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
-
-    for (int i = tid; i < n; i += stride)
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
         deltas[i] = static_cast<T>((static_cast<float>(outputs[i]) - targets[i]) * scaling_factor);
 }
 
@@ -152,10 +146,7 @@ __global__ void weighted_squared_error_gradient_kernel(
     const float negatives_weight,
     const float scaling_factor)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
-
-    for (int i = tid; i < n; i += stride)
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;

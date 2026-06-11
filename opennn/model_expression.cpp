@@ -1189,8 +1189,6 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     case JavaScript: file << get_expression_javascript(); break;
     case PHP:        file << get_expression_php();        break;
     }
-
-    file.close();
 }
 
 }

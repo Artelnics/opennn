@@ -560,31 +560,16 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
     switch (node.kind)
     {
     case Ast::Kind::Const:
-    {
-        RpnOp operation;
-        operation.kind = RpnOp::Kind::PushConst;
-        operation.constant = node.constant;
-        bytecode.push_back(operation);
+        bytecode.push_back({RpnOp::Kind::PushConst, 0, node.constant});
         return;
-    }
 
     case Ast::Kind::Input:
-    {
-        RpnOp operation;
-        operation.kind = RpnOp::Kind::PushInput;
-        operation.index = node.index;
-        bytecode.push_back(operation);
+        bytecode.push_back({RpnOp::Kind::PushInput, node.index, 0.0f});
         return;
-    }
 
     case Ast::Kind::Output:
-    {
-        RpnOp operation;
-        operation.kind = RpnOp::Kind::PushOutput;
-        operation.index = node.index;
-        bytecode.push_back(operation);
+        bytecode.push_back({RpnOp::Kind::PushOutput, node.index, 0.0f});
         return;
-    }
 
     case Ast::Kind::UnaryNeg:
         emit_bytecode(*node.children[0], bytecode);
@@ -781,10 +766,7 @@ bool is_smooth(const Ast& node)
         && (node.function_name == "min" || node.function_name == "max"))
         return false;
 
-    for (const AstPtr& child : node.children)
-        if (!is_smooth(*child)) return false;
-
-    return true;
+    return ranges::all_of(node.children, [](const AstPtr& child) { return is_smooth(*child); });
 }
 
 
@@ -1062,14 +1044,12 @@ CompiledFormula compile_formula(const string& expression,
 
 bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints)
 {
-    if (formula_constraints.empty())
-        return false;
-
-    for (const FormulaConstraint& formula_constraint : formula_constraints)
-        if (formula_constraint.uses_callback || formula_constraint.compiled.shape != FormulaShape::Affine)
-            return false;
-
-    return true;
+    return !formula_constraints.empty()
+        && ranges::all_of(formula_constraints, [](const FormulaConstraint& formula_constraint)
+           {
+               return !formula_constraint.uses_callback
+                   && formula_constraint.compiled.shape == FormulaShape::Affine;
+           });
 }
 
 
@@ -1292,24 +1272,15 @@ void repair_single_affine_input(MatrixR& random_inputs,
     const float up  = constraint.up_bound;
     const Index rows_number = random_inputs.rows();
 
-    vector<Index> columns;
-    vector<float> coefficients;
-    columns.reserve(terms.size());
-    coefficients.reserve(terms.size());
+    vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
 
-    for (const auto& [column, coefficient] : terms)
-    {
-        columns.push_back(column);
-        coefficients.push_back(coefficient);
-    }
-
-    const Index terms_number = static_cast<Index>(columns.size());
+    const Index terms_number = static_cast<Index>(shuffled.size());
 
     for (Index r = 0; r < rows_number; ++r)
     {
         float expression = constant;
-        for (Index t = 0; t < terms_number; ++t)
-            expression += coefficients[t] * random_inputs(r, columns[t]);
+        for (const auto& [column, coefficient] : shuffled)
+            expression += coefficient * random_inputs(r, column);
 
         // Only project violated inequalities (equalities always project).
         // Leaving satisfied points untouched is what preserves the diversity.
@@ -1344,20 +1315,17 @@ void repair_single_affine_input(MatrixR& random_inputs,
         for (Index sweep = terms_number - 1; sweep > 0; --sweep)
         {
             const Index pick = random_integer(0, sweep);
-            swap(columns[sweep], columns[pick]);
-            swap(coefficients[sweep], coefficients[pick]);
+            swap(shuffled[sweep], shuffled[pick]);
         }
 
         // Clamp-and-carry: each coordinate absorbs as much of the remaining
         // residual as its box allows; a single pass is algebraically exact for
         // one constraint whenever the target is reachable within the box.
-        for (Index t = 0; t < terms_number; ++t)
+        for (const auto& [column, coefficient] : shuffled)
         {
-            const float coefficient = coefficients[t];
             if (coefficient == 0.0f)
                 continue;
 
-            const Index column = columns[t];
             const float old_value = random_inputs(r, column);
             const float wanted = old_value + residual / coefficient;
             const float new_value = min(superior_frontier(column),

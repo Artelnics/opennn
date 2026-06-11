@@ -6,9 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "dataset.h"
 #include "neural_network.h"
-#include "optimizer.h"
 #include "training_strategy.h"
 #include "neuron_selection.h"
 

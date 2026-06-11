@@ -7,10 +7,7 @@
 
 #pragma once
 
-#include "loss.h"
 #include "optimizer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

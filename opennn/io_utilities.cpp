@@ -476,17 +476,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
         else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
     };
 
-    if (try_ymd && regex_match(date, match, re_ymd_hms_ms))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ymd_hms))
+    if (try_ymd && (regex_match(date, match, re_ymd_hms_ms) || regex_match(date, match, re_ymd_hms)))
     {
         time_components.tm_year = stoi(match[1]) - 1900;
         time_components.tm_mon  = stoi(match[2]) - 1;

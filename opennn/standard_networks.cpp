@@ -36,18 +36,13 @@ namespace
 
 bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
 {
-    if (a.size() != b.size()) return false;
-
-    for (size_t i = 0; i < a.size(); ++i)
+    return ranges::equal(a, b, [](const auto& x, const auto& y)
     {
-        if (a[i].size() != b[i].size()) return false;
-
-        for (size_t j = 0; j < a[i].size(); ++j)
-            if (!(a[i][j].shape == b[i][j].shape) || a[i][j].dtype != b[i][j].dtype)
-                return false;
-    }
-
-    return true;
+        return ranges::equal(x, y, [](const TensorSpec& s, const TensorSpec& t)
+        {
+            return s.shape == t.shape && s.dtype == t.dtype;
+        });
+    });
 }
 
 void recompile_if_specs_changed(NeuralNetwork& network,

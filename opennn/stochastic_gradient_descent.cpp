@@ -156,8 +156,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
     else
     {
-        VectorMap velocity(optimization_data.views[Velocity].as<float>(),
-                           optimization_data.views[Velocity].size());
+        VectorMap velocity = optimization_data.views[Velocity].as_vector();
 
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
@@ -263,14 +262,11 @@ TrainingResult StochasticGradientDescent::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    unique_ptr<ForwardPropagation> validation_forward_propagation;
-
-    if (has_validation)
-        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
-
-    ForwardPropagation* validation_fp = has_validation
-        ? validation_forward_propagation.get()
+    const unique_ptr<ForwardPropagation> validation_forward_propagation = has_validation
+        ? make_unique<ForwardPropagation>(validation_batch_size, neural_network)
         : nullptr;
+
+    ForwardPropagation* validation_fp = validation_forward_propagation.get();
 
     setup_device_training();
 
@@ -290,7 +286,6 @@ TrainingResult StochasticGradientDescent::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    bool stop_training = false;
     const bool shuffle = !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
@@ -414,13 +409,12 @@ TrainingResult StochasticGradientDescent::train()
                                   validation_error, validation_accuracy,
                                   has_validation, is_token_cross_entropy, elapsed_time);
 
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures,
-                                                      training_back_propagation.loss,
-                                                      has_validation);
-
-            if (stop_training) break;
+            if (check_stopping_condition(results, epoch, elapsed_time,
+                                         results.training_error_history(epoch),
+                                         validation_failures,
+                                         training_back_propagation.loss,
+                                         has_validation))
+                break;
         }
     }
 

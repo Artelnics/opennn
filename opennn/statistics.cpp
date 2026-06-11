@@ -788,18 +788,6 @@ float median(const MatrixR& matrix, Index column_index)
         : sorted_column[median_index];
 }
 
-VectorR median(const MatrixR& matrix, const VectorI& column_indices)
-{
-    const Index column_indices_size = column_indices.size();
-
-    VectorR medians(column_indices_size);
-
-    for (Index j = 0; j < column_indices_size; ++j)
-        medians(j) = median(VectorR(matrix.col(column_indices(j))));
-
-    return medians;
-}
-
 VectorR median(const MatrixR& matrix,
                const vector<Index>& row_indices,
                const vector<Index>& column_indices)
