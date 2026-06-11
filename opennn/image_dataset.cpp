@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
+#include "device_backend.h"
 #include "image_processing.h"
 #include "tensor_types.h"
 #include "string_utilities.h"
@@ -86,6 +87,38 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 Index ImageDataset::get_channels_number() const
 {
     return input_shape[2];
+}
+
+void ImageDataset::enable_device_residency()
+{
+    if (!device::is_cuda_build()) return;
+    if (is_device_resident()) return;
+    if (augmentation.enabled) return;
+    if (get_samples_number() == 0) return;
+
+    const Index samples_number = get_samples_number();
+    const vector<Index> input_indices = get_feature_indices("Input");
+    const vector<Index> target_indices = get_feature_indices("Target");
+    const Index inputs_number = ssize(input_indices);
+    const Index targets_number = ssize(target_indices);
+
+    vector<Index> all_samples(samples_number);
+    iota(all_samples.begin(), all_samples.end(), 0);
+
+    // Stage the rows the host fill_* path would produce for training batches
+    // (scaled pixels followed by the one-hot targets), so the device gather
+    // can replace the per-batch decode entirely.
+    MatrixR inputs(samples_number, inputs_number);
+    fill_inputs(all_samples, input_indices, inputs.data(), true, 1);
+
+    MatrixR targets(samples_number, targets_number);
+    fill_targets(all_samples, target_indices, targets.data(), true, 1);
+
+    MatrixR staged(samples_number, inputs_number + targets_number);
+    staged.leftCols(inputs_number) = inputs;
+    staged.rightCols(targets_number) = targets;
+
+    upload_device_matrix(staged);
 }
 
 void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,

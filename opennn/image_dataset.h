@@ -47,6 +47,8 @@ public:
 
     VectorI calculate_target_distribution() const override;
 
+    void enable_device_residency() override;
+
     void read_images();
 
     void from_JSON(const JsonDocument&) override;

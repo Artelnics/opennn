@@ -1,0 +1,4 @@
+cifar10/
+*.npy
+opennn_resnet50_speed
+*.log

@@ -163,9 +163,16 @@ void Dataset::enable_device_residency()
     if (data.size() == 0) return;
     if (is_device_resident()) return;
 
-    const Index bytes = Index(data.size()) * Index(sizeof(float));
+    upload_device_matrix(data);
+}
+
+void Dataset::upload_device_matrix(const MatrixR& matrix)
+{
+    device_data_columns = matrix.cols();
+
+    const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
-    device::copy_async(data_device.data, data.data(), bytes,
+    device::copy_async(data_device.data, matrix.data(), bytes,
                        device::CopyKind::HostToDevice, Backend::get_compute_stream());
     device::synchronize(Backend::get_compute_stream());
 }

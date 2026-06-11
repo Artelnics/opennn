@@ -355,6 +355,14 @@ struct BatchNormOp : Operator
 
     bool active() const { return features > 0; }
 
+    BatchNormOp();
+    ~BatchNormOp() override;
+
+    struct BnGraphCache;
+    mutable unique_ptr<BnGraphCache> bn_graph_cache;
+
+    void destroy_cuda() override;
+
     void set(Index new_features, float new_momentum = 0.1f);
 
     vector<TensorSpec> parameter_specs() const override;
@@ -446,6 +454,9 @@ struct ConvolutionOp : Operator
 
     Index planned_batch_size = 0;
 
+    struct ConvGraphCache;
+    mutable unique_ptr<ConvGraphCache> conv_graph_cache;
+
     void set(Index input_h, Index input_w,
              Index kernels_n, Index kernel_h, Index kernel_w, Index kernel_c,
              Index row_stride, Index column_stride,
@@ -461,9 +472,9 @@ struct ConvolutionOp : Operator
 
     void destroy_cuda() override;
 
-    ~ConvolutionOp() override { destroy_cuda(); }
+    ~ConvolutionOp() override;
 
-    ConvolutionOp() = default;
+    ConvolutionOp();
     ConvolutionOp(const ConvolutionOp&) = delete;
     ConvolutionOp& operator=(const ConvolutionOp&) = delete;
 

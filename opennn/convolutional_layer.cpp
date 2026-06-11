@@ -124,7 +124,13 @@ void Convolutional::set(const Shape& new_input_shape,
 
     throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
 
-    throw_if(new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1],
+    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
+             "Convolution type must be 'Valid' or 'Same'.");
+
+    // With "Same" padding the padded input always covers the kernel, so the
+    // size restriction only applies to unpadded ("Valid") convolutions.
+    throw_if(new_convolution_type == "Valid"
+             && (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1]),
              "kernel shape cannot be bigger than input shape");
 
     throw_if(new_kernel_shape[2] != new_input_shape[2],
@@ -134,9 +140,6 @@ void Convolutional::set(const Shape& new_input_shape,
              "Stride shape cannot be bigger than input shape");
 
     throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
-
-    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
-             "Convolution type must be 'Valid' or 'Same'.");
 
     throw_if(new_convolution_type == "Same"
              && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0),

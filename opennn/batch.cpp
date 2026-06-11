@@ -215,7 +215,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     if (device_gather && dataset && dataset->is_device_resident())
     {
         const float* matrix = dataset->get_device_data();
-        const Index matrix_cols = dataset->get_data_columns();
+        const Index matrix_cols = dataset->get_device_data_columns();
 
         device::copy_async(gather_indices_device.data, gather_row_indices.data(),
                            current_batch_size * Index(sizeof(int)),

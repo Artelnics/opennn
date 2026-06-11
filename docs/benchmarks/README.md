@@ -18,6 +18,8 @@ links to the full note with methodology and reproduction steps.
 |---|---:|---:|---:|---:|
 | [Accuracy (R², Rosenbrock)](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | **0.988** | n/a | 0.988 | 0.987 |
 | [Training precision (MSE / time)](precision-opennn-vs-pytorch-vs-tensorflow.md) | **0.109 / 2 s** | n/a | 0.162 / 42 s | 0.156 / 310 s |
+| [GPU CNN training (samples/s)](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **211,904** | n/a | 111,241 | 55,339 |
+| [GPU ResNet-50 training (samples/s)](resnet50-training-speed-gpu-opennn-vs-pytorch.md) | **2,912** | n/a | 2,080 | — |
 | [CPU runtime size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
 | [GPU (CNN) deployment](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
@@ -46,6 +48,14 @@ infers in one self-contained binary.
   blog's precision benchmark reproduced: OpenNN's second-order optimizers (quasi-Newton,
   Levenberg-Marquardt) reach a ~1.3–1.5× lower MSE than Adam in TensorFlow/PyTorch, 21–155×
   faster wall-clock.
+* **[GPU CNN training speed](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a
+  minimal CNN (one conv + one pooling layer) on MNIST, batch 128, fp32: OpenNN trains 1.9×
+  faster than PyTorch and 3.8× faster than TensorFlow on the same GPU (cudnn-frontend
+  convolutions + GPU-resident dataset mode).
+* **[GPU ResNet-50 training speed](resnet50-training-speed-gpu-opennn-vs-pytorch.md)** — the
+  same question at real-architecture scale: ResNet-50 on CIFAR-10, batch 128, fp32. OpenNN
+  trains 1.4× faster than eager PyTorch after moving batch normalization to the
+  cudnn-frontend graph API.
 * **[Deployment size on CPU](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
 * **[Deployment size on GPU](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the
@@ -68,10 +78,11 @@ infers in one self-contained binary.
 
 ## Scope and fairness
 
-* These are **size, startup, memory, and packaging** benchmarks — not training or inference
-  throughput. PyTorch and TensorFlow are general-purpose frameworks with vast operator sets,
-  autograd, JIT, and large ecosystems; OpenNN is a focused native library. The footprint
-  differences follow directly from that difference in scope.
+* Most of these are **size, startup, memory, and packaging** benchmarks; the training
+  precision and GPU CNN notes add controlled training comparisons. PyTorch and TensorFlow are
+  general-purpose frameworks with vast operator sets, autograd, JIT, and large ecosystems;
+  OpenNN is a focused native library. The footprint differences follow directly from that
+  difference in scope.
 * The comparisons are deliberately like-for-like on the same hardware, same data, same model,
   and (for memory) single-threaded on all sides. Each note states its method and how to
   reproduce it.

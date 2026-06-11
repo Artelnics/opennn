@@ -707,6 +707,379 @@ void BatchNormOp::apply_delta_cpu(const TensorView& input,
     }
 }
 
+struct ConvolutionOp::ConvGraphCache
+{
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+    struct Entry
+    {
+        shared_ptr<cudnn_frontend::graph::Graph> fwd, wgrad, bgrad, dgrad;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_W, fwd_B, fwd_Y;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> wgrad_X, wgrad_DY, wgrad_DW;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bgrad_DY, bgrad_DB;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX;
+        void* fwd_workspace = nullptr;
+        void* wgrad_workspace = nullptr;
+        void* bgrad_workspace = nullptr;
+        void* dgrad_workspace = nullptr;
+    };
+
+    map<Index, Entry> entries;
+
+    ~ConvGraphCache()
+    {
+        for (auto& [_, entry] : entries)
+        {
+            device::deallocate(Device::CUDA, entry.fwd_workspace, 0);
+            device::deallocate(Device::CUDA, entry.wgrad_workspace, 0);
+            device::deallocate(Device::CUDA, entry.bgrad_workspace, 0);
+            device::deallocate(Device::CUDA, entry.dgrad_workspace, 0);
+        }
+    }
+#endif
+
+    bool disabled = false;
+};
+
+ConvolutionOp::ConvolutionOp() = default;
+
+ConvolutionOp::~ConvolutionOp()
+{
+    destroy_cuda();
+}
+
+struct BatchNormOp::BnGraphCache
+{
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+    struct Entry
+    {
+        shared_ptr<cudnn_frontend::graph::Graph> fwd, bwd;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_Scale, fwd_Bias,
+            fwd_PrevMean, fwd_PrevVar, fwd_Eps, fwd_Mom,
+            fwd_Y, fwd_Mean, fwd_InvVar, fwd_NextMean, fwd_NextVar;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_X, bwd_Scale,
+            bwd_Mean, bwd_InvVar, bwd_DX, bwd_DScale, bwd_DBias;
+        void* fwd_workspace = nullptr;
+        void* bwd_workspace = nullptr;
+    };
+
+    map<Index, Entry> entries;
+
+    ~BnGraphCache()
+    {
+        for (auto& [_, entry] : entries)
+        {
+            device::deallocate(Device::CUDA, entry.fwd_workspace, 0);
+            device::deallocate(Device::CUDA, entry.bwd_workspace, 0);
+        }
+    }
+#endif
+
+    bool disabled = false;
+};
+
+BatchNormOp::BatchNormOp() = default;
+BatchNormOp::~BatchNormOp() = default;
+
+void BatchNormOp::destroy_cuda()
+{
+    bn_graph_cache.reset();
+}
+
+#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+
+// cudnn-frontend graph path for fp32 convolutions: the legacy v7 API below has
+// poor NHWC-fp32 kernel coverage (its best backward-filter algorithm is ~6x
+// slower than the engines the graph API selects for the same shapes).
+namespace
+{
+namespace conv_fe
+{
+
+struct Dims
+{
+    int64_t batch, channels, height, width;
+    int64_t kernels, kernel_height, kernel_width;
+    int64_t output_height, output_width;
+    int64_t padding_height, padding_width;
+    int64_t row_stride, column_stride;
+};
+
+Dims make_dims(const ConvolutionOp& op, int64_t batch)
+{
+    return {
+        batch, op.kernel_channels, op.input_height, op.input_width,
+        op.kernels_number, op.kernel_height, op.kernel_width,
+        (op.input_height + 2 * op.padding_height - op.kernel_height) / op.row_stride + 1,
+        (op.input_width + 2 * op.padding_width - op.kernel_width) / op.column_stride + 1,
+        op.padding_height, op.padding_width,
+        op.row_stride, op.column_stride
+    };
+}
+
+auto conv_check = [](auto status, const string& what) {
+    throw_if(status.is_bad(),
+             format("Convolution cudnn-frontend {}: {}", what, status.get_message()));
+};
+
+bool frontend_enabled()
+{
+    static const bool legacy_forced = [] {
+        const char* value = getenv("OPENNN_CONV_LEGACY");
+        return value && value[0] == '1';
+    }();
+    return !legacy_forced;
+}
+
+shared_ptr<cudnn_frontend::graph::Graph> new_graph()
+{
+    auto graph = make_shared<cudnn_frontend::graph::Graph>();
+    graph->set_io_data_type(cudnn_frontend::DataType_t::FLOAT)
+          .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
+          .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
+    return graph;
+}
+
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+nhwc_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
+            int64_t n, int64_t c, int64_t h, int64_t w)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({n, c, h, w})
+                        .set_stride({h * w * c, 1, w * c, c}));
+}
+
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+krsc_tensor(cudnn_frontend::graph::Graph& graph, const char* name, const Dims& d)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
+                        .set_stride({d.kernel_height * d.kernel_width * d.channels, 1,
+                                     d.kernel_width * d.channels, d.channels}));
+}
+
+void finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, const string& tag)
+{
+    cudnnHandle_t handle = Backend::get_cudnn_handle();
+
+    conv_check(graph.validate(), tag + " validate");
+    conv_check(graph.build_operation_graph(handle), tag + " build_operation_graph");
+    conv_check(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A}), tag + " create_execution_plans");
+    conv_check(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+
+    int64_t workspace_bytes = 0;
+    conv_check(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
+    if (workspace_bytes > 0)
+        workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
+}
+
+void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d, bool fuse_relu)
+{
+    auto graph = new_graph();
+
+    entry.fwd_X = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
+    entry.fwd_W = krsc_tensor(*graph, "W", d);
+    entry.fwd_B = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
+                                .set_name("B")
+                                .set_dim({1, d.kernels, 1, 1})
+                                .set_stride({d.kernels, 1, d.kernels, d.kernels}));
+
+    auto convolved = graph->conv_fprop(entry.fwd_X, entry.fwd_W,
+                                       cudnn_frontend::graph::Conv_fprop_attributes()
+                                       .set_padding({d.padding_height, d.padding_width})
+                                       .set_stride({d.row_stride, d.column_stride})
+                                       .set_dilation({1, 1}));
+
+    entry.fwd_Y = graph->pointwise(convolved, entry.fwd_B,
+                                   cudnn_frontend::graph::Pointwise_attributes()
+                                   .set_mode(cudnn_frontend::PointwiseMode_t::ADD));
+
+    if (fuse_relu)
+        entry.fwd_Y = graph->pointwise(entry.fwd_Y,
+                                       cudnn_frontend::graph::Pointwise_attributes()
+                                       .set_mode(cudnn_frontend::PointwiseMode_t::RELU_FWD));
+
+    entry.fwd_Y->set_output(true)
+                .set_dim({d.batch, d.kernels, d.output_height, d.output_width})
+                .set_stride({d.output_height * d.output_width * d.kernels, 1,
+                             d.output_width * d.kernels, d.kernels});
+
+    finalize(*graph, entry.fwd_workspace, "forward");
+    entry.fwd = graph;
+}
+
+void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+{
+    auto graph = new_graph();
+
+    entry.wgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
+    entry.wgrad_X  = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
+
+    entry.wgrad_DW = graph->conv_wgrad(entry.wgrad_DY, entry.wgrad_X,
+                                       cudnn_frontend::graph::Conv_wgrad_attributes()
+                                       .set_padding({d.padding_height, d.padding_width})
+                                       .set_stride({d.row_stride, d.column_stride})
+                                       .set_dilation({1, 1}));
+    entry.wgrad_DW->set_output(true)
+                   .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
+                   .set_stride({d.kernel_height * d.kernel_width * d.channels, 1,
+                                d.kernel_width * d.channels, d.channels});
+
+    finalize(*graph, entry.wgrad_workspace, "wgrad");
+    entry.wgrad = graph;
+}
+
+void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+{
+    auto graph = new_graph();
+
+    entry.bgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
+
+    entry.bgrad_DB = graph->reduction(entry.bgrad_DY,
+                                      cudnn_frontend::graph::Reduction_attributes()
+                                      .set_mode(cudnn_frontend::ReductionMode_t::ADD));
+    entry.bgrad_DB->set_output(true)
+                   .set_dim({1, d.kernels, 1, 1})
+                   .set_stride({d.kernels, 1, d.kernels, d.kernels});
+
+    finalize(*graph, entry.bgrad_workspace, "bgrad");
+    entry.bgrad = graph;
+}
+
+void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+{
+    auto graph = new_graph();
+
+    entry.dgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
+    entry.dgrad_W  = krsc_tensor(*graph, "W", d);
+
+    entry.dgrad_DX = graph->conv_dgrad(entry.dgrad_DY, entry.dgrad_W,
+                                       cudnn_frontend::graph::Conv_dgrad_attributes()
+                                       .set_padding({d.padding_height, d.padding_width})
+                                       .set_stride({d.row_stride, d.column_stride})
+                                       .set_dilation({1, 1}));
+    entry.dgrad_DX->set_output(true)
+                   .set_dim({d.batch, d.channels, d.height, d.width})
+                   .set_stride({d.height * d.width * d.channels, 1,
+                                d.width * d.channels, d.channels});
+
+    finalize(*graph, entry.dgrad_workspace, "dgrad");
+    entry.dgrad = graph;
+}
+
+// The legacy cudnnBatchNormalization* calls are likewise slow on NHWC
+// activations; batch normalization goes through the same graph API.
+
+struct BnDims
+{
+    int64_t batch, channels, spatial;
+};
+
+BnDims bn_dims(const TensorView& input, Index features)
+{
+    const int64_t batch = input.shape[0];
+    const int64_t channels = features;
+    return {batch, channels, int64_t(input.size()) / (batch * channels)};
+}
+
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+per_channel_tensor(cudnn_frontend::graph::Graph& graph, const char* name, int64_t channels)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({1, channels, 1, 1})
+                        .set_stride({channels, 1, channels, channels}));
+}
+
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+scalar_tensor(cudnn_frontend::graph::Graph& graph, const char* name)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({1, 1, 1, 1})
+                        .set_stride({1, 1, 1, 1})
+                        .set_is_pass_by_value(true));
+}
+
+void set_per_channel_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& tensor, int64_t channels)
+{
+    tensor->set_output(true)
+           .set_dim({1, channels, 1, 1})
+           .set_stride({channels, 1, channels, channels});
+}
+
+void build_bn_forward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d)
+{
+    auto graph = new_graph();
+
+    entry.fwd_X        = nhwc_tensor(*graph, "X", d.batch, d.channels, d.spatial, 1);
+    entry.fwd_Scale    = per_channel_tensor(*graph, "SCALE", d.channels);
+    entry.fwd_Bias     = per_channel_tensor(*graph, "BIAS", d.channels);
+    entry.fwd_PrevMean = per_channel_tensor(*graph, "PREV_MEAN", d.channels);
+    entry.fwd_PrevVar  = per_channel_tensor(*graph, "PREV_VAR", d.channels);
+    entry.fwd_Eps      = scalar_tensor(*graph, "EPSILON");
+    entry.fwd_Mom      = scalar_tensor(*graph, "MOMENTUM");
+
+    auto attributes = cudnn_frontend::graph::Batchnorm_attributes()
+                      .set_epsilon(entry.fwd_Eps)
+                      .set_previous_running_stats(entry.fwd_PrevMean, entry.fwd_PrevVar, entry.fwd_Mom);
+
+    auto [Y, mean, inv_variance, next_mean, next_var] =
+        graph->batchnorm(entry.fwd_X, entry.fwd_Scale, entry.fwd_Bias, attributes);
+
+    Y->set_output(true)
+      .set_dim({d.batch, d.channels, d.spatial, 1})
+      .set_stride({d.spatial * d.channels, 1, d.channels, d.channels});
+    set_per_channel_output(mean, d.channels);
+    set_per_channel_output(inv_variance, d.channels);
+    set_per_channel_output(next_mean, d.channels);
+    set_per_channel_output(next_var, d.channels);
+
+    entry.fwd_Y        = Y;
+    entry.fwd_Mean     = mean;
+    entry.fwd_InvVar   = inv_variance;
+    entry.fwd_NextMean = next_mean;
+    entry.fwd_NextVar  = next_var;
+
+    finalize(*graph, entry.fwd_workspace, "batchnorm forward");
+    entry.fwd = graph;
+}
+
+void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d)
+{
+    auto graph = new_graph();
+
+    entry.bwd_DY     = nhwc_tensor(*graph, "DY", d.batch, d.channels, d.spatial, 1);
+    entry.bwd_X      = nhwc_tensor(*graph, "X", d.batch, d.channels, d.spatial, 1);
+    entry.bwd_Scale  = per_channel_tensor(*graph, "SCALE", d.channels);
+    entry.bwd_Mean   = per_channel_tensor(*graph, "MEAN", d.channels);
+    entry.bwd_InvVar = per_channel_tensor(*graph, "INV_VARIANCE", d.channels);
+
+    auto attributes = cudnn_frontend::graph::Batchnorm_backward_attributes()
+                      .set_saved_mean_and_inv_variance(entry.bwd_Mean, entry.bwd_InvVar);
+
+    auto [DX, dscale, dbias] = graph->batchnorm_backward(entry.bwd_DY, entry.bwd_X, entry.bwd_Scale, attributes);
+
+    DX->set_output(true)
+       .set_dim({d.batch, d.channels, d.spatial, 1})
+       .set_stride({d.spatial * d.channels, 1, d.channels, d.channels});
+    set_per_channel_output(dscale, d.channels);
+    set_per_channel_output(dbias, d.channels);
+
+    entry.bwd_DX     = DX;
+    entry.bwd_DScale = dscale;
+    entry.bwd_DBias  = dbias;
+
+    finalize(*graph, entry.bwd_workspace, "batchnorm backward");
+    entry.bwd = graph;
+}
+
+}  // namespace conv_fe
+}  // namespace
+
+#endif  // HAVE_CUDNN_FRONTEND
+
 #ifdef OPENNN_HAS_CUDA
 
 void BatchNormOp::apply_inference_gpu(const TensorView& input, TensorView& output)
@@ -726,6 +1099,48 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
                                    TensorView& mean, TensorView& inverse_variance,
                                    TensorView& output)
 {
+#ifdef HAVE_CUDNN_FRONTEND
+    if (input.type == Type::FP32 && conv_fe::frontend_enabled())
+    {
+        if (!bn_graph_cache) bn_graph_cache = make_unique<BnGraphCache>();
+
+        if (!bn_graph_cache->disabled)
+            try
+            {
+                auto& entry = bn_graph_cache->entries[input.shape[0]];
+                if (!entry.fwd)
+                    conv_fe::build_bn_forward(entry, conv_fe::bn_dims(input, features));
+
+                float epsilon_value = EPSILON;
+                float momentum_value = momentum;
+
+                unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+                tensors[entry.fwd_X]        = input.data;
+                tensors[entry.fwd_Scale]    = gamma.data;
+                tensors[entry.fwd_Bias]     = beta.data;
+                tensors[entry.fwd_PrevMean] = running_mean.data;
+                tensors[entry.fwd_PrevVar]  = running_variance.data;
+                tensors[entry.fwd_Eps]      = &epsilon_value;
+                tensors[entry.fwd_Mom]      = &momentum_value;
+                tensors[entry.fwd_Y]        = output.data;
+                tensors[entry.fwd_Mean]     = mean.data;
+                tensors[entry.fwd_InvVar]   = inverse_variance.data;
+                tensors[entry.fwd_NextMean] = running_mean.data;
+                tensors[entry.fwd_NextVar]  = running_variance.data;
+
+                conv_fe::conv_check(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
+                                    "batchnorm forward execute");
+                return;
+            }
+            catch (const exception& e)
+            {
+                bn_graph_cache->disabled = true;
+                cerr << "BatchNormOp: cudnn-frontend batch normalization unavailable ("
+                     << e.what() << "); falling back to the legacy cuDNN API.\n";
+            }
+    }
+#endif
+
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         Backend::get_cudnn_handle(),
         CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
@@ -744,6 +1159,41 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
                                 const TensorView& inverse_variance,
                                 TensorView& delta) const
 {
+#ifdef HAVE_CUDNN_FRONTEND
+    if (input.type == Type::FP32 && conv_fe::frontend_enabled())
+    {
+        if (!bn_graph_cache) bn_graph_cache = make_unique<BnGraphCache>();
+
+        if (!bn_graph_cache->disabled)
+            try
+            {
+                auto& entry = bn_graph_cache->entries[input.shape[0]];
+                if (!entry.bwd)
+                    conv_fe::build_bn_backward(entry, conv_fe::bn_dims(input, features));
+
+                unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+                tensors[entry.bwd_DY]     = delta.data;
+                tensors[entry.bwd_X]      = input.data;
+                tensors[entry.bwd_Scale]  = gamma.data;
+                tensors[entry.bwd_Mean]   = mean.data;
+                tensors[entry.bwd_InvVar] = inverse_variance.data;
+                tensors[entry.bwd_DX]     = delta.data;
+                tensors[entry.bwd_DScale] = gamma_gradient.data;
+                tensors[entry.bwd_DBias]  = beta_gradient.data;
+
+                conv_fe::conv_check(entry.bwd->execute(Backend::get_cudnn_handle(), tensors, entry.bwd_workspace),
+                                    "batchnorm backward execute");
+                return;
+            }
+            catch (const exception& e)
+            {
+                bn_graph_cache->disabled = true;
+                cerr << "BatchNormOp: cudnn-frontend batch normalization unavailable ("
+                     << e.what() << "); falling back to the legacy cuDNN API.\n";
+            }
+    }
+#endif
+
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         Backend::get_cudnn_handle(),
         CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
@@ -1446,6 +1896,7 @@ void ConvolutionOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
+
 void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(fp, layer);
@@ -1618,6 +2069,7 @@ void ConvolutionOp::destroy_cuda()
     if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
     cudnn_workspace_size_ = 0;
     planned_batch_size = 0;
+    conv_graph_cache.reset();
 }
 void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
 {
@@ -1669,10 +2121,45 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
     planned_batch_size = input.shape[0];
 }
 
+
 void ConvolutionOp::apply_gpu(const TensorView& input,
                             TensorView& output,
                             cudnnActivationDescriptor_t fused_activation)
 {
+#ifdef HAVE_CUDNN_FRONTEND
+    if (input.type == Type::FP32 && conv_fe::frontend_enabled())
+    {
+        if (!conv_graph_cache) conv_graph_cache = make_unique<ConvGraphCache>();
+
+        if (!conv_graph_cache->disabled)
+            try
+            {
+                auto& entry = conv_graph_cache->entries[input.shape[0]];
+                if (!entry.fwd)
+                    // The only fused activation the layer requests is ReLU
+                    // (see Convolutional::configure_operators).
+                    conv_fe::build_forward(entry, conv_fe::make_dims(*this, input.shape[0]),
+                                           fused_activation != nullptr);
+
+                unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+                tensors[entry.fwd_X] = input.data;
+                tensors[entry.fwd_W] = weights.data;
+                tensors[entry.fwd_B] = bias.data;
+                tensors[entry.fwd_Y] = output.data;
+
+                conv_fe::conv_check(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
+                                    "forward execute");
+                return;
+            }
+            catch (const exception& e)
+            {
+                conv_graph_cache->disabled = true;
+                cerr << "ConvolutionOp: cudnn-frontend convolution unavailable ("
+                     << e.what() << "); falling back to the legacy cuDNN API.\n";
+            }
+    }
+#endif
+
     if (input.shape[0] > planned_batch_size)
         plan_convolution_algorithms(input, output);
 
@@ -1719,6 +2206,67 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 {
     assert(output_delta.type == input.type);
     assert(weight_gradient.type == Type::FP32);
+
+#ifdef HAVE_CUDNN_FRONTEND
+    if (input.type == Type::FP32 && conv_fe::frontend_enabled())
+    {
+        if (!conv_graph_cache) conv_graph_cache = make_unique<ConvGraphCache>();
+
+        if (!conv_graph_cache->disabled)
+            try
+            {
+                auto& entry = conv_graph_cache->entries[input.shape[0]];
+                const conv_fe::Dims dims = conv_fe::make_dims(*this, input.shape[0]);
+
+                if (!entry.wgrad) conv_fe::build_wgrad(entry, dims);
+
+                unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+                tensors[entry.wgrad_DY] = output_delta.data;
+                tensors[entry.wgrad_X]  = input.data;
+                tensors[entry.wgrad_DW] = weight_gradient.data;
+
+                conv_fe::conv_check(entry.wgrad->execute(Backend::get_cudnn_handle(), tensors, entry.wgrad_workspace),
+                                    "wgrad execute");
+
+                // cudnnConvolutionBackwardBias is pathologically slow on NHWC
+                // deltas (~2 ms for a 16-channel reduction); use a frontend
+                // reduction graph instead.
+                if (!entry.bgrad) conv_fe::build_bgrad(entry, dims);
+
+                unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
+                bgrad_tensors[entry.bgrad_DY] = output_delta.data;
+                bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
+
+                conv_fe::conv_check(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
+                                    "bgrad execute");
+
+                if (input_delta.data && input_delta.size() != 0)
+                {
+                    if (!entry.dgrad) conv_fe::build_dgrad(entry, dims);
+
+                    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;
+                    dgrad_tensors[entry.dgrad_DY] = output_delta.data;
+                    dgrad_tensors[entry.dgrad_W]  = weights.data;
+                    dgrad_tensors[entry.dgrad_DX] = input_delta.data;
+
+                    conv_fe::conv_check(entry.dgrad->execute(Backend::get_cudnn_handle(), dgrad_tensors, entry.dgrad_workspace),
+                                        "dgrad execute");
+                }
+                return;
+            }
+            catch (const exception& e)
+            {
+                conv_graph_cache->disabled = true;
+                cerr << "ConvolutionOp: cudnn-frontend convolution unavailable ("
+                     << e.what() << "); falling back to the legacy cuDNN API.\n";
+            }
+    }
+#endif
+
+    // The legacy algorithms are planned in the forward pass only when the
+    // frontend path is not in use; plan here if this is the first legacy call.
+    if (input.shape[0] > planned_batch_size)
+        const_cast<ConvolutionOp*>(this)->plan_convolution_algorithms(input, output_delta);
 
     const bool bf16 = (input.type == Type::BF16);
 
