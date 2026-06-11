@@ -252,24 +252,36 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
     if(maximum_target_sequence_length == 1 && target_vocabulary.size() == 6)
     {
+        // The two class labels live after the reserved tokens in the vocabulary.
+        const string& class_a = target_vocabulary[reserved_tokens.size()];
+        const string& class_b = target_vocabulary[reserved_tokens.size() + 1];
+
+        // Orient the 0/1 mapping once: prefer the positive/negative word lists
+        // when the labels are recognizable (so good/yes/true -> 1), otherwise
+        // fall back to vocabulary order so ANY label pair works
+        // (e.g. "amable"/"sincero", "spam"/"ham").
+        string positive_class;
+
+        if(contains(positive_words, class_a) || contains(negative_words, class_b))
+            positive_class = class_a;
+        else if(contains(positive_words, class_b) || contains(negative_words, class_a))
+            positive_class = class_b;
+        else
+            positive_class = class_b; // default: second class in vocabulary -> 1
+
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
             const string& token = target_document_tokens[sample_index][0];
 
-            if(contains(positive_words, token))
-                data(sample_index, maximum_input_sequence_length) = 1;
-            else if(contains(negative_words, token))
-                data(sample_index, maximum_input_sequence_length) = 0;
-            else
-                throw runtime_error("Unknown target value");
+            data(sample_index, maximum_input_sequence_length) = (token == positive_class) ? 1 : 0;
         }
 
         return;
     }
 
-    // Multiple classification
+    // Multiple classification (one-hot: one target column per class)
 
-    if(maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
+    if(maximum_target_sequence_length == Index(target_vocabulary.size()) - Index(reserved_tokens.size()))
     {
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {

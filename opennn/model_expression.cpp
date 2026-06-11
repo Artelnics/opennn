@@ -793,7 +793,24 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
     // Expression
 
+    // Build the expression with the sanitized, JS-safe feature names already in
+    // place. Otherwise the scaling/neuron equations carry raw labels such as
+    // "1", "ER+/HER2- 1 Prolif" or names whose substrings collide with JS tokens
+    // ("examined" contains "min", "inferred" contains "inf"), which the
+    // downstream string replacements then corrupt (e.g. a feature literally
+    // named "1" gets word-replaced everywhere, hitting numeric constants).
+    // Rename the network's variables temporarily, generate, then restore them.
+    NeuralNetwork* mutable_network = const_cast<NeuralNetwork*>(neural_network);
+    const vector<Variable> saved_input_variables = mutable_network->get_input_variables();
+    const vector<Variable> saved_output_variables = mutable_network->get_output_variables();
+
+    mutable_network->set_input_names(fixes_feature_names);
+    mutable_network->set_output_names(fixes_output_names);
+
     string expression = neural_network->get_expression();
+
+    mutable_network->set_input_variables(saved_input_variables);
+    mutable_network->set_output_variables(saved_output_variables);
 
     for(int i = 0 ; i < outputs_number; i++)
         replace_all_word_appearances(expression, output_names[i], fixes_output_names[i]);
@@ -878,6 +895,84 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
     buffer << subheader_javascript();
 
+    // Categorical inputs: a categorical variable expands into one input feature
+    // per category (Variable::get_names() returns its categories), so the flat
+    // input_names list has N entries for an N-category variable. Map each
+    // feature back to its categorical variable so the form can render a single
+    // <select> combo box instead of one slider per category (which also broke
+    // the generated code when category labels contained spaces/symbols).
+    vector<int> feature_to_catvar(inputs_number, -1);
+    vector<bool> feature_is_cat_first(inputs_number, false);
+    vector<string> catvar_names;
+    vector<vector<string>> catvar_categories;
+    {
+        Index span_total = 0;
+        for(const Variable& v : variables)
+            if(v.role == "Input" || v.role == "InputTarget")
+                span_total += v.is_categorical() ? Index(v.categories.size()) : Index(1);
+
+        // Only annotate when the variable layout matches the flattened features,
+        // otherwise fall back to the plain per-feature rendering.
+        if(span_total == inputs_number)
+        {
+            Index fidx = 0;
+            for(const Variable& v : variables)
+            {
+                if(v.role != "Input" && v.role != "InputTarget")
+                    continue;
+
+                const Index span = v.is_categorical() ? Index(v.categories.size()) : Index(1);
+
+                if(v.is_categorical() && !v.categories.empty())
+                {
+                    const int cv = int(catvar_names.size());
+                    catvar_names.push_back(v.name);
+                    catvar_categories.push_back(v.categories);
+
+                    for(Index k = 0; k < span && (fidx + k) < inputs_number; k++)
+                    {
+                        feature_to_catvar[fidx + k] = cv;
+                        feature_is_cat_first[fidx + k] = (k == 0);
+                    }
+                }
+
+                fidx += span;
+            }
+        }
+    }
+
+    // Render one categorical variable as a <select> whose options set the
+    // matching one-hot hidden inputs (the actual model inputs) to 0/1.
+    auto render_categorical_input = [&](int cv, Index start, Index count)
+    {
+        buffer << "<!-- categorical input: " << catvar_names[cv] << " -->" << endl;
+        buffer << "<tr style=\"height:3.5em\">" << endl;
+        buffer << "<td> " << catvar_names[cv] << " </td>" << endl;
+        buffer << "<td class=\"neural-cell\">" << endl;
+
+        // neuralNetwork() reads each input from "<feature>_text", so the hidden
+        // one-hot inputs and the onchange handler must target that id (not the
+        // bare feature name) or the selected category never reaches the network.
+        buffer << "<select onchange=\"";
+        for(Index k = 0; k < count; k++)
+            buffer << "document.getElementById('" << fixes_feature_names[start + k]
+                   << "_text').value=(this.selectedIndex==" << k << ")?1:0;";
+        buffer << "neuralNetwork();\">" << endl;
+
+        for(Index k = 0; k < count; k++)
+            buffer << "<option value=\"" << k << "\">" << catvar_categories[cv][k] << "</option>" << endl;
+
+        buffer << "</select>" << endl;
+
+        // Hidden one-hot inputs referenced by the expression (first category on).
+        for(Index k = 0; k < count; k++)
+            buffer << "<input type=\"hidden\" id=\"" << fixes_feature_names[start + k]
+                   << "_text\" value=\"" << (k == 0 ? 1 : 0) << "\">" << endl;
+
+        buffer << "</td>" << endl;
+        buffer << "</tr>" << endl;
+    };
+
     // Inputs
 
     if(neural_network->has("Scaling2d") || neural_network->has("Scaling4d") || neural_network->has("Scaling3d"))
@@ -903,6 +998,14 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
         for(Index i = 0; i < inputs_number; i++)
         {
+            if(feature_to_catvar[i] != -1)
+            {
+                if(feature_is_cat_first[i])
+                    render_categorical_input(feature_to_catvar[i], i,
+                                             Index(catvar_categories[feature_to_catvar[i]].size()));
+                continue;
+            }
+
             int desc_idx = -1;
 
             if(is_scaling_3d)
@@ -972,6 +1075,15 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     else
     {
         for(Index i = 0; i < inputs_number; i++)
+        {
+            if(feature_to_catvar[i] != -1)
+            {
+                if(feature_is_cat_first[i])
+                    render_categorical_input(feature_to_catvar[i], i,
+                                             Index(catvar_categories[feature_to_catvar[i]].size()));
+                continue;
+            }
+
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
@@ -980,6 +1092,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                    << "<input type=\"number\" id=\"" << fixes_feature_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" oninput=\"updateTextInput1(this.value, '" << fixes_feature_names[i] << "'); neuralNetwork();\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
+        }
     }
 
     buffer << "</table>" << endl;
@@ -1105,23 +1218,28 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     {
         string line = lines[i];
 
-        for(Index j = 0; j < inputs_number; ++j)
-            replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
+        // Feature names are already sanitized inside the expression (the network
+        // was renamed before get_expression()), so no per-input substitution is
+        // needed here. Doing it would re-corrupt numeric constants for features
+        // literally named "1", "2", ... (the feature token equals the literal).
 
         if(Softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
 
+        // Whole-word only, so identifiers that merely contain "exp"/"min"/"max"/
+        // "tanh" as a substring (e.g. "examined") are not turned into "Math.*".
         for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
             string key_word = found_mathematical_expressions[j];
             string new_word = sufix + key_word;
-            replace_all_appearances(line, key_word, new_word);
+            replace_all_word_appearances(line, key_word, new_word);
         }
 
         if(Softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
 
-        replace_all_appearances(line, "nan", "0");
-        replace_all_appearances(line, "NaN", "0");
-        replace_all_appearances(line, "inf", "Infinity");
+        // Whole-word only: never rewrite "inferred" -> "Infinityerred", etc.
+        replace_all_word_appearances(line, "nan", "0");
+        replace_all_word_appearances(line, "NaN", "0");
+        replace_all_word_appearances(line, "inf", "Infinity");
 
         line.size() <= 1
             ? buffer << endl

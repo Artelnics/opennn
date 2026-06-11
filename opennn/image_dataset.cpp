@@ -515,12 +515,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
-    using __clkD = chrono::high_resolution_clock;
-    auto __msD = [](auto a, auto b) {
-        return chrono::duration_cast<chrono::milliseconds>(b - a).count();
-    };
-    auto __sD = __clkD::now();
-
     const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");
 
     if(!image_dataset_element)
@@ -536,11 +530,9 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    __sD = __clkD::now();
     set_shape("Input", { read_xml_index(data_source_element, "Height"),
                          read_xml_index(data_source_element, "Width"),
                          read_xml_index(data_source_element, "Channels") });
-    cout << "[TIMING-ENG]       img.set_shape: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -559,17 +551,13 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* variables_element = image_dataset_element->FirstChildElement("Variables");
 
-    __sD = __clkD::now();
     image_variables_from_XML(variables_element);
-    cout << "[TIMING-ENG]       img.variables_from_XML: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 
     // Samples
 
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
-    __sD = __clkD::now();
     samples_from_XML(samples_element);
-    cout << "[TIMING-ENG]       img.samples_from_XML: " << __msD(__sD, __clkD::now()) << " ms" << endl;
 }
 
 

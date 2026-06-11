@@ -130,6 +130,10 @@ void TrainingStrategy::set_default()
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
+        // Fixed learning rate for convolutional networks: 0.001 saturates the CNN at
+        // ln(2) and it never learns. 0.0001 trains reliably (see also from_XML, which
+        // enforces this even for projects saved with a different value).
+        adaptive_moment_estimation->set_learning_rate(type(0.0001));
         adaptive_moment_estimation->set_maximum_epochs(100);
         adaptive_moment_estimation->set_display_period(10);
 
@@ -364,6 +368,15 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Display
 
     optimizer->set_display(read_xml_bool(root_element, "Display"));
+
+    // Convolutional networks always train with a fixed learning rate (0.0001).
+    // Override whatever value the project XML carried: 0.001 saturates the CNN at
+    // ln(2) and it never learns, so this guarantees image models train reliably
+    // regardless of the saved value or the GUI.
+
+    if(has_neural_network() && neural_network->has("Convolutional"))
+        if(AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get()))
+            adam->set_learning_rate(type(0.0001));
 }
 
 
