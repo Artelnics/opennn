@@ -112,6 +112,9 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+        data.resize(0, 0);
 }
 
 string Dataset::get_storage_mode_string() const

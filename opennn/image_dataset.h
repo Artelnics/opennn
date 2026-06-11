@@ -45,9 +45,6 @@ public:
                            float min_range,
                            float max_range);
 
-    using Dataset::set_storage_mode;
-    void set_storage_mode(StorageMode) override;
-
     VectorI calculate_target_distribution() const override;
 
     void read_images();

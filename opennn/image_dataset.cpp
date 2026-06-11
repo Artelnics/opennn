@@ -75,14 +75,6 @@ pair<float, float> scaling_affine(ScalerMethod scaler,
 
 }  // namespace
 
-void ImageDataset::set_storage_mode(StorageMode new_storage_mode)
-{
-    Dataset::set_storage_mode(new_storage_mode);
-
-    if (new_storage_mode == StorageMode::BinaryFile)
-        data.resize(0, 0);
-}
-
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;

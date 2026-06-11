@@ -198,11 +198,7 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 {
     Dataset::set_storage_mode(new_storage_mode);
 
-    if (new_storage_mode == StorageMode::BinaryFile)
-    {
-        data.resize(0, 0);
-    }
-    else
+    if (new_storage_mode != StorageMode::BinaryFile)
     {
         binary_rows_number = 0;
         binary_columns_number = 0;
