@@ -20,6 +20,11 @@ namespace opennn
 namespace
 {
 
+inline Eigen::array<Index, 3> array_3(const Index first_dimension, const Index second_dimension, const Index third_dimension)
+{
+    return Eigen::array<Index, 3>({first_dimension, second_dimension, third_dimension});
+}
+
 inline ComparisonOperator to_comparison_operator(const ResponseOptimization::ConditionType condition)
 {
     switch (condition)
