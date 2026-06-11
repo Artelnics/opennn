@@ -358,11 +358,11 @@ TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     // Require x1 + x2 <= 1.0 over a domain with each variable in [0, 10]
     opt.set_formula_constraint("x1 + x2",
-                               ResponseOptimization::ConditionType::LessEqualTo,
+                               ComparisonOperator::LessEqualTo,
                                float(0), float(1));
 
     opt.set_iterations(3);
@@ -387,11 +387,11 @@ TEST(ResponseOptimizationFormula, AffineEqualityLandsOnHyperplane)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     // Force x1 + x2 = 5
     opt.set_formula_constraint("x1 + x2",
-                               ResponseOptimization::ConditionType::EqualTo,
+                               ComparisonOperator::EqualTo,
                                float(5));
 
     opt.set_iterations(3);
@@ -416,11 +416,11 @@ TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     // Require x1^2 + x2^2 <= 4 (points inside circle of radius 2).
     opt.set_formula_constraint("x1^2 + x2^2",
-                               ResponseOptimization::ConditionType::LessEqualTo,
+                               ComparisonOperator::LessEqualTo,
                                float(0), float(4));
 
     opt.set_iterations(3);
@@ -444,12 +444,12 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     // Callback: |x1 - x2| <= 1
     opt.set_formula_constraint(
         [](const VectorR& in, const VectorR& /*out*/) { return abs(in(0) - in(1)); },
-        ResponseOptimization::ConditionType::LessEqualTo,
+        ComparisonOperator::LessEqualTo,
         float(0), float(1));
 
     opt.set_iterations(3);
@@ -470,11 +470,11 @@ TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     // Unreachable: inputs live in [0,1] but we demand x1 + x2 ∈ [90, 100]
     opt.set_formula_constraint("x1 + x2",
-                               ResponseOptimization::ConditionType::Between,
+                               ComparisonOperator::Between,
                                float(90), float(100));
 
     opt.set_iterations(2);
@@ -492,7 +492,7 @@ TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
                                 float(-1), float(1));
 
     ResponseOptimization opt(setup.network.get());
-    opt.set_condition("y", ResponseOptimization::ConditionType::Minimize);
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
     opt.set_iterations(2);
     opt.set_evaluations_number(300);
@@ -508,6 +508,54 @@ TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
         EXPECT_GE(results(i, 1), float(0) - float(1e-3));
         EXPECT_LE(results(i, 1), float(10) + float(1e-3));
     }
+}
+
+
+TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
+{
+    // "Allow both": x1 is simultaneously a Minimize objective and box-constrained
+    // to [2, 4]. The objective is honored within the constrained sub-box, so every
+    // sampled x1 stays in [2, 4] and the optimum drives x1 toward the lower bound.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    opt.set_objective("x1", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", ComparisonOperator::Between, float(2), float(4));
+
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.set_iterations(5);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_GE(results(i, 0), float(2) - float(1e-2));
+        EXPECT_LE(results(i, 0), float(4) + float(1e-2));
+    }
+
+    EXPECT_LT(results(0, 0), float(3))
+        << "best x1 = " << results(0, 0) << " (should approach the lower bound 2)";
+}
+
+
+TEST(ResponseOptimizationFormula, TimeRoleScaffoldIsAvailable)
+{
+    // The forecasting time-role API is scaffolded now; the runtime forecasting path
+    // is left untouched, so this only exercises the set/clear surface and the enum.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" });
+
+    ResponseOptimization opt(setup.network.get());
+
+    opt.set_time_role("x2", ResponseOptimization::TimeType::PastBatch);
+    opt.clear_constraints("x2");
+
+    SUCCEED();
 }
 
 

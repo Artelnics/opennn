@@ -17,25 +17,6 @@
 namespace opennn
 {
 
-namespace
-{
-
-inline ComparisonOperator to_comparison_operator(const ResponseOptimization::ConditionType condition)
-{
-    switch (condition)
-    {
-    case ResponseOptimization::ConditionType::EqualTo:        return ComparisonOperator::EqualTo;
-    case ResponseOptimization::ConditionType::Between:        return ComparisonOperator::Between;
-    case ResponseOptimization::ConditionType::GreaterEqualTo: return ComparisonOperator::GreaterEqualTo;
-    case ResponseOptimization::ConditionType::LessEqualTo:    return ComparisonOperator::LessEqualTo;
-    case ResponseOptimization::ConditionType::GreaterThan:    return ComparisonOperator::GreaterThan;
-    case ResponseOptimization::ConditionType::LessThan:       return ComparisonOperator::LessThan;
-    default:                                                  return ComparisonOperator::None;
-    }
-}
-
-}
-
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
     set(new_neural_network);
@@ -51,64 +32,52 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 }
 
 
-void ResponseOptimization::set_condition(const string& name, const ConditionType condition, float low, float up)
+void ResponseOptimization::set_constraint(const string& name, const ComparisonOperator comparison, float low, float up)
 {
-   conditions[name] = Condition(condition, low, up);
+    constraints[name] = VariableConstraint(comparison, low, up);
 }
 
 
-vector<NamedColumn> ResponseOptimization::build_input_columns_for_formula() const
+void ResponseOptimization::set_objective(const string& name, const Sense sense)
 {
-    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    objectives[name] = sense;
+}
 
-    vector<NamedColumn> input_columns;
-    input_columns.reserve(input_variables.size());
 
-    Index input_column = 0;
+void ResponseOptimization::set_time_role(const string& name, const TimeType role)
+{
+    time_roles[name] = role;
+}
 
-    for (const Variable& variable : input_variables)
+
+vector<NamedColumn> ResponseOptimization::build_columns_for_formula(const vector<Variable>& variables,
+                                                                   const bool apply_role_and_history_filter) const
+{
+    vector<NamedColumn> columns;
+    columns.reserve(variables.size());
+
+    Index column = 0;
+
+    for (const Variable& variable : variables)
     {
         const Index dimension = variable.get_feature_count();
-        const bool is_past = (get_condition(variable.name).condition == ConditionType::Past);
 
-        if (variable.get_role() != "Input" || is_past)
+        if (apply_role_and_history_filter
+        && (variable.get_role() != "Input" || is_history(variable.name)))
             continue;
 
         if (dimension == 1)
-            input_columns.push_back({variable.name, input_column});
+            columns.push_back({variable.name, column});
 
-        input_column += dimension;
+        column += dimension;
     }
 
-    return input_columns;
-}
-
-
-vector<NamedColumn> ResponseOptimization::build_output_columns_for_formula() const
-{
-    const vector<Variable>& output_variables = neural_network->get_output_variables();
-
-    vector<NamedColumn> output_columns;
-    output_columns.reserve(output_variables.size());
-
-    Index output_column = 0;
-
-    for (const Variable& variable : output_variables)
-    {
-        const Index dimension = variable.get_feature_count();
-
-        if (dimension == 1)
-            output_columns.push_back({variable.name, output_column});
-
-        output_column += dimension;
-    }
-
-    return output_columns;
+    return columns;
 }
 
 
 void ResponseOptimization::set_formula_constraint(const string& expression,
-                                                  const ConditionType op,
+                                                  const ComparisonOperator comparison,
                                                   const float low,
                                                   const float up)
 {
@@ -117,13 +86,13 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
 
     FormulaConstraint formula_constraint;
     formula_constraint.expression = expression;
-    formula_constraint.comparison_operator = to_comparison_operator(op);
+    formula_constraint.comparison_operator = comparison;
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
     formula_constraint.uses_callback = false;
 
-    const vector<NamedColumn> input_columns = build_input_columns_for_formula();
-    const vector<NamedColumn> output_columns = build_output_columns_for_formula();
+    const vector<NamedColumn> input_columns = build_columns_for_formula(neural_network->get_input_variables(), true);
+    const vector<NamedColumn> output_columns = build_columns_for_formula(neural_network->get_output_variables(), false);
 
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
 
@@ -132,14 +101,14 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
 
 
 void ResponseOptimization::set_formula_constraint(function<float(const VectorR&, const VectorR&)> callback,
-                                                  const ConditionType op,
+                                                  const ComparisonOperator comparison,
                                                   const float low,
                                                   const float up)
 {
     FormulaConstraint formula_constraint;
     formula_constraint.callback = move(callback);
     formula_constraint.uses_callback = true;
-    formula_constraint.comparison_operator = to_comparison_operator(op);
+    formula_constraint.comparison_operator = comparison;
     formula_constraint.low_bound = low;
     formula_constraint.up_bound = up;
 
@@ -168,26 +137,53 @@ void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 }
 
 
-void ResponseOptimization::clear_conditions()
+void ResponseOptimization::clear_constraints()
 {
-    conditions.clear();
+    constraints.clear();
+    objectives.clear();
+    time_roles.clear();
 }
 
 
-void ResponseOptimization::clear_conditions(const string& name)
+void ResponseOptimization::clear_constraints(const string& name)
 {
-    conditions.erase(name);
+    constraints.erase(name);
+    objectives.erase(name);
+    time_roles.erase(name);
 }
 
 
-ResponseOptimization::Condition ResponseOptimization::get_condition(const string& name) const
+ResponseOptimization::VariableConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    map<string, Condition>::const_iterator it = conditions.find(name);
+    const map<string, VariableConstraint>::const_iterator it = constraints.find(name);
 
-    if (it != conditions.end())
-        return it->second;
+    return (it != constraints.end()) ? it->second : VariableConstraint(ComparisonOperator::None);
+}
 
-    return Condition(ConditionType::None);
+
+bool ResponseOptimization::is_objective(const string& name) const
+{
+    return objectives.find(name) != objectives.end();
+}
+
+
+ResponseOptimization::Sense ResponseOptimization::get_sense(const string& name) const
+{
+    return objectives.at(name);
+}
+
+
+bool ResponseOptimization::is_past(const TimeType role)
+{
+    return role == TimeType::PastContinuous || role == TimeType::PastBatch;
+}
+
+
+bool ResponseOptimization::is_history(const string& name) const
+{
+    const map<string, TimeType>::const_iterator it = time_roles.find(name);
+
+    return it != time_roles.end() && is_past(it->second);
 }
 
 
@@ -255,8 +251,12 @@ Index ResponseOptimization::get_objectives_number() const
 {
     Index objectives_number = 0;
 
-    for (const auto& [_, constraints] : conditions)
-        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
+    for (const Variable& variable : get_variables_and_descriptives("Input").first)
+        if (is_objective(variable.name))
+            objectives_number++;
+
+    for (const Variable& variable : get_variables_and_descriptives("Target").first)
+        if (is_objective(variable.name))
             objectives_number++;
 
     return objectives_number;
@@ -297,10 +297,8 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
     {
         const string& var_role = variables_uncheked[i].get_role();
 
-        const Condition current_cond = get_condition(variables_uncheked[i].name);
-
-        if (current_cond.condition == ConditionType::Past)
-            continue; // Skip this variable entirely for optimization purposes
+        if (is_history(variables_uncheked[i].name))
+            continue; // Skip history variables entirely for optimization purposes
 
         const bool keep = is_input_request ? (var_role == "Input")
                                            : (var_role == "Target" || var_role == "InputTarget");
@@ -367,15 +365,15 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
 
-    vector<Condition> applicable_conditions;
-    applicable_conditions.reserve(variables_number);
+    vector<VariableConstraint> applicable_constraints;
+    applicable_constraints.reserve(variables_number);
 
     for (const Variable& variable : variables)
-        applicable_conditions.push_back(get_condition(variable.name));
+        applicable_constraints.push_back(get_constraint(variable.name));
 
     Domain original_domain(variables, descriptives, deformation_domain_factor);
 
-    original_domain.bound(variables, applicable_conditions);
+    original_domain.bound(variables, applicable_constraints);
 
     return original_domain;
 }
@@ -386,13 +384,13 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     const Index objectives_number = response_optimization.get_objectives_number();
 
     throw_if(objectives_number == 0,
-             "No Objectives found, make sure to set Minimize or Maximize to any variable");
+             "No objectives found, make sure to call set_objective(name, Sense::Minimize/Maximize) on a variable");
 
-    objective_sources.resize(2, objectives_number);
+    source_and_column.resize(2, objectives_number);
 
-    objective_normalizer.resize(2, objectives_number);
+    scale_and_offset.resize(2, objectives_number);
 
-    utopian_and_senses.resize(2, objectives_number);
+    utopian_and_sense.resize(2, objectives_number);
 
     Index current_objective_index = 0;
 
@@ -410,32 +408,31 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
         for (Index i = 0; i < static_cast<Index>(variables.size()); ++i)
         {
-            const Condition current_condition = response_optimization.get_condition(variables[i].name);
+            const string& variable_name = variables[i].name;
 
-            if (current_condition.condition == ConditionType::Maximize
-            || current_condition.condition == ConditionType::Minimize)
+            if (response_optimization.is_objective(variable_name))
             {
-                objective_sources(0, current_objective_index) = is_input ? 1.0f : 0.0f;
+                source_and_column(0, current_objective_index) = is_input ? 1.0f : 0.0f;
 
-                objective_sources(1, current_objective_index) = static_cast<float>(feature_pointer);
+                source_and_column(1, current_objective_index) = static_cast<float>(feature_pointer);
 
                 const float inferior_frontier = domain.inferior_frontier(feature_pointer);
                 const float superior_frontier = domain.superior_frontier(feature_pointer);
                 const float range = superior_frontier - inferior_frontier;
 
-                objective_normalizer(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
 
-                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
 
-                if (current_condition.condition == ConditionType::Maximize)
+                if (response_optimization.get_sense(variable_name) == Sense::Maximize)
                 {
-                    utopian_and_senses(0, current_objective_index) = superior_frontier;
-                    utopian_and_senses(1, current_objective_index) = 1.0;
+                    utopian_and_sense(0, current_objective_index) = superior_frontier;
+                    utopian_and_sense(1, current_objective_index) = 1.0;
                 }
                 else
                 {
-                    utopian_and_senses(0, current_objective_index) = inferior_frontier;
-                    utopian_and_senses(1, current_objective_index) = -1.0;
+                    utopian_and_sense(0, current_objective_index) = inferior_frontier;
+                    utopian_and_sense(1, current_objective_index) = -1.0;
                 }
 
                 current_objective_index++;
@@ -450,7 +447,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 }
 
 
-void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<Condition>& conditions)
+void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<VariableConstraint>& constraints)
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
     Index feature_index = 0;
@@ -459,42 +456,42 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
     {
         const Index feature_dimension = feature_dimensions[variable_index];
 
-        const Condition& condition = conditions[variable_index];
+        const VariableConstraint& constraint = constraints[variable_index];
 
         if(feature_dimension == 1)
         {
             float& inferior = inferior_frontier(feature_index);
             float& superior = superior_frontier(feature_index);
 
-            switch(condition.condition)
+            switch(constraint.comparison)
             {
-            case ConditionType::EqualTo:
-                inferior = max(inferior, condition.low_bound);
-                superior = min(superior, condition.low_bound);
+            case ComparisonOperator::EqualTo:
+                inferior = max(inferior, constraint.low_bound);
+                superior = min(superior, constraint.low_bound);
                 break;
-            case ConditionType::Between:
-                inferior = max(inferior, condition.low_bound);
-                superior = min(superior, condition.up_bound);
+            case ComparisonOperator::Between:
+                inferior = max(inferior, constraint.low_bound);
+                superior = min(superior, constraint.up_bound);
                 break;
-            case ConditionType::GreaterEqualTo:
-                inferior = max(inferior, condition.low_bound);
+            case ComparisonOperator::GreaterEqualTo:
+                inferior = max(inferior, constraint.low_bound);
                 break;
-            case ConditionType::LessEqualTo:
-                superior = min(superior, condition.up_bound);
+            case ComparisonOperator::LessEqualTo:
+                superior = min(superior, constraint.up_bound);
                 break;
-            case ConditionType::LessThan:
-                superior = min(superior, condition.up_bound);
+            case ComparisonOperator::LessThan:
+                superior = min(superior, constraint.up_bound);
                 break;
-            case ConditionType::GreaterThan:
-                inferior = max(inferior, condition.low_bound);
+            case ComparisonOperator::GreaterThan:
+                inferior = max(inferior, constraint.low_bound);
                 break;
             default:
                 break;
             }
         }
-        else if(condition.condition == ConditionType::EqualTo)
+        else if(constraint.comparison == ComparisonOperator::EqualTo)
         {
-            const Index category_index = static_cast<Index>(llround(condition.low_bound));
+            const Index category_index = static_cast<Index>(llround(constraint.low_bound));
 
             for(Index j = 0; j < feature_dimension; ++j)
             {
@@ -592,9 +589,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
     {
         const Index dim = variable.get_feature_count();
 
-        const Condition current_cond = get_condition(variable.name);
-
-        if (variable.get_role() == "Input" && current_cond.condition != ConditionType::Past)
+        if (variable.get_role() == "Input" && !is_history(variable.name))
         {
            const MatrixR block_data = input_control.block(0, candidate_col_cursor, batch_size, dim);
 
@@ -731,14 +726,12 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
     for (Index column_index = 0; column_index < static_cast<Index>(all_target_variables.size()); ++column_index)
     {
-        const Condition current_condition = get_condition(all_target_variables[column_index].name);
+        const string& variable_name = all_target_variables[column_index].name;
 
-        if (current_condition.condition == ConditionType::Past)
+        if (is_history(variable_name))
             continue; // not in domain — skip without advancing domain_index
 
-        if (!(current_condition.condition == ConditionType::Maximize ||
-              current_condition.condition == ConditionType::Minimize ||
-              current_condition.condition == ConditionType::None))
+        if (get_constraint(variable_name).comparison != ComparisonOperator::None)
         {
             feasible_indices = filter_selected_indices_by_column(outputs,
                                                                  feasible_indices,
@@ -934,14 +927,14 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 
 MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
-    const Index objectives_number = objective_sources.cols();
+    const Index objectives_number = source_and_column.cols();
 
     MatrixR objective_matrix(inputs.rows(), objectives_number);
 
     for (Index j = 0; j < objectives_number; ++j)
-        objective_matrix.col(j)= (objective_sources(0, j) > 0.5)
-              ? inputs.col(static_cast<Index>(objective_sources(1, j)))
-              : outputs.col(static_cast<Index>(objective_sources(1, j)));
+        objective_matrix.col(j)= (source_and_column(0, j) > 0.5)
+              ? inputs.col(static_cast<Index>(source_and_column(1, j)))
+              : outputs.col(static_cast<Index>(source_and_column(1, j)));
 
     return objective_matrix;
 }
@@ -949,8 +942,8 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
 
 void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) const
 {
-    const auto combined_scale = objective_normalizer.row(0).array() * utopian_and_senses.row(1).array();
-    const auto combined_offset = objective_normalizer.row(1).array() * utopian_and_senses.row(1).array();
+    const auto combined_scale = scale_and_offset.row(0).array() * utopian_and_sense.row(1).array();
+    const auto combined_offset = scale_and_offset.row(1).array() * utopian_and_sense.row(1).array();
 
     objective_matrix.array().rowwise() *= combined_scale;
     objective_matrix.array().rowwise() += combined_offset;
@@ -962,7 +955,7 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
     if (unnormalized_objective_values.rows() == 0)
         return false;
 
-    const Index objectives_number = utopian_and_senses.cols();
+    const Index objectives_number = utopian_and_sense.cols();
 
     if (unnormalized_objective_values.cols() != objectives_number)
         return false;
@@ -971,8 +964,8 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
 
     for (Index j = 0; j < objectives_number; ++j)
     {
-        const float sense = utopian_and_senses(1, j);
-        const float current_utopian = utopian_and_senses(0, j);
+        const float sense = utopian_and_sense(1, j);
+        const float current_utopian = utopian_and_sense(0, j);
 
         const float best = (sense > 0)
             ? unnormalized_objective_values.col(j).maxCoeff()
@@ -981,8 +974,8 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
         if (sense * (best - current_utopian) <= float(0))
             continue;
 
-        const float scale = objective_normalizer(0, j);
-        const float offset = objective_normalizer(1, j);
+        const float scale = scale_and_offset(0, j);
+        const float offset = scale_and_offset(1, j);
 
         if (abs(scale) < EPSILON)
             continue;
@@ -997,9 +990,9 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
         if (new_range < EPSILON)
             continue;
 
-        utopian_and_senses(0, j) = best;
-        objective_normalizer(0, j) = float(1) / new_range;
-        objective_normalizer(1, j) = -new_inferior / new_range;
+        utopian_and_sense(0, j) = best;
+        scale_and_offset(0, j) = float(1) / new_range;
+        scale_and_offset(1, j) = -new_inferior / new_range;
 
         any_updated = true;
     }
@@ -1018,7 +1011,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     objectives.normalize(objective_matrix);
 
-    const VectorR normalized_utopian_point = (objectives.utopian_and_senses.row(1).array() + (float)1.0) / (float)2.0;
+    const VectorR normalized_utopian_point = (objectives.utopian_and_sense.row(1).array() + (float)1.0) / (float)2.0;
 
     const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , (int)subset_dimension);
 
@@ -1083,11 +1076,11 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
             break;
         }
 
-        optimal_point = (objectives.objective_sources(0, 0) > 0.5f
+        optimal_point = (objectives.source_and_column(0, 0) > 0.5f
             ? optimal_set.first
-            : optimal_set.second)(0, static_cast<Index>(objectives.objective_sources(1, 0)));
+            : optimal_set.second)(0, static_cast<Index>(objectives.source_and_column(1, 0)));
 
-        const float relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
+        const float relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_sense(0,0) + 1e-6f));
 
         cout << "  - Relative error: " << relative_error << endl;
 
@@ -1368,12 +1361,12 @@ vector<float> ResponseOptimization::get_utopian_point() const
 {
     const Objectives objectives(*this);
 
-    const Index objectives_number = objectives.utopian_and_senses.cols();
+    const Index objectives_number = objectives.utopian_and_sense.cols();
 
     vector<float> utopian_point(static_cast<size_t>(objectives_number));
 
     for (Index j = 0; j < objectives_number; ++j)
-        utopian_point[static_cast<size_t>(j)] = objectives.utopian_and_senses(0, j);
+        utopian_point[static_cast<size_t>(j)] = objectives.utopian_and_sense(0, j);
 
     return utopian_point;
 }
@@ -1425,7 +1418,7 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
         else
             objective_matrix.col(j).setZero();
 
-        const float sense = objectives.utopian_and_senses(1, j);
+        const float sense = objectives.utopian_and_sense(1, j);
 
         normalized_utopian(j) = (sense > float(0)) ? float(1) : float(0);
     }

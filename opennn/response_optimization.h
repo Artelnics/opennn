@@ -24,16 +24,18 @@ class ResponseOptimization
 {
 public:
 
-    enum class ConditionType {None, Between, EqualTo, LessEqualTo, GreaterEqualTo, LessThan, GreaterThan, Minimize, Maximize, Past};
+    enum class Sense { Minimize, Maximize };
 
-    struct Condition
+    enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
+
+    struct VariableConstraint
     {
-        ConditionType condition;
+        ComparisonOperator comparison;
         float low_bound;
         float up_bound;
 
-        Condition(ConditionType new_type = ConditionType::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
-            : condition(new_type), low_bound(new_low_bound), up_bound(new_up_bound) {}
+        VariableConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
+            : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
     struct Domain
@@ -52,7 +54,7 @@ public:
                  const vector<Descriptives>& descriptives,
                  const float deformation_domain_factor = 1.0f);
 
-        void bound(const vector<Variable>& variables, const vector<Condition>& conditions);
+        void bound(const vector<Variable>& variables, const vector<VariableConstraint>& constraints);
 
         void reshape(const float zoom_factor,
                      const VectorR& center,
@@ -67,11 +69,11 @@ public:
     {
         Objectives(const ResponseOptimization& response_optimization);
 
-        MatrixR objective_sources;
+        MatrixR source_and_column;
 
-        MatrixR utopian_and_senses;
+        MatrixR utopian_and_sense;
 
-        MatrixR objective_normalizer;
+        MatrixR scale_and_offset;
 
         MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
@@ -86,19 +88,21 @@ public:
 
     void set(NeuralNetwork* = nullptr);
 
-    void clear_conditions();
-    void clear_conditions(const string& name);
+    void clear_constraints();
+    void clear_constraints(const string& name);
 
-    Condition get_condition(const string& name) const;
+    void set_constraint(const string& name, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
 
-    void set_condition(const string& name, const ConditionType condition = ConditionType::None, float low = 0.0f, float up = 0.0f);
+    void set_objective(const string& name, const Sense sense);
+
+    void set_time_role(const string& name, const TimeType role);
 
     void set_formula_constraint(const string& expression,
-                                ConditionType op,
+                                ComparisonOperator comparison,
                                 float low = 0.0f, float up = 0.0f);
 
     void set_formula_constraint(function<float(const VectorR&, const VectorR&)> callback,
-                                ConditionType op,
+                                ComparisonOperator comparison,
                                 float low = 0.0f, float up = 0.0f);
 
     void clear_formula_constraints();
@@ -164,8 +168,13 @@ public:
 
 private:
 
-    vector<NamedColumn> build_input_columns_for_formula() const;
-    vector<NamedColumn> build_output_columns_for_formula() const;
+    vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
+
+    VariableConstraint get_constraint(const string& name) const;
+    bool is_objective(const string& name) const;
+    Sense get_sense(const string& name) const;
+    bool is_history(const string& name) const;
+    static bool is_past(const TimeType role);
 
     bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
@@ -184,7 +193,11 @@ private:
 
     mutable unique_ptr<NetworkDifferential> network_differential;
 
-    map<string, Condition> conditions;
+    map<string, VariableConstraint> constraints;
+
+    map<string, Sense> objectives;
+
+    map<string, TimeType> time_roles;
 
     vector<FormulaConstraint> formula_constraints;
 
