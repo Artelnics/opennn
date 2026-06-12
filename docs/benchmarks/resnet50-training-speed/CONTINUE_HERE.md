@@ -73,18 +73,38 @@ vector — dead lead). Post-fusion profile (fp32 b128, profiling run ~14.2 s/ep)
   engine selection; don't retry.
 - BN+ReLU and any other pointwise-launch elimination: GPU is conv-bound.
 
-## Next leads for the remaining 1.48x (in order)
+## THE NEXT PROJECT — block-end fusion, ceiling MEASURED at +39%
 
-1. **Re-profile post-autotune** (OPENNN_PROFILE first, then nsys on native
-   Windows if needed — nsys broken under WSL): the conv-share of the epoch
-   has changed; find the new top cost before acting.
-2. **accumulate_output_deltas** (was 5.9%, 33,930 calls/epoch) and the
-   standalone block-end Addition+ReLU layers — fusion candidates (BN+add+ReLU
-   epilogue, step 3 of the original sketch; cross-layer, invasive).
-3. **Autotune the BN graphs safely**: needs a scratch delta buffer for the
-   in-place backward during timing, or autotune only the (pure) forward.
-4. torch.compile additionally fuses ALL pointwise ops via Triton and removes
-   eager overhead; after 1-3, what remains is that fused-everything margin.
+Post-autotune profile (profile_autotuned.log): conv 67% (bwd 42 + fwd 24.6),
+then a pointwise tail: accumulate_output_deltas 7.7% (34,320 calls),
+adam 7.1% (2.01 ms/step = fp32 roofline, NOT winnable), standalone Activation
+8.5%, Addition 7.2%.
+
+**Skip-probe verdict (2026-06-12 night): disabling AddOp fwd/bwd + standalone
+Activation fwd/bwd + accumulate_output_deltas → 5,339 samples/s vs 3,850
+baseline (+39%) — within 8% of torch.compile's 5,772.** Unlike the four
+previous host-scope mirages, this tail is real cost. (Probe = env-guarded
+early returns, garbage numerics, speed-only; reverted, not committed.)
+
+Why it's so expensive — per bottleneck block today: Addition fwd add (1 pass),
+block-end Activation bwd copy+dReLU (2 passes), Addition bwd 2 copies,
+accumulate setZero+2 adds (3 passes) ≈ 8 full-tensor passes that fusion/
+aliasing can mostly remove. Plan:
+
+1. Forward: fuse skip-add + ReLU into conv3's BN forward graph
+   (BN→ADD→RELU epilogue, supported cudnn pattern) — kills Addition fwd and
+   Activation fwd. Cross-layer: Convolutional needs the skip tensor as an
+   extra input slot; Addition/Activation layers become pass-through (slot
+   aliasing), like forward_fused but across layers.
+2. Backward: dReLU at the block end fuses into the same BN bwd prologue
+   (mask from post-ReLU block output); replace AddOp bwd copies and
+   accumulate's setZero+add chain with delta-view aliasing where the
+   consumers permit (watch in-place BN bwd which transforms delta).
+3. Optional after 1-2: autotune BN graphs safely (scratch delta during
+   timing) and re-check bwd conv engines with nsys on native Windows.
+
+Expected landing zone if 70-90% of the ceiling is recovered: ~4,900-5,200
+samples/s vs torch.compile 5,772.
 
 ## Where things run
 
