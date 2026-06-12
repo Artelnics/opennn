@@ -54,7 +54,11 @@ public:
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
+    bool get_residual() const { return residual; }
+    void set_residual(bool);
+
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
@@ -94,6 +98,7 @@ private:
     Index column_stride = 1;
 
     bool use_padding = false;
+    bool residual = false;
 
     ConvolutionOp convolution;
     ActivationOp  activation;

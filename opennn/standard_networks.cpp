@@ -329,6 +329,19 @@ ResNet::ResNet(const Shape& input_shape,
                         Shape{stride, stride}, prefix + "_skip");
     };
 
+    // The block-end convolution takes the skip branch as a second input; its
+    // batch norm fuses the residual add and the final ReLU.
+    auto add_residual_conv = [&](Index input_index, Index skip_index,
+                                 const Shape& kernel_shape, const string& name) -> Index {
+        auto conv = make_unique<Convolutional>(
+            get_layer(input_index)->get_output_shape(),
+            kernel_shape, "ReLU", Shape{1, 1}, "Same",
+            /*batch_normalization=*/true, name);
+        conv->set_residual(true);
+        add_layer(move(conv), {input_index, skip_index});
+        return get_layers_number() - 1;
+    };
+
     auto add_basic_block = [&](Index input_index, size_t stage, Index block,
                                Index filters) -> Index {
         const Shape input_shape  = get_layer(input_index)->get_output_shape();
@@ -336,25 +349,15 @@ ResNet::ResNet(const Shape& input_shape,
         const Index stride    = (stage > 0 && block == 0) ? 2 : 1;
         const string prefix   = format("s{}b{}", stage, block);
 
-        Index main_index = add_conv(input_index,
+        const Index main_index = add_conv(input_index,
             Shape{3, 3, input_channels, filters}, "ReLU",
             Shape{stride, stride}, prefix + "_conv1");
-        main_index = add_conv(main_index,
-            Shape{3, 3, filters, filters}, "Identity",
-            Shape{1, 1}, prefix + "_conv2");
 
         const Index skip_index = add_skip(input_index, input_channels, filters,
                                           stride, prefix);
 
-        add_layer(make_unique<Addition>(get_layer(main_index)->get_output_shape(),
-                                        prefix + "_add"),
-                  {main_index, skip_index});
-        const Index add_index = get_layers_number() - 1;
-
-        add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
-                                          "ReLU", prefix + "_relu"),
-                  {add_index});
-        return get_layers_number() - 1;
+        return add_residual_conv(main_index, skip_index,
+            Shape{3, 3, filters, filters}, prefix + "_conv2");
     };
 
     auto add_bottleneck_block = [&](Index input_index, size_t stage, Index block,
@@ -371,22 +374,12 @@ ResNet::ResNet(const Shape& input_shape,
         main_index = add_conv(main_index,
             Shape{3, 3, filters, filters}, "ReLU",
             Shape{stride, stride}, prefix + "_conv2");
-        main_index = add_conv(main_index,
-            Shape{1, 1, filters, output_channels}, "Identity",
-            Shape{1, 1}, prefix + "_conv3");
 
         const Index skip_index = add_skip(input_index, input_channels, output_channels,
                                           stride, prefix);
 
-        add_layer(make_unique<Addition>(get_layer(main_index)->get_output_shape(),
-                                        prefix + "_add"),
-                  {main_index, skip_index});
-        const Index add_index = get_layers_number() - 1;
-
-        add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
-                                          "ReLU", prefix + "_relu"),
-                  {add_index});
-        return get_layers_number() - 1;
+        return add_residual_conv(main_index, skip_index,
+            Shape{1, 1, filters, output_channels}, prefix + "_conv3");
     };
 
 

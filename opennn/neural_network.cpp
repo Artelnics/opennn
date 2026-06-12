@@ -347,6 +347,12 @@ static void validate_source_arity(const Layer& layer,
                             + to_string(layer_index) + " expects "
                             + to_string(addition->get_inputs_number()) + " sources, got "
                             + to_string(sources.size()) + ".");
+
+    if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
+        convolutional && convolutional->get_residual() && ssize(sources) != 2)
+        throw runtime_error("NeuralNetwork::set_source_layers: residual Convolutional layer "
+                            + to_string(layer_index) + " expects 2 sources, got "
+                            + to_string(sources.size()) + ".");
 }
 
 void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_layers)

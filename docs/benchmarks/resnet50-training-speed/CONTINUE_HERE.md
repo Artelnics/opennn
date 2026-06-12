@@ -1,7 +1,40 @@
-# ResNet-50 speed work — resume notes (updated 2026-06-12, night)
+# ResNet-50 speed work — resume notes (updated 2026-06-12, late night)
 
 Goal: close the gap to `torch.compile` (compiled PyTorch 5,772 samples/s;
 eager PyTorch 2,080).
+
+## DONE: block-end residual fusion — 4,312/4,026/3,959, median ~4,026 (+5% on
+## top of autotune; spreads don't overlap, so real)
+
+Session total: 2,912 → ~4,026 median (+38%, peak run +48%). Now ~1.9x faster
+than PyTorch eager, ~1.43x behind torch.compile. Verified: 58 layers (32
+removed), parameter count bit-identical (23,555,088), training trajectory
+matches the unfused net. Windows full build green, tests at the 87
+pre-existing failures. NOTE the run-to-run GPU variance (~±5%) — always
+median of 3.
+
+Implementation:
+- `Convolutional::set_residual(true)` + two sources {main, skip}: the
+  block-end conv consumes the skip tensor directly; `Addition` and block-end
+  `Activation` layers are GONE from `opennn::ResNet`.
+- `BatchNormOp::fuse_add`: fwd graph = BN → ADD(residual) → RELU (legacy GPU /
+  inference / CPU paths apply add+relu manually). Backward: ActivationOp runs
+  its in-place dReLU (backward_fused=false for residual — the skip branch
+  needs the materialized post-activation delta), then BatchNormOp copies that
+  delta to `residual_delta_slot` (=2) BEFORE its in-place transform; framework
+  delta routing (consumer_edges / restore / accumulate) handles the rest.
+- `get_backward_specs` for residual conv returns a second output-shaped spec
+  (slot 2) → routed to the skip source; projection-skip convs get it aliased
+  for free (single consumer), identity skips still pay accumulate.
+- Validation in `validate_source_arity` (residual conv must have 2 sources);
+  JSON field "Residual".
+
+Remaining un-recovered ceiling (probe said 5,339 with everything skipped):
+the per-block dReLU kernel + residual-delta copy, and the identity-skip
+accumulate (setZero+2 adds). Next candidate: backward fork fusion —
+BN_infer→DRelu(fork: real output to skip slot)→DBN single graph (kills the
+separate dReLU AND the copy); needs per-entry build-failure fallback so an
+unsupported fork pattern doesn't disable the whole BN frontend.
 
 ## DONE 2026-06-12 night: conv engine autotuning — +30%, OpenNN at ~3,850
 

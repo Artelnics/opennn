@@ -85,6 +85,26 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     };
 }
 
+vector<TensorSpec> Convolutional::get_backward_specs(Index batch_size) const
+{
+    vector<TensorSpec> specs = {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
+
+    if (residual)
+        specs.push_back({Shape{batch_size}.append(get_output_shape()), compute_dtype});
+
+    return specs;
+}
+
+void Convolutional::set_residual(bool new_residual)
+{
+    throw_if(new_residual && !batch_norm.active(),
+             "Convolutional: a residual input requires batch normalization.");
+
+    residual = new_residual;
+
+    update_convolution_operator();
+}
+
 void Convolutional::update_convolution_operator()
 {
     convolution.set(input_height, input_width,
@@ -108,11 +128,16 @@ void Convolutional::update_convolution_operator()
 
     const bool relu = (activation.function == ActivationOp::Function::ReLU);
     const bool fuse_bn_relu = relu && batch_norm.active();
+    const bool fuse_bn_add  = residual && batch_norm.active();
 
-    convolution.fused_activation = (relu && !batch_norm.active()) ? activation.descriptor : nullptr;
-    batch_norm.fuse_relu         = fuse_bn_relu;
-    activation.forward_fused     = relu;
-    activation.backward_fused    = fuse_bn_relu;
+    convolution.fused_activation  = (relu && !batch_norm.active()) ? activation.descriptor : nullptr;
+    batch_norm.fuse_relu          = fuse_bn_relu;
+    batch_norm.fuse_add           = fuse_bn_add;
+    batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;
+    activation.forward_fused      = relu;
+    // The residual branch needs the post-activation delta materialized, so the
+    // activation backward runs unfused and batch norm forwards it to the skip.
+    activation.backward_fused     = fuse_bn_relu && !fuse_bn_add;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -247,6 +272,9 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     if (has_batch_norm && kernels_number > 0)
         batch_norm.set(kernels_number, batch_norm.momentum);
 
+    residual = convolutional_layer_element->has("Residual")
+            && read_json_bool(convolutional_layer_element, "Residual");
+
     update_convolution_operator();
 }
 
@@ -259,7 +287,8 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
         {"KernelsChannels", to_string(get_kernel_channels())},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
         {"Convolution", use_padding ? "Same" : "Valid"},
-        {"BatchNormalization", to_string(batch_norm.active())}
+        {"BatchNormalization", to_string(batch_norm.active())},
+        {"Residual", to_string(residual)}
     });
 }
 

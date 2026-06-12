@@ -18,6 +18,8 @@ struct BatchNormOp : Operator
     Index features = 0;
     float momentum = 0.1f;
     bool fuse_relu = false;
+    bool fuse_add = false;
+    size_t residual_delta_slot = 0;
 
     TensorView gamma;
     TensorView beta;
@@ -74,14 +76,16 @@ private:
     mutable VectorR delta_scale_scratch;
 
     void apply_inference_cpu(const TensorView& input, TensorView& output);
-    void apply_inference_gpu(const TensorView& input, TensorView& output);
+    void apply_inference_gpu(const TensorView& input, TensorView& output,
+                             const TensorView& residual);
 
     void apply_training_cpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
                              TensorView& output);
     void apply_training_gpu (const TensorView& input,
                              TensorView& mean, TensorView& inverse_variance,
-                             TensorView& output);
+                             TensorView& output,
+                             const TensorView& residual);
 
     void apply_delta_cpu(const TensorView& input,
                          const TensorView& mean,
