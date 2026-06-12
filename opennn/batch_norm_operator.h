@@ -55,12 +55,6 @@ struct BatchNormOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
-    void apply_delta(const TensorView& input,
-                     const TensorView& output,
-                     const TensorView& mean,
-                     const TensorView& inverse_variance,
-                     TensorView& delta) const;
-
     void update_inference_cache();
     void invalidate_inference_cache() { inference_cache_dirty = true; }
 
@@ -93,9 +87,11 @@ private:
                          TensorView& delta) const;
     void apply_delta_gpu(const TensorView& input,
                          const TensorView& output,
+                         const TensorView& residual,
                          const TensorView& mean,
                          const TensorView& inverse_variance,
-                         TensorView& delta) const;
+                         TensorView& delta,
+                         TensorView& residual_delta) const;
 };
 
 }

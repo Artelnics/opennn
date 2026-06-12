@@ -131,9 +131,11 @@ void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
 {
     if (!active()) return;
 
+    static const TensorView no_residual;
+
     const TensorView& input    = get_input(fp, layer);
     TensorView& output         = get_output(fp, layer);
-    const TensorView& residual = fuse_add ? fp.input_views[layer][1] : TensorView{};
+    const TensorView& residual = fuse_add ? fp.input_views[layer][1] : no_residual;
 
     if (!is_training)
     {
@@ -159,39 +161,32 @@ void BatchNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     invalidate_inference_cache();
 }
 
-void BatchNormOp::apply_delta(const TensorView& input,
-                            const TensorView& output,
-                            const TensorView& mean,
-                            const TensorView& inverse_variance,
-                            TensorView& delta) const
-{
-    if (delta.is_cuda())
-    {
-        apply_delta_gpu(input, output, mean, inverse_variance, delta);
-        return;
-    }
-    apply_delta_cpu(input, mean, inverse_variance, delta);
-}
-
 void BatchNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
 {
     if (!active()) return;
+
+    static TensorView empty;
 
     const TensorView& input            = get_input(fp, layer);
     const TensorView& output           = get_output(fp, layer);
     const TensorView& mean             = get_output(fp, layer, 1);
     const TensorView& inverse_variance = get_output(fp, layer, 2);
     TensorView& delta                  = get_output_delta(bp, layer);
+    TensorView& residual_delta         = residual_delta_slot
+        ? bp.backward_slots[layer][residual_delta_slot] : empty;
 
-    // The activation has already been undone in place, so the residual branch
-    // gets its delta before the in-place batch-norm transform destroys it.
-    if (fuse_add && residual_delta_slot)
+    if (!delta.is_cuda())
     {
-        TensorView& residual_delta = bp.backward_slots[layer][residual_delta_slot];
+        // The activation has already been undone in place, so the residual
+        // branch gets its delta before the in-place transform destroys it.
         if (!residual_delta.empty()) copy(delta, residual_delta);
+        apply_delta_cpu(input, mean, inverse_variance, delta);
+        return;
     }
 
-    apply_delta(input, output, mean, inverse_variance, delta);
+    const TensorView& residual = fuse_add ? fp.input_views[layer][1] : empty;
+
+    apply_delta_gpu(input, output, residual, mean, inverse_variance, delta, residual_delta);
 }
 
 void BatchNormOp::apply_inference_cpu(const TensorView& input, TensorView& output)
@@ -296,9 +291,12 @@ struct BatchNormOp::BnGraphCache
             fwd_PrevMean, fwd_PrevVar, fwd_Eps, fwd_Mom, fwd_Residual,
             fwd_Y, fwd_Mean, fwd_InvVar, fwd_NextMean, fwd_NextVar;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_X, bwd_Scale, bwd_Bias,
-            bwd_Mean, bwd_InvVar, bwd_DX, bwd_DScale, bwd_DBias;
+            bwd_Mean, bwd_InvVar, bwd_Residual, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
         void* fwd_workspace = nullptr;
         void* bwd_workspace = nullptr;
+        bool bwd_forked = false;
+        bool fwd_autotune = false;
+        bool bwd_autotune = false;
     };
 
     map<Index, Entry> entries;
@@ -411,11 +409,12 @@ void build_bn_forward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    finalize(*graph, entry.fwd_workspace, "batchnorm forward");
+    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace, "batchnorm forward", autotune_enabled());
     entry.fwd = graph;
 }
 
-void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d, bool fuse_relu)
+void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
+                       bool fuse_relu, bool fork_residual = false)
 {
     auto graph = new_graph();
 
@@ -430,14 +429,31 @@ void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     if (fuse_relu)
     {
         // cuDNN only fuses DReLU->DBN when the ReLU input is a virtual tensor,
-        // so the pre-ReLU batch-norm output is recomputed in-graph.
+        // so the pre-ReLU activation input is recomputed in-graph.
         entry.bwd_Bias = per_channel_tensor(*graph, "BIAS", d.channels);
-        auto bn_y = graph->batchnorm_inference(entry.bwd_X, entry.bwd_Mean, entry.bwd_InvVar,
-                                               entry.bwd_Scale, entry.bwd_Bias,
-                                               cudnn_frontend::graph::Batchnorm_inference_attributes());
-        delta_in = graph->pointwise(entry.bwd_DY, bn_y,
+        auto pre_activation = graph->batchnorm_inference(entry.bwd_X, entry.bwd_Mean, entry.bwd_InvVar,
+                                                         entry.bwd_Scale, entry.bwd_Bias,
+                                                         cudnn_frontend::graph::Batchnorm_inference_attributes());
+
+        if (fork_residual)
+        {
+            entry.bwd_Residual = nhwc_tensor(*graph, "RESIDUAL", d.batch, d.channels, d.spatial, 1);
+            pre_activation = graph->pointwise(pre_activation, entry.bwd_Residual,
+                                              cudnn_frontend::graph::Pointwise_attributes()
+                                              .set_mode(cudnn_frontend::PointwiseMode_t::ADD));
+        }
+
+        delta_in = graph->pointwise(entry.bwd_DY, pre_activation,
                                     cudnn_frontend::graph::Pointwise_attributes()
                                     .set_mode(cudnn_frontend::PointwiseMode_t::RELU_BWD));
+
+        // The fork: the post-activation delta is also a real output feeding
+        // the skip branch directly, replacing the dReLU kernel and the copy.
+        if (fork_residual)
+        {
+            set_nhwc_output(delta_in, d.batch, d.channels, d.spatial, 1);
+            entry.bwd_DPre = delta_in;
+        }
     }
 
     auto attributes = cudnn_frontend::graph::Batchnorm_backward_attributes()
@@ -453,7 +469,7 @@ void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    finalize(*graph, entry.bwd_workspace, "batchnorm backward");
+    entry.bwd_autotune = finalize(*graph, entry.bwd_workspace, "batchnorm backward", autotune_enabled());
     entry.bwd = graph;
 }
 
@@ -486,6 +502,8 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
                                    TensorView& output,
                                    const TensorView& residual)
 {
+    PROFILE_SCOPE("op:bn_fwd");
+
 #ifdef HAVE_CUDNN_FRONTEND
     if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(bn_graph_cache, "BatchNormOp", [&](BnGraphCache& cache)
@@ -512,6 +530,8 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextMean] = running_mean.data;
         tensors[entry.fwd_NextVar]  = running_variance.data;
 
+        cudnn_fe::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
+
         cudnn_fe::check_status(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
                                "batchnorm forward execute");
     }))
@@ -536,14 +556,19 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
 
 void BatchNormOp::apply_delta_gpu(const TensorView& input,
                                 const TensorView& output,
+                                const TensorView& residual,
                                 const TensorView& mean,
                                 const TensorView& inverse_variance,
-                                TensorView& delta) const
+                                TensorView& delta,
+                                TensorView& residual_delta) const
 {
-    // With a fused residual add, the activation operator has already undone
-    // the activation in place (its delta also feeds the skip branch), so
-    // batch norm must not apply dReLU again.
-    const bool relu_in_graph = fuse_relu && !fuse_add;
+    PROFILE_SCOPE("op:bn_bwd");
+
+    // Residual blocks try the forked graph (BN_infer + add -> dReLU, whose
+    // result is both a real output for the skip branch and the DBN input);
+    // every unforked path undoes the activation and copies the delta to the
+    // skip branch by hand before the plain batch-norm backward.
+    const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty();
 
 #ifdef HAVE_CUDNN_FRONTEND
     if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
@@ -551,11 +576,40 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
     {
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.bwd)
-            cudnn_fe::build_bn_backward(entry, cudnn_fe::bn_dims(input, features), relu_in_graph);
+        {
+            const cudnn_fe::BnDims dims = cudnn_fe::bn_dims(input, features);
+
+            if (want_fork)
+                try
+                {
+                    cudnn_fe::build_bn_backward(entry, dims, true, true);
+                    entry.bwd_forked = true;
+                }
+                catch (const exception&)
+                {
+                    entry.bwd_Bias     = nullptr;
+                    entry.bwd_Residual = nullptr;
+                    entry.bwd_DPre     = nullptr;
+                }
+
+            if (!entry.bwd)
+                cudnn_fe::build_bn_backward(entry, dims, fuse_relu && !fuse_add);
+        }
+
+        if (fuse_add && !entry.bwd_forked)
+        {
+            if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
+            if (!residual_delta.empty()) copy(delta, residual_delta);
+        }
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.bwd_DY]     = delta.data;
-        if (relu_in_graph) tensors[entry.bwd_Bias] = beta.data;
+        if (entry.bwd_Bias)     tensors[entry.bwd_Bias]     = beta.data;
+        if (entry.bwd_forked)
+        {
+            tensors[entry.bwd_Residual] = residual.data;
+            tensors[entry.bwd_DPre]     = residual_delta.data;
+        }
         tensors[entry.bwd_X]      = input.data;
         tensors[entry.bwd_Scale]  = gamma.data;
         tensors[entry.bwd_Mean]   = mean.data;
@@ -564,13 +618,20 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.bwd_DScale] = gamma_gradient.data;
         tensors[entry.bwd_DBias]  = beta_gradient.data;
 
+        cudnn_fe::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace);
+
         cudnn_fe::check_status(entry.bwd->execute(Backend::get_cudnn_handle(), tensors, entry.bwd_workspace),
                                "batchnorm backward execute");
     }))
         return;
 #endif
 
-    if (relu_in_graph) activation_backward(output, delta, ActivationFunction::ReLU);
+    if (fuse_add)
+    {
+        if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
+        if (!residual_delta.empty()) copy(delta, residual_delta);
+    }
+    else if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
 
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         Backend::get_cudnn_handle(),
@@ -592,7 +653,8 @@ void BatchNormOp::apply_inference_gpu(const TensorView&, TensorView&, const Tens
 void BatchNormOp::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&,
                                     const TensorView&)                                                   { throw runtime_error("BatchNorm::apply_training_gpu: CUDA support not compiled in."); }
 void BatchNormOp::apply_delta_gpu    (const TensorView&, const TensorView&, const TensorView&,
-                                    const TensorView&, TensorView&) const                               { throw runtime_error("BatchNorm::apply_delta_gpu: CUDA support not compiled in."); }
+                                    const TensorView&, const TensorView&, TensorView&,
+                                    TensorView&) const                                                  { throw runtime_error("BatchNorm::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
 

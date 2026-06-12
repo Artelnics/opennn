@@ -536,6 +536,8 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
                             TensorView& output,
                             cudnnActivationDescriptor_t fused_activation)
 {
+    PROFILE_SCOPE("op:conv_fwd");
+
 #ifdef HAVE_CUDNN_FRONTEND
     if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOp", [&](ConvGraphCache& cache)
@@ -553,11 +555,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
         tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
-        if (entry.fwd_autotune)
-        {
-            entry.fwd_autotune = false;
-            cudnn_fe::autotune_now(*entry.fwd, tensors, entry.fwd_workspace);
-        }
+        cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
 
         cudnn_fe::check_status(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
                                "forward execute");
@@ -609,6 +607,8 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
 {
+    PROFILE_SCOPE("op:conv_bwd");
+
     assert(output_delta.type == input.type);
     assert(weight_gradient.type == Type::FP32);
 
@@ -626,11 +626,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.wgrad_X]  = input.data;
         tensors[entry.wgrad_DW] = weight_gradient.data;
 
-        if (entry.wgrad_autotune)
-        {
-            entry.wgrad_autotune = false;
-            cudnn_fe::autotune_now(*entry.wgrad, tensors, entry.wgrad_workspace);
-        }
+        cudnn_fe::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace);
 
         cudnn_fe::check_status(entry.wgrad->execute(Backend::get_cudnn_handle(), tensors, entry.wgrad_workspace),
                                "wgrad execute");
@@ -644,11 +640,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         bgrad_tensors[entry.bgrad_DY] = output_delta.data;
         bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
 
-        if (entry.bgrad_autotune)
-        {
-            entry.bgrad_autotune = false;
-            cudnn_fe::autotune_now(*entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
-        }
+        cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
 
         cudnn_fe::check_status(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
                                "bgrad execute");
@@ -662,11 +654,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
 
-            if (entry.dgrad_autotune)
-            {
-                entry.dgrad_autotune = false;
-                cudnn_fe::autotune_now(*entry.dgrad, dgrad_tensors, entry.dgrad_workspace);
-            }
+            cudnn_fe::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace);
 
             cudnn_fe::check_status(entry.dgrad->execute(Backend::get_cudnn_handle(), dgrad_tensors, entry.dgrad_workspace),
                                    "dgrad execute");

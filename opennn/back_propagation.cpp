@@ -245,16 +245,23 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     TensorView& destination = layer_output_deltas[layer_index];
     if (!destination.data) return;
 
-    destination.setZero();
+    vector<const TensorView*> sources;
+    sources.reserve(edges.size());
 
     for (const auto& [consumer_layer, input_position] : edges)
     {
         const TensorView& source = backward_slots[consumer_layer][1 + input_position];
 
-        if (!source.data || source.size() != destination.size()) continue;
-
-        add(destination, source, destination);
+        if (source.data && source.size() == destination.size())
+            sources.push_back(&source);
     }
+
+    if (sources.empty())  { destination.setZero(); return; }
+    if (sources.size() == 1) { copy(*sources[0], destination); return; }
+
+    add(*sources[0], *sources[1], destination);
+    for (size_t i = 2; i < sources.size(); ++i)
+        add(destination, *sources[i], destination);
 }
 
 TensorView& BackPropagation::get_output_delta()

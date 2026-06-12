@@ -112,7 +112,8 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, cons
 
     check_status(graph.validate(), tag + " validate");
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
-    check_status(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A}), tag + " create_execution_plans");
+    check_status(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A, cudnn_frontend::HeurMode_t::FALLBACK}),
+                 tag + " create_execution_plans");
 
     const bool autotune = request_autotune
         && graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::ALL).is_good();
@@ -131,11 +132,16 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, cons
     return false;
 }
 
-// Times every built plan with a throwaway max-size workspace, keeps the
-// fastest, then allocates the persistent workspace for the chosen plan only.
+// On the first execution of an autotune-built graph: times every plan with a
+// throwaway max-size workspace, keeps the fastest, then allocates the
+// persistent workspace for the chosen plan only.
 template<typename TensorMap>
-inline void autotune_now(cudnn_frontend::graph::Graph& graph, TensorMap& tensors, void*& workspace)
+inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
+                         TensorMap& tensors, void*& workspace)
 {
+    if (!pending) return;
+    pending = false;
+
     void* tune_workspace = nullptr;
     try
     {
@@ -149,6 +155,35 @@ inline void autotune_now(cudnn_frontend::graph::Graph& graph, TensorMap& tensors
     const int64_t workspace_bytes = graph.get_workspace_size();
     if (workspace_bytes > 0)
         workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
+}
+
+// Autotune variant for graphs with in-place or state-updating tensors (batch
+// norm): times the plans on throwaway buffers so repeated execution cannot
+// corrupt training data.
+template<typename TensorMap>
+inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& graph,
+                                  const TensorMap& tensors, void*& workspace)
+{
+    if (!pending) return;
+
+    TensorMap scratch = tensors;
+    vector<void*> buffers;
+    buffers.reserve(scratch.size());
+
+    for (auto& [tensor, pointer] : scratch)
+    {
+        if (tensor->get_is_pass_by_value()) continue;
+
+        int64_t elements = 1;
+        for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
+
+        buffers.push_back(device::allocate(Device::CUDA, Index(elements * sizeof(float))));
+        pointer = buffers.back();
+    }
+
+    autotune_now(pending, graph, scratch, workspace);
+
+    for (void* buffer : buffers) device::deallocate(Device::CUDA, buffer, 0);
 }
 
 }  // namespace cudnn_fe

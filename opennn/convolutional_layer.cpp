@@ -135,9 +135,7 @@ void Convolutional::update_convolution_operator()
     batch_norm.fuse_add           = fuse_bn_add;
     batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;
     activation.forward_fused      = relu;
-    // The residual branch needs the post-activation delta materialized, so the
-    // activation backward runs unfused and batch norm forwards it to the skip.
-    activation.backward_fused     = fuse_bn_relu && !fuse_bn_add;
+    activation.backward_fused     = fuse_bn_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
