@@ -23,8 +23,8 @@ extract() { grep -oE "$1=[0-9.]+" | head -1 | cut -d= -f2; }
 echo "############ CIFAR-10 ResNet-50 training-speed benchmark (GPU) ############"
 echo "epochs=$EPOCHS batch=$BATCH"
 
-echo "==== OpenNN (CUDA, fp32, GPU-resident data) ===="
-o=$(OPENNN_GPU_RESIDENT_DATA=1 LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$DATA_DIR/train" "$EPOCHS" "$BATCH" fp32 2>/dev/null)
+echo "==== OpenNN (CUDA, fp32, GPU-resident data, CUDA graph) ===="
+o=$(OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$DATA_DIR/train" "$EPOCHS" "$BATCH" fp32 2>/dev/null)
 echo "$o" | grep -E "samples_per_sec|epoch_s|parameters|RESULT"
 ONN=$(echo "$o" | extract samples_per_sec)
 

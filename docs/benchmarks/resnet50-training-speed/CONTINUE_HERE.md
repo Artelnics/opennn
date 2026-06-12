@@ -1,7 +1,65 @@
-# ResNet-50 speed work — resume notes (updated 2026-06-12, late night)
+# ResNet-50 speed work — resume notes (updated 2026-06-13, early morning)
 
-Goal: close the gap to `torch.compile` (compiled PyTorch 5,772 samples/s;
-eager PyTorch 2,080).
+Goal: beat `torch.compile` (compiled PyTorch 5,772 samples/s; eager 2,080).
+
+## CURRENT STANDING: 5,235 median (5,288/5,235/5,140) — 91% of torch.compile
+
+Full session ladder (medians of 3, fp32 b128 RTX 3060 WSL):
+2,912 base → 3,842 conv autotune (+30%) → 4,373 residual fwd fusion + fork
+bwd (+14%) → 4,824 single-pass skip-join accumulate (+10%) → 4,863 BN
+autotune (+1%) → 5,048 biasless convs under BN (+4%) → **5,235 with
+OPENNN_CUDA_GRAPH=1 (+4%, now the benchmark default in run_resnet50.sh)**.
+2.5x over PyTorch eager. Tests at the 87 pre-existing failures throughout.
+
+Since the last entry:
+- **Fork bwd fusion**: BN bwd graph = BN_infer(X)(+ADD S) → RELU_BWD whose
+  output is BOTH real (written straight to the skip's delta slot) AND the
+  DBN input ("DADD" fork, sample `BN_inference DRelu DBN` / first backward
+  TEST_CASE in samples/cpp/norm/batchnorm.cpp). Per-entry try/catch fallback
+  (failed fork build clears the stale tensor attrs, rebuilds plain, manual
+  dReLU+copy) so the BN frontend can never be disabled by it.
+- **accumulate_output_deltas**: gathers valid sources, then one
+  add(s0,s1,dest) (+ chained adds for >2) instead of setZero+add-per-edge.
+- **BN graph autotune** via `cudnn_fe::autotune_with_scratch` (times plans on
+  throwaway buffers — REQUIRED because BN bwd is in-place and BN fwd updates
+  running stats; never autotune those on live data).
+- **Biasless convs**: `ConvolutionOp::use_bias=false` when BN follows (BN
+  beta absorbs it; matches torchvision bias=False). Kills the per-conv bgrad
+  reduction graph (53 graph executions/step) + the fwd bias add. Param count
+  drops by exactly the 26,560 biases.
+- **OPENNN_CUDA_GRAPH=1 now pays** (+4%) — it was neutral before the step
+  became launch-overhead-sensitive; re-test config levers after big changes.
+
+## Measured budgets (the map for the last 10%)
+
+PyTorch bare-conv budget on the exact 53 shapes (pt_conv_budget.py, CUDA
+events, channels_last+TF32+benchmark): **fwd 4.35 + bwd 13.2 = 17.5 ms/step**.
+Compiled total 22.2 ms/step. Our step at 5,235/s = 24.4 ms.
+
+Our split (profile_split.log scopes, pre-bias-removal, profiled epoch):
+op:conv_bwd 10.5 ms (FASTER than torch's 13.2!), op:conv_fwd 6.45 (torch
+4.35), **op:bn_fwd 4.3 + op:bn_bwd 4.9 vs ~2.5 roofline** — BN graphs are
+the remaining excess; adam 2.0 (fp32 roofline), accumulate ~1.2.
+
+## RULED OUT
+
+- conv+genstats / ConvBNfprop restructure (stats free during conv): the
+  runtime-fusion genstats engines are **HALF-I/O ONLY** (see SBRCS sample,
+  samples/cpp/convolution/fprop.cpp — io=HALF). Dead for the fp32 protocol.
+- NVIDIA_TF32_OVERRIDE (either value), Adam (roofline), CUDA-graph pre-fusion.
+
+## Next leads for the last ~10%
+
+1. **nsys --cuda-graph-trace=node on native Windows** (admin terminal; see
+   ../training-speed memory notes) — exact kernel-time map of the captured
+   step; identifies whether bn kernels or specific conv shapes hold the rest.
+2. **Custom fused BN kernels** (hand CUDA): cudnn's BN engines are ~2x off
+   roofline at our small spatial sizes; a hand-written two-pass BN
+   (vectorized, fused add+relu, one block per channel) could halve bn time
+   (~+8-9%). Write bn_fwd/bn_bwd kernels in kernel_layers.cu and use them
+   instead of the frontend graphs (keep graphs as fallback).
+3. conv_fwd excess vs torch (6.45 vs 4.35 pre-bias; re-profile post-bias) —
+   per-shape comparison via an extended pt_conv_budget + per-shape scopes.
 
 ## DONE: block-end residual fusion — 4,312/4,026/3,959, median ~4,026 (+5% on
 ## top of autotune; spreads don't overlap, so real)
