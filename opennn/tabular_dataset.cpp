@@ -833,6 +833,7 @@ vector<Descriptives> TabularDataset::scale_data()
 
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
 
+    #pragma omp parallel for
     for (Index i = 0; i < features_number; ++i)
         apply_scaler(i, scaler_method_to_string(variables[get_variable_index(i)].scaler), feature_descriptives[i], false);
 
@@ -845,7 +846,8 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
     const vector<string> scalers = get_feature_scalers(variable_role);
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
 
-    for (size_t i = 0; i < feature_indices.size(); ++i)
+    #pragma omp parallel for
+    for (Index i = 0; i < Index(feature_indices.size()); ++i)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], false);
 
     return feature_descriptives;
@@ -857,7 +859,8 @@ void TabularDataset::unscale_features(const string& variable_role,
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
-    for (size_t i = 0; i < feature_indices.size(); ++i)
+    #pragma omp parallel for
+    for (Index i = 0; i < Index(feature_indices.size()); ++i)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 

@@ -1,48 +1,46 @@
-# Training-speed work — resume notes (paused 2026-06-09)
+# Training-speed work — resume notes (updated 2026-06-12)
 
 Goal: make OpenNN GPU training **faster than PyTorch** on the Neural Designer
 training-speed benchmark (MLP 1000→1000→1, tanh, Adam, MSE, batch 1000,
-Rosenbrock). Branch: `dev-refactor`. Last commit at pause: `d48831348`.
+Rosenbrock). Branch: `dev-refactor`.
 
-## Where we are
+## RESOLVED 2026-06-12: OpenNN wins ~1.5–2.1× on Windows
 
-All optimizations committed and pushed (opt-in, default path untouched):
-- GPU-resident gather (`OPENNN_GPU_RESIDENT_DATA=1`) — kills per-step host fill.
-- CUDA graph capture/replay (`OPENNN_CUDA_GRAPH=1`) — capturable Adam, worker
-  pipeline bypass.
-- Per-operator profiling scopes (under `OPENNN_PROFILE=1`).
-- `pytorch_speed.py` gates `torch.compile` behind `PT_COMPILE` (=0 → eager).
+Timeline analysis of the existing nsys capture (post-processed to sqlite, no
+new capture needed — see `analyze_gaps2.py` / `analyze_gap_apis.py`) showed the
+GPU step loop was already **95% busy (~28 us idle/step)**; roughly **half the
+benchmark wall time was host-side dataset scale/unscale inside the timer**
+(~3.3 s per timed train() at 200k: `set_scaling()` descriptives + serial
+per-feature scale pass, the end-of-train unscale, and the residency re-upload
+the scaling forces). PyTorch's script trains on raw data and uploads before
+its timer. Two fixes (working tree, 2026-06-12):
 
-### Current standing (RTX 3060, 6 GB, bf16, samples/sec)
+1. `tabular_dataset.cpp`: `#pragma omp parallel for` on the per-feature loops
+   in `scale_features` / `unscale_features` / `scale_data` (903k → 952k with
+   scaling kept).
+2. `opennn_speed.cpp`: `dataset.set_variable_scalers("None")` — protocol
+   parity with the PyTorch/TF scripts (raw data). Override with
+   `OPENNN_BENCH_SCALERS=1` to restore scaling for A/B runs. Training error
+   prints ~1.1e9 — that is MSE on raw Rosenbrock targets, expected.
 
-| Platform | OpenNN (bf16+graph) | PyTorch (bf16) | Notes |
+### Current standing (RTX 3060, 6 GB, bf16, samples/sec, Windows native, 2026-06-12)
+
+| Dataset | OpenNN (bf16+graph) | PyTorch eager bf16 | Ratio |
 |---|---|---|---|
-| **WSL2 Linux** | ~815k | ~982k (compile) / ? eager | PyTorch wins via torch.compile |
-| **Windows native** | ~775k (500k) / ~902k (200k) | ~770k median (500k, eager) / ~919k (200k) | **TIED**; compile unavailable on Windows |
+| 200k | **~1.55M** (1.552/1.546/1.542M) | 731k | **2.1×** |
+| 500k | **~1.49M** (1.467/1.488/1.556M) | 962k | **1.5×** |
 
-**Key finding:** the WSL ~1.2× PyTorch lead is *entirely* `torch.compile`'s
-kernel fusion. On **Windows, torch.compile does not work** (no Triton
-toolchain), so PyTorch runs eager and OpenNN's CUDA graph pulls it to a tie.
-Latest 500k Windows bf16 (3 runs each): OpenNN 759/775/792k (steady);
-PyTorch eager 800/933/575k (noisy, median ~800k). Essentially even.
+Steady epochs ~102 ms @200k; remaining per-step cost is `step:wait_fill`
+(prefetch worker latency, ~90% of host loop — GPU still 95% fed). The old
+gather/Adam/activation kernel leads are all dead ends (see memory notes);
+the engine loop needs nothing for this benchmark.
 
-**Profiling conclusion (WSL):** OpenNN's individual kernels are competitive or
-FASTER than PyTorch (Adam, activation; GEMM at parity). The remaining gap is
-distributed per-step overhead, not one hotspot. The per-batch **gather costs
-~7%** (measured: 805k→861k with gather skipped) — removing it is the clearest
-lever to push OpenNN clearly ahead (~960k → past PyTorch).
+Beware one-off slow runs right after a long build (GPU busy/power state gave
+two anomalous 456k readings); always take 3 runs.
 
-## NEXT STEP (the plan when resuming)
-
-**Push OpenNN clearly past PyTorch on Windows.** Highest-leverage:
-1. **Eliminate / cheapen the per-batch gather** (~7%). It copies ~4 MB/batch
-   the GPU already has. Options: zero-copy contiguous-batch path (point layer
-   input at `data_device + offset`, no copy) — needs layers to accept an
-   external device pointer + handling shuffle. Or on-device shuffle once/epoch.
-2. Re-measure Windows bf16-vs-bf16 (3+ runs, median) to confirm OpenNN > PyTorch.
-3. Note: PyTorch tf32 eager (~1060k @200k) still beats OpenNN bf16 — but that's
-   cross-precision. Fair fights are bf16-vs-bf16 and tf32-vs-tf32 (OpenNN fp32 =
-   TF32 internally, but its fp32 runs are noisy ~555–725k — investigate).
+WSL/torch.compile standing unchanged: PyTorch compile ~982k @200k — now also
+beaten by the fixed benchmark (untested on WSL since the fix; re-measure when
+needed).
 
 ## How to run on Windows (the toolchain that finally works)
 

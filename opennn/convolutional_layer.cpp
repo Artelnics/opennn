@@ -106,10 +106,13 @@ void Convolutional::update_convolution_operator()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
-    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
-                           && !batch_norm.active();
-    convolution.fused_activation = fuse_relu ? activation.descriptor : nullptr;
-    activation.forward_fused     = fuse_relu;
+    const bool relu = (activation.function == ActivationOp::Function::ReLU);
+    const bool fuse_bn_relu = relu && batch_norm.active();
+
+    convolution.fused_activation = (relu && !batch_norm.active()) ? activation.descriptor : nullptr;
+    batch_norm.fuse_relu         = fuse_bn_relu;
+    activation.forward_fused     = relu;
+    activation.backward_fused    = fuse_bn_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,

@@ -346,13 +346,15 @@ target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
 
-# operators.cpp pulls in cudnn-frontend, which has names (`half`, `bfloat16`)
-# that collide with Eigen names brought into global scope by pch.h's
-# `using namespace Eigen`. Disable PCH on this TU so cudnn-frontend is parsed
-# in a clean scope and the file picks up Eigen/std the regular way.
+# These operator TUs pull in cudnn-frontend, which has names (`half`,
+# `bfloat16`) that collide with Eigen names brought into global scope by
+# pch.h's `using namespace Eigen`. Disable PCH on them so cudnn-frontend is
+# parsed in a clean scope and the files pick up Eigen/std the regular way.
 if(OPENNN_HAS_CUDA)
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/operators.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/batch_norm_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/convolution_operator.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
     )
 endif()

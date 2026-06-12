@@ -49,6 +49,8 @@ int main(int argc, char* argv[])
 
         TabularDataset dataset(csv_path, ",", false, false);
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);
+        if (!std::getenv("OPENNN_BENCH_SCALERS"))
+            dataset.set_variable_scalers("None");  // PyTorch/TF train on raw data; keep the protocols identical
         const Index samples = dataset.get_samples_number();
 
         std::cout << "samples=" << samples << " features=" << features

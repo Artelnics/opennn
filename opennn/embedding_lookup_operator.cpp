@@ -1,0 +1,120 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   E M B E D D I N G   L O O K U P   O P E R A T O R   S O U R C E
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "embedding_lookup_operator.h"
+#include "device_backend.h"
+#include "json.h"
+#include "random_utilities.h"
+#include "tensor_operations.h"
+#include "string_utilities.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
+#include "profiler.h"
+
+namespace opennn
+{
+
+void EmbeddingLookupOp::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
+{
+    vocabulary_size     = new_vocabulary_size;
+    sequence_length     = new_sequence_length;
+    embedding_dimension = new_embedding_dimension;
+}
+
+vector<TensorSpec> EmbeddingLookupOp::parameter_specs() const
+{
+    return {{{vocabulary_size, embedding_dimension}, Type::FP32}};
+}
+
+vector<TensorSpec> EmbeddingLookupOp::state_specs() const
+{
+    if (!add_positional_encoding) return {};
+    return {{{sequence_length, embedding_dimension}, Type::FP32}};
+}
+
+void EmbeddingLookupOp::link_parameters(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    weights = views[0];
+}
+
+void EmbeddingLookupOp::link_gradients(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    weight_gradient = views[0];
+}
+
+void EmbeddingLookupOp::link_states(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    const bool needs_init = positional_encoding.data == nullptr;
+    positional_encoding = views[0];
+    if (needs_init) init_positional_encoding();
+}
+
+void EmbeddingLookupOp::set_parameters_random()
+{
+    if (weights.empty()) return;
+    MatrixMap weights_matrix = weights.as_matrix();
+    set_random_normal(weights_matrix, 0.0f, 1.0f);
+    weights_matrix.row(0).setZero();
+}
+
+void EmbeddingLookupOp::set_parameters_glorot()
+{
+    if (weights.empty()) return;
+    const float limit = glorot_limit(vocabulary_size, embedding_dimension);
+    set_random_uniform(weights.as_vector(), -limit, limit);
+    weights.as_matrix().row(0).setZero();
+}
+
+void EmbeddingLookupOp::init_positional_encoding()
+{
+    if (!add_positional_encoding) return;
+    if (positional_encoding.empty() || !positional_encoding.data) return;
+
+    float* table = positional_encoding.as<float>();
+    const Index half   = embedding_dimension / 2;
+    const float half_f = float(embedding_dimension) / 2.0f;
+
+    VectorR divisors(embedding_dimension);
+    for (Index j = 0; j < embedding_dimension; ++j)
+        divisors(j) = pow(10000.0f, (j < half ? j : j - half) / half_f);
+
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < sequence_length; ++i)
+        for (Index j = 0; j < embedding_dimension; ++j)
+            table[i * embedding_dimension + j] = (j < half)
+                ? sin(i / divisors(j))
+                : cos(i / divisors(j));
+}
+
+void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+{
+    const TensorView& indices = get_input(fp, layer);
+    TensorView& output        = get_output(fp, layer);
+
+    embedding_lookup_forward(indices, weights, positional_encoding, output,
+                             sequence_length, embedding_dimension, vocabulary_size,
+                             scale_embedding, add_positional_encoding);
+}
+
+void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+{
+    const TensorView& indices      = get_input(fp, layer);
+    const TensorView& output_delta = get_output_delta(bp, layer);
+
+    embedding_lookup_backward(indices, output_delta, weight_gradient,
+                              embedding_dimension, vocabulary_size, scale_embedding);
+}
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.
