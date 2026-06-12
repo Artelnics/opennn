@@ -29,6 +29,7 @@ struct ConvolutionOp : Operator
     Index padding_width = 0;
 
     Type compute_dtype = Type::FP32;
+    bool use_bias = true;
 
     TensorView weights;
     TensorView bias;

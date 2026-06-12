@@ -107,6 +107,8 @@ void Convolutional::set_residual(bool new_residual)
 
 void Convolutional::update_convolution_operator()
 {
+    convolution.use_bias = !batch_norm.active();
+
     convolution.set(input_height, input_width,
                     kernels_number, kernel_height, kernel_width, kernel_channels,
                     row_stride, column_stride,

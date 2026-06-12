@@ -164,23 +164,28 @@ krsc_tensor(cudnn_frontend::graph::Graph& graph, const char* name, const Dims& d
                         .set_stride(krsc_strides(d)));
 }
 
-void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d, bool fuse_relu)
+void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
+                   bool fuse_relu, bool use_bias)
 {
     auto graph = new_graph();
 
     entry.fwd_X = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
     entry.fwd_W = krsc_tensor(*graph, "W", d);
-    entry.fwd_B = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                                .set_name("B")
-                                .set_dim({1, d.kernels, 1, 1})
-                                .set_stride({d.kernels, 1, d.kernels, d.kernels}));
 
-    auto convolved = graph->conv_fprop(entry.fwd_X, entry.fwd_W,
-                                       conv_attributes<cudnn_frontend::graph::Conv_fprop_attributes>(d));
+    entry.fwd_Y = graph->conv_fprop(entry.fwd_X, entry.fwd_W,
+                                    conv_attributes<cudnn_frontend::graph::Conv_fprop_attributes>(d));
 
-    entry.fwd_Y = graph->pointwise(convolved, entry.fwd_B,
-                                   cudnn_frontend::graph::Pointwise_attributes()
-                                   .set_mode(cudnn_frontend::PointwiseMode_t::ADD));
+    if (use_bias)
+    {
+        entry.fwd_B = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
+                                    .set_name("B")
+                                    .set_dim({1, d.kernels, 1, 1})
+                                    .set_stride({d.kernels, 1, d.kernels, d.kernels}));
+
+        entry.fwd_Y = graph->pointwise(entry.fwd_Y, entry.fwd_B,
+                                       cudnn_frontend::graph::Pointwise_attributes()
+                                       .set_mode(cudnn_frontend::PointwiseMode_t::ADD));
+    }
 
     if (fuse_relu)
         entry.fwd_Y = graph->pointwise(entry.fwd_Y,
@@ -270,6 +275,10 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
 
 vector<TensorSpec> ConvolutionOp::parameter_specs() const
 {
+    // The bias is redundant under batch normalization (its beta absorbs it).
+    if (!use_bias)
+        return {{{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype}};
+
     return {
         {{kernels_number}, compute_dtype},
         {{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype},
@@ -278,16 +287,16 @@ vector<TensorSpec> ConvolutionOp::parameter_specs() const
 
 void ConvolutionOp::link_parameters(span<const TensorView> views)
 {
-    if (views.size() < 2) return;
-    bias    = views[0];
-    weights = views[1];
+    if (views.empty()) return;
+    bias    = use_bias ? views[0] : TensorView{};
+    weights = views[use_bias ? 1 : 0];
 }
 
 void ConvolutionOp::link_gradients(span<const TensorView> views)
 {
-    if (views.size() < 2) return;
-    bias_gradient   = views[0];
-    weight_gradient = views[1];
+    if (views.empty()) return;
+    bias_gradient   = use_bias ? views[0] : TensorView{};
+    weight_gradient = views[use_bias ? 1 : 0];
 }
 
 void ConvolutionOp::set_parameters_random()
@@ -363,7 +372,7 @@ array<pair<Index, Index>, 4> ConvolutionOp::nhwc_padding() const
 void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
 {
     const TensorMap4 inputs = input.as_tensor<4>();
-    const VectorMap biases = bias.as_vector();
+    const VectorMap biases = use_bias ? bias.as_vector() : VectorMap(nullptr, 0);
 
     const Index batch_size = inputs.dimension(0);
 
@@ -386,15 +395,16 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
     {
         const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
+        const float bias_value = use_bias ? biases(kernel_index) : 0.0f;
 
         if (row_stride == 1 && column_stride == 1)
             outputs.chip(kernel_index, 3).device(get_device()) =
-                padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
+                padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + bias_value;
         else
             outputs.chip(kernel_index, 3).device(get_device()) =
                 padded_inputs.convolve(kernel_map, conv_dims)
                              .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
-                             .reshape(out_slice_shape) + biases(kernel_index);
+                             .reshape(out_slice_shape) + bias_value;
     }
 }
 
@@ -409,11 +419,11 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
     const TensorMap4 inputs        = input.as_tensor<4>();
     const TensorMap4 output_deltas = output_delta.as_tensor<4>();
 
-    VectorMap bias_gradients = bias_gradient.as_vector();
+    VectorMap bias_gradients = use_bias ? bias_gradient.as_vector() : VectorMap(nullptr, 0);
     TensorMap4 weight_gradients = weight_gradient.as_tensor<4>();
     const TensorMap4 kernels = weights.as_tensor<4>();
 
-    bias_gradients.setZero();
+    if (use_bias) bias_gradients.setZero();
     weight_gradients.setZero();
 
     const bool write_input_delta = !input_delta.empty();
@@ -434,7 +444,7 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
                 for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
                 {
                     const float delta = output_deltas(image_index, output_row, output_column, kernel_index);
-                    bias_gradients(kernel_index) += delta;
+                    if (use_bias) bias_gradients(kernel_index) += delta;
 
                     for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
                     {
@@ -547,12 +557,12 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
             // The only fused activation the layer requests is ReLU
             // (see Convolutional::configure_operators).
             cudnn_fe::build_forward(entry, cudnn_fe::make_dims(*this, input.shape[0]),
-                                    fused_activation != nullptr);
+                                    fused_activation != nullptr, use_bias);
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.fwd_X] = input.data;
         tensors[entry.fwd_W] = weights.data;
-        tensors[entry.fwd_B] = bias.data;
+        if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
         cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
@@ -596,11 +606,12 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
                                         &zero,
                                         output.get_descriptor(), output.data));
 
-    CHECK_CUDNN(cudnnAddTensor(Backend::get_cudnn_handle(),
-                               &one,
-                               bias.get_descriptor(), bias.data,
-                               &one,
-                               output.get_descriptor(), output.data));
+    if (use_bias)
+        CHECK_CUDNN(cudnnAddTensor(Backend::get_cudnn_handle(),
+                                   &one,
+                                   bias.get_descriptor(), bias.data,
+                                   &one,
+                                   output.get_descriptor(), output.data));
 }
 
 void ConvolutionOp::apply_delta_gpu(const TensorView& input,
@@ -631,19 +642,22 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         cudnn_fe::check_status(entry.wgrad->execute(Backend::get_cudnn_handle(), tensors, entry.wgrad_workspace),
                                "wgrad execute");
 
-        // cudnnConvolutionBackwardBias is pathologically slow on NHWC
-        // deltas (~2 ms for a 16-channel reduction); use a frontend
-        // reduction graph instead.
-        if (!entry.bgrad) cudnn_fe::build_bgrad(entry, dims);
+        if (use_bias)
+        {
+            // cudnnConvolutionBackwardBias is pathologically slow on NHWC
+            // deltas (~2 ms for a 16-channel reduction); use a frontend
+            // reduction graph instead.
+            if (!entry.bgrad) cudnn_fe::build_bgrad(entry, dims);
 
-        unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
-        bgrad_tensors[entry.bgrad_DY] = output_delta.data;
-        bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
+            unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
+            bgrad_tensors[entry.bgrad_DY] = output_delta.data;
+            bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
 
-        cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
+            cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
 
-        cudnn_fe::check_status(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
-                               "bgrad execute");
+            cudnn_fe::check_status(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
+                                   "bgrad execute");
+        }
 
         if (input_delta.data && input_delta.size() != 0)
         {
@@ -691,23 +705,26 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         &zero,
         kernel_descriptor, weight_gradient_buffer));
 
-    TensorView output_delta_for_bias = output_delta;
-
-    if (bf16)
+    if (use_bias)
     {
-        float* const output_delta_fp32 = ensure_bf16_to_fp32_workspace(output_delta.size());
-        cast_bf16_to_fp32_cuda(output_delta.size(),
-                               output_delta.as<bfloat16>(),
-                               output_delta_fp32);
+        TensorView output_delta_for_bias = output_delta;
 
-        output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32, Device::CUDA);
+        if (bf16)
+        {
+            float* const output_delta_fp32 = ensure_bf16_to_fp32_workspace(output_delta.size());
+            cast_bf16_to_fp32_cuda(output_delta.size(),
+                                   output_delta.as<bfloat16>(),
+                                   output_delta_fp32);
+
+            output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32, Device::CUDA);
+        }
+
+        CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
+            &one,
+            output_delta_for_bias.get_descriptor(), output_delta_for_bias.data,
+            &zero,
+            bias_gradient.get_descriptor(), bias_gradient.data));
     }
-
-    CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
-        &one,
-        output_delta_for_bias.get_descriptor(), output_delta_for_bias.data,
-        &zero,
-        bias_gradient.get_descriptor(), bias_gradient.data));
 
     if (bf16)
         cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_workspace, weight_gradient.as_float());
