@@ -84,6 +84,10 @@ struct ConvolutionOp::ConvGraphCache
         void* wgrad_workspace = nullptr;
         void* bgrad_workspace = nullptr;
         void* dgrad_workspace = nullptr;
+        bool fwd_autotune = false;
+        bool wgrad_autotune = false;
+        bool bgrad_autotune = false;
+        bool dgrad_autotune = false;
     };
 
     map<Index, Entry> entries;
@@ -185,7 +189,7 @@ void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d, b
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    finalize(*graph, entry.fwd_workspace, "forward");
+    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace, "forward", autotune_enabled());
     entry.fwd = graph;
 }
 
@@ -202,7 +206,7 @@ void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
 
-    finalize(*graph, entry.wgrad_workspace, "wgrad");
+    entry.wgrad_autotune = finalize(*graph, entry.wgrad_workspace, "wgrad", autotune_enabled());
     entry.wgrad = graph;
 }
 
@@ -219,7 +223,7 @@ void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    finalize(*graph, entry.bgrad_workspace, "bgrad");
+    entry.bgrad_autotune = finalize(*graph, entry.bgrad_workspace, "bgrad", autotune_enabled());
     entry.bgrad = graph;
 }
 
@@ -234,7 +238,7 @@ void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                                        conv_attributes<cudnn_frontend::graph::Conv_dgrad_attributes>(d));
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    finalize(*graph, entry.dgrad_workspace, "dgrad");
+    entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace, "dgrad", autotune_enabled());
     entry.dgrad = graph;
 }
 
@@ -549,6 +553,12 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
         tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
+        if (entry.fwd_autotune)
+        {
+            entry.fwd_autotune = false;
+            cudnn_fe::autotune_now(*entry.fwd, tensors, entry.fwd_workspace);
+        }
+
         cudnn_fe::check_status(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
                                "forward execute");
     }))
@@ -616,6 +626,12 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.wgrad_X]  = input.data;
         tensors[entry.wgrad_DW] = weight_gradient.data;
 
+        if (entry.wgrad_autotune)
+        {
+            entry.wgrad_autotune = false;
+            cudnn_fe::autotune_now(*entry.wgrad, tensors, entry.wgrad_workspace);
+        }
+
         cudnn_fe::check_status(entry.wgrad->execute(Backend::get_cudnn_handle(), tensors, entry.wgrad_workspace),
                                "wgrad execute");
 
@@ -628,6 +644,12 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         bgrad_tensors[entry.bgrad_DY] = output_delta.data;
         bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
 
+        if (entry.bgrad_autotune)
+        {
+            entry.bgrad_autotune = false;
+            cudnn_fe::autotune_now(*entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
+        }
+
         cudnn_fe::check_status(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
                                "bgrad execute");
 
@@ -639,6 +661,12 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
             dgrad_tensors[entry.dgrad_DY] = output_delta.data;
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
+
+            if (entry.dgrad_autotune)
+            {
+                entry.dgrad_autotune = false;
+                cudnn_fe::autotune_now(*entry.dgrad, dgrad_tensors, entry.dgrad_workspace);
+            }
 
             cudnn_fe::check_status(entry.dgrad->execute(Backend::get_cudnn_handle(), dgrad_tensors, entry.dgrad_workspace),
                                    "dgrad execute");

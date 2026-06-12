@@ -1,7 +1,31 @@
-# ResNet-50 speed work — resume notes (updated 2026-06-12, evening)
+# ResNet-50 speed work — resume notes (updated 2026-06-12, night)
 
-Goal: close the 2x gap to `torch.compile` (OpenNN ~2,930 samples/s vs compiled
-PyTorch 5,772; eager PyTorch 2,080 already beaten).
+Goal: close the gap to `torch.compile` (compiled PyTorch 5,772 samples/s;
+eager PyTorch 2,080).
+
+## DONE 2026-06-12 night: conv engine autotuning — +30%, OpenNN at ~3,850
+
+**3,903/3,842/3,705 samples/s (12.8 s/epoch)** vs ~2,950 before. Now 1.9x
+faster than PyTorch eager; remaining gap to torch.compile is 1.48x.
+
+Implementation (`cudnn_frontend_utilities.h` + `convolution_operator.cpp`):
+`finalize(..., request_autotune)` builds ALL candidate plans
+(`BuildPlanPolicy_t::ALL`); on each conv graph's first execution
+`cudnn_fe::autotune_now()` times every plan with a THROWAWAY max-size
+workspace, keeps the fastest (frontend `Graph::autotune`), then allocates the
+persistent workspace for the winner only. This is the `cudnn.benchmark=True`
+equivalent. Conv graphs only (pure → safe to execute repeatedly); BN graphs
+deliberately excluded (in-place backward DY==DX would corrupt step-1
+gradients if executed ~100x). `OPENNN_CONV_AUTOTUNE=0` disables. GOTCHA: do
+NOT pre-allocate `get_autotune_workspace_size()` per graph at build time —
+max-over-all-plans for ~90 graphs OOMs the 6 GB card (that bug cost one run).
+
+Probes that settled the diagnosis (all on WSL, fp32 b128):
+- `NVIDIA_TF32_OVERRIDE=0` → 745/s (4x slower) → our convs were ALREADY on
+  TF32 tensor cores; precision parity with PyTorch, not the gap.
+- `NVIDIA_TF32_OVERRIDE=1` → 1,266/s — breaks engine selection, never use.
+- `OPENNN_CUDA_GRAPH=1` → 2,680/s pre-autotune, 3,654/s post-autotune —
+  capture works (sane training) but never helps; loop is kernel-bound.
 
 ## DONE 2026-06-12: BN+ReLU fusion implemented — wall-clock NEUTRAL
 
@@ -49,22 +73,18 @@ vector — dead lead). Post-fusion profile (fp32 b128, profiling run ~14.2 s/ep)
   engine selection; don't retry.
 - BN+ReLU and any other pointwise-launch elimination: GPU is conv-bound.
 
-## Next leads (in order)
+## Next leads for the remaining 1.48x (in order)
 
-1. **nsys kernel-level profile, native Windows** (nsys broken under WSL):
-   need the resnet bench built on Windows (no cmake target — hand-link like
-   WSL, see below) + cifar10 copied from WSL. Question to answer: are our
-   fp32 conv engines TF32 tensor-core kernels (names like
-   `sm80_xmma_*tf32f32*`) like PyTorch's, or strict-fp32 ones? PyTorch
-   defaults `cudnn.allow_tf32=True` for convs; our frontend graphs request
-   FLOAT compute (TF32 eligibility is engine-internal; this frontend version
-   has no TF32 datatype/knob — only numeric-note filtering).
-2. **Engine autotuning**: PyTorch sets `cudnn.benchmark=True` (times engines,
-   picks best); our `finalize()` takes heuristic-A first choice
-   (`HEURISTICS_CHOICE`). Try `HeurMode_t::B` and/or frontend autotune API.
-3. **accumulate_output_deltas** (5.9%, 33,930 calls/epoch) — skip-connection
-   delta accumulation; could fold the add into conv dgrad epilogue or the
-   fused BN bwd graph (cross-layer, invasive).
+1. **Re-profile post-autotune** (OPENNN_PROFILE first, then nsys on native
+   Windows if needed — nsys broken under WSL): the conv-share of the epoch
+   has changed; find the new top cost before acting.
+2. **accumulate_output_deltas** (was 5.9%, 33,930 calls/epoch) and the
+   standalone block-end Addition+ReLU layers — fusion candidates (BN+add+ReLU
+   epilogue, step 3 of the original sketch; cross-layer, invasive).
+3. **Autotune the BN graphs safely**: needs a scratch delta buffer for the
+   in-place backward during timing, or autotune only the (pure) forward.
+4. torch.compile additionally fuses ALL pointwise ops via Triton and removes
+   eager overhead; after 1-3, what remains is that fused-everything margin.
 
 ## Where things run
 
