@@ -1,31 +1,34 @@
-# GPU ResNet-50 training speed: OpenNN vs PyTorch (CIFAR-10)
+# GPU ResNet-50 training speed: OpenNN vs PyTorch (CIFAR-10 / CIFAR-100)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-13. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU, CUDA 12.9, cuDNN 9.23.*
 
 The [MNIST CNN note](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)
 measures a minimal convolutional network. This note scales the same question
 to a **real architecture**: ResNet-50 — 53 convolutions, 53 batch
-normalizations, residual connections, 23.5M parameters — trained on CIFAR-10
-with identical configuration in both frameworks.
+normalizations, residual connections, 23.5M parameters — trained on CIFAR with
+identical configuration in both frameworks.
 
 ## The result
 
-Training throughput on 50,000 CIFAR-10 images (32×32×3), batch 128, fp32,
-cross-entropy + Adam, timed after warmup (medians of three timed runs on one
-session):
+Training throughput on 50,000 CIFAR images (32×32×3), batch 128, fp32,
+cross-entropy + Adam, timed after warmup (medians of three timed runs, all
+three engines on one session). CIFAR-100 differs only in the classifier head
+(2048→100 instead of 2048→10) and is run on the identical 32×32 workload:
 
-| | Epoch time | Samples/s |
-|---|---:|---:|
-| **OpenNN** (CUDA graph, fp32, GPU-resident data) | **5.9 s** | **8,433** |
-| PyTorch `torch.compile` (fp32) | 9.5 s | 5,268 |
-| PyTorch (eager fp32) | 12.6 s | 3,960 |
+| Dataset | OpenNN (CUDA graph) | `torch.compile` | PyTorch eager | OpenNN vs compile / eager |
+|---|---:|---:|---:|---|
+| **CIFAR-10** | **8,433** | 5,268 | 3,960 | 1.6× / 2.1× |
+| **CIFAR-100** | **8,702** | 5,000 | 4,124 | 1.7× / 2.1× |
 
-**OpenNN trains ResNet-50 1.6× faster than `torch.compile` and 2.1× faster
-than eager PyTorch** on the same GPU, with the same architecture (the PyTorch
-model is written out to match torchvision's resnet50 v1.5 exactly; parameter
-counts agree at 23.5M) and the same data residency. Training is real:
-cross-entropy descends from 2.3 at initialization to ≈1.0 within three epochs
-in both engines.
+**OpenNN trains ResNet-50 ~1.6–1.7× faster than `torch.compile` and ~2.1×
+faster than eager PyTorch** on the same GPU, with the same architecture (the
+PyTorch model is written out to match torchvision's resnet50 v1.5 exactly;
+parameter counts agree to the dense-bias rounding — 23,712,944 vs 23,712,932 on
+CIFAR-100) and the same data residency. The two datasets land in the same band
+because the cost is the 32×32 convolutional workload, which the 10→100 head
+change leaves untouched. Training is real: cross-entropy descends from its
+random-init value (≈2.3 on 10 classes, ≈4.6 on 100) toward ≈1.0 / ≈1.8 within
+three epochs in both engines.
 
 This is the headline number after a full optimization pass. The first run of
 this benchmark was 2,912 samples/s; the section below traces how it got from
@@ -82,8 +85,8 @@ the 614 MB dataset once and gathers batches device-side.
 
 | | Value |
 |---|---|
-| Data | CIFAR-10 train split: 50,000 BMPs, 32×32×3, 10 classes |
-| Network | ResNet-50 v1.5: conv 7×7/2 → maxpool 3×3/2 → bottleneck stages [3,4,6,3] → Dense 10 (softmax) |
+| Data | CIFAR-10 / CIFAR-100 train split: 50,000 BMPs, 32×32×3, 10 / 100 classes |
+| Network | ResNet-50 v1.5: conv 7×7/2 → maxpool 3×3/2 → bottleneck stages [3,4,6,3] → Dense 10/100 (softmax) |
 | Loss / optimizer | cross-entropy, Adam (lr 0.001), no regularization |
 | Protocol | shuffled epochs, 2 warmup epochs, timed epochs after |
 | Precision | fp32, framework-default TF32 policy |
@@ -91,9 +94,13 @@ the 614 MB dataset once and gathers batches device-side.
 
 On 32×32 inputs the standard ImageNet stem reduces the final feature map to
 1×1×2048, so the global average pool is the identity and is omitted on the
-OpenNN side; the PyTorch model keeps its (no-op) `AdaptiveAvgPool2d(1)`.
-OpenNN's convolutions carry biases (23,555,088 parameters vs PyTorch's
-23,528,522 bias-free convs) — extra work OpenNN does, not an advantage.
+OpenNN side; the PyTorch model keeps its (no-op) `AdaptiveAvgPool2d(1)`. Both
+models drop the convolution biases under batch normalization (its β absorbs
+them, matching torchvision's `bias=False`), so the parameter counts agree to
+the dense-bias rounding. Softmax + cross-entropy is fused on both sides (the
+gradient is the collapsed `softmax_output − target`), so neither engine
+materializes a softmax-Jacobian — the 10→100 head change is free at the
+gradient.
 
 Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (driver 555.85) under
 WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 +
@@ -127,8 +134,12 @@ in [`docs/benchmarks/resnet50-training-speed/`](resnet50-training-speed/):
 
 ```bash
 python prepare_cifar10.py cifar10        # downloads CIFAR-10, writes BMPs + npy
-./run_resnet50.sh 5 128                  # both engines + summary
+python prepare_cifar100.py cifar100      # CIFAR-100 (100-class fine labels)
+./run_resnet50.sh 5 128 cifar10          # both engines + summary (or: cifar100)
 # or individually:
-OPENNN_GPU_RESIDENT_DATA=1 ./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16]
+OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 ./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16]
 python pytorch_resnet50_speed.py [epochs] [batch] cifar10
 ```
+
+The PyTorch programs read the class count from the labels, so the same scripts
+run on either dataset; the OpenNN program reads it from the dataset shape.

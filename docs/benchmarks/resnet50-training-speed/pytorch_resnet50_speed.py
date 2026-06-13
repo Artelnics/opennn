@@ -82,10 +82,11 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 n = x.shape[0]
+classes = int(y.max().item()) + 1
 print(f"device={torch.cuda.get_device_name(0)}")
-print(f"samples={n} batch={batch} epochs={epochs}")
+print(f"samples={n} batch={batch} epochs={epochs} classes={classes}")
 
-model = ResNet50().cuda()
+model = ResNet50(classes).cuda()
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
 loss_fn = nn.CrossEntropyLoss()

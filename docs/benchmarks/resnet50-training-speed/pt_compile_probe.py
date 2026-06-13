@@ -72,7 +72,7 @@ x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
 n = x.shape[0]
 
-model = ResNet50().cuda()
+model = ResNet50(int(y.max().item()) + 1).cuda()
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 starts = list(range(0, n - batch + 1, batch))
