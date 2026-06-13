@@ -27,7 +27,7 @@ namespace cudnn_fe
 
 inline const auto check_status = [](auto status, const string& what) {
     throw_if(status.is_bad(),
-             format("Convolution cudnn-frontend {}: {}", what, status.get_message()));
+             format("cudnn-frontend {}: {}", what, status.get_message()));
 };
 
 inline bool frontend_enabled()
@@ -46,6 +46,66 @@ inline bool autotune_enabled()
         return value && value[0] == '0';
     }();
     return !disabled;
+}
+
+// With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
+// (per-label totals printed at exit). Incompatible with OPENNN_CUDA_GRAPH=1.
+inline bool graph_timing_enabled()
+{
+    static const bool enabled = [] {
+        const char* value = getenv("OPENNN_GRAPH_TIMING");
+        return value && value[0] == '1';
+    }();
+    return enabled;
+}
+
+inline map<string, pair<double, long>>& graph_times()
+{
+    static map<string, pair<double, long>> times;
+    static const bool registered = [] {
+        atexit(+[] {
+            double total = 0;
+            for (const auto& [label, accumulated] : graph_times()) total += accumulated.first;
+            cerr << format("[GRAPH_TIMING] total_gpu_ms={:.1f}\n", total);
+            for (const auto& [label, accumulated] : graph_times())
+                cerr << format("[GRAPH_TIMING] {:<40} total_ms={:>9.1f} calls={:>6} ms/call={:.4f}\n",
+                               label, accumulated.first, accumulated.second,
+                               accumulated.first / accumulated.second);
+        });
+        return true;
+    }();
+    (void)registered;
+    return times;
+}
+
+template<typename TensorMap>
+inline void execute_graph(cudnn_frontend::graph::Graph& graph, TensorMap& tensors,
+                          void* workspace, const string& what, const string& timing_label)
+{
+    if (timing_label.empty())
+    {
+        check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
+        return;
+    }
+
+    cudaEvent_t begin, end;
+    cudaEventCreate(&begin);
+    cudaEventCreate(&end);
+    cudaEventRecord(begin, Backend::get_compute_stream());
+
+    check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
+
+    cudaEventRecord(end, Backend::get_compute_stream());
+    cudaEventSynchronize(end);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, begin, end);
+    cudaEventDestroy(begin);
+    cudaEventDestroy(end);
+
+    auto& [total, calls] = graph_times()[timing_label];
+    total += milliseconds;
+    ++calls;
 }
 
 // Runs a frontend-path body with the shared cache/disable/fallback protocol;

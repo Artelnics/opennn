@@ -1,15 +1,45 @@
-# ResNet-50 speed work — resume notes (updated 2026-06-13, early morning)
+# ResNet-50 speed work — resume notes (updated 2026-06-13)
 
-Goal: beat `torch.compile` (compiled PyTorch 5,772 samples/s; eager 2,080).
+Goal (MET): beat `torch.compile`. Now 1.6x AHEAD of it.
 
-## CURRENT STANDING: 5,235 median (5,288/5,235/5,140) — 91% of torch.compile
+## CURRENT STANDING: 8,433 median (8,770/8,433/8,233) — BEATS torch.compile 1.6x
 
-Full session ladder (medians of 3, fp32 b128 RTX 3060 WSL):
+Same-session interleaved (fp32 b128 RTX 3060 WSL, 2026-06-13):
+OpenNN 8,302/8,228 vs torch.compile 5,268 vs PyTorch eager 3,960.
+OpenNN is **1.6x torch.compile, 2.1x eager**. Numerics correct (train error
+2.3 → ~1.0 over 3 epochs). Tests at the 87 pre-existing failures throughout.
+
+### THE WIN: resident CUDA-graph mega-launch (5,235 → 8,433, +61%)
+The whole last-10% project was a misframe. Per-kernel CUDA-event timing
+(OPENNN_GRAPH_TIMING=1, kept in cudnn_frontend_utilities.h) showed OpenNN's
+conv KERNELS already cost 13.6 ms/step vs PyTorch's entire 53-conv budget of
+17.1 ms — compute was never the gap. The gap was LAUNCH OVERHEAD (~150
+launches/step on WSL's slow CUDA API).
+
+The CUDA-graph path mega-batched 8 steps/launch for the staged (host-loaded)
+path but only 1 step/launch for the GPU-resident path — which is what the
+benchmark uses. Extended the M=8 mega-graph to the resident gather path in
+`optimizer.cpp` (run_graph_epoch, new `resident_gather` branch): issue the 8
+device gathers on the TRANSFER stream OUTSIDE the graph, capture only the 8
+compute steps. One launch per group. That single change: 5,235 → 8,433.
+- GOTCHA that cost a rebuild: the gather's internal `record_h2d_done` records
+  a CUDA event; if captured INSIDE the graph, the host's later
+  cudaEventSynchronize on it throws CUDA error 1. Keep gather + its event
+  OUTSIDE the capture window (matches the working single-step pattern).
+
+### RULED OUT this session (measured, reverted)
+- Custom hand-written NHWC batch-norm CUDA kernels: correct but 2-5% SLOWER
+  than the cudnn-frontend BN graphs (cudnn BN already near roofline at these
+  small spatial sizes). Removed.
+- Subsampled-view trick for 1x1 stride-2 projection convs (stride-1 conv over
+  a strided input view): regressed the strided dgrads 2-4x (defeats cuDNN's
+  vectorized NHWC kernels). Reverted.
+
+### Earlier ladder (Phase 1, kernels): medians of 3, fp32 b128 RTX 3060 WSL
 2,912 base → 3,842 conv autotune (+30%) → 4,373 residual fwd fusion + fork
 bwd (+14%) → 4,824 single-pass skip-join accumulate (+10%) → 4,863 BN
-autotune (+1%) → 5,048 biasless convs under BN (+4%) → **5,235 with
-OPENNN_CUDA_GRAPH=1 (+4%, now the benchmark default in run_resnet50.sh)**.
-2.5x over PyTorch eager. Tests at the 87 pre-existing failures throughout.
+autotune (+1%) → 5,048 biasless convs under BN (+4%) → 5,235 single-step
+CUDA graph (+4%) → **8,433 resident mega-graph (+61%)**.
 
 Since the last entry:
 - **Fork bwd fusion**: BN bwd graph = BN_infer(X)(+ADD S) → RELU_BWD whose

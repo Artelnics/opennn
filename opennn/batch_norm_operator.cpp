@@ -532,8 +532,10 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
 
         cudnn_fe::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
 
-        cudnn_fe::check_status(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
-                               "batchnorm forward execute");
+        cudnn_fe::execute_graph(*entry.fwd, tensors, entry.fwd_workspace, "batchnorm forward execute",
+                                cudnn_fe::graph_timing_enabled()
+                                ? format("bn_fwd c{} r{}", features, input.size() / features)
+                                : string());
     }))
         return;
 #endif
@@ -620,18 +622,16 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
 
         cudnn_fe::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace);
 
-        cudnn_fe::check_status(entry.bwd->execute(Backend::get_cudnn_handle(), tensors, entry.bwd_workspace),
-                               "batchnorm backward execute");
+        cudnn_fe::execute_graph(*entry.bwd, tensors, entry.bwd_workspace, "batchnorm backward execute",
+                                cudnn_fe::graph_timing_enabled()
+                                ? format("bn_bwd c{} r{}", features, input.size() / features)
+                                : string());
     }))
         return;
 #endif
 
-    if (fuse_add)
-    {
-        if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
-        if (!residual_delta.empty()) copy(delta, residual_delta);
-    }
-    else if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
+    if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
+    if (!residual_delta.empty()) copy(delta, residual_delta);
 
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         Backend::get_cudnn_handle(),

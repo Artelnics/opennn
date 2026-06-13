@@ -247,6 +247,14 @@ void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
     entry.dgrad = graph;
 }
 
+string timing_label(const ConvolutionOp& op, const char* kind)
+{
+    if (!graph_timing_enabled()) return {};
+    return format("{} {}x{}x{} k{}x{}x{} s{}", kind,
+                  op.input_height, op.input_width, op.kernel_channels,
+                  op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
+}
+
 }  // namespace cudnn_fe
 
 #endif
@@ -321,7 +329,7 @@ void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    apply(input, output, fused_activation);
+    apply(input, output);
 }
 
 void ConvolutionOp::apply_delta(const TensorView& input,
@@ -336,11 +344,11 @@ void ConvolutionOp::apply_delta(const TensorView& input,
     apply_delta_cpu(input, output_delta, input_delta);
 }
 
-void ConvolutionOp::apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation)
+void ConvolutionOp::apply(const TensorView& input, TensorView& output)
 {
     if (input.is_cuda())
     {
-        apply_gpu(input, output, fused_activation);
+        apply_gpu(input, output);
         return;
     }
     apply_cpu(input, output);
@@ -542,9 +550,7 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
 }
 
 
-void ConvolutionOp::apply_gpu(const TensorView& input,
-                            TensorView& output,
-                            cudnnActivationDescriptor_t fused_activation)
+void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
 {
     PROFILE_SCOPE("op:conv_fwd");
 
@@ -555,7 +561,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.fwd)
             // The only fused activation the layer requests is ReLU
-            // (see Convolutional::configure_operators).
+            // (see Convolutional::update_convolution_operator).
             cudnn_fe::build_forward(entry, cudnn_fe::make_dims(*this, input.shape[0]),
                                     fused_activation != nullptr, use_bias);
 
@@ -567,8 +573,8 @@ void ConvolutionOp::apply_gpu(const TensorView& input,
 
         cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
 
-        cudnn_fe::check_status(entry.fwd->execute(Backend::get_cudnn_handle(), tensors, entry.fwd_workspace),
-                               "forward execute");
+        cudnn_fe::execute_graph(*entry.fwd, tensors, entry.fwd_workspace, "forward execute",
+                                cudnn_fe::timing_label(*this, "conv_fwd"));
     }))
         return;
 #endif
@@ -639,8 +645,8 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
         cudnn_fe::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace);
 
-        cudnn_fe::check_status(entry.wgrad->execute(Backend::get_cudnn_handle(), tensors, entry.wgrad_workspace),
-                               "wgrad execute");
+        cudnn_fe::execute_graph(*entry.wgrad, tensors, entry.wgrad_workspace, "wgrad execute",
+                                cudnn_fe::timing_label(*this, "conv_wgrad"));
 
         if (use_bias)
         {
@@ -655,8 +661,8 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
             cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
 
-            cudnn_fe::check_status(entry.bgrad->execute(Backend::get_cudnn_handle(), bgrad_tensors, entry.bgrad_workspace),
-                                   "bgrad execute");
+            cudnn_fe::execute_graph(*entry.bgrad, bgrad_tensors, entry.bgrad_workspace, "bgrad execute",
+                                    cudnn_fe::timing_label(*this, "conv_bgrad"));
         }
 
         if (input_delta.data && input_delta.size() != 0)
@@ -670,8 +676,8 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
             cudnn_fe::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace);
 
-            cudnn_fe::check_status(entry.dgrad->execute(Backend::get_cudnn_handle(), dgrad_tensors, entry.dgrad_workspace),
-                                   "dgrad execute");
+            cudnn_fe::execute_graph(*entry.dgrad, dgrad_tensors, entry.dgrad_workspace, "dgrad execute",
+                                    cudnn_fe::timing_label(*this, "conv_dgrad"));
         }
     }))
         return;
@@ -745,7 +751,7 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 #else
 
 void ConvolutionOp::destroy_cuda()                                                                  {}
-void ConvolutionOp::apply_gpu(const TensorView&, TensorView&, cudnnActivationDescriptor_t)          { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
+void ConvolutionOp::apply_gpu(const TensorView&, TensorView&)                                       { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
 void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif

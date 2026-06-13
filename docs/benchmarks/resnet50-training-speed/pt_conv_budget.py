@@ -35,6 +35,7 @@ for stage_index, (mid, out, blocks) in enumerate(stages):
 
 total_fwd = 0.0
 total_bwd = 0.0
+per_shape = {}
 start = torch.cuda.Event(enable_timing=True)
 stop = torch.cuda.Event(enable_timing=True)
 
@@ -72,6 +73,15 @@ for (in_c, out_c, k, s, hw) in convs:
 
     total_fwd += fwd_ms
     total_bwd += bwd_ms
+
+    key = f"{hw}x{hw}x{in_c} k{k}x{k}x{out_c} s{s}"
+    aggregate = per_shape.setdefault(key, [0.0, 0.0, 0])
+    aggregate[0] += fwd_ms
+    aggregate[1] += bwd_ms
+    aggregate[2] += 1
+
+for key, (fwd_ms, bwd_ms, count) in sorted(per_shape.items(), key=lambda e: -(e[1][0] + e[1][1])):
+    print(f"pt_shape {key:<24} n={count} fwd_ms={fwd_ms:.3f} bwd_ms={bwd_ms:.3f}")
 
 print(f"convs={len(convs)}")
 print(f"pt_conv_fwd_ms_per_step={total_fwd:.3f}")

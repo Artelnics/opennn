@@ -77,7 +77,7 @@ struct ConvolutionOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
-    void apply(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+    void apply(const TensorView& input, TensorView& output);
 
     void apply_delta(const TensorView& input,
                      const TensorView& output_delta,
@@ -85,7 +85,7 @@ struct ConvolutionOp : Operator
 
 private:
     void apply_cpu(const TensorView& input, TensorView& output);
-    void apply_gpu(const TensorView& input, TensorView& output, cudnnActivationDescriptor_t fused_activation = nullptr);
+    void apply_gpu(const TensorView& input, TensorView& output);
 
     void apply_delta_cpu(const TensorView& input, const TensorView& output_delta,
                          TensorView& input_delta) const;
