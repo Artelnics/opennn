@@ -36,16 +36,16 @@ using Eigen::Index;
 void adam_update_cuda(const Index, float*, float*, float*, const float*,
                       const float, const float, const float, const float,
                       const float, const float,
-                      __nv_bfloat16* params_bf16 = nullptr);
+                      __nv_bfloat16* parameters_bf16_mirror = nullptr);
 
 void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
-                     __nv_bfloat16* params_bf16 = nullptr);
+                     __nv_bfloat16* parameters_bf16_mirror = nullptr);
 
 void sgd_update_capturable_cuda(
     const Index n, float* parameters, float* velocity, const float* gradients,
     const float* learning_rate_device, const float momentum, const bool nesterov,
-    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+    __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
 
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream = nullptr);
 
@@ -54,7 +54,7 @@ void adam_update_capturable_cuda(
     const float beta_1, const float beta_2,
     const float learning_rate, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
-    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+    __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
@@ -87,10 +87,10 @@ template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
 
 template<typename T>
-void multiple_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
+void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
-void multiple_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
+void categorical_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
 
 template<typename T>
 void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float);

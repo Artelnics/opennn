@@ -28,7 +28,11 @@ void configure_pooling_descriptor(PoolOp& op)
 {
     if (op.pool_height <= 0 || op.pool_width <= 0) return;
 
-    if (!op.pooling_descriptor) CHECK_CUDNN(cudnnCreatePoolingDescriptor(&op.pooling_descriptor));
+    if (!op.pooling_descriptor)
+    {
+        CHECK_CUDNN(cudnnCreatePoolingDescriptor(&op.pooling_descriptor.handle));
+        op.pooling_descriptor.deleter = &cudnnDestroyPoolingDescriptor;
+    }
 
     const cudnnPoolingMode_t mode = (op.method == PoolOp::Max)
         ? CUDNN_POOLING_MAX
@@ -40,17 +44,6 @@ void configure_pooling_descriptor(PoolOp& op)
                                             to_int(op.pool_height), to_int(op.pool_width),
                                             to_int(op.padding_height), to_int(op.padding_width),
                                             to_int(op.row_stride), to_int(op.column_stride)));
-}
-
-}
-
-#else
-
-namespace
-{
-
-void configure_pooling_descriptor(PoolOp&)
-{
 }
 
 }
@@ -75,7 +68,9 @@ void PoolOp::set(Index input_h, Index input_w, Index input_c,
     padding_width   = padding_w;
     method          = new_method;
 
+#ifdef OPENNN_HAS_CUDA
     configure_pooling_descriptor(*this);
+#endif
 }
 
 void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
@@ -260,11 +255,6 @@ void PoolOp::apply_delta_cpu(const TensorView& output_delta,
 
 #ifdef OPENNN_HAS_CUDA
 
-void PoolOp::destroy_cuda()
-{
-    if (pooling_descriptor) { cudnnDestroyPoolingDescriptor(pooling_descriptor); pooling_descriptor = nullptr; }
-}
-
 void PoolOp::apply_gpu(const TensorView& input, TensorView& output)
 {
     CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
@@ -292,7 +282,6 @@ void PoolOp::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void PoolOp::destroy_cuda()                                                                           {}
 void PoolOp::apply_gpu(const TensorView&, TensorView&)                                                { throw runtime_error("Pool::apply_gpu: CUDA support not compiled in."); }
 void PoolOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Pool::apply_delta_gpu: CUDA support not compiled in."); }
 

@@ -741,6 +741,16 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
+// Cast an fp32 bias to bf16 for a fused bf16 cuBLASLt BIAS epilogue (which
+// rejects an fp32 bias). Uses the gradient workspace, which is unused during
+// forward propagation, so it does not clobber the input cast.
+const void* bias_for_gemm_bf16(const TensorView& bias)
+{
+    bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
+    cast_fp32_to_bf16_cuda(bias.size(), bias.as<float>(), dst);
+    return dst;
+}
+
 namespace
 {
 const LtMatmulPlan& get_lt_gemm_plan(
@@ -909,6 +919,11 @@ void* ensure_cudnn_conv_workspace(size_t)
 const void* data_for_gemm_dtype(const TensorView&, Type)
 {
     throw runtime_error("data_for_gemm_dtype requires CUDA support.");
+}
+
+const void* bias_for_gemm_bf16(const TensorView&)
+{
+    throw runtime_error("bias_for_gemm_bf16 requires CUDA support.");
 }
 
 void run_lt_matmul_cached(int, int, int,

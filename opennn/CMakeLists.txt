@@ -295,7 +295,6 @@ if(OPENNN_HAS_CUDA)
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
 
-    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
     if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
         message(FATAL_ERROR
             "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
@@ -305,10 +304,9 @@ if(OPENNN_HAS_CUDA)
     # SYSTEM include so GCC suppresses third-party warnings (-Wswitch-enum,
     # -Wunused-parameter, etc.) from inside cudnn-frontend headers.
     target_include_directories(opennn SYSTEM PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
-    # operators.cpp guards SDPA / Flash Attention with HAVE_CUDNN_FRONTEND.
-    # The find_path above already errors out if the header is missing, so when
-    # we get here it is always available — define the macro so the SDPA path
-    # is actually compiled in the CMake build (qmake sets it in cuda.pri).
+    # CUDA operators guard the cuDNN frontend paths with HAVE_CUDNN_FRONTEND.
+    # The top-level build fetches these headers; standalone consumers can still
+    # pass CUDNN_FRONTEND_INCLUDE_DIR explicitly.
 
     target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
 endif()

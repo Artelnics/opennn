@@ -754,7 +754,11 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
         {
             const float inv_D = 1.0f / static_cast<float>(D);
             const float mean = s * inv_D;
-            const float inv_var = rsqrtf(s_sq * inv_D - mean * mean + eps);
+            // Clamp variance to >= 0: E[x^2] - E[x]^2 can go slightly negative from
+            // catastrophic cancellation at large activations, which would make
+            // rsqrtf return inf/nan (matches the CPU layer-norm fix).
+            const float variance = fmaxf(s_sq * inv_D - mean * mean, 0.0f);
+            const float inv_var = rsqrtf(variance + eps);
             s_mean    = mean;
             s_inv_var = inv_var;
             means[idx]    = mean;

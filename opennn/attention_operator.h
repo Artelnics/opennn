@@ -49,8 +49,6 @@ struct AttentionOp : Operator
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
 
-    void destroy_cuda() override;
-
     AttentionOp();
     ~AttentionOp() override;
     AttentionOp(AttentionOp&&) noexcept;

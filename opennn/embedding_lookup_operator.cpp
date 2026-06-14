@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "embedding_lookup_operator.h"
-#include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"

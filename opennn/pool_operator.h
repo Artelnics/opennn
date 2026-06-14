@@ -30,17 +30,13 @@ struct PoolOp : Operator
 
     Method method = Max;
 
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+    CudnnDescriptor<cudnnPoolingDescriptor_t> pooling_descriptor;
 
     void set(Index input_h, Index input_w, Index input_c,
              Index pool_h, Index pool_w,
              Index row_stride, Index column_stride,
              Index padding_h, Index padding_w,
              Method method);
-
-    void destroy_cuda() override;
-
-    ~PoolOp() override { destroy_cuda(); }
 
     PoolOp() = default;
     PoolOp(const PoolOp&) = delete;

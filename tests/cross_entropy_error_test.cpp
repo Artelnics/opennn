@@ -20,9 +20,10 @@ TEST(CrossEntropyError2d, DefaultConstructor)
     EXPECT_TRUE(loss.get_dataset() == nullptr);
 }
 
-
 TEST(CrossEntropyError2d, BackPropagate)
 {
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
     const Index samples_number = random_integer(2, 10);
 
     const Index inputs_number = random_integer(1, 10);
@@ -58,6 +59,8 @@ TEST(CrossEntropyError2d, BackPropagate)
     type error = sqrt(difference);
 
     EXPECT_NEAR(error,0, type(1.0e-1));
+
+    Configuration::instance().set();
 }
 
 

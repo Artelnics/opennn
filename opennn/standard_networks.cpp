@@ -121,7 +121,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                    "classification_layer"));
 
     compile();
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
@@ -233,7 +233,7 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     add_layer(make_unique<Unscaling>(output_shape));
 
     compile();
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 #ifndef OPENNN_NO_VISION
@@ -823,7 +823,7 @@ Transformer::Transformer(Index input_sequence_length,
                                  "Softmax", false, "output_projection"));
 
     compile();
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)

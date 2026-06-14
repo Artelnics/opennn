@@ -24,7 +24,7 @@ struct ActivationOp : Operator
 
     Function function = Function::Identity;
 
-    cudnnActivationDescriptor_t descriptor = nullptr;
+    CudnnDescriptor<cudnnActivationDescriptor_t> descriptor;
 
     vector<size_t> output_slots_backward;
 
@@ -41,10 +41,6 @@ struct ActivationOp : Operator
 
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
-
-    void destroy_cuda() override;
-
-    ~ActivationOp() override { destroy_cuda(); }
 
     ActivationOp() = default;
     ActivationOp(const ActivationOp&) = delete;

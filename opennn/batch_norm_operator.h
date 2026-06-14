@@ -37,8 +37,6 @@ struct BatchNormOp : Operator
     struct BnGraphCache;
     mutable unique_ptr<BnGraphCache> bn_graph_cache;
 
-    void destroy_cuda() override;
-
     void set(Index new_features, float new_momentum = 0.1f);
 
     vector<TensorSpec> parameter_specs() const override;

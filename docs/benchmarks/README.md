@@ -20,6 +20,10 @@ links to the full note with methodology and reproduction steps.
 | [Training precision (MSE / time)](precision-opennn-vs-pytorch-vs-tensorflow.md) | **0.109 / 2 s** | n/a | 0.162 / 42 s | 0.156 / 310 s |
 | [GPU CNN training (samples/s)](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **211,904** | n/a | 111,241 | 55,339 |
 | [GPU ResNet-50 training (samples/s)](resnet50-training-speed-gpu-opennn-vs-pytorch.md) | **2,912** | n/a | 2,080 | — |
+| [GPU dense inference (samples/s)](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **3.99 M** | n/a | 2.80 M | — |
+| [GPU dense max train batch](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **482,344** | n/a | 399,507 | — |
+| [GPU energy / training sample](energy-consumption-gpu-opennn-vs-pytorch.md) | **24.0 µJ** | n/a | 58.2 µJ | — |
+| [GPU Transformer inference, bf16 (tok/s)](transformer-inference-gpu-opennn-vs-pytorch.md) | **141,010** | n/a | 102,718 | — |
 | [CPU runtime size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
 | [GPU (CNN) deployment](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
@@ -56,6 +60,17 @@ infers in one self-contained binary.
   same question at real-architecture scale: ResNet-50 on CIFAR-10, batch 128, fp32. OpenNN
   trains 1.4× faster than eager PyTorch after moving batch normalization to the
   cudnn-frontend graph API.
+* **[GPU dense max batch & speed](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md)** — a
+  purely dense 1000→1000→1 MLP on the GPU: OpenNN runs inference 1.43–1.56× faster than PyTorch
+  (device-resident path), trains 1.30–1.35× faster at low mini-batch counts, and fits a 1.21×
+  larger training batch on the same 6 GB card.
+* **[GPU energy consumption](energy-consumption-gpu-opennn-vs-pytorch.md)** — joules per sample on
+  the same dense MLP, integrated from GPU power. OpenNN spends 1.44× less energy per inference and
+  2.42× less per training sample (1.76× even in its slowest training regime).
+* **[GPU Transformer inference](transformer-inference-gpu-opennn-vs-pytorch.md)** — the *Attention
+  Is All You Need* forward pass (d_model 512, 8 heads, FF 2048, 6+6 layers). In bf16 (the precision
+  transformers run in, where OpenNN's fused flash-attention engages), OpenNN is **1.21–1.37× faster
+  than PyTorch** across sequence lengths. bf16 output validated against the fp32 CPU reference.
 * **[Deployment size on CPU](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
 * **[Deployment size on GPU](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the

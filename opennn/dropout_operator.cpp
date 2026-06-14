@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "dropout_operator.h"
-#include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
@@ -44,12 +43,6 @@ void DropoutOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t 
 {
     if (!active()) return;
     dropout_backward(get_output_delta(bp, layer), mask, rate);
-}
-
-void DropoutOp::destroy_cuda()
-{
-    if (mask.device_type == Device::CUDA)
-        mask.resize_bytes(0, Device::CUDA);
 }
 
 void DropoutOp::to_JSON(JsonWriter& w) const

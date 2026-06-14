@@ -410,26 +410,29 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 
 static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
 {
-    const Index n = output.size();
-    mask.resize_bytes(n * Index(sizeof(float)), Device::CPU);
+    const Index element_count = output.size();
+    mask.resize_bytes(element_count * Index(sizeof(float)), Device::CPU);
+    if (element_count == 0) return;
 
-    const float scale = 1.0f / (1.0f - rate);
-    float* data = output.as<float>();
-    float* mask_data = mask.as<float>();
+    const float keep_scale = 1.0f / (1.0f - rate);
+    float* output_data = output.as<float>();
+    float* mask_values = mask.as<float>();
+
+    set_random_uniform(VectorMap(mask_values, element_count), 0.0f, 1.0f);
 
     #pragma omp parallel for
-    for (Index i = 0; i < n; ++i)
+    for (Index i = 0; i < element_count; ++i)
     {
-        const float mask_value = random_uniform(0.0f, 1.0f) < rate ? 0.0f : scale;
-        mask_data[i] = mask_value;
-        data[i] *= mask_value;
+        const float keep_value = mask_values[i] < rate ? 0.0f : keep_scale;
+        mask_values[i] = keep_value;
+        output_data[i] *= keep_value;
     }
 }
 
 static void dropout_backward_cpu(TensorView& delta, const Buffer& mask)
 {
-    const Index n = delta.size();
-    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), n);
+    const Index element_count = delta.size();
+    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), element_count);
     delta.as_vector().array() *= mask_view.array();
 }
 
@@ -450,12 +453,14 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                         TensorView& output, cublasLtEpilogue_t epilogue)
 {
-    if (cpu_math::try_linear_forward(input, weights, bias, output, epilogue)) return;
+    const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+
+    if (cpu_math::try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
     output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + bias.as_vector().transpose();
 
-    if (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
+    if (fuse_relu)
         output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);
 }
 
@@ -524,7 +529,11 @@ static void layer_norm_forward_cpu(const TensorView& input, const TensorView& ga
         const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
-        const float std_val = sqrt(sum_sq * inv_D - mean * mean + EPSILON);
+        // Variance via E[x^2] - E[x]^2 can go slightly negative from catastrophic
+        // cancellation when activations are large (high embedding dimension); clamp
+        // to >= 0 before the sqrt so the layer norm cannot produce NaN.
+        const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
+        const float std_val = sqrt(variance + EPSILON);
         const float inv_std = 1.0f / std_val;
 
         means_data[row] = mean;
@@ -1043,27 +1052,27 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
 
 static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
 {
-    const Index n = output.size();
-    if (mask.device_type != Device::CUDA || mask.bytes < n)
-        mask.resize_bytes(n, Device::CUDA);
+    const Index element_count = output.size();
+    if (mask.device_type != Device::CUDA || mask.bytes < element_count)
+        mask.resize_bytes(element_count, Device::CUDA);
 
     const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
 
     output.dispatch([&](auto tag)
     {
         using T = decltype(tag);
-        dropout_forward_cuda<T>(n, output.as<T>(), mask.as<uint8_t>(), rate, seed);
+        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed);
     });
 }
 
 static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float rate)
 {
-    const Index n = delta.size();
+    const Index element_count = delta.size();
 
     delta.dispatch([&](auto tag)
     {
         using T = decltype(tag);
-        dropout_backward_cuda<T>(n, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
+        dropout_backward_cuda<T>(element_count, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
     });
 }
 
@@ -1077,12 +1086,77 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    run_lt_matmul_cached(
-        output_columns, total_rows, input_columns,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        epilogue,
-        weights.data, input_for_gemm, output.data, bias.data,
-        io_type, io_type);
+    // cuBLASLt's fused BIAS epilogue requires the bias data type to match the
+    // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
+    // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
+    // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
+    const void* bias_for_gemm = (bias.data && output.type == Type::BF16 && bias.type == Type::FP32)
+        ? bias_for_gemm_bf16(bias)
+        : bias.data;
+
+    try
+    {
+        run_lt_matmul_cached(
+            output_columns, total_rows, input_columns,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            epilogue,
+            weights.data, input_for_gemm, output.data, bias_for_gemm,
+            io_type, io_type);
+    }
+    catch (const runtime_error& e)
+    {
+        const bool unsupported_bf16_lt = output.type == Type::BF16
+                                      && (epilogue == CUBLASLT_EPILOGUE_BIAS
+                                          || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
+                                      && string(e.what()).find("CuBLAS Error: 15") != string::npos;
+
+        if (!unsupported_bf16_lt)
+            throw;
+
+        cudaStream_t stream = Backend::get_compute_stream();
+
+        VectorR input_host(input.size());
+        VectorR weights_host(weights.size());
+        VectorR bias_host(bias.size());
+        VectorR output_host(output.size());
+
+        copy_device_to_host_float(input.data, input.type, input.size(), input_host.data(), stream);
+        copy_device_to_host_float(weights.data, weights.type, weights.size(), weights_host.data(), stream);
+        if (bias.data)
+            copy_device_to_host_float(bias.data, bias.type, bias.size(), bias_host.data(), stream);
+
+        TensorView input_cpu(input_host.data(), input.shape, Type::FP32, Device::CPU);
+        TensorView weights_cpu(weights_host.data(), weights.shape, Type::FP32, Device::CPU);
+        TensorView bias_cpu(bias_host.data(), bias.shape, Type::FP32, Device::CPU);
+        TensorView output_cpu(output_host.data(), output.shape, Type::FP32, Device::CPU);
+
+        linear_forward_cpu(input_cpu, weights_cpu, bias_cpu, output_cpu, epilogue);
+
+        if (output.type == Type::FP32)
+        {
+            device::copy_async(output.data,
+                               output_host.data(),
+                               output.byte_size(),
+                               device::CopyKind::HostToDevice,
+                               stream);
+        }
+        else
+        {
+            Buffer output_fp32(Device::CUDA);
+            output_fp32.resize_bytes(output.size() * Index(sizeof(float)), Device::CUDA);
+            device::copy_async(output_fp32.data,
+                               output_host.data(),
+                               output_fp32.bytes,
+                               device::CopyKind::HostToDevice,
+                               stream);
+            cast_fp32_to_bf16_cuda(output.size(),
+                                   output_fp32.as<float>(),
+                                   output.as<bfloat16>(),
+                                   stream);
+        }
+
+        device::synchronize(stream);
+    }
 }
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,

@@ -28,18 +28,18 @@ namespace opennn
 namespace
 {
 
-void atomic_rename(const filesystem::path& from, const filesystem::path& to)
+void atomic_rename(const filesystem::path& source_path, const filesystem::path& destination_path)
 {
 #if defined(_WIN32)
-    if (!::MoveFileExW(from.wstring().c_str(),
-                       to.wstring().c_str(),
+    if (!::MoveFileExW(source_path.wstring().c_str(),
+                       destination_path.wstring().c_str(),
                        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {}",
-                                   from.string(), to.string()));
+        throw runtime_error(format("atomic_rename: MoveFileExW failed for {} -> {} (GetLastError={}).",
+                                   source_path.string(), destination_path.string(), ::GetLastError()));
 #else
-    throw_if(::rename(from.c_str(), to.c_str()) != 0,
+    throw_if(::rename(source_path.c_str(), destination_path.c_str()) != 0,
              format("atomic_rename: rename failed for {} -> {} (errno={}).",
-                    from.string(), to.string(), errno));
+                    source_path.string(), destination_path.string(), errno));
 #endif
 }
 
@@ -383,17 +383,28 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
         result.mapping.reset();
     }
 
-    ifstream file(path, ios::binary | ios::ate);
+    ifstream input_file(path, ios::binary | ios::ate);
 
-    throw_if(!file.is_open(),
+    throw_if(!input_file.is_open(),
              format("Cannot open file {}\n", path.string()));
 
-    const auto file_size = file.tellg();
-    file.seekg(0);
+    const streamoff file_byte_count = input_file.tellg();
+    throw_if(file_byte_count < 0,
+             format("Cannot determine size for file {}\n", path.string()));
+    throw_if(file_byte_count > streamoff(numeric_limits<streamsize>::max()),
+             format("File {} is too large to read into memory\n", path.string()));
 
-    result.buffer.resize(static_cast<size_t>(file_size), '\0');
-    if (file_size > 0)
-        file.read(result.buffer.data(), file_size);
+    input_file.seekg(0);
+    throw_if(!input_file.good(),
+             format("Cannot seek file {}\n", path.string()));
+
+    result.buffer.resize(static_cast<size_t>(file_byte_count), '\0');
+    if (file_byte_count > 0)
+    {
+        input_file.read(result.buffer.data(), static_cast<streamsize>(file_byte_count));
+        throw_if(!input_file,
+                 format("Cannot read file {}\n", path.string()));
+    }
 
     if (has_bom(result.buffer))
         result.buffer.erase(0, 3);

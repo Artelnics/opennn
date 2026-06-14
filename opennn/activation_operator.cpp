@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "activation_operator.h"
-#include "device_backend.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
@@ -24,37 +23,19 @@ namespace opennn
 namespace
 {
 
-void configure_activation_descriptor(cudnnActivationDescriptor_t& descriptor,
+void configure_activation_descriptor(CudnnDescriptor<cudnnActivationDescriptor_t>& descriptor,
                                      ActivationOp::Function function)
 {
-    if (!descriptor) CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor));
+    if (!descriptor)
+    {
+        CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor.handle));
+        descriptor.deleter = &cudnnDestroyActivationDescriptor;
+    }
+
     CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor,
                                              ActivationOp::to_cudnn_mode(function),
                                              CUDNN_PROPAGATE_NAN,
                                              0.0));
-}
-
-void destroy_activation_descriptor(cudnnActivationDescriptor_t& descriptor)
-{
-    if (!descriptor) return;
-
-    cudnnDestroyActivationDescriptor(descriptor);
-    descriptor = nullptr;
-}
-
-}
-
-#else
-
-namespace
-{
-
-void configure_activation_descriptor(cudnnActivationDescriptor_t&, ActivationOp::Function)
-{
-}
-
-void destroy_activation_descriptor(cudnnActivationDescriptor_t&)
-{
 }
 
 }
@@ -80,7 +61,9 @@ cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
 void ActivationOp::set_function(Function new_function)
 {
     function = new_function;
+#ifdef OPENNN_HAS_CUDA
     configure_activation_descriptor(descriptor, function);
+#endif
 }
 
 void ActivationOp::set_function(const string& name)
@@ -129,11 +112,6 @@ void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, s
         TensorView& delta = get_output_delta(bp, layer);
         apply_delta(outputs, delta);
     }
-}
-
-void ActivationOp::destroy_cuda()
-{
-    destroy_activation_descriptor(descriptor);
 }
 
 void ActivationOp::to_JSON(JsonWriter& w) const

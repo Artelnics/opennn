@@ -62,19 +62,40 @@ void visit_type_pair(Type t_in, Type t_out, F&& f)
     });
 }
 
-inline cudnnDataType_t to_cudnn(Type type) noexcept
+inline cudnnDataType_t to_cudnn(Type type)
 {
-    return type == Type::BF16 ? TypeInfo<Type::BF16>::cudnn : TypeInfo<Type::FP32>::cudnn;
+    switch (type)
+    {
+    case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
+    case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
+    case Type::Auto: break;
+    }
+
+    throw runtime_error("to_cudnn: Type::Auto must be resolved before tensor use.");
 }
 
-inline cudaDataType_t to_cuda(Type type) noexcept
+inline cudaDataType_t to_cuda(Type type)
 {
-    return type == Type::BF16 ? TypeInfo<Type::BF16>::cuda : TypeInfo<Type::FP32>::cuda;
+    switch (type)
+    {
+    case Type::FP32: return TypeInfo<Type::FP32>::cuda;
+    case Type::BF16: return TypeInfo<Type::BF16>::cuda;
+    case Type::Auto: break;
+    }
+
+    throw runtime_error("to_cuda: Type::Auto must be resolved before tensor use.");
 }
 
-inline Index type_bytes(Type type) noexcept
+inline Index type_bytes(Type type)
 {
-    return type == Type::BF16 ? TypeInfo<Type::BF16>::bytes : TypeInfo<Type::FP32>::bytes;
+    switch (type)
+    {
+    case Type::FP32: return TypeInfo<Type::FP32>::bytes;
+    case Type::BF16: return TypeInfo<Type::BF16>::bytes;
+    case Type::Auto: break;
+    }
+
+    throw runtime_error("type_bytes: Type::Auto must be resolved before tensor use.");
 }
 
 static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES;
@@ -243,37 +264,37 @@ struct Buffer
     Index size_in_floats() const { return bytes / Index(sizeof(float)); }
     bool  empty() const { return bytes == 0; }
 
-    void resize_bytes(Index new_bytes, Device new_device_type)
+    void resize_bytes(Index byte_count, Device allocation_device)
     {
-        if (new_bytes == bytes && device_type == new_device_type) return;
+        if (byte_count == bytes && device_type == allocation_device) return;
 
         const bool changes_cuda_allocation =
             (device_type == Device::CUDA && data)
-            || (new_device_type == Device::CUDA && new_bytes > 0);
+            || (allocation_device == Device::CUDA && byte_count > 0);
         throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
                  format("CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
                         "(warmup incomplete before CUDA graph capture).",
                         bytes,
-                        new_bytes));
+                        byte_count));
 
         free_buffer();
-        device_type = new_device_type;
-        if (new_bytes == 0) return;
+        device_type = allocation_device;
+        if (byte_count == 0) return;
 
-        data = device::allocate(new_device_type, new_bytes);
-        bytes = new_bytes;
+        data = device::allocate(allocation_device, byte_count);
+        bytes = byte_count;
     }
 
-    void grow_to(Index new_bytes)
+    void grow_to(Index minimum_bytes)
     {
-        if (new_bytes > bytes)
-            resize_bytes(new_bytes, device_type);
+        if (minimum_bytes > bytes)
+            resize_bytes(minimum_bytes, device_type);
     }
 
     template<typename T>
-    T* ensure(Index n_elements)
+    T* ensure(Index element_count)
     {
-        grow_to(n_elements * Index(sizeof(T)));
+        grow_to(element_count * Index(sizeof(T)));
         return as<T>();
     }
 
@@ -282,25 +303,38 @@ struct Buffer
         device::set_zero(data, bytes, device_type);
     }
 
-    void migrate_to(Device target, cudaStream_t stream = nullptr)
+    void migrate_to(Device target_device, cudaStream_t stream = nullptr)
     {
-        if (device_type == target || !data) return;
+        if (device_type == target_device || !data) return;
 
-        void* fresh = device::allocate(target, bytes);
-        device::copy_async(fresh, data, bytes, device_type, target, stream);
+        Buffer target_buffer(target_device);
+        target_buffer.resize_bytes(bytes, target_device);
+        device::copy_async(target_buffer.data, data, bytes, device_type, target_device, stream);
         if (stream) device::synchronize(stream);
 
-        device::deallocate(device_type, data, bytes);
-        data = fresh;
-        device_type = target;
+        swap(target_buffer);
     }
 
-    explicit Buffer(Device new_device_type = Device::CPU) noexcept : device_type(new_device_type) {}
+    explicit Buffer(Device initial_device = Device::CPU) noexcept : device_type(initial_device) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
     Buffer(Buffer&& other) noexcept : Buffer() { swap(other); }
-    Buffer& operator=(Buffer&& other) noexcept { swap(other); return *this; }
+    Buffer& operator=(Buffer&& other) noexcept
+    {
+        if (this == &other) return *this;
+
+        free_buffer();
+        data = other.data;
+        bytes = other.bytes;
+        device_type = other.device_type;
+
+        other.data = nullptr;
+        other.bytes = 0;
+        other.device_type = Device::CPU;
+
+        return *this;
+    }
 
     ~Buffer() { free_buffer(); }
 
@@ -338,7 +372,7 @@ struct TensorView
 
     Index size() const noexcept { return shape.size(); }
 
-    Index byte_size() const noexcept { return size() * type_bytes(type); }
+    Index byte_size() const { return size() * type_bytes(type); }
 
     bool empty() const noexcept { return shape.empty(); }
     bool is_cuda() const noexcept { return device == Device::CUDA; }
@@ -355,7 +389,7 @@ struct TensorView
         return reinterpret_cast<float*>(data);
     }
 
-    cudaDataType_t cuda_dtype() const noexcept { return to_cuda(type); }
+    cudaDataType_t cuda_dtype() const { return to_cuda(type); }
 
     template<typename F>
     void dispatch(F&& fn) const
@@ -371,55 +405,91 @@ struct TensorView
 
     MatrixMap as_matrix() const
     {
-        assert(shape.rank >= 2);
-        return MatrixMap(as<float>(), shape[0], shape.size() / shape[0]);
+        throw_if(shape.rank < 2, "TensorView::as_matrix requires rank >= 2.");
+        throw_if(shape.size() > 0 && !data, "TensorView::as_matrix requires non-null data.");
+
+        const Index row_count = shape[0];
+        const Index column_count = row_count == 0 ? 0 : shape.size() / row_count;
+        return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
-    MatrixMap as_matrix(Index batch_index) const
+    MatrixMap as_matrix(Index matrix_index) const
     {
-        assert(shape.rank >= 2);
-        const Index rows = shape[shape.rank - 2];
-        const Index cols = shape[shape.rank - 1];
-        return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
+        throw_if(shape.rank < 2, "TensorView::as_matrix(matrix_index) requires rank >= 2.");
+        throw_if(shape.size() > 0 && !data, "TensorView::as_matrix(matrix_index) requires non-null data.");
+
+        const Index row_count = shape[shape.rank - 2];
+        const Index column_count = shape[shape.rank - 1];
+        const Index matrix_element_count = row_count * column_count;
+        const Index matrix_count = matrix_element_count == 0 ? 0 : shape.size() / matrix_element_count;
+
+        throw_if(matrix_index < 0 || matrix_index >= matrix_count,
+                 format("TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
+                        matrix_index, matrix_count));
+
+        return MatrixMap(reinterpret_cast<float*>(data) + matrix_index * matrix_element_count,
+                         row_count,
+                         column_count);
     }
 
     MatrixMap as_flat_matrix() const
     {
-        assert(shape.rank >= 1);
-        const Index cols = shape[shape.rank - 1];
-        return MatrixMap(as<float>(), shape.size() / cols, cols);
+        throw_if(shape.rank < 1, "TensorView::as_flat_matrix requires rank >= 1.");
+        throw_if(shape.size() > 0 && !data, "TensorView::as_flat_matrix requires non-null data.");
+
+        const Index column_count = shape[shape.rank - 1];
+        const Index row_count = column_count == 0 ? 0 : shape.size() / column_count;
+        return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
     MatrixMap as_flat_matrix(Index batch_index) const
     {
-        assert(shape.rank >= 2);
-        const Index cols = shape[shape.rank - 1];
-        const Index rows = shape.size() / (shape[0] * cols);
-        return MatrixMap(as<float>() + batch_index * rows * cols, rows, cols);
+        throw_if(shape.rank < 2, "TensorView::as_flat_matrix(batch_index) requires rank >= 2.");
+        throw_if(batch_index < 0 || batch_index >= shape[0],
+                 format("TensorView::as_flat_matrix(batch_index): batch index {} out of range [0, {}).",
+                        batch_index, shape[0]));
+        throw_if(shape.size() > 0 && !data, "TensorView::as_flat_matrix(batch_index) requires non-null data.");
+
+        const Index column_count = shape[shape.rank - 1];
+        const Index row_count = column_count == 0 ? 0 : shape.size() / (shape[0] * column_count);
+        return MatrixMap(reinterpret_cast<float*>(data) + batch_index * row_count * column_count,
+                         row_count,
+                         column_count);
     }
 
     VectorMap as_vector() const
     {
-        return VectorMap(as<float>(), shape.size());
+        throw_if(shape.size() > 0 && !data, "TensorView::as_vector requires non-null data.");
+        return VectorMap(reinterpret_cast<float*>(data), shape.size());
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor() const
     {
-        assert(shape.rank == Rank);
+        throw_if(shape.rank != Rank,
+                 format("TensorView::as_tensor requires rank {}, got {}.", Rank, shape.rank));
+        throw_if(shape.size() > 0 && !data, "TensorView::as_tensor requires non-null data.");
+
         Eigen::array<Index, Rank> dims;
         copy_n(shape.dims, Rank, dims.begin());
-        return TensorMapR<Rank>(as<float>(), dims);
+        return TensorMapR<Rank>(reinterpret_cast<float*>(data), dims);
     }
 
     template<int Rank>
     TensorMapR<Rank> as_tensor(Index batch_index) const
     {
-        assert(shape.rank == Rank + 1);
+        throw_if(shape.rank != Rank + 1,
+                 format("TensorView::as_tensor(batch_index) requires rank {}, got {}.",
+                        Rank + 1, shape.rank));
+        throw_if(batch_index < 0 || batch_index >= shape[0],
+                 format("TensorView::as_tensor(batch_index): batch index {} out of range [0, {}).",
+                        batch_index, shape[0]));
+        throw_if(shape.size() > 0 && !data, "TensorView::as_tensor(batch_index) requires non-null data.");
+
         Eigen::array<Index, Rank> dims;
         for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
-        const Index slice_size = shape.size() / shape[0];
-        return TensorMapR<Rank>(as<float>() + batch_index * slice_size, dims);
+        const Index slice_element_count = shape.size() / shape[0];
+        return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index * slice_element_count, dims);
     }
 
     void fill(float value);

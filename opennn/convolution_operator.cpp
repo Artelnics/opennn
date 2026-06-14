@@ -35,14 +35,24 @@ void configure_convolution_descriptors(ConvolutionOp& op)
 
     if (op.kernels_number <= 0) return;
 
-    if (!op.kernel_descriptor) CHECK_CUDNN(cudnnCreateFilterDescriptor(&op.kernel_descriptor));
+    if (!op.kernel_descriptor)
+    {
+        CHECK_CUDNN(cudnnCreateFilterDescriptor(&op.kernel_descriptor.handle));
+        op.kernel_descriptor.deleter = &cudnnDestroyFilterDescriptor;
+    }
+
     CHECK_CUDNN(cudnnSetFilter4dDescriptor(op.kernel_descriptor,
                                            to_cudnn(op.compute_dtype),
                                            CUDNN_TENSOR_NHWC,
                                            to_int(op.kernels_number), to_int(op.kernel_channels),
                                            to_int(op.kernel_height),  to_int(op.kernel_width)));
 
-    if (!op.convolution_descriptor) CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&op.convolution_descriptor));
+    if (!op.convolution_descriptor)
+    {
+        CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&op.convolution_descriptor.handle));
+        op.convolution_descriptor.deleter = &cudnnDestroyConvolutionDescriptor;
+    }
+
     CHECK_CUDNN(cudnnSetConvolution2dDescriptor(op.convolution_descriptor,
                                                 to_int(op.padding_height), to_int(op.padding_width),
                                                 to_int(op.row_stride), to_int(op.column_stride),
@@ -52,17 +62,6 @@ void configure_convolution_descriptors(ConvolutionOp& op)
 
     CHECK_CUDNN(cudnnSetConvolutionMathType(op.convolution_descriptor,
                                             CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION));
-}
-
-}
-
-#else
-
-namespace
-{
-
-void configure_convolution_descriptors(ConvolutionOp&)
-{
 }
 
 }
@@ -109,10 +108,7 @@ struct ConvolutionOp::ConvGraphCache
 
 ConvolutionOp::ConvolutionOp() = default;
 
-ConvolutionOp::~ConvolutionOp()
-{
-    destroy_cuda();
-}
+ConvolutionOp::~ConvolutionOp() = default;
 
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
 
@@ -278,7 +274,9 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
     padding_width    = new_padding_w;
     compute_dtype = new_compute_dtype;
 
+#ifdef OPENNN_HAS_CUDA
     configure_convolution_descriptors(*this);
+#endif
 }
 
 vector<TensorSpec> ConvolutionOp::parameter_specs() const
@@ -491,14 +489,6 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void ConvolutionOp::destroy_cuda()
-{
-    if (kernel_descriptor)      { cudnnDestroyFilterDescriptor(kernel_descriptor);           kernel_descriptor = nullptr; }
-    if (convolution_descriptor) { cudnnDestroyConvolutionDescriptor(convolution_descriptor); convolution_descriptor = nullptr; }
-    cudnn_workspace_size_ = 0;
-    planned_batch_size = 0;
-    conv_graph_cache.reset();
-}
 void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
@@ -750,7 +740,6 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOp::destroy_cuda()                                                                  {}
 void ConvolutionOp::apply_gpu(const TensorView&, TensorView&)                                       { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
 void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 

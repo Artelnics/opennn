@@ -48,10 +48,10 @@ void Batch::set(const Index new_samples_number,
 
     const bool on_gpu = uses_cuda();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
-    const bool bf16_input = on_gpu
-                         && config.training_type == Type::BF16
-                         && dataset->supports_bf16_inputs();
-    const Index input_device_bytes = bf16_input ? Index(sizeof(bfloat16)) : Index(sizeof(float));
+    input_is_bf16 = on_gpu
+                 && config.training_type == Type::BF16
+                 && dataset->supports_bf16_inputs();
+    const Index input_device_bytes = input_is_bf16 ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 
     auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
     {
@@ -95,7 +95,7 @@ void Batch::set(const Index new_samples_number,
     if (!target.shape.empty())
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
-    fp32_staging.resize_bytes(bf16_input
+    fp32_staging.resize_bytes(input_is_bf16
         ? samples_number * input.features_number * Index(sizeof(float))
         : Index(0),
         Device::CUDA);
@@ -108,7 +108,7 @@ void Batch::set(const Index new_samples_number,
         if (!decoder.shape.empty() && decoder.buffer.data)
             input_views_cache.emplace_back(decoder.buffer.data, decoder.shape, Type::FP32, Device::CUDA);
 
-        input_views_cache.emplace_back(input.buffer.data, input.shape, bf16_input ? Type::BF16 : Type::FP32, Device::CUDA);
+        input_views_cache.emplace_back(input.buffer.data, input.shape, input_is_bf16 ? Type::BF16 : Type::FP32, Device::CUDA);
     }
 
     if (on_gpu && !target.shape.empty() && target.buffer.data)
@@ -145,7 +145,9 @@ void Batch::print() const
 
     if (input.buffer.data)
     {
-        if (input.shape.rank == 4)
+        if (uses_cuda())
+            cout << "<CUDA input data not printed>";
+        else if (input.shape.rank == 4)
             cout << TensorMap4(const_cast<float*>(input.buffer.as<float>()),
                                input.shape[0],
                                input.shape[1],
@@ -172,9 +174,14 @@ void Batch::print() const
          << "Target shape:" << target.shape << "\n";
 
     if (target.buffer.data && target.shape.rank == 2)
-        cout << MatrixMap(const_cast<float*>(target.buffer.as<float>()),
-                            target.shape[0],
-                            target.shape[1]) << "\n";
+    {
+        if (uses_cuda())
+            cout << "<CUDA target data not printed>" << "\n";
+        else
+            cout << MatrixMap(const_cast<float*>(target.buffer.as<float>()),
+                              target.shape[0],
+                              target.shape[1]) << "\n";
+    }
 }
 
 bool Batch::is_empty() const
@@ -223,7 +230,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
         const int* idx = gather_indices_device.as<int>();
 
-        if (!destination.fp32_staging.empty())
+        if (destination.input_is_bf16)
         {
             gather_rows_bf16_cuda(matrix, idx, destination.input.buffer.as<bfloat16>(),
                                   current_batch_size, input.features_number, matrix_cols, input_col_offset, stream);
@@ -245,7 +252,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         device::copy_async(destination, source, bytes, device::CopyKind::HostToDevice, stream);
     };
 
-    if (!destination.fp32_staging.empty())
+    if (destination.input_is_bf16)
     {
         assert(destination.fp32_staging.bytes >= input_values_count * Index(sizeof(float)));
         copy_to_device_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float));

@@ -93,11 +93,11 @@ template<typename T> void binary_cross_entropy_cuda(const Index, float*, const f
 template<typename T> void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float)
 { throw runtime_error("binary_cross_entropy_gradient_cuda requires CUDA support."); }
 
-template<typename T> void multiple_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
-{ throw runtime_error("multiple_cross_entropy_cuda requires CUDA support."); }
+template<typename T> void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
+{ throw runtime_error("categorical_cross_entropy_cuda requires CUDA support."); }
 
-template<typename T> void multiple_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float)
-{ throw runtime_error("multiple_cross_entropy_gradient_cuda requires CUDA support."); }
+template<typename T> void categorical_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float)
+{ throw runtime_error("categorical_cross_entropy_gradient_cuda requires CUDA support."); }
 
 template<typename T> void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float)
 { throw runtime_error("weighted_squared_error_cuda requires CUDA support."); }
@@ -230,7 +230,7 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     if (input.is_cuda()) {
         input.dispatch([&](auto tag) {
             using T = decltype(tag);
-            multiple_cross_entropy_cuda<T>(input.size(),
+            categorical_cross_entropy_cuda<T>(input.size(),
                 workspace_device, target.as<float>(), input.as<T>(), EPSILON);
             error = sum_abs_cuda(workspace_device, input.size()) / input.shape[0];
         });
@@ -246,6 +246,15 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
     if (isnan(error) || isinf(error)) error = 10.0f;
 }
 
+void cross_entropy(const TensorView& input, const TensorView& target, float& error,
+                   float* workspace_device)
+{
+    if (input.shape.back() == 1)
+        binary_cross_entropy(input, target, error, workspace_device);
+    else
+        categorical_cross_entropy(input, target, error, workspace_device);
+}
+
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
 {
     if (input.is_cuda()) {
@@ -257,7 +266,7 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
                 binary_cross_entropy_gradient_cuda<T>(input.size(),
                     input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
             else
-                multiple_cross_entropy_gradient_cuda<T>(input.size(),
+                categorical_cross_entropy_gradient_cuda<T>(input.size(),
                     input_delta.as<T>(), target.as<float>(), input.as<T>(), scale);
         });
         return;

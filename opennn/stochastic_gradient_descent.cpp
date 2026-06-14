@@ -44,7 +44,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
         current_learning_rate,
         momentum,
         nesterov,
-        neural_network->get_parameters_bf16_data());
+        neural_network->get_parameters_bf16_mirror_data());
 }
 
 #else
@@ -187,7 +187,7 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         optimization_data.graph_effective_lr.as<float>(),
         momentum,
         nesterov,
-        neural_network->get_parameters_bf16_data(),
+        neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 #else
     (void)back_propagation; (void)optimization_data;

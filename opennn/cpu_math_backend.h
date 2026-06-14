@@ -8,7 +8,13 @@
 
 #pragma once
 
-#include "tensor_operations.h"
+namespace opennn
+{
+
+enum class ActivationFunction;
+struct TensorView;
+
+}
 
 namespace opennn::cpu_math
 {
@@ -19,6 +25,6 @@ bool try_linear_forward(const TensorView& input,
                         const TensorView& weights,
                         const TensorView& bias,
                         TensorView& output,
-                        cublasLtEpilogue_t epilogue);
+                        bool fuse_relu);
 
 }

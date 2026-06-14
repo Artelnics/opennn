@@ -317,11 +317,6 @@ struct BatchNormOp::BnGraphCache
 BatchNormOp::BatchNormOp() = default;
 BatchNormOp::~BatchNormOp() = default;
 
-void BatchNormOp::destroy_cuda()
-{
-    bn_graph_cache.reset();
-}
-
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
 
 namespace cudnn_fe

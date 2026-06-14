@@ -72,6 +72,7 @@ public:
     float* get_parameters_data() { return parameters.as<float>(); }
     const float* get_parameters_data() const { return parameters.as<float>(); }
     Index get_parameters_size() const { return parameters.size_in_floats(); }
+    Device get_parameters_device() const { return parameters.device_type; }
     float* get_states_data() { return states.as<float>(); }
     const float* get_states_data() const { return states.as<float>(); }
     Index get_states_buffer_size() const { return states.size_in_floats(); }
@@ -137,6 +138,15 @@ public:
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
 
+    // Device-resident inference: input already on GPU, caller-owned persistent
+    // ForwardPropagation (activations allocated once), parameters uploaded only
+    // when upload_parameters=true (skip on repeat calls with unchanged weights).
+    // Output is left on the GPU; returns its TensorView (no D2H copy). This is
+    // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
+    TensorView calculate_outputs_resident(const vector<TensorView>& gpu_inputs,
+                                          ForwardPropagation& forward_propagation,
+                                          bool upload_parameters = true);
+
     MatrixR calculate_outputs(const MatrixR&);
 
     MatrixR calculate_outputs(const Tensor3&);
@@ -186,13 +196,13 @@ public:
 
     void cast_parameters_to_bf16();
 
-    bfloat16* get_parameters_bf16_data()
+    bfloat16* get_parameters_bf16_mirror_data()
     {
         return parameters.device_type == Device::CUDA
             && config.training_type == Type::BF16
             && !parameters.empty()
-            && !parameters_bf16.empty()
-            ? parameters_bf16.as<bfloat16>()
+            && !parameters_bf16_mirror.empty()
+            ? parameters_bf16_mirror.as<bfloat16>()
             : nullptr;
     }
 
@@ -240,7 +250,7 @@ protected:
     vector<vector<Index>> source_layers;
 
     Buffer parameters;
-    Buffer parameters_bf16{Device::CUDA};
+    Buffer parameters_bf16_mirror{Device::CUDA};
 
     Buffer states;
 

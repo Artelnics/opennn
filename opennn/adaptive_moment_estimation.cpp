@@ -48,7 +48,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
         EPSILON,
         bias_correction_1,
         bias_correction_2,
-        neural_network->get_parameters_bf16_data());
+        neural_network->get_parameters_bf16_mirror_data());
 }
 
 #else
@@ -476,7 +476,7 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
         optimization_data.graph_step.as<int>(),
         optimization_data.graph_effective_lr.as<float>(),
         optimization_data.graph_effective_eps.as<float>(),
-        neural_network->get_parameters_bf16_data(),
+        neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 #else
     (void)back_propagation; (void)optimization_data;

@@ -14,6 +14,7 @@
 
 #include "tensor_types.h"
 #include "device_backend.h"
+#include "string_utilities.h"
 
 // cudnn-frontend graph path for fp32 convolutions and batch normalization:
 // the legacy v7 API has poor NHWC-fp32 kernel coverage (backward-filter ~6x,
@@ -32,10 +33,7 @@ inline const auto check_status = [](auto status, const string& what) {
 
 inline bool frontend_enabled()
 {
-    static const bool legacy_forced = [] {
-        const char* value = getenv("OPENNN_CONV_LEGACY");
-        return value && value[0] == '1';
-    }();
+    static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
     return !legacy_forced;
 }
 
@@ -52,10 +50,7 @@ inline bool autotune_enabled()
 // (per-label totals printed at exit). Incompatible with OPENNN_CUDA_GRAPH=1.
 inline bool graph_timing_enabled()
 {
-    static const bool enabled = [] {
-        const char* value = getenv("OPENNN_GRAPH_TIMING");
-        return value && value[0] == '1';
-    }();
+    static const bool enabled = env_flag_enabled("OPENNN_GRAPH_TIMING");
     return enabled;
 }
 
@@ -88,20 +83,17 @@ inline void execute_graph(cudnn_frontend::graph::Graph& graph, TensorMap& tensor
         return;
     }
 
-    cudaEvent_t begin, end;
-    cudaEventCreate(&begin);
-    cudaEventCreate(&end);
-    cudaEventRecord(begin, Backend::get_compute_stream());
+    CudaEvent begin(cudaEventDefault);
+    CudaEvent end(cudaEventDefault);
+    device::record_event(begin, Backend::get_compute_stream());
 
     check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
 
-    cudaEventRecord(end, Backend::get_compute_stream());
-    cudaEventSynchronize(end);
+    device::record_event(end, Backend::get_compute_stream());
+    device::synchronize_event(end);
 
     float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, begin, end);
-    cudaEventDestroy(begin);
-    cudaEventDestroy(end);
+    CHECK_CUDA(cudaEventElapsedTime(&milliseconds, begin, end));
 
     auto& [total, calls] = graph_times()[timing_label];
     total += milliseconds;
@@ -202,15 +194,14 @@ inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
     if (!pending) return;
     pending = false;
 
-    void* tune_workspace = nullptr;
+    Buffer tune_workspace{Device::CUDA};
     try
     {
         const int64_t tune_bytes = graph.get_autotune_workspace_size();
-        if (tune_bytes > 0) tune_workspace = device::allocate(Device::CUDA, Index(tune_bytes));
-        graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace);
+        if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
+        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
     }
     catch (...) {}
-    device::deallocate(Device::CUDA, tune_workspace, 0);
 
     const int64_t workspace_bytes = graph.get_workspace_size();
     if (workspace_bytes > 0)
@@ -227,7 +218,7 @@ inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& g
     if (!pending) return;
 
     TensorMap scratch = tensors;
-    vector<void*> buffers;
+    vector<Buffer> buffers;
     buffers.reserve(scratch.size());
 
     for (auto& [tensor, pointer] : scratch)
@@ -237,13 +228,12 @@ inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& g
         int64_t elements = 1;
         for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
 
-        buffers.push_back(device::allocate(Device::CUDA, Index(elements * sizeof(float))));
-        pointer = buffers.back();
+        Buffer& buffer = buffers.emplace_back(Device::CUDA);
+        buffer.resize_bytes(Index(elements * sizeof(float)), Device::CUDA);
+        pointer = buffer.data;
     }
 
     autotune_now(pending, graph, scratch, workspace);
-
-    for (void* buffer : buffers) device::deallocate(Device::CUDA, buffer, 0);
 }
 
 }  // namespace cudnn_fe

@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "cpu_math_backend.h"
+#include "tensor_operations.h"
+#include "string_utilities.h"
 
 #ifdef EIGEN_USE_MKL_ALL
 #include <mkl_cblas.h>
@@ -18,110 +20,7 @@ namespace opennn::cpu_math
 
 #ifdef EIGEN_USE_MKL_ALL
 
-static bool env_enabled(const char* name)
-{
-    const char* value = getenv(name);
-    return value && (strcmp(value, "1") == 0
-                  || strcmp(value, "true") == 0
-                  || strcmp(value, "TRUE") == 0);
-}
-
-static bool fast_vml_enabled()    { static const bool enabled = env_enabled("OPENNN_MKL_FAST_VML");    return enabled; }
-static bool packed_gemm_enabled() { static const bool enabled = env_enabled("OPENNN_MKL_PACKED_GEMM"); return enabled; }
-
-struct PackedGemmCache
-{
-    const void* source = nullptr;
-    int m = 0;
-    int n = 0;
-    int k = 0;
-    vector<float> data;
-};
-
-static const float* get_packed_b(const TensorView& weights, int m, int n, int k)
-{
-    static thread_local vector<PackedGemmCache> caches;
-
-    for (PackedGemmCache& cache : caches)
-        if (cache.source == weights.data
-            && cache.m == m
-            && cache.n == n
-            && cache.k == k)
-            return cache.data.data();
-
-    PackedGemmCache cache;
-    cache.source = weights.data;
-    cache.m = m;
-    cache.n = n;
-    cache.k = k;
-
-    cache.data.resize(cblas_sgemm_pack_get_size(CblasBMatrix, m, n, k));
-    cblas_sgemm_pack(CblasRowMajor,
-                     CblasBMatrix,
-                     CblasNoTrans,
-                     m,
-                     n,
-                     k,
-                     1.0f,
-                     weights.as<float>(),
-                     n,
-                     cache.data.data());
-
-    caches.push_back(move(cache));
-    return caches.back().data.data();
-}
-
-static void tanh_forward(TensorView& output)
-{
-    float* values = output.as<float>();
-    const int size = to_int(output.size());
-
-    if (fast_vml_enabled())
-        vmsTanh(size, values, values, VML_EP);
-    else
-        vsTanh(size, values, values);
-}
-
-static void linear_gemm(const TensorView& input,
-                        const TensorView& weights,
-                        TensorView& output,
-                        int m,
-                        int n,
-                        int k)
-{
-    if (packed_gemm_enabled() && n > 1)
-    {
-        cblas_sgemm_compute(CblasRowMajor,
-                            CblasNoTrans,
-                            CblasPacked,
-                            m,
-                            n,
-                            k,
-                            input.as<float>(),
-                            k,
-                            get_packed_b(weights, m, n, k),
-                            n,
-                            0.0f,
-                            output.as<float>(),
-                            n);
-        return;
-    }
-
-    cblas_sgemm(CblasRowMajor,
-                CblasNoTrans,
-                CblasNoTrans,
-                m,
-                n,
-                k,
-                1.0f,
-                input.as<float>(),
-                k,
-                weights.as<float>(),
-                n,
-                0.0f,
-                output.as<float>(),
-                n);
-}
+static bool fast_vml_enabled() { static const bool enabled = env_flag_enabled("OPENNN_MKL_FAST_VML"); return enabled; }
 
 static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
 {
@@ -161,9 +60,16 @@ static void add_bias(TensorView& output, const TensorView& bias, Index rows, Ind
 
 bool try_activation_forward(TensorView& output, ActivationFunction function)
 {
-    if (function != ActivationFunction::Tanh) return false;
+    if (function != ActivationFunction::Tanh || output.type != Type::FP32) return false;
 
-    tanh_forward(output);
+    float* values = output.as<float>();
+    const int size = to_int(output.size());
+
+    if (fast_vml_enabled())
+        vmsTanh(size, values, values, VML_EP);
+    else
+        vsTanh(size, values, values);
+
     return true;
 }
 
@@ -171,20 +77,52 @@ bool try_linear_forward(const TensorView& input,
                         const TensorView& weights,
                         const TensorView& bias,
                         TensorView& output,
-                        cublasLtEpilogue_t epilogue)
+                        bool fuse_relu)
 {
+    if (input.type != Type::FP32
+        || weights.type != Type::FP32
+        || bias.type != Type::FP32
+        || output.type != Type::FP32
+        || input.shape.rank == 0
+        || weights.shape.rank != 2
+        || bias.shape.rank != 1)
+        return false;
+
     const Index input_columns = input.shape.back();
     const Index output_columns = weights.shape.back();
+
+    if (input_columns <= 0
+        || output_columns <= 0
+        || input.size() % input_columns != 0
+        || weights.shape[0] != input_columns
+        || bias.size() != output_columns)
+        return false;
+
     const Index rows = input.size() / input_columns;
 
-    linear_gemm(input,
-                weights,
-                output,
-                to_int(rows),
-                to_int(output_columns),
-                to_int(input_columns));
+    if (rows <= 0 || output.size() != rows * output_columns)
+        return false;
 
-    add_bias(output, bias, rows, output_columns, epilogue == CUBLASLT_EPILOGUE_RELU_BIAS);
+    const int m = to_int(rows);
+    const int n = to_int(output_columns);
+    const int k = to_int(input_columns);
+
+    cblas_sgemm(CblasRowMajor,
+                CblasNoTrans,
+                CblasNoTrans,
+                m,
+                n,
+                k,
+                1.0f,
+                input.as<float>(),
+                k,
+                weights.as<float>(),
+                n,
+                0.0f,
+                output.as<float>(),
+                n);
+
+    add_bias(output, bias, rows, output_columns, fuse_relu);
     return true;
 }
 
@@ -195,7 +133,7 @@ bool try_activation_forward(TensorView&, ActivationFunction)
     return false;
 }
 
-bool try_linear_forward(const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t)
+bool try_linear_forward(const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)
 {
     return false;
 }

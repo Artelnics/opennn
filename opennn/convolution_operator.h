@@ -39,8 +39,8 @@ struct ConvolutionOp : Operator
 
     cudnnActivationDescriptor_t fused_activation = nullptr;
 
-    cudnnFilterDescriptor_t      kernel_descriptor      = nullptr;
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+    CudnnDescriptor<cudnnFilterDescriptor_t>      kernel_descriptor;
+    CudnnDescriptor<cudnnConvolutionDescriptor_t> convolution_descriptor;
 
     cudnnConvolutionFwdAlgo_t       algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
     cudnnConvolutionBwdDataAlgo_t   algorithm_data    = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
@@ -65,8 +65,6 @@ struct ConvolutionOp : Operator
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
-
-    void destroy_cuda() override;
 
     ~ConvolutionOp() override;
 

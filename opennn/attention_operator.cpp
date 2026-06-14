@@ -12,6 +12,7 @@
 
 #include "attention_operator.h"
 #include "device_backend.h"
+#include "kernel.cuh"
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
@@ -155,7 +156,8 @@ TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
 
 bool AttentionOp::sdpa_supported(Type dtype, Device device)
 {
-    return cudnn_frontend_available && device == Device::CUDA && dtype == Type::BF16;
+    return cudnn_frontend_available && device == Device::CUDA
+        && (dtype == Type::BF16 || dtype == Type::FP32);
 }
 
 #if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
@@ -228,6 +230,20 @@ struct AttentionOp::SDPACache
 
         void* seq_len_q_buf  = nullptr;
         void* seq_len_kv_buf = nullptr;
+        // bf16 scratch for the fp32-input path (cuDNN flash-attn is bf16-only):
+        // Q/K/V cast down, O cast back up.
+        void* q_bf16_buf = nullptr;
+        void* k_bf16_buf = nullptr;
+        void* v_bf16_buf = nullptr;
+        void* o_bf16_buf = nullptr;
+        Index q_bf16_elems = 0, kv_bf16_elems = 0, o_bf16_elems = 0;
+        // backward bf16 scratch for the fp32 path: dO cast down; dQ/dK/dV
+        // come out of the bf16 graph and are cast back up to fp32.
+        void* do_bf16_buf = nullptr;
+        void* dq_bf16_buf = nullptr;
+        void* dk_bf16_buf = nullptr;
+        void* dv_bf16_buf = nullptr;
+        Index do_bf16_elems = 0, dq_bf16_elems = 0, dkv_bf16_elems = 0;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
@@ -262,6 +278,14 @@ struct AttentionOp::SDPACache
         for (auto& [_, e] : entries)
         {
             device::deallocate(Device::CUDA, e.fwd_workspace_buf, 0);
+            device::deallocate(Device::CUDA, e.q_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.k_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.v_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.o_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.do_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.dq_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.dk_bf16_buf, 0);
+            device::deallocate(Device::CUDA, e.dv_bf16_buf, 0);
             device::deallocate(Device::CUDA, e.bwd_workspace_buf, 0);
             device::deallocate(Device::CUDA, e.stats_buf, 0);
             device::deallocate(Device::CUDA, e.seed_buf, 0);
@@ -498,14 +522,9 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
 #endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
 
 AttentionOp::AttentionOp() = default;
-AttentionOp::~AttentionOp() { destroy_cuda(); }
+AttentionOp::~AttentionOp() = default;
 AttentionOp::AttentionOp(AttentionOp&&) noexcept = default;
 AttentionOp& AttentionOp::operator=(AttentionOp&&) noexcept = default;
-
-void AttentionOp::destroy_cuda()
-{
-    sdpa_cache.reset();
-}
 
 void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
@@ -712,19 +731,21 @@ void AttentionOp::apply_gpu(const TensorView& query,
     throw_if(!sdpa_supported(query.type, query.device),
              "AttentionOp: SDPA backend selected by the layer "
              "but not supported (build without HAVE_CUDNN_FRONTEND, "
-             "non-BF16 dtype, or CPU runtime).");
+             "unsupported dtype, or CPU runtime).");
 
     if (!sdpa_cache) sdpa_cache = make_unique<SDPACache>();
 
     const bool dropout_in_graph = dropout.active() && is_training;
 
+    const bool fp32_via_bf16 = (query.type == Type::FP32);
+    const Type graph_dtype = fp32_via_bf16 ? Type::BF16 : query.type;
     SDPACache::CacheKey ck{
         query.shape[0],
         query.shape[2],
         key.shape[2],
         heads_number,
         head_dimension,
-        query.type,
+        graph_dtype,
         dropout_in_graph,
         use_causal_mask,
         is_training
@@ -750,11 +771,40 @@ void AttentionOp::apply_gpu(const TensorView& query,
         ++sdpa_dropout_offset;
     }
 
+    void* q_ptr = query.data;
+    void* k_ptr = key.data;
+    void* v_ptr = value.data;
+    void* o_ptr = output.data;
+    if (fp32_via_bf16)
+    {
+        cudaStream_t cstream = Backend::get_compute_stream();
+        const Index q_elems  = query.size();
+        const Index kv_elems = key.size();
+        const Index o_elems  = output.size();
+        if (q_elems > entry.q_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.q_bf16_buf, 0);
+          entry.q_bf16_buf = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
+          entry.q_bf16_elems = q_elems; }
+        if (kv_elems > entry.kv_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.k_bf16_buf, 0);
+          device::deallocate(Device::CUDA, entry.v_bf16_buf, 0);
+          entry.k_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+          entry.v_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+          entry.kv_bf16_elems = kv_elems; }
+        if (o_elems > entry.o_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.o_bf16_buf, 0);
+          entry.o_bf16_buf = device::allocate(Device::CUDA, o_elems * Index(sizeof(bfloat16)));
+          entry.o_bf16_elems = o_elems; }
+        cast_fp32_to_bf16_cuda(q_elems,  query.as<float>(), static_cast<bfloat16*>(entry.q_bf16_buf), cstream);
+        cast_fp32_to_bf16_cuda(kv_elems, key.as<float>(),   static_cast<bfloat16*>(entry.k_bf16_buf), cstream);
+        cast_fp32_to_bf16_cuda(kv_elems, value.as<float>(), static_cast<bfloat16*>(entry.v_bf16_buf), cstream);
+        q_ptr = entry.q_bf16_buf; k_ptr = entry.k_bf16_buf; v_ptr = entry.v_bf16_buf; o_ptr = entry.o_bf16_buf;
+    }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
-    tp[entry.fwd_Q] = query.data;
-    tp[entry.fwd_K] = key.data;
-    tp[entry.fwd_V] = value.data;
-    tp[entry.fwd_O] = output.data;
+    tp[entry.fwd_Q] = q_ptr;
+    tp[entry.fwd_K] = k_ptr;
+    tp[entry.fwd_V] = v_ptr;
+    tp[entry.fwd_O] = o_ptr;
     tp[entry.fwd_SeqLenQ]  = entry.seq_len_q_buf;
     tp[entry.fwd_SeqLenKV] = entry.seq_len_kv_buf;
     if (is_training && entry.fwd_Stats) tp[entry.fwd_Stats] = entry.stats_buf;
@@ -767,6 +817,9 @@ void AttentionOp::apply_gpu(const TensorView& query,
     auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.fwd_workspace_buf);
     throw_if(status.is_bad(),
              format("SDPA forward execute: {}", status.get_message()));
+    if (fp32_via_bf16)
+        cast_bf16_to_fp32_cuda(output.size(), static_cast<const bfloat16*>(entry.o_bf16_buf),
+                               output.as<float>());
 #else
     apply_cpu(query, key, value, source_input,
               attention_weights, attention_weights_dropped,
@@ -976,13 +1029,15 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     const bool dropout_in_graph = dropout.active();
 
+    const bool fp32_via_bf16 = (query.type == Type::FP32);
+    const Type graph_dtype = fp32_via_bf16 ? Type::BF16 : query.type;
     SDPACache::CacheKey ck{
         query.shape[0],
         query.shape[2],
         key.shape[2],
         heads_number,
         head_dimension,
-        query.type,
+        graph_dtype,
         dropout_in_graph,
         use_causal_mask,
         true
@@ -1011,16 +1066,51 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                            Backend::get_compute_stream());
     }
 
+    void* bq = const_cast<float*>(query.as<float>());
+    void* bk = const_cast<float*>(key.as<float>());
+    void* bv = const_cast<float*>(value.as<float>());
+    void* bo = const_cast<float*>(attention_output.as<float>());
+    void* bdo = const_cast<float*>(output_delta.as<float>());
+    void* bdq = query_delta.data;
+    void* bdk = key_delta.data;
+    void* bdv = value_delta.data;
+    if (fp32_via_bf16)
+    {
+        cudaStream_t cstream = Backend::get_compute_stream();
+        const Index q_elems  = query.size();
+        const Index kv_elems = key.size();
+        const Index do_elems = output_delta.size();
+        // reuse the forward's cast Q/K/V/O (same iteration's forward populated them)
+        bq = entry.q_bf16_buf; bk = entry.k_bf16_buf;
+        bv = entry.v_bf16_buf; bo = entry.o_bf16_buf;
+        if (do_elems > entry.do_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.do_bf16_buf, 0);
+          entry.do_bf16_buf = device::allocate(Device::CUDA, do_elems * Index(sizeof(bfloat16)));
+          entry.do_bf16_elems = do_elems; }
+        if (q_elems > entry.dq_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.dq_bf16_buf, 0);
+          entry.dq_bf16_buf = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
+          entry.dq_bf16_elems = q_elems; }
+        if (kv_elems > entry.dkv_bf16_elems)
+        { device::deallocate(Device::CUDA, entry.dk_bf16_buf, 0);
+          device::deallocate(Device::CUDA, entry.dv_bf16_buf, 0);
+          entry.dk_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+          entry.dv_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+          entry.dkv_bf16_elems = kv_elems; }
+        cast_fp32_to_bf16_cuda(do_elems, output_delta.as<float>(), static_cast<bfloat16*>(entry.do_bf16_buf), cstream);
+        bdo = entry.do_bf16_buf;
+        bdq = entry.dq_bf16_buf; bdk = entry.dk_bf16_buf; bdv = entry.dv_bf16_buf;
+    }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
-    tp[entry.bwd_Q]     = const_cast<float*>(query.as<float>());
-    tp[entry.bwd_K]     = const_cast<float*>(key.as<float>());
-    tp[entry.bwd_V]     = const_cast<float*>(value.as<float>());
-    tp[entry.bwd_O]     = const_cast<float*>(attention_output.as<float>());
-    tp[entry.bwd_dO]    = const_cast<float*>(output_delta.as<float>());
+    tp[entry.bwd_Q]     = bq;
+    tp[entry.bwd_K]     = bk;
+    tp[entry.bwd_V]     = bv;
+    tp[entry.bwd_O]     = bo;
+    tp[entry.bwd_dO]    = bdo;
     tp[entry.bwd_Stats] = entry.stats_buf;
-    tp[entry.bwd_dQ]    = query_delta.data;
-    tp[entry.bwd_dK]    = key_delta.data;
-    tp[entry.bwd_dV]    = value_delta.data;
+    tp[entry.bwd_dQ]    = bdq;
+    tp[entry.bwd_dK]    = bdk;
+    tp[entry.bwd_dV]    = bdv;
     tp[entry.bwd_SeqLenQ]  = entry.seq_len_q_buf;
     tp[entry.bwd_SeqLenKV] = entry.seq_len_kv_buf;
     if (dropout_in_graph)
@@ -1032,6 +1122,12 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
     auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tp, entry.bwd_workspace_buf);
     throw_if(status.is_bad(),
              format("SDPA backward execute: {}", status.get_message()));
+    if (fp32_via_bf16)
+    {
+        cast_bf16_to_fp32_cuda(query.size(), static_cast<const bfloat16*>(entry.dq_bf16_buf), query_delta.as<float>());
+        cast_bf16_to_fp32_cuda(key.size(),   static_cast<const bfloat16*>(entry.dk_bf16_buf), key_delta.as<float>());
+        cast_bf16_to_fp32_cuda(value.size(), static_cast<const bfloat16*>(entry.dv_bf16_buf), value_delta.as<float>());
+    }
 #elif defined(OPENNN_HAS_CUDA)
     apply_delta_gpu_unfused(query, key, value,
                             attention_weights, attention_weights_dropped,

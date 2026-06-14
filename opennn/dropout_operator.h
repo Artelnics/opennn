@@ -31,10 +31,6 @@ struct DropoutOp : Operator
     void to_JSON(JsonWriter& w) const override;
     void from_JSON(const Json* parent) override;
 
-    void destroy_cuda() override;
-
-    ~DropoutOp() override { destroy_cuda(); }
-
     DropoutOp() = default;
     DropoutOp(DropoutOp&&) noexcept = default;
     DropoutOp& operator=(DropoutOp&&) noexcept = default;

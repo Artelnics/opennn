@@ -89,8 +89,6 @@ struct Operator
     virtual void from_JSON(const Json*)       {}
     virtual void load_state_from_JSON(const Json*) {}
 
-    virtual void destroy_cuda() {}
-
     vector<size_t> input_slots = {0};
     vector<size_t> output_slots = {1};
 

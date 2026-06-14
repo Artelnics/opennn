@@ -20,7 +20,6 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
     EXPECT_TRUE(loss.get_dataset() != nullptr);
 }
 
-
 // Batch class has been removed from the API.
 // The MultipleClassification_CPU_vs_GPU and BinaryClassification_CPU_vs_GPU
 // tests depended on Batch and are disabled until the API is restored.
