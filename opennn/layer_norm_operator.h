@@ -18,6 +18,13 @@ struct LayerNormOp : Operator
     Index sequence_length     = 0;
     Index embedding_dimension = 0;
 
+    // When set, the op takes a second input (the residual) and fuses the
+    // residual-add into the layer-norm kernel, replacing a separate Addition
+    // layer (mirrors the BatchNorm fuse_add). The post-add sum is written to the
+    // NormalizedInput output slot so the backward can read the residual stream.
+    bool fuse_add = false;
+    size_t residual_delta_slot = 0;
+
     TensorView gamma;
     TensorView beta;
 

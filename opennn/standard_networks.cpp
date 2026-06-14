@@ -710,11 +710,12 @@ Transformer::Transformer(Index input_sequence_length,
              "Transformer: embedding_dimension must be divisible by heads_number.");
 
     auto add_residual_and_norm = [&](const Shape& shape,
-                                     const string& add_label,
+                                     const string& /*add_label*/,
                                      const string& norm_label,
                                      Index left_index, Index right_index) -> Index {
-        add_layer(make_unique<Addition>(shape, add_label), {left_index, right_index});
-        add_layer(make_unique<Normalization3d>(shape, norm_label));
+        auto norm = make_unique<Normalization3d>(shape, norm_label);
+        norm->set_fuse_add(true);
+        add_layer(move(norm), {left_index, right_index});
         return get_layers_number() - 1;
     };
 

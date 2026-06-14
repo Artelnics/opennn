@@ -57,6 +57,15 @@ void LayerNormOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /
     TensorView& normalized  = get_output(fp, layer, 2);
     TensorView& output      = get_output(fp, layer, 3);
 
+    if (fuse_add)
+    {
+        // The residual is the second gathered source input; `normalized` slot
+        // holds the post-add sum (mirrors BatchNormOp's fuse_add).
+        const TensorView& residual = fp.input_views[layer][1];
+        layer_norm_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
+        return;
+    }
+
     layer_norm_forward(input, gamma, beta, means, stds, normalized, output);
 }
 
@@ -67,9 +76,23 @@ void LayerNormOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     const TensorView& output_delta = get_output_delta(bp, layer);
     TensorView& input_delta        = get_input_delta(bp, layer);
 
-    layer_norm_backward(get_input(fp, layer), output_delta, get_output(fp, layer),
+    // When fused, the norm operated on the post-add sum (stored in `normalized`);
+    // use it as the forward input. The add's backward passes the same gradient to
+    // both inputs, so the residual input_delta (slot 1) is a copy of input_delta.
+    const TensorView& norm_input = fuse_add ? normalized : get_input(fp, layer);
+
+    layer_norm_backward(norm_input, output_delta, get_output(fp, layer),
                         stds, normalized, gamma, gamma_gradient, beta_gradient,
                         input_delta);
+
+    if (fuse_add && residual_delta_slot)
+    {
+        // The residual stream's gradient equals the norm input's gradient (the
+        // add forks the same delta to both inputs), written to its own slot.
+        TensorView& residual_delta = bp.backward_slots[layer][residual_delta_slot];
+        if (residual_delta.data) device::copy_async(residual_delta.data, input_delta.data,
+            input_delta.byte_size(), device::CopyKind::DeviceToDevice, Backend::get_compute_stream());
+    }
 }
 
 }

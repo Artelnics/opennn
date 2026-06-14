@@ -777,6 +777,79 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
     }
 }
 
+// Fused residual-add + layernorm: computes S = X + R once, writes S to `sum`
+// (the residual-stream tensor the backward needs), and writes LayerNorm(S) to Y.
+// Saves a separate add kernel launch and one full read of S versus running an
+// Addition layer followed by a LayerNorm layer. Mirrors the BatchNorm fuse_add.
+template<typename T>
+__global__ void layernorm_add_forward_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R, T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const T* x_row   = X   + idx * D;
+    const T* r_row   = R   + idx * D;
+    T*       s_row   = sum + idx * D;
+    T*       y_row   = Y   + idx * D;
+
+    float local_sum = 0.0f;
+    float local_sum_sq = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float s = static_cast<float>(x_row[i]) + static_cast<float>(r_row[i]);
+        s_row[i]      = static_cast<T>(s);   // store the residual-stream sum
+        local_sum    += s;
+        local_sum_sq += s * s;
+    }
+
+    warp_reduce_sum2(local_sum, local_sum_sq);
+
+    __shared__ float warp_sum[32];
+    __shared__ float warp_sum_sq[32];
+    __shared__ float s_mean;
+    __shared__ float s_inv_var;
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+    {
+        warp_sum[warp_id]    = local_sum;
+        warp_sum_sq[warp_id] = local_sum_sq;
+    }
+    __syncthreads();
+
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
+    {
+        float s    = (threadIdx.x < num_warps) ? warp_sum[threadIdx.x]    : 0.0f;
+        float s_sq = (threadIdx.x < num_warps) ? warp_sum_sq[threadIdx.x] : 0.0f;
+        warp_reduce_sum2(s, s_sq);
+
+        if (threadIdx.x == 0)
+        {
+            const float inv_D = 1.0f / static_cast<float>(D);
+            const float mean = s * inv_D;
+            const float variance = fmaxf(s_sq * inv_D - mean * mean, 0.0f);
+            const float inv_var = rsqrtf(variance + eps);
+            s_mean    = mean;
+            s_inv_var = inv_var;
+            means[idx]    = mean;
+            inv_vars[idx] = inv_var;
+        }
+    }
+    __syncthreads();
+
+    const float mean    = s_mean;
+    const float inv_var = s_inv_var;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float x_hat = (static_cast<float>(s_row[i]) - mean) * inv_var;
+        y_row[i] = static_cast<T>(fmaf(gamma[i], x_hat, beta[i]));
+    }
+}
+
 static inline int layernorm_threads(int D)
 {
     if (D <= 32) return 32;
@@ -793,8 +866,18 @@ void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* m
     OPENNN_CUDA_LAUNCH(layernorm_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps));
 }
 
+template<typename T>
+void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R, T* sum, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    if (N == 0 || D == 0) return;
+
+    OPENNN_CUDA_LAUNCH(layernorm_add_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps));
+}
+
 template void layernorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, float*, const float*, const float*, const float);
 template void layernorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
+template void layernorm_add_forward_cuda<float>        (const int, const int, const float*,         const float*,         float*,         float*,         float*, float*, const float*, const float*, const float);
+template void layernorm_add_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, float*, float*, const float*, const float*, const float);
 
 template<typename T>
 __global__ void layernorm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)

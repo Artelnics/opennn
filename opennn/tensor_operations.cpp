@@ -603,6 +603,32 @@ void layer_norm_forward(const TensorView& input, const TensorView& gamma, const 
     layer_norm_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
+// Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
+// (the residual-stream value the backward needs) and LayerNorm(sum) to output.
+void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+                            const TensorView& gamma, const TensorView& beta,
+                            TensorView& means, TensorView& standard_deviations,
+                            TensorView& normalized, TensorView& sum, TensorView& output)
+{
+    if (input.is_cuda())
+    {
+        const int rows = to_int(input.size() / input.shape.back());
+        const int cols = to_int(input.shape.back());
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            layernorm_add_forward_cuda<T>(rows, cols,
+                                          input.as<T>(), residual.as<T>(),
+                                          sum.as<T>(), output.as<T>(),
+                                          means.as<float>(), standard_deviations.as<float>(),
+                                          gamma.as<float>(), beta.as<float>(), EPSILON);
+        });
+        return;
+    }
+    // CPU: add then normalize (the add result goes into `sum`).
+    add(input, residual, sum);
+    layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
+}
+
 void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,

@@ -28,8 +28,13 @@ public:
     Index get_embedding_dimension() const { return embedding_dimension; }
 
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
+
+    // Fuse a residual-add into the layer norm: the layer then takes two source
+    // layers (main, residual) and skips a separate Addition layer.
+    void set_fuse_add(bool on);
 
     void set_input_shape(const Shape&) override;
 

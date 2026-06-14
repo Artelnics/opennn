@@ -590,6 +590,11 @@ namespace
         cublasLtMatmulAlgo_t   algorithm{};
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
+        // Autotuning: cuBLASLt's first heuristic is not always the fastest, so we
+        // keep the top candidates and, on the first real matmul, time each and
+        // lock in the quickest. `tuned` marks that selection as done.
+        vector<cublasLtMatmulHeuristicResult_t> candidates;
+        bool                   tuned = false;
 
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
@@ -606,6 +611,8 @@ namespace
             swap(algorithm, other.algorithm);
             swap(has_algorithm, other.has_algorithm);
             swap(workspace_bytes, other.workspace_bytes);
+            swap(candidates, other.candidates);
+            swap(tuned, other.tuned);
         }
 
         ~LtMatmulPlan()
@@ -662,9 +669,15 @@ namespace
 
     cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
     {
-        return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-            ? CUBLAS_COMPUTE_32F
-            : CUBLAS_COMPUTE_DTYPE;
+        if (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
+        {
+            // bf16 multiply with the fast tensor-core accumulation path (the
+            // analogue of FAST_TF32 for fp32). Plain CUBLAS_COMPUTE_32F left the
+            // heuristic on a non-tensor-core algorithm, so bf16 got no speedup.
+            static const bool plain = std::getenv("OPENNN_BF16_COMPUTE_PLAIN") != nullptr;
+            return plain ? CUBLAS_COMPUTE_32F : CUBLAS_COMPUTE_32F_FAST_16BF;
+        }
+        return CUBLAS_COMPUTE_DTYPE;
     }
 
     struct LtMatmulPreferenceGuard
@@ -800,7 +813,16 @@ const LtMatmulPlan& get_lt_gemm_plan(
         CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
         &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-    cublasLtMatmulHeuristicResult_t heuristic = {};
+    // Autotuning (OPENNN_GEMM_AUTOTUNE=1) asks for several candidate algorithms;
+    // the first real matmul times them and keeps the fastest. Otherwise take the
+    // single first heuristic (cuBLASLt's default best guess), as before.
+    static const bool autotune = [] {
+        const char* v = std::getenv("OPENNN_GEMM_AUTOTUNE");
+        return v && v[0] == '1';
+    }();
+    constexpr int max_candidates = 16;
+
+    cublasLtMatmulHeuristicResult_t heuristics[max_candidates] = {};
     int returned_results = 0;
     CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                                 plan.matmul_descriptor,
@@ -808,13 +830,22 @@ const LtMatmulPlan& get_lt_gemm_plan(
                                                 plan.b_matrix_layout,
                                                 plan.output_matrix_layout,
                                                 plan.output_matrix_layout,
-                                                pref.pref, 1, &heuristic, &returned_results));
+                                                pref.pref,
+                                                autotune ? max_candidates : 1,
+                                                heuristics, &returned_results));
 
     if (returned_results > 0)
     {
-        plan.algorithm = heuristic.algo;
+        plan.algorithm = heuristics[0].algo;
         plan.has_algorithm = true;
-        plan.workspace_bytes = heuristic.workspaceSize;
+        plan.workspace_bytes = heuristics[0].workspaceSize;
+
+        if (autotune && returned_results > 1)
+        {
+            plan.candidates.assign(heuristics, heuristics + returned_results);
+            for (int i = 0; i < returned_results; ++i)
+                ensure_cublas_lt_workspace(heuristics[i].workspaceSize);
+        }
 
         // Grow the global workspace to fit this plan's chosen algorithm.
         ensure_cublas_lt_workspace(plan.workspace_bytes);
@@ -834,10 +865,58 @@ void run_lt_matmul_cached(
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype)
 {
-    const LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+    LtMatmulPlan& plan = const_cast<LtMatmulPlan&>(
+        get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype));
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+    // One-time autotune: with real operands in hand, time each candidate
+    // algorithm on this stream and keep the fastest. Safe to do here because it
+    // produces correct output every iteration; only the algo choice changes.
+    if (!plan.tuned && !plan.candidates.empty())
+    {
+        cudaStream_t stream = Backend::get_compute_stream();
+        auto time_algo = [&](const cublasLtMatmulAlgo_t& algo, size_t ws_bytes) -> float {
+            cudaEvent_t a, b;
+            cudaEventCreate(&a); cudaEventCreate(&b);
+            void* ws = ensure_cublas_lt_workspace(ws_bytes);
+            // 2 warmup + 5 timed runs
+            for (int w = 0; w < 2; ++w)
+                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                               &algo, ws, ws_bytes, stream);
+            cudaEventRecord(a, stream);
+            for (int t = 0; t < 5; ++t)
+                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                               &algo, ws, ws_bytes, stream);
+            cudaEventRecord(b, stream);
+            cudaEventSynchronize(b);
+            float ms = 0.0f; cudaEventElapsedTime(&ms, a, b);
+            cudaEventDestroy(a); cudaEventDestroy(b);
+            return ms;
+        };
+        float best_ms = 1e30f;
+        for (const auto& cand : plan.candidates)
+        {
+            float ms;
+            try { ms = time_algo(cand.algo, cand.workspaceSize); }
+            catch (...) { continue; }                 // skip an algo that errors
+            if (ms < best_ms)
+            {
+                best_ms = ms;
+                plan.algorithm = cand.algo;
+                plan.workspace_bytes = cand.workspaceSize;
+                plan.has_algorithm = true;
+            }
+        }
+        ensure_cublas_lt_workspace(plan.workspace_bytes);
+        plan.tuned = true;
+        plan.candidates.clear();
+    }
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,

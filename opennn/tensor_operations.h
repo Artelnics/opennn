@@ -60,6 +60,10 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
 void layer_norm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                         TensorView& means, TensorView& standard_deviations,
                         TensorView& normalized, TensorView& output);
+void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+                            const TensorView& gamma, const TensorView& beta,
+                            TensorView& means, TensorView& standard_deviations,
+                            TensorView& normalized, TensorView& sum, TensorView& output);
 void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,

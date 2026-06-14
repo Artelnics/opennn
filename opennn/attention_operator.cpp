@@ -230,6 +230,11 @@ struct AttentionOp::SDPACache
 
         void* seq_len_q_buf  = nullptr;
         void* seq_len_kv_buf = nullptr;
+        // The per-sample valid sequence lengths depend only on the source
+        // content (which positions are padding). On a repeated-inference loop the
+        // source buffer is reused, so cache the pointer and skip the scan when it
+        // is unchanged. A weight update / new source resets it via the pointer.
+        const void* seq_len_source_ptr = nullptr;
         // bf16 scratch for the fp32-input path (cuDNN flash-attn is bf16-only):
         // Q/K/V cast down, O cast back up.
         void* q_bf16_buf = nullptr;
@@ -355,7 +360,13 @@ void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
     const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
         && source_input.is_cuda();
 
+    // Skip the padding scan when the source buffer is the same one we last
+    // scanned for this entry: the lengths in seq_len_*_buf are already correct.
+    if (ok && source_input.data == entry.seq_len_source_ptr)
+        return;
+
     if (ok)
+    {
         source_input.dispatch([&](auto tag) {
             using T = decltype(tag);
             attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
@@ -366,6 +377,8 @@ void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
                                                static_cast<int32_t*>(entry.seq_len_q_buf),
                                                static_cast<int32_t*>(entry.seq_len_kv_buf));
         });
+        entry.seq_len_source_ptr = source_input.data;
+    }
 
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
