@@ -1,0 +1,6 @@
+# compiled benchmark binary
+opennn_cnn_speed
+*.log
+
+# generated dataset caches (prepare_mnist.py)
+*.npy
