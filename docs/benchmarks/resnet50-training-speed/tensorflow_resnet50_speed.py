@@ -10,6 +10,7 @@
 # cores, so this is the like-for-like opponent to OpenNN's CUDA-graph path.
 #
 #   usage:  python tensorflow_resnet50_speed.py [epochs] [batch] [data_dir]
+#   env:    TF_BF16=1 -> mixed_bfloat16 policy (matches OpenNN's bf16 column)
 
 import sys
 import time
@@ -23,12 +24,15 @@ import tensorflow as tf
 epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 batch = int(sys.argv[2]) if len(sys.argv) > 2 else 128
 data_dir = sys.argv[3] if len(sys.argv) > 3 else "cifar10"
+bf16 = os.environ.get("TF_BF16") is not None
 
 gpus = tf.config.list_physical_devices("GPU")
 assert gpus, "CUDA GPU required"
 for g in gpus:
     tf.config.experimental.set_memory_growth(g, True)
 tf.random.set_seed(42)
+if bf16:
+    tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
 
 K = tf.keras.layers
 
@@ -60,7 +64,8 @@ def build_resnet50(classes, hw):
             x = bottleneck(x, mid, stride, f"s{stage}b{block}")
             in_ch = mid * 4
     x = K.GlobalAveragePooling2D()(x)
-    out = K.Dense(classes)(x)
+    # fp32 logits head under mixed_bfloat16 for a numerically stable loss.
+    out = K.Dense(classes, dtype="float32")(x)
     return tf.keras.Model(inp, out)
 
 
@@ -70,7 +75,7 @@ n = x.shape[0]
 hw = x.shape[1]
 classes = int(y.max()) + 1
 print(f"device={gpus[0].name}")
-print(f"path=fast(NHWC+XLA)")
+print(f"path=fast(NHWC+XLA){' +bf16' if bf16 else ''}")
 print(f"samples={n} batch={batch} epochs={epochs} classes={classes}")
 
 with tf.device("/GPU:0"):

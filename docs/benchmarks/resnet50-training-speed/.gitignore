@@ -6,3 +6,4 @@ opennn_resnet50_speed
 *.log
 *.nsys-rep
 *.sqlite
+__pycache__/

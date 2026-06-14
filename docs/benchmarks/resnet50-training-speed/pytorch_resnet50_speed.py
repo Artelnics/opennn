@@ -13,6 +13,7 @@
 #
 #   usage:  python pytorch_resnet50_speed.py [epochs] [batch] [data_dir]
 #   env:    PT_FAST=1  -> channels_last + torch.compile + TF32
+#           PT_BF16=1  -> torch.autocast(bfloat16) (matches OpenNN's bf16 column)
 
 import sys
 import time
@@ -26,6 +27,7 @@ epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 batch = int(sys.argv[2]) if len(sys.argv) > 2 else 128
 data_dir = sys.argv[3] if len(sys.argv) > 3 else "cifar10"
 fast = os.environ.get("PT_FAST") is not None
+bf16 = os.environ.get("PT_BF16") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
@@ -98,7 +100,7 @@ if fast:
 n = x.shape[0]
 classes = int(y.max().item()) + 1
 print(f"device={torch.cuda.get_device_name(0)}")
-print(f"path={'fast(channels_last+compile)' if fast else 'eager(NCHW)'}")
+print(f"path={'fast(channels_last+compile)' if fast else 'eager(NCHW)'}{' +bf16' if bf16 else ''}")
 print(f"samples={n} batch={batch} epochs={epochs} classes={classes}")
 
 model = ResNet50(classes).cuda()
@@ -118,7 +120,8 @@ def run_epoch():
     for s in starts:
         idx = perm[s:s + batch]
         optimizer.zero_grad(set_to_none=True)
-        loss = loss_fn(model(x[idx]), y[idx])
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
+            loss = loss_fn(model(x[idx]), y[idx])
         loss.backward()
         optimizer.step()
     torch.cuda.synchronize()

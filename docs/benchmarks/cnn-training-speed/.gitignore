@@ -4,3 +4,4 @@ opennn_cnn_speed
 
 # generated dataset caches (prepare_mnist.py)
 *.npy
+__pycache__/
