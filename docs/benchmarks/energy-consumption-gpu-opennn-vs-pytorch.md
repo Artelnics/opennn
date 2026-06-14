@@ -1,121 +1,119 @@
-# GPU energy consumption: OpenNN vs PyTorch (dense MLP)
+# GPU energy consumption: OpenNN vs PyTorch vs TensorFlow (dense MLP)
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
+
+**Status:** current GPU energy result. It is valid for the sampled NVIDIA
+`power.draw` protocol described below — GPU-board energy, not whole-system wall
+power. Every number is the **median of 5 runs (± population stdev)**; the raw
+per-run data, versions, and power traces are in
+[`results/`](results/) (`gpu-dense-rosenbrock-energy-*.json`).
 
 The [speed note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) shows
 OpenNN running the same dense network faster than PyTorch. Speed and energy are
 not the same thing — a faster engine can finish sooner but draw more power while
 it runs, so the energy bill is an independent question. This note measures it:
 **how many joules each engine spends per sample**, for inference and for
-training, on the same GPU and the same 1000 → 1000 (tanh) → 1 network.
+training, on the same GPU and the same 1000 → 1000 (tanh) → 1 network, against
+**both** PyTorch and TensorFlow running their fair fast paths.
 
 ## The result
 
-GPU energy at batch 8000, fp32, integrated from 20 Hz `nvidia-smi` power samples
-over a ≥8 s steady-state window (idle baseline 26.8 W subtracted to give the
-workload's *active* energy):
+GPU energy per sample at batch 8000, fp32, integrated from 20 Hz `nvidia-smi`
+power samples over a steady-state loop of 2000 iterations (so each run is many
+seconds; the idle baseline of 27.2 W is subtracted to give the workload's
+*active* energy). All three engines run the **identical workload** — one
+forward (inference) or forward+backward+Adam step (training) on a fixed batch,
+repeated — so energy per sample is apples-to-apples. PyTorch and TensorFlow run
+their compiled fast paths (`torch.compile` / XLA `jit_compile`).
 
-| Workload | Engine | Avg power | Active power | **Energy / sample** | OpenNN advantage |
-|---|---|---:|---:|---:|---|
-| **Inference** | OpenNN | 97.3 W | 70.5 W | **20.4 µJ** | — |
-| | PyTorch | 86.8 W | 60.0 W | 28.2 µJ | **1.44× less energy** |
-| **Training** | OpenNN | 57.8 W | 31.0 W | **24.0 µJ** | — |
-| | PyTorch | 80.2 W | 53.4 W | 58.2 µJ | **2.42× less energy** |
+**Inference — energy per sample (µJ), lower is better:**
 
-**OpenNN spends 1.44× less energy per inference and 2.42× less energy per
-training sample** than PyTorch on this network. The two wins come from two
-different mechanisms — which is the interesting part.
+| Engine | Total energy | Active energy | Avg power | vs OpenNN (total) |
+|---|---:|---:|---:|---|
+| **OpenNN** | **25.9 ± 2.8** | 17.9 ± 2.1 | 88 W | — |
+| TensorFlow (XLA) | 29.8 ± 3.0 | 18.3 ± 2.1 | 68 W | OpenNN **1.15× less** |
+| PyTorch (compile) | 43.5 ± 2.2 | 30.6 ± 1.3 | 91 W | OpenNN **1.68× less** |
 
-## Inference: more power, less energy
+**Training — energy per sample (µJ), lower is better:**
 
-OpenNN draws *more* power during inference than PyTorch (97 W vs 87 W): its
-device-resident inference path keeps the GPU busier, with fewer idle gaps. But it
-finishes each sample so much faster that the **energy per sample is 28 % lower**.
-Efficiency here is bought with speed, not with throttling — the energy ratio
-(28.2 / 20.4 = 1.38×) tracks the throughput ratio (≈1.43×) almost exactly, which
-is the signature of a workload whose energy is dominated by *how long the GPU
-runs*, not *how hard*.
+| Engine | Total energy | Active energy | Avg power | vs OpenNN (total) |
+|---|---:|---:|---:|---|
+| TensorFlow (XLA) | **60.5 ± 3.5** | 38.6 ± 2.5 | 74 W | OpenNN 0.93× (TF lower) |
+| **OpenNN** | **64.9 ± 3.9** | 46.1 ± 2.8 | 92 W | — |
+| PyTorch (compile) | 89.1 ± 3.2 | 62.7 ± 2.7 | 91 W | OpenNN **1.37× less** |
 
-## Training: less power *and* less energy
+**OpenNN spends the least energy per inference of the three — 1.15× less than
+TensorFlow and 1.68× less than PyTorch.** For training, OpenNN spends **1.37×
+less energy than PyTorch**, but here **TensorFlow's XLA path is the most
+energy-efficient** (≈7 % below OpenNN), because TF holds the GPU at a markedly
+lower average power (74 W vs 92 W). We report that honestly: OpenNN is the
+inference-energy leader and beats PyTorch on both, and TF's compiled training
+step is the one place a competitor edges it.
 
-Training is the larger and more surprising win. OpenNN draws **less** power than
-PyTorch (58 W vs 80 W) *and* spends **2.4× less energy per sample**. PyTorch
-holds the GPU at ~80 W for longer per sample; OpenNN's faster GEMMs and lower
-sustained draw compound into under half the energy.
+## Why the picture differs between inference and training
 
-This win is not an artifact of a favorable batch schedule. The speed note shows
-OpenNN's per-step throughput depends on how many mini-batches an epoch has (its
-data-pipeline coordination is per-step). Measuring training energy at the *hard*
-end of that range — 50 mini-batches per epoch, where OpenNN is slowest on raw
-speed — it still spends **33.0 µJ/sample** versus PyTorch's 58.2, a **1.76×**
-energy win. So across the whole regime OpenNN is between **1.76× and 2.42×** more
-energy-efficient at training; the headline uses the 12-batch/epoch point, and the
-floor (1.76×) is stated here so the number is not cherry-picked. The reason is
-consistent: OpenNN trains at 46–58 W where PyTorch sits at 80 W.
+The energy bill is power × time, and the three engines trade those off
+differently:
+
+* **OpenNN runs the GPU hot and short.** It sustains the highest average power
+  (88–92 W) but finishes each sample fastest, so on inference its short runtime
+  wins outright. Its energy tracks its speed lead, the signature of a
+  runtime-dominated workload.
+* **TensorFlow runs the GPU cooler.** Its XLA-compiled step sits at 68–74 W —
+  ~20 % below OpenNN/PyTorch. On inference that isn't enough to overcome
+  OpenNN's speed; on training, where the step is heavier, the lower sustained
+  power makes TF the energy leader despite not being the fastest.
+* **PyTorch draws high power without the matching speed**, so it is the least
+  energy-efficient of the three on both workloads even with `torch.compile`.
 
 ## Setup
 
 | | Value |
 |---|---|
 | Network | 1000 → 1000 (tanh) → 1, dense; MSE, Adam, fp32 |
-| Inference | device-resident forward loop, batch 8000 |
-| Training | resident dataset + CUDA-graph mega-launch (`OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1`), batch 8000 |
+| Workload | identical across engines: fixed batch 8000, 2000 steps, warmup excluded |
+| OpenNN | device-resident; training uses `OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1` |
+| PyTorch | `torch.compile`, GPU-resident tensors |
+| TensorFlow | `@tf.function(jit_compile=True)` (XLA), GPU-resident tensors |
 | Power source | `nvidia-smi --query-gpu=power.draw`, 20 Hz (`-lms 50`), trapezoidal integration |
-| Idle baseline | 26.8 W (mean over 5 s idle), subtracted for *active* energy |
-| Window | ≥ 8 s steady state per run (150–330 power samples each); warmup excluded |
+| Idle baseline | 27.2 W (measured fresh at start), subtracted for *active* energy |
+| Statistics | median of 5 runs, ± population stdev; raw runs in `results/*.json` |
 
-Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (6 GB, driver 555.42)
+Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (6 GB, driver 555.85)
 under WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 +
-CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
+CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124), TensorFlow 2.21.0, CPython 3.12.
 
 ## Caveats
 
-* **This is GPU energy only.** The board's power sensor (`power.draw`) covers the
-  GPU; CPU/system energy is *not* included. Intel RAPL (the CPU energy counter)
-  is virtualized away under WSL2, so a whole-system figure is not available on
-  this setup. For a GPU-bound workload the GPU is the dominant term, but the
-  number is "GPU energy," not "wall energy."
-* **Energy is integrated from sampled power, not read from a hardware counter.**
-  This consumer GPU does not expose a cumulative joule counter
-  (`total_energy_consumption` is unsupported), so energy is ∫power dt at 20 Hz.
-  That is accurate over a multi-second window (hundreds of samples) and is
-  applied identically to both engines; it would be less reliable for sub-second
-  runs, which is why every run is sized to ≥ 8 s.
-* **Active vs total energy.** The table's "energy/sample" is *active* (idle
-  baseline removed) so it reflects the workload's marginal cost. Total-energy
-  ratios are smaller because both engines share the same ~27 W idle floor; the
-  raw totals are in the reproduction output.
+* **This is GPU energy only.** The board power sensor (`power.draw`) covers the
+  GPU; CPU/system energy is *not* included (Intel RAPL is virtualized away under
+  WSL2). For a GPU-bound workload the GPU is the dominant term, but the number is
+  "GPU energy," not "wall energy." A whole-system claim needs a wall-power meter.
+* **Energy is integrated from sampled power, not a hardware joule counter.** This
+  consumer GPU does not expose `total_energy_consumption`, so energy is ∫power dt
+  at 20 Hz — accurate over a multi-second window (hundreds of samples) and
+  applied identically to all three engines.
+* **Active vs total energy.** The headline uses *total* energy (it includes the
+  shared idle floor, so it is the conservative framing). *Active* energy (idle
+  removed) is also reported; on it the OpenNN/TF inference gap narrows to a tie
+  while PyTorch remains the outlier.
+* **Run-to-run variance is real** (±3–4 µJ on a noisy 20 Hz signal and a laptop
+  GPU under thermal variation), which is why every figure is a 5-run median with
+  its stdev. The *ranking* is stable across runs; the exact ratios shift slightly.
 * Single consumer laptop GPU under WSL2; absolute watts and the idle floor shift
-  with hardware, driver, and power policy. The *ratios* are the portable result,
-  and they follow directly from the speed and utilization differences in the
-  [speed note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md).
+  with hardware, driver, and power policy.
 
 ## Reproducing
 
-The energy harness wraps any benchmark command, logs GPU power alongside it, and
-integrates. It and the benchmark programs are in
-[`docs/benchmarks/rosenbrock-max-batch/`](rosenbrock-max-batch/):
+The energy harness runs all three engines on the identical workload, samples GPU
+power while each runs, integrates, repeats N times, and writes a result JSON. It
+and the benchmark programs are in
+[`rosenbrock-max-batch/`](rosenbrock-max-batch/):
 
 ```bash
-# energy_measure.sh <samples_processed> <label> -- <command...>
-
-# Inference energy (samples = batch * iters)
-ENERGY_IDLE_W=26.8 ./energy_measure.sh 40000000 opennn_infer -- \
-  ./opennn_rosenbrock_resident_infer 8000 5000 1000 1000
-ENERGY_IDLE_W=26.8 ./energy_measure.sh 28000000 pytorch_infer -- \
-  python pytorch_rosenbrock_throughput.py inference 8000 3500 1000 1000
-
-# Training energy (samples = dataset_size * epochs, or batch * iters for PyTorch)
-ENERGY_IDLE_W=26.8 ./energy_measure.sh 10000000 opennn_train -- \
-  env OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1 \
-  ./opennn_rosenbrock_throughput train 100000 8000 100 1000 1000
-ENERGY_IDLE_W=26.8 ./energy_measure.sh 12800000 pytorch_train -- \
-  python pytorch_rosenbrock_throughput.py train 8000 1600 1000 1000
-```
-
-Measure your own idle baseline first (`ENERGY_IDLE_W`):
-
-```bash
-timeout 5 nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits -lms 50 \
-  | awk '{s+=$1;n++} END{printf "idle_W=%.2f\n", s/n}'
+cd docs/benchmarks/rosenbrock-max-batch
+# build the OpenNN binaries first (build_tput.sh / build_resident.sh)
+python run_energy.py --mode both --batch 8000 --iters 2000 --runs 5
+# -> writes ../results/gpu-dense-rosenbrock-energy-<timestamp>.json
+# engines: --engines opennn,pytorch,tensorflow   idle override: --idle 27.2
 ```

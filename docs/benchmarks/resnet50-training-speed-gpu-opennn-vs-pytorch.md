@@ -2,6 +2,10 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-13. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU, CUDA 12.9, cuDNN 9.23.*
 
+**Status:** current GPU ResNet-50 headline for the benchmark index. The earlier
+2,912 samples/s result is kept below only as historical context for the optimization
+path that led to the current 8,433 samples/s result.
+
 The [MNIST CNN note](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)
 measures a minimal convolutional network. This note scales the same question
 to a **real architecture**: ResNet-50 — 53 convolutions, 53 batch
@@ -113,7 +117,8 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
   the CUDA-graph mega-launch is the headline result, not the eager loop (which
   lands ~5,200 samples/s, still 1.3× eager PyTorch). `torch.compile` is the
   fair opponent for a graph-replaying engine, and OpenNN is 1.6× ahead of it
-  here ([`pt_compile_probe.py`](resnet50-training-speed/pt_compile_probe.py)).
+  here; the official runner now records both PyTorch eager and
+  `torch.compile` ([`pt_compile_probe.py`](resnet50-training-speed/pt_compile_probe.py)).
 * The mega-launch's leverage is largest under WSL2, where CUDA-API issue
   latency is high; on native Linux the per-launch cost is lower and the margin
   over `torch.compile` would narrow. The conv/BN kernels themselves are cuDNN
@@ -129,16 +134,17 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
 
 ## Reproducing
 
-The data prep, both training programs, the compile probe, and the runner are
+The data prep, both PyTorch paths, the OpenNN benchmark, and the runner are
 in [`docs/benchmarks/resnet50-training-speed/`](resnet50-training-speed/):
 
 ```bash
 python prepare_cifar10.py cifar10        # downloads CIFAR-10, writes BMPs + npy
 python prepare_cifar100.py cifar100      # CIFAR-100 (100-class fine labels)
-./run_resnet50.sh 5 128 cifar10          # both engines + summary (or: cifar100)
+./run_resnet50.sh 5 128 cifar10          # OpenNN + PyTorch eager + torch.compile + result JSON
 # or individually:
 OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 ./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16]
 python pytorch_resnet50_speed.py [epochs] [batch] cifar10
+python pt_compile_probe.py [epochs] [batch] cifar10
 ```
 
 The PyTorch programs read the class count from the labels, so the same scripts

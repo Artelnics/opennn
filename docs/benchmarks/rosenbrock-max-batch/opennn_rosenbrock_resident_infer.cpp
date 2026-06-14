@@ -36,9 +36,12 @@ int main(int argc, char* argv[])
     try
     {
         set_seed(0);
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        const bool use_bf16 = std::getenv("OPENNN_BF16") != nullptr;
+        Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
-        ApproximationNetwork network(Shape{inputs}, {hidden}, Shape{1});
+        const char* act_env = std::getenv("OPENNN_ACT");
+        const std::string act = act_env ? act_env : "Tanh";
+        ApproximationNetwork network(Shape{inputs}, {hidden}, Shape{1}, act);
         static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
         static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
         static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");

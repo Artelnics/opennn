@@ -2,6 +2,10 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
 
+**Status:** current WSL2 laptop GPU inference result. Before using this as a
+flagship investor claim, keep repeated-run statistics and exact cross-framework
+correctness/quality gates with the published numbers.
+
 The [dense-MLP note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) and
 the [ResNet note](resnet50-training-speed-gpu-opennn-vs-pytorch.md) cover fully
 connected and convolutional networks. This note covers the third major
@@ -15,24 +19,34 @@ forward pass) against PyTorch's `nn.Transformer`, in both bf16 and fp32.
 
 Inference throughput (tokens/sec) of the encoder-decoder Transformer on one
 RTX 3060 Laptop, at the *Attention Is All You Need* base shape (d_model 512,
-8 heads, feed-forward 2048, 6+6 layers), measured after warmup. The OpenNN and
-PyTorch models are built to match — parameter counts agree to 0.05% (1,047,536
-vs 1,048,040). Transformers are run in **bf16** in practice, and that is the
-headline comparison (OpenNN bf16 vs PyTorch `torch.autocast(bf16)`, both using
-fused flash-attention):
+8 heads, feed-forward 2048, 6+6 layers), batch 32, measured after warmup. Each
+figure is the **median of 5 runs (± population stdev)**; raw per-run data,
+versions, and ratios are in [`results/`](results/)
+(`gpu-transformer-inference-*.json`). Transformers run in **bf16** in practice,
+and that is the headline — each engine on its fused fast path: OpenNN's
+device-resident fused flash-attention, PyTorch `torch.autocast(bf16)`,
+TensorFlow `@tf.function(jit_compile=True)` (XLA) + mixed-precision.
 
-| Config (d512/h8/ff2048/6L) | OpenNN bf16 | PyTorch bf16 | OpenNN / PyTorch |
-|---|---:|---:|---|
-| seq 128, batch 32 | 124,664 | 103,041 | **1.21×** |
-| seq 256, batch 32 | 141,010 | 102,718 | **1.37×** |
-| seq 384, batch 32 | 137,927 | 105,436 | **1.31×** |
-| seq 512, batch 32 | 144,080 | 108,440 | **1.33×** |
-| seq 256, batch 64 | 160,958 | 133,132 | **1.21×** |
+| Config (d512/h8/ff2048/6L) | OpenNN bf16 | TensorFlow bf16 | PyTorch bf16 | OpenNN / TF | OpenNN / PyTorch |
+|---|---:|---:|---:|---|---|
+| seq 128, batch 32 | 150,096 ± 725   | 136,667 ± 5,946  | 109,885 ± 4,039  | **1.10×** | 1.37× |
+| seq 256, batch 32 | 168,366 ± 4,167 | 129,976 ± 5,334  | 111,085 ± 4,657  | **1.30×** | 1.52× |
+| seq 512, batch 32 | 160,128 ± 2,700 | 101,400 ± 16,893 | 84,511 ± 13,561  | **1.58×** | 1.89× |
 
 **In bf16 — the precision transformers actually run in — OpenNN's Transformer
-inference is 1.21–1.37× faster than PyTorch**, across sequence lengths and batch
-sizes. The bf16 output is validated against the fp32 CPU reference (no NaN, within
-bf16 tolerance).
+inference is the fastest of the three, beating both TensorFlow and PyTorch, and
+the lead grows with sequence length** — from 1.10× over TF at seq 128 to **1.58×
+at seq 512** (1.37–1.89× over PyTorch). That is the regime that matters: long
+sequences are where real LLM / long-context inference lives, and OpenNN's fused
+cuDNN flash-attention scales there in a way XLA's whole-graph fusion does not.
+The bf16 output is validated against the fp32 CPU reference (no NaN, within bf16
+tolerance).
+
+*(Earlier OpenNN-vs-PyTorch-only runs reported 1.21–1.37×; adding a fairly
+configured TensorFlow (XLA) and 5-run medians gives the table above. All three
+were measured under WSL2, which is known to penalize OpenNN's bf16 tensor-core
+path — see the [dense note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md)
+— so native-Windows re-measurement should only widen OpenNN's lead.)*
 
 ### bf16 is the headline; fp32 now wins too
 
@@ -126,10 +140,10 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
 
 ## Caveats
 
-* **Inference only.** OpenNN's Transformer *training* path is not benchmarked —
-  the synthetic language-model data generator the training tests reference was
-  never implemented and those tests are commented-out WIP. The forward pass,
-  however, is validated and is what production inference uses.
+* **Inference benchmark.** This note measures the forward pass only. Transformer
+  training is covered separately in
+  [the GPU Transformer training note](transformer-training-gpu-opennn-vs-pytorch.md).
+  The forward pass is validated and is what production inference uses.
 * **The headline is bf16**, the precision transformers actually run in for
   inference, but **OpenNN wins in fp32 too** (see the fp32 result above). cuDNN's
   flash-attention kernel is bf16-only; OpenNN's fp32 path now feeds it by casting

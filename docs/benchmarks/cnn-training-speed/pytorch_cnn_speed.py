@@ -2,29 +2,44 @@
 #
 # Same model as the OpenNN and TensorFlow programs: 28x28x1 -> Conv 16@3x3
 # (Same, ReLU) -> MaxPool 2x2 -> Flatten -> Dense 10, cross-entropy, Adam,
-# batch 128. Plain eager fp32 with framework-default TF32 settings; the
-# dataset is GPU-resident and reshuffled every epoch. Reports the median
-# epoch time after a 2-epoch warmup.
+# batch 128. The dataset is GPU-resident and reshuffled every epoch. Reports
+# the median epoch time after a 2-epoch warmup.
+#
+# Two paths, so the comparison against OpenNN is fair:
+#   default     -> plain eager fp32, NCHW (the framework default).
+#   PT_FAST=1   -> channels_last (NHWC, the layout OpenNN's cuDNN convs use)
+#                  + torch.compile (kernel fusion / CUDA graphs). PyTorch's
+#                  optimized fast path.
 #
 #   usage:  python pytorch_cnn_speed.py [epochs] [batch]
+#   env:    PT_FAST=1  -> channels_last + torch.compile
 
 import sys
 import time
+import os
 
 import numpy as np
 import torch
 
 epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 batch = int(sys.argv[2]) if len(sys.argv) > 2 else 128
+fast = os.environ.get("PT_FAST") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
 torch.backends.cudnn.benchmark = True
+if fast:
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
 
 x = torch.from_numpy(np.load("mnist_images.npy")).permute(0, 3, 1, 2).div(255.0).contiguous().cuda()
 y = torch.from_numpy(np.load("mnist_labels.npy")).cuda()
+if fast:
+    # NHWC / channels_last: the tensor-core-friendly layout OpenNN's convs use.
+    x = x.to(memory_format=torch.channels_last)
 n = x.shape[0]
 print(f"device={torch.cuda.get_device_name(0)}")
+print(f"path={'fast(channels_last+compile)' if fast else 'eager(NCHW)'}")
 print(f"samples={n} batch={batch} epochs={epochs}")
 
 model = torch.nn.Sequential(
@@ -34,6 +49,9 @@ model = torch.nn.Sequential(
     torch.nn.Flatten(),
     torch.nn.Linear(14 * 14 * 16, 10),
 ).cuda()
+if fast:
+    model = model.to(memory_format=torch.channels_last)
+    model = torch.compile(model)
 
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
