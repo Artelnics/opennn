@@ -13,6 +13,7 @@
 //          mode = train | inference
 
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -42,7 +43,8 @@ int main(int argc, char* argv[])
     try
     {
         set_seed(0);
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        const bool use_bf16 = std::getenv("OPENNN_BF16") != nullptr;
+        Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         ApproximationNetwork network(Shape{inputs}, {hidden}, Shape{1});
         static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
@@ -92,6 +94,7 @@ int main(int argc, char* argv[])
         const double s = std::chrono::duration<double>(t1 - t0).count();
         const double per_epoch = s / double(iters);
         std::cout << "mode=train samples=" << samples << " batch=" << batch
+                  << " precision=" << (use_bf16 ? "bf16" : "fp32")
                   << " steps_per_epoch=" << (samples / batch) << "\n";
         std::cout << "epoch_s=" << per_epoch << "\n";
         std::cout << "samples_per_sec=" << long(double(samples) / per_epoch) << "\n";
