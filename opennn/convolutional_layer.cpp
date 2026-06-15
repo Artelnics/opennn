@@ -132,7 +132,7 @@ void Convolutional::update_convolution_operator()
     const bool fuse_bn_relu = relu && batch_norm.active();
     const bool fuse_bn_add  = residual && batch_norm.active();
 
-    convolution.fused_activation  = (relu && !batch_norm.active()) ? activation.descriptor : nullptr;
+    convolution.fused_activation  = (relu && !batch_norm.active()) ? activation.descriptor.handle : nullptr;
     batch_norm.fuse_relu          = fuse_bn_relu;
     batch_norm.fuse_add           = fuse_bn_add;
     batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;
