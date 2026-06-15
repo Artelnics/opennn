@@ -915,6 +915,55 @@ TEST(ResponseOptimizationCategory, ExplorationSamplesEveryCategoryAndTracksFrequ
 }
 
 
+TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
+{
+    // 1 numeric input "x" + 1 categorical "cat" (3 levels) => 4 one-hot features fed to a
+    // real network forward pass. The Scaling layer holds one descriptive PER FEATURE (4)
+    // while the optimizer works per logical variable (2); this is the production layout
+    // that get_variables_and_descriptives collapses (before that, a 4-vs-2 size mismatch
+    // threw). An AllowedSet over category indices excludes the middle level "B".
+    ApproximationNetwork network(Shape{ 4 }, Shape{ 4 }, Shape{ 1 });
+
+    Variable x; x.name = "x"; x.set_role("Input"); x.type = VariableType::Numeric;
+    Variable cat; cat.name = "cat"; cat.set_role("Input"); cat.type = VariableType::Categorical;
+    cat.set_categories({ "A", "B", "C" });
+    network.set_input_variables({ x, cat });
+
+    Variable y; y.name = "y"; y.set_role("Target"); y.type = VariableType::Numeric;
+    network.set_output_variables({ y });
+
+    vector<Descriptives> in_desc(4);
+    in_desc[0] = Descriptives(float(0), float(10), float(5), float(2.5));        // x
+    for (Index j = 1; j < 4; ++j)
+        in_desc[j] = Descriptives(float(0), float(1), float(0.5), float(0.5));   // one-hot column
+    static_cast<Scaling*>(network.get_first("Scaling"))->set_descriptives(in_desc);
+
+    static_cast<Unscaling*>(network.get_first("Unscaling"))
+        ->set_descriptives({ Descriptives(float(-1), float(1), float(0), float(0.5)) });
+
+    ResponseOptimization opt(&network);
+    opt.set_objective("y", ResponseOptimization::Sense::Maximize);
+    opt.set_constraint("cat", vector<float>{ float(0), float(2) });   // allow A and C, exclude B
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    ASSERT_EQ(results.cols(), 5);                                     // x, A, B, C, y
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        const float a = results(i, 1), b = results(i, 2), c = results(i, 3);
+        EXPECT_NEAR(a + b + c, float(1), float(1e-3)) << "row " << i << " not one-hot";
+        EXPECT_LT(b, float(1e-3)) << "row " << i << " category B should be excluded";
+        const bool one_hot = (a > float(0.99) && c < float(0.01))
+                          || (c > float(0.99) && a < float(0.01));
+        EXPECT_TRUE(one_hot) << "row " << i << " a=" << a << " c=" << c;
+    }
+}
+
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

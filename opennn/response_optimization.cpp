@@ -364,16 +364,38 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
 
     const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
 
-    throw_if(variables_uncheked.size() != descriptives_uncheked.size(),
+    // Scaling/Unscaling layers store one Descriptives per FEATURE, so a categorical
+    // input contributes get_categories_number() entries (its one-hot block). The
+    // optimizer works per logical Variable (Domain::set indexes descriptives[variable]),
+    // so when the descriptives are feature-level we collapse each variable's one-hot
+    // block down to a single representative descriptive (the block's first feature;
+    // the value is unused for categorical variables, whose Domain frontier is the
+    // 0..1 one-hot box). When the counts already match (all-scalar inputs, or targets)
+    // this is a pass-through and behaviour is unchanged.
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables_uncheked);
+    const Index total_features = accumulate(feature_dimensions.begin(), feature_dimensions.end(), Index(0));
+
+    const bool feature_level = (Index(descriptives_uncheked.size()) == total_features)
+                            && (total_features != Index(variables_uncheked.size()));
+
+    throw_if(!feature_level && variables_uncheked.size() != descriptives_uncheked.size(),
              "ResponseOptimization: Variable count and Descriptives count mismatch.");
 
     vector<Variable> filtered_vars;
     vector<Descriptives> filtered_desc;
     filtered_vars.reserve(variables_uncheked.size());
-    filtered_desc.reserve(descriptives_uncheked.size());
+    filtered_desc.reserve(variables_uncheked.size());
+
+    Index feature_cursor = 0;
 
     for (size_t i = 0; i < variables_uncheked.size(); ++i)
     {
+        const Descriptives variable_descriptive = feature_level
+            ? descriptives_uncheked[size_t(feature_cursor)]   // representative of the one-hot block
+            : descriptives_uncheked[i];
+
+        feature_cursor += feature_dimensions[i];
+
         const string& var_role = variables_uncheked[i].get_role();
 
         if (is_history(variables_uncheked[i].name))
@@ -384,7 +406,7 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         if (keep)
         {
             filtered_vars.push_back(variables_uncheked[i]);
-            filtered_desc.push_back(descriptives_uncheked[i]);
+            filtered_desc.push_back(variable_descriptive);
         }
     }
 
