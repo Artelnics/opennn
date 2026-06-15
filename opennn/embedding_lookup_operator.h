@@ -42,6 +42,8 @@ struct EmbeddingLookupOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+
+    void load_state_from_JSON(const Json* parent) override;
 };
 
 }

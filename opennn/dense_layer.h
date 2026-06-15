@@ -59,6 +59,7 @@ public:
     void set_momentum(float new_momentum);
 
     void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
     void from_JSON(const JsonDocument&) override;
 
     string write_expression(const vector<string>& input_names,

@@ -112,6 +112,19 @@ void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& 
                               embedding_dimension, vocabulary_size, scale_embedding);
 }
 
+void EmbeddingLookupOp::load_state_from_JSON(const Json* /*parent*/)
+{
+    // The positional encoding is deterministic and is never written to JSON, so
+    // there is nothing to deserialize: recompute it instead. This guarantees the
+    // state is valid after a load even when the operator was linked before this
+    // point with a buffer that init_positional_encoding() did not refill (the
+    // link_states() init only runs on the first link). The device-resident copy
+    // is populated by migrating the host state, not by this CPU-side fill, so we
+    // only recompute while the state lives on the host.
+    if (positional_encoding.is_cuda()) return;
+    init_positional_encoding();
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
