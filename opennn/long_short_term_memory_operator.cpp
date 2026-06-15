@@ -587,12 +587,15 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
             gWg_m.noalias() += step_in.transpose() * DG;
             gWo_m.noalias() += step_in.transpose() * DO;
 
-            DX.noalias()  = DF * Wf_m.transpose();
-            DX.noalias() += DI * Wi_m.transpose();
-            DX.noalias() += DG * Wg_m.transpose();
-            DX.noalias() += DO * Wo_m.transpose();
-            for (Index b = 0; b < batch_size; ++b)
-                std::memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
+            if (write_input_delta)
+            {
+                DX.noalias()  = DF * Wf_m.transpose();
+                DX.noalias() += DI * Wi_m.transpose();
+                DX.noalias() += DG * Wg_m.transpose();
+                DX.noalias() += DO * Wo_m.transpose();
+                for (Index b = 0; b < batch_size; ++b)
+                    std::memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
+            }
 
             if (t > 0)
             {

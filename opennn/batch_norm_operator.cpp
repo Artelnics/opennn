@@ -120,7 +120,7 @@ void BatchNormOp::update_inference_cache()
     if (!gamma.data || !beta.data || !running_mean.data || !running_variance.data) return;
 
     inference_scale = gamma.as_vector().array()
-                    / (running_variance.as_vector().array() + EPSILON).sqrt();
+                    / (running_variance.as_vector().array().max(0.0f) + EPSILON).sqrt();
     inference_shift = beta.as_vector().array()
                     - inference_scale.array() * running_mean.as_vector().array();
 
@@ -224,7 +224,7 @@ void BatchNormOp::apply_training_cpu(const TensorView& input,
     running_means     = running_means     * (1.0f - momentum) + means             * momentum;
     running_variances = running_variances * (1.0f - momentum) + inverse_variances * momentum;
 
-    inverse_variances.array() = 1.0f / (inverse_variances.array() + EPSILON).sqrt();
+    inverse_variances.array() = 1.0f / (inverse_variances.array().max(0.0f) + EPSILON).sqrt();
     const VectorR scale = inverse_variances.array() * gamma.as_vector().array();
     const VectorMap betas = beta.as_vector();
 

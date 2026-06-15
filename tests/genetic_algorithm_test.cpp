@@ -5,6 +5,7 @@
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/genetic_algorithm.h"
+#include "../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -29,6 +30,8 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 
 TEST(GeneticAlgorithmTest, InputSelection)
 {
+    set_seed(0);
+
     const Index inputs_number = 3;
     const Index samples_number = 30;
 
@@ -65,6 +68,11 @@ TEST(GeneticAlgorithmTest, InputSelection)
     // Should complete without crashing and produce valid results
     EXPECT_GE(results.get_epochs_number(), 1);
     EXPECT_GE(results.optimum_validation_error, type(0));
+
+    // Fitness must be aligned with individuals so selection keeps the
+    // target-correlated feature 0 and not the constant-noise features.
+    ASSERT_EQ(results.optimal_inputs.size(), inputs_number);
+    EXPECT_TRUE(results.optimal_inputs(0));
 }
 
 

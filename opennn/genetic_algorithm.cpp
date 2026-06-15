@@ -204,7 +204,14 @@ void GeneticAlgorithm::evaluate_population()
 
 void GeneticAlgorithm::assign_fitness()
 {
-    fitness = calculate_rank(validation_errors).cast<float>().array() + 1.0f;
+    const Index individuals_number = validation_errors.size();
+
+    const VectorI order = calculate_rank(validation_errors);
+
+    fitness.resize(individuals_number);
+
+    for (Index k = 0; k < individuals_number; ++k)
+        fitness(order(k)) = float(individuals_number - k);
 }
 
 void GeneticAlgorithm::perform_selection()

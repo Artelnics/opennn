@@ -159,9 +159,10 @@ void PoolOp::apply_cpu(const TensorView& input, TensorView& output, TensorView& 
     const Index output_height = outputs.dimension(1);
     const Index output_width  = outputs.dimension(2);
 
-    if (method == Max && is_training)
+    if (method == Max)
     {
-        TensorMap4 indices_map = maximal_indices.as_tensor<4>();
+        const bool write_indices = !maximal_indices.empty();
+        TensorMap4 indices_map = write_indices ? maximal_indices.as_tensor<4>() : TensorMap4(nullptr, 0, 0, 0, 0);
         for_each_pool_window(*this, batch_size, output_height, output_width,
             [&](const PoolWindow& window) {
                 float best = NEG_INFINITY;
@@ -174,24 +175,8 @@ void PoolOp::apply_cpu(const TensorView& input, TensorView& output, TensorView& 
                         if (value > best) { best = value; argmax = pr * pool_width + pc; }
                     }
                 outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
-                indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
-            });
-        return;
-    }
-
-    if (method == Max)
-    {
-        for_each_pool_window(*this, batch_size, output_height, output_width,
-            [&](const PoolWindow& window) {
-                float best = NEG_INFINITY;
-                for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                    for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    {
-                        const float value = inputs(window.batch, window.in_row_start + pr,
-                                                window.in_col_start + pc, window.channel);
-                        if (value > best) best = value;
-                    }
-                outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
+                if (write_indices)
+                    indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
             });
         return;
     }

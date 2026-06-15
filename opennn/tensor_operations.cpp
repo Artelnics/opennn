@@ -211,13 +211,15 @@ void unscale(const TensorView& input,
 
 static void copy_cpu(const TensorView& source, TensorView& destination)
 {
-    memcpy(destination.data, source.data, source.size() * sizeof(float));
+    memcpy(destination.data, source.data, source.byte_size());
 }
 
 void copy(const TensorView& source, TensorView& destination)
 {
     throw_if(source.size() != destination.size(),
              "Tensor sizes mismatch in copy operation.");
+    throw_if(source.type != destination.type,
+             "Tensor dtypes mismatch in copy operation.");
 
     if (source.is_cuda()) { copy_gpu(source, destination); return; }
     copy_cpu(source, destination);
