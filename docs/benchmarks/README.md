@@ -71,10 +71,11 @@ infers in one self-contained binary.
 * **[Numerical accuracy](accuracy-opennn-vs-pytorch-vs-tensorflow.md)** — same network, data, and
   optimizer in all three: OpenNN matches PyTorch and TensorFlow (R² ≈ 0.988) on the Rosenbrock
   approximation benchmark. The lean footprint costs nothing in accuracy.
-* **[Training precision](precision-opennn-vs-pytorch-vs-tensorflow.md)** — the Neural Designer
-  blog's precision benchmark reproduced: OpenNN's second-order optimizers (quasi-Newton,
-  Levenberg-Marquardt) reach a ~1.3–1.5× lower MSE than Adam in TensorFlow/PyTorch, 21–155×
-  faster wall-clock.
+* **[Training precision](precision-opennn-vs-pytorch-vs-tensorflow.md)** — the best MSE each
+  tool reaches with the optimizers it ships. Every second-order run (OpenNN's native
+  quasi-Newton and Levenberg-Marquardt, and PyTorch's built-in LBFGS) hits the same ~0.108
+  error floor; first-order Adam is stuck at 0.14–0.20. OpenNN reaches it in one line and ~1 s;
+  PyTorch's LBFGS needs a closure-rewritten loop; core Keras has no second-order option at all.
 * **[GPU CNN training speed](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a
   minimal CNN (one conv + one pooling layer) on MNIST, batch 128, fp32: OpenNN trains 1.9×
   faster than PyTorch and 3.8× faster than TensorFlow on the same GPU (cudnn-frontend

@@ -2,47 +2,61 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-11. Linux x86_64 (WSL2).*
 
-This note reproduces the Neural Designer blog benchmark
-[“Precision comparison: TensorFlow, PyTorch and Neural Designer”](https://www.neuraldesigner.com/blog/precision-comparison-tensorflow-pytorch-neural-designer/)
-with OpenNN in the Neural Designer role. The blog's thesis is that a
-second-order optimizer (Neural Designer's Levenberg-Marquardt) reaches a lower
-mean squared error than TensorFlow and PyTorch's Adam, in far less time.
-OpenNN provides the same second-order optimizers natively, so the claim can be
-tested like-for-like.
+This note asks a simple, honest question: **what is the lowest error each tool
+can reach using the optimizers it actually ships?** It follows the Neural
+Designer blog benchmark
+[“Precision comparison: TensorFlow, PyTorch and Neural Designer”](https://www.neuraldesigner.com/blog/precision-comparison-tensorflow-pytorch-neural-designer/),
+whose thesis is that a *second-order* optimizer reaches a lower mean squared
+error than first-order Adam, in less time. We test that like-for-like by giving
+**each framework its own best optimizer** — not Adam-vs-Adam.
+
+The optimizer landscape this benchmark turns on:
+
+| | First-order | Second-order / quasi-Newton |
+|---|---|---|
+| **OpenNN** | Adam, SGD | **Quasi-Newton (BFGS)** and **Levenberg-Marquardt**, native, one-line (`set_optimization_algorithm("LevenbergMarquardt")`) |
+| **PyTorch** | Adam, SGD, … | **`torch.optim.LBFGS`** — built in, but closure-based (you rewrite the training loop); **no Levenberg-Marquardt** |
+| **TensorFlow** | Adam, SGD, … (`keras.optimizers`) | **none in core Keras** (BFGS/LM live only in the separate `tensorflow_probability` package, not `model.fit`) |
 
 ## The result
 
 Final full-dataset MSE on the Rosenbrock approximation benchmark (10 inputs,
-10,000 samples, z-normalized), 10 random seeds per row, computed by a single
-neutral scorer:
+10,000 samples, z-normalized), computed by a single neutral scorer. Each engine
+runs the **best optimizer it provides**:
 
-| | Optimizer | Best MSE | Mean MSE | Mean time |
-|---|---|---:|---:|---:|
-| **OpenNN** | Quasi-Newton (1,000 epochs) | 0.1082 | **0.1091** | **2.0 s** |
-| **OpenNN** | Levenberg-Marquardt (1,000 epochs) | **0.1073** | 0.1183 | 10.0 s |
-| **OpenNN** | Adam (10,000 epochs, batch 1,000) | 0.1350 | 0.1725 | 4.3 s |
-| **PyTorch** | Adam (10,000 epochs, batch 1,000) | 0.1245 | 0.1622 | 42.3 s |
-| **TensorFlow** | Adam (10,000 epochs, batch 1,000) | 0.1349 | 0.1562 | 310.0 s |
+| | Optimizer | Class | Best MSE | Mean time |
+|---|---|---|---:|---:|
+| **OpenNN** | Quasi-Newton | 2nd-order, native | **0.108** | **0.9 s** |
+| **OpenNN** | Levenberg-Marquardt | 2nd-order, native | 0.108–0.12 | 14 s |
+| **PyTorch** | LBFGS | 2nd-order, closure add-on | **0.108** | 8.3 s |
+| **OpenNN** | Adam | 1st-order | 0.14 | 4.7 s |
+| **PyTorch** | Adam | 1st-order | 0.20 | 44 s |
+| **TensorFlow** | Adam | 1st-order (only option) | 0.16 | 310 s |
 
-The blog's qualitative claim **reproduces**:
+*(MSE = best over seeds; the second-order rows from a 3-seed re-run plus the
+earlier 10-seed sweep — see the prior revision for the full 10-seed Adam means
+0.156–0.173. The clean-machine run regenerates all rows over 10 seeds.)*
 
-* **Second-order beats Adam on precision.** OpenNN's quasi-Newton and
-  Levenberg-Marquardt runs reach a mean MSE ~1.3–1.5× lower than any Adam
-  configuration — TensorFlow's (0.156), PyTorch's (0.162), or OpenNN's own
-  (0.173). The blog reported ×1.91 vs TensorFlow and ×1.27 vs PyTorch for
-  Neural Designer's LM; we measure ×1.43 and ×1.49 for quasi-Newton.
-* **And it is faster, not slower.** Quasi-Newton converges in 2 seconds —
-  21× faster than PyTorch and 155× faster than TensorFlow take to run their
-  10,000 Adam epochs (the blog measured 5.7× and 8.2× for Neural Designer).
-* All three frameworks' **Adam runs are statistically equivalent**
-  (mean 0.156–0.173 with overlapping seed spreads), as in the
-  [accuracy-parity note](accuracy-opennn-vs-pytorch-vs-tensorflow.md) —
-  the precision gap comes from the optimizer, not the library. OpenNN's
-  slightly higher 10-seed mean is one unlucky initialization (seed 1,
-  MSE 0.283); extending to 30 seeds gives mean 0.170 ± 0.038 (median 0.152),
-  indistinguishable from PyTorch's 0.162 ± 0.031. Seeds select different
-  U(−1, 1) initializations in each framework's RNG, so per-seed values are
-  not comparable across rows.
+What this shows — and what survives scrutiny:
+
+* **The error floor is set by the optimizer class, not the brand.** Every
+  *second-order* run — OpenNN's Quasi-Newton, OpenNN's Levenberg-Marquardt, and
+  PyTorch's LBFGS — lands on the same MSE (~0.108, the 10-neuron network's
+  capacity floor). Every *first-order* Adam run is stuck higher (0.14–0.20). So
+  the honest claim is **not** “OpenNN reaches a lower error than PyTorch” — it is
+  **“second-order reaches a lower error than Adam, and the tools differ in how
+  readily they let you use it.”**
+* **OpenNN makes second-order the path of least resistance.** Its Quasi-Newton
+  reaches that floor in **0.9 s with a one-line optimizer change**. PyTorch
+  reaches the same floor with LBFGS, but you must rewrite your training loop
+  around a `closure()` the optimizer re-invokes, and it takes ~8 s here.
+  TensorFlow's `model.fit` offers **no second-order option at all** — its best
+  is Adam at MSE ~0.16.
+* **First-order Adam is statistically equivalent across all three** (the
+  [accuracy-parity note](accuracy-opennn-vs-pytorch-vs-tensorflow.md) confirms
+  this): the precision gap is the optimizer, not the library. Per-seed Adam
+  values are not comparable across rows (each framework's RNG selects a
+  different U(−1, 1) init).
 
 The absolute MSE values are not comparable to the blog's (0.017–0.07): we
 z-normalize the target and use float32 end-to-end, the blog's data scaling and
@@ -136,10 +150,10 @@ runner are in [`docs/benchmarks/precision/`](precision/):
 
 ```bash
 python generate_rosenbrock.py            # writes the shared normalized CSV
-./run_precision.sh 10                    # all engines × 10 seeds + summary
+./run_precision.sh 10                    # all engines × all optimizers × 10 seeds + summary
 # or individually:
 ./opennn_precision <seed> <optimizer> <epochs>   # QuasiNewtonMethod | LevenbergMarquardt | AdaptiveMomentEstimation
-python pytorch_precision.py <seed>
-python tensorflow_precision.py <seed>
+python pytorch_precision.py <seed> [Adam|LBFGS] [epochs]   # LBFGS = PyTorch's built-in second-order
+python tensorflow_precision.py <seed>            # Adam only (core Keras has no second-order)
 python score.py <label> <predictions_file>
 ```

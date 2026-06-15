@@ -44,17 +44,23 @@ for seed in $(seq 0 $((RUNS - 1))); do
     record "OpenNN-Adam" "$seed" "$("$OPENNN_BIN" "$seed" AdaptiveMomentEstimation 10000 2>/dev/null)" pred_opennn.txt
 done
 
+# PyTorch's two built-in optimizers: its second-order LBFGS and its Adam.
 for seed in $(seq 0 $((RUNS - 1))); do
-    record "PyTorch" "$seed" "$("$PY" pytorch_precision.py "$seed" 2>/dev/null)" pred_pytorch.txt
+    record "PyTorch-LBFGS" "$seed" "$("$PY" pytorch_precision.py "$seed" LBFGS 1000 2>/dev/null)" pred_pytorch.txt
 done
 
 for seed in $(seq 0 $((RUNS - 1))); do
-    record "TensorFlow" "$seed" "$("$PY" tensorflow_precision.py "$seed" 2>/dev/null)" pred_tensorflow.txt
+    record "PyTorch-Adam" "$seed" "$("$PY" pytorch_precision.py "$seed" Adam 10000 2>/dev/null)" pred_pytorch.txt
+done
+
+# TensorFlow core keras.optimizers has no second-order option: Adam only.
+for seed in $(seq 0 $((RUNS - 1))); do
+    record "TensorFlow-Adam" "$seed" "$("$PY" tensorflow_precision.py "$seed" 2>/dev/null)" pred_tensorflow.txt
 done
 
 echo
-echo "############ summary ############"
-for label in OpenNN-QNM OpenNN-LM OpenNN-Adam PyTorch TensorFlow; do
+echo "############ summary: best MSE each engine reaches with its own optimizers ############"
+for label in OpenNN-LM OpenNN-QNM OpenNN-Adam PyTorch-LBFGS PyTorch-Adam TensorFlow-Adam; do
     "$PY" - "$label" "${MSES[$label]:-}" "${TIMES[$label]:-}" <<'EOF'
 import sys
 label = sys.argv[1]
