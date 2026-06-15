@@ -42,10 +42,14 @@ the data into memory.
 parsed once into a single dense `float` (4-byte) matrix. Two properties of the loader
 keep the footprint low:
 
-* **Memory-mapped input.** The CSV is mapped read-only and parsed in place, so the
-  file's bytes are *file-backed* pages, not heap memory. Under a committed-memory
-  budget they cost nothing — the OS can drop and re-read them — so only the parsed
-  matrix counts against the limit.
+* **Memory-mapped input (quote-free numeric CSV).** When the file contains no `"`
+  characters — the case for this benchmark's plain numeric Rosenbrock data — the CSV
+  is mapped read-only and parsed in place, so its bytes are *file-backed* pages, not
+  heap memory. Under a committed-memory budget they cost nothing (the OS can drop and
+  re-read them), so only the parsed matrix counts against the limit. If the file
+  contains quoted fields, the loader falls back to reading the whole file into a heap
+  buffer first (to strip quoted separators), which forfeits this saving; the
+  capacity advantage above applies to the unquoted-numeric path.
 * **Per-row tokenization.** Rows are tokenized one at a time as the matrix is filled,
   rather than building a table of every row's fields up front. There is no large
   transient index of the whole file.
