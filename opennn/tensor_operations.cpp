@@ -100,7 +100,7 @@ static void scale_cpu(const TensorView& input,
                const TensorView& means, const TensorView& standard_deviations,
                const TensorView& scalers,
                float min_range, float max_range,
-               TensorView& output)
+               TensorView& output, bool inverse)
 {
     const Index features = scalers.size();
     if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
@@ -126,35 +126,47 @@ static void scale_cpu(const TensorView& input,
         switch (code)
         {
         case 1:
-        {
-            const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
-            if (range < EPSILON)
-                column.setZero();
+            if (!inverse)
+            {
+                const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
+                if (range < EPSILON)
+                    column.setZero();
+                else
+                    column = (column - minimums_vector(feature_index)) / range
+                           * (max_range - min_range) + min_range;
+            }
             else
-                column = (column - minimums_vector(feature_index)) / range
-                       * (max_range - min_range) + min_range;
+                column = (column - min_range) / (max_range - min_range)
+                       * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
             break;
-        }
         case 2:
-        {
-            const float sd = standard_deviations_vector(feature_index);
-            if (sd > EPSILON)
-                column = (column - means_vector(feature_index)) / sd;
+            if (!inverse)
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                if (sd > EPSILON)
+                    column = (column - means_vector(feature_index)) / sd;
+                else
+                    column.setZero();
+            }
             else
-                column.setZero();
+                column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
             break;
-        }
         case 3:
-        {
-            const float sd = standard_deviations_vector(feature_index);
-            column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
+            if (!inverse)
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
+            }
+            else
+                column *= standard_deviations_vector(feature_index);
             break;
-        }
         case 4:
-            column = column.log();
+            if (inverse) column = column.exp();
+            else         column = column.log();
             break;
         case 5:
-            column /= 255.0f;
+            if (inverse) column *= 255.0f;
+            else         column /= 255.0f;
             break;
         default:
             break;
@@ -176,59 +188,7 @@ void scale(const TensorView& input,
         return;
     }
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output);
-}
-
-static void unscale_cpu(const TensorView& input,
-                 const TensorView& minimums, const TensorView& maximums,
-                 const TensorView& means, const TensorView& standard_deviations,
-                 const TensorView& scalers,
-                 float min_range, float max_range,
-                 TensorView& output)
-{
-    const Index features = scalers.size();
-    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
-
-    const MatrixMap input_matrix = input.as_flat_matrix();
-    const VectorMap minimums_vector = minimums.as_vector();
-    const VectorMap maximums_vector = maximums.as_vector();
-    const VectorMap means_vector  = means.as_vector();
-    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
-    const VectorMap scalers_vector   = scalers.as_vector();
-
-    MatrixMap output_matrix = output.as_flat_matrix();
-
-    output_matrix.noalias() = input_matrix;
-
-    const Index cols = output_matrix.cols();
-    for (Index col = 0; col < cols; ++col)
-    {
-        const Index feature_index = col % features;
-        const int code = static_cast<int>(scalers_vector(feature_index));
-        auto column = output_matrix.col(col).array();
-
-        switch (code)
-        {
-        case 1:
-            column = (column - min_range) / (max_range - min_range)
-                   * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
-            break;
-        case 2:
-            column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
-            break;
-        case 3:
-            column *= standard_deviations_vector(feature_index);
-            break;
-        case 4:
-            column = column.exp();
-            break;
-        case 5:
-            column *= 255.0f;
-            break;
-        default:
-            break;
-        }
-    }
+              min_range, max_range, output, false);
 }
 
 void unscale(const TensorView& input,
@@ -245,8 +205,8 @@ void unscale(const TensorView& input,
         return;
     }
     
-    unscale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-                min_range, max_range, output);
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, true);
 }
 
 static void copy_cpu(const TensorView& source, TensorView& destination)
@@ -1028,21 +988,13 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const long long stride_b = rows_b * cols_b;
     const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
 
-    if (batch_count == 1)
-        gemm_cuda(operation_b, operation_a,
-                  output_columns, output_rows, inner_dimension,
-                  input_b.data, input_b.cuda_dtype(), cols_b,
-                  input_a.data, input_a.cuda_dtype(), cols_a,
-                  output.data,  output.cuda_dtype(),  output_columns,
-                  alpha, beta);
-    else
-        gemm_strided_batched_cuda(operation_b, operation_a,
-                                  output_columns, output_rows, inner_dimension,
-                                  input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
-                                  input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
-                                  output.data,  output.cuda_dtype(), output_columns, stride_output,
-                                  batch_count,
-                                  alpha, beta);
+    gemm_strided_batched_cuda(operation_b, operation_a,
+                              output_columns, output_rows, inner_dimension,
+                              input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
+                              input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
+                              output.data,  output.cuda_dtype(), output_columns, stride_output,
+                              batch_count,
+                              alpha, beta);
 }
 
 static void softmax_gpu(TensorView& output)

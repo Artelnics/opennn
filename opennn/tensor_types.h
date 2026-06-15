@@ -442,21 +442,6 @@ struct TensorView
         return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
-    MatrixMap as_flat_matrix(Index batch_index) const
-    {
-        throw_if(shape.rank < 2, "TensorView::as_flat_matrix(batch_index) requires rank >= 2.");
-        throw_if(batch_index < 0 || batch_index >= shape[0],
-                 format("TensorView::as_flat_matrix(batch_index): batch index {} out of range [0, {}).",
-                        batch_index, shape[0]));
-        throw_if(shape.size() > 0 && !data, "TensorView::as_flat_matrix(batch_index) requires non-null data.");
-
-        const Index column_count = shape[shape.rank - 1];
-        const Index row_count = column_count == 0 ? 0 : shape.size() / (shape[0] * column_count);
-        return MatrixMap(reinterpret_cast<float*>(data) + batch_index * row_count * column_count,
-                         row_count,
-                         column_count);
-    }
-
     VectorMap as_vector() const
     {
         throw_if(shape.size() > 0 && !data, "TensorView::as_vector requires non-null data.");

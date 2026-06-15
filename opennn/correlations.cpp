@@ -97,36 +97,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     return logistic_correlation(x, y);
 }
 
-Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
-{
-    const Index x_columns = x.cols();
-    const Index y_columns = y.cols();
-
-    const bool x_binary = is_binary(x);
-    const bool y_binary = is_binary(y);
-
-    if (x_columns == 1 && y_columns == 1)
-    {
-        const auto x_vector = x.col(0);
-        const auto y_vector = y.col(0);
-
-        if (x_binary == y_binary)
-            return linear_correlation_spearman(x_vector, y_vector);
-
-        return x_binary
-            ? logistic_correlation_spearman(y_vector, x_vector)
-            : logistic_correlation_spearman(x_vector, y_vector);
-    }
-
-    if (x_columns == 1 && y_columns != 1)
-        return logistic_correlation(VectorR(x.col(0)), y);
-
-    if (x_columns != 1 && y_columns == 1)
-        return logistic_correlation(x, VectorR(y.col(0)));
-
-    return logistic_correlation(x, y);
-}
-
 VectorR cross_correlations(const VectorR& x,
                            const VectorR& y,
                            Index maximum_past_time_steps)

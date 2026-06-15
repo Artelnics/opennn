@@ -237,9 +237,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
         const Index bias_offset = parameter_offsets[n];
         const Index weight_offset = bias_offset + get_aligned_size(neurons);
 
-        for (Index k = 0; k < neurons; ++k)
-            for (Index row = 0; row < rows; ++row)
-                jacobian(row, bias_offset + k) = delta(row, k);
+        jacobian.block(0, bias_offset, rows, neurons) = delta.leftCols(neurons);
 
         for (Index i = 0; i < inputs_number; ++i)
             for (Index k = 0; k < neurons; ++k)

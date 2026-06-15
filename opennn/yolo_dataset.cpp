@@ -1296,27 +1296,6 @@ void YoloDataset::setup_metadata(Index new_samples_number)
     split_samples_random();
 }
 
-void YoloDataset::set_runtime_input_shape(const Shape& new_shape)
-{
-    throw_if(new_shape.rank != 3,
-             "YoloDataset::set_runtime_input_shape: rank must be 3.");
-    throw_if(new_shape[2] != cache_input_shape[2],
-             "YoloDataset::set_runtime_input_shape: channel count must match the cache.");
-    throw_if(new_shape[0] <= 0 || new_shape[1] <= 0,
-             "YoloDataset::set_runtime_input_shape: H/W must be positive.");
-    throw_if(new_shape[0] > cache_input_shape[0] || new_shape[1] > cache_input_shape[1],
-             "YoloDataset::set_runtime_input_shape: H/W cannot exceed the cache letterbox size.");
-    const Index stride = 32;
-    throw_if(new_shape[0] % stride != 0 || new_shape[1] % stride != 0,
-             "YoloDataset::set_runtime_input_shape: H/W must be multiples of 32.");
-
-    input_shape = new_shape;
-    grid_size = new_shape[0] / stride;
-    image_record_bytes = input_shape.size();
-    target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
-    target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
-}
-
 void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
                                         const vector<vector<array<float, 2>>>& per_head_anchors)
 {

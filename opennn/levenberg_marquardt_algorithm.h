@@ -25,9 +25,6 @@ struct BackPropagationLM
 
     Index samples_number = 0;
 
-    VectorR output_deltas;
-    Shape output_delta_dimensions;
-
     Loss* loss_pointer = nullptr;
 
     float error;

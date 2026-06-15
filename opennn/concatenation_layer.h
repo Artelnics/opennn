@@ -26,7 +26,6 @@ public:
     Shape get_output_shape() const override;
 
     Index get_inputs_number() const { return ssize(concatenation.input_channels); }
-    const vector<Index>& get_input_channels() const { return concatenation.input_channels; }
 
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 

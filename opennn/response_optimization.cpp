@@ -150,33 +150,9 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 }
 
 
-void ResponseOptimization::clear_formula_constraints()
-{
-    formula_constraints.clear();
-}
-
-
-void ResponseOptimization::set_min_feasible_ratio(float new_ratio)
-{
-    min_feasible_ratio = new_ratio;
-}
-
-
 void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 {
     max_oversample_factor = new_factor;
-}
-
-
-void ResponseOptimization::clear_conditions()
-{
-    conditions.clear();
-}
-
-
-void ResponseOptimization::clear_conditions(const string& name)
-{
-    conditions.erase(name);
 }
 
 
@@ -209,47 +185,6 @@ void ResponseOptimization::set_iterations(const int new_max_iterations)
     max_iterations = new_max_iterations;
 }
 
-
-void ResponseOptimization::set_zoom_factor(float new_zoom_factor)
-{
-    zoom_factor = new_zoom_factor;
-}
-
-
-void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
-{
-    relative_tolerance = new_relative_tolerance;
-}
-
-
-void ResponseOptimization::set_max_pareto_number(const Index new_max_pareto_number)
-{
-    max_pareto_number = new_max_pareto_number;
-}
-
-
-void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_evaluations)
-{
-    max_total_evaluations = new_max_total_evaluations;
-}
-
-
-void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_sampling_factor)
-{
-    initial_sampling_factor = max(Index(1), new_initial_sampling_factor);
-}
-
-
-void ResponseOptimization::set_deformation_domain_factor(float new_deformation_domain_factor)
-{
-    deformation_domain_factor = new_deformation_domain_factor;
-}
-
-
-float ResponseOptimization::get_deformation_domain_factor()
-{
-    return deformation_domain_factor;
-}
 
 Index ResponseOptimization::get_objectives_number() const
 {
@@ -626,11 +561,7 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
-    VectorR categories_to_save = points_inputs.colwise().maxCoeff();
-
-    for(Index i = 0; i < categories_to_save.size(); ++i)
-        if(center(i) > categories_to_save(i))
-            categories_to_save(i) = center(i);
+    const VectorR categories_to_save = points_inputs.colwise().maxCoeff().transpose().cwiseMax(center);
 
     Index current_feature_index = 0;
 
@@ -1315,78 +1246,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     cout << "> Total surrogate evaluations used: " << evaluations_used << endl;
 
     return append_columns(global_pareto_inputs, global_pareto_outputs);
-}
-
-
-vector<float> ResponseOptimization::get_utopian_point() const
-{
-    const Objectives objectives(*this);
-
-    const auto utopian_row = objectives.utopian_and_senses.row(0);
-
-    return vector<float>(utopian_row.begin(), utopian_row.end());
-}
-
-
-pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pareto_front,
-                                                             const VectorR& importance_scale) const
-{
-    if (pareto_front.rows() == 0)
-        return {-1, VectorR()};
-
-    if (pareto_front.rows() == 1)
-        return {0, pareto_front.row(0).transpose()};
-
-    const Index objectives_number = get_objectives_number();
-
-    VectorR scale = (importance_scale.size() == 0)
-        ? VectorR::Ones(objectives_number)
-        : importance_scale;
-
-    throw_if(scale.size() != objectives_number, "Importance scale size must match objectives number.\n");
-
-    throw_if(scale.minCoeff() < float(0), "Importance scale must be non-negative.\n");
-
-    throw_if(scale.maxCoeff() == float(0), "Importance scale must contain at least one non-zero entry.\n");
-
-    const Index inputs_number = neural_network->get_inputs_number();
-
-    throw_if(pareto_front.cols() < inputs_number,
-             "Pareto front has fewer columns than the number of input features.\n");
-
-    const MatrixR pareto_inputs  = pareto_front.leftCols(inputs_number);
-    const MatrixR pareto_outputs = pareto_front.rightCols(pareto_front.cols() - inputs_number);
-
-    const Objectives objectives(*this);
-
-    MatrixR objective_matrix = objectives.extract(pareto_inputs, pareto_outputs);
-
-    VectorR normalized_utopian(objectives_number);
-
-    for (Index j = 0; j < objectives_number; ++j)
-    {
-        const float col_min = objective_matrix.col(j).minCoeff();
-        const float col_max = objective_matrix.col(j).maxCoeff();
-        const float col_range = col_max - col_min;
-
-        if (col_range > EPSILON)
-            objective_matrix.col(j).array() = (objective_matrix.col(j).array() - col_min) / col_range;
-        else
-            objective_matrix.col(j).setZero();
-
-        const float sense = objectives.utopian_and_senses(1, j);
-
-        normalized_utopian(j) = (sense > float(0)) ? float(1) : float(0);
-    }
-
-    objective_matrix.array().rowwise() *= scale.transpose().array();
-    normalized_utopian.array() *= scale.array();
-
-    const VectorI nearest = get_nearest_points(objective_matrix, normalized_utopian, 1);
-
-    const Index advised_row_index = nearest(0);
-
-    return {advised_row_index, pareto_front.row(advised_row_index).transpose()};
 }
 
 

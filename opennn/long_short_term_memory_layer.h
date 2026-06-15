@@ -39,12 +39,8 @@ public:
     void set_return_sequences(bool value);
 
     const TensorView& get_forget_bias()    const { return lstm_op.forget_bias; }
-    const TensorView& get_input_bias()     const { return lstm_op.input_bias; }
-    const TensorView& get_candidate_bias() const { return lstm_op.candidate_bias; }
-    const TensorView& get_output_bias()    const { return lstm_op.output_bias; }
 
     const ActivationOp::Function& get_activation_function() const { return lstm_op.activation_function; }
-    const ActivationOp::Function& get_recurrent_activation_function() const { return lstm_op.recurrent_activation_function; }
     ActivationOp::Function get_output_activation() const override { return lstm_op.activation_function; }
 
     vector<TensorSpec> get_forward_specs(Index batch_size)  const override;

@@ -532,14 +532,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_crossover();
 
         perform_mutation();
-
-        assign_fitness();
-
-        perform_selection();
-
-        perform_crossover();
-
-        perform_mutation();
     }
 
 

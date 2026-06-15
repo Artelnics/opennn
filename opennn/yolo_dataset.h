@@ -62,13 +62,9 @@ public:
     Index get_classes_number() const { return ssize(class_names); }
     const vector<array<float, 2>>& get_anchors() const { return anchors; }
     const vector<string>& get_class_names() const { return class_names; }
-    const string& get_class_name(Index i) const { return class_names[size_t(i)]; }
     const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
-    const vector<filesystem::path>& get_image_paths() const { return image_filenames; }
 
     bool is_multi_scale() const { return !head_grid_sizes.empty(); }
-    const vector<Index>& get_head_grid_sizes() const { return head_grid_sizes; }
-    const vector<vector<array<float, 2>>>& get_head_anchors() const { return head_anchors; }
     Index get_boxes_per_head() const { return boxes_per_head; }
     void set_multi_scale_heads(const vector<Index>& grid_sizes,
                                const vector<vector<array<float, 2>>>& per_head_anchors);
@@ -110,11 +106,6 @@ public:
     };
 
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
-    const AugmentationConfig& get_augmentation() const { return augmentation; }
-
-    void set_runtime_input_shape(const Shape& new_shape);
-    const Shape& get_cache_input_shape() const { return cache_input_shape; }
-    Index get_cache_grid_size() const { return cache_grid_size; }
 
     static Index convert_voc_to_yolo(const filesystem::path& voc_root,
                                      const string& image_set,

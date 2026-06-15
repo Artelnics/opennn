@@ -265,6 +265,7 @@ protected:
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
+    void set_default_variable_roles_implementation(bool forecasting);
 
     void read_data_file_preview(const vector<string_view>&, char);
     void check_separators(string_view) const;

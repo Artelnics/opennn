@@ -18,7 +18,6 @@ struct MergeOp : Operator
     Index heads_number = 0;
     Index query_sequence_length = 0;
     Index head_dimension = 0;
-    Type  compute_dtype = Type::FP32;
 
     void set(Index heads_number, Index query_sequence_length, Index head_dimension, Type compute_dtype);
 

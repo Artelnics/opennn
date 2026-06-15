@@ -349,20 +349,7 @@ template void split_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*,
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
 {
-    if (n == 0) return;
-
-    if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
-    {
-        const int vec_width = static_cast<int>(16 / sizeof(T));
-        const int D_vec     = D / vec_width;
-        const int n_vec     = checked_int(n / vec_width);
-        OPENNN_CUDA_LAUNCH(swap_heads_vec_kernel<T><<<grid_size_for(n_vec), block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, in, out, H, S, D_vec));
-    }
-    else
-    {
-        const int total = checked_int(n);
-        OPENNN_CUDA_LAUNCH(swap_heads_scalar_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, in, out, H, S, D));
-    }
+    split_heads_cuda(n, in, out, H, S, D);
 }
 
 template void merge_heads_cuda<float>        (const Index, const float*,         float*,         const int, const int, const int);

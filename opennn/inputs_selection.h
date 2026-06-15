@@ -101,8 +101,6 @@ struct InputsSelectionResult
 
     void set(const Index = 0);
 
-    string write_stopping_condition() const;
-
     void resize_history(const Index new_size);
 
     void print() const;

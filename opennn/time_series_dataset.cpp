@@ -90,11 +90,6 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     split_samples_sequential(0.6f, 0.2f, 0.2f);
 }
 
-Index TimeSeriesDataset::get_time_variable_index() const
-{
-    return time_variable_index;
-}
-
 Index TimeSeriesDataset::get_past_time_steps() const
 {
     return past_time_steps;
@@ -148,11 +143,6 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
         const Index n_targets = get_features_number("Target");
         target_shape = { future_time_steps * (n_targets > 0 ? n_targets : 1) };
     }
-}
-
-void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_index)
-{
-    time_variable_index = new_time_variable_index;
 }
 
 void TimeSeriesDataset::set_multi_target(bool new_multi_target)
@@ -526,54 +516,6 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
             for (Index k = 0; k < new_past_time_steps; ++k)
                 cross_correlations(i, j, k) = cross_correlations_vector(k);
-        }
-    }
-
-    return cross_correlations;
-}
-
-Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index past_time_steps) const
-{
-    const Index samples_number = get_samples_number();
-
-    throw_if(past_time_steps > samples_number,
-             format("Past time steps ({}) is greater than samples number ({}) \n",
-                    past_time_steps, samples_number));
-
-    vector<Index> numeric_vars_indices;
-
-    for (size_t i = 0; i < variables.size(); ++i)
-        if (variables[i].role != VariableRole::None && variables[i].type == VariableType::Numeric)
-            numeric_vars_indices.push_back(i);
-
-    const Index numeric_vars_count = numeric_vars_indices.size();
-
-    if (numeric_vars_count == 0)
-        return {};
-
-    map<Index, VectorR> ranked_series;
-
-    for (const Index global_index : numeric_vars_indices)
-    {
-        const MatrixR var_data = get_variable_data(global_index);
-        ranked_series[global_index] = calculate_spearman_ranks(var_data.col(0));
-    }
-
-    Tensor3 cross_correlations(numeric_vars_count, numeric_vars_count, past_time_steps);
-
-    #pragma omp parallel for
-    for (Index i = 0; i < numeric_vars_count; ++i)
-    {
-        const VectorR& ranked_series_i = ranked_series.at(numeric_vars_indices[i]);
-
-        for (Index j = 0; j < numeric_vars_count; ++j)
-        {
-            const VectorR& ranked_series_j = ranked_series.at(numeric_vars_indices[j]);
-
-            const VectorR ccf_vector = opennn::cross_correlations(ranked_series_i, ranked_series_j, past_time_steps);
-
-            for (Index k = 0; k < past_time_steps; ++k)
-                cross_correlations(i, j, k) = ccf_vector(k);
         }
     }
 

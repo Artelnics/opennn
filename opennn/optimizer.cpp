@@ -549,22 +549,12 @@ void Optimizer::set_scaling()
         switch (scaling_layer->get_input_shape().rank)
         {
             case 1:
+            case 2:
             {
                 auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
                 throw_if(!tabular_dataset, "Expected TabularDataset.");
                 input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
                 input_variable_descriptives = tabular_dataset->scale_features("Input");
-                scaling_layer->set_descriptives(input_variable_descriptives);
-                scaling_layer->set_scalers(input_variable_scalers);
-                break;
-            }
-
-            case 2:
-            {
-                auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-                throw_if(!time_series_dataset, "Expected TimeSeriesDataset.");
-                input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
-                input_variable_descriptives = time_series_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
                 scaling_layer->set_scalers(input_variable_scalers);
                 break;

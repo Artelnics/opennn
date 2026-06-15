@@ -38,7 +38,6 @@ public:
 
     Index get_channels_number() const;
 
-    const AugmentationSettings& get_augmentation() const { return augmentation; }
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,

@@ -31,16 +31,7 @@ public:
                                 : Shape{output_features};
     }
 
-    Index get_time_steps()      const { return time_steps; }
-    Index get_input_features()  const { return input_features; }
-    Index get_output_features() const { return output_features; }
-
-    bool get_return_sequences() const { return return_sequences; }
     void set_return_sequences(bool value);
-
-    const TensorView& get_biases()            const { return recurrent_op.bias; }
-    const TensorView& get_input_weights()     const { return recurrent_op.input_weights; }
-    const TensorView& get_recurrent_weights() const { return recurrent_op.recurrent_weights; }
 
     string get_activation_function() const { return ActivationOp::to_string(recurrent_op.activation); }
     ActivationOp::Function get_output_activation() const override { return recurrent_op.activation; }

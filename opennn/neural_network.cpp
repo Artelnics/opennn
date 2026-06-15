@@ -30,46 +30,6 @@ static vector<Index> string_to_source_indices(const string&);
 static void validate_source_indices(const vector<Index>&, Index, Index);
 static void validate_source_arity(const Layer&, const vector<Index>&, Index);
 
-static void write_outputs_csv(ofstream& file,
-                              const vector<string>& input_names,
-                              const Tensor2& input_values,
-                              const vector<string>& output_names,
-                              const MatrixR& outputs)
-{
-    const Index outputs_number = outputs.cols();
-    const Index batch_size = outputs.rows();
-    const Index features_number = input_values.size() == 0 ? 0 : input_values.dimension(1);
-
-    for (const auto& name : input_names)
-        file << name << ";";
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        file << output_names[i];
-
-        if (i + 1 < outputs_number)
-            file << ";";
-    }
-
-    file << "\n";
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        for (Index j = 0; j < features_number; ++j)
-            file << input_values(i, j) << ";";
-
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            file << outputs(i, j);
-
-            if (j != outputs_number - 1)
-                file << ";";
-        }
-
-        file << "\n";
-    }
-}
-
 NeuralNetwork::NeuralNetwork()
 {
     clear();
@@ -1165,32 +1125,6 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     save_parameters_binary(binary_path);
 }
 
-void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(), "Cannot open parameters data file.\n");
-
-    const Index params_size = parameters.size_in_floats();
-    const float* params_data = parameters.as<float>();
-    VectorR params_host_snapshot;
-    if (parameters.device_type == Device::CUDA)
-    {
-        params_host_snapshot.resize(params_size);
-        cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(params_host_snapshot.data(), params_data,
-                           params_size * Index(sizeof(float)),
-                           device::CopyKind::DeviceToHost,
-                           stream);
-        device::synchronize(stream);
-        params_data = params_host_snapshot.data();
-    }
-    const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
-    file << parameters_view << "\n";
-
-    file.close();
-}
-
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
     ofstream file(file_name, ios::binary);
@@ -1304,68 +1238,12 @@ void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
     throw_if(!file, format("Error reading binary file: {}", file_name.string()));
 }
 
-void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
-{
-    const MatrixR outputs = calculate_outputs(inputs);
-
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             format("Cannot open {} file.\n", file_name.string()));
-
-    const vector<string> output_names = get_output_feature_names();
-
-    write_outputs_csv(file, {}, Tensor2(), output_names, outputs);
-
-    file.close();
-}
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
-{
-    const MatrixR outputs = calculate_outputs(inputs_3d);
-
-    const Index batch_size = inputs_3d.dimension(0);
-    const Index past_time_steps = inputs_3d.dimension(1);
-    const Index features_number = inputs_3d.dimension(2);
-
-    Tensor2 last_time_step_inputs(batch_size, features_number);
-
-    last_time_step_inputs = inputs_3d.chip(past_time_steps - 1, 1);
-
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             format("Cannot open {} file.\n", file_name.string()));
-
-    const vector<string> output_names = get_output_feature_names();
-    const vector<string> input_names = get_input_feature_names();
-
-    write_outputs_csv(file, input_names, last_time_step_inputs, output_names, outputs);
-
-    file.close();
-}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-
 vector<string> NeuralNetwork::get_layer_labels() const
 {
     vector<string> layer_labels(layers.size());
     ranges::transform(layers, layer_labels.begin(),
                       [](const unique_ptr<Layer>& layer) { return layer->get_label(); });
     return layer_labels;
-}
-
-vector<string> NeuralNetwork::get_names_string() const
-{
-    vector<string> names(layers.size());
-    ranges::transform(layers, names.begin(),
-                      [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
-    return names;
 }
 
 void NeuralNetwork::link_parameters()

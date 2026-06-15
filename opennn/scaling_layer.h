@@ -39,7 +39,6 @@ public:
     void set_input_shape(const Shape&) override;
 
     void set_descriptives(const vector<Descriptives>&);
-    void set_min_max_range(float min, float max);
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 

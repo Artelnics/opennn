@@ -908,41 +908,4 @@ void translate_image_y(TensorMap3& image, Index shift)
     }
 }
 
-void reflect_image_horizontal(Tensor3& image)
-{
-    TensorMap3 image_map(image.data(), image.dimension(0), image.dimension(1), image.dimension(2));
-    reflect_image_horizontal(image_map);
-}
-
-void reflect_image_vertical(Tensor3& image)
-{
-    TensorMap3 image_map(image.data(), image.dimension(0), image.dimension(1), image.dimension(2));
-    reflect_image_vertical(image_map);
-}
-
-void rotate_image(const Tensor3& input, Tensor3& output, float angle_degree)
-{
-    TensorMap3 input_map(const_cast<float*>(input.data()), input.dimension(0), input.dimension(1), input.dimension(2));
-    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
-    rotate_image(input_map, output_map, angle_degree);
-}
-
-void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
-{
-    if (input.data() != output.data())
-        copy_n(input.data(), input.size(), output.data());
-
-    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
-    translate_image_x(output_map, shift);
-}
-
-void translate_image_y(const Tensor3& input, Tensor3& output, Index shift)
-{
-    if (input.data() != output.data())
-        copy_n(input.data(), input.size(), output.data());
-
-    TensorMap3 output_map(output.data(), output.dimension(0), output.dimension(1), output.dimension(2));
-    translate_image_y(output_map, shift);
-}
-
 }

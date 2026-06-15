@@ -165,18 +165,12 @@ public:
     void to_JSON(JsonWriter&) const;
 
     void save(const filesystem::path&) const;
-    void save_parameters(const filesystem::path&) const;
     void save_parameters_binary(const filesystem::path&) const;
     void save_states_binary(const filesystem::path&) const;
 
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
     void load_states_binary(const filesystem::path&);
-
-    vector<string> get_names_string() const;
-
-    void save_outputs(MatrixR&, const filesystem::path&);
-    void save_outputs(Tensor3&, const filesystem::path&);
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,

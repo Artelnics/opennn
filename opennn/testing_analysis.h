@@ -54,15 +54,6 @@ public:
         void print() const;
     };
 
-    struct KolmogorovSmirnovResult
-    {
-        MatrixR positive_cumulative_gain;
-
-        MatrixR negative_cumulative_gain;
-
-        VectorR maximum_gain;
-    };
-
     struct BinaryClassificationRates
     {
         vector<Index> true_positives_indices;
@@ -92,7 +83,6 @@ public:
     vector<Descriptives> calculate_percentage_errors_descriptives(const MatrixR&, const MatrixR&) const;
 
     vector<vector<Descriptives>> calculate_error_data_descriptives() const;
-    void print_error_data_descriptives() const;
 
     vector<Histogram> calculate_error_data_histograms(const Index = 10) const;
 
@@ -111,14 +101,11 @@ public:
     float calculate_determination(const VectorR&, const VectorR&) const;
     Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
-    void print_linear_correlations() const;
-
     Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
     void print_goodness_of_fit_analysis() const;
     VectorR calculate_binary_classification_tests(const float = 0.50) const;
 
     void print_binary_classification_tests() const;
-    vector<MatrixI> calculate_multilabel_confusion(const float) const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;
     MatrixI calculate_confusion(const float = 0.50) const;
 
@@ -130,45 +117,15 @@ public:
     float calculate_area_under_curve(const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
     float calculate_optimal_threshold(const MatrixR&) const;
-    MatrixR perform_cumulative_gain_analysis() const;
-    MatrixR calculate_cumulative_gain(const MatrixR&, const MatrixR&) const;
-    MatrixR calculate_negative_cumulative_gain(const MatrixR&, const MatrixR&)const;
-
-    MatrixR perform_lift_chart_analysis() const;
-    MatrixR calculate_lift_chart(const MatrixR&) const;
-
-    KolmogorovSmirnovResult perform_Kolmogorov_Smirnov_analysis() const;
-    VectorR calculate_maximum_gain(const MatrixR&, const MatrixR&) const;
-    vector<Histogram> calculate_output_histogram(const MatrixR&, Index = 10) const;
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
     vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
     vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;
-    VectorR calculate_multiple_classification_precision() const;
-    MatrixR calculate_multiple_classification_tests() const;
     Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
 
     Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
-
-    Tensor<string, 2> calculate_well_classified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
-
-    Tensor<string, 2> calculate_misclassified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
-    void save_confusion(const filesystem::path&) const;
-
-    void save_multiple_classification_tests(const filesystem::path&) const;
-
-    vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
-
-    vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
-
-    void from_JSON(const JsonDocument&);
-
-    void to_JSON(JsonWriter&) const;
-
-    void save(const filesystem::path&) const;
-    void load(const filesystem::path&);
 
 private:
 
@@ -176,10 +133,6 @@ private:
 
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
                                                 bool target_positive, bool output_positive) const;
-
-    MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;
-
-    Tensor<string, 2> classify_samples(const MatrixR&, const MatrixR&, const vector<string>&, bool match) const;
 
     NeuralNetwork* neural_network = nullptr;
 

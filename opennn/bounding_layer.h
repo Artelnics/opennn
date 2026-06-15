@@ -37,10 +37,8 @@ public:
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
 
-    void set_lower_bounds(const VectorR&);
     void set_lower_bound(Index, float);
 
-    void set_upper_bounds(const VectorR&);
     void set_upper_bound(Index, float);
 
     float* link_states(float*, Device) override;

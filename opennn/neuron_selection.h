@@ -75,10 +75,6 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    VectorR validation_error_history;
-
-    VectorR training_error_history;
-
     Index minimum_neurons = 0;
 
     Index maximum_neurons = 0;
@@ -103,8 +99,6 @@ struct NeuronsSelectionResult
    NeuronsSelectionResult(const Index maximum_epochs = 0);
 
    void resize_history(const Index new_size);
-
-   string write_stopping_condition() const;
 
    void print() const;
 

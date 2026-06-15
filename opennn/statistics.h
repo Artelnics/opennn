@@ -73,23 +73,9 @@ struct Histogram
 
     Histogram(const VectorR&, const VectorR&);
 
-    Histogram(const VectorR&, const VectorR&, const VectorR&, const VectorR&);
-
     Histogram(const VectorR&, Index);
 
     Index get_bins_number() const;
-
-    Index count_empty_bins() const;
-
-    Index calculate_minimum_frequency() const;
-
-    Index calculate_maximum_frequency() const;
-
-    Index calculate_most_populated_bin() const;
-
-    Index calculate_bin(const float) const;
-
-    Index calculate_frequency(const float) const;
 
     VectorR minimums;
 
@@ -105,14 +91,12 @@ float minimum(const VectorR&, const vector<Index>&);
 float maximum(const MatrixR&);
 float maximum(const VectorR&);
 float maximum(const VectorR&, const vector<Index>&);
-float range(const VectorR&);
 float mean(const VectorR&);
 float mean(const MatrixR&, Index);
 VectorR mean(const MatrixR&);
 VectorR mean(const MatrixR&, const vector<Index>&, const vector<Index>&);
 float median(const VectorR&);
 float median(const MatrixR&, Index);
-VectorR median(const MatrixR&);
 VectorR median(const MatrixR&, const vector<Index>&, const vector<Index>&);
 float variance(const VectorR&);
 float variance(const VectorR&, const VectorI&);

@@ -63,14 +63,6 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     refresh_op_storage(op_storage_device);
 }
 
-void Scaling::set_min_max_range(float new_min, float new_max)
-{
-    min_range = new_min;
-    max_range = new_max;
-    scale_op.min_range = new_min;
-    scale_op.max_range = new_max;
-}
-
 void Scaling::set_scalers(const vector<string>& scalers_str)
 {
     throw_if(ssize(scalers_str) != ssize(scalers),

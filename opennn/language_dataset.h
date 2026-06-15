@@ -23,14 +23,12 @@ public:
                     Index maximum_vocabulary_size = 20000,
                     Index minimum_token_frequency = 1);
 
-    const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
     const vector<string>& get_target_vocabulary() const { return target_vocabulary; }
 
     Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
     Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
 
     const unordered_map<string, Index>& get_input_vocabulary_map() const { return input_vocabulary_map; }
-    const unordered_map<string, Index>& get_target_vocabulary_map() const { return target_vocabulary_map; }
 
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }

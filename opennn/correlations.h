@@ -61,7 +61,6 @@ VectorR calculate_spearman_ranks(const VectorR&);
 
 Correlation logistic_correlation_spearman(const VectorR&, const VectorR&);
 
-Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 float r_correlation_to_z_correlation(const float);
 float z_correlation_to_r_correlation(const float);
 

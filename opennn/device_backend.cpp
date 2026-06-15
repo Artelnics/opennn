@@ -931,26 +931,6 @@ void run_lt_matmul_cached(
                                 Backend::get_compute_stream()));
 }
 
-void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
-               int m, int n, int k,
-               const void* A, cudaDataType_t Atype, int lda,
-               const void* B, cudaDataType_t Btype, int ldb,
-               void* C, cudaDataType_t Ctype, int ldc,
-               float alpha, float beta)
-{
-    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
-    CHECK_CUBLAS(cublasGemmEx(Backend::get_cublas_handle(),
-                              transa, transb,
-                              m, n, k,
-                              &alpha,
-                              A, Atype, lda,
-                              B, Btype, ldb,
-                              &beta,
-                              C, Ctype, ldc,
-                              compute,
-                              CUBLAS_GEMM_DEFAULT));
-}
-
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int m, int n, int k,
                                const void* A, cudaDataType_t Atype, int lda, long long stride_a,
@@ -1015,16 +995,6 @@ void run_lt_matmul_cached(int, int, int,
                           cudaDataType_t)
 {
     throw runtime_error("run_lt_matmul_cached requires CUDA support.");
-}
-
-void gemm_cuda(cublasOperation_t, cublasOperation_t,
-               int, int, int,
-               const void*, cudaDataType_t, int,
-               const void*, cudaDataType_t, int,
-               void*, cudaDataType_t, int,
-               float, float)
-{
-    throw runtime_error("gemm_cuda requires CUDA support.");
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,

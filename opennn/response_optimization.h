@@ -86,9 +86,6 @@ public:
 
     void set(NeuralNetwork* = nullptr);
 
-    void clear_conditions();
-    void clear_conditions(const string& name);
-
     Condition get_condition(const string& name) const;
 
     void set_condition(const string& name, const ConditionType condition = ConditionType::None, float low = 0.0f, float up = 0.0f);
@@ -101,32 +98,16 @@ public:
                                 ConditionType op,
                                 float low = 0.0f, float up = 0.0f);
 
-    void clear_formula_constraints();
-
-    void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
 
     void set_fixed_history(const Tensor3& history);
 
     void set_iterations(const int iterations);
-    void set_zoom_factor(float new_zoom_factor);
     void set_evaluations_number(const int new_evaluations_number);
-    void set_relative_tolerance(float new_relative_tolerance);
-    void set_max_pareto_number(const Index new_max_pareto_number);
-    void set_max_total_evaluations(const Index new_max_total_evaluations);
-    void set_initial_sampling_factor(const Index new_initial_sampling_factor);
-
-    void set_deformation_domain_factor(float new_deformation_domain_factor);
-    float get_deformation_domain_factor();
 
     vector<Descriptives> get_descriptives(const string& role) const;
 
     pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
-
-    vector<float> get_utopian_point() const;
-
-    pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
-                                                         const VectorR& importance_scale = VectorR()) const;
 
     Domain get_original_domain(const string role) const;
 

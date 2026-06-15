@@ -76,33 +76,6 @@ void NeuronsSelectionResult::resize_history(const Index new_size)
     validation_error_history.conservativeResize(new_size);
 }
 
-string NeuronsSelectionResult::write_stopping_condition() const
-{
-    if (!stopping_condition) return "None";
-
-    using enum NeuronSelection::StoppingCondition;
-    switch (*stopping_condition)
-    {
-        case MaximumTime:
-            return "MaximumTime";
-
-        case ValidationErrorGoal:
-            return "ValidationErrorGoal";
-
-        case MaximumEpochs:
-            return "MaximumEpochs";
-
-        case MaximumValidationFailures:
-            return "MaximumValidationFailures";
-
-        case MaximumNeurons:
-            return "MaximumNeurons";
-
-        default:
-            return {};
-    }
-}
-
 void NeuronsSelectionResult::print() const
 {
     cout << "\n"

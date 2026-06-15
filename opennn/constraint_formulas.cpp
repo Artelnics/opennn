@@ -1437,11 +1437,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
             // active residual is negligible. This makes a generous pass cap cheap
             // — easy points converge in a handful of passes, only stiff manifolds
             // use the full budget.
-            float max_abs_residual = 0.0f;
-            for (const float residual : residuals)
-                max_abs_residual = max(max_abs_residual, abs(residual));
-
-            if (max_abs_residual <= EPSILON)
+            if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
                 break;
 
             const Index active_number = static_cast<Index>(active.size());
@@ -1608,11 +1604,7 @@ void repair_output_constraints(MatrixR& inputs,
             if (active.empty())
                 break;
 
-            float max_abs_residual = 0.0f;
-            for (const float residual : residuals)
-                max_abs_residual = max(max_abs_residual, abs(residual));
-
-            if (max_abs_residual <= EPSILON)
+            if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
                 break;
 
             const Index active_number = static_cast<Index>(active.size());

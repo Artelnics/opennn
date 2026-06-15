@@ -73,11 +73,6 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     set_default();
 }
 
-Index AdaptiveMomentEstimation::get_samples_number() const
-{
-    return batch_size;
-}
-
 void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
 {
     batch_size = new_batch_size;
