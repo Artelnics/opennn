@@ -2,10 +2,15 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
 
-**Status:** current GPU energy result. It is valid for the sampled NVIDIA
-`power.draw` protocol described below — GPU-board energy, not whole-system wall
-power. Every number is the **median of 5 runs (± population stdev)**; the raw
-per-run data, versions, and power traces are in
+**Status:** current GPU energy result. It is a **sampled-power estimate**, not a
+hardware joule counter: energy is the time-integral of NVIDIA `power.draw`
+sampled at 20 Hz (GPU-board only, not whole-system wall power). Read the
+**ratios** between engines as the result, not the absolute watts — those shift
+with hardware, driver, and power policy. Every number is the **median of 5 runs
+(± population stdev)**; the raw per-run data, versions, power traces, and the
+**per-run GPU state** (SM/memory clocks, temperature, power limit, and active
+throttle reasons before/after each run, so a reviewer can rule out thermal or
+power-limit artifacts behind the watt figures) are in
 [`results/`](results/) (`gpu-dense-rosenbrock-energy-*.json`).
 
 The [speed note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) shows

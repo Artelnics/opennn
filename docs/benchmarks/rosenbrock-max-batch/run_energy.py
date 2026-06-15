@@ -135,6 +135,30 @@ def measure_idle(seconds=5.0):
     return sum(vals) / len(vals) if vals else 26.8
 
 
+def gpu_state():
+    """Snapshot clocks / temperature / power-limit so a reviewer can rule out
+    thermal throttling or power-policy artifacts behind the power numbers.
+    Sampled, not controlled -- it documents the conditions, it does not fix them."""
+    fields = ("clocks.current.sm,clocks.max.sm,clocks.current.memory,"
+              "temperature.gpu,power.limit,power.draw,clocks_throttle_reasons.active")
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", f"--query-gpu={fields}", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5).stdout.strip().split("\n")[0]
+        vals = [v.strip() for v in out.split(",")]
+        keys = ["sm_clock_mhz", "sm_clock_max_mhz", "mem_clock_mhz",
+                "temp_c", "power_limit_w", "power_draw_w", "throttle_reasons"]
+        state = {}
+        for k, v in zip(keys, vals):
+            try:
+                state[k] = float(v)
+            except ValueError:
+                state[k] = v  # e.g. throttle reasons (hex/text) or "[N/A]"
+        return state
+    except Exception:
+        return {"error": "nvidia-smi gpu-state query failed"}
+
+
 def run_one(cmd, env_over, idle_w, trace_path):
     """Run cmd while logging power; return (metrics dict, stdout)."""
     env = dict(os.environ)
@@ -145,9 +169,11 @@ def run_one(cmd, env_over, idle_w, trace_path):
          "--format=csv,noheader,nounits", "-lms", "50"],
         stdout=logf, stderr=subprocess.DEVNULL)
     time.sleep(0.3)  # let the logger spin up
+    state_before = gpu_state()
     t0 = time.perf_counter()
     proc = subprocess.run(cmd, env=env, capture_output=True, text=True)
     wall = time.perf_counter() - t0
+    state_after = gpu_state()
     time.sleep(0.3)
     logger.terminate()
     logger.wait()
@@ -155,6 +181,14 @@ def run_one(cmd, env_over, idle_w, trace_path):
 
     samples = parse_power_csv(trace_path)
     e_total, e_active, avg_w, span = integrate(samples, idle_w)
+    full_out = proc.stdout + proc.stderr
+    # The workload prints `samples_per_sec=` only after finishing every iteration.
+    # OpenNN's resident-inference binary completes the work correctly but then
+    # crashes during CUDA-context teardown at process exit (SIGBUS, rc=-7) -- the
+    # measured energy is still valid because all the real work (and its power
+    # draw) happened before the marker was printed. So treat a run as complete
+    # when the marker is present, regardless of a teardown-only exit signal.
+    completed = "samples_per_sec=" in full_out
     return {
         "wall_s": round(wall, 3),
         "integ_span_s": round(span, 3),
@@ -164,6 +198,11 @@ def run_one(cmd, env_over, idle_w, trace_path):
         "energy_total_j": round(e_total, 3),
         "energy_active_j": round(e_active, 3),
         "rc": proc.returncode,
+        "completed": completed,
+        # GPU conditions during the run -- lets a reviewer check for throttling /
+        # power-limit clamping behind the avg_power_w figure.
+        "gpu_state_before": state_before,
+        "gpu_state_after": state_after,
     }, proc.stdout + proc.stderr
 
 
@@ -249,10 +288,17 @@ def main():
                 trace = os.path.join(RESULTS_DIR, f".trace-{eng}-{mode}-{run_id}-{r}.csv")
                 m, out = run_one(cmd, env_over, idle_w, trace)
                 os.remove(trace)
-                if m["rc"] != 0 or m["power_samples"] < 10:
-                    print(f"  run {r}: FAILED rc={m['rc']} samples={m['power_samples']}")
+                # Accept a run whose workload completed (printed samples_per_sec)
+                # with a usable power trace, even if the process crashed on
+                # teardown (OpenNN resident infer: rc=-7 SIGBUS at CUDA-context
+                # exit, work already done). Reject genuine mid-run failures.
+                if not m["completed"] or m["power_samples"] < 10:
+                    print(f"  run {r}: FAILED rc={m['rc']} completed={m['completed']} "
+                          f"samples={m['power_samples']}")
                     raw_outputs.append(out[-500:])
                     continue
+                if m["rc"] != 0:
+                    print(f"  run {r}: NOTE rc={m['rc']} (teardown-only; work completed, energy valid)")
                 m["j_per_sample_total"] = round(m["energy_total_j"] / samples_per_run * 1e6, 4)  # µJ
                 m["j_per_sample_active"] = round(m["energy_active_j"] / samples_per_run * 1e6, 4)
                 per_run.append(m)

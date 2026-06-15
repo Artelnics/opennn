@@ -49,12 +49,17 @@ and the gather kernel. Full closure would require gathering *inside* the capture
 graph (reading the resident dataset directly) — a larger re-architecture.
 
 ### Energy
-`energy_measure.sh` wraps any run, logs GPU power at 20 Hz, and integrates it to
-joules/sample (idle-subtracted). On this card OpenNN spends **1.44× less energy
-per inference** and **2.42× less per training sample** (1.76× even at 50
-mini-batches/epoch) than PyTorch — see the
-[energy article](../energy-consumption-gpu-opennn-vs-pytorch.md). Inference: more
-power but faster → less energy; training: lower power *and* faster.
+`run_energy.py` runs the identical workload on all three engines, logs GPU power
+at 20 Hz, and integrates it to joules/sample (trapezoidal; total and
+idle-subtracted), reporting a 5-run median ± stdev. On this card, by total energy
+per sample, OpenNN spends **1.68× less per inference** and **1.37× less per
+training sample than PyTorch**; against TensorFlow's XLA path OpenNN wins
+inference (≈1.15×) but TF edges OpenNN on training energy (≈7% lower) — reported
+honestly in the [energy article](../energy-consumption-gpu-opennn-vs-pytorch.md).
+Inference: OpenNN draws more power but finishes sooner → less total energy. These
+are sampled-power estimates (`nvidia-smi`, not a hardware joule counter), so treat
+the ratios — not the absolute watts — as the result. (`energy_measure.sh` is the
+older single-run wrapper; `run_energy.py` is the current 3-way harness.)
 
 ## Files
 

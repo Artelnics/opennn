@@ -4,3 +4,5 @@ opennn_rosenbrock_resident_infer
 opennn_rosenbrock_throughput
 opennn_rosenbrock_maxbatch
 *.log
+__pycache__/
+.trace-*.csv
