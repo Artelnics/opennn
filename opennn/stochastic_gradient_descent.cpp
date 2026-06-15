@@ -428,6 +428,10 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"BatchSize", to_string(batch_size)},
+        {"InitialLearningRate", to_string(initial_learning_rate)},
+        {"InitialDecay", to_string(initial_decay)},
+        {"Momentum", to_string(momentum)},
+        {"Nesterov", to_string(nesterov)},
         {"ApplyMomentum", to_string(momentum > 0.0f)}
     });
     write_common_json(printer);
@@ -441,8 +445,14 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
 
-    const bool apply_momentum = read_json_bool(root_element, "ApplyMomentum");
-    set_momentum(apply_momentum ? 0.9f : 0.0f);
+    if (root_element->has("InitialLearningRate")) set_initial_learning_rate(read_json_float(root_element, "InitialLearningRate"));
+    if (root_element->has("InitialDecay"))        set_initial_decay(read_json_float(root_element, "InitialDecay"));
+    if (root_element->has("Nesterov"))            set_nesterov(read_json_bool(root_element, "Nesterov"));
+
+    if (root_element->has("Momentum"))
+        set_momentum(read_json_float(root_element, "Momentum"));
+    else
+        set_momentum(read_json_bool(root_element, "ApplyMomentum") ? 0.9f : 0.0f);
 
     read_common_json(root_element);
 }

@@ -6,6 +6,7 @@
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/loss.h"
 #include "../opennn/language_dataset.h"
+#include "../opennn/json.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;
@@ -24,6 +25,33 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
 
     EXPECT_TRUE(adaptive_moment_estimation.get_loss() != nullptr);
+}
+
+
+TEST(AdaptiveMomentEstimationTest, HyperparametersRoundTripJSON)
+{
+    AdaptiveMomentEstimation adam;
+    adam.set_learning_rate(0.005f);
+    adam.set_beta_1(0.85f);
+    adam.set_beta_2(0.995f);
+    adam.set_gradient_clip_norm(2.5f);
+
+    JsonWriter writer;
+    adam.to_JSON(writer);
+    const std::string json = writer.c_str();
+
+    EXPECT_NE(json.find("LearningRate"), std::string::npos);
+    EXPECT_NE(json.find("Beta1"), std::string::npos);
+    EXPECT_NE(json.find("Beta2"), std::string::npos);
+    EXPECT_NE(json.find("GradientClipNorm"), std::string::npos);
+
+    JsonDocument document;
+    document.root = Json::parse(json);
+
+    AdaptiveMomentEstimation loaded;
+    loaded.from_JSON(document);
+
+    EXPECT_FLOAT_EQ(loaded.get_gradient_clip_norm(), 2.5f);
 }
 
 

@@ -484,6 +484,10 @@ void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
     printer.open_element("AdaptiveMomentEstimation");
 
     add_json_field(printer, "BatchSize", to_string(batch_size));
+    add_json_field(printer, "LearningRate", to_string(learning_rate));
+    add_json_field(printer, "Beta1", to_string(beta_1));
+    add_json_field(printer, "Beta2", to_string(beta_2));
+    add_json_field(printer, "GradientClipNorm", to_string(gradient_clip_norm));
     write_common_json(printer);
 
     printer.close_element();
@@ -494,6 +498,10 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
+    if (root_element->has("LearningRate"))     set_learning_rate(read_json_float(root_element, "LearningRate"));
+    if (root_element->has("Beta1"))            set_beta_1(read_json_float(root_element, "Beta1"));
+    if (root_element->has("Beta2"))            set_beta_2(read_json_float(root_element, "Beta2"));
+    if (root_element->has("GradientClipNorm")) set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm"));
     read_common_json(root_element);
 }
 

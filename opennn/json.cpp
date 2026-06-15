@@ -79,14 +79,14 @@ string Json::as_string() const
     return "";
 }
 
-long Json::as_long() const
+long long Json::as_long() const
 {
     using enum Kind;
     switch (kind)
     {
-    case Number: return long(number_value);
+    case Number: return (long long)(number_value);
     case Bool:   return bool_value ? 1 : 0;
-    case String: return string_value.empty() ? 0L : std::stol(string_value);
+    case String: return string_value.empty() ? 0LL : std::stoll(string_value);
     case Null:
     case Array:
     case Object: return 0;
@@ -531,7 +531,7 @@ float read_json_float(const Json* root, const string& field)
     return v ? float(v->as_double()) : 0.0f;
 }
 
-long read_json_index(const Json* root, const string& field)
+long long read_json_index(const Json* root, const string& field)
 {
     if (!root) return 0;
     const Json* v = root->find(field);

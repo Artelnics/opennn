@@ -1083,7 +1083,7 @@ string ModelExpression::replace_reserved_keywords(const string& input)
         out = '_' + out;
 
     for (const auto& [search, replace_val] : special_words)
-        replace_all_appearances(out, search, replace_val);
+        replace_all_word_appearances(out, search, replace_val);
 
     return out;
 }
