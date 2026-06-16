@@ -12,7 +12,9 @@
 
 #include "attention_operator.h"
 #include "device_backend.h"
+#ifdef OPENNN_HAS_CUDA
 #include "kernel.cuh"
+#endif
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"

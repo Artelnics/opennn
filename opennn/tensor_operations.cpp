@@ -581,6 +581,7 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& sum, TensorView& output)
 {
+#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         const int rows = to_int(input.size() / input.shape.back());
@@ -595,6 +596,7 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
         });
         return;
     }
+#endif
     // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
     layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
