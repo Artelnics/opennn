@@ -32,6 +32,28 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
                                              Index network_height,
                                              Index network_width);
 
+// Single Detection head's output, post-DetectionOp (x/y sigmoid, w/h = anchor*exp,
+// objectness sigmoid, class probs sigmoid/softmax). Used as input to cross-scale NMS.
+struct YoloFpnHead
+{
+    const float* data = nullptr;     // shape implicit: [grid_size, grid_size, boxes_per_cell * (5+classes)]
+    Index grid_size = 0;
+    Index boxes_per_cell = 0;
+    Index classes_number = 0;
+};
+
+// Cross-scale NMS for FPN-style YOLO inference. Decodes candidates from each
+// head's already-decoded output, merges them in normalized image coords,
+// runs unified class-aware greedy NMS, then letterbox-unwarps to the original
+// image size. Single-sample (no batch dimension).
+vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& heads,
+                                                 Index original_height,
+                                                 Index original_width,
+                                                 Index network_height,
+                                                 Index network_width,
+                                                 float confidence_threshold = 0.25f,
+                                                 float iou_threshold = 0.45f);
+
 class YoloDataset final : public ImageDataset
 {
 public:

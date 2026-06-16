@@ -880,6 +880,137 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
     return converted;
 }
 
+namespace
+{
+
+float candidate_iou(const array<float, 6>& a, const array<float, 6>& b)
+{
+    const float a_left = a[0] - 0.5f * a[2];
+    const float a_top = a[1] - 0.5f * a[3];
+    const float a_right = a[0] + 0.5f * a[2];
+    const float a_bottom = a[1] + 0.5f * a[3];
+
+    const float b_left = b[0] - 0.5f * b[2];
+    const float b_top = b[1] - 0.5f * b[3];
+    const float b_right = b[0] + 0.5f * b[2];
+    const float b_bottom = b[1] + 0.5f * b[3];
+
+    const float inter_w = max(0.0f, min(a_right, b_right) - max(a_left, b_left));
+    const float inter_h = max(0.0f, min(a_bottom, b_bottom) - max(a_top, b_top));
+    const float inter = inter_w * inter_h;
+    const float area = a[2] * a[3] + b[2] * b[3] - inter;
+
+    return area > 0.0f ? inter / area : 0.0f;
+}
+
+}
+
+vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& heads,
+                                                 Index original_height,
+                                                 Index original_width,
+                                                 Index network_height,
+                                                 Index network_width,
+                                                 float confidence_threshold,
+                                                 float iou_threshold)
+{
+    if (original_height <= 0 || original_width <= 0
+    ||  network_height  <= 0 || network_width  <= 0)
+        throw runtime_error("decode_yolo_fpn_detections: dimensions must be positive.");
+
+    vector<array<float, 6>> candidates;
+
+    // Each candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id).
+    // Decoded output from DetectionOp: x,y are sigmoid([0,1]) cell-relative
+    // offsets; w,h are already image-normalized (anchor * exp(raw)).
+    for (const YoloFpnHead& head : heads)
+    {
+        if (!head.data || head.grid_size <= 0 || head.boxes_per_cell <= 0
+        ||  head.classes_number <= 0)
+            continue;
+
+        const Index values_per_box = 5 + head.classes_number;
+        const Index channels = head.boxes_per_cell * values_per_box;
+        const float inv_grid = 1.0f / float(head.grid_size);
+
+        for (Index row = 0; row < head.grid_size; ++row)
+            for (Index col = 0; col < head.grid_size; ++col)
+            {
+                const Index cell = (row * head.grid_size + col) * channels;
+
+                for (Index box = 0; box < head.boxes_per_cell; ++box)
+                {
+                    const Index base = cell + box * values_per_box;
+
+                    Index best_class = 0;
+                    float best_probability = head.data[base + 5];
+                    for (Index c = 1; c < head.classes_number; ++c)
+                        if (head.data[base + 5 + c] > best_probability)
+                        {
+                            best_probability = head.data[base + 5 + c];
+                            best_class = c;
+                        }
+
+                    const float score = head.data[base + 4] * best_probability;
+                    if (score < confidence_threshold) continue;
+
+                    candidates.push_back({
+                        (float(col) + head.data[base + 0]) * inv_grid,
+                        (float(row) + head.data[base + 1]) * inv_grid,
+                        head.data[base + 2],
+                        head.data[base + 3],
+                        score,
+                        float(best_class)
+                    });
+                }
+            }
+    }
+
+    ranges::sort(candidates, greater<>{}, [](const array<float, 6>& c) { return c[4]; });
+
+    vector<array<float, 6>> kept;
+    kept.reserve(candidates.size());
+    for (const array<float, 6>& candidate : candidates)
+    {
+        bool suppressed = false;
+        for (const array<float, 6>& k : kept)
+            if (Index(k[5]) == Index(candidate[5])
+            &&  candidate_iou(candidate, k) > iou_threshold)
+            {
+                suppressed = true;
+                break;
+            }
+        if (!suppressed) kept.push_back(candidate);
+    }
+
+    const float scale = min(float(network_width)  / float(original_width),
+                            float(network_height) / float(original_height));
+    const float scaled_width  = float(original_width)  * scale;
+    const float scaled_height = float(original_height) * scale;
+    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
+    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
+
+    vector<YoloDetection> detections;
+    detections.reserve(kept.size());
+    for (const array<float, 6>& k : kept)
+    {
+        const float cx_net_px = k[0] * float(network_width);
+        const float cy_net_px = k[1] * float(network_height);
+        const float w_net_px  = k[2] * float(network_width);
+        const float h_net_px  = k[3] * float(network_height);
+
+        YoloDetection detection;
+        detection.center_x = clamp((cx_net_px - offset_x) / scale, 0.0f, float(original_width));
+        detection.center_y = clamp((cy_net_px - offset_y) / scale, 0.0f, float(original_height));
+        detection.width    = w_net_px / scale;
+        detection.height   = h_net_px / scale;
+        detection.score    = k[4];
+        detection.class_id = Index(k[5]);
+        detections.push_back(detection);
+    }
+
+    return detections;
+}
+
 vector<YoloDetection> decode_yolo_detections(const float* nms_output,
                                              Index max_boxes,
                                              Index original_height,

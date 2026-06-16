@@ -429,7 +429,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          Index grid_size,
                          Backbone backbone,
                          ClassActivation class_activation,
-                         HeadStyle head_style) : NeuralNetwork()
+                         HeadStyle head_style,
+                         BodyActivation body_activation) : NeuralNetwork()
 {
     throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -443,6 +444,11 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         throw_if(ssize(anchors) != 9,
                  "YoloNetwork: HeadStyle::FPN expects exactly 9 anchors (3 per scale).");
     }
+
+    // Single source of truth for every conv-layer activation string in this
+    // network. Defaults to "ReLU" so call sites + saved Phase 1/2 weights
+    // behave unchanged.
+    const char* act = (body_activation == BodyActivation::LeakyReLU) ? "LeakyReLU" : "ReLU";
 
     const Shape stride{1, 1};
     const Shape stride_2{2, 2};
@@ -471,7 +477,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             add_layer(make_unique<Convolutional>(conv_input_shape,
                                                  Shape{3, 3, conv_input_shape[2], filters[size_t(i)]},
-                                                 "ReLU", stride, "Same", true,
+                                                 act, stride, "Same", true,
                                                  format("yolo_conv_{}", i + 1)));
 
             add_layer(make_unique<Pooling>(get_output_shape(), pool, pool_stride,
@@ -481,7 +487,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         add_layer(make_unique<Convolutional>(get_output_shape(),
                                              Shape{3, 3, get_output_shape()[2], 1024},
-                                             "ReLU", stride, "Same", true,
+                                             act, stride, "Same", true,
                                              "yolo_conv_6"));
     }
     else
@@ -491,7 +497,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index reduced = max<Index>(channels / 2, 1);
 
             Index main_index = add_conv(input_index,
-                Shape{1, 1, channels, reduced}, "ReLU",
+                Shape{1, 1, channels, reduced}, act,
                 stride, true, prefix + "_conv1");
             main_index = add_conv(main_index,
                 Shape{3, 3, reduced, channels}, "Identity",
@@ -503,7 +509,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index add_index = get_layers_number() - 1;
 
             add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(),
-                                              "ReLU", prefix + "_relu"),
+                                              act, prefix + "_relu"),
                       {add_index});
             return get_layers_number() - 1;
         };
@@ -517,7 +523,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         add_layer(make_unique<Convolutional>(input_shape,
                                              Shape{3, 3, input_shape[2], 32},
-                                             "ReLU", stride_2, "Same", true,
+                                             act, stride_2, "Same", true,
                                              "darknet_stem"));
         Index last_index = get_layers_number() - 1;
 
@@ -532,7 +538,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             const Index input_channels = get_layer(last_index)->get_output_shape()[2];
 
             last_index = add_conv(last_index,
-                Shape{3, 3, input_channels, channels}, "ReLU",
+                Shape{3, 3, input_channels, channels}, act,
                 stride_2, true, format("darknet_down_{}", i + 1));
 
             for (Index j = 0; j < blocks_number; ++j)
@@ -577,7 +583,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index p5_lateral = add_conv(c5_index,
                 Shape{1, 1, get_layer(c5_index)->get_output_shape()[2], 256},
-                "ReLU", stride, true, "fpn_p5_lateral");
+                act, stride, true, "fpn_p5_lateral");
             add_detection_head(p5_lateral, anchors_large, "large");
 
             add_layer(make_unique<Upsample>(
@@ -597,7 +603,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index p4_lateral = add_conv(p4_concatenation,
                 Shape{1, 1, get_layer(p4_concatenation)->get_output_shape()[2], 256},
-                "ReLU", stride, true, "fpn_p4_lateral");
+                act, stride, true, "fpn_p4_lateral");
             add_detection_head(p4_lateral, anchors_medium, "medium");
 
             add_layer(make_unique<Upsample>(
@@ -617,7 +623,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index p3_lateral = add_conv(p3_concatenation,
                 Shape{1, 1, get_layer(p3_concatenation)->get_output_shape()[2], 128},
-                "ReLU", stride, true, "fpn_p3_lateral");
+                act, stride, true, "fpn_p3_lateral");
             add_detection_head(p3_lateral, anchors_small, "small");
 
             compile();

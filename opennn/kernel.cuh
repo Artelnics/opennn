@@ -249,4 +249,33 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* activation_derivatives,
                                       T* delta);
 
+// YOLO DetectionOp
+
+// Apply sigmoid(xy), exp(wh)*anchor, sigmoid(obj), softmax|sigmoid(classes)
+// per box across the (batch, grid, grid, boxes_per_cell) tile.
+// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOp::ClassActivation).
+// anchors layout: flat [aw0, ah0, aw1, ah1, ...] of length 2*boxes_per_cell.
+void detection_forward_cuda(const Index batch_size,
+                            const Index grid_size,
+                            const Index boxes_per_cell,
+                            const Index classes_number,
+                            const Index channels,
+                            const int class_activation,
+                            const float* anchors,
+                            const float* input,
+                            float* output);
+
+// Chain rule through the same. For (x, y, obj) and sigmoid classes the
+// gate is d_sig = out * (1-out). For (w, h) the gate is d_exp = out. For
+// softmax classes the per-box Jacobian collapses to out * (delta - <delta, out>).
+void detection_backward_cuda(const Index batch_size,
+                             const Index grid_size,
+                             const Index boxes_per_cell,
+                             const Index classes_number,
+                             const Index channels,
+                             const int class_activation,
+                             const float* output,
+                             const float* output_delta,
+                             float* input_delta);
+
 #endif // KERNEL_CUH

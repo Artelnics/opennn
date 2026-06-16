@@ -159,3 +159,67 @@ TEST(Dense3dTest, BackPropagate)
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.size(), batch_size * sequence_length * output_embedding);
 }
+
+
+TEST(ActivationTest, LeakyReLUStringMapRoundTrip)
+{
+    EXPECT_EQ(activation_function_from_string("LeakyReLU"), ActivationFunction::LeakyReLU);
+    EXPECT_EQ(activation_function_to_string(ActivationFunction::LeakyReLU), "LeakyReLU");
+}
+
+
+TEST(ActivationTest, LeakyReLUForwardPassesPositiveAndScalesNegative)
+{
+    // f(x) = x         if x >= 0
+    //      = slope * x if x <  0      (slope = LEAKY_RELU_SLOPE = 0.1)
+    vector<float> buffer = { -2.0f, -0.5f, 0.0f, 0.5f, 2.0f };
+    TensorView view(buffer.data(), {Index(buffer.size())});
+
+    activation_forward(view, ActivationFunction::LeakyReLU);
+
+    EXPECT_FLOAT_EQ(buffer[0], -0.2f);  // -2.0 * 0.1
+    EXPECT_FLOAT_EQ(buffer[1], -0.05f); // -0.5 * 0.1
+    EXPECT_FLOAT_EQ(buffer[2],  0.0f);  // gate is >= 0
+    EXPECT_FLOAT_EQ(buffer[3],  0.5f);
+    EXPECT_FLOAT_EQ(buffer[4],  2.0f);
+}
+
+
+TEST(ActivationTest, LeakyReLUBackwardGatesByOutputSign)
+{
+    // f'(y) = 1        if y >= 0  (because positive slope preserves sign of x)
+    //       = slope    if y <  0
+    // Inputs: outputs (post-activation), incoming delta.
+    vector<float> outputs = { -0.2f, -0.05f, 0.0f, 0.5f, 2.0f };
+    vector<float> delta   = {  1.0f,   2.0f, 3.0f, 4.0f, 5.0f };
+
+    TensorView outputs_view(outputs.data(), {Index(outputs.size())});
+    TensorView delta_view  (delta.data(),   {Index(delta.size())});
+
+    activation_backward(outputs_view, delta_view, ActivationFunction::LeakyReLU);
+
+    EXPECT_FLOAT_EQ(delta[0], 0.1f);  // negative side: 1.0 * 0.1
+    EXPECT_FLOAT_EQ(delta[1], 0.2f);  // negative side: 2.0 * 0.1
+    EXPECT_FLOAT_EQ(delta[2], 3.0f);  // zero counts as positive side
+    EXPECT_FLOAT_EQ(delta[3], 4.0f);
+    EXPECT_FLOAT_EQ(delta[4], 5.0f);
+}
+
+
+TEST(ActivationTest, LeakyReLUFlowsThroughDenseLayer)
+{
+    // End-to-end smoke test: a Dense layer constructed with "LeakyReLU"
+    // resolves the string, propagates through compile(), and produces output
+    // of the expected shape. Validates the wiring beyond the kernel itself.
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{3}, "LeakyReLU"));
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    MatrixR input(2, 4);
+    input.setConstant(type(1.0));
+
+    const MatrixR output = neural_network.calculate_outputs(input);
+    EXPECT_EQ(output.rows(), 2);
+    EXPECT_EQ(output.cols(), 3);
+}

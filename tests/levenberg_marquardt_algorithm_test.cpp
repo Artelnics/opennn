@@ -67,10 +67,9 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainReducesError)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    // Use raw Dense network (no Scaling/Unscaling) — LM Jacobian only handles Dense<2>
+    // LM only supports a single trainable Dense layer.
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{3}, "Tanh"));
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{outputs_n}, "Identity"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_n}, Shape{outputs_n}, "Identity"));
     neural_network.compile();
 
     Loss loss(&neural_network, &dataset);
