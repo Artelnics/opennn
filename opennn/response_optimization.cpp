@@ -190,9 +190,9 @@ void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 }
 
 
-void ResponseOptimization::set_category_exploration_ratio(float new_ratio)
+void ResponseOptimization::set_exploration_ratio(float new_ratio)
 {
-    category_exploration_ratio = new_ratio;
+    exploration_ratio = new_ratio;
 }
 
 
@@ -795,7 +795,8 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const vector<Index>& free_lattice_columns,
                                  const vector<float>& free_lattice_min,
                                  const vector<float>& free_lattice_max,
-                                 const Index outer_cap)
+                                 const Index outer_cap,
+                                 const float exploration_ratio)
 {
     vector<const FormulaConstraint*> input_constraints;
     for (const FormulaConstraint& constraint : formula_constraints)
@@ -832,7 +833,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
         bool all_feasible = true;
         const bool last_pass = (outer + 1 >= passes);
         const Index swaps = 1 + outer / 2;
-        const float unlock_fraction = min(1.0f, 0.1f * float(outer + 1));
+        const float unlock_fraction = min(1.0f, exploration_ratio * float(outer + 1));
 
         for (Index r = 0; r < rows; ++r)
         {
@@ -953,7 +954,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             if(Index(frequencies.size()) != categories_number)
                 frequencies.assign(categories_number, 0);
 
-            const Index exploration_count = llround(category_exploration_ratio * effective_evaluations);
+            const Index exploration_count = llround(exploration_ratio * effective_evaluations);
 
             for(Index i = 0; i < effective_evaluations; ++i)
             {
@@ -1042,12 +1043,38 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
         }
 
+        // Explore / exploit split (same exploration_ratio as categoricals): the first
+        // fraction of rows draw freely (explore new supports); the rest restrict the K "on"
+        // indicators to the incumbent-preferred set captured at the last reshape (exploit the
+        // improving direction). Exploit falls back to a free draw when no preferred support is
+        // available yet (iteration 0) or it is too small to reach k.
+        const Index exploration_count = llround(exploration_ratio * effective_evaluations);
+        const bool have_preferred = (static_cast<Index>(cardinality_preferred.size()) == inputs_features_number);
+
         vector<float> draw;
         for (Index r = 0; r < effective_evaluations; ++r)
         {
-            throw_if(!draw_k_hot(count, group.k, force_on, force_off, draw),
-                     "ResponseOptimization: cardinality constraint (k=" + to_string(group.k)
-                     + ") is infeasible under the current box pins.");
+            bool drawn = false;
+
+            if (have_preferred && r >= exploration_count)
+            {
+                vector<char> exploit_force_off = force_off;
+                bool any_preferred_free = false;
+                for (Index c = 0; c < count; ++c)
+                {
+                    if (force_on[c]) continue;
+                    if (cardinality_preferred[columns[c]]) any_preferred_free = true;
+                    else exploit_force_off[c] = 1;   // bar non-preferred indicators from this draw
+                }
+                if (any_preferred_free)
+                    drawn = draw_k_hot(count, group.k, force_on, exploit_force_off, draw);
+            }
+
+            if (!drawn)
+                throw_if(!draw_k_hot(count, group.k, force_on, force_off, draw),
+                         "ResponseOptimization: cardinality constraint (k=" + to_string(group.k)
+                         + ") is infeasible under the current box pins.");
+
             for (Index c = 0; c < count; ++c)
                 random_inputs(r, columns[c]) = draw[c];
         }
@@ -1088,7 +1115,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                                     lattice_columns, lattice_min, lattice_max,
                                     cardinality_columns,
                                     free_lattice_columns, free_lattice_min, free_lattice_max,
-                                    /*outer_cap*/ 8);
+                                    /*outer_cap*/ 8, exploration_ratio);
     else
     {
         repair_inputs(random_inputs,
@@ -1595,6 +1622,122 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 }
 
 
+void ResponseOptimization::promote_single_variable_constraints()
+{
+    if (formula_constraints.empty() || !neural_network)
+        return;
+
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    const vector<NamedColumn> input_columns = build_columns_for_formula(input_variables, true);
+
+    map<Index, string> name_of_column;
+    for (const NamedColumn& column : input_columns)
+        name_of_column[column.column_index] = column.name;
+
+    // [lo, hi] interval implied by an interval-type VariableConstraint; false for AllowedSet.
+    auto interval_of = [](const VariableConstraint& constraint, float& lo, float& hi) -> bool
+    {
+        lo = -numeric_limits<float>::infinity();
+        hi =  numeric_limits<float>::infinity();
+        switch (constraint.comparison)
+        {
+        case ComparisonOperator::None:           return true;
+        case ComparisonOperator::EqualTo:        lo = hi = constraint.low_bound; return true;
+        case ComparisonOperator::Between:        lo = constraint.low_bound; hi = constraint.up_bound; return true;
+        case ComparisonOperator::GreaterEqualTo:
+        case ComparisonOperator::GreaterThan:    lo = constraint.low_bound; return true;
+        case ComparisonOperator::LessEqualTo:
+        case ComparisonOperator::LessThan:       hi = constraint.up_bound; return true;
+        case ComparisonOperator::AllowedSet:
+        default:                                 return false;
+        }
+    };
+
+    vector<FormulaConstraint> kept;
+    kept.reserve(formula_constraints.size());
+
+    for (FormulaConstraint& formula_constraint : formula_constraints)
+    {
+        const CompiledFormula& compiled = formula_constraint.compiled;
+
+        const bool promotable = !formula_constraint.uses_callback
+            && formula_constraint.comparison_operator != ComparisonOperator::None
+            && formula_constraint.comparison_operator != ComparisonOperator::AllowedSet
+            && compiled.shape == FormulaShape::Affine
+            && compiled.scope == FormulaScope::InputsOnly
+            && compiled.affine_input_terms.size() == 1
+            && compiled.affine_output_terms.empty();
+
+        if (!promotable) { kept.push_back(move(formula_constraint)); continue; }
+
+        const Index column = compiled.affine_input_terms.front().first;
+        const float coefficient = compiled.affine_input_terms.front().second;
+        const auto found = name_of_column.find(column);
+
+        if (found == name_of_column.end() || coefficient == 0.0f)
+        { kept.push_back(move(formula_constraint)); continue; }
+
+        // Solve a*x + c {op} bound for the implied interval on x.
+        const float constant = compiled.affine_constant;
+        const float low = formula_constraint.low_bound;
+        const float up  = formula_constraint.up_bound;
+        const auto solve = [&](const float bound) { return (bound - constant) / coefficient; };
+
+        float implied_lo = -numeric_limits<float>::infinity();
+        float implied_hi =  numeric_limits<float>::infinity();
+
+        switch (formula_constraint.comparison_operator)
+        {
+        case ComparisonOperator::EqualTo:
+            implied_lo = implied_hi = solve(low); break;
+        case ComparisonOperator::Between:
+            implied_lo = min(solve(low), solve(up));
+            implied_hi = max(solve(low), solve(up)); break;
+        case ComparisonOperator::GreaterEqualTo:
+        case ComparisonOperator::GreaterThan:
+            (coefficient > 0.0f ? implied_lo : implied_hi) = solve(low); break;
+        case ComparisonOperator::LessEqualTo:
+        case ComparisonOperator::LessThan:
+            (coefficient > 0.0f ? implied_hi : implied_lo) = solve(up); break;
+        default: break;
+        }
+
+        const string& name = found->second;
+
+        float existing_lo = -numeric_limits<float>::infinity();
+        float existing_hi =  numeric_limits<float>::infinity();
+        const auto existing = constraints.find(name);
+        if (existing != constraints.end() && !interval_of(existing->second, existing_lo, existing_hi))
+        { kept.push_back(move(formula_constraint)); continue; }   // existing AllowedSet: leave as formula
+
+        const float new_lo = max(implied_lo, existing_lo);
+        const float new_hi = min(implied_hi, existing_hi);
+
+        throw_if(new_lo > new_hi + bound_tolerance(new_hi),
+                 "ResponseOptimization: constraint '" + formula_constraint.expression
+                 + "' leaves variable '" + name + "' with an empty box.");
+
+        const bool lo_finite = isfinite(new_lo);
+        const bool hi_finite = isfinite(new_hi);
+
+        if (lo_finite && hi_finite && new_lo == new_hi)
+            constraints[name] = VariableConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
+        else if (lo_finite && hi_finite)
+            constraints[name] = VariableConstraint(ComparisonOperator::Between, new_lo, new_hi);
+        else if (lo_finite)
+            constraints[name] = VariableConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
+        else if (hi_finite)
+            constraints[name] = VariableConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
+
+        cout << "> Promoted single-variable constraint '" << formula_constraint.expression
+             << "' to a box on '" << name << "'." << endl;
+        // promoted -> intentionally not kept in the formula set
+    }
+
+    formula_constraints = move(kept);
+}
+
+
 void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Domain& original) const
 {
     if (cardinality_constraints.empty())
@@ -1612,12 +1755,20 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
         feature += dimensions[i];
     }
 
+    if (static_cast<Index>(cardinality_preferred.size()) != domain.superior_frontier.size())
+        cardinality_preferred.assign(domain.superior_frontier.size(), 0);
+
     for (const CardinalityConstraint& group : cardinality_constraints)
         for (const string& name : group.variable_names)
         {
             const auto found = column_of.find(name);
             if (found == column_of.end())
                 continue;
+
+            // Capture the incumbent-preferred support from the reshaped (pinned) box BEFORE
+            // reopening it: an indicator the reshape kept "on" was in a surviving support.
+            cardinality_preferred[found->second] = (domain.superior_frontier(found->second) >= 0.5f) ? 1 : 0;
+
             domain.inferior_frontier(found->second) = original.inferior_frontier(found->second);
             domain.superior_frontier(found->second) = original.superior_frontier(found->second);
         }
@@ -2198,6 +2349,7 @@ MatrixR ResponseOptimization::solve_once() const
 
     evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
     category_frequencies.clear();
+    cardinality_preferred.clear();   // no incumbent support until the first reshape
 
     initialize_network_differential();   // exact analytic VJP if possible, else finite differences
 
@@ -2209,6 +2361,10 @@ MatrixR ResponseOptimization::solve_once() const
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
+    // Fold any single-variable affine formula constraint into its variable's domain box
+    // before branching/solving (enforced for free at sampling instead of per-point).
+    promote_single_variable_constraints();
+
     // An AllowedSet (expr in {v1..vk}) is solved by BRANCHING: each value becomes an
     // EqualTo equality subproblem the existing machinery already handles. We only
     // branch what cannot be sampled directly: every formula AllowedSet, and any

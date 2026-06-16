@@ -140,7 +140,10 @@ public:
 
     void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
-    void set_category_exploration_ratio(float new_ratio);
+    // Global explore-vs-exploit fraction: the share of sampling steered to exploration
+    // rather than exploiting the incumbent. Shared by categorical least-sampled steering,
+    // the cardinality K-hot explore fraction, and the mixed-integer pump's per-pass unlock.
+    void set_exploration_ratio(float new_ratio);
 
     void set_fixed_history(const Tensor3& history);
     void clear_fixed_history();
@@ -249,6 +252,14 @@ private:
     // an ordinary binary. The continuous weights still contract normally.
     void restore_cardinality_columns(Domain& domain, const Domain& original) const;
 
+    // Normalization pass: a formula constraint that is affine in exactly one (scalar) input
+    // is solved in closed form to an interval and folded into that variable's domain box
+    // (intersecting any existing interval box), then dropped from the formula set so it is
+    // enforced for free at sampling instead of per-point. Throws if the intersection is empty.
+    // Constraints touching >1 variable, nonlinear ones, or a variable already constrained by
+    // an AllowedSet are left in the formula set untouched.
+    void promote_single_variable_constraints();
+
     NeuralNetwork* neural_network = nullptr;
 
     mutable unique_ptr<NetworkDifferential> network_differential;
@@ -265,7 +276,7 @@ private:
 
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
-    float category_exploration_ratio = 0.1f;
+    float exploration_ratio = 0.1f;
 
     Index evaluations_number = 2000;
 
@@ -293,6 +304,12 @@ private:
     // variable name), so a fraction of each categorical draw can be steered to the
     // least-sampled category. Reset at the start of every solve_once run.
     mutable map<string, vector<Index>> category_frequencies;
+
+    // Incumbent-preferred cardinality indicators (over input feature columns; 1 = an
+    // indicator the last reshape would have pinned "on", i.e. in a surviving support).
+    // Captured before the box is restored to [0,1] and used to steer the exploit share of
+    // the K-hot draw. Empty until the first reshape, so iteration 0 draws uniformly.
+    mutable vector<char> cardinality_preferred;
 
     // Multiplier on the candidate count of the FIRST (initial, full-domain)
     // multi-objective sampling only: the initial pass draws

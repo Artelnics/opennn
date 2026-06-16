@@ -988,6 +988,123 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
 }
 
 
+TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
+{
+    // A non-default exploration_ratio exercises both the explore (free K-hot) and exploit
+    // (incumbent-preferred K-hot) branches across iterations; feasibility + cardinality must
+    // still hold regardless of the split.
+    const int A = 6;
+    const int K = 2;
+
+    vector<string> indicator_names, input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
+    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    string budget;
+    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
+    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
+    for (int i = 0; i < A; ++i)
+    {
+        const string w = "w" + to_string(i), z = "z" + to_string(i);
+        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
+        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
+    }
+    opt.set_cardinality_constraint(indicator_names, K);
+
+    opt.set_exploration_ratio(float(0.5));   // half explore, half exploit
+    opt.set_iterations(4);
+    opt.set_evaluations_number(1200);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0) << "explore/exploit split lost feasibility";
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        float weight_sum = 0, indicator_sum = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float w = results(r, i), z = results(r, A + i);
+            weight_sum += w; indicator_sum += z;
+            EXPECT_LE(w, z + float(1e-2)) << "buy-in upper at row " << r << " asset " << i;
+            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
+        }
+        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget at row " << r;
+        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality at row " << r;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// Single-variable affine constraint -> domain box promotion (B)
+// -----------------------------------------------------------------------------
+
+TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
+{
+    // "2*x1 - 6 <= 0"  ->  x1 <= 3, folded into the box; every result must respect it.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("2 * x1 - 6", ComparisonOperator::LessEqualTo, float(0), float(0));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+        EXPECT_LE(results(r, 0), float(3) + float(1e-3)) << "x1 not boxed to <= 3 at row " << r;
+}
+
+TEST(SingleVariablePromotion, EmptyIntersectionThrows)
+{
+    // Existing box [5,10] intersected with the implied x1 <= 3 is empty -> must throw.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", ComparisonOperator::Between, float(5), float(10));
+    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(3));
+
+    opt.set_iterations(2);
+    opt.set_evaluations_number(200);
+
+    EXPECT_ANY_THROW(opt.perform_response_optimization());
+}
+
+TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
+{
+    // A promoted box on an integer variable must still yield integral, in-box results.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(5));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        EXPECT_NEAR(results(r, 0), round(results(r, 0)), float(1e-3)) << "x1 not integral at row " << r;
+        EXPECT_LE(results(r, 0), float(5) + float(1e-3)) << "x1 not boxed at row " << r;
+    }
+}
+
+
 // -----------------------------------------------------------------------------
 // AllowedSet: membership constraints (x in {values})
 // -----------------------------------------------------------------------------
