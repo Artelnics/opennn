@@ -42,6 +42,19 @@ public:
             : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
+    // Cardinality constraint sum_i z_i = k over a set of binary/integer indicator
+    // variables (named). Unlike a scalar AllowedSet it couples a whole VECTOR of
+    // indicators, so it drives SAMPLING (a box-aware K-hot draw, see draw_k_hot) and a
+    // swap-based perturbation rather than the value-branching machinery; its indicator
+    // columns are excluded from the continuous projection. Expressed as a dedicated
+    // group instead of a new ComparisonOperator precisely because it is a sampling /
+    // combinatorial object, not a per-row comparison on one expression.
+    struct CardinalityConstraint
+    {
+        vector<string> variable_names;
+        Index k = 0;
+    };
+
     struct Domain
     {
         Domain() = default;
@@ -105,6 +118,10 @@ public:
 
     void set_constraint(const string& name, const vector<float>& allowed_values);
 
+    // Cardinality: the named binary/integer indicators must sum to exactly k.
+    void set_cardinality_constraint(const vector<string>& variable_names, Index k);
+    void clear_cardinality_constraints();
+
     void set_objective(const string& name, const Sense sense);
 
     void set_time_role(const string& name, const TimeType role);
@@ -148,6 +165,8 @@ public:
     vector<float> get_utopian_point() const;
 
     const map<string, vector<Index>>& get_category_frequencies() const { return category_frequencies; }
+
+    const vector<CardinalityConstraint>& get_cardinality_constraints() const { return cardinality_constraints; }
 
     pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
                                                          const VectorR& importance_scale = VectorR()) const;
@@ -224,6 +243,12 @@ private:
     // the analytic forward fails to match calculate_outputs.
     void initialize_network_differential() const;
 
+    // Keep cardinality-indicator columns at their original (post-bound) box after each
+    // domain reshape: their indicators are combinatorial and must stay resampleable as
+    // a box-aware K-hot draw, never pinned to the incumbent support the way reshape pins
+    // an ordinary binary. The continuous weights still contract normally.
+    void restore_cardinality_columns(Domain& domain, const Domain& original) const;
+
     NeuralNetwork* neural_network = nullptr;
 
     mutable unique_ptr<NetworkDifferential> network_differential;
@@ -235,6 +260,8 @@ private:
     map<string, TimeType> time_roles;
 
     vector<FormulaConstraint> formula_constraints;
+
+    vector<CardinalityConstraint> cardinality_constraints;
 
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;

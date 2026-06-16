@@ -10,6 +10,7 @@
 
 #include "../opennn/constraint_formulas.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/random_utilities.h"
 #include "../opennn/response_optimization.h"
 #include "../opennn/scaling_layer.h"
 #include "../opennn/standard_networks.h"
@@ -710,6 +711,280 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
     for (Index i = 0; i < results.rows(); ++i)
         EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
             << "integer x1 not integral after output repair at row " << i;
+}
+
+
+// -----------------------------------------------------------------------------
+// Mixed-integer repair: masked affine projector (step 1)
+// -----------------------------------------------------------------------------
+
+TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
+{
+    // Portfolio-style budget + buy-in over 4 weights w0..w3 and 4 indicators z0..z3.
+    // The indicators are pinned to a cardinality-2 pattern {z0=z1=1, z2=z3=0} and held
+    // fixed; the projector must land the continuous weights on the affine manifold
+    //   sum w = 1,  w_i <= z_i,  w_i >= 0.01 z_i
+    // without ever moving an indicator.
+    const vector<NamedColumn> inputs =
+        make_named_columns({ "w0", "w1", "w2", "w3", "z0", "z1", "z2", "z3" });
+    const vector<NamedColumn> outputs;   // input-only system, no network
+
+    auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
+    {
+        FormulaConstraint constraint;
+        constraint.expression = expression;
+        constraint.comparison_operator = op;
+        constraint.low_bound = low;
+        constraint.up_bound = up;
+        constraint.compiled = compile_formula(expression, inputs, outputs);
+        return constraint;
+    };
+
+    vector<FormulaConstraint> constraints;
+    constraints.push_back(make_fc("w0 + w1 + w2 + w3", ComparisonOperator::EqualTo, float(1), float(1)));
+    for (int i = 0; i < 4; ++i)
+    {
+        const string w = "w" + to_string(i);
+        const string z = "z" + to_string(i);
+        constraints.push_back(make_fc(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0)));
+        constraints.push_back(make_fc(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0)));
+    }
+
+    const Index n = 8;
+    const VectorR inferior = VectorR::Zero(n);
+    const VectorR superior = VectorR::Ones(n);
+
+    const Index rows = 200;
+    MatrixR points(rows, n);
+    set_random_uniform(points, float(0), float(1));   // weights start anywhere in [0,1]
+    for (Index r = 0; r < rows; ++r)
+    {
+        points(r, 4) = float(1); points(r, 5) = float(1);   // z0 = z1 = 1
+        points(r, 6) = float(0); points(r, 7) = float(0);   // z2 = z3 = 0
+    }
+
+    vector<char> fixed(n, 0);
+    fixed[4] = fixed[5] = fixed[6] = fixed[7] = 1;          // hold all indicators fixed
+
+    repair_affine_inputs_with_fixed(points, inferior, superior, constraints, fixed);
+
+    for (Index r = 0; r < rows; ++r)
+    {
+        // Indicators are untouched (exactly, not just to tolerance).
+        EXPECT_EQ(points(r, 4), float(1)); EXPECT_EQ(points(r, 5), float(1));
+        EXPECT_EQ(points(r, 6), float(0)); EXPECT_EQ(points(r, 7), float(0));
+
+        const float budget = points(r, 0) + points(r, 1) + points(r, 2) + points(r, 3);
+        EXPECT_NEAR(budget, float(1), float(1e-3)) << "budget violated at row " << r;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            EXPECT_LE(points(r, i), points(r, 4 + i) + float(1e-3))
+                << "buy-in upper violated at row " << r << " col " << i;
+            EXPECT_GE(points(r, i), float(0.01) * points(r, 4 + i) - float(1e-3))
+                << "buy-in lower violated at row " << r << " col " << i;
+        }
+
+        // Unselected weights must collapse to ~0.
+        EXPECT_NEAR(points(r, 2), float(0), float(1e-3)) << "w2 not zeroed at row " << r;
+        EXPECT_NEAR(points(r, 3), float(0), float(1e-3)) << "w3 not zeroed at row " << r;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// Mixed-integer repair: lattice clamp-and-carry (step 2)
+// -----------------------------------------------------------------------------
+
+namespace
+{
+    FormulaConstraint make_integer_constraint(const string& expression,
+                                              const vector<NamedColumn>& inputs,
+                                              ComparisonOperator op, float low, float up)
+    {
+        FormulaConstraint constraint;
+        constraint.expression = expression;
+        constraint.comparison_operator = op;
+        constraint.low_bound = low;
+        constraint.up_bound = up;
+        constraint.compiled = compile_formula(expression, inputs, /*outputs*/ {});
+        return constraint;
+    }
+}
+
+TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
+{
+    // 3 integer vars n0..n2 in [0,5]; knapsack budget n0 + n1 + n2 <= 4.
+    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
+    const FormulaConstraint budget =
+        make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
+
+    const Index n = 3;
+    const VectorR inferior = VectorR::Zero(n);
+    const VectorR superior = VectorR::Constant(n, float(5));
+
+    const Index rows = 300;
+    MatrixR points(rows, n);
+    set_random_uniform(points, float(0), float(5));   // continuous; the carry lattices it
+
+    repair_single_affine_integer(points, inferior, superior, budget);
+
+    for (Index r = 0; r < rows; ++r)
+    {
+        for (Index j = 0; j < n; ++j)
+        {
+            EXPECT_NEAR(points(r, j), round(points(r, j)), float(1e-4)) << "not integral at " << r << "," << j;
+            EXPECT_GE(points(r, j), float(0));
+            EXPECT_LE(points(r, j), float(5));
+        }
+        EXPECT_LE(points(r, 0) + points(r, 1) + points(r, 2), float(4) + float(1e-3))
+            << "budget violated at row " << r;
+    }
+}
+
+TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
+{
+    // n0 + n1 + n2 == 3, each in [0,5]; unit coefficients => the carry must hit it exactly.
+    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
+    const FormulaConstraint exact =
+        make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
+
+    const Index n = 3;
+    const VectorR inferior = VectorR::Zero(n);
+    const VectorR superior = VectorR::Constant(n, float(5));
+
+    const Index rows = 300;
+    MatrixR points(rows, n);
+    set_random_uniform(points, float(0), float(5));
+
+    repair_single_affine_integer(points, inferior, superior, exact);
+
+    for (Index r = 0; r < rows; ++r)
+    {
+        for (Index j = 0; j < n; ++j)
+            EXPECT_NEAR(points(r, j), round(points(r, j)), float(1e-4)) << "not integral at " << r << "," << j;
+        EXPECT_NEAR(points(r, 0) + points(r, 1) + points(r, 2), float(3), float(1e-3))
+            << "equality not met at row " << r;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// Mixed-integer repair: box-aware K-hot draw (step 3, Hole A)
+// -----------------------------------------------------------------------------
+
+TEST(MixedIntegerKHot, DrawsExactlyKHonoringPins)
+{
+    const Index count = 8, k = 3;
+    vector<char> force_on(count, 0), force_off(count, 0);
+    force_on[1] = 1;                       // index 1 must be selected
+    force_off[5] = 1; force_off[6] = 1;    // indices 5,6 excluded
+
+    for (int trial = 0; trial < 200; ++trial)
+    {
+        vector<float> out;
+        ASSERT_TRUE(draw_k_hot(count, k, force_on, force_off, out));
+        ASSERT_EQ(static_cast<Index>(out.size()), count);
+
+        float sum = 0;
+        for (const float v : out) { EXPECT_TRUE(v == float(0) || v == float(1)); sum += v; }
+        EXPECT_EQ(sum, float(k));
+        EXPECT_EQ(out[1], float(1));        // forced on
+        EXPECT_EQ(out[5], float(0));        // forced off
+        EXPECT_EQ(out[6], float(0));
+    }
+}
+
+TEST(MixedIntegerKHot, ReportsInfeasiblePins)
+{
+    const Index count = 4;
+    vector<float> out;
+
+    // Too many forced on (3 > k=2).
+    {
+        vector<char> force_on(count, 0), force_off(count, 0);
+        force_on[0] = force_on[1] = force_on[2] = 1;
+        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
+    }
+    // Too few free to reach k (only index 3 free, need 2).
+    {
+        vector<char> force_on(count, 0), force_off(count, 0);
+        force_off[0] = force_off[1] = force_off[2] = 1;
+        EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
+    }
+    // Contradictory pin (forced on and off).
+    {
+        vector<char> force_on(count, 0), force_off(count, 0);
+        force_on[0] = 1; force_off[0] = 1;
+        EXPECT_FALSE(draw_k_hot(count, 1, force_on, force_off, out));
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// Mixed-integer end-to-end: portfolio buy-in + budget + cardinality (steps 3-4)
+// -----------------------------------------------------------------------------
+
+TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
+{
+    // OR-Library port1 MIQP shape, scaled down: A assets, choose exactly K, weights on a
+    // simplex with a buy-in floor coupling each continuous weight to its binary indicator.
+    //   sum_i w_i = 1,  0.01 z_i <= w_i <= z_i,  sum_i z_i = K,  w_i in [0,1], z_i in {0,1}.
+    const int A = 8;
+    const int K = 3;
+
+    vector<string> indicator_names;
+    vector<string> input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
+    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;   // indicators
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    string budget;
+    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
+    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
+
+    for (int i = 0; i < A; ++i)
+    {
+        const string w = "w" + to_string(i);
+        const string z = "z" + to_string(i);
+        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
+        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
+    }
+
+    opt.set_cardinality_constraint(indicator_names, K);
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0) << "no feasible point for buy-in + budget + cardinality";
+
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        float weight_sum = 0, indicator_sum = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float w = results(r, i);
+            const float z = results(r, A + i);
+            weight_sum += w;
+            indicator_sum += z;
+
+            EXPECT_NEAR(z, round(z), float(1e-3)) << "indicator z" << i << " not binary at row " << r;
+            EXPECT_LE(w, z + float(1e-2))         << "buy-in upper w" << i << " <= z" << i << " at row " << r;
+            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
+        }
+        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget violated at row " << r;
+        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality violated at row " << r;
+    }
 }
 
 
