@@ -19,19 +19,16 @@ class LanguageDataset final : public Dataset
 
 public:
 
-    LanguageDataset(const filesystem::path& = "");
-    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size);
-    LanguageDataset(const filesystem::path&, Index maximum_vocabulary_size, Index minimum_token_frequency);
+    LanguageDataset(const filesystem::path& = "",
+                    Index maximum_vocabulary_size = 20000,
+                    Index minimum_token_frequency = 1);
 
-    const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
     const vector<string>& get_target_vocabulary() const { return target_vocabulary; }
 
     Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
     Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
 
     const unordered_map<string, Index>& get_input_vocabulary_map() const { return input_vocabulary_map; }
-    const unordered_map<string, Index>& get_target_vocabulary_map() const { return target_vocabulary_map; }
-    const unordered_map<Index, string>& get_target_inverse_vocabulary_map() const { return target_inverse_vocabulary_map; }
 
     Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
@@ -41,17 +38,10 @@ public:
 
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
-    using Dataset::set_storage_mode;
-    void set_storage_mode(StorageMode) override;
-
-    Index get_samples_number() const override;
-    using Dataset::get_samples_number;
 
     VectorI calculate_target_distribution() const override;
 
     void read_txt();
-
-    void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
@@ -94,20 +84,20 @@ private:
                         float* output_data,
                         int contiguous,
                         Index sequence_length,
-                        Index offsets_index,
+                        Index record_offset,
                         Index shift,
                         const char* context) const;
 
+    void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
+
     void update_input_vocabulary_map();
-    void update_target_vocabulary_maps();
+    void update_target_vocabulary_map();
 
     unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary) const;
 
     void load_documents(string& buffer,
                         vector<vector<string_view>>& input_documents,
-                        vector<vector<string_view>>& target_documents,
-                        bool has_header_line,
-                        bool strict_field_count) const;
+                        vector<vector<string_view>>& target_documents) const;
 
     void encode_streaming(const vector<vector<string_view>>&,
                           const vector<vector<string_view>>&,
@@ -115,17 +105,13 @@ private:
                           vector<vector<Index>>& target_indices) const;
 
     void write_binary_cache(const vector<vector<Index>>& input_indices,
-                            const vector<vector<Index>>& target_indices,
-                            bool has_decoder);
-
-    bool try_load_binary_cache(Index expected_samples);
+                            const vector<vector<Index>>& target_indices);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
 
     unordered_map<string, Index> input_vocabulary_map;
     unordered_map<string, Index> target_vocabulary_map;
-    unordered_map<Index, string> target_inverse_vocabulary_map;
 
     Index maximum_input_sequence_length = 0;
     Index maximum_target_sequence_length = 0;
@@ -135,8 +121,6 @@ private:
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
-    uint64_t cache_data_offset = 0;
-    vector<array<int64_t, 4>> offsets_table;
 };
 
 }

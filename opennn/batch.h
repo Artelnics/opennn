@@ -78,6 +78,7 @@ struct Batch
     Index samples_number = 0;
     Index current_sample_count = 0;
     bool needs_device_copy = true;
+    bool input_is_bf16 = false;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;

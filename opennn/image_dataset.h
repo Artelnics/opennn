@@ -38,17 +38,15 @@ public:
 
     Index get_channels_number() const;
 
-    const AugmentationSettings& get_augmentation() const { return augmentation; }
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,
                            float min_range,
                            float max_range);
 
-    using Dataset::set_storage_mode;
-    void set_storage_mode(StorageMode) override;
-
     VectorI calculate_target_distribution() const override;
+
+    void enable_device_residency() override;
 
     void read_images();
 

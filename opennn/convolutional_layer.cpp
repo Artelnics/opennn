@@ -7,11 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_types.h"
 #include "convolutional_layer.h"
-#include "neural_network.h"
-#include "loss.h"
-#include "string_utilities.h"
 
 namespace opennn
 {
@@ -73,12 +69,6 @@ Index Convolutional::get_padding_width() const
     return (total_padding + 1) / 2;
 }
 
-Index Convolutional::get_input_height() const { return input_height; }
-
-Index Convolutional::get_input_width() const { return input_width; }
-
-Index Convolutional::get_input_channels() const { return input_channels; }
-
 vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
 {
     const Shape output_shape = {batch_size, get_output_height(), get_output_width(), kernels_number};
@@ -95,8 +85,30 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     };
 }
 
+vector<TensorSpec> Convolutional::get_backward_specs(Index batch_size) const
+{
+    vector<TensorSpec> specs = {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
+
+    if (residual)
+        specs.push_back({Shape{batch_size}.append(get_output_shape()), compute_dtype});
+
+    return specs;
+}
+
+void Convolutional::set_residual(bool new_residual)
+{
+    throw_if(new_residual && !batch_norm.active(),
+             "Convolutional: a residual input requires batch normalization.");
+
+    residual = new_residual;
+
+    update_convolution_operator();
+}
+
 void Convolutional::update_convolution_operator()
 {
+    convolution.use_bias = !batch_norm.active();
+
     convolution.set(input_height, input_width,
                     kernels_number, kernel_height, kernel_width, kernel_channels,
                     row_stride, column_stride,
@@ -116,10 +128,16 @@ void Convolutional::update_convolution_operator()
     activation.input_slots  = {Output};
     activation.output_slots = {Output};
 
-    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
-                           && !batch_norm.active();
-    convolution.fused_activation = fuse_relu ? activation.descriptor : nullptr;
-    activation.forward_fused     = fuse_relu;
+    const bool relu = (activation.function == ActivationOp::Function::ReLU);
+    const bool fuse_bn_relu = relu && batch_norm.active();
+    const bool fuse_bn_add  = residual && batch_norm.active();
+
+    convolution.fused_activation  = (relu && !batch_norm.active()) ? activation.descriptor.handle : nullptr;
+    batch_norm.fuse_relu          = fuse_bn_relu;
+    batch_norm.fuse_add           = fuse_bn_add;
+    batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;
+    activation.forward_fused      = relu;
+    activation.backward_fused     = fuse_bn_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -134,7 +152,13 @@ void Convolutional::set(const Shape& new_input_shape,
 
     throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
 
-    throw_if(new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1],
+    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
+             "Convolution type must be 'Valid' or 'Same'.");
+
+    // With "Same" padding the padded input always covers the kernel, so the
+    // size restriction only applies to unpadded ("Valid") convolutions.
+    throw_if(new_convolution_type == "Valid"
+             && (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1]),
              "kernel shape cannot be bigger than input shape");
 
     throw_if(new_kernel_shape[2] != new_input_shape[2],
@@ -144,9 +168,6 @@ void Convolutional::set(const Shape& new_input_shape,
              "Stride shape cannot be bigger than input shape");
 
     throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
-
-    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
-             "Convolution type must be 'Valid' or 'Same'.");
 
     throw_if(new_convolution_type == "Same"
              && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0),
@@ -251,6 +272,9 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     if (has_batch_norm && kernels_number > 0)
         batch_norm.set(kernels_number, batch_norm.momentum);
 
+    residual = convolutional_layer_element->has("Residual")
+            && read_json_bool(convolutional_layer_element, "Residual");
+
     update_convolution_operator();
 }
 
@@ -263,7 +287,8 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
         {"KernelsChannels", to_string(get_kernel_channels())},
         {"StrideDimensions", shape_to_string({get_row_stride(), get_column_stride()})},
         {"Convolution", use_padding ? "Same" : "Valid"},
-        {"BatchNormalization", to_string(batch_norm.active())}
+        {"BatchNormalization", to_string(batch_norm.active())},
+        {"Residual", to_string(residual)}
     });
 }
 

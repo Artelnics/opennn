@@ -30,46 +30,6 @@ static vector<Index> string_to_source_indices(const string&);
 static void validate_source_indices(const vector<Index>&, Index, Index);
 static void validate_source_arity(const Layer&, const vector<Index>&, Index);
 
-static void write_outputs_csv(ofstream& file,
-                              const vector<string>& input_names,
-                              const Tensor2& input_values,
-                              const vector<string>& output_names,
-                              const MatrixR& outputs)
-{
-    const Index outputs_number = outputs.cols();
-    const Index batch_size = outputs.rows();
-    const Index features_number = input_values.size() == 0 ? 0 : input_values.dimension(1);
-
-    for (const auto& name : input_names)
-        file << name << ";";
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        file << output_names[i];
-
-        if (i + 1 < outputs_number)
-            file << ";";
-    }
-
-    file << "\n";
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        for (Index j = 0; j < features_number; ++j)
-            file << input_values(i, j) << ";";
-
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            file << outputs(i, j);
-
-            if (j != outputs_number - 1)
-                file << ";";
-        }
-
-        file << "\n";
-    }
-}
-
 NeuralNetwork::NeuralNetwork()
 {
     clear();
@@ -116,7 +76,7 @@ void NeuralNetwork::compile()
     parameters.resize_bytes(get_aligned_bytes(get_parameter_specs(), Type::FP32), Device::CPU);
     parameters.setZero();
 
-    parameters_bf16.resize_bytes(0, Device::CUDA);
+    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
 
     link_parameters();
 
@@ -346,6 +306,12 @@ static void validate_source_arity(const Layer& layer,
         throw runtime_error("NeuralNetwork::set_source_layers: Addition layer "
                             + to_string(layer_index) + " expects "
                             + to_string(addition->get_inputs_number()) + " sources, got "
+                            + to_string(sources.size()) + ".");
+
+    if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
+        convolutional && convolutional->get_residual() && ssize(sources) != 2)
+        throw runtime_error("NeuralNetwork::set_source_layers: residual Convolutional layer "
+                            + to_string(layer_index) + " expects 2 sources, got "
                             + to_string(sources.size()) + ".");
 }
 
@@ -669,6 +635,94 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
     const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
 
+#ifdef OPENNN_HAS_CUDA
+    if (is_gpu())
+    {
+        NeuralNetwork* self = const_cast<NeuralNetwork*>(this);
+
+        if (parameters.device_type != Device::CUDA
+            || (config.training_type == Type::BF16 && !parameters.empty() && parameters_bf16_mirror.empty()))
+            self->copy_parameters_device();
+
+        self->copy_states_device();
+
+        vector<TensorView> input_views_device = input_view;
+        forward_propagation.device_input_buffers.resize(input_view.size());
+        forward_propagation.device_fp32_input_buffers.resize(input_view.size());
+
+        const auto input_feeds_embedding = [&](size_t input_index)
+        {
+            const Index external_source = -static_cast<Index>(input_index) - 1;
+
+            for (size_t layer_index = 0; layer_index < source_layers.size(); ++layer_index)
+                for (const Index source : source_layers[layer_index])
+                    if (source == external_source
+                        && layers[layer_index]->get_type() == LayerType::Embedding)
+                        return true;
+
+            return false;
+        };
+
+        cudaStream_t stream = Backend::get_compute_stream();
+        bool staged_inputs = false;
+
+        for (size_t i = 0; i < input_view.size(); ++i)
+        {
+            const TensorView& source = input_view[i];
+            if (source.empty()) continue;
+            if (source.device == Device::CUDA) continue;
+
+            throw_if(source.device == Device::Auto,
+                     "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
+
+            // Embedding inputs are float-backed token ids; keep them FP32 so ids stay exact.
+            const bool cast_input_to_bf16 = config.training_type == Type::BF16
+                                         && source.type == Type::FP32
+                                         && !input_feeds_embedding(i);
+
+            Buffer& input_buffer = forward_propagation.device_input_buffers[i];
+
+            if (cast_input_to_bf16)
+            {
+                Buffer& fp32_buffer = forward_propagation.device_fp32_input_buffers[i];
+                fp32_buffer.resize_bytes(source.byte_size(), Device::CUDA);
+                device::copy_async(fp32_buffer.data,
+                                   source.data,
+                                   source.byte_size(),
+                                   device::CopyKind::HostToDevice,
+                                   stream);
+
+                input_buffer.resize_bytes(source.size() * Index(sizeof(bfloat16)), Device::CUDA);
+                cast_fp32_to_bf16_cuda(source.size(),
+                                       fp32_buffer.as<float>(),
+                                       input_buffer.as<bfloat16>(),
+                                       stream);
+                input_views_device[i].type = Type::BF16;
+            }
+            else
+            {
+                input_buffer.resize_bytes(source.byte_size(), Device::CUDA);
+                device::copy_async(input_buffer.data,
+                                   source.data,
+                                   source.byte_size(),
+                                   device::CopyKind::HostToDevice,
+                                   stream);
+            }
+
+            input_views_device[i].data = input_buffer.data;
+            input_views_device[i].device = Device::CUDA;
+            staged_inputs = true;
+        }
+
+        forward_propagate(input_views_device, forward_propagation, is_training, first_layer_index, last_layer_index);
+
+        if (staged_inputs)
+            device::synchronize(stream);
+
+        return;
+    }
+#endif
+
     forward_propagate(input_view, forward_propagation, is_training, first_layer_index, last_layer_index);
 }
 
@@ -709,15 +763,37 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    VectorMap parameters_view(parameters.as<float>(), parameters.size_in_floats());
+    // Save, swap in the trial parameters, run, restore. The parameter buffer can
+    // be device-resident (CUDA mode), so a host VectorMap over parameters.data()
+    // would read/write device memory from the host (illegal access). Route the
+    // save and the swaps through set_parameters(), which copies device-side and
+    // refreshes the bf16 working copy and the layer links.
+    const Device original_parameters_device = parameters.device_type;
+    const Index parameters_size = get_parameters_size();
+    VectorR saved_parameters(parameters_size);
+    if (parameters.device_type == Device::CUDA)
+    {
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(saved_parameters.data(), parameters.data,
+                           parameters_size * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+    }
+    else
+        memcpy(saved_parameters.data(), parameters.data,
+               size_t(parameters_size) * sizeof(float));
 
-    const VectorR saved_parameters = parameters_view;
-
-    parameters_view = new_parameters;
-
+    set_parameters(new_parameters);
     forward_propagate(input_view, forward_propagation, true);
+    set_parameters(saved_parameters);
 
-    parameters_view = saved_parameters;
+    if (parameters.device_type != original_parameters_device)
+    {
+        if (original_parameters_device == Device::CPU)
+            copy_parameters_host();
+        else if (original_parameters_device == Device::CUDA)
+            copy_parameters_device();
+    }
 }
 
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
@@ -1049,32 +1125,6 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     save_parameters_binary(binary_path);
 }
 
-void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(), "Cannot open parameters data file.\n");
-
-    const Index params_size = parameters.size_in_floats();
-    const float* params_data = parameters.as<float>();
-    VectorR params_host_snapshot;
-    if (parameters.device_type == Device::CUDA)
-    {
-        params_host_snapshot.resize(params_size);
-        cudaStream_t stream = Backend::get_compute_stream();
-        device::copy_async(params_host_snapshot.data(), params_data,
-                           params_size * Index(sizeof(float)),
-                           device::CopyKind::DeviceToHost,
-                           stream);
-        device::synchronize(stream);
-        params_data = params_host_snapshot.data();
-    }
-    const Map<const VectorR, AlignedMax> parameters_view(params_data, params_size);
-    file << parameters_view << "\n";
-
-    file.close();
-}
-
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
     ofstream file(file_name, ios::binary);
@@ -1188,54 +1238,6 @@ void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
     throw_if(!file, format("Error reading binary file: {}", file_name.string()));
 }
 
-void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
-{
-    const MatrixR outputs = calculate_outputs(inputs);
-
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             format("Cannot open {} file.\n", file_name.string()));
-
-    const vector<string> output_names = get_output_feature_names();
-
-    write_outputs_csv(file, {}, Tensor2(), output_names, outputs);
-
-    file.close();
-}
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
-{
-    const MatrixR outputs = calculate_outputs(inputs_3d);
-
-    const Index batch_size = inputs_3d.dimension(0);
-    const Index past_time_steps = inputs_3d.dimension(1);
-    const Index features_number = inputs_3d.dimension(2);
-
-    Tensor2 last_time_step_inputs(batch_size, features_number);
-
-    last_time_step_inputs = inputs_3d.chip(past_time_steps - 1, 1);
-
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             format("Cannot open {} file.\n", file_name.string()));
-
-    const vector<string> output_names = get_output_feature_names();
-    const vector<string> input_names = get_input_feature_names();
-
-    write_outputs_csv(file, input_names, last_time_step_inputs, output_names, outputs);
-
-    file.close();
-}
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-
 vector<string> NeuralNetwork::get_layer_labels() const
 {
     vector<string> layer_labels(layers.size());
@@ -1244,20 +1246,12 @@ vector<string> NeuralNetwork::get_layer_labels() const
     return layer_labels;
 }
 
-vector<string> NeuralNetwork::get_names_string() const
-{
-    vector<string> names(layers.size());
-    ranges::transform(layers, names.begin(),
-                      [](const unique_ptr<Layer>& layer) { return layer->get_name(); });
-    return names;
-}
-
 void NeuralNetwork::link_parameters()
 {
     float* fp32_base = parameters.as<float>();
 
-    bfloat16* bf16_base = (parameters.device_type == Device::CUDA && !parameters_bf16.empty())
-        ? parameters_bf16.as<bfloat16>()
+    bfloat16* bf16_mirror_base = (parameters.device_type == Device::CUDA && !parameters_bf16_mirror.empty())
+        ? parameters_bf16_mirror.as<bfloat16>()
         : nullptr;
 
     Index offset = 0;
@@ -1286,9 +1280,9 @@ void NeuralNetwork::link_parameters()
             Type view_type = Type::FP32;
             Device view_device = parameters.device_type;
 
-            if (slot_dtype == Type::BF16 && bf16_base != nullptr)
+            if (slot_dtype == Type::BF16 && bf16_mirror_base != nullptr)
             {
-                slot_ptr = bf16_base + offset;
+                slot_ptr = bf16_mirror_base + offset;
                 view_type = Type::BF16;
                 view_device = Device::CUDA;
             }
@@ -1324,7 +1318,7 @@ void NeuralNetwork::copy_parameters_device()
 {
     if (parameters.empty())
     {
-        parameters_bf16.resize_bytes(0, Device::CUDA);
+        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
         return;
     }
 
@@ -1333,12 +1327,12 @@ void NeuralNetwork::copy_parameters_device()
 
     if (config.training_type == Type::BF16)
     {
-        parameters_bf16.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
+        parameters_bf16_mirror.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
         cast_parameters_to_bf16();
     }
     else
     {
-        parameters_bf16.resize_bytes(0, Device::CUDA);
+        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
     }
 
     link_parameters();
@@ -1346,19 +1340,24 @@ void NeuralNetwork::copy_parameters_device()
 
 void NeuralNetwork::cast_parameters_to_bf16()
 {
-    if (parameters_bf16.empty()) return;
+    if (parameters_bf16_mirror.empty()) return;
     if (parameters.empty())      return;
 
     cast_fp32_to_bf16_cuda(parameters.size_in_floats(),
                            parameters.as<float>(),
-                           parameters_bf16.as<bfloat16>());
+                           parameters_bf16_mirror.as<bfloat16>());
 }
 
 void NeuralNetwork::copy_parameters_host()
 {
-    if (parameters.empty()) return;
+    if (parameters.empty())
+    {
+        parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+        return;
+    }
 
     parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
+    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
 
     link_parameters();
 }
@@ -1382,31 +1381,7 @@ void NeuralNetwork::copy_states_host()
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_views_cpu,
                                                 ForwardPropagation& forward_propagation)
 {
-    copy_parameters_device();
-    copy_states_device();
-
-    cudaStream_t stream = Backend::get_compute_stream();
-
-    vector<TensorView> input_views_gpu = input_views_cpu;
-    vector<Buffer>     input_buffers(input_views_cpu.size());
-
-    for (size_t i = 0; i < input_views_cpu.size(); ++i)
-    {
-        const TensorView& source = input_views_cpu[i];
-        if (source.empty()) continue;
-        if (source.device == Device::CUDA) continue;
-
-        input_buffers[i].resize_bytes(source.byte_size(), Device::CUDA);
-        device::copy_async(input_buffers[i].data,
-                           input_views_cpu[i].data,
-                           source.byte_size(),
-                           device::CopyKind::HostToDevice,
-                           stream);
-        input_views_gpu[i].data = input_buffers[i].data;
-        input_views_gpu[i].device = Device::CUDA;
-    }
-
-    forward_propagate(input_views_gpu, forward_propagation, false);
+    forward_propagate(input_views_cpu, forward_propagation, false);
 
     const TensorView out_view = forward_propagation.get_outputs();
 
@@ -1414,10 +1389,30 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     const Index out_cols = out_view.size() / batch_size;
     MatrixR result(batch_size, out_cols);
 
+    cudaStream_t stream = Backend::get_compute_stream();
     copy_device_to_host_float(out_view.data, out_view.type, out_view.size(),
                               result.data(), stream);
 
     return result;
+}
+
+TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& gpu_inputs,
+                                                     ForwardPropagation& forward_propagation,
+                                                     bool upload_parameters)
+{
+    // Upload weights only when asked (first call / after a weight update); on a
+    // pure repeated-inference loop this is skipped, so the per-call cost is just
+    // the forward kernels -- no param re-upload, no input H2D, no output D2H, no
+    // ForwardPropagation (re)allocation. Input must already be Device::CUDA.
+    if (upload_parameters)
+    {
+        copy_parameters_device();
+        copy_states_device();
+    }
+
+    forward_propagate(gpu_inputs, forward_propagation, false);
+
+    return forward_propagation.get_outputs();
 }
 
 #else
@@ -1451,6 +1446,13 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
                                                 ForwardPropagation&)
 {
     throw runtime_error("NeuralNetwork::calculate_outputs_device requires CUDA support.");
+}
+
+TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>&,
+                                                     ForwardPropagation&,
+                                                     bool)
+{
+    throw runtime_error("NeuralNetwork::calculate_outputs_resident requires CUDA support.");
 }
 
 #endif

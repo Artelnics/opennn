@@ -58,11 +58,12 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
 {
     ForecastingNetwork neural_network({ 1,1 }, { 4 }, { 2 });
 
-    EXPECT_EQ(neural_network.get_layers_number(), 4);
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling");
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Recurrent");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
 
 

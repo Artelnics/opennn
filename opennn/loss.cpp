@@ -271,7 +271,6 @@ void yolo_gradient_kernel(const TensorView& output,
     const Index batch_size = output.shape[0];
     const Index grid_size = output.shape[1];
     const Index channels = output.shape[3];
-    (void)batch_size;
 
     const float* out = output.as<float>();
     const float* tgt = target.as<float>();
@@ -586,10 +585,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         result.error *= get_weighted_coefficient(batch);
         break;
     case CrossEntropy:
-        if (input.shape.back() == 1)
-            binary_cross_entropy(input, target, result.error, workspace_device);
-        else
-            categorical_cross_entropy(input, target, result.error, workspace_device);
+        cross_entropy(input, target, result.error, workspace_device);
         break;
     case CrossEntropy3d:
     {
@@ -706,7 +702,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
             if (input.shape.back() == 1)
                 binary_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
             else
-                multiple_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
+                categorical_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
         });
         reduce_abs_and_accumulate(input.size(), 1.0f / static_cast<float>(input.shape[0]));
         return true;
@@ -714,9 +710,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     case CrossEntropy3d:
     {
         const Index vocabulary_size = input.shape.back();
-        const Index sequence_length = input.shape[input.get_rank() - 2];
-        const Index batch_size = input.size() / (sequence_length * vocabulary_size);
-        const Index token_count = batch_size * sequence_length;
+        const Index token_count = input.size() / vocabulary_size;
 
         float* valid_mask_device = workspace + token_count;
         float* correct_mask_device = workspace + 2 * token_count;
@@ -755,43 +749,20 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
 {
     if (!supports_device_epoch_metrics()) return false;
 
-    const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorView target = batch.get_targets();
-    TensorView& input_delta = back_propagation.get_output_delta();
+    if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
+        return false;
 
     if (error == Error::CrossEntropy3d)
     {
-        if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
-            return false;
+        const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+        const TensorView target = batch.get_targets();
+        TensorView& input_delta = back_propagation.get_output_delta();
 
         cross_entropy_3d_gradient_device_count(input, target, input_delta, metric_results_device.as<float>() + 1);
     }
     else
     {
-        if (!calculate_error_device_metrics(batch, forward_propagation, error_sum_device, accuracy_sum_device))
-            return false;
-
-        using enum Error;
-        switch (error)
-        {
-        case MeanSquaredError:
-            mean_squared_error_gradient(input, target, input_delta);
-            break;
-        case NormalizedSquaredError:
-            normalized_squared_error_gradient(input, target, normalization_coefficient, input_delta);
-            break;
-        case WeightedSquaredError:
-            weighted_squared_error_gradient(input, target, positives_weight, negatives_weight,
-                                            get_weighted_coefficient(batch), input_delta);
-            break;
-        case CrossEntropy:
-            cross_entropy_gradient(input, target, input_delta);
-            break;
-        case CrossEntropy3d:
-        case MinkowskiError:
-        case Yolo:
-            return false;
-        }
+        calculate_output_deltas(batch, forward_propagation, back_propagation);
     }
 
     back_propagation.error = 0.0f;
@@ -907,7 +878,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     const TensorView parameters(neural_network->get_parameters_data(),
                                 {neural_network->get_parameters_size()},
                                 Type::FP32,
-                                neural_network->get_device());
+                                neural_network->get_parameters_device());
 
     back_propagation.regularization = calculate_regularization(parameters);
     back_propagation.loss += back_propagation.regularization;
@@ -945,7 +916,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     back_propagate_layers(forward_propagation, back_propagation);
 }
 
-static const vector<pair<Loss::Error, string>> error_map = {
+static const vector<pair<Loss::Error, string>> error_entries = {
     {Loss::Error::MeanSquaredError,       "MeanSquaredError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
@@ -956,20 +927,17 @@ static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::Yolo,                   "YoloError"}
 };
 
+static const EnumMap<Loss::Error> error_map{error_entries};
+
 void Loss::set_error(const Error& new_error)
 {
     error = new_error;
-
-    for (const auto& [error_value, error_name] : error_map)
-        if (error_value == error) { name = error_name; return; }
+    name = error_map.to_string(new_error);
 }
 
 void Loss::set_error(const string& new_name)
 {
-    for (const auto& [error_value, error_name] : error_map)
-        if (error_name == new_name) { set_error(error_value); return; }
-
-    throw runtime_error(format("Unknown loss method: {}", new_name));
+    set_error(error_map.from_string(new_name));
 }
 
 void Loss::add_regularization_gradient(const TensorView& gradient) const
@@ -978,10 +946,17 @@ void Loss::add_regularization_gradient(const TensorView& gradient) const
 
     check_neural_network();
 
+    const Device gradient_device = gradient.device;
+
+    if (gradient_device == Device::CUDA && neural_network->get_parameters_device() != Device::CUDA)
+        neural_network->copy_parameters_device();
+    else if (gradient_device == Device::CPU && neural_network->get_parameters_device() == Device::CUDA)
+        neural_network->copy_parameters_host();
+
     const TensorView parameters(neural_network->get_parameters_data(),
                                 { neural_network->get_parameters_size() },
                                 Type::FP32,
-                                neural_network->get_device());
+                                gradient_device);
 
     if (regularization_method == Regularization::L1)
         l1_regularization_gradient(parameters, regularization_weight, gradient);

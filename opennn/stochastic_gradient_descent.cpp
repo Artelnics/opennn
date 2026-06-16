@@ -44,7 +44,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
         current_learning_rate,
         momentum,
         nesterov,
-        neural_network->get_parameters_bf16_data());
+        neural_network->get_parameters_bf16_mirror_data());
 }
 
 #else
@@ -90,11 +90,6 @@ void StochasticGradientDescent::set_default()
 void StochasticGradientDescent::set_batch_size(const Index new_batch_size)
 {
     batch_size = new_batch_size;
-}
-
-Index StochasticGradientDescent::get_samples_number() const
-{
-    return batch_size;
 }
 
 void StochasticGradientDescent::set_initial_learning_rate(const float new_learning_rate)
@@ -156,8 +151,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
     else
     {
-        VectorMap velocity(optimization_data.views[Velocity].as<float>(),
-                           optimization_data.views[Velocity].size());
+        VectorMap velocity = optimization_data.views[Velocity].as_vector();
 
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
@@ -188,7 +182,7 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         optimization_data.graph_effective_lr.as<float>(),
         momentum,
         nesterov,
-        neural_network->get_parameters_bf16_data(),
+        neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 #else
     (void)back_propagation; (void)optimization_data;
@@ -263,14 +257,11 @@ TrainingResult StochasticGradientDescent::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    unique_ptr<ForwardPropagation> validation_forward_propagation;
-
-    if (has_validation)
-        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
-
-    ForwardPropagation* validation_fp = has_validation
-        ? validation_forward_propagation.get()
+    const unique_ptr<ForwardPropagation> validation_forward_propagation = has_validation
+        ? make_unique<ForwardPropagation>(validation_batch_size, neural_network)
         : nullptr;
+
+    ForwardPropagation* validation_fp = validation_forward_propagation.get();
 
     setup_device_training();
 
@@ -290,7 +281,6 @@ TrainingResult StochasticGradientDescent::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    bool stop_training = false;
     const bool shuffle = !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
@@ -414,13 +404,12 @@ TrainingResult StochasticGradientDescent::train()
                                   validation_error, validation_accuracy,
                                   has_validation, is_token_cross_entropy, elapsed_time);
 
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures,
-                                                      training_back_propagation.loss,
-                                                      has_validation);
-
-            if (stop_training) break;
+            if (check_stopping_condition(results, epoch, elapsed_time,
+                                         results.training_error_history(epoch),
+                                         validation_failures,
+                                         training_back_propagation.loss,
+                                         has_validation))
+                break;
         }
     }
 
@@ -439,6 +428,10 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"BatchSize", to_string(batch_size)},
+        {"InitialLearningRate", to_string(initial_learning_rate)},
+        {"InitialDecay", to_string(initial_decay)},
+        {"Momentum", to_string(momentum)},
+        {"Nesterov", to_string(nesterov)},
         {"ApplyMomentum", to_string(momentum > 0.0f)}
     });
     write_common_json(printer);
@@ -452,8 +445,14 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
 
-    const bool apply_momentum = read_json_bool(root_element, "ApplyMomentum");
-    set_momentum(apply_momentum ? 0.9f : 0.0f);
+    if (root_element->has("InitialLearningRate")) set_initial_learning_rate(read_json_float(root_element, "InitialLearningRate"));
+    if (root_element->has("InitialDecay"))        set_initial_decay(read_json_float(root_element, "InitialDecay"));
+    if (root_element->has("Nesterov"))            set_nesterov(read_json_bool(root_element, "Nesterov"));
+
+    if (root_element->has("Momentum"))
+        set_momentum(read_json_float(root_element, "Momentum"));
+    else
+        set_momentum(read_json_bool(root_element, "ApplyMomentum") ? 0.9f : 0.0f);
 
     read_common_json(root_element);
 }

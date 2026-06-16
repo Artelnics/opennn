@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
+#include "device_backend.h"
 #include "image_processing.h"
 #include "tensor_types.h"
 #include "string_utilities.h"
@@ -75,14 +76,6 @@ pair<float, float> scaling_affine(ScalerMethod scaler,
 
 }  // namespace
 
-void ImageDataset::set_storage_mode(StorageMode new_storage_mode)
-{
-    Dataset::set_storage_mode(new_storage_mode);
-
-    if (new_storage_mode == StorageMode::BinaryFile)
-        data.resize(0, 0);
-}
-
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
@@ -94,6 +87,38 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 Index ImageDataset::get_channels_number() const
 {
     return input_shape[2];
+}
+
+void ImageDataset::enable_device_residency()
+{
+    if (!device::is_cuda_build()) return;
+    if (is_device_resident()) return;
+    if (augmentation.enabled) return;
+    if (get_samples_number() == 0) return;
+
+    const Index samples_number = get_samples_number();
+    const vector<Index> input_indices = get_feature_indices("Input");
+    const vector<Index> target_indices = get_feature_indices("Target");
+    const Index inputs_number = ssize(input_indices);
+    const Index targets_number = ssize(target_indices);
+
+    vector<Index> all_samples(samples_number);
+    iota(all_samples.begin(), all_samples.end(), 0);
+
+    // Stage the rows the host fill_* path would produce for training batches
+    // (scaled pixels followed by the one-hot targets), so the device gather
+    // can replace the per-batch decode entirely.
+    MatrixR inputs(samples_number, inputs_number);
+    fill_inputs(all_samples, input_indices, inputs.data(), true, 1);
+
+    MatrixR targets(samples_number, targets_number);
+    fill_targets(all_samples, target_indices, targets.data(), true, 1);
+
+    MatrixR staged(samples_number, inputs_number + targets_number);
+    staged.leftCols(inputs_number) = inputs;
+    staged.rightCols(targets_number) = targets;
+
+    upload_device_matrix(staged);
 }
 
 void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
@@ -283,7 +308,7 @@ void ImageDataset::read_images()
         "ImageDataset: image classification requires at least two class folders.");
 
     vector<filesystem::path> paths;
-    vector<Index> labels;
+    vector<int32_t> labels;
 
     for (Index i = 0; i < folders_number; ++i)
     {
@@ -296,7 +321,7 @@ void ImageDataset::read_images()
         for (auto& p : folder_files)
         {
             paths.emplace_back(std::move(p));
-            labels.push_back(i);
+            labels.push_back(int32_t(i));
         }
     }
 
@@ -340,9 +365,7 @@ void ImageDataset::read_images()
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    sample_labels.resize(size_t(samples_number));
-    for (Index i = 0; i < samples_number; ++i)
-        sample_labels[size_t(i)] = int32_t(labels[size_t(i)]);
+    sample_labels = std::move(labels);
 
     sample_roles.assign(samples_number, SampleRole::Training);
 

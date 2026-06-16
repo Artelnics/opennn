@@ -24,7 +24,7 @@ __global__ void adam_update_kernel(
     float* __restrict__ m,
     float* __restrict__ v,
     const float* __restrict__ gradients,
-    __nv_bfloat16* __restrict__ parameters_bf16,
+    __nv_bfloat16* __restrict__ parameters_bf16_mirror,
     const float beta_1,
     const float one_minus_beta_1,
     const float beta_2,
@@ -44,7 +44,7 @@ __global__ void adam_update_kernel(
     float4* __restrict__ const       m4 = reinterpret_cast<float4*>(m);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(v);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
-    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
+    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16_mirror);
 
     for (int i = tid; i < n_vec; i += stride)
     {
@@ -76,8 +76,8 @@ __global__ void adam_update_kernel(
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
                         lr, eps);
 
-        if (parameters_bf16)
-            parameters_bf16[i] = __float2bfloat16(parameters[i]);
+        if (parameters_bf16_mirror)
+            parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
     }
 }
 
@@ -93,7 +93,7 @@ void adam_update_cuda(
     const float epsilon,
     const float bias_correction_1,
     const float bias_correction_2,
-    __nv_bfloat16* parameters_bf16)
+    __nv_bfloat16* parameters_bf16_mirror)
 {
     if (n == 0) return;
 
@@ -106,8 +106,8 @@ void adam_update_cuda(
     const float one_minus_beta_1 = 1.0f - beta_1;
     const float one_minus_beta_2 = 1.0f - beta_2;
 
-    const bool mirror_aligned = parameters_bf16 == nullptr
-        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+    const bool mirror_aligned = parameters_bf16_mirror == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16_mirror) & 0x3) == 0;
 
     const bool aligned = are_float4_aligned(parameters, m, v, gradients) && mirror_aligned;
 
@@ -121,7 +121,7 @@ void adam_update_cuda(
         m,
         v,
         gradients,
-        parameters_bf16,
+        parameters_bf16_mirror,
         beta_1,
         one_minus_beta_1,
         beta_2,
@@ -158,7 +158,7 @@ void adam_update_capturable_cuda(
     const float beta_1, const float beta_2,
     const float learning_rate, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
-    __nv_bfloat16* parameters_bf16,
+    __nv_bfloat16* parameters_bf16_mirror,
     cudaStream_t stream)
 {
     if (n == 0) return;
@@ -168,8 +168,8 @@ void adam_update_capturable_cuda(
     const float one_minus_beta_1 = 1.0f - beta_1;
     const float one_minus_beta_2 = 1.0f - beta_2;
 
-    const bool mirror_aligned = parameters_bf16 == nullptr
-        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+    const bool mirror_aligned = parameters_bf16_mirror == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16_mirror) & 0x3) == 0;
     const bool aligned = are_float4_aligned(parameters, m, v, gradients) && mirror_aligned;
     const int n_vec = aligned ? (total / 4) : 0;
     const int grid_size = grid_size_for(vector_work_size(total, n_vec, 4));
@@ -179,7 +179,7 @@ void adam_update_capturable_cuda(
         effective_lr_device, effective_eps_device));
 
     OPENNN_CUDA_LAUNCH(adam_update_kernel<<<grid_size, block_size, 0, stream>>>(
-        n_vec, total, parameters, m, v, gradients, parameters_bf16,
+        n_vec, total, parameters, m, v, gradients, parameters_bf16_mirror,
         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
         0.0f, 0.0f,
         effective_lr_device, effective_eps_device));
@@ -207,7 +207,7 @@ __global__ void sgd_update_kernel(
     float* __restrict__ parameters,
     float* __restrict__ velocity,
     const float* __restrict__ gradients,
-    __nv_bfloat16* __restrict__ parameters_bf16,
+    __nv_bfloat16* __restrict__ parameters_bf16_mirror,
     const float learning_rate_scalar,
     const float* __restrict__ learning_rate_device,
     const float momentum,
@@ -222,7 +222,7 @@ __global__ void sgd_update_kernel(
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
     float4* __restrict__ const       v4 = reinterpret_cast<float4*>(velocity);
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
-    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16);
+    __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16_mirror);
 
     if (has_momentum)
     {
@@ -252,8 +252,8 @@ __global__ void sgd_update_kernel(
         {
             sgd_update_one(parameters[i], velocity[i], gradients[i],
                            lr, momentum, nesterov);
-            if (parameters_bf16)
-                parameters_bf16[i] = __float2bfloat16(parameters[i]);
+            if (parameters_bf16_mirror)
+                parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
         }
     }
     else
@@ -281,8 +281,8 @@ __global__ void sgd_update_kernel(
         for (int i = tail_start + tid; i < n; i += stride)
         {
             parameters[i] -= lr * gradients[i];
-            if (parameters_bf16)
-                parameters_bf16[i] = __float2bfloat16(parameters[i]);
+            if (parameters_bf16_mirror)
+                parameters_bf16_mirror[i] = __float2bfloat16(parameters[i]);
         }
     }
 }
@@ -295,14 +295,14 @@ void sgd_update_cuda(
     const float learning_rate,
     const float momentum,
     const bool nesterov,
-    __nv_bfloat16* parameters_bf16)
+    __nv_bfloat16* parameters_bf16_mirror)
 {
     if (n == 0 || learning_rate == 0.0f) return;
 
     const int total = checked_int(n);
 
-    const bool mirror_aligned = parameters_bf16 == nullptr
-        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+    const bool mirror_aligned = parameters_bf16_mirror == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16_mirror) & 0x3) == 0;
 
     const bool velocity_aligned = velocity == nullptr || is_float4_aligned(velocity);
     const bool aligned = are_float4_aligned(parameters, gradients) && velocity_aligned && mirror_aligned;
@@ -316,7 +316,7 @@ void sgd_update_cuda(
         parameters,
         velocity,
         gradients,
-        parameters_bf16,
+        parameters_bf16_mirror,
         learning_rate, nullptr, momentum, nesterov));
 }
 
@@ -339,7 +339,7 @@ void sgd_update_capturable_cuda(
     const float* learning_rate_device,
     const float momentum,
     const bool nesterov,
-    __nv_bfloat16* parameters_bf16,
+    __nv_bfloat16* parameters_bf16_mirror,
     cudaStream_t stream)
 {
     if (n == 0) return;
@@ -347,8 +347,8 @@ void sgd_update_capturable_cuda(
 
     const int total = checked_int(n);
 
-    const bool mirror_aligned = parameters_bf16 == nullptr
-        || (reinterpret_cast<std::uintptr_t>(parameters_bf16) & 0x3) == 0;
+    const bool mirror_aligned = parameters_bf16_mirror == nullptr
+        || (reinterpret_cast<std::uintptr_t>(parameters_bf16_mirror) & 0x3) == 0;
 
     const bool velocity_aligned = velocity == nullptr || is_float4_aligned(velocity);
     const bool aligned = are_float4_aligned(parameters, gradients) && velocity_aligned && mirror_aligned;
@@ -362,7 +362,7 @@ void sgd_update_capturable_cuda(
         parameters,
         velocity,
         gradients,
-        parameters_bf16,
+        parameters_bf16_mirror,
         0.0f, learning_rate_device, momentum, nesterov));
 }
 

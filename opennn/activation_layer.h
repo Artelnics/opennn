@@ -36,9 +36,6 @@ public:
 private:
 
     ActivationOp activation;
-
-    enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
 };
 
 }

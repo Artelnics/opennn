@@ -7,13 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_types.h"
-#include "tensor_operations.h"
 #include "multihead_attention_layer.h"
-#include "loss.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
-#include "random_utilities.h"
 
 namespace opennn
 {

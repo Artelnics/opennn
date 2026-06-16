@@ -272,13 +272,6 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     return lines;
 }
 
-string ModelExpression::get_layer_expression(const Layer& layer,
-                                             const vector<string>& input_names,
-                                             const vector<string>& output_names)
-{
-    return layer.write_expression(input_names, output_names);
-}
-
 string ModelExpression::build_expression() const
 {
     const size_t layers_number = neural_network->get_layers_number();
@@ -322,7 +315,7 @@ string ModelExpression::build_expression() const
                                             : format("{}_output_{}", layer_labels[i], j);
         }
 
-        buffer << get_layer_expression(*layers[i], new_input_names, layer_output_names) << "\n";
+        buffer << layers[i]->write_expression(new_input_names, layer_output_names) << "\n";
 
         if (!is_last)
             new_input_names = move(layer_output_names);
@@ -1090,7 +1083,7 @@ string ModelExpression::replace_reserved_keywords(const string& input)
         out = '_' + out;
 
     for (const auto& [search, replace_val] : special_words)
-        replace_all_appearances(out, search, replace_val);
+        replace_all_word_appearances(out, search, replace_val);
 
     return out;
 }
@@ -1189,8 +1182,6 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     case JavaScript: file << get_expression_javascript(); break;
     case PHP:        file << get_expression_php();        break;
     }
-
-    file.close();
 }
 
 }

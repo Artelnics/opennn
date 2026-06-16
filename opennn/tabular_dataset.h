@@ -44,8 +44,6 @@ public:
     MatrixR get_data(const string&, const string&) const;
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    VectorR get_sample_data(Index) const;
-
     MatrixR get_variable_data(Index) const;
     MatrixR get_variable_data(Index, const vector<Index>&) const;
     MatrixR get_variable_data(const string&) const;
@@ -89,14 +87,9 @@ public:
     virtual void impute_missing_values_interpolate();
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f);
-    vector<string> unuse_collinear_variables(const float = 0.95f);
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
-
-    vector<Descriptives> calculate_variable_descriptives_positive_samples() const;
-    vector<Descriptives> calculate_variable_descriptives_negative_samples() const;
-    vector<Descriptives> calculate_variable_descriptives_categories(const Index) const;
 
     vector<Histogram> calculate_variable_distributions(const Index = 10) const;
     vector<BoxPlot> calculate_variables_box_plots() const;
@@ -104,12 +97,10 @@ public:
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
     Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const;
-    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const;
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
     Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const override;
-    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
     VectorI calculate_correlations_rank() const override;
 
@@ -193,7 +184,6 @@ protected:
 
     void infer_column_types(const vector<string_view>&, char);
 
-    vector<Index> filter_used_samples_by_column(Index, bool) const;
     void apply_scaler(Index, const string&, const Descriptives&, bool);
 };
 

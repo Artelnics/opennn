@@ -194,6 +194,16 @@ if(OpenNN_ENABLE_MKL)
     # Prefer oneAPI's own MKLConfig.cmake when discoverable: it resolves the
     # correct lib/include/redist layout (which differs across oneAPI versions)
     # and exposes MKL::MKL with the runtime DLL dir baked in.
+    # Default to the single-DLL mkl_rt (sdl) with the LP64 interface: mkl_rt
+    # picks LP64 at runtime unless told otherwise, so compiling against
+    # MKLConfig's ilp64 default while running through mkl_rt corrupts every
+    # LAPACK integer argument (e.g. geqp3 pivots used by Levenberg-Marquardt).
+    if(NOT DEFINED MKL_LINK)
+        set(MKL_LINK sdl)
+    endif()
+    if(NOT DEFINED MKL_INTERFACE)
+        set(MKL_INTERFACE lp64)
+    endif()
     find_package(MKL CONFIG QUIET
         HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
 
@@ -285,7 +295,6 @@ if(OPENNN_HAS_CUDA)
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
 
-    find_path(CUDNN_FRONTEND_INCLUDE_DIR NAMES cudnn_frontend.h)
     if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
         message(FATAL_ERROR
             "OpenNN with OPENNN_HAS_CUDA=ON requires the cuDNN frontend headers "
@@ -295,10 +304,9 @@ if(OPENNN_HAS_CUDA)
     # SYSTEM include so GCC suppresses third-party warnings (-Wswitch-enum,
     # -Wunused-parameter, etc.) from inside cudnn-frontend headers.
     target_include_directories(opennn SYSTEM PUBLIC ${CUDNN_FRONTEND_INCLUDE_DIR})
-    # operators.cpp guards SDPA / Flash Attention with HAVE_CUDNN_FRONTEND.
-    # The find_path above already errors out if the header is missing, so when
-    # we get here it is always available — define the macro so the SDPA path
-    # is actually compiled in the CMake build (qmake sets it in cuda.pri).
+    # CUDA operators guard the cuDNN frontend paths with HAVE_CUDNN_FRONTEND.
+    # The top-level build fetches these headers; standalone consumers can still
+    # pass CUDNN_FRONTEND_INCLUDE_DIR explicitly.
 
     target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
 endif()
@@ -336,13 +344,15 @@ target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
 
-# operators.cpp pulls in cudnn-frontend, which has names (`half`, `bfloat16`)
-# that collide with Eigen names brought into global scope by pch.h's
-# `using namespace Eigen`. Disable PCH on this TU so cudnn-frontend is parsed
-# in a clean scope and the file picks up Eigen/std the regular way.
+# These operator TUs pull in cudnn-frontend, which has names (`half`,
+# `bfloat16`) that collide with Eigen names brought into global scope by
+# pch.h's `using namespace Eigen`. Disable PCH on them so cudnn-frontend is
+# parsed in a clean scope and the files pick up Eigen/std the regular way.
 if(OPENNN_HAS_CUDA)
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/operators.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/batch_norm_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/convolution_operator.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
     )
 endif()

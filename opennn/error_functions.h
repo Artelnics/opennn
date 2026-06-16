@@ -24,6 +24,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
+void cross_entropy(const TensorView& input, const TensorView& target, float& error, float* workspace_device);
 void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta);
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device);

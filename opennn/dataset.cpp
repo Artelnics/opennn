@@ -10,8 +10,6 @@
 #include "batch.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
-#include <cstdlib>
-#include <regex>
 
 namespace opennn
 {
@@ -81,7 +79,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (batch_size <= 0 || batch_size > samples_number)
         batch_size = samples_number;
 
-    const Index batches_number = samples_number / batch_size;
+    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
     if (ssize(batches) != batches_number)
         batches.resize(batches_number);
@@ -114,6 +112,9 @@ void Dataset::set_data_path(const filesystem::path& new_data_path)
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
+
+    if (new_storage_mode == StorageMode::BinaryFile)
+        data.resize(0, 0);
 }
 
 string Dataset::get_storage_mode_string() const
@@ -162,9 +163,16 @@ void Dataset::enable_device_residency()
     if (data.size() == 0) return;
     if (is_device_resident()) return;
 
-    const Index bytes = Index(data.size()) * Index(sizeof(float));
+    upload_device_matrix(data);
+}
+
+void Dataset::upload_device_matrix(const MatrixR& matrix)
+{
+    device_data_columns = matrix.cols();
+
+    const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
-    device::copy_async(data_device.data, data.data(), bytes,
+    device::copy_async(data_device.data, matrix.data(), bytes,
                        device::CopyKind::HostToDevice, Backend::get_compute_stream());
     device::synchronize(Backend::get_compute_stream());
 }
@@ -269,6 +277,11 @@ void Dataset::split_samples_sequential(const float training_ratio,
 
 void Dataset::set_default_variable_roles()
 {
+    set_default_variable_roles_implementation(false);
+}
+
+void Dataset::set_default_variable_roles_implementation(bool forecasting)
+{
     const Index variables_number = variables.size();
 
     if (variables_number == 0)
@@ -282,19 +295,42 @@ void Dataset::set_default_variable_roles()
 
     set_variable_roles("Input");
 
+    bool target = false;
+    bool time_variable = false;
+
     for (Index i = variables_number - 1; i >= 0; i--)
     {
-        Variable& variable = variables[i];
-
-        if (variable.type == VariableType::Constant
-        ||  variable.type == VariableType::DateTime)
+        if (forecasting)
         {
-            variable.set_role("None");
+            if (variables[i].type == VariableType::DateTime && !time_variable)
+            {
+                variables[i].set_role("Time");
+                time_variable = true;
+            }
+            else if (variables[i].type == VariableType::Constant)
+            {
+                variables[i].set_role("None");
+            }
+            else if (!target)
+            {
+                variables[i].set_role("Target");
+                target = true;
+            }
         }
         else
         {
-            variable.set_role("Target");
-            break;
+            Variable& variable = variables[i];
+
+            if (variable.type == VariableType::Constant
+            ||  variable.type == VariableType::DateTime)
+            {
+                variable.set_role("None");
+            }
+            else
+            {
+                variable.set_role("Target");
+                break;
+            }
         }
     }
 }
@@ -322,39 +358,7 @@ vector<Index> Dataset::get_feature_dimensions() const
 
 void Dataset::set_default_variable_roles_forecasting()
 {
-    const Index variables_number = variables.size();
-
-    if (variables_number == 0)
-        return;
-
-    if (variables_number == 1)
-    {
-        variables[0].set_role("None");
-        return;
-    }
-
-    set_variable_roles("Input");
-
-    bool target = false;
-    bool time_variable = false;
-
-    for (Index i = variables_number - 1; i >= 0; i--)
-    {
-        if (variables[i].type == VariableType::DateTime && !time_variable)
-        {
-            variables[i].set_role("Time");
-            time_variable = true;
-        }
-        else if (variables[i].type == VariableType::Constant)
-        {
-            variables[i].set_role("None");
-        }
-        else if (!target)
-        {
-            variables[i].set_role("Target");
-            target = true;
-        }
-    }
+    set_default_variable_roles_implementation(true);
 }
 
 vector<VariableType> Dataset::get_variable_types(const vector<Index>& indices) const
@@ -389,6 +393,7 @@ vector<string> Dataset::get_feature_names() const
                              make_move_iterator(names.begin()),
                              make_move_iterator(names.end()));
     }
+
     return feature_names;
 }
 
@@ -777,8 +782,14 @@ vector<vector<Index>> Dataset::get_feature_indices() const
 
     vector<vector<Index>> indices(variables_number);
 
+    Index offset = 0;
     for (Index i = 0; i < variables_number; ++i)
-        indices[i] = get_feature_indices(i);
+    {
+        const Index count = variables[i].get_feature_count();
+        indices[i].resize(count);
+        iota(indices[i].begin(), indices[i].end(), offset);
+        offset += count;
+    }
 
     return indices;
 }

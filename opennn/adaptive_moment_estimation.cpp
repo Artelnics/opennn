@@ -48,7 +48,7 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
         EPSILON,
         bias_correction_1,
         bias_correction_2,
-        neural_network->get_parameters_bf16_data());
+        neural_network->get_parameters_bf16_mirror_data());
 }
 
 #else
@@ -71,11 +71,6 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
 {
     set_default();
-}
-
-Index AdaptiveMomentEstimation::get_samples_number() const
-{
-    return batch_size;
 }
 
 void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
@@ -180,14 +175,11 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    unique_ptr<ForwardPropagation> validation_forward_propagation;
-
-    if (has_validation)
-        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
-
-    ForwardPropagation* validation_fp = has_validation
-        ? validation_forward_propagation.get()
+    const unique_ptr<ForwardPropagation> validation_forward_propagation = has_validation
+        ? make_unique<ForwardPropagation>(validation_batch_size, neural_network)
         : nullptr;
+
+    ForwardPropagation* validation_fp = validation_forward_propagation.get();
 
     setup_device_training();
 
@@ -214,7 +206,6 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    bool stop_training = false;
     static const bool no_shuffle = [] {
         const char* v = std::getenv("OPENNN_NO_SHUFFLE");
         return v && v[0] == '1';
@@ -369,13 +360,12 @@ TrainingResult AdaptiveMomentEstimation::train()
                                   validation_error, validation_accuracy,
                                   has_validation, is_token_cross_entropy, elapsed_time);
 
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures,
-                                                      training_back_propagation.loss,
-                                                      has_validation);
-
-            if (stop_training) break;
+            if (check_stopping_condition(results, epoch, elapsed_time,
+                                         results.training_error_history(epoch),
+                                         validation_failures,
+                                         training_back_propagation.loss,
+                                         has_validation))
+                break;
         }
     }
 
@@ -390,18 +380,10 @@ TrainingResult AdaptiveMomentEstimation::train()
             cout << "Restoring best parameters and states from epoch " << best_epoch
                  << " (validation error " << best_validation_error << ")\n";
 
-        VectorR best_view(best_parameters.size());
-        memcpy(best_view.data(), best_parameters.data(),
-                    best_parameters.size() * sizeof(float));
-        neural_network->set_parameters(best_view);
+        neural_network->set_parameters(Map<const VectorR>(best_parameters.data(), Index(best_parameters.size())));
 
         if (!best_states.empty())
-        {
-            VectorR best_state_view(best_states.size());
-            memcpy(best_state_view.data(), best_states.data(),
-                   best_states.size() * sizeof(float));
-            neural_network->set_states(best_state_view);
-        }
+            neural_network->set_states(Map<const VectorR>(best_states.data(), Index(best_states.size())));
 
         results.restored_best_parameters = true;
         results.restored_epoch = best_epoch;
@@ -442,10 +424,8 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());
 
-    VectorMap gradient_exponential_decay(optimization_data.views[GradientMoment].as<float>(),
-                                         optimization_data.views[GradientMoment].size());
-    VectorMap square_gradient_exponential_decay(optimization_data.views[SquareGradientMoment].as<float>(),
-                                                optimization_data.views[SquareGradientMoment].size());
+    VectorMap gradient_exponential_decay = optimization_data.views[GradientMoment].as_vector();
+    VectorMap square_gradient_exponential_decay = optimization_data.views[SquareGradientMoment].as_vector();
 
     VectorMap gradient(back_propagation.gradient.as<float>(),
                        back_propagation.gradient.size_in_floats());
@@ -491,7 +471,7 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
         optimization_data.graph_step.as<int>(),
         optimization_data.graph_effective_lr.as<float>(),
         optimization_data.graph_effective_eps.as<float>(),
-        neural_network->get_parameters_bf16_data(),
+        neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 #else
     (void)back_propagation; (void)optimization_data;
@@ -504,6 +484,10 @@ void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
     printer.open_element("AdaptiveMomentEstimation");
 
     add_json_field(printer, "BatchSize", to_string(batch_size));
+    add_json_field(printer, "LearningRate", to_string(learning_rate));
+    add_json_field(printer, "Beta1", to_string(beta_1));
+    add_json_field(printer, "Beta2", to_string(beta_2));
+    add_json_field(printer, "GradientClipNorm", to_string(gradient_clip_norm));
     write_common_json(printer);
 
     printer.close_element();
@@ -514,6 +498,10 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
+    if (root_element->has("LearningRate"))     set_learning_rate(read_json_float(root_element, "LearningRate"));
+    if (root_element->has("Beta1"))            set_beta_1(read_json_float(root_element, "Beta1"));
+    if (root_element->has("Beta2"))            set_beta_2(read_json_float(root_element, "Beta2"));
+    if (root_element->has("GradientClipNorm")) set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm"));
     read_common_json(root_element);
 }
 

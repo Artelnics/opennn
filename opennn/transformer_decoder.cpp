@@ -54,9 +54,8 @@ Index sample_token(VectorR& probabilities,
 
     if (config.temperature == 0.0f)
     {
-        Index best = 0;
-        for (Index i = 1; i < vocabulary_size; ++i)
-            if (probabilities(i) > probabilities(best)) best = i;
+        Index best;
+        probabilities.maxCoeff(&best);
         return best;
     }
 
@@ -115,9 +114,8 @@ Index sample_token(VectorR& probabilities,
     const float sum = probabilities.sum();
     if (sum <= 0.0f)
     {
-        Index best = 0;
-        for (Index i = 1; i < vocabulary_size; ++i)
-            if (original(i) > original(best)) best = i;
+        Index best;
+        original.maxCoeff(&best);
         return best;
     }
 
@@ -153,7 +151,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 
     throw_if(language_dataset.get_input_vocabulary_map().empty(),
              "TransformerDecoder: dataset input vocabulary is empty.");
-    throw_if(language_dataset.get_target_inverse_vocabulary_map().empty(),
+    throw_if(language_dataset.get_target_vocabulary().empty(),
              "TransformerDecoder: dataset target vocabulary is empty.");
 
     transformer.copy_parameters_device();
@@ -339,7 +337,7 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
 
 string TransformerDecoder::assemble_output_string() const
 {
-    const auto& output_inverse_vocabulary_map = language_dataset.get_target_inverse_vocabulary_map();
+    const vector<string>& output_vocabulary = language_dataset.get_target_vocabulary();
     const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
 
     string result;
@@ -348,11 +346,10 @@ string TransformerDecoder::assemble_output_string() const
         const Index token_id = static_cast<Index>(target_ids(0, i));
         if (token_id == end_token_id || token_id == pad_token_id) break;
 
-        const auto it = output_inverse_vocabulary_map.find(token_id);
-        if (it == output_inverse_vocabulary_map.end()) continue;
+        if (token_id < 0 || token_id >= ssize(output_vocabulary)) continue;
 
         if (!result.empty()) result += " ";
-        result += it->second;
+        result += output_vocabulary[size_t(token_id)];
     }
     return result;
 }
@@ -384,7 +381,7 @@ string TransformerDecoder::decode(const string& source,
         ? min(config.maximum_tokens + Index(1), decoder_sequence_length)
         : decoder_sequence_length;
 
-    const auto& output_inverse_vocabulary_map = language_dataset.get_target_inverse_vocabulary_map();
+    const vector<string>& output_vocabulary = language_dataset.get_target_vocabulary();
 
     for (Index i = 1; i < generation_limit; ++i)
     {
@@ -403,12 +400,9 @@ string TransformerDecoder::decode(const string& source,
         if (next_token_id == end_token_id)
             break;
 
-        if (on_token && is_printable_token(next_token_id))
-        {
-            const auto it = output_inverse_vocabulary_map.find(next_token_id);
-            if (it != output_inverse_vocabulary_map.end())
-                on_token(it->second);
-        }
+        if (on_token && is_printable_token(next_token_id)
+            && next_token_id >= 0 && next_token_id < ssize(output_vocabulary))
+            on_token(output_vocabulary[size_t(next_token_id)]);
     }
 
     return assemble_output_string();

@@ -472,15 +472,11 @@ cudaStream_t get_compute_stream()
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-static void initialize_cuda_backend(cudaStream_t& compute_stream,
-                                    cudaStream_t& transfer_stream,
-                                    cublasHandle_t& cublas_handle,
-                                    cublasLtHandle_t& cublas_lt_handle,
-                                    cudnnHandle_t& cudnn_handle,
-                                    cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+Backend::Backend()
 {
+    set_threads_number(0);
+
+#ifdef OPENNN_HAS_CUDA
     int device_count = 0;
     const cudaError_t status = cudaGetDeviceCount(&device_count);
     if (status != cudaSuccess || device_count == 0)
@@ -507,15 +503,12 @@ static void initialize_cuda_backend(cudaStream_t& compute_stream,
                                            CUDNN_OP_TENSOR_ADD,
                                            CUDNN_DATA_FLOAT,
                                            CUDNN_NOT_PROPAGATE_NAN));
+#endif
 }
 
-static void destroy_cuda_backend(cudaStream_t& compute_stream,
-                                 cudaStream_t& transfer_stream,
-                                 cublasHandle_t& cublas_handle,
-                                 cublasLtHandle_t& cublas_lt_handle,
-                                 cudnnHandle_t& cudnn_handle,
-                                 cudnnOpTensorDescriptor_t& operator_sum_descriptor)
+Backend::~Backend()
 {
+#ifdef OPENNN_HAS_CUDA
     if (operator_sum_descriptor)
     {
         cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
@@ -545,49 +538,7 @@ static void destroy_cuda_backend(cudaStream_t& compute_stream,
 
     device::destroy_stream(transfer_stream);
     transfer_stream = nullptr;
-}
-
-#else
-
-static void initialize_cuda_backend(cudaStream_t&,
-                                    cudaStream_t&,
-                                    cublasHandle_t&,
-                                    cublasLtHandle_t&,
-                                    cudnnHandle_t&,
-                                    cudnnOpTensorDescriptor_t&)
-{
-}
-
-static void destroy_cuda_backend(cudaStream_t&,
-                                 cudaStream_t&,
-                                 cublasHandle_t&,
-                                 cublasLtHandle_t&,
-                                 cudnnHandle_t&,
-                                 cudnnOpTensorDescriptor_t&)
-{
-}
-
 #endif
-
-Backend::Backend()
-{
-    set_threads_number(0);
-    initialize_cuda_backend(compute_stream,
-                            transfer_stream,
-                            cublas_handle,
-                            cublas_lt_handle,
-                            cudnn_handle,
-                            operator_sum_descriptor);
-}
-
-Backend::~Backend()
-{
-    destroy_cuda_backend(compute_stream,
-                         transfer_stream,
-                         cublas_handle,
-                         cublas_lt_handle,
-                         cudnn_handle,
-                         operator_sum_descriptor);
 }
 
 void Backend::set_threads_number(int num_threads)
@@ -639,6 +590,11 @@ namespace
         cublasLtMatmulAlgo_t   algorithm{};
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
+        // Autotuning: cuBLASLt's first heuristic is not always the fastest, so we
+        // keep the top candidates and, on the first real matmul, time each and
+        // lock in the quickest. `tuned` marks that selection as done.
+        vector<cublasLtMatmulHeuristicResult_t> candidates;
+        bool                   tuned = false;
 
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
@@ -655,6 +611,8 @@ namespace
             swap(algorithm, other.algorithm);
             swap(has_algorithm, other.has_algorithm);
             swap(workspace_bytes, other.workspace_bytes);
+            swap(candidates, other.candidates);
+            swap(tuned, other.tuned);
         }
 
         ~LtMatmulPlan()
@@ -711,9 +669,15 @@ namespace
 
     cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
     {
-        return (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-            ? CUBLAS_COMPUTE_32F
-            : CUBLAS_COMPUTE_DTYPE;
+        if (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
+        {
+            // bf16 multiply with the fast tensor-core accumulation path (the
+            // analogue of FAST_TF32 for fp32). Plain CUBLAS_COMPUTE_32F left the
+            // heuristic on a non-tensor-core algorithm, so bf16 got no speedup.
+            static const bool plain = std::getenv("OPENNN_BF16_COMPUTE_PLAIN") != nullptr;
+            return plain ? CUBLAS_COMPUTE_32F : CUBLAS_COMPUTE_32F_FAST_16BF;
+        }
+        return CUBLAS_COMPUTE_DTYPE;
     }
 
     struct LtMatmulPreferenceGuard
@@ -790,6 +754,16 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
+// Cast an fp32 bias to bf16 for a fused bf16 cuBLASLt BIAS epilogue (which
+// rejects an fp32 bias). Uses the gradient workspace, which is unused during
+// forward propagation, so it does not clobber the input cast.
+const void* bias_for_gemm_bf16(const TensorView& bias)
+{
+    bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
+    cast_fp32_to_bf16_cuda(bias.size(), bias.as<float>(), dst);
+    return dst;
+}
+
 namespace
 {
 const LtMatmulPlan& get_lt_gemm_plan(
@@ -839,7 +813,16 @@ const LtMatmulPlan& get_lt_gemm_plan(
         CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
         &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-    cublasLtMatmulHeuristicResult_t heuristic = {};
+    // Autotuning (OPENNN_GEMM_AUTOTUNE=1) asks for several candidate algorithms;
+    // the first real matmul times them and keeps the fastest. Otherwise take the
+    // single first heuristic (cuBLASLt's default best guess), as before.
+    static const bool autotune = [] {
+        const char* v = std::getenv("OPENNN_GEMM_AUTOTUNE");
+        return v && v[0] == '1';
+    }();
+    constexpr int max_candidates = 16;
+
+    cublasLtMatmulHeuristicResult_t heuristics[max_candidates] = {};
     int returned_results = 0;
     CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
                                                 plan.matmul_descriptor,
@@ -847,13 +830,22 @@ const LtMatmulPlan& get_lt_gemm_plan(
                                                 plan.b_matrix_layout,
                                                 plan.output_matrix_layout,
                                                 plan.output_matrix_layout,
-                                                pref.pref, 1, &heuristic, &returned_results));
+                                                pref.pref,
+                                                autotune ? max_candidates : 1,
+                                                heuristics, &returned_results));
 
     if (returned_results > 0)
     {
-        plan.algorithm = heuristic.algo;
+        plan.algorithm = heuristics[0].algo;
         plan.has_algorithm = true;
-        plan.workspace_bytes = heuristic.workspaceSize;
+        plan.workspace_bytes = heuristics[0].workspaceSize;
+
+        if (autotune && returned_results > 1)
+        {
+            plan.candidates.assign(heuristics, heuristics + returned_results);
+            for (int i = 0; i < returned_results; ++i)
+                ensure_cublas_lt_workspace(heuristics[i].workspaceSize);
+        }
 
         // Grow the global workspace to fit this plan's chosen algorithm.
         ensure_cublas_lt_workspace(plan.workspace_bytes);
@@ -873,10 +865,58 @@ void run_lt_matmul_cached(
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype)
 {
-    const LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+    LtMatmulPlan& plan = const_cast<LtMatmulPlan&>(
+        get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype));
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+    // One-time autotune: with real operands in hand, time each candidate
+    // algorithm on this stream and keep the fastest. Safe to do here because it
+    // produces correct output every iteration; only the algo choice changes.
+    if (!plan.tuned && !plan.candidates.empty())
+    {
+        cudaStream_t stream = Backend::get_compute_stream();
+        auto time_algo = [&](const cublasLtMatmulAlgo_t& algo, size_t ws_bytes) -> float {
+            cudaEvent_t a, b;
+            cudaEventCreate(&a); cudaEventCreate(&b);
+            void* ws = ensure_cublas_lt_workspace(ws_bytes);
+            // 2 warmup + 5 timed runs
+            for (int w = 0; w < 2; ++w)
+                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                               &algo, ws, ws_bytes, stream);
+            cudaEventRecord(a, stream);
+            for (int t = 0; t < 5; ++t)
+                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
+                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
+                               &algo, ws, ws_bytes, stream);
+            cudaEventRecord(b, stream);
+            cudaEventSynchronize(b);
+            float ms = 0.0f; cudaEventElapsedTime(&ms, a, b);
+            cudaEventDestroy(a); cudaEventDestroy(b);
+            return ms;
+        };
+        float best_ms = 1e30f;
+        for (const auto& cand : plan.candidates)
+        {
+            float ms;
+            try { ms = time_algo(cand.algo, cand.workspaceSize); }
+            catch (...) { continue; }                 // skip an algo that errors
+            if (ms < best_ms)
+            {
+                best_ms = ms;
+                plan.algorithm = cand.algo;
+                plan.workspace_bytes = cand.workspaceSize;
+                plan.has_algorithm = true;
+            }
+        }
+        ensure_cublas_lt_workspace(plan.workspace_bytes);
+        plan.tuned = true;
+        plan.candidates.clear();
+    }
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
@@ -889,26 +929,6 @@ void run_lt_matmul_cached(
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_cublas_lt_workspace(plan.workspace_bytes), plan.workspace_bytes,
                                 Backend::get_compute_stream()));
-}
-
-void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
-               int m, int n, int k,
-               const void* A, cudaDataType_t Atype, int lda,
-               const void* B, cudaDataType_t Btype, int ldb,
-               void* C, cudaDataType_t Ctype, int ldc,
-               float alpha, float beta)
-{
-    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
-    CHECK_CUBLAS(cublasGemmEx(Backend::get_cublas_handle(),
-                              transa, transb,
-                              m, n, k,
-                              &alpha,
-                              A, Atype, lda,
-                              B, Btype, ldb,
-                              &beta,
-                              C, Ctype, ldc,
-                              compute,
-                              CUBLAS_GEMM_DEFAULT));
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
@@ -960,6 +980,11 @@ const void* data_for_gemm_dtype(const TensorView&, Type)
     throw runtime_error("data_for_gemm_dtype requires CUDA support.");
 }
 
+const void* bias_for_gemm_bf16(const TensorView&)
+{
+    throw runtime_error("bias_for_gemm_bf16 requires CUDA support.");
+}
+
 void run_lt_matmul_cached(int, int, int,
                           cublasOperation_t,
                           cublasOperation_t,
@@ -970,16 +995,6 @@ void run_lt_matmul_cached(int, int, int,
                           cudaDataType_t)
 {
     throw runtime_error("run_lt_matmul_cached requires CUDA support.");
-}
-
-void gemm_cuda(cublasOperation_t, cublasOperation_t,
-               int, int, int,
-               const void*, cudaDataType_t, int,
-               const void*, cudaDataType_t, int,
-               void*, cudaDataType_t, int,
-               float, float)
-{
-    throw runtime_error("gemm_cuda requires CUDA support.");
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,

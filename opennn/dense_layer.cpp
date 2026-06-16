@@ -8,9 +8,6 @@
 
 #include "registry.h"
 #include "dense_layer.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
-#include "random_utilities.h"
 
 namespace opennn
 {
@@ -190,8 +187,15 @@ string Dense::write_expression(const vector<string>& input_names,
 
 void Dense::read_JSON_body(const Json* dense_layer_element)
 {
-    if (dense_layer_element->has("Momentum"))
+    if (read_json_bool(dense_layer_element, "BatchNormalization"))
         set_batch_normalization(true);
+}
+
+void Dense::write_JSON_body(JsonWriter& printer) const
+{
+    write_json(printer, {
+        {"BatchNormalization", to_string(batch_norm.active())}
+    });
 }
 
 void Dense::from_JSON(const JsonDocument& document)

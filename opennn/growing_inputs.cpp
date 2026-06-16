@@ -15,8 +15,6 @@
 #include "scaling_layer.h"
 #include "optimizer.h"
 #include "training_strategy.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -25,16 +23,6 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
     set_default();
-}
-
-Index GrowingInputs::get_minimum_inputs_number() const
-{
-    return minimum_inputs_number;
-}
-
-Index GrowingInputs::get_maximum_inputs_number() const
-{
-    return maximum_inputs_number;
 }
 
 void GrowingInputs::set_default()
@@ -50,11 +38,6 @@ void GrowingInputs::set_default()
     maximum_inputs_number = (training_strategy && training_strategy->get_neural_network() && training_strategy->get_dataset())
         ? training_strategy->get_dataset()->get_variables_number("Input")
         : 50;
-}
-
-void GrowingInputs::set_minimum_inputs_number(const Index new_minimum_inputs_number)
-{
-    minimum_inputs_number = new_minimum_inputs_number;
 }
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
@@ -84,23 +67,20 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     float previous_validation_error = MAX;
 
-    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
     const vector<string> variable_names = dataset->get_variable_names();
-    vector<string> input_variable_names;
 
     if (display) cout << "Calculating correlations..." << "\n";
 
-    const MatrixR correlations = get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations());
-    const VectorR total_correlations = correlations.col(0).array().abs();
+    const VectorR total_correlations =
+        get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations()).col(0).array().abs();
 
     vector<Index> correlation_indices(original_input_variables_number);
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
 
-    sort(correlation_indices.data(),
-        correlation_indices.data() + correlation_indices.size(),
-        [&](Index i, Index j) {return total_correlations[i] > total_correlations[j]; });
+    ranges::sort(correlation_indices,
+                 [&](Index i, Index j) {return total_correlations[i] > total_correlations[j]; });
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
 
@@ -127,16 +107,14 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     float elapsed_time = 0.0f;
     time(&beginning_time);
 
-    bool stop = false;
     Index epoch = 0;
 
-    while (!stop)
+    while (!input_selection_results.stopping_condition)
     {
         if (variable_index >= correlations_rank_descending.size())
         {
             if (display) cout << "\nAll the variables has been used." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-            stop = true;
             continue;
         }
 
@@ -155,13 +133,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             continue;
         }
 
-        const Shape input_shape = time_series_dataset
-            ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
-            : Shape{ input_features_number };
-        neural_network->set_input_shape(input_shape);
-        dataset->set_shape("Input", input_shape);
-
-        neural_network->compile();
+        configure_neural_network_inputs(neural_network, dataset, input_features_number);
 
         if (display)
         {
@@ -170,8 +142,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
                 << "Input variables number: " << input_variables_number << "\n"
                 << "Inputs: " << "\n";
 
-            input_variable_names = dataset->get_variable_names("Input");
-            cout << input_variable_names;
+            cout << dataset->get_variable_names("Input");
         }
 
         float minimum_training_error = MAX;
@@ -236,32 +207,27 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
-            stop = true;
         }
         else if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
             if (display) cout << "\nValidation error goal reached: " << input_selection_results.optimum_validation_error << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::ValidationErrorGoal;
-            stop = true;
         }
         else if (epoch >= maximum_epochs)
         {
             if (display) cout << "\nMaximum number of epochs reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
-            stop = true;
         }
         else if (validation_failures >= maximum_validation_failures)
         {
             if (display) cout << "\nMaximum validation failures (" << validation_failures << ") reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumValidationFailures;
-            stop = true;
         }
         else if (const Index current_inputs = dataset->get_variables_number("Input");
                  current_inputs >= maximum_inputs_number)
         {
             if (display) cout << "\nMaximum inputs (" << current_inputs << ") reached." << "\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-            stop = true;
         }
     }
 
@@ -274,7 +240,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     const Index optimal_processed_variables_number = dataset->get_features_number("Input");
 
-    if (time_series_dataset && time_variable_indices.size() == 1)
+    if (dynamic_cast<TimeSeriesDataset*>(dataset) && time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
 
     configure_neural_network_inputs(neural_network, dataset, optimal_processed_variables_number);

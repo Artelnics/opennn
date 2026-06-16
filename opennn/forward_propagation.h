@@ -34,6 +34,8 @@ struct ForwardPropagation
     NeuralNetwork* neural_network = nullptr;
 
     Buffer data;
+    vector<Buffer> device_input_buffers;
+    vector<Buffer> device_fp32_input_buffers;
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
 };

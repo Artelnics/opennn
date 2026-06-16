@@ -148,7 +148,6 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
 
     message(STATUS "Found cuDNN ${CUDNN_VERSION}: ${CUDNN_LIBRARY}")
     set(HAVE_CUDNN ON)
-    link_libraries(${CUDNN_LIBRARY})
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).
     # Required for SDPA / Flash Attention. Fetched at configure time; pinned

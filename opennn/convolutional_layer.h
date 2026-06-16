@@ -32,9 +32,9 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_input_height() const;
-    Index get_input_width() const;
-    Index get_input_channels() const;
+    Index get_input_height() const { return input_height; }
+    Index get_input_width() const { return input_width; }
+    Index get_input_channels() const { return input_channels; }
 
     Index get_kernel_height() const { return kernel_height; }
     Index get_kernel_width() const { return kernel_width; }
@@ -54,7 +54,11 @@ public:
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
+    bool get_residual() const { return residual; }
+    void set_residual(bool);
+
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},
@@ -94,6 +98,7 @@ private:
     Index column_stride = 1;
 
     bool use_padding = false;
+    bool residual = false;
 
     ConvolutionOp convolution;
     ActivationOp  activation;

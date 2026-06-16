@@ -28,26 +28,32 @@ void Configuration::set(Device new_device,
 Configuration::Resolved Configuration::resolve() const
 {
     Resolved resolved;
+    bool cuda_available = false;
 
     switch (device)
     {
     case Device::Auto:
-        resolved.device = device::has_cuda_device() ? Device::CUDA : Device::CPU;
+        cuda_available = device::has_cuda_device();
+        resolved.device = cuda_available ? Device::CUDA : Device::CPU;
         break;
     case Device::CPU:
         resolved.device = Device::CPU;
         break;
     case Device::CUDA:
-        throw_if(!device::has_cuda_device(),
-                 "Configuration: CUDA requested but no GPU detected.");
+        cuda_available = device::has_cuda_device();
+        throw_if(!cuda_available, "Configuration: CUDA requested but no GPU detected.");
         resolved.device = Device::CUDA;
         break;
     }
 
+    const int compute_capability = resolved.device == Device::CUDA && training_type != Type::FP32
+        ? device::cuda_compute_capability()
+        : -1;
+
     switch (training_type)
     {
     case Type::Auto:
-        resolved.training_type = resolved.device == Device::CUDA && device::cuda_compute_capability() >= 80
+        resolved.training_type = resolved.device == Device::CUDA && compute_capability >= 80
             ? Type::BF16
             : Type::FP32;
         break;
@@ -56,7 +62,7 @@ Configuration::Resolved Configuration::resolve() const
         break;
     case Type::BF16:
         throw_if(resolved.device != Device::CUDA, "Configuration: BF16 requires CUDA.");
-        throw_if(device::cuda_compute_capability() < 80,
+        throw_if(compute_capability < 80,
                  "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
         resolved.training_type = Type::BF16;
         break;

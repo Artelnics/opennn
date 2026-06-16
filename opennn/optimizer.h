@@ -45,7 +45,7 @@ public:
 
     void set(Loss* new_loss) { loss = new_loss; }
 
-    virtual void set_loss(Loss* new_loss) { loss = new_loss; }
+    virtual void set_loss(Loss* new_loss) { set(new_loss); }
 
     virtual void set_display(bool new_display) { display = new_display; }
 

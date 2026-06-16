@@ -378,6 +378,11 @@ int Optimizer::get_batch_workers_number(const NeuralNetwork& neural_network) con
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
+    // OPENNN_BATCH_POOL overrides the prefetch-pool depth. Each pooled Batch holds
+    // a full input+target copy on the GPU, so lowering this trades a little
+    // prefetch overlap for a larger max batch. Default keeps 3.
+    if (const char* pool = std::getenv("OPENNN_BATCH_POOL"))
+        return max(1, atoi(pool));
     return neural_network.is_gpu()
         ? max(get_batch_workers_number(neural_network) + 1, 3)
         : 1;
@@ -544,22 +549,12 @@ void Optimizer::set_scaling()
         switch (scaling_layer->get_input_shape().rank)
         {
             case 1:
+            case 2:
             {
                 auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
                 throw_if(!tabular_dataset, "Expected TabularDataset.");
                 input_variable_scalers = tabular_dataset->get_feature_scalers("Input");
                 input_variable_descriptives = tabular_dataset->scale_features("Input");
-                scaling_layer->set_descriptives(input_variable_descriptives);
-                scaling_layer->set_scalers(input_variable_scalers);
-                break;
-            }
-
-            case 2:
-            {
-                auto* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-                throw_if(!time_series_dataset, "Expected TimeSeriesDataset.");
-                input_variable_scalers = time_series_dataset->get_feature_scalers("Input");
-                input_variable_descriptives = time_series_dataset->scale_features("Input");
                 scaling_layer->set_descriptives(input_variable_descriptives);
                 scaling_layer->set_scalers(input_variable_scalers);
                 break;
@@ -677,15 +672,10 @@ void Optimizer::set_unscaling()
     auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
                                        const VectorR& means, const VectorR& std_devs)
     {
-        const Index descriptives_count = minimums.size();
-        vector<Descriptives> descriptives(descriptives_count);
-        for (Index i = 0; i < descriptives_count; ++i)
-        {
-            descriptives[i].minimum = minimums[i];
-            descriptives[i].maximum = maximums[i];
-            descriptives[i].mean = means[i];
-            descriptives[i].standard_deviation = std_devs[i];
-        }
+        vector<Descriptives> descriptives;
+        descriptives.reserve(minimums.size());
+        for (Index i = 0; i < minimums.size(); ++i)
+            descriptives.emplace_back(minimums[i], maximums[i], means[i], std_devs[i]);
         return descriptives;
     };
 
@@ -1049,7 +1039,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     // latency starves the GPU. Device-resident (gather) and BF16 batches keep
     // the upload-outside-the-graph path.
     const bool staged_h2d = !loss->get_dataset()->is_device_resident()
-                         && fixed_device_batch->fp32_staging.empty();
+                         && !fixed_device_batch->input_is_bf16;
 
     const auto stage_into_slot = [](const Batch& source, Batch& slot)
     {
@@ -1084,6 +1074,19 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         copy_section(slot.target);
     };
 
+    // Resident gather: copy the worker batch's per-batch row indices and gather
+    // metadata into the slot so the slot gathers from itself; the captured
+    // graph reads the slot's fixed index buffer on replay.
+    const auto stage_gather_indices = [](const Batch& source, Batch& slot)
+    {
+        slot.current_sample_count = source.current_sample_count;
+        slot.device_gather        = source.device_gather;
+        slot.input_col_offset     = source.input_col_offset;
+        slot.target_col_offset    = source.target_col_offset;
+        slot.gather_row_indices   = source.gather_row_indices;
+        slot.needs_device_copy    = false;
+    };
+
     // The update closure is copied so the eager fallback keeps working for the
     // rest of the epoch after a capture failure clears the member.
     const auto run_compute_step = [&, update = graph_update](Batch& slot)
@@ -1098,10 +1101,120 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         update(back_propagation);
     };
 
+    // Capture-or-run: replay `exec` if it exists; otherwise, when graph_update
+    // is set, run `warmup` once eagerly and then capture `record` into a fresh
+    // graph; otherwise just run `warmup`. The profiler muting (op-level scopes
+    // call device::synchronize, illegal inside a capture window), the
+    // capture/instantiate lifecycle, and the failure recovery live here so the
+    // three call sites below don't each repeat them. `record` defaults to
+    // `warmup`; only the staged mega-graph captures a different body (fork/join
+    // H2D on the transfer stream) than its eager warmup.
+    const auto capture_or_run = [&](device::GraphExecHandle& exec,
+                                    const auto& warmup, const auto& record)
+    {
+        if (exec)
+        {
+            PROFILE_SCOPE_HOST("step:graph_launch");
+            device::launch_graph(exec, compute);
+            return;
+        }
+        if (!graph_update) { warmup(); return; }
+
+        warmup();
+        const bool profiler_enabled = ::opennn::enabled();
+        ::opennn::enabled() = false;
+        try
+        {
+            device::synchronize(compute);
+            device::StreamCapture capture(compute);
+            record();
+            const device::GraphHandle graph = capture.end();
+            device::instantiate_or_update(exec, graph.get());
+        }
+        catch (const exception& capture_error)
+        {
+            reset_graph_capture();
+            cout << "CUDA graph capture failed (" << capture_error.what()
+                 << "); continuing without graphs.\n";
+        }
+        ::opennn::enabled() = profiler_enabled;
+    };
+
+    const bool resident_gather = loss->get_dataset()->is_device_resident()
+                              && !fixed_device_batch->input_is_bf16;
+
     Batch* host_batch = nullptr;
     try
     {
-        if (staged_h2d
+        if (resident_gather
+            && usable_slots == graph_slots_count
+            && batches_number >= Index(graph_group_size)
+            && (graph_update || training_graph_execs[0]))
+        {
+            // Resident mega-graph: the M device-side gathers run on the transfer
+            // stream OUTSIDE the graph (their index H2D is a pageable copy, which
+            // is illegal to capture), each rejoined onto compute by an event; the
+            // graph then captures only the M compute steps. One launch per group
+            // amortizes the per-step launch the single-step resident path paid.
+            constexpr Index M = Index(graph_group_size);
+            const Index groups = batches_number / M;
+
+            for (Index group = 0; group < groups; ++group)
+            {
+                const size_t parity = size_t(group & 1);
+                const size_t base = parity * size_t(M);
+                Batch& event_slot = *slots[base + size_t(M) - 1];
+                device::GraphExecHandle& exec = training_graph_execs[parity];
+
+                {
+                    PROFILE_SCOPE_HOST("step:group_sync");
+                    // The prior same-parity group's graph read these slots; it
+                    // must finish before the gathers overwrite them.
+                    if (event_slot.h2d_done_recorded)
+                        device::synchronize_event(event_slot.h2d_done_event);
+                }
+
+                for (Index m = 0; m < M; ++m)
+                {
+                    Batch& slot = *slots[base + size_t(m)];
+                    {
+                        PROFILE_SCOPE_HOST("step:wait_fill");
+                        host_batch = session->wait(group * M + m);
+                    }
+                    PROFILE_SCOPE_HOST("step:gather_issue");
+                    stage_gather_indices(*host_batch, slot);
+                    empty_queue.push(host_batch);
+                    host_batch = nullptr;
+
+                    if (slot.h2d_done_recorded)
+                        device::stream_wait_event(transfer, slot.h2d_done_event);
+                    slot.upload_to_device_batch_async(slot, transfer);
+                    slot.wait_h2d_on_compute_stream();
+                }
+
+                const auto run_group = [&] {
+                    for (Index m = 0; m < M; ++m)
+                        run_compute_step(*slots[base + size_t(m)]);
+                };
+                capture_or_run(exec, run_group, run_group);
+
+                event_slot.record_h2d_done(compute);
+            }
+
+            for (Index iteration = groups * M; iteration < batches_number; ++iteration)
+            {
+                host_batch = session->wait(iteration);
+                Batch& slot = *slots[0];
+                device::synchronize(compute);
+                stage_gather_indices(*host_batch, slot);
+                empty_queue.push(host_batch);
+                host_batch = nullptr;
+                slot.upload_to_device_batch_async(slot, transfer);
+                slot.wait_h2d_on_compute_stream();
+                run_compute_step(slot);
+            }
+        }
+        else if (staged_h2d
             && usable_slots == graph_slots_count
             && batches_number >= Index(graph_group_size))
         {
@@ -1143,74 +1256,40 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                     }
                 }
 
-                if (exec)
-                {
-                    PROFILE_SCOPE_HOST("step:graph_launch");
-                    device::launch_graph(exec, compute);
-                }
-                else if (graph_update)
-                {
+                // Warmup/eager body: H2D + compute per slot on the compute
+                // stream, plus (one-time) creation of the fork/join events the
+                // captured body needs. Event creation is here, not in `record`,
+                // because cudaEventCreate is illegal inside a capture window.
+                const auto warmup_group = [&] {
                     for (Index m = 0; m < M; ++m)
                     {
                         Batch& slot = *slots[base + size_t(m)];
                         issue_slot_h2d(slot, compute);
                         run_compute_step(slot);
                     }
-
                     if (!graph_fork_events[parity])
                         graph_fork_events[parity].create();
                     for (Index m = 0; m < M; ++m)
                         if (!graph_copy_done_events[base + size_t(m)])
                             graph_copy_done_events[base + size_t(m)].create();
-
-                    // Op-level PROFILE_SCOPEs call device::synchronize(), which
-                    // is illegal inside a capture window (and meaningless there:
-                    // the replayed graph never runs host scopes). Mute while
-                    // recording.
-                    const bool profiler_enabled = ::opennn::enabled();
-                    ::opennn::enabled() = false;
-                    try
-                    {
-                        device::synchronize(compute);
-                        device::StreamCapture capture(compute);
-
-                        // Fork the H2D chain onto the transfer stream inside the
-                        // graph so the copy engine overlaps the compute steps.
-                        device::record_event(graph_fork_events[parity], compute);
-                        device::stream_wait_event(transfer, graph_fork_events[parity]);
-
-                        for (Index m = 0; m < M; ++m)
-                        {
-                            issue_slot_h2d(*slots[base + size_t(m)], transfer);
-                            device::record_event(graph_copy_done_events[base + size_t(m)], transfer);
-                        }
-
-                        for (Index m = 0; m < M; ++m)
-                        {
-                            device::stream_wait_event(compute, graph_copy_done_events[base + size_t(m)]);
-                            run_compute_step(*slots[base + size_t(m)]);
-                        }
-
-                        const device::GraphHandle graph = capture.end();
-                        device::instantiate_or_update(exec, graph.get());
-                    }
-                    catch (const exception& capture_error)
-                    {
-                        reset_graph_capture();
-                        cout << "CUDA graph capture failed (" << capture_error.what()
-                             << "); continuing without graphs.\n";
-                    }
-                    ::opennn::enabled() = profiler_enabled;
-                }
-                else
-                {
+                };
+                // Captured body: fork the H2D chain onto the transfer stream
+                // inside the graph so the copy engine overlaps the compute steps.
+                const auto record_group = [&] {
+                    device::record_event(graph_fork_events[parity], compute);
+                    device::stream_wait_event(transfer, graph_fork_events[parity]);
                     for (Index m = 0; m < M; ++m)
                     {
-                        Batch& slot = *slots[base + size_t(m)];
-                        issue_slot_h2d(slot, compute);
-                        run_compute_step(slot);
+                        issue_slot_h2d(*slots[base + size_t(m)], transfer);
+                        device::record_event(graph_copy_done_events[base + size_t(m)], transfer);
                     }
-                }
+                    for (Index m = 0; m < M; ++m)
+                    {
+                        device::stream_wait_event(compute, graph_copy_done_events[base + size_t(m)]);
+                        run_compute_step(*slots[base + size_t(m)]);
+                    }
+                };
+                capture_or_run(exec, warmup_group, record_group);
 
                 event_slot.record_h2d_done(compute);
             }
@@ -1272,38 +1351,18 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                     host_batch->wait_h2d_on_compute_stream();
                 }
 
-                if (exec && !staged_h2d)
+                // Staged H2D never uses per-slot graphs here (the mega/hybrid
+                // paths above own that); run it eagerly. Otherwise capture or
+                // replay the single compute step.
+                if (staged_h2d)
                 {
-                    PROFILE_SCOPE_HOST("step:graph_launch");
-                    device::launch_graph(exec, compute);
-                }
-                else if (graph_update && !staged_h2d)
-                {
+                    issue_slot_h2d(slot, compute);
                     run_compute_step(slot);
-
-                    // See the capture note above: mute op-level profiling.
-                    const bool profiler_enabled = ::opennn::enabled();
-                    ::opennn::enabled() = false;
-                    try
-                    {
-                        device::synchronize(compute);
-                        device::StreamCapture capture(compute);
-                        run_compute_step(slot);
-                        const device::GraphHandle graph = capture.end();
-                        device::instantiate_or_update(exec, graph.get());
-                    }
-                    catch (const exception& capture_error)
-                    {
-                        reset_graph_capture();
-                        cout << "CUDA graph capture failed (" << capture_error.what()
-                             << "); continuing without graphs.\n";
-                    }
-                    ::opennn::enabled() = profiler_enabled;
                 }
                 else
                 {
-                    if (staged_h2d) issue_slot_h2d(slot, compute);
-                    run_compute_step(slot);
+                    const auto run_slot = [&] { run_compute_step(slot); };
+                    capture_or_run(exec, run_slot, run_slot);
                 }
 
                 slot.record_h2d_done(compute);

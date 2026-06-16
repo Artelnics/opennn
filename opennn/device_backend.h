@@ -130,41 +130,6 @@ cudaStream_t get_compute_stream();
 namespace opennn
 {
 
-struct CudaStream
-{
-    cudaStream_t handle = nullptr;
-
-    CudaStream() = default;
-    explicit CudaStream(unsigned flags) { handle = device::create_stream(flags); }
-
-    CudaStream(const CudaStream&) = delete;
-    CudaStream& operator=(const CudaStream&) = delete;
-
-    CudaStream(CudaStream&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
-    CudaStream& operator=(CudaStream&& other) noexcept
-    {
-        if (this != &other) { destroy(); handle = other.handle; other.handle = nullptr; }
-        return *this;
-    }
-
-    ~CudaStream() { destroy(); }
-
-    void create(unsigned flags)
-    {
-        destroy();
-        handle = device::create_stream(flags);
-    }
-
-    void destroy() noexcept
-    {
-        device::destroy_stream(handle);
-        handle = nullptr;
-    }
-
-    operator cudaStream_t() const noexcept { return handle; }
-    explicit operator bool()  const noexcept { return handle != nullptr; }
-};
-
 struct CudaEvent
 {
     cudaEvent_t handle = nullptr;
@@ -251,6 +216,8 @@ void* ensure_cudnn_conv_workspace(size_t min_bytes);
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
 
+const void* bias_for_gemm_bf16(const TensorView& bias);
+
 void run_lt_matmul_cached(
     int m, int n, int k,
     cublasOperation_t transA,
@@ -260,13 +227,6 @@ void run_lt_matmul_cached(
     const void* bias_pointer,
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F);
-
-void gemm_cuda(cublasOperation_t transa, cublasOperation_t transb,
-               int m, int n, int k,
-               const void* A, cudaDataType_t Atype, int lda,
-               const void* B, cudaDataType_t Btype, int ldb,
-               void* C, cudaDataType_t Ctype, int ldc,
-               float alpha = 1.0f, float beta = 0.0f);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int m, int n, int k,

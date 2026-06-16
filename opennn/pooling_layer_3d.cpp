@@ -7,12 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_types.h"
-#include "tensor_operations.h"
 #include "pooling_layer_3d.h"
-#include "loss.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

@@ -28,8 +28,6 @@ public:
 
     void set_batch_size(const Index);
 
-    Index get_samples_number() const;
-
     void set_initial_learning_rate(const float);
     void set_initial_decay(const float);
     void set_momentum(const float);

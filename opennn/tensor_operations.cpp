@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_operations.h"
+#include "cpu_math_backend.h"
 #include "device_backend.h"
 #include "random_utilities.h"
 #include "profiler.h"
@@ -17,11 +18,12 @@ namespace opennn
 const EnumMap<ActivationFunction>& activation_function_map()
 {
     static const vector<pair<ActivationFunction, string>> entries = {
-        {ActivationFunction::Identity, "Identity"},
-        {ActivationFunction::Sigmoid,  "Sigmoid"},
-        {ActivationFunction::Tanh,     "Tanh"},
-        {ActivationFunction::ReLU,     "ReLU"},
-        {ActivationFunction::Softmax,  "Softmax"}
+        {ActivationFunction::Identity,  "Identity"},
+        {ActivationFunction::Sigmoid,   "Sigmoid"},
+        {ActivationFunction::Tanh,      "Tanh"},
+        {ActivationFunction::ReLU,      "ReLU"},
+        {ActivationFunction::Softmax,   "Softmax"},
+        {ActivationFunction::LeakyReLU, "LeakyReLU"}
     };
     static const EnumMap<ActivationFunction> instance{entries};
     return instance;
@@ -99,7 +101,7 @@ static void scale_cpu(const TensorView& input,
                const TensorView& means, const TensorView& standard_deviations,
                const TensorView& scalers,
                float min_range, float max_range,
-               TensorView& output)
+               TensorView& output, bool inverse)
 {
     const Index features = scalers.size();
     if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
@@ -125,35 +127,47 @@ static void scale_cpu(const TensorView& input,
         switch (code)
         {
         case 1:
-        {
-            const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
-            if (range < EPSILON)
-                column.setZero();
+            if (!inverse)
+            {
+                const float range = maximums_vector(feature_index) - minimums_vector(feature_index);
+                if (range < EPSILON)
+                    column.setZero();
+                else
+                    column = (column - minimums_vector(feature_index)) / range
+                           * (max_range - min_range) + min_range;
+            }
             else
-                column = (column - minimums_vector(feature_index)) / range
-                       * (max_range - min_range) + min_range;
+                column = (column - min_range) / (max_range - min_range)
+                       * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
             break;
-        }
         case 2:
-        {
-            const float sd = standard_deviations_vector(feature_index);
-            if (sd > EPSILON)
-                column = (column - means_vector(feature_index)) / sd;
+            if (!inverse)
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                if (sd > EPSILON)
+                    column = (column - means_vector(feature_index)) / sd;
+                else
+                    column.setZero();
+            }
             else
-                column.setZero();
+                column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
             break;
-        }
         case 3:
-        {
-            const float sd = standard_deviations_vector(feature_index);
-            column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
+            if (!inverse)
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
+            }
+            else
+                column *= standard_deviations_vector(feature_index);
             break;
-        }
         case 4:
-            column = column.log();
+            if (inverse) column = column.exp();
+            else         column = column.log();
             break;
         case 5:
-            column /= 255.0f;
+            if (inverse) column *= 255.0f;
+            else         column /= 255.0f;
             break;
         default:
             break;
@@ -175,59 +189,7 @@ void scale(const TensorView& input,
         return;
     }
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output);
-}
-
-static void unscale_cpu(const TensorView& input,
-                 const TensorView& minimums, const TensorView& maximums,
-                 const TensorView& means, const TensorView& standard_deviations,
-                 const TensorView& scalers,
-                 float min_range, float max_range,
-                 TensorView& output)
-{
-    const Index features = scalers.size();
-    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
-
-    const MatrixMap input_matrix = input.as_flat_matrix();
-    const VectorMap minimums_vector = minimums.as_vector();
-    const VectorMap maximums_vector = maximums.as_vector();
-    const VectorMap means_vector  = means.as_vector();
-    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
-    const VectorMap scalers_vector   = scalers.as_vector();
-
-    MatrixMap output_matrix = output.as_flat_matrix();
-
-    output_matrix.noalias() = input_matrix;
-
-    const Index cols = output_matrix.cols();
-    for (Index col = 0; col < cols; ++col)
-    {
-        const Index feature_index = col % features;
-        const int code = static_cast<int>(scalers_vector(feature_index));
-        auto column = output_matrix.col(col).array();
-
-        switch (code)
-        {
-        case 1:
-            column = (column - min_range) / (max_range - min_range)
-                   * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
-            break;
-        case 2:
-            column = means_vector(feature_index) + column * standard_deviations_vector(feature_index);
-            break;
-        case 3:
-            column *= standard_deviations_vector(feature_index);
-            break;
-        case 4:
-            column = column.exp();
-            break;
-        case 5:
-            column *= 255.0f;
-            break;
-        default:
-            break;
-        }
-    }
+              min_range, max_range, output, false);
 }
 
 void unscale(const TensorView& input,
@@ -244,19 +206,21 @@ void unscale(const TensorView& input,
         return;
     }
     
-    unscale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-                min_range, max_range, output);
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, true);
 }
 
 static void copy_cpu(const TensorView& source, TensorView& destination)
 {
-    memcpy(destination.data, source.data, source.size() * sizeof(float));
+    memcpy(destination.data, source.data, source.byte_size());
 }
 
 void copy(const TensorView& source, TensorView& destination)
 {
     throw_if(source.size() != destination.size(),
              "Tensor sizes mismatch in copy operation.");
+    throw_if(source.type != destination.type,
+             "Tensor dtypes mismatch in copy operation.");
 
     if (source.is_cuda()) { copy_gpu(source, destination); return; }
     copy_cpu(source, destination);
@@ -343,6 +307,8 @@ void softmax(TensorView& output)
 
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
+    if (cpu_math::try_activation_forward(output, function)) return;
+
     auto a = output.as_vector().array();
 
     using enum ActivationFunction;
@@ -359,6 +325,9 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
         return;
     case ReLU:
         a = a.cwiseMax(0.0f);
+        return;
+    case LeakyReLU:
+        a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
         return;
     }
 }
@@ -382,6 +351,11 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         return;
     case ReLU:
         d = (y > 0.0f).select(d, 0.0f);
+        return;
+    case LeakyReLU:
+        // Negative-side output is slope * pre-activation, so sign(y) == sign(x)
+        // for any positive slope — we can recover the gate from y alone.
+        d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
     }
 }
@@ -407,26 +381,29 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 
 static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
 {
-    const Index n = output.size();
-    mask.resize_bytes(n * Index(sizeof(float)), Device::CPU);
+    const Index element_count = output.size();
+    mask.resize_bytes(element_count * Index(sizeof(float)), Device::CPU);
+    if (element_count == 0) return;
 
-    const float scale = 1.0f / (1.0f - rate);
-    float* data = output.as<float>();
-    float* mask_data = mask.as<float>();
+    const float keep_scale = 1.0f / (1.0f - rate);
+    float* output_data = output.as<float>();
+    float* mask_values = mask.as<float>();
+
+    set_random_uniform(VectorMap(mask_values, element_count), 0.0f, 1.0f);
 
     #pragma omp parallel for
-    for (Index i = 0; i < n; ++i)
+    for (Index i = 0; i < element_count; ++i)
     {
-        const float mask_value = random_uniform(0.0f, 1.0f) < rate ? 0.0f : scale;
-        mask_data[i] = mask_value;
-        data[i] *= mask_value;
+        const float keep_value = mask_values[i] < rate ? 0.0f : keep_scale;
+        mask_values[i] = keep_value;
+        output_data[i] *= keep_value;
     }
 }
 
 static void dropout_backward_cpu(TensorView& delta, const Buffer& mask)
 {
-    const Index n = delta.size();
-    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), n);
+    const Index element_count = delta.size();
+    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), element_count);
     delta.as_vector().array() *= mask_view.array();
 }
 
@@ -447,10 +424,14 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
                         TensorView& output, cublasLtEpilogue_t epilogue)
 {
+    const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+
+    if (cpu_math::try_linear_forward(input, weights, bias, output, fuse_relu)) return;
+
     output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + bias.as_vector().transpose();
 
-    if (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
+    if (fuse_relu)
         output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);
 }
 
@@ -519,7 +500,11 @@ static void layer_norm_forward_cpu(const TensorView& input, const TensorView& ga
         const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
-        const float std_val = sqrt(sum_sq * inv_D - mean * mean + EPSILON);
+        // Variance via E[x^2] - E[x]^2 can go slightly negative from catastrophic
+        // cancellation when activations are large (high embedding dimension); clamp
+        // to >= 0 before the sqrt so the layer norm cannot produce NaN.
+        const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
+        const float std_val = sqrt(variance + EPSILON);
         const float inv_std = 1.0f / std_val;
 
         means_data[row] = mean;
@@ -589,6 +574,32 @@ void layer_norm_forward(const TensorView& input, const TensorView& gamma, const 
     layer_norm_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
+// Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
+// (the residual-stream value the backward needs) and LayerNorm(sum) to output.
+void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+                            const TensorView& gamma, const TensorView& beta,
+                            TensorView& means, TensorView& standard_deviations,
+                            TensorView& normalized, TensorView& sum, TensorView& output)
+{
+    if (input.is_cuda())
+    {
+        const int rows = to_int(input.size() / input.shape.back());
+        const int cols = to_int(input.shape.back());
+        output.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            layernorm_add_forward_cuda<T>(rows, cols,
+                                          input.as<T>(), residual.as<T>(),
+                                          sum.as<T>(), output.as<T>(),
+                                          means.as<float>(), standard_deviations.as<float>(),
+                                          gamma.as<float>(), beta.as<float>(), EPSILON);
+        });
+        return;
+    }
+    // CPU: add then normalize (the add result goes into `sum`).
+    add(input, residual, sum);
+    layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
+}
+
 void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,
@@ -644,7 +655,7 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
         if (scale_embedding)
             output_mat.row(i) *= sqrt(to_type(embedding_dimension));
 
-        if (add_positional_encoding && token_id > 0)
+        if (add_positional_encoding)
             output_mat.row(i) += positional_encoding.as_matrix().row(i % sequence_length);
     }
 }
@@ -988,21 +999,13 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const long long stride_b = rows_b * cols_b;
     const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
 
-    if (batch_count == 1)
-        gemm_cuda(operation_b, operation_a,
-                  output_columns, output_rows, inner_dimension,
-                  input_b.data, input_b.cuda_dtype(), cols_b,
-                  input_a.data, input_a.cuda_dtype(), cols_a,
-                  output.data,  output.cuda_dtype(),  output_columns,
-                  alpha, beta);
-    else
-        gemm_strided_batched_cuda(operation_b, operation_a,
-                                  output_columns, output_rows, inner_dimension,
-                                  input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
-                                  input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
-                                  output.data,  output.cuda_dtype(), output_columns, stride_output,
-                                  batch_count,
-                                  alpha, beta);
+    gemm_strided_batched_cuda(operation_b, operation_a,
+                              output_columns, output_rows, inner_dimension,
+                              input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
+                              input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
+                              output.data,  output.cuda_dtype(), output_columns, stride_output,
+                              batch_count,
+                              alpha, beta);
 }
 
 static void softmax_gpu(TensorView& output)
@@ -1038,27 +1041,27 @@ static void activation_backward_gpu(const TensorView& outputs, TensorView& delta
 
 static void dropout_forward_gpu(TensorView& output, Buffer& mask, float rate)
 {
-    const Index n = output.size();
-    if (mask.device_type != Device::CUDA || mask.bytes < n)
-        mask.resize_bytes(n, Device::CUDA);
+    const Index element_count = output.size();
+    if (mask.device_type != Device::CUDA || mask.bytes < element_count)
+        mask.resize_bytes(element_count, Device::CUDA);
 
     const unsigned long long seed = static_cast<unsigned long long>(random_integer(0, 1 << 30));
 
     output.dispatch([&](auto tag)
     {
         using T = decltype(tag);
-        dropout_forward_cuda<T>(n, output.as<T>(), mask.as<uint8_t>(), rate, seed);
+        dropout_forward_cuda<T>(element_count, output.as<T>(), mask.as<uint8_t>(), rate, seed);
     });
 }
 
 static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float rate)
 {
-    const Index n = delta.size();
+    const Index element_count = delta.size();
 
     delta.dispatch([&](auto tag)
     {
         using T = decltype(tag);
-        dropout_backward_cuda<T>(n, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
+        dropout_backward_cuda<T>(element_count, delta.as<T>(), delta.as<T>(), mask.as<uint8_t>(), rate);
     });
 }
 
@@ -1072,12 +1075,77 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    run_lt_matmul_cached(
-        output_columns, total_rows, input_columns,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        epilogue,
-        weights.data, input_for_gemm, output.data, bias.data,
-        io_type, io_type);
+    // cuBLASLt's fused BIAS epilogue requires the bias data type to match the
+    // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
+    // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
+    // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
+    const void* bias_for_gemm = (bias.data && output.type == Type::BF16 && bias.type == Type::FP32)
+        ? bias_for_gemm_bf16(bias)
+        : bias.data;
+
+    try
+    {
+        run_lt_matmul_cached(
+            output_columns, total_rows, input_columns,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            epilogue,
+            weights.data, input_for_gemm, output.data, bias_for_gemm,
+            io_type, io_type);
+    }
+    catch (const runtime_error& e)
+    {
+        const bool unsupported_bf16_lt = output.type == Type::BF16
+                                      && (epilogue == CUBLASLT_EPILOGUE_BIAS
+                                          || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
+                                      && string(e.what()).find("CuBLAS Error: 15") != string::npos;
+
+        if (!unsupported_bf16_lt)
+            throw;
+
+        cudaStream_t stream = Backend::get_compute_stream();
+
+        VectorR input_host(input.size());
+        VectorR weights_host(weights.size());
+        VectorR bias_host(bias.size());
+        VectorR output_host(output.size());
+
+        copy_device_to_host_float(input.data, input.type, input.size(), input_host.data(), stream);
+        copy_device_to_host_float(weights.data, weights.type, weights.size(), weights_host.data(), stream);
+        if (bias.data)
+            copy_device_to_host_float(bias.data, bias.type, bias.size(), bias_host.data(), stream);
+
+        TensorView input_cpu(input_host.data(), input.shape, Type::FP32, Device::CPU);
+        TensorView weights_cpu(weights_host.data(), weights.shape, Type::FP32, Device::CPU);
+        TensorView bias_cpu(bias_host.data(), bias.shape, Type::FP32, Device::CPU);
+        TensorView output_cpu(output_host.data(), output.shape, Type::FP32, Device::CPU);
+
+        linear_forward_cpu(input_cpu, weights_cpu, bias_cpu, output_cpu, epilogue);
+
+        if (output.type == Type::FP32)
+        {
+            device::copy_async(output.data,
+                               output_host.data(),
+                               output.byte_size(),
+                               device::CopyKind::HostToDevice,
+                               stream);
+        }
+        else
+        {
+            Buffer output_fp32(Device::CUDA);
+            output_fp32.resize_bytes(output.size() * Index(sizeof(float)), Device::CUDA);
+            device::copy_async(output_fp32.data,
+                               output_host.data(),
+                               output_fp32.bytes,
+                               device::CopyKind::HostToDevice,
+                               stream);
+            cast_fp32_to_bf16_cuda(output.size(),
+                                   output_fp32.as<float>(),
+                                   output.as<bfloat16>(),
+                                   stream);
+        }
+
+        device::synchronize(stream);
+    }
 }
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,

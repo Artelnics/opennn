@@ -26,8 +26,7 @@ void TabularDataset::set(const Index new_samples_number,
     input_shape = new_input_shape;
 
     const Index new_inputs_number = new_input_shape.size();
-    const Index target_size = new_target_shape.size();
-    const Index new_targets_number = (target_size == 2) ? 1 : target_size;
+    const Index new_targets_number = new_target_shape.size();
     const Index new_features_number = new_inputs_number + new_targets_number;
 
     target_shape = { new_targets_number };
@@ -70,11 +69,10 @@ MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indice
     return this_data;
 }
 
-VectorR TabularDataset::get_sample_data(Index index) const { return data.row(index); }
-
 MatrixR TabularDataset::get_variable_data(Index variable_index) const
 {
-    const Index start_column = get_feature_indices(variable_index)[0];
+    const Index start_column = transform_reduce(variables.begin(), variables.begin() + variable_index,
+        Index(0), plus<>{}, [](const Variable& v) { return v.get_feature_count(); });
     return data.block(0, start_column, data.rows(), variables[variable_index].get_feature_count());
 }
 
@@ -198,11 +196,7 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 {
     Dataset::set_storage_mode(new_storage_mode);
 
-    if (new_storage_mode == StorageMode::BinaryFile)
-    {
-        data.resize(0, 0);
-    }
-    else
+    if (new_storage_mode != StorageMode::BinaryFile)
     {
         binary_rows_number = 0;
         binary_columns_number = 0;
@@ -444,76 +438,6 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
     return unused_variables;
 }
 
-vector<string> TabularDataset::unuse_collinear_variables(const float maximum_correlation)
-{
-    const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const Index input_variables_number = input_variable_indices.size();
-
-    vector<Index> high_corr_counts(input_variables_number, 0);
-    vector<float> mean_abs_corr(input_variables_number, 0.0);
-    vector<bool> to_be_removed(input_variables_number, false);
-
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        float sum_of_abs_corr = 0.0;
-        for (Index j = 0; j < input_variables_number; ++j)
-        {
-            if (i == j) continue;
-
-            const float abs_r = abs(correlations(i, j).coefficient);
-            if (!isnan(abs_r))
-            {
-                if (abs_r >= maximum_correlation)
-                    high_corr_counts[i]++;
-
-                sum_of_abs_corr += abs_r;
-            }
-        }
-
-        if (input_variables_number > 1)
-            mean_abs_corr[i] = sum_of_abs_corr / (input_variables_number - 1);
-    }
-
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        for (Index j = i + 1; j < input_variables_number; ++j)
-        {
-
-            if (to_be_removed[i] || to_be_removed[j])
-                continue;
-
-            const float r = correlations(i, j).coefficient;
-
-            if (!isnan(r) && abs(r) >= maximum_correlation)
-            {
-                const Index index_to_flag_for_removal =
-                    (high_corr_counts[i] > high_corr_counts[j]) ? i :
-                        (high_corr_counts[j] > high_corr_counts[i]) ? j :
-                        (mean_abs_corr[i] >= mean_abs_corr[j]) ? i : j;
-
-                to_be_removed[index_to_flag_for_removal] = true;
-            }
-        }
-    }
-
-    vector<string> unused_variables;
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        if (!to_be_removed[i]) continue;
-
-        Variable& variable = variables[input_variable_indices[i]];
-
-        if (variable.role != VariableRole::None)
-        {
-            variable.set_role("None");
-            unused_variables.push_back(variable.name);
-        }
-    }
-
-    return unused_variables;
-}
-
 vector<Histogram> TabularDataset::calculate_variable_distributions(const Index bins_number) const
 {
     const Index used_variables_number = get_used_variables_number();
@@ -635,45 +559,6 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives() const
     return descriptives(data);
 }
 
-vector<Index> TabularDataset::filter_used_samples_by_column(Index column_index, bool positive) const
-{
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-
-    vector<Index> filtered;
-    filtered.reserve(used_sample_indices.size());
-
-    for (const Index sample_index : used_sample_indices)
-    {
-        const bool match = positive
-            ? abs(data(sample_index, column_index) - 1.0f) < EPSILON
-            : data(sample_index, column_index) < EPSILON;
-
-        if (match)
-            filtered.push_back(sample_index);
-    }
-
-    return filtered;
-}
-
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
-{
-    const Index target_index = get_feature_indices("Target")[0];
-
-    return descriptives(data, filter_used_samples_by_column(target_index, true), get_feature_indices("Input"));
-}
-
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_samples() const
-{
-    const Index target_index = get_feature_indices("Target")[0];
-
-    return descriptives(data, filter_used_samples_by_column(target_index, false), get_feature_indices("Input"));
-}
-
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(const Index class_index) const
-{
-    return descriptives(data, filter_used_samples_by_column(class_index, true), get_feature_indices("Input"));
-}
-
 vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string& variable_role) const
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -721,11 +606,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_pearson_c
     return calculate_input_target_variable_correlations(correlation, "pearson");
 }
 
-Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_spearman_correlations() const
-{
-    return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
-}
-
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     Correlation::Method method,
@@ -769,11 +649,6 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_pearson_correlations() const
 {
     return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson");
-}
-
-Tensor<Correlation, 2> TabularDataset::calculate_input_variable_spearman_correlations() const
-{
-    return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
 }
 
 VectorI TabularDataset::calculate_correlations_rank() const
@@ -839,6 +714,7 @@ vector<Descriptives> TabularDataset::scale_data()
 
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
 
+    #pragma omp parallel for
     for (Index i = 0; i < features_number; ++i)
         apply_scaler(i, scaler_method_to_string(variables[get_variable_index(i)].scaler), feature_descriptives[i], false);
 
@@ -851,7 +727,8 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
     const vector<string> scalers = get_feature_scalers(variable_role);
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
 
-    for (size_t i = 0; i < feature_indices.size(); ++i)
+    #pragma omp parallel for
+    for (Index i = 0; i < Index(feature_indices.size()); ++i)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], false);
 
     return feature_descriptives;
@@ -863,7 +740,8 @@ void TabularDataset::unscale_features(const string& variable_role,
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
-    for (size_t i = 0; i < feature_indices.size(); ++i)
+    #pragma omp parallel for
+    for (Index i = 0; i < Index(feature_indices.size()); ++i)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 
@@ -924,20 +802,10 @@ VectorI TabularDataset::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        const Index target_index = target_feature_indices[0];
+        const auto target_column = data.col(target_feature_indices[0]).head(samples_number).array();
 
-        Index positives = 0;
-        Index negatives = 0;
-
-        for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
-        {
-            const float value = data(sample_index, target_index);
-            if (!isnan(value))
-                (value < 0.5f) ? negatives++ : positives++;
-        }
-
-        class_distribution(0) = negatives;
-        class_distribution(1) = positives;
+        class_distribution(0) = (target_column < 0.5f).count();
+        class_distribution(1) = (target_column >= 0.5f).count();
     }
     else
     {
@@ -1051,10 +919,7 @@ void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
     vector<Index> flat_outliers;
-    const size_t outliers_count = static_cast<size_t>(transform_reduce(
-        outliers_indices.begin(), outliers_indices.end(), Index(0), plus<>{},
-        [](const vector<Index>& indices) { return static_cast<Index>(indices.size()); }));
-    flat_outliers.reserve(outliers_count);
+    flat_outliers.reserve(outliers_indices[0].size() + outliers_indices[1].size());
 
     for (const auto& per_feature : outliers_indices)
         flat_outliers.insert(flat_outliers.end(), per_feature.begin(), per_feature.end());
@@ -1208,7 +1073,7 @@ DateFormat infer_dataset_date_format(const vector<Variable>& variables,
 
             const string_view token = row[token_index];
 
-            if (token.empty() || token == missing_values_label)
+            if (is_missing_token(token, missing_values_label))
                 continue;
 
             cmatch date_parts;
@@ -1261,7 +1126,7 @@ void TabularDataset::read_csv()
 
     const Index samples_number = lines.size();
 
-    auto is_missing = [&](string_view t) { return t.empty() || t == missing_values_label; };
+    auto is_missing = [&](string_view t) { return is_missing_token(t, missing_values_label); };
 
     if (!has_sample_ids && samples_number > 0)
     {
@@ -1316,13 +1181,7 @@ void TabularDataset::read_csv()
     variables.resize(variables_number);
 
     if (has_header)
-    {
-        vector<string> names;
-        names.reserve(variables_number);
-        for (Index i = 0; i < variables_number; ++i)
-            names.emplace_back(header_tokens[i + id_offset]);
-        set_variable_names(names);
-    }
+        set_variable_names(vector<string>(header_tokens.begin() + id_offset, header_tokens.end()));
     else
         set_default_variable_names();
 
@@ -1455,7 +1314,7 @@ void TabularDataset::set_missing_values_method(const string& new_missing_values_
 bool TabularDataset::has_missing_values(const vector<string_view>& row) const
 {
     return ranges::any_of(row,
-                          [&](string_view t) { return t.empty() || t == missing_values_label; });
+                          [&](string_view t) { return is_missing_token(t, missing_values_label); });
 }
 
 void TabularDataset::missing_values_to_JSON(JsonWriter &printer) const
@@ -1696,7 +1555,7 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
             const string_view token = tokens[token_index];
 
-            if (token.empty() || token == missing_values_label) continue;
+            if (is_missing_token(token, missing_values_label)) continue;
 
             if (variable.is_categorical()) break;
 
@@ -1731,8 +1590,7 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
         {
             if (!variables[col_index].is_categorical()) continue;
             const size_t token_index = col_index + id_offset;
-            if (token_index < tokens.size() && !tokens[token_index].empty()
-                && tokens[token_index] != missing_values_label)
+            if (token_index < tokens.size() && !is_missing_token(tokens[token_index], missing_values_label))
                 unique_categories[col_index].emplace(tokens[token_index]);
         }
     }

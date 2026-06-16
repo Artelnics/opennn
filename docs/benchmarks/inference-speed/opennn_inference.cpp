@@ -2,8 +2,8 @@
 //
 //   Mirrors the training-speed benchmark's model so the two read together: a
 //   2-layer MLP (F -> F -> 1, tanh then linear) on the Rosenbrock dataset. Here
-//   the network only does inference: calculate_outputs() runs a pure forward
-//   pass (is_training=false, so dropout is skipped and no gradients are built).
+//   the network only does inference: forward_propagate(..., is_training=false)
+//   runs a pure forward pass (dropout is skipped and no gradients are built).
 //
 //   Reports median seconds per full pass over the dataset, samples/second
 //   (throughput), and milliseconds per batch (latency).
@@ -17,7 +17,9 @@
 #include <vector>
 
 #include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
+#include "../../../opennn/neural_network.h"
+#include "../../../opennn/dense_layer.h"
+#include "../../../opennn/forward_propagation.h"
 #include "../../../opennn/configuration.h"
 #include "../../../opennn/random_utilities.h"
 
@@ -52,24 +54,41 @@ int main(int argc, char* argv[])
         std::cout << "samples=" << samples << " features=" << features
                   << " batch=" << batch << " reps=" << reps << "\n";
 
-        ApproximationNetwork network(dataset.get_input_shape(),
-                                     {features},
-                                     dataset.get_target_shape());
+        NeuralNetwork network;
+        network.add_layer(make_unique<opennn::Dense>(dataset.get_input_shape(),
+                                                     Shape{features},
+                                                     "Tanh",
+                                                     false,
+                                                     "hidden_layer"));
+        network.add_layer(make_unique<opennn::Dense>(Shape{features},
+                                                     dataset.get_target_shape(),
+                                                     "Identity",
+                                                     false,
+                                                     "output_layer"));
+        network.compile();
+        network.set_parameters_glorot();
 
-        const std::vector<Index> starts = [&]
+        ForwardPropagation forward_propagation(batch, &network);
+
+        const std::vector<TensorView> batches = [&]
         {
-            std::vector<Index> s;
-            for (Index i = 0; i + batch <= samples; i += batch) s.push_back(i);
-            return s;
+            std::vector<TensorView> views;
+            views.reserve(size_t(samples / batch));
+            for (Index i = 0; i + batch <= samples; i += batch)
+            {
+                float* batch_data = const_cast<float*>(data.data()) + i * inputs_number;
+                views.emplace_back(batch_data, Shape{batch, inputs_number}, Type::FP32);
+            }
+            return views;
         }();
 
         double sink = 0.0;
         auto run_pass = [&]
         {
-            for (const Index s : starts)
+            for (const TensorView& inputs : batches)
             {
-                const MatrixR inputs = data.middleRows(s, batch);
-                const MatrixR outputs = network.calculate_outputs(inputs);
+                network.forward_propagate({inputs}, forward_propagation, false);
+                const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
                 sink += double(outputs(0, 0));  // consume the result so it isn't optimized away
             }
         };
@@ -78,7 +97,7 @@ int main(int argc, char* argv[])
         run_pass();
         run_pass();
 
-        const Index batched_samples = Index(starts.size()) * batch;
+        const Index batched_samples = Index(batches.size()) * batch;
         std::vector<double> times;
         times.reserve(reps);
         for (Index r = 0; r < reps; ++r)
@@ -92,7 +111,7 @@ int main(int argc, char* argv[])
         std::sort(times.begin(), times.end());
         const double median = times[times.size() / 2];
         const double samples_per_sec = double(batched_samples) / median;
-        const double ms_per_batch = median / double(starts.size()) * 1000.0;
+        const double ms_per_batch = median / double(batches.size()) * 1000.0;
 
         std::cerr << "checksum=" << sink << "\n";  // keep run_pass from being elided
 

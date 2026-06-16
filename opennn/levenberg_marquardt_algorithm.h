@@ -7,16 +7,13 @@
 
 #pragma once
 
-#include "layer.h"
-#include "batch.h"
-#include "dense_layer.h"
 #include "optimizer.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
 
 class NeuralNetwork;
+class Dense;
 struct ForwardPropagation;
 
 struct BackPropagationLM
@@ -27,9 +24,6 @@ struct BackPropagationLM
     void set(const Index = 0, Loss* = nullptr);
 
     Index samples_number = 0;
-
-    VectorR output_deltas;
-    Shape output_delta_dimensions;
 
     Loss* loss_pointer = nullptr;
 
@@ -84,12 +78,6 @@ private:
    void compute_jacobian(const Batch& batch,
                          const ForwardPropagation& forward_propagation,
                          BackPropagationLM& back_propagation_lm);
-
-   void insert_dense_jacobian(const Dense* layer,
-                              const ForwardPropagation& forward_propagation,
-                              Index layer_index,
-                              Index parameter_offset,
-                              MatrixR& jacobian);
 
    float initial_damping_parameter = 0.0f;
 

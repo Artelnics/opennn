@@ -27,13 +27,11 @@ public:
     Shape get_output_shape() const override;
 
     Index get_input_features() const { return input_shape.empty() ? 0 : input_shape.back(); }
-    Index get_sequence_length() const { return (input_shape.rank == 2) ? input_shape[0] : Index(1); }
 
     const ActivationOp::Function& get_activation_function() const { return activation.function; }
     ActivationOp::Function get_output_activation() const override { return activation.function; }
 
     bool get_batch_normalization() const { return batch_norm.active(); }
-    float get_momentum() const { return batch_norm.momentum; }
 
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
 
@@ -59,6 +57,7 @@ public:
     void set_momentum(float new_momentum);
 
     void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
     void from_JSON(const JsonDocument&) override;
 
     string write_expression(const vector<string>& input_names,

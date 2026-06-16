@@ -99,13 +99,23 @@ public:
 
     enum class HeadStyle { Single, FPN };
 
+    // ReLU = the activation used since Phase 1 — preserves saved-weight effect.
+    // LeakyReLU = Darknet/YOLO-v3 convention (slope 0.1) — applied uniformly
+    // to every conv in the backbone (Vgg or DarknetTiny stages, residual
+    // blocks, FPN lateral convs). The Detection layer's class activation and
+    // the final logits stay as-is. Switching this changes forward outputs even
+    // with identical parameters, so saved Phase 1/2 weights should not be
+    // loaded across this flag.
+    enum class BodyActivation { ReLU, LeakyReLU };
+
     YoloNetwork(const Shape& input_shape,
                 Index classes_number,
                 const vector<array<float, 2>>& anchors,
                 Index grid_size = 13,
                 Backbone backbone = Backbone::Vgg,
                 ClassActivation class_activation = ClassActivation::Softmax,
-                HeadStyle head_style = HeadStyle::Single);
+                HeadStyle head_style = HeadStyle::Single,
+                BodyActivation body_activation = BodyActivation::ReLU);
 };
 
 class TextClassificationNetwork : public NeuralNetwork

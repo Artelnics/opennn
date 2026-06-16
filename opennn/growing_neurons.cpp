@@ -12,8 +12,6 @@
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "string_utilities.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -59,8 +57,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
 
     Index validation_failures = 0;
-
-    bool end = false;
 
     time_t beginning_time;
     time_t current_time;
@@ -146,8 +142,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         elapsed_time = float(difftime(current_time,beginning_time));
 
 
-        end = true;
-
         if (elapsed_time >= maximum_time)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
@@ -168,12 +162,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             if (display) cout << "Epoch " << epoch << "\nMaximum number of neurons reached: " << neurons_number << "\n";
             neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumNeurons;
         }
-        else
-        {
-            end = false;
-        }
 
-        if (end)
+        if (neuron_selection_results.stopping_condition)
         {
             neuron_selection_results.elapsed_time = get_time(elapsed_time);
 

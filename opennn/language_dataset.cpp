@@ -8,7 +8,6 @@
 
 #include "language_dataset.h"
 #include "string_utilities.h"
-#include "random_utilities.h"
 #include "tensor_types.h"
 #include "io_utilities.h"
 
@@ -16,64 +15,6 @@
 
 namespace opennn
 {
-
-namespace {
-
-#pragma pack(push, 1)
-struct LangCacheHeader
-{
-    char     magic[8];
-    uint32_t version;
-    uint64_t num_samples;
-    uint32_t input_max_len;
-    uint32_t target_max_len;
-    uint8_t  has_decoder;
-    uint8_t  pad[35];
-};
-#pragma pack(pop)
-static_assert(sizeof(LangCacheHeader) == 64, "LangCacheHeader must be 64 bytes");
-
-constexpr uint32_t LANG_CACHE_VERSION = 1;
-constexpr const char LANG_CACHE_MAGIC[8] = {'O','P','E','N','N','N','T','K'};
-
-}
-
-LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Dataset()
-{
-    data_path = new_data_path;
-    separator = Dataset::Separator::Tab;
-    storage_mode = StorageMode::BinaryFile;
-
-    if (!data_path.empty())
-        read_txt();
-}
-
-void LanguageDataset::set_storage_mode(StorageMode new_storage_mode)
-{
-    Dataset::set_storage_mode(new_storage_mode);
-
-    if (new_storage_mode == StorageMode::BinaryFile)
-        data.resize(0, 0);
-}
-
-Index LanguageDataset::get_samples_number() const
-{
-    return storage_mode == StorageMode::Matrix
-        ? Index(data.rows())
-        : Index(offsets_table.size());
-}
-
-LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
-                                 Index new_maximum_vocabulary_size) : Dataset()
-{
-    data_path = new_data_path;
-    separator = Dataset::Separator::Tab;
-    maximum_vocabulary_size = new_maximum_vocabulary_size;
-    storage_mode = StorageMode::BinaryFile;
-
-    if (!data_path.empty())
-        read_txt();
-}
 
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
                                  Index new_maximum_vocabulary_size,
@@ -98,21 +39,19 @@ VectorI LanguageDataset::calculate_target_distribution() const
     Index positives = 0;
     Index negatives = 0;
 
+    const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
+
     for (Index sample = 0; sample < samples_number; ++sample)
     {
         int32_t token = 0;
 
         if (storage_mode == StorageMode::Matrix)
-        {
             token = int32_t(data(sample, maximum_input_sequence_length));
-        }
         else
-        {
-            const auto& offsets = offsets_table[size_t(sample)];
-            if (offsets[3] < 1) continue;
             cache_reader.read_at(&token, sizeof(token),
-                                 cache_data_offset + uint64_t(offsets[2]) * sizeof(int32_t));
-        }
+                                 (uint64_t(sample) * record_tokens
+                                  + uint64_t(maximum_input_sequence_length)) * sizeof(int32_t));
+
         (token < 1) ? negatives++ : positives++;
     }
 
@@ -158,13 +97,13 @@ void LanguageDataset::read_txt()
 {
     cout << "Reading .txt file..." << "\n";
 
-    cache_path = filesystem::path(data_path.string() + ".cache") / "tokens.bin";
+    cache_reader.close();
 
     string buffer;
     vector<vector<string_view>> input_document_tokens;
     vector<vector<string_view>> target_document_tokens;
 
-    load_documents(buffer, input_document_tokens, target_document_tokens, false, true);
+    load_documents(buffer, input_document_tokens, target_document_tokens);
 
     auto get_maximum_size = [](const auto& nested_values) {
         const auto it = ranges::max_element(nested_values,
@@ -178,7 +117,7 @@ void LanguageDataset::read_txt()
     create_vocabulary(target_document_tokens, target_vocabulary);
 
     update_input_vocabulary_map();
-    update_target_vocabulary_maps();
+    update_target_vocabulary_map();
 
     maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
 
@@ -187,74 +126,20 @@ void LanguageDataset::read_txt()
 
     const bool is_single_token_target = (maximum_target_document_tokens == 1);
 
+    maximum_target_sequence_length = is_single_token_target
+        ? (target_vocabulary_size == 6 ? 1 : target_vocabulary_size - 4)
+        : maximum_target_document_tokens + 1;
+
     if (is_single_token_target)
-    {
-        maximum_target_sequence_length = (target_vocabulary_size == 6)
-            ? 1
-            : target_vocabulary_size - 4;
-
-        const Index features_number = maximum_input_sequence_length + maximum_target_sequence_length;
-
-        variables.resize(features_number);
-
-        ranges::for_each(variables | views::take(maximum_input_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Input; });
-
-        ranges::for_each(variables
-                         | views::drop(maximum_input_sequence_length)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Target; });
-
-        if (!variables.empty())
-            variables[0].categories = input_vocabulary;
-
-        for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = format("token_{}", i + 1);
-
-        input_shape = { get_maximum_input_sequence_length() };
-        target_shape = { get_maximum_target_sequence_length() };
         decoder_shape.clear();
-    }
     else
-    {
-        maximum_target_sequence_length = maximum_target_document_tokens + 1;
+        decoder_shape = { maximum_target_sequence_length };
 
-        const Index decoder_offset = maximum_input_sequence_length;
-        const Index target_offset = decoder_offset + maximum_target_sequence_length;
-        const Index features_number = maximum_input_sequence_length
-                                      + 2 * maximum_target_sequence_length;
+    input_shape  = { maximum_input_sequence_length };
+    target_shape = { maximum_target_sequence_length };
 
-        variables.resize(features_number);
-
-        ranges::for_each(variables | views::take(maximum_input_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Input; });
-
-        ranges::for_each(variables
-                         | views::drop(decoder_offset)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Decoder; });
-
-        ranges::for_each(variables
-                         | views::drop(target_offset)
-                         | views::take(maximum_target_sequence_length),
-                         [](Variable& variable) { variable.role = VariableRole::Target; });
-
-        if (!variables.empty())
-            variables[0].categories = input_vocabulary;
-
-        for (Index i = 0; i < maximum_input_sequence_length; ++i)
-            variables[i].name = format("input_token_{}", i + 1);
-
-        for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[decoder_offset + i].name = format("decoder_token_{}", i + 1);
-
-        for (Index i = 0; i < maximum_target_sequence_length; ++i)
-            variables[target_offset + i].name = format("target_token_{}", i + 1);
-
-        input_shape = { get_maximum_input_sequence_length() };
-        decoder_shape = { get_maximum_target_sequence_length() };
-        target_shape = { get_maximum_target_sequence_length() };
-    }
+    variables.resize(maximum_input_sequence_length
+                   + (is_single_token_target ? 1 : 2) * maximum_target_sequence_length);
 
     const bool has_decoder = !decoder_shape.empty();
 
@@ -292,16 +177,30 @@ void LanguageDataset::read_txt()
                     data(i, decoder_offset + 1 + j) = float(tgt[size_t(j)]);
             }
         }
-
-        offsets_table.clear();
-        cache_reader.close();
     }
-    else if (!try_load_binary_cache(samples_number))
+    else
     {
-        vector<vector<Index>> input_indices;
-        vector<vector<Index>> target_indices;
-        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
-        write_binary_cache(input_indices, target_indices, has_decoder);
+        // BinaryFile: fixed-size records of (max_in + max_tgt) int32 tokens per sample, PAD = 0.
+        cache_path = filesystem::path(data_path.string() + ".cache") / "tokens.bin";
+
+        const uintmax_t record_bytes = uintmax_t(maximum_input_sequence_length
+                                               + maximum_target_sequence_length) * sizeof(int32_t);
+
+        const bool cache_valid = filesystem::exists(cache_path)
+            && filesystem::file_size(cache_path) == uintmax_t(samples_number) * record_bytes
+            && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
+
+        if (cache_valid)
+        {
+            cache_reader.open(cache_path);
+        }
+        else
+        {
+            vector<vector<Index>> input_indices;
+            vector<vector<Index>> target_indices;
+            encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
+            write_binary_cache(input_indices, target_indices);
+        }
     }
 
     sample_roles.resize(samples_number);
@@ -349,18 +248,13 @@ unordered_map<string_view, Index> LanguageDataset::create_vocabulary_map(const v
     return vocabulary_map;
 }
 
-void LanguageDataset::update_target_vocabulary_maps()
+void LanguageDataset::update_target_vocabulary_map()
 {
     target_vocabulary_map.clear();
-    target_inverse_vocabulary_map.clear();
     target_vocabulary_map.reserve(target_vocabulary.size());
-    target_inverse_vocabulary_map.reserve(target_vocabulary.size());
 
     for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
-    {
         target_vocabulary_map[target_vocabulary[i]] = i;
-        target_inverse_vocabulary_map[i] = target_vocabulary[i];
-    }
 }
 
 void LanguageDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
@@ -372,14 +266,12 @@ void LanguageDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
 void LanguageDataset::set_target_vocabulary(const vector<string>& new_vocabulary)
 {
     target_vocabulary = new_vocabulary;
-    update_target_vocabulary_maps();
+    update_target_vocabulary_map();
 }
 
 void LanguageDataset::load_documents(string& buffer,
                                      vector<vector<string_view>>& input_documents,
-                                     vector<vector<string_view>>& target_documents,
-                                     bool has_header_line,
-                                     bool strict_field_count) const
+                                     vector<vector<string_view>>& target_documents) const
 {
     ifstream file(data_path, ios::binary | ios::ate);
 
@@ -411,7 +303,7 @@ void LanguageDataset::load_documents(string& buffer,
 
     const string_view buffer_view(buffer);
     size_t line_start = 0;
-    bool header_pending = has_header_line;
+    bool header_pending = has_header;
 
     while (line_start < buffer_view.size())
     {
@@ -428,12 +320,8 @@ void LanguageDataset::load_documents(string& buffer,
 
         const vector<string_view> fields = get_token_views(line, field_separator);
 
-        if (fields.size() != 2)
-        {
-            throw_if(strict_field_count,
-                     "Line must contain two fields: input and target.");
-            continue;
-        }
+        throw_if(fields.size() != 2,
+                 "Line must contain two fields: input and target.");
 
         input_documents.push_back(tokenize_views(fields[0]));
         target_documents.push_back(tokenize_views(fields[1]));
@@ -574,9 +462,13 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
                 throw runtime_error("Unknown target value");
         }
     }
-    else if (maximum_target_sequence_length == 6 && target_vocab_size >= 6)
+    else
     {
+        // One-hot single-token targets: one column per non-reserved vocabulary entry.
         const Index reserved_count = ssize(reserved_tokens);
+
+        throw_if(maximum_target_sequence_length != target_vocab_size - reserved_count,
+                 "Unsupported target encoding: expected one column per target class.");
 
         for (Index sample = 0; sample < samples_number; ++sample)
         {
@@ -595,148 +487,42 @@ void LanguageDataset::encode_streaming(const vector<vector<string_view>>& input_
                 target_indices[sample][col] = 1;
         }
     }
-    else
-    {
-        #pragma omp parallel for
-        for (Index sample = 0; sample < samples_number; ++sample)
-        {
-            const vector<string_view>& tokens = target_document_tokens[sample];
-            vector<Index>& destination = target_indices[sample];
-
-            destination.reserve(tokens.size() + 2);
-            destination.push_back(Index(START_INDEX));
-
-            for (size_t i = 0; i < tokens.size(); ++i)
-            {
-                if (1 + i >= size_t(maximum_target_sequence_length)) break;
-                const auto it = target_vocabulary_map.find(tokens[i]);
-                destination.push_back(it != target_vocabulary_map.end() ? it->second : Index(UNK_INDEX));
-            }
-
-            if (1 + tokens.size() < size_t(maximum_target_sequence_length))
-                destination.push_back(Index(END_INDEX));
-        }
-    }
 }
 
 void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indices,
-                                         const vector<vector<Index>>& target_indices,
-                                         bool has_decoder)
+                                         const vector<vector<Index>>& target_indices)
 {
     const Index samples_number = ssize(input_indices);
-
-    offsets_table.assign(size_t(samples_number), array<int64_t, 4>{0, 0, 0, 0});
-
-    int64_t total_in_tokens = 0;
-    int64_t total_tgt_tokens = 0;
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        offsets_table[size_t(i)][0] = total_in_tokens;
-        offsets_table[size_t(i)][1] = int64_t(input_indices[size_t(i)].size());
-        offsets_table[size_t(i)][2] = total_tgt_tokens;
-        offsets_table[size_t(i)][3] = int64_t(target_indices[size_t(i)].size());
-        total_in_tokens  += int64_t(input_indices[size_t(i)].size());
-        total_tgt_tokens += int64_t(target_indices[size_t(i)].size());
-    }
-
-    for (Index i = 0; i < samples_number; ++i)
-        offsets_table[size_t(i)][2] += total_in_tokens;
-
-    cache_data_offset = sizeof(LangCacheHeader)
-                    + uint64_t(samples_number) * sizeof(array<int64_t, 4>);
-
-    LangCacheHeader header{};
-    memcpy(header.magic, LANG_CACHE_MAGIC, 8);
-    header.version        = LANG_CACHE_VERSION;
-    header.num_samples    = uint64_t(samples_number);
-    header.input_max_len  = uint32_t(maximum_input_sequence_length);
-    header.target_max_len = uint32_t(maximum_target_sequence_length);
-    header.has_decoder    = has_decoder ? uint8_t(1) : uint8_t(0);
+    const Index record_tokens = maximum_input_sequence_length + maximum_target_sequence_length;
 
     filesystem::create_directories(cache_path.parent_path());
     const filesystem::path tmp_path = cache_path.string() + ".tmp";
 
     FileWriter writer;
     writer.open(tmp_path);
-    writer.write(&header, sizeof(header));
-    writer.write(offsets_table.data(), offsets_table.size() * sizeof(array<int64_t, 4>));
 
-    vector<int32_t> chunk;
-    chunk.reserve(8192);
-    for (const auto& v : input_indices)
+    vector<int32_t> record(size_t(record_tokens), 0);
+
+    for (Index i = 0; i < samples_number; ++i)
     {
-        chunk.clear();
-        chunk.reserve(v.size());
-        for (Index t : v) chunk.push_back(int32_t(t));
-        if (!chunk.empty()) writer.write(chunk.data(), chunk.size() * sizeof(int32_t));
+        ranges::fill(record, 0);
+
+        const vector<Index>& in = input_indices[size_t(i)];
+        const Index in_n = min(ssize(in), maximum_input_sequence_length);
+        for (Index j = 0; j < in_n; ++j)
+            record[size_t(j)] = int32_t(in[size_t(j)]);
+
+        const vector<Index>& tgt = target_indices[size_t(i)];
+        const Index tgt_n = min(ssize(tgt), maximum_target_sequence_length);
+        for (Index j = 0; j < tgt_n; ++j)
+            record[size_t(maximum_input_sequence_length + j)] = int32_t(tgt[size_t(j)]);
+
+        writer.write(record.data(), record.size() * sizeof(int32_t));
     }
-    for (const auto& v : target_indices)
-    {
-        chunk.clear();
-        chunk.reserve(v.size());
-        for (Index t : v) chunk.push_back(int32_t(t));
-        if (!chunk.empty()) writer.write(chunk.data(), chunk.size() * sizeof(int32_t));
-    }
+
     writer.finish_with_rename(cache_path);
 
     cache_reader.open(cache_path);
-}
-
-bool LanguageDataset::try_load_binary_cache(Index expected_samples)
-{
-    if (!filesystem::exists(cache_path)) return false;
-
-    try
-    {
-        cache_reader.open(cache_path);
-        const uint64_t file_bytes = cache_reader.file_size();
-        if (file_bytes < sizeof(LangCacheHeader)) { cache_reader.close(); return false; }
-
-        LangCacheHeader header{};
-        cache_reader.read_at(&header, sizeof(header), 0);
-
-        if (memcmp(header.magic, LANG_CACHE_MAGIC, 8) != 0) { cache_reader.close(); return false; }
-        if (header.version != LANG_CACHE_VERSION) { cache_reader.close(); return false; }
-        if (Index(header.num_samples) != expected_samples) { cache_reader.close(); return false; }
-        if (Index(header.input_max_len)  != maximum_input_sequence_length)  { cache_reader.close(); return false; }
-        if (Index(header.target_max_len) != maximum_target_sequence_length) { cache_reader.close(); return false; }
-        if (header.has_decoder != uint8_t(!decoder_shape.empty())) { cache_reader.close(); return false; }
-
-        const uint64_t offsets_bytes = header.num_samples * sizeof(array<int64_t, 4>);
-        if (file_bytes < sizeof(LangCacheHeader) + offsets_bytes) { cache_reader.close(); return false; }
-
-        offsets_table.resize(size_t(header.num_samples));
-        cache_reader.read_at(offsets_table.data(),
-                             offsets_table.size() * sizeof(array<int64_t, 4>),
-                             sizeof(LangCacheHeader));
-        cache_data_offset = sizeof(LangCacheHeader)
-                        + uint64_t(header.num_samples) * sizeof(array<int64_t, 4>);
-
-        int64_t token_count = 0;
-        for (const array<int64_t, 4>& offsets : offsets_table)
-        {
-            if (offsets[0] < 0 || offsets[1] < 0 || offsets[2] < 0 || offsets[3] < 0
-            ||  offsets[0] > numeric_limits<int64_t>::max() - offsets[1]
-            ||  offsets[2] > numeric_limits<int64_t>::max() - offsets[3])
-            {
-                cache_reader.close();
-                return false;
-            }
-
-            token_count = max(token_count, offsets[0] + offsets[1]);
-            token_count = max(token_count, offsets[2] + offsets[3]);
-        }
-
-        const uint64_t expected_bytes = cache_data_offset + uint64_t(token_count) * sizeof(int32_t);
-        if (file_bytes != expected_bytes) { cache_reader.close(); return false; }
-
-        return true;
-    }
-    catch (const exception&)
-    {
-        cache_reader.close();
-        return false;
-    }
 }
 
 void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
@@ -744,7 +530,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
                                      float* output_data,
                                      int contiguous,
                                      Index sequence_length,
-                                     Index offsets_index,
+                                     Index record_offset,
                                      Index shift,
                                      const char* context) const
 {
@@ -755,8 +541,9 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
     }
 
     const Index batch_size = ssize(sample_indices);
-
-    fill_n(output_data, batch_size * sequence_length, 0.0f);
+    const Index samples_number = get_samples_number();
+    const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
+    const Index n = sequence_length - shift;
 
     string omp_error;
 
@@ -768,17 +555,13 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
             if (shift > 0) output_data[i * sequence_length] = START_INDEX;
 
             const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= ssize(offsets_table),
+            throw_if(sample_index < 0 || sample_index >= samples_number,
                      format("LanguageDataset {} sample index is out of range.", context));
-
-            const auto& offsets = offsets_table[size_t(sample_index)];
-            const Index n = min(Index(offsets[size_t(offsets_index + 1)]), sequence_length - shift);
-            if (n <= 0) continue;
 
             thread_local vector<int32_t> buf;
             buf.resize(size_t(n));
             cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                                 cache_data_offset + uint64_t(offsets[size_t(offsets_index)]) * sizeof(int32_t));
+                                 (uint64_t(sample_index) * record_tokens + uint64_t(record_offset)) * sizeof(int32_t));
 
             for (Index j = 0; j < n; ++j)
                 output_data[i * sequence_length + shift + j] = float(buf[size_t(j)]);
@@ -811,7 +594,7 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    int contiguous) const
 {
     fill_sequences(sample_indices, target_indices, target_data, contiguous,
-                   maximum_target_sequence_length, 2, 0, "target");
+                   maximum_target_sequence_length, maximum_input_sequence_length, 0, "target");
 }
 
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
@@ -821,7 +604,7 @@ void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    int contiguous) const
 {
     fill_sequences(sample_indices, decoder_indices, decoder_data, contiguous,
-                   maximum_target_sequence_length, 2, 1, "decoder");
+                   maximum_target_sequence_length, maximum_input_sequence_length, 1, "decoder");
 }
 
 }

@@ -83,17 +83,6 @@ Histogram::Histogram(const VectorR& new_centers,
 {
 }
 
-Histogram::Histogram(const VectorR& new_frequencies,
-                     const VectorR& new_centers,
-                     const VectorR& new_minimums,
-                     const VectorR& new_maximums)
-    : minimums(new_minimums),
-      maximums(new_maximums),
-      centers(new_centers),
-      frequencies(new_frequencies)
-{
-}
-
 Histogram::Histogram(const VectorR& data, Index bins_number)
 {
     const float data_maximum = maximum(data);
@@ -118,58 +107,6 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
 Index Histogram::get_bins_number() const
 {
     return centers.size();
-}
-
-Index Histogram::count_empty_bins() const
-{
-    return static_cast<Index>((frequencies.array() == 0.0f).count());
-}
-
-Index Histogram::calculate_minimum_frequency() const
-{
-    return minimum(frequencies);
-}
-
-Index Histogram::calculate_maximum_frequency() const
-{
-    return maximum(frequencies);
-}
-
-Index Histogram::calculate_most_populated_bin() const
-{
-    if (frequencies.size() == 0)
-        return 0;
-
-    Index max_index;
-    frequencies.maxCoeff(&max_index);
-
-    return max_index;
-}
-
-Index Histogram::calculate_bin(const float value) const
-{
-    const Index bins_number = get_bins_number();
-
-    if (bins_number == 0) return 0;
-
-    const float min_center = centers(0);
-    const float max_center = centers(bins_number - 1);
-    const float bin_width = (max_center - min_center) / (bins_number - 1);
-
-    for (Index i = 0; i < bins_number; ++i) {
-        if (value < centers(i) + bin_width / 2) {
-            return i;
-        }
-    }
-
-    return bins_number - 1;
-}
-
-Index Histogram::calculate_frequency(const float value) const
-{
-    if (get_bins_number() == 0) return 0;
-
-    return frequencies[calculate_bin(value)];
 }
 
 float minimum(const MatrixR& matrix)
@@ -697,14 +634,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     return descriptives_results;
 }
 
-float range(const VectorR& vector)
-{
-    const float min = minimum(vector);
-    const float max = maximum(vector);
-
-    return abs(max - min);
-}
-
 VectorR mean(const MatrixR& matrix)
 {
     const auto finite = matrix.array().isFinite();
@@ -757,47 +686,9 @@ float mean(const MatrixR& matrix, Index column_index)
     return finite.select(col.array(), 0.0f).sum() / float(count);
 }
 
-VectorR median(const MatrixR& matrix)
-{
-    VectorR medians(matrix.cols());
-
-    for (Index j = 0; j < matrix.cols(); ++j)
-        medians(j) = median(VectorR(matrix.col(j)));
-
-    return medians;
-}
-
 float median(const MatrixR& matrix, Index column_index)
 {
-    vector<float> sorted_column;
-    sorted_column.reserve(matrix.rows());
-
-    for (Index i = 0; i < matrix.rows(); ++i)
-        if (!isnan(matrix(i, column_index)))
-            sorted_column.push_back(matrix(i, column_index));
-
-    if (sorted_column.empty()) return NAN;
-
-    ranges::sort(sorted_column);
-
-    const Index valid_count = ssize(sorted_column);
-    const Index median_index = valid_count / 2;
-
-    return (valid_count % 2 == 0)
-        ? (sorted_column[median_index - 1] + sorted_column[median_index]) / 2.0f
-        : sorted_column[median_index];
-}
-
-VectorR median(const MatrixR& matrix, const VectorI& column_indices)
-{
-    const Index column_indices_size = column_indices.size();
-
-    VectorR medians(column_indices_size);
-
-    for (Index j = 0; j < column_indices_size; ++j)
-        medians(j) = median(VectorR(matrix.col(column_indices(j))));
-
-    return medians;
+    return median(VectorR(matrix.col(column_index)));
 }
 
 VectorR median(const MatrixR& matrix,

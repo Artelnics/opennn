@@ -9,8 +9,6 @@
 #include "registry.h"
 #include "device_backend.h"
 #include "scaling_layer.h"
-#include "tensor_operations.h"
-#include "forward_propagation.h"
 #include "string_utilities.h"
 #include "json.h"
 
@@ -47,8 +45,6 @@ void Scaling::set(const Shape& new_input_shape)
     max_range = 1.0f;
     op_storage_dirty = true;
 
-    if (input_shape.empty()) return;
-
     check_rank(input_shape, {1, 2, 3}, "Scaling", "input");
 }
 
@@ -65,14 +61,6 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
-}
-
-void Scaling::set_min_max_range(float new_min, float new_max)
-{
-    min_range = new_min;
-    max_range = new_max;
-    scale_op.min_range = new_min;
-    scale_op.max_range = new_max;
 }
 
 void Scaling::set_scalers(const vector<string>& scalers_str)

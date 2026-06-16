@@ -15,7 +15,11 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
+// LeakyReLU appended last so existing values 0..4 stay stable.
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU };
+
+// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
+inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction function);
@@ -60,6 +64,10 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
 void layer_norm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                         TensorView& means, TensorView& standard_deviations,
                         TensorView& normalized, TensorView& output);
+void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+                            const TensorView& gamma, const TensorView& beta,
+                            TensorView& means, TensorView& standard_deviations,
+                            TensorView& normalized, TensorView& sum, TensorView& output);
 void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,

@@ -207,7 +207,7 @@ TEST(Dataset, UnuseConstantRawVariables)
 
 TEST(Dataset, CalculateTargetDistribution)
 {
-    TabularDataset dataset(5, { 3 }, { 2 });
+    TabularDataset dataset(5, { 3 }, { 1 });
     MatrixR data(5, 4);
 
     data << type(2),type(5),type(6),type(0),

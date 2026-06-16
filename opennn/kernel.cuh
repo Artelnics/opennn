@@ -36,16 +36,16 @@ using Eigen::Index;
 void adam_update_cuda(const Index, float*, float*, float*, const float*,
                       const float, const float, const float, const float,
                       const float, const float,
-                      __nv_bfloat16* params_bf16 = nullptr);
+                      __nv_bfloat16* parameters_bf16_mirror = nullptr);
 
 void sgd_update_cuda(const Index, float*, float*, const float*,
                      const float, const float, const bool,
-                     __nv_bfloat16* params_bf16 = nullptr);
+                     __nv_bfloat16* parameters_bf16_mirror = nullptr);
 
 void sgd_update_capturable_cuda(
     const Index n, float* parameters, float* velocity, const float* gradients,
     const float* learning_rate_device, const float momentum, const bool nesterov,
-    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+    __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
 
 void set_scalar_device_cuda(float* dst, const float value, cudaStream_t stream = nullptr);
 
@@ -54,7 +54,7 @@ void adam_update_capturable_cuda(
     const float beta_1, const float beta_2,
     const float learning_rate, const float epsilon,
     int* step_device, float* effective_lr_device, float* effective_eps_device,
-    __nv_bfloat16* params_bf16 = nullptr, cudaStream_t stream = nullptr);
+    __nv_bfloat16* parameters_bf16_mirror = nullptr, cudaStream_t stream = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
@@ -87,10 +87,10 @@ template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
 
 template<typename T>
-void multiple_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
+void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
-void multiple_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
+void categorical_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
 
 template<typename T>
 void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float);
@@ -197,6 +197,10 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
 
+// Fused residual-add + layernorm: S = X + R, writes S to `sum` and LayerNorm(S) to Y.
+template<typename T>
+void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R, T* sum, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
+
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta);
 
@@ -244,5 +248,34 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* next_carry,
                                       const T* activation_derivatives,
                                       T* delta);
+
+// YOLO DetectionOp
+
+// Apply sigmoid(xy), exp(wh)*anchor, sigmoid(obj), softmax|sigmoid(classes)
+// per box across the (batch, grid, grid, boxes_per_cell) tile.
+// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOp::ClassActivation).
+// anchors layout: flat [aw0, ah0, aw1, ah1, ...] of length 2*boxes_per_cell.
+void detection_forward_cuda(const Index batch_size,
+                            const Index grid_size,
+                            const Index boxes_per_cell,
+                            const Index classes_number,
+                            const Index channels,
+                            const int class_activation,
+                            const float* anchors,
+                            const float* input,
+                            float* output);
+
+// Chain rule through the same. For (x, y, obj) and sigmoid classes the
+// gate is d_sig = out * (1-out). For (w, h) the gate is d_exp = out. For
+// softmax classes the per-box Jacobian collapses to out * (delta - <delta, out>).
+void detection_backward_cuda(const Index batch_size,
+                             const Index grid_size,
+                             const Index boxes_per_cell,
+                             const Index classes_number,
+                             const Index channels,
+                             const int class_activation,
+                             const float* output,
+                             const float* output_delta,
+                             float* input_delta);
 
 #endif // KERNEL_CUH

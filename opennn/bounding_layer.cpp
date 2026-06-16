@@ -9,11 +9,7 @@
 #include "registry.h"
 #include "device_backend.h"
 #include "tensor_types.h"
-#include "tensor_operations.h"
 #include "bounding_layer.h"
-#include "neural_network.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 #include "string_utilities.h"
 #include "json.h"
 
@@ -89,32 +85,12 @@ void Bounding::set_lower_bound(Index index, float new_lower_bound)
     refresh_op_storage(op_storage_device);
 }
 
-void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
-{
-    throw_if(new_lower_bounds.size() != ssize(lower_bounds),
-             format("Bounding::set_lower_bounds: size mismatch (expected {}, got {}).",
-                    lower_bounds.size(), new_lower_bounds.size()));
-    copy_n(new_lower_bounds.data(), new_lower_bounds.size(), lower_bounds.begin());
-    op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
-}
-
 void Bounding::set_upper_bound(Index index, float new_upper_bound)
 {
     throw_if(index < 0 || size_t(index) >= upper_bounds.size(),
              format("Bounding::set_upper_bound: index {} out of range [0, {}).",
                     index, upper_bounds.size()));
     upper_bounds[size_t(index)] = new_upper_bound;
-    op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
-}
-
-void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
-{
-    throw_if(new_upper_bounds.size() != ssize(upper_bounds),
-             format("Bounding::set_upper_bounds: size mismatch (expected {}, got {}).",
-                    upper_bounds.size(), new_upper_bounds.size()));
-    copy_n(new_upper_bounds.data(), new_upper_bounds.size(), upper_bounds.begin());
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
 }

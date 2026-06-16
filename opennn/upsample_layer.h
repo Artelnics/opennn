@@ -25,8 +25,6 @@ public:
     Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
-    Index get_scale_factor() const { return upsample.scale_factor; }
-
     void set(const Shape&, Index scale_factor, const string&);
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override {}

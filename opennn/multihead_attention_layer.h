@@ -39,16 +39,6 @@ public:
     {
         return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
     }
-    Shape get_heads_shape(Index batch_size) const
-    {
-        return {batch_size, heads_number, query_sequence_length, get_head_dimension()};
-    }
-
-    Shape get_concat_shape(Index batch_size) const
-    {
-        return {batch_size, query_sequence_length, heads_number, get_head_dimension()};
-    }
-
     vector<TensorSpec> get_forward_specs(Index batch_size) const override;
     vector<TensorSpec> get_backward_specs(Index batch_size) const override;
 

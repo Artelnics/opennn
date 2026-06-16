@@ -9,8 +9,6 @@
 #include "dataset.h"
 #include "time_series_dataset.h"
 #include "neural_network.h"
-#include "optimizer.h"
-#include "training_strategy.h"
 #include "inputs_selection.h"
 
 namespace opennn
@@ -69,33 +67,6 @@ void InputsSelectionResult::set(const Index maximum_epochs)
     validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
     mean_validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
     mean_training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
-}
-
-string InputsSelectionResult::write_stopping_condition() const
-{
-    if (!stopping_condition) return "None";
-
-    using enum InputsSelection::StoppingCondition;
-    switch (*stopping_condition)
-    {
-    case MaximumTime:
-        return "MaximumTime";
-
-    case ValidationErrorGoal:
-        return "ValidationErrorGoal";
-
-    case MaximumInputs:
-        return "MaximumInputs";
-
-    case MaximumEpochs:
-        return "MaximumEpochs";
-
-    case MaximumValidationFailures:
-        return "MaximumValidationFailures";
-
-    default:
-        return {};
-    }
 }
 
 void InputsSelectionResult::resize_history(const Index new_size)

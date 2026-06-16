@@ -42,19 +42,6 @@ Index Variable::get_categories_number() const
     return ssize(categories);
 }
 
-void Variable::from_JSON(const JsonDocument& document)
-{
-    const Json* root = document.first_child();
-
-    name = read_json_string(root, "Name");
-    set_scaler(read_json_string(root, "Scaler"));
-    set_role(read_json_string(root, "Role"));
-    set_type(read_json_string(root, "Type"));
-
-    if (type == VariableType::Categorical)
-        categories = get_tokens(read_json_string(root, "Categories"), ";");
-}
-
 void Variable::to_JSON(JsonWriter& printer) const
 {
     write_json(printer, {

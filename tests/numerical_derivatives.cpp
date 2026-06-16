@@ -64,12 +64,11 @@ VectorR calculate_gradient(Loss& loss)
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation    back_propagation(samples_number, &loss);
 
-    Map<const VectorR, AlignedMax> parameters(neural_network->get_parameters_data(),
-                                               neural_network->get_parameters_size());
-
-    neural_network->forward_propagate(batch.get_inputs(), parameters, forward_propagation);
+    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
 
     loss.back_propagate(batch, forward_propagation, back_propagation);
+
+    back_propagation.gradient.migrate_to(Device::CPU);
 
     return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<float>(),
                                           back_propagation.gradient.size_in_floats());
@@ -95,6 +94,8 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation    back_propagation(samples_number, &loss);
+
+    neural_network->copy_parameters_host();
 
     VectorMap parameters(neural_network->get_parameters_data(),
                          neural_network->get_parameters_size());

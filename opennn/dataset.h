@@ -136,11 +136,12 @@ public:
     void set_data(const MatrixR&);
     void set_data_constant(float);
 
-    void enable_device_residency();
+    virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
     bool is_device_resident() const { return data_device.data != nullptr; }
     const float* get_device_data() const { return data_device.as<float>(); }
     Index get_data_columns() const { return data.cols(); }
+    Index get_device_data_columns() const { return device_data_columns; }
 
     void set_default();
     void set_sample_roles(const string&);
@@ -264,6 +265,7 @@ protected:
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
+    void set_default_variable_roles_implementation(bool forecasting);
 
     void read_data_file_preview(const vector<string_view>&, char);
     void check_separators(string_view) const;
@@ -274,9 +276,12 @@ protected:
 
     StorageMode storage_mode = StorageMode::Matrix;
 
+    void upload_device_matrix(const MatrixR&);
+
     MatrixR data;
 
     Buffer data_device{Device::CUDA};
+    Index device_data_columns = 0;
 
     Shape input_shape;
     Shape target_shape;

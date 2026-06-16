@@ -57,7 +57,7 @@ TEST(TimeSeriesDataset, CrossCorrelations)
 {
 
     Shape input_shape = { 2 };
-    Shape target_shape = { 2 };
+    Shape target_shape = { 1 };
 
     TimeSeriesDataset dataset(6, input_shape, target_shape);
     
@@ -93,7 +93,7 @@ TEST(TimeSeriesDataset, CrossCorrelations)
 TEST(TimeSeriesDataset, test_transform_time_series)
 {
     Shape input_shape = { 1 };
-    Shape target_shape = { 2 };
+    Shape target_shape = { 1 };
 
     TimeSeriesDataset dataset(9, input_shape, target_shape);
 
@@ -142,7 +142,7 @@ TEST(TimeSeriesDataset, test_set_steps_ahead_number)
 {
 
     Shape input_shape = { 1 };
-    Shape target_shape = { 2 };
+    Shape target_shape = { 1 };
 
     TimeSeriesDataset dataset(4, input_shape, target_shape);
 
@@ -167,7 +167,7 @@ TEST(TimeSeriesDataset, test_set_lags_number)
 {
 
     Shape input_shape = { 1 };
-    Shape target_shape = { 2 };
+    Shape target_shape = { 1 };
 
     TimeSeriesDataset dataset(4, input_shape, target_shape);
 

@@ -37,8 +37,6 @@ private:
     string get_expression_php() const;
     string get_expression_javascript() const;
 
-    static string get_layer_expression(const Layer&, const vector<string>&, const vector<string>&);
-
     void emit_c_prelude(ostringstream&) const;
     void emit_c_activations(ostringstream&, const string& expression) const;
     void emit_c_calculate_outputs(ostringstream&, const string& expression, const vector<string>& lines, bool has_softmax) const;
