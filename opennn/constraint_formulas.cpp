@@ -1111,45 +1111,78 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
 }
 
 
-bool draw_k_hot(const Index count, const Index k,
-                const vector<char>& force_on,
-                const vector<char>& force_off,
-                vector<float>& out)
+namespace
 {
-    out.assign(count, 0.0f);
 
-    vector<Index> free_indices;
-    free_indices.reserve(count);
-    Index forced_on = 0;
+// Signed residual of one constraint at `value`: 0 when satisfied (boundary feasible),
+// otherwise the amount by which `value` overshoots the violated bound (value - bound).
+// Returns true iff the constraint is part of the active set: every violated constraint,
+// plus EqualTo always (so the projection keeps it pinned even when momentarily satisfied).
+// One definition for every operator, shared by the three repairs and the affine sweeps.
+bool constraint_residual(const ComparisonOperator comparison, const float low, const float up,
+                         const float value, float& residual)
+{
+    residual = 0.0f;
 
-    for (Index i = 0; i < count; ++i)
+    switch (comparison)
     {
-        const bool on  = (i < static_cast<Index>(force_on.size())  && force_on[i]  != 0);
-        const bool off = (i < static_cast<Index>(force_off.size()) && force_off[i] != 0);
+    case ComparisonOperator::EqualTo:
+        residual = value - low; return true;
+    case ComparisonOperator::Between:
+        if (value < low) { residual = value - low; return true; }
+        if (value > up)  { residual = value - up;  return true; }
+        return false;
+    case ComparisonOperator::GreaterEqualTo:
+    case ComparisonOperator::GreaterThan:
+        if (value < low) { residual = value - low; return true; }
+        return false;
+    case ComparisonOperator::LessEqualTo:
+    case ComparisonOperator::LessThan:
+        if (value > up) { residual = value - up; return true; }
+        return false;
+    case ComparisonOperator::None:
+    default:
+        return false;
+    }
+}
 
-        if (on && off)      { out.assign(count, 0.0f); return false; }   // contradictory pin
-        if (on)             { out[i] = 1.0f; ++forced_on; continue; }
-        if (off)            continue;                                    // stays 0
-        free_indices.push_back(i);
+// One Gauss-Newton-on-manifold step over the active set: drop constraint rows that are
+// entirely zero (nothing free to move them — left as residual for the caller), then
+// point <- point - J^T (J J^T + eps I)^-1 h, box-clamped. Returns false when no row is
+// projectable (the caller should stop iterating this point). Shared by all three repairs.
+bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
+                              const VectorR& inferior_frontier, const VectorR& superior_frontier,
+                              VectorR& point)
+{
+    const Index active_number = jacobian.rows();
+
+    vector<Index> projectable;
+    projectable.reserve(active_number);
+    for (Index i = 0; i < active_number; ++i)
+        if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
+            projectable.push_back(i);
+
+    if (projectable.empty())
+        return false;
+
+    const Index projectable_number = static_cast<Index>(projectable.size());
+
+    MatrixR reduced_jacobian(projectable_number, jacobian.cols());
+    VectorR reduced_rhs(projectable_number);
+    for (Index k = 0; k < projectable_number; ++k)
+    {
+        reduced_jacobian.row(k) = jacobian.row(projectable[k]);
+        reduced_rhs(k) = rhs(projectable[k]);
     }
 
-    const Index remaining = k - forced_on;
-    if (remaining < 0 || remaining > static_cast<Index>(free_indices.size()))
-    {
-        out.assign(count, 0.0f);
-        return false;   // too many forced on, or too few free to reach k
-    }
+    MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
+    gram.diagonal().array() += EPSILON;
 
-    // Partial Fisher-Yates: select `remaining` of the free indices uniformly.
-    const Index free_number = static_cast<Index>(free_indices.size());
-    for (Index pick = 0; pick < remaining; ++pick)
-    {
-        const Index swap_with = pick + random_integer(0, free_number - 1 - pick);
-        swap(free_indices[pick], free_indices[swap_with]);
-        out[free_indices[pick]] = 1.0f;
-    }
-
+    point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
+    point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
     return true;
+}
+
 }
 
 
@@ -1324,41 +1357,16 @@ void repair_single_affine_input(MatrixR& random_inputs,
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project).
-        // Leaving satisfied points untouched is what preserves the diversity.
-        float target = 0.0f;
-        switch (constraint.comparison_operator)
-        {
-        case ComparisonOperator::EqualTo:
-            target = low;
-            break;
-        case ComparisonOperator::Between:
-            if      (expression < low) target = low;
-            else if (expression > up)  target = up;
-            else continue;
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
-            if (expression < low) target = low; else continue;
-            break;
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
-            if (expression > up) target = up; else continue;
-            break;
-        case ComparisonOperator::None:
-        default:
+        // Only project violated inequalities (equalities always project). Leaving satisfied
+        // points untouched is what preserves the diversity. constraint_residual gives the
+        // overshoot (expression - bound); the sweep moves the expression the opposite way.
+        float residual;
+        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
-        }
+        residual = -residual;
 
-        float residual = target - expression;
-
-        // Fresh random sweep order for this row (Fisher-Yates), keeping each
-        // column paired with its coefficient.
-        for (Index sweep = terms_number - 1; sweep > 0; --sweep)
-        {
-            const Index pick = random_integer(0, sweep);
-            swap(shuffled[sweep], shuffled[pick]);
-        }
+        // Fresh random sweep order for this row.
+        partial_shuffle(shuffled, terms_number);
 
         // Clamp-and-carry: each coordinate absorbs as much of the remaining
         // residual as its box allows; a single pass is algebraically exact for
@@ -1398,83 +1406,44 @@ void repair_single_affine_integer(MatrixR& random_inputs,
     const float up  = constraint.up_bound;
     const Index rows_number = random_inputs.rows();
 
-    vector<Index> columns;
-    vector<float> coefficients;
-    columns.reserve(terms.size());
-    coefficients.reserve(terms.size());
-
-    for (const auto& [column, coefficient] : terms)
-    {
-        columns.push_back(column);
-        coefficients.push_back(coefficient);
-    }
-
-    const Index terms_number = static_cast<Index>(columns.size());
+    vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
+    const Index terms_number = static_cast<Index>(shuffled.size());
 
     for (Index r = 0; r < rows_number; ++r)
     {
         // Snap the referenced coordinates to their integer lattice first, so the carry
         // operates on integer values (the caller guarantees these columns are discrete).
-        for (Index t = 0; t < terms_number; ++t)
+        for (const auto& [column, coefficient] : shuffled)
         {
-            const Index column = columns[t];
             const float lattice_min = ceil(inferior_frontier(column));
             const float lattice_max = floor(superior_frontier(column));
             random_inputs(r, column) = min(lattice_max, max(lattice_min, round(random_inputs(r, column))));
         }
 
         float expression = constant;
-        for (Index t = 0; t < terms_number; ++t)
-            expression += coefficients[t] * random_inputs(r, columns[t]);
+        for (const auto& [column, coefficient] : shuffled)
+            expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project); leaving
-        // satisfied rows untouched is what preserves the diversity.
-        float target = 0.0f;
-        switch (constraint.comparison_operator)
-        {
-        case ComparisonOperator::EqualTo:
-            target = low;
-            break;
-        case ComparisonOperator::Between:
-            if      (expression < low) target = low;
-            else if (expression > up)  target = up;
-            else continue;
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
-            if (expression < low) target = low; else continue;
-            break;
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
-            if (expression > up) target = up; else continue;
-            break;
-        case ComparisonOperator::None:
-        default:
+        // Only project violated inequalities (equalities always project); leaving satisfied
+        // rows untouched is what preserves the diversity. The carry moves the expression onto
+        // the violated bound, i.e. by the negated overshoot from constraint_residual.
+        float residual;
+        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
-        }
+        residual = -residual;
 
-        float residual = target - expression;
-
-        // Fresh random sweep order for this row (Fisher-Yates), keeping each column
-        // paired with its coefficient.
-        for (Index sweep = terms_number - 1; sweep > 0; --sweep)
-        {
-            const Index pick = random_integer(0, sweep);
-            swap(columns[sweep], columns[pick]);
-            swap(coefficients[sweep], coefficients[pick]);
-        }
+        // Fresh random sweep order for this row.
+        partial_shuffle(shuffled, terms_number);
 
         // Lattice clamp-and-carry: each coordinate absorbs as much of the remaining
         // residual as it can in whole integer steps. Truncating the step toward zero
         // means an inequality is never overshot past its opposite bound; a unit-
         // coefficient target reachable within the box is hit exactly in one pass.
-        for (Index t = 0; t < terms_number; ++t)
+        for (const auto& [column, coefficient] : shuffled)
         {
-            const float coefficient = coefficients[t];
             if (coefficient == 0.0f)
                 continue;
 
-            const Index column = columns[t];
             const float lattice_min = ceil(inferior_frontier(column));
             const float lattice_max = floor(superior_frontier(column));
 
@@ -1550,34 +1519,8 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
             for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, empty_outputs);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
+                float residual;
+                if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
                 {
                     active.push_back(constraint);
                     residuals.push_back(residual);
@@ -1613,14 +1556,8 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
                         jacobian(i, column) = evaluate_rpn(program, point, empty_outputs);
             }
 
-            // Gauss-Newton-on-manifold step: point <- point - J^T (J J^T + eps I)^-1 h.
-            MatrixR gram = jacobian * jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= jacobian.transpose() * gram.ldlt().solve(rhs);
-
-            // Box projection.
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
+            if (!gauss_newton_project_row(jacobian, rhs, inferior_frontier, superior_frontier, point))
+                break;
         }
 
         random_inputs.row(r) = point.transpose();
@@ -1682,34 +1619,8 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
             for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, empty_outputs);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
+                float residual;
+                if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
                 {
                     active.push_back(constraint);
                     residuals.push_back(residual);
@@ -1719,11 +1630,7 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
             if (active.empty())
                 break;
 
-            float max_abs_residual = 0.0f;
-            for (const float residual : residuals)
-                max_abs_residual = max(max_abs_residual, abs(residual));
-
-            if (max_abs_residual <= EPSILON)
+            if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
                 break;
 
             const Index active_number = static_cast<Index>(active.size());
@@ -1746,42 +1653,15 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 
             // Hold the fixed coordinates put: zero their Jacobian columns so the
             // Gauss-Newton step can never move them (their current value is already
-            // folded into every residual via the evaluation above).
+            // folded into every residual via the evaluation above). gauss_newton_project_row
+            // then drops any row left all-zero (its variables all fixed).
             if (has_mask)
                 for (Index j = 0; j < inputs_number; ++j)
                     if (fixed_columns[j])
                         jacobian.col(j).setZero();
 
-            // Drop constraints left with an all-zero row (every variable fixed):
-            // there is nothing free to project them onto, so their violation must
-            // persist as residual for the caller (perturbation / rejection), not be
-            // forced onto the continuous slice.
-            vector<Index> projectable;
-            projectable.reserve(active_number);
-            for (Index i = 0; i < active_number; ++i)
-                if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
-                    projectable.push_back(i);
-
-            if (projectable.empty())
+            if (!gauss_newton_project_row(jacobian, rhs, inferior_frontier, superior_frontier, point))
                 break;
-
-            const Index projectable_number = static_cast<Index>(projectable.size());
-
-            MatrixR reduced_jacobian(projectable_number, inputs_number);
-            VectorR reduced_rhs(projectable_number);
-            for (Index k = 0; k < projectable_number; ++k)
-            {
-                reduced_jacobian.row(k) = jacobian.row(projectable[k]);
-                reduced_rhs(k) = rhs(projectable[k]);
-            }
-
-            // Gauss-Newton-on-manifold step over the free coordinates + box clamp.
-            MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
-
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
         }
 
         random_inputs.row(r) = point.transpose();
@@ -1886,34 +1766,8 @@ void repair_output_constraints(MatrixR& inputs,
             for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, output);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
+                float residual;
+                if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
                 {
                     active.push_back(constraint);
                     residuals.push_back(residual);
@@ -1968,34 +1822,11 @@ void repair_output_constraints(MatrixR& inputs,
                     if (fixed_columns[j])
                         jacobian.col(j).setZero();
 
-            // Drop constraints left with an all-zero row (only fixed inputs affect them):
-            // the continuous slice cannot project them, so leave their violation for the
+            // gauss_newton_project_row drops any row left all-zero (only fixed inputs affect
+            // it): the continuous slice cannot project it, so its violation is left for the
             // downstream feasibility filter.
-            vector<Index> projectable;
-            projectable.reserve(active_number);
-            for (Index i = 0; i < active_number; ++i)
-                if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
-                    projectable.push_back(i);
-
-            if (projectable.empty())
+            if (!gauss_newton_project_row(jacobian, rhs, inferior_frontier, superior_frontier, point))
                 break;
-
-            const Index projectable_number = static_cast<Index>(projectable.size());
-
-            MatrixR reduced_jacobian(projectable_number, inputs_number);
-            VectorR reduced_rhs(projectable_number);
-            for (Index k = 0; k < projectable_number; ++k)
-            {
-                reduced_jacobian.row(k) = jacobian.row(projectable[k]);
-                reduced_rhs(k) = rhs(projectable[k]);
-            }
-
-            // Gauss-Newton-on-manifold step + box projection.
-            MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
         }
 
         inputs.row(r) = point.transpose();

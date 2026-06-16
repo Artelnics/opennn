@@ -311,6 +311,10 @@ private:
     // the K-hot draw. Empty until the first reshape, so iteration 0 draws uniformly.
     mutable vector<char> cardinality_preferred;
 
+    // Cardinality indicator name -> feature column, resolved once per run (the variable
+    // layout is fixed) so restore_cardinality_columns does not rebuild it every reshape.
+    mutable map<string, Index> cardinality_indicator_columns;
+
     // Multiplier on the candidate count of the FIRST (initial, full-domain)
     // multi-objective sampling only: the initial pass draws
     // evaluations_number * initial_sampling_factor candidates, while every

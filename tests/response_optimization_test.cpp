@@ -868,6 +868,33 @@ TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
     }
 }
 
+TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
+{
+    // End-to-end: a pure-integer knapsack n0+n1+n2 <= 4 over three integer variables routes
+    // through the mixed-integer pump, where the lattice clamp-and-carry fast path solves it.
+    MinimalApproximation setup({ "n0", "n1", "n2" }, { "y" }, float(0), float(5), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < 3; ++i) input_variables[i].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("n0 + n1 + n2", ComparisonOperator::LessEqualTo, float(0), float(4));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        for (int j = 0; j < 3; ++j)
+            EXPECT_NEAR(results(r, j), round(results(r, j)), float(1e-3)) << "n" << j << " not integral at row " << r;
+        EXPECT_LE(results(r, 0) + results(r, 1) + results(r, 2), float(4) + float(1e-2)) << "knapsack violated at row " << r;
+    }
+}
+
 
 // -----------------------------------------------------------------------------
 // Mixed-integer repair: box-aware K-hot draw (step 3, Hole A)

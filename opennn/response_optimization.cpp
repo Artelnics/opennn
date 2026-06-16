@@ -822,6 +822,33 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
         inputs.col(lattice_columns[c]).array()
             = inputs.col(lattice_columns[c]).array().round().max(lattice_min[c]).min(lattice_max[c]);
 
+    // Exact fast path: any input-only affine constraint over ONLY free integer/binary columns
+    // (a pure-integer knapsack) is solved by a single lattice clamp-and-carry, so the cyclic
+    // perturbation below never has to search for it. Cardinality-grouped columns are owned by
+    // the K-hot draw / swap and are excluded.
+    std::set<Index> cardinality_set;
+    for (const vector<Index>& group : cardinality_columns)
+        cardinality_set.insert(group.begin(), group.end());
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+    {
+        if (constraint.uses_callback
+            || constraint.comparison_operator == ComparisonOperator::None
+            || constraint.compiled.scope != FormulaScope::InputsOnly
+            || constraint.compiled.shape != FormulaShape::Affine
+            || constraint.compiled.affine_input_terms.empty())
+            continue;
+
+        bool all_free_discrete = true;
+        for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
+            if (term.first >= static_cast<Index>(fixed_mask.size())
+                || !fixed_mask[term.first] || cardinality_set.count(term.first))
+            { all_free_discrete = false; break; }
+
+        if (all_free_discrete)
+            repair_single_affine_integer(inputs, inferior_frontier, superior_frontier, constraint);
+    }
+
     for (Index outer = 0; outer < passes; ++outer)
     {
         repair_affine_inputs_with_fixed(inputs, inferior_frontier, superior_frontier,
@@ -1743,35 +1770,42 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
     if (cardinality_constraints.empty())
         return;
 
-    const vector<Variable> variables = get_variables_and_descriptives("Input").first;
-    const vector<Index> dimensions = get_feature_dimensions(variables);
-
-    map<string, Index> column_of;
-    Index feature = 0;
-    for (size_t i = 0; i < variables.size(); ++i)
+    // Resolve indicator name -> column once per run (the layout is fixed).
+    if (cardinality_indicator_columns.empty())
     {
-        if (dimensions[i] == 1)
-            column_of[variables[i].name] = feature;
-        feature += dimensions[i];
+        const vector<Variable> variables = get_variables_and_descriptives("Input").first;
+        const vector<Index> dimensions = get_feature_dimensions(variables);
+
+        map<string, Index> column_of;
+        Index feature = 0;
+        for (size_t i = 0; i < variables.size(); ++i)
+        {
+            if (dimensions[i] == 1)
+                column_of[variables[i].name] = feature;
+            feature += dimensions[i];
+        }
+
+        for (const CardinalityConstraint& group : cardinality_constraints)
+            for (const string& name : group.variable_names)
+            {
+                const auto found = column_of.find(name);
+                if (found != column_of.end())
+                    cardinality_indicator_columns[name] = found->second;
+            }
     }
 
     if (static_cast<Index>(cardinality_preferred.size()) != domain.superior_frontier.size())
         cardinality_preferred.assign(domain.superior_frontier.size(), 0);
 
-    for (const CardinalityConstraint& group : cardinality_constraints)
-        for (const string& name : group.variable_names)
-        {
-            const auto found = column_of.find(name);
-            if (found == column_of.end())
-                continue;
+    for (const auto& [name, column] : cardinality_indicator_columns)
+    {
+        // Capture the incumbent-preferred support from the reshaped (pinned) box BEFORE
+        // reopening it: an indicator the reshape kept "on" was in a surviving support.
+        cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
 
-            // Capture the incumbent-preferred support from the reshaped (pinned) box BEFORE
-            // reopening it: an indicator the reshape kept "on" was in a surviving support.
-            cardinality_preferred[found->second] = (domain.superior_frontier(found->second) >= 0.5f) ? 1 : 0;
-
-            domain.inferior_frontier(found->second) = original.inferior_frontier(found->second);
-            domain.superior_frontier(found->second) = original.superior_frontier(found->second);
-        }
+        domain.inferior_frontier(column) = original.inferior_frontier(column);
+        domain.superior_frontier(column) = original.superior_frontier(column);
+    }
 }
 
 
@@ -2349,7 +2383,8 @@ MatrixR ResponseOptimization::solve_once() const
 
     evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
     category_frequencies.clear();
-    cardinality_preferred.clear();   // no incumbent support until the first reshape
+    cardinality_preferred.clear();          // no incumbent support until the first reshape
+    cardinality_indicator_columns.clear();  // rebuilt lazily for this run's variable layout
 
     initialize_network_differential();   // exact analytic VJP if possible, else finite differences
 

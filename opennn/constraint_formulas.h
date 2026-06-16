@@ -166,19 +166,6 @@ void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& superior_frontier,
                                   const MultivariateConstraint& constraint);
 
-// Draw a box-respecting K-hot assignment over `count` indicators into `out` (sized
-// to `count`): indices flagged in `force_on` are always 1, `force_off` always 0, and
-// the remaining k - |force_on| ones are chosen uniformly at random from the free
-// indices. Honors pinned binaries (a frontier that has collapsed an indicator to a
-// forced 0 or 1) so the cardinality draw can never violate the box. Returns false and
-// leaves `out` cleared when the pins make exactly-k infeasible: a column both forced on
-// and off, more than k forced on, or too few free indices to reach k. `force_on` /
-// `force_off` may be shorter than `count` (missing entries are treated as not forced).
-[[nodiscard]] bool draw_k_hot(Index count, Index k,
-                              const vector<char>& force_on,
-                              const vector<char>& force_off,
-                              vector<float>& out);
-
 // Router over the input-only, non-callback constraints: one affine -> single
 // random sweep; several affine -> Gram + Dykstra; any smooth nonlinear ->
 // Gauss-Newton (which folds in the affine ones). Call this from the sampler.
