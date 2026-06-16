@@ -1006,6 +1006,8 @@ template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const
 template<typename T>
 __global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
 {
+    // function code = static_cast<int>(ActivationFunction). Branches must stay
+    // in sync with the enum order in tensor_utilities.h.
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
         const float x = static_cast<float>(data[idx]);
@@ -1017,6 +1019,8 @@ __global__ void activation_forward_kernel(const int n, T* __restrict__ data, con
             y = tanhf(x);
         else if (function == 3)
             y = fmaxf(x, 0.0f);
+        else if (function == 5)
+            y = x >= 0.0f ? x : 0.1f * x;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
 
         data[idx] = static_cast<T>(y);
     }
@@ -1049,6 +1053,8 @@ __global__ void activation_backward_kernel(const int n, const T* __restrict__ ou
             out = d * (1.0f - y * y);
         else if (function == 3)
             out = y > 0.0f ? d : 0.0f;
+        else if (function == 5)
+            out = y >= 0.0f ? d : 0.1f * d;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
 
         delta[idx] = static_cast<T>(out);
     }
@@ -1432,3 +1438,189 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
 
 template void rnn_step_fused_backward_pre_cuda<float>        (const Index, const Index, const Index, const Index, const bool, const float*,         const float*,         const float*,         float*);
 template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
+
+
+// -----------------------------------------------------------------------------
+// YOLO DetectionOp
+// -----------------------------------------------------------------------------
+// CPU reference: operators.cpp:DetectionOp::apply / apply_delta.
+// Thread layout: one thread per box. Tile = (batch, grid, grid, boxes_per_cell);
+// each thread owns a contiguous span of (5 + classes_number) floats in NHWC
+// layout (channels-last), matching the CPU loop's `base` index arithmetic.
+
+__device__ __forceinline__ float yolo_sigmoid_device(float x)
+{
+    return 1.0f / (1.0f + __expf(-x));
+}
+
+__global__ void detection_forward_kernel(const int batch_size,
+                                         const int grid_size,
+                                         const int boxes_per_cell,
+                                         const int classes_number,
+                                         const int channels,
+                                         const int class_activation,
+                                         const float* __restrict__ anchors,
+                                         const float* __restrict__ src,
+                                         float* __restrict__ dst)
+{
+    const int values_per_box = 5 + classes_number;
+    const int total = batch_size * grid_size * grid_size * boxes_per_cell;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+         idx < total;
+         idx += blockDim.x * gridDim.x)
+    {
+        const int box = idx % boxes_per_cell;
+        const int t   = idx / boxes_per_cell;
+        const int col = t % grid_size;
+        const int t2  = t / grid_size;
+        const int row = t2 % grid_size;
+        const int b   = t2 / grid_size;
+
+        const int cell = ((b * grid_size + row) * grid_size + col) * channels;
+        const int base = cell + box * values_per_box;
+
+        const float aw = anchors[box * 2 + 0];
+        const float ah = anchors[box * 2 + 1];
+
+        dst[base + 0] = yolo_sigmoid_device(src[base + 0]);
+        dst[base + 1] = yolo_sigmoid_device(src[base + 1]);
+        dst[base + 2] = __expf(src[base + 2]) * aw;
+        dst[base + 3] = __expf(src[base + 3]) * ah;
+        dst[base + 4] = yolo_sigmoid_device(src[base + 4]);
+
+        if (class_activation == 1)  // Sigmoid
+        {
+            for (int c = 0; c < classes_number; ++c)
+                dst[base + 5 + c] = yolo_sigmoid_device(src[base + 5 + c]);
+        }
+        else  // Softmax
+        {
+            float max_logit = src[base + 5];
+            for (int c = 1; c < classes_number; ++c)
+            {
+                const float v = src[base + 5 + c];
+                if (v > max_logit) max_logit = v;
+            }
+            float sum = 0.0f;
+            for (int c = 0; c < classes_number; ++c)
+            {
+                const float e = __expf(src[base + 5 + c] - max_logit);
+                dst[base + 5 + c] = e;
+                sum += e;
+            }
+            const float inv_sum = 1.0f / (sum + 1e-7f);
+            for (int c = 0; c < classes_number; ++c)
+                dst[base + 5 + c] *= inv_sum;
+        }
+    }
+}
+
+void detection_forward_cuda(const Index batch_size,
+                            const Index grid_size,
+                            const Index boxes_per_cell,
+                            const Index classes_number,
+                            const Index channels,
+                            const int class_activation,
+                            const float* anchors,
+                            const float* input,
+                            float* output)
+{
+    if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
+
+    const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
+    detection_forward_kernel<<<grid_size_for(total), block_size, 0,
+                               opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch_size),
+        static_cast<int>(grid_size),
+        static_cast<int>(boxes_per_cell),
+        static_cast<int>(classes_number),
+        static_cast<int>(channels),
+        class_activation,
+        anchors, input, output);
+}
+
+__global__ void detection_backward_kernel(const int batch_size,
+                                          const int grid_size,
+                                          const int boxes_per_cell,
+                                          const int classes_number,
+                                          const int channels,
+                                          const int class_activation,
+                                          const float* __restrict__ out,
+                                          const float* __restrict__ delta,
+                                          float* __restrict__ in_delta)
+{
+    const int values_per_box = 5 + classes_number;
+    const int total = batch_size * grid_size * grid_size * boxes_per_cell;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+         idx < total;
+         idx += blockDim.x * gridDim.x)
+    {
+        const int box = idx % boxes_per_cell;
+        const int t   = idx / boxes_per_cell;
+        const int col = t % grid_size;
+        const int t2  = t / grid_size;
+        const int row = t2 % grid_size;
+        const int b   = t2 / grid_size;
+
+        const int cell = ((b * grid_size + row) * grid_size + col) * channels;
+        const int base = cell + box * values_per_box;
+
+        const float ox = out[base + 0];
+        const float oy = out[base + 1];
+        const float oo = out[base + 4];
+
+        in_delta[base + 0] = delta[base + 0] * ox * (1.0f - ox);
+        in_delta[base + 1] = delta[base + 1] * oy * (1.0f - oy);
+        // d/dx exp(x)*a evaluated through the output o = exp(x)*a is just o (the anchor cancels).
+        in_delta[base + 2] = delta[base + 2] * out[base + 2];
+        in_delta[base + 3] = delta[base + 3] * out[base + 3];
+        in_delta[base + 4] = delta[base + 4] * oo * (1.0f - oo);
+
+        if (class_activation == 1)  // Sigmoid
+        {
+            for (int c = 0; c < classes_number; ++c)
+            {
+                const float s = out[base + 5 + c];
+                in_delta[base + 5 + c] = delta[base + 5 + c] * s * (1.0f - s);
+            }
+        }
+        else  // Softmax: ∂L/∂x_i = s_i * (g_i - Σ_j g_j s_j)
+        {
+            float dot = 0.0f;
+            for (int c = 0; c < classes_number; ++c)
+                dot += delta[base + 5 + c] * out[base + 5 + c];
+
+            for (int c = 0; c < classes_number; ++c)
+            {
+                const float s = out[base + 5 + c];
+                in_delta[base + 5 + c] = s * (delta[base + 5 + c] - dot);
+            }
+        }
+    }
+}
+
+void detection_backward_cuda(const Index batch_size,
+                             const Index grid_size,
+                             const Index boxes_per_cell,
+                             const Index classes_number,
+                             const Index channels,
+                             const int class_activation,
+                             const float* output,
+                             const float* output_delta,
+                             float* input_delta)
+{
+    if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
+
+    const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
+    detection_backward_kernel<<<grid_size_for(total), block_size, 0,
+                                opennn::Backend::get_compute_stream()>>>(
+        static_cast<int>(batch_size),
+        static_cast<int>(grid_size),
+        static_cast<int>(boxes_per_cell),
+        static_cast<int>(classes_number),
+        static_cast<int>(channels),
+        class_activation,
+        output, output_delta, input_delta);
+}

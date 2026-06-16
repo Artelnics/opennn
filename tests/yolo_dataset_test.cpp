@@ -150,7 +150,7 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
     const Index target_floats_per_sample = grid_size * grid_size * channels;
 
     std::vector<float> targets(static_cast<size_t>(2 * target_floats_per_sample), 0.0f);
-    dataset.fill_targets({0, 1}, {}, targets.data(), /*is_training=*/false, /*parallelize=*/false);
+    dataset.fill_targets({0, 1}, {}, targets.data(), /*is_training=*/false);
 
     // ---- Sample 0 ----------------------------------------------------------
     {
@@ -225,11 +225,15 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     dataset.set_display(false);
     dataset.set(images_dir, labels_dir, Shape{H, W, 3}, 2, 1, anchors);
 
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
     const Index pixels = H * W * 3;
     std::vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
 
     // is_training=true scales to [0,1].
-    dataset.fill_inputs({0}, {}, inputs.data(), /*is_training=*/true, /*parallelize=*/false);
+    dataset.fill_inputs({0}, {}, inputs.data(), /*is_training=*/true);
 
     // Every pixel should be the same solid color, divided by 255.
     constexpr float expected_r = 200.0f / 255.0f;

@@ -15,7 +15,11 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax };
+// LeakyReLU appended last so existing values 0..4 stay stable.
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU };
+
+// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
+inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction function);
