@@ -28,7 +28,7 @@ public:
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
-    struct VariableConstraint
+    struct UnivariateConstraint
     {
         ComparisonOperator comparison;
         float low_bound;
@@ -38,7 +38,7 @@ public:
         // only take one of these values / category indices).
         vector<float> allowed_values;
 
-        VariableConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
+        UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
             : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
@@ -71,7 +71,7 @@ public:
                  const vector<Descriptives>& descriptives,
                  const float deformation_domain_factor = 1.0f);
 
-        void bound(const vector<Variable>& variables, const vector<VariableConstraint>& constraints);
+        void bound(const vector<Variable>& variables, const vector<UnivariateConstraint>& constraints);
 
         void reshape(const float zoom_factor,
                      const VectorR& center,
@@ -227,7 +227,7 @@ private:
 
     vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
 
-    VariableConstraint get_constraint(const string& name) const;
+    UnivariateConstraint get_constraint(const string& name) const;
     bool is_objective(const string& name) const;
     Sense get_sense(const string& name) const;
     bool is_history(const string& name) const;
@@ -264,13 +264,13 @@ private:
 
     mutable unique_ptr<NetworkDifferential> network_differential;
 
-    map<string, VariableConstraint> constraints;
+    map<string, UnivariateConstraint> constraints;
 
     map<string, Sense> objectives;
 
     map<string, TimeType> time_roles;
 
-    vector<FormulaConstraint> formula_constraints;
+    vector<MultivariateConstraint> formula_constraints;
 
     vector<CardinalityConstraint> cardinality_constraints;
 

@@ -34,7 +34,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 
 void ResponseOptimization::set_constraint(const string& name, const ComparisonOperator comparison, float low, float up)
 {
-    constraints[name] = VariableConstraint(comparison, low, up);
+    constraints[name] = UnivariateConstraint(comparison, low, up);
 }
 
 
@@ -43,7 +43,7 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
     throw_if(allowed_values.empty(),
              "ResponseOptimization: AllowedSet constraint for '" + name + "' needs at least one value");
 
-    VariableConstraint constraint(ComparisonOperator::AllowedSet);
+    UnivariateConstraint constraint(ComparisonOperator::AllowedSet);
     constraint.allowed_values = allowed_values;
     constraints[name] = move(constraint);
 }
@@ -114,7 +114,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     throw_if(!neural_network,
              "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
 
-    FormulaConstraint formula_constraint;
+    MultivariateConstraint formula_constraint;
     formula_constraint.expression = expression;
     formula_constraint.comparison_operator = comparison;
     formula_constraint.low_bound = low;
@@ -135,7 +135,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
                                                   const float low,
                                                   const float up)
 {
-    FormulaConstraint formula_constraint;
+    MultivariateConstraint formula_constraint;
     formula_constraint.callback = move(callback);
     formula_constraint.uses_callback = true;
     formula_constraint.comparison_operator = comparison;
@@ -157,7 +157,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     throw_if(allowed_values.empty(),
              "ResponseOptimization: AllowedSet formula constraint needs at least one value");
 
-    FormulaConstraint formula_constraint;
+    MultivariateConstraint formula_constraint;
     formula_constraint.expression = expression;
     formula_constraint.comparison_operator = ComparisonOperator::AllowedSet;
     formula_constraint.allowed_values = allowed_values;
@@ -232,11 +232,11 @@ void ResponseOptimization::clear_time_roles(const string& name)
 }
 
 
-ResponseOptimization::VariableConstraint ResponseOptimization::get_constraint(const string& name) const
+ResponseOptimization::UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    const map<string, VariableConstraint>::const_iterator it = constraints.find(name);
+    const map<string, UnivariateConstraint>::const_iterator it = constraints.find(name);
 
-    return (it != constraints.end()) ? it->second : VariableConstraint(ComparisonOperator::None);
+    return (it != constraints.end()) ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
 
@@ -485,7 +485,7 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
 
-    vector<VariableConstraint> applicable_constraints;
+    vector<UnivariateConstraint> applicable_constraints;
     applicable_constraints.reserve(variables_number);
 
     for (const Variable& variable : variables)
@@ -567,7 +567,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 }
 
 
-void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<VariableConstraint>& constraints)
+void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<UnivariateConstraint>& constraints)
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
     Index feature_index = 0;
@@ -576,7 +576,7 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
     {
         const Index feature_dimension = feature_dimensions[variable_index];
 
-        const VariableConstraint& constraint = constraints[variable_index];
+        const UnivariateConstraint& constraint = constraints[variable_index];
 
         if(feature_dimension == 1)
         {
@@ -686,11 +686,11 @@ namespace
 // input constraint within its bound tolerance. Output and callback constraints are
 // not the pump's concern (they are handled after the forward pass).
 bool row_satisfies_input_affine(const VectorR& point,
-                                const vector<const FormulaConstraint*>& input_constraints)
+                                const vector<const MultivariateConstraint*>& input_constraints)
 {
     const VectorR empty_outputs;
 
-    for (const FormulaConstraint* constraint : input_constraints)
+    for (const MultivariateConstraint* constraint : input_constraints)
     {
         const float value = constraint->compiled.evaluate(point, empty_outputs);
         const float low = constraint->low_bound;
@@ -786,7 +786,7 @@ void unlock_free_integers_row(VectorR& point,
 void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& inferior_frontier,
                                  const VectorR& superior_frontier,
-                                 const vector<FormulaConstraint>& formula_constraints,
+                                 const vector<MultivariateConstraint>& formula_constraints,
                                  const vector<char>& fixed_mask,
                                  const vector<Index>& lattice_columns,
                                  const vector<float>& lattice_min,
@@ -798,8 +798,8 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const Index outer_cap,
                                  const float exploration_ratio)
 {
-    vector<const FormulaConstraint*> input_constraints;
-    for (const FormulaConstraint& constraint : formula_constraints)
+    vector<const MultivariateConstraint*> input_constraints;
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -883,7 +883,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
         if(categories_number == 1)
         {
-            const VariableConstraint constraint = get_constraint(variables[input_variable].name);
+            const UnivariateConstraint constraint = get_constraint(variables[input_variable].name);
             const VariableType type = variables[input_variable].type;
 
             if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
@@ -1095,7 +1095,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     // affine/nonlinear constraint (or a cardinality group); otherwise keep the original
     // continuous-repair-then-round path verbatim so purely continuous problems are unchanged.
     bool discrete_in_input_constraint = false;
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -1229,7 +1229,7 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& input_row,
                                                              const VectorR& output_row) const
 {
-    for (const FormulaConstraint& formula_constraint : formula_constraints)
+    for (const MultivariateConstraint& formula_constraint : formula_constraints)
     {
         const float evaluated_value = formula_constraint.uses_callback
             ? formula_constraint.callback(input_row, output_row)
@@ -1634,8 +1634,8 @@ void ResponseOptimization::promote_single_variable_constraints()
     for (const NamedColumn& column : input_columns)
         name_of_column[column.column_index] = column.name;
 
-    // [lo, hi] interval implied by an interval-type VariableConstraint; false for AllowedSet.
-    auto interval_of = [](const VariableConstraint& constraint, float& lo, float& hi) -> bool
+    // [lo, hi] interval implied by an interval-type UnivariateConstraint; false for AllowedSet.
+    auto interval_of = [](const UnivariateConstraint& constraint, float& lo, float& hi) -> bool
     {
         lo = -numeric_limits<float>::infinity();
         hi =  numeric_limits<float>::infinity();
@@ -1653,10 +1653,10 @@ void ResponseOptimization::promote_single_variable_constraints()
         }
     };
 
-    vector<FormulaConstraint> kept;
+    vector<MultivariateConstraint> kept;
     kept.reserve(formula_constraints.size());
 
-    for (FormulaConstraint& formula_constraint : formula_constraints)
+    for (MultivariateConstraint& formula_constraint : formula_constraints)
     {
         const CompiledFormula& compiled = formula_constraint.compiled;
 
@@ -1721,13 +1721,13 @@ void ResponseOptimization::promote_single_variable_constraints()
         const bool hi_finite = isfinite(new_hi);
 
         if (lo_finite && hi_finite && new_lo == new_hi)
-            constraints[name] = VariableConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
+            constraints[name] = UnivariateConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
         else if (lo_finite && hi_finite)
-            constraints[name] = VariableConstraint(ComparisonOperator::Between, new_lo, new_hi);
+            constraints[name] = UnivariateConstraint(ComparisonOperator::Between, new_lo, new_hi);
         else if (lo_finite)
-            constraints[name] = VariableConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
+            constraints[name] = UnivariateConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
         else if (hi_finite)
-            constraints[name] = VariableConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
+            constraints[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
 
         cout << "> Promoted single-variable constraint '" << formula_constraint.expression
              << "' to a box on '" << name << "'." << endl;
@@ -2205,7 +2205,7 @@ void ResponseOptimization::initialize_network_differential() const
 
     // Only needed when some constraint references the network outputs.
     bool has_output_constraint = false;
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
         if (!constraint.uses_callback
             && constraint.comparison_operator != ComparisonOperator::None
             && constraint.compiled.scope != FormulaScope::InputsOnly)
@@ -2386,7 +2386,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     const vector<NamedColumn> input_columns = build_columns_for_formula(input_variables, true);
 
     bool any_callback_formula = false;
-    for (const FormulaConstraint& formula_constraint : formula_constraints)
+    for (const MultivariateConstraint& formula_constraint : formula_constraints)
         if (formula_constraint.uses_callback)
             any_callback_formula = true;
 
@@ -2400,7 +2400,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     auto input_referenced_by_formula = [&](const Index column) -> bool
     {
         if (any_callback_formula) return true;
-        for (const FormulaConstraint& formula_constraint : formula_constraints)
+        for (const MultivariateConstraint& formula_constraint : formula_constraints)
             for (const Index referenced : formula_constraint.compiled.input_indices)
                 if (referenced == column) return true;
         return false;
@@ -2470,8 +2470,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
         }
     }
 
-    const map<string, VariableConstraint> saved_constraints = constraints;
-    const vector<FormulaConstraint> saved_formula_constraints = formula_constraints;
+    const map<string, UnivariateConstraint> saved_constraints = constraints;
+    const vector<MultivariateConstraint> saved_formula_constraints = formula_constraints;
     const Index saved_budget = max_total_evaluations;
 
     const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
@@ -2490,13 +2490,13 @@ MatrixR ResponseOptimization::perform_response_optimization()
         {
             if (axes[a].is_formula)
             {
-                FormulaConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
+                MultivariateConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
             }
             else
-                constraints[axes[a].variable_name] = VariableConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
+                constraints[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
         }
 
         max_total_evaluations = cap;

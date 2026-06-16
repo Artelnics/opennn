@@ -731,7 +731,7 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
     {
-        FormulaConstraint constraint;
+        MultivariateConstraint constraint;
         constraint.expression = expression;
         constraint.comparison_operator = op;
         constraint.low_bound = low;
@@ -740,7 +740,7 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
         return constraint;
     };
 
-    vector<FormulaConstraint> constraints;
+    vector<MultivariateConstraint> constraints;
     constraints.push_back(make_fc("w0 + w1 + w2 + w3", ComparisonOperator::EqualTo, float(1), float(1)));
     for (int i = 0; i < 4; ++i)
     {
@@ -798,11 +798,11 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 
 namespace
 {
-    FormulaConstraint make_integer_constraint(const string& expression,
+    MultivariateConstraint make_integer_constraint(const string& expression,
                                               const vector<NamedColumn>& inputs,
                                               ComparisonOperator op, float low, float up)
     {
-        FormulaConstraint constraint;
+        MultivariateConstraint constraint;
         constraint.expression = expression;
         constraint.comparison_operator = op;
         constraint.low_bound = low;
@@ -816,7 +816,7 @@ TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 {
     // 3 integer vars n0..n2 in [0,5]; knapsack budget n0 + n1 + n2 <= 4.
     const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const FormulaConstraint budget =
+    const MultivariateConstraint budget =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
 
     const Index n = 3;
@@ -846,7 +846,7 @@ TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
 {
     // n0 + n1 + n2 == 3, each in [0,5]; unit coefficients => the carry must hit it exactly.
     const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const FormulaConstraint exact =
+    const MultivariateConstraint exact =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
 
     const Index n = 3;

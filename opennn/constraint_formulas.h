@@ -81,7 +81,7 @@ enum class ComparisonOperator : uint8_t
 };
 
 
-struct FormulaConstraint
+struct MultivariateConstraint
 {
     string expression;
     function<float(const VectorR&, const VectorR&)> callback;
@@ -110,9 +110,9 @@ struct LinearConstraintSet
 
 inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
 
-[[nodiscard]] bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
+[[nodiscard]] bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints);
 
-[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
                                                               const Index n_in,
                                                               const Index n_out);
 
@@ -122,7 +122,7 @@ inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-
 void repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
-                          const vector<FormulaConstraint>& formula_constraints,
+                          const vector<MultivariateConstraint>& formula_constraints,
                           Index max_correction_passes = 64);
 
 // Per-point Gauss-Newton-on-manifold repair for smooth nonlinear input-only
@@ -140,7 +140,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
-                             const vector<FormulaConstraint>& formula_constraints,
+                             const vector<MultivariateConstraint>& formula_constraints,
                              Index max_correction_passes = 64);
 
 // Single-pass random-sweep clamp-and-carry for one affine input-only
@@ -149,7 +149,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
-                                const FormulaConstraint& constraint);
+                                const MultivariateConstraint& constraint);
 
 // Lattice analogue of repair_single_affine_input for one affine constraint whose
 // variables are all integer/binary (the caller guarantees this). Each row is first
@@ -164,7 +164,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
-                                  const FormulaConstraint& constraint);
+                                  const MultivariateConstraint& constraint);
 
 // Draw a box-respecting K-hot assignment over `count` indicators into `out` (sized
 // to `count`): indices flagged in `force_on` are always 1, `force_off` always 0, and
@@ -185,7 +185,7 @@ void repair_single_affine_integer(MatrixR& random_inputs,
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
-                   const vector<FormulaConstraint>& formula_constraints);
+                   const vector<MultivariateConstraint>& formula_constraints);
 
 // Masked per-row affine projection: project each point's FREE input coordinates
 // onto the active input-only affine (or smooth) constraints while holding every
@@ -203,7 +203,7 @@ void repair_inputs(MatrixR& random_inputs,
 void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
                                      const VectorR& superior_frontier,
-                                     const vector<FormulaConstraint>& formula_constraints,
+                                     const vector<MultivariateConstraint>& formula_constraints,
                                      const vector<char>& fixed_columns,
                                      Index max_correction_passes = 64);
 
@@ -227,7 +227,7 @@ using SurrogateVjp     = function<VectorR(const VectorR&, const VectorR&)>;
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                const SurrogateVjp& vjp,
                                Index max_correction_passes = 64,
@@ -242,7 +242,7 @@ void repair_output_constraints(MatrixR& inputs,
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});

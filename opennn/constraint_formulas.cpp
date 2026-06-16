@@ -1042,10 +1042,10 @@ CompiledFormula compile_formula(const string& expression,
 }
 
 
-bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints)
+bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints)
 {
     return !formula_constraints.empty()
-        && ranges::all_of(formula_constraints, [](const FormulaConstraint& formula_constraint)
+        && ranges::all_of(formula_constraints, [](const MultivariateConstraint& formula_constraint)
            {
                return !formula_constraint.uses_callback
                    && formula_constraint.compiled.shape == FormulaShape::Affine;
@@ -1053,7 +1053,7 @@ bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula
 }
 
 
-LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
                                                 const Index n_in,
                                                 const Index n_out)
 {
@@ -1066,7 +1066,7 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
 
     for (Index i = 0; i < m; ++i)
     {
-        const FormulaConstraint& formula_constraint = formula_constraints[i];
+        const MultivariateConstraint& formula_constraint = formula_constraints[i];
 
         for (const auto& [column, coefficient] : formula_constraint.compiled.affine_input_terms)
             linear_set.A(i, column) += coefficient;
@@ -1156,12 +1156,12 @@ bool draw_k_hot(const Index count, const Index k,
 void repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
-                          const vector<FormulaConstraint>& formula_constraints,
+                          const vector<MultivariateConstraint>& formula_constraints,
                           const Index max_correction_passes)
 {
-    vector<const FormulaConstraint*> affine_constraints;
+    vector<const MultivariateConstraint*> affine_constraints;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
         if (!constraint.uses_callback
             && constraint.comparison_operator != ComparisonOperator::None
             && constraint.compiled.shape == FormulaShape::Affine
@@ -1177,7 +1177,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     const Index constraints_number = static_cast<Index>(affine_constraints.size());
 
     Index slacks_number = 0;
-    for (const FormulaConstraint* constraint : affine_constraints)
+    for (const MultivariateConstraint* constraint : affine_constraints)
         if (constraint->comparison_operator != ComparisonOperator::EqualTo)
             ++slacks_number;
 
@@ -1192,7 +1192,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     for (Index i = 0; i < constraints_number; ++i)
     {
-        const FormulaConstraint& constraint = *affine_constraints[i];
+        const MultivariateConstraint& constraint = *affine_constraints[i];
         const float constant = constraint.compiled.affine_constant;
         const float low = constraint.low_bound;
         const float up = constraint.up_bound;
@@ -1302,7 +1302,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
-                                const FormulaConstraint& constraint)
+                                const MultivariateConstraint& constraint)
 {
     const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
 
@@ -1386,7 +1386,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
-                                  const FormulaConstraint& constraint)
+                                  const MultivariateConstraint& constraint)
 {
     const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
 
@@ -1499,16 +1499,16 @@ void repair_single_affine_integer(MatrixR& random_inputs,
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
-                             const vector<FormulaConstraint>& formula_constraints,
+                             const vector<MultivariateConstraint>& formula_constraints,
                              const Index max_correction_passes)
 {
     // Smooth input-only constraints we can project. Affine ones (constant
     // Jacobian) are folded in so the whole input-only set is satisfied jointly;
     // we only run at all when at least one is genuinely nonlinear.
-    vector<const FormulaConstraint*> constraints;
+    vector<const MultivariateConstraint*> constraints;
     bool any_nonlinear = false;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -1542,12 +1542,12 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
         for (Index pass = 0; pass < passes; ++pass)
         {
             // Active set: residual h and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
+            vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
             residuals.reserve(constraints.size());
 
-            for (const FormulaConstraint* constraint : constraints)
+            for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, empty_outputs);
                 const float low = constraint->low_bound;
@@ -1631,7 +1631,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
                                      const VectorR& superior_frontier,
-                                     const vector<FormulaConstraint>& formula_constraints,
+                                     const vector<MultivariateConstraint>& formula_constraints,
                                      const vector<char>& fixed_columns,
                                      const Index max_correction_passes)
 {
@@ -1639,9 +1639,9 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
     // gradient), but every row holds its `fixed_columns` coordinates put. We run
     // whenever at least one such constraint exists (no "any nonlinear" guard): the
     // mixed-integer buy-in / budget rows are all affine.
-    vector<const FormulaConstraint*> constraints;
+    vector<const MultivariateConstraint*> constraints;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -1674,12 +1674,12 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
         for (Index pass = 0; pass < passes; ++pass)
         {
             // Active set: residual h and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
+            vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
             residuals.reserve(constraints.size());
 
-            for (const FormulaConstraint* constraint : constraints)
+            for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, empty_outputs);
                 const float low = constraint->low_bound;
@@ -1792,17 +1792,17 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
-                   const vector<FormulaConstraint>& formula_constraints)
+                   const vector<MultivariateConstraint>& formula_constraints)
 {
     // Route by the structure of the input-only, non-callback constraints:
     //   - any nonlinear present  -> Gauss-Newton repair (folds in affine ones)
     //   - exactly one affine     -> single-pass random sweep (exact, diverse)
     //   - two or more affine      -> batched Gram + Dykstra projection
-    const FormulaConstraint* single_affine = nullptr;
+    const MultivariateConstraint* single_affine = nullptr;
     Index affine_number = 0;
     bool any_nonlinear = false;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -1832,7 +1832,7 @@ void repair_inputs(MatrixR& random_inputs,
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                const SurrogateVjp& vjp,
                                const Index max_correction_passes,
@@ -1842,9 +1842,9 @@ void repair_output_constraints(MatrixR& inputs,
     // and referencing outputs (Mixed or OutputsOnly). Affine-in-(x,y) ones use
     // their constant terms; nonlinear smooth ones use the compiled gradients.
     // Input-only constraints are handled pre-evaluation by repair_inputs.
-    vector<const FormulaConstraint*> constraints;
+    vector<const MultivariateConstraint*> constraints;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
         if (constraint.uses_callback
             || constraint.comparison_operator == ComparisonOperator::None
@@ -1878,12 +1878,12 @@ void repair_output_constraints(MatrixR& inputs,
             const Index outputs_number = output.size();
 
             // Active set: residual and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
+            vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
             residuals.reserve(constraints.size());
 
-            for (const FormulaConstraint* constraint : constraints)
+            for (const MultivariateConstraint* constraint : constraints)
             {
                 const float value = constraint->compiled.evaluate(point, output);
                 const float low = constraint->low_bound;
@@ -2006,7 +2006,7 @@ void repair_output_constraints(MatrixR& inputs,
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
