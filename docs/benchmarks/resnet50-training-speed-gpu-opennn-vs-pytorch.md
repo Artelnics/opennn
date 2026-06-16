@@ -1,11 +1,5 @@
 # GPU ResNet-50 training speed: OpenNN vs PyTorch (CIFAR-10 / CIFAR-100)
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-13. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU, CUDA 12.9, cuDNN 9.23.*
-
-**Status:** current GPU ResNet-50 headline for the benchmark index. The earlier
-2,912 samples/s result is kept below only as historical context for the optimization
-path that led to the current 8,433 samples/s result.
-
 The [MNIST CNN note](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)
 measures a minimal convolutional network. This note scales the same question
 to a **real architecture**: ResNet-50 — 53 convolutions, 53 batch
@@ -19,7 +13,7 @@ cross-entropy + Adam, timed after warmup (medians of three timed runs, all
 three engines on one session). CIFAR-100 differs only in the classifier head
 (2048→100 instead of 2048→10) and is run on the identical 32×32 workload:
 
-| Dataset | OpenNN (CUDA graph) | `torch.compile` | PyTorch eager | OpenNN vs compile / eager |
+| Dataset | OpenNN (CUDA graph) | torch.compile | PyTorch eager | OpenNN vs compile / eager |
 |---|---:|---:|---:|---|
 | **CIFAR-10** | **8,433** | 5,268 | 3,960 | 1.6× / 2.1× |
 | **CIFAR-100** | **8,702** | 5,000 | 4,124 | 1.7× / 2.1× |

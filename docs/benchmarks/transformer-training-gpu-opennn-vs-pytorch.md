@@ -1,11 +1,5 @@
 # Transformer training on the GPU: OpenNN vs PyTorch
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
-
-**Status:** current WSL2 laptop GPU result. Before using this as a flagship
-investor claim, keep repeated-run statistics, raw logs, and a cross-framework
-quality/correctness gate with the published numbers.
-
 This is the training counterpart to the
 [transformer inference benchmark](transformer-inference-gpu-opennn-vs-pytorch.md).
 Same architecture — the encoder-decoder **Transformer** from *Attention Is All

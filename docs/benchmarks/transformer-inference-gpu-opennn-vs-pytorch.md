@@ -1,11 +1,5 @@
 # GPU Transformer inference: OpenNN vs PyTorch ("Attention Is All You Need")
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
-
-**Status:** current WSL2 laptop GPU inference result. Before using this as a
-flagship investor claim, keep repeated-run statistics and exact cross-framework
-correctness/quality gates with the published numbers.
-
 The [dense-MLP note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) and
 the [ResNet note](resnet50-training-speed-gpu-opennn-vs-pytorch.md) cover fully
 connected and convolutional networks. This note covers the third major
@@ -173,7 +167,7 @@ OPENNN_BF16=1 LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_transformer_resident 256
 # PyTorch bf16 counterpart (torch.autocast)
 PT_BF16=1 python pytorch_transformer_infer.py 256 512 8 2048 6 10000 32 50
 
-# fp32 (drop the env flags) — also wins, via the fp32-via-bf16 fused path.
+# fp32 (omit the env flags) — also wins, via the fp32-via-bf16 fused path.
 
 # bf16 forward correctness (GPU bf16 vs CPU fp32 reference)
 OPENNN_BF16=1 ./opennn_attention_validate 256 512 8 2048 6 1000 4

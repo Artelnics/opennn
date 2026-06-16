@@ -1,159 +1,305 @@
-# Training precision: OpenNN vs PyTorch vs TensorFlow (Rosenbrock, Neural Designer protocol)
+# Precision of TensorFlow, PyTorch, and Neural Designer
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-11. Linux x86_64 (WSL2).*
+This post compares the training precision of TensorFlow, PyTorch, and Neural Designer for an
+approximation benchmark.
 
-This note asks a simple, honest question: **what is the lowest error each tool
-can reach using the optimizers it actually ships?** It follows the Neural
-Designer blog benchmark
-[“Precision comparison: TensorFlow, PyTorch and Neural Designer”](https://www.neuraldesigner.com/blog/precision-comparison-tensorflow-pytorch-neural-designer/),
-whose thesis is that a *second-order* optimizer reaches a lower mean squared
-error than first-order Adam, in less time. We test that like-for-like by giving
-**each framework its own best optimizer** — not Adam-vs-Adam.
+[TensorFlow](https://tensorflow.org/), [PyTorch](https://pytorch.org/) and [Neural
+Designer](https://www.neuraldesigner.com/) are three popular machine learning platforms developed by
+[Google](https://research.google/teams/brain/), [Facebook](https://ai.facebook.com/research/) and
+[Artelnics](https://www.artelnics.com/), respectively.
 
-The optimizer landscape this benchmark turns on:
+Although all those frameworks implement neural networks, they present some important differences in
+functionality, usability, performance, etc.
 
-| | First-order | Second-order / quasi-Newton |
-|---|---|---|
-| **OpenNN** | Adam, SGD | **Quasi-Newton (BFGS)** and **Levenberg-Marquardt**, native, one-line (`set_optimization_algorithm("LevenbergMarquardt")`) |
-| **PyTorch** | Adam, SGD, … | **`torch.optim.LBFGS`** — built in, but closure-based (you rewrite the training loop); **no Levenberg-Marquardt** |
-| **TensorFlow** | Adam, SGD, … (`keras.optimizers`) | **none in core Keras** (BFGS/LM live only in the separate `tensorflow_probability` package, not `model.fit`) |
+As we will see, the training accuracy of Neural Designer using the Levenberg-Marquardt algorithm is
+**x1.91** higher than that of TensorFlow and **x1.21** times higher than that of PyTorch using Adam.
 
-## The result
+Moreover, Neural Designer trains this neural network **x5.71** times faster than TensorFlow and
+**x8.21** times faster than PyTorch.
 
-Final full-dataset MSE on the Rosenbrock approximation benchmark (10 inputs,
-10,000 samples, z-normalized), computed by a single neutral scorer. Each engine
-runs the **best optimizer it provides**:
+In this article, we outline all the steps required to reproduce the results using Neural Designer
+([download](https://www.neuraldesigner.com/downloads/))
 
-| | Optimizer | Class | Best MSE | Mean time |
-|---|---|---|---:|---:|
-| **OpenNN** | Quasi-Newton | 2nd-order, native | **0.108** | **0.9 s** |
-| **OpenNN** | Levenberg-Marquardt | 2nd-order, native | 0.108–0.12 | 14 s |
-| **PyTorch** | LBFGS | 2nd-order, closure add-on | **0.108** | 8.3 s |
-| **OpenNN** | Adam | 1st-order | 0.14 | 4.7 s |
-| **PyTorch** | Adam | 1st-order | 0.20 | 44 s |
-| **TensorFlow** | Adam | 1st-order (only option) | 0.16 | 310 s |
+### Contents
 
-*(MSE = best over seeds; the second-order rows from a 3-seed re-run plus the
-earlier 10-seed sweep — see the prior revision for the full 10-seed Adam means
-0.156–0.173. The clean-machine run regenerates all rows over 10 seeds.)*
+- [Introduction](#Introduction).
+- [Benchmark application](#BenchmarkApplication).
+- [Reference computer](#ReferenceComputer).
+- [Results](#Results).
+- [Conclusions](#Conclusions).
 
-What this shows — and what survives scrutiny:
+## Introduction
 
-* **The error floor is set by the optimizer class, not the brand.** Every
-  *second-order* run — OpenNN's Quasi-Newton, OpenNN's Levenberg-Marquardt, and
-  PyTorch's LBFGS — lands on the same MSE (~0.108, the 10-neuron network's
-  capacity floor). Every *first-order* Adam run is stuck higher (0.14–0.20). So
-  the honest claim is **not** “OpenNN reaches a lower error than PyTorch” — it is
-  **“second-order reaches a lower error than Adam, and the tools differ in how
-  readily they let you use it.”**
-* **OpenNN makes second-order the path of least resistance.** Its Quasi-Newton
-  reaches that floor in **0.9 s with a one-line optimizer change**. PyTorch
-  reaches the same floor with LBFGS, but you must rewrite your training loop
-  around a `closure()` the optimizer re-invokes, and it takes ~8 s here.
-  TensorFlow's `model.fit` offers **no second-order option at all** — its best
-  is Adam at MSE ~0.16.
-* **First-order Adam is statistically equivalent across all three** (the
-  [accuracy-parity note](accuracy-opennn-vs-pytorch-vs-tensorflow.md) confirms
-  this): the precision gap is the optimizer, not the library. Per-seed Adam
-  values are not comparable across rows (each framework's RNG selects a
-  different U(−1, 1) init).
+One of the most critical factors in machine learning platforms is their training accuracy.
 
-The absolute MSE values are not comparable to the blog's (0.017–0.07): we
-z-normalize the target and use float32 end-to-end, the blog's data scaling and
-Neural Designer 5.9's internals are not fully specified, and hardware and
-library versions differ by five years. What is comparable — and what this
-note holds fixed — is the *relative* standing of the tools under one
-protocol.
+![](https://www.neuraldesigner.com/images/precision-test.svg)
 
-## Setup
+This article aims to measure the training accuracies of TensorFlow, PyTorch, and Neural Designer for
+a benchmark application and compare the speeds obtained by those platforms.
 
-The task is the [Rosenbrock benchmark](https://www.neuraldesigner.com/blog/the-rosenbrock-benchmark-for-machine-learning/)
-from the blog: inputs `x_i ~ U(-1, 1)`, target
-`y = Σ_i [ (1 - x_i)² + 100 (x_{i+1} - x_i²)² ]`, 10 input variables,
-10,000 samples. Per the blog there is no train/test split: networks train on
-all 10,000 samples and the final MSE is measured on the same set. One
-generator writes a single z-normalized CSV consumed by every framework.
+The most important factor for training accuracy is the optimization algorithm used.
 
-Held identical across all rows, following the blog:
+The above table shows that TensorFlow and PyTorch are programmed in C++ and Python, while Neural
+Designer is entirely programmed in C++.
 
-| | Value |
-|---|---|
-| Architecture | 10 → 10 (tanh) → 1 (linear) |
-| Initialization | U(-1, 1) for all weights and biases |
-| Loss | mean squared error, no regularization |
-| Adam rows | lr 0.001, batch 1,000, 10,000 epochs |
-| Second-order rows | full batch, 1,000 epochs (blog's Neural Designer config) |
-| Scoring | one neutral scorer reads each framework's predictions |
+Next, we measure the training accuracy for a benchmark problem on a reference computer using
+TensorFlow, PyTorch, and Neural Designer. We then compare the results produced by that platforms.
 
-Times are wall-clock around the training loop only (no import, data loading,
-or prediction time), measured sequentially on an idle machine.
+## Benchmark application
 
-* Hardware: Intel Core i7-12700H (20 threads), WSL2 Ubuntu 24.04 on Windows 11.
-* Versions: OpenNN dev-refactor built with g++ 13.3 (`-O3 -march=native`,
-  Eigen 5.0.1, CPU); PyTorch 2.6.0 and TensorFlow 2.21.0 on CPython 3.12,
-  forced to CPU (`CUDA_VISIBLE_DEVICES=""`).
+The first step is to choose a benchmark application that is general enough to conclude the
+performance of the machine learning platforms. As previously stated, we will train a neural network
+that approximates a set of input-target samples.
 
-## Notes on the comparison
+In this regard, an approximation application comprises a data set, a neural network, and an
+associated training strategy. The next table uniquely defines these three components.
 
-* **Why TensorFlow is so slow here:** 310 s for 100,000 tiny steps is almost
-  entirely Keras `fit()` per-step/per-epoch overhead, not math. PyTorch's
-  eager loop pays less overhead (42 s); OpenNN's native loop pays the least
-  (4.3 s). On a 10-neuron network the GEMMs are negligible — this benchmark
-  measures framework overhead and optimizer quality, not FLOPS.
-* **Quasi-Newton vs Levenberg-Marquardt:** both land in the same precision
-  band (the 10-neuron network's capacity floor, MSE ≈ 0.107–0.12). BFGS does
-  it with gradients only (2 s); LM pays for a 10,000×131 Jacobian and a QR
-  solve per epoch (10 s). Per-seed results differ only in which local minimum
-  each lands in; on some seeds LM is best (0.1073), on others quasi-Newton.
-* **Early stopping:** the second-order optimizers stop on zero loss decrease,
-  so some seeds finish in a few hundred epochs (LM seed 4: 161 epochs, 1.9 s,
-  MSE 0.1080) — included as-is, as Neural Designer would behave.
-* **Intel MKL:** rebuilding OpenNN with `-DOpenNN_ENABLE_MKL=ON` leaves every
-  number above within noise — at these sizes neither the forward GEMMs nor
-  the 131-parameter QR are BLAS-bound.
+| Data set![](https://www.neuraldesigner.com/images/data_set.svg) | Benchmark: Rosenbrock Inputs number: 10 Targets number: 1 Samples number: 10000 File size: 2.38 MB ([download](https://www.neuraldesigner.com/files/datasets/R_new.rar)) |
+| --- | --- |
+| Neural network![](https://www.neuraldesigner.com/images/neural_network.svg) | Layers number: 2 Layer 1: -Type: Perceptron (Dense) -Inputs number: 10 -Neurons number: 10 -Activation function: Hyperbolic tangent (tanh) Layer 2: -Type: Perceptron (Dense) -Inputs number: 10 -Neurons number: 1 -Activation function: Linear Initialization: Random uniform [-1,1] |
+| Training strategy![](https://www.neuraldesigner.com/images/training_strategy.svg) | Loss index: -Error: Mean Squared Error (MSE) -Regularization: None Optimization algorithm (TensorFlow and PyTorch): -Algorithm: Adaptive Moment Estimation (Adam) -Batch size: 1000 -Maximum epochs: 10000 Optimization algorithm (Neural Designer): -Algorithm: Levenberg-Marquardt (LM) -Maximum epochs: 1000 |
 
-## Library fixes this benchmark surfaced
+Once we have created the TensorFlow, PyTorch, and Neural Designer applications, we need to run them.
 
-Reproducing the blog initially *failed*: the second-order rows could not be
-produced on the dev-refactor tree. Three defects were found and fixed in the
-process — itself a good argument for keeping this benchmark in the suite:
+## Reference computer
 
-1. **Quasi-Newton trained on a zero gradient.** Constructing the validation
-   `BackPropagation` after the training one re-linked every layer's gradient
-   output to the validation buffer, so the optimizer saw an all-zero gradient
-   and silently froze at the initial loss (`quasi_newton_method.cpp`,
-   construction order). A failed line search now also resets the inverse
-   Hessian and retries along steepest descent instead of deadlocking.
-2. **Levenberg-Marquardt rejected multi-layer networks.** The refactored
-   Jacobian only supported a single trainable Dense layer, so the blog's
-   2-layer MLP threw. The Jacobian now chains backward through a sequential
-   Dense stack with per-layer aligned parameter offsets; it was validated
-   against central finite differences (max |J−J_num| ≈ 3e-6,
-   |g−g_num| ≈ 1e-7) and the previously failing
-   `LevenbergMarquardtAlgorithmTest.TrainReducesError` passes.
-3. **MKL builds crashed in LM's QR solve.** OpenNN's CMake accepted
-   `MKLConfig.cmake`'s ILP64 default while linking the single-DLL `mkl_rt`,
-   which defaults to LP64 at runtime — LAPACK `geqp3` then returned garbage
-   pivots and Eigen segfaulted. The MKL config now defaults to
-   `MKL_LINK=sdl` + `MKL_INTERFACE=lp64`.
-4. **Two silent-mismatch traps.** `TabularDataset(n, {inputs}, {2})`
-   collapsed the target shape to *one* column (inconsistent with
-   `ClassificationNetwork`, which builds a 2-unit softmax for `{2}`) — the
-   collapse is removed. And LM's `calculate_errors` now throws on an
-   output/target size mismatch instead of silently resizing the error vector
-   and corrupting the gradient.
+The next step is to choose the computer to train the neural networks with TensorFlow, PyTorch, and
+Neural Designer.
 
-## Reproducing
+| Operating system: | Windows 10 Enterprise |
+| --- | --- |
+| Processor: | CPU Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz |
+| Physical RAM: | 16.0 GB |
 
-The data generator, the three training programs, the neutral scorer, and the
-runner are in [`docs/benchmarks/precision/`](precision/):
+Once the computer has been chosen, we install TensorFlow (2.1.0), PyTorch (1.7.0), and Neural
+Designer (5.9.0) on it.
 
-```bash
-python generate_rosenbrock.py            # writes the shared normalized CSV
-./run_precision.sh 10                    # all engines × all optimizers × 10 seeds + summary
-# or individually:
-./opennn_precision <seed> <optimizer> <epochs>   # QuasiNewtonMethod | LevenbergMarquardt | AdaptiveMomentEstimation
-python pytorch_precision.py <seed> [Adam|LBFGS] [epochs]   # LBFGS = PyTorch's built-in second-order
-python tensorflow_precision.py <seed>            # Adam only (core Keras has no second-order)
-python score.py <label> <predictions_file>
 ```
+#TENSORFLOW CODE
+                import tensorflow as tf
+                import pandas as pd
+                import time
+                import numpy as np
+
+                #read data float32
+	start_time = time.time()
+	filename = "C:/R_new.csv"
+	df_test = pd.read_csv(filename, nrows=100)
+	float_cols = .dtype == "float64"]
+	float32_cols = {c: np.float32 for c in float_cols}
+	data = pd.read_csv(filename, engine='c', dtype=float32_cols)
+                print("Loading time: ", round(time.time() - start_time), " seconds")
+
+	x = data.iloc[:,:-1].values
+	y = data.iloc[:,[-1]].values
+
+	initializer = tf.keras.initializers.RandomUniform(minval=-1., maxval=1.)
+
+                #build model
+	model = tf.keras.models.Sequential([tf.keras.layers.Dense(1000,
+									    activation = 'tanh',
+									    kernel_initializer = initializer,
+									    bias_initializer=initializer),
+							tf.keras.layers.Dense(1,
+									    activation = 'linear',
+									    kernel_initializer = initializer,
+									    bias_initializer=initializer)])
+
+                #compile model
+	model.compile(optimizer='adam', loss = 'mean_squared_error')
+
+                #train model
+	start_time = time.time()
+	history = model.fit(x, y, batch_size = 1000, epochs = 1000)
+                print("Training time: ", round(time.time() - start_time), " seconds")
+
+```
+
+Building this application with PyTorch also requires some Python scripting. This code is listed
+below. Also, you can download
+[here.](https://www.neuraldesigner.com/wp-content/uploads/2025/07/Final_pytorch-cpu.py_.zip)
+
+```
+#PYTORCH CODE
+            import pandas as pd
+            import time
+            import torch
+            import numpy as np
+            import statistics
+
+            def init_weights(m):
+            if type(m) == torch.nn.Linear:
+			torch.nn.init.uniform_(m.weight, a=-1.0, b=1.0)
+			torch.nn.init.uniform_(m.bias.data, a=-1.0, b=1.0)
+
+	epoch = 1000
+	total_samples, batch_size, input_variables, hidden_neurons, output_variables = 1000000, 1000, 1000, 1000, 1
+	device = torch.device("cuda:0")
+
+            # read data float32
+	start_time = time.time()
+	filename = "C:/R_new.csv"
+	df_test = pd.read_csv(filename, nrows=100)
+	float_cols = .dtype == "float64"]
+	float32_cols = {c: np.float32 for c in float_cols}
+	dataset = pd.read_csv(filename, engine='c', dtype=float32_cols)
+            print("Loading time: ", round(time.time() - start_time), " seconds")
+
+	x = torch.tensor(dataset.iloc[:,:-1].values, dtype = torch.float32)
+	y = torch.tensor(dataset.iloc[:,[-1]].values, dtype = torch.float32)
+            # build model
+	model = torch.nn.Sequential(torch.nn.Linear(input_variables, hidden_neurons),
+								torch.nn.Tanh(),
+								torch.nn.Linear(hidden_neurons, output_variables)).cuda()
+
+            # initialize weights
+	model.apply(init_weights)
+
+            # compile model
+	learning_rate = 0.001
+	loss_fn = torch.nn.MSELoss(reduction = 'mean')
+	optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+	indices = np.arange(0,total_samples)
+
+	start = time.time()
+
+            for j in range(epoch):
+
+		mse=[]
+
+		t0 = time.time()
+
+            for i in range(0, total_samples, batch_size):
+
+			batch_indices = indices[i:i+batch_size]
+
+			batch_x, batch_y = x[batch_indices], y[batch_indices]
+
+			batch_x = batch_x.cuda()
+
+			batch_y = batch_y.cuda()
+
+			outputs = model.forward(batch_x)
+
+			loss = loss_fn(outputs, batch_y)
+
+			model.zero_grad()
+
+			loss.backward()
+
+			optimizer.step()
+
+			mse.append(loss.item())
+
+            print("Epoch:", j+1,"/1000", "[================================] - ","loss: ", statistics.mean(mse))
+
+		t1 = time.time() - t0
+
+            print("Elapsed time: ", int(round(t1 )), "sec")
+
+	end = time.time()
+
+	elapsed = end - start
+
+            print("Training time: ",int(round(elapsed )), "seconds")
+
+```
+
+Once the TensorFlow, PyTorch, and Neural Designer applications have been created, we need to run
+them.
+
+## Results
+
+The last step is to run the benchmark application on the selected machine with TensorFlow, PyTorch,
+and Neural Designer and compare those platforms’ training times.
+
+The next figure shows the training results with **TensorFlow**.
+
+| Run | Time | MSE |
+| --- | --- | --- |
+| 1 | 00:47 | 0.0587 |
+| 2 | 00:48 | 0.0582 |
+| 3 | 00:48 | 0.0988 |
+| 4 | 00:47 | 0.1012 |
+| 5 | 00:47 | 0.0508 |
+| 6 | 00:48 | 0.1008 |
+| 7 | 00:51 | **0.0333** |
+| 8 | 00:52 | 0.0998 |
+| 9 | 00:50 | 0.0582 |
+| 10 | 00:48 | 0.0454 |
+
+As we can see, the minimum mean squared error by TensorFlow is 0.0333, and the average mean squared
+error over the ten runs is 0.0705. The average training time is 48.6 seconds.
+
+Similarly, the following figure is a screenshot of **PyTorch** at the end of the process.
+
+| Run | Time | MSE |
+| --- | --- | --- |
+| 1 | 01:15 | 0.0294 |
+| 2 | 01:09 | 0.0474 |
+| 3 | 01:10 | 0.0332 |
+| 4 | 01:08 | 0.0586 |
+| 5 | 01:10 | **0.0221** |
+| 6 | 01:09 | 0.0480 |
+| 7 | 01:12 | 0.1006 |
+| 8 | 01:10 | 0.0332 |
+| 9 | 01:09 | 0.0582 |
+| 10 | 01:06 | 0.0988 |
+
+In this case, the minimum mean squared error by PyTorch over the ten runs is 0.0221. The average
+mean squared error is 0.0529. The average training time is 69.8 seconds.
+
+Finally, the following figure shows the training results with **Neural Designer**.
+
+| Run | Time | MSE |
+| --- | --- | --- |
+| 1 | 00:08 | 0.0196 |
+| 2 | 00:09 | 0.0263 |
+| 3 | 00:08 | 0.0254 |
+| 4 | 00:09 | 0.0191 |
+| 5 | 00:09 | 0.0413 |
+| 6 | 00:09 | 0.0263 |
+| 7 | 00:08 | 0.0397 |
+| 8 | 00:08 | **0.0174** |
+| 9 | 00:08 | 0.0527 |
+| 10 | 00:09 | 0.0521 |
+
+The minimum mean squared error by Neural Designer is 0.0174. The average mean squared error over the
+ten runs is 0.0320. With Neural Designer, the average training time is 8.5 seconds.
+
+The following table summarizes the metrics yield by the three machine learning platforms.
+
+|  | TensorFlow | PyTorch | Neural Designer |
+| --- | --- | --- | --- |
+| Minimum MSE | 0.0333 | 0.0221 | **0.0174** |
+| Average MSE | 0.0705 | 0.0529 | **0.0320** |
+| Average training time | 48.6 seconds | 69.8 seconds | **8.5 seconds** |
+
+Finally, the following chart depicts the training accuracies of TensorFlow, PyTorch, and Neural
+Designer for this case graphically.
+
+![](https://www.neuraldesigner.com/images/precision-comparison.svg)
+
+As we can see, both the minimum and the average mean squared error of Neural Designer using the LM
+algorithm is smaller than that of TensorFlow and PyTorch using Adam.
+
+Using these metrics, we can say that the precision of Neural Designer for this benchmark is x1.91
+times bigger than that of TensorFlow and 1.27 times higher than that of PyTorch.
+
+Regarding the training time, in this benchmark, Neural Designer is about x5.72 times faster than
+TensorFlow and x8.21 times faster than PyTorch.
+
+## Conclusions
+
+Neural Designer implements second-order optimizers, such as the quasi-Newton method and the
+Levenberg-Marquardt algorithm. These algorithms have better convergence properties for small and
+medium-sized datasets than first-order optimizers, such as Adam.
+
+This results in that, for the benchmark described in this post, the precision of Neural Designer is
+**x1.91** times faster than that of TensorFlow and **x1.27** times faster than that of PyTorch.
+
+To reproduce these results, [download](https://www.neuraldesigner.com/downloads/)Neural Designer and
+follow the steps described in this article.
+
+## Related posts

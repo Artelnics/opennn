@@ -1,11 +1,5 @@
 # GPU max batch and speed on a dense MLP: OpenNN vs PyTorch (Rosenbrock)
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
-
-**Status:** current WSL2 laptop GPU result. The result is useful as engineering
-evidence, but the hand-link scripts in the reproduction directory should become
-CMake targets and the raw logs should be archived before investor use.
-
 **Important measurement caveat (WSL2 vs native Windows).** These numbers were
 taken under WSL2. WSL2 was found to *specifically* degrade OpenNN's bf16
 tensor-core GEMM path while leaving the framework baselines unaffected — so the

@@ -1,7 +1,5 @@
 # GPU on Windows: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-09. Windows 11 x86_64, NVIDIA CUDA.*
-
 Most GPU comparisons assume Linux. On Linux every major framework has a complete CUDA story,
 so the only question is which is fastest. **Windows is different.** Here the question comes
 *before* speed: on Windows, the other frameworks' GPU paths are **incomplete** — a feature is
@@ -14,7 +12,7 @@ The short version:
 | On Windows, with an NVIDIA GPU | Trains on GPU? | Its fast path works? |
 |---|---|---|
 | **OpenNN** | **Yes, natively** | **Yes** — CUDA graphs, capturable optimizer, all native |
-| PyTorch | Yes, natively | **No** — `torch.compile` (its kernel-fusion path) does not work on Windows |
+| PyTorch | Yes, natively | **No** — torch.compile (its kernel-fusion path) does not work on Windows |
 | TensorFlow | **No** (native GPU dropped after 2.10) | — only via WSL2 (a Linux VM) or a limited plugin |
 | ONNX Runtime | Inference only — does not train | n/a (inference engine) |
 
