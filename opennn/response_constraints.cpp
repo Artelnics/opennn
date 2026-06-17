@@ -932,32 +932,18 @@ float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& output
 }
 
 
-CompiledFormula compile_formula(const string& expression,
-                                const vector<NamedColumn>& inputs,
-                                const vector<NamedColumn>& outputs)
+CompiledFormula compile_ast(const Ast& ast)
 {
-    throw_if(expression.empty(),
-             "FormulaParser: empty expression");
-
-    Lexer lexer(expression);
-    Parser parser(lexer, inputs, outputs);
-
-    AstPtr ast = parser.parse_expression();
-
-    throw_if(lexer.peek().kind != Token::Kind::End,
-             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
-
-    validate_function_arities(*ast);
+    validate_function_arities(ast);
 
     CompiledFormula result;
 
     set<Index> input_references;
     set<Index> output_references;
-    collect_variable_references(*ast, input_references, output_references);
+    collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
-             format("FormulaParser: expression '{}' references no input or output variables",
-                    expression));
+             "FormulaParser: expression references no input or output variables");
 
     result.input_indices.assign(input_references.begin(), input_references.end());
     result.output_indices.assign(output_references.begin(), output_references.end());
@@ -966,7 +952,7 @@ CompiledFormula compile_formula(const string& expression,
     else if (input_references.empty())   result.scope = FormulaScope::OutputsOnly;
     else                                 result.scope = FormulaScope::Mixed;
 
-    const AffineForm affine_form = analyze_affine(*ast);
+    const AffineForm affine_form = analyze_affine(ast);
 
     if (affine_form.is_affine)
     {
@@ -987,14 +973,14 @@ CompiledFormula compile_formula(const string& expression,
     {
         result.shape = FormulaShape::Nonlinear;
 
-        if (is_smooth(*ast))
+        if (is_smooth(ast))
         {
             result.gradient_available = true;
 
             result.input_gradient.reserve(result.input_indices.size());
             for (const Index input_column : result.input_indices)
             {
-                const AstPtr partial = differentiate(*ast, false, input_column);
+                const AstPtr partial = differentiate(ast, false, input_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
                 result.input_gradient.emplace_back(input_column, move(program));
@@ -1003,7 +989,7 @@ CompiledFormula compile_formula(const string& expression,
             result.output_gradient.reserve(result.output_indices.size());
             for (const Index output_column : result.output_indices)
             {
-                const AstPtr partial = differentiate(*ast, true, output_column);
+                const AstPtr partial = differentiate(ast, true, output_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
                 result.output_gradient.emplace_back(output_column, move(program));
@@ -1011,9 +997,209 @@ CompiledFormula compile_formula(const string& expression,
         }
     }
 
-    emit_bytecode(*ast, result.bytecode);
+    emit_bytecode(ast, result.bytecode);
 
     return result;
+}
+
+
+AstPtr parse_to_ast(const string& expression,
+                    const vector<NamedColumn>& inputs,
+                    const vector<NamedColumn>& outputs)
+{
+    throw_if(expression.empty(),
+             "FormulaParser: empty expression");
+
+    Lexer lexer(expression);
+    Parser parser(lexer, inputs, outputs);
+
+    AstPtr ast = parser.parse_expression();
+
+    throw_if(lexer.peek().kind != Token::Kind::End,
+             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
+
+    return ast;
+}
+
+
+CompiledFormula compile_formula(const string& expression,
+                                const vector<NamedColumn>& inputs,
+                                const vector<NamedColumn>& outputs)
+{
+    return compile_ast(*parse_to_ast(expression, inputs, outputs));
+}
+
+
+namespace
+{
+
+bool is_selector(const Ast& node)
+{
+    return node.kind == Ast::Kind::Func
+        && (node.function_name == "min" || node.function_name == "max" || node.function_name == "abs");
+}
+
+
+void collect_selectors(const Ast& node, vector<const Ast*>& selectors)
+{
+    if (is_selector(node))
+        selectors.push_back(&node);
+    for (const AstPtr& child : node.children)
+        collect_selectors(*child, selectors);
+}
+
+
+vector<const Ast*> selectors_of(const Ast& node)
+{
+    vector<const Ast*> selectors;
+    collect_selectors(node, selectors);
+    return selectors;
+}
+
+
+bool has_selector(const Ast& node) { return !selectors_of(node).empty(); }
+
+
+// Rebuild the AST with every min/max/abs replaced by the argument the mode selects, so the
+// result is smooth in the region defined by those mode choices.
+AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
+{
+    if (is_selector(node))
+    {
+        const int mode = modes.at(&node);
+        if (node.function_name == "abs")
+        {
+            AstPtr child = resolve_smooth(*node.children[0], modes);
+            return (mode == 0) ? move(child) : make_neg(move(child));
+        }
+        return resolve_smooth(*node.children[mode], modes);
+    }
+
+    auto rebuilt = make_unique<Ast>();
+    rebuilt->kind = node.kind;
+    rebuilt->constant = node.constant;
+    rebuilt->index = node.index;
+    rebuilt->function_name = node.function_name;
+    rebuilt->children.reserve(node.children.size());
+    for (const AstPtr& child : node.children)
+        rebuilt->children.push_back(resolve_smooth(*child, modes));
+    return rebuilt;
+}
+
+
+MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperator comparison, const float low, const float up)
+{
+    MultivariateConstraint constraint;
+    constraint.comparison_operator = comparison;
+    constraint.low_bound = low;
+    constraint.up_bound = up;
+    constraint.compiled = compile_ast(*ast);
+    constraint.kind = classify(constraint);
+    return constraint;
+}
+
+
+// Inequality that pins one min/max/abs node to the argument chosen by `mode`.
+MultivariateConstraint region_constraint(const Ast& selector, const int mode, const map<const Ast*, int>& modes)
+{
+    if (selector.function_name == "abs")
+        return make_smooth_constraint(resolve_smooth(*selector.children[0], modes),
+                                      mode == 0 ? ComparisonOperator::GreaterEqualTo : ComparisonOperator::LessEqualTo, 0.0f, 0.0f);
+
+    AstPtr difference = make_sub(resolve_smooth(*selector.children[0], modes),
+                                 resolve_smooth(*selector.children[1], modes));
+
+    const bool less_equal = (selector.function_name == "min") ? (mode == 0) : (mode == 1);
+    return make_smooth_constraint(move(difference),
+                                  less_equal ? ComparisonOperator::LessEqualTo : ComparisonOperator::GreaterEqualTo, 0.0f, 0.0f);
+}
+
+
+// Full 2^k region enumeration: exact for any operator and any nesting of min/max/abs. Each
+// branch is a conjunction (the substituted-smooth constraint plus the region inequalities); the
+// union over branches reproduces the original feasible set.
+vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
+                                                         const ComparisonOperator comparison, const float low, const float up,
+                                                         const vector<const Ast*>& selectors)
+{
+    const int count = static_cast<int>(selectors.size());
+
+    vector<vector<MultivariateConstraint>> branches;
+
+    for (int combination = 0; combination < (1 << count); ++combination)
+    {
+        map<const Ast*, int> modes;
+        for (int i = 0; i < count; ++i)
+            modes[selectors[i]] = (combination >> i) & 1;
+
+        vector<MultivariateConstraint> branch;
+        branch.push_back(make_smooth_constraint(resolve_smooth(root, modes), comparison, low, up));
+        for (int i = 0; i < count; ++i)
+            branch.push_back(region_constraint(*selectors[i], modes.at(selectors[i]), modes));
+
+        branches.push_back(move(branch));
+    }
+
+    return branches;
+}
+
+
+// Disjunctive-normal-form expansion of one (possibly non-smooth) constraint. A top-level AND
+// case with smooth arguments stays a single branch (no disjunction); everything else falls back
+// to the general region enumeration.
+vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
+                                                  const ComparisonOperator comparison, const float low, const float up)
+{
+    const vector<const Ast*> selectors = selectors_of(root);
+
+    if (selectors.empty())
+        return { { make_smooth_constraint(clone(root), comparison, low, up) } };
+
+    if (is_selector(root)
+        && ranges::none_of(root.children, [](const AstPtr& child) { return has_selector(*child); }))
+    {
+        const string& name = root.function_name;
+        const bool ge = (comparison == ComparisonOperator::GreaterEqualTo || comparison == ComparisonOperator::GreaterThan);
+        const bool le = (comparison == ComparisonOperator::LessEqualTo || comparison == ComparisonOperator::LessThan);
+
+        if (name == "min" && ge)
+        {
+            vector<MultivariateConstraint> branch;
+            for (const AstPtr& child : root.children)
+                branch.push_back(make_smooth_constraint(clone(*child), comparison, low, up));
+            return { move(branch) };
+        }
+        if (name == "max" && le)
+        {
+            vector<MultivariateConstraint> branch;
+            for (const AstPtr& child : root.children)
+                branch.push_back(make_smooth_constraint(clone(*child), comparison, low, up));
+            return { move(branch) };
+        }
+        if (name == "abs" && le)
+            return { { make_smooth_constraint(clone(*root.children[0]), ComparisonOperator::Between, -up, up) } };
+    }
+
+    return enumerate_regions(root, comparison, low, up, selectors);
+}
+
+}
+
+
+vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
+                                                         const ComparisonOperator comparison,
+                                                         const float low, const float up,
+                                                         const vector<NamedColumn>& inputs,
+                                                         const vector<NamedColumn>& outputs)
+{
+    AstPtr ast = parse_to_ast(expression, inputs, outputs);
+
+    vector<vector<MultivariateConstraint>> branches = expand_ast(*ast, comparison, low, up);
+
+    if (branches.size() == 1 && branches[0].size() == 1)
+        branches[0][0].expression = expression;
+
+    return branches;
 }
 
 

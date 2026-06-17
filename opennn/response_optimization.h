@@ -252,6 +252,11 @@ private:
 
     vector<MultivariateConstraint> formula_constraints;
 
+    // Non-smooth (min/max/abs) constraints expanded to disjunctive normal form:
+    // disjunctive_constraints[d][b] is the conjunction of smooth constraints for branch b of
+    // disjunction d. perform_response_optimization branches over them (union of the branches).
+    vector<vector<vector<MultivariateConstraint>>> disjunctive_constraints;
+
     vector<CardinalityConstraint> cardinality_constraints;
 
     float min_feasible_ratio = 0.01f;

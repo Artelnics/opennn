@@ -114,6 +114,16 @@ struct Lattice
 
 [[nodiscard]] ConstraintKind classify(const MultivariateConstraint& constraint);
 
+// Expand one constraint into disjunctive normal form over the smooth pieces of any min/max/abs
+// it contains: returns a list of branches, each a conjunction of smooth constraints, whose union
+// equals the original feasible set. A smooth constraint (or a top-level AND case) yields a single
+// branch; OR / nested non-smooth cases yield several (the caller branches over them).
+vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
+                                                         ComparisonOperator comparison,
+                                                         float low, float up,
+                                                         const vector<NamedColumn>& inputs,
+                                                         const vector<NamedColumn>& outputs);
+
 [[nodiscard]] bool constraint_is_satisfied(const MultivariateConstraint& constraint,
                                            const VectorR& input_row,
                                            const VectorR& output_row);

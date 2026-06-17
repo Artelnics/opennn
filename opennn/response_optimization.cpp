@@ -128,20 +128,35 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     throw_if(!neural_network,
              "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
 
-    MultivariateConstraint formula_constraint;
-    formula_constraint.expression = expression;
-    formula_constraint.comparison_operator = comparison;
-    formula_constraint.low_bound = low;
-    formula_constraint.up_bound = up;
-    formula_constraint.uses_callback = false;
-
     const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
     const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
 
-    formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
-    formula_constraint.kind = classify(formula_constraint);
+    // Non-smooth (min/max/abs) constraints expand to a disjunction of smooth branches; a smooth
+    // constraint or a top-level AND case stays a single branch added directly. A degenerate
+    // expansion (e.g. a constant-valued piece) falls back to the original constraint, which is
+    // still enforced by rejection at the feasibility filter.
+    vector<vector<MultivariateConstraint>> branches;
+    try
+    {
+        branches = expand_constraint(expression, comparison, low, up, input_columns, output_columns);
+    }
+    catch (const exception&)
+    {
+        MultivariateConstraint constraint;
+        constraint.expression = expression;
+        constraint.comparison_operator = comparison;
+        constraint.low_bound = low;
+        constraint.up_bound = up;
+        constraint.compiled = compile_formula(expression, input_columns, output_columns);
+        constraint.kind = classify(constraint);
+        branches = { { move(constraint) } };
+    }
 
-    formula_constraints.push_back(move(formula_constraint));
+    if (branches.size() == 1)
+        for (MultivariateConstraint& constraint : branches[0])
+            formula_constraints.push_back(move(constraint));
+    else
+        disjunctive_constraints.push_back(move(branches));
 }
 
 
@@ -192,6 +207,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
 void ResponseOptimization::clear_formula_constraints()
 {
     formula_constraints.clear();
+    disjunctive_constraints.clear();
 }
 
 
@@ -2163,10 +2179,11 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     struct BranchAxis
     {
-        bool is_formula = false;
+        enum class Type { Variable, Formula, Disjunction };
+        Type type = Type::Variable;
         string variable_name;
-        Index formula_index = 0;
-        vector<float> values;
+        Index index = 0;        // formula_constraints index (Formula) or disjunctive_constraints index (Disjunction)
+        vector<float> values;   // membership values (Variable/Formula) or branch indices (Disjunction)
     };
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
@@ -2223,13 +2240,20 @@ MatrixR ResponseOptimization::perform_response_optimization()
         if (is_input_name(name) && !input_referenced_by_formula(input_column_of(name)))
             continue;
 
-        axes.push_back({false, name, 0, constraint.allowed_values});
+        axes.push_back({BranchAxis::Type::Variable, name, 0, constraint.allowed_values});
     }
 
     for (Index j = 0; j < static_cast<Index>(formula_constraints.size()); ++j)
         if (formula_constraints[j].comparison_operator == ComparisonOperator::AllowedSet
             && !formula_constraints[j].allowed_values.empty())
-            axes.push_back({true, string(), j, formula_constraints[j].allowed_values});
+            axes.push_back({BranchAxis::Type::Formula, string(), j, formula_constraints[j].allowed_values});
+
+    for (Index d = 0; d < static_cast<Index>(disjunctive_constraints.size()); ++d)
+    {
+        vector<float> branch_indices(disjunctive_constraints[d].size());
+        iota(branch_indices.begin(), branch_indices.end(), 0.0f);
+        axes.push_back({BranchAxis::Type::Disjunction, string(), d, branch_indices});
+    }
 
     if (axes.empty())
         return solve_once();
@@ -2238,9 +2262,9 @@ MatrixR ResponseOptimization::perform_response_optimization()
     for (const BranchAxis& axis : axes)
         branches_number *= static_cast<Index>(axis.values.size());
 
-    cout << "> AllowedSet: " << axes.size() << " membership axis(es) -> " << branches_number
-         << (branch_mode == BranchMode::Budgeted ? " equality branch(es) (budgeted: successive-halving + dominated-drop)."
-                                                  : " equality branch(es) (exhaustive).") << endl;
+    cout << "> Branching: " << axes.size() << " axis(es) -> " << branches_number
+         << (branch_mode == BranchMode::Budgeted ? " branch(es) (budgeted: successive-halving + dominated-drop)."
+                                                  : " branch(es) (exhaustive).") << endl;
 
     vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
     {
@@ -2273,13 +2297,18 @@ MatrixR ResponseOptimization::perform_response_optimization()
     {
         for (size_t a = 0; a < axes.size(); ++a)
         {
-            if (axes[a].is_formula)
+            if (axes[a].type == BranchAxis::Type::Formula)
             {
-                MultivariateConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
+                MultivariateConstraint& formula_constraint = formula_constraints[axes[a].index];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
                 formula_constraint.kind = classify(formula_constraint);
+            }
+            else if (axes[a].type == BranchAxis::Type::Disjunction)
+            {
+                const vector<MultivariateConstraint>& branch = disjunctive_constraints[axes[a].index][static_cast<Index>(values[a])];
+                formula_constraints.insert(formula_constraints.end(), branch.begin(), branch.end());
             }
             else
                 constraints[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);

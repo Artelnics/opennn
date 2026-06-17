@@ -464,6 +464,154 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 }
 
 
+// -----------------------------------------------------------------------------
+// Non-smooth (min/max/abs) constraint expansion
+// -----------------------------------------------------------------------------
+
+TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("x1 + x2", ComparisonOperator::LessEqualTo, float(0), float(3), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    ASSERT_EQ(branches[0].size(), size_t(1));
+    EXPECT_EQ(branches[0][0].compiled.shape, FormulaShape::Affine);
+}
+
+
+TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));       // AND -> no disjunction
+    EXPECT_EQ(branches[0].size(), size_t(2));    // x1 >= 1 AND x2 >= 1
+    for (const auto& c : branches[0])
+        EXPECT_EQ(c.comparison_operator, ComparisonOperator::GreaterEqualTo);
+}
+
+
+TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("max(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(2), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    EXPECT_EQ(branches[0].size(), size_t(2));
+}
+
+
+TEST(NonSmoothExpand, AbsLessEqualIsInterval)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("abs(x1 - x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    ASSERT_EQ(branches[0].size(), size_t(1));
+    EXPECT_EQ(branches[0][0].comparison_operator, ComparisonOperator::Between);
+    EXPECT_NEAR(branches[0][0].low_bound, float(-1), float(1e-6));
+    EXPECT_NEAR(branches[0][0].up_bound, float(1), float(1e-6));
+}
+
+
+TEST(NonSmoothExpand, OrCasesBranch)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+
+    EXPECT_EQ(expand_constraint("min(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {}).size(), size_t(2));
+    EXPECT_EQ(expand_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
+    EXPECT_EQ(expand_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
+}
+
+
+TEST(NonSmoothExpand, NestedYieldsRegionProduct)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    // two selectors (max + abs) -> 2^2 = 4 regions
+    const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
+    EXPECT_EQ(branches.size(), size_t(4));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, MinGreaterEqualKeepsBothAboveBound)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_GE(results(i, 0), float(1) - float(1e-2));
+        EXPECT_GE(results(i, 1), float(1) - float(1e-2));
+    }
+}
+
+
+TEST(ResponseOptimizationNonSmooth, MaxGreaterEqualBranchesIntoUnion)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(3), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_TRUE(results(i, 0) >= float(3) - float(1e-2) || results(i, 1) >= float(3) - float(1e-2));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, AbsGreaterEqualBranchesBySign)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(2), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_GE(abs(results(i, 0) - results(i, 1)), float(2) - float(1e-2));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    // max(x1, |x2|) <= 1  <=>  x1 <= 1 AND |x2| <= 1
+    opt.set_formula_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_LE(results(i, 0), float(1) + float(1e-2));
+        EXPECT_LE(abs(results(i, 1)), float(1) + float(1e-2));
+    }
+}
+
+
 TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -737,6 +885,7 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
         constraint.low_bound = low;
         constraint.up_bound = up;
         constraint.compiled = compile_formula(expression, inputs, outputs);
+        constraint.kind = classify(constraint);
         return constraint;
     };
 
@@ -808,6 +957,7 @@ namespace
         constraint.low_bound = low;
         constraint.up_bound = up;
         constraint.compiled = compile_formula(expression, inputs, /*outputs*/ {});
+        constraint.kind = classify(constraint);
         return constraint;
     }
 }
