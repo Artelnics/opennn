@@ -62,6 +62,8 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
         layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, params.heads_number);
 
     layer->set(params.query_sequence_length, params.source_sequence_length, params.embedding_dimension, params.heads_number, params.use_causal_mask);
+
+    GTEST_SKIP() << "forward-propagation assertions are commented out pending re-enable";
 /*
     vector<TensorView*> param_views = layer->get_parameter_views();
     VectorR layer_parameters(get_size(param_views));
@@ -144,6 +146,8 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
         layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, params.heads_number);
 
     layer->set(params.query_sequence_length, params.source_sequence_length, params.embedding_dimension, params.heads_number, params.use_causal_mask);
+
+    GTEST_SKIP() << "back-propagation assertions are commented out pending re-enable";
 /*
     vector<TensorView*> param_views = layer->get_parameter_views();
     VectorR layer_parameters(get_size(param_views));
