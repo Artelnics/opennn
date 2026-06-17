@@ -902,6 +902,36 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     MatrixR random_inputs(effective_evaluations, inputs_features_number);
     set_random_uniform(random_inputs, 0, 1);
 
+    // Explore vs exploit. The passed input_domain is the reshaped (exploit) box; the original
+    // box is the explore range. The explore fraction adapts to the last feasibility rate (rarer
+    // feasible -> explore more), floored at exploration_ratio for continuous variables and 1.5x
+    // that for the harder discrete ones.
+    const Domain original_domain = get_original_domain("Input");
+
+    const float continuous_explore = clamp(max(exploration_ratio, 1.0f - last_feasibility_rate), 0.0f, 1.0f);
+    const float discrete_explore   = min(1.0f, 1.5f * continuous_explore);
+
+    // Fill rows [r0, r0+len) of a scalar column from one box, by variable type.
+    const auto sample_scalar = [&](const Index col, const Index r0, const Index len,
+                                   const float inferior, const float superior, const VariableType type)
+    {
+        if (len <= 0) return;
+
+        if (type == VariableType::Binary)
+        {
+            const float lo = ceil(inferior), hi = floor(superior);
+            random_inputs.block(r0, col, len, 1).array() = random_inputs.block(r0, col, len, 1).array().round().max(lo).min(hi);
+        }
+        else if (type == VariableType::Integer)
+        {
+            const float lo = ceil(inferior), hi = floor(superior);
+            random_inputs.block(r0, col, len, 1).array()
+                = (random_inputs.block(r0, col, len, 1).array() * (hi - lo + 1.0f) + (lo - 0.5f)).round().max(lo).min(hi);
+        }
+        else
+            random_inputs.block(r0, col, len, 1).array() = random_inputs.block(r0, col, len, 1).array() * (superior - inferior) + inferior;
+    };
+
     Index current_feature_index = 0;
 
     for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
@@ -936,28 +966,24 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 for (Index i = 0; i < effective_evaluations; ++i)
                     random_inputs(i, current_feature_index) = candidates[random_integer(0, candidates.size() - 1)];
             }
-            else if (type == VariableType::Binary)
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
-            else if (type == VariableType::Integer)
-            {
-                const float minimum = ceil(input_domain.inferior_frontier(current_feature_index));
-                const float maximum = floor(input_domain.superior_frontier(current_feature_index));
-
-                throw_if(maximum < minimum,
-                         "ResponseOptimization: integer variable '" + variables[input_variable].name
-                         + "' has no integer value within its range.");
-
-                random_inputs.col(current_feature_index).array()
-                    = (random_inputs.col(current_feature_index).array() * (maximum - minimum + 1.0f) + (minimum - 0.5f))
-                      .round().max(minimum).min(maximum);
-            }
             else
             {
-                const float inferior = input_domain.inferior_frontier(current_feature_index);
-                const float superior = input_domain.superior_frontier(current_feature_index);
-                const float range = superior - inferior;
+                if (type == VariableType::Integer)
+                    throw_if(floor(original_domain.superior_frontier(current_feature_index)) < ceil(original_domain.inferior_frontier(current_feature_index)),
+                             "ResponseOptimization: integer variable '" + variables[input_variable].name
+                             + "' has no integer value within its range.");
 
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inferior;
+                const float explore_fraction = (type == VariableType::Binary || type == VariableType::Integer)
+                                              ? discrete_explore : continuous_explore;
+                const Index explore_count = llround(explore_fraction * effective_evaluations);
+
+                // explore rows draw from the original box, exploit rows from the contracted box.
+                sample_scalar(current_feature_index, 0, explore_count,
+                              original_domain.inferior_frontier(current_feature_index),
+                              original_domain.superior_frontier(current_feature_index), type);
+                sample_scalar(current_feature_index, explore_count, effective_evaluations - explore_count,
+                              input_domain.inferior_frontier(current_feature_index),
+                              input_domain.superior_frontier(current_feature_index), type);
             }
             current_feature_index++;
         }
@@ -965,37 +991,43 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         {
             random_inputs.block(0, current_feature_index, effective_evaluations, categories_number).setZero();
 
-            vector<Index> allowed_categories;
-            allowed_categories.reserve(categories_number);
-
+            vector<Index> present_categories, original_categories;
             for(Index i = 0; i < categories_number; ++i)
-                if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
-                    allowed_categories.push_back(i);
+            {
+                if(input_domain.superior_frontier(current_feature_index + i) > 0.5)    present_categories.push_back(i);
+                if(original_domain.superior_frontier(current_feature_index + i) > 0.5) original_categories.push_back(i);
+            }
 
-            throw_if(allowed_categories.empty(),
+            throw_if(original_categories.empty(),
                      "ResponseOptimization: variable '"
                      + variables[input_variable].name +
                      "' has every category constrained out — cannot generate inputs.");
+
+            if (present_categories.empty())
+                present_categories = original_categories;   // contracted out this round -> fall back
 
             vector<Index>& frequencies = category_frequencies[variables[input_variable].name];
             if(Index(frequencies.size()) != categories_number)
                 frequencies.assign(categories_number, 0);
 
-            const Index exploration_count = llround(exploration_ratio * effective_evaluations);
+            const Index explore_count = llround(discrete_explore * effective_evaluations);
 
             for(Index i = 0; i < effective_evaluations; ++i)
             {
                 Index chosen;
 
-                if(i < exploration_count)
+                if(i < explore_count)
                 {
-                    chosen = allowed_categories[0];
-                    for(const Index category : allowed_categories)
+                    // explore: the least-sampled ORIGINAL category (re-reaches categories the
+                    // contraction dropped).
+                    chosen = original_categories[0];
+                    for(const Index category : original_categories)
                         if(frequencies[category] < frequencies[chosen])
                             chosen = category;
                 }
                 else
-                    chosen = allowed_categories[random_integer(0, allowed_categories.size() - 1)];
+                    // exploit: a present (contracted) category at random.
+                    chosen = present_categories[random_integer(0, present_categories.size() - 1)];
 
                 random_inputs(i, current_feature_index + chosen) = 1.0;
                 frequencies[chosen]++;
@@ -1006,10 +1038,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     }
 
     // ---- Mixed-integer / cardinality repair --------------------------------
-    // Discrete layout: every non-continuous column is held fixed during the continuous
-    // projection (Hole C); scalar integer/binary columns form the lattice that gets
-    // rounded and (when free) re-randomised on perturbation.
-    vector<char> fixed_mask(inputs_features_number, 0);
+    // Hole C: every non-continuous column is held fixed during the continuous projection.
+    // The scalar integer/binary columns also form the lattice that gets rounded and (when
+    // free) re-randomised on perturbation.
+    const vector<char> fixed_mask = discrete_column_mask(variables);
     vector<Index> lattice_columns; vector<float> lattice_min, lattice_max;
     map<string, Index> scalar_column_of;
 
@@ -1019,12 +1051,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         {
             const Index dimension = input_feature_dimensions[i];
             const VariableType type = variables[i].type;
-            const bool discrete = (type == VariableType::Binary || type == VariableType::Integer
-                                   || type == VariableType::Categorical || dimension > 1);
-
-            if (discrete)
-                for (Index j = 0; j < dimension; ++j)
-                    fixed_mask[feature + j] = 1;
 
             if (dimension == 1)
             {
@@ -1070,12 +1096,12 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
         }
 
-        // Explore / exploit split (same exploration_ratio as categoricals): the first
-        // fraction of rows draw freely (explore new supports); the rest restrict the K "on"
-        // indicators to the incumbent-preferred set captured at the last reshape (exploit the
-        // improving direction). Exploit falls back to a free draw when no preferred support is
-        // available yet (iteration 0) or it is too small to reach k.
-        const Index exploration_count = llround(exploration_ratio * effective_evaluations);
+        // Explore / exploit split (the discrete explore fraction, shared with categoricals and
+        // the pump): the first fraction of rows draw freely (explore new supports); the rest
+        // restrict the K "on" indicators to the incumbent-preferred set captured at the last
+        // reshape (exploit the improving direction). Exploit falls back to a free draw when no
+        // preferred support is available yet (iteration 0) or it is too small to reach k.
+        const Index exploration_count = llround(discrete_explore * effective_evaluations);
         const bool have_preferred = (static_cast<Index>(cardinality_preferred.size()) == inputs_features_number);
 
         vector<float> draw;
@@ -1142,7 +1168,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                                     lattice_columns, lattice_min, lattice_max,
                                     cardinality_columns,
                                     free_lattice_columns, free_lattice_min, free_lattice_max,
-                                    /*outer_cap*/ 8, exploration_ratio);
+                                    /*outer_cap*/ 8, discrete_explore);
     else
     {
         repair_inputs(random_inputs,
@@ -1483,22 +1509,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
     // stay on the lattice the input pump placed, so the re-snap below is a no-op rather
     // than a move that could re-break the input constraints.
     const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
-    const vector<Index> input_feature_dimensions = get_feature_dimensions(input_variables);
-
-    vector<char> fixed_columns(random_inputs.cols(), 0);
-    {
-        Index feature = 0;
-        for (size_t i = 0; i < input_variables.size(); ++i)
-        {
-            const VariableType type = input_variables[i].type;
-            const Index dimension = input_feature_dimensions[i];
-            if (type == VariableType::Binary || type == VariableType::Integer
-                || type == VariableType::Categorical || dimension > 1)
-                for (Index j = 0; j < dimension; ++j)
-                    fixed_columns[feature + j] = 1;
-            feature += dimension;
-        }
-    }
+    const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
     // Repair constraints that reference the network outputs (no-op when none):
     // Gauss-Newton onto g(x, f(x)) = c. Prefer the exact analytic Jacobian
@@ -1542,7 +1553,14 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 
     const MatrixR outputs = calculate_outputs(random_inputs);
     evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
-    return filter_feasible_points(random_inputs, outputs, output_domain);
+
+    pair<MatrixR, MatrixR> feasible = filter_feasible_points(random_inputs, outputs, output_domain);
+
+    // Feed the adaptive explore fraction of the next sampling call: the share of draws that
+    // survived the constraints this round.
+    last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
+
+    return feasible;
 }
 
 
@@ -1762,6 +1780,27 @@ void ResponseOptimization::promote_single_variable_constraints()
     }
 
     formula_constraints = move(kept);
+}
+
+
+vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& variables) const
+{
+    const vector<Index> dimensions = get_feature_dimensions(variables);
+
+    vector<char> mask(get_features_number(variables), 0);
+
+    Index feature = 0;
+    for (size_t i = 0; i < variables.size(); ++i)
+    {
+        const VariableType type = variables[i].type;
+        if (type == VariableType::Binary || type == VariableType::Integer
+            || type == VariableType::Categorical || dimensions[i] > 1)
+            for (Index j = 0; j < dimensions[i]; ++j)
+                mask[feature + j] = 1;
+        feature += dimensions[i];
+    }
+
+    return mask;
 }
 
 
@@ -2385,6 +2424,7 @@ MatrixR ResponseOptimization::solve_once() const
     category_frequencies.clear();
     cardinality_preferred.clear();          // no incumbent support until the first reshape
     cardinality_indicator_columns.clear();  // rebuilt lazily for this run's variable layout
+    last_feasibility_rate = 1.0f;           // first sample explores at the baseline ratio
 
     initialize_network_differential();   // exact analytic VJP if possible, else finite differences
 

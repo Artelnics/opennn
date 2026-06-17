@@ -260,6 +260,11 @@ private:
     // an AllowedSet are left in the formula set untouched.
     void promote_single_variable_constraints();
 
+    // Column mask of the non-continuous (Binary/Integer/Categorical/one-hot) inputs, held
+    // fixed during the continuous projection and re-snapped after the output repair. Shared
+    // by calculate_random_inputs and generate_feasible_points.
+    vector<char> discrete_column_mask(const vector<Variable>& variables) const;
+
     NeuralNetwork* neural_network = nullptr;
 
     mutable unique_ptr<NetworkDifferential> network_differential;
@@ -277,6 +282,10 @@ private:
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
     float exploration_ratio = 0.1f;
+
+    // Feasibility rate (feasible / sampled) of the last sampling call. Drives the adaptive
+    // explore fraction: rarer feasible points -> wider exploration. 1.0 until the first sample.
+    mutable float last_feasibility_rate = 1.0f;
 
     Index evaluations_number = 2000;
 
