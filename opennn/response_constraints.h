@@ -110,6 +110,15 @@ struct LinearConstraintSet
 
 inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
 
+// True for a real, input-only constraint the repair pipeline can act on: a set
+// comparison operator, no opaque callback, and no output dependence.
+[[nodiscard]] inline bool is_input_only_repairable(const MultivariateConstraint& constraint)
+{
+    return !constraint.uses_callback
+        && constraint.comparison_operator != ComparisonOperator::None
+        && constraint.compiled.scope == FormulaScope::InputsOnly;
+}
+
 [[nodiscard]] bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints);
 
 [[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
@@ -125,18 +134,11 @@ void repair_affine_inputs(MatrixR& random_inputs,
                           const vector<MultivariateConstraint>& formula_constraints,
                           Index max_correction_passes = 64);
 
-// Per-point Gauss-Newton-on-manifold repair for smooth nonlinear input-only
-// constraints. Each point alternates an active-set Gauss-Newton projection
-// (x <- x - J^T (J J^T)^-1 h, with J the Jacobian of the currently-violated
-// constraints and h their residual) with a box clamp, for a few passes. It is a
-// no-op unless at least one genuinely nonlinear smooth input-only constraint is
-// present; the all-affine case is handled (batched) by repair_affine_inputs. Any
-// affine input-only constraints are folded into the same active set so they stay
-// satisfied jointly. Points still infeasible after the cap are left for the
-// downstream feasibility filter to drop. The pass cap is generous because the
-// loop early-exits per point once its residual is negligible (so well-conditioned
-// manifolds still cost only a handful of passes); stiff/anisotropic manifolds are
-// the ones that actually use the budget (ellipse-class ~32, well-conditioned ~8).
+// Per-point Gauss-Newton-on-manifold repair for smooth nonlinear input-only constraints:
+// alternates an active-set GN projection (x <- x - J^T (J J^T)^-1 h) with a box clamp, with a
+// per-point residual early-exit. Affine input-only constraints are folded into the same active
+// set. No-op unless a genuinely nonlinear smooth input constraint exists (the all-affine case
+// goes to repair_affine_inputs). Points still infeasible after the cap fall to the filter.
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
@@ -151,16 +153,12 @@ void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& superior_frontier,
                                 const MultivariateConstraint& constraint);
 
-// Lattice analogue of repair_single_affine_input for one affine constraint whose
-// variables are all integer/binary (the caller guarantees this). Each row is first
-// snapped to its integer lattice, then a random-sweep clamp-and-carry distributes the
-// residual in WHOLE integer steps, truncating toward zero so an inequality is never
-// overshot into violating its opposite bound; the per-column lattice bound is
-// [ceil(inferior), floor(superior)]. Exact in one pass for a unit-coefficient target
-// reachable within the box (e.g. a pure-integer knapsack sum); any residue the lattice
-// cannot represent is left for the downstream pump / feasibility filter. Satisfied rows
-// are untouched (diversity-preserving). This is the single-constraint fast path; coupled
-// or multi-constraint integer cases are handled by the cyclic mixed-integer pump.
+// Lattice analogue of repair_single_affine_input for one affine constraint over all-integer/
+// binary variables (caller-guaranteed): snap each row to the lattice [ceil(inf), floor(sup)],
+// then clamp-and-carry the residual in whole integer steps truncated toward zero (so an
+// inequality is never overshot into its opposite bound). Exact in one pass for a unit-coefficient
+// target reachable in the box (pure-integer knapsack); any irrepresentable residue falls to the
+// pump. Single-constraint fast path; coupled/multi-constraint cases go to the mixed-integer pump.
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
@@ -174,19 +172,13 @@ void repair_inputs(MatrixR& random_inputs,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints);
 
-// Masked per-row affine projection: project each point's FREE input coordinates
-// onto the active input-only affine (or smooth) constraints while holding every
-// column flagged in `fixed_columns` (size = n_inputs, nonzero = fixed) at its
-// current per-row value. Fixed columns get a zeroed Jacobian — their value stays
-// folded into each residual via the constraint evaluation — so only the free
-// coordinates absorb the residual. The box clamp on the result is the final op of
-// every pass, so an affine-vs-box conflict surfaces as a leftover residual (the
-// caller's feasibility signal), never as a box violation. This is the projection
-// half of the mixed-integer repair: round the discrete columns, flag them fixed,
-// then call this to re-project the continuous slice onto the budget / buy-in rows.
-// A constraint whose variables are all fixed is dropped from the Gauss-Newton solve
-// (nothing free to move); its violation simply persists as residual for the caller.
-// Passing an empty `fixed_columns` projects every coordinate (no fixing).
+// Masked per-row affine projection: project each point's FREE input coordinates onto the
+// input-only affine/smooth constraints while holding every `fixed_columns` coordinate (size =
+// n_inputs, nonzero = fixed) at its per-row value via a zeroed Jacobian. The box clamp is the
+// final op of every pass, so an affine-vs-box conflict surfaces as leftover residual (the
+// caller's feasibility signal), never a box violation. The projection half of mixed-integer
+// repair (round discrete columns, fix them, re-project the continuous slice). A constraint with
+// all variables fixed is dropped. Empty `fixed_columns` projects every coordinate.
 void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
                                      const VectorR& superior_frontier,
@@ -203,14 +195,11 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 using SurrogateForward = function<VectorR(const VectorR&)>;
 using SurrogateVjp     = function<VectorR(const VectorR&, const VectorR&)>;
 
-// Per-point Gauss-Newton repair for smooth constraints that reference network
-// outputs (scope Mixed or OutputsOnly). The constraint manifold g(x, f(x)) = c
-// is projected with the chain-rule Jacobian d/dx g = dg/dx + dg/dy * df/dx,
-// where df/dx is supplied exactly by vjp(). Each point alternates a Gauss-Newton
-// step with a box clamp, with a residual early-exit. The surrogate manifold is
-// nonconvex so this is local; points still infeasible after the cap are left for
-// the downstream rejection filter. Input-only constraints are ignored here (they
-// are repaired pre-evaluation by repair_inputs).
+// Per-point Gauss-Newton repair for smooth output-referencing constraints (scope Mixed or
+// OutputsOnly). Projects g(x, f(x)) = c with the chain-rule Jacobian dg/dx + dg/dy * df/dx,
+// df/dx supplied exactly by vjp(); alternates a GN step with a box clamp and a residual
+// early-exit. Local (the surrogate manifold is nonconvex); leftovers fall to the rejection
+// filter. Input-only constraints are repaired pre-evaluation by repair_inputs.
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
@@ -220,12 +209,9 @@ void repair_output_constraints(MatrixR& inputs,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
 
-// Same, but without an explicit VJP: the network Jacobian is obtained by a
-// box-scaled central difference over `forward` (the only network access is the
-// public forward map, so no neural-network internals are touched). The repaired
-// points are still exact to tolerance — the exact forward plus Gauss-Newton
-// drive the residual to zero; the finite-difference Jacobian only sets the step
-// direction, not the final feasibility.
+// Same, but without an explicit VJP: the Jacobian is a box-scaled central difference over
+// `forward` (no network internals touched). Still exact to tolerance — the exact forward plus
+// GN drive the residual to zero; the finite-difference Jacobian only sets the step direction.
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,

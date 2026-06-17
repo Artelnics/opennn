@@ -651,6 +651,13 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
 }
 
 
+// Round one column to its integer lattice and clamp to [minimum, maximum].
+static void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, const float maximum)
+{
+    inputs.col(column).array() = inputs.col(column).array().round().max(minimum).min(maximum);
+}
+
+
 static void round_discrete_inputs(MatrixR& inputs,
                                   const vector<Variable>& variables,
                                   const VectorR& inferior_frontier,
@@ -665,14 +672,10 @@ static void round_discrete_inputs(MatrixR& inputs,
         const VariableType type = variables[i].type;
 
         if(type == VariableType::Binary)
-            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(0.0f).min(1.0f);
+            snap_to_lattice(inputs, feature_index, 0.0f, 1.0f);
         else if(type == VariableType::Integer)
-        {
-            const float minimum = ceil(inferior_frontier(feature_index));
-            const float maximum = floor(superior_frontier(feature_index));
-
-            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(minimum).min(maximum);
-        }
+            snap_to_lattice(inputs, feature_index,
+                            ceil(inferior_frontier(feature_index)), floor(superior_frontier(feature_index)));
 
         feature_index += feature_dimensions[i];
     }
@@ -682,9 +685,7 @@ static void round_discrete_inputs(MatrixR& inputs,
 namespace
 {
 
-// Input-only feasibility test used by the mixed-integer pump: every affine / smooth
-// input constraint within its bound tolerance. Output and callback constraints are
-// not the pump's concern (they are handled after the forward pass).
+// Pump feasibility test: every affine / smooth input constraint within its bound tolerance.
 bool row_satisfies_input_affine(const VectorR& point,
                                 const vector<const MultivariateConstraint*>& input_constraints)
 {
@@ -721,10 +722,8 @@ bool row_satisfies_input_affine(const VectorR& point,
 }
 
 
-// Box-bounded cardinality swap: turn one selected indicator off and one unselected on,
-// drawn only from columns the box still allows to move (remove-room / add-room >= 1, i.e.
-// value - inferior >= 1 to remove, superior - value >= 1 to add). Keeps sum z = k exact
-// and can never cross a frontier, so a pinned indicator is never disturbed.
+// Turn one selected indicator off and one unselected on, only where the box has room
+// (>= 1 either side). Keeps sum z = k exact and never crosses a frontier, so pins stay put.
 void cardinality_swap_row(VectorR& point,
                           const vector<Index>& columns,
                           const VectorR& inferior_frontier,
@@ -756,8 +755,7 @@ void cardinality_swap_row(VectorR& point,
 }
 
 
-// Re-randomise a random fraction of the FREE (non-cardinality) integer/binary columns to a
-// fresh lattice value, so a stuck free-integer assignment is perturbed between pump passes.
+// Re-randomise a fraction of the free integer/binary columns to perturb a stuck row.
 void unlock_free_integers_row(VectorR& point,
                               const vector<Index>& columns,
                               const vector<float>& lattice_min,
@@ -774,15 +772,11 @@ void unlock_free_integers_row(VectorR& point,
 }
 
 
-// Cyclic feasibility pump (per-row feasibility-pump): snap the discrete columns to their
-// lattice, then repeatedly (a) re-project the continuous slice onto the affine set with the
-// discrete columns held fixed, (b) test each row, (c) perturb the integer assignment of any
-// still-infeasible row (box-bounded cardinality swap + free-integer unlock, both escalating)
-// so it re-projects against a fresh assignment next pass. Rows still infeasible after the cap
-// are left for the downstream feasibility filter to drop. Because the discrete columns are
-// only ever moved by the lattice snap / perturbation (never the projection), they stay on the
-// grid and inside the box throughout — no post-repair re-round that could re-break the affine
-// rows.
+// Cyclic feasibility pump: snap discrete columns to the lattice, then repeatedly project the
+// continuous slice with the discrete columns fixed, test each row, and perturb still-infeasible
+// rows (escalating cardinality swap + free-integer unlock). Invariant: discrete columns move
+// only via snap/perturbation, never the projection, so they stay on-grid and in-box with no
+// post-repair re-round. Rows still infeasible after the cap fall to the feasibility filter.
 void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& inferior_frontier,
                                  const VectorR& superior_frontier,
@@ -801,9 +795,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     vector<const MultivariateConstraint*> input_constraints;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        if (!is_input_only_repairable(constraint))
             continue;
 
         const bool affine = (constraint.compiled.shape == FormulaShape::Affine
@@ -817,24 +809,19 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     const Index rows = inputs.rows();
     const Index passes = max(Index(1), outer_cap);
 
-    // Lattice snap up front (Hole B: binary clamps to its frontier via the lattice bounds).
+    // Lattice snap up front (binary clamps to its frontier via the lattice bounds).
     for (size_t c = 0; c < lattice_columns.size(); ++c)
-        inputs.col(lattice_columns[c]).array()
-            = inputs.col(lattice_columns[c]).array().round().max(lattice_min[c]).min(lattice_max[c]);
+        snap_to_lattice(inputs, lattice_columns[c], lattice_min[c], lattice_max[c]);
 
-    // Exact fast path: any input-only affine constraint over ONLY free integer/binary columns
-    // (a pure-integer knapsack) is solved by a single lattice clamp-and-carry, so the cyclic
-    // perturbation below never has to search for it. Cardinality-grouped columns are owned by
-    // the K-hot draw / swap and are excluded.
+    // Exact fast path: an affine constraint over only free integer/binary columns (pure-integer
+    // knapsack) is solved by one lattice clamp-and-carry. Cardinality-grouped columns are excluded.
     std::set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
         cardinality_set.insert(group.begin(), group.end());
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly
+        if (!is_input_only_repairable(constraint)
             || constraint.compiled.shape != FormulaShape::Affine
             || constraint.compiled.affine_input_terms.empty())
             continue;
@@ -889,6 +876,113 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 } // namespace
 
 
+// Map every scalar input to its feature column, and collect the integer/binary columns
+// with their per-column lattice bounds [ceil(inferior), floor(superior)].
+void ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
+                                               const vector<Index>& feature_dimensions,
+                                               const Domain& input_domain,
+                                               map<string, Index>& scalar_column_of,
+                                               vector<Index>& lattice_columns,
+                                               vector<float>& lattice_min,
+                                               vector<float>& lattice_max) const
+{
+    Index feature = 0;
+
+    for (size_t i = 0; i < variables.size(); ++i)
+    {
+        if (feature_dimensions[i] == 1)
+        {
+            scalar_column_of[variables[i].name] = feature;
+
+            if (variables[i].type == VariableType::Binary || variables[i].type == VariableType::Integer)
+            {
+                lattice_columns.push_back(feature);
+                lattice_min.push_back(ceil(input_domain.inferior_frontier(feature)));
+                lattice_max.push_back(floor(input_domain.superior_frontier(feature)));
+            }
+        }
+
+        feature += feature_dimensions[i];
+    }
+}
+
+
+// Resolve each cardinality group to its indicator columns and draw a box-aware K-hot
+// assignment per row into random_inputs (overriding the per-variable binary sampling there).
+// Explore rows draw freely; exploit rows restrict the "on" indicators to the incumbent-
+// preferred support captured at the last reshape, falling back to a free draw when none exists.
+vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Domain& input_domain,
+                                                                        const map<string, Index>& scalar_column_of,
+                                                                        const vector<char>& fixed_mask,
+                                                                        const float discrete_explore,
+                                                                        MatrixR& random_inputs) const
+{
+    const Index effective_evaluations = random_inputs.rows();
+    const Index inputs_features_number = random_inputs.cols();
+
+    vector<vector<Index>> cardinality_columns;
+
+    for (const CardinalityConstraint& group : cardinality_constraints)
+    {
+        vector<Index> columns;
+        columns.reserve(group.variable_names.size());
+
+        for (const string& name : group.variable_names)
+        {
+            const auto found = scalar_column_of.find(name);
+            throw_if(found == scalar_column_of.end(),
+                     "ResponseOptimization: cardinality variable '" + name + "' is not a scalar input");
+            throw_if(!fixed_mask[found->second],
+                     "ResponseOptimization: cardinality variable '" + name + "' must be binary or integer");
+            columns.push_back(found->second);
+        }
+
+        const Index count = static_cast<Index>(columns.size());
+        vector<char> force_on(count, 0), force_off(count, 0);
+        for (Index c = 0; c < count; ++c)
+        {
+            if (input_domain.superior_frontier(columns[c]) < 0.5f) force_off[c] = 1;
+            if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
+        }
+
+        const Index exploration_count = llround(discrete_explore * effective_evaluations);
+        const bool have_preferred = (static_cast<Index>(cardinality_preferred.size()) == inputs_features_number);
+
+        vector<float> draw;
+        for (Index r = 0; r < effective_evaluations; ++r)
+        {
+            bool drawn = false;
+
+            if (have_preferred && r >= exploration_count)
+            {
+                vector<char> exploit_force_off = force_off;
+                bool any_preferred_free = false;
+                for (Index c = 0; c < count; ++c)
+                {
+                    if (force_on[c]) continue;
+                    if (cardinality_preferred[columns[c]]) any_preferred_free = true;
+                    else exploit_force_off[c] = 1;   // bar non-preferred indicators from this draw
+                }
+                if (any_preferred_free)
+                    drawn = draw_k_hot(count, group.k, force_on, exploit_force_off, draw);
+            }
+
+            if (!drawn)
+                throw_if(!draw_k_hot(count, group.k, force_on, force_off, draw),
+                         "ResponseOptimization: cardinality constraint (k=" + to_string(group.k)
+                         + ") is infeasible under the current box pins.");
+
+            for (Index c = 0; c < count; ++c)
+                random_inputs(r, columns[c]) = draw[c];
+        }
+
+        cardinality_columns.push_back(move(columns));
+    }
+
+    return cardinality_columns;
+}
+
+
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
 {
     const vector<Variable> variables = get_variables_and_descriptives("Input").first;
@@ -902,34 +996,33 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     MatrixR random_inputs(effective_evaluations, inputs_features_number);
     set_random_uniform(random_inputs, 0, 1);
 
-    // Explore vs exploit. The passed input_domain is the reshaped (exploit) box; the original
-    // box is the explore range. The explore fraction adapts to the last feasibility rate (rarer
-    // feasible -> explore more), floored at exploration_ratio for continuous variables and 1.5x
-    // that for the harder discrete ones.
+    // input_domain is the reshaped (exploit) box; original_domain is the explore range. The
+    // explore fraction adapts to the last feasibility rate (rarer feasible -> explore more),
+    // floored at exploration_ratio (continuous) and 1.5x that for the harder discrete variables.
     const Domain original_domain = get_original_domain("Input");
 
     const float continuous_explore = clamp(max(exploration_ratio, 1.0f - last_feasibility_rate), 0.0f, 1.0f);
     const float discrete_explore   = min(1.0f, 1.5f * continuous_explore);
 
-    // Fill rows [r0, r0+len) of a scalar column from one box, by variable type.
-    const auto sample_scalar = [&](const Index col, const Index r0, const Index len,
+    // Fill row_count rows of a scalar column from one box, by variable type.
+    const auto sample_scalar = [&](const Index col, const Index first_row, const Index row_count,
                                    const float inferior, const float superior, const VariableType type)
     {
-        if (len <= 0) return;
+        if (row_count <= 0) return;
 
         if (type == VariableType::Binary)
         {
             const float lo = ceil(inferior), hi = floor(superior);
-            random_inputs.block(r0, col, len, 1).array() = random_inputs.block(r0, col, len, 1).array().round().max(lo).min(hi);
+            random_inputs.block(first_row, col, row_count, 1).array() = random_inputs.block(first_row, col, row_count, 1).array().round().max(lo).min(hi);
         }
         else if (type == VariableType::Integer)
         {
             const float lo = ceil(inferior), hi = floor(superior);
-            random_inputs.block(r0, col, len, 1).array()
-                = (random_inputs.block(r0, col, len, 1).array() * (hi - lo + 1.0f) + (lo - 0.5f)).round().max(lo).min(hi);
+            random_inputs.block(first_row, col, row_count, 1).array()
+                = (random_inputs.block(first_row, col, row_count, 1).array() * (hi - lo + 1.0f) + (lo - 0.5f)).round().max(lo).min(hi);
         }
         else
-            random_inputs.block(r0, col, len, 1).array() = random_inputs.block(r0, col, len, 1).array() * (superior - inferior) + inferior;
+            random_inputs.block(first_row, col, row_count, 1).array() = random_inputs.block(first_row, col, row_count, 1).array() * (superior - inferior) + inferior;
     };
 
     Index current_feature_index = 0;
@@ -1012,22 +1105,21 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
             const Index explore_count = llround(discrete_explore * effective_evaluations);
 
+            // explore picks the least-sampled ORIGINAL category (re-reaches categories the
+            // contraction dropped); exploit picks a present (contracted) category at random.
+            const auto least_sampled_category = [&frequencies](const vector<Index>& categories)
+            {
+                Index best = categories[0];
+                for(const Index category : categories)
+                    if(frequencies[category] < frequencies[best]) best = category;
+                return best;
+            };
+
             for(Index i = 0; i < effective_evaluations; ++i)
             {
-                Index chosen;
-
-                if(i < explore_count)
-                {
-                    // explore: the least-sampled ORIGINAL category (re-reaches categories the
-                    // contraction dropped).
-                    chosen = original_categories[0];
-                    for(const Index category : original_categories)
-                        if(frequencies[category] < frequencies[chosen])
-                            chosen = category;
-                }
-                else
-                    // exploit: a present (contracted) category at random.
-                    chosen = present_categories[random_integer(0, present_categories.size() - 1)];
+                const Index chosen = (i < explore_count)
+                    ? least_sampled_category(original_categories)
+                    : present_categories[random_integer(0, present_categories.size() - 1)];
 
                 random_inputs(i, current_feature_index + chosen) = 1.0;
                 frequencies[chosen]++;
@@ -1037,103 +1129,21 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         }
     }
 
-    // ---- Mixed-integer / cardinality repair --------------------------------
-    // Hole C: every non-continuous column is held fixed during the continuous projection.
-    // The scalar integer/binary columns also form the lattice that gets rounded and (when
-    // free) re-randomised on perturbation.
+    // Mixed-integer / cardinality repair. Every non-continuous column is held fixed during
+    // the continuous projection; the scalar integer/binary columns form the lattice.
     const vector<char> fixed_mask = discrete_column_mask(variables);
+
     vector<Index> lattice_columns; vector<float> lattice_min, lattice_max;
     map<string, Index> scalar_column_of;
+    build_input_lattice(variables, input_feature_dimensions, input_domain,
+                        scalar_column_of, lattice_columns, lattice_min, lattice_max);
 
-    {
-        Index feature = 0;
-        for (size_t i = 0; i < variables.size(); ++i)
-        {
-            const Index dimension = input_feature_dimensions[i];
-            const VariableType type = variables[i].type;
+    const vector<vector<Index>> cardinality_columns =
+        resolve_cardinality_columns(input_domain, scalar_column_of, fixed_mask, discrete_explore, random_inputs);
 
-            if (dimension == 1)
-            {
-                scalar_column_of[variables[i].name] = feature;
-                if (type == VariableType::Binary || type == VariableType::Integer)
-                {
-                    lattice_columns.push_back(feature);
-                    lattice_min.push_back(ceil(input_domain.inferior_frontier(feature)));
-                    lattice_max.push_back(floor(input_domain.superior_frontier(feature)));
-                }
-            }
-
-            feature += dimension;
-        }
-    }
-
-    // Resolve each cardinality group to its indicator columns and draw a box-aware K-hot
-    // assignment per row (overriding the per-variable binary sampling for those columns).
-    vector<vector<Index>> cardinality_columns;
     std::set<Index> grouped_columns;
-
-    for (const CardinalityConstraint& group : cardinality_constraints)
-    {
-        vector<Index> columns;
-        columns.reserve(group.variable_names.size());
-
-        for (const string& name : group.variable_names)
-        {
-            const auto found = scalar_column_of.find(name);
-            throw_if(found == scalar_column_of.end(),
-                     "ResponseOptimization: cardinality variable '" + name + "' is not a scalar input");
-            throw_if(!fixed_mask[found->second],
-                     "ResponseOptimization: cardinality variable '" + name + "' must be binary or integer");
-            columns.push_back(found->second);
-            grouped_columns.insert(found->second);
-        }
-
-        const Index count = static_cast<Index>(columns.size());
-        vector<char> force_on(count, 0), force_off(count, 0);
-        for (Index c = 0; c < count; ++c)
-        {
-            if (input_domain.superior_frontier(columns[c]) < 0.5f) force_off[c] = 1;
-            if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
-        }
-
-        // Explore / exploit split (the discrete explore fraction, shared with categoricals and
-        // the pump): the first fraction of rows draw freely (explore new supports); the rest
-        // restrict the K "on" indicators to the incumbent-preferred set captured at the last
-        // reshape (exploit the improving direction). Exploit falls back to a free draw when no
-        // preferred support is available yet (iteration 0) or it is too small to reach k.
-        const Index exploration_count = llround(discrete_explore * effective_evaluations);
-        const bool have_preferred = (static_cast<Index>(cardinality_preferred.size()) == inputs_features_number);
-
-        vector<float> draw;
-        for (Index r = 0; r < effective_evaluations; ++r)
-        {
-            bool drawn = false;
-
-            if (have_preferred && r >= exploration_count)
-            {
-                vector<char> exploit_force_off = force_off;
-                bool any_preferred_free = false;
-                for (Index c = 0; c < count; ++c)
-                {
-                    if (force_on[c]) continue;
-                    if (cardinality_preferred[columns[c]]) any_preferred_free = true;
-                    else exploit_force_off[c] = 1;   // bar non-preferred indicators from this draw
-                }
-                if (any_preferred_free)
-                    drawn = draw_k_hot(count, group.k, force_on, exploit_force_off, draw);
-            }
-
-            if (!drawn)
-                throw_if(!draw_k_hot(count, group.k, force_on, force_off, draw),
-                         "ResponseOptimization: cardinality constraint (k=" + to_string(group.k)
-                         + ") is infeasible under the current box pins.");
-
-            for (Index c = 0; c < count; ++c)
-                random_inputs(r, columns[c]) = draw[c];
-        }
-
-        cardinality_columns.push_back(move(columns));
-    }
+    for (const vector<Index>& group : cardinality_columns)
+        grouped_columns.insert(group.begin(), group.end());
 
     vector<Index> free_lattice_columns; vector<float> free_lattice_min, free_lattice_max;
     for (size_t c = 0; c < lattice_columns.size(); ++c)
@@ -1147,19 +1157,17 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     // Route to the pump only when discrete variables actually couple into an input-only
     // affine/nonlinear constraint (or a cardinality group); otherwise keep the original
     // continuous-repair-then-round path verbatim so purely continuous problems are unchanged.
-    bool discrete_in_input_constraint = false;
+    bool discrete_is_coupled = false;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        if (!is_input_only_repairable(constraint))
             continue;
         for (const Index column : constraint.compiled.input_indices)
             if (column >= 0 && column < inputs_features_number && fixed_mask[column])
-                discrete_in_input_constraint = true;
+                discrete_is_coupled = true;
     }
 
-    if (!cardinality_constraints.empty() || discrete_in_input_constraint)
+    if (!cardinality_constraints.empty() || discrete_is_coupled)
         repair_mixed_integer_inputs(random_inputs,
                                     input_domain.inferior_frontier,
                                     input_domain.superior_frontier,
@@ -1197,25 +1205,25 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
     input_combined.device(get_device()) = fixed_history.broadcast(array<Index, 3>{batch_size, 1, 1});
 
-    Index feature_cursor = 0;    
-    Index candidate_col_cursor = 0; 
+    Index feature_cursor = 0;
+    Index candidate_cursor = 0;
 
     for (const Variable& variable : input_variables)
     {
-        const Index dim = variable.get_feature_count();
+        const Index feature_count = variable.get_feature_count();
 
         if (variable.get_role() == "Input" && !is_history(variable.name))
         {
-           const MatrixR block_data = input_control.block(0, candidate_col_cursor, batch_size, dim);
+            const MatrixR block_data = input_control.block(0, candidate_cursor, batch_size, feature_count);
 
-            TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, dim);
+            TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, feature_count);
 
-            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, dim}).device(get_device()) = block_tensor;
+            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, feature_count}).device(get_device()) = block_tensor;
 
-            candidate_col_cursor += dim;
+            candidate_cursor += feature_count;
         }
 
-        feature_cursor += dim;
+        feature_cursor += feature_count;
     }
 
     return input_combined;

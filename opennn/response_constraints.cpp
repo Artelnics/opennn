@@ -1195,10 +1195,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
     vector<const MultivariateConstraint*> affine_constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (!constraint.uses_callback
-            && constraint.comparison_operator != ComparisonOperator::None
+        if (is_input_only_repairable(constraint)
             && constraint.compiled.shape == FormulaShape::Affine
-            && constraint.compiled.scope == FormulaScope::InputsOnly
             && !constraint.compiled.affine_input_terms.empty())
             affine_constraints.push_back(&constraint);
 
@@ -1479,9 +1477,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        if (!is_input_only_repairable(constraint))
             continue;
 
         if (constraint.compiled.shape == FormulaShape::Affine
@@ -1580,9 +1576,7 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        if (!is_input_only_repairable(constraint))
             continue;
 
         if (constraint.compiled.shape == FormulaShape::Affine
@@ -1684,9 +1678,7 @@ void repair_inputs(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        if (!is_input_only_repairable(constraint))
             continue;
 
         if (constraint.compiled.shape == FormulaShape::Affine

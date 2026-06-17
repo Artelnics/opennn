@@ -178,6 +178,20 @@ public:
 
     MatrixR calculate_random_inputs(const Domain& input_domain, Index evaluations_count = -1) const;
 
+    void build_input_lattice(const vector<Variable>& variables,
+                             const vector<Index>& feature_dimensions,
+                             const Domain& input_domain,
+                             map<string, Index>& scalar_column_of,
+                             vector<Index>& lattice_columns,
+                             vector<float>& lattice_min,
+                             vector<float>& lattice_max) const;
+
+    vector<vector<Index>> resolve_cardinality_columns(const Domain& input_domain,
+                                                      const map<string, Index>& scalar_column_of,
+                                                      const vector<char>& fixed_mask,
+                                                      float discrete_explore,
+                                                      MatrixR& random_inputs) const;
+
     Tensor3 combine_input(const MatrixR& present_random_values) const;
 
     MatrixR calculate_outputs(const MatrixR& input) const;
