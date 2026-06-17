@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [master, dev-refactor]
+  pull_request:
+    branches: [master, dev-refactor]
+
+# Cancel superseded runs on the same ref to save runner time.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: CPU build + tests (Ubuntu)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      # FetchContent pulls Eigen/zlib/jpeg-turbo/googletest at configure time.
+      # Cache the populated _deps tree so reconfigures don't re-download.
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: deps-${{ runner.os }}-
+
+      - name: Configure (CPU-only, tests on)
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_BUILD_TESTS=ON
+          -DOpenNN_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      # Run the test binary from the repository root so the fixtures the tests
+      # load via "../datasets/..." resolve (add_test sets no WORKING_DIRECTORY).
+      - name: Run tests
+        run: ./build/bin/run_tests
