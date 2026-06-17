@@ -124,8 +124,10 @@ __global__ void unscale_kernel(const int n, const int features,
         switch (code)
         {
         case 1:
-            y = (x - min_range) / (max_range - min_range)
-                * (maximums[f] - minimums[f]) + minimums[f];
+            y = (max_range - min_range < FLT_EPSILON)
+                ? minimums[f]
+                : (x - min_range) / (max_range - min_range)
+                    * (maximums[f] - minimums[f]) + minimums[f];
             break;
         case 2:
             y = means[f] + x * stds[f];
