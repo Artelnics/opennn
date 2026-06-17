@@ -1117,7 +1117,7 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 ConstraintKind classify(const MultivariateConstraint& constraint)
 {
     if (constraint.comparison_operator == ComparisonOperator::None)
-        return ConstraintKind::Inactive;
+        return ConstraintKind::Unrepairable;
 
     if (constraint.uses_callback)
         return ConstraintKind::Callback;
@@ -1133,10 +1133,10 @@ ConstraintKind classify(const MultivariateConstraint& constraint)
             return ConstraintKind::AffineInput;
         if (nonlinear_ready)
             return ConstraintKind::NonlinearInput;
-        return ConstraintKind::Inactive;
+        return ConstraintKind::Unrepairable;
     }
 
-    return (affine || nonlinear_ready) ? ConstraintKind::OutputTouching : ConstraintKind::Inactive;
+    return (affine || nonlinear_ready) ? ConstraintKind::OutputDependent : ConstraintKind::Unrepairable;
 }
 
 
@@ -1221,7 +1221,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     vector<const MultivariateConstraint*> affine_constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (classify(constraint) == ConstraintKind::AffineInput)
+        if (constraint.kind == ConstraintKind::AffineInput)
             affine_constraints.push_back(&constraint);
 
     if (affine_constraints.empty())
@@ -1481,7 +1481,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        const ConstraintKind kind = classify(constraint);
+        const ConstraintKind kind = constraint.kind;
 
         if (kind == ConstraintKind::AffineInput)
             constraints.push_back(&constraint);
@@ -1567,7 +1567,7 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        const ConstraintKind kind = classify(constraint);
+        const ConstraintKind kind = constraint.kind;
         if (kind == ConstraintKind::AffineInput || kind == ConstraintKind::NonlinearInput)
             constraints.push_back(&constraint);
     }
@@ -1654,7 +1654,7 @@ void repair_inputs(MatrixR& random_inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        const ConstraintKind kind = classify(constraint);
+        const ConstraintKind kind = constraint.kind;
 
         if (kind == ConstraintKind::AffineInput)
         {
@@ -1721,18 +1721,14 @@ void cardinality_swap_row(VectorR& point,
 }
 
 
-void unlock_free_integers_row(VectorR& point,
-                              const vector<Index>& columns,
-                              const vector<float>& lattice_min,
-                              const vector<float>& lattice_max,
-                              const float fraction)
+void unlock_free_integers_row(VectorR& point, const Lattice& lattice, const float fraction)
 {
-    for (size_t c = 0; c < columns.size(); ++c)
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
         if (random_uniform(0.0f, 1.0f) < fraction)
         {
-            const float span = max(0.0f, lattice_max[c] - lattice_min[c]);
-            const float draw = random_uniform(0.0f, 1.0f) * (span + 1.0f) + (lattice_min[c] - 0.5f);
-            point(columns[c]) = min(lattice_max[c], max(lattice_min[c], round(draw)));
+            const float span = max(0.0f, lattice.max[c] - lattice.min[c]);
+            const float draw = random_uniform(0.0f, 1.0f) * (span + 1.0f) + (lattice.min[c] - 0.5f);
+            point(lattice.columns[c]) = min(lattice.max[c], max(lattice.min[c], round(draw)));
         }
 }
 
@@ -1744,20 +1740,16 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& superior_frontier,
                                  const vector<MultivariateConstraint>& formula_constraints,
                                  const vector<char>& fixed_mask,
-                                 const vector<Index>& lattice_columns,
-                                 const vector<float>& lattice_min,
-                                 const vector<float>& lattice_max,
+                                 const Lattice& lattice,
                                  const vector<vector<Index>>& cardinality_columns,
-                                 const vector<Index>& free_lattice_columns,
-                                 const vector<float>& free_lattice_min,
-                                 const vector<float>& free_lattice_max,
+                                 const Lattice& free_lattice,
                                  const Index outer_cap,
                                  const float exploration_ratio)
 {
     vector<const MultivariateConstraint*> input_constraints;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        const ConstraintKind kind = classify(constraint);
+        const ConstraintKind kind = constraint.kind;
         if (kind == ConstraintKind::AffineInput || kind == ConstraintKind::NonlinearInput)
             input_constraints.push_back(&constraint);
     }
@@ -1765,8 +1757,8 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     const Index rows = inputs.rows();
     const Index passes = max(Index(1), outer_cap);
 
-    for (size_t c = 0; c < lattice_columns.size(); ++c)
-        snap_to_lattice(inputs, lattice_columns[c], lattice_min[c], lattice_max[c]);
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
+        snap_to_lattice(inputs, lattice.columns[c], lattice.min[c], lattice.max[c]);
 
     std::set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
@@ -1774,7 +1766,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (classify(constraint) != ConstraintKind::AffineInput)
+        if (constraint.kind != ConstraintKind::AffineInput)
             continue;
 
         bool all_free_discrete = true;
@@ -1814,7 +1806,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
             for (const vector<Index>& columns : cardinality_columns)
                 cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
 
-            unlock_free_integers_row(point, free_lattice_columns, free_lattice_min, free_lattice_max, unlock_fraction);
+            unlock_free_integers_row(point, free_lattice, unlock_fraction);
 
             inputs.row(r) = point.transpose();
         }
@@ -1837,7 +1829,7 @@ void repair_output_constraints(MatrixR& inputs,
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (classify(constraint) == ConstraintKind::OutputTouching)
+        if (constraint.kind == ConstraintKind::OutputDependent)
             constraints.push_back(&constraint);
 
     if (constraints.empty())

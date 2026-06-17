@@ -139,6 +139,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
 
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+    formula_constraint.kind = classify(formula_constraint);
 
     formula_constraints.push_back(move(formula_constraint));
 }
@@ -158,6 +159,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 
     formula_constraint.compiled.shape = FormulaShape::Nonlinear;
     formula_constraint.compiled.scope = FormulaScope::Mixed;
+    formula_constraint.kind = classify(formula_constraint);
 
     formula_constraints.push_back(move(formula_constraint));
 }
@@ -181,6 +183,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
 
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+    formula_constraint.kind = classify(formula_constraint);
 
     formula_constraints.push_back(move(formula_constraint));
 }
@@ -679,14 +682,12 @@ static void round_discrete_inputs(MatrixR& inputs,
 }
 
 
-void ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
-                                               const vector<Index>& feature_dimensions,
-                                               const Domain& input_domain,
-                                               map<string, Index>& scalar_column_of,
-                                               vector<Index>& lattice_columns,
-                                               vector<float>& lattice_min,
-                                               vector<float>& lattice_max) const
+Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
+                                                  const vector<Index>& feature_dimensions,
+                                                  const Domain& input_domain,
+                                                  map<string, Index>& scalar_column_of) const
 {
+    Lattice lattice;
     Index feature = 0;
 
     for (size_t i = 0; i < variables.size(); ++i)
@@ -697,14 +698,16 @@ void ResponseOptimization::build_input_lattice(const vector<Variable>& variables
 
             if (variables[i].type == VariableType::Binary || variables[i].type == VariableType::Integer)
             {
-                lattice_columns.push_back(feature);
-                lattice_min.push_back(ceil(input_domain.inferior_frontier(feature)));
-                lattice_max.push_back(floor(input_domain.superior_frontier(feature)));
+                lattice.columns.push_back(feature);
+                lattice.min.push_back(ceil(input_domain.inferior_frontier(feature)));
+                lattice.max.push_back(floor(input_domain.superior_frontier(feature)));
             }
         }
 
         feature += feature_dimensions[i];
     }
+
+    return lattice;
 }
 
 
@@ -926,10 +929,8 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
     const vector<char> fixed_mask = discrete_column_mask(variables);
 
-    vector<Index> lattice_columns; vector<float> lattice_min, lattice_max;
     map<string, Index> scalar_column_of;
-    build_input_lattice(variables, input_feature_dimensions, input_domain,
-                        scalar_column_of, lattice_columns, lattice_min, lattice_max);
+    const Lattice lattice = build_input_lattice(variables, input_feature_dimensions, input_domain, scalar_column_of);
 
     const vector<vector<Index>> cardinality_columns =
         resolve_cardinality_columns(input_domain, scalar_column_of, fixed_mask, discrete_explore, random_inputs);
@@ -938,20 +939,19 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     for (const vector<Index>& group : cardinality_columns)
         grouped_columns.insert(group.begin(), group.end());
 
-    vector<Index> free_lattice_columns; vector<float> free_lattice_min, free_lattice_max;
-    for (size_t c = 0; c < lattice_columns.size(); ++c)
-        if (!grouped_columns.count(lattice_columns[c]))
+    Lattice free_lattice;
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
+        if (!grouped_columns.count(lattice.columns[c]))
         {
-            free_lattice_columns.push_back(lattice_columns[c]);
-            free_lattice_min.push_back(lattice_min[c]);
-            free_lattice_max.push_back(lattice_max[c]);
+            free_lattice.columns.push_back(lattice.columns[c]);
+            free_lattice.min.push_back(lattice.min[c]);
+            free_lattice.max.push_back(lattice.max[c]);
         }
 
     bool discrete_is_coupled = false;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        const ConstraintKind kind = classify(constraint);
-        if (kind != ConstraintKind::AffineInput && kind != ConstraintKind::NonlinearInput)
+        if (constraint.kind != ConstraintKind::AffineInput && constraint.kind != ConstraintKind::NonlinearInput)
             continue;
         for (const Index column : constraint.compiled.input_indices)
             if (column >= 0 && column < inputs_features_number && fixed_mask[column])
@@ -964,10 +964,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                                     input_domain.superior_frontier,
                                     formula_constraints,
                                     fixed_mask,
-                                    lattice_columns, lattice_min, lattice_max,
+                                    lattice,
                                     cardinality_columns,
-                                    free_lattice_columns, free_lattice_min, free_lattice_max,
-                                     8, discrete_explore);
+                                    free_lattice,
+                                    8, discrete_explore);
     else
     {
         repair_inputs(random_inputs,
@@ -2279,6 +2279,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
+                formula_constraint.kind = classify(formula_constraint);
             }
             else
                 constraints[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);

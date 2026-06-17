@@ -72,6 +72,9 @@ enum class ComparisonOperator : uint8_t
 };
 
 
+enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent };
+
+
 struct MultivariateConstraint
 {
     string expression;
@@ -85,6 +88,7 @@ struct MultivariateConstraint
     vector<float> allowed_values;
 
     CompiledFormula compiled;
+    ConstraintKind kind = ConstraintKind::Unrepairable;
 };
 
 
@@ -100,7 +104,13 @@ inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-
 
 void snap_to_lattice(MatrixR& inputs, Index column, float minimum, float maximum);
 
-enum class ConstraintKind { Inactive, Callback, AffineInput, NonlinearInput, OutputTouching };
+// Integer/binary columns with their per-column lattice bounds [min, max].
+struct Lattice
+{
+    vector<Index> columns;
+    vector<float> min;
+    vector<float> max;
+};
 
 [[nodiscard]] ConstraintKind classify(const MultivariateConstraint& constraint);
 
@@ -153,13 +163,9 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& superior_frontier,
                                  const vector<MultivariateConstraint>& formula_constraints,
                                  const vector<char>& fixed_mask,
-                                 const vector<Index>& lattice_columns,
-                                 const vector<float>& lattice_min,
-                                 const vector<float>& lattice_max,
+                                 const Lattice& lattice,
                                  const vector<vector<Index>>& cardinality_columns,
-                                 const vector<Index>& free_lattice_columns,
-                                 const vector<float>& free_lattice_min,
-                                 const vector<float>& free_lattice_max,
+                                 const Lattice& free_lattice,
                                  Index outer_cap,
                                  float exploration_ratio);
 
