@@ -28,8 +28,6 @@ public:
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
-    // AllowedSet branch handling: Budgeted races branches under successive halving and drops
-    // dominated ones; Exhaustive solves every branch to completion with an equal budget quota.
     enum class BranchMode { Budgeted, Exhaustive };
 
     struct UnivariateConstraint
@@ -38,21 +36,12 @@ public:
         float low_bound;
         float up_bound;
 
-        // Membership target for ComparisonOperator::AllowedSet (the variable may
-        // only take one of these values / category indices).
         vector<float> allowed_values;
 
         UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
             : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
     };
 
-    // Cardinality constraint sum_i z_i = k over a set of binary/integer indicator
-    // variables (named). Unlike a scalar AllowedSet it couples a whole VECTOR of
-    // indicators, so it drives SAMPLING (a box-aware K-hot draw, see draw_k_hot) and a
-    // swap-based perturbation rather than the value-branching machinery; its indicator
-    // columns are excluded from the continuous projection. Expressed as a dedicated
-    // group instead of a new ComparisonOperator precisely because it is a sampling /
-    // combinatorial object, not a per-row comparison on one expression.
     struct CardinalityConstraint
     {
         vector<string> variable_names;
@@ -122,7 +111,6 @@ public:
 
     void set_constraint(const string& name, const vector<float>& allowed_values);
 
-    // Cardinality: the named binary/integer indicators must sum to exactly k.
     void set_cardinality_constraint(const vector<string>& variable_names, Index k);
     void clear_cardinality_constraints();
 
@@ -144,9 +132,6 @@ public:
 
     void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
-    // Global explore-vs-exploit fraction: the share of sampling steered to exploration
-    // rather than exploiting the incumbent. Shared by categorical least-sampled steering,
-    // the cardinality K-hot explore fraction, and the mixed-integer pump's per-pass unlock.
     void set_exploration_ratio(float new_ratio);
 
     void set_fixed_history(const Tensor3& history);
@@ -222,23 +207,12 @@ public:
 
     MatrixR perform_multiobjective_optimization() const;
 
-    // Runs one optimization with the constraints exactly as configured. AllowedSet
-    // membership is resolved one level up, in perform_response_optimization, which
-    // branches over the allowed values (each a separate EqualTo equality solve) and
-    // aggregates; this is the per-branch worker.
     MatrixR solve_once() const;
 
-    // Entry point. With no AllowedSet membership it is a single solve_once(); with
-    // AllowedSet constraints it expands the cartesian product of allowed values into
-    // equality branches (equal evaluation-budget quota each), then returns the global
-    // Pareto front over the union. Not const: it temporarily rewrites the constraints
-    // per branch and restores them.
     MatrixR perform_response_optimization();
 
     Index get_objectives_number() const;
 
-    // Total surrogate evaluations spent by the last perform_response_optimization(),
-    // summed across AllowedSet branches. Lets budgeted runs verify the cap was honored.
     Index get_evaluations_used() const;
 
     vector<NamedColumn> build_input_columns(const vector<Variable>& variables) const;
@@ -250,7 +224,6 @@ public:
     bool is_history(const string& name) const;
     static bool is_past(const TimeType role);
 
-    // True once a fixed history has been set (forecasting mode), computed from fixed_history.
     bool is_forecasting() const { return fixed_history.size() > 0; }
 
     bool row_satisfies_formula_constraints(const VectorR& input_row,
@@ -260,29 +233,12 @@ public:
                                                                   const Domain& output_domain,
                                                                   Index evaluations_count) const;
 
-    // Rebuilds + self-validates the analytic surrogate Jacobian for the current
-    // network. Leaves network_differential null (finite-difference fallback) when
-    // there is no output constraint, the network is forecasting/unsupported, or
-    // the analytic forward fails to match calculate_outputs.
     void initialize_network_differential() const;
 
-    // Keep cardinality-indicator columns at their original (post-bound) box after each
-    // domain reshape: their indicators are combinatorial and must stay resampleable as
-    // a box-aware K-hot draw, never pinned to the incumbent support the way reshape pins
-    // an ordinary binary. The continuous weights still contract normally.
     void restore_cardinality_columns(Domain& domain, const Domain& original) const;
 
-    // Normalization pass: a formula constraint that is affine in exactly one (scalar) input
-    // is solved in closed form to an interval and folded into that variable's domain box
-    // (intersecting any existing interval box), then dropped from the formula set so it is
-    // enforced for free at sampling instead of per-point. Throws if the intersection is empty.
-    // Constraints touching >1 variable, nonlinear ones, or a variable already constrained by
-    // an AllowedSet are left in the formula set untouched.
     void promote_single_variable_constraints();
 
-    // Column mask of the non-continuous (Binary/Integer/Categorical/one-hot) inputs, held
-    // fixed during the continuous projection and re-snapped after the output repair. Shared
-    // by calculate_random_inputs and generate_feasible_points.
     vector<char> discrete_column_mask(const vector<Variable>& variables) const;
 
 private:
@@ -305,8 +261,6 @@ private:
     Index max_oversample_factor = 8;
     float exploration_ratio = 0.1f;
 
-    // Feasibility rate (feasible / sampled) of the last sampling call. Drives the adaptive
-    // explore fraction: rarer feasible points -> wider exploration. 1.0 until the first sample.
     mutable float last_feasibility_rate = 1.0f;
 
     Index evaluations_number = 2000;
@@ -321,39 +275,15 @@ private:
 
     Index max_pareto_number = 10000;
 
-    // Optional hard cap on the TOTAL number of surrogate evaluations spent
-    // across the whole run (initial sampling + every per-Pareto-point local
-    // sampling in every iteration). 0 = unlimited (default; preserves the
-    // original behaviour exactly). When > 0, the MO/SO loop stops launching
-    // new sampling calls once `evaluations_used` reaches this budget, then
-    // returns the best front found so far. Used to run IDC under a matched
-    // surrogate-evaluation budget against population-based baselines.
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
 
-    // Per-category cumulative sample counts for each categorical input (keyed by
-    // variable name), so a fraction of each categorical draw can be steered to the
-    // least-sampled category. Reset at the start of every solve_once run.
     mutable map<string, vector<Index>> category_frequencies;
 
-    // Incumbent-preferred cardinality indicators (over input feature columns; 1 = an
-    // indicator the last reshape would have pinned "on", i.e. in a surviving support).
-    // Captured before the box is restored to [0,1] and used to steer the exploit share of
-    // the K-hot draw. Empty until the first reshape, so iteration 0 draws uniformly.
     mutable vector<char> cardinality_preferred;
 
-    // Cardinality indicator name -> feature column, resolved once per run (the variable
-    // layout is fixed) so restore_cardinality_columns does not rebuild it every reshape.
     mutable map<string, Index> cardinality_indicator_columns;
 
-    // Multiplier on the candidate count of the FIRST (initial, full-domain)
-    // multi-objective sampling only: the initial pass draws
-    // evaluations_number * initial_sampling_factor candidates, while every
-    // per-Pareto-point local sampling keeps the base evaluations_number. A
-    // larger initial set gives a broader domain to seed the contraction from.
-    // 1 = unchanged (default; preserves the original behaviour exactly). The
-    // extra initial cost is counted against max_total_evaluations like any
-    // other sampling, so the matched budget still holds.
     Index initial_sampling_factor = 1;
 
     BranchMode branch_mode = BranchMode::Budgeted;

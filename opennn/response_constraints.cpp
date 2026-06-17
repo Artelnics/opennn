@@ -623,16 +623,6 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
 }
 
 
-// ---- Symbolic differentiation (drives the nonlinear Gauss-Newton repair) ----
-//
-// We already hold the expression as an AST, so the cleanest way to obtain the
-// Jacobian is to differentiate that AST once at compile time into derivative
-// ASTs, then compile each to its own RPN program. At repair time the Jacobian
-// is just a few evaluate_rpn() calls — no per-point AD graph, no finite
-// differences, and it batches exactly like the constraint itself. The smart
-// constructors below constant-fold on the fly to keep the derivative bytecode
-// small (the classic symbolic-swell mitigation; our formulas are tiny anyway).
-
 AstPtr clone(const Ast& node)
 {
     auto copy = make_unique<Ast>();
@@ -770,9 +760,6 @@ bool is_smooth(const Ast& node)
 }
 
 
-// Differentiate w.r.t. one variable: an input (wrt_is_output == false) or an
-// output (wrt_is_output == true) column. Outputs are first-class so the same
-// pass yields both dg/dx and dg/dy for the chain rule through the network.
 AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_index)
 {
     switch (node.kind)
@@ -799,7 +786,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
     case Ast::Kind::Mul:
     {
-        // (a*b)' = a'*b + a*b'
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         return make_add(make_mul(move(da), clone(*node.children[1])),
@@ -808,7 +794,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
     case Ast::Kind::Div:
     {
-        // (a/b)' = (a'*b - a*b') / b^2
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr numerator = make_sub(make_mul(move(da), clone(*node.children[1])),
@@ -822,7 +807,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         float exponent;
         if (is_const(*node.children[1], exponent))
         {
-            // (a^c)' = c*a^(c-1)*a'
             AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
             AstPtr power = make_pow(clone(*node.children[0]), make_const(exponent - 1.0f));
             return make_mul(make_mul(make_const(exponent), move(power)), move(da));
@@ -831,13 +815,11 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         float base;
         if (is_const(*node.children[0], base))
         {
-            // (k^b)' = k^b*ln(k)*b'
             AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
             AstPtr value = make_pow(make_const(base), clone(*node.children[1]));
             return make_mul(make_mul(move(value), make_const(log(base))), move(db));
         }
 
-        // General a^b = exp(b*ln a): (a^b)' = a^b*(b'*ln a + b*a'/a)
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr term1 = make_mul(move(db), make_func("log", clone(*node.children[0])));
@@ -853,22 +835,21 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         const Ast& u = *node.children[0];
         AstPtr du = differentiate(u, wrt_is_output, wrt_index);
 
-        if (name == "sqrt")   // (sqrt u)' = u'/(2 sqrt u)
+        if (name == "sqrt")
             return make_div(move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
-        if (name == "exp")    // (exp u)' = exp(u) u'
+        if (name == "exp")
             return make_mul(make_func("exp", clone(u)), move(du));
-        if (name == "log")    // (log u)' = u'/u
+        if (name == "log")
             return make_div(move(du), clone(u));
-        if (name == "abs")    // (|u|)' = (u/|u|) u'
+        if (name == "abs")
             return make_mul(make_div(clone(u), make_func("abs", clone(u))), move(du));
-        if (name == "sin")    // (sin u)' = cos(u) u'
+        if (name == "sin")
             return make_mul(make_func("cos", clone(u)), move(du));
-        if (name == "cos")    // (cos u)' = -sin(u) u'
+        if (name == "cos")
             return make_neg(make_mul(make_func("sin", clone(u)), move(du)));
-        if (name == "tan")    // (tan u)' = u'/cos^2(u)
+        if (name == "tan")
             return make_div(move(du), make_pow(make_func("cos", clone(u)), make_const(2.0f)));
 
-        // min/max are non-smooth and filtered out before differentiate() runs.
         return make_const(0.0f);
     }
     }
@@ -1006,12 +987,6 @@ CompiledFormula compile_formula(const string& expression,
     {
         result.shape = FormulaShape::Nonlinear;
 
-        // For smooth nonlinear constraints, precompile the gradient (one RPN
-        // program per referenced input AND per referenced output) so both the
-        // input-only Gauss-Newton repair and the output-constraint repair can
-        // assemble Jacobians with plain evaluate_rpn() calls. Output partials
-        // feed the chain rule dg/dy * df/dx through the network. Non-smooth
-        // (min/max) formulas get no gradient and fall back to rejection.
         if (is_smooth(*ast))
         {
             result.gradient_available = true;
@@ -1074,7 +1049,6 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
         for (const auto& [column, coefficient] : formula_constraint.compiled.affine_output_terms)
             linear_set.A(i, n_in + column) += coefficient;
 
-        // Move the affine constant to the RHS so that A·z is compared to (bound - affine_constant) directly.
         const float c = formula_constraint.compiled.affine_constant;
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
@@ -1140,6 +1114,32 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 }
 
 
+ConstraintKind classify(const MultivariateConstraint& constraint)
+{
+    if (constraint.comparison_operator == ComparisonOperator::None)
+        return ConstraintKind::Inactive;
+
+    if (constraint.uses_callback)
+        return ConstraintKind::Callback;
+
+    const CompiledFormula& formula = constraint.compiled;
+
+    const bool affine = (formula.shape == FormulaShape::Affine);
+    const bool nonlinear_ready = (formula.shape == FormulaShape::Nonlinear && formula.gradient_available);
+
+    if (formula.scope == FormulaScope::InputsOnly)
+    {
+        if (affine && !formula.affine_input_terms.empty())
+            return ConstraintKind::AffineInput;
+        if (nonlinear_ready)
+            return ConstraintKind::NonlinearInput;
+        return ConstraintKind::Inactive;
+    }
+
+    return (affine || nonlinear_ready) ? ConstraintKind::OutputTouching : ConstraintKind::Inactive;
+}
+
+
 void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, const float maximum)
 {
     inputs.col(column).array() = inputs.col(column).array().round().max(minimum).min(maximum);
@@ -1149,11 +1149,6 @@ void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, c
 namespace
 {
 
-// Signed residual of one constraint at `value`: 0 when satisfied (boundary feasible),
-// otherwise the amount by which `value` overshoots the violated bound (value - bound).
-// Returns true iff the constraint is part of the active set: every violated constraint,
-// plus EqualTo always (so the projection keeps it pinned even when momentarily satisfied).
-// One definition for every operator, shared by the three repairs and the affine sweeps.
 bool constraint_residual(const ComparisonOperator comparison, const float low, const float up,
                          const float value, float& residual)
 {
@@ -1181,10 +1176,6 @@ bool constraint_residual(const ComparisonOperator comparison, const float low, c
     }
 }
 
-// One Gauss-Newton-on-manifold step over the active set: drop constraint rows that are
-// entirely zero (nothing free to move them — left as residual for the caller), then
-// point <- point - J^T (J J^T + eps I)^-1 h, box-clamped. Returns false when no row is
-// projectable (the caller should stop iterating this point). Shared by all three repairs.
 bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
                               const VectorR& inferior_frontier, const VectorR& superior_frontier,
                               VectorR& point)
@@ -1230,9 +1221,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     vector<const MultivariateConstraint*> affine_constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (is_input_only_repairable(constraint)
-            && constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
+        if (classify(constraint) == ConstraintKind::AffineInput)
             affine_constraints.push_back(&constraint);
 
     if (affine_constraints.empty())
@@ -1390,20 +1379,13 @@ void repair_single_affine_input(MatrixR& random_inputs,
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project). Leaving satisfied
-        // points untouched is what preserves the diversity. constraint_residual gives the
-        // overshoot (expression - bound); the sweep moves the expression the opposite way.
         float residual;
         if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
         residual = -residual;
 
-        // Fresh random sweep order for this row.
         partial_shuffle(shuffled, terms_number);
 
-        // Clamp-and-carry: each coordinate absorbs as much of the remaining
-        // residual as its box allows; a single pass is algebraically exact for
-        // one constraint whenever the target is reachable within the box.
         for (const auto& [column, coefficient] : shuffled)
         {
             if (coefficient == 0.0f)
@@ -1444,8 +1426,6 @@ void repair_single_affine_integer(MatrixR& random_inputs,
 
     for (Index r = 0; r < rows_number; ++r)
     {
-        // Snap the referenced coordinates to their integer lattice first, so the carry
-        // operates on integer values (the caller guarantees these columns are discrete).
         for (const auto& [column, coefficient] : shuffled)
         {
             const float lattice_min = ceil(inferior_frontier(column));
@@ -1457,21 +1437,13 @@ void repair_single_affine_integer(MatrixR& random_inputs,
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project); leaving satisfied
-        // rows untouched is what preserves the diversity. The carry moves the expression onto
-        // the violated bound, i.e. by the negated overshoot from constraint_residual.
         float residual;
         if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
         residual = -residual;
 
-        // Fresh random sweep order for this row.
         partial_shuffle(shuffled, terms_number);
 
-        // Lattice clamp-and-carry: each coordinate absorbs as much of the remaining
-        // residual as it can in whole integer steps. Truncating the step toward zero
-        // means an inequality is never overshot past its opposite bound; a unit-
-        // coefficient target reachable within the box is hit exactly in one pass.
         for (const auto& [column, coefficient] : shuffled)
         {
             if (coefficient == 0.0f)
@@ -1504,22 +1476,16 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const vector<MultivariateConstraint>& formula_constraints,
                              const Index max_correction_passes)
 {
-    // Smooth input-only constraints we can project. Affine ones (constant
-    // Jacobian) are folded in so the whole input-only set is satisfied jointly;
-    // we only run at all when at least one is genuinely nonlinear.
     vector<const MultivariateConstraint*> constraints;
     bool any_nonlinear = false;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint))
-            continue;
+        const ConstraintKind kind = classify(constraint);
 
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
+        if (kind == ConstraintKind::AffineInput)
             constraints.push_back(&constraint);
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
+        else if (kind == ConstraintKind::NonlinearInput)
         {
             constraints.push_back(&constraint);
             any_nonlinear = true;
@@ -1533,7 +1499,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
     const Index inputs_number = random_inputs.cols();
     const Index passes        = max(Index(1), max_correction_passes);
 
-    const VectorR empty_outputs;   // input-only constraints never touch outputs
+    const VectorR empty_outputs;
 
     for (Index r = 0; r < rows_number; ++r)
     {
@@ -1541,7 +1507,6 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 
         for (Index pass = 0; pass < passes; ++pass)
         {
-            // Active set: residual h and which constraints are currently violated.
             vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
@@ -1559,13 +1524,8 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
             }
 
             if (active.empty())
-                break;   // every constraint satisfied at this point
+                break;
 
-            // Residual-based early-exit: an EqualTo constraint is always "active"
-            // but may already be satisfied to tolerance, so stop once the worst
-            // active residual is negligible. This makes a generous pass cap cheap
-            // — easy points converge in a handful of passes, only stiff manifolds
-            // use the full budget.
             if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
                 break;
 
@@ -1603,22 +1563,12 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const vector<char>& fixed_columns,
                                      const Index max_correction_passes)
 {
-    // Same input-only set the nonlinear repair projects (affine terms or a smooth
-    // gradient), but every row holds its `fixed_columns` coordinates put. We run
-    // whenever at least one such constraint exists (no "any nonlinear" guard): the
-    // mixed-integer buy-in / budget rows are all affine.
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint))
-            continue;
-
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
-            constraints.push_back(&constraint);
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
+        const ConstraintKind kind = classify(constraint);
+        if (kind == ConstraintKind::AffineInput || kind == ConstraintKind::NonlinearInput)
             constraints.push_back(&constraint);
     }
 
@@ -1631,7 +1581,7 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 
     const bool has_mask = (static_cast<Index>(fixed_columns.size()) == inputs_number);
 
-    const VectorR empty_outputs;   // input-only constraints never touch outputs
+    const VectorR empty_outputs;
 
     for (Index r = 0; r < rows_number; ++r)
     {
@@ -1639,7 +1589,6 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 
         for (Index pass = 0; pass < passes; ++pass)
         {
-            // Active set: residual h and which constraints are currently violated.
             vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
@@ -1680,10 +1629,6 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                         jacobian(i, column) = evaluate_rpn(program, point, empty_outputs);
             }
 
-            // Hold the fixed coordinates put: zero their Jacobian columns so the
-            // Gauss-Newton step can never move them (their current value is already
-            // folded into every residual via the evaluation above). gauss_newton_project_row
-            // then drops any row left all-zero (its variables all fixed).
             if (has_mask)
                 for (Index j = 0; j < inputs_number; ++j)
                     if (fixed_columns[j])
@@ -1703,27 +1648,20 @@ void repair_inputs(MatrixR& random_inputs,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
 {
-    // Route by the structure of the input-only, non-callback constraints:
-    //   - any nonlinear present  -> Gauss-Newton repair (folds in affine ones)
-    //   - exactly one affine     -> single-pass random sweep (exact, diverse)
-    //   - two or more affine      -> batched Gram + Dykstra projection
     const MultivariateConstraint* single_affine = nullptr;
     Index affine_number = 0;
     bool any_nonlinear = false;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint))
-            continue;
+        const ConstraintKind kind = classify(constraint);
 
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
+        if (kind == ConstraintKind::AffineInput)
         {
             ++affine_number;
             single_affine = &constraint;
         }
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
+        else if (kind == ConstraintKind::NonlinearInput)
             any_nonlinear = true;
     }
 
@@ -1739,7 +1677,6 @@ void repair_inputs(MatrixR& random_inputs,
 namespace
 {
 
-// Pump feasibility test: every input constraint satisfied (within tolerance).
 bool row_satisfies_input_affine(const VectorR& point,
                                 const vector<const MultivariateConstraint*>& input_constraints)
 {
@@ -1753,8 +1690,6 @@ bool row_satisfies_input_affine(const VectorR& point,
 }
 
 
-// Turn one selected indicator off and one unselected on, only where the box has room
-// (>= 1 either side). Keeps sum z = k exact and never crosses a frontier, so pins stay put.
 void cardinality_swap_row(VectorR& point,
                           const vector<Index>& columns,
                           const VectorR& inferior_frontier,
@@ -1786,7 +1721,6 @@ void cardinality_swap_row(VectorR& point,
 }
 
 
-// Re-randomise a fraction of the free integer/binary columns to perturb a stuck row.
 void unlock_free_integers_row(VectorR& point,
                               const vector<Index>& columns,
                               const vector<float>& lattice_min,
@@ -1802,7 +1736,7 @@ void unlock_free_integers_row(VectorR& point,
         }
 }
 
-} // namespace
+}
 
 
 void repair_mixed_integer_inputs(MatrixR& inputs,
@@ -1823,35 +1757,24 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     vector<const MultivariateConstraint*> input_constraints;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint))
-            continue;
-
-        const bool affine = (constraint.compiled.shape == FormulaShape::Affine
-                             && !constraint.compiled.affine_input_terms.empty());
-        const bool nonlinear = (constraint.compiled.shape == FormulaShape::Nonlinear
-                                && constraint.compiled.gradient_available);
-        if (affine || nonlinear)
+        const ConstraintKind kind = classify(constraint);
+        if (kind == ConstraintKind::AffineInput || kind == ConstraintKind::NonlinearInput)
             input_constraints.push_back(&constraint);
     }
 
     const Index rows = inputs.rows();
     const Index passes = max(Index(1), outer_cap);
 
-    // Lattice snap up front (binary clamps to its frontier via the lattice bounds).
     for (size_t c = 0; c < lattice_columns.size(); ++c)
         snap_to_lattice(inputs, lattice_columns[c], lattice_min[c], lattice_max[c]);
 
-    // Exact fast path: an affine constraint over only free integer/binary columns (pure-integer
-    // knapsack) is solved by one lattice clamp-and-carry. Cardinality-grouped columns are excluded.
     std::set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
         cardinality_set.insert(group.begin(), group.end());
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint)
-            || constraint.compiled.shape != FormulaShape::Affine
-            || constraint.compiled.affine_input_terms.empty())
+        if (classify(constraint) != ConstraintKind::AffineInput)
             continue;
 
         bool all_free_discrete = true;
@@ -1870,7 +1793,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                         formula_constraints, fixed_mask);
 
         if (input_constraints.empty())
-            return;   // nothing left to satisfy on the input side
+            return;
 
         bool all_feasible = true;
         const bool last_pass = (outer + 1 >= passes);
@@ -1886,7 +1809,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 
             all_feasible = false;
             if (last_pass)
-                continue;   // leave it for the feasibility filter to drop
+                continue;
 
             for (const vector<Index>& columns : cardinality_columns)
                 cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
@@ -1911,26 +1834,11 @@ void repair_output_constraints(MatrixR& inputs,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
 {
-    // Output-touching constraints we can project: not callback, op set, smooth,
-    // and referencing outputs (Mixed or OutputsOnly). Affine-in-(x,y) ones use
-    // their constant terms; nonlinear smooth ones use the compiled gradients.
-    // Input-only constraints are handled pre-evaluation by repair_inputs.
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope == FormulaScope::InputsOnly)
-            continue;
-
-        const bool affine = (constraint.compiled.shape == FormulaShape::Affine);
-        const bool nonlinear_ready = (constraint.compiled.shape == FormulaShape::Nonlinear
-                                      && constraint.compiled.gradient_available);
-
-        if (affine || nonlinear_ready)
+        if (classify(constraint) == ConstraintKind::OutputTouching)
             constraints.push_back(&constraint);
-    }
 
     if (constraints.empty())
         return;
@@ -1947,10 +1855,9 @@ void repair_output_constraints(MatrixR& inputs,
 
         for (Index pass = 0; pass < passes; ++pass)
         {
-            const VectorR output = forward(point);          // 1 forward, shared by all constraints
+            const VectorR output = forward(point);
             const Index outputs_number = output.size();
 
-            // Active set: residual and which constraints are currently violated.
             vector<const MultivariateConstraint*> active;
             vector<float> residuals;
             active.reserve(constraints.size());
@@ -1983,7 +1890,6 @@ void repair_output_constraints(MatrixR& inputs,
                 rhs(i) = residuals[i];
                 const CompiledFormula& compiled = active[i]->compiled;
 
-                // dg/dx (direct) and dg/dy (the VJP cotangent seed).
                 VectorR grad_x = VectorR::Zero(inputs_number);
                 VectorR cotangent = VectorR::Zero(outputs_number);
 
@@ -2002,22 +1908,14 @@ void repair_output_constraints(MatrixR& inputs,
                         cotangent(column) = evaluate_rpn(program, point, output);
                 }
 
-                // Chain rule: d/dx g(x, f(x)) = dg/dx + (df/dx)^T dg/dy.
                 jacobian.row(i) = (grad_x + vjp(point, cotangent)).transpose();
             }
 
-            // Hold discrete coordinates fixed: zero their Jacobian columns so the output
-            // repair moves only the continuous inputs. Integers/binaries stay on their
-            // lattice, so the post-repair re-snap can no longer re-break the input
-            // constraints the input pump already satisfied.
             if (has_mask)
                 for (Index j = 0; j < inputs_number; ++j)
                     if (fixed_columns[j])
                         jacobian.col(j).setZero();
 
-            // gauss_newton_project_row drops any row left all-zero (only fixed inputs affect
-            // it): the continuous slice cannot project it, so its violation is left for the
-            // downstream feasibility filter.
             if (!gauss_newton_project_row(jacobian, rhs, inferior_frontier, superior_frontier, point))
                 break;
         }
@@ -2037,8 +1935,6 @@ void repair_output_constraints(MatrixR& inputs,
 {
     const Index inputs_number = inputs.cols();
 
-    // Per-coordinate central-difference step scaled to the box width, floored so
-    // it stays meaningful for degenerate (fixed) coordinates.
     VectorR step(inputs_number);
     for (Index j = 0; j < inputs_number; ++j)
         step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));

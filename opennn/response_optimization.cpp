@@ -395,14 +395,6 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
 
     const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
 
-    // Scaling/Unscaling layers store one Descriptives per FEATURE, so a categorical
-    // input contributes get_categories_number() entries (its one-hot block). The
-    // optimizer works per logical Variable (Domain::set indexes descriptives[variable]),
-    // so when the descriptives are feature-level we collapse each variable's one-hot
-    // block down to a single representative descriptive (the block's first feature;
-    // the value is unused for categorical variables, whose Domain frontier is the
-    // 0..1 one-hot box). When the counts already match (all-scalar inputs, or targets)
-    // this is a pass-through and behaviour is unchanged.
     const vector<Index> feature_dimensions = get_feature_dimensions(variables_uncheked);
     const Index total_features = accumulate(feature_dimensions.begin(), feature_dimensions.end(), Index(0));
 
@@ -422,7 +414,7 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
     for (size_t i = 0; i < variables_uncheked.size(); ++i)
     {
         const Descriptives variable_descriptive = feature_level
-            ? descriptives_uncheked[size_t(feature_cursor)]   // representative of the one-hot block
+            ? descriptives_uncheked[size_t(feature_cursor)]
             : descriptives_uncheked[i];
 
         feature_cursor += feature_dimensions[i];
@@ -430,7 +422,7 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         const string& var_role = variables_uncheked[i].get_role();
 
         if (is_history(variables_uncheked[i].name))
-            continue; // Skip history variables entirely for optimization purposes
+            continue;
 
         const bool keep = is_input_request ? (var_role == "Input")
                                            : (var_role == "Target" || var_role == "InputTarget");
@@ -687,8 +679,6 @@ static void round_discrete_inputs(MatrixR& inputs,
 }
 
 
-// Map every scalar input to its feature column, and collect the integer/binary columns
-// with their per-column lattice bounds [ceil(inferior), floor(superior)].
 void ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
                                                const vector<Index>& feature_dimensions,
                                                const Domain& input_domain,
@@ -718,10 +708,6 @@ void ResponseOptimization::build_input_lattice(const vector<Variable>& variables
 }
 
 
-// Resolve each cardinality group to its indicator columns and draw a box-aware K-hot
-// assignment per row into random_inputs (overriding the per-variable binary sampling there).
-// Explore rows draw freely; exploit rows restrict the "on" indicators to the incumbent-
-// preferred support captured at the last reshape, falling back to a free draw when none exists.
 vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Domain& input_domain,
                                                                         const map<string, Index>& scalar_column_of,
                                                                         const vector<char>& fixed_mask,
@@ -772,7 +758,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
                 {
                     if (force_on[c]) continue;
                     if (cardinality_preferred[columns[c]]) any_preferred_free = true;
-                    else exploit_force_off[c] = 1;   // bar non-preferred indicators from this draw
+                    else exploit_force_off[c] = 1;
                 }
                 if (any_preferred_free)
                     drawn = draw_k_hot(count, group.k, force_on, exploit_force_off, draw);
@@ -807,15 +793,11 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     MatrixR random_inputs(effective_evaluations, inputs_features_number);
     set_random_uniform(random_inputs, 0, 1);
 
-    // input_domain is the reshaped (exploit) box; original_domain is the explore range. The
-    // explore fraction adapts to the last feasibility rate (rarer feasible -> explore more),
-    // floored at exploration_ratio (continuous) and 1.5x that for the harder discrete variables.
     const Domain original_domain = get_original_domain("Input");
 
     const float continuous_explore = clamp(max(exploration_ratio, 1.0f - last_feasibility_rate), 0.0f, 1.0f);
     const float discrete_explore   = min(1.0f, 1.5f * continuous_explore);
 
-    // Fill row_count rows of a scalar column from one box, by variable type.
     const auto sample_scalar = [&](const Index col, const Index first_row, const Index row_count,
                                    const float inferior, const float superior, const VariableType type)
     {
@@ -836,112 +818,112 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             random_inputs.block(first_row, col, row_count, 1).array() = random_inputs.block(first_row, col, row_count, 1).array() * (superior - inferior) + inferior;
     };
 
+    const auto sample_allowed_set = [&](const Index col, const vector<float>& allowed_values)
+    {
+        const float inferior = input_domain.inferior_frontier(col);
+        const float superior = input_domain.superior_frontier(col);
+
+        vector<float> candidates;
+        candidates.reserve(allowed_values.size());
+        for (const float value : allowed_values)
+            if (value >= inferior - EPSILON && value <= superior + EPSILON)
+                candidates.push_back(value);
+
+        if (candidates.empty())
+        {
+            const float center = 0.5f * (inferior + superior);
+            float nearest = allowed_values.front();
+            for (const float value : allowed_values)
+                if (abs(value - center) < abs(nearest - center)) nearest = value;
+            candidates.push_back(nearest);
+        }
+
+        for (Index i = 0; i < effective_evaluations; ++i)
+            random_inputs(i, col) = candidates[random_integer(0, candidates.size() - 1)];
+    };
+
+    const auto sample_categorical = [&](const Index first_col, const Index categories_number, const string& name)
+    {
+        random_inputs.block(0, first_col, effective_evaluations, categories_number).setZero();
+
+        vector<Index> present_categories, original_categories;
+        for(Index i = 0; i < categories_number; ++i)
+        {
+            if(input_domain.superior_frontier(first_col + i) > 0.5)    present_categories.push_back(i);
+            if(original_domain.superior_frontier(first_col + i) > 0.5) original_categories.push_back(i);
+        }
+
+        throw_if(original_categories.empty(),
+                 "ResponseOptimization: variable '" + name + "' has every category constrained out — cannot generate inputs.");
+
+        if (present_categories.empty())
+            present_categories = original_categories;
+
+        vector<Index>& frequencies = category_frequencies[name];
+        if(Index(frequencies.size()) != categories_number)
+            frequencies.assign(categories_number, 0);
+
+        const Index explore_count = llround(discrete_explore * effective_evaluations);
+
+        const auto least_sampled_category = [&frequencies](const vector<Index>& categories)
+        {
+            Index best = categories[0];
+            for(const Index category : categories)
+                if(frequencies[category] < frequencies[best]) best = category;
+            return best;
+        };
+
+        for(Index i = 0; i < effective_evaluations; ++i)
+        {
+            const Index chosen = (i < explore_count)
+                ? least_sampled_category(original_categories)
+                : present_categories[random_integer(0, present_categories.size() - 1)];
+
+            random_inputs(i, first_col + chosen) = 1.0;
+            frequencies[chosen]++;
+        }
+    };
+
     Index current_feature_index = 0;
 
     for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
     {
         const Index categories_number = input_feature_dimensions[input_variable];
+        const string& name = variables[input_variable].name;
 
-        if(categories_number == 1)
+        if(categories_number != 1)
         {
-            const UnivariateConstraint constraint = get_constraint(variables[input_variable].name);
-            const VariableType type = variables[input_variable].type;
-
-            if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
-            {
-                const float inferior = input_domain.inferior_frontier(current_feature_index);
-                const float superior = input_domain.superior_frontier(current_feature_index);
-
-                vector<float> candidates;
-                candidates.reserve(constraint.allowed_values.size());
-                for (const float value : constraint.allowed_values)
-                    if (value >= inferior - EPSILON && value <= superior + EPSILON)
-                        candidates.push_back(value);
-
-                if (candidates.empty())
-                {
-                    const float center = 0.5f * (inferior + superior);
-                    float nearest = constraint.allowed_values.front();
-                    for (const float value : constraint.allowed_values)
-                        if (abs(value - center) < abs(nearest - center)) nearest = value;
-                    candidates.push_back(nearest);
-                }
-
-                for (Index i = 0; i < effective_evaluations; ++i)
-                    random_inputs(i, current_feature_index) = candidates[random_integer(0, candidates.size() - 1)];
-            }
-            else
-            {
-                if (type == VariableType::Integer)
-                    throw_if(floor(original_domain.superior_frontier(current_feature_index)) < ceil(original_domain.inferior_frontier(current_feature_index)),
-                             "ResponseOptimization: integer variable '" + variables[input_variable].name
-                             + "' has no integer value within its range.");
-
-                const float explore_fraction = (type == VariableType::Binary || type == VariableType::Integer)
-                                              ? discrete_explore : continuous_explore;
-                const Index explore_count = llround(explore_fraction * effective_evaluations);
-
-                // explore rows draw from the original box, exploit rows from the contracted box.
-                sample_scalar(current_feature_index, 0, explore_count,
-                              original_domain.inferior_frontier(current_feature_index),
-                              original_domain.superior_frontier(current_feature_index), type);
-                sample_scalar(current_feature_index, explore_count, effective_evaluations - explore_count,
-                              input_domain.inferior_frontier(current_feature_index),
-                              input_domain.superior_frontier(current_feature_index), type);
-            }
-            current_feature_index++;
+            sample_categorical(current_feature_index, categories_number, name);
+            current_feature_index += categories_number;
+            continue;
         }
+
+        const UnivariateConstraint constraint = get_constraint(name);
+        const VariableType type = variables[input_variable].type;
+
+        if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
+            sample_allowed_set(current_feature_index, constraint.allowed_values);
         else
         {
-            random_inputs.block(0, current_feature_index, effective_evaluations, categories_number).setZero();
+            if (type == VariableType::Integer)
+                throw_if(floor(original_domain.superior_frontier(current_feature_index)) < ceil(original_domain.inferior_frontier(current_feature_index)),
+                         "ResponseOptimization: integer variable '" + name + "' has no integer value within its range.");
 
-            vector<Index> present_categories, original_categories;
-            for(Index i = 0; i < categories_number; ++i)
-            {
-                if(input_domain.superior_frontier(current_feature_index + i) > 0.5)    present_categories.push_back(i);
-                if(original_domain.superior_frontier(current_feature_index + i) > 0.5) original_categories.push_back(i);
-            }
+            const float explore_fraction = (type == VariableType::Binary || type == VariableType::Integer)
+                                          ? discrete_explore : continuous_explore;
+            const Index explore_count = llround(explore_fraction * effective_evaluations);
 
-            throw_if(original_categories.empty(),
-                     "ResponseOptimization: variable '"
-                     + variables[input_variable].name +
-                     "' has every category constrained out — cannot generate inputs.");
-
-            if (present_categories.empty())
-                present_categories = original_categories;   // contracted out this round -> fall back
-
-            vector<Index>& frequencies = category_frequencies[variables[input_variable].name];
-            if(Index(frequencies.size()) != categories_number)
-                frequencies.assign(categories_number, 0);
-
-            const Index explore_count = llround(discrete_explore * effective_evaluations);
-
-            // explore picks the least-sampled ORIGINAL category (re-reaches categories the
-            // contraction dropped); exploit picks a present (contracted) category at random.
-            const auto least_sampled_category = [&frequencies](const vector<Index>& categories)
-            {
-                Index best = categories[0];
-                for(const Index category : categories)
-                    if(frequencies[category] < frequencies[best]) best = category;
-                return best;
-            };
-
-            for(Index i = 0; i < effective_evaluations; ++i)
-            {
-                const Index chosen = (i < explore_count)
-                    ? least_sampled_category(original_categories)
-                    : present_categories[random_integer(0, present_categories.size() - 1)];
-
-                random_inputs(i, current_feature_index + chosen) = 1.0;
-                frequencies[chosen]++;
-            }
-
-            current_feature_index += categories_number;
+            sample_scalar(current_feature_index, 0, explore_count,
+                          original_domain.inferior_frontier(current_feature_index),
+                          original_domain.superior_frontier(current_feature_index), type);
+            sample_scalar(current_feature_index, explore_count, effective_evaluations - explore_count,
+                          input_domain.inferior_frontier(current_feature_index),
+                          input_domain.superior_frontier(current_feature_index), type);
         }
+
+        current_feature_index++;
     }
 
-    // Mixed-integer / cardinality repair. Every non-continuous column is held fixed during
-    // the continuous projection; the scalar integer/binary columns form the lattice.
     const vector<char> fixed_mask = discrete_column_mask(variables);
 
     vector<Index> lattice_columns; vector<float> lattice_min, lattice_max;
@@ -965,13 +947,11 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             free_lattice_max.push_back(lattice_max[c]);
         }
 
-    // Route to the pump only when discrete variables actually couple into an input-only
-    // affine/nonlinear constraint (or a cardinality group); otherwise keep the original
-    // continuous-repair-then-round path verbatim so purely continuous problems are unchanged.
     bool discrete_is_coupled = false;
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (!is_input_only_repairable(constraint))
+        const ConstraintKind kind = classify(constraint);
+        if (kind != ConstraintKind::AffineInput && kind != ConstraintKind::NonlinearInput)
             continue;
         for (const Index column : constraint.compiled.input_indices)
             if (column >= 0 && column < inputs_features_number && fixed_mask[column])
@@ -987,7 +967,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                                     lattice_columns, lattice_min, lattice_max,
                                     cardinality_columns,
                                     free_lattice_columns, free_lattice_min, free_lattice_max,
-                                    /*outer_cap*/ 8, discrete_explore);
+                                     8, discrete_explore);
     else
     {
         repair_inputs(random_inputs,
@@ -1007,10 +987,10 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
     const vector<Variable> input_variables = neural_network->get_input_variables();
-    const Index batch_size = input_control.rows(); // 1000
+    const Index batch_size = input_control.rows();
     const Shape input_shape = neural_network->get_input_shape();
-    const Index total_lags = input_shape[0]; // 2
-    const Index total_features = input_shape[1]; // 8
+    const Index total_lags = input_shape[0];
+    const Index total_features = input_shape[1];
 
     Tensor3 input_combined(batch_size, total_lags, total_features);
 
@@ -1126,7 +1106,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
         const string& variable_name = all_target_variables[column_index].name;
 
         if (is_history(variable_name))
-            continue; // not in domain — skip without advancing domain_index
+            continue;
 
         if (get_constraint(variable_name).comparison != ComparisonOperator::None)
         {
@@ -1150,7 +1130,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
         if (all_formula_constraints_are_linear(formula_constraints))
         {
-            // All-linear shortcut: one matrix product evaluates every constraint for every surviving candidate.
             const Index k     = static_cast<Index>(feasible_indices.size());
             const Index n_in  = inputs.cols();
             const Index n_out = outputs.cols();
@@ -1166,7 +1145,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
 
             const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
-                                 + Y * linear_set.A.rightCols(n_out).transpose();   // (k, m)
+                                 + Y * linear_set.A.rightCols(n_out).transpose();
 
             for (Index i = 0; i < k; ++i)
             {
@@ -1286,18 +1265,9 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 {
     MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
 
-    // Hold every discrete column (binary / integer / categorical one-hot) fixed through
-    // the output-constraint repair so it adjusts only the continuous inputs. The integers
-    // stay on the lattice the input pump placed, so the re-snap below is a no-op rather
-    // than a move that could re-break the input constraints.
     const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
     const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
-    // Repair constraints that reference the network outputs (no-op when none):
-    // Gauss-Newton onto g(x, f(x)) = c. Prefer the exact analytic Jacobian
-    // (NetworkDifferential); otherwise fall back to a finite-difference VJP over
-    // calculate_outputs. Either way the exact forward drives the residual to
-    // zero, so the repaired points are exact to tolerance.
     if (network_differential)
     {
         repair_output_constraints(random_inputs,
@@ -1325,21 +1295,16 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
                                   64, fixed_columns);
     }
 
-    // The output-coupled repair moves points continuously: re-snap Integer and
-    // Binary coordinates to their grid (a no-op now that the repair holds them fixed,
-    // kept as a defensive safety net); any residual is handled by the feasibility filter.
     round_discrete_inputs(random_inputs,
                           input_variables,
                           input_domain.inferior_frontier,
                           input_domain.superior_frontier);
 
     const MatrixR outputs = calculate_outputs(random_inputs);
-    evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
+    evaluations_used += evaluations_count;
 
     pair<MatrixR, MatrixR> feasible = filter_feasible_points(random_inputs, outputs, output_domain);
 
-    // Feed the adaptive explore fraction of the next sampling call: the share of draws that
-    // survived the constraints this round.
     last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
 
     return feasible;
@@ -1461,7 +1426,6 @@ void ResponseOptimization::promote_single_variable_constraints()
     for (const NamedColumn& column : input_columns)
         name_of_column[column.column_index] = column.name;
 
-    // [lo, hi] interval implied by an interval-type UnivariateConstraint; false for AllowedSet.
     auto interval_of = [](const UnivariateConstraint& constraint, float& lo, float& hi) -> bool
     {
         lo = -numeric_limits<float>::infinity();
@@ -1504,7 +1468,6 @@ void ResponseOptimization::promote_single_variable_constraints()
         if (found == name_of_column.end() || coefficient == 0.0f)
         { kept.push_back(move(formula_constraint)); continue; }
 
-        // Solve a*x + c {op} bound for the implied interval on x.
         const float constant = compiled.affine_constant;
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
@@ -1535,7 +1498,7 @@ void ResponseOptimization::promote_single_variable_constraints()
         float existing_hi =  numeric_limits<float>::infinity();
         const auto existing = constraints.find(name);
         if (existing != constraints.end() && !interval_of(existing->second, existing_lo, existing_hi))
-        { kept.push_back(move(formula_constraint)); continue; }   // existing AllowedSet: leave as formula
+        { kept.push_back(move(formula_constraint)); continue; }
 
         const float new_lo = max(implied_lo, existing_lo);
         const float new_hi = min(implied_hi, existing_hi);
@@ -1558,7 +1521,6 @@ void ResponseOptimization::promote_single_variable_constraints()
 
         cout << "> Promoted single-variable constraint '" << formula_constraint.expression
              << "' to a box on '" << name << "'." << endl;
-        // promoted -> intentionally not kept in the formula set
     }
 
     formula_constraints = move(kept);
@@ -1591,7 +1553,6 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
     if (cardinality_constraints.empty())
         return;
 
-    // Resolve indicator name -> column once per run (the layout is fixed).
     if (cardinality_indicator_columns.empty())
     {
         const vector<Variable> variables = get_variables_and_descriptives("Input").first;
@@ -1620,8 +1581,6 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
 
     for (const auto& [name, column] : cardinality_indicator_columns)
     {
-        // Capture the incumbent-preferred support from the reshaped (pinned) box BEFORE
-        // reopening it: an indicator the reshape kept "on" was in a surviving support.
         cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
 
         domain.inferior_frontier(column) = original.inferior_frontier(column);
@@ -1827,9 +1786,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
 
-    // The initial, full-domain pass draws a broader candidate set
-    // (initial_sampling_factor x evaluations_number) to seed the contraction
-    // from a wider sample; per-Pareto-point sampling below keeps the base count.
     auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain, initial_sampling_factor);
 
     if (first_feasible_inputs.rows() == 0)
@@ -1871,9 +1827,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
-            // Matched-budget stop: once the total surrogate-evaluation budget
-            // is spent, stop launching new local-sampling calls and use the
-            // candidates aggregated so far this iteration.
             if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
                 break;
 
@@ -2058,7 +2011,6 @@ void ResponseOptimization::initialize_network_differential() const
     if (!neural_network || is_forecasting())
         return;
 
-    // Only needed when some constraint references the network outputs.
     bool has_output_constraint = false;
     for (const MultivariateConstraint& constraint : formula_constraints)
         if (!constraint.uses_callback
@@ -2079,9 +2031,6 @@ void ResponseOptimization::initialize_network_differential() const
         return;
     }
 
-    // Self-validation ("stay in sync"): the analytic forward must match
-    // calculate_outputs over the input domain. Sample within the scaling
-    // descriptives' range when a scaling layer is present.
     const Index inputs_number = neural_network->get_inputs_number();
 
     VectorR lower = VectorR::Constant(inputs_number, -1.0f);
@@ -2092,10 +2041,6 @@ void ResponseOptimization::initialize_network_differential() const
         upper = candidate->layers.front().maximum;
     }
 
-    // Validation runs ONCE per optimization (not per evaluation), so it is
-    // negligible against the run. The cheap forward check uses more probes (it
-    // is the drift guard); the costlier VJP check (2*n_in forwards per probe)
-    // uses a few, enough to catch a broken Jacobian.
     const Index forward_probes = 16;
     const Index vjp_probes = 4;
 
@@ -2120,13 +2065,11 @@ void ResponseOptimization::initialize_network_differential() const
     {
         const VectorR x = probe.row(i).transpose();
 
-        // (a) forward must match the network (cheap; every probe).
         const VectorR analytic_output = candidate->forward(x);
         const VectorR truth = reference.row(i).transpose();
         worst_forward_error = max(worst_forward_error,
             (analytic_output - truth).cwiseAbs().maxCoeff() / (1.0f + truth.cwiseAbs().maxCoeff()));
 
-        // (b) analytic VJP must match a central-difference VJP (a few probes).
         if (i >= vjp_probes) continue;
 
         const VectorR analytic_gradient = candidate->vjp(x, cotangent);
@@ -2158,9 +2101,6 @@ void ResponseOptimization::initialize_network_differential() const
 }
 
 
-// A branch is dropped when every one of its points is dominated (beyond `margin`) by
-// some incumbent point. Objectives are normalized so higher is better; the margin is
-// generous early (noisy small-budget probes) and tightens each round.
 static bool branch_is_dominated(const MatrixR& branch_objective,
                                 const MatrixR& incumbent_objective,
                                 const Index objectives_number,
@@ -2189,7 +2129,7 @@ static bool branch_is_dominated(const MatrixR& branch_objective,
         }
 
         if (!point_dominated)
-            return false;   // a non-dominated point keeps the branch alive
+            return false;
     }
 
     return true;
@@ -2202,13 +2142,13 @@ MatrixR ResponseOptimization::solve_once() const
 
     throw_if(objectives_number == 0, "No objectives found\n");
 
-    evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
+    evaluations_used = 0;
     category_frequencies.clear();
-    cardinality_preferred.clear();          // no incumbent support until the first reshape
-    cardinality_indicator_columns.clear();  // rebuilt lazily for this run's variable layout
-    last_feasibility_rate = 1.0f;           // first sample explores at the baseline ratio
+    cardinality_preferred.clear();
+    cardinality_indicator_columns.clear();
+    last_feasibility_rate = 1.0f;
 
-    initialize_network_differential();   // exact analytic VJP if possible, else finite differences
+    initialize_network_differential();
 
     return (objectives_number == 1)
         ? perform_single_objective_optimization()
@@ -2218,16 +2158,8 @@ MatrixR ResponseOptimization::solve_once() const
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
-    // Fold any single-variable affine formula constraint into its variable's domain box
-    // before branching/solving (enforced for free at sampling instead of per-point).
     promote_single_variable_constraints();
 
-    // An AllowedSet (expr in {v1..vk}) is solved by BRANCHING: each value becomes an
-    // EqualTo equality subproblem the existing machinery already handles. We only
-    // branch what cannot be sampled directly: every formula AllowedSet, and any
-    // input-variable scalar AllowedSet referenced by a formula (pinning it lets the
-    // formula repair adjust the rest). Free scalar inputs and categorical subsets are
-    // drawn straight from the set inside a single solve, so they are not branched.
 
     struct BranchAxis
     {
@@ -2286,10 +2218,10 @@ MatrixR ResponseOptimization::perform_response_optimization()
         const bool scalar = (feature_count_of(name) == 1);
 
         if (!scalar)
-            continue;   // categorical subset -> handled by the Domain mask + sampler
+            continue;
 
         if (is_input_name(name) && !input_referenced_by_formula(input_column_of(name)))
-            continue;   // free scalar input -> sampled directly from the set
+            continue;
 
         axes.push_back({false, name, 0, constraint.allowed_values});
     }
@@ -2310,7 +2242,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
          << (branch_mode == BranchMode::Budgeted ? " equality branch(es) (budgeted: successive-halving + dominated-drop)."
                                                   : " equality branch(es) (exhaustive).") << endl;
 
-    // Materialise each branch's value assignment (one value per axis) by mixed-radix.
     vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
     {
         vector<Index> radix(axes.size(), 0);
@@ -2338,9 +2269,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     Index spent = 0;
 
-    // Pin every AllowedSet to this branch's values (AllowedSet -> EqualTo(value)), solve
-    // under the evaluation cap, then restore. Returns an empty matrix for an infeasible
-    // branch (caught) and accumulates the evaluations the branch spent.
     auto solve_branch = [&](const vector<float>& values, const Index cap) -> MatrixR
     {
         for (size_t a = 0; a < axes.size(); ++a)
@@ -2371,8 +2299,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return result;
     };
 
-    // Normalized objective matrix (higher = better) for a result, always in the original
-    // full-set reference frame so branch qualities are comparable.
     auto objective_of = [&](const MatrixR& result) -> MatrixR
     {
         MatrixR matrix = objectives.extract(result.leftCols(input_features),
@@ -2399,8 +2325,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
         incumbent_objective = objective_of(incumbent);
     };
 
-    // Exhaustive (switch off, or a single branch): every branch to completion under an
-    // equal budget quota, then the global front. Zero-regret; the original behaviour.
     if (branch_mode == BranchMode::Exhaustive || branches_number == 1)
     {
         const Index per_branch_budget = (saved_budget > 0) ? max(Index(1), saved_budget / branches_number) : 0;
@@ -2416,11 +2340,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return incumbent;
     }
 
-    // Budgeted: successive halving over branches. Round 0's small cap is the feasibility
-    // probe (infeasible -> empty -> dropped); each round re-paretoes the incumbent, drops
-    // every branch it dominates (beyond a shrinking margin), and the top 1/eta survivors
-    // by reward get the next, larger slice. The remaining budget is spread over the
-    // remaining rounds so the user's total cap is respected.
     const Index eta = 3;
 
     Index rounds_number = 1;
@@ -2486,7 +2405,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
         drop_margin *= 0.5f;
     }
 
-    // Finalist polish: spend whatever budget remains on the survivor(s).
     const Index polish_cap = (saved_budget > 0) ? max(Index(0), saved_budget - spent) : 0;
     if (saved_budget == 0 || polish_cap > 0)
         for (const Index branch : live)
