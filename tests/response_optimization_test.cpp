@@ -8,7 +8,7 @@
 
 #include "pch.h"
 
-#include "../opennn/constraint_formulas.h"
+#include "../opennn/response_constraints.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/random_utilities.h"
 #include "../opennn/response_optimization.h"

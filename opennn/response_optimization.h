@@ -11,7 +11,7 @@
 #include "pch.h"
 #include "statistics.h"
 #include "variable.h"
-#include "constraint_formulas.h"
+#include "response_constraints.h"
 #include "network_differential.h"
 
 namespace opennn
