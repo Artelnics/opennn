@@ -1,14 +1,31 @@
 #include "pch.h"
+#include "../opennn/configuration.h"
 #include <gtest/gtest.h>
 #include <exception>
 #include <iostream>
 #include <cstdlib>
 
 using namespace std;
+using namespace opennn;
+
+namespace
+{
+
+class CpuConfigurationListener : public ::testing::EmptyTestEventListener
+{
+public:
+    void OnTestStart(const ::testing::TestInfo&) override
+    {
+        Configuration::instance().set(Device::CPU, Type::FP32);
+    }
+};
+
+}
 
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::UnitTest::GetInstance()->listeners().Append(new CpuConfigurationListener);
 
     try {
         return RUN_ALL_TESTS();

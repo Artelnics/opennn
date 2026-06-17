@@ -50,6 +50,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
+    throw_if(last_trainable_layer_index < 1,
+             "GrowingNeurons requires a layer before the last trainable layer to resize.");
+
     Index neurons_number = 0;
 
 
@@ -128,8 +131,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
         if (display)
             cout << "Neurons number: " << neurons_number << "\n"
-                 << "Training error: " << training_results.get_training_error() << "\n"
-                 << "Validation error: " << training_results.get_validation_error() << "\n"
+                 << "Training error: " << minimum_training_error << "\n"
+                 << "Validation error: " << minimum_validation_error << "\n"
                  << "Elapsed time: " << get_time(elapsed_time) << "\n";
 
         if (previous_validation_error < minimum_validation_error)
@@ -147,9 +150,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
             neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumTime;
         }
-        else if (training_results.get_validation_error() <= validation_error_goal)
+        else if (minimum_validation_error <= validation_error_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << training_results.get_validation_error() << "\n";
+            if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << minimum_validation_error << "\n";
             neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::ValidationErrorGoal;
         }
         else if (validation_failures >= maximum_validation_failures)

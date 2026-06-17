@@ -1009,7 +1009,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     layers.clear();
     source_layers.clear();
     layers.reserve(layers_number);
-    source_layers.resize(layers_number);
     first_trainable_cache_ = -1;
     last_trainable_cache_  = -1;
 
@@ -1035,6 +1034,8 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
             layers.push_back(move(layer));
         }
     }
+
+    source_layers.resize(layers.size());
 
     if (const Json* source_layers_element = layers_container->find("SourceLayers"); source_layers_element)
     {

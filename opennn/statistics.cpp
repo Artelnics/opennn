@@ -323,6 +323,9 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 Histogram histogram(const VectorR& new_vector, Index bins_number)
 {
     const Index size = new_vector.size();
+
+    if (size == 0) return Histogram(bins_number);
+
     VectorR minimums(bins_number);
     VectorR maximums(bins_number);
 
@@ -335,10 +338,8 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     unordered_set<float> unique_set;
     unique_values.reserve(unique_capacity);
     unique_set.reserve(unique_capacity);
-    unique_values.push_back(new_vector(0));
-    unique_set.insert(new_vector(0));
 
-    for (Index i = 1; i < size; ++i)
+    for (Index i = 0; i < size; ++i)
     {
         const float value = new_vector(i);
 

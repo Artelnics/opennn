@@ -67,7 +67,7 @@ __global__ void scale_kernel(const int n, const int features,
             y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;
         case 4:
-            y = logf(x);
+            y = logf(fmaxf(x, FLT_EPSILON));
             break;
         case 5:
             y = x / 255.0f;
@@ -1528,16 +1528,16 @@ void detection_forward_cuda(const Index batch_size,
 {
     if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
 
-    const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
-    detection_forward_kernel<<<grid_size_for(total), block_size, 0,
+    const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
+    OPENNN_CUDA_LAUNCH(detection_forward_kernel<<<grid_size_for(total), block_size, 0,
                                opennn::device::get_compute_stream()>>>(
-        static_cast<int>(batch_size),
-        static_cast<int>(grid_size),
-        static_cast<int>(boxes_per_cell),
-        static_cast<int>(classes_number),
-        static_cast<int>(channels),
+        checked_int(batch_size),
+        checked_int(grid_size),
+        checked_int(boxes_per_cell),
+        checked_int(classes_number),
+        checked_int(channels),
         class_activation,
-        anchors, input, output);
+        anchors, input, output));
 }
 
 __global__ void detection_backward_kernel(const int batch_size,
@@ -1613,14 +1613,14 @@ void detection_backward_cuda(const Index batch_size,
 {
     if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
 
-    const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
-    detection_backward_kernel<<<grid_size_for(total), block_size, 0,
+    const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
+    OPENNN_CUDA_LAUNCH(detection_backward_kernel<<<grid_size_for(total), block_size, 0,
                                 opennn::device::get_compute_stream()>>>(
-        static_cast<int>(batch_size),
-        static_cast<int>(grid_size),
-        static_cast<int>(boxes_per_cell),
-        static_cast<int>(classes_number),
-        static_cast<int>(channels),
+        checked_int(batch_size),
+        checked_int(grid_size),
+        checked_int(boxes_per_cell),
+        checked_int(classes_number),
+        checked_int(channels),
         class_activation,
-        output, output_delta, input_delta);
+        output, output_delta, input_delta));
 }

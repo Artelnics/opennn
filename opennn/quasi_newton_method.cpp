@@ -382,7 +382,9 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    float alpha = 1.0f;
+    float alpha = (optimization_data.initial_learning_rate > 0.0f)
+        ? optimization_data.initial_learning_rate
+        : 1.0f;
     const float rho = 0.5f;
     const float armijo_constant = 1e-4f;
     const float previous_error = back_propagation.error;

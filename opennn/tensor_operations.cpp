@@ -137,8 +137,11 @@ static void scale_cpu(const TensorView& input,
                            * (max_range - min_range) + min_range;
             }
             else
+            {
+                throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
                 column = (column - min_range) / (max_range - min_range)
                        * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
+            }
             break;
         case 2:
             if (!inverse)
@@ -159,11 +162,14 @@ static void scale_cpu(const TensorView& input,
                 column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
             }
             else
-                column *= standard_deviations_vector(feature_index);
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                column *= (abs(sd) < EPSILON) ? 1.0f : sd;
+            }
             break;
         case 4:
             if (inverse) column = column.exp();
-            else         column = column.log();
+            else         column = column.max(EPSILON).log();
             break;
         case 5:
             if (inverse) column *= 255.0f;
