@@ -237,8 +237,6 @@ public:
     // summed across AllowedSet branches. Lets budgeted runs verify the cap was honored.
     Index get_evaluations_used() const;
 
-private:
-
     vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
 
     UnivariateConstraint get_constraint(const string& name) const;
@@ -278,6 +276,8 @@ private:
     // fixed during the continuous projection and re-snapped after the output repair. Shared
     // by calculate_random_inputs and generate_feasible_points.
     vector<char> discrete_column_mask(const vector<Variable>& variables) const;
+
+private:
 
     NeuralNetwork* neural_network = nullptr;
 
