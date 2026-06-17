@@ -3,7 +3,7 @@
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
 
 **Status:** current WSL2 laptop GPU inference result. Before using this as a
-flagship investor claim, keep repeated-run statistics and exact cross-framework
+flagship public claim, keep repeated-run statistics and exact cross-framework
 correctness/quality gates with the published numbers.
 
 The [dense-MLP note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) and

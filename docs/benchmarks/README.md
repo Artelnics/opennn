@@ -1,6 +1,6 @@
 # OpenNN benchmarks: OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow
 
-*For [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14.*
+*For [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-15.*
 
 These notes compare the **deployment characteristics** of OpenNN against PyTorch and
 TensorFlow — how much a trained model costs to ship, start, and run, not how fast it trains.
@@ -12,7 +12,7 @@ This page is the **current headline index**. Detailed benchmark notes may mentio
 runs when they explain an optimization path, but the table below is the single source of
 truth for current headline numbers. Results are measured on the platform stated in each
 linked note; several newer GPU notes use Linux x86_64 under WSL2, while the CPU inference
-note is a Windows result that is marked for Linux re-measurement before investor use.
+note is a Windows result that is marked for Linux re-measurement before public use.
 
 ## Summary
 
@@ -38,14 +38,15 @@ note is a Windows result that is marked for Linux re-measurement before investor
 
 ## Evidence status
 
-| Benchmark group | Status | Before investor use |
+| Benchmark group | Status | Before public headline use |
 |---|---|---|
 | Accuracy, precision, footprint, startup, memory, capacity, dependencies, LOC, code export | Current benchmark notes | Keep raw command output, version metadata, and commit hash with the published numbers |
-| CPU inference speed | Valid Windows tuned result; not yet final investor headline | Re-measure on the reference Linux x86_64 box and keep the Windows result as a platform-specific note |
+| CPU inference speed | Valid Windows tuned result; not yet final public headline | Re-measure on the reference Linux x86_64 box and keep the Windows result as a platform-specific note |
 | GPU CNN training | Current WSL2 laptop GPU result | Add an optimized PyTorch/`torch.compile` and TensorFlow/XLA run or state clearly that the comparison is eager/Keras fp32 |
 | GPU ResNet-50 training | Current WSL2 laptop GPU result; previous 2,912 samples/s is historical | Keep the `torch.compile` result in the official runner output, not only in the compile probe |
 | GPU dense speed, max batch, and energy | Current WSL2 laptop GPU result | Replace machine-specific build scripts with CMake targets and attach raw logs/power traces |
 | GPU Transformer inference and training | Current WSL2 laptop GPU result | Add repeated-run statistics and exact cross-framework correctness/quality gates before using as a flagship claim |
+| Recurrent/LSTM forecasting | Harness packaged; Linux result pending | Run the JSON harness on the reference Linux GPU and archive raw output |
 
 Only the top-level benchmark notes are intended as the public evidence layer. The
 `CONTINUE_HERE.md` files and machine-specific build notes in subdirectories are
@@ -55,6 +56,9 @@ benchmark harness.
 The machine-readable benchmark inventory is
 [`benchmark_manifest.json`](benchmark_manifest.json). New published runs should write
 result artifacts under [`results/`](results/) using the format described there.
+The result artifact rules in [`results/README.md`](results/README.md) define the
+suite's MLPerf-inspired protocol. These are not official MLPerf results unless
+submitted through MLCommons.
 
 OpenNN is the smallest on every footprint axis, starts an order of magnitude faster, is the
 only one that can export a trained model as dependency-free source — and reaches the **same
@@ -100,10 +104,14 @@ infers in one self-contained binary.
 * **[GPU Transformer training](transformer-training-gpu-opennn-vs-pytorch.md)** — the same
   encoder-decoder Transformer shape in fp32 training, where OpenNN is 1.04–1.69× faster than
   PyTorch across the tested sequence lengths and spends 23% less GPU energy per sample at seq 256.
+* **[Recurrent vs LSTM forecasting](recurrent-lstm-forecasting-opennn.md)** - an OpenNN
+  sequence-model coverage benchmark on UCI Beijing PM2.5 forecasting. It compares OpenNN's recurrent
+  layer against its LSTM layer on CPU and GPU, reporting test RMSE, training time, winners by
+  scenario, and CPU/GPU speedups. Harness is ready; Linux headline run pending.
 * **[CPU inference speed](inference-speed-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** —
   a tuned dense MLP inference run. The Windows result puts OpenNN in the same class as ONNX
   Runtime and ahead of PyTorch/TensorFlow, but it needs the planned Linux re-measurement before
-  becoming an investor headline.
+  becoming a public headline.
 * **[Deployment size on CPU](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — the runtime library a CPU app
   ships: a 3.2 MB OpenNN executable vs the 442 MB `libtorch_cpu` / 752 MB `libtensorflow_cc`.
 * **[Deployment size on GPU](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — a CNN's CUDA footprint. Here the

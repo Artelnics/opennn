@@ -2,7 +2,7 @@
 
 *Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-11. Numbers below measured on Windows x86_64; re-measure on the reference Linux x86_64 box before publishing.*
 
-**Status:** valid Windows tuned result, but not yet a final investor headline. The
+**Status:** valid Windows tuned result, but not yet a final public headline. The
 benchmark index treats this as a platform-specific result until the same workload is
 re-measured on the reference Linux x86_64 machine with raw logs and version metadata.
 

@@ -878,25 +878,27 @@ void run_lt_matmul_cached(
     {
         cudaStream_t stream = Backend::get_compute_stream();
         auto time_algo = [&](const cublasLtMatmulAlgo_t& algo, size_t ws_bytes) -> float {
-            cudaEvent_t a, b;
-            cudaEventCreate(&a); cudaEventCreate(&b);
+            CudaEvent a(cudaEventDefault), b(cudaEventDefault);   // RAII: no leak on throw
             void* ws = ensure_cublas_lt_workspace(ws_bytes);
-            // 2 warmup + 5 timed runs
+            // 2 warmup + 5 timed runs. CHECK_CUBLAS each call: an algorithm that
+            // returns a non-success status (e.g. NOT_SUPPORTED for this shape) does
+            // little work and would otherwise time as "fast" and get selected,
+            // corrupting every later real matmul. The throw is caught below and the
+            // candidate is skipped.
             for (int w = 0; w < 2; ++w)
-                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
                                &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
                                &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                               &algo, ws, ws_bytes, stream);
-            cudaEventRecord(a, stream);
+                               &algo, ws, ws_bytes, stream));
+            cudaEventRecord(a.handle, stream);
             for (int t = 0; t < 5; ++t)
-                cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
+                CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
                                &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
                                &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                               &algo, ws, ws_bytes, stream);
-            cudaEventRecord(b, stream);
-            cudaEventSynchronize(b);
-            float ms = 0.0f; cudaEventElapsedTime(&ms, a, b);
-            cudaEventDestroy(a); cudaEventDestroy(b);
+                               &algo, ws, ws_bytes, stream));
+            cudaEventRecord(b.handle, stream);
+            cudaEventSynchronize(b.handle);
+            float ms = 0.0f; cudaEventElapsedTime(&ms, a.handle, b.handle);
             return ms;
         };
         float best_ms = 1e30f;

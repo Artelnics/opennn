@@ -278,6 +278,7 @@ TrainingResult StochasticGradientDescent::train()
     float validation_error = 0.0f;
     float validation_accuracy = 0.0f;
     Index validation_failures = 0;
+    reset_best_parameters();
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
@@ -394,8 +395,7 @@ TrainingResult StochasticGradientDescent::train()
                 validation_accuracy = validation_evaluation_result.accuracy;
                 results.validation_error_history(epoch) = validation_error;
 
-                if (epoch != 0 && validation_error > results.validation_error_history(epoch - 1))
-                    ++validation_failures;
+                update_best_parameters(neural_network, validation_error, epoch, validation_failures);
             }
 
             elapsed_time = get_elapsed_time(beginning_time);
@@ -414,6 +414,8 @@ TrainingResult StochasticGradientDescent::train()
     }
 
     teardown_device_training();
+
+    restore_best_parameters(neural_network, results);
 
     set_unscaling();
 

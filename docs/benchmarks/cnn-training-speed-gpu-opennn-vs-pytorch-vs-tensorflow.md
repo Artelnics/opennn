@@ -5,7 +5,7 @@
 **Status:** current WSL2 laptop GPU result. The comparison is plain fp32 training
 loops: OpenNN GPU-resident data, PyTorch eager with GPU-resident tensors, and
 TensorFlow Keras `fit` from host NumPy. Add optimized PyTorch/`torch.compile` and
-TensorFlow/XLA runs before treating this as a final investor headline.
+TensorFlow/XLA runs before treating this as a final public headline.
 
 The other notes in this series measure footprint and CPU behavior. This one
 measures **GPU training throughput on a convolutional network**: the simplest

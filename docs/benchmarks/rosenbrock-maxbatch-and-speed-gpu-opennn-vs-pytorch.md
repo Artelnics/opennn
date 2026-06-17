@@ -4,7 +4,7 @@
 
 **Status:** current WSL2 laptop GPU result. The result is useful as engineering
 evidence, but the hand-link scripts in the reproduction directory should become
-CMake targets and the raw logs should be archived before investor use.
+CMake targets and the raw logs should be archived before public use.
 
 **Important measurement caveat (WSL2 vs native Windows).** These numbers were
 taken under WSL2. WSL2 was found to *specifically* degrade OpenNN's bf16
@@ -15,7 +15,7 @@ own fp32** (8.3 M samples/s at batch 8000, hidden 1000) and matches TensorFlow's
 bf16 — confirmed with Nsight Systems, which shows the work running in a
 `cutlass_80_tensorop_bf16_s16816gemm_relu` tensor-core kernel with a fused ReLU
 epilogue and a one-time input cast. **Re-measure on native Windows before using
-any dense GPU number as an investor headline.** The fp32 figures below are less
+any dense GPU number as a public headline.** The fp32 figures below are less
 affected; the bf16 gap is the WSL artifact.
 
 The [ResNet-50 note](resnet50-training-speed-gpu-opennn-vs-pytorch.md) measures a

@@ -372,7 +372,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
             for (Index j = 0; j < unique_values_number; ++j)
             {
-                if (new_vector(i) - centers(j) < EPSILON)
+                if (abs(new_vector(i) - centers(j)) < EPSILON)
                 {
                     frequencies(j)++;
                     break;
@@ -536,11 +536,11 @@ Descriptives vector_descriptives(const VectorR& x)
     if (x.size() == 0)
         return Descriptives();
 
-    const float min = x.minCoeff();
-    const float max = x.maxCoeff();
-
     const VectorR valid = filter_missing_values(x);
     const Index count = valid.size();
+
+    const float min = (count > 0) ? valid.minCoeff() : 0.0f;
+    const float max = (count > 0) ? valid.maxCoeff() : 0.0f;
 
     const float mean = (count > 0) ? valid.mean() : 0.0f;
 
