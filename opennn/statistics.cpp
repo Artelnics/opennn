@@ -85,20 +85,23 @@ Histogram::Histogram(const VectorR& new_centers,
 
 Histogram::Histogram(const VectorR& data, Index bins_number)
 {
+    if (bins_number <= 0 || data.size() == 0) return;
+
     const float data_maximum = maximum(data);
     const float data_minimum = minimum(data);
     const float step = (data_maximum - data_minimum) / float(bins_number);
-    const float inv_step = 1.0f / step;
 
     centers = VectorR::LinSpaced(bins_number, data_minimum + 0.5f * step, data_maximum - 0.5f * step);
     frequencies = VectorR::Zero(bins_number);
+
+    const float inv_step = (step < EPSILON) ? 0.0f : 1.0f / step;
 
     for (Index i = 0; i < data.size(); ++i)
     {
         const float value = data(i);
         if (isnan(value)) continue;
 
-        const Index corresponding_bin = min(Index((value - data_minimum) * inv_step), bins_number - 1);
+        const Index corresponding_bin = clamp(Index((value - data_minimum) * inv_step), Index(0), bins_number - 1);
 
         frequencies(corresponding_bin)++;
     }
@@ -323,6 +326,9 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 Histogram histogram(const VectorR& new_vector, Index bins_number)
 {
     const Index size = new_vector.size();
+
+    if (size == 0) return Histogram(bins_number);
+
     VectorR minimums(bins_number);
     VectorR maximums(bins_number);
 
@@ -335,10 +341,8 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     unordered_set<float> unique_set;
     unique_values.reserve(unique_capacity);
     unique_set.reserve(unique_capacity);
-    unique_values.push_back(new_vector(0));
-    unique_set.insert(new_vector(0));
 
-    for (Index i = 1; i < size; ++i)
+    for (Index i = 0; i < size; ++i)
     {
         const float value = new_vector(i);
 

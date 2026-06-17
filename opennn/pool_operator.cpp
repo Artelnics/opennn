@@ -218,9 +218,11 @@ void PoolOp::apply_delta_cpu(const TensorView& output_delta,
                     {
                         const Index in_col_start = out_col * column_stride - padding_width;
                         const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
-                        const Index pr = argmax / pool_width;
-                        const Index pc = argmax % pool_width;
-                        input_deltas(b, in_row_start + pr, in_col_start + pc, c)
+                        const Index in_row = in_row_start + argmax / pool_width;
+                        const Index in_col = in_col_start + argmax % pool_width;
+                        if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
+                            continue;
+                        input_deltas(b, in_row, in_col, c)
                             += output_deltas(b, out_row, out_col, c);
                     }
                 }

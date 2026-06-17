@@ -9,7 +9,7 @@ TEST(Transformer, ConstructorCreatesNetwork)
     Transformer transformer(2, 3, 5, 6, 4, 4, 6, 1);
 
     EXPECT_EQ(transformer.is_empty(), false);
-    EXPECT_EQ(transformer.get_layers_number(), 20);
+    EXPECT_EQ(transformer.get_layers_number(), 15);
 }
 
 
@@ -33,7 +33,7 @@ TEST(Transformer, GeneralConstructor)
                             feed_forward_dimension,
                             layers_number);
 
-    EXPECT_EQ(transformer.get_layers_number(), 20);
+    EXPECT_EQ(transformer.get_layers_number(), 15);
 
     EXPECT_EQ(transformer.get_layer_index("decoder"), -1);
     EXPECT_EQ(transformer.get_layer_index("input"), -2);
@@ -42,29 +42,29 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(transformer.get_layer_index("encoder_embedding"), 1);
 
     EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_1"), 2);
-    EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_addition_1"), 3);
-    EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_normalization_1"), 4);
-    EXPECT_EQ(transformer.get_layer_index("encoder_internal_dense_1"), 5);
-    EXPECT_EQ(transformer.get_layer_index("encoder_external_dense_1"), 6);
-    EXPECT_EQ(transformer.get_layer_index("encoder_dense_addition_1"), 7);
-    EXPECT_EQ(transformer.get_layer_index("encoder_dense_normalization_1"), 8);
+    EXPECT_THROW(transformer.get_layer_index("encoder_self_attention_addition_1"), runtime_error);
+    EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_normalization_1"), 3);
+    EXPECT_EQ(transformer.get_layer_index("encoder_internal_dense_1"), 4);
+    EXPECT_EQ(transformer.get_layer_index("encoder_external_dense_1"), 5);
+    EXPECT_THROW(transformer.get_layer_index("encoder_dense_addition_1"), runtime_error);
+    EXPECT_EQ(transformer.get_layer_index("encoder_dense_normalization_1"), 6);
 
-    EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_1"), 9);
-    EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_addition_1"), 10);
-    EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_normalization_1"), 11);
-    EXPECT_EQ(transformer.get_layer_index("cross_attention_1"), 12);
-    EXPECT_EQ(transformer.get_layer_index("cross_attention_addition_1"), 13);
-    EXPECT_EQ(transformer.get_layer_index("cross_attention_normalization_1"), 14);
-    EXPECT_EQ(transformer.get_layer_index("decoder_internal_dense_1"), 15);
-    EXPECT_EQ(transformer.get_layer_index("decoder_external_dense_1"), 16);
-    EXPECT_EQ(transformer.get_layer_index("decoder_dense_addition_1"), 17);
-    EXPECT_EQ(transformer.get_layer_index("decoder_dense_normalization_1"), 18);
+    EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_1"), 7);
+    EXPECT_THROW(transformer.get_layer_index("decoder_self_attention_addition_1"), runtime_error);
+    EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_normalization_1"), 8);
+    EXPECT_EQ(transformer.get_layer_index("cross_attention_1"), 9);
+    EXPECT_THROW(transformer.get_layer_index("cross_attention_addition_1"), runtime_error);
+    EXPECT_EQ(transformer.get_layer_index("cross_attention_normalization_1"), 10);
+    EXPECT_EQ(transformer.get_layer_index("decoder_internal_dense_1"), 11);
+    EXPECT_EQ(transformer.get_layer_index("decoder_external_dense_1"), 12);
+    EXPECT_THROW(transformer.get_layer_index("decoder_dense_addition_1"), runtime_error);
+    EXPECT_EQ(transformer.get_layer_index("decoder_dense_normalization_1"), 13);
 
-    EXPECT_EQ(transformer.get_layer_index("output_projection"), 19);
+    EXPECT_EQ(transformer.get_layer_index("output_projection"), 14);
 
     const vector<vector<Index>>& in = transformer.get_source_layers();
 
-    ASSERT_EQ(in.size(), 20);
+    ASSERT_EQ(in.size(), 15);
 
     EXPECT_EQ(in[0], (vector<Index>{-1}));
     EXPECT_EQ(in[1], (vector<Index>{-2}));
@@ -73,47 +73,37 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(in[3], (vector<Index>{1, 2}));
     EXPECT_EQ(in[4], (vector<Index>{3}));
     EXPECT_EQ(in[5], (vector<Index>{4}));
-    EXPECT_EQ(in[6], (vector<Index>{5}));
-    EXPECT_EQ(in[7], (vector<Index>{4, 6}));
-    EXPECT_EQ(in[8], (vector<Index>{7}));
+    EXPECT_EQ(in[6], (vector<Index>{3, 5}));
 
-    EXPECT_EQ(in[9],  (vector<Index>{0}));
-    EXPECT_EQ(in[10], (vector<Index>{0, 9}));
+    EXPECT_EQ(in[7],  (vector<Index>{0}));
+    EXPECT_EQ(in[8],  (vector<Index>{0, 7}));
+    EXPECT_EQ(in[9],  (vector<Index>{8, 6}));
+    EXPECT_EQ(in[10], (vector<Index>{8, 9}));
     EXPECT_EQ(in[11], (vector<Index>{10}));
-    EXPECT_EQ(in[12], (vector<Index>{11, 8}));
-    EXPECT_EQ(in[13], (vector<Index>{11, 12}));
-    EXPECT_EQ(in[14], (vector<Index>{13}));
-    EXPECT_EQ(in[15], (vector<Index>{14}));
-    EXPECT_EQ(in[16], (vector<Index>{15}));
-    EXPECT_EQ(in[17], (vector<Index>{14, 16}));
-    EXPECT_EQ(in[18], (vector<Index>{17}));
+    EXPECT_EQ(in[12], (vector<Index>{11}));
+    EXPECT_EQ(in[13], (vector<Index>{10, 12}));
 
-    EXPECT_EQ(in[19], (vector<Index>{18}));
+    EXPECT_EQ(in[14], (vector<Index>{13}));
 
     const vector<vector<Index>> out = transformer.get_consumer_layers();
 
-    ASSERT_EQ(out.size(), 20);
+    ASSERT_EQ(out.size(), 15);
 
-    EXPECT_EQ(out[0], (vector<Index>{10, 9}));
+    EXPECT_EQ(out[0], (vector<Index>{8, 7}));
     EXPECT_EQ(out[1],  (vector<Index>{3, 2}));
     EXPECT_EQ(out[2],  (vector<Index>{3}));
-    EXPECT_EQ(out[3],  (vector<Index>{4}));
-    EXPECT_EQ(out[4],  (vector<Index>{7, 5}));
+    EXPECT_EQ(out[3],  (vector<Index>{6, 4}));
+    EXPECT_EQ(out[4],  (vector<Index>{5}));
     EXPECT_EQ(out[5],  (vector<Index>{6}));
-    EXPECT_EQ(out[6],  (vector<Index>{7}));
+    EXPECT_EQ(out[6],  (vector<Index>{9}));
     EXPECT_EQ(out[7],  (vector<Index>{8}));
-    EXPECT_EQ(out[8],  (vector<Index>{12}));
+    EXPECT_EQ(out[8],  (vector<Index>{10, 9}));
     EXPECT_EQ(out[9],  (vector<Index>{10}));
-    EXPECT_EQ(out[10], (vector<Index>{11}));
-    EXPECT_EQ(out[11], (vector<Index>{13, 12}));
+    EXPECT_EQ(out[10], (vector<Index>{13, 11}));
+    EXPECT_EQ(out[11], (vector<Index>{12}));
     EXPECT_EQ(out[12], (vector<Index>{13}));
     EXPECT_EQ(out[13], (vector<Index>{14}));
-    EXPECT_EQ(out[14], (vector<Index>{17, 15}));
-    EXPECT_EQ(out[15], (vector<Index>{16}));
-    EXPECT_EQ(out[16], (vector<Index>{17}));
-    EXPECT_EQ(out[17], (vector<Index>{18}));
-    EXPECT_EQ(out[18], (vector<Index>{19}));
-    EXPECT_EQ(out[19], (vector<Index>{-1}));
+    EXPECT_EQ(out[14], (vector<Index>{-1}));
 }
 
 /*

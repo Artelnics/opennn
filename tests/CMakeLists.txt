@@ -73,4 +73,6 @@ endif()
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
 
+add_test(NAME run_tests COMMAND run_tests)
+set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
 
