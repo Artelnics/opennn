@@ -44,6 +44,54 @@ Index sample_augmentation_shift(float minimum, float maximum)
     return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
 }
 
+uint64_t fnv1a_64(const string& value)
+{
+    uint64_t hash = 14695981039346656037ull;
+
+    for (const unsigned char c : value)
+    {
+        hash ^= uint64_t(c);
+        hash *= 1099511628211ull;
+    }
+
+    return hash;
+}
+
+filesystem::path resolved_dataset_key(const filesystem::path& path)
+{
+    try
+    {
+        return filesystem::weakly_canonical(path);
+    }
+    catch (...)
+    {
+        return filesystem::absolute(path);
+    }
+}
+
+filesystem::path image_cache_path(const filesystem::path& data_path,
+                                  Index samples_number,
+                                  Index height,
+                                  Index width,
+                                  Index channels)
+{
+    const char* cache_root = getenv("OPENNN_IMAGE_CACHE_DIR");
+
+    if (cache_root && cache_root[0] != '\0')
+    {
+        const uint64_t hash = fnv1a_64(resolved_dataset_key(data_path).generic_string());
+
+        ostringstream name;
+        name << "images-" << hex << hash << dec
+             << "-" << height << "x" << width << "x" << channels
+             << "-" << samples_number << ".bin";
+
+        return filesystem::path(cache_root) / name.str();
+    }
+
+    return data_path / ".cache" / "images.bin";
+}
+
 pair<float, float> scaling_affine(ScalerMethod scaler,
                                   const Descriptives& descriptives,
                                   float min_range,
@@ -80,6 +128,16 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
     storage_mode = StorageMode::BinaryFile;
+
+    read_images();
+}
+
+ImageDataset::ImageDataset(const filesystem::path& new_data_path,
+                           const Shape& new_input_shape) : Dataset()
+{
+    data_path = new_data_path;
+    storage_mode = StorageMode::BinaryFile;
+    requested_input_shape = new_input_shape;
 
     read_images();
 }
@@ -251,9 +309,10 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    set_shape("Input", { read_json_index(data_source_element, "Height"),
-                         read_json_index(data_source_element, "Width"),
-                         read_json_index(data_source_element, "Channels") });
+    requested_input_shape = { read_json_index(data_source_element, "Height"),
+                              read_json_index(data_source_element, "Width"),
+                              read_json_index(data_source_element, "Channels") };
+    set_shape("Input", requested_input_shape);
 
     set_codification(read_json_string(data_source_element, "Codification"));
     set_storage_mode(data_source_element->has("StorageMode")
@@ -331,9 +390,23 @@ void ImageDataset::read_images()
 
     const Tensor3 first_image = load_image(paths[0]);
 
-    const Index height = first_image.dimension(0);
-    const Index width = first_image.dimension(1);
-    const Index channels = first_image.dimension(2);
+    Index height = first_image.dimension(0);
+    Index width = first_image.dimension(1);
+    Index channels = first_image.dimension(2);
+
+    if (!requested_input_shape.empty())
+    {
+        throw_if(requested_input_shape.rank != 3,
+                 "ImageDataset: requested input shape must be {height, width, channels}.");
+        throw_if(requested_input_shape[0] <= 0
+              || requested_input_shape[1] <= 0
+              || requested_input_shape[2] <= 0,
+                 "ImageDataset: requested input shape dimensions must be positive.");
+
+        height = requested_input_shape[0];
+        width = requested_input_shape[1];
+        channels = requested_input_shape[2];
+    }
 
     const Index pixels_number = height * width * channels;
 
@@ -387,7 +460,7 @@ void ImageDataset::read_images()
     }
     else
     {
-        cache_path = data_path / ".cache" / "images.bin";
+        cache_path = image_cache_path(data_path, samples_number, height, width, channels);
 
         const bool cache_valid = filesystem::exists(cache_path)
             && filesystem::file_size(cache_path) == uint64_t(samples_number) * pixel_number;

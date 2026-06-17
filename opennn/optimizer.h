@@ -88,6 +88,19 @@ protected:
                                    float training_error, Index validation_failures,
                                    float training_loss, bool has_validation) const;
 
+    // Track the lowest-validation-error parameters/states seen so far. On a new
+    // best, snapshot them and reset validation_failures; otherwise count one
+    // failure (epochs-since-best). Used by every optimizer's epoch loop.
+    void update_best_parameters(NeuralNetwork* neural_network, float validation_error,
+                                Index epoch, Index& validation_failures);
+
+    // If training stopped on MaximumValidationErrorIncreases, restore the
+    // snapshot taken by update_best_parameters so the final model is the best
+    // one, not the last (possibly worse) epoch's.
+    void restore_best_parameters(NeuralNetwork* neural_network, TrainingResult& results);
+
+    void reset_best_parameters();
+
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
 
@@ -183,6 +196,11 @@ protected:
     float training_loss_goal = 0.0f;
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
+
+    float best_validation_error = numeric_limits<float>::max();
+    Index best_epoch = -1;
+    vector<float> best_parameters;
+    vector<float> best_states;
 
     Index maximum_epochs = 10000;
 

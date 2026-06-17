@@ -891,6 +891,73 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
     return true;
 }
 
+void Optimizer::reset_best_parameters()
+{
+    best_validation_error = numeric_limits<float>::max();
+    best_epoch = -1;
+    best_parameters.clear();
+    best_states.clear();
+}
+
+void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float validation_error,
+                                       Index epoch, Index& validation_failures)
+{
+    if (validation_error >= best_validation_error)
+    {
+        ++validation_failures;
+        return;
+    }
+
+    best_validation_error = validation_error;
+    best_epoch = epoch;
+    validation_failures = 0;
+
+    const tuple<vector<float>&, const float*, Index> snapshots[] = {
+        {best_parameters, neural_network->get_parameters_data(), neural_network->get_parameters_size()},
+        {best_states,     neural_network->get_states_data(),     neural_network->get_states_buffer_size()}
+    };
+
+    for (const auto& [destination, source, size] : snapshots)
+    {
+        if (size == 0) continue;
+
+        if (Index(destination.size()) != size)
+            destination.resize(size);
+
+        const size_t bytes = size_t(size) * sizeof(float);
+        if (neural_network->is_gpu() && device::is_cuda_build())
+        {
+            cudaStream_t stream = Backend::get_compute_stream();
+            device::copy_async(destination.data(), source, Index(bytes),
+                               device::CopyKind::DeviceToHost, stream);
+            device::synchronize(stream);
+        }
+        else
+            memcpy(destination.data(), source, bytes);
+    }
+}
+
+void Optimizer::restore_best_parameters(NeuralNetwork* neural_network, TrainingResult& results)
+{
+    if (!results.stopping_condition
+        || *results.stopping_condition != StoppingCondition::MaximumValidationErrorIncreases
+        || best_parameters.empty()
+        || Index(best_parameters.size()) != neural_network->get_parameters_size())
+        return;
+
+    if (display)
+        cout << "Restoring best parameters and states from epoch " << best_epoch
+             << " (validation error " << best_validation_error << ")\n";
+
+    neural_network->set_parameters(Map<const VectorR>(best_parameters.data(), Index(best_parameters.size())));
+
+    if (!best_states.empty())
+        neural_network->set_states(Map<const VectorR>(best_states.data(), Index(best_states.size())));
+
+    results.restored_best_parameters = true;
+    results.restored_epoch = best_epoch;
+}
+
 void Optimizer::write_common_json(JsonWriter& printer) const
 {
     write_json(printer, {

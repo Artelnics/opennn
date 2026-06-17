@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -98,6 +99,26 @@ struct ScenarioProgress
 
 ScenarioProgress g_bar;
 
+string forecasting_data_dir()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_DATA_DIR");
+    if (env && env[0] != '\0')
+    {
+        string path(env);
+        if (!path.empty() && path.back() != '/' && path.back() != '\\')
+            path += '/';
+        return path;
+    }
+
+    return DATA_DIR;
+}
+
+string forecasting_dataset_profile()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_DATASET");
+    return (env && env[0] != '\0') ? string(env) : string("no2");
+}
+
 struct Scenario
 {
     string  id;
@@ -144,7 +165,7 @@ struct AggregatedResult
 
 unique_ptr<TimeSeriesDataset> load_dataset(const Scenario& s)
 {
-    auto ds = make_unique<TimeSeriesDataset>(DATA_DIR + s.csv_file,
+    auto ds = make_unique<TimeSeriesDataset>(forecasting_data_dir() + s.csv_file,
                                              s.separator,
                                              /*has_header=*/true,
                                              /*has_sample_ids=*/false);
@@ -278,12 +299,53 @@ void print_agg(const AggregatedResult& a)
               << "  ep_mean=" << std::setw(4) << a.epochs_mean
               << "  val_mean=" << std::scientific << std::setprecision(3) << a.val_err_mean
               << "  test_rmse=" << a.test_rmse_mean
-              << " ± " << a.test_rmse_std
+              << " +/- " << a.test_rmse_std
               << "  best=" << a.test_rmse_best;
     if (std::isfinite(a.test_rmse_rel_mean))
         std::cout << "  rmse%=" << std::fixed << std::setprecision(2)
                   << (100.0f * a.test_rmse_rel_mean);
     std::cout << "  time=" << std::fixed << std::setprecision(2) << a.time_mean << "s\n";
+}
+
+void print_metric_line(const string& phase,
+                       const string& scenario_id,
+                       const AggregatedResult& a,
+                       const string& winner)
+{
+    std::ostringstream os;
+    os << "METRIC"
+       << " phase=" << phase
+       << " scenario=" << scenario_id
+       << " net=" << a.net
+       << " params=" << a.params
+       << " epochs_mean=" << a.epochs_mean
+       << " successful_runs=" << a.successful_runs
+       << " val_err_mean=" << std::setprecision(9) << a.val_err_mean
+       << " test_rmse_mean=" << std::setprecision(9) << a.test_rmse_mean
+       << " test_rmse_std=" << std::setprecision(9) << a.test_rmse_std
+       << " test_rmse_best=" << std::setprecision(9) << a.test_rmse_best
+       << " test_rmse_rel_mean=" << std::setprecision(9) << a.test_rmse_rel_mean
+       << " time_s_mean=" << std::setprecision(9) << a.time_mean
+       << " winner=" << winner;
+
+    std::cout << os.str() << "\n";
+}
+
+void print_speedup_metric(const string& scenario_id,
+                          const string& net,
+                          double cpu_s,
+                          double gpu_s,
+                          float speedup)
+{
+    std::ostringstream os;
+    os << "SPEEDUP"
+       << " scenario=" << scenario_id
+       << " net=" << net
+       << " cpu_time_s=" << std::setprecision(9) << cpu_s
+       << " gpu_time_s=" << std::setprecision(9) << gpu_s
+       << " cpu_over_gpu=" << std::setprecision(9) << speedup;
+
+    std::cout << os.str() << "\n";
 }
 
 struct ScenarioVerdict
@@ -396,6 +458,12 @@ void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
         if (v.winner != "n/a")  ++total;
     }
     std::cout << "\nLSTM wins (" << phase << "): " << lstm_wins << " / " << total << "\n";
+
+    for (const auto& v : vs)
+    {
+        print_metric_line(phase, v.id, v.rec, v.winner);
+        print_metric_line(phase, v.id, v.lstm, v.winner);
+    }
 }
 
 // CPU vs GPU comparison across the two phases.
@@ -416,10 +484,10 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
               << std::right
               << std::setw(13) << "Rec CPU s"
               << std::setw(13) << "Rec GPU s"
-              << std::setw(9)  << "Rec×"
+              << std::setw(9)  << "Rec x"
               << std::setw(13) << "LSTM CPU s"
               << std::setw(13) << "LSTM GPU s"
-              << std::setw(9)  << "LSTM×"
+              << std::setw(9)  << "LSTM x"
               << "\n";
     std::cout << std::string(77, '-') << "\n";
 
@@ -437,6 +505,10 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
                   << std::setw(13) << g.lstm.time_mean
                   << std::setw(8)  << speedup(c.lstm.time_mean, g.lstm.time_mean) << "x"
                   << "\n";
+        print_speedup_metric(c.id, "Recurrent", c.rec.time_mean, g.rec.time_mean,
+                             speedup(c.rec.time_mean, g.rec.time_mean));
+        print_speedup_metric(c.id, "LSTM", c.lstm.time_mean, g.lstm.time_mean,
+                             speedup(c.lstm.time_mean, g.lstm.time_mean));
     }
     std::cout << "\nSpeedup = CPU mean time / GPU mean time. Recurrent uses custom CUDA\n"
                  "kernels + cuBLAS; LSTM uses cudnnRNNForward (cellMode = CUDNN_LSTM).\n";
@@ -485,7 +557,29 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
 
 const vector<Scenario>& scenarios()
 {
-    static const vector<Scenario> v = {
+    static const vector<Scenario> beijing = {
+        {"B1", "Beijing PM2.5, past=24h, future=1h",
+            "beijing_pm25_forecasting.csv", ",",
+            24, 1, false, {},
+            Shape{32}, 0.003f, 128, 120, 20},
+
+        {"B2", "Beijing PM2.5, past=48h, future=1h",
+            "beijing_pm25_forecasting.csv", ",",
+            48, 1, false, {},
+            Shape{48}, 0.003f, 128, 100, 20},
+
+        {"B3", "Beijing PM2.5, past=72h, future=24h",
+            "beijing_pm25_forecasting.csv", ",",
+            72, 24, true, {},
+            Shape{64}, 0.002f, 128, 80, 20},
+
+        {"B4", "Beijing PM2.5, past=168h, future=24h",
+            "beijing_pm25_forecasting.csv", ",",
+            168, 24, true, {},
+            Shape{64}, 0.001f, 128, 60, 15},
+    };
+
+    static const vector<Scenario> no2 = {
         // -------- LIGHT --------
         {"S1", "Madrid NO2, past=5, future=1",
             "madridNO2forecasting.csv", ",",
@@ -546,7 +640,8 @@ const vector<Scenario>& scenarios()
         //     150, 15, true, {7, 8},
         //     Shape{256, 128, 96, 48}, 0.0005f, 128, 50, 25},
     };
-    return v;
+
+    return forecasting_dataset_profile() == "beijing_pm25" ? beijing : no2;
 }
 
 } // namespace
@@ -724,6 +819,8 @@ int main()
         std::cout << "OpenNN - Recurrent vs LSTM forecasting benchmark "
                   << "(" << SEED_COUNT << " seed" << (SEED_COUNT > 1 ? "s" : "")
                   << " per scenario)\n";
+        std::cout << "Dataset profile: " << forecasting_dataset_profile()
+                  << "  data_dir=" << forecasting_data_dir() << "\n";
         std::cout << "Flow: phase 1 runs every scenario on GPU; when GPU is done,\n"
                      "      phase 2 reruns the same scenarios on CPU.\n";
 

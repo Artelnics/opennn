@@ -14,8 +14,8 @@ comparison survives a skeptical reviewer:
 
 This replaces the OpenNN-best-vs-PyTorch-eager-NCHW comparison in
 run_resnet50.sh, which understated the frameworks (audit P1/P2/P5). CIFAR is
-small-input geometry; the ImageNet-scale run is tracked separately
-(IMAGENET_GEOMETRY_CONTINUE.md) for the real-scale credibility claim.
+small-input geometry; the full ImageNet run is tracked separately
+(IMAGENET_CONTINUE.md) for the real-scale credibility claim.
 
 Data layout: prepare_<dataset>.py writes <dataset>/cifar_images.npy (read by
 the Python engines) and <dataset>/train/ BMPs (read by OpenNN).
@@ -38,7 +38,27 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "results"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
-OPENNN_BIN = os.environ.get("OPENNN_RESNET_BIN", os.path.join(HERE, "opennn_resnet50_speed"))
+
+
+def default_opennn_bin():
+    env_bin = os.environ.get("OPENNN_RESNET_BIN")
+    if env_bin:
+        return env_bin
+    repo_root = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+    candidates = [
+        os.path.join(HERE, "opennn_resnet50_speed"),
+        os.path.join(repo_root, "build-ninja", "bin", "opennn_resnet50_speed"),
+        os.path.join(repo_root, "build-ninja", "bin", "opennn_resnet50_speed.exe"),
+        os.path.join(repo_root, "build", "bin", "opennn_resnet50_speed"),
+        os.path.join(repo_root, "build", "bin", "opennn_resnet50_speed.exe"),
+    ]
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    return candidates[0]
+
+
+OPENNN_BIN = default_opennn_bin()
 
 
 def engine_cmd(engine, dataset, epochs, batch, bf16):

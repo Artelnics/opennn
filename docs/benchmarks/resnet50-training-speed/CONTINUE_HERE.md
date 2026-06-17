@@ -2,6 +2,46 @@
 
 Goal (MET): beat `torch.compile`. Now 1.6x AHEAD of it.
 
+## Current Full ImageNet Path (2026-06-15)
+
+Use the real ImageNet class-folder tree for the reference Linux run. The
+`imagenet_like/` geometry proxy is historical only.
+
+Expected layout:
+
+```text
+imagenet/
+  train/
+    n01440764/
+      *.JPEG
+    ...
+```
+
+Build and run through the JSON harness:
+
+```bash
+cmake -S . -B build-gpu -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DOpenNN_BUILD_EXAMPLES=ON \
+  -DCMAKE_CUDA_ARCHITECTURES=native
+cmake --build build-gpu --target opennn_resnet50_speed -j"$(nproc)"
+
+cd docs/benchmarks/resnet50-training-speed
+python prepare_imagenet_smoke.py /path/to/imagenet /tmp/imagenet_smoke \
+  --classes 4 --images-per-class 4
+python run_imagenet_resnet50.py --data /tmp/imagenet_smoke \
+  --batches 4 --epochs 1 --runs 1 --engines opennn,pytorch_eager \
+  --gpu-index 0
+python run_imagenet_resnet50.py --data /path/to/imagenet \
+  --batches 64,32,16 --epochs 1 --runs 1 --precision fp32 \
+  --engines opennn,pytorch_fast,pytorch_eager \
+  --gpu-index 0 --require-gpu-idle \
+  --opennn-cache-dir /local_nvme/opennn-image-cache
+```
+
+OpenNN builds a uint8 cache on first run. Full ImageNet at 224x224x3 needs
+roughly 190 GB, so use local NVMe for `--opennn-cache-dir` when possible.
+
 ## CURRENT STANDING: 8,433 median (8,770/8,433/8,233) — BEATS torch.compile 1.6x
 
 Same-session interleaved (fp32 b128 RTX 3060 WSL, 2026-06-13):

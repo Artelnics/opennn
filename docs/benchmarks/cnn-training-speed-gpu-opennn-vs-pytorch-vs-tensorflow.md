@@ -1,5 +1,12 @@
 # GPU CNN training speed: OpenNN vs PyTorch vs TensorFlow (MNIST)
 
+*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-11. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU, CUDA 12.9, cuDNN 9.23.*
+
+**Status:** current WSL2 laptop GPU result. The comparison is plain fp32 training
+loops: OpenNN GPU-resident data, PyTorch eager with GPU-resident tensors, and
+TensorFlow Keras `fit` from host NumPy. Add optimized PyTorch/`torch.compile` and
+TensorFlow/XLA runs before treating this as a final public headline.
+
 The other notes in this series measure footprint and CPU behavior. This one
 measures **GPU training throughput on a convolutional network**: the simplest
 CNN that exercises the convolution, pooling, and dense paths — one

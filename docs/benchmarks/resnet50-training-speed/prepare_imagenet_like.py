@@ -1,4 +1,4 @@
-# Build an ImageNet-geometry training-speed dataset from CIFAR content:
+# Build an ImageNet-like proxy training-speed dataset from CIFAR content:
 # 50,000 images upsampled to 224x224x3, laid out across 1000 class folders so
 # ResNet-50 gets a true 1000-way classifier head and a 1000-way softmax. The
 # image *content* is irrelevant to a speed benchmark -- only the 224x224x3 /

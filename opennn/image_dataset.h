@@ -35,6 +35,7 @@ public:
 
     ImageDataset() = default;
     ImageDataset(const filesystem::path&);
+    ImageDataset(const filesystem::path&, const Shape&);
 
     Index get_channels_number() const;
 
@@ -78,6 +79,8 @@ private:
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
+
+    Shape requested_input_shape;
 
     uint64_t pixel_number = 0;
     uint32_t classes_number = 0;
