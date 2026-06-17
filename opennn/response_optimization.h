@@ -24,16 +24,35 @@ class ResponseOptimization
 {
 public:
 
-    enum class ConditionType {None, Between, EqualTo, LessEqualTo, GreaterEqualTo, LessThan, GreaterThan, Minimize, Maximize, Past};
+    enum class Sense { Minimize, Maximize };
 
-    struct Condition
+    enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
+
+    struct UnivariateConstraint
     {
-        ConditionType condition;
+        ComparisonOperator comparison;
         float low_bound;
         float up_bound;
 
-        Condition(ConditionType new_type = ConditionType::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
-            : condition(new_type), low_bound(new_low_bound), up_bound(new_up_bound) {}
+        // Membership target for ComparisonOperator::AllowedSet (the variable may
+        // only take one of these values / category indices).
+        vector<float> allowed_values;
+
+        UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
+            : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
+    };
+
+    // Cardinality constraint sum_i z_i = k over a set of binary/integer indicator
+    // variables (named). Unlike a scalar AllowedSet it couples a whole VECTOR of
+    // indicators, so it drives SAMPLING (a box-aware K-hot draw, see draw_k_hot) and a
+    // swap-based perturbation rather than the value-branching machinery; its indicator
+    // columns are excluded from the continuous projection. Expressed as a dedicated
+    // group instead of a new ComparisonOperator precisely because it is a sampling /
+    // combinatorial object, not a per-row comparison on one expression.
+    struct CardinalityConstraint
+    {
+        vector<string> variable_names;
+        Index k = 0;
     };
 
     struct Domain
@@ -52,7 +71,7 @@ public:
                  const vector<Descriptives>& descriptives,
                  const float deformation_domain_factor = 1.0f);
 
-        void bound(const vector<Variable>& variables, const vector<Condition>& conditions);
+        void bound(const vector<Variable>& variables, const vector<UnivariateConstraint>& constraints);
 
         void reshape(const float zoom_factor,
                      const VectorR& center,
@@ -67,11 +86,11 @@ public:
     {
         Objectives(const ResponseOptimization& response_optimization);
 
-        MatrixR objective_sources;
+        MatrixR source_and_column;
 
-        MatrixR utopian_and_senses;
+        MatrixR utopian_and_sense;
 
-        MatrixR objective_normalizer;
+        MatrixR scale_and_offset;
 
         MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
@@ -86,28 +105,74 @@ public:
 
     void set(NeuralNetwork* = nullptr);
 
-    Condition get_condition(const string& name) const;
+    void clear_constraints();
+    void clear_constraints(const string& name);
 
-    void set_condition(const string& name, const ConditionType condition = ConditionType::None, float low = 0.0f, float up = 0.0f);
+    void clear_objectives();
+    void clear_objectives(const string& name);
+
+    void clear_time_roles();
+    void clear_time_roles(const string& name);
+
+    void set_constraint(const string& name, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
+
+    void set_constraint(const string& name, const vector<float>& allowed_values);
+
+    // Cardinality: the named binary/integer indicators must sum to exactly k.
+    void set_cardinality_constraint(const vector<string>& variable_names, Index k);
+    void clear_cardinality_constraints();
+
+    void set_objective(const string& name, const Sense sense);
+
+    void set_time_role(const string& name, const TimeType role);
 
     void set_formula_constraint(const string& expression,
-                                ConditionType op,
+                                ComparisonOperator comparison,
                                 float low = 0.0f, float up = 0.0f);
 
     void set_formula_constraint(function<float(const VectorR&, const VectorR&)> callback,
-                                ConditionType op,
+                                ComparisonOperator comparison,
                                 float low = 0.0f, float up = 0.0f);
 
+    void set_formula_constraint(const string& expression, const vector<float>& allowed_values);
+
+    void clear_formula_constraints();
+
+    void set_min_feasible_ratio(float new_ratio);
     void set_max_oversample_factor(Index new_factor);
+    // Global explore-vs-exploit fraction: the share of sampling steered to exploration
+    // rather than exploiting the incumbent. Shared by categorical least-sampled steering,
+    // the cardinality K-hot explore fraction, and the mixed-integer pump's per-pass unlock.
+    void set_exploration_ratio(float new_ratio);
 
     void set_fixed_history(const Tensor3& history);
+    void clear_fixed_history();
 
     void set_iterations(const int iterations);
+    void set_zoom_factor(float new_zoom_factor);
     void set_evaluations_number(const int new_evaluations_number);
+    void set_relative_tolerance(float new_relative_tolerance);
+    void set_max_pareto_number(const Index new_max_pareto_number);
+    void set_max_total_evaluations(const Index new_max_total_evaluations);
+    void set_initial_sampling_factor(const Index new_initial_sampling_factor);
+
+    void set_branch_pruning(const bool new_prune_branches);
+
+    void set_deformation_domain_factor(float new_deformation_domain_factor);
+    float get_deformation_domain_factor();
 
     vector<Descriptives> get_descriptives(const string& role) const;
 
     pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
+
+    vector<float> get_utopian_point() const;
+
+    const map<string, vector<Index>>& get_category_frequencies() const { return category_frequencies; }
+
+    const vector<CardinalityConstraint>& get_cardinality_constraints() const { return cardinality_constraints; }
+
+    pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
+                                                         const VectorR& importance_scale = VectorR()) const;
 
     Domain get_original_domain(const string role) const;
 
@@ -139,14 +204,34 @@ public:
 
     MatrixR perform_multiobjective_optimization() const;
 
-    MatrixR perform_response_optimization() const;
+    // Runs one optimization with the constraints exactly as configured. AllowedSet
+    // membership is resolved one level up, in perform_response_optimization, which
+    // branches over the allowed values (each a separate EqualTo equality solve) and
+    // aggregates; this is the per-branch worker.
+    MatrixR solve_once() const;
+
+    // Entry point. With no AllowedSet membership it is a single solve_once(); with
+    // AllowedSet constraints it expands the cartesian product of allowed values into
+    // equality branches (equal evaluation-budget quota each), then returns the global
+    // Pareto front over the union. Not const: it temporarily rewrites the constraints
+    // per branch and restores them.
+    MatrixR perform_response_optimization();
 
     Index get_objectives_number() const;
 
+    // Total surrogate evaluations spent by the last perform_response_optimization(),
+    // summed across AllowedSet branches. Lets budgeted runs verify the cap was honored.
+    Index get_evaluations_used() const;
+
 private:
 
-    vector<NamedColumn> build_input_columns_for_formula() const;
-    vector<NamedColumn> build_output_columns_for_formula() const;
+    vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
+
+    UnivariateConstraint get_constraint(const string& name) const;
+    bool is_objective(const string& name) const;
+    Sense get_sense(const string& name) const;
+    bool is_history(const string& name) const;
+    static bool is_past(const TimeType role);
 
     bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
@@ -161,16 +246,37 @@ private:
     // the analytic forward fails to match calculate_outputs.
     void initialize_network_differential() const;
 
+    // Keep cardinality-indicator columns at their original (post-bound) box after each
+    // domain reshape: their indicators are combinatorial and must stay resampleable as
+    // a box-aware K-hot draw, never pinned to the incumbent support the way reshape pins
+    // an ordinary binary. The continuous weights still contract normally.
+    void restore_cardinality_columns(Domain& domain, const Domain& original) const;
+
+    // Normalization pass: a formula constraint that is affine in exactly one (scalar) input
+    // is solved in closed form to an interval and folded into that variable's domain box
+    // (intersecting any existing interval box), then dropped from the formula set so it is
+    // enforced for free at sampling instead of per-point. Throws if the intersection is empty.
+    // Constraints touching >1 variable, nonlinear ones, or a variable already constrained by
+    // an AllowedSet are left in the formula set untouched.
+    void promote_single_variable_constraints();
+
     NeuralNetwork* neural_network = nullptr;
 
     mutable unique_ptr<NetworkDifferential> network_differential;
 
-    map<string, Condition> conditions;
+    map<string, UnivariateConstraint> constraints;
 
-    vector<FormulaConstraint> formula_constraints;
+    map<string, Sense> objectives;
+
+    map<string, TimeType> time_roles;
+
+    vector<MultivariateConstraint> formula_constraints;
+
+    vector<CardinalityConstraint> cardinality_constraints;
 
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
+    float exploration_ratio = 0.1f;
 
     Index evaluations_number = 2000;
 
@@ -194,6 +300,21 @@ private:
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
 
+    // Per-category cumulative sample counts for each categorical input (keyed by
+    // variable name), so a fraction of each categorical draw can be steered to the
+    // least-sampled category. Reset at the start of every solve_once run.
+    mutable map<string, vector<Index>> category_frequencies;
+
+    // Incumbent-preferred cardinality indicators (over input feature columns; 1 = an
+    // indicator the last reshape would have pinned "on", i.e. in a surviving support).
+    // Captured before the box is restored to [0,1] and used to steer the exploit share of
+    // the K-hot draw. Empty until the first reshape, so iteration 0 draws uniformly.
+    mutable vector<char> cardinality_preferred;
+
+    // Cardinality indicator name -> feature column, resolved once per run (the variable
+    // layout is fixed) so restore_cardinality_columns does not rebuild it every reshape.
+    mutable map<string, Index> cardinality_indicator_columns;
+
     // Multiplier on the candidate count of the FIRST (initial, full-domain)
     // multi-objective sampling only: the initial pass draws
     // evaluations_number * initial_sampling_factor candidates, while every
@@ -203,6 +324,13 @@ private:
     // extra initial cost is counted against max_total_evaluations like any
     // other sampling, so the matched budget still holds.
     Index initial_sampling_factor = 1;
+
+    // AllowedSet branch handling. true (default) = budgeted: branches are raced under
+    // successive halving (cheap feasibility probe first, then the global-incumbent
+    // dominated branches are dropped and the survivors get progressively more of the
+    // evaluation budget). false = exhaustive: every branch is solved to completion with
+    // an equal budget quota, then aggregated (the original behaviour, zero-regret).
+    bool prune_branches = true;
 
     float deformation_domain_factor = 1.0f;
 

@@ -158,6 +158,12 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
 
+    // Augmentation re-randomises inputs on every fill_inputs call, which
+    // makes the loss non-deterministic across finite-difference probes.
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
     NeuralNetwork neural_network;
     build_yolo_network(neural_network, f);
 
@@ -187,6 +193,10 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
     YoloDataset dataset;
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
 
     NeuralNetwork neural_network;
     build_yolo_network(neural_network, f);

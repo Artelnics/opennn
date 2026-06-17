@@ -19,6 +19,8 @@
 
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/configuration.h"
+#include "../../opennn/forward_propagation.h"
+#include "../../opennn/layer.h"
 #include "../../opennn/non_max_suppression_layer.h"
 #include "../../opennn/random_utilities.h"
 #include "../../opennn/standard_networks.h"
@@ -276,9 +278,17 @@ int main()
         // FPN (YOLO v3): 3 detection heads at strides 32/16/8 with top-down
         // upsample+concatenation. Requires Backbone::DarknetTiny and 9 anchors
         // (3 per scale, smallest→stride-8, largest→stride-32). Cross-scale
-        // NMS for inference is not yet wired — training only.
+        // NMS for inference runs via decode_yolo_fpn_detections below.
         const auto head_style = YoloNetwork::HeadStyle::FPN;
         // const auto head_style = YoloNetwork::HeadStyle::Single;
+
+        // ReLU = Phase 1/2 default (preserves saved weights). LeakyReLU =
+        // Darknet/YOLO-v3 convention (slope 0.1). Switching changes forward
+        // outputs even at identical parameters, so the weights filename
+        // suffixes with "_leaky" to avoid silently reloading ReLU-trained
+        // weights under LeakyReLU semantics.
+        const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
+        // const auto body_activation = YoloNetwork::BodyActivation::ReLU;
 
         const bool use_voc = false;
         const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
@@ -397,7 +407,8 @@ int main()
                                  grid_size,
                                  backbone,
                                  class_activation,
-                                 head_style);
+                                 head_style,
+                                 body_activation);
 
         std::cout << "Network: backbone="
                   << (backbone == YoloNetwork::Backbone::Vgg ? "Vgg" : "DarknetTiny")
@@ -405,13 +416,15 @@ int main()
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
                   << (head_style == YoloNetwork::HeadStyle::FPN ? "FPN" : "Single")
+                  << ", body_activation="
+                  << (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
                   << ", layers=" << yolo_network.get_layers_number()
                   << ", parameters=" << yolo_network.get_parameters_number() << "\n";
 
         // Loosen the NMS confidence threshold so the demo prints something visible
-        // even on an under-trained tiny model. FPN mode has no NMS layer
-        // (cross-scale NMS happens externally in the inference helper, not
-        // wired here yet) — skip the NMS configuration in that case.
+        // even on an under-trained tiny model. FPN mode has no NMS layer —
+        // cross-scale NMS happens externally in decode_yolo_fpn_detections, so
+        // skip the NMS configuration in that case.
         if (head_style != YoloNetwork::HeadStyle::FPN)
         {
             auto* nms_layer = dynamic_cast<NonMaxSuppression*>(
@@ -450,6 +463,7 @@ int main()
         const std::string weights_filename = std::string("yolo_weights_") +
             (backbone == YoloNetwork::Backbone::Vgg ? "vgg" : "darknet") +
             (head_style == YoloNetwork::HeadStyle::FPN ? "_fpn" : "") +
+            (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             std::string(".bin");
         std::filesystem::path weights_path = data_dir / weights_filename;
         // Backward-compat: load the Phase 2 committed weights file if present.
@@ -474,15 +488,11 @@ int main()
                       << " (" << yolo_network.get_parameters_number() << " parameters)\n";
         }
 
-        // FPN mode: cross-scale NMS for inference isn't wired yet, so the
-        // visualization pipeline below (which decodes from the NMS layer
-        // output) doesn't apply. Skip and exit after training.
-        if (head_style == YoloNetwork::HeadStyle::FPN)
-        {
-            std::cout << "\n[FPN] Training run complete. Visualization skipped "
-                      << "(cross-scale NMS not implemented yet).\n";
-            return 0;
-        }
+        // FPN mode: gather per-head Detection layer outputs from a manual
+        // forward pass (no NMS layer is appended in FPN networks), then run
+        // cross-scale NMS in decode_yolo_fpn_detections. Single-head mode
+        // continues to read from the appended NMS layer below.
+        const bool is_fpn = (head_style == YoloNetwork::HeadStyle::FPN);
 
         // Inference on 5 SELECTION (held-out) samples — the model has never
         // seen these during training, so this is the real generalization test.
@@ -517,14 +527,52 @@ int main()
                                 /*is_training=*/false, /*parallelize=*/false);
             std::copy(input_buffer.begin(), input_buffer.end(), input.data());
 
-            const MatrixR outputs = yolo_network.calculate_outputs(input);
+            std::vector<YoloDetection> detections;
 
-            std::vector<YoloDetection> detections = decode_yolo_detections(
-                outputs.data(), max_boxes,
-                /*original_height=*/input_shape[0],
-                /*original_width=*/input_shape[1],
-                /*network_height=*/input_shape[0],
-                /*network_width=*/input_shape[1]);
+            if (is_fpn)
+            {
+                // Manual forward pass — we need every Detection layer's output,
+                // not just the network terminal. Walk layers, build YoloFpnHead
+                // entries for each Detection layer, then cross-scale NMS.
+                ForwardPropagation forward_propagation(/*batch_size=*/1, &yolo_network);
+                const std::vector<TensorView> input_views = {
+                    TensorView(input.data(),
+                               {1, input.dimension(1), input.dimension(2), input.dimension(3)},
+                               Type::FP32)
+                };
+                yolo_network.forward_propagate(input_views, forward_propagation, /*is_training=*/false);
+
+                std::vector<YoloFpnHead> fpn_heads;
+                const auto& layers = yolo_network.get_layers();
+                for (size_t li = 0; li < layers.size(); ++li)
+                {
+                    if (!layers[li] || layers[li]->get_type() != LayerType::Detection) continue;
+                    const Shape head_shape = layers[li]->get_output_shape();
+                    // Shape per Detection layer: [grid, grid, 3*(5+classes)] — drop batch.
+                    const TensorView view = forward_propagation.forward_slots[li].back();
+                    const Index channels = head_shape[2];
+                    const Index classes_n = Index(dataset.get_classes_number());
+                    const Index boxes_per_head = channels / (5 + classes_n);
+                    fpn_heads.push_back({ view.as<float>(), head_shape[0], boxes_per_head, classes_n });
+                }
+
+                detections = decode_yolo_fpn_detections(
+                    fpn_heads,
+                    /*original_height=*/input_shape[0],
+                    /*original_width=*/input_shape[1],
+                    /*network_height=*/input_shape[0],
+                    /*network_width=*/input_shape[1]);
+            }
+            else
+            {
+                const MatrixR outputs = yolo_network.calculate_outputs(input);
+                detections = decode_yolo_detections(
+                    outputs.data(), max_boxes,
+                    /*original_height=*/input_shape[0],
+                    /*original_width=*/input_shape[1],
+                    /*network_height=*/input_shape[0],
+                    /*network_width=*/input_shape[1]);
+            }
 
             const std::filesystem::path image_path = dataset.get_image_path(s);
             const std::string name = image_path.stem().string();

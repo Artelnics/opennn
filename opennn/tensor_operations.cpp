@@ -18,11 +18,12 @@ namespace opennn
 const EnumMap<ActivationFunction>& activation_function_map()
 {
     static const vector<pair<ActivationFunction, string>> entries = {
-        {ActivationFunction::Identity, "Identity"},
-        {ActivationFunction::Sigmoid,  "Sigmoid"},
-        {ActivationFunction::Tanh,     "Tanh"},
-        {ActivationFunction::ReLU,     "ReLU"},
-        {ActivationFunction::Softmax,  "Softmax"}
+        {ActivationFunction::Identity,  "Identity"},
+        {ActivationFunction::Sigmoid,   "Sigmoid"},
+        {ActivationFunction::Tanh,      "Tanh"},
+        {ActivationFunction::ReLU,      "ReLU"},
+        {ActivationFunction::Softmax,   "Softmax"},
+        {ActivationFunction::LeakyReLU, "LeakyReLU"}
     };
     static const EnumMap<ActivationFunction> instance{entries};
     return instance;
@@ -325,6 +326,9 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
     case ReLU:
         a = a.cwiseMax(0.0f);
         return;
+    case LeakyReLU:
+        a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
+        return;
     }
 }
 
@@ -347,6 +351,11 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         return;
     case ReLU:
         d = (y > 0.0f).select(d, 0.0f);
+        return;
+    case LeakyReLU:
+        // Negative-side output is slope * pre-activation, so sign(y) == sign(x)
+        // for any positive slope — we can recover the gate from y alone.
+        d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
     }
 }
@@ -572,6 +581,7 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& sum, TensorView& output)
 {
+#ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         const int rows = to_int(input.size() / input.shape.back());
@@ -586,6 +596,7 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
         });
         return;
     }
+#endif
     // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
     layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);

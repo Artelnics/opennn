@@ -1,124 +1,223 @@
-# GPU energy consumption: OpenNN vs PyTorch vs TensorFlow (dense MLP)
+# Energy consumption of TensorFlow and Neural Designer
 
-*Benchmark note for [opennn.net/benchmarks](https://www.opennn.net/benchmarks/). Last updated 2026-06-14. Linux x86_64 (WSL2), NVIDIA RTX 3060 Laptop GPU (6 GB), CUDA 12.9, cuDNN 9.23.*
+[TensorFlow](https://tensorflow.org/) and [Neural Designer](https://www.neuraldesigner.com/) are
+popular machine learning platforms developed by [Google](https://research.google/teams/brain/) and
+[Artelnics](https://www.artelnics.com/), respectively.
 
-**Status:** current GPU energy result. It is a **sampled-power estimate**, not a
-hardware joule counter: energy is the time-integral of NVIDIA `power.draw`
-sampled at 20 Hz (GPU-board only, not whole-system wall power). Read the
-**ratios** between engines as the result, not the absolute watts — those shift
-with hardware, driver, and power policy. Every number is the **median of 5 runs
-(± population stdev)**; the raw per-run data, versions, power traces, and the
-**per-run GPU state** (SM/memory clocks, temperature, power limit, and active
-throttle reasons before/after each run, so a reviewer can rule out thermal or
-power-limit artifacts behind the watt figures) are in
-[`results/`](results/) (`gpu-dense-rosenbrock-energy-*.json`).
+Although all those frameworks are based on neural networks, they present essential differences in
+functionality, usability, performance, consumption, etc.
 
-The [speed note](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) shows
-OpenNN running the same dense network faster than PyTorch. Speed and energy are
-not the same thing — a faster engine can finish sooner but draw more power while
-it runs, so the energy bill is an independent question. This note measures it:
-**how many joules each engine spends per sample**, for inference and for
-training, on the same GPU and the same 1000 → 1000 (tanh) → 1 network, against
-**both** PyTorch and TensorFlow running their fair fast paths.
+This post compares the energy consumption of TensorFlow and Neural Designer using the GPU for an
+approximation benchmark.
 
-## The result
+As we will see, Neural Designer consumes **42**% less than its competitor machine learning platform.
 
-GPU energy per sample at batch 8000, fp32, integrated from 20 Hz `nvidia-smi`
-power samples over a steady-state loop of 2000 iterations (so each run is many
-seconds; the idle baseline of 27.2 W is subtracted to give the workload's
-*active* energy). All three engines run the **identical workload** — one
-forward (inference) or forward+backward+Adam step (training) on a fixed batch,
-repeated — so energy per sample is apples-to-apples. PyTorch and TensorFlow run
-their compiled fast paths (`torch.compile` / XLA `jit_compile`).
+In this article, we outline all the steps required to reproduce the results using Neural Designer
+([download](https://www.neuraldesigner.com/downloads/))
 
-**Inference — energy per sample (µJ), lower is better:**
+**Contents:**
 
-| Engine | Total energy | Active energy | Avg power | vs OpenNN (total) |
-|---|---:|---:|---:|---|
-| **OpenNN** | **25.9 ± 2.8** | 17.9 ± 2.1 | 88 W | — |
-| TensorFlow (XLA) | 29.8 ± 3.0 | 18.3 ± 2.1 | 68 W | OpenNN **1.15× less** |
-| PyTorch (compile) | 43.5 ± 2.2 | 30.6 ± 1.3 | 91 W | OpenNN **1.68× less** |
+- [Introduction](#Introduction).
+- [Benchmark application](#BenchmarkApplication).
+- [Reference computer](#ReferenceComputer).
+- [Reference electricity consumption meter](#Referenceelectricityconsumptionmeter).
+- [Results](#Results).
+- [Conclusions](#Conclusions).
 
-**Training — energy per sample (µJ), lower is better:**
+## Introduction
 
-| Engine | Total energy | Active energy | Avg power | vs OpenNN (total) |
-|---|---:|---:|---:|---|
-| TensorFlow (XLA) | **60.5 ± 3.5** | 38.6 ± 2.5 | 74 W | OpenNN 0.93× (TF lower) |
-| **OpenNN** | **64.9 ± 3.9** | 46.1 ± 2.8 | 92 W | — |
-| PyTorch (compile) | 89.1 ± 3.2 | 62.7 ± 2.7 | 91 W | OpenNN **1.37× less** |
+Two of the most essential features of machine learning platforms are their training speed and the
+total amount of energy consumed during this process.
 
-**OpenNN spends the least energy per inference of the three — 1.15× less than
-TensorFlow and 1.68× less than PyTorch.** For training, OpenNN spends **1.37×
-less energy than PyTorch**, but here **TensorFlow's XLA path is the most
-energy-efficient** (≈7 % below OpenNN), because TF holds the GPU at a markedly
-lower average power (74 W vs 92 W). We report that honestly: OpenNN is the
-inference-energy leader and beats PyTorch on both, and TF's compiled training
-step is the one place a competitor edges it.
+In most cases, modeling huge data sets is very expensive in computational terms, which leads to a
+high economic cost of neural network training and a high environmental impact.
 
-## Why the picture differs between inference and training
+Thus, this article aims to measure the GPU energy consumption of TensorFlow and Neural Designer for
+a benchmark application. Also, a couple of instructions are given to enable anyone to repeat this
+one or a similar benchmark and check on their own the fantastic results obtained when Neural
+Designer is used.
 
-The energy bill is power × time, and the three engines trade those off
-differently:
+The following table summarizes the technical features of these tools that might impact their GPU
+performance.
 
-* **OpenNN runs the GPU hot and short.** It sustains the highest average power
-  (88–92 W) but finishes each sample fastest, so on inference its short runtime
-  wins outright. Its energy tracks its speed lead, the signature of a
-  runtime-dominated workload.
-* **TensorFlow runs the GPU cooler.** Its XLA-compiled step sits at 68–74 W —
-  ~20 % below OpenNN/PyTorch. On inference that isn't enough to overcome
-  OpenNN's speed; on training, where the step is heavier, the lower sustained
-  power makes TF the energy leader despite not being the fastest.
-* **PyTorch draws high power without the matching speed**, so it is the least
-  energy-efficient of the three on both workloads even with `torch.compile`.
+|  | TensorFlow | Neural Designer |
+| --- | --- | --- |
+| Written in | C++, CUDA, Python | C++, CUDA |
+| Interface | Python | Graphical User Interface |
+| Differentiation | Automatic | Analytical |
 
-## Setup
+The above table shows that TensorFlow is programmed in C++ and Python, whereas Neural Designer is
+entirely programmed in C++.
 
-| | Value |
-|---|---|
-| Network | 1000 → 1000 (tanh) → 1, dense; MSE, Adam, fp32 |
-| Workload | identical across engines: fixed batch 8000, 2000 steps, warmup excluded |
-| OpenNN | device-resident; training uses `OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1` |
-| PyTorch | `torch.compile`, GPU-resident tensors |
-| TensorFlow | `@tf.function(jit_compile=True)` (XLA), GPU-resident tensors |
-| Power source | `nvidia-smi --query-gpu=power.draw`, 20 Hz (`-lms 50`), trapezoidal integration |
-| Idle baseline | 27.2 W (measured fresh at start), subtracted for *active* energy |
-| Statistics | median of 5 runs, ± population stdev; raw runs in `results/*.json` |
+Interpreted languages like Python have advantages over compiled languages like C ++, such as their
+ease of use.
 
-Hardware/software: NVIDIA GeForce RTX 3060 Laptop GPU (6 GB, driver 555.85)
-under WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 +
-CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124), TensorFlow 2.21.0, CPython 3.12.
+However, the performance of Python is generally lower than that of C++. Indeed, Python takes
+significant time to interpret sentences during the program’s execution.
 
-## Caveats
+On the other hand, TensorFlow uses automatic differentiation, while Neural Designer uses analytical
+differentiation.
 
-* **This is GPU energy only.** The board power sensor (`power.draw`) covers the
-  GPU; CPU/system energy is *not* included (Intel RAPL is virtualized away under
-  WSL2). For a GPU-bound workload the GPU is the dominant term, but the number is
-  "GPU energy," not "wall energy." A whole-system claim needs a wall-power meter.
-* **Energy is integrated from sampled power, not a hardware joule counter.** This
-  consumer GPU does not expose `total_energy_consumption`, so energy is ∫power dt
-  at 20 Hz — accurate over a multi-second window (hundreds of samples) and
-  applied identically to all three engines.
-* **Active vs total energy.** The headline uses *total* energy (it includes the
-  shared idle floor, so it is the conservative framing). *Active* energy (idle
-  removed) is also reported; on it the OpenNN/TF inference gap narrows to a tie
-  while PyTorch remains the outlier.
-* **Run-to-run variance is real** (±3–4 µJ on a noisy 20 Hz signal and a laptop
-  GPU under thermal variation), which is why every figure is a 5-run median with
-  its stdev. The *ranking* is stable across runs; the exact ratios shift slightly.
-* Single consumer laptop GPU under WSL2; absolute watts and the idle floor shift
-  with hardware, driver, and power policy.
+As before, automatic differentiation has some advantages over analytical differentiation. Indeed, it
+simplifies obtaining the gradient for new architectures or loss indices.
 
-## Reproducing
+However, the performance of automatic differentiation is, in general, lower than that of analytical
+differentiation: The first derives the gradient during the program’s execution, while the second has
+that formula pre-calculated.
 
-The energy harness runs all three engines on the identical workload, samples GPU
-power while each runs, integrates, repeats N times, and writes a result JSON. It
-and the benchmark programs are in
-[`rosenbrock-max-batch/`](rosenbrock-max-batch/):
+Next, we use TensorFlow and Neural Designer to measure the energy consumption for a benchmark
+problem on a reference computer. The results produced by these platforms are then compared.
 
-```bash
-cd docs/benchmarks/rosenbrock-max-batch
-# build the OpenNN binaries first (build_tput.sh / build_resident.sh)
-python run_energy.py --mode both --batch 8000 --iters 2000 --runs 5
-# -> writes ../results/gpu-dense-rosenbrock-energy-<timestamp>.json
-# engines: --engines opennn,pytorch,tensorflow   idle override: --idle 27.2
+## Benchmark application
+
+The first step is to choose a benchmark application that is general enough to conclude the
+performance of the machine learning platforms. As previously stated, we will train a neural network
+that approximates a set of input-target samples.
+
+In this regard, an approximation application is defined by a data set, a neural network, and an
+associated training strategy. The following table uniquely defines these three components.
+
+| Data set![](https://www.neuraldesigner.com/images/data_set.svg) | Benchmark: Rosenbrock Inputs number: 1000 Targets number: 1 Samples number: 1000000 |
+| --- | --- |
+| Neural network![](https://www.neuraldesigner.com/images/neural_network.svg) | Layers number: 2 Layer 1: -Type: Perceptron (Dense) -Inputs number: 1000 -Neurons number: 1000 -Activation function: Hyperbolic tangent (tanh) Layer 2: -Type: Perceptron (Dense) -Inputs number: 1000 -Neurons number: 1 -Activation function: Linear Initialization: Random uniform [-1,1] |
+| Training strategy![](https://www.neuraldesigner.com/images/training_strategy.svg) | Loss index: -Error: Mean Squared Error (MSE) -Regularization: None Optimization algorithm: -Algorithm: Adaptive Moment Estimation (Adam) -Batch size: 1000 -Maximum epochs: 20000 |
+
+Once the TensorFlow and Neural Designer applications have been created, we must run them.
+
+## Reference computer
+
+The next step is to choose the computer in which the neural network will be trained with TensorFlow
+and Neural Designer. The table below shows the features of the computer used for this instance.
+
+| Operating system: | Windows 11 Home 64-bit |
+| --- | --- |
+| Processor: | Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz, 3192 Mhz, 6 Core(s), 12 Logical Processor(s) |
+| Physical RAM: | 31.9 GB |
+| Device (GPU): | NVIDIA GeForce GTX 1050 Ti |
+
+Once the computer has been selected, we install TensorFlow (2.1.0) and Neural Designer (5.9.9) on
+it.
+
+Below, the TensorFlow code used is shown.
+
 ```
+import tensorflow as tf
+import pandas as pd
+import time
+import numpy as np
+from tensorflow.keras.utils import Sequence
+
+#read data float32
+
+filename = "C:/Users/Usuario/Downloads/rosenbrock.csv"
+df_test = pd.read_csv(filename, nrows=100)
+float_cols = .dtype == "float64"]
+float32_cols = {c: np.float32 for c in float_cols}
+data = pd.read_csv(filename, engine='c', dtype=float32_cols)
+
+
+x = data.iloc[:,:-1].values
+y = data.iloc[:,[-1]].values
+
+initializer = tf.keras.initializers.RandomUniform(minval=-1., maxval=1.)
+
+#build model
+
+model = tf.keras.models.Sequential([tf.keras.layers.Dense(1000,activation = 'tanh', kernel_initializer = initializer, bias_initializer=initializer),
+tf.keras.layers.Dense(1, activation = 'linear', kernel_initializer = initializer, bias_initializer=initializer)])
+
+#compile model
+
+model.compile(optimizer='adam', loss = 'mean_squared_error')
+
+
+#train model
+
+class DataGenerator(Sequence):
+                def __init__(self, x_set, y_set, batch_size):
+                self.x, self.y = x_set, y_set
+                self.batch_size = batch_size
+
+                def __len__(self):
+                return int(np.ceil(len(self.x) / float(self.batch_size)))
+
+                def __getitem__(self, idx):
+        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+                return batch_x, batch_y
+
+train_gen = DataGenerator(x, y, 1000)
+
+start_time = time.time()
+with tf.device('/gpu:0'):
+    history = model.fit(train_gen, epochs=20000)
+print("Training time: ", round(time.time() - start_time), " seconds")
+```
+
+## Reference electricity consumption meter
+
+This section describes the device used for the energy consumption measurements so that the reader
+can reproduce the results obtained in the following section with maximum accuracy.
+
+| Device model | Perel E305EM5-G |
+| --- | --- |
+
+## Results
+
+The last step is to run the benchmark application on the selected machine with TensorFlow and Neural
+Designer and compare the energy consumed by those platforms during training.
+
+The following figure shows the training time with TensorFlow.
+
+![](https://www.neuraldesigner.com/wp-content/uploads/2025/07/capturafinalrecortadarosenbrockgputensorflow-1.webp)
+
+As we can see, TensorFlow takes 30:14:30 to train the neural network for 20000 epochs (5.44
+seconds/epoch). The final mean squared error is 0.0003. The overall energy consumption of the
+training process is 4.5 kWh, as shown below.
+
+![](https://www.neuraldesigner.com/wp-content/uploads/2025/07/fotoconsumidoresgpurosenbrocktensorflow-2-1024x680.webp)
+
+Finally, the following figure shows the training time with Neural Designer.
+
+![](https://www.neuraldesigner.com/wp-content/uploads/2025/07/Captura-de-pantalla-rosenbrock-Neural-Designer-recortada-3-653x1024.webp)
+
+Neural Designer takes 21:03:43 to train the neural network for 20000 epochs (3.79 seconds/epoch).
+During that time, it reaches a mean squared error of 0.023. The overall energy consumption of the
+training process is 2.6 kWh, as shown below.
+
+![](https://www.neuraldesigner.com/wp-content/uploads/2025/07/fotoconsumidoresgpurosenbrockneuraldesigner-4-1024x859.webp)
+
+The following table summarizes the the most important metrics the two machine learning platforms
+yielded.
+
+|  | TensorFlow | Neural Designer |
+| --- | --- | --- |
+| Training time | 30:14:30 | 21:03:43 |
+| Epoch time | 5.44 seconds/epoch | 3.79 seconds/epoch |
+| Training speed | 183,824 samples/second | 263.852 samples/second |
+| Total energy consumed | 4.5kWh | 2.6 kWh |
+
+The following chart depicts the energy consumed using TensorFlow and Neural Designer graphically in
+this case.
+
+**Electric energy consumption**
+
+TensorFlow
+
+Neural Designer
+
+As we can see, the energy consumption of Neural Designer for this application is **42** % lower than
+that of TensorFlow.
+
+## Conclusions
+
+Neural Designer is entirely written in C ++, uses analytical differentiation, and has been optimized
+to minimize the number of operations during training.
+
+As a result, its energy consumption during the training process using Neural Designer is **42** %
+lower than that using TensorFlow.
+
+To reproduce these results, [download](https://www.neuraldesigner.com/downloads/)Neural Designer and
+follow the steps described in this article.
+
+## Related posts

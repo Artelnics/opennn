@@ -77,11 +77,11 @@ CompiledFormula compile_formula(const string& expression,
 
 enum class ComparisonOperator : uint8_t
 {
-    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan
+    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet
 };
 
 
-struct FormulaConstraint
+struct MultivariateConstraint
 {
     string expression;
     function<float(const VectorR&, const VectorR&)> callback;
@@ -90,6 +90,11 @@ struct FormulaConstraint
     ComparisonOperator comparison_operator = ComparisonOperator::None;
     float low_bound = 0.0f;
     float up_bound = 0.0f;
+
+    // Membership target for ComparisonOperator::AllowedSet (expr in {values}).
+    // ResponseOptimization expands it into one EqualTo branch per value before any
+    // repair/filter runs, so the solver layers below never see AllowedSet directly.
+    vector<float> allowed_values;
 
     CompiledFormula compiled;
 };
@@ -105,9 +110,9 @@ struct LinearConstraintSet
 
 inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
 
-[[nodiscard]] bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints);
+[[nodiscard]] bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints);
 
-[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
                                                               const Index n_in,
                                                               const Index n_out);
 
@@ -117,7 +122,7 @@ inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-
 void repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
-                          const vector<FormulaConstraint>& formula_constraints,
+                          const vector<MultivariateConstraint>& formula_constraints,
                           Index max_correction_passes = 64);
 
 // Per-point Gauss-Newton-on-manifold repair for smooth nonlinear input-only
@@ -135,7 +140,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
-                             const vector<FormulaConstraint>& formula_constraints,
+                             const vector<MultivariateConstraint>& formula_constraints,
                              Index max_correction_passes = 64);
 
 // Single-pass random-sweep clamp-and-carry for one affine input-only
@@ -144,7 +149,22 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
-                                const FormulaConstraint& constraint);
+                                const MultivariateConstraint& constraint);
+
+// Lattice analogue of repair_single_affine_input for one affine constraint whose
+// variables are all integer/binary (the caller guarantees this). Each row is first
+// snapped to its integer lattice, then a random-sweep clamp-and-carry distributes the
+// residual in WHOLE integer steps, truncating toward zero so an inequality is never
+// overshot into violating its opposite bound; the per-column lattice bound is
+// [ceil(inferior), floor(superior)]. Exact in one pass for a unit-coefficient target
+// reachable within the box (e.g. a pure-integer knapsack sum); any residue the lattice
+// cannot represent is left for the downstream pump / feasibility filter. Satisfied rows
+// are untouched (diversity-preserving). This is the single-constraint fast path; coupled
+// or multi-constraint integer cases are handled by the cyclic mixed-integer pump.
+void repair_single_affine_integer(MatrixR& random_inputs,
+                                  const VectorR& inferior_frontier,
+                                  const VectorR& superior_frontier,
+                                  const MultivariateConstraint& constraint);
 
 // Router over the input-only, non-callback constraints: one affine -> single
 // random sweep; several affine -> Gram + Dykstra; any smooth nonlinear ->
@@ -152,7 +172,27 @@ void repair_single_affine_input(MatrixR& random_inputs,
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
-                   const vector<FormulaConstraint>& formula_constraints);
+                   const vector<MultivariateConstraint>& formula_constraints);
+
+// Masked per-row affine projection: project each point's FREE input coordinates
+// onto the active input-only affine (or smooth) constraints while holding every
+// column flagged in `fixed_columns` (size = n_inputs, nonzero = fixed) at its
+// current per-row value. Fixed columns get a zeroed Jacobian — their value stays
+// folded into each residual via the constraint evaluation — so only the free
+// coordinates absorb the residual. The box clamp on the result is the final op of
+// every pass, so an affine-vs-box conflict surfaces as a leftover residual (the
+// caller's feasibility signal), never as a box violation. This is the projection
+// half of the mixed-integer repair: round the discrete columns, flag them fixed,
+// then call this to re-project the continuous slice onto the budget / buy-in rows.
+// A constraint whose variables are all fixed is dropped from the Gauss-Newton solve
+// (nothing free to move); its violation simply persists as residual for the caller.
+// Passing an empty `fixed_columns` projects every coordinate (no fixing).
+void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
+                                     const VectorR& inferior_frontier,
+                                     const VectorR& superior_frontier,
+                                     const vector<MultivariateConstraint>& formula_constraints,
+                                     const vector<char>& fixed_columns,
+                                     Index max_correction_passes = 64);
 
 // Surrogate callbacks for output-constraint repair (Regime 2 / reverse-mode
 // VJP). The module stays network-agnostic: the caller supplies the forward map
@@ -174,10 +214,11 @@ using SurrogateVjp     = function<VectorR(const VectorR&, const VectorR&)>;
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                const SurrogateVjp& vjp,
-                               Index max_correction_passes = 64);
+                               Index max_correction_passes = 64,
+                               const vector<char>& fixed_columns = {});
 
 // Same, but without an explicit VJP: the network Jacobian is obtained by a
 // box-scaled central difference over `forward` (the only network access is the
@@ -188,9 +229,10 @@ void repair_output_constraints(MatrixR& inputs,
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
-                               Index max_correction_passes = 64);
+                               Index max_correction_passes = 64,
+                               const vector<char>& fixed_columns = {});
 
 
 }
