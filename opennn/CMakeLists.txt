@@ -23,10 +23,10 @@ endif()
 
 # A static lib is an archive of every TU's objects, so the heavy Eigen / STL /
 # cuDNN-frontend template instantiations are duplicated across all 72 objects
-# (the linker only dedups them when building an exe/dll). A shared lib dedups
+# (the linker only dedups them when building a bin/so or an exe/dll respectively). A shared lib dedups
 # at link time into one much smaller binary. Default OFF to keep the proven
 # static build; enable with -DOpenNN_BUILD_SHARED=ON.
-option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
+option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (SO or DLL) instead of static" OFF)
 if(OpenNN_BUILD_SHARED)
     set(_opennn_lib_type SHARED)
 else()

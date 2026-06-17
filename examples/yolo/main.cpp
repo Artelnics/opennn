@@ -549,7 +549,7 @@ int main()
                     if (!layers[li] || layers[li]->get_type() != LayerType::Detection) continue;
                     const Shape head_shape = layers[li]->get_output_shape();
                     // Shape per Detection layer: [grid, grid, 3*(5+classes)] — drop batch.
-                    const TensorView view = forward_propagation.views[li].back()[0];
+                    const TensorView& view = forward_propagation.input_views[li].back();
                     const Index channels = head_shape[2];
                     const Index classes_n = Index(dataset.get_classes_number());
                     const Index boxes_per_head = channels / (5 + classes_n);

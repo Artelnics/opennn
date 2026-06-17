@@ -22,14 +22,15 @@
 #include "../../../opennn/adaptive_moment_estimation.h"
 #include "../../../opennn/random_utilities.h"
 
+using namespace opennn;
+
+#if defined(_WIN32)
 // windows.h must come after the OpenNN/Eigen headers and with NOMINMAX so its
 // min/max macros do not clobber std::min / std::max inside those headers.
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
 #include <psapi.h>
-
-using namespace opennn;
 
 static double peak_working_set_mb()
 {
@@ -48,6 +49,47 @@ static double current_working_set_mb()
         return double(pmc.WorkingSetSize) / (1024.0 * 1024.0);
     return -1.0;
 }
+#else
+#include <sys/resource.h>
+#include <unistd.h>
+
+double peak_working_set_mb()
+{
+    struct rusage usage {};
+    
+    if(getrusage(RUSAGE_SELF, &usage) == 0)
+    {
+        // Linux reports ru_maxrss in KiB
+        return static_cast<double>(usage.ru_maxrss) / 1024.0;
+    }
+    
+    return -1.0;
+}
+
+double current_working_set_mb()
+{
+    long total_pages;
+    long rss_pages;
+    
+    FILE* f = fopen("/proc/self/statm", "r");
+    if(!f)
+        return -1.0;
+    
+    if(fscanf(f, "%ld %ld", &total_pages, &rss_pages) != 2)
+    {
+        fclose(f);
+        return -1.0;
+    }
+    
+    fclose(f);
+    
+    long page_size = sysconf(_SC_PAGESIZE);
+    
+    return static_cast<double>(rss_pages * page_size)
+    / (1024.0 * 1024.0);
+}
+
+#endif
 
 int main(int argc, char* argv[])
 {
