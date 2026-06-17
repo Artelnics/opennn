@@ -28,6 +28,10 @@ public:
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
+    // AllowedSet branch handling: Budgeted races branches under successive halving and drops
+    // dominated ones; Exhaustive solves every branch to completion with an equal budget quota.
+    enum class BranchMode { Budgeted, Exhaustive };
+
     struct UnivariateConstraint
     {
         ComparisonOperator comparison;
@@ -156,7 +160,7 @@ public:
     void set_max_total_evaluations(const Index new_max_total_evaluations);
     void set_initial_sampling_factor(const Index new_initial_sampling_factor);
 
-    void set_branch_pruning(const bool new_prune_branches);
+    void set_branch_mode(const BranchMode new_branch_mode);
 
     void set_deformation_domain_factor(float new_deformation_domain_factor);
     float get_deformation_domain_factor();
@@ -237,13 +241,17 @@ public:
     // summed across AllowedSet branches. Lets budgeted runs verify the cap was honored.
     Index get_evaluations_used() const;
 
-    vector<NamedColumn> build_columns_for_formula(const vector<Variable>& variables, bool apply_role_and_history_filter) const;
+    vector<NamedColumn> build_input_columns(const vector<Variable>& variables) const;
+    vector<NamedColumn> build_output_columns(const vector<Variable>& variables) const;
 
     UnivariateConstraint get_constraint(const string& name) const;
     bool is_objective(const string& name) const;
     Sense get_sense(const string& name) const;
     bool is_history(const string& name) const;
     static bool is_past(const TimeType role);
+
+    // True once a fixed history has been set (forecasting mode), computed from fixed_history.
+    bool is_forecasting() const { return fixed_history.size() > 0; }
 
     bool row_satisfies_formula_constraints(const VectorR& input_row,
                                                          const VectorR& output_row) const;
@@ -348,18 +356,11 @@ private:
     // other sampling, so the matched budget still holds.
     Index initial_sampling_factor = 1;
 
-    // AllowedSet branch handling. true (default) = budgeted: branches are raced under
-    // successive halving (cheap feasibility probe first, then the global-incumbent
-    // dominated branches are dropped and the survivors get progressively more of the
-    // evaluation budget). false = exhaustive: every branch is solved to completion with
-    // an equal budget quota, then aggregated (the original behaviour, zero-regret).
-    bool prune_branches = true;
+    BranchMode branch_mode = BranchMode::Budgeted;
 
     float deformation_domain_factor = 1.0f;
 
     Tensor3 fixed_history;
-
-    bool is_forecasting = false;
 };
 
 }

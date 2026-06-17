@@ -1111,6 +1111,41 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
 }
 
 
+bool constraint_is_satisfied(const MultivariateConstraint& constraint,
+                             const VectorR& input_row,
+                             const VectorR& output_row)
+{
+    const float value = constraint.uses_callback
+        ? constraint.callback(input_row, output_row)
+        : constraint.compiled.evaluate(input_row, output_row);
+
+    const float low = constraint.low_bound;
+    const float up  = constraint.up_bound;
+
+    switch (constraint.comparison_operator)
+    {
+    case ComparisonOperator::EqualTo:
+        return abs(value - low) <= bound_tolerance(low);
+    case ComparisonOperator::Between:
+        return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
+    case ComparisonOperator::GreaterEqualTo:
+    case ComparisonOperator::GreaterThan:
+        return value >= low - bound_tolerance(low);
+    case ComparisonOperator::LessEqualTo:
+    case ComparisonOperator::LessThan:
+        return value <= up + bound_tolerance(up);
+    default:
+        return true;
+    }
+}
+
+
+void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, const float maximum)
+{
+    inputs.col(column).array() = inputs.col(column).array().round().max(minimum).min(maximum);
+}
+
+
 namespace
 {
 
@@ -1698,6 +1733,172 @@ void repair_inputs(MatrixR& random_inputs,
         repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
     else if (affine_number >= 2)
         repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
+}
+
+
+namespace
+{
+
+// Pump feasibility test: every input constraint satisfied (within tolerance).
+bool row_satisfies_input_affine(const VectorR& point,
+                                const vector<const MultivariateConstraint*>& input_constraints)
+{
+    const VectorR empty_outputs;
+
+    for (const MultivariateConstraint* constraint : input_constraints)
+        if (!constraint_is_satisfied(*constraint, point, empty_outputs))
+            return false;
+
+    return true;
+}
+
+
+// Turn one selected indicator off and one unselected on, only where the box has room
+// (>= 1 either side). Keeps sum z = k exact and never crosses a frontier, so pins stay put.
+void cardinality_swap_row(VectorR& point,
+                          const vector<Index>& columns,
+                          const VectorR& inferior_frontier,
+                          const VectorR& superior_frontier,
+                          const Index swaps)
+{
+    for (Index s = 0; s < swaps; ++s)
+    {
+        vector<Index> off_candidates, on_candidates;
+
+        for (const Index column : columns)
+        {
+            const float value = point(column);
+            if (value > 0.5f && (value - inferior_frontier(column)) >= 1.0f - EPSILON)
+                off_candidates.push_back(column);
+            else if (value < 0.5f && (superior_frontier(column) - value) >= 1.0f - EPSILON)
+                on_candidates.push_back(column);
+        }
+
+        if (off_candidates.empty() || on_candidates.empty())
+            break;
+
+        const Index off_column = off_candidates[random_integer(0, static_cast<Index>(off_candidates.size()) - 1)];
+        const Index on_column  = on_candidates [random_integer(0, static_cast<Index>(on_candidates.size())  - 1)];
+
+        point(off_column) = round(point(off_column) - 1.0f);
+        point(on_column)  = round(point(on_column)  + 1.0f);
+    }
+}
+
+
+// Re-randomise a fraction of the free integer/binary columns to perturb a stuck row.
+void unlock_free_integers_row(VectorR& point,
+                              const vector<Index>& columns,
+                              const vector<float>& lattice_min,
+                              const vector<float>& lattice_max,
+                              const float fraction)
+{
+    for (size_t c = 0; c < columns.size(); ++c)
+        if (random_uniform(0.0f, 1.0f) < fraction)
+        {
+            const float span = max(0.0f, lattice_max[c] - lattice_min[c]);
+            const float draw = random_uniform(0.0f, 1.0f) * (span + 1.0f) + (lattice_min[c] - 0.5f);
+            point(columns[c]) = min(lattice_max[c], max(lattice_min[c], round(draw)));
+        }
+}
+
+} // namespace
+
+
+void repair_mixed_integer_inputs(MatrixR& inputs,
+                                 const VectorR& inferior_frontier,
+                                 const VectorR& superior_frontier,
+                                 const vector<MultivariateConstraint>& formula_constraints,
+                                 const vector<char>& fixed_mask,
+                                 const vector<Index>& lattice_columns,
+                                 const vector<float>& lattice_min,
+                                 const vector<float>& lattice_max,
+                                 const vector<vector<Index>>& cardinality_columns,
+                                 const vector<Index>& free_lattice_columns,
+                                 const vector<float>& free_lattice_min,
+                                 const vector<float>& free_lattice_max,
+                                 const Index outer_cap,
+                                 const float exploration_ratio)
+{
+    vector<const MultivariateConstraint*> input_constraints;
+    for (const MultivariateConstraint& constraint : formula_constraints)
+    {
+        if (!is_input_only_repairable(constraint))
+            continue;
+
+        const bool affine = (constraint.compiled.shape == FormulaShape::Affine
+                             && !constraint.compiled.affine_input_terms.empty());
+        const bool nonlinear = (constraint.compiled.shape == FormulaShape::Nonlinear
+                                && constraint.compiled.gradient_available);
+        if (affine || nonlinear)
+            input_constraints.push_back(&constraint);
+    }
+
+    const Index rows = inputs.rows();
+    const Index passes = max(Index(1), outer_cap);
+
+    // Lattice snap up front (binary clamps to its frontier via the lattice bounds).
+    for (size_t c = 0; c < lattice_columns.size(); ++c)
+        snap_to_lattice(inputs, lattice_columns[c], lattice_min[c], lattice_max[c]);
+
+    // Exact fast path: an affine constraint over only free integer/binary columns (pure-integer
+    // knapsack) is solved by one lattice clamp-and-carry. Cardinality-grouped columns are excluded.
+    std::set<Index> cardinality_set;
+    for (const vector<Index>& group : cardinality_columns)
+        cardinality_set.insert(group.begin(), group.end());
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+    {
+        if (!is_input_only_repairable(constraint)
+            || constraint.compiled.shape != FormulaShape::Affine
+            || constraint.compiled.affine_input_terms.empty())
+            continue;
+
+        bool all_free_discrete = true;
+        for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
+            if (term.first >= static_cast<Index>(fixed_mask.size())
+                || !fixed_mask[term.first] || cardinality_set.count(term.first))
+            { all_free_discrete = false; break; }
+
+        if (all_free_discrete)
+            repair_single_affine_integer(inputs, inferior_frontier, superior_frontier, constraint);
+    }
+
+    for (Index outer = 0; outer < passes; ++outer)
+    {
+        repair_affine_inputs_with_fixed(inputs, inferior_frontier, superior_frontier,
+                                        formula_constraints, fixed_mask);
+
+        if (input_constraints.empty())
+            return;   // nothing left to satisfy on the input side
+
+        bool all_feasible = true;
+        const bool last_pass = (outer + 1 >= passes);
+        const Index swaps = 1 + outer / 2;
+        const float unlock_fraction = min(1.0f, exploration_ratio * float(outer + 1));
+
+        for (Index r = 0; r < rows; ++r)
+        {
+            VectorR point = inputs.row(r).transpose();
+
+            if (row_satisfies_input_affine(point, input_constraints))
+                continue;
+
+            all_feasible = false;
+            if (last_pass)
+                continue;   // leave it for the feasibility filter to drop
+
+            for (const vector<Index>& columns : cardinality_columns)
+                cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
+
+            unlock_free_integers_row(point, free_lattice_columns, free_lattice_min, free_lattice_max, unlock_fraction);
+
+            inputs.row(r) = point.transpose();
+        }
+
+        if (all_feasible)
+            break;
+    }
 }
 
 

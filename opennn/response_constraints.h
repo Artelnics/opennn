@@ -110,6 +110,9 @@ struct LinearConstraintSet
 
 inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
 
+// Round one column to its integer lattice and clamp to [minimum, maximum].
+void snap_to_lattice(MatrixR& inputs, Index column, float minimum, float maximum);
+
 // True for a real, input-only constraint the repair pipeline can act on: a set
 // comparison operator, no opaque callback, and no output dependence.
 [[nodiscard]] inline bool is_input_only_repairable(const MultivariateConstraint& constraint)
@@ -118,6 +121,14 @@ inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-
         && constraint.comparison_operator != ComparisonOperator::None
         && constraint.compiled.scope == FormulaScope::InputsOnly;
 }
+
+// True when one constraint is satisfied at (input_row, output_row), within bound_tolerance on
+// every bound (strict GreaterThan/LessThan are treated like their non-strict forms). Evaluates
+// the callback or the compiled expression as appropriate. Shared by the feasibility filter and
+// the mixed-integer pump.
+[[nodiscard]] bool constraint_is_satisfied(const MultivariateConstraint& constraint,
+                                           const VectorR& input_row,
+                                           const VectorR& output_row);
 
 [[nodiscard]] bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints);
 
@@ -185,6 +196,28 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const vector<MultivariateConstraint>& formula_constraints,
                                      const vector<char>& fixed_columns,
                                      Index max_correction_passes = 64);
+
+// Cyclic feasibility pump for coupled mixed-integer / cardinality input constraints: snap the
+// discrete columns to the lattice, then repeatedly project the continuous slice with the discrete
+// columns fixed (repair_affine_inputs_with_fixed), test each row, and perturb still-infeasible
+// rows (escalating cardinality swap + free-integer unlock). Invariant: discrete columns move only
+// via snap/perturbation, never the projection, so they stay on-grid and in-box with no re-round.
+// The caller supplies the precomputed lattice / cardinality column groups. Rows still infeasible
+// after outer_cap passes fall to the downstream feasibility filter.
+void repair_mixed_integer_inputs(MatrixR& inputs,
+                                 const VectorR& inferior_frontier,
+                                 const VectorR& superior_frontier,
+                                 const vector<MultivariateConstraint>& formula_constraints,
+                                 const vector<char>& fixed_mask,
+                                 const vector<Index>& lattice_columns,
+                                 const vector<float>& lattice_min,
+                                 const vector<float>& lattice_max,
+                                 const vector<vector<Index>>& cardinality_columns,
+                                 const vector<Index>& free_lattice_columns,
+                                 const vector<float>& free_lattice_min,
+                                 const vector<float>& free_lattice_max,
+                                 Index outer_cap,
+                                 float exploration_ratio);
 
 // Surrogate callbacks for output-constraint repair (Regime 2 / reverse-mode
 // VJP). The module stays network-agnostic: the caller supplies the forward map

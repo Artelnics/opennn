@@ -1269,7 +1269,7 @@ TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
-    opt.set_branch_pruning(false);
+    opt.set_branch_mode(ResponseOptimization::BranchMode::Exhaustive);
 
     opt.set_iterations(3);
     opt.set_evaluations_number(400);
