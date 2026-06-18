@@ -215,6 +215,16 @@ struct NetworkDifferential
     }
 };
 
+
+// Built-once analytic Jacobian plus the flag tracking whether it has been built/decided for the
+// current network; the two always change together. A null differential means the finite-difference
+// fallback is in effect.
+struct NetworkJacobian
+{
+    unique_ptr<NetworkDifferential> differential;
+    bool ready = false;
+};
+
 }
 
 // OpenNN: Open Neural Networks Library.

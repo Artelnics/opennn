@@ -270,14 +270,15 @@ private:
     float deformation_domain_factor = 1.0f;
     BranchMode branch_mode = BranchMode::Budgeted;
 
-    // Transient solve state
+    // Transient solve state(I try to remove them)
 
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
-    mutable unique_ptr<NetworkDifferential> network_differential;
-    mutable bool network_differential_ready = false;
+    mutable NetworkJacobian network_jacobian;
 
     mutable SamplingMemory sampling_memory;
+	
+	// Do not remove it's useful for benchmarks
 
     mutable Index evaluations_used = 0;
 };

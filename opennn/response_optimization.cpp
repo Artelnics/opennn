@@ -30,8 +30,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
     variables_descriptives.clear();
-    network_differential.reset();
-    network_differential_ready = false;
+    network_jacobian = {};
 }
 
 
@@ -162,7 +161,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     else
         constraint_set.disjunctive.push_back(move(branches));
 
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -184,7 +183,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 
     constraint_set.multivariate.push_back(move(formula_constraint));
 
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -210,7 +209,7 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
 
     constraint_set.multivariate.push_back(move(formula_constraint));
 
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -218,7 +217,7 @@ void ResponseOptimization::clear_formula_constraints()
 {
     constraint_set.multivariate.clear();
     constraint_set.disjunctive.clear();
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -315,14 +314,14 @@ bool ResponseOptimization::is_history(const string& name) const
 void ResponseOptimization::set_fixed_history(const Tensor3& history)
 {
     fixed_history = history;
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
 void ResponseOptimization::clear_fixed_history()
 {
     fixed_history = Tensor3();
-    network_differential_ready = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -1305,14 +1304,14 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
     const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
     const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
-    if (network_differential)
+    if (network_jacobian.differential)
     {
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
                                   constraint_set.multivariate,
-                                  [this](const VectorR& x) { return network_differential->forward(x); },
-                                  [this](const VectorR& x, const VectorR& cotangent) { return network_differential->vjp(x, cotangent); },
+                                  [this](const VectorR& x) { return network_jacobian.differential->forward(x); },
+                                  [this](const VectorR& x, const VectorR& cotangent) { return network_jacobian.differential->vjp(x, cotangent); },
                                   64, fixed_columns);
     }
     else
@@ -2088,11 +2087,11 @@ void ResponseOptimization::initialize_network_differential() const
     // The analytic Jacobian models the network, not the constraints, so it is built and validated
     // once and reused across every branch; rebuilding it per solve_once would repeat the same work.
     // Invalidated when the network or the formula constraints change.
-    if (network_differential_ready)
+    if (network_jacobian.ready)
         return;
 
-    network_differential_ready = true;
-    network_differential.reset();
+    network_jacobian.ready = true;
+    network_jacobian.differential.reset();
 
     if (!neural_network || is_forecasting())
         return;
@@ -2186,7 +2185,7 @@ void ResponseOptimization::initialize_network_differential() const
 
     if (worst_forward_error < 1e-3f && worst_vjp_error < 2e-2f)
     {
-        network_differential = move(candidate);
+        network_jacobian.differential = move(candidate);
         cout << "> Analytic surrogate Jacobian active (forward error " << worst_forward_error
              << ", VJP-vs-finite-difference error " << worst_vjp_error << ")." << endl;
     }
