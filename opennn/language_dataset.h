@@ -33,6 +33,12 @@ public:
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
 
+    // Classification mode: treat the whole target field as a single atomic class
+    // label instead of tokenizing it. Without this, a label like "Sci_Tech" is
+    // split by tokenize() into ["sci","_","tech"], which makes read_csv() take the
+    // seq2seq branch (one "class" per word token) instead of N-way classification.
+    void set_classification_target(const bool&);
+
     void read_csv() override;
 
     void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
@@ -69,6 +75,8 @@ private:
 
     Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
+
+    bool classification_target = false;
 };
 
 }

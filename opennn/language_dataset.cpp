@@ -129,6 +129,12 @@ void LanguageDataset::set_target_vocabulary(const vector<string>& new_target_voc
 }
 
 
+void LanguageDataset::set_classification_target(const bool& new_classification_target)
+{
+    classification_target = new_classification_target;
+}
+
+
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
                                         vector<string>& vocabulary) const
 {
@@ -367,7 +373,19 @@ void LanguageDataset::read_csv()
             throw runtime_error("Line must contain two fields: input and target.");
 
         input_document_tokens[sample_index] = tokenize(tokens[0]);
-        target_document_tokens[sample_index] = tokenize(tokens[1]);
+
+        if(classification_target)
+        {
+            // Classification: the target field is a single atomic class label.
+            // Keep it whole (only trim surrounding whitespace) so labels like
+            // "Sci_Tech" stay one token instead of being split into sci/_/tech,
+            // which would push read_csv into the seq2seq branch below.
+            string label = tokens[1];
+            trim(label);
+            target_document_tokens[sample_index] = { label };
+        }
+        else
+            target_document_tokens[sample_index] = tokenize(tokens[1]);
 
         sample_index++;
     }
@@ -379,6 +397,25 @@ void LanguageDataset::read_csv()
     create_vocabulary(target_document_tokens, target_vocabulary);
 
     maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
+
+    // Cap the input sequence length. It is otherwise driven by the single longest
+    // document in the dataset, so one very long sample (e.g. a full Wikipedia
+    // abstract of ~1500 tokens) forces the whole model to that length. Multi-head
+    // attention is O(sequence_length^2) in memory and compute, so an unbounded
+    // length makes the CUDA training path allocate enormous tensors and abort
+    // (SIGABRT), and makes CPU training extremely slow. Documents longer than the
+    // cap are truncated during encoding (the encode loops below stop at
+    // maximum_input_sequence_length), so shorter datasets are unaffected.
+    static const Index MAXIMUM_INPUT_SEQUENCE_LENGTH = 256;
+    if(maximum_input_sequence_length > MAXIMUM_INPUT_SEQUENCE_LENGTH)
+    {
+        cout << "[LanguageDataset] Input sequence length capped from "
+             << maximum_input_sequence_length << " to "
+             << MAXIMUM_INPUT_SEQUENCE_LENGTH
+             << " tokens (longer documents are truncated)." << endl;
+
+        maximum_input_sequence_length = MAXIMUM_INPUT_SEQUENCE_LENGTH;
+    }
 
     const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
     const Index target_vocabulary_size = get_target_vocabulary_size();
