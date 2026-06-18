@@ -685,7 +685,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         #pragma omp atomic
         progress_counter++;
 
-        if (omp_get_thread_num() == 0)
+        if (omp_get_thread_num() == 0 && display)
             display_progress_bar(progress_counter, samples_number);
     }
 
