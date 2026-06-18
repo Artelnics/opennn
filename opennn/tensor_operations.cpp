@@ -564,10 +564,14 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        const float sum_scaled_gradient      = (gamma_map * output_delta_map).sum() * inv_D;
-        const float sum_scaled_gradient_norm = (gamma_map * output_delta_map * norm_map).sum() * inv_D;
+        // gamma * delta is reused three times; compute it once into the output buffer (no extra
+        // allocation) and reuse it for both reductions and the final update.
+        input_delta_map = gamma_map * output_delta_map;
 
-        input_delta_map = (gamma_map * output_delta_map - sum_scaled_gradient
+        const float sum_scaled_gradient      = input_delta_map.sum() * inv_D;
+        const float sum_scaled_gradient_norm = (input_delta_map * norm_map).sum() * inv_D;
+
+        input_delta_map = (input_delta_map - sum_scaled_gradient
                           - norm_map * sum_scaled_gradient_norm) * inv_std;
     }
 }
