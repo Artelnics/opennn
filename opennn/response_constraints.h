@@ -92,6 +92,26 @@ struct MultivariateConstraint
 };
 
 
+struct UnivariateConstraint
+{
+    ComparisonOperator comparison;
+    float low_bound;
+    float up_bound;
+
+    vector<float> allowed_values;
+
+    UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
+        : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
+};
+
+
+struct CardinalityConstraint
+{
+    vector<string> variable_names;
+    Index k = 0;
+};
+
+
 struct LinearConstraintSet
 {
     MatrixR A;

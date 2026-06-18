@@ -269,7 +269,7 @@ void ResponseOptimization::clear_time_roles(const string& name)
 }
 
 
-ResponseOptimization::UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
+UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
     const map<string, UnivariateConstraint>::const_iterator it = constraint_set.univariate.find(name);
 
