@@ -275,6 +275,7 @@ private:
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
     mutable unique_ptr<NetworkDifferential> network_differential;
+    mutable bool network_differential_ready = false;
 
     mutable SamplingMemory sampling_memory;
 

@@ -30,6 +30,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
     variables_descriptives.clear();
+    network_differential.reset();
+    network_differential_ready = false;
 }
 
 
@@ -159,6 +161,8 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
             constraint_set.multivariate.push_back(move(constraint));
     else
         constraint_set.disjunctive.push_back(move(branches));
+
+    network_differential_ready = false;
 }
 
 
@@ -179,6 +183,8 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
     formula_constraint.kind = classify(formula_constraint);
 
     constraint_set.multivariate.push_back(move(formula_constraint));
+
+    network_differential_ready = false;
 }
 
 
@@ -203,6 +209,8 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.kind = classify(formula_constraint);
 
     constraint_set.multivariate.push_back(move(formula_constraint));
+
+    network_differential_ready = false;
 }
 
 
@@ -210,6 +218,7 @@ void ResponseOptimization::clear_formula_constraints()
 {
     constraint_set.multivariate.clear();
     constraint_set.disjunctive.clear();
+    network_differential_ready = false;
 }
 
 
@@ -306,12 +315,14 @@ bool ResponseOptimization::is_history(const string& name) const
 void ResponseOptimization::set_fixed_history(const Tensor3& history)
 {
     fixed_history = history;
+    network_differential_ready = false;
 }
 
 
 void ResponseOptimization::clear_fixed_history()
 {
     fixed_history = Tensor3();
+    network_differential_ready = false;
 }
 
 
@@ -2074,19 +2085,36 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
 
 void ResponseOptimization::initialize_network_differential() const
 {
+    // The analytic Jacobian models the network, not the constraints, so it is built and validated
+    // once and reused across every branch; rebuilding it per solve_once would repeat the same work.
+    // Invalidated when the network or the formula constraints change.
+    if (network_differential_ready)
+        return;
+
+    network_differential_ready = true;
     network_differential.reset();
 
     if (!neural_network || is_forecasting())
         return;
 
-    bool has_output_constraint = false;
-    for (const MultivariateConstraint& constraint : constraint_set.multivariate)
-        if (!constraint.uses_callback
-            && constraint.comparison_operator != ComparisonOperator::None
-            && constraint.compiled.scope != FormulaScope::InputsOnly)
-            has_output_constraint = true;
+    // Only build if some part of the problem (base set or any disjunctive branch) carries a
+    // non-callback output constraint that the analytic Jacobian could repair.
+    const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)
+    {
+        for (const MultivariateConstraint& constraint : list)
+            if (!constraint.uses_callback
+                && constraint.comparison_operator != ComparisonOperator::None
+                && constraint.compiled.scope != FormulaScope::InputsOnly)
+                return true;
+        return false;
+    };
 
-    if (!has_output_constraint)
+    bool has_output = has_output_constraint(constraint_set.multivariate);
+    for (const vector<vector<MultivariateConstraint>>& disjunction : constraint_set.disjunctive)
+        for (const vector<MultivariateConstraint>& branch : disjunction)
+            has_output = has_output || has_output_constraint(branch);
+
+    if (!has_output)
         return;
 
     auto candidate = make_unique<NetworkDifferential>();
