@@ -55,11 +55,12 @@ public:
         vector<CardinalityConstraint> cardinality;
     };
 
-    struct SamplingScratch
+    struct SamplingMemory
     {
         map<string, vector<Index>> category_frequencies;
         vector<char> cardinality_preferred;
         map<string, Index> cardinality_indicator_columns;
+        float last_feasibility_rate = 1.0f;
     };
 
     struct Domain
@@ -170,7 +171,7 @@ public:
 
     vector<float> get_utopian_point() const;
 
-    const map<string, vector<Index>>& get_category_frequencies() const { return scratch.category_frequencies; }
+    const map<string, vector<Index>>& get_category_frequencies() const { return sampling_memory.category_frequencies; }
 
     const vector<CardinalityConstraint>& get_cardinality_constraints() const { return constraint_set.cardinality; }
 
@@ -259,9 +260,9 @@ public:
 
 private:
 
-    NeuralNetwork* neural_network = nullptr;
+    // Problem definition
 
-    mutable unique_ptr<NetworkDifferential> network_differential;
+    NeuralNetwork* neural_network = nullptr;
 
     ConstraintSet constraint_set;
 
@@ -269,38 +270,33 @@ private:
 
     map<string, TimeType> time_roles;
 
-    float min_feasible_ratio = 0.01f;
-    Index max_oversample_factor = 8;
-    float exploration_ratio = 0.1f;
+    Tensor3 fixed_history;
 
-    mutable float last_feasibility_rate = 1.0f;
+    // Algorithm hyperparameters
 
     Index evaluations_number = 2000;
-
     Index max_iterations = 20;
-
     Index min_iterations = 4;
-
-    float zoom_factor = 0.85f;
-
-    float relative_tolerance = 1e-6f;
-
+    Index initial_sampling_factor = 1;
     Index max_pareto_number = 10000;
-
     Index max_total_evaluations = 0;
-    mutable Index evaluations_used = 0;
+    Index max_oversample_factor = 8;
+    float zoom_factor = 0.85f;
+    float relative_tolerance = 1e-6f;
+    float min_feasible_ratio = 0.01f;
+    float exploration_ratio = 0.1f;
+    float deformation_domain_factor = 1.0f;
+    BranchMode branch_mode = BranchMode::Budgeted;
+
+    // Transient solve state
 
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
-    mutable SamplingScratch scratch;
+    mutable unique_ptr<NetworkDifferential> network_differential;
 
-    Index initial_sampling_factor = 1;
+    mutable SamplingMemory sampling_memory;
 
-    BranchMode branch_mode = BranchMode::Budgeted;
-
-    float deformation_domain_factor = 1.0f;
-
-    Tensor3 fixed_history;
+    mutable Index evaluations_used = 0;
 };
 
 }

@@ -774,7 +774,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
         }
 
         const Index exploration_count = llround(discrete_explore * effective_evaluations);
-        const bool have_preferred = (static_cast<Index>(scratch.cardinality_preferred.size()) == inputs_features_number);
+        const bool have_preferred = (static_cast<Index>(sampling_memory.cardinality_preferred.size()) == inputs_features_number);
 
         vector<float> draw;
         for (Index r = 0; r < effective_evaluations; ++r)
@@ -788,7 +788,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
                 for (Index c = 0; c < count; ++c)
                 {
                     if (force_on[c]) continue;
-                    if (scratch.cardinality_preferred[columns[c]]) any_preferred_free = true;
+                    if (sampling_memory.cardinality_preferred[columns[c]]) any_preferred_free = true;
                     else exploit_force_off[c] = 1;
                 }
                 if (any_preferred_free)
@@ -826,7 +826,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
     const Domain original_domain = get_original_domain("Input");
 
-    const float continuous_explore = clamp(max(exploration_ratio, 1.0f - last_feasibility_rate), 0.0f, 1.0f);
+    const float continuous_explore = clamp(max(exploration_ratio, 1.0f - sampling_memory.last_feasibility_rate), 0.0f, 1.0f);
     const float discrete_explore   = min(1.0f, 1.5f * continuous_explore);
 
     const auto sample_scalar = [&](const Index col, const Index first_row, const Index row_count,
@@ -894,7 +894,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         if (present_categories.empty())
             present_categories = original_categories;
 
-        vector<Index>& frequencies = scratch.category_frequencies[name];
+        vector<Index>& frequencies = sampling_memory.category_frequencies[name];
         if(Index(frequencies.size()) != categories_number)
             frequencies.assign(categories_number, 0);
 
@@ -1329,7 +1329,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 
     pair<MatrixR, MatrixR> feasible = filter_feasible_points(random_inputs, outputs, output_domain);
 
-    last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
+    sampling_memory.last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
 
     return feasible;
 }
@@ -1585,7 +1585,7 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
     if (constraint_set.cardinality.empty())
         return;
 
-    if (scratch.cardinality_indicator_columns.empty())
+    if (sampling_memory.cardinality_indicator_columns.empty())
     {
         const vector<Variable>& variables = get_variables_and_descriptives("Input").first;
         const vector<Index> dimensions = get_feature_dimensions(variables);
@@ -1604,16 +1604,16 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
             {
                 const auto found = column_of.find(name);
                 if (found != column_of.end())
-                    scratch.cardinality_indicator_columns[name] = found->second;
+                    sampling_memory.cardinality_indicator_columns[name] = found->second;
             }
     }
 
-    if (static_cast<Index>(scratch.cardinality_preferred.size()) != domain.superior_frontier.size())
-        scratch.cardinality_preferred.assign(domain.superior_frontier.size(), 0);
+    if (static_cast<Index>(sampling_memory.cardinality_preferred.size()) != domain.superior_frontier.size())
+        sampling_memory.cardinality_preferred.assign(domain.superior_frontier.size(), 0);
 
-    for (const auto& [name, column] : scratch.cardinality_indicator_columns)
+    for (const auto& [name, column] : sampling_memory.cardinality_indicator_columns)
     {
-        scratch.cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
+        sampling_memory.cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
 
         domain.inferior_frontier(column) = original.inferior_frontier(column);
         domain.superior_frontier(column) = original.superior_frontier(column);
@@ -2211,8 +2211,7 @@ MatrixR ResponseOptimization::solve_once() const
     throw_if(objectives_number == 0, "No objectives found\n");
 
     evaluations_used = 0;
-    scratch = SamplingScratch();
-    last_feasibility_rate = 1.0f;
+    sampling_memory = SamplingMemory();
 
     initialize_network_differential();
 
