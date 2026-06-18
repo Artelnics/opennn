@@ -18,7 +18,6 @@ namespace opennn
 {
 
 class NeuralNetwork;
-class Dataset;
 
 class ResponseOptimization
 {
@@ -46,6 +45,14 @@ public:
     {
         vector<string> variable_names;
         Index k = 0;
+    };
+
+    struct ConstraintSet
+    {
+        map<string, UnivariateConstraint> univariate;
+        vector<MultivariateConstraint> multivariate;
+        vector<vector<vector<MultivariateConstraint>>> disjunctive;
+        vector<CardinalityConstraint> cardinality;
     };
 
     struct Domain
@@ -158,7 +165,7 @@ public:
 
     const map<string, vector<Index>>& get_category_frequencies() const { return category_frequencies; }
 
-    const vector<CardinalityConstraint>& get_cardinality_constraints() const { return cardinality_constraints; }
+    const vector<CardinalityConstraint>& get_cardinality_constraints() const { return constraint_set.cardinality; }
 
     pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
                                                          const VectorR& importance_scale = VectorR()) const;
@@ -249,20 +256,11 @@ private:
 
     mutable unique_ptr<NetworkDifferential> network_differential;
 
-    map<string, UnivariateConstraint> constraints;
+    ConstraintSet constraint_set;
 
     map<string, Sense> objectives;
 
     map<string, TimeType> time_roles;
-
-    vector<MultivariateConstraint> formula_constraints;
-
-    // Non-smooth (min/max/abs) constraints expanded to disjunctive normal form:
-    // disjunctive_constraints[d][b] is the conjunction of smooth constraints for branch b of
-    // disjunction d. perform_response_optimization branches over them (union of the branches).
-    vector<vector<vector<MultivariateConstraint>>> disjunctive_constraints;
-
-    vector<CardinalityConstraint> cardinality_constraints;
 
     float min_feasible_ratio = 0.01f;
     Index max_oversample_factor = 8;
@@ -285,8 +283,6 @@ private:
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
 
-    // Cache of get_variables_and_descriptives(role) keyed by role; depends only on the network and
-    // time roles, so it is cleared whenever those change (set/set_time_role/clear_time_roles).
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
     mutable map<string, vector<Index>> category_frequencies;

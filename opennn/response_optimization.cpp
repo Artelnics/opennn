@@ -35,7 +35,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 
 void ResponseOptimization::set_constraint(const string& name, const ComparisonOperator comparison, float low, float up)
 {
-    constraints[name] = UnivariateConstraint(comparison, low, up);
+    constraint_set.univariate[name] = UnivariateConstraint(comparison, low, up);
 }
 
 
@@ -46,7 +46,7 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
 
     UnivariateConstraint constraint(ComparisonOperator::AllowedSet);
     constraint.allowed_values = allowed_values;
-    constraints[name] = move(constraint);
+    constraint_set.univariate[name] = move(constraint);
 }
 
 
@@ -59,13 +59,13 @@ void ResponseOptimization::set_cardinality_constraint(const vector<string>& vari
              "ResponseOptimization: cardinality target k=" + to_string(k)
              + " is out of range for " + to_string(variable_names.size()) + " indicator(s)");
 
-    cardinality_constraints.push_back({ variable_names, k });
+    constraint_set.cardinality.push_back({ variable_names, k });
 }
 
 
 void ResponseOptimization::clear_cardinality_constraints()
 {
-    cardinality_constraints.clear();
+    constraint_set.cardinality.clear();
 }
 
 
@@ -156,9 +156,9 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
 
     if (branches.size() == 1)
         for (MultivariateConstraint& constraint : branches[0])
-            formula_constraints.push_back(move(constraint));
+            constraint_set.multivariate.push_back(move(constraint));
     else
-        disjunctive_constraints.push_back(move(branches));
+        constraint_set.disjunctive.push_back(move(branches));
 }
 
 
@@ -178,7 +178,7 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
     formula_constraint.compiled.scope = FormulaScope::Mixed;
     formula_constraint.kind = classify(formula_constraint);
 
-    formula_constraints.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(move(formula_constraint));
 }
 
 
@@ -202,14 +202,14 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
     formula_constraint.kind = classify(formula_constraint);
 
-    formula_constraints.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(move(formula_constraint));
 }
 
 
 void ResponseOptimization::clear_formula_constraints()
 {
-    formula_constraints.clear();
-    disjunctive_constraints.clear();
+    constraint_set.multivariate.clear();
+    constraint_set.disjunctive.clear();
 }
 
 
@@ -233,13 +233,13 @@ void ResponseOptimization::set_exploration_ratio(float new_ratio)
 
 void ResponseOptimization::clear_constraints()
 {
-    constraints.clear();
+    constraint_set.univariate.clear();
 }
 
 
 void ResponseOptimization::clear_constraints(const string& name)
 {
-    constraints.erase(name);
+    constraint_set.univariate.erase(name);
 }
 
 
@@ -271,9 +271,9 @@ void ResponseOptimization::clear_time_roles(const string& name)
 
 ResponseOptimization::UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    const map<string, UnivariateConstraint>::const_iterator it = constraints.find(name);
+    const map<string, UnivariateConstraint>::const_iterator it = constraint_set.univariate.find(name);
 
-    return (it != constraints.end()) ? it->second : UnivariateConstraint(ComparisonOperator::None);
+    return (it != constraint_set.univariate.end()) ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
 
@@ -750,7 +750,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
     vector<vector<Index>> cardinality_columns;
 
-    for (const CardinalityConstraint& group : cardinality_constraints)
+    for (const CardinalityConstraint& group : constraint_set.cardinality)
     {
         vector<Index> columns;
         columns.reserve(group.variable_names.size());
@@ -991,7 +991,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         }
 
     bool discrete_is_coupled = false;
-    for (const MultivariateConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : constraint_set.multivariate)
     {
         if (constraint.kind != ConstraintKind::AffineInput && constraint.kind != ConstraintKind::NonlinearInput)
             continue;
@@ -1000,11 +1000,11 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 discrete_is_coupled = true;
     }
 
-    if (!cardinality_constraints.empty() || discrete_is_coupled)
+    if (!constraint_set.cardinality.empty() || discrete_is_coupled)
         repair_mixed_integer_inputs(random_inputs,
                                     input_domain.inferior_frontier,
                                     input_domain.superior_frontier,
-                                    formula_constraints,
+                                    constraint_set.multivariate,
                                     fixed_mask,
                                     lattice,
                                     cardinality_columns,
@@ -1015,7 +1015,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         repair_inputs(random_inputs,
                       input_domain.inferior_frontier,
                       input_domain.superior_frontier,
-                      formula_constraints);
+                      constraint_set.multivariate);
 
         round_discrete_inputs(random_inputs, variables,
                               input_domain.inferior_frontier,
@@ -1123,7 +1123,7 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& input_row,
                                                              const VectorR& output_row) const
 {
-    for (const MultivariateConstraint& formula_constraint : formula_constraints)
+    for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
         if (!constraint_is_satisfied(formula_constraint, input_row, output_row))
             return false;
 
@@ -1165,12 +1165,12 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             break;
     }
 
-    if (!formula_constraints.empty() && !feasible_indices.empty())
+    if (!constraint_set.multivariate.empty() && !feasible_indices.empty())
     {
         vector<Index> formula_feasible_indices;
         formula_feasible_indices.reserve(feasible_indices.size());
 
-        if (all_formula_constraints_are_linear(formula_constraints))
+        if (all_formula_constraints_are_linear(constraint_set.multivariate))
         {
             const Index k     = static_cast<Index>(feasible_indices.size());
             const Index n_in  = inputs.cols();
@@ -1179,7 +1179,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const MatrixR X = slice_rows(inputs, feasible_indices);
             const MatrixR Y = slice_rows(outputs, feasible_indices);
 
-            const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
+            const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, n_in, n_out);
 
             const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
                                  + Y * linear_set.A.rightCols(n_out).transpose();
@@ -1221,7 +1221,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
 {
     const Index multiplier = max(Index(1), evaluations_multiplier);
 
-    if (formula_constraints.empty())
+    if (constraint_set.multivariate.empty())
         return generate_feasible_points(input_domain, output_domain, evaluations_number * multiplier);
 
     const Index base_evaluations = evaluations_number * multiplier;
@@ -1299,7 +1299,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
-                                  formula_constraints,
+                                  constraint_set.multivariate,
                                   [this](const VectorR& x) { return network_differential->forward(x); },
                                   [this](const VectorR& x, const VectorR& cotangent) { return network_differential->vjp(x, cotangent); },
                                   64, fixed_columns);
@@ -1314,7 +1314,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
-                                  formula_constraints,
+                                  constraint_set.multivariate,
                                   batch_forward,
                                   64, fixed_columns);
     }
@@ -1448,7 +1448,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
 void ResponseOptimization::promote_single_variable_constraints()
 {
-    if (formula_constraints.empty() || !neural_network)
+    if (constraint_set.multivariate.empty() || !neural_network)
         return;
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
@@ -1477,9 +1477,9 @@ void ResponseOptimization::promote_single_variable_constraints()
     };
 
     vector<MultivariateConstraint> kept;
-    kept.reserve(formula_constraints.size());
+    kept.reserve(constraint_set.multivariate.size());
 
-    for (MultivariateConstraint& formula_constraint : formula_constraints)
+    for (MultivariateConstraint& formula_constraint : constraint_set.multivariate)
     {
         const CompiledFormula& compiled = formula_constraint.compiled;
 
@@ -1528,8 +1528,8 @@ void ResponseOptimization::promote_single_variable_constraints()
 
         float existing_lo = -numeric_limits<float>::infinity();
         float existing_hi =  numeric_limits<float>::infinity();
-        const auto existing = constraints.find(name);
-        if (existing != constraints.end() && !interval_of(existing->second, existing_lo, existing_hi))
+        const auto existing = constraint_set.univariate.find(name);
+        if (existing != constraint_set.univariate.end() && !interval_of(existing->second, existing_lo, existing_hi))
         { kept.push_back(move(formula_constraint)); continue; }
 
         const float new_lo = max(implied_lo, existing_lo);
@@ -1543,19 +1543,19 @@ void ResponseOptimization::promote_single_variable_constraints()
         const bool hi_finite = isfinite(new_hi);
 
         if (lo_finite && hi_finite && new_lo == new_hi)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
         else if (lo_finite && hi_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::Between, new_lo, new_hi);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::Between, new_lo, new_hi);
         else if (lo_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
         else if (hi_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
 
         cout << "> Promoted single-variable constraint '" << formula_constraint.expression
              << "' to a box on '" << name << "'." << endl;
     }
 
-    formula_constraints = move(kept);
+    constraint_set.multivariate = move(kept);
 }
 
 
@@ -1582,7 +1582,7 @@ vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& 
 
 void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Domain& original) const
 {
-    if (cardinality_constraints.empty())
+    if (constraint_set.cardinality.empty())
         return;
 
     if (cardinality_indicator_columns.empty())
@@ -1599,7 +1599,7 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
             feature += dimensions[i];
         }
 
-        for (const CardinalityConstraint& group : cardinality_constraints)
+        for (const CardinalityConstraint& group : constraint_set.cardinality)
             for (const string& name : group.variable_names)
             {
                 const auto found = column_of.find(name);
@@ -2080,7 +2080,7 @@ void ResponseOptimization::initialize_network_differential() const
         return;
 
     bool has_output_constraint = false;
-    for (const MultivariateConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : constraint_set.multivariate)
         if (!constraint.uses_callback
             && constraint.comparison_operator != ComparisonOperator::None
             && constraint.compiled.scope != FormulaScope::InputsOnly)
@@ -2234,7 +2234,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         enum class Type { Variable, Formula, Disjunction };
         Type type = Type::Variable;
         string variable_name;
-        Index index = 0;        // formula_constraints index (Formula) or disjunctive_constraints index (Disjunction)
+        Index index = 0;        // constraint_set.multivariate index (Formula) or constraint_set.disjunctive index (Disjunction)
         vector<float> values;   // membership values (Variable/Formula) or branch indices (Disjunction)
     };
 
@@ -2244,7 +2244,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     const vector<NamedColumn> input_columns = build_input_columns(input_variables);
 
     bool any_callback_formula = false;
-    for (const MultivariateConstraint& formula_constraint : formula_constraints)
+    for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
         if (formula_constraint.uses_callback)
             any_callback_formula = true;
 
@@ -2258,7 +2258,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     auto input_referenced_by_formula = [&](const Index column) -> bool
     {
         if (any_callback_formula) return true;
-        for (const MultivariateConstraint& formula_constraint : formula_constraints)
+        for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
             for (const Index referenced : formula_constraint.compiled.input_indices)
                 if (referenced == column) return true;
         return false;
@@ -2279,7 +2279,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     vector<BranchAxis> axes;
 
-    for (const auto& [name, constraint] : constraints)
+    for (const auto& [name, constraint] : constraint_set.univariate)
     {
         if (constraint.comparison != ComparisonOperator::AllowedSet || constraint.allowed_values.empty())
             continue;
@@ -2295,14 +2295,14 @@ MatrixR ResponseOptimization::perform_response_optimization()
         axes.push_back({BranchAxis::Type::Variable, name, 0, constraint.allowed_values});
     }
 
-    for (Index j = 0; j < static_cast<Index>(formula_constraints.size()); ++j)
-        if (formula_constraints[j].comparison_operator == ComparisonOperator::AllowedSet
-            && !formula_constraints[j].allowed_values.empty())
-            axes.push_back({BranchAxis::Type::Formula, string(), j, formula_constraints[j].allowed_values});
+    for (Index j = 0; j < static_cast<Index>(constraint_set.multivariate.size()); ++j)
+        if (constraint_set.multivariate[j].comparison_operator == ComparisonOperator::AllowedSet
+            && !constraint_set.multivariate[j].allowed_values.empty())
+            axes.push_back({BranchAxis::Type::Formula, string(), j, constraint_set.multivariate[j].allowed_values});
 
-    for (Index d = 0; d < static_cast<Index>(disjunctive_constraints.size()); ++d)
+    for (Index d = 0; d < static_cast<Index>(constraint_set.disjunctive.size()); ++d)
     {
-        vector<float> branch_indices(disjunctive_constraints[d].size());
+        vector<float> branch_indices(constraint_set.disjunctive[d].size());
         iota(branch_indices.begin(), branch_indices.end(), 0.0f);
         axes.push_back({BranchAxis::Type::Disjunction, string(), d, branch_indices});
     }
@@ -2334,8 +2334,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
         }
     }
 
-    const map<string, UnivariateConstraint> saved_constraints = constraints;
-    const vector<MultivariateConstraint> saved_formula_constraints = formula_constraints;
+    const map<string, UnivariateConstraint> saved_constraints = constraint_set.univariate;
+    const vector<MultivariateConstraint> saved_formula_constraints = constraint_set.multivariate;
     const Index saved_budget = max_total_evaluations;
 
     const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
@@ -2351,7 +2351,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         {
             if (axes[a].type == BranchAxis::Type::Formula)
             {
-                MultivariateConstraint& formula_constraint = formula_constraints[axes[a].index];
+                MultivariateConstraint& formula_constraint = constraint_set.multivariate[axes[a].index];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
@@ -2359,11 +2359,11 @@ MatrixR ResponseOptimization::perform_response_optimization()
             }
             else if (axes[a].type == BranchAxis::Type::Disjunction)
             {
-                const vector<MultivariateConstraint>& branch = disjunctive_constraints[axes[a].index][static_cast<Index>(values[a])];
-                formula_constraints.insert(formula_constraints.end(), branch.begin(), branch.end());
+                const vector<MultivariateConstraint>& branch = constraint_set.disjunctive[axes[a].index][static_cast<Index>(values[a])];
+                constraint_set.multivariate.insert(constraint_set.multivariate.end(), branch.begin(), branch.end());
             }
             else
-                constraints[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
+                constraint_set.univariate[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
         }
 
         max_total_evaluations = cap;
@@ -2374,8 +2374,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
         spent += evaluations_used;
 
-        constraints = saved_constraints;
-        formula_constraints = saved_formula_constraints;
+        constraint_set.univariate = saved_constraints;
+        constraint_set.multivariate = saved_formula_constraints;
         max_total_evaluations = saved_budget;
 
         return result;
