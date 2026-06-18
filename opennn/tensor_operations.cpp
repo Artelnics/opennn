@@ -1372,6 +1372,28 @@ MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix
 }
 
 
+VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
+{
+    VectorR result(static_cast<Index>(indices.size()));
+
+    for (Index i = 0; i < static_cast<Index>(indices.size()); ++i)
+        result(i) = values(indices[i]);
+
+    return result;
+}
+
+
+MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
+{
+    MatrixR result(static_cast<Index>(indices.size()), matrix.cols());
+
+    for (Index i = 0; i < static_cast<Index>(indices.size()); ++i)
+        result.row(i) = matrix.row(indices[i]);
+
+    return result;
+}
+
+
 VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
 {
     const Index rows = matrix.rows();

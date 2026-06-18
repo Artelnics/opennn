@@ -857,8 +857,12 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             candidates.push_back(nearest);
         }
 
+        // One locked bulk draw of every pick instead of locking the RNG once per row.
+        MatrixR picks(effective_evaluations, 1);
+        set_random_integer(picks, 0, static_cast<Index>(candidates.size()) - 1);
+
         for (Index i = 0; i < effective_evaluations; ++i)
-            random_inputs(i, col) = candidates[random_integer(0, candidates.size() - 1)];
+            random_inputs(i, col) = candidates[static_cast<size_t>(picks(i, 0))];
     };
 
     const auto sample_categorical = [&](const Index first_col, const Index categories_number, const string& name)
@@ -892,11 +896,21 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             return best;
         };
 
+        // The exploit rows (i >= explore_count) draw uniformly over the same category range, so a
+        // single bulk draw replaces one locked RNG call per exploit row. The explore rows are RNG-free.
+        const Index exploit_count = max(Index(0), effective_evaluations - explore_count);
+        MatrixR picks;
+        if (exploit_count > 0)
+        {
+            picks.resize(exploit_count, 1);
+            set_random_integer(picks, 0, static_cast<Index>(present_categories.size()) - 1);
+        }
+
         for(Index i = 0; i < effective_evaluations; ++i)
         {
             const Index chosen = (i < explore_count)
                 ? least_sampled_category(original_categories)
-                : present_categories[random_integer(0, present_categories.size() - 1)];
+                : present_categories[static_cast<size_t>(picks(i - explore_count, 0))];
 
             random_inputs(i, first_col + chosen) = 1.0;
             frequencies[chosen]++;
@@ -1150,13 +1164,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             const Index n_in  = inputs.cols();
             const Index n_out = outputs.cols();
 
-            MatrixR X(k, n_in);
-            MatrixR Y(k, n_out);
-            for (Index i = 0; i < k; ++i)
-            {
-                X.row(i) = inputs.row(feasible_indices[i]);
-                Y.row(i) = outputs.row(feasible_indices[i]);
-            }
+            const MatrixR X = slice_rows(inputs, feasible_indices);
+            const MatrixR Y = slice_rows(outputs, feasible_indices);
 
             const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
 
@@ -1190,18 +1199,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     if (feasible_indices.empty())
         return {MatrixR(), MatrixR()};
 
-    const Index feasible_count = static_cast<Index>(feasible_indices.size());
-
-    MatrixR feasible_inputs(feasible_count, inputs.cols());
-    MatrixR feasible_outputs(feasible_count, outputs.cols());
-
-    for (Index i = 0; i < feasible_count; ++i)
-    {
-        feasible_inputs.row(i) = inputs.row(feasible_indices[i]);
-        feasible_outputs.row(i) = outputs.row(feasible_indices[i]);
-    }
-
-    return {feasible_inputs, feasible_outputs};
+    return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
 }
 
 
@@ -1687,61 +1685,66 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 }
 
 
+// True if row `a` Pareto-dominates row `b` (maximization): no worse in every objective and
+// strictly better in at least one. Short-circuits on the first objective where `a` falls behind.
+static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, const Index b)
+{
+    bool strictly_better = false;
+
+    for (Index k = 0; k < objective_matrix.cols(); ++k)
+    {
+        const float difference = objective_matrix(a, k) - objective_matrix(b, k);
+        if (difference < 0.0f) return false;
+        if (difference > 0.0f) strictly_better = true;
+    }
+
+    return strictly_better;
+}
+
+
+// Row indices of the Pareto-optimal (non-dominated) points of an objective matrix, maximization
+// sense. Rows with non-finite entries are skipped (they neither belong to the front nor enter it
+// as dominators). Incremental cull: each point is tested only against the running front and, when
+// kept, evicts the front members it dominates — far cheaper than all-pairs once the front is small.
+static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
+{
+    const Index rows_number = objective_matrix.rows();
+
+    vector<Index> front;
+    front.reserve(rows_number);
+
+    for (Index i = 0; i < rows_number; ++i)
+    {
+        if (!objective_matrix.row(i).allFinite())
+            continue;
+
+        bool dominated = false;
+        for (const Index j : front)
+            if (pareto_dominates(objective_matrix, j, i)) { dominated = true; break; }
+
+        if (dominated)
+            continue;
+
+        front.erase(remove_if(front.begin(), front.end(),
+                              [&](const Index j) { return pareto_dominates(objective_matrix, i, j); }),
+                    front.end());
+        front.push_back(i);
+    }
+
+    return front;
+}
+
+
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs,
                                                               const MatrixR& outputs,
                                                               const MatrixR& objective_matrix) const
 {
-    const Index rows_number = inputs.rows();
-
-    if (rows_number == 0)
+    if (inputs.rows() == 0)
         return {};
 
-    vector<int> non_dominated(static_cast<size_t>(rows_number), 1);
+    const vector<Index> front = pareto_front_indices(objective_matrix);
 
-    for (Index i = 0; i < rows_number; ++i)
-    {
-        const auto row_i = objective_matrix.row(i);
-
-        if(!row_i.allFinite())
-        {
-            non_dominated[i] = 0;
-            continue;
-        }
-
-        for (Index j = 0; j < rows_number; ++j)
-        {
-            if (i == j)
-                continue;
-
-            const auto row_j = objective_matrix.row(j);
-
-            if ((row_j.array() >= row_i.array()).all() && (row_j.array() > row_i.array()).any())
-            {
-                non_dominated[i] = 0;
-                break;
-            }
-        }
-    }
-
-    vector<Index> non_dominated_indices;
-    non_dominated_indices.reserve(rows_number);
-
-    for (Index i = 0; i < rows_number; ++i)
-        if (non_dominated[i] == 1)
-            non_dominated_indices.push_back(i);
-
-    const Index pareto_size = static_cast<Index>(non_dominated_indices.size());
-
-    MatrixR pareto_inputs(pareto_size, inputs.cols());
-    MatrixR pareto_outputs(pareto_size, outputs.cols());
-
-    for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
-    {       
-        pareto_inputs.row(i) = inputs.row(non_dominated_indices[i]);
-        pareto_outputs.row(i) = outputs.row(non_dominated_indices[i]);
-    }
-
-    return {pareto_inputs, pareto_outputs};
+    return {slice_rows(inputs, front), slice_rows(outputs, front)};
 }
 
 
