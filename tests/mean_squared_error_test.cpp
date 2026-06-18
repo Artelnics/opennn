@@ -197,9 +197,10 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    // Embedding + Dense with large flattened sizes produces large gradients;
-    // absolute tolerance must account for gradient magnitude.
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-2));
+    const type max_abs_diff = (gradient - numerical_gradient).array().abs().maxCoeff();
+    const type gradient_scale = max(type(1), numerical_gradient.array().abs().maxCoeff());
+
+    EXPECT_LT(max_abs_diff / gradient_scale, type(2.0e-2));
 }
 
 

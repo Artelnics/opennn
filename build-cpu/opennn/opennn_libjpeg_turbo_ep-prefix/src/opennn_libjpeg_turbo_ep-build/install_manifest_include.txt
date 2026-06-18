@@ -1,0 +1,4 @@
+/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include/jconfig.h
+/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include/jerror.h
+/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include/jmorecfg.h
+/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include/jpeglib.h

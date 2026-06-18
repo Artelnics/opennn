@@ -1530,7 +1530,7 @@ void detection_forward_cuda(const Index batch_size,
 
     const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
     detection_forward_kernel<<<grid_size_for(total), block_size, 0,
-                               opennn::Backend::get_compute_stream()>>>(
+                               opennn::device::get_compute_stream()>>>(
         static_cast<int>(batch_size),
         static_cast<int>(grid_size),
         static_cast<int>(boxes_per_cell),
@@ -1615,7 +1615,7 @@ void detection_backward_cuda(const Index batch_size,
 
     const int total = static_cast<int>(batch_size * grid_size * grid_size * boxes_per_cell);
     detection_backward_kernel<<<grid_size_for(total), block_size, 0,
-                                opennn::Backend::get_compute_stream()>>>(
+                                opennn::device::get_compute_stream()>>>(
         static_cast<int>(batch_size),
         static_cast<int>(grid_size),
         static_cast<int>(boxes_per_cell),

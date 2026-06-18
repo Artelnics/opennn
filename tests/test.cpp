@@ -4,11 +4,16 @@
 #include <iostream>
 #include <cstdlib>
 
+#include "../opennn/configuration.h"
+
 using namespace std;
+using namespace opennn;
 
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
 
     try {
         return RUN_ALL_TESTS();

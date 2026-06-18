@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     adam->set_gradient_clip_norm(1.0e9f);
     if (argc > 3) adam->set_learning_rate(stof(argv[3]));
 
-    const TrainingResults results = training_strategy.train();
+    const auto results = training_strategy.train();
     cerr << "final_training_error " << results.get_training_error() << "\n";
 
     // Predict on the shared test split and write one prediction per line.

@@ -1,0 +1,1052 @@
+[
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -x c++-header -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/cmake_pch.hxx.gch -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx.cxx",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx.cxx",
+  "output": "opennn/CMakeFiles/opennn.dir/cmake_pch.hxx.gch"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/activation_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/activation_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/activation_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/activation_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/activation_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/activation_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/activation_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/activation_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/adaptive_moment_estimation.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/adaptive_moment_estimation.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/adaptive_moment_estimation.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/adaptive_moment_estimation.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/add_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/add_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/add_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/add_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/addition_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/addition_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/addition_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/attention_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/attention_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/attention_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/attention_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/back_propagation.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/back_propagation.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/back_propagation.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/back_propagation.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/batch.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/batch.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/batch.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/batch.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/batch_norm_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/batch_norm_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/batch_norm_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/batch_norm_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/bound_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/bound_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/bound_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/bound_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/bounding_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/bounding_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/bounding_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/bounding_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/combination_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/combination_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/combination_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/combination_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/concatenation_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/concatenation_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/concatenation_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/concatenation_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/concatenation_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/concatenation_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/concatenation_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/concatenation_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/configuration.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/configuration.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/configuration.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/configuration.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/constraint_formulas.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/constraint_formulas.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/constraint_formulas.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/constraint_formulas.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/convolution_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/convolution_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/convolution_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/convolution_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/convolutional_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/convolutional_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/convolutional_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/convolutional_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/correlations.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/correlations.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/correlations.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/correlations.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/cpu_math_backend.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/cpu_math_backend.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/cpu_math_backend.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/cpu_math_backend.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/dense_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/dense_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/dense_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/dense_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/detection_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/detection_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/detection_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/detection_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/detection_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/detection_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/detection_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/detection_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/device_backend.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/device_backend.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/device_backend.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/device_backend.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/dropout_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/dropout_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/dropout_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/dropout_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/embedding_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/embedding_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/embedding_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/embedding_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/embedding_lookup_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/embedding_lookup_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/embedding_lookup_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/embedding_lookup_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/error_functions.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/error_functions.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/error_functions.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/error_functions.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/flat_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/flat_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/flat_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/flat_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/flatten_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/flatten_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/flatten_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/flatten_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/forward_propagation.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/forward_propagation.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/forward_propagation.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/forward_propagation.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/genetic_algorithm.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/genetic_algorithm.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/genetic_algorithm.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/genetic_algorithm.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/growing_inputs.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/growing_inputs.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/growing_inputs.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/growing_inputs.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/growing_neurons.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/growing_neurons.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/growing_neurons.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/growing_neurons.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/image_dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/image_dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/image_dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/image_dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/image_processing.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/image_processing.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/image_processing.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/image_processing.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/inputs_selection.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/inputs_selection.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/inputs_selection.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/inputs_selection.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/io_utilities.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/io_utilities.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/io_utilities.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/io_utilities.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/json.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/json.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/json.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/json.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/language_dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/language_dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/language_dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/language_dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/layer_norm_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/layer_norm_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/layer_norm_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/layer_norm_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/levenberg_marquardt_algorithm.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/levenberg_marquardt_algorithm.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/levenberg_marquardt_algorithm.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/levenberg_marquardt_algorithm.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/long_short_term_memory_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/long_short_term_memory_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/long_short_term_memory_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/long_short_term_memory_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/long_short_term_memory_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/long_short_term_memory_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/long_short_term_memory_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/long_short_term_memory_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/loss.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/loss.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/loss.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/loss.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/merge_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/merge_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/merge_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/merge_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/model_expression.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/model_expression.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/model_expression.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/model_expression.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/model_selection.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/model_selection.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/model_selection.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/model_selection.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/multihead_attention_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/multihead_attention_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/multihead_attention_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/multihead_attention_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/multihead_projection_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/multihead_projection_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/multihead_projection_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/multihead_projection_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/network_differential.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/network_differential.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/network_differential.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/network_differential.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/neural_network.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/neural_network.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/neural_network.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/neural_network.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/neuron_selection.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/neuron_selection.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/neuron_selection.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/neuron_selection.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/non_max_suppression_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/non_max_suppression_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/non_max_suppression_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/non_max_suppression_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/non_max_suppression_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/non_max_suppression_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/non_max_suppression_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/non_max_suppression_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/normalization_layer_3d.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/normalization_layer_3d.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/normalization_layer_3d.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/normalization_layer_3d.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/optimizer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/optimizer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/optimizer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/optimizer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/pch.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/pch.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/pch.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/pch.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/pool3d_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/pool3d_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/pool3d_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/pool3d_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/pool_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/pool_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/pool_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/pool_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/pooling_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/pooling_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/pooling_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/pooling_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/pooling_layer_3d.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/pooling_layer_3d.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/pooling_layer_3d.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/pooling_layer_3d.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/quasi_newton_method.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/quasi_newton_method.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/quasi_newton_method.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/quasi_newton_method.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/random_utilities.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/random_utilities.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/random_utilities.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/random_utilities.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/recurrent_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/recurrent_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/recurrent_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/recurrent_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/recurrent_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/recurrent_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/recurrent_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/recurrent_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/registry.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/registry.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/registry.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/registry.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/response_optimization.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/response_optimization.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/response_optimization.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/response_optimization.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/scale_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/scale_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/scale_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/scale_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/scaling.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/scaling.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/scaling.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/scaling.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/scaling_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/scaling_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/scaling_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/scaling_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/standard_networks.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/standard_networks.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/standard_networks.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/standard_networks.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/statistics.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/statistics.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/statistics.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/statistics.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/stochastic_gradient_descent.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/stochastic_gradient_descent.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/stochastic_gradient_descent.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/stochastic_gradient_descent.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/string_utilities.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/string_utilities.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/string_utilities.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/string_utilities.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/tabular_dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/tabular_dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/tabular_dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/tabular_dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/tensor_operations.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/tensor_operations.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/tensor_operations.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/tensor_operations.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/tensor_types.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/tensor_types.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/tensor_types.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/tensor_types.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/testing_analysis.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/testing_analysis.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/testing_analysis.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/testing_analysis.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/time_series_dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/time_series_dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/time_series_dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/time_series_dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/training_result.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/training_result.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/training_result.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/training_result.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/training_strategy.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/training_strategy.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/training_strategy.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/training_strategy.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/transformer_decoder.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/transformer_decoder.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/transformer_decoder.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/transformer_decoder.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/unscaling_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/unscaling_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/unscaling_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/unscaling_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/upsample_layer.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/upsample_layer.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/upsample_layer.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/upsample_layer.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/upsample_operator.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/upsample_operator.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/upsample_operator.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/upsample_operator.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/variable.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/variable.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/variable.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/variable.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -fopenmp -Wall -Wextra -Wpedantic -Wswitch-enum -O3 -fno-math-errno -fno-trapping-math -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/opennn.dir/yolo_dataset.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/opennn/yolo_dataset.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/opennn/yolo_dataset.cpp",
+  "output": "opennn/CMakeFiles/opennn.dir/yolo_dataset.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -x c++-header -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/cmake_pch.hxx.gch -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx.cxx",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx.cxx",
+  "output": "tests/CMakeFiles/run_tests.dir/cmake_pch.hxx.gch"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/activation_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/activation_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/activation_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/activation_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/adaptive_moment_estimation_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/adaptive_moment_estimation_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/adaptive_moment_estimation_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/adaptive_moment_estimation_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/addition_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/addition_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/addition_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/addition_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/batch_norm_operator_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/batch_norm_operator_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/batch_norm_operator_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/batch_norm_operator_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/bounding_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/bounding_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/bounding_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/bounding_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/concatenation_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/concatenation_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/concatenation_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/concatenation_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/concatenation_operator_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/concatenation_operator_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/concatenation_operator_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/concatenation_operator_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/convolutional_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/convolutional_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/convolutional_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/convolutional_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/correlations_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/correlations_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/correlations_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/correlations_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/cross_entropy_error_3d_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/cross_entropy_error_3d_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/cross_entropy_error_3d_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/cross_entropy_error_3d_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/cross_entropy_error_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/cross_entropy_error_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/cross_entropy_error_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/cross_entropy_error_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/dense_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/dense_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/dense_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/dense_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/detection_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/detection_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/detection_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/detection_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/device_backend_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/device_backend_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/device_backend_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/device_backend_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/dropout_operator_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/dropout_operator_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/dropout_operator_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/dropout_operator_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/embedding_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/embedding_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/embedding_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/embedding_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/flatten_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/flatten_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/flatten_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/flatten_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/genetic_algorithm_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/genetic_algorithm_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/genetic_algorithm_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/genetic_algorithm_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/gpu_comparison_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/gpu_comparison_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/gpu_comparison_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/gpu_comparison_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/growing_inputs_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/growing_inputs_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/growing_inputs_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/growing_inputs_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/growing_neurons_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/growing_neurons_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/growing_neurons_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/growing_neurons_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/image_dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/image_dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/image_dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/image_dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/image_processing_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/image_processing_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/image_processing_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/image_processing_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/io_utilities_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/io_utilities_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/io_utilities_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/io_utilities_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/language_dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/language_dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/language_dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/language_dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/levenberg_marquardt_algorithm_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/levenberg_marquardt_algorithm_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/levenberg_marquardt_algorithm_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/levenberg_marquardt_algorithm_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/long_short_term_memory_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/long_short_term_memory_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/long_short_term_memory_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/long_short_term_memory_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/mean_squared_error_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/mean_squared_error_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/mean_squared_error_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/mean_squared_error_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/minkowski_error_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/minkowski_error_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/minkowski_error_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/minkowski_error_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/model_expression_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/model_expression_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/model_expression_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/model_expression_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/model_selection_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/model_selection_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/model_selection_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/model_selection_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/multihead_attention_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/multihead_attention_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/multihead_attention_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/multihead_attention_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/neural_network_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/neural_network_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/neural_network_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/neural_network_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/non_max_suppression_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/non_max_suppression_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/non_max_suppression_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/non_max_suppression_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/normalization_layer_3d_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/normalization_layer_3d_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/normalization_layer_3d_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/normalization_layer_3d_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/normalized_squared_error_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/normalized_squared_error_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/normalized_squared_error_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/normalized_squared_error_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/numerical_derivatives.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/numerical_derivatives.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/numerical_derivatives.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/numerical_derivatives.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/pool3d_operator_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/pool3d_operator_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/pool3d_operator_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/pool3d_operator_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/pooling_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/pooling_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/pooling_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/pooling_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/quasi_newton_method_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/quasi_newton_method_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/quasi_newton_method_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/quasi_newton_method_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/recurrent_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/recurrent_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/recurrent_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/recurrent_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/registry_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/registry_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/registry_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/registry_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/response_optimization_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/response_optimization_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/response_optimization_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/response_optimization_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/scaling_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/scaling_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/scaling_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/scaling_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/scaling_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/scaling_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/scaling_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/scaling_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/statistics_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/statistics_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/statistics_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/statistics_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/stochastic_gradient_descent_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/stochastic_gradient_descent_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/stochastic_gradient_descent_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/stochastic_gradient_descent_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/string_utilities_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/string_utilities_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/string_utilities_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/string_utilities_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/tabular_dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/tabular_dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/tabular_dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/tabular_dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/tensors_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/tensors_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/tensors_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/tensors_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/testing_analysis_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/testing_analysis_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/testing_analysis_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/testing_analysis_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/timeseries_dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/timeseries_dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/timeseries_dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/timeseries_dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/training_strategy_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/training_strategy_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/training_strategy_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/training_strategy_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/transformer_decoder_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/transformer_decoder_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/transformer_decoder_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/transformer_decoder_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/transformer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/transformer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/transformer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/transformer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/unscaling_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/unscaling_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/unscaling_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/unscaling_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/upsample_layer_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/upsample_layer_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/upsample_layer_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/upsample_layer_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/upsample_operator_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/upsample_operator_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/upsample_operator_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/upsample_operator_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/weighted_squared_error_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/weighted_squared_error_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/weighted_squared_error_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/weighted_squared_error_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/yolo_dataset_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_dataset_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_dataset_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/yolo_dataset_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/yolo_fpn_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_fpn_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_fpn_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/yolo_fpn_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/yolo_inference_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_inference_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_inference_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/yolo_inference_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/tests/CMakeFiles/run_tests.dir/cmake_pch.hxx -o CMakeFiles/run_tests.dir/yolo_loss_test.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_loss_test.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/tests/yolo_loss_test.cpp",
+  "output": "tests/CMakeFiles/run_tests.dir/yolo_loss_test.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++  -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/include -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "output": "_deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++  -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "output": "_deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++  -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "output": "_deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++  -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/include -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "output": "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/blank",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/examples/blank/../opennn -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/blank.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/blank/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/blank/main.cpp",
+  "output": "examples/blank/CMakeFiles/blank.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/airfoil_self_noise",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/airfoil_self_noise.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/airfoil_self_noise/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/airfoil_self_noise/main.cpp",
+  "output": "examples/airfoil_self_noise/CMakeFiles/airfoil_self_noise.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/amazon_reviews",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/amazon_reviews.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/amazon_reviews/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/amazon_reviews/main.cpp",
+  "output": "examples/amazon_reviews/CMakeFiles/amazon_reviews.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/breast_cancer",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/breast_cancer.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/breast_cancer/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/breast_cancer/main.cpp",
+  "output": "examples/breast_cancer/CMakeFiles/breast_cancer.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/emotion_analysis",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/emotion_analysis.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/emotion_analysis/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/emotion_analysis/main.cpp",
+  "output": "examples/emotion_analysis/CMakeFiles/emotion_analysis.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/no2_forecasting",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/no2_forecasting.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/no2_forecasting/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/no2_forecasting/main.cpp",
+  "output": "examples/no2_forecasting/CMakeFiles/no2_forecasting.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/iris_plant",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/iris_plant.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/iris_plant/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/iris_plant/main.cpp",
+  "output": "examples/iris_plant/CMakeFiles/iris_plant.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/mnist",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/mnist.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/mnist/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/mnist/main.cpp",
+  "output": "examples/mnist/CMakeFiles/mnist.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/melanoma_cancer",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/melanoma_cancer.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/melanoma_cancer/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/melanoma_cancer/main.cpp",
+  "output": "examples/melanoma_cancer/CMakeFiles/melanoma_cancer.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/translation",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/translation.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/translation/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/translation/main.cpp",
+  "output": "examples/translation/CMakeFiles/translation.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/yolo",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -Winvalid-pch -include /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/opennn/CMakeFiles/opennn.dir/cmake_pch.hxx -o CMakeFiles/yolo.dir/main.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/examples/yolo/main.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/examples/yolo/main.cpp",
+  "output": "examples/yolo/CMakeFiles/yolo.dir/main.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/capacity_benchmark",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/opennn_capacity.dir/__/__/docs/benchmarks/capacity/opennn_capacity.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/capacity/opennn_capacity.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/capacity/opennn_capacity.cpp",
+  "output": "examples/capacity_benchmark/CMakeFiles/opennn_capacity.dir/__/__/docs/benchmarks/capacity/opennn_capacity.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/training_speed_benchmark",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/opennn_speed.dir/__/__/docs/benchmarks/training-speed/opennn_speed.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/training-speed/opennn_speed.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/training-speed/opennn_speed.cpp",
+  "output": "examples/training_speed_benchmark/CMakeFiles/opennn_speed.dir/__/__/docs/benchmarks/training-speed/opennn_speed.cpp.o"
+},
+{
+  "directory": "/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/examples/inference_speed_benchmark",
+  "command": "/usr/bin/c++ -DEIGEN_NO_DEBUG -I/home/artelnics/Documents/openNN_refactor/opennn/opennn -I/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/eigen-src -isystem /home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/include  -fopenmp -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -Wno-interference-size -Wno-switch-enum -Wno-unused-parameter -Wno-unused-result -o CMakeFiles/opennn_inference.dir/__/__/docs/benchmarks/inference-speed/opennn_inference.cpp.o -c /home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/inference-speed/opennn_inference.cpp",
+  "file": "/home/artelnics/Documents/openNN_refactor/opennn/docs/benchmarks/inference-speed/opennn_inference.cpp",
+  "output": "examples/inference_speed_benchmark/CMakeFiles/opennn_inference.dir/__/__/docs/benchmarks/inference-speed/opennn_inference.cpp.o"
+}
+]
