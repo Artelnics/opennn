@@ -1,6 +1,0 @@
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/libjpeg.a
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/pkgconfig/libjpeg.pc
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfig.cmake
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfigVersion.cmake
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboTargets.cmake
-/home/artelnics/Documents/openNN_refactor/opennn/build-cpu/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboTargets-release.cmake
