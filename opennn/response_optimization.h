@@ -287,7 +287,7 @@ private:
 
     // Cache of get_variables_and_descriptives(role) keyed by role; depends only on the network and
     // time roles, so it is cleared whenever those change (set/set_time_role/clear_time_roles).
-    mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives_cache;
+    mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
     mutable map<string, vector<Index>> category_frequencies;
 

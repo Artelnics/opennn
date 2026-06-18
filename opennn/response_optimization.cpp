@@ -29,7 +29,7 @@ ResponseOptimization::~ResponseOptimization() = default;
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
-    variables_descriptives_cache.clear();
+    variables_descriptives.clear();
 }
 
 
@@ -78,7 +78,7 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense)
 void ResponseOptimization::set_time_role(const string& name, const TimeType role)
 {
     time_roles[name] = role;
-    variables_descriptives_cache.clear();
+    variables_descriptives.clear();
 }
 
 
@@ -258,14 +258,14 @@ void ResponseOptimization::clear_objectives(const string& name)
 void ResponseOptimization::clear_time_roles()
 {
     time_roles.clear();
-    variables_descriptives_cache.clear();
+    variables_descriptives.clear();
 }
 
 
 void ResponseOptimization::clear_time_roles(const string& name)
 {
     time_roles.erase(name);
-    variables_descriptives_cache.clear();
+    variables_descriptives.clear();
 }
 
 
@@ -414,8 +414,8 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
     // The filtered variables/descriptives depend only on the network and the time roles, both
     // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
     // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
-    const auto cached = variables_descriptives_cache.find(role);
-    if (cached != variables_descriptives_cache.end())
+    const auto cached = variables_descriptives.find(role);
+    if (cached != variables_descriptives.end())
         return cached->second;
 
     const bool is_input_request = (role == "Input");
@@ -463,7 +463,7 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         }
     }
 
-    const auto inserted = variables_descriptives_cache.emplace(role, make_pair(move(filtered_vars), move(filtered_desc)));
+    const auto inserted = variables_descriptives.emplace(role, make_pair(move(filtered_vars), move(filtered_desc)));
     return inserted.first->second;
 }
 
