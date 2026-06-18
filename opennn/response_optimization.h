@@ -55,6 +55,13 @@ public:
         vector<CardinalityConstraint> cardinality;
     };
 
+    struct SamplingScratch
+    {
+        map<string, vector<Index>> category_frequencies;
+        vector<char> cardinality_preferred;
+        map<string, Index> cardinality_indicator_columns;
+    };
+
     struct Domain
     {
         Domain() = default;
@@ -163,7 +170,7 @@ public:
 
     vector<float> get_utopian_point() const;
 
-    const map<string, vector<Index>>& get_category_frequencies() const { return category_frequencies; }
+    const map<string, vector<Index>>& get_category_frequencies() const { return scratch.category_frequencies; }
 
     const vector<CardinalityConstraint>& get_cardinality_constraints() const { return constraint_set.cardinality; }
 
@@ -285,11 +292,7 @@ private:
 
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
-    mutable map<string, vector<Index>> category_frequencies;
-
-    mutable vector<char> cardinality_preferred;
-
-    mutable map<string, Index> cardinality_indicator_columns;
+    mutable SamplingScratch scratch;
 
     Index initial_sampling_factor = 1;
 
