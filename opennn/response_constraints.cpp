@@ -2019,7 +2019,7 @@ void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
                                const vector<MultivariateConstraint>& formula_constraints,
-                               const SurrogateForward& forward,
+                               const SurrogateBatchForward& batch_forward,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
 {
@@ -2029,16 +2029,34 @@ void repair_output_constraints(MatrixR& inputs,
     for (Index j = 0; j < inputs_number; ++j)
         step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));
 
-    const SurrogateVjp finite_difference_vjp =
-        [&forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
+    // Single-row forward for the constraint evaluation inside the Gauss-Newton loop.
+    const SurrogateForward forward = [&batch_forward](const VectorR& x) -> VectorR
     {
-        VectorR gradient = VectorR::Zero(inputs_number);
+        MatrixR single(1, x.size());
+        single.row(0) = x.transpose();
+        return batch_forward(single).row(0).transpose();
+    };
+
+    // Central-difference VJP: stack all 2*inputs_number perturbations of the row and evaluate them
+    // in one batched forward call (rows are independent), instead of two forwards per dimension.
+    const SurrogateVjp finite_difference_vjp =
+        [&batch_forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
+    {
+        MatrixR perturbed(2 * inputs_number, inputs_number);
         for (Index k = 0; k < inputs_number; ++k)
         {
-            VectorR plus = x, minus = x;
-            plus(k) += step(k);
-            minus(k) -= step(k);
-            const VectorR derivative = (forward(plus) - forward(minus)) / (2.0f * step(k));
+            perturbed.row(2 * k)     = x.transpose();
+            perturbed.row(2 * k + 1) = x.transpose();
+            perturbed(2 * k,     k) += step(k);
+            perturbed(2 * k + 1, k) -= step(k);
+        }
+
+        const MatrixR perturbed_outputs = batch_forward(perturbed);
+
+        VectorR gradient(inputs_number);
+        for (Index k = 0; k < inputs_number; ++k)
+        {
+            const VectorR derivative = (perturbed_outputs.row(2 * k) - perturbed_outputs.row(2 * k + 1)).transpose() / (2.0f * step(k));
             gradient(k) = derivative.dot(cotangent);
         }
         return gradient;

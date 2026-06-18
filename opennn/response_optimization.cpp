@@ -29,6 +29,7 @@ ResponseOptimization::~ResponseOptimization() = default;
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
+    variables_descriptives_cache.clear();
 }
 
 
@@ -77,6 +78,7 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense)
 void ResponseOptimization::set_time_role(const string& name, const TimeType role)
 {
     time_roles[name] = role;
+    variables_descriptives_cache.clear();
 }
 
 
@@ -256,12 +258,14 @@ void ResponseOptimization::clear_objectives(const string& name)
 void ResponseOptimization::clear_time_roles()
 {
     time_roles.clear();
+    variables_descriptives_cache.clear();
 }
 
 
 void ResponseOptimization::clear_time_roles(const string& name)
 {
     time_roles.erase(name);
+    variables_descriptives_cache.clear();
 }
 
 
@@ -407,6 +411,13 @@ vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) 
 
 pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables_and_descriptives(const string& role) const
 {
+    // The filtered variables/descriptives depend only on the network and the time roles, both
+    // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
+    // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
+    const auto cached = variables_descriptives_cache.find(role);
+    if (cached != variables_descriptives_cache.end())
+        return cached->second;
+
     const bool is_input_request = (role == "Input");
 
     const vector<Variable>& variables_uncheked = is_input_request ? neural_network->get_input_variables()
@@ -452,7 +463,8 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
         }
     }
 
-    return {filtered_vars, filtered_desc};
+    const auto inserted = variables_descriptives_cache.emplace(role, make_pair(move(filtered_vars), move(filtered_desc)));
+    return inserted.first->second;
 }
 
 void ResponseOptimization::Domain::set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const float deformation_domain_factor)
@@ -1294,18 +1306,16 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
     }
     else
     {
-        const SurrogateForward forward = [this](const VectorR& x) -> VectorR
+        const SurrogateBatchForward batch_forward = [this](const MatrixR& x) -> MatrixR
         {
-            MatrixR single(1, x.size());
-            single.row(0) = x.transpose();
-            return calculate_outputs(single).row(0).transpose();
+            return calculate_outputs(x);
         };
 
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
                                   formula_constraints,
-                                  forward,
+                                  batch_forward,
                                   64, fixed_columns);
     }
 
@@ -1405,15 +1415,23 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
                                                                       const MatrixR& feasible_outputs,
                                                                       const Objectives& objectives) const
 {
-    const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
-
     MatrixR objective_matrix = objectives.extract(feasible_inputs, feasible_outputs);
-
     objectives.normalize(objective_matrix);
+
+    return calculate_optimal_points(feasible_inputs, feasible_outputs, objectives, objective_matrix);
+}
+
+
+pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                                      const MatrixR& feasible_outputs,
+                                                                      const Objectives& objectives,
+                                                                      const MatrixR& normalized_objective_matrix) const
+{
+    const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
 
     const VectorR normalized_utopian_point = (objectives.utopian_and_sense.row(1).array() + (float)1.0) / (float)2.0;
 
-    const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , (int)subset_dimension);
+    const VectorI nearest_rows = get_nearest_points(normalized_objective_matrix, normalized_utopian_point , (int)subset_dimension);
 
     MatrixR nearest_inputs(subset_dimension, feasible_inputs.cols());
     MatrixR nearest_outputs(subset_dimension, feasible_outputs.cols());
@@ -1685,6 +1703,32 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 }
 
 
+// Vertically stack row-blocks in a single allocation. Replaces repeated append_rows, which copies
+// the whole growing matrix every call (quadratic). Empty blocks contribute no rows.
+static MatrixR stack_rows(const vector<MatrixR>& blocks)
+{
+    if (blocks.empty())
+        return MatrixR();
+
+    Index total_rows = 0;
+    for (const MatrixR& block : blocks)
+        total_rows += block.rows();
+
+    MatrixR result(total_rows, blocks.front().cols());
+
+    Index row = 0;
+    for (const MatrixR& block : blocks)
+    {
+        if (block.rows() == 0)
+            continue;
+        result.middleRows(row, block.rows()) = block;
+        row += block.rows();
+    }
+
+    return result;
+}
+
+
 // True if row `a` Pareto-dominates row `b` (maximization): no worse in every objective and
 // strictly better in at least one. Short-circuits on the first objective where `a` falls behind.
 static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, const Index b)
@@ -1841,8 +1885,8 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     {
         cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
 
-        MatrixR candidate_inputs = global_pareto_inputs;
-        MatrixR candidate_outputs = global_pareto_outputs;
+        vector<MatrixR> candidate_input_blocks { global_pareto_inputs };
+        vector<MatrixR> candidate_output_blocks { global_pareto_outputs };
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
@@ -1856,19 +1900,24 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix );
 
-            candidate_inputs = append_rows(candidate_inputs, local_pareto_input);
-            candidate_outputs = append_rows(candidate_outputs, local_pareto_output);
+            candidate_input_blocks.push_back(move(local_pareto_input));
+            candidate_output_blocks.push_back(move(local_pareto_output));
         }
+
+        // Single allocation instead of append_rows copying the growing matrix every iteration.
+        const MatrixR candidate_inputs = stack_rows(candidate_input_blocks);
+        const MatrixR candidate_outputs = stack_rows(candidate_output_blocks);
 
         cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
 
         if (candidate_inputs.rows() == 0)
             break;
 
-        pair<MatrixR, MatrixR> optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives);
-
+        // Normalized objectives of the candidate set, shared by optimal-point selection and Pareto.
         MatrixR objective_matrix = objectives.extract(candidate_inputs, candidate_outputs);
         objectives.normalize(objective_matrix);
+
+        pair<MatrixR, MatrixR> optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives, objective_matrix);
 
         const auto pareto_pair = calculate_pareto(candidate_inputs, candidate_outputs, objective_matrix);
 

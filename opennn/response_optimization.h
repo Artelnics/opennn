@@ -194,6 +194,11 @@ public:
                                                                   const MatrixR& feasible_outputs,
                                                                   const Objectives& objectives) const;
 
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                                  const MatrixR& feasible_outputs,
+                                                                  const Objectives& objectives,
+                                                                  const MatrixR& normalized_objective_matrix) const;
+
     pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
     pair<float, float> calculate_quality_metrics(const MatrixR& inputs,
@@ -279,6 +284,10 @@ private:
 
     Index max_total_evaluations = 0;
     mutable Index evaluations_used = 0;
+
+    // Cache of get_variables_and_descriptives(role) keyed by role; depends only on the network and
+    // time roles, so it is cleared whenever those change (set/set_time_role/clear_time_roles).
+    mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives_cache;
 
     mutable map<string, vector<Index>> category_frequencies;
 

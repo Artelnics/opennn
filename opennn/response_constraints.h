@@ -179,8 +179,9 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                                  Index outer_cap,
                                  float exploration_ratio);
 
-using SurrogateForward = function<VectorR(const VectorR&)>;
-using SurrogateVjp     = function<VectorR(const VectorR&, const VectorR&)>;
+using SurrogateForward      = function<VectorR(const VectorR&)>;
+using SurrogateVjp          = function<VectorR(const VectorR&, const VectorR&)>;
+using SurrogateBatchForward = function<MatrixR(const MatrixR&)>;
 
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
@@ -191,11 +192,13 @@ void repair_output_constraints(MatrixR& inputs,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
 
+// Finite-difference fallback: builds a central-difference VJP from a batched forward, evaluating
+// all 2*inputs_number perturbations of a row in a single forward call instead of one per dimension.
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
                                const vector<MultivariateConstraint>& formula_constraints,
-                               const SurrogateForward& forward,
+                               const SurrogateBatchForward& batch_forward,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
 
