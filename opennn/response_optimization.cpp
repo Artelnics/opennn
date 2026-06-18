@@ -409,7 +409,7 @@ vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) 
     throw runtime_error("ResponseOptimization: Required Scaling/Unscaling layer for role '" + role + "' not found.");
 }
 
-pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables_and_descriptives(const string& role) const
+const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_variables_and_descriptives(const string& role) const
 {
     // The filtered variables/descriptives depend only on the network and the time roles, both
     // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
@@ -509,7 +509,7 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
 
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(const string role) const
 {
-    const auto [variables, descriptives] = get_variables_and_descriptives(role);
+    const auto& [variables, descriptives] = get_variables_and_descriptives(role);
 
     const size_t variables_number = variables.size();
 
@@ -553,7 +553,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     {
         const bool is_input = (role == "Input");
 
-        const vector<Variable> variables = response_optimization.get_variables_and_descriptives(role).first;
+        const vector<Variable>& variables = response_optimization.get_variables_and_descriptives(role).first;
 
         const vector<Index> feature_dimensions_by_role = get_feature_dimensions(variables);
 
@@ -813,7 +813,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
 {
-    const vector<Variable> variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& variables = get_variables_and_descriptives("Input").first;
 
     const vector<Index> input_feature_dimensions = get_feature_dimensions(variables);
 
@@ -1291,7 +1291,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 {
     MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
 
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
     const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
     if (network_differential)
@@ -1587,7 +1587,7 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
 
     if (cardinality_indicator_columns.empty())
     {
-        const vector<Variable> variables = get_variables_and_descriptives("Input").first;
+        const vector<Variable>& variables = get_variables_and_descriptives("Input").first;
         const vector<Index> dimensions = get_feature_dimensions(variables);
 
         map<string, Index> column_of;
@@ -1625,7 +1625,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
     const Objectives objectives(*this);
 
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
@@ -1844,7 +1844,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
     Objectives objectives(*this);
 
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");

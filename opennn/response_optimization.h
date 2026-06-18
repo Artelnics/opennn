@@ -152,7 +152,7 @@ public:
 
     vector<Descriptives> get_descriptives(const string& role) const;
 
-    pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
+    const pair<vector<Variable>, vector<Descriptives>>& get_variables_and_descriptives(const string& role) const;
 
     vector<float> get_utopian_point() const;
 
