@@ -1028,7 +1028,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
-    const vector<Variable> input_variables = neural_network->get_input_variables();
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
     const Index batch_size = input_control.rows();
     const Shape input_shape = neural_network->get_input_shape();
     const Index total_lags = input_shape[0];
