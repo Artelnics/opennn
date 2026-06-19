@@ -1353,7 +1353,7 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     MatrixR objective_matrix(inputs.rows(), objectives_number);
 
     for (Index j = 0; j < objectives_number; ++j)
-        objective_matrix.col(j)= (source_and_column(0, j) > 0.5)
+        objective_matrix.col(j) = (source_and_column(0, j) > 0.5)
               ? inputs.col(static_cast<Index>(source_and_column(1, j)))
               : outputs.col(static_cast<Index>(source_and_column(1, j)));
 
@@ -1906,7 +1906,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
             auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
 
-            MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
+            MatrixR local_objective_matrix = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix );
@@ -1986,7 +1986,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
         input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
-        const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
+        const MatrixR best_and_pareto = append_rows(optimal_set.first, global_pareto_inputs);
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
