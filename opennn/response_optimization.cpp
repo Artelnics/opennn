@@ -279,9 +279,9 @@ void ResponseOptimization::clear_time_roles(const string& name)
 
 UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    const map<string, UnivariateConstraint>::const_iterator it = constraint_set.univariate.find(name);
+    const map<string, UnivariateConstraint>::const_iterator constraint_iterator = constraint_set.univariate.find(name);
 
-    return (it != constraint_set.univariate.end()) ? it->second : UnivariateConstraint(ComparisonOperator::None);
+    return (constraint_iterator != constraint_set.univariate.end()) ? constraint_iterator->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
 
@@ -305,9 +305,9 @@ bool ResponseOptimization::is_past(const TimeType role)
 
 bool ResponseOptimization::is_history(const string& name) const
 {
-    const map<string, TimeType>::const_iterator it = time_roles.find(name);
+    const map<string, TimeType>::const_iterator role_iterator = time_roles.find(name);
 
-    return it != time_roles.end() && is_past(it->second);
+    return role_iterator != time_roles.end() && is_past(role_iterator->second);
 }
 
 
@@ -424,9 +424,9 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
     // The filtered variables/descriptives depend only on the network and the time roles, both
     // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
     // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
-    const auto cached_it = variables_descriptives.find(role);
-    if (cached_it != variables_descriptives.end())
-        return cached_it->second;
+    const auto cache_iterator = variables_descriptives.find(role);
+    if (cache_iterator != variables_descriptives.end())
+        return cache_iterator->second;
 
     const bool is_input_request = (role == "Input");
 
@@ -444,10 +444,10 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
     throw_if(!feature_level && variables_unchecked.size() != descriptives_unchecked.size(),
              "ResponseOptimization: Variable count and Descriptives count mismatch.");
 
-    vector<Variable> filtered_vars;
-    vector<Descriptives> filtered_desc;
-    filtered_vars.reserve(variables_unchecked.size());
-    filtered_desc.reserve(variables_unchecked.size());
+    vector<Variable> filtered_variables;
+    vector<Descriptives> filtered_descriptives;
+    filtered_variables.reserve(variables_unchecked.size());
+    filtered_descriptives.reserve(variables_unchecked.size());
 
     Index feature_cursor = 0;
 
@@ -459,21 +459,21 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
 
         feature_cursor += feature_dimensions[i];
 
-        const string& var_role = variables_unchecked[i].get_role();
+        const string& variable_role = variables_unchecked[i].get_role();
 
         if (is_history(variables_unchecked[i].name))
             continue;
 
-        const bool keep = is_input_request ? (var_role == "Input")
-                                           : (var_role == "Target" || var_role == "InputTarget");
+        const bool keep = is_input_request ? (variable_role == "Input")
+                                           : (variable_role == "Target" || variable_role == "InputTarget");
         if (keep)
         {
-            filtered_vars.push_back(variables_unchecked[i]);
-            filtered_desc.push_back(variable_descriptive);
+            filtered_variables.push_back(variables_unchecked[i]);
+            filtered_descriptives.push_back(variable_descriptive);
         }
     }
 
-    const auto inserted = variables_descriptives.emplace(role, make_pair(move(filtered_vars), move(filtered_desc)));
+    const auto inserted = variables_descriptives.emplace(role, make_pair(move(filtered_variables), move(filtered_descriptives)));
     return inserted.first->second;
 }
 
@@ -1183,19 +1183,19 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
         if (all_formula_constraints_are_linear(constraint_set.multivariate))
         {
-            const Index k     = static_cast<Index>(feasible_indices.size());
-            const Index n_in  = inputs.cols();
-            const Index n_out = outputs.cols();
+            const Index feasible_count = static_cast<Index>(feasible_indices.size());
+            const Index inputs_number = inputs.cols();
+            const Index outputs_number = outputs.cols();
 
-            const MatrixR X = slice_rows(inputs, feasible_indices);
-            const MatrixR Y = slice_rows(outputs, feasible_indices);
+            const MatrixR feasible_inputs = slice_rows(inputs, feasible_indices);
+            const MatrixR feasible_outputs = slice_rows(outputs, feasible_indices);
 
-            const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, n_in, n_out);
+            const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, inputs_number, outputs_number);
 
-            const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
-                                 + Y * linear_set.A.rightCols(n_out).transpose();
+            const MatrixR values = feasible_inputs * linear_set.A.leftCols(inputs_number).transpose()
+                                 + feasible_outputs * linear_set.A.rightCols(outputs_number).transpose();
 
-            for (Index i = 0; i < k; ++i)
+            for (Index i = 0; i < feasible_count; ++i)
             {
                 const bool feasible = ((values.row(i).transpose().array() >= linear_set.lower.array()) &&
                                        (values.row(i).transpose().array() <= linear_set.upper.array())).all();
@@ -2148,9 +2148,9 @@ void ResponseOptimization::initialize_network_differential() const
     const MatrixR reference = calculate_outputs(probe);
     const Index outputs_number = reference.cols();
 
-    VectorR fd_step(inputs_number);
+    VectorR finite_difference_step(inputs_number);
     for (Index j = 0; j < inputs_number; ++j)
-        fd_step(j) = max(1e-4f, 1e-3f * (upper(j) - lower(j)));
+        finite_difference_step(j) = max(1e-4f, 1e-3f * (upper(j) - lower(j)));
 
     const VectorR cotangent = VectorR::Ones(outputs_number);
 
@@ -2174,10 +2174,10 @@ void ResponseOptimization::initialize_network_differential() const
         {
             MatrixR plus(1, inputs_number), minus(1, inputs_number);
             plus.row(0) = x.transpose();   minus.row(0) = x.transpose();
-            plus(0, k) += fd_step(k);      minus(0, k) -= fd_step(k);
+            plus(0, k) += finite_difference_step(k);      minus(0, k) -= finite_difference_step(k);
             const VectorR forward_plus  = calculate_outputs(plus).row(0).transpose();
             const VectorR forward_minus = calculate_outputs(minus).row(0).transpose();
-            finite_difference_gradient(k) = cotangent.dot(forward_plus - forward_minus) / (2.0f * fd_step(k));
+            finite_difference_gradient(k) = cotangent.dot(forward_plus - forward_minus) / (2.0f * finite_difference_step(k));
         }
         worst_vjp_error = max(worst_vjp_error,
             (analytic_gradient - finite_difference_gradient).cwiseAbs().maxCoeff()
@@ -2447,10 +2447,10 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return incumbent;
     }
 
-    const Index eta = 3;
+    const Index reduction_factor = 3;
 
     Index rounds_number = 1;
-    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + eta - 1) / eta)
+    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + reduction_factor - 1) / reduction_factor)
         ++rounds_number;
 
     const Index notional_total = branches_number * evaluations_number * max(Index(1), max_iterations);
@@ -2499,7 +2499,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         sort(survivors.begin(), survivors.end(),
              [&](const size_t a, const size_t b) { return reward[a] > reward[b]; });
 
-        const Index keep = max(Index(1), (static_cast<Index>(survivors.size()) + eta - 1) / eta);
+        const Index keep = max(Index(1), (static_cast<Index>(survivors.size()) + reduction_factor - 1) / reduction_factor);
         if (static_cast<Index>(survivors.size()) > keep)
             survivors.resize(static_cast<size_t>(keep));
 
