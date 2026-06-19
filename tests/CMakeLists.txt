@@ -28,7 +28,6 @@ endif()
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
 
-include(GoogleTest)
-gtest_discover_tests(run_tests DISCOVERY_TIMEOUT 120)
-
+add_test(NAME run_tests COMMAND run_tests)
+set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
 

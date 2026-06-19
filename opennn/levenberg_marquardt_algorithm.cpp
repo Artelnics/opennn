@@ -337,6 +337,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     float loss_decrease = MAX;
 
     Index validation_failures = 0;
+    reset_best_parameters();
 
     BackPropagationLM training_back_propagation_lm(training_samples_number, loss);
     BackPropagationLM validation_back_propagation_lm(validation_samples_number, loss);
@@ -378,8 +379,8 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
             results.validation_error_history(epoch) = validation_back_propagation_lm.error;
 
-            if (epoch != 0 && validation_back_propagation_lm.error > results.validation_error_history(epoch-1))
-                ++validation_failures;
+            update_best_parameters(neural_network, validation_back_propagation_lm.error,
+                                   epoch, validation_failures);
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -417,6 +418,8 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
                           training_back_propagation_lm,
                           optimization_data);
     }
+
+    restore_best_parameters(neural_network, results);
 
     set_unscaling();
 

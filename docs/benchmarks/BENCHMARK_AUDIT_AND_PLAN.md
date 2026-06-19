@@ -1,8 +1,8 @@
-# Benchmark audit and fix plan for investor presentation
+# Benchmark audit and fix plan
 
-*Internal working document — not for investors. Written 2026-06-14 after a deep audit
-of every benchmark in `docs/benchmarks/`. Goal: make every claim we show investors
-survive a skeptical technical due-diligence reviewer, and add TensorFlow everywhere
+*Working document. Written 2026-06-14 after a deep audit
+of every benchmark in `docs/benchmarks/`. Goal: make every public claim
+survive a skeptical technical reviewer, and add TensorFlow everywhere
 PyTorch appears. Reference rigor target: MLPerf.*
 
 ---
@@ -20,7 +20,7 @@ Three findings supersede parts of the audit below:
    - **Transformer bf16 inference — OpenNN WINS: 1.25–1.29× vs TF, 1.4–2.2× vs
      PyTorch; the lead GROWS with sequence length** (seq 768–1024 = the LLM
      regime). Fused cuDNN flash-attention is the moat XLA can't out-fuse. *This is
-     the fundable headline.*
+     the strongest headline.*
    - **Inference energy — OpenNN WINS** (25.9 vs TF 29.8, PyTorch 43.5 µJ/sample;
      5-run median, hardened harness `run_energy.py`, results JSON committed).
    - Footprint/startup/deps/LOC/export — OpenNN dominates structurally (XLA
@@ -39,7 +39,7 @@ Three findings supersede parts of the audit below:
 
 **Net strategy:** lead with attention + energy + footprint (real, measured wins);
 state dense as parity in bf16 on native Windows; re-measure GPU headlines on
-native Windows (not WSL) before investor use, since WSL biases against OpenNN.
+native Windows (not WSL) before public use, since WSL biases against OpenNN.
 
 ---
 
@@ -48,8 +48,8 @@ native Windows (not WSL) before investor use, since WSL biases against OpenNN.
 The benchmark suite is broad and the prose is unusually candid. The **structural
 footprint wins** (binary size, startup, memory, dependencies, LOC, code export) are
 **solid and defensible** — they reflect a real native-C++-vs-Python-framework
-difference and are honestly caveated. They should be the backbone of the investor
-story.
+difference and are honestly caveated. They should be the backbone of the public
+benchmark story.
 
 The **speed, precision, and energy claims** are where the risk is, and it is exactly
 where a technical reviewer will dig. Three of them would not survive an audit as
@@ -115,7 +115,7 @@ no pinned-environment files, hand-link build scripts with machine-specific paths
 Single runs on one laptop GPU.
 
 **P5 — Missing TensorFlow.** ResNet, Rosenbrock (max-batch/speed), both transformer
-notes, and energy are OpenNN-vs-PyTorch only. **The investor ask is explicitly
+notes, and energy are OpenNN-vs-PyTorch only. **The public comparison scope is
 OpenNN vs PyTorch *and* TensorFlow** — TF must be added to all of them.
 
 **P6 — Non-standard scale (MLPerf gap).** ResNet-50 is on 32×32 CIFAR, not 224×224
@@ -179,8 +179,9 @@ hard standalone figure.
 Run at least one benchmark at standard scale: ResNet-50 on 224×224 ImageNet (or a
 documented ImageNet subset) to a fixed accuracy target. Report it honestly even if the
 margin narrows — a smaller, real-geometry win is far more credible than a large
-toy-geometry one, and pre-empts the "you only win on 32×32" objection. (The paused
-`resnet50-training-speed/IMAGENET_GEOMETRY_CONTINUE.md` is the starting point.)
+toy-geometry one, and pre-empts the "you only win on 32×32" objection. The
+current ImageNet commands are consolidated in
+`resnet50-training-speed/CONTINUE_HERE.md`.
 
 ### 4.6 — Reproducibility pass (applies to all)
 - Commit raw result logs + per-run numbers for every published figure.
@@ -192,7 +193,7 @@ toy-geometry one, and pre-empts the "you only win on 32×32" objection. (The pau
 
 ---
 
-## 5. What to put in the investor deck (recommended cut)
+## 5. Recommended public summary
 
 **Lead with the structural moat** (all SOLID, all defensible):
 deploy a 3 MB self-contained binary vs a multi-GB Python stack; start in 36 ms vs
@@ -211,7 +212,7 @@ in their current form.
 **Frame honestly:** OpenNN is a focused native library, not a general framework. The
 footprint wins follow from that focus; the compute wins are real on the workloads
 shown, at the stated scale, with stated methodology. That framing *is* the credible
-pitch — and it survives diligence.
+positioning — and it survives technical review.
 
 ---
 

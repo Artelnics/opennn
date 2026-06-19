@@ -42,17 +42,22 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(transformer.get_layer_index("encoder_embedding"), 1);
 
     EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_1"), 2);
+    EXPECT_THROW(transformer.get_layer_index("encoder_self_attention_addition_1"), runtime_error);
     EXPECT_EQ(transformer.get_layer_index("encoder_self_attention_normalization_1"), 3);
     EXPECT_EQ(transformer.get_layer_index("encoder_internal_dense_1"), 4);
     EXPECT_EQ(transformer.get_layer_index("encoder_external_dense_1"), 5);
+    EXPECT_THROW(transformer.get_layer_index("encoder_dense_addition_1"), runtime_error);
     EXPECT_EQ(transformer.get_layer_index("encoder_dense_normalization_1"), 6);
 
     EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_1"), 7);
+    EXPECT_THROW(transformer.get_layer_index("decoder_self_attention_addition_1"), runtime_error);
     EXPECT_EQ(transformer.get_layer_index("decoder_self_attention_normalization_1"), 8);
     EXPECT_EQ(transformer.get_layer_index("cross_attention_1"), 9);
+    EXPECT_THROW(transformer.get_layer_index("cross_attention_addition_1"), runtime_error);
     EXPECT_EQ(transformer.get_layer_index("cross_attention_normalization_1"), 10);
     EXPECT_EQ(transformer.get_layer_index("decoder_internal_dense_1"), 11);
     EXPECT_EQ(transformer.get_layer_index("decoder_external_dense_1"), 12);
+    EXPECT_THROW(transformer.get_layer_index("decoder_dense_addition_1"), runtime_error);
     EXPECT_EQ(transformer.get_layer_index("decoder_dense_normalization_1"), 13);
 
     EXPECT_EQ(transformer.get_layer_index("output_projection"), 14);

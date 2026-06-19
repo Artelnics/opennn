@@ -11,14 +11,29 @@ DATASET="${3:-cifar10}"
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PY="${BENCH_PYTHON:-$HOME/benchenv/bin/python}"
-OPENNN_BIN="${OPENNN_RESNET_BIN:-$HERE/opennn_resnet50_speed}"
+REPO_ROOT="$(cd "$HERE/../../.." && pwd)"
+if [ -n "${OPENNN_RESNET_BIN:-}" ]; then
+  OPENNN_BIN="$OPENNN_RESNET_BIN"
+else
+  OPENNN_BIN="$HERE/opennn_resnet50_speed"
+  for candidate in \
+    "$HERE/opennn_resnet50_speed" \
+    "$REPO_ROOT/build-ninja/bin/opennn_resnet50_speed" \
+    "$REPO_ROOT/build-ninja/bin/opennn_resnet50_speed.exe" \
+    "$REPO_ROOT/build/bin/opennn_resnet50_speed" \
+    "$REPO_ROOT/build/bin/opennn_resnet50_speed.exe"; do
+    if [ -x "$candidate" ] || [ -f "$candidate" ]; then
+      OPENNN_BIN="$candidate"
+      break
+    fi
+  done
+fi
 DATA_DIR="${CIFAR_DIR:-$HERE/$DATASET}"
 PREP="${PREP_SCRIPT:-prepare_$DATASET.py}"
 WSL_CUDA="/usr/lib/wsl/lib"
 RESULTS_DIR="${BENCH_RESULTS_DIR:-$HERE/../results}"
 RUN_ID="${BENCH_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
 RESULT_FILE="${BENCH_RESULT_FILE:-$RESULTS_DIR/resnet50-training-speed-$DATASET-$RUN_ID.json}"
-REPO_ROOT="$(cd "$HERE/../../.." && pwd)"
 
 cd "$HERE"
 

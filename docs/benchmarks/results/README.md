@@ -4,6 +4,32 @@ This directory is the evidence store for benchmark runs. Top-level benchmark
 notes explain the narrative result; result JSON files keep the machine-readable
 run data that supports those notes.
 
+## Protocol
+
+The suite follows an **MLPerf-inspired** protocol, but these are not official
+MLPerf results unless they are submitted through MLCommons. The borrowed rules
+are simple: fixed workload, explicit quality/correctness rule, documented timed
+region, repeated runs where practical, machine metadata, raw logs, and immutable
+JSON artifacts.
+
+Use these benchmark classes in new artifacts:
+
+- `training_time_to_quality`: preferred for training; wall time to a declared
+  quality target.
+- `training_throughput_with_quality`: fixed-epoch or fixed-step training with a
+  reported quality metric; useful for engineering, not final headline training
+  evidence until a quality target exists.
+- `inference_offline`: batch throughput inference.
+- `inference_single_stream`: latency-oriented inference.
+- `footprint_or_packaging`: size, startup, dependencies, source LOC, or export.
+
+References: MLCommons MLPerf Training
+<https://mlcommons.org/benchmarks/training/>, MLPerf Inference Datacenter
+<https://mlcommons.org/benchmarks/inference-datacenter/>, Training rules
+<https://github.com/mlcommons/training_policies/blob/master/training_rules.adoc>,
+and Inference rules
+<https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc>.
+
 ## Naming
 
 Use this pattern for generated result files:
@@ -28,6 +54,22 @@ Each result JSON should contain:
   "benchmark_id": "gpu-resnet50-training",
   "run_id": "20260614T211500Z",
   "git_commit": "abcdef123456",
+  "protocol": {
+    "style": "mlperf_inspired",
+    "official_mlperf": false,
+    "benchmark_class": "training_throughput_with_quality",
+    "division": "closed",
+    "quality_rule": {
+      "metric": "final_loss",
+      "target": null,
+      "status": "reported_not_gated"
+    },
+    "measurement_rule": {
+      "warmup": "documented per benchmark",
+      "runs": 5,
+      "aggregation": "median"
+    }
+  },
   "dataset": "cifar10",
   "configuration": {
     "epochs": 5,
@@ -67,9 +109,15 @@ Each result JSON should contain:
 
 - Store the git commit, command line, framework versions, and raw output for
   every published headline number.
+- Store the `protocol` object for every new result. Use
+  `style=mlperf_inspired` and `official_mlperf=false` unless the run has gone
+  through MLCommons submission/review.
 - Keep result files immutable. If a benchmark is rerun, write a new file rather
   than editing an old one.
 - Use the benchmark id from `../benchmark_manifest.json`.
+- Prefer training time-to-quality over fixed-epoch training speed. Fixed-epoch
+  speed artifacts are allowed as engineering evidence, but the note must say
+  they are not final MLPerf-style headline results until a quality target is set.
 - If a run is platform-specific, encode that in the result metadata and keep the
   benchmark note explicit about it.
 - Internal lab notes such as `CONTINUE_HERE.md` are not evidence artifacts until

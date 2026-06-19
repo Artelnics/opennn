@@ -918,13 +918,15 @@ void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
 {
     const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
-    vector<Index> flat_outliers;
-    flat_outliers.reserve(outliers_indices[0].size() + outliers_indices[1].size());
+    const vector<Index>& outliers_mask = outliers_indices[0];
+    const vector<Index> sample_indices = get_used_sample_indices();
 
-    for (const auto& per_feature : outliers_indices)
-        flat_outliers.insert(flat_outliers.end(), per_feature.begin(), per_feature.end());
+    vector<Index> outliers_samples;
+    outliers_samples.reserve(outliers_mask.size());
 
-    const vector<Index> outliers_samples = get_elements_greater_than(flat_outliers, 0);
+    for (size_t j = 0; j < outliers_mask.size(); ++j)
+        if (outliers_mask[j] > 0)
+            outliers_samples.push_back(sample_indices[j]);
 
     set_sample_roles(outliers_samples, "None");
 }

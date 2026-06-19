@@ -98,6 +98,43 @@ void shuffle_vector(vector<T>& vec)
 template void shuffle_vector<Index>(vector<Index>&);
 template void shuffle_vector<size_t>(vector<size_t>&);
 
+
+bool draw_k_hot(const Index count, const Index k,
+                const vector<char>& force_on,
+                const vector<char>& force_off,
+                vector<float>& out)
+{
+    out.assign(count, 0.0f);
+
+    vector<Index> free_indices;
+    free_indices.reserve(count);
+    Index forced_on = 0;
+
+    for (Index i = 0; i < count; ++i)
+    {
+        const bool on  = (i < static_cast<Index>(force_on.size())  && force_on[i]  != 0);
+        const bool off = (i < static_cast<Index>(force_off.size()) && force_off[i] != 0);
+
+        if (on && off)      { out.assign(count, 0.0f); return false; }   // contradictory pin
+        if (on)             { out[i] = 1.0f; ++forced_on; continue; }
+        if (off)            continue;                                    // stays 0
+        free_indices.push_back(i);
+    }
+
+    const Index remaining = k - forced_on;
+    if (remaining < 0 || remaining > static_cast<Index>(free_indices.size()))
+    {
+        out.assign(count, 0.0f);
+        return false;   // too many forced on, or too few free to reach k
+    }
+
+    partial_shuffle(free_indices, remaining);
+    for (Index pick = 0; pick < remaining; ++pick)
+        out[free_indices[pick]] = 1.0f;
+
+    return true;
+}
+
 void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
 {
     const size_t size = vec.size();

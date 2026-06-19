@@ -14,6 +14,7 @@
 #include <cctype>
 #include <csetjmp>
 #include <cstdio>
+#include <memory>
 #include <zlib.h>
 extern "C" {
 #include <jpeglib.h>
@@ -522,6 +523,57 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
     return header;
 }
 
+void copy_image_to_expected_shape(const Tensor3& source,
+                                  float* dst,
+                                  Index expected_height,
+                                  Index expected_width,
+                                  Index expected_channels,
+                                  const string& path_for_error)
+{
+    const Index source_height = source.dimension(0);
+    const Index source_width = source.dimension(1);
+
+    unique_ptr<Tensor3> resized;
+    const Tensor3* image = &source;
+
+    if (source_height != expected_height || source_width != expected_width)
+    {
+        resized = make_unique<Tensor3>(resize_image(source, expected_height, expected_width));
+        image = resized.get();
+    }
+
+    const Index channels = image->dimension(2);
+    const Index pixels = expected_height * expected_width;
+
+    if (channels == expected_channels)
+    {
+        copy_n(image->data(), pixels * expected_channels, dst);
+        return;
+    }
+
+    if (channels == 1 && expected_channels == 3)
+    {
+        const float* src = image->data();
+        for (Index i = 0; i < pixels; ++i)
+        {
+            dst[3 * i + 0] = src[i];
+            dst[3 * i + 1] = src[i];
+            dst[3 * i + 2] = src[i];
+        }
+        return;
+    }
+
+    if (channels == 3 && expected_channels == 1)
+    {
+        const float* src = image->data();
+        for (Index i = 0; i < pixels; ++i)
+            dst[i] = (src[3 * i + 0] + src[3 * i + 1] + src[3 * i + 2]) / 3.0f;
+        return;
+    }
+
+    throw runtime_error(format("Channel mismatch in image: {}", path_for_error));
+}
+
 }
 
 bool is_supported_image_file(const filesystem::path& path)
@@ -600,34 +652,13 @@ void load_image(const filesystem::path& path,
 
     read_image_file(path, buffer);
 
-    Index height = 0;
-    Index width = 0;
-    Index channels = 0;
-
     if (has_bmp_signature(buffer))
     {
         const BmpHeader h = parse_bmp_header(buffer, path.string());
-        height = h.height;
-        width = h.width;
-        channels = h.channels;
-
-        throw_if(channels != expected_channels,
-                 format("Channel mismatch in image: {}", path.string()));
-
-        if (height == expected_height && width == expected_width)
-        {
-            decode_bmp_pixels(buffer, h, dst);
-            return;
-        }
-
-        Tensor3 temp(height, width, channels);
+        Tensor3 temp(h.height, h.width, h.channels);
         decode_bmp_pixels(buffer, h, temp.data());
-
-        const Tensor3 resized = resize_image(temp, expected_height, expected_width);
-        const Index pixels = expected_height * expected_width * expected_channels;
-
-        copy_n(resized.data(), pixels, dst);
-
+        copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
+                                     expected_channels, path.string());
         return;
     }
 
@@ -635,26 +666,10 @@ void load_image(const filesystem::path& path,
     {
         thread_local vector<uint8_t> compressed;
         const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
-        height = h.height;
-        width = h.width;
-        channels = h.channels;
-
-        throw_if(channels != expected_channels,
-                 format("Channel mismatch in image: {}", path.string()));
-
-        if (height == expected_height && width == expected_width)
-        {
-            decode_png_pixels(h, compressed, dst, path.string());
-            return;
-        }
-
-        Tensor3 temp(height, width, channels);
+        Tensor3 temp(h.height, h.width, h.channels);
         decode_png_pixels(h, compressed, temp.data(), path.string());
-
-        const Tensor3 resized = resize_image(temp, expected_height, expected_width);
-        const Index pixels = expected_height * expected_width * expected_channels;
-
-        copy_n(resized.data(), pixels, dst);
+        copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
+                                     expected_channels, path.string());
         return;
     }
 
@@ -682,22 +697,10 @@ void load_image(const filesystem::path& path,
         jpeg_destroy_decompress(&cinfo);
     }
 
-    throw_if(jc != expected_channels,
-             format("Channel mismatch in image: {}", path.string()));
-
-    if (jh == expected_height && jw == expected_width)
-    {
-        decode_jpeg_pixels(buffer, dst, path.string());
-        return;
-    }
-
     Tensor3 temp(jh, jw, jc);
     decode_jpeg_pixels(buffer, temp.data(), path.string());
-
-    const Tensor3 resized = resize_image(temp, expected_height, expected_width);
-    const Index pixels = expected_height * expected_width * expected_channels;
-
-    copy_n(resized.data(), pixels, dst);
+    copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
+                                 expected_channels, path.string());
 }
 
 Tensor3 resize_image(const Tensor3& input_image,

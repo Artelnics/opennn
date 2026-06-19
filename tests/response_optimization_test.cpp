@@ -8,7 +8,7 @@
 
 #include "pch.h"
 
-#include "../opennn/constraint_formulas.h"
+#include "../opennn/response_constraints.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/random_utilities.h"
 #include "../opennn/response_optimization.h"
@@ -464,6 +464,154 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 }
 
 
+// -----------------------------------------------------------------------------
+// Non-smooth (min/max/abs) constraint expansion
+// -----------------------------------------------------------------------------
+
+TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("x1 + x2", ComparisonOperator::LessEqualTo, float(0), float(3), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    ASSERT_EQ(branches[0].size(), size_t(1));
+    EXPECT_EQ(branches[0][0].compiled.shape, FormulaShape::Affine);
+}
+
+
+TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));       // AND -> no disjunction
+    EXPECT_EQ(branches[0].size(), size_t(2));    // x1 >= 1 AND x2 >= 1
+    for (const auto& c : branches[0])
+        EXPECT_EQ(c.comparison_operator, ComparisonOperator::GreaterEqualTo);
+}
+
+
+TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("max(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(2), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    EXPECT_EQ(branches[0].size(), size_t(2));
+}
+
+
+TEST(NonSmoothExpand, AbsLessEqualIsInterval)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const auto branches = expand_constraint("abs(x1 - x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
+
+    ASSERT_EQ(branches.size(), size_t(1));
+    ASSERT_EQ(branches[0].size(), size_t(1));
+    EXPECT_EQ(branches[0][0].comparison_operator, ComparisonOperator::Between);
+    EXPECT_NEAR(branches[0][0].low_bound, float(-1), float(1e-6));
+    EXPECT_NEAR(branches[0][0].up_bound, float(1), float(1e-6));
+}
+
+
+TEST(NonSmoothExpand, OrCasesBranch)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+
+    EXPECT_EQ(expand_constraint("min(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {}).size(), size_t(2));
+    EXPECT_EQ(expand_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
+    EXPECT_EQ(expand_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
+}
+
+
+TEST(NonSmoothExpand, NestedYieldsRegionProduct)
+{
+    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    // two selectors (max + abs) -> 2^2 = 4 regions
+    const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
+    EXPECT_EQ(branches.size(), size_t(4));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, MinGreaterEqualKeepsBothAboveBound)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_GE(results(i, 0), float(1) - float(1e-2));
+        EXPECT_GE(results(i, 1), float(1) - float(1e-2));
+    }
+}
+
+
+TEST(ResponseOptimizationNonSmooth, MaxGreaterEqualBranchesIntoUnion)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(3), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_TRUE(results(i, 0) >= float(3) - float(1e-2) || results(i, 1) >= float(3) - float(1e-2));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, AbsGreaterEqualBranchesBySign)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(2), float(0));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_GE(abs(results(i, 0) - results(i, 1)), float(2) - float(1e-2));
+}
+
+
+TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    // max(x1, |x2|) <= 1  <=>  x1 <= 1 AND |x2| <= 1
+    opt.set_formula_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1));
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_LE(results(i, 0), float(1) + float(1e-2));
+        EXPECT_LE(abs(results(i, 1)), float(1) + float(1e-2));
+    }
+}
+
+
 TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -731,16 +879,17 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
     {
-        FormulaConstraint constraint;
+        MultivariateConstraint constraint;
         constraint.expression = expression;
         constraint.comparison_operator = op;
         constraint.low_bound = low;
         constraint.up_bound = up;
         constraint.compiled = compile_formula(expression, inputs, outputs);
+        constraint.kind = classify(constraint);
         return constraint;
     };
 
-    vector<FormulaConstraint> constraints;
+    vector<MultivariateConstraint> constraints;
     constraints.push_back(make_fc("w0 + w1 + w2 + w3", ComparisonOperator::EqualTo, float(1), float(1)));
     for (int i = 0; i < 4; ++i)
     {
@@ -798,16 +947,17 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 
 namespace
 {
-    FormulaConstraint make_integer_constraint(const string& expression,
+    MultivariateConstraint make_integer_constraint(const string& expression,
                                               const vector<NamedColumn>& inputs,
                                               ComparisonOperator op, float low, float up)
     {
-        FormulaConstraint constraint;
+        MultivariateConstraint constraint;
         constraint.expression = expression;
         constraint.comparison_operator = op;
         constraint.low_bound = low;
         constraint.up_bound = up;
         constraint.compiled = compile_formula(expression, inputs, /*outputs*/ {});
+        constraint.kind = classify(constraint);
         return constraint;
     }
 }
@@ -816,7 +966,7 @@ TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 {
     // 3 integer vars n0..n2 in [0,5]; knapsack budget n0 + n1 + n2 <= 4.
     const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const FormulaConstraint budget =
+    const MultivariateConstraint budget =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
 
     const Index n = 3;
@@ -846,7 +996,7 @@ TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
 {
     // n0 + n1 + n2 == 3, each in [0,5]; unit coefficients => the carry must hit it exactly.
     const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
-    const FormulaConstraint exact =
+    const MultivariateConstraint exact =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
 
     const Index n = 3;
@@ -865,6 +1015,33 @@ TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
             EXPECT_NEAR(points(r, j), round(points(r, j)), float(1e-4)) << "not integral at " << r << "," << j;
         EXPECT_NEAR(points(r, 0) + points(r, 1) + points(r, 2), float(3), float(1e-3))
             << "equality not met at row " << r;
+    }
+}
+
+TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
+{
+    // End-to-end: a pure-integer knapsack n0+n1+n2 <= 4 over three integer variables routes
+    // through the mixed-integer pump, where the lattice clamp-and-carry fast path solves it.
+    MinimalApproximation setup({ "n0", "n1", "n2" }, { "y" }, float(0), float(5), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < 3; ++i) input_variables[i].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("n0 + n1 + n2", ComparisonOperator::LessEqualTo, float(0), float(4));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        for (int j = 0; j < 3; ++j)
+            EXPECT_NEAR(results(r, j), round(results(r, j)), float(1e-3)) << "n" << j << " not integral at row " << r;
+        EXPECT_LE(results(r, 0) + results(r, 1) + results(r, 2), float(4) + float(1e-2)) << "knapsack violated at row " << r;
     }
 }
 
@@ -984,6 +1161,123 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
         }
         EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget violated at row " << r;
         EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality violated at row " << r;
+    }
+}
+
+
+TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
+{
+    // A non-default exploration_ratio exercises both the explore (free K-hot) and exploit
+    // (incumbent-preferred K-hot) branches across iterations; feasibility + cardinality must
+    // still hold regardless of the split.
+    const int A = 6;
+    const int K = 2;
+
+    vector<string> indicator_names, input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
+    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    string budget;
+    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
+    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
+    for (int i = 0; i < A; ++i)
+    {
+        const string w = "w" + to_string(i), z = "z" + to_string(i);
+        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
+        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
+    }
+    opt.set_cardinality_constraint(indicator_names, K);
+
+    opt.set_exploration_ratio(float(0.5));   // half explore, half exploit
+    opt.set_iterations(4);
+    opt.set_evaluations_number(1200);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0) << "explore/exploit split lost feasibility";
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        float weight_sum = 0, indicator_sum = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float w = results(r, i), z = results(r, A + i);
+            weight_sum += w; indicator_sum += z;
+            EXPECT_LE(w, z + float(1e-2)) << "buy-in upper at row " << r << " asset " << i;
+            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
+        }
+        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget at row " << r;
+        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality at row " << r;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// Single-variable affine constraint -> domain box promotion (B)
+// -----------------------------------------------------------------------------
+
+TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
+{
+    // "2*x1 - 6 <= 0"  ->  x1 <= 3, folded into the box; every result must respect it.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("2 * x1 - 6", ComparisonOperator::LessEqualTo, float(0), float(0));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+        EXPECT_LE(results(r, 0), float(3) + float(1e-3)) << "x1 not boxed to <= 3 at row " << r;
+}
+
+TEST(SingleVariablePromotion, EmptyIntersectionThrows)
+{
+    // Existing box [5,10] intersected with the implied x1 <= 3 is empty -> must throw.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_constraint("x1", ComparisonOperator::Between, float(5), float(10));
+    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(3));
+
+    opt.set_iterations(2);
+    opt.set_evaluations_number(200);
+
+    EXPECT_ANY_THROW(opt.perform_response_optimization());
+}
+
+TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
+{
+    // A promoted box on an integer variable must still yield integral, in-box results.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    input_variables[0].type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x1", ComparisonOperator::LessEqualTo, float(0), float(5));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        EXPECT_NEAR(results(r, 0), round(results(r, 0)), float(1e-3)) << "x1 not integral at row " << r;
+        EXPECT_LE(results(r, 0), float(5) + float(1e-3)) << "x1 not boxed at row " << r;
     }
 }
 
@@ -1125,7 +1419,7 @@ TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     opt.set_formula_constraint("x1 + x2", vector<float>{ float(2), float(4), float(6), float(8) });
-    opt.set_branch_pruning(false);
+    opt.set_branch_mode(ResponseOptimization::BranchMode::Exhaustive);
 
     opt.set_iterations(3);
     opt.set_evaluations_number(400);

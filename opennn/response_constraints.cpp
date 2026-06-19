@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   C O N S T R A I N T   F O R M U L A S   C L A S S
+//   R E S P O N S E   C O N S T R A I N T S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "pch.h"
-#include "constraint_formulas.h"
+#include "response_constraints.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 
@@ -623,16 +623,6 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
 }
 
 
-// ---- Symbolic differentiation (drives the nonlinear Gauss-Newton repair) ----
-//
-// We already hold the expression as an AST, so the cleanest way to obtain the
-// Jacobian is to differentiate that AST once at compile time into derivative
-// ASTs, then compile each to its own RPN program. At repair time the Jacobian
-// is just a few evaluate_rpn() calls — no per-point AD graph, no finite
-// differences, and it batches exactly like the constraint itself. The smart
-// constructors below constant-fold on the fly to keep the derivative bytecode
-// small (the classic symbolic-swell mitigation; our formulas are tiny anyway).
-
 AstPtr clone(const Ast& node)
 {
     auto copy = make_unique<Ast>();
@@ -770,9 +760,6 @@ bool is_smooth(const Ast& node)
 }
 
 
-// Differentiate w.r.t. one variable: an input (wrt_is_output == false) or an
-// output (wrt_is_output == true) column. Outputs are first-class so the same
-// pass yields both dg/dx and dg/dy for the chain rule through the network.
 AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_index)
 {
     switch (node.kind)
@@ -799,7 +786,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
     case Ast::Kind::Mul:
     {
-        // (a*b)' = a'*b + a*b'
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         return make_add(make_mul(move(da), clone(*node.children[1])),
@@ -808,7 +794,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
     case Ast::Kind::Div:
     {
-        // (a/b)' = (a'*b - a*b') / b^2
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr numerator = make_sub(make_mul(move(da), clone(*node.children[1])),
@@ -822,7 +807,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         float exponent;
         if (is_const(*node.children[1], exponent))
         {
-            // (a^c)' = c*a^(c-1)*a'
             AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
             AstPtr power = make_pow(clone(*node.children[0]), make_const(exponent - 1.0f));
             return make_mul(make_mul(make_const(exponent), move(power)), move(da));
@@ -831,13 +815,11 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         float base;
         if (is_const(*node.children[0], base))
         {
-            // (k^b)' = k^b*ln(k)*b'
             AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
             AstPtr value = make_pow(make_const(base), clone(*node.children[1]));
             return make_mul(make_mul(move(value), make_const(log(base))), move(db));
         }
 
-        // General a^b = exp(b*ln a): (a^b)' = a^b*(b'*ln a + b*a'/a)
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
         AstPtr term1 = make_mul(move(db), make_func("log", clone(*node.children[0])));
@@ -853,22 +835,21 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         const Ast& u = *node.children[0];
         AstPtr du = differentiate(u, wrt_is_output, wrt_index);
 
-        if (name == "sqrt")   // (sqrt u)' = u'/(2 sqrt u)
+        if (name == "sqrt")
             return make_div(move(du), make_mul(make_const(2.0f), make_func("sqrt", clone(u))));
-        if (name == "exp")    // (exp u)' = exp(u) u'
+        if (name == "exp")
             return make_mul(make_func("exp", clone(u)), move(du));
-        if (name == "log")    // (log u)' = u'/u
+        if (name == "log")
             return make_div(move(du), clone(u));
-        if (name == "abs")    // (|u|)' = (u/|u|) u'
+        if (name == "abs")
             return make_mul(make_div(clone(u), make_func("abs", clone(u))), move(du));
-        if (name == "sin")    // (sin u)' = cos(u) u'
+        if (name == "sin")
             return make_mul(make_func("cos", clone(u)), move(du));
-        if (name == "cos")    // (cos u)' = -sin(u) u'
+        if (name == "cos")
             return make_neg(make_mul(make_func("sin", clone(u)), move(du)));
-        if (name == "tan")    // (tan u)' = u'/cos^2(u)
+        if (name == "tan")
             return make_div(move(du), make_pow(make_func("cos", clone(u)), make_const(2.0f)));
 
-        // min/max are non-smooth and filtered out before differentiate() runs.
         return make_const(0.0f);
     }
     }
@@ -951,32 +932,18 @@ float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& output
 }
 
 
-CompiledFormula compile_formula(const string& expression,
-                                const vector<NamedColumn>& inputs,
-                                const vector<NamedColumn>& outputs)
+CompiledFormula compile_ast(const Ast& ast)
 {
-    throw_if(expression.empty(),
-             "FormulaParser: empty expression");
-
-    Lexer lexer(expression);
-    Parser parser(lexer, inputs, outputs);
-
-    AstPtr ast = parser.parse_expression();
-
-    throw_if(lexer.peek().kind != Token::Kind::End,
-             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
-
-    validate_function_arities(*ast);
+    validate_function_arities(ast);
 
     CompiledFormula result;
 
     set<Index> input_references;
     set<Index> output_references;
-    collect_variable_references(*ast, input_references, output_references);
+    collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
-             format("FormulaParser: expression '{}' references no input or output variables",
-                    expression));
+             "FormulaParser: expression references no input or output variables");
 
     result.input_indices.assign(input_references.begin(), input_references.end());
     result.output_indices.assign(output_references.begin(), output_references.end());
@@ -985,7 +952,7 @@ CompiledFormula compile_formula(const string& expression,
     else if (input_references.empty())   result.scope = FormulaScope::OutputsOnly;
     else                                 result.scope = FormulaScope::Mixed;
 
-    const AffineForm affine_form = analyze_affine(*ast);
+    const AffineForm affine_form = analyze_affine(ast);
 
     if (affine_form.is_affine)
     {
@@ -1006,20 +973,14 @@ CompiledFormula compile_formula(const string& expression,
     {
         result.shape = FormulaShape::Nonlinear;
 
-        // For smooth nonlinear constraints, precompile the gradient (one RPN
-        // program per referenced input AND per referenced output) so both the
-        // input-only Gauss-Newton repair and the output-constraint repair can
-        // assemble Jacobians with plain evaluate_rpn() calls. Output partials
-        // feed the chain rule dg/dy * df/dx through the network. Non-smooth
-        // (min/max) formulas get no gradient and fall back to rejection.
-        if (is_smooth(*ast))
+        if (is_smooth(ast))
         {
             result.gradient_available = true;
 
             result.input_gradient.reserve(result.input_indices.size());
             for (const Index input_column : result.input_indices)
             {
-                const AstPtr partial = differentiate(*ast, false, input_column);
+                const AstPtr partial = differentiate(ast, false, input_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
                 result.input_gradient.emplace_back(input_column, move(program));
@@ -1028,7 +989,7 @@ CompiledFormula compile_formula(const string& expression,
             result.output_gradient.reserve(result.output_indices.size());
             for (const Index output_column : result.output_indices)
             {
-                const AstPtr partial = differentiate(*ast, true, output_column);
+                const AstPtr partial = differentiate(ast, true, output_column);
                 vector<RpnOp> program;
                 emit_bytecode(*partial, program);
                 result.output_gradient.emplace_back(output_column, move(program));
@@ -1036,16 +997,209 @@ CompiledFormula compile_formula(const string& expression,
         }
     }
 
-    emit_bytecode(*ast, result.bytecode);
+    emit_bytecode(ast, result.bytecode);
 
     return result;
 }
 
 
-bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula_constraints)
+AstPtr parse_to_ast(const string& expression,
+                    const vector<NamedColumn>& inputs,
+                    const vector<NamedColumn>& outputs)
+{
+    throw_if(expression.empty(),
+             "FormulaParser: empty expression");
+
+    Lexer lexer(expression);
+    Parser parser(lexer, inputs, outputs);
+
+    AstPtr ast = parser.parse_expression();
+
+    throw_if(lexer.peek().kind != Token::Kind::End,
+             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
+
+    return ast;
+}
+
+
+CompiledFormula compile_formula(const string& expression,
+                                const vector<NamedColumn>& inputs,
+                                const vector<NamedColumn>& outputs)
+{
+    return compile_ast(*parse_to_ast(expression, inputs, outputs));
+}
+
+
+namespace
+{
+
+bool is_selector(const Ast& node)
+{
+    return node.kind == Ast::Kind::Func
+        && (node.function_name == "min" || node.function_name == "max" || node.function_name == "abs");
+}
+
+
+void collect_selectors(const Ast& node, vector<const Ast*>& selectors)
+{
+    if (is_selector(node))
+        selectors.push_back(&node);
+    for (const AstPtr& child : node.children)
+        collect_selectors(*child, selectors);
+}
+
+
+vector<const Ast*> selectors_of(const Ast& node)
+{
+    vector<const Ast*> selectors;
+    collect_selectors(node, selectors);
+    return selectors;
+}
+
+
+bool has_selector(const Ast& node) { return !selectors_of(node).empty(); }
+
+
+// Rebuild the AST with every min/max/abs replaced by the argument the mode selects, so the
+// result is smooth in the region defined by those mode choices.
+AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
+{
+    if (is_selector(node))
+    {
+        const int mode = modes.at(&node);
+        if (node.function_name == "abs")
+        {
+            AstPtr child = resolve_smooth(*node.children[0], modes);
+            return (mode == 0) ? move(child) : make_neg(move(child));
+        }
+        return resolve_smooth(*node.children[mode], modes);
+    }
+
+    auto rebuilt = make_unique<Ast>();
+    rebuilt->kind = node.kind;
+    rebuilt->constant = node.constant;
+    rebuilt->index = node.index;
+    rebuilt->function_name = node.function_name;
+    rebuilt->children.reserve(node.children.size());
+    for (const AstPtr& child : node.children)
+        rebuilt->children.push_back(resolve_smooth(*child, modes));
+    return rebuilt;
+}
+
+
+MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperator comparison, const float low, const float up)
+{
+    MultivariateConstraint constraint;
+    constraint.comparison_operator = comparison;
+    constraint.low_bound = low;
+    constraint.up_bound = up;
+    constraint.compiled = compile_ast(*ast);
+    constraint.kind = classify(constraint);
+    return constraint;
+}
+
+
+// Inequality that pins one min/max/abs node to the argument chosen by `mode`.
+MultivariateConstraint region_constraint(const Ast& selector, const int mode, const map<const Ast*, int>& modes)
+{
+    if (selector.function_name == "abs")
+        return make_smooth_constraint(resolve_smooth(*selector.children[0], modes),
+                                      mode == 0 ? ComparisonOperator::GreaterEqualTo : ComparisonOperator::LessEqualTo, 0.0f, 0.0f);
+
+    AstPtr difference = make_sub(resolve_smooth(*selector.children[0], modes),
+                                 resolve_smooth(*selector.children[1], modes));
+
+    const bool less_equal = (selector.function_name == "min") ? (mode == 0) : (mode == 1);
+    return make_smooth_constraint(move(difference),
+                                  less_equal ? ComparisonOperator::LessEqualTo : ComparisonOperator::GreaterEqualTo, 0.0f, 0.0f);
+}
+
+
+// Full 2^k region enumeration: exact for any operator and any nesting of min/max/abs. Each
+// branch is a conjunction (the substituted-smooth constraint plus the region inequalities); the
+// union over branches reproduces the original feasible set.
+vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
+                                                         const ComparisonOperator comparison, const float low, const float up,
+                                                         const vector<const Ast*>& selectors)
+{
+    const int count = static_cast<int>(selectors.size());
+
+    vector<vector<MultivariateConstraint>> branches;
+
+    for (int combination = 0; combination < (1 << count); ++combination)
+    {
+        map<const Ast*, int> modes;
+        for (int i = 0; i < count; ++i)
+            modes[selectors[i]] = (combination >> i) & 1;
+
+        vector<MultivariateConstraint> branch;
+        branch.push_back(make_smooth_constraint(resolve_smooth(root, modes), comparison, low, up));
+        for (int i = 0; i < count; ++i)
+            branch.push_back(region_constraint(*selectors[i], modes.at(selectors[i]), modes));
+
+        branches.push_back(move(branch));
+    }
+
+    return branches;
+}
+
+
+// Disjunctive-normal-form expansion of one (possibly non-smooth) constraint. A top-level AND
+// case with smooth arguments stays a single branch (no disjunction); everything else falls back
+// to the general region enumeration.
+vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
+                                                  const ComparisonOperator comparison, const float low, const float up)
+{
+    const vector<const Ast*> selectors = selectors_of(root);
+
+    if (selectors.empty())
+        return { { make_smooth_constraint(clone(root), comparison, low, up) } };
+
+    if (is_selector(root)
+        && ranges::none_of(root.children, [](const AstPtr& child) { return has_selector(*child); }))
+    {
+        const string& name = root.function_name;
+        const bool ge = (comparison == ComparisonOperator::GreaterEqualTo || comparison == ComparisonOperator::GreaterThan);
+        const bool le = (comparison == ComparisonOperator::LessEqualTo || comparison == ComparisonOperator::LessThan);
+
+        if ((name == "min" && ge) || (name == "max" && le))
+        {
+            vector<MultivariateConstraint> branch;
+            for (const AstPtr& child : root.children)
+                branch.push_back(make_smooth_constraint(clone(*child), comparison, low, up));
+            return { move(branch) };
+        }
+        if (name == "abs" && le)
+            return { { make_smooth_constraint(clone(*root.children[0]), ComparisonOperator::Between, -up, up) } };
+    }
+
+    return enumerate_regions(root, comparison, low, up, selectors);
+}
+
+}
+
+
+vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
+                                                         const ComparisonOperator comparison,
+                                                         const float low, const float up,
+                                                         const vector<NamedColumn>& inputs,
+                                                         const vector<NamedColumn>& outputs)
+{
+    AstPtr ast = parse_to_ast(expression, inputs, outputs);
+
+    vector<vector<MultivariateConstraint>> branches = expand_ast(*ast, comparison, low, up);
+
+    if (branches.size() == 1 && branches[0].size() == 1)
+        branches[0][0].expression = expression;
+
+    return branches;
+}
+
+
+bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints)
 {
     return !formula_constraints.empty()
-        && ranges::all_of(formula_constraints, [](const FormulaConstraint& formula_constraint)
+        && ranges::all_of(formula_constraints, [](const MultivariateConstraint& formula_constraint)
            {
                return !formula_constraint.uses_callback
                    && formula_constraint.compiled.shape == FormulaShape::Affine;
@@ -1053,7 +1207,7 @@ bool all_formula_constraints_are_linear(const vector<FormulaConstraint>& formula
 }
 
 
-LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>& formula_constraints,
+LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
                                                 const Index n_in,
                                                 const Index n_out)
 {
@@ -1066,7 +1220,7 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
 
     for (Index i = 0; i < m; ++i)
     {
-        const FormulaConstraint& formula_constraint = formula_constraints[i];
+        const MultivariateConstraint& formula_constraint = formula_constraints[i];
 
         for (const auto& [column, coefficient] : formula_constraint.compiled.affine_input_terms)
             linear_set.A(i, column) += coefficient;
@@ -1074,7 +1228,6 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
         for (const auto& [column, coefficient] : formula_constraint.compiled.affine_output_terms)
             linear_set.A(i, n_in + column) += coefficient;
 
-        // Move the affine constant to the RHS so that A·z is compared to (bound - affine_constant) directly.
         const float c = formula_constraint.compiled.affine_constant;
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
@@ -1111,62 +1264,264 @@ LinearConstraintSet build_linear_constraint_set(const vector<FormulaConstraint>&
 }
 
 
-bool draw_k_hot(const Index count, const Index k,
-                const vector<char>& force_on,
-                const vector<char>& force_off,
-                vector<float>& out)
+bool constraint_is_satisfied(const MultivariateConstraint& constraint,
+                             const VectorR& input_row,
+                             const VectorR& output_row)
 {
-    out.assign(count, 0.0f);
+    const float value = constraint.uses_callback
+        ? constraint.callback(input_row, output_row)
+        : constraint.compiled.evaluate(input_row, output_row);
 
-    vector<Index> free_indices;
-    free_indices.reserve(count);
-    Index forced_on = 0;
+    const float low = constraint.low_bound;
+    const float up  = constraint.up_bound;
 
-    for (Index i = 0; i < count; ++i)
+    switch (constraint.comparison_operator)
     {
-        const bool on  = (i < static_cast<Index>(force_on.size())  && force_on[i]  != 0);
-        const bool off = (i < static_cast<Index>(force_off.size()) && force_off[i] != 0);
+    case ComparisonOperator::EqualTo:
+        return abs(value - low) <= bound_tolerance(low);
+    case ComparisonOperator::Between:
+        return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
+    case ComparisonOperator::GreaterEqualTo:
+    case ComparisonOperator::GreaterThan:
+        return value >= low - bound_tolerance(low);
+    case ComparisonOperator::LessEqualTo:
+    case ComparisonOperator::LessThan:
+        return value <= up + bound_tolerance(up);
+    default:
+        return true;
+    }
+}
 
-        if (on && off)      { out.assign(count, 0.0f); return false; }   // contradictory pin
-        if (on)             { out[i] = 1.0f; ++forced_on; continue; }
-        if (off)            continue;                                    // stays 0
-        free_indices.push_back(i);
+
+ConstraintKind classify(const MultivariateConstraint& constraint)
+{
+    if (constraint.comparison_operator == ComparisonOperator::None)
+        return ConstraintKind::Unrepairable;
+
+    if (constraint.uses_callback)
+        return ConstraintKind::Callback;
+
+    const CompiledFormula& formula = constraint.compiled;
+
+    const bool affine = (formula.shape == FormulaShape::Affine);
+    const bool nonlinear_ready = (formula.shape == FormulaShape::Nonlinear && formula.gradient_available);
+
+    if (formula.scope == FormulaScope::InputsOnly)
+    {
+        if (affine && !formula.affine_input_terms.empty())
+            return ConstraintKind::AffineInput;
+        if (nonlinear_ready)
+            return ConstraintKind::NonlinearInput;
+        return ConstraintKind::Unrepairable;
     }
 
-    const Index remaining = k - forced_on;
-    if (remaining < 0 || remaining > static_cast<Index>(free_indices.size()))
+    return (affine || nonlinear_ready) ? ConstraintKind::OutputDependent : ConstraintKind::Unrepairable;
+}
+
+
+void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, const float maximum)
+{
+    inputs.col(column).array() = inputs.col(column).array().round().max(minimum).min(maximum);
+}
+
+
+namespace
+{
+
+bool constraint_residual(const ComparisonOperator comparison, const float low, const float up,
+                         const float value, float& residual)
+{
+    residual = 0.0f;
+
+    switch (comparison)
     {
-        out.assign(count, 0.0f);
-        return false;   // too many forced on, or too few free to reach k
+    case ComparisonOperator::EqualTo:
+        residual = value - low; return true;
+    case ComparisonOperator::Between:
+        if (value < low) { residual = value - low; return true; }
+        if (value > up)  { residual = value - up;  return true; }
+        return false;
+    case ComparisonOperator::GreaterEqualTo:
+    case ComparisonOperator::GreaterThan:
+        if (value < low) { residual = value - low; return true; }
+        return false;
+    case ComparisonOperator::LessEqualTo:
+    case ComparisonOperator::LessThan:
+        if (value > up) { residual = value - up; return true; }
+        return false;
+    case ComparisonOperator::None:
+    default:
+        return false;
+    }
+}
+
+bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
+                              const VectorR& inferior_frontier, const VectorR& superior_frontier,
+                              VectorR& point)
+{
+    const Index active_number = jacobian.rows();
+
+    vector<Index> projectable;
+    projectable.reserve(active_number);
+    for (Index i = 0; i < active_number; ++i)
+        if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
+            projectable.push_back(i);
+
+    if (projectable.empty())
+        return false;
+
+    const Index projectable_number = static_cast<Index>(projectable.size());
+
+    MatrixR reduced_jacobian(projectable_number, jacobian.cols());
+    VectorR reduced_rhs(projectable_number);
+    for (Index k = 0; k < projectable_number; ++k)
+    {
+        reduced_jacobian.row(k) = jacobian.row(projectable[k]);
+        reduced_rhs(k) = rhs(projectable[k]);
     }
 
-    // Partial Fisher-Yates: select `remaining` of the free indices uniformly.
-    const Index free_number = static_cast<Index>(free_indices.size());
-    for (Index pick = 0; pick < remaining; ++pick)
-    {
-        const Index swap_with = pick + random_integer(0, free_number - 1 - pick);
-        swap(free_indices[pick], free_indices[swap_with]);
-        out[free_indices[pick]] = 1.0f;
-    }
+    MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
+    gram.diagonal().array() += EPSILON;
 
+    point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
+    point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
     return true;
+}
+
+
+vector<const MultivariateConstraint*> input_repairable_constraints(const vector<MultivariateConstraint>& formula_constraints)
+{
+    vector<const MultivariateConstraint*> constraints;
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+        if (constraint.kind == ConstraintKind::AffineInput || constraint.kind == ConstraintKind::NonlinearInput)
+            constraints.push_back(&constraint);
+
+    return constraints;
+}
+
+
+// Collects the constraints violated at `point` (with surrogate outputs `output`, empty for
+// input-only constraints) together with their signed residuals. Returns false when none are
+// violated or the worst residual is already within tolerance: nothing left to repair.
+bool collect_violations(const vector<const MultivariateConstraint*>& constraints,
+                        const VectorR& point, const VectorR& output,
+                        vector<const MultivariateConstraint*>& active, vector<float>& residuals)
+{
+    active.clear();
+    residuals.clear();
+    active.reserve(constraints.size());
+    residuals.reserve(constraints.size());
+
+    for (const MultivariateConstraint* constraint : constraints)
+    {
+        const float value = constraint->compiled.evaluate(point, output);
+        float residual;
+        if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
+        {
+            active.push_back(constraint);
+            residuals.push_back(residual);
+        }
+    }
+
+    if (active.empty())
+        return false;
+
+    return VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() > EPSILON;
+}
+
+
+// Gradient of one constraint with respect to the inputs. For output-dependent constraints `vjp`
+// back-propagates the output sensitivity through the surrogate; for input-only constraints it is
+// null and only the direct input gradient is returned.
+VectorR constraint_gradient(const MultivariateConstraint& constraint,
+                            const VectorR& point, const VectorR& output, const SurrogateVjp& vjp)
+{
+    const CompiledFormula& compiled = constraint.compiled;
+
+    VectorR gradient = VectorR::Zero(point.size());
+
+    if (compiled.shape == FormulaShape::Affine)
+        for (const auto& [column, coefficient] : compiled.affine_input_terms)
+            gradient(column) = coefficient;
+    else
+        for (const auto& [column, program] : compiled.input_gradient)
+            gradient(column) = evaluate_rpn(program, point, output);
+
+    if (!vjp)
+        return gradient;
+
+    VectorR cotangent = VectorR::Zero(output.size());
+
+    if (compiled.shape == FormulaShape::Affine)
+        for (const auto& [column, coefficient] : compiled.affine_output_terms)
+            cotangent(column) = coefficient;
+    else
+        for (const auto& [column, program] : compiled.output_gradient)
+            cotangent(column) = evaluate_rpn(program, point, output);
+
+    return gradient + vjp(point, cotangent);
+}
+
+
+// Iterated Gauss-Newton projection of a single row onto the feasible set of `constraints`.
+// `forward` maps the row to its surrogate outputs (null for input-only constraints); `vjp`
+// back-propagates an output cotangent (null for input-only). Columns flagged in `fixed_columns`
+// are held constant.
+void gauss_newton_repair_row(VectorR& point,
+                             const vector<const MultivariateConstraint*>& constraints,
+                             const SurrogateForward& forward, const SurrogateVjp& vjp,
+                             const vector<char>& fixed_columns,
+                             const VectorR& inferior_frontier, const VectorR& superior_frontier,
+                             const Index passes)
+{
+    const Index inputs_number = point.size();
+    const bool has_mask = (static_cast<Index>(fixed_columns.size()) == inputs_number);
+
+    vector<const MultivariateConstraint*> active;
+    vector<float> residuals;
+
+    for (Index pass = 0; pass < passes; ++pass)
+    {
+        const VectorR output = forward ? forward(point) : VectorR();
+
+        if (!collect_violations(constraints, point, output, active, residuals))
+            break;
+
+        const Index active_number = static_cast<Index>(active.size());
+
+        MatrixR jacobian(active_number, inputs_number);
+        VectorR rhs(active_number);
+
+        for (Index i = 0; i < active_number; ++i)
+        {
+            rhs(i) = residuals[i];
+            jacobian.row(i) = constraint_gradient(*active[i], point, output, vjp).transpose();
+        }
+
+        if (has_mask)
+            for (Index j = 0; j < inputs_number; ++j)
+                if (fixed_columns[j])
+                    jacobian.col(j).setZero();
+
+        if (!gauss_newton_project_row(jacobian, rhs, inferior_frontier, superior_frontier, point))
+            break;
+    }
+}
+
 }
 
 
 void repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
-                          const vector<FormulaConstraint>& formula_constraints,
+                          const vector<MultivariateConstraint>& formula_constraints,
                           const Index max_correction_passes)
 {
-    vector<const FormulaConstraint*> affine_constraints;
+    vector<const MultivariateConstraint*> affine_constraints;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
-        if (!constraint.uses_callback
-            && constraint.comparison_operator != ComparisonOperator::None
-            && constraint.compiled.shape == FormulaShape::Affine
-            && constraint.compiled.scope == FormulaScope::InputsOnly
-            && !constraint.compiled.affine_input_terms.empty())
+    for (const MultivariateConstraint& constraint : formula_constraints)
+        if (constraint.kind == ConstraintKind::AffineInput)
             affine_constraints.push_back(&constraint);
 
     if (affine_constraints.empty())
@@ -1177,7 +1532,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     const Index constraints_number = static_cast<Index>(affine_constraints.size());
 
     Index slacks_number = 0;
-    for (const FormulaConstraint* constraint : affine_constraints)
+    for (const MultivariateConstraint* constraint : affine_constraints)
         if (constraint->comparison_operator != ComparisonOperator::EqualTo)
             ++slacks_number;
 
@@ -1192,7 +1547,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     for (Index i = 0; i < constraints_number; ++i)
     {
-        const FormulaConstraint& constraint = *affine_constraints[i];
+        const MultivariateConstraint& constraint = *affine_constraints[i];
         const float constant = constraint.compiled.affine_constant;
         const float low = constraint.low_bound;
         const float up = constraint.up_bound;
@@ -1302,7 +1657,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
-                                const FormulaConstraint& constraint)
+                                const MultivariateConstraint& constraint)
 {
     const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
 
@@ -1324,45 +1679,13 @@ void repair_single_affine_input(MatrixR& random_inputs,
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project).
-        // Leaving satisfied points untouched is what preserves the diversity.
-        float target = 0.0f;
-        switch (constraint.comparison_operator)
-        {
-        case ComparisonOperator::EqualTo:
-            target = low;
-            break;
-        case ComparisonOperator::Between:
-            if      (expression < low) target = low;
-            else if (expression > up)  target = up;
-            else continue;
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
-            if (expression < low) target = low; else continue;
-            break;
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
-            if (expression > up) target = up; else continue;
-            break;
-        case ComparisonOperator::None:
-        default:
+        float residual;
+        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
-        }
+        residual = -residual;
 
-        float residual = target - expression;
+        partial_shuffle(shuffled, terms_number);
 
-        // Fresh random sweep order for this row (Fisher-Yates), keeping each
-        // column paired with its coefficient.
-        for (Index sweep = terms_number - 1; sweep > 0; --sweep)
-        {
-            const Index pick = random_integer(0, sweep);
-            swap(shuffled[sweep], shuffled[pick]);
-        }
-
-        // Clamp-and-carry: each coordinate absorbs as much of the remaining
-        // residual as its box allows; a single pass is algebraically exact for
-        // one constraint whenever the target is reachable within the box.
         for (const auto& [column, coefficient] : shuffled)
         {
             if (coefficient == 0.0f)
@@ -1386,7 +1709,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
-                                  const FormulaConstraint& constraint)
+                                  const MultivariateConstraint& constraint)
 {
     const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
 
@@ -1398,83 +1721,34 @@ void repair_single_affine_integer(MatrixR& random_inputs,
     const float up  = constraint.up_bound;
     const Index rows_number = random_inputs.rows();
 
-    vector<Index> columns;
-    vector<float> coefficients;
-    columns.reserve(terms.size());
-    coefficients.reserve(terms.size());
-
-    for (const auto& [column, coefficient] : terms)
-    {
-        columns.push_back(column);
-        coefficients.push_back(coefficient);
-    }
-
-    const Index terms_number = static_cast<Index>(columns.size());
+    vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
+    const Index terms_number = static_cast<Index>(shuffled.size());
 
     for (Index r = 0; r < rows_number; ++r)
     {
-        // Snap the referenced coordinates to their integer lattice first, so the carry
-        // operates on integer values (the caller guarantees these columns are discrete).
-        for (Index t = 0; t < terms_number; ++t)
+        for (const auto& [column, coefficient] : shuffled)
         {
-            const Index column = columns[t];
             const float lattice_min = ceil(inferior_frontier(column));
             const float lattice_max = floor(superior_frontier(column));
             random_inputs(r, column) = min(lattice_max, max(lattice_min, round(random_inputs(r, column))));
         }
 
         float expression = constant;
-        for (Index t = 0; t < terms_number; ++t)
-            expression += coefficients[t] * random_inputs(r, columns[t]);
+        for (const auto& [column, coefficient] : shuffled)
+            expression += coefficient * random_inputs(r, column);
 
-        // Only project violated inequalities (equalities always project); leaving
-        // satisfied rows untouched is what preserves the diversity.
-        float target = 0.0f;
-        switch (constraint.comparison_operator)
-        {
-        case ComparisonOperator::EqualTo:
-            target = low;
-            break;
-        case ComparisonOperator::Between:
-            if      (expression < low) target = low;
-            else if (expression > up)  target = up;
-            else continue;
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
-            if (expression < low) target = low; else continue;
-            break;
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
-            if (expression > up) target = up; else continue;
-            break;
-        case ComparisonOperator::None:
-        default:
+        float residual;
+        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
             continue;
-        }
+        residual = -residual;
 
-        float residual = target - expression;
+        partial_shuffle(shuffled, terms_number);
 
-        // Fresh random sweep order for this row (Fisher-Yates), keeping each column
-        // paired with its coefficient.
-        for (Index sweep = terms_number - 1; sweep > 0; --sweep)
+        for (const auto& [column, coefficient] : shuffled)
         {
-            const Index pick = random_integer(0, sweep);
-            swap(columns[sweep], columns[pick]);
-            swap(coefficients[sweep], coefficients[pick]);
-        }
-
-        // Lattice clamp-and-carry: each coordinate absorbs as much of the remaining
-        // residual as it can in whole integer steps. Truncating the step toward zero
-        // means an inequality is never overshot past its opposite bound; a unit-
-        // coefficient target reachable within the box is hit exactly in one pass.
-        for (Index t = 0; t < terms_number; ++t)
-        {
-            const float coefficient = coefficients[t];
             if (coefficient == 0.0f)
                 continue;
 
-            const Index column = columns[t];
             const float lattice_min = ceil(inferior_frontier(column));
             const float lattice_max = floor(superior_frontier(column));
 
@@ -1499,290 +1773,41 @@ void repair_single_affine_integer(MatrixR& random_inputs,
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
-                             const vector<FormulaConstraint>& formula_constraints,
+                             const vector<MultivariateConstraint>& formula_constraints,
                              const Index max_correction_passes)
 {
-    // Smooth input-only constraints we can project. Affine ones (constant
-    // Jacobian) are folded in so the whole input-only set is satisfied jointly;
-    // we only run at all when at least one is genuinely nonlinear.
-    vector<const FormulaConstraint*> constraints;
-    bool any_nonlinear = false;
+    const bool any_nonlinear = ranges::any_of(formula_constraints, [](const MultivariateConstraint& constraint)
+        { return constraint.kind == ConstraintKind::NonlinearInput; });
 
-    for (const FormulaConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
-            continue;
-
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
-            constraints.push_back(&constraint);
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
-        {
-            constraints.push_back(&constraint);
-            any_nonlinear = true;
-        }
-    }
-
-    if (!any_nonlinear || constraints.empty())
+    if (!any_nonlinear)
         return;
 
-    const Index rows_number   = random_inputs.rows();
-    const Index inputs_number = random_inputs.cols();
-    const Index passes        = max(Index(1), max_correction_passes);
-
-    const VectorR empty_outputs;   // input-only constraints never touch outputs
-
-    for (Index r = 0; r < rows_number; ++r)
-    {
-        VectorR point = random_inputs.row(r).transpose();
-
-        for (Index pass = 0; pass < passes; ++pass)
-        {
-            // Active set: residual h and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
-            vector<float> residuals;
-            active.reserve(constraints.size());
-            residuals.reserve(constraints.size());
-
-            for (const FormulaConstraint* constraint : constraints)
-            {
-                const float value = constraint->compiled.evaluate(point, empty_outputs);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
-                {
-                    active.push_back(constraint);
-                    residuals.push_back(residual);
-                }
-            }
-
-            if (active.empty())
-                break;   // every constraint satisfied at this point
-
-            // Residual-based early-exit: an EqualTo constraint is always "active"
-            // but may already be satisfied to tolerance, so stop once the worst
-            // active residual is negligible. This makes a generous pass cap cheap
-            // — easy points converge in a handful of passes, only stiff manifolds
-            // use the full budget.
-            if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
-                break;
-
-            const Index active_number = static_cast<Index>(active.size());
-
-            MatrixR jacobian = MatrixR::Zero(active_number, inputs_number);
-            VectorR rhs(active_number);
-
-            for (Index i = 0; i < active_number; ++i)
-            {
-                rhs(i) = residuals[i];
-                const CompiledFormula& compiled = active[i]->compiled;
-
-                if (compiled.shape == FormulaShape::Affine)
-                    for (const auto& [column, coefficient] : compiled.affine_input_terms)
-                        jacobian(i, column) = coefficient;
-                else
-                    for (const auto& [column, program] : compiled.input_gradient)
-                        jacobian(i, column) = evaluate_rpn(program, point, empty_outputs);
-            }
-
-            // Gauss-Newton-on-manifold step: point <- point - J^T (J J^T + eps I)^-1 h.
-            MatrixR gram = jacobian * jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= jacobian.transpose() * gram.ldlt().solve(rhs);
-
-            // Box projection.
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
-        }
-
-        random_inputs.row(r) = point.transpose();
-    }
+    repair_affine_inputs_with_fixed(random_inputs, inferior_frontier, superior_frontier,
+                                    formula_constraints, {}, max_correction_passes);
 }
 
 
 void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
                                      const VectorR& superior_frontier,
-                                     const vector<FormulaConstraint>& formula_constraints,
+                                     const vector<MultivariateConstraint>& formula_constraints,
                                      const vector<char>& fixed_columns,
                                      const Index max_correction_passes)
 {
-    // Same input-only set the nonlinear repair projects (affine terms or a smooth
-    // gradient), but every row holds its `fixed_columns` coordinates put. We run
-    // whenever at least one such constraint exists (no "any nonlinear" guard): the
-    // mixed-integer buy-in / budget rows are all affine.
-    vector<const FormulaConstraint*> constraints;
-
-    for (const FormulaConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
-            continue;
-
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
-            constraints.push_back(&constraint);
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
-            constraints.push_back(&constraint);
-    }
+    const vector<const MultivariateConstraint*> constraints = input_repairable_constraints(formula_constraints);
 
     if (constraints.empty())
         return;
 
-    const Index rows_number   = random_inputs.rows();
-    const Index inputs_number = random_inputs.cols();
-    const Index passes        = max(Index(1), max_correction_passes);
-
-    const bool has_mask = (static_cast<Index>(fixed_columns.size()) == inputs_number);
-
-    const VectorR empty_outputs;   // input-only constraints never touch outputs
+    const Index rows_number = random_inputs.rows();
+    const Index passes      = max(Index(1), max_correction_passes);
 
     for (Index r = 0; r < rows_number; ++r)
     {
         VectorR point = random_inputs.row(r).transpose();
 
-        for (Index pass = 0; pass < passes; ++pass)
-        {
-            // Active set: residual h and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
-            vector<float> residuals;
-            active.reserve(constraints.size());
-            residuals.reserve(constraints.size());
-
-            for (const FormulaConstraint* constraint : constraints)
-            {
-                const float value = constraint->compiled.evaluate(point, empty_outputs);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
-                {
-                    active.push_back(constraint);
-                    residuals.push_back(residual);
-                }
-            }
-
-            if (active.empty())
-                break;
-
-            float max_abs_residual = 0.0f;
-            for (const float residual : residuals)
-                max_abs_residual = max(max_abs_residual, abs(residual));
-
-            if (max_abs_residual <= EPSILON)
-                break;
-
-            const Index active_number = static_cast<Index>(active.size());
-
-            MatrixR jacobian = MatrixR::Zero(active_number, inputs_number);
-            VectorR rhs(active_number);
-
-            for (Index i = 0; i < active_number; ++i)
-            {
-                rhs(i) = residuals[i];
-                const CompiledFormula& compiled = active[i]->compiled;
-
-                if (compiled.shape == FormulaShape::Affine)
-                    for (const auto& [column, coefficient] : compiled.affine_input_terms)
-                        jacobian(i, column) = coefficient;
-                else
-                    for (const auto& [column, program] : compiled.input_gradient)
-                        jacobian(i, column) = evaluate_rpn(program, point, empty_outputs);
-            }
-
-            // Hold the fixed coordinates put: zero their Jacobian columns so the
-            // Gauss-Newton step can never move them (their current value is already
-            // folded into every residual via the evaluation above).
-            if (has_mask)
-                for (Index j = 0; j < inputs_number; ++j)
-                    if (fixed_columns[j])
-                        jacobian.col(j).setZero();
-
-            // Drop constraints left with an all-zero row (every variable fixed):
-            // there is nothing free to project them onto, so their violation must
-            // persist as residual for the caller (perturbation / rejection), not be
-            // forced onto the continuous slice.
-            vector<Index> projectable;
-            projectable.reserve(active_number);
-            for (Index i = 0; i < active_number; ++i)
-                if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
-                    projectable.push_back(i);
-
-            if (projectable.empty())
-                break;
-
-            const Index projectable_number = static_cast<Index>(projectable.size());
-
-            MatrixR reduced_jacobian(projectable_number, inputs_number);
-            VectorR reduced_rhs(projectable_number);
-            for (Index k = 0; k < projectable_number; ++k)
-            {
-                reduced_jacobian.row(k) = jacobian.row(projectable[k]);
-                reduced_rhs(k) = rhs(projectable[k]);
-            }
-
-            // Gauss-Newton-on-manifold step over the free coordinates + box clamp.
-            MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
-
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
-        }
+        gauss_newton_repair_row(point, constraints, {}, {}, fixed_columns,
+                                inferior_frontier, superior_frontier, passes);
 
         random_inputs.row(r) = point.transpose();
     }
@@ -1792,31 +1817,22 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
-                   const vector<FormulaConstraint>& formula_constraints)
+                   const vector<MultivariateConstraint>& formula_constraints)
 {
-    // Route by the structure of the input-only, non-callback constraints:
-    //   - any nonlinear present  -> Gauss-Newton repair (folds in affine ones)
-    //   - exactly one affine     -> single-pass random sweep (exact, diverse)
-    //   - two or more affine      -> batched Gram + Dykstra projection
-    const FormulaConstraint* single_affine = nullptr;
+    const MultivariateConstraint* single_affine = nullptr;
     Index affine_number = 0;
     bool any_nonlinear = false;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
+    for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
-            continue;
+        const ConstraintKind kind = constraint.kind;
 
-        if (constraint.compiled.shape == FormulaShape::Affine
-            && !constraint.compiled.affine_input_terms.empty())
+        if (kind == ConstraintKind::AffineInput)
         {
             ++affine_number;
             single_affine = &constraint;
         }
-        else if (constraint.compiled.shape == FormulaShape::Nonlinear
-                 && constraint.compiled.gradient_available)
+        else if (kind == ConstraintKind::NonlinearInput)
             any_nonlinear = true;
     }
 
@@ -1829,174 +1845,170 @@ void repair_inputs(MatrixR& random_inputs,
 }
 
 
+namespace
+{
+
+bool row_satisfies_input_affine(const VectorR& point,
+                                const vector<const MultivariateConstraint*>& input_constraints)
+{
+    const VectorR empty_outputs;
+
+    for (const MultivariateConstraint* constraint : input_constraints)
+        if (!constraint_is_satisfied(*constraint, point, empty_outputs))
+            return false;
+
+    return true;
+}
+
+
+void cardinality_swap_row(VectorR& point,
+                          const vector<Index>& columns,
+                          const VectorR& inferior_frontier,
+                          const VectorR& superior_frontier,
+                          const Index swaps)
+{
+    for (Index s = 0; s < swaps; ++s)
+    {
+        vector<Index> off_candidates, on_candidates;
+
+        for (const Index column : columns)
+        {
+            const float value = point(column);
+            if (value > 0.5f && (value - inferior_frontier(column)) >= 1.0f - EPSILON)
+                off_candidates.push_back(column);
+            else if (value < 0.5f && (superior_frontier(column) - value) >= 1.0f - EPSILON)
+                on_candidates.push_back(column);
+        }
+
+        if (off_candidates.empty() || on_candidates.empty())
+            break;
+
+        const Index off_column = off_candidates[random_integer(0, static_cast<Index>(off_candidates.size()) - 1)];
+        const Index on_column  = on_candidates [random_integer(0, static_cast<Index>(on_candidates.size())  - 1)];
+
+        point(off_column) = round(point(off_column) - 1.0f);
+        point(on_column)  = round(point(on_column)  + 1.0f);
+    }
+}
+
+
+void unlock_free_integers_row(VectorR& point, const Lattice& lattice, const float fraction)
+{
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
+        if (random_uniform(0.0f, 1.0f) < fraction)
+        {
+            const float span = max(0.0f, lattice.max[c] - lattice.min[c]);
+            const float draw = random_uniform(0.0f, 1.0f) * (span + 1.0f) + (lattice.min[c] - 0.5f);
+            point(lattice.columns[c]) = min(lattice.max[c], max(lattice.min[c], round(draw)));
+        }
+}
+
+}
+
+
+void repair_mixed_integer_inputs(MatrixR& inputs,
+                                 const VectorR& inferior_frontier,
+                                 const VectorR& superior_frontier,
+                                 const vector<MultivariateConstraint>& formula_constraints,
+                                 const vector<char>& fixed_mask,
+                                 const Lattice& lattice,
+                                 const vector<vector<Index>>& cardinality_columns,
+                                 const Lattice& free_lattice,
+                                 const Index outer_cap,
+                                 const float exploration_ratio)
+{
+    const vector<const MultivariateConstraint*> input_constraints = input_repairable_constraints(formula_constraints);
+
+    const Index rows = inputs.rows();
+    const Index passes = max(Index(1), outer_cap);
+
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
+        snap_to_lattice(inputs, lattice.columns[c], lattice.min[c], lattice.max[c]);
+
+    std::set<Index> cardinality_set;
+    for (const vector<Index>& group : cardinality_columns)
+        cardinality_set.insert(group.begin(), group.end());
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+    {
+        if (constraint.kind != ConstraintKind::AffineInput)
+            continue;
+
+        bool all_free_discrete = true;
+        for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
+            if (term.first >= static_cast<Index>(fixed_mask.size())
+                || !fixed_mask[term.first] || cardinality_set.count(term.first))
+            { all_free_discrete = false; break; }
+
+        if (all_free_discrete)
+            repair_single_affine_integer(inputs, inferior_frontier, superior_frontier, constraint);
+    }
+
+    for (Index outer = 0; outer < passes; ++outer)
+    {
+        repair_affine_inputs_with_fixed(inputs, inferior_frontier, superior_frontier,
+                                        formula_constraints, fixed_mask);
+
+        if (input_constraints.empty())
+            return;
+
+        bool all_feasible = true;
+        const bool last_pass = (outer + 1 >= passes);
+        const Index swaps = 1 + outer / 2;
+        const float unlock_fraction = min(1.0f, exploration_ratio * float(outer + 1));
+
+        for (Index r = 0; r < rows; ++r)
+        {
+            VectorR point = inputs.row(r).transpose();
+
+            if (row_satisfies_input_affine(point, input_constraints))
+                continue;
+
+            all_feasible = false;
+            if (last_pass)
+                continue;
+
+            for (const vector<Index>& columns : cardinality_columns)
+                cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
+
+            unlock_free_integers_row(point, free_lattice, unlock_fraction);
+
+            inputs.row(r) = point.transpose();
+        }
+
+        if (all_feasible)
+            break;
+    }
+}
+
+
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
+                               const vector<MultivariateConstraint>& formula_constraints,
                                const SurrogateForward& forward,
                                const SurrogateVjp& vjp,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
 {
-    // Output-touching constraints we can project: not callback, op set, smooth,
-    // and referencing outputs (Mixed or OutputsOnly). Affine-in-(x,y) ones use
-    // their constant terms; nonlinear smooth ones use the compiled gradients.
-    // Input-only constraints are handled pre-evaluation by repair_inputs.
-    vector<const FormulaConstraint*> constraints;
+    vector<const MultivariateConstraint*> constraints;
 
-    for (const FormulaConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope == FormulaScope::InputsOnly)
-            continue;
-
-        const bool affine = (constraint.compiled.shape == FormulaShape::Affine);
-        const bool nonlinear_ready = (constraint.compiled.shape == FormulaShape::Nonlinear
-                                      && constraint.compiled.gradient_available);
-
-        if (affine || nonlinear_ready)
+    for (const MultivariateConstraint& constraint : formula_constraints)
+        if (constraint.kind == ConstraintKind::OutputDependent)
             constraints.push_back(&constraint);
-    }
 
     if (constraints.empty())
         return;
 
-    const Index rows_number   = inputs.rows();
-    const Index inputs_number  = inputs.cols();
-    const Index passes        = max(Index(1), max_correction_passes);
-
-    const bool has_mask = (static_cast<Index>(fixed_columns.size()) == inputs_number);
+    const Index rows_number = inputs.rows();
+    const Index passes      = max(Index(1), max_correction_passes);
 
     for (Index r = 0; r < rows_number; ++r)
     {
         VectorR point = inputs.row(r).transpose();
 
-        for (Index pass = 0; pass < passes; ++pass)
-        {
-            const VectorR output = forward(point);          // 1 forward, shared by all constraints
-            const Index outputs_number = output.size();
-
-            // Active set: residual and which constraints are currently violated.
-            vector<const FormulaConstraint*> active;
-            vector<float> residuals;
-            active.reserve(constraints.size());
-            residuals.reserve(constraints.size());
-
-            for (const FormulaConstraint* constraint : constraints)
-            {
-                const float value = constraint->compiled.evaluate(point, output);
-                const float low = constraint->low_bound;
-                const float up  = constraint->up_bound;
-
-                float residual = 0.0f;
-                bool is_active = false;
-
-                switch (constraint->comparison_operator)
-                {
-                case ComparisonOperator::EqualTo:
-                    residual = value - low; is_active = true; break;
-                case ComparisonOperator::Between:
-                    if      (value < low) { residual = value - low; is_active = true; }
-                    else if (value > up)  { residual = value - up;  is_active = true; }
-                    break;
-                case ComparisonOperator::GreaterEqualTo:
-                case ComparisonOperator::GreaterThan:
-                    if (value < low) { residual = value - low; is_active = true; }
-                    break;
-                case ComparisonOperator::LessEqualTo:
-                case ComparisonOperator::LessThan:
-                    if (value > up) { residual = value - up; is_active = true; }
-                    break;
-                case ComparisonOperator::None:
-                default:
-                    break;
-                }
-
-                if (is_active)
-                {
-                    active.push_back(constraint);
-                    residuals.push_back(residual);
-                }
-            }
-
-            if (active.empty())
-                break;
-
-            if (VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() <= EPSILON)
-                break;
-
-            const Index active_number = static_cast<Index>(active.size());
-
-            MatrixR jacobian = MatrixR::Zero(active_number, inputs_number);
-            VectorR rhs(active_number);
-
-            for (Index i = 0; i < active_number; ++i)
-            {
-                rhs(i) = residuals[i];
-                const CompiledFormula& compiled = active[i]->compiled;
-
-                // dg/dx (direct) and dg/dy (the VJP cotangent seed).
-                VectorR grad_x = VectorR::Zero(inputs_number);
-                VectorR cotangent = VectorR::Zero(outputs_number);
-
-                if (compiled.shape == FormulaShape::Affine)
-                {
-                    for (const auto& [column, coefficient] : compiled.affine_input_terms)
-                        grad_x(column) = coefficient;
-                    for (const auto& [column, coefficient] : compiled.affine_output_terms)
-                        cotangent(column) = coefficient;
-                }
-                else
-                {
-                    for (const auto& [column, program] : compiled.input_gradient)
-                        grad_x(column) = evaluate_rpn(program, point, output);
-                    for (const auto& [column, program] : compiled.output_gradient)
-                        cotangent(column) = evaluate_rpn(program, point, output);
-                }
-
-                // Chain rule: d/dx g(x, f(x)) = dg/dx + (df/dx)^T dg/dy.
-                jacobian.row(i) = (grad_x + vjp(point, cotangent)).transpose();
-            }
-
-            // Hold discrete coordinates fixed: zero their Jacobian columns so the output
-            // repair moves only the continuous inputs. Integers/binaries stay on their
-            // lattice, so the post-repair re-snap can no longer re-break the input
-            // constraints the input pump already satisfied.
-            if (has_mask)
-                for (Index j = 0; j < inputs_number; ++j)
-                    if (fixed_columns[j])
-                        jacobian.col(j).setZero();
-
-            // Drop constraints left with an all-zero row (only fixed inputs affect them):
-            // the continuous slice cannot project them, so leave their violation for the
-            // downstream feasibility filter.
-            vector<Index> projectable;
-            projectable.reserve(active_number);
-            for (Index i = 0; i < active_number; ++i)
-                if (jacobian.row(i).cwiseAbs().maxCoeff() > 0.0f)
-                    projectable.push_back(i);
-
-            if (projectable.empty())
-                break;
-
-            const Index projectable_number = static_cast<Index>(projectable.size());
-
-            MatrixR reduced_jacobian(projectable_number, inputs_number);
-            VectorR reduced_rhs(projectable_number);
-            for (Index k = 0; k < projectable_number; ++k)
-            {
-                reduced_jacobian.row(k) = jacobian.row(projectable[k]);
-                reduced_rhs(k) = rhs(projectable[k]);
-            }
-
-            // Gauss-Newton-on-manifold step + box projection.
-            MatrixR gram = reduced_jacobian * reduced_jacobian.transpose();
-            gram.diagonal().array() += EPSILON;
-
-            point -= reduced_jacobian.transpose() * gram.ldlt().solve(reduced_rhs);
-            point = point.cwiseMax(inferior_frontier).cwiseMin(superior_frontier);
-        }
+        gauss_newton_repair_row(point, constraints, forward, vjp, fixed_columns,
+                                inferior_frontier, superior_frontier, passes);
 
         inputs.row(r) = point.transpose();
     }
@@ -2006,29 +2018,45 @@ void repair_output_constraints(MatrixR& inputs,
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
-                               const vector<FormulaConstraint>& formula_constraints,
-                               const SurrogateForward& forward,
+                               const vector<MultivariateConstraint>& formula_constraints,
+                               const SurrogateBatchForward& batch_forward,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
 {
     const Index inputs_number = inputs.cols();
 
-    // Per-coordinate central-difference step scaled to the box width, floored so
-    // it stays meaningful for degenerate (fixed) coordinates.
     VectorR step(inputs_number);
     for (Index j = 0; j < inputs_number; ++j)
         step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));
 
-    const SurrogateVjp finite_difference_vjp =
-        [&forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
+    // Single-row forward for the constraint evaluation inside the Gauss-Newton loop.
+    const SurrogateForward forward = [&batch_forward](const VectorR& x) -> VectorR
     {
-        VectorR gradient = VectorR::Zero(inputs_number);
+        MatrixR single(1, x.size());
+        single.row(0) = x.transpose();
+        return batch_forward(single).row(0).transpose();
+    };
+
+    // Central-difference VJP: stack all 2*inputs_number perturbations of the row and evaluate them
+    // in one batched forward call (rows are independent), instead of two forwards per dimension.
+    const SurrogateVjp finite_difference_vjp =
+        [&batch_forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
+    {
+        MatrixR perturbed(2 * inputs_number, inputs_number);
         for (Index k = 0; k < inputs_number; ++k)
         {
-            VectorR plus = x, minus = x;
-            plus(k) += step(k);
-            minus(k) -= step(k);
-            const VectorR derivative = (forward(plus) - forward(minus)) / (2.0f * step(k));
+            perturbed.row(2 * k)     = x.transpose();
+            perturbed.row(2 * k + 1) = x.transpose();
+            perturbed(2 * k,     k) += step(k);
+            perturbed(2 * k + 1, k) -= step(k);
+        }
+
+        const MatrixR perturbed_outputs = batch_forward(perturbed);
+
+        VectorR gradient(inputs_number);
+        for (Index k = 0; k < inputs_number; ++k)
+        {
+            const VectorR derivative = (perturbed_outputs.row(2 * k) - perturbed_outputs.row(2 * k + 1)).transpose() / (2.0f * step(k));
             gradient(k) = derivative.dot(cotangent);
         }
         return gradient;

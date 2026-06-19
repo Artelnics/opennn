@@ -233,6 +233,13 @@ TrainingResult QuasiNewtonMethod::train()
 
 
     Index validation_failures = 0;
+    reset_best_parameters();
+
+    // Reset line-search state so a second train() on the same object does not
+    // start from the previous run's learning rate / slope.
+    old_learning_rate = 0.0f;
+    learning_rate = 0.0f;
+    training_slope = 0.0f;
 
     float old_loss = 0.0f;
     float loss_decrease = MAX;
@@ -303,9 +310,8 @@ TrainingResult QuasiNewtonMethod::train()
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
-            if (epoch != 0
-                && validation_back_propagation.error > results.validation_error_history(epoch-1))
-                ++validation_failures;
+            update_best_parameters(neural_network, validation_back_propagation.error,
+                                   epoch, validation_failures);
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -339,6 +345,8 @@ TrainingResult QuasiNewtonMethod::train()
         }
 
     }
+
+    restore_best_parameters(neural_network, results);
 
     set_unscaling();
 
@@ -374,7 +382,9 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    float alpha = 1.0f;
+    float alpha = (optimization_data.initial_learning_rate > 0.0f)
+        ? optimization_data.initial_learning_rate
+        : 1.0f;
     const float rho = 0.5f;
     const float armijo_constant = 1e-4f;
     const float previous_error = back_propagation.error;

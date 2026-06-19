@@ -6,7 +6,7 @@ work per step. This benchmark instead measures the metric that actually matters
 — **how long until the model reaches a fixed quality target** — and gates on a
 **held-out** metric so a model that overfits the training split cannot pass.
 
-This directly answers the due-diligence question *"are you fast because you
+This directly answers the technical review question *"are you fast because you
 don't actually learn?"*
 
 ## Method
