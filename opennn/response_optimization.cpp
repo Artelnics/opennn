@@ -424,51 +424,51 @@ const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_va
     // The filtered variables/descriptives depend only on the network and the time roles, both
     // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
     // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
-    const auto cached = variables_descriptives.find(role);
-    if (cached != variables_descriptives.end())
-        return cached->second;
+    const auto cached_it = variables_descriptives.find(role);
+    if (cached_it != variables_descriptives.end())
+        return cached_it->second;
 
     const bool is_input_request = (role == "Input");
 
-    const vector<Variable>& variables_uncheked = is_input_request ? neural_network->get_input_variables()
+    const vector<Variable>& variables_unchecked = is_input_request ? neural_network->get_input_variables()
                                                         : neural_network->get_output_variables();
 
-    const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
+    const vector<Descriptives> descriptives_unchecked = get_descriptives(is_input_request ? "Input" : "Target");
 
-    const vector<Index> feature_dimensions = get_feature_dimensions(variables_uncheked);
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables_unchecked);
     const Index total_features = accumulate(feature_dimensions.begin(), feature_dimensions.end(), Index(0));
 
-    const bool feature_level = (Index(descriptives_uncheked.size()) == total_features)
-                            && (total_features != Index(variables_uncheked.size()));
+    const bool feature_level = (Index(descriptives_unchecked.size()) == total_features)
+                            && (total_features != Index(variables_unchecked.size()));
 
-    throw_if(!feature_level && variables_uncheked.size() != descriptives_uncheked.size(),
+    throw_if(!feature_level && variables_unchecked.size() != descriptives_unchecked.size(),
              "ResponseOptimization: Variable count and Descriptives count mismatch.");
 
     vector<Variable> filtered_vars;
     vector<Descriptives> filtered_desc;
-    filtered_vars.reserve(variables_uncheked.size());
-    filtered_desc.reserve(variables_uncheked.size());
+    filtered_vars.reserve(variables_unchecked.size());
+    filtered_desc.reserve(variables_unchecked.size());
 
     Index feature_cursor = 0;
 
-    for (size_t i = 0; i < variables_uncheked.size(); ++i)
+    for (size_t i = 0; i < variables_unchecked.size(); ++i)
     {
         const Descriptives variable_descriptive = feature_level
-            ? descriptives_uncheked[size_t(feature_cursor)]
-            : descriptives_uncheked[i];
+            ? descriptives_unchecked[size_t(feature_cursor)]
+            : descriptives_unchecked[i];
 
         feature_cursor += feature_dimensions[i];
 
-        const string& var_role = variables_uncheked[i].get_role();
+        const string& var_role = variables_unchecked[i].get_role();
 
-        if (is_history(variables_uncheked[i].name))
+        if (is_history(variables_unchecked[i].name))
             continue;
 
         const bool keep = is_input_request ? (var_role == "Input")
                                            : (var_role == "Target" || var_role == "InputTarget");
         if (keep)
         {
-            filtered_vars.push_back(variables_uncheked[i]);
+            filtered_vars.push_back(variables_unchecked[i]);
             filtered_desc.push_back(variable_descriptive);
         }
     }
@@ -584,10 +584,11 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                 const float inferior_frontier = domain.inferior_frontier(feature_pointer);
                 const float superior_frontier = domain.superior_frontier(feature_pointer);
                 const float range = superior_frontier - inferior_frontier;
+                const float safe_range = (range < EPSILON) ? EPSILON : range;
 
-                scale_and_offset(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(0, current_objective_index) = 1.0 / safe_range;
 
-                scale_and_offset(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(1, current_objective_index) = -inferior_frontier / safe_range;
 
                 if (response_optimization.get_sense(variable_name) == Sense::Maximize)
                 {
