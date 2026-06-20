@@ -29,12 +29,14 @@ ResponseOptimization::~ResponseOptimization() = default;
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
+    variables_descriptives.clear();
+    network_jacobian = {};
 }
 
 
 void ResponseOptimization::set_constraint(const string& name, const ComparisonOperator comparison, float low, float up)
 {
-    constraints[name] = UnivariateConstraint(comparison, low, up);
+    constraint_set.univariate[name] = UnivariateConstraint(comparison, low, up);
 }
 
 
@@ -45,7 +47,7 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
 
     UnivariateConstraint constraint(ComparisonOperator::AllowedSet);
     constraint.allowed_values = allowed_values;
-    constraints[name] = move(constraint);
+    constraint_set.univariate[name] = move(constraint);
 }
 
 
@@ -58,13 +60,13 @@ void ResponseOptimization::set_cardinality_constraint(const vector<string>& vari
              "ResponseOptimization: cardinality target k=" + to_string(k)
              + " is out of range for " + to_string(variable_names.size()) + " indicator(s)");
 
-    cardinality_constraints.push_back({ variable_names, k });
+    constraint_set.cardinality.push_back({ variable_names, k });
 }
 
 
 void ResponseOptimization::clear_cardinality_constraints()
 {
-    cardinality_constraints.clear();
+    constraint_set.cardinality.clear();
 }
 
 
@@ -77,11 +79,11 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense)
 void ResponseOptimization::set_time_role(const string& name, const TimeType role)
 {
     time_roles[name] = role;
+    variables_descriptives.clear();
 }
 
 
-vector<NamedColumn> ResponseOptimization::build_columns_for_formula(const vector<Variable>& variables,
-                                                                   const bool apply_role_and_history_filter) const
+vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
 {
     vector<NamedColumn> columns;
     columns.reserve(variables.size());
@@ -92,14 +94,29 @@ vector<NamedColumn> ResponseOptimization::build_columns_for_formula(const vector
     {
         const Index dimension = variable.get_feature_count();
 
-        if (apply_role_and_history_filter
-        && (variable.get_role() != "Input" || is_history(variable.name)))
-            continue;
-
-        if (dimension == 1)
+        if (variable.get_role() == "Input" && !is_history(variable.name) && dimension == 1)
             columns.push_back({variable.name, column});
 
         column += dimension;
+    }
+
+    return columns;
+}
+
+
+vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Variable>& variables) const
+{
+    vector<NamedColumn> columns;
+    columns.reserve(variables.size());
+
+    Index column = 0;
+
+    for (const Variable& variable : variables)
+    {
+        if (variable.get_feature_count() == 1)
+            columns.push_back({variable.name, column});
+
+        column += variable.get_feature_count();
     }
 
     return columns;
@@ -114,19 +131,37 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     throw_if(!neural_network,
              "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
 
-    MultivariateConstraint formula_constraint;
-    formula_constraint.expression = expression;
-    formula_constraint.comparison_operator = comparison;
-    formula_constraint.low_bound = low;
-    formula_constraint.up_bound = up;
-    formula_constraint.uses_callback = false;
+    const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
+    const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
 
-    const vector<NamedColumn> input_columns = build_columns_for_formula(neural_network->get_input_variables(), true);
-    const vector<NamedColumn> output_columns = build_columns_for_formula(neural_network->get_output_variables(), false);
+    // Non-smooth (min/max/abs) constraints expand to a disjunction of smooth branches; a smooth
+    // constraint or a top-level AND case stays a single branch added directly. A degenerate
+    // expansion (e.g. a constant-valued piece) falls back to the original constraint, which is
+    // still enforced by rejection at the feasibility filter.
+    vector<vector<MultivariateConstraint>> branches;
+    try
+    {
+        branches = expand_constraint(expression, comparison, low, up, input_columns, output_columns);
+    }
+    catch (const exception&)
+    {
+        MultivariateConstraint constraint;
+        constraint.expression = expression;
+        constraint.comparison_operator = comparison;
+        constraint.low_bound = low;
+        constraint.up_bound = up;
+        constraint.compiled = compile_formula(expression, input_columns, output_columns);
+        constraint.kind = classify(constraint);
+        branches = { { move(constraint) } };
+    }
 
-    formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+    if (branches.size() == 1)
+        for (MultivariateConstraint& constraint : branches[0])
+            constraint_set.multivariate.push_back(move(constraint));
+    else
+        constraint_set.disjunctive.push_back(move(branches));
 
-    formula_constraints.push_back(move(formula_constraint));
+    network_jacobian.ready = false;
 }
 
 
@@ -144,8 +179,11 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 
     formula_constraint.compiled.shape = FormulaShape::Nonlinear;
     formula_constraint.compiled.scope = FormulaScope::Mixed;
+    formula_constraint.kind = classify(formula_constraint);
 
-    formula_constraints.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(move(formula_constraint));
+
+    network_jacobian.ready = false;
 }
 
 
@@ -163,18 +201,23 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.allowed_values = allowed_values;
     formula_constraint.uses_callback = false;
 
-    const vector<NamedColumn> input_columns = build_columns_for_formula(neural_network->get_input_variables(), true);
-    const vector<NamedColumn> output_columns = build_columns_for_formula(neural_network->get_output_variables(), false);
+    const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
+    const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
 
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+    formula_constraint.kind = classify(formula_constraint);
 
-    formula_constraints.push_back(move(formula_constraint));
+    constraint_set.multivariate.push_back(move(formula_constraint));
+
+    network_jacobian.ready = false;
 }
 
 
 void ResponseOptimization::clear_formula_constraints()
 {
-    formula_constraints.clear();
+    constraint_set.multivariate.clear();
+    constraint_set.disjunctive.clear();
+    network_jacobian.ready = false;
 }
 
 
@@ -198,13 +241,13 @@ void ResponseOptimization::set_exploration_ratio(float new_ratio)
 
 void ResponseOptimization::clear_constraints()
 {
-    constraints.clear();
+    constraint_set.univariate.clear();
 }
 
 
 void ResponseOptimization::clear_constraints(const string& name)
 {
-    constraints.erase(name);
+    constraint_set.univariate.erase(name);
 }
 
 
@@ -223,20 +266,22 @@ void ResponseOptimization::clear_objectives(const string& name)
 void ResponseOptimization::clear_time_roles()
 {
     time_roles.clear();
+    variables_descriptives.clear();
 }
 
 
 void ResponseOptimization::clear_time_roles(const string& name)
 {
     time_roles.erase(name);
+    variables_descriptives.clear();
 }
 
 
-ResponseOptimization::UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
+UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    const map<string, UnivariateConstraint>::const_iterator it = constraints.find(name);
+    const map<string, UnivariateConstraint>::const_iterator constraint_iterator = constraint_set.univariate.find(name);
 
-    return (it != constraints.end()) ? it->second : UnivariateConstraint(ComparisonOperator::None);
+    return (constraint_iterator != constraint_set.univariate.end()) ? constraint_iterator->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
 
@@ -260,23 +305,23 @@ bool ResponseOptimization::is_past(const TimeType role)
 
 bool ResponseOptimization::is_history(const string& name) const
 {
-    const map<string, TimeType>::const_iterator it = time_roles.find(name);
+    const map<string, TimeType>::const_iterator role_iterator = time_roles.find(name);
 
-    return it != time_roles.end() && is_past(it->second);
+    return role_iterator != time_roles.end() && is_past(role_iterator->second);
 }
 
 
 void ResponseOptimization::set_fixed_history(const Tensor3& history)
 {
     fixed_history = history;
-    is_forecasting = true;
+    network_jacobian.ready = false;
 }
 
 
 void ResponseOptimization::clear_fixed_history()
 {
     fixed_history = Tensor3();
-    is_forecasting = false;
+    network_jacobian.ready = false;
 }
 
 
@@ -322,9 +367,9 @@ void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_s
 }
 
 
-void ResponseOptimization::set_branch_pruning(const bool new_prune_branches)
+void ResponseOptimization::set_branch_mode(const BranchMode new_branch_mode)
 {
-    prune_branches = new_prune_branches;
+    branch_mode = new_branch_mode;
 }
 
 
@@ -374,62 +419,62 @@ vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) 
     throw runtime_error("ResponseOptimization: Required Scaling/Unscaling layer for role '" + role + "' not found.");
 }
 
-pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables_and_descriptives(const string& role) const
+const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_variables_and_descriptives(const string& role) const
 {
+    // The filtered variables/descriptives depend only on the network and the time roles, both
+    // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
+    // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
+    const auto cache_iterator = variables_descriptives.find(role);
+    if (cache_iterator != variables_descriptives.end())
+        return cache_iterator->second;
+
     const bool is_input_request = (role == "Input");
 
-    const vector<Variable>& variables_uncheked = is_input_request ? neural_network->get_input_variables()
+    const vector<Variable>& variables_unchecked = is_input_request ? neural_network->get_input_variables()
                                                         : neural_network->get_output_variables();
 
-    const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
+    const vector<Descriptives> descriptives_unchecked = get_descriptives(is_input_request ? "Input" : "Target");
 
-    // Scaling/Unscaling layers store one Descriptives per FEATURE, so a categorical
-    // input contributes get_categories_number() entries (its one-hot block). The
-    // optimizer works per logical Variable (Domain::set indexes descriptives[variable]),
-    // so when the descriptives are feature-level we collapse each variable's one-hot
-    // block down to a single representative descriptive (the block's first feature;
-    // the value is unused for categorical variables, whose Domain frontier is the
-    // 0..1 one-hot box). When the counts already match (all-scalar inputs, or targets)
-    // this is a pass-through and behaviour is unchanged.
-    const vector<Index> feature_dimensions = get_feature_dimensions(variables_uncheked);
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables_unchecked);
     const Index total_features = accumulate(feature_dimensions.begin(), feature_dimensions.end(), Index(0));
 
-    const bool feature_level = (Index(descriptives_uncheked.size()) == total_features)
-                            && (total_features != Index(variables_uncheked.size()));
+    const bool feature_level = (Index(descriptives_unchecked.size()) == total_features)
+                            && (total_features != Index(variables_unchecked.size()));
 
-    throw_if(!feature_level && variables_uncheked.size() != descriptives_uncheked.size(),
+    throw_if(!feature_level && variables_unchecked.size() != descriptives_unchecked.size(),
              "ResponseOptimization: Variable count and Descriptives count mismatch.");
 
-    vector<Variable> filtered_vars;
-    vector<Descriptives> filtered_desc;
-    filtered_vars.reserve(variables_uncheked.size());
-    filtered_desc.reserve(variables_uncheked.size());
+    vector<Variable> filtered_variables;
+    vector<Descriptives> filtered_descriptives;
+    filtered_variables.reserve(variables_unchecked.size());
+    filtered_descriptives.reserve(variables_unchecked.size());
 
     Index feature_cursor = 0;
 
-    for (size_t i = 0; i < variables_uncheked.size(); ++i)
+    for (size_t i = 0; i < variables_unchecked.size(); ++i)
     {
         const Descriptives variable_descriptive = feature_level
-            ? descriptives_uncheked[size_t(feature_cursor)]   // representative of the one-hot block
-            : descriptives_uncheked[i];
+            ? descriptives_unchecked[size_t(feature_cursor)]
+            : descriptives_unchecked[i];
 
         feature_cursor += feature_dimensions[i];
 
-        const string& var_role = variables_uncheked[i].get_role();
+        const string& variable_role = variables_unchecked[i].get_role();
 
-        if (is_history(variables_uncheked[i].name))
-            continue; // Skip history variables entirely for optimization purposes
+        if (is_history(variables_unchecked[i].name))
+            continue;
 
-        const bool keep = is_input_request ? (var_role == "Input")
-                                           : (var_role == "Target" || var_role == "InputTarget");
+        const bool keep = is_input_request ? (variable_role == "Input")
+                                           : (variable_role == "Target" || variable_role == "InputTarget");
         if (keep)
         {
-            filtered_vars.push_back(variables_uncheked[i]);
-            filtered_desc.push_back(variable_descriptive);
+            filtered_variables.push_back(variables_unchecked[i]);
+            filtered_descriptives.push_back(variable_descriptive);
         }
     }
 
-    return {filtered_vars, filtered_desc};
+    const auto inserted = variables_descriptives.emplace(role, make_pair(move(filtered_variables), move(filtered_descriptives)));
+    return inserted.first->second;
 }
 
 void ResponseOptimization::Domain::set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const float deformation_domain_factor)
@@ -474,7 +519,7 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
 
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(const string role) const
 {
-    const auto [variables, descriptives] = get_variables_and_descriptives(role);
+    const auto& [variables, descriptives] = get_variables_and_descriptives(role);
 
     const size_t variables_number = variables.size();
 
@@ -518,7 +563,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     {
         const bool is_input = (role == "Input");
 
-        const vector<Variable> variables = response_optimization.get_variables_and_descriptives(role).first;
+        const vector<Variable>& variables = response_optimization.get_variables_and_descriptives(role).first;
 
         const vector<Index> feature_dimensions_by_role = get_feature_dimensions(variables);
 
@@ -539,10 +584,11 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                 const float inferior_frontier = domain.inferior_frontier(feature_pointer);
                 const float superior_frontier = domain.superior_frontier(feature_pointer);
                 const float range = superior_frontier - inferior_frontier;
+                const float safe_range = (range < EPSILON) ? EPSILON : range;
 
-                scale_and_offset(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(0, current_objective_index) = 1.0 / safe_range;
 
-                scale_and_offset(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
+                scale_and_offset(1, current_objective_index) = -inferior_frontier / safe_range;
 
                 if (response_optimization.get_sense(variable_name) == Sense::Maximize)
                 {
@@ -665,388 +711,57 @@ static void round_discrete_inputs(MatrixR& inputs,
         const VariableType type = variables[i].type;
 
         if(type == VariableType::Binary)
-            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(0.0f).min(1.0f);
+            snap_to_lattice(inputs, feature_index, 0.0f, 1.0f);
         else if(type == VariableType::Integer)
-        {
-            const float minimum = ceil(inferior_frontier(feature_index));
-            const float maximum = floor(superior_frontier(feature_index));
-
-            inputs.col(feature_index).array() = inputs.col(feature_index).array().round().max(minimum).min(maximum);
-        }
+            snap_to_lattice(inputs, feature_index,
+                            ceil(inferior_frontier(feature_index)), floor(superior_frontier(feature_index)));
 
         feature_index += feature_dimensions[i];
     }
 }
 
 
-namespace
+Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
+                                                  const vector<Index>& feature_dimensions,
+                                                  const Domain& input_domain,
+                                                  map<string, Index>& scalar_column_of) const
 {
+    Lattice lattice;
+    Index feature = 0;
 
-// Input-only feasibility test used by the mixed-integer pump: every affine / smooth
-// input constraint within its bound tolerance. Output and callback constraints are
-// not the pump's concern (they are handled after the forward pass).
-bool row_satisfies_input_affine(const VectorR& point,
-                                const vector<const MultivariateConstraint*>& input_constraints)
-{
-    const VectorR empty_outputs;
-
-    for (const MultivariateConstraint* constraint : input_constraints)
+    for (size_t i = 0; i < variables.size(); ++i)
     {
-        const float value = constraint->compiled.evaluate(point, empty_outputs);
-        const float low = constraint->low_bound;
-        const float up  = constraint->up_bound;
-
-        switch (constraint->comparison_operator)
+        if (feature_dimensions[i] == 1)
         {
-        case ComparisonOperator::EqualTo:
-            if (abs(value - low) > bound_tolerance(low)) return false;
-            break;
-        case ComparisonOperator::Between:
-            if (value < low - bound_tolerance(low) || value > up + bound_tolerance(up)) return false;
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
-            if (value < low - bound_tolerance(low)) return false;
-            break;
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
-            if (value > up + bound_tolerance(up)) return false;
-            break;
-        default:
-            break;
+            scalar_column_of[variables[i].name] = feature;
+
+            if (variables[i].type == VariableType::Binary || variables[i].type == VariableType::Integer)
+            {
+                lattice.columns.push_back(feature);
+                lattice.min.push_back(ceil(input_domain.inferior_frontier(feature)));
+                lattice.max.push_back(floor(input_domain.superior_frontier(feature)));
+            }
         }
+
+        feature += feature_dimensions[i];
     }
 
-    return true;
+    return lattice;
 }
 
 
-// Box-bounded cardinality swap: turn one selected indicator off and one unselected on,
-// drawn only from columns the box still allows to move (remove-room / add-room >= 1, i.e.
-// value - inferior >= 1 to remove, superior - value >= 1 to add). Keeps sum z = k exact
-// and can never cross a frontier, so a pinned indicator is never disturbed.
-void cardinality_swap_row(VectorR& point,
-                          const vector<Index>& columns,
-                          const VectorR& inferior_frontier,
-                          const VectorR& superior_frontier,
-                          const Index swaps)
+vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Domain& input_domain,
+                                                                        const map<string, Index>& scalar_column_of,
+                                                                        const vector<char>& fixed_mask,
+                                                                        const float discrete_explore,
+                                                                        MatrixR& random_inputs) const
 {
-    for (Index s = 0; s < swaps; ++s)
-    {
-        vector<Index> off_candidates, on_candidates;
+    const Index effective_evaluations = random_inputs.rows();
+    const Index inputs_features_number = random_inputs.cols();
 
-        for (const Index column : columns)
-        {
-            const float value = point(column);
-            if (value > 0.5f && (value - inferior_frontier(column)) >= 1.0f - EPSILON)
-                off_candidates.push_back(column);
-            else if (value < 0.5f && (superior_frontier(column) - value) >= 1.0f - EPSILON)
-                on_candidates.push_back(column);
-        }
-
-        if (off_candidates.empty() || on_candidates.empty())
-            break;
-
-        const Index off_column = off_candidates[random_integer(0, static_cast<Index>(off_candidates.size()) - 1)];
-        const Index on_column  = on_candidates [random_integer(0, static_cast<Index>(on_candidates.size())  - 1)];
-
-        point(off_column) = round(point(off_column) - 1.0f);
-        point(on_column)  = round(point(on_column)  + 1.0f);
-    }
-}
-
-
-// Re-randomise a random fraction of the FREE (non-cardinality) integer/binary columns to a
-// fresh lattice value, so a stuck free-integer assignment is perturbed between pump passes.
-void unlock_free_integers_row(VectorR& point,
-                              const vector<Index>& columns,
-                              const vector<float>& lattice_min,
-                              const vector<float>& lattice_max,
-                              const float fraction)
-{
-    for (size_t c = 0; c < columns.size(); ++c)
-        if (random_uniform(0.0f, 1.0f) < fraction)
-        {
-            const float span = max(0.0f, lattice_max[c] - lattice_min[c]);
-            const float draw = random_uniform(0.0f, 1.0f) * (span + 1.0f) + (lattice_min[c] - 0.5f);
-            point(columns[c]) = min(lattice_max[c], max(lattice_min[c], round(draw)));
-        }
-}
-
-
-// Cyclic feasibility pump (per-row feasibility-pump): snap the discrete columns to their
-// lattice, then repeatedly (a) re-project the continuous slice onto the affine set with the
-// discrete columns held fixed, (b) test each row, (c) perturb the integer assignment of any
-// still-infeasible row (box-bounded cardinality swap + free-integer unlock, both escalating)
-// so it re-projects against a fresh assignment next pass. Rows still infeasible after the cap
-// are left for the downstream feasibility filter to drop. Because the discrete columns are
-// only ever moved by the lattice snap / perturbation (never the projection), they stay on the
-// grid and inside the box throughout — no post-repair re-round that could re-break the affine
-// rows.
-void repair_mixed_integer_inputs(MatrixR& inputs,
-                                 const VectorR& inferior_frontier,
-                                 const VectorR& superior_frontier,
-                                 const vector<MultivariateConstraint>& formula_constraints,
-                                 const vector<char>& fixed_mask,
-                                 const vector<Index>& lattice_columns,
-                                 const vector<float>& lattice_min,
-                                 const vector<float>& lattice_max,
-                                 const vector<vector<Index>>& cardinality_columns,
-                                 const vector<Index>& free_lattice_columns,
-                                 const vector<float>& free_lattice_min,
-                                 const vector<float>& free_lattice_max,
-                                 const Index outer_cap,
-                                 const float exploration_ratio)
-{
-    vector<const MultivariateConstraint*> input_constraints;
-    for (const MultivariateConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
-            continue;
-
-        const bool affine = (constraint.compiled.shape == FormulaShape::Affine
-                             && !constraint.compiled.affine_input_terms.empty());
-        const bool nonlinear = (constraint.compiled.shape == FormulaShape::Nonlinear
-                                && constraint.compiled.gradient_available);
-        if (affine || nonlinear)
-            input_constraints.push_back(&constraint);
-    }
-
-    const Index rows = inputs.rows();
-    const Index passes = max(Index(1), outer_cap);
-
-    // Lattice snap up front (Hole B: binary clamps to its frontier via the lattice bounds).
-    for (size_t c = 0; c < lattice_columns.size(); ++c)
-        inputs.col(lattice_columns[c]).array()
-            = inputs.col(lattice_columns[c]).array().round().max(lattice_min[c]).min(lattice_max[c]);
-
-    // Exact fast path: any input-only affine constraint over ONLY free integer/binary columns
-    // (a pure-integer knapsack) is solved by a single lattice clamp-and-carry, so the cyclic
-    // perturbation below never has to search for it. Cardinality-grouped columns are owned by
-    // the K-hot draw / swap and are excluded.
-    std::set<Index> cardinality_set;
-    for (const vector<Index>& group : cardinality_columns)
-        cardinality_set.insert(group.begin(), group.end());
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
-    {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly
-            || constraint.compiled.shape != FormulaShape::Affine
-            || constraint.compiled.affine_input_terms.empty())
-            continue;
-
-        bool all_free_discrete = true;
-        for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
-            if (term.first >= static_cast<Index>(fixed_mask.size())
-                || !fixed_mask[term.first] || cardinality_set.count(term.first))
-            { all_free_discrete = false; break; }
-
-        if (all_free_discrete)
-            repair_single_affine_integer(inputs, inferior_frontier, superior_frontier, constraint);
-    }
-
-    for (Index outer = 0; outer < passes; ++outer)
-    {
-        repair_affine_inputs_with_fixed(inputs, inferior_frontier, superior_frontier,
-                                        formula_constraints, fixed_mask);
-
-        if (input_constraints.empty())
-            return;   // nothing left to satisfy on the input side
-
-        bool all_feasible = true;
-        const bool last_pass = (outer + 1 >= passes);
-        const Index swaps = 1 + outer / 2;
-        const float unlock_fraction = min(1.0f, exploration_ratio * float(outer + 1));
-
-        for (Index r = 0; r < rows; ++r)
-        {
-            VectorR point = inputs.row(r).transpose();
-
-            if (row_satisfies_input_affine(point, input_constraints))
-                continue;
-
-            all_feasible = false;
-            if (last_pass)
-                continue;   // leave it for the feasibility filter to drop
-
-            for (const vector<Index>& columns : cardinality_columns)
-                cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
-
-            unlock_free_integers_row(point, free_lattice_columns, free_lattice_min, free_lattice_max, unlock_fraction);
-
-            inputs.row(r) = point.transpose();
-        }
-
-        if (all_feasible)
-            break;
-    }
-}
-
-} // namespace
-
-
-MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
-{
-    const vector<Variable> variables = get_variables_and_descriptives("Input").first;
-
-    const vector<Index> input_feature_dimensions = get_feature_dimensions(variables);
-
-    const Index inputs_features_number = get_features_number(variables);
-
-    const Index effective_evaluations = (evaluations_count > 0) ? evaluations_count : evaluations_number;
-
-    MatrixR random_inputs(effective_evaluations, inputs_features_number);
-    set_random_uniform(random_inputs, 0, 1);
-
-    Index current_feature_index = 0;
-
-    for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
-    {
-        const Index categories_number = input_feature_dimensions[input_variable];
-
-        if(categories_number == 1)
-        {
-            const UnivariateConstraint constraint = get_constraint(variables[input_variable].name);
-            const VariableType type = variables[input_variable].type;
-
-            if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
-            {
-                const float inferior = input_domain.inferior_frontier(current_feature_index);
-                const float superior = input_domain.superior_frontier(current_feature_index);
-
-                vector<float> candidates;
-                candidates.reserve(constraint.allowed_values.size());
-                for (const float value : constraint.allowed_values)
-                    if (value >= inferior - EPSILON && value <= superior + EPSILON)
-                        candidates.push_back(value);
-
-                if (candidates.empty())
-                {
-                    const float center = 0.5f * (inferior + superior);
-                    float nearest = constraint.allowed_values.front();
-                    for (const float value : constraint.allowed_values)
-                        if (abs(value - center) < abs(nearest - center)) nearest = value;
-                    candidates.push_back(nearest);
-                }
-
-                for (Index i = 0; i < effective_evaluations; ++i)
-                    random_inputs(i, current_feature_index) = candidates[random_integer(0, candidates.size() - 1)];
-            }
-            else if (type == VariableType::Binary)
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
-            else if (type == VariableType::Integer)
-            {
-                const float minimum = ceil(input_domain.inferior_frontier(current_feature_index));
-                const float maximum = floor(input_domain.superior_frontier(current_feature_index));
-
-                throw_if(maximum < minimum,
-                         "ResponseOptimization: integer variable '" + variables[input_variable].name
-                         + "' has no integer value within its range.");
-
-                random_inputs.col(current_feature_index).array()
-                    = (random_inputs.col(current_feature_index).array() * (maximum - minimum + 1.0f) + (minimum - 0.5f))
-                      .round().max(minimum).min(maximum);
-            }
-            else
-            {
-                const float inferior = input_domain.inferior_frontier(current_feature_index);
-                const float superior = input_domain.superior_frontier(current_feature_index);
-                const float range = superior - inferior;
-
-                random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array() * range + inferior;
-            }
-            current_feature_index++;
-        }
-        else
-        {
-            random_inputs.block(0, current_feature_index, effective_evaluations, categories_number).setZero();
-
-            vector<Index> allowed_categories;
-            allowed_categories.reserve(categories_number);
-
-            for(Index i = 0; i < categories_number; ++i)
-                if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
-                    allowed_categories.push_back(i);
-
-            throw_if(allowed_categories.empty(),
-                     "ResponseOptimization: variable '"
-                     + variables[input_variable].name +
-                     "' has every category constrained out — cannot generate inputs.");
-
-            vector<Index>& frequencies = category_frequencies[variables[input_variable].name];
-            if(Index(frequencies.size()) != categories_number)
-                frequencies.assign(categories_number, 0);
-
-            const Index exploration_count = llround(exploration_ratio * effective_evaluations);
-
-            for(Index i = 0; i < effective_evaluations; ++i)
-            {
-                Index chosen;
-
-                if(i < exploration_count)
-                {
-                    chosen = allowed_categories[0];
-                    for(const Index category : allowed_categories)
-                        if(frequencies[category] < frequencies[chosen])
-                            chosen = category;
-                }
-                else
-                    chosen = allowed_categories[random_integer(0, allowed_categories.size() - 1)];
-
-                random_inputs(i, current_feature_index + chosen) = 1.0;
-                frequencies[chosen]++;
-            }
-
-            current_feature_index += categories_number;
-        }
-    }
-
-    // ---- Mixed-integer / cardinality repair --------------------------------
-    // Discrete layout: every non-continuous column is held fixed during the continuous
-    // projection (Hole C); scalar integer/binary columns form the lattice that gets
-    // rounded and (when free) re-randomised on perturbation.
-    vector<char> fixed_mask(inputs_features_number, 0);
-    vector<Index> lattice_columns; vector<float> lattice_min, lattice_max;
-    map<string, Index> scalar_column_of;
-
-    {
-        Index feature = 0;
-        for (size_t i = 0; i < variables.size(); ++i)
-        {
-            const Index dimension = input_feature_dimensions[i];
-            const VariableType type = variables[i].type;
-            const bool discrete = (type == VariableType::Binary || type == VariableType::Integer
-                                   || type == VariableType::Categorical || dimension > 1);
-
-            if (discrete)
-                for (Index j = 0; j < dimension; ++j)
-                    fixed_mask[feature + j] = 1;
-
-            if (dimension == 1)
-            {
-                scalar_column_of[variables[i].name] = feature;
-                if (type == VariableType::Binary || type == VariableType::Integer)
-                {
-                    lattice_columns.push_back(feature);
-                    lattice_min.push_back(ceil(input_domain.inferior_frontier(feature)));
-                    lattice_max.push_back(floor(input_domain.superior_frontier(feature)));
-                }
-            }
-
-            feature += dimension;
-        }
-    }
-
-    // Resolve each cardinality group to its indicator columns and draw a box-aware K-hot
-    // assignment per row (overriding the per-variable binary sampling for those columns).
     vector<vector<Index>> cardinality_columns;
-    std::set<Index> grouped_columns;
 
-    for (const CardinalityConstraint& group : cardinality_constraints)
+    for (const CardinalityConstraint& group : constraint_set.cardinality)
     {
         vector<Index> columns;
         columns.reserve(group.variable_names.size());
@@ -1059,7 +774,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             throw_if(!fixed_mask[found->second],
                      "ResponseOptimization: cardinality variable '" + name + "' must be binary or integer");
             columns.push_back(found->second);
-            grouped_columns.insert(found->second);
         }
 
         const Index count = static_cast<Index>(columns.size());
@@ -1070,13 +784,8 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
         }
 
-        // Explore / exploit split (same exploration_ratio as categoricals): the first
-        // fraction of rows draw freely (explore new supports); the rest restrict the K "on"
-        // indicators to the incumbent-preferred set captured at the last reshape (exploit the
-        // improving direction). Exploit falls back to a free draw when no preferred support is
-        // available yet (iteration 0) or it is too small to reach k.
-        const Index exploration_count = llround(exploration_ratio * effective_evaluations);
-        const bool have_preferred = (static_cast<Index>(cardinality_preferred.size()) == inputs_features_number);
+        const Index exploration_count = llround(discrete_explore * effective_evaluations);
+        const bool have_preferred = (static_cast<Index>(sampling_memory.cardinality_preferred.size()) == inputs_features_number);
 
         vector<float> draw;
         for (Index r = 0; r < effective_evaluations; ++r)
@@ -1090,8 +799,8 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 for (Index c = 0; c < count; ++c)
                 {
                     if (force_on[c]) continue;
-                    if (cardinality_preferred[columns[c]]) any_preferred_free = true;
-                    else exploit_force_off[c] = 1;   // bar non-preferred indicators from this draw
+                    if (sampling_memory.cardinality_preferred[columns[c]]) any_preferred_free = true;
+                    else exploit_force_off[c] = 1;
                 }
                 if (any_preferred_free)
                     drawn = draw_k_hot(count, group.k, force_on, exploit_force_off, draw);
@@ -1109,46 +818,215 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
         cardinality_columns.push_back(move(columns));
     }
 
-    vector<Index> free_lattice_columns; vector<float> free_lattice_min, free_lattice_max;
-    for (size_t c = 0; c < lattice_columns.size(); ++c)
-        if (!grouped_columns.count(lattice_columns[c]))
+    return cardinality_columns;
+}
+
+
+MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
+{
+    const vector<Variable>& variables = get_variables_and_descriptives("Input").first;
+
+    const vector<Index> input_feature_dimensions = get_feature_dimensions(variables);
+
+    const Index inputs_features_number = get_features_number(variables);
+
+    const Index effective_evaluations = (evaluations_count > 0) ? evaluations_count : evaluations_number;
+
+    MatrixR random_inputs(effective_evaluations, inputs_features_number);
+    set_random_uniform(random_inputs, 0, 1);
+
+    const Domain original_domain = get_original_domain("Input");
+
+    const float continuous_explore = clamp(max(exploration_ratio, 1.0f - sampling_memory.last_feasibility_rate), 0.0f, 1.0f);
+    const float discrete_explore   = min(1.0f, 1.5f * continuous_explore);
+
+    const auto sample_scalar = [&](const Index col, const Index first_row, const Index row_count,
+                                   const float inferior, const float superior, const VariableType type)
+    {
+        if (row_count <= 0) return;
+
+        if (type == VariableType::Binary)
         {
-            free_lattice_columns.push_back(lattice_columns[c]);
-            free_lattice_min.push_back(lattice_min[c]);
-            free_lattice_max.push_back(lattice_max[c]);
+            const float lo = ceil(inferior), hi = floor(superior);
+            random_inputs.block(first_row, col, row_count, 1).array() = random_inputs.block(first_row, col, row_count, 1).array().round().max(lo).min(hi);
+        }
+        else if (type == VariableType::Integer)
+        {
+            const float lo = ceil(inferior), hi = floor(superior);
+            random_inputs.block(first_row, col, row_count, 1).array()
+                = (random_inputs.block(first_row, col, row_count, 1).array() * (hi - lo + 1.0f) + (lo - 0.5f)).round().max(lo).min(hi);
+        }
+        else
+            random_inputs.block(first_row, col, row_count, 1).array() = random_inputs.block(first_row, col, row_count, 1).array() * (superior - inferior) + inferior;
+    };
+
+    const auto sample_allowed_set = [&](const Index col, const vector<float>& allowed_values)
+    {
+        const float inferior = input_domain.inferior_frontier(col);
+        const float superior = input_domain.superior_frontier(col);
+
+        vector<float> candidates;
+        candidates.reserve(allowed_values.size());
+        for (const float value : allowed_values)
+            if (value >= inferior - EPSILON && value <= superior + EPSILON)
+                candidates.push_back(value);
+
+        if (candidates.empty())
+        {
+            const float center = 0.5f * (inferior + superior);
+            float nearest = allowed_values.front();
+            for (const float value : allowed_values)
+                if (abs(value - center) < abs(nearest - center)) nearest = value;
+            candidates.push_back(nearest);
         }
 
-    // Route to the pump only when discrete variables actually couple into an input-only
-    // affine/nonlinear constraint (or a cardinality group); otherwise keep the original
-    // continuous-repair-then-round path verbatim so purely continuous problems are unchanged.
-    bool discrete_in_input_constraint = false;
-    for (const MultivariateConstraint& constraint : formula_constraints)
+        // One locked bulk draw of every pick instead of locking the RNG once per row.
+        MatrixR picks(effective_evaluations, 1);
+        set_random_integer(picks, 0, static_cast<Index>(candidates.size()) - 1);
+
+        for (Index i = 0; i < effective_evaluations; ++i)
+            random_inputs(i, col) = candidates[static_cast<size_t>(picks(i, 0))];
+    };
+
+    const auto sample_categorical = [&](const Index first_col, const Index categories_number, const string& name)
     {
-        if (constraint.uses_callback
-            || constraint.comparison_operator == ComparisonOperator::None
-            || constraint.compiled.scope != FormulaScope::InputsOnly)
+        random_inputs.block(0, first_col, effective_evaluations, categories_number).setZero();
+
+        vector<Index> present_categories, original_categories;
+        for(Index i = 0; i < categories_number; ++i)
+        {
+            if(input_domain.superior_frontier(first_col + i) > 0.5)    present_categories.push_back(i);
+            if(original_domain.superior_frontier(first_col + i) > 0.5) original_categories.push_back(i);
+        }
+
+        throw_if(original_categories.empty(),
+                 "ResponseOptimization: variable '" + name + "' has every category constrained out — cannot generate inputs.");
+
+        if (present_categories.empty())
+            present_categories = original_categories;
+
+        vector<Index>& frequencies = sampling_memory.category_frequencies[name];
+        if(Index(frequencies.size()) != categories_number)
+            frequencies.assign(categories_number, 0);
+
+        const Index explore_count = llround(discrete_explore * effective_evaluations);
+
+        const auto least_sampled_category = [&frequencies](const vector<Index>& categories)
+        {
+            Index best = categories[0];
+            for(const Index category : categories)
+                if(frequencies[category] < frequencies[best]) best = category;
+            return best;
+        };
+
+        // The exploit rows (i >= explore_count) draw uniformly over the same category range, so a
+        // single bulk draw replaces one locked RNG call per exploit row. The explore rows are RNG-free.
+        const Index exploit_count = max(Index(0), effective_evaluations - explore_count);
+        MatrixR picks;
+        if (exploit_count > 0)
+        {
+            picks.resize(exploit_count, 1);
+            set_random_integer(picks, 0, static_cast<Index>(present_categories.size()) - 1);
+        }
+
+        for(Index i = 0; i < effective_evaluations; ++i)
+        {
+            const Index chosen = (i < explore_count)
+                ? least_sampled_category(original_categories)
+                : present_categories[static_cast<size_t>(picks(i - explore_count, 0))];
+
+            random_inputs(i, first_col + chosen) = 1.0;
+            frequencies[chosen]++;
+        }
+    };
+
+    Index current_feature_index = 0;
+
+    for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
+    {
+        const Index categories_number = input_feature_dimensions[input_variable];
+        const string& name = variables[input_variable].name;
+
+        if(categories_number != 1)
+        {
+            sample_categorical(current_feature_index, categories_number, name);
+            current_feature_index += categories_number;
+            continue;
+        }
+
+        const UnivariateConstraint constraint = get_constraint(name);
+        const VariableType type = variables[input_variable].type;
+
+        if (constraint.comparison == ComparisonOperator::AllowedSet && !constraint.allowed_values.empty())
+            sample_allowed_set(current_feature_index, constraint.allowed_values);
+        else
+        {
+            if (type == VariableType::Integer)
+                throw_if(floor(original_domain.superior_frontier(current_feature_index)) < ceil(original_domain.inferior_frontier(current_feature_index)),
+                         "ResponseOptimization: integer variable '" + name + "' has no integer value within its range.");
+
+            const float explore_fraction = (type == VariableType::Binary || type == VariableType::Integer)
+                                          ? discrete_explore : continuous_explore;
+            const Index explore_count = llround(explore_fraction * effective_evaluations);
+
+            sample_scalar(current_feature_index, 0, explore_count,
+                          original_domain.inferior_frontier(current_feature_index),
+                          original_domain.superior_frontier(current_feature_index), type);
+            sample_scalar(current_feature_index, explore_count, effective_evaluations - explore_count,
+                          input_domain.inferior_frontier(current_feature_index),
+                          input_domain.superior_frontier(current_feature_index), type);
+        }
+
+        current_feature_index++;
+    }
+
+    const vector<char> fixed_mask = discrete_column_mask(variables);
+
+    map<string, Index> scalar_column_of;
+    const Lattice lattice = build_input_lattice(variables, input_feature_dimensions, input_domain, scalar_column_of);
+
+    const vector<vector<Index>> cardinality_columns =
+        resolve_cardinality_columns(input_domain, scalar_column_of, fixed_mask, discrete_explore, random_inputs);
+
+    std::set<Index> grouped_columns;
+    for (const vector<Index>& group : cardinality_columns)
+        grouped_columns.insert(group.begin(), group.end());
+
+    Lattice free_lattice;
+    for (size_t c = 0; c < lattice.columns.size(); ++c)
+        if (!grouped_columns.count(lattice.columns[c]))
+        {
+            free_lattice.columns.push_back(lattice.columns[c]);
+            free_lattice.min.push_back(lattice.min[c]);
+            free_lattice.max.push_back(lattice.max[c]);
+        }
+
+    bool discrete_is_coupled = false;
+    for (const MultivariateConstraint& constraint : constraint_set.multivariate)
+    {
+        if (constraint.kind != ConstraintKind::AffineInput && constraint.kind != ConstraintKind::NonlinearInput)
             continue;
         for (const Index column : constraint.compiled.input_indices)
             if (column >= 0 && column < inputs_features_number && fixed_mask[column])
-                discrete_in_input_constraint = true;
+                discrete_is_coupled = true;
     }
 
-    if (!cardinality_constraints.empty() || discrete_in_input_constraint)
+    if (!constraint_set.cardinality.empty() || discrete_is_coupled)
         repair_mixed_integer_inputs(random_inputs,
                                     input_domain.inferior_frontier,
                                     input_domain.superior_frontier,
-                                    formula_constraints,
+                                    constraint_set.multivariate,
                                     fixed_mask,
-                                    lattice_columns, lattice_min, lattice_max,
+                                    lattice,
                                     cardinality_columns,
-                                    free_lattice_columns, free_lattice_min, free_lattice_max,
-                                    /*outer_cap*/ 8, exploration_ratio);
+                                    free_lattice,
+                                    8, discrete_explore);
     else
     {
         repair_inputs(random_inputs,
                       input_domain.inferior_frontier,
                       input_domain.superior_frontier,
-                      formula_constraints);
+                      constraint_set.multivariate);
 
         round_discrete_inputs(random_inputs, variables,
                               input_domain.inferior_frontier,
@@ -1161,35 +1039,35 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
-    const vector<Variable> input_variables = neural_network->get_input_variables();
-    const Index batch_size = input_control.rows(); // 1000
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    const Index batch_size = input_control.rows();
     const Shape input_shape = neural_network->get_input_shape();
-    const Index total_lags = input_shape[0]; // 2
-    const Index total_features = input_shape[1]; // 8
+    const Index total_lags = input_shape[0];
+    const Index total_features = input_shape[1];
 
     Tensor3 input_combined(batch_size, total_lags, total_features);
 
     input_combined.device(get_device()) = fixed_history.broadcast(array<Index, 3>{batch_size, 1, 1});
 
-    Index feature_cursor = 0;    
-    Index candidate_col_cursor = 0; 
+    Index feature_cursor = 0;
+    Index candidate_cursor = 0;
 
     for (const Variable& variable : input_variables)
     {
-        const Index dim = variable.get_feature_count();
+        const Index feature_count = variable.get_feature_count();
 
         if (variable.get_role() == "Input" && !is_history(variable.name))
         {
-           const MatrixR block_data = input_control.block(0, candidate_col_cursor, batch_size, dim);
+            const MatrixR block_data = input_control.block(0, candidate_cursor, batch_size, feature_count);
 
-            TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, dim);
+            TensorMap<const Tensor<float, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, feature_count);
 
-            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, dim}).device(get_device()) = block_tensor;
+            input_combined.slice(array<Index, 3>{0, total_lags - 1, feature_cursor}, array<Index, 3>{batch_size, 1, feature_count}).device(get_device()) = block_tensor;
 
-            candidate_col_cursor += dim;
+            candidate_cursor += feature_count;
         }
 
-        feature_cursor += dim;
+        feature_cursor += feature_count;
     }
 
     return input_combined;
@@ -1198,7 +1076,7 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 
 MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 {
-    if (is_forecasting)
+    if (is_forecasting())
     {
         throw_if(fixed_history.size() == 0,
                  "ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
@@ -1256,46 +1134,9 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
 bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& input_row,
                                                              const VectorR& output_row) const
 {
-    for (const MultivariateConstraint& formula_constraint : formula_constraints)
-    {
-        const float evaluated_value = formula_constraint.uses_callback
-            ? formula_constraint.callback(input_row, output_row)
-            : formula_constraint.compiled.evaluate(input_row, output_row);
-
-        const float low_bound = formula_constraint.low_bound;
-        const float up_bound = formula_constraint.up_bound;
-
-        bool constraint_satisfied = true;
-
-        switch (formula_constraint.comparison_operator)
-        {
-        case ComparisonOperator::EqualTo:
-            constraint_satisfied = abs(evaluated_value - low_bound) <= bound_tolerance(low_bound);
-            break;
-        case ComparisonOperator::Between:
-            constraint_satisfied = (evaluated_value >= low_bound - bound_tolerance(low_bound))
-                                && (evaluated_value <= up_bound + bound_tolerance(up_bound));
-            break;
-        case ComparisonOperator::GreaterEqualTo:
-            constraint_satisfied = evaluated_value >= low_bound - bound_tolerance(low_bound);
-            break;
-        case ComparisonOperator::LessEqualTo:
-            constraint_satisfied = evaluated_value <= up_bound + bound_tolerance(up_bound);
-            break;
-        case ComparisonOperator::GreaterThan:
-            constraint_satisfied = evaluated_value > low_bound;
-            break;
-        case ComparisonOperator::LessThan:
-            constraint_satisfied = evaluated_value < up_bound;
-            break;
-        default:
-            constraint_satisfied = true;
-            break;
-        }
-
-        if (!constraint_satisfied)
+    for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
+        if (!constraint_is_satisfied(formula_constraint, input_row, output_row))
             return false;
-    }
 
     return true;
 }
@@ -1318,7 +1159,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
         const string& variable_name = all_target_variables[column_index].name;
 
         if (is_history(variable_name))
-            continue; // not in domain — skip without advancing domain_index
+            continue;
 
         if (get_constraint(variable_name).comparison != ComparisonOperator::None)
         {
@@ -1335,32 +1176,26 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
             break;
     }
 
-    if (!formula_constraints.empty() && !feasible_indices.empty())
+    if (!constraint_set.multivariate.empty() && !feasible_indices.empty())
     {
         vector<Index> formula_feasible_indices;
         formula_feasible_indices.reserve(feasible_indices.size());
 
-        if (all_formula_constraints_are_linear(formula_constraints))
+        if (all_formula_constraints_are_linear(constraint_set.multivariate))
         {
-            // All-linear shortcut: one matrix product evaluates every constraint for every surviving candidate.
-            const Index k     = static_cast<Index>(feasible_indices.size());
-            const Index n_in  = inputs.cols();
-            const Index n_out = outputs.cols();
+            const Index feasible_count = static_cast<Index>(feasible_indices.size());
+            const Index inputs_number = inputs.cols();
+            const Index outputs_number = outputs.cols();
 
-            MatrixR X(k, n_in);
-            MatrixR Y(k, n_out);
-            for (Index i = 0; i < k; ++i)
-            {
-                X.row(i) = inputs.row(feasible_indices[i]);
-                Y.row(i) = outputs.row(feasible_indices[i]);
-            }
+            const MatrixR feasible_inputs = slice_rows(inputs, feasible_indices);
+            const MatrixR feasible_outputs = slice_rows(outputs, feasible_indices);
 
-            const LinearConstraintSet linear_set = build_linear_constraint_set(formula_constraints, n_in, n_out);
+            const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, inputs_number, outputs_number);
 
-            const MatrixR values = X * linear_set.A.leftCols(n_in).transpose()
-                                 + Y * linear_set.A.rightCols(n_out).transpose();   // (k, m)
+            const MatrixR values = feasible_inputs * linear_set.A.leftCols(inputs_number).transpose()
+                                 + feasible_outputs * linear_set.A.rightCols(outputs_number).transpose();
 
-            for (Index i = 0; i < k; ++i)
+            for (Index i = 0; i < feasible_count; ++i)
             {
                 const bool feasible = ((values.row(i).transpose().array() >= linear_set.lower.array()) &&
                                        (values.row(i).transpose().array() <= linear_set.upper.array())).all();
@@ -1387,18 +1222,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     if (feasible_indices.empty())
         return {MatrixR(), MatrixR()};
 
-    const Index feasible_count = static_cast<Index>(feasible_indices.size());
-
-    MatrixR feasible_inputs(feasible_count, inputs.cols());
-    MatrixR feasible_outputs(feasible_count, outputs.cols());
-
-    for (Index i = 0; i < feasible_count; ++i)
-    {
-        feasible_inputs.row(i) = inputs.row(feasible_indices[i]);
-        feasible_outputs.row(i) = outputs.row(feasible_indices[i]);
-    }
-
-    return {feasible_inputs, feasible_outputs};
+    return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
 }
 
 
@@ -1408,7 +1232,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
 {
     const Index multiplier = max(Index(1), evaluations_multiplier);
 
-    if (formula_constraints.empty())
+    if (constraint_set.multivariate.empty())
         return generate_feasible_points(input_domain, output_domain, evaluations_number * multiplier);
 
     const Index base_evaluations = evaluations_number * multiplier;
@@ -1478,71 +1302,47 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
 {
     MatrixR random_inputs = calculate_random_inputs(input_domain, evaluations_count);
 
-    // Hold every discrete column (binary / integer / categorical one-hot) fixed through
-    // the output-constraint repair so it adjusts only the continuous inputs. The integers
-    // stay on the lattice the input pump placed, so the re-snap below is a no-op rather
-    // than a move that could re-break the input constraints.
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
-    const vector<Index> input_feature_dimensions = get_feature_dimensions(input_variables);
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
+    const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
-    vector<char> fixed_columns(random_inputs.cols(), 0);
-    {
-        Index feature = 0;
-        for (size_t i = 0; i < input_variables.size(); ++i)
-        {
-            const VariableType type = input_variables[i].type;
-            const Index dimension = input_feature_dimensions[i];
-            if (type == VariableType::Binary || type == VariableType::Integer
-                || type == VariableType::Categorical || dimension > 1)
-                for (Index j = 0; j < dimension; ++j)
-                    fixed_columns[feature + j] = 1;
-            feature += dimension;
-        }
-    }
-
-    // Repair constraints that reference the network outputs (no-op when none):
-    // Gauss-Newton onto g(x, f(x)) = c. Prefer the exact analytic Jacobian
-    // (NetworkDifferential); otherwise fall back to a finite-difference VJP over
-    // calculate_outputs. Either way the exact forward drives the residual to
-    // zero, so the repaired points are exact to tolerance.
-    if (network_differential)
+    if (network_jacobian.differential)
     {
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
-                                  formula_constraints,
-                                  [this](const VectorR& x) { return network_differential->forward(x); },
-                                  [this](const VectorR& x, const VectorR& cotangent) { return network_differential->vjp(x, cotangent); },
+                                  constraint_set.multivariate,
+                                  [this](const VectorR& x) { return network_jacobian.differential->forward(x); },
+                                  [this](const VectorR& x, const VectorR& cotangent) { return network_jacobian.differential->vjp(x, cotangent); },
                                   64, fixed_columns);
     }
     else
     {
-        const SurrogateForward forward = [this](const VectorR& x) -> VectorR
+        const SurrogateBatchForward batch_forward = [this](const MatrixR& x) -> MatrixR
         {
-            MatrixR single(1, x.size());
-            single.row(0) = x.transpose();
-            return calculate_outputs(single).row(0).transpose();
+            return calculate_outputs(x);
         };
 
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
                                   input_domain.superior_frontier,
-                                  formula_constraints,
-                                  forward,
+                                  constraint_set.multivariate,
+                                  batch_forward,
                                   64, fixed_columns);
     }
 
-    // The output-coupled repair moves points continuously: re-snap Integer and
-    // Binary coordinates to their grid (a no-op now that the repair holds them fixed,
-    // kept as a defensive safety net); any residual is handled by the feasibility filter.
     round_discrete_inputs(random_inputs,
                           input_variables,
                           input_domain.inferior_frontier,
                           input_domain.superior_frontier);
 
     const MatrixR outputs = calculate_outputs(random_inputs);
-    evaluations_used += evaluations_count;   // total surrogate-evaluation budget tracking
-    return filter_feasible_points(random_inputs, outputs, output_domain);
+    evaluations_used += evaluations_count;
+
+    pair<MatrixR, MatrixR> feasible = filter_feasible_points(random_inputs, outputs, output_domain);
+
+    sampling_memory.last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
+
+    return feasible;
 }
 
 
@@ -1553,7 +1353,7 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     MatrixR objective_matrix(inputs.rows(), objectives_number);
 
     for (Index j = 0; j < objectives_number; ++j)
-        objective_matrix.col(j)= (source_and_column(0, j) > 0.5)
+        objective_matrix.col(j) = (source_and_column(0, j) > 0.5)
               ? inputs.col(static_cast<Index>(source_and_column(1, j)))
               : outputs.col(static_cast<Index>(source_and_column(1, j)));
 
@@ -1626,15 +1426,23 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
                                                                       const MatrixR& feasible_outputs,
                                                                       const Objectives& objectives) const
 {
-    const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
-
     MatrixR objective_matrix = objectives.extract(feasible_inputs, feasible_outputs);
-
     objectives.normalize(objective_matrix);
+
+    return calculate_optimal_points(feasible_inputs, feasible_outputs, objectives, objective_matrix);
+}
+
+
+pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                                      const MatrixR& feasible_outputs,
+                                                                      const Objectives& objectives,
+                                                                      const MatrixR& normalized_objective_matrix) const
+{
+    const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
 
     const VectorR normalized_utopian_point = (objectives.utopian_and_sense.row(1).array() + (float)1.0) / (float)2.0;
 
-    const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , (int)subset_dimension);
+    const VectorI nearest_rows = get_nearest_points(normalized_objective_matrix, normalized_utopian_point , (int)subset_dimension);
 
     MatrixR nearest_inputs(subset_dimension, feasible_inputs.cols());
     MatrixR nearest_outputs(subset_dimension, feasible_outputs.cols());
@@ -1651,17 +1459,16 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
 void ResponseOptimization::promote_single_variable_constraints()
 {
-    if (formula_constraints.empty() || !neural_network)
+    if (constraint_set.multivariate.empty() || !neural_network)
         return;
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
-    const vector<NamedColumn> input_columns = build_columns_for_formula(input_variables, true);
+    const vector<NamedColumn> input_columns = build_input_columns(input_variables);
 
     map<Index, string> name_of_column;
     for (const NamedColumn& column : input_columns)
         name_of_column[column.column_index] = column.name;
 
-    // [lo, hi] interval implied by an interval-type UnivariateConstraint; false for AllowedSet.
     auto interval_of = [](const UnivariateConstraint& constraint, float& lo, float& hi) -> bool
     {
         lo = -numeric_limits<float>::infinity();
@@ -1681,9 +1488,9 @@ void ResponseOptimization::promote_single_variable_constraints()
     };
 
     vector<MultivariateConstraint> kept;
-    kept.reserve(formula_constraints.size());
+    kept.reserve(constraint_set.multivariate.size());
 
-    for (MultivariateConstraint& formula_constraint : formula_constraints)
+    for (MultivariateConstraint& formula_constraint : constraint_set.multivariate)
     {
         const CompiledFormula& compiled = formula_constraint.compiled;
 
@@ -1704,7 +1511,6 @@ void ResponseOptimization::promote_single_variable_constraints()
         if (found == name_of_column.end() || coefficient == 0.0f)
         { kept.push_back(move(formula_constraint)); continue; }
 
-        // Solve a*x + c {op} bound for the implied interval on x.
         const float constant = compiled.affine_constant;
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
@@ -1733,9 +1539,9 @@ void ResponseOptimization::promote_single_variable_constraints()
 
         float existing_lo = -numeric_limits<float>::infinity();
         float existing_hi =  numeric_limits<float>::infinity();
-        const auto existing = constraints.find(name);
-        if (existing != constraints.end() && !interval_of(existing->second, existing_lo, existing_hi))
-        { kept.push_back(move(formula_constraint)); continue; }   // existing AllowedSet: leave as formula
+        const auto existing = constraint_set.univariate.find(name);
+        if (existing != constraint_set.univariate.end() && !interval_of(existing->second, existing_lo, existing_hi))
+        { kept.push_back(move(formula_constraint)); continue; }
 
         const float new_lo = max(implied_lo, existing_lo);
         const float new_hi = min(implied_hi, existing_hi);
@@ -1748,32 +1554,51 @@ void ResponseOptimization::promote_single_variable_constraints()
         const bool hi_finite = isfinite(new_hi);
 
         if (lo_finite && hi_finite && new_lo == new_hi)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::EqualTo, new_lo, new_lo);
         else if (lo_finite && hi_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::Between, new_lo, new_hi);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::Between, new_lo, new_hi);
         else if (lo_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::GreaterEqualTo, new_lo, 0.0f);
         else if (hi_finite)
-            constraints[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
 
         cout << "> Promoted single-variable constraint '" << formula_constraint.expression
              << "' to a box on '" << name << "'." << endl;
-        // promoted -> intentionally not kept in the formula set
     }
 
-    formula_constraints = move(kept);
+    constraint_set.multivariate = move(kept);
+}
+
+
+vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& variables) const
+{
+    const vector<Index> dimensions = get_feature_dimensions(variables);
+
+    vector<char> mask(get_features_number(variables), 0);
+
+    Index feature = 0;
+    for (size_t i = 0; i < variables.size(); ++i)
+    {
+        const VariableType type = variables[i].type;
+        if (type == VariableType::Binary || type == VariableType::Integer
+            || type == VariableType::Categorical || dimensions[i] > 1)
+            for (Index j = 0; j < dimensions[i]; ++j)
+                mask[feature + j] = 1;
+        feature += dimensions[i];
+    }
+
+    return mask;
 }
 
 
 void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Domain& original) const
 {
-    if (cardinality_constraints.empty())
+    if (constraint_set.cardinality.empty())
         return;
 
-    // Resolve indicator name -> column once per run (the layout is fixed).
-    if (cardinality_indicator_columns.empty())
+    if (sampling_memory.cardinality_indicator_columns.empty())
     {
-        const vector<Variable> variables = get_variables_and_descriptives("Input").first;
+        const vector<Variable>& variables = get_variables_and_descriptives("Input").first;
         const vector<Index> dimensions = get_feature_dimensions(variables);
 
         map<string, Index> column_of;
@@ -1785,23 +1610,21 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
             feature += dimensions[i];
         }
 
-        for (const CardinalityConstraint& group : cardinality_constraints)
+        for (const CardinalityConstraint& group : constraint_set.cardinality)
             for (const string& name : group.variable_names)
             {
                 const auto found = column_of.find(name);
                 if (found != column_of.end())
-                    cardinality_indicator_columns[name] = found->second;
+                    sampling_memory.cardinality_indicator_columns[name] = found->second;
             }
     }
 
-    if (static_cast<Index>(cardinality_preferred.size()) != domain.superior_frontier.size())
-        cardinality_preferred.assign(domain.superior_frontier.size(), 0);
+    if (static_cast<Index>(sampling_memory.cardinality_preferred.size()) != domain.superior_frontier.size())
+        sampling_memory.cardinality_preferred.assign(domain.superior_frontier.size(), 0);
 
-    for (const auto& [name, column] : cardinality_indicator_columns)
+    for (const auto& [name, column] : sampling_memory.cardinality_indicator_columns)
     {
-        // Capture the incumbent-preferred support from the reshaped (pinned) box BEFORE
-        // reopening it: an indicator the reshape kept "on" was in a surviving support.
-        cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
+        sampling_memory.cardinality_preferred[column] = (domain.superior_frontier(column) >= 0.5f) ? 1 : 0;
 
         domain.inferior_frontier(column) = original.inferior_frontier(column);
         domain.superior_frontier(column) = original.superior_frontier(column);
@@ -1813,7 +1636,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
     const Objectives objectives(*this);
 
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
@@ -1891,61 +1714,92 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 }
 
 
+// Vertically stack row-blocks in a single allocation. Replaces repeated append_rows, which copies
+// the whole growing matrix every call (quadratic). Empty blocks contribute no rows.
+static MatrixR stack_rows(const vector<MatrixR>& blocks)
+{
+    if (blocks.empty())
+        return MatrixR();
+
+    Index total_rows = 0;
+    for (const MatrixR& block : blocks)
+        total_rows += block.rows();
+
+    MatrixR result(total_rows, blocks.front().cols());
+
+    Index row = 0;
+    for (const MatrixR& block : blocks)
+    {
+        if (block.rows() == 0)
+            continue;
+        result.middleRows(row, block.rows()) = block;
+        row += block.rows();
+    }
+
+    return result;
+}
+
+
+// True if row `a` Pareto-dominates row `b` (maximization): no worse in every objective and
+// strictly better in at least one. Short-circuits on the first objective where `a` falls behind.
+static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, const Index b)
+{
+    bool strictly_better = false;
+
+    for (Index k = 0; k < objective_matrix.cols(); ++k)
+    {
+        const float difference = objective_matrix(a, k) - objective_matrix(b, k);
+        if (difference < 0.0f) return false;
+        if (difference > 0.0f) strictly_better = true;
+    }
+
+    return strictly_better;
+}
+
+
+// Row indices of the Pareto-optimal (non-dominated) points of an objective matrix, maximization
+// sense. Rows with non-finite entries are skipped (they neither belong to the front nor enter it
+// as dominators). Incremental cull: each point is tested only against the running front and, when
+// kept, evicts the front members it dominates — far cheaper than all-pairs once the front is small.
+static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
+{
+    const Index rows_number = objective_matrix.rows();
+
+    vector<Index> front;
+    front.reserve(rows_number);
+
+    for (Index i = 0; i < rows_number; ++i)
+    {
+        if (!objective_matrix.row(i).allFinite())
+            continue;
+
+        bool dominated = false;
+        for (const Index j : front)
+            if (pareto_dominates(objective_matrix, j, i)) { dominated = true; break; }
+
+        if (dominated)
+            continue;
+
+        front.erase(remove_if(front.begin(), front.end(),
+                              [&](const Index j) { return pareto_dominates(objective_matrix, i, j); }),
+                    front.end());
+        front.push_back(i);
+    }
+
+    return front;
+}
+
+
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs,
                                                               const MatrixR& outputs,
                                                               const MatrixR& objective_matrix) const
 {
-    const Index rows_number = inputs.rows();
-
-    if (rows_number == 0)
+    if (inputs.rows() == 0)
         return {};
 
-    vector<int> non_dominated(static_cast<size_t>(rows_number), 1);
+    const vector<Index> front = pareto_front_indices(objective_matrix);
 
-    for (Index i = 0; i < rows_number; ++i)
-    {
-        const auto row_i = objective_matrix.row(i);
-
-        if(!row_i.allFinite())
-        {
-            non_dominated[i] = 0;
-            continue;
-        }
-
-        for (Index j = 0; j < rows_number; ++j)
-        {
-            if (i == j)
-                continue;
-
-            const auto row_j = objective_matrix.row(j);
-
-            if ((row_j.array() >= row_i.array()).all() && (row_j.array() > row_i.array()).any())
-            {
-                non_dominated[i] = 0;
-                break;
-            }
-        }
-    }
-
-    vector<Index> non_dominated_indices;
-    non_dominated_indices.reserve(rows_number);
-
-    for (Index i = 0; i < rows_number; ++i)
-        if (non_dominated[i] == 1)
-            non_dominated_indices.push_back(i);
-
-    const Index pareto_size = static_cast<Index>(non_dominated_indices.size());
-
-    MatrixR pareto_inputs(pareto_size, inputs.cols());
-    MatrixR pareto_outputs(pareto_size, outputs.cols());
-
-    for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
-    {       
-        pareto_inputs.row(i) = inputs.row(non_dominated_indices[i]);
-        pareto_outputs.row(i) = outputs.row(non_dominated_indices[i]);
-    }
-
-    return {pareto_inputs, pareto_outputs};
+    return {slice_rows(inputs, front), slice_rows(outputs, front)};
 }
 
 
@@ -2001,14 +1855,11 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
     Objectives objectives(*this);
 
-    const vector<Variable> input_variables = get_variables_and_descriptives("Input").first;
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
 
-    // The initial, full-domain pass draws a broader candidate set
-    // (initial_sampling_factor x evaluations_number) to seed the contraction
-    // from a wider sample; per-Pareto-point sampling below keeps the base count.
     auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain, initial_sampling_factor);
 
     if (first_feasible_inputs.rows() == 0)
@@ -2045,37 +1896,39 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     {
         cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
 
-        MatrixR candidate_inputs = global_pareto_inputs;
-        MatrixR candidate_outputs = global_pareto_outputs;
+        vector<MatrixR> candidate_input_blocks { global_pareto_inputs };
+        vector<MatrixR> candidate_output_blocks { global_pareto_outputs };
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
-            // Matched-budget stop: once the total surrogate-evaluation budget
-            // is spent, stop launching new local-sampling calls and use the
-            // candidates aggregated so far this iteration.
             if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
                 break;
 
             auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
 
-            MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
+            MatrixR local_objective_matrix = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);
 
             auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix );
 
-            candidate_inputs = append_rows(candidate_inputs, local_pareto_input);
-            candidate_outputs = append_rows(candidate_outputs, local_pareto_output);
+            candidate_input_blocks.push_back(move(local_pareto_input));
+            candidate_output_blocks.push_back(move(local_pareto_output));
         }
+
+        // Single allocation instead of append_rows copying the growing matrix every iteration.
+        const MatrixR candidate_inputs = stack_rows(candidate_input_blocks);
+        const MatrixR candidate_outputs = stack_rows(candidate_output_blocks);
 
         cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
 
         if (candidate_inputs.rows() == 0)
             break;
 
-        pair<MatrixR, MatrixR> optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives);
-
+        // Normalized objectives of the candidate set, shared by optimal-point selection and Pareto.
         MatrixR objective_matrix = objectives.extract(candidate_inputs, candidate_outputs);
         objectives.normalize(objective_matrix);
+
+        pair<MatrixR, MatrixR> optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives, objective_matrix);
 
         const auto pareto_pair = calculate_pareto(candidate_inputs, candidate_outputs, objective_matrix);
 
@@ -2133,7 +1986,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
         input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
-        const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
+        const MatrixR best_and_pareto = append_rows(optimal_set.first, global_pareto_inputs);
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
@@ -2232,20 +2085,36 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
 
 void ResponseOptimization::initialize_network_differential() const
 {
-    network_differential.reset();
-
-    if (!neural_network || is_forecasting)
+    // The analytic Jacobian models the network, not the constraints, so it is built and validated
+    // once and reused across every branch; rebuilding it per solve_once would repeat the same work.
+    // Invalidated when the network or the formula constraints change.
+    if (network_jacobian.ready)
         return;
 
-    // Only needed when some constraint references the network outputs.
-    bool has_output_constraint = false;
-    for (const MultivariateConstraint& constraint : formula_constraints)
-        if (!constraint.uses_callback
-            && constraint.comparison_operator != ComparisonOperator::None
-            && constraint.compiled.scope != FormulaScope::InputsOnly)
-            has_output_constraint = true;
+    network_jacobian.ready = true;
+    network_jacobian.differential.reset();
 
-    if (!has_output_constraint)
+    if (!neural_network || is_forecasting())
+        return;
+
+    // Only build if some part of the problem (base set or any disjunctive branch) carries a
+    // non-callback output constraint that the analytic Jacobian could repair.
+    const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)
+    {
+        for (const MultivariateConstraint& constraint : list)
+            if (!constraint.uses_callback
+                && constraint.comparison_operator != ComparisonOperator::None
+                && constraint.compiled.scope != FormulaScope::InputsOnly)
+                return true;
+        return false;
+    };
+
+    bool has_output = has_output_constraint(constraint_set.multivariate);
+    for (const vector<vector<MultivariateConstraint>>& disjunction : constraint_set.disjunctive)
+        for (const vector<MultivariateConstraint>& branch : disjunction)
+            has_output = has_output || has_output_constraint(branch);
+
+    if (!has_output)
         return;
 
     auto candidate = make_unique<NetworkDifferential>();
@@ -2258,9 +2127,6 @@ void ResponseOptimization::initialize_network_differential() const
         return;
     }
 
-    // Self-validation ("stay in sync"): the analytic forward must match
-    // calculate_outputs over the input domain. Sample within the scaling
-    // descriptives' range when a scaling layer is present.
     const Index inputs_number = neural_network->get_inputs_number();
 
     VectorR lower = VectorR::Constant(inputs_number, -1.0f);
@@ -2271,10 +2137,6 @@ void ResponseOptimization::initialize_network_differential() const
         upper = candidate->layers.front().maximum;
     }
 
-    // Validation runs ONCE per optimization (not per evaluation), so it is
-    // negligible against the run. The cheap forward check uses more probes (it
-    // is the drift guard); the costlier VJP check (2*n_in forwards per probe)
-    // uses a few, enough to catch a broken Jacobian.
     const Index forward_probes = 16;
     const Index vjp_probes = 4;
 
@@ -2286,9 +2148,9 @@ void ResponseOptimization::initialize_network_differential() const
     const MatrixR reference = calculate_outputs(probe);
     const Index outputs_number = reference.cols();
 
-    VectorR fd_step(inputs_number);
+    VectorR finite_difference_step(inputs_number);
     for (Index j = 0; j < inputs_number; ++j)
-        fd_step(j) = max(1e-4f, 1e-3f * (upper(j) - lower(j)));
+        finite_difference_step(j) = max(1e-4f, 1e-3f * (upper(j) - lower(j)));
 
     const VectorR cotangent = VectorR::Ones(outputs_number);
 
@@ -2299,13 +2161,11 @@ void ResponseOptimization::initialize_network_differential() const
     {
         const VectorR x = probe.row(i).transpose();
 
-        // (a) forward must match the network (cheap; every probe).
         const VectorR analytic_output = candidate->forward(x);
         const VectorR truth = reference.row(i).transpose();
         worst_forward_error = max(worst_forward_error,
             (analytic_output - truth).cwiseAbs().maxCoeff() / (1.0f + truth.cwiseAbs().maxCoeff()));
 
-        // (b) analytic VJP must match a central-difference VJP (a few probes).
         if (i >= vjp_probes) continue;
 
         const VectorR analytic_gradient = candidate->vjp(x, cotangent);
@@ -2314,10 +2174,10 @@ void ResponseOptimization::initialize_network_differential() const
         {
             MatrixR plus(1, inputs_number), minus(1, inputs_number);
             plus.row(0) = x.transpose();   minus.row(0) = x.transpose();
-            plus(0, k) += fd_step(k);      minus(0, k) -= fd_step(k);
+            plus(0, k) += finite_difference_step(k);      minus(0, k) -= finite_difference_step(k);
             const VectorR forward_plus  = calculate_outputs(plus).row(0).transpose();
             const VectorR forward_minus = calculate_outputs(minus).row(0).transpose();
-            finite_difference_gradient(k) = cotangent.dot(forward_plus - forward_minus) / (2.0f * fd_step(k));
+            finite_difference_gradient(k) = cotangent.dot(forward_plus - forward_minus) / (2.0f * finite_difference_step(k));
         }
         worst_vjp_error = max(worst_vjp_error,
             (analytic_gradient - finite_difference_gradient).cwiseAbs().maxCoeff()
@@ -2326,7 +2186,7 @@ void ResponseOptimization::initialize_network_differential() const
 
     if (worst_forward_error < 1e-3f && worst_vjp_error < 2e-2f)
     {
-        network_differential = move(candidate);
+        network_jacobian.differential = move(candidate);
         cout << "> Analytic surrogate Jacobian active (forward error " << worst_forward_error
              << ", VJP-vs-finite-difference error " << worst_vjp_error << ")." << endl;
     }
@@ -2337,9 +2197,6 @@ void ResponseOptimization::initialize_network_differential() const
 }
 
 
-// A branch is dropped when every one of its points is dominated (beyond `margin`) by
-// some incumbent point. Objectives are normalized so higher is better; the margin is
-// generous early (noisy small-budget probes) and tightens each round.
 static bool branch_is_dominated(const MatrixR& branch_objective,
                                 const MatrixR& incumbent_objective,
                                 const Index objectives_number,
@@ -2368,7 +2225,7 @@ static bool branch_is_dominated(const MatrixR& branch_objective,
         }
 
         if (!point_dominated)
-            return false;   // a non-dominated point keeps the branch alive
+            return false;
     }
 
     return true;
@@ -2381,12 +2238,10 @@ MatrixR ResponseOptimization::solve_once() const
 
     throw_if(objectives_number == 0, "No objectives found\n");
 
-    evaluations_used = 0;   // reset the total surrogate-evaluation budget counter
-    category_frequencies.clear();
-    cardinality_preferred.clear();          // no incumbent support until the first reshape
-    cardinality_indicator_columns.clear();  // rebuilt lazily for this run's variable layout
+    evaluations_used = 0;
+    sampling_memory = SamplingMemory();
 
-    initialize_network_differential();   // exact analytic VJP if possible, else finite differences
+    initialize_network_differential();
 
     return (objectives_number == 1)
         ? perform_single_objective_optimization()
@@ -2396,32 +2251,25 @@ MatrixR ResponseOptimization::solve_once() const
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
-    // Fold any single-variable affine formula constraint into its variable's domain box
-    // before branching/solving (enforced for free at sampling instead of per-point).
     promote_single_variable_constraints();
 
-    // An AllowedSet (expr in {v1..vk}) is solved by BRANCHING: each value becomes an
-    // EqualTo equality subproblem the existing machinery already handles. We only
-    // branch what cannot be sampled directly: every formula AllowedSet, and any
-    // input-variable scalar AllowedSet referenced by a formula (pinning it lets the
-    // formula repair adjust the rest). Free scalar inputs and categorical subsets are
-    // drawn straight from the set inside a single solve, so they are not branched.
 
     struct BranchAxis
     {
-        bool is_formula = false;
+        enum class Type { Variable, Formula, Disjunction };
+        Type type = Type::Variable;
         string variable_name;
-        Index formula_index = 0;
-        vector<float> values;
+        Index index = 0;        // constraint_set.multivariate index (Formula) or constraint_set.disjunctive index (Disjunction)
+        vector<float> values;   // membership values (Variable/Formula) or branch indices (Disjunction)
     };
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
     const vector<Variable>& output_variables = neural_network->get_output_variables();
 
-    const vector<NamedColumn> input_columns = build_columns_for_formula(input_variables, true);
+    const vector<NamedColumn> input_columns = build_input_columns(input_variables);
 
     bool any_callback_formula = false;
-    for (const MultivariateConstraint& formula_constraint : formula_constraints)
+    for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
         if (formula_constraint.uses_callback)
             any_callback_formula = true;
 
@@ -2435,7 +2283,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     auto input_referenced_by_formula = [&](const Index column) -> bool
     {
         if (any_callback_formula) return true;
-        for (const MultivariateConstraint& formula_constraint : formula_constraints)
+        for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
             for (const Index referenced : formula_constraint.compiled.input_indices)
                 if (referenced == column) return true;
         return false;
@@ -2456,7 +2304,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     vector<BranchAxis> axes;
 
-    for (const auto& [name, constraint] : constraints)
+    for (const auto& [name, constraint] : constraint_set.univariate)
     {
         if (constraint.comparison != ComparisonOperator::AllowedSet || constraint.allowed_values.empty())
             continue;
@@ -2464,18 +2312,25 @@ MatrixR ResponseOptimization::perform_response_optimization()
         const bool scalar = (feature_count_of(name) == 1);
 
         if (!scalar)
-            continue;   // categorical subset -> handled by the Domain mask + sampler
+            continue;
 
         if (is_input_name(name) && !input_referenced_by_formula(input_column_of(name)))
-            continue;   // free scalar input -> sampled directly from the set
+            continue;
 
-        axes.push_back({false, name, 0, constraint.allowed_values});
+        axes.push_back({BranchAxis::Type::Variable, name, 0, constraint.allowed_values});
     }
 
-    for (Index j = 0; j < static_cast<Index>(formula_constraints.size()); ++j)
-        if (formula_constraints[j].comparison_operator == ComparisonOperator::AllowedSet
-            && !formula_constraints[j].allowed_values.empty())
-            axes.push_back({true, string(), j, formula_constraints[j].allowed_values});
+    for (Index j = 0; j < static_cast<Index>(constraint_set.multivariate.size()); ++j)
+        if (constraint_set.multivariate[j].comparison_operator == ComparisonOperator::AllowedSet
+            && !constraint_set.multivariate[j].allowed_values.empty())
+            axes.push_back({BranchAxis::Type::Formula, string(), j, constraint_set.multivariate[j].allowed_values});
+
+    for (Index d = 0; d < static_cast<Index>(constraint_set.disjunctive.size()); ++d)
+    {
+        vector<float> branch_indices(constraint_set.disjunctive[d].size());
+        iota(branch_indices.begin(), branch_indices.end(), 0.0f);
+        axes.push_back({BranchAxis::Type::Disjunction, string(), d, branch_indices});
+    }
 
     if (axes.empty())
         return solve_once();
@@ -2484,11 +2339,10 @@ MatrixR ResponseOptimization::perform_response_optimization()
     for (const BranchAxis& axis : axes)
         branches_number *= static_cast<Index>(axis.values.size());
 
-    cout << "> AllowedSet: " << axes.size() << " membership axis(es) -> " << branches_number
-         << (prune_branches ? " equality branch(es) (budgeted: successive-halving + dominated-drop)."
-                            : " equality branch(es) (exhaustive).") << endl;
+    cout << "> Branching: " << axes.size() << " axis(es) -> " << branches_number
+         << (branch_mode == BranchMode::Budgeted ? " branch(es) (budgeted: successive-halving + dominated-drop)."
+                                                  : " branch(es) (exhaustive).") << endl;
 
-    // Materialise each branch's value assignment (one value per axis) by mixed-radix.
     vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
     {
         vector<Index> radix(axes.size(), 0);
@@ -2505,8 +2359,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
         }
     }
 
-    const map<string, UnivariateConstraint> saved_constraints = constraints;
-    const vector<MultivariateConstraint> saved_formula_constraints = formula_constraints;
+    const map<string, UnivariateConstraint> saved_constraints = constraint_set.univariate;
+    const vector<MultivariateConstraint> saved_formula_constraints = constraint_set.multivariate;
     const Index saved_budget = max_total_evaluations;
 
     const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
@@ -2516,22 +2370,25 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     Index spent = 0;
 
-    // Pin every AllowedSet to this branch's values (AllowedSet -> EqualTo(value)), solve
-    // under the evaluation cap, then restore. Returns an empty matrix for an infeasible
-    // branch (caught) and accumulates the evaluations the branch spent.
     auto solve_branch = [&](const vector<float>& values, const Index cap) -> MatrixR
     {
         for (size_t a = 0; a < axes.size(); ++a)
         {
-            if (axes[a].is_formula)
+            if (axes[a].type == BranchAxis::Type::Formula)
             {
-                MultivariateConstraint& formula_constraint = formula_constraints[axes[a].formula_index];
+                MultivariateConstraint& formula_constraint = constraint_set.multivariate[axes[a].index];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
+                formula_constraint.kind = classify(formula_constraint);
+            }
+            else if (axes[a].type == BranchAxis::Type::Disjunction)
+            {
+                const vector<MultivariateConstraint>& branch = constraint_set.disjunctive[axes[a].index][static_cast<Index>(values[a])];
+                constraint_set.multivariate.insert(constraint_set.multivariate.end(), branch.begin(), branch.end());
             }
             else
-                constraints[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
+                constraint_set.univariate[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
         }
 
         max_total_evaluations = cap;
@@ -2542,15 +2399,13 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
         spent += evaluations_used;
 
-        constraints = saved_constraints;
-        formula_constraints = saved_formula_constraints;
+        constraint_set.univariate = saved_constraints;
+        constraint_set.multivariate = saved_formula_constraints;
         max_total_evaluations = saved_budget;
 
         return result;
     };
 
-    // Normalized objective matrix (higher = better) for a result, always in the original
-    // full-set reference frame so branch qualities are comparable.
     auto objective_of = [&](const MatrixR& result) -> MatrixR
     {
         MatrixR matrix = objectives.extract(result.leftCols(input_features),
@@ -2577,9 +2432,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         incumbent_objective = objective_of(incumbent);
     };
 
-    // Exhaustive (switch off, or a single branch): every branch to completion under an
-    // equal budget quota, then the global front. Zero-regret; the original behaviour.
-    if (!prune_branches || branches_number == 1)
+    if (branch_mode == BranchMode::Exhaustive || branches_number == 1)
     {
         const Index per_branch_budget = (saved_budget > 0) ? max(Index(1), saved_budget / branches_number) : 0;
 
@@ -2594,15 +2447,10 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return incumbent;
     }
 
-    // Budgeted: successive halving over branches. Round 0's small cap is the feasibility
-    // probe (infeasible -> empty -> dropped); each round re-paretoes the incumbent, drops
-    // every branch it dominates (beyond a shrinking margin), and the top 1/eta survivors
-    // by reward get the next, larger slice. The remaining budget is spread over the
-    // remaining rounds so the user's total cap is respected.
-    const Index eta = 3;
+    const Index reduction_factor = 3;
 
     Index rounds_number = 1;
-    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + eta - 1) / eta)
+    for (Index remaining = branches_number; remaining > 1; remaining = (remaining + reduction_factor - 1) / reduction_factor)
         ++rounds_number;
 
     const Index notional_total = branches_number * evaluations_number * max(Index(1), max_iterations);
@@ -2651,7 +2499,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         sort(survivors.begin(), survivors.end(),
              [&](const size_t a, const size_t b) { return reward[a] > reward[b]; });
 
-        const Index keep = max(Index(1), (static_cast<Index>(survivors.size()) + eta - 1) / eta);
+        const Index keep = max(Index(1), (static_cast<Index>(survivors.size()) + reduction_factor - 1) / reduction_factor);
         if (static_cast<Index>(survivors.size()) > keep)
             survivors.resize(static_cast<size_t>(keep));
 
@@ -2664,7 +2512,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
         drop_margin *= 0.5f;
     }
 
-    // Finalist polish: spend whatever budget remains on the survivor(s).
     const Index polish_cap = (saved_budget > 0) ? max(Index(0), saved_budget - spent) : 0;
     if (saved_budget == 0 || polish_cap > 0)
         for (const Index branch : live)

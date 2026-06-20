@@ -60,30 +60,21 @@ TEST(TestingAnalysis, PercentageErrorData)
 
 TEST(TestingAnalysis, AbsoluteErrorDescriptives)
 {
-/*
-    const Index samples_number = 1;
-    const Index inputs_number = 1;
-    const Index targets_number = 1;
+    TestingAnalysis testing_analysis;
 
-    TabularDataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number;
-    dataset.set_data_constant(type(0));
-    dataset.set_sample_roles("Testing");
+    MatrixR targets(4, 1);
+    targets << type(1), type(2), type(3), type(4);
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
-    neural_network.set_parameters_random();
+    MatrixR outputs(4, 1);
+    outputs << type(1.5), type(2), type(2), type(4);
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    const vector<Descriptives> error_data =
+        testing_analysis.calculate_absolute_errors_descriptives(targets, outputs);
 
-    vector<Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
-
-    EXPECT_EQ(error_data.size(), 1);
-    EXPECT_NEAR(error_data[0].minimum, 1, EPSILON);
-    EXPECT_NEAR(error_data[0].maximum, 1, EPSILON);
-    EXPECT_NEAR(error_data[0].mean, 1, EPSILON);
-    EXPECT_NEAR(error_data[0].standard_deviation, 0, EPSILON);
-*/
+    ASSERT_EQ(ssize(error_data), 1);
+    EXPECT_NEAR(error_data[0].minimum, type(0),     1e-5);
+    EXPECT_NEAR(error_data[0].maximum, type(1),     1e-5);
+    EXPECT_NEAR(error_data[0].mean,    type(0.375), 1e-5);
 }
 
 
@@ -114,34 +105,25 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
 
 TEST(TestingAnalysis, ErrorDataDescriptives)
 {
-/*
-    vector<vector<Descriptives>> error_data_statistics;
-
-    // Test
-
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    TabularDataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number;
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
+    ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
-    error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
-    EXPECT_EQ(error_data_statistics.size(), 1);
-    EXPECT_EQ(error_data_statistics[0].size(), 3);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, EPSILON);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, EPSILON);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, EPSILON);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, EPSILON);
-*/
+    const vector<vector<Descriptives>> error_data_descriptives =
+        testing_analysis.calculate_error_data_descriptives();
+
+    ASSERT_EQ(ssize(error_data_descriptives), targets_number);
+    ASSERT_FALSE(error_data_descriptives[0].empty());
+    EXPECT_NEAR(error_data_descriptives[0][0].standard_deviation, type(0), 1e-5);
 }
 
 
@@ -196,34 +178,20 @@ TEST(TestingAnalysis, MaximalErrors)
 
 TEST(TestingAnalysis, LinearRegression)
 {
-/*
-    Tensor<Correlation, 1> linear_correlation;
-
-    // Test
-
-    const Index samples_number = 2;
-    const Index inputs_number = 2;
-    const Index neurons_number = 1;
-    const Index targets_number = 1;
-
-    TabularDataset dataset(samples_number, {inputs_number}, {targets_number;
-    dataset.set_data_random();
-    dataset.set_sample_roles("Testing");
-
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number;
-
+    TabularDataset dataset(5, { 1 }, { 1 });
+    ApproximationNetwork neural_network({ 1 }, {}, { 1 });
     TestingAnalysis testing_analysis(&neural_network, &dataset);
-    linear_correlation = testing_analysis.linear_correlation();
 
-    EXPECT_EQ(linear_correlation.size() == 1, true);
-    EXPECT_EQ(isnan(linear_correlation(0).a), true);
-    EXPECT_EQ(isnan(linear_correlation(0).b), true);
-    EXPECT_EQ(isnan(linear_correlation(0).r), true);
+    MatrixR targets(5, 1);
+    targets << type(1), type(2), type(3), type(4), type(5);
 
-    Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
+    MatrixR outputs(5, 1);
+    outputs << type(1), type(2), type(3), type(4), type(5);
 
-    EXPECT_EQ(goodness_of_fit_analysis.size() == 1, true);
-*/
+    const Tensor<Correlation, 1> correlation = testing_analysis.linear_correlation(targets, outputs);
+
+    ASSERT_EQ(correlation.size(), 1);
+    EXPECT_NEAR(correlation(0).coefficient, type(1), 1e-4);
 }
 
 
@@ -877,57 +845,47 @@ TEST(TestingAnalysis, TrueNegativeSamples)
 
 TEST(TestingAnalysis, MultipleClassificationRates)
 {
-    vector<Index> testing_indices;
-
-    Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
-
-    // Test
-
-    MatrixR targets;
-    targets.resize(9, 3);
-
-    targets(0,0) = type(1); targets(0,1) = type(0); targets(0,2) = type(0);
-    targets(1,0) = type(0); targets(1,1) = type(1); targets(1,2) = type(0);
-    targets(2,0) = type(0); targets(2,1) = type(0); targets(2,2) = type(1);
-    targets(3,0) = type(1); targets(3,1) = type(0); targets(3,2) = type(0);
-    targets(4,0) = type(0); targets(4,1) = type(1); targets(4,2) = type(0);
-    targets(5,0) = type(0); targets(5,1) = type(0); targets(5,2) = type(1);
-    targets(6,0) = type(1); targets(6,1) = type(0); targets(6,2) = type(0);
-    targets(7,0) = type(0); targets(7,1) = type(1); targets(7,2) = type(0);
-    targets(8,0) = type(0); targets(8,1) = type(0); targets(8,2) = type(1);
-
-    MatrixR outputs;
-    outputs.resize(9, 3);
-
-    outputs(0,0) = type(1); outputs(0,1) = type(0); outputs(0,2) = type(0);
-    outputs(1,0) = type(0); outputs(1,1) = type(1); outputs(1,2) = type(0);
-    outputs(2,0) = type(0); outputs(2,1) = type(0); outputs(2,2) = type(1);
-    outputs(3,0) = type(0); outputs(3,1) = type(1); outputs(3,2) = type(0);
-    outputs(4,0) = type(1); outputs(4,1) = type(0); outputs(4,2) = type(0);
-    outputs(5,0) = type(0); outputs(5,1) = type(1); outputs(5,2) = type(0);
-    outputs(6,0) = type(0); outputs(6,1) = type(0); outputs(6,2) = type(1);
-    outputs(7,0) = type(0); outputs(7,0) = type(0); outputs(7,2) = type(1);
-    outputs(8,0) = type(1); outputs(8,1) = type(0); outputs(8,2) = type(0);
-/*
-    testing_indices.resize(9);
-    testing_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-
     TestingAnalysis testing_analysis;
 
-    multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+    MatrixR targets(9, 3);
+    targets << type(1), type(0), type(0),
+               type(0), type(1), type(0),
+               type(0), type(0), type(1),
+               type(1), type(0), type(0),
+               type(0), type(1), type(0),
+               type(0), type(0), type(1),
+               type(1), type(0), type(0),
+               type(0), type(1), type(0),
+               type(0), type(0), type(1);
 
-    EXPECT_EQ(multiple_classification_rates.size(), 9);
+    MatrixR outputs(9, 3);
+    outputs << type(1), type(0), type(0),
+               type(0), type(1), type(0),
+               type(0), type(0), type(1),
+               type(0), type(1), type(0),
+               type(1), type(0), type(0),
+               type(0), type(1), type(0),
+               type(0), type(0), type(1),
+               type(0), type(0), type(1),
+               type(1), type(0), type(0);
 
-    EXPECT_EQ(multiple_classification_rates(0,0)(0), 0);
-    EXPECT_EQ(multiple_classification_rates(0,1)(0), 3);
-    EXPECT_EQ(multiple_classification_rates(0,2)(0), 6);
-    EXPECT_EQ(multiple_classification_rates(1,0)(0), 4);
-    EXPECT_EQ(multiple_classification_rates(1,1)(0), 1);
-    EXPECT_EQ(multiple_classification_rates(1,2)(0), 7);
-    EXPECT_EQ(multiple_classification_rates(2,0)(0), 8);
-    EXPECT_EQ(multiple_classification_rates(2,1)(0), 5);
-    EXPECT_EQ(multiple_classification_rates(2,2)(0), 2);
-*/
+    const vector<Index> testing_indices = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+
+    const Tensor<VectorI, 2> rates =
+        testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+
+    ASSERT_EQ(rates.dimension(0), 3);
+    ASSERT_EQ(rates.dimension(1), 3);
+
+    EXPECT_EQ(rates(0, 0)(0), 0);
+    EXPECT_EQ(rates(0, 1)(0), 3);
+    EXPECT_EQ(rates(0, 2)(0), 6);
+    EXPECT_EQ(rates(1, 0)(0), 4);
+    EXPECT_EQ(rates(1, 1)(0), 1);
+    EXPECT_EQ(rates(1, 2)(0), 7);
+    EXPECT_EQ(rates(2, 0)(0), 8);
+    EXPECT_EQ(rates(2, 1)(0), 5);
+    EXPECT_EQ(rates(2, 2)(0), 2);
 }
 
 // OpenNN: Open Neural Networks Library.

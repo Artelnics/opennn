@@ -57,7 +57,6 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
 
     TabularDataset dataset(samples, {2}, {1});
 
-    // Generamos datos donde output = input1, input2 es ruido puro
     MatrixR data(samples, 3);
     for(Index i = 0; i < samples; i++)
     {
@@ -79,47 +78,6 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     growing_inputs.set_maximum_inputs_number(1);
     InputsSelectionResult results = growing_inputs.perform_input_selection();
 
-    // El índice 0 (input1) debería ser seleccionado
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
 }
-
-/*
-void GrowingInputsTest::test_perform_inputs_selection()
-{
-
-
-    // Test
-
-    dataset.generate_random_data(30, 3);
-
-    Tensor<string, 1> columns_uses(3);
-    columns_uses.setValues({"Input","Input","Target"});
-
-    dataset.set_raw_variable_uses(columns_uses);
-
-    dataset.split_samples_random();
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
-
-
-    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
-
-    // Test
-
-    dataset.generate_sum_data(20,3);
-
-    neural_network.set();
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
-
-    TrainingStrategy training_strategy1(&neural_network, &dataset);
-
-    //input_selection_results = growing_inputs.perform_input_selection();
-
-    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
-
-}
-
-}
-*/

@@ -799,8 +799,8 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const float decis
         : sensitivity / (1.0f - specificity);
 
     const float negative_likelihood = accuracy_is_one ? 1.0f
-        : (abs(1.0f - sensitivity) < EPSILON) ? 0.0f
-        : specificity / (1.0f - sensitivity);
+        : (specificity < EPSILON) ? 0.0f
+        : (1.0f - sensitivity) / specificity;
 
     const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
     const float f1_score = (f1_denominator == 0)

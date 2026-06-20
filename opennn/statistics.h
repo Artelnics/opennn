@@ -9,6 +9,7 @@
 #pragma once
 
 #include "pch.h"
+#include "tensor_operations.h"
 
 namespace opennn
 {
@@ -120,20 +121,6 @@ VectorI maximal_indices(const VectorR&, Index);
 VectorI maximal_indices(const MatrixR&);
 inline bool row_finite(const VectorR& values, Index i) { return isfinite(values(i)); }
 inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).array().isFinite().all(); }
-
-inline VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
-{
-    VectorR result(indices.size());
-    for (Index i = 0; i < Index(indices.size()); ++i) result(i) = values(indices[i]);
-    return result;
-}
-
-inline MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
-{
-    MatrixR result(indices.size(), matrix.cols());
-    for (Index i = 0; i < Index(indices.size()); ++i) result.row(i) = matrix.row(indices[i]);
-    return result;
-}
 
 VectorR filter_missing_values(const VectorR&);
 

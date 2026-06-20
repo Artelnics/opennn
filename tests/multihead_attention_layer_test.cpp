@@ -1,32 +1,37 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #include "../opennn/tensor_types.h"
 #include "../opennn/multihead_attention_layer.h"
-#include "../opennn/random_utilities.h"
-#include <iostream>
+#include "../opennn/flatten_layer.h"
+#include "../opennn/tabular_dataset.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/loss.h"
 #include <cmath>
 
 using namespace opennn;
 
-struct MultiHeadAttentionConfig
+namespace
 {
-    Index batch_size;
-    Index query_sequence_length;
-    Index source_sequence_length;
-    Index embedding_dimension;
-    Index heads_number;
-    bool use_causal_mask;
-    bool is_cross_attention;
-    string test_name;
-};
 
-class MultiHeadAttentionTest : public ::testing::TestWithParam<MultiHeadAttentionConfig> {};
+void set_identity_projections(Layer* layer, Index embedding_dimension)
+{
+    vector<TensorView>& parameter_views = layer->get_parameter_views();
 
-INSTANTIATE_TEST_SUITE_P(MultiHeadAttentionTest, MultiHeadAttentionTest, ::testing::Values(
-                                                                             MultiHeadAttentionConfig{ 2, 5, 5, 16, 4, false, false, "SelfAttention" },
-                                                                             MultiHeadAttentionConfig{ 3, 6, 6, 32, 8, true, false, "SelfAttentionCausalMask" },
-                                                                             MultiHeadAttentionConfig{ 2, 4, 7, 12, 3, false, true, "CrossAttention" },
-                                                                             MultiHeadAttentionConfig{ 8, 3, 3, 8, 2, false, false, "LargeBatchSmallDims" }));
+    for (size_t projection = 0; projection < 4; ++projection)
+    {
+        VectorMap bias = parameter_views[2 * projection].as_vector();
+        bias.setZero();
+
+        MatrixMap weights = parameter_views[2 * projection + 1].as_matrix();
+        weights.setZero();
+        for (Index diagonal = 0; diagonal < embedding_dimension; ++diagonal)
+            weights(diagonal, diagonal) = type(1.0);
+    }
+}
+
+}
+
 
 TEST(MultiHeadAttentionTest, DefaultConstructors)
 {
@@ -35,6 +40,7 @@ TEST(MultiHeadAttentionTest, DefaultConstructors)
     EXPECT_EQ(mha_self.get_source_sequence_length(), 0);
     EXPECT_EQ(mha_self.get_embedding_dimension(), 0);
 }
+
 
 TEST(MultiHeadAttentionTest, GeneralConstructors)
 {
@@ -51,225 +57,181 @@ TEST(MultiHeadAttentionTest, GeneralConstructors)
     EXPECT_EQ(mha_cross.get_heads_number(), 2);
 }
 
-TEST_P(MultiHeadAttentionTest, ForwardPropagate)
+
+TEST(MultiHeadAttentionTest, GeneralConstructorOutputAndInputShape)
 {
-    MultiHeadAttentionConfig params = GetParam();
+    MultiHeadAttention mha_self({ 10, 32 }, 4);
+    EXPECT_EQ(mha_self.get_input_shape(), (Shape{ 10, 32 }));
+    EXPECT_EQ(mha_self.get_output_shape(), (Shape{ 10, 32 }));
 
-    unique_ptr<MultiHeadAttention> layer;
-    if (params.is_cross_attention)
-        layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, Shape{ params.source_sequence_length, params.embedding_dimension }, params.heads_number);
-    else
-        layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, params.heads_number);
-
-    layer->set(params.query_sequence_length, params.source_sequence_length, params.embedding_dimension, params.heads_number, params.use_causal_mask);
-/*
-    vector<TensorView*> param_views = layer->get_parameter_views();
-    VectorR layer_parameters(get_size(param_views));
-    link(layer_parameters.data(), param_views);
-    layer->set_parameters_random();
-
-    Tensor3 query_input(params.batch_size, params.query_sequence_length, params.embedding_dimension);
-    query_input.setRandom();
-
-    Tensor3 source_input;
-    if (params.is_cross_attention)
-    {
-        source_input.resize(params.batch_size, params.source_sequence_length, params.embedding_dimension);
-        source_input.setRandom();
-    }
-
-    unique_ptr<LayerForwardPropagation> forward_base = make_unique<MultiHeadAttentionForwardPropagation>(params.batch_size, layer.get());
-    forward_base->initialize();
-
-    Tensor1 workspace(get_size(forward_base->get_workspace_views()));
-    link(workspace.data(), forward_base->get_workspace_views());
-
-    forward_base->inputs.resize(params.is_cross_attention ? 2 : 1);
-    forward_base->inputs[0] = TensorView(query_input.data(), { params.batch_size, params.query_sequence_length, params.embedding_dimension });
-    if (params.is_cross_attention)
-        forward_base->inputs[1] = TensorView(source_input.data(), { params.batch_size, params.source_sequence_length, params.embedding_dimension });
-
-    layer->forward_propagate(forward_base, false);
-    const TensorView output_view = forward_base->get_outputs();
-
-*/
-
-/* @todo Re-enable CUDA comparison when CPU forward propagation above is uncommented
-#ifdef OPENNN_HAS_CUDA
-    vector<TensorView*> param_views_device = layer->get_parameter_views_device();
-    TensorCuda layer_parameters_device({get_size(param_views_device)});
-    link(layer_parameters_device.data, param_views_device);
-    CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
-
-    unique_ptr<LayerForwardPropagationCuda> forward_cuda_base = make_unique<MultiHeadAttentionForwardPropagationCuda>(params.batch_size, layer.get());
-    forward_cuda_base->initialize();
-
-    vector<TensorView*> workspace_views_device = forward_cuda_base->get_workspace_views();
-    TensorCuda layer_workspace_device({get_size(workspace_views_device)});
-    link(layer_workspace_device.data, workspace_views_device);
-
-    TensorCuda query_device({ params.batch_size, params.query_sequence_length, params.embedding_dimension });
-    CHECK_CUDA(cudaMemcpy(query_device.data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
-
-    forward_cuda_base->inputs.resize(params.is_cross_attention ? 2 : 1);
-    forward_cuda_base->inputs[0] = query_device.view();
-
-    TensorCuda source_device;
-    if (params.is_cross_attention)
-    {
-        source_device.resize({ params.batch_size, params.source_sequence_length, params.embedding_dimension });
-        CHECK_CUDA(cudaMemcpy(source_device.data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
-        forward_cuda_base->inputs[1] = source_device.view();
-    }
-
-    layer->forward_propagate(forward_cuda_base, false);
-
-    vector<type> host_output_from_gpu(forward_cuda_base->outputs.size());
-    CHECK_CUDA(cudaMemcpy(host_output_from_gpu.data(), forward_cuda_base->outputs.data, forward_cuda_base->outputs.size() * sizeof(type), cudaMemcpyDeviceToHost));
-
-    for (Index i = 0; i < output_view.size(); ++i)
-        EXPECT_NEAR(output_view.data[i], host_output_from_gpu[i], 1e-3);
-#endif
-*/
+    MultiHeadAttention mha_cross({ 5, 16 }, { 8, 16 }, 2);
+    EXPECT_EQ(mha_cross.get_input_shape(), (Shape{ 5, 16 }));
+    EXPECT_EQ(mha_cross.get_output_shape(), (Shape{ 5, 16 }));
+    EXPECT_EQ(mha_cross.get_source_sequence_length(), 8);
 }
 
-TEST_P(MultiHeadAttentionTest, BackPropagate)
+
+TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 {
-    MultiHeadAttentionConfig params = GetParam();
+    const Index batch_size = 1;
+    const Index sequence_length = 2;
+    const Index embedding_dimension = 2;
+    const Index heads_number = 1;
 
-    unique_ptr<MultiHeadAttention> layer;
-    if (params.is_cross_attention)
-        layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, Shape{ params.source_sequence_length, params.embedding_dimension }, params.heads_number);
-    else
-        layer = make_unique<MultiHeadAttention>(Shape{ params.query_sequence_length, params.embedding_dimension }, params.heads_number);
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<MultiHeadAttention>(Shape{ sequence_length, embedding_dimension }, heads_number));
+    neural_network.compile();
 
-    layer->set(params.query_sequence_length, params.source_sequence_length, params.embedding_dimension, params.heads_number, params.use_causal_mask);
-/*
-    vector<TensorView*> param_views = layer->get_parameter_views();
-    VectorR layer_parameters(get_size(param_views));
-    link(layer_parameters.data(), param_views);
-    layer->set_parameters_random();
+    set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);
 
-    Tensor3 query_input(params.batch_size, params.query_sequence_length, params.embedding_dimension);
-    query_input.setRandom();
+    Tensor3 input_data(batch_size, sequence_length, embedding_dimension);
+    input_data(0, 0, 0) = type(1.0);  input_data(0, 0, 1) = type(0.0);
+    input_data(0, 1, 0) = type(0.0);  input_data(0, 1, 1) = type(1.0);
 
-    Tensor3 source_input;
-    if (params.is_cross_attention)
-    {
-        source_input.resize(params.batch_size, params.source_sequence_length, params.embedding_dimension);
-        source_input.setRandom();
-    }
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> inputs = { TensorView(input_data.data(), { batch_size, sequence_length, embedding_dimension }) };
+    neural_network.forward_propagate(inputs, forward_propagation, false);
 
-    unique_ptr<LayerForwardPropagation> forward_base = make_unique<MultiHeadAttentionForwardPropagation>(params.batch_size, layer.get());
-    forward_base->initialize();
+    const TensorView output_view = forward_propagation.get_outputs();
 
-    Tensor1 workspace_fw(get_size(forward_base->get_workspace_views()));
-    link(workspace_fw.data(), forward_base->get_workspace_views());
+    ASSERT_EQ(output_view.shape.rank, 3);
+    EXPECT_EQ(output_view.shape[0], batch_size);
+    EXPECT_EQ(output_view.shape[1], sequence_length);
+    EXPECT_EQ(output_view.shape[2], embedding_dimension);
 
-    forward_base->inputs.resize(params.is_cross_attention ? 2 : 1);
-    forward_base->inputs[0] = TensorView(query_input.data(), { params.batch_size, params.query_sequence_length, params.embedding_dimension });
-    if (params.is_cross_attention)
-        forward_base->inputs[1] = TensorView(source_input.data(), { params.batch_size, params.source_sequence_length, params.embedding_dimension });
+    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
+    const float exp_score = std::exp(scale);
+    const float high = exp_score / (exp_score + type(1.0));
+    const float low = type(1.0) / (exp_score + type(1.0));
 
-    layer->forward_propagate(forward_base, true);
-    TensorView output_view = forward_base->get_outputs();
+    const float* output_data = output_view.as<type>();
 
-    unique_ptr<LayerBackPropagation> back_base = make_unique<MultiHeadAttentionBackPropagation>(params.batch_size, layer.get());
-    back_base->initialize();
+    EXPECT_NEAR(output_data[0], high, 1.0e-5f);
+    EXPECT_NEAR(output_data[1], low,  1.0e-5f);
+    EXPECT_NEAR(output_data[2], low,  1.0e-5f);
+    EXPECT_NEAR(output_data[3], high, 1.0e-5f);
+}
 
-    vector<TensorView*> gradient_views = back_base->get_gradient_views();
-    VectorR layer_gradients(get_size(gradient_views));
-    layer_gradients.setZero();
-    link(layer_gradients.data(), gradient_views);
 
-    vector<TensorView*> bp_workspace_views = back_base->get_workspace_views();
-    VectorR bp_workspace(get_size(bp_workspace_views));
-    if (bp_workspace.size() > 0)
-        link(bp_workspace.data(), bp_workspace_views);
+TEST(MultiHeadAttentionTest, CausalMaskForward)
+{
+    const Index batch_size = 1;
+    const Index sequence_length = 2;
+    const Index embedding_dimension = 2;
+    const Index heads_number = 1;
 
-    Tensor1 deltas(output_view.size());
-    for(Index i = 0; i < deltas.size(); ++i) deltas(i) = static_cast<type>(random_normal(0.0, 1.0));
-    TensorView delta_view(deltas.data(), output_view.shape);
+    auto mha = make_unique<MultiHeadAttention>(Shape{ sequence_length, embedding_dimension }, heads_number);
+    mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, true);
 
-    back_base->output_gradients = { delta_view };
+    NeuralNetwork neural_network;
+    neural_network.add_layer(std::move(mha));
+    neural_network.compile();
 
-#ifdef OPENNN_HAS_CUDA
+    set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);
 
-    TensorCuda delta_device({params.batch_size, params.query_sequence_length, params.embedding_dimension});
-    CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
+    Tensor3 input_data(batch_size, sequence_length, embedding_dimension);
+    input_data(0, 0, 0) = type(1.0);  input_data(0, 0, 1) = type(0.0);
+    input_data(0, 1, 0) = type(0.0);  input_data(0, 1, 1) = type(1.0);
 
-#endif
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> inputs = { TensorView(input_data.data(), { batch_size, sequence_length, embedding_dimension }) };
+    neural_network.forward_propagate(inputs, forward_propagation, false);
 
-    layer->back_propagate(forward_base, back_base);
-    MultiHeadAttentionBackPropagation* back = static_cast<MultiHeadAttentionBackPropagation*>(back_base.get());
+    const TensorView output_view = forward_propagation.get_outputs();
+    const float* output_data = output_view.as<type>();
 
-#ifdef OPENNN_HAS_CUDA
+    EXPECT_NEAR(output_data[0], type(1.0), 1.0e-5f);
+    EXPECT_NEAR(output_data[1], type(0.0), 1.0e-5f);
 
-    vector<TensorView*> param_views_device = layer->get_parameter_views_device();
-    TensorCuda layer_parameters_device({get_size(param_views_device)});
-    link(layer_parameters_device.data, param_views_device);
-    CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
+    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
+    const float exp_score = std::exp(scale);
+    const float high = exp_score / (exp_score + type(1.0));
+    const float low = type(1.0) / (exp_score + type(1.0));
 
-    unique_ptr<LayerForwardPropagationCuda> forward_cuda_base = make_unique<MultiHeadAttentionForwardPropagationCuda>(params.batch_size, layer.get());
-    forward_cuda_base->initialize();
+    EXPECT_NEAR(output_data[2], low,  1.0e-5f);
+    EXPECT_NEAR(output_data[3], high, 1.0e-5f);
+}
 
-    vector<TensorView*> workspace_fw_views_device = forward_cuda_base->get_workspace_views();
-    TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
-    link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
-    TensorCuda query_device({ params.batch_size, params.query_sequence_length, params.embedding_dimension });
-    CHECK_CUDA(cudaMemcpy(query_device.data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
+{
+    const Index batch_size = 1;
+    const Index query_sequence_length = 1;
+    const Index source_sequence_length = 2;
+    const Index embedding_dimension = 2;
+    const Index heads_number = 1;
 
-    forward_cuda_base->inputs.resize(params.is_cross_attention ? 2 : 1);
-    forward_cuda_base->inputs[0] = query_device.view();
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<MultiHeadAttention>(Shape{ query_sequence_length, embedding_dimension },
+                                                             Shape{ source_sequence_length, embedding_dimension },
+                                                             heads_number),
+                             { -1, -2 });
+    neural_network.compile();
 
-    TensorCuda source_device;
-    if (params.is_cross_attention)
-    {
-        source_device.resize({ params.batch_size, params.source_sequence_length, params.embedding_dimension });
-        CHECK_CUDA(cudaMemcpy(source_device.data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
-        forward_cuda_base->inputs[1] = source_device.view();
-    }
+    EXPECT_EQ(neural_network.get_layer(0)->get_output_shape(), (Shape{ query_sequence_length, embedding_dimension }));
 
-    unique_ptr<LayerBackPropagationCuda> back_cuda_base = make_unique<MultiHeadAttentionBackPropagationCuda>(params.batch_size, layer.get());
-    back_cuda_base->initialize();
+    set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);
 
-    vector<TensorView*> gradient_views_device = back_cuda_base->get_gradient_views();
-    TensorCuda layer_gradients_device({get_size(gradient_views_device)});
-    CHECK_CUDA(cudaMemset(layer_gradients_device.data, 0, layer_gradients_device.size() * sizeof(type)));
-    link(layer_gradients_device.data, gradient_views_device);
+    Tensor3 query_data(batch_size, query_sequence_length, embedding_dimension);
+    query_data(0, 0, 0) = type(1.0);  query_data(0, 0, 1) = type(0.0);
 
-    vector<TensorView*> bp_workspace_views_device = back_cuda_base->get_workspace_views();
-    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
-    if (bp_workspace_device.size() > 0)
-        link(bp_workspace_device.data, bp_workspace_views_device);
+    Tensor3 source_data(batch_size, source_sequence_length, embedding_dimension);
+    source_data(0, 0, 0) = type(1.0);  source_data(0, 0, 1) = type(0.0);
+    source_data(0, 1, 0) = type(0.0);  source_data(0, 1, 1) = type(1.0);
 
-    layer->forward_propagate(forward_cuda_base, true);
+    ForwardPropagation forward_propagation(batch_size, &neural_network);
+    vector<TensorView> inputs = {
+        TensorView(query_data.data(),  { batch_size, query_sequence_length, embedding_dimension }),
+        TensorView(source_data.data(), { batch_size, source_sequence_length, embedding_dimension })
+    };
+    neural_network.forward_propagate(inputs, forward_propagation, false);
 
-    back_cuda_base->output_gradients = { delta_device.view() };
-    layer->back_propagate(forward_cuda_base, back_cuda_base);
+    const TensorView output_view = forward_propagation.get_outputs();
 
-    vector<type> host_layer_gradients(layer_gradients_device.size());
-    CHECK_CUDA(cudaMemcpy(host_layer_gradients.data(), layer_gradients_device.data, layer_gradients_device.size() * sizeof(type), cudaMemcpyDeviceToHost));
+    ASSERT_EQ(output_view.shape.rank, 3);
+    EXPECT_EQ(output_view.shape[1], query_sequence_length);
+    EXPECT_EQ(output_view.shape[2], embedding_dimension);
 
-    for (Index i = 0; i < layer_gradients.size(); ++i)
-        EXPECT_NEAR(layer_gradients[i], host_layer_gradients[i], 1e-2);
+    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
+    const float exp_score = std::exp(scale);
+    const float high = exp_score / (exp_score + type(1.0));
+    const float low = type(1.0) / (exp_score + type(1.0));
 
-    vector<type> host_q_input_grads(back_cuda_base->input_gradients[0].size());
-    CHECK_CUDA(cudaMemcpy(host_q_input_grads.data(), back_cuda_base->input_gradients[0].data, host_q_input_grads.size() * sizeof(type), cudaMemcpyDeviceToHost));
+    const float* output_data = output_view.as<type>();
 
-    for (Index i = 0; i < back->input_gradients[0].size(); ++i)
-        EXPECT_NEAR(back->input_gradients[0].data[i], host_q_input_grads[i], 1e-2);
+    EXPECT_NEAR(output_data[0], high, 1.0e-5f);
+    EXPECT_NEAR(output_data[1], low,  1.0e-5f);
+}
 
-    if (params.is_cross_attention)
-    {
-        vector<type> host_s_input_grads(back_cuda_base->input_gradients[1].size());
-        CHECK_CUDA(cudaMemcpy(host_s_input_grads.data(), back_cuda_base->input_gradients[1].data, host_s_input_grads.size() * sizeof(type), cudaMemcpyDeviceToHost));
 
-        for (Index i = 0; i < back->input_gradients[1].size(); ++i)
-            EXPECT_NEAR(back->input_gradients[1].data[i], host_s_input_grads[i], 1e-2);
-    }
+TEST(MultiHeadAttentionTest, BackwardGradientMatchesNumerical)
+{
+    const Index samples_number = 4;
+    const Index sequence_length = 3;
+    const Index heads_number = 2;
+    const Index head_dimension = 2;
+    const Index embedding_dimension = heads_number * head_dimension;
 
-#endif
-*/
+    const Shape input_shape{ sequence_length, embedding_dimension };
+
+    TabularDataset dataset(samples_number, input_shape, { sequence_length * embedding_dimension });
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<MultiHeadAttention>(input_shape, heads_number));
+    neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_shape()));
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const type error = calculate_numerical_error(loss);
+    EXPECT_GE(error, 0);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }

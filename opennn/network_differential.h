@@ -86,7 +86,7 @@ struct NetworkDifferential
             case ScalerMethod::MinimumMaximum:        out(j) = (x - layer.minimum(j)) / guarded(layer.maximum(j) - layer.minimum(j)) * (layer.max_range - layer.min_range) + layer.min_range; break;
             case ScalerMethod::MeanStandardDeviation: out(j) = (x - layer.mean(j)) / guarded(layer.deviation(j)); break;
             case ScalerMethod::StandardDeviation:     out(j) = x / guarded(layer.deviation(j)); break;
-            case ScalerMethod::Logarithm:             out(j) = log(x); break;
+            case ScalerMethod::Logarithm:             out(j) = log(guarded(x)); break;
             case ScalerMethod::ImageMinMax:           out(j) = x / 255.0f; break;
             }
         }
@@ -213,6 +213,16 @@ struct NetworkDifferential
         }
         return carried;
     }
+};
+
+
+// Built-once analytic Jacobian plus the flag tracking whether it has been built/decided for the
+// current network; the two always change together. A null differential means the finite-difference
+// fallback is in effect.
+struct NetworkJacobian
+{
+    unique_ptr<NetworkDifferential> differential;
+    bool ready = false;
 };
 
 }

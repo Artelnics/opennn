@@ -15,6 +15,8 @@ namespace opennn
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
+
+    set_default();
 }
 
 void ModelSelection::set_default()

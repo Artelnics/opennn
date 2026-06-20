@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     try
     {
         // ====================================================================
-        // blank_cuda — four GPU training benchmarks, all disabled (`#if 0`).
+        // blank_cuda — five GPU training benchmarks, all disabled (`#if 0`).
         // Enable exactly ONE block by switching its `#if 0` to `#if 1`.
         // ====================================================================
 
@@ -58,14 +58,14 @@ int main(int argc, char** argv)
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(100);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(20);
 
-        cout << "OpenNN. HIGGS 5x300 DNN GPU FP32 benchmark."
+        cout << "OpenNN. HIGGS 5x300 DNN GPU BF16 benchmark."
              << " batch=" << batch_size << " max_epochs=" << maximum_epochs << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::BF16);
         Backend::instance();
         set_seed(42);
 
-        TabularDataset dataset("/tmp/HIGGS.csv", ",", false, false);
+        TabularDataset dataset("/home/artelnics/Documents/datasets/higgs/HIGGS.csv", ",", false, false);
 
         vector<Index> input_variables(28);
         iota(input_variables.begin(), input_variables.end(), 1);
@@ -83,13 +83,13 @@ int main(int argc, char** argv)
         network.add_layer(make_unique<Scaling>(dataset.get_shape("Input")));
 
         for (Index i = 0; i < 5; ++i)
-            network.add_layer(make_unique<Dense>(network.get_output_shape(),
-                                                 Shape{300}, "Tanh", false,
-                                                 format("higgs_hidden_{}", i + 1)));
+            network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                         Shape{300}, "Tanh", false,
+                                                         format("higgs_hidden_{}", i + 1)));
 
-        network.add_layer(make_unique<Dense>(network.get_output_shape(),
-                                             dataset.get_shape("Target"),
-                                             "Sigmoid", false, "higgs_output"));
+        network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
+                                                     dataset.get_shape("Target"),
+                                                     "Sigmoid", false, "higgs_output"));
         network.compile();
         network.set_parameters_glorot();
 
@@ -133,26 +133,26 @@ int main(int argc, char** argv)
 
         // --------------------------------------------------------------------
         // 2) WEATHER — LSTM forecasting (TimeSeriesDataset)
-        //    TODO: pick the weather dataset. Expected: a CSV time series with a
-        //    header; set the target column(s) and the past/future windows below.
+        //    Jena Climate (Max Planck): 10-minute weather records, 14 numeric
+        //    variables. The CSV was preprocessed (datasets/weather_jena/) to drop
+        //    the "Date Time" column and move "T (degC)" to the last column, which
+        //    TimeSeriesDataset forecasts by default (the other 13 vars are inputs).
         //    Network: ForecastingLstmNetwork (Scaling -> LSTM stack -> Dense).
         // --------------------------------------------------------------------
 #if 0
-        cout << "OpenNN. Weather LSTM forecasting GPU FP32 benchmark." << endl;
+        cout << "OpenNN. Weather (Jena) LSTM forecasting GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
         set_seed(42);
 
-        // TODO: replace with the chosen weather dataset and its separator.
-        const filesystem::path dataset_path = "/home/artelnics/Documents/weather/<TODO_weather>.csv";
+        const filesystem::path dataset_path =
+            "/home/artelnics/Documents/datasets/weather_jena/jena_weather.csv";
 
         TimeSeriesDataset dataset(dataset_path, ",", /*has_header=*/true, /*has_sample_ids=*/false);
+        // Target = last column ("T (degC)"); the other 13 variables are inputs.
 
-        // TODO: declare which column(s) are forecast targets (the rest are inputs).
-        // dataset.set_variable_role(<target_col>, "InputTarget");
-
-        const Index past_time_steps   = 24;   // e.g. last 24 hours
+        const Index past_time_steps   = 72;   // 12 h of history (10-min cadence)
         const Index future_time_steps = 1;    // forecast horizon
         dataset.set_past_time_steps(past_time_steps);
         dataset.set_future_time_steps(future_time_steps);
@@ -200,21 +200,26 @@ int main(int argc, char** argv)
 
         // --------------------------------------------------------------------
         // 3) IMAGENET — ResNet-50 (ImageDataset)
-        //    ResNet is used here on purpose: ImageNet is 1000 classes at
-        //    224x224, well beyond a plain CNN. ResNet-50 = bottleneck blocks
-        //    {3,4,6,3} with stage filters {64,128,256,512}.
-        //    TODO: point ImageDataset at the ImageNet root (one subfolder per
-        //    class). Inputs are normalised with the standard ImageNet mean/std.
+        //    Full ImageNet-1k needs image-net.org credentials, so this uses
+        //    Imagenette (fast.ai's public 10-class ImageNet subset) as a drop-in
+        //    proxy. ImageDataset takes the root as ONE subfolder per class (no
+        //    train/val split — split_samples_random does that), so train+val were
+        //    merged into datasets/imagenette/ (10 class folders directly) and every image was
+        //    preprocessed to a uniform 160x160 (ImageDataset adopts the first
+        //    image's size for the whole set). ResNet-50 = bottleneck blocks
+        //    {3,4,6,3}, filters {64,128,256,512}.
         // --------------------------------------------------------------------
 #if 0
-        cout << "OpenNN. ImageNet ResNet-50 GPU FP32 benchmark." << endl;
+        cout << "OpenNN. ImageNet (Imagenette) ResNet-50 GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);  // switch to Type::BF16 for the fast tensor-core path
         Backend::instance();
         set_seed(42);
 
-        // TODO: replace with the ImageNet root (class-per-subfolder layout).
-        const filesystem::path dataset_path = "/home/artelnics/Documents/imagenet/<TODO_imagenet>";
+        // Class-per-subfolder root (10 classes). Swap for the real ImageNet-1k
+        // train root once credentials / a mirror are available.
+        const filesystem::path dataset_path =
+            "/home/artelnics/Documents/datasets/imagenette";
 
         ImageDataset dataset(dataset_path);
         dataset.split_samples_random(0.80f, 0.10f, 0.10f);
@@ -254,7 +259,7 @@ int main(int argc, char** argv)
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-        adam->set_batch_size(64);
+        adam->set_batch_size(32);   // ResNet-50 @160x160; raise if VRAM allows
         adam->set_learning_rate(1.0e-3f);
         adam->set_workers_number(8);
         adam->set_maximum_epochs(90);
@@ -277,12 +282,14 @@ int main(int argc, char** argv)
 
         // --------------------------------------------------------------------
         // 4) EN -> DE TRANSLATION — Transformer (LanguageDataset)
-        //    The original "Attention Is All You Need" English->German task.
-        //    Base config from the paper: d_model=512, h=8, d_ff=2048, N=6.
-        //    TODO: point LanguageDataset at the EN-DE parallel corpus. Expected
-        //    format: one pair per line, "english sentence \t german sentence".
-        //    NOTE: the full paper config + WMT14 is heavy; shrink the dims /
-        //    layers / corpus for a quick smoke run.
+        //    The "Attention Is All You Need" WMT14 English->German task. The raw
+        //    WMT14 parallel corpora (Europarl + Common Crawl + News Commentary)
+        //    were combined into tab-separated "english <TAB> german" files in
+        //    datasets/wmt14_en_de/:
+        //      - wmt14_en_de.txt         full ~4.5M pairs (authentic WMT14)
+        //      - wmt14_en_de.subset.txt  100k clean News-Commentary pairs (used here)
+        //    The model below is smaller than the paper so the subset trains in
+        //    reasonable time; paper base is d_model=512, h=8, d_ff=2048, N=6.
         // --------------------------------------------------------------------
 #if 0
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
@@ -291,8 +298,8 @@ int main(int argc, char** argv)
         Backend::instance();
         set_seed(42);
 
-        // TODO: replace with the EN-DE parallel corpus (tab-separated EN \t DE).
-        const filesystem::path dataset_path = "/home/artelnics/Documents/wmt_en_de/<TODO_en_de>.txt";
+        const filesystem::path dataset_path =
+            "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.subset.txt";
 
         LanguageDataset language_dataset(dataset_path);
 
@@ -305,11 +312,11 @@ int main(int argc, char** argv)
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // "Attention Is All You Need" base transformer.
-        const Index embedding_dimension    = 512;
+        // Smaller-than-paper transformer (subset-friendly). Paper base: 512/8/2048/6.
+        const Index embedding_dimension    = 256;
         const Index heads_number           = 8;
-        const Index feed_forward_dimension  = 2048;
-        const Index layers_number           = 6;
+        const Index feed_forward_dimension  = 1024;
+        const Index layers_number           = 2;
 
         Transformer transformer(input_sequence_length,
                                 decoder_sequence_length,
@@ -359,7 +366,90 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        cout << "blank_cuda: all four benchmark blocks are disabled (#if 0).\n"
+        // --------------------------------------------------------------------
+        // 5) TOM & JERRY — CNN, binary image classification (ImageDataset)
+        //    Dataset: datasets/tom_and_jerry_bmp/ with two class folders
+        //    (jerry/, tom/). The dataset is NOT preprocessed here: OpenNN fixes
+        //    the input size from the FIRST image of the set and resizes every
+        //    other image to match it (resize_image() runs inside ImageDataset on
+        //    load). ImageDataset uses StorageMode::BinaryFile by default — a
+        //    disk-backed pixel cache at <root>/.cache/images.bin, built once then
+        //    read on demand (no full in-RAM matrix).
+        //    Network: ImageClassificationNetwork (a conv/pool CNN). NOTE: ResNet
+        //    is not used here because its classifier is hardcoded to "Softmax",
+        //    which is degenerate for a 1-output binary target; ImageClassification
+        //    Network correctly uses Sigmoid when the output size is 1.
+        //    Args: argv[1] = batch size (default 32), argv[2] = max epochs (50).
+        // --------------------------------------------------------------------
+#if 1
+        const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(32);
+        const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(50);
+
+        cout << "OpenNN. Tom & Jerry CNN GPU FP32 benchmark."
+             << " batch=" << batch_size << " max_epochs=" << maximum_epochs << endl;
+
+        Configuration::instance().set(Device::CUDA, Type::FP32);  // Type::BF16 for the tensor-core path
+        Backend::instance();
+        set_seed(42);
+
+        const filesystem::path dataset_path =
+            "/home/artelnics/Documents/datasets/tom_and_jerry_bmp";
+
+        // StorageMode::BinaryFile (ImageDataset default). OpenNN reads the first
+        // image to fix the input size, then resizes every other image to match.
+        ImageDataset dataset(dataset_path);
+        dataset.split_samples_random(0.80f, 0.10f, 0.10f);
+
+        const Shape input_shape  = dataset.get_shape("Input");
+        const Shape target_shape = dataset.get_shape("Target");
+
+        cout << "[DATASET] train=" << dataset.get_samples_number("Training")
+             << " val="            << dataset.get_samples_number("Validation")
+             << " test="           << dataset.get_samples_number("Testing")
+             << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
+             << " classes="        << target_shape[0] << endl;
+
+        // Conv(3x3,ReLU,Same)+MaxPool(2x2) per filter count -> Dense(<=128,ReLU)
+        // -> Dense(output, Sigmoid for binary / Softmax for multi-class).
+        ImageClassificationNetwork network(input_shape,
+                                           Shape{16, 32, 64, 128},
+                                           target_shape);
+
+        cout << "Tom & Jerry CNN params=" << network.get_parameters_number() << endl;
+
+        TrainingStrategy training_strategy(&network, &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training_strategy.get_loss()->set_regularization("None");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+        adam->set_batch_size(batch_size);
+        adam->set_learning_rate(1.0e-3f);
+        adam->set_workers_number(8);
+        adam->set_maximum_epochs(maximum_epochs);
+        adam->set_maximum_validation_failures(10);
+        adam->set_display_period(1);
+
+        const auto t0 = steady_clock::now();
+        training_strategy.train();
+        const auto t1 = steady_clock::now();
+        cout << "\nTotal training time: "
+             << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
+
+        TestingAnalysis testing_analysis(&network, &dataset);
+        testing_analysis.set_batch_size(64);
+        const TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
+        cout << "\nAUC: " << roc.area_under_curve
+             << "  optimal_threshold: " << roc.optimal_threshold << endl;
+        cout << "\nConfusion (threshold 0.5):\n"
+             << testing_analysis.calculate_confusion(0.5f) << endl;
+
+        cout << "Bye!" << endl;
+        return 0;
+#endif
+
+        cout << "blank_cuda: all five benchmark blocks are disabled (#if 0).\n"
                 "Enable one by switching its `#if 0` to `#if 1` and rebuilding." << endl;
         return 0;
     }

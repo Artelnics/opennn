@@ -524,60 +524,23 @@ TEST(StatisticsTest, Histogram)
 
 TEST(StatisticsTest, Histograms)
 {
-    
-    Tensor<Histogram, 1> histograms;
-    MatrixR matrix(3,3);
-    matrix << type(1),type(1),type(1),
-              type(2),type(2),type(2),
-              type(3),type(3),type(3);
+    MatrixR matrix(3, 3);
+    matrix << type(1), type(1), type(1),
+              type(2), type(2), type(2),
+              type(3), type(3), type(3);
 
-    //histograms = opennn::histograms(matrix, 3);
+    const vector<Histogram> result = histograms(matrix, 3);
 
-    //EXPECT_EQ(histograms(0).frequencies(0), 1);
-    //EXPECT_EQ(histograms(1).frequencies(0), 1);
-    //EXPECT_EQ(histograms(2).frequencies(0), 1);
-    
-}
+    ASSERT_EQ(ssize(result), 3);
 
-
-TEST(StatisticsTest, TotalFrequencies)
-{
-    Tensor<Histogram, 1> histograms(3);
-
-    // Test
-
-    VectorR vector1_1(16);
-    vector1_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
-
-    VectorR vector2_1(16);
-    vector2_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
-
-    VectorR vector3_1(16);
-    vector3_1 << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(0),type(1),type(1),type(1),type(2),type(2),type(2),type(2),type(2);
-
-    histograms(0) = histogram(vector1_1, 7);
-    histograms(1) = histogram(vector2_1, 7);
-    histograms(2) = histogram(vector3_1, 7);
-/*
-    vector<Index> total_frequencies = opennn::total_frequencies(histograms);
-
-    //EXPECT_EQ(total_frequencies(0), 2);
-    //EXPECT_EQ(total_frequencies(1), 4);
-    //EXPECT_EQ(total_frequencies(2), 6);
-
-    // Test
-
-    MatrixR matrix(3,3);
-    matrix <<
-        {type(1),type(1),type(NAN)},
-        {type(2),type(2),type(1)},
-        {type(3),type(3),type(2)};
-
-    histograms = opennn::histograms(matrix, 3);
-*/
-    //EXPECT_EQ(histograms(0).frequencies(0), 1 );
-    //EXPECT_EQ(histograms(1).frequencies(0), 1);
-    //EXPECT_EQ(histograms(2).frequencies(0), 1);
+    for (const Histogram& column_histogram : result)
+    {
+        ASSERT_EQ(column_histogram.frequencies.size(), 3);
+        EXPECT_EQ(column_histogram.frequencies.sum(), 3);
+        EXPECT_EQ(column_histogram.frequencies(0), 1);
+        EXPECT_EQ(column_histogram.frequencies(1), 1);
+        EXPECT_EQ(column_histogram.frequencies(2), 1);
+    }
 }
 
 
@@ -762,111 +725,5 @@ TEST(StatisticsTest, BoxPlot)
 }
 
 
-// percentiles() function is no longer part of the API
-/*
-TEST(StatisticsTest, Percentiles)
-{
-
-    VectorR vector;
-
-    // Test
-
-    VectorR empty_vector(10);
-    empty_vector.setConstant(NAN);
-    VectorR percentiles_empty = opennn::percentiles(empty_vector);
-
-    EXPECT_EQ(isnan(percentiles_empty(0)),true);
-
-    // Test
-
-    vector.resize(10);
-    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9) ;
-
-
-    VectorR percentiles = opennn::percentiles(vector);
-
-    VectorR solution(10);
-    solution <<  type(0.5), type(1.5), type(2.5), type(3.5), type(4.5), type(5.5), type(6.5), type(7.5), type(8.5), type(9) ;
-
-    EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(3)), solution(3), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(4)), solution(4), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(5)), solution(5), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(6)), solution(6), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-
-
-    // Test
-
-    vector.resize(21);
-    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) ;
-
-    percentiles = opennn::percentiles(vector);
-
-    solution.resize(10);
-    solution <<  type(2), type(4), type(6), type(8), type(10), type(12), type(14), type(16), type(18), type(20) ;
-
-    EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(3)), solution(3), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(4)), solution(4), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(5)), solution(5), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(6)), solution(6), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-
-
-    // Test
-
-    vector.resize(14);
-
-    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(11), type(15), type(19), type(32) ;
-
-    percentiles = opennn::percentiles(vector);
-
-    solution.resize(10);
-    solution <<  type(1), type(2), type(4), type(5), type(6.5), type(8), type(9), type(15), type(19), type(32) ;
-
-    EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(3)), solution(3), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(4)), solution(4), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(5)), solution(5), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(6)), solution(6), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-
-    // Test
-    vector.resize(21);
-    vector <<  type(0), type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10), type(11), type(12), type(13), type(14), type(15), type(16), type(17), type(18), type(19), type(20) ;
-
-    vector(20) = type(NAN);
-
-    percentiles = opennn::percentiles(vector);
-
-    solution.resize(10);
-    solution <<  type(1.5), type(3.5), type(5.5), type(7.5), type(9.5), type(11.5), type(13.5), type(15.5), type(17.5), type(19) ;
-
-    EXPECT_NEAR(abs(percentiles(0)), solution(0), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(1)), solution(1), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(2)), solution(2), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(3)), solution(3), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(4)), solution(4), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(5)), solution(5), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(6)), solution(6), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(7)), solution(7), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(8)), solution(8), type(1.0e-7));
-    EXPECT_NEAR(abs(percentiles(9)), solution(9), type(1.0e-7));
-
-}
-*/
 
 

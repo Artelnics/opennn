@@ -137,8 +137,11 @@ static void scale_cpu(const TensorView& input,
                            * (max_range - min_range) + min_range;
             }
             else
+            {
+                throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
                 column = (column - min_range) / (max_range - min_range)
                        * (maximums_vector(feature_index) - minimums_vector(feature_index)) + minimums_vector(feature_index);
+            }
             break;
         case 2:
             if (!inverse)
@@ -159,11 +162,14 @@ static void scale_cpu(const TensorView& input,
                 column *= (sd > EPSILON) ? (1.0f / sd) : 0.0f;
             }
             else
-                column *= standard_deviations_vector(feature_index);
+            {
+                const float sd = standard_deviations_vector(feature_index);
+                column *= (abs(sd) < EPSILON) ? 1.0f : sd;
+            }
             break;
         case 4:
             if (inverse) column = column.exp();
-            else         column = column.log();
+            else         column = column.max(EPSILON).log();
             break;
         case 5:
             if (inverse) column *= 255.0f;
@@ -558,10 +564,14 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        const float sum_scaled_gradient      = (gamma_map * output_delta_map).sum() * inv_D;
-        const float sum_scaled_gradient_norm = (gamma_map * output_delta_map * norm_map).sum() * inv_D;
+        // gamma * delta is reused three times; compute it once into the output buffer (no extra
+        // allocation) and reuse it for both reductions and the final update.
+        input_delta_map = gamma_map * output_delta_map;
 
-        input_delta_map = (gamma_map * output_delta_map - sum_scaled_gradient
+        const float sum_scaled_gradient      = input_delta_map.sum() * inv_D;
+        const float sum_scaled_gradient_norm = (input_delta_map * norm_map).sum() * inv_D;
+
+        input_delta_map = (input_delta_map - sum_scaled_gradient
                           - norm_map * sum_scaled_gradient_norm) * inv_std;
     }
 }
@@ -1362,6 +1372,28 @@ MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix
     MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
     result.leftCols(first_matrix.cols()) = first_matrix;
     result.rightCols(second_matrix.cols()) = second_matrix;
+    return result;
+}
+
+
+VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
+{
+    VectorR result(static_cast<Index>(indices.size()));
+
+    for (Index i = 0; i < static_cast<Index>(indices.size()); ++i)
+        result(i) = values(indices[i]);
+
+    return result;
+}
+
+
+MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
+{
+    MatrixR result(static_cast<Index>(indices.size()), matrix.cols());
+
+    for (Index i = 0; i < static_cast<Index>(indices.size()); ++i)
+        result.row(i) = matrix.row(indices[i]);
+
     return result;
 }
 

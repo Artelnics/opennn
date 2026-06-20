@@ -22,7 +22,7 @@ move from TF32 to bf16 tensor cores when you switch precision.
 
 Indicative only — **WSL2 degrades OpenNN's bf16 tensor-core path**, so these
 understate bf16; native Windows gives larger margins. Re-run there for
-investor-grade absolute numbers. bf16 wins **every** cell even under WSL2.
+publication-grade absolute numbers. bf16 wins **every** cell even under WSL2.
 
 | workload | mode | fp32 | bf16 | bf16 speedup |
 |---|---|---|---|---|
