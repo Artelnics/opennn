@@ -767,6 +767,44 @@ Tensor4 tensor4_from_device(const type* pointer, const size_t& new_batch_samples
 
 #endif
 
+bool cuda_available()
+{
+#ifdef OPENNN_CUDA
+    // Probe once and cache. cudaGetDeviceCount never throws here: we inspect the
+    // status instead of CHECK_CUDA, so a machine with no NVIDIA driver/GPU
+    // (which returns cudaErrorInsufficientDriver == 35 or cudaErrorNoDevice)
+    // reports "no CUDA" cleanly instead of aborting the process.
+    static const bool available = []() -> bool
+    {
+        int device_count = 0;
+        const cudaError_t status = cudaGetDeviceCount(&device_count);
+
+        if (status != cudaSuccess)
+        {
+            cudaGetLastError(); // clear the sticky error so it doesn't leak
+
+            cout << "OpenNN: no usable CUDA device ("
+                 << cudaGetErrorString(status) << "). Running on CPU." << endl;
+
+            return false;
+        }
+
+        if (device_count <= 0)
+        {
+            cout << "OpenNN: no CUDA device found. Running on CPU." << endl;
+            return false;
+        }
+
+        return true;
+    }();
+
+    return available;
+#else
+    return false;
+#endif
+}
+
+
 Device::Device()
 {
     int max_threads = thread::hardware_concurrency();
@@ -776,14 +814,21 @@ Device::Device()
     set_threads_number(max_threads);
 
 #ifdef OPENNN_CUDA
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+    // Only create cuBLAS/cuDNN handles when a GPU is actually present. On a
+    // GPU-less machine these Create calls would fail and abort startup; leaving
+    // the handles null is safe because the destructor guards on them and the
+    // CUDA training path is never taken without a device.
+    if (cuda_available())
+    {
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
+        CHECK_CUDNN(cudnnCreate(&cudnn_handle));
 
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
 
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_multiplication_descriptor, CUDNN_OP_TENSOR_MUL, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+    }
 #endif
 }
 

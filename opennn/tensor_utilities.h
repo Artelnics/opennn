@@ -874,6 +874,13 @@ inline ThreadPoolDevice& get_device()
 
 void set_threads_number(int num_threads);
 
+// True only when a usable CUDA device is present (cached after the first probe).
+// Always defined - returns false in CPU-only builds and on machines with no
+// NVIDIA GPU/driver - so callers can gate CUDA paths without #ifdef. This is
+// what lets a single CUDA-enabled engine run on a GPU-less machine (falling back
+// to CPU) instead of aborting at the first cudaMalloc with "CUDA Error: 35".
+bool cuda_available();
+
 #ifdef OPENNN_CUDA
 
     inline cublasHandle_t get_cublas_handle()
@@ -1034,6 +1041,11 @@ struct TensorCuda
 
     void resize(const Shape& shape)
     {
+        // No usable GPU: leave the device tensor inert (data == nullptr). The
+        // network still builds and trains on CPU; nothing reads this buffer
+        // unless the CUDA training path runs, which is disabled without a device.
+        if (!cuda_available()) return;
+
         set_descriptor(shape);
         const size_t bytes = size() * sizeof(float);
         cudaFree(data);

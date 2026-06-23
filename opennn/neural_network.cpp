@@ -78,11 +78,17 @@ void NeuralNetwork::compile()
 
 #ifdef OPENNN_CUDA
 
-    const vector<vector<TensorViewCuda*>> layer_parameter_views_device = get_layer_parameter_views_device();
+    // Skip all device-side parameter setup when there is no usable GPU. This is
+    // the path that crashed on GPU-less machines (allocate_parameters_device ->
+    // cudaMalloc -> "CUDA Error: 35") simply when building a network on import.
+    if (cuda_available())
+    {
+        const vector<vector<TensorViewCuda*>> layer_parameter_views_device = get_layer_parameter_views_device();
 
-    allocate_parameters_device();
+        allocate_parameters_device();
 
-    link(parameters_device.data, layer_parameter_views_device);
+        link(parameters_device.data, layer_parameter_views_device);
+    }
 
 #endif
 }
@@ -1840,12 +1846,16 @@ const vector<Variable>& NeuralNetwork::get_output_variables() const
 
 void NeuralNetwork::allocate_parameters_device()
 {
+    if (!cuda_available()) return;
+
     parameters_device.resize({ parameters.size() });
 }
 
 
 void NeuralNetwork::copy_parameters_device()
 {
+    if (!cuda_available()) return;
+
     CHECK_CUDA(cudaMemcpy(parameters_device.data,
                           parameters.data(),
                           parameters.size() * sizeof(type),
@@ -1854,6 +1864,8 @@ void NeuralNetwork::copy_parameters_device()
 
 void NeuralNetwork::copy_parameters_host()
 {
+    if (!cuda_available()) return;
+
     CHECK_CUDA(cudaMemcpy(parameters.data(),
                           parameters_device.data,
                           parameters.size() * sizeof(type),
