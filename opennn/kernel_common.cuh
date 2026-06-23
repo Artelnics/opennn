@@ -22,6 +22,16 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
+static constexpr int activation_identity  = 0;
+static constexpr int activation_sigmoid   = 1;
+static constexpr int activation_tanh      = 2;
+static constexpr int activation_relu      = 3;
+static constexpr int activation_softmax   = 4;
+static constexpr int activation_leaky_relu = 5;
+
+static constexpr int class_activation_softmax = 0;
+static constexpr int class_activation_sigmoid = 1;
+
 static inline int ceil_div(int a, int b)
 {
     return (a + b - 1) / b;
@@ -72,20 +82,20 @@ __device__ inline void rnn_activation(int activation_id, float z, float& h, floa
 {
     switch (activation_id)
     {
-        case 1:
+        case activation_sigmoid:
             h  = 1.0f / (1.0f + expf(-z));
             dh = h * (1.0f - h);
             break;
-        case 2:
+        case activation_tanh:
             h  = tanhf(z);
             dh = 1.0f - h * h;
             break;
-        case 3:
+        case activation_relu:
             h  = z > 0.0f ? z : 0.0f;
             dh = z > 0.0f ? 1.0f : 0.0f;
             break;
-        case 0:
-        case 4:
+        case activation_identity:
+        case activation_softmax:
         default:
             h  = z;
             dh = 1.0f;

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "non_max_suppression_operator.h"
 
 namespace opennn
 {

@@ -14,6 +14,9 @@ namespace opennn
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16 };
 
+// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
+inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
+
 }
 
 // OpenNN: Open Neural Networks Library.

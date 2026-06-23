@@ -247,7 +247,7 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 }
 
 
-TEST(ScalingTest, ScaleLogarithmicShiftsNonPositiveValues)
+TEST(ScalingTest, ScaleLogarithmicClampsNonPositiveValues)
 {
     MatrixR matrix(3, 1);
     matrix << type(-2), type(0), type(3);
@@ -255,11 +255,9 @@ TEST(ScalingTest, ScaleLogarithmicShiftsNonPositiveValues)
     MatrixMap map(matrix.data(), 3, 1);
     scale_logarithmic(map, 0);
 
-    const float offset = 2.0f + 1.0f + EPSILON;
-
-    EXPECT_NEAR(matrix(0, 0), std::log(-2.0f + offset), 1e-5f);
-    EXPECT_NEAR(matrix(1, 0), std::log( 0.0f + offset), 1e-5f);
-    EXPECT_NEAR(matrix(2, 0), std::log( 3.0f + offset), 1e-5f);
+    EXPECT_NEAR(matrix(0, 0), std::log(EPSILON), 1e-5f);
+    EXPECT_NEAR(matrix(1, 0), std::log(EPSILON), 1e-5f);
+    EXPECT_NEAR(matrix(2, 0), std::log(3.0f), 1e-5f);
 
     EXPECT_TRUE(matrix.array().isFinite().all());
 }

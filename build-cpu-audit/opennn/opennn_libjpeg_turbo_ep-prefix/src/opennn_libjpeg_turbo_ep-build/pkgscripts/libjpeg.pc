@@ -1,0 +1,10 @@
+prefix=C:/tests_delete/opennn/build-cpu-audit/_deps/opennn_libjpeg_turbo-install
+exec_prefix=C:/tests_delete/opennn/build-cpu-audit/_deps/opennn_libjpeg_turbo-install
+libdir=C:/tests_delete/opennn/build-cpu-audit/_deps/opennn_libjpeg_turbo-install/lib
+includedir=C:/tests_delete/opennn/build-cpu-audit/_deps/opennn_libjpeg_turbo-install/include
+
+Name: libjpeg
+Description: A SIMD-accelerated JPEG codec that provides the libjpeg API
+Version: 3.1.4
+Libs: -L${libdir} -ljpeg
+Cflags: -I${includedir}

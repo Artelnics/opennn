@@ -1,6 +1,11 @@
 #include "pch.h"
 
 #include "../opennn/string_utilities.h"
+#include <cstdlib>
+#ifdef _WIN32
+#define setenv(name, value, overwrite) _putenv_s(name, value)
+#define unsetenv(name) _putenv_s(name, "")
+#endif
 
 using namespace opennn;
 

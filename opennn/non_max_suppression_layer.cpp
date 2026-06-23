@@ -21,8 +21,6 @@ NonMaxSuppression::NonMaxSuppression(const Shape& new_input_shape,
     : Layer(LayerType::NonMaxSuppression, false)
 {
     operators = {&nms};
-    nms.input_slots = {Input};
-    nms.output_slots = {Output};
 
     set(new_input_shape,
         new_boxes_per_cell,

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "long_short_term_memory_operator.h"
 
 namespace opennn
 {

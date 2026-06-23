@@ -36,7 +36,7 @@ const string& activation_function_to_string(ActivationFunction function)
 
 ActivationFunction activation_function_from_string(const string& name)
 {
-    return activation_function_map().from_string(name, ActivationFunction::Identity);
+    return activation_function_map().from_string(name);
 }
 
 #define OPENNN_GPU_OPS(X) \

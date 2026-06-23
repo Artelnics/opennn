@@ -157,6 +157,7 @@ static MatrixR activation_derivative(ActivationOp::Function activation_function,
         return 1.0f - outputs.array().square();
     case ReLU:
         return (outputs.array() > 0.0f).cast<float>();
+    case LeakyReLU: return outputs.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
     }
 
     return MatrixR::Ones(outputs.rows(), outputs.cols());

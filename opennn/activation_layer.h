@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "activation_operator.h"
 
 namespace opennn
 {
@@ -26,10 +26,7 @@ public:
     ActivationOp::Function get_output_activation() const override { return activation.function; }
 
     void set(const Shape&, const string&, const string&);
-    void set_input_shape(const Shape& new_input_shape) override
-    {
-        set(new_input_shape, ActivationOp::to_string(activation.function), label);
-    }
+    void set_input_shape(const Shape&) override;
 
     void set_function(const string& name) { activation.set_function(name); }
 

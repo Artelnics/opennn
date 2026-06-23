@@ -18,16 +18,16 @@ set(PCH_HEADER pch.h)
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp")
 
-add_executable(run_tests ${TEST_SOURCES})
+add_executable(opennn_tests ${TEST_SOURCES})
 
-target_link_libraries(run_tests gtest gtest_main opennn)
+target_link_libraries(opennn_tests gtest gtest_main opennn)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(run_tests stdc++fs)
+    target_link_libraries(opennn_tests stdc++fs)
 endif()
 
-target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
+target_precompile_headers(opennn_tests PRIVATE ${PCH_HEADER})
 
-add_test(NAME run_tests COMMAND run_tests)
+add_test(NAME run_tests COMMAND opennn_tests)
 set_tests_properties(run_tests PROPERTIES TIMEOUT 600)
 

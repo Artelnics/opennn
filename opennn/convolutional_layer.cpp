@@ -189,8 +189,12 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-    set_activation_function(new_activation_function);
-    set_batch_normalization(new_batch_normalization);
+    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
+    throw_if(function == ActivationOp::Function::Softmax,
+             "Softmax is not a valid activation for a convolutional layer.");
+    activation.set_function(function);
+
+    batch_norm.features = new_batch_normalization ? kernels_number : 0;
 
     update_convolution_operator();
 }
@@ -242,14 +246,13 @@ void Convolutional::set_activation_function(const string& new_activation_functio
              "Softmax is not a valid activation for a convolutional layer.");
 
     activation.set_function(function);
+    update_convolution_operator();
 }
 
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
-    if (new_batch_normalization && kernels_number > 0)
-        batch_norm.set(kernels_number, batch_norm.momentum);
-    else
-        batch_norm.features = 0;
+    batch_norm.features = new_batch_normalization ? kernels_number : 0;
+    update_convolution_operator();
 }
 
 void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
@@ -268,14 +271,10 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
              "Convolution type must be 'Valid' or 'Same'.");
     use_padding = (convolution_type == "Same");
 
-    const bool has_batch_norm = read_json_bool(convolutional_layer_element, "BatchNormalization");
-    if (has_batch_norm && kernels_number > 0)
-        batch_norm.set(kernels_number, batch_norm.momentum);
+    batch_norm.features = read_json_bool(convolutional_layer_element, "BatchNormalization") ? kernels_number : 0;
 
     residual = convolutional_layer_element->has("Residual")
             && read_json_bool(convolutional_layer_element, "Residual");
-
-    update_convolution_operator();
 }
 
 void Convolutional::write_JSON_body(JsonWriter& printer) const

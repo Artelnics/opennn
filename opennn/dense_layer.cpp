@@ -85,11 +85,7 @@ void Dense::configure_operators()
 
 void Dense::set_batch_normalization(bool enable)
 {
-    if (enable)
-        batch_norm.set(output_features, batch_norm.momentum);
-    else
-        batch_norm.features = 0;
-
+    batch_norm.features = enable ? output_features : 0;
     configure_operators();
 }
 
@@ -112,10 +108,14 @@ void Dense::set(const Shape& new_input_shape,
     input_shape = new_input_shape;
     output_features = new_output_shape.back();
 
-    set_activation_function(new_activation_function);
-    set_batch_normalization(new_batch_normalization);
-    set_label(new_label);
+    ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
+    if (function == ActivationOp::Function::Softmax && get_outputs_number() == 1)
+        function = ActivationOp::Function::Sigmoid;
+    activation.set_function(function);
 
+    batch_norm.features = new_batch_normalization ? output_features : 0;
+
+    set_label(new_label);
     configure_operators();
 }
 
@@ -140,6 +140,7 @@ void Dense::set_activation_function(const string& name)
         function = ActivationOp::Function::Sigmoid;
 
     activation.set_function(function);
+    configure_operators();
 }
 
 void Dense::set_momentum(float new_momentum)
@@ -187,8 +188,7 @@ string Dense::write_expression(const vector<string>& input_names,
 
 void Dense::read_JSON_body(const Json* dense_layer_element)
 {
-    if (read_json_bool(dense_layer_element, "BatchNormalization"))
-        set_batch_normalization(true);
+    batch_norm.features = read_json_bool(dense_layer_element, "BatchNormalization") ? output_features : 0;
 }
 
 void Dense::write_JSON_body(JsonWriter& printer) const

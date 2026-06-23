@@ -113,15 +113,16 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 void Recurrent::set_activation_function(const string& name)
 {
     const ActivationOp::Function fn = ActivationOp::from_string(name);
-    throw_if(fn == ActivationOp::Function::Softmax,
-             "Recurrent: Softmax activation is not supported (use Tanh, Sigmoid, ReLU or Identity).");
+    throw_if(fn == ActivationOp::Function::Softmax || fn == ActivationOp::Function::LeakyReLU,
+             "Recurrent: unsupported activation (use Tanh, Sigmoid, ReLU or Identity).");
     recurrent_op.activation = fn;
 }
 
 void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 {
     set_activation_function(read_json_string(recurrent_layer_element, "Activation"));
-    set_return_sequences(read_json_bool(recurrent_layer_element, "ReturnSequences"));
+    return_sequences = read_json_bool(recurrent_layer_element, "ReturnSequences");
+    configure_operators();
 }
 
 void Recurrent::write_JSON_body(JsonWriter& printer) const

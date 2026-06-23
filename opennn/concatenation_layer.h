@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "concatenation_operator.h"
 
 namespace opennn
 {

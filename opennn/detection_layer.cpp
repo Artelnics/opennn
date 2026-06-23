@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "detection_layer.h"
+#include "enum_map.h"
 #include "json.h"
 
 namespace opennn
@@ -15,6 +16,17 @@ namespace opennn
 
 namespace
 {
+
+const EnumMap<DetectionOp::ClassActivation>& class_activation_map()
+{
+    using ClassActivation = DetectionOp::ClassActivation;
+    static const vector<EnumMap<ClassActivation>::Entry> entries = {
+        {ClassActivation::Softmax, "Softmax"},
+        {ClassActivation::Sigmoid, "Sigmoid"}
+    };
+    static const EnumMap<ClassActivation> instance{entries};
+    return instance;
+}
 
 string anchors_to_string(const vector<array<float, 2>>& anchors)
 {
@@ -48,10 +60,6 @@ Detection::Detection(const Shape& new_input_shape,
     : Layer(LayerType::Detection)
 {
     operators = {&detection};
-    detection.input_slots = {Input};
-    detection.output_slots = {Output};
-    detection.input_delta_slots = {InputDelta};
-    detection.output_delta_slots = {OutputDelta};
 
     set(new_input_shape, new_anchors, new_label);
 }
@@ -90,18 +98,15 @@ void Detection::configure_operator()
 
 void Detection::read_JSON_body(const Json* root)
 {
-    set_anchors(string_to_anchors(read_json_string(root, "Anchors")));
-
-    set_class_activation(read_json_string(root, "ClassActivation") == "Sigmoid"
-                         ? ClassActivation::Sigmoid
-                         : ClassActivation::Softmax);
+    detection.anchors = string_to_anchors(read_json_string(root, "Anchors"));
+    detection.class_activation = class_activation_map().from_string(read_json_string(root, "ClassActivation"));
+    configure_operator();
 }
 
 void Detection::write_JSON_body(JsonWriter& writer) const
 {
     add_json_field(writer, "Anchors", anchors_to_string(detection.anchors));
-    add_json_field(writer, "ClassActivation",
-                   detection.class_activation == ClassActivation::Sigmoid ? "Sigmoid" : "Softmax");
+    add_json_field(writer, "ClassActivation", class_activation_map().to_string(detection.class_activation));
 }
 
 REGISTER(Layer, Detection, "Detection")
