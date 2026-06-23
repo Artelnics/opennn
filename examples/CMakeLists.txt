@@ -33,4 +33,5 @@ add_subdirectory(capacity_benchmark)
 add_subdirectory(training_speed_benchmark)
 add_subdirectory(inference_speed_benchmark)
 add_subdirectory(resnet50_training_speed_benchmark)
-
+add_subdirectory(resnet50_max_batch_benchmark)
+add_subdirectory(image_classification_max_batch_benchmark)

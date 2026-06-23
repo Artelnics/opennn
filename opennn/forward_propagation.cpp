@@ -8,6 +8,7 @@
 
 #include "forward_propagation.h"
 #include "neural_network.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -46,11 +47,19 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const Index total_bytes = get_aligned_bytes(forward_specs);
     data.resize_bytes(total_bytes, neural_network->get_device());
     data.setZero();
+    memory_debug::record("forward", "ForwardPropagation::data", total_bytes,
+                         format("batch={}", batch_size));
 
     uint8_t* cursor = data.as<uint8_t>();
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
+        const Index layer_bytes = get_aligned_bytes(specs);
+        if (layer_bytes > 0)
+            memory_debug::record("forward.layer",
+                                 format("{}:{}", i, layers[i]->get_label()),
+                                 layer_bytes,
+                                 format("batch={}", batch_size));
         forward_slots[i].assign(specs.size() + 1, TensorView{});
 
         for (size_t j = 0; j < specs.size(); ++j)

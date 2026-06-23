@@ -69,6 +69,27 @@
       "needs": ["run full ImageNet sweep", "attach repeated-run JSON artifacts", "repeat on reference Linux machine", "archive raw logs"]
     },
     {
+      "id": "gpu-resnet50-max-batch",
+      "doc": "resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md",
+      "category": "gpu_training_capacity",
+      "benchmark_class": "training_capacity",
+      "status": "current_rtx4080_capacity_result",
+      "publication_readiness": "draft_candidate_not_opennn_headline",
+      "platform": "linux_x86_64_cuda",
+      "comparison": "OpenNN ImageDataset BinaryFile path vs PyTorch torch.compile/eager vs TensorFlow XLA",
+      "metrics": ["max_training_batch", "peak_vram_mib", "next_failing_batch"],
+      "runner": {
+        "status": "writes_result_json",
+        "commands": [
+          "cmake --build build-gpu --target opennn_resnet50_maxbatch_trial",
+          "cd docs/benchmarks/resnet50-max-batch && python run_resnet50_maxbatch.py --dataset cifar10 --precision fp32 --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128"
+        ]
+      },
+      "latest_result": "results/gpu-resnet50-max-batch-cifar10-20260622T135753Z.json",
+      "comparison_result": "results/gpu-resnet50-max-batch-cifar10-20260622T133809Z.json",
+      "needs": ["repeat run before public headline use", "investigate OpenNN convolution workspace/graph memory boundary", "keep card title neutral if OpenNN does not win this benchmark"]
+    },
+    {
       "id": "gpu-dense-rosenbrock-speed-and-capacity",
       "doc": "rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md",
       "category": "gpu_inference_training_capacity",

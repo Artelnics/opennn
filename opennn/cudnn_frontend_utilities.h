@@ -15,6 +15,7 @@
 #include "tensor_types.h"
 #include "device_backend.h"
 #include "string_utilities.h"
+#include "memory_debug.h"
 
 // cudnn-frontend graph path for fp32 convolutions and batch normalization:
 // the legacy v7 API has poor NHWC-fp32 kernel coverage (backward-filter ~6x,
@@ -179,7 +180,10 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, cons
     int64_t workspace_bytes = 0;
     check_status(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
     if (workspace_bytes > 0)
+    {
         workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
+        memory_debug::record("workspace.cudnn_frontend", tag, Index(workspace_bytes), "persistent");
+    }
 
     return false;
 }
@@ -205,7 +209,10 @@ inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
 
     const int64_t workspace_bytes = graph.get_workspace_size();
     if (workspace_bytes > 0)
+    {
         workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
+        memory_debug::record("workspace.cudnn_frontend", "autotuned", Index(workspace_bytes), "persistent");
+    }
 }
 
 // Autotune variant for graphs with in-place or state-updating tensors (batch

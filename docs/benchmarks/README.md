@@ -22,6 +22,7 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | [Training precision (MSE / time)](precision-opennn-vs-pytorch-vs-tensorflow.md) | **0.109 / 2 s** | n/a | 0.162 / 42 s | 0.156 / 310 s |
 | [GPU CNN training (samples/s)](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **211,904** | n/a | 111,241 | 55,339 |
 | [GPU ResNet-50 training (samples/s)](resnet50-training-speed-gpu-opennn-vs-pytorch.md) | **8,433** | n/a | 5,268 (`torch.compile`) / 3,960 eager | — |
+| [GPU ResNet-50 max train batch](resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md) | 4,752 | n/a | 9,216 (`torch.compile`) / 8,704 eager | **11,760** |
 | [GPU dense inference (samples/s)](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **3.99 M** | n/a | 2.80 M | — |
 | [GPU dense max train batch](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **482,344** | n/a | 399,507 | — |
 | [GPU energy / inference sample (µJ)](energy-consumption-gpu-opennn-vs-pytorch.md) | **25.9** | n/a | 43.5 | 29.8 |
@@ -44,6 +45,7 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | CPU inference speed | Valid Windows tuned result; not yet final public headline | Re-measure on the reference Linux x86_64 box and keep the Windows result as a platform-specific note |
 | GPU CNN training | Current WSL2 laptop GPU result | Add an optimized PyTorch/`torch.compile` and TensorFlow/XLA run or state clearly that the comparison is eager/Keras fp32 |
 | GPU ResNet-50 training | Current WSL2 laptop GPU result; previous 2,912 samples/s is historical | Keep the `torch.compile` result in the official runner output, not only in the compile probe |
+| GPU ResNet-50 max batch | Current RTX 4080 capacity result; TensorFlow and PyTorch fit larger batches than OpenNN | Treat as memory-regression evidence, not as an OpenNN headline claim; repeat before public use |
 | GPU dense speed, max batch, and energy | Current WSL2 laptop GPU result | Replace machine-specific build scripts with CMake targets and attach raw logs/power traces |
 | GPU Transformer inference and training | Current WSL2 laptop GPU result | Add repeated-run statistics and exact cross-framework correctness/quality gates before using as a flagship claim |
 | Recurrent/LSTM forecasting | Harness packaged; Linux result pending | Run the JSON harness on the reference Linux GPU and archive raw output |
@@ -88,6 +90,11 @@ infers in one self-contained binary.
   same question at real-architecture scale: ResNet-50 on CIFAR-10, batch 128, fp32. OpenNN
   trains 1.6× faster than `torch.compile` and 2.1× faster than eager PyTorch after the
   full cudnn-frontend and resident CUDA-graph optimization pass.
+* **[GPU ResNet-50 max training batch](resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a
+  capacity benchmark on ResNet-50/CIFAR-10, fp32, one full training step. On the current RTX 4080
+  run, TensorFlow XLA fits the largest batch (11,760), PyTorch `torch.compile` fits 9,216, and
+  OpenNN with the `ImageDataset` BinaryFile path and `OPENNN_BATCH_POOL=1` fits 4,752. This is
+  useful memory-regression evidence, not an OpenNN headline win.
 * **[GPU dense max batch & speed](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md)** — a
   purely dense 1000→1000→1 MLP on the GPU: OpenNN runs inference 1.43–1.56× faster than PyTorch
   (device-resident path), trains 1.30–1.35× faster at low mini-batch counts, and fits a 1.21×

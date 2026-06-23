@@ -11,6 +11,7 @@
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "tensor_operations.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -56,6 +57,8 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     const Index gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
     gradient.resize_bytes(gradient_bytes, neural_network->get_device());
     gradient.setZero();
+    memory_debug::record("backward", "BackPropagation::gradient", gradient_bytes,
+                         format("batch={}", batch_size));
 
     gradient_views.resize(layers_number);
 
@@ -149,6 +152,19 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         entries_ending_at_backward_step[size_t(delta_entries[entry_index].last_step)].push_back(entry_index);
     }
 
+    Index live_bytes = 0;
+    Index lower_bound_live_bytes = 0;
+    for (Index backward_step = 0; backward_step <= last_backward_step; ++backward_step)
+    {
+        for (size_t entry_index : entries_starting_at_backward_step[size_t(backward_step)])
+            live_bytes += get_aligned_bytes(delta_entries[entry_index].spec);
+
+        lower_bound_live_bytes = max(lower_bound_live_bytes, live_bytes);
+
+        for (size_t entry_index : entries_ending_at_backward_step[size_t(backward_step)])
+            live_bytes -= get_aligned_bytes(delta_entries[entry_index].spec);
+    }
+
     vector<pair<Index, Index>> free_blocks = {{0, numeric_limits<Index>::max()}};
     Index peak_bytes = 0;
 
@@ -207,6 +223,14 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     delta_pool.resize_bytes(peak_bytes, neural_network->get_device());
     delta_pool.setZero();
+    memory_debug::record("backward", "BackPropagation::delta_pool", peak_bytes,
+                         format("batch={}", batch_size));
+    memory_debug::record("backward.delta_pool_analysis", "live_bytes_lower_bound",
+                         lower_bound_live_bytes,
+                         format("batch={},entries={}", batch_size, delta_entries.size()));
+    memory_debug::record("backward.delta_pool_analysis", "allocator_fragmentation_overhead",
+                         peak_bytes - lower_bound_live_bytes,
+                         format("batch={},entries={}", batch_size, delta_entries.size()));
 
     uint8_t* const base = delta_pool.as<uint8_t>();
 

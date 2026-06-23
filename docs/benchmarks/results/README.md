@@ -19,6 +19,9 @@ Use these benchmark classes in new artifacts:
 - `training_throughput_with_quality`: fixed-epoch or fixed-step training with a
   reported quality metric; useful for engineering, not final headline training
   evidence until a quality target exists.
+- `training_capacity`: largest batch that completes forward, backward, and the
+  optimizer update under a stated physical VRAM or RAM cap. The quality rule
+  should at least gate finite loss after the training step.
 - `inference_offline`: batch throughput inference.
 - `inference_single_stream`: latency-oriented inference.
 - `footprint_or_packaging`: size, startup, dependencies, source LOC, or export.

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "training_result.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -170,6 +171,8 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);
 
     data.resize_bytes(total_bytes, device);
+    memory_debug::record("optimizer", "OptimizerData::data", total_bytes,
+                         format("slots={}", slot_shapes.size()));
 
     if (total_bytes > 0)
     {

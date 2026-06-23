@@ -11,6 +11,7 @@
 #include "dataset.h"
 #include "tabular_dataset.h"
 #include "loss.h"
+#include "memory_debug.h"
 #include "yolo_dataset.h"
 #include "detection_layer.h"
 #include "neural_network.h"
@@ -568,6 +569,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
             ? 3 * (input.size() / input.shape.back())
             : input.size();
         errors_device.grow_to(workspace_floats * Index(sizeof(float)));
+        memory_debug::record("loss", "Loss::errors_device",
+                             workspace_floats * Index(sizeof(float)),
+                             format("batch={}", batch.get_samples_number()));
         workspace_device = errors_device.as<float>();
     }
 
@@ -646,6 +650,12 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
 
     errors_device.grow_to(workspace_floats * Index(sizeof(float)));
     metric_results_device.grow_to(Index(3 * sizeof(float)));
+    memory_debug::record("loss", "Loss::errors_device",
+                         workspace_floats * Index(sizeof(float)),
+                         format("batch={}", batch.get_samples_number()));
+    memory_debug::record("loss", "Loss::metric_results_device",
+                         Index(3 * sizeof(float)),
+                         format("batch={}", batch.get_samples_number()));
 
     float* const workspace = errors_device.as<float>();
     float* const results_device = metric_results_device.as<float>();

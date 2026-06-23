@@ -8,6 +8,7 @@
 
 #include "batch.h"
 #include "device_backend.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -67,7 +68,12 @@ void Batch::set(const Index new_samples_number,
         slot.features_number = dataset_shape.size();
 
         const Index element_bytes = on_gpu ? device_elem_bytes : Index(sizeof(float));
-        slot.buffer.resize_bytes(slot.shape.size() * element_bytes, batch_device);
+        const Index device_bytes = slot.shape.size() * element_bytes;
+        slot.buffer.resize_bytes(device_bytes, batch_device);
+        memory_debug::record("batch.device",
+                             format("Batch::{}.buffer", role),
+                             device_bytes,
+                             format("samples={}", samples_number));
 
         if (!on_gpu) return;
 
@@ -79,6 +85,10 @@ void Batch::set(const Index new_samples_number,
             slot.host = static_cast<float*>(
                 device::allocate_pinned_host(size * Index(sizeof(float))));
             slot.host_allocated_size = size;
+            memory_debug::record("batch.pinned_host",
+                                 format("Batch::{}.host", role),
+                                 size * Index(sizeof(float)),
+                                 format("samples={}", samples_number));
         }
     };
 
@@ -95,13 +105,20 @@ void Batch::set(const Index new_samples_number,
     if (!target.shape.empty())
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
-    fp32_staging.resize_bytes(input_is_bf16
+    const Index fp32_staging_bytes = input_is_bf16
         ? samples_number * input.features_number * Index(sizeof(float))
-        : Index(0),
-        Device::CUDA);
+        : Index(0);
+    fp32_staging.resize_bytes(fp32_staging_bytes, Device::CUDA);
+    memory_debug::record("batch.device", "Batch::fp32_staging", fp32_staging_bytes,
+                         format("samples={}", samples_number));
 
     if (on_gpu)
+    {
         gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
+        memory_debug::record("batch.device", "Batch::gather_indices_device",
+                             samples_number * Index(sizeof(int)),
+                             format("samples={}", samples_number));
+    }
 
     if (on_gpu && !input.shape.empty() && input.buffer.data)
     {
