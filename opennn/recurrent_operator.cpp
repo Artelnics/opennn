@@ -183,10 +183,11 @@ void RecurrentOp::apply(const TensorView& input,
             step_hidden = step_hidden.array().cwiseMax(0.0f);
             break;
         case F::Identity:
-        case F::Softmax:
             if (is_training)
                 step_derivs.setOnes();
             break;
+        case F::Softmax:
+        case F::LeakyReLU: throw runtime_error("RecurrentOp: unsupported activation.");
         }
 
         for (Index i = 0; i < batch_size; ++i)

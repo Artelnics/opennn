@@ -31,7 +31,8 @@ float lstm_activate(ActivationOp::Function function, float x)
         case Sigmoid:  return 1.0f / (1.0f + exp(-x));
         case Tanh:     return tanh(x);
         case ReLU:     return max(0.0f, x);
-        case Softmax:  return x;
+        case Softmax:
+        case LeakyReLU: throw runtime_error("LongShortTermMemoryOp: unsupported activation.");
     }
     return x;
 }
@@ -45,7 +46,8 @@ float lstm_derivative_from_output(ActivationOp::Function function, float y)
         case Sigmoid:  return y * (1.0f - y);
         case Tanh:     return 1.0f - y * y;
         case ReLU:     return y > 0.0f ? 1.0f : 0.0f;
-        case Softmax:  return 1.0f;
+        case Softmax:
+        case LeakyReLU: throw runtime_error("LongShortTermMemoryOp: unsupported activation.");
     }
     return 1.0f;
 }

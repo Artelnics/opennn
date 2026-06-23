@@ -19,11 +19,6 @@ Activation::Activation(const Shape& new_input_shape,
 {
     operators = {&activation};
 
-    activation.input_slots         = {Input};
-    activation.output_slots        = {Output};
-    activation.input_delta_slots   = {InputDelta};
-    activation.output_delta_slots  = {OutputDelta};
-
     set(new_input_shape, new_activation, new_name);
 }
 
@@ -31,12 +26,17 @@ void Activation::set(const Shape& new_input_shape,
                      const string& new_activation,
                      const string& new_label)
 {
-    check_rank(new_input_shape, {1, 2, 3}, "Activation", "input");
-
-    input_shape = new_input_shape;
+    set_input_shape(new_input_shape);
     activation.set_function(new_activation);
 
     set_label(new_label);
+}
+
+void Activation::set_input_shape(const Shape& new_input_shape)
+{
+    check_rank(new_input_shape, {1, 2, 3}, "Activation", "input");
+
+    input_shape = new_input_shape;
 }
 
 REGISTER(Layer, Activation, "Activation")

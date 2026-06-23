@@ -10,7 +10,7 @@
 
 #include "statistics.h"
 #include "layer.h"
-#include "operators.h"
+#include "scale_operator.h"
 #include "variable.h"
 
 namespace opennn

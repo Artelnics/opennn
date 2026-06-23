@@ -24,7 +24,7 @@ namespace
 {
 
 void configure_activation_descriptor(CudnnDescriptor<cudnnActivationDescriptor_t>& descriptor,
-                                     ActivationOp::Function function)
+                                      ActivationOp::Function function)
 {
     if (!descriptor)
     {
@@ -52,7 +52,8 @@ cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
     case Tanh:    return CUDNN_ACTIVATION_TANH;
     case ReLU:    return CUDNN_ACTIVATION_RELU;
     case Identity:
-    case Softmax: return CUDNN_ACTIVATION_IDENTITY;
+    case Softmax:
+    case LeakyReLU: return CUDNN_ACTIVATION_IDENTITY;
     }
 
     return CUDNN_ACTIVATION_IDENTITY;
@@ -62,7 +63,10 @@ void ActivationOp::set_function(Function new_function)
 {
     function = new_function;
 #ifdef OPENNN_HAS_CUDA
-    configure_activation_descriptor(descriptor, function);
+    if (function == Function::Sigmoid || function == Function::Tanh || function == Function::ReLU)
+        configure_activation_descriptor(descriptor, function);
+    else
+        descriptor.reset();
 #endif
 }
 

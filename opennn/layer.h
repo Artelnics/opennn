@@ -10,7 +10,7 @@
 
 #include "tensor_types.h"
 #include "tensor_operations.h"
-#include "operators.h"
+#include "operator.h"
 #include "random_utilities.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"

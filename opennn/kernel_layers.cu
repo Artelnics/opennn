@@ -1008,21 +1008,20 @@ template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const
 template<typename T>
 __global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
 {
-    // function code = static_cast<int>(ActivationFunction). Branches must stay
-    // in sync with the enum order in tensor_utilities.h.
+    // Function codes mirror ActivationFunction values.
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
     {
         const float x = static_cast<float>(data[idx]);
         float y = x;
 
-        if (function == 1)
+        if (function == activation_sigmoid)
             y = 1.0f / (1.0f + expf(-x));
-        else if (function == 2)
+        else if (function == activation_tanh)
             y = tanhf(x);
-        else if (function == 3)
+        else if (function == activation_relu)
             y = fmaxf(x, 0.0f);
-        else if (function == 5)
-            y = x >= 0.0f ? x : 0.1f * x;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
+        else if (function == activation_leaky_relu)
+            y = x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
 
         data[idx] = static_cast<T>(y);
     }
@@ -1049,14 +1048,14 @@ __global__ void activation_backward_kernel(const int n, const T* __restrict__ ou
         const float d = static_cast<float>(delta[idx]);
         float out = d;
 
-        if (function == 1)
+        if (function == activation_sigmoid)
             out = d * y * (1.0f - y);
-        else if (function == 2)
+        else if (function == activation_tanh)
             out = d * (1.0f - y * y);
-        else if (function == 3)
+        else if (function == activation_relu)
             out = y > 0.0f ? d : 0.0f;
-        else if (function == 5)
-            out = y >= 0.0f ? d : 0.1f * d;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
+        else if (function == activation_leaky_relu)
+            out = y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
 
         delta[idx] = static_cast<T>(out);
     }
@@ -1491,7 +1490,7 @@ __global__ void detection_forward_kernel(const int batch_size,
         dst[base + 3] = __expf(src[base + 3]) * ah;
         dst[base + 4] = yolo_sigmoid_device(src[base + 4]);
 
-        if (class_activation == 1)  // Sigmoid
+        if (class_activation == class_activation_sigmoid)
         {
             for (int c = 0; c < classes_number; ++c)
                 dst[base + 5 + c] = yolo_sigmoid_device(src[base + 5 + c]);
@@ -1580,7 +1579,7 @@ __global__ void detection_backward_kernel(const int batch_size,
         in_delta[base + 3] = delta[base + 3] * out[base + 3];
         in_delta[base + 4] = delta[base + 4] * oo * (1.0f - oo);
 
-        if (class_activation == 1)  // Sigmoid
+        if (class_activation == class_activation_sigmoid)
         {
             for (int c = 0; c < classes_number; ++c)
             {

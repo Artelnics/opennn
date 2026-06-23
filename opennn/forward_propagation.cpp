@@ -28,7 +28,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();
-    device_fp32_input_buffers.clear();
+    device_fp32_input_staging.resize_bytes(0, Device::CUDA);
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
 

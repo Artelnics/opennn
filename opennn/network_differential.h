@@ -56,6 +56,7 @@ struct NetworkDifferential
         case ActivationFunction::Sigmoid:  return (1.0f + (-z.array()).exp()).inverse();
         case ActivationFunction::Tanh:     return z.array().tanh();
         case ActivationFunction::ReLU:     return z.array().max(0.0f);
+        case ActivationFunction::LeakyReLU: return (z.array() >= 0.0f).select(z.array(), z.array() * LEAKY_RELU_SLOPE);
         case ActivationFunction::Softmax:
         default: throw runtime_error("NetworkDifferential: unsupported activation");
         }
@@ -69,6 +70,7 @@ struct NetworkDifferential
         case ActivationFunction::Sigmoid:  return a.array() * (1.0f - a.array());
         case ActivationFunction::Tanh:     return 1.0f - a.array().square();
         case ActivationFunction::ReLU:     return (a.array() > 0.0f).cast<float>();
+        case ActivationFunction::LeakyReLU: return a.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
         case ActivationFunction::Softmax:
         default: throw runtime_error("NetworkDifferential: unsupported activation");
         }

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "upsample_operator.h"
 
 namespace opennn
 {

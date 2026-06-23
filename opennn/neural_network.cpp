@@ -648,7 +648,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         vector<TensorView> input_views_device = input_view;
         forward_propagation.device_input_buffers.resize(input_view.size());
-        forward_propagation.device_fp32_input_buffers.resize(input_view.size());
 
         const auto input_feeds_embedding = [&](size_t input_index)
         {
@@ -684,8 +683,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             if (cast_input_to_bf16)
             {
-                Buffer& fp32_buffer = forward_propagation.device_fp32_input_buffers[i];
-                fp32_buffer.resize_bytes(source.byte_size(), Device::CUDA);
+                Buffer& fp32_buffer = forward_propagation.device_fp32_input_staging;
+                fp32_buffer.grow_to(source.byte_size());
                 device::copy_async(fp32_buffer.data,
                                    source.data,
                                    source.byte_size(),

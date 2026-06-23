@@ -9,8 +9,8 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
 #include "pooling_layer.h"
+#include "pool3d_operator.h"
 
 namespace opennn
 {

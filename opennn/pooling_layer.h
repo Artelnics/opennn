@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "pool_operator.h"
 
 namespace opennn
 {
@@ -20,19 +20,8 @@ enum class PoolingMethod
     AveragePooling
 };
 
-inline const string& pooling_method_to_string(PoolingMethod method)
-{
-    static const string max_str = "MaxPooling";
-    static const string avg_str = "AveragePooling";
-    return method == PoolingMethod::MaxPooling ? max_str : avg_str;
-}
-
-inline PoolingMethod string_to_pooling_method(const string& name)
-{
-    if (name == "MaxPooling")     return PoolingMethod::MaxPooling;
-    if (name == "AveragePooling") return PoolingMethod::AveragePooling;
-    throw runtime_error(format("Unknown pooling method: {}", name));
-}
+const string& pooling_method_to_string(PoolingMethod);
+PoolingMethod string_to_pooling_method(const string&);
 
 class Pooling final : public Layer
 {

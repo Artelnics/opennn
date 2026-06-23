@@ -1,0 +1,4 @@
+C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/include/jconfig.h
+C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/include/jerror.h
+C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/include/jmorecfg.h
+C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/include/jpeglib.h

@@ -330,8 +330,7 @@ struct BnDims
 BnDims bn_dims(const TensorView& input, Index features)
 {
     const int64_t batch = input.shape[0];
-    const int64_t channels = features;
-    return {batch, channels, int64_t(input.size()) / (batch * channels)};
+    return {batch, features, int64_t(input.size()) / (batch * features)};
 }
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>

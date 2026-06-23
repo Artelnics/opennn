@@ -80,7 +80,7 @@ TEST(Dense2dTest, BackwardGradientMatchesNumerical)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{targets_number}, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{targets_number}, "Sigmoid"));
     neural_network.compile();
     neural_network.set_parameters_random();
 

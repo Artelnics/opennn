@@ -8,9 +8,35 @@
 
 #include "registry.h"
 #include "pooling_layer.h"
+#include "enum_map.h"
 
 namespace opennn
 {
+
+namespace
+{
+
+const EnumMap<PoolingMethod>& pooling_method_map()
+{
+    static const vector<EnumMap<PoolingMethod>::Entry> entries = {
+        {PoolingMethod::MaxPooling,     "MaxPooling"},
+        {PoolingMethod::AveragePooling, "AveragePooling"}
+    };
+    static const EnumMap<PoolingMethod> instance{entries};
+    return instance;
+}
+
+}
+
+const string& pooling_method_to_string(PoolingMethod method)
+{
+    return pooling_method_map().to_string(method);
+}
+
+PoolingMethod string_to_pooling_method(const string& name)
+{
+    return pooling_method_map().from_string(name);
+}
 
 Pooling::Pooling(const Shape& new_input_shape,
                  const Shape& new_pool_dimensions,

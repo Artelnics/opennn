@@ -1,0 +1,3 @@
+run_tests 0 0
+---
+run_tests

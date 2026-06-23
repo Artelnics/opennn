@@ -766,7 +766,7 @@ const void* bias_for_gemm_bf16(const TensorView& bias)
 
 namespace
 {
-const LtMatmulPlan& get_lt_gemm_plan(
+LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
     cublasOperation_t transB,
@@ -865,8 +865,7 @@ void run_lt_matmul_cached(
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype)
 {
-    LtMatmulPlan& plan = const_cast<LtMatmulPlan&>(
-        get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype));
+    LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
