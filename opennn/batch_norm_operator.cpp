@@ -292,23 +292,14 @@ struct BatchNormOp::BnGraphCache
             fwd_Y, fwd_Mean, fwd_InvVar, fwd_NextMean, fwd_NextVar;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_X, bwd_Scale, bwd_Bias,
             bwd_Mean, bwd_InvVar, bwd_Residual, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
-        void* fwd_workspace = nullptr;
-        void* bwd_workspace = nullptr;
+        int64_t fwd_workspace_bytes = 0;
+        int64_t bwd_workspace_bytes = 0;
         bool bwd_forked = false;
         bool fwd_autotune = false;
         bool bwd_autotune = false;
     };
 
     map<Index, Entry> entries;
-
-    ~BnGraphCache()
-    {
-        for (auto& [_, entry] : entries)
-        {
-            device::deallocate(Device::CUDA, entry.fwd_workspace, 0);
-            device::deallocate(Device::CUDA, entry.bwd_workspace, 0);
-        }
-    }
 #endif
 
     bool disabled = false;
@@ -403,7 +394,7 @@ void build_bn_forward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace, "batchnorm forward", autotune_enabled());
+    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "batchnorm forward", autotune_enabled());
     entry.fwd = graph;
 }
 
@@ -463,7 +454,7 @@ void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    entry.bwd_autotune = finalize(*graph, entry.bwd_workspace, "batchnorm backward", autotune_enabled());
+    entry.bwd_autotune = finalize(*graph, entry.bwd_workspace_bytes, "batchnorm backward", autotune_enabled());
     entry.bwd = graph;
 }
 
@@ -524,9 +515,10 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextMean] = running_mean.data;
         tensors[entry.fwd_NextVar]  = running_variance.data;
 
-        cudnn_fe::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
+        cudnn_fe::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
 
-        cudnn_fe::execute_graph(*entry.fwd, tensors, entry.fwd_workspace, "batchnorm forward execute",
+        cudnn_fe::execute_graph(*entry.fwd, tensors, cudnn_fe::shared_workspace(entry.fwd_workspace_bytes),
+                                "batchnorm forward execute",
                                 cudnn_fe::graph_timing_enabled()
                                 ? format("bn_fwd c{} r{}", features, input.size() / features)
                                 : string());
@@ -614,9 +606,10 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.bwd_DScale] = gamma_gradient.data;
         tensors[entry.bwd_DBias]  = beta_gradient.data;
 
-        cudnn_fe::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace);
+        cudnn_fe::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace_bytes);
 
-        cudnn_fe::execute_graph(*entry.bwd, tensors, entry.bwd_workspace, "batchnorm backward execute",
+        cudnn_fe::execute_graph(*entry.bwd, tensors, cudnn_fe::shared_workspace(entry.bwd_workspace_bytes),
+                                "batchnorm backward execute",
                                 cudnn_fe::graph_timing_enabled()
                                 ? format("bn_bwd c{} r{}", features, input.size() / features)
                                 : string());

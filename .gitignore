@@ -35,6 +35,7 @@ graphify-out/
 # CMake build dirs
 /build/
 /build-ninja/
+/build-*/
 **/_deps/
 CMakeCache.txt
 CMakeFiles/

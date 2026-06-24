@@ -9,6 +9,7 @@
 #include "device_backend.h"
 #include "tensor_types.h"
 #include "string_utilities.h"
+#include "memory_debug.h"
 
 #include <atomic>
 
@@ -707,9 +708,24 @@ namespace
         return workspace_buffer.ensure<T>(n);
     }
 
+    // cublasLt and the cuDNN-frontend graphs all draw scratch from this one
+    // buffer (ops run serially on the compute stream, so the live peak is the
+    // max single workspace, not the sum). Record each growth delta so
+    // memory_debug telescopes to the final buffer size, the achieved floor.
+    void* ensure_shared_scratch(size_t min_bytes)
+    {
+        Buffer& buffer = thread_state().workspace;
+        const Index before = buffer.bytes;
+        void* pointer = ensure_workspace<uint8_t>(buffer, Index(min_bytes));
+        if (buffer.bytes > before)
+            memory_debug::record("workspace.cudnn_frontend", "shared_scratch",
+                                 buffer.bytes - before, "high_water");
+        return pointer;
+    }
+
     void* ensure_cublas_lt_workspace(size_t min_bytes)
     {
-        return ensure_workspace<uint8_t>(thread_state().workspace, Index(min_bytes));
+        return ensure_shared_scratch(min_bytes);
     }
 
     bfloat16* ensure_bf16_input_workspace(Index n)
@@ -730,7 +746,7 @@ float* ensure_bf16_to_fp32_workspace(Index n)
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)
 {
-    return ensure_workspace<uint8_t>(thread_state().workspace, Index(min_bytes));
+    return ensure_shared_scratch(min_bytes);
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)

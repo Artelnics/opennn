@@ -79,10 +79,10 @@ struct ConvolutionOp::ConvGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> wgrad_X, wgrad_DY, wgrad_DW;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bgrad_DY, bgrad_DB;
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> dgrad_W, dgrad_DY, dgrad_DX;
-        void* fwd_workspace = nullptr;
-        void* wgrad_workspace = nullptr;
-        void* bgrad_workspace = nullptr;
-        void* dgrad_workspace = nullptr;
+        int64_t fwd_workspace_bytes = 0;
+        int64_t wgrad_workspace_bytes = 0;
+        int64_t bgrad_workspace_bytes = 0;
+        int64_t dgrad_workspace_bytes = 0;
         bool fwd_autotune = false;
         bool wgrad_autotune = false;
         bool bgrad_autotune = false;
@@ -90,17 +90,6 @@ struct ConvolutionOp::ConvGraphCache
     };
 
     map<Index, Entry> entries;
-
-    ~ConvGraphCache()
-    {
-        for (auto& [_, entry] : entries)
-        {
-            device::deallocate(Device::CUDA, entry.fwd_workspace, 0);
-            device::deallocate(Device::CUDA, entry.wgrad_workspace, 0);
-            device::deallocate(Device::CUDA, entry.bgrad_workspace, 0);
-            device::deallocate(Device::CUDA, entry.dgrad_workspace, 0);
-        }
-    }
 #endif
 
     bool disabled = false;
@@ -190,7 +179,7 @@ void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace, "forward", autotune_enabled());
+    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "forward", autotune_enabled());
     entry.fwd = graph;
 }
 
@@ -207,7 +196,7 @@ void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
 
-    entry.wgrad_autotune = finalize(*graph, entry.wgrad_workspace, "wgrad", autotune_enabled());
+    entry.wgrad_autotune = finalize(*graph, entry.wgrad_workspace_bytes, "wgrad", autotune_enabled());
     entry.wgrad = graph;
 }
 
@@ -224,7 +213,7 @@ void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    entry.bgrad_autotune = finalize(*graph, entry.bgrad_workspace, "bgrad", autotune_enabled());
+    entry.bgrad_autotune = finalize(*graph, entry.bgrad_workspace_bytes, "bgrad", autotune_enabled());
     entry.bgrad = graph;
 }
 
@@ -239,7 +228,7 @@ void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                                        conv_attributes<cudnn_frontend::graph::Conv_dgrad_attributes>(d));
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace, "dgrad", autotune_enabled());
+    entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace_bytes, "dgrad", autotune_enabled());
     entry.dgrad = graph;
 }
 
@@ -561,10 +550,10 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
         if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
-        cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace);
+        cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
 
-        cudnn_fe::execute_graph(*entry.fwd, tensors, entry.fwd_workspace, "forward execute",
-                                cudnn_fe::timing_label(*this, "conv_fwd"));
+        cudnn_fe::execute_graph(*entry.fwd, tensors, cudnn_fe::shared_workspace(entry.fwd_workspace_bytes),
+                                "forward execute", cudnn_fe::timing_label(*this, "conv_fwd"));
     }))
         return;
 #endif
@@ -633,10 +622,10 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.wgrad_X]  = input.data;
         tensors[entry.wgrad_DW] = weight_gradient.data;
 
-        cudnn_fe::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace);
+        cudnn_fe::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace_bytes);
 
-        cudnn_fe::execute_graph(*entry.wgrad, tensors, entry.wgrad_workspace, "wgrad execute",
-                                cudnn_fe::timing_label(*this, "conv_wgrad"));
+        cudnn_fe::execute_graph(*entry.wgrad, tensors, cudnn_fe::shared_workspace(entry.wgrad_workspace_bytes),
+                                "wgrad execute", cudnn_fe::timing_label(*this, "conv_wgrad"));
 
         if (use_bias)
         {
@@ -649,10 +638,10 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
             bgrad_tensors[entry.bgrad_DY] = output_delta.data;
             bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
 
-            cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace);
+            cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace_bytes);
 
-            cudnn_fe::execute_graph(*entry.bgrad, bgrad_tensors, entry.bgrad_workspace, "bgrad execute",
-                                    cudnn_fe::timing_label(*this, "conv_bgrad"));
+            cudnn_fe::execute_graph(*entry.bgrad, bgrad_tensors, cudnn_fe::shared_workspace(entry.bgrad_workspace_bytes),
+                                    "bgrad execute", cudnn_fe::timing_label(*this, "conv_bgrad"));
         }
 
         if (input_delta.data && input_delta.size() != 0)
@@ -664,10 +653,10 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
 
-            cudnn_fe::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace);
+            cudnn_fe::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace_bytes);
 
-            cudnn_fe::execute_graph(*entry.dgrad, dgrad_tensors, entry.dgrad_workspace, "dgrad execute",
-                                    cudnn_fe::timing_label(*this, "conv_dgrad"));
+            cudnn_fe::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_fe::shared_workspace(entry.dgrad_workspace_bytes),
+                                    "dgrad execute", cudnn_fe::timing_label(*this, "conv_dgrad"));
         }
     }))
         return;

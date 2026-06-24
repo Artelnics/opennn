@@ -101,6 +101,15 @@ inline void execute_graph(cudnn_frontend::graph::Graph& graph, TensorMap& tensor
     ++calls;
 }
 
+// All frontend graphs draw their scratch from one shared device buffer (the
+// same one the legacy conv path and cublasLt already use): the ops execute
+// serially on the compute stream, so the live peak is max(individual
+// workspace), not the sum. A 0-byte request passes nullptr, as cuDNN expects.
+inline void* shared_workspace(int64_t bytes)
+{
+    return bytes > 0 ? ensure_cudnn_conv_workspace(size_t(bytes)) : nullptr;
+}
+
 // Runs a frontend-path body with the shared cache/disable/fallback protocol;
 // returns false when the caller should take the legacy path instead.
 template<typename GraphCache, typename Body>
@@ -158,10 +167,12 @@ inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 // With request_autotune, every candidate plan is built so the first execution
 // can time them and keep the fastest (cudnn.benchmark=True equivalent);
 // returns whether that mode is active for this graph.
-inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, const string& tag,
+inline bool finalize(cudnn_frontend::graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
                      bool request_autotune = false)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
+
+    workspace_bytes = 0;
 
     check_status(graph.validate(), tag + " validate");
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
@@ -171,19 +182,13 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, cons
     const bool autotune = request_autotune
         && graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::ALL).is_good();
 
-    // The autotuned workspace is allocated after plan selection (autotune_now);
-    // allocating the max-over-all-plans size for every graph exhausts the device.
+    // The autotuned workspace size is fixed after plan selection (autotune_now);
+    // the scratch itself comes from the shared buffer, requested at execute time.
     if (autotune) return true;
 
     check_status(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 
-    int64_t workspace_bytes = 0;
     check_status(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
-    if (workspace_bytes > 0)
-    {
-        workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
-        memory_debug::record("workspace.cudnn_frontend", tag, Index(workspace_bytes), "persistent");
-    }
 
     return false;
 }
@@ -193,7 +198,7 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, void*& workspace, cons
 // persistent workspace for the chosen plan only.
 template<typename TensorMap>
 inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
-                         TensorMap& tensors, void*& workspace)
+                         TensorMap& tensors, int64_t& workspace_bytes)
 {
     if (!pending) return;
     pending = false;
@@ -207,12 +212,7 @@ inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
     }
     catch (...) {}
 
-    const int64_t workspace_bytes = graph.get_workspace_size();
-    if (workspace_bytes > 0)
-    {
-        workspace = device::allocate(Device::CUDA, Index(workspace_bytes));
-        memory_debug::record("workspace.cudnn_frontend", "autotuned", Index(workspace_bytes), "persistent");
-    }
+    workspace_bytes = graph.get_workspace_size();
 }
 
 // Autotune variant for graphs with in-place or state-updating tensors (batch
@@ -220,7 +220,7 @@ inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
 // corrupt training data.
 template<typename TensorMap>
 inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& graph,
-                                  const TensorMap& tensors, void*& workspace)
+                                  const TensorMap& tensors, int64_t& workspace_bytes)
 {
     if (!pending) return;
 
@@ -240,7 +240,7 @@ inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& g
         pointer = buffer.data;
     }
 
-    autotune_now(pending, graph, scratch, workspace);
+    autotune_now(pending, graph, scratch, workspace_bytes);
 }
 
 }  // namespace cudnn_fe
