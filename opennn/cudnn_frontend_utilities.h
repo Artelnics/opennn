@@ -32,10 +32,26 @@ inline const auto check_status = [](auto status, const string& what) {
              format("cudnn-frontend {}: {}", what, status.get_message()));
 };
 
+inline int device_sm_version()
+{
+    static const int sm = [] {
+        int device = 0;
+        cudaGetDevice(&device);
+        int major = 0, minor = 0;
+        cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, device);
+        cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, device);
+        return major * 100 + minor * 10;
+    }();
+    return sm;
+}
+
 inline bool frontend_enabled()
 {
     static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
-    return !legacy_forced;
+    if (legacy_forced) return false;
+    // cuDNN-frontend batchnorm/conv graph API requires SM 8.0+ (Ampere).
+    // Silently skip on older hardware to avoid per-layer warning spam.
+    return device_sm_version() >= 800;
 }
 
 inline bool autotune_enabled()

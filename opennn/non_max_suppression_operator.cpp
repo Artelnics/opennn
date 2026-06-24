@@ -69,13 +69,33 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
              "NonMaxSuppressionOp: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
 {
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    throw_if(input.is_cuda(),
-             "NonMaxSuppressionOp GPU path is not implemented yet.");
+    if (is_training) return; // loss reads Detection output directly; NMS output not used during training
+
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        // CPU fallback for inference: copy to host, run NMS, copy back
+        const size_t bytes = size_t(input.size()) * sizeof(float);
+        cpu_input_staging.resize(size_t(input.size()));
+        cudaMemcpy(cpu_input_staging.data(), input.as<float>(), bytes, cudaMemcpyDeviceToHost);
+
+        TensorView cpu_in{cpu_input_staging.data(), input.shape};
+
+        cpu_output_staging.resize(size_t(output.size()));
+        TensorView cpu_out{cpu_output_staging.data(), output.shape};
+
+        apply(cpu_in, cpu_out);
+
+        const size_t out_bytes = size_t(output.size()) * sizeof(float);
+        cudaMemcpy(output.as<float>(), cpu_output_staging.data(), out_bytes, cudaMemcpyHostToDevice);
+        return;
+    }
+#endif
     apply(input, output);
 }
 

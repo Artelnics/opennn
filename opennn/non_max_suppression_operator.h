@@ -31,6 +31,9 @@ struct NonMaxSuppressionOp : Operator
 
 private:
     void apply(const TensorView& input, TensorView& output) const;
+
+    mutable vector<float> cpu_input_staging;
+    mutable vector<float> cpu_output_staging;
 };
 
 }

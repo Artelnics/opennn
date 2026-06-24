@@ -14,6 +14,9 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "profiler.h"
+#ifdef OPENNN_HAS_CUDA
+#  include "kernel.cuh"
+#endif
 
 namespace opennn
 {
@@ -37,11 +40,23 @@ void ConcatenationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bo
     throw_if(inputs.size() != input_channels.size(),
              "Concatenation: input count mismatch.");
 
-    throw_if(output.is_cuda(),
-             "ConcatenationOp GPU path is not implemented yet.");
-
     const Index batch_size = output.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
+
+#ifdef OPENNN_HAS_CUDA
+    if (output.is_cuda())
+    {
+        Index ch_offset = 0;
+        for (size_t i = 0; i < inputs.size(); ++i)
+        {
+            concat_forward_slice_cuda(to_int(batch_size), to_int(height), to_int(width),
+                                      to_int(input_channels[i]), to_int(total_channels), to_int(ch_offset),
+                                      inputs[i].as<float>(), output.as<float>());
+            ch_offset += input_channels[i];
+        }
+        return;
+    }
+#endif
 
     float* dst = output.as<float>();
 
@@ -76,11 +91,25 @@ void ConcatenationOp::back_propagate(ForwardPropagation&, BackPropagation& bp, s
 
     if (!needs_input_delta) return;
 
-    throw_if(output_delta.is_cuda(),
-             "ConcatenationOp GPU path is not implemented yet.");
-
     const Index batch_size = output_delta.shape[0];
     const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
+
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
+        Index ch_offset = 0;
+        for (size_t i = 0; i < input_channels.size(); ++i)
+        {
+            TensorView& in_delta = get_input_delta(bp, layer, i);
+            if (!in_delta.empty())
+                concat_backward_slice_cuda(to_int(batch_size), to_int(height), to_int(width),
+                                           to_int(input_channels[i]), to_int(total_channels), to_int(ch_offset),
+                                           output_delta.as<float>(), in_delta.as<float>());
+            ch_offset += input_channels[i];
+        }
+        return;
+    }
+#endif
 
     const float* delta = output_delta.as<float>();
 

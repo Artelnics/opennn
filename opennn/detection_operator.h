@@ -24,6 +24,7 @@ struct DetectionOp : Operator
     ClassActivation class_activation = ClassActivation::Softmax;
 
     vector<array<float, 2>> anchors;
+    mutable Buffer device_anchors;  // GPU mirror of anchors; lazily populated
 
     void set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors);
 

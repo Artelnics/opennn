@@ -1486,8 +1486,8 @@ __global__ void detection_forward_kernel(const int batch_size,
 
         dst[base + 0] = yolo_sigmoid_device(src[base + 0]);
         dst[base + 1] = yolo_sigmoid_device(src[base + 1]);
-        dst[base + 2] = __expf(src[base + 2]) * aw;
-        dst[base + 3] = __expf(src[base + 3]) * ah;
+        dst[base + 2] = __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f)) * aw;
+        dst[base + 3] = __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f)) * ah;
         dst[base + 4] = yolo_sigmoid_device(src[base + 4]);
 
         if (class_activation == class_activation_sigmoid)
@@ -1624,4 +1624,136 @@ void detection_backward_cuda(const Index batch_size,
         checked_int(channels),
         class_activation,
         output, output_delta, input_delta));
+}
+
+// ── Nearest-neighbor upsample (NHWC layout) ───────────────────────────────────
+
+__global__ void upsample_forward_kernel(
+    const int n,               // total output elements = batch * out_h * out_w * channels
+    const float* __restrict__ src,
+    float* __restrict__ dst,
+    const int in_h, const int in_w,
+    const int out_h, const int out_w,
+    const int channels, const int scale)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % channels;
+        const int ow = (i / channels) % out_w;
+        const int oh = (i / channels / out_w) % out_h;
+        const int b  =  i / channels / out_w / out_h;
+
+        const int iw = ow / scale;
+        const int ih = oh / scale;
+        dst[i] = src[((b * in_h + ih) * in_w + iw) * channels + c];
+    }
+}
+
+__global__ void upsample_backward_kernel(
+    const int n,               // total input elements = batch * in_h * in_w * channels
+    const float* __restrict__ out_delta,
+    float* __restrict__ in_delta,
+    const int in_h, const int in_w,
+    const int out_h, const int out_w,
+    const int channels, const int scale)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % channels;
+        const int iw = (i / channels) % in_w;
+        const int ih = (i / channels / in_w) % in_h;
+        const int b  =  i / channels / in_w / in_h;
+
+        float acc = 0.0f;
+        for (int dh = 0; dh < scale; ++dh)
+            for (int dw = 0; dw < scale; ++dw)
+            {
+                const int oh = ih * scale + dh;
+                const int ow = iw * scale + dw;
+                acc += out_delta[((b * out_h + oh) * out_w + ow) * channels + c];
+            }
+        in_delta[i] = acc;
+    }
+}
+
+void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                           const float* src, float* dst)
+{
+    const int n = batch * (in_h * scale) * (in_w * scale) * channels;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(upsample_forward_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale));
+}
+
+void upsample_backward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                            const float* out_delta, float* in_delta)
+{
+    const int n = batch * in_h * in_w * channels;
+    if (n == 0) return;
+    cudaMemsetAsync(in_delta, 0, size_t(n) * sizeof(float), opennn::device::get_compute_stream());
+    OPENNN_CUDA_LAUNCH(upsample_backward_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale));
+}
+
+// ── Channel concatenation (NHWC) ─────────────────────────────────────────────
+// One call per input slice; each thread handles one element of that slice.
+
+// Forward: copies src[b][h][w][c_local] → dst[b][h][w][ch_offset + c_local]
+__global__ void concat_forward_slice_kernel(
+    const int n,                        // batch * H * W * slice_ch
+    const float* __restrict__ src,
+    float* __restrict__ dst,
+    const int H, const int W,
+    const int slice_ch, const int total_ch, const int ch_offset)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % slice_ch;
+        const int w  = (i / slice_ch) % W;
+        const int h  = (i / slice_ch / W) % H;
+        const int b  =  i / slice_ch / W / H;
+        dst[((b * H + h) * W + w) * total_ch + ch_offset + c] = src[i];
+    }
+}
+
+// Backward: copies out_delta[b][h][w][ch_offset + c_local] → in_delta[b][h][w][c_local]
+__global__ void concat_backward_slice_kernel(
+    const int n,
+    const float* __restrict__ out_delta,
+    float* __restrict__ in_delta,
+    const int H, const int W,
+    const int slice_ch, const int total_ch, const int ch_offset)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % slice_ch;
+        const int w  = (i / slice_ch) % W;
+        const int h  = (i / slice_ch / W) % H;
+        const int b  =  i / slice_ch / W / H;
+        in_delta[i] = out_delta[((b * H + h) * W + w) * total_ch + ch_offset + c];
+    }
+}
+
+void concat_forward_slice_cuda(int batch, int H, int W,
+                               int slice_ch, int total_ch, int ch_offset,
+                               const float* src, float* dst)
+{
+    const int n = batch * H * W * slice_ch;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(concat_forward_slice_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, src, dst, H, W, slice_ch, total_ch, ch_offset));
+}
+
+void concat_backward_slice_cuda(int batch, int H, int W,
+                                int slice_ch, int total_ch, int ch_offset,
+                                const float* out_delta, float* in_delta)
+{
+    const int n = batch * H * W * slice_ch;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(concat_backward_slice_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset));
 }

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include "layer.h"
 #include "operators.h"
 
@@ -78,6 +79,14 @@ public:
     void set_convolution_type(const string&);
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
+
+    // Load weights (and BN parameters) for this layer from an open Darknet
+    // binary weights file.  The file position must be placed immediately at
+    // the start of this layer's data (i.e. after the Darknet file header and
+    // all preceding layers).  With BN: reads beta, gamma, running_mean,
+    // running_var then conv weights.  Without BN: reads bias then conv weights.
+    // Conv weights are transposed from Darknet [O,I,H,W] → OpenNN [O,H,W,I].
+    void load_darknet_weights(FILE* f);
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

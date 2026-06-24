@@ -298,6 +298,61 @@ void Convolutional::from_JSON(const JsonDocument& document)
     update_convolution_operator();
 }
 
+void Convolutional::load_darknet_weights(FILE* f)
+{
+    throw_if(!f, "load_darknet_weights: file handle is null.");
+
+    const Index O  = kernels_number;
+    const Index kH = kernel_height;
+    const Index kW = kernel_width;
+    const Index I  = kernel_channels;
+    const Index total_weights = O * kH * kW * I;
+
+    if (batch_norm.active())
+    {
+        // Darknet BN order: beta, gamma, running_mean, running_var
+        const size_t n = static_cast<size_t>(batch_norm.features);
+        const auto read_bn = [&](TensorView& tv)
+        {
+            throw_if(fread(tv.as<float>(), sizeof(float), n, f) != n,
+                     "load_darknet_weights: short read on BN parameters.");
+        };
+        read_bn(batch_norm.beta);
+        read_bn(batch_norm.gamma);
+        read_bn(batch_norm.running_mean);
+        read_bn(batch_norm.running_variance);
+    }
+    else
+    {
+        // No BN: read bias
+        const size_t n_out = static_cast<size_t>(O);
+        const auto read_bias = [&](TensorView& tv)
+        {
+            throw_if(fread(tv.as<float>(), sizeof(float), n_out, f) != n_out,
+                     "load_darknet_weights: short read on bias.");
+        };
+        read_bias(convolution.bias);
+    }
+
+    // Read conv weights: Darknet layout [O, I, kH, kW], OpenNN layout [O, kH, kW, I]
+    const size_t n_weights = static_cast<size_t>(total_weights);
+    std::vector<float> tmp(n_weights, 0.0f);
+    throw_if(fread(tmp.data(), sizeof(float), n_weights, f) != n_weights,
+             "load_darknet_weights: short read on conv weights.");
+
+    float* dst = convolution.weights.as<float>();
+    for (Index o = 0; o < O; ++o)
+        for (Index h = 0; h < kH; ++h)
+            for (Index w = 0; w < kW; ++w)
+                for (Index ic = 0; ic < I; ++ic)
+                    dst[o*kH*kW*I + h*kW*I + w*I + ic] =
+                        tmp[static_cast<size_t>(o*I*kH*kW + ic*kH*kW + h*kW + w)];
+
+    // Invalidate the BN inference cache so it is recomputed with the new stats.
+    if (batch_norm.active())
+        batch_norm.invalidate_inference_cache();
+}
+
 REGISTER(Layer, Convolutional, "Convolutional")
 
 }

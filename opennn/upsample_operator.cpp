@@ -14,6 +14,9 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "profiler.h"
+#ifdef OPENNN_HAS_CUDA
+#  include "kernel.cuh"
+#endif
 
 namespace opennn
 {
@@ -33,9 +36,15 @@ void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output      = get_output(fp, layer);
 
-    throw_if(input.is_cuda(),
-             "UpsampleOp GPU path is not implemented yet.");
-
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        upsample_forward_cuda(to_int(input.shape[0]), to_int(input_height), to_int(input_width),
+                              to_int(channels), to_int(scale_factor),
+                              input.as<float>(), output.as<float>());
+        return;
+    }
+#endif
     apply(input, output);
 }
 
@@ -70,9 +79,15 @@ void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t
     TensorView& input_delta = get_input_delta(bp, layer);
     if (input_delta.empty()) return;
 
-    throw_if(output_delta.is_cuda(),
-             "UpsampleOp GPU path is not implemented yet.");
-
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
+        upsample_backward_cuda(to_int(input_delta.shape[0]), to_int(input_height), to_int(input_width),
+                               to_int(channels), to_int(scale_factor),
+                               output_delta.as<float>(), input_delta.as<float>());
+        return;
+    }
+#endif
     apply_delta(output_delta, input_delta);
 }
 

@@ -139,7 +139,7 @@ I verified the YOLO backward chain by hand:
 
 ## 5. Risks / open questions
 
-- **GPU YOLO path is unimplemented.** Roberto's mixed-precision/GPU work doesn't cover Detection, NMS, or YOLO loss. This is fine for CPU validation now, but blocks production GPU training.
+- **GPU YOLO path is now fully implemented** (as of 2026-06-16). DetectionOp, NMS, GIoU loss, UpsampleOp, and ConcatenationOp all have working CUDA kernels. VOC training on RTX 2080 runs at ~69 sec/epoch. No longer a blocker.
 - **`YoloNetwork` enforces `input_H/W == grid_size * 32`** (`standard_networks.cpp:372-373`). That's a 5-pool stride-32 architecture — locks input to 13×32=416 or 7×32=224. Multi-scale training needs this relaxed.
 - **No pretrained weights loader.** v3+ practically requires ImageNet-pretrained backbones; without that, training a usable detector from scratch is slow.
 - **No mAP / COCO evaluation harness.** Hard to know if "training works" actually means "detector is good." Phase 1 should add at least a per-class precision/recall test on a held-out tiny set.
@@ -338,9 +338,9 @@ So even on a GPU box, setting `Device::CUDA` crashes during the first forward pa
 - **§14 FPN heads** — multi-scale detection at strides 32/16/8. Needs an Upsample layer (may not exist in OpenNN — to check) and three detection heads concat'd from intermediate backbone outputs. Bigger scope, maybe 2-3 hrs of focused work. CPU-validatable in structure.
 - **§15 per-class sigmoid** — DetectionOp variant: replace softmax classes with sigmoid, replace cross-entropy class loss with BCE. Opt-in flag. Smaller scope, ~30-60 min.
 - **LeakyReLU activation** — needed for faithful Darknet-53 (~1-2% mAP gain). Extend `ActivationFunction` enum + CPU and cuDNN dispatch. Separate task.
-- **GPU kernels for YOLO ops** — see `project_yolo_gpu_todo.md`. Real unlock for actual VOC/COCO training.
+- **GPU kernels for YOLO ops** — **COMPLETE as of 2026-06-16.** DetectionOp, NMS, GIoU loss, Upsample, Concatenation all implemented. VOC 2007 GPU training validated (~69 s/epoch on RTX 2080). See session log 2026-06-16.
 
-**What's *not* validated and why:** full Darknet-Tiny + GIoU + L2 + VOC training. On CPU it'd take weeks (5K images × 50 epochs × hours/epoch). On GPU it's blocked on the four missing CUDA kernels above. So §13 and §16 are *structurally* correct (everything constructs, forward+backward pass works, no NaN under the stabilizer combination) but the "does DarknetTiny + GIoU actually beat Phase 2 Vgg" empirical question is on hold until GPU support exists.
+**What's *not* validated and why:** full Darknet-Tiny + GIoU + L2 + VOC training convergence. GPU training is now unblocked (30 epochs ran, loss 59→19, still decreasing). Full convergence requires ~150–300 epochs. The "does DarknetTiny + GIoU actually beat Phase 2 Vgg" empirical question can now be answered once training runs to convergence.
 
 **Two empirical lessons worth remembering:**
 1. *Don't change two things at once when measuring.* GIoU + L2 + smaller backbone + smaller dataset = can't tell which one is hurting on synthetic. Phase 2 measured at 0.87 → GIoU+L2+Vgg at 0.54 → GIoU+L2+DarknetTiny at "degenerate constant prediction". Each addition individually might be fine; the stack isn't, on synthetic.
@@ -531,3 +531,214 @@ Wired `BodyActivation::LeakyReLU` through the example: new `body_activation` kno
 - Investigate the pre-existing tight-tolerance failure in `YoloLoss.NoObjectGradientMatchesNumericalGradient` (~0.108 mismatch on float32, tolerance 1e-3).
 
 **Numerical gradient validation (added 2026-05-29):** `tests/yolo_fpn_test.cpp` checks that the multi-head FPN analytical gradient matches the numerical gradient on a tiny hand-built 3-head network (8×8 input, 3 stride-2 convs, 3 detection heads at strides 1/2/4) with no-object targets. Validates the back_propagation pool change (3 leaf-Detection delta slots), multi-head dispatch in `Loss::calculate_error` / `calculate_output_deltas`, target slicing in `yolo_error_cpu_multi` / `yolo_gradient_cpu_multi`, and per-head delta routing. **Discovered along the way:** the existing `YoloLoss.NoObjectGradientMatchesNumericalGradient` test (single-head, 1e-3 tolerance) ALSO fails on the committed `e1e079281` baseline with ~0.108 mismatch — a pre-existing issue, almost certainly the tolerance being too tight for single-precision float accumulation. The new FPN test uses a 1.5 loose tolerance matching the existing `WithObjectGradientMatchesV1Approximation` pattern; catches sign errors, scale-of-2 bugs, and routing mistakes but not sub-10% precision drift. Investigation of the pre-existing tight-tolerance failure is its own future task.
+
+### 2026-06-16 — GPU training fully operational on RTX 2080 (SM 7.5)
+
+All remaining GPU stubs replaced with working CUDA kernels. End-to-end GPU training validated on PASCAL VOC 2007 with DarknetTiny + FPN + GIoU + LeakyReLU + Sigmoid classes.
+
+**GPU kernels added:**
+
+- **`DetectionOp::forward_propagate` / `back_propagate`** (`opennn/detection_operator.cpp`): replaced `throw_if(is_cuda)` stubs with calls to the existing `detection_forward_cuda` / `detection_backward_cuda` (already in `kernel_layers.cu`). Anchors are lazily uploaded to a `mutable Buffer device_anchors` on the first GPU forward pass via `cudaMemcpyAsync`.
+
+- **`NonMaxSuppressionOp`** (`opennn/non_max_suppression_operator.cpp`): during training, NMS is a no-op (`if (is_training) return` — loss reads Detection output directly). During inference, a CPU fallback is used: `cudaMemcpy` to CPU staging → `apply()` → `cudaMemcpy` back.
+
+- **YOLO GIoU loss** (`opennn/kernel_losses.cu`, `opennn/loss.cpp`): new `yolo_error_cuda` / `yolo_gradient_cuda` device functions and wrappers. One thread per box; `atomicAdd` to scalar accumulator for the error; direct delta writes for gradient (delta is pre-zeroed by the caller). Key fix: `batch.get_targets()` returns a CUDA-side pointer in GPU mode — must `cudaMemcpy` to a CPU staging buffer before the existing multi-head CPU dispatcher reads it. GPU multi-head dispatch wired in `calculate_error` and `calculate_output_deltas` for FPN (multi-head) paths. Constants: `YOLO_LAMBDA_GIOU=5.0f`, `YOLO_LAMBDA_NOOBJ=0.5f`, `YOLO_GRAD_CLIP=10.0f`.
+
+- **`UpsampleOp`** (`opennn/upsample_operator.cpp`, `opennn/kernel_layers.cu`): nearest-neighbor NHWC upsample forward (tile each pixel into scale×scale block) and backward (sum input pixel's grad over its output block). Called `upsample_forward_cuda` / `upsample_backward_cuda`.
+
+- **`ConcatenationOp`** (`opennn/concatenation_operator.cpp`, `opennn/kernel_layers.cu`): channel-axis concat in NHWC layout. One kernel call per input slice: `concat_forward_slice_cuda` / `concat_backward_slice_cuda`.
+
+**Other fixes:**
+
+- **BatchNorm cuDNN-frontend warning spam** (`opennn/cudnn_frontend_utilities.h`): each BN layer tried the new cuDNN graph API, got SM 7.5 < 8.0 and printed a warning (13 times per run). Fixed by adding `device_sm_version()` check in `frontend_enabled()` — returns `false` immediately on SM < 800 without trying.
+
+- **ConvOp cuDNN error during visualization** (`opennn/convolution_operator.cpp`): algorithm was planned for batch_size=8 (training) but only replanned when batch was *larger*. Visualization runs batch 1 or 5 → `cudnnConvolutionForward` returned error 2000. Fixed: `input.shape[0] > planned_batch_size` → `input.shape[0] != planned_batch_size`.
+
+- **Visualization: GPU tensor → CPU before FPN decode** (`examples/yolo/main.cpp`): `forward_slots[li].back().as<float>()` returns a GPU pointer in GPU mode; `decode_yolo_fpn_detections` reads it on CPU → segfault. Fixed by `cudaMemcpy`-ing each detection head's output to a CPU buffer before the decoder.
+
+- **Visualization: JPEG image loading** (`examples/yolo/main.cpp`): VOC images are JPEGs but visualization called `read_bmp24()` → "not a 24-bit BMP" crash. Fixed by using `opennn::load_image()` from `image_processing.h` for non-BMP extensions, converting the returned float Tensor3 to `Image24` RGB bytes.
+
+- **Visualization: confidence threshold** (`examples/yolo/main.cpp`): default 0.25 is too high for a model trained only 30 epochs. Lowered to 0.01 for visualization so partial-quality predictions are visible.
+
+**Training results (VOC 2007 trainval, DarknetTiny + FPN, RTX 2080):**
+
+| Metric | Epoch 1 | Epoch 30 |
+|---|---|---|
+| Training error | 59.7 | 19.3 |
+| Validation error | 22.4 | 20.2 |
+| Time per epoch | ~69 s | ~69 s |
+| Total training time | — | ~35 min |
+
+Dataset: 5011 images, 3508 training / 1503 validation samples at batch size 8. Validation error still declining at epoch 30 — model not yet converged. Loss curve shows consistent decrease with no NaN or exploding gradients.
+
+**Files touched 2026-06-16 (committed to `dev-refactor`):**
+- `opennn/detection_operator.{h,cpp}` — `mutable Buffer device_anchors`; GPU dispatch for forward/backward.
+- `opennn/non_max_suppression_operator.{h,cpp}` — CPU staging buffers; training no-op; inference CPU fallback.
+- `opennn/kernel_losses.cu` — GIoU YOLO forward + backward CUDA kernels appended at end.
+- `opennn/loss.{h,cpp}` — `mutable Buffer yolo_target_device`; `yolo_error_gpu_multi` / `yolo_gradient_gpu_multi` GPU helpers; GPU dispatch in `calculate_error` / `calculate_output_deltas`.
+- `opennn/kernel.cuh` — declarations for upsample, concat, yolo CUDA entry points.
+- `opennn/upsample_operator.cpp` — GPU dispatch for forward/backward.
+- `opennn/concatenation_operator.cpp` — GPU dispatch for forward/backward.
+- `opennn/kernel_layers.cu` — `upsample_forward/backward_kernel`, `concat_forward/backward_slice_kernel` and wrappers appended.
+- `opennn/cudnn_frontend_utilities.h` — `device_sm_version()` + SM < 800 early-exit in `frontend_enabled()`.
+- `opennn/convolution_operator.cpp` — replan on any batch size change (`!=` not `>`).
+- `examples/yolo/main.cpp` — `Device::CUDA`, 30 epochs, `confidence_threshold=0.01f`, JPEG loading, GPU→CPU copy for FPN heads, `Device: GPU/CPU` print.
+
+**What's next (after 2026-06-18 Phase 3 fixes — see session log below):**
+
+1. Run fresh training with Sigmoid classes + warmup + early stopping.
+2. Inspect mAP@0.5 output from the new run (baseline for all future comparisons).
+3. If results are good, proceed to Phase 4 (Mosaic augmentation, CIoU, PANet).
+4. **Pretrained backbone weights** — training from scratch on VOC 2007 is feasible but slow. Loading ImageNet-pretrained Darknet-Tiny weights would accelerate convergence significantly (need a weight-conversion script for Darknet `.weights` format).
+
+### 2026-06-17 — Resume training + LR schedule + visualization diagnostics
+
+**Diagnosis: why no bounding boxes appeared.** Score = `objectness × max_class_prob`. After 30 epochs from scratch on 20-class VOC: objectness ≈ 0.1, softmax over 20 classes ≈ 0.1 → score ≈ 0.01. The `confidence_threshold=0.01f` was borderline; many boxes never entered the NMS candidate list at all. The console message "(no boxes survived NMS)" was misleading — it was a threshold issue, not NMS suppression.
+
+**Training run 2 COMPLETE.** Resumed from 30-epoch weights, ran 150 more epochs at constant lr=0.001. Final: train=17.3892, val=19.2528 (~67 s/epoch on RTX 2080). Total ~180 epochs at lr=0.001. Loss plateaued — barely moved over 150 epochs. LR decay is the unlock.
+
+**Process management.** Use tmux for training runs so they survive disconnects. `reptyr` can attach a running process to tmux (requires `echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope` to unlock ptrace).
+
+**Changes made to `examples/yolo/main.cpp` (built, ready for next run):**
+
+1. **`resume_training` flag** — loads weights if they exist, then always proceeds to training (true incremental resume). `resume_training=false` to skip training and only visualize.
+
+2. **LR step-decay schedule with epoch tracking** — `epochs_done.txt` in `yolo_voc_data/` stores cumulative epoch count so resume always picks the correct LR stage:
+   - Epochs 0–100: lr = 0.001 (main training)
+   - Epochs 100–130: lr = 0.0001 (first decay)
+   - Epochs 130–150: lr = 0.00001 (fine-tune)
+
+3. **Raw score diagnostics in FPN visualization** — before NMS, prints per-sample:
+   ```
+   Raw: max_obj=0.23 max_score=0.041 boxes≥0.01:12 ≥0.1:0 ≥0.25:0
+   ```
+   This immediately shows whether the model is predicting anything and at what confidence level.
+
+4. **Visualization confidence threshold lowered** 0.01 → 0.001 — early-stage predictions visible even at low confidence.
+
+**After reboot — next action:**
+```bash
+echo "100" > yolo_voc_data/epochs_done.txt
+./build/bin/yolo   # already built; runs LR decay: 30ep@0.0001 then 20ep@0.00001
+```
+Inspect raw score diagnostics output and annotated BMPs. If `max_score` climbs above 0.1 during decay, boxes should start appearing.
+
+**Remaining improvements (not yet implemented):**
+- **Focal loss on objectness** — down-weights the ~98% no-object cells; large accuracy gain.
+- **Pretrained DarkNet backbone weights** — would cut convergence from ~300 to ~30 epochs.
+- **Larger batch size** (try 16) — RTX 2080 8 GB should handle it; more stable gradients.
+
+### 2026-06-18 — Phase 3 completion: Sigmoid classes, mAP metric, LR warmup, early stopping
+
+**Goal:** finish what YOLO v3 actually defines before moving to v4. After 100-epoch Softmax run (train=12.5, val=16.0), person class dominated predictions in 4 of 5 validation samples despite lambda_class=2.0. Root cause: Softmax creates winner-takes-all competition — person's higher frequency steals probability mass from other classes.
+
+**Changes to `examples/yolo/main.cpp` (built and linked clean):**
+
+1. **Sigmoid class activation** — switched from Softmax to `ClassActivation::Sigmoid` (§15, implemented May 2026 but never enabled). Each class now scored independently with BCE loss. Added `_sigmoid` suffix to weights filename so Softmax weights cannot be accidentally loaded.
+
+2. **Per-variant epochs file** — epochs file renamed from `epochs_done.txt` to `<weights_stem>_epochs.txt`. Switching backbone/activation/head now always starts from epoch 0 without manually resetting the file.
+
+3. **LR warmup** — 3-epoch warmup at lr=1e-4 before the main 1e-3 stage. Prevents large gradient steps when weights are random. Schedule: 3 warmup + 77 main + 20 fine-tune = 100 total.
+
+4. **Early stopping with best-val restore** — `adam->set_maximum_validation_failures(15)`. If validation doesn't improve for 15 consecutive epochs, stops and restores best-validation-epoch weights automatically.
+
+5. **VOC mAP@0.5** — added full mAP evaluation after visualization. Runs inference on all validation images (FPN decode, confidence_threshold=0.001), collects per-class predictions, matches to ALL GT boxes per image (not just first), computes 11-point interpolated AP per class + overall mAP. Note: GT coords are normalized to original image; predictions are normalized to 416×416 letterbox — small mismatch for non-square images, acceptable for Phase 3 tracking.
+
+**Next:** fresh training run from scratch (`yolo_weights_darknet_fpn_leaky_sigmoid.bin`). Paste results for analysis.
+
+### 2026-06-18 (cont.) — BCE objectness + IoU-ignore + focal classification, 100-epoch run
+
+**Training results (100 epochs from scratch, Sigmoid + BCE + IoU-ignore + focal cls γ=2):**
+
+| Metric | Best result |
+|---|---|
+| mAP@0.5 | **9.7%** |
+| max_obj | 0.58–0.70 (was stuck at 0.28 before BCE fix) |
+| val error | 31.9 |
+
+BCE fix confirmed working: max_obj climbed from 0.28 to 0.58–0.70 within first 30 epochs. Right boxes (IoU=0.6+) appeared at ranks 61-88 with confidence 0.001–0.003 — correct spatial placement, insufficient objectness confidence. This is the classic background-dominance symptom: ~85k background cells vs ~120 foreground cells per batch.
+
+**Root cause analysis — background dominance:**
+- Even with λ_noobj=0.5 and IoU-ignore, total background gradient ~4250 vs foreground ~108 (39:1 ratio)
+- Background gradient `conf/(conf*(1-conf)+ε)` ≈ conf for small conf → network sees strong "suppress everything" signal
+- Easy background cells (conf≈0.01) never stop contributing; RetinaNet focal loss fixes exactly this
+
+**Fix: focal loss on objectness** (implemented 2026-06-18):
+- Forward bg: `-(conf^γ) * log(1-conf)` — conf^2 downweights easy bg by up to 3000× at conf=0.01
+- Forward fg: `-(1-conf)^γ * log(conf)` — slightly upweights hard fg (1.2× at conf=0.1)
+- Backward: exact focal gradient (full chain rule, not simplified approximation)
+  - bg: `λ * p^(γ-1) * (-γ*log(1-p) + p/(1-p))`
+  - fg: `(1-p)^(γ-1) * (γ*log(p) - (1-p)/p)`
+- γ=2.0 for both, separate from class focal γ; new `set_yolo_obj_focal_gamma(float)` setter
+- **Files:** `opennn/loss.{h,cpp}`, `opennn/kernel_losses.cu`, `opennn/kernel.cuh`
+
+**New weights filename:** `_bce_ig_ofocal.bin` (triggers fresh training from scratch)
+
+**What to watch for in next training run:**
+- Background gradient should be suppressed 100-3000× for easy cells (conf≈0.01)
+- Foreground gradient slightly amplified for hard cells (conf≈0.1)
+- Expect mAP >15% if focal cures the bg dominance issue
+- Best-IoU boxes should climb from rank 60+ toward top-10
+
+**Also added (2026-06-18):** two loss verification checks at startup in `examples/yolo/main.cpp`:
+1. `yolo_loss_gradient_check_cpu()` — finite-difference vs analytical (self-consistency), threshold 1e-2
+2. `yolo_loss_expected_value_check_cpu()` — hand-computed expected values + gradient directions (correctness)
+Both print `[PASS]`/`[FAIL]` at startup before training begins.
+
+### 2026-06-19 — Asymmetric focal objectness + 3-class filtered dataset fix
+
+**100-epoch run with SYMMETRIC focal objectness (γ=2 on both fg and bg) — RESULT: WORSE**
+
+| Metric | Result |
+|---|---|
+| mAP@0.5 | **9.7%** (same as before — no gain) |
+| max_obj | 0.25–0.51 (LOWER than previous 0.58–0.70) |
+
+**Root cause: symmetric focal suppresses fg confidence learning.**
+At p=0.5, focal fg gradient = `(1-p)^γ * (p-1) = 0.25 * (-0.5)` — 4× weaker than BCE. The network
+stalls before objectness can climb. Easy-positive suppression is the last thing we want on fg cells.
+
+**Fix: asymmetric focal — standard BCE for fg, focal only for bg.**
+- Fg forward/backward: unchanged BCE (`(c-1)/(c*(1-c)+ε)`)  
+- Bg forward: `-p^γ * log(1-p)`  
+- Bg backward: `λ * p^(γ-1) * (-γ*log(1-p) + p/(1-p))`
+
+Applied in both CPU (`opennn/loss.cpp`) and GPU (`opennn/kernel_losses.cu`) kernels.
+New weights filename suffix: `_bgfocal` (vs the old `_ofocal` which was the symmetric version).
+
+**100-epoch run with ASYMMETRIC focal objectness — mAP 11.9%**
+
+| Metric | Result |
+|---|---|
+| mAP@0.5 | **11.9%** (+2.2pp over 9.7%) |
+| max_obj | 0.25–0.62 (healthy range) |
+| Best class | — (still car-biased predictions) |
+
+**3-class filtered experiment (dog, cat, car) — first attempt FAILED**
+
+Added `voc_class_filter = {"dog", "cat", "car"}` to narrow the problem, but first run mAP collapsed
+to 7.3% with max_obj 0.14–0.27 — worse than 20-class.
+
+**Root cause: images_dir still points to all 5011 VOC images.**
+`convert_voc_to_yolo` with the class filter writes labels only for images that contain dog/cat/car
+(~2000 of 5011). The other ~3000 images have no label file and are treated as all-background during
+training. With λ_noobj=0.5 and 10,647 anchor cells per image, these "empty" images produce huge
+noobj gradient pressure → model learns to suppress everything → max_obj collapses.
+
+The train=158 / val=5.3 anomaly seen at epoch 0 was explained by this: the training average included
+early-epoch batches where 60% of images were all-background with random (p≈0.5) objectness, generating
+~463 noobj loss per image. Val was computed after one epoch of gradient suppression, so already low.
+
+**Fix: symlinked filtered images directory (2026-06-19, in codebase).**
+After conversion, scan `voc_labels_filtered/` for .txt files, create symlinks in
+`yolo_voc_data/voc_images_filtered/` pointing to the original JPEGs, and set `images_dir` to
+the filtered dir. Dataset now contains only the ~2000 images with dog/cat/car objects.
+Code: `examples/yolo/main.cpp` (added symlink creation block after the converter call).
+
+**Ready to run tomorrow:**
+```bash
+cmake --build build --target yolo -j$(nproc) && ./build/bin/yolo
+```
+First run will build the new cache (only filtered images), print
+`"Filtered to N images containing the requested classes."`, and train from scratch.
+Expected: mAP >20% if the detector core is healthy on a simpler problem.

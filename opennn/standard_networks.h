@@ -93,7 +93,7 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
-    enum class Backbone { Vgg, DarknetTiny };
+    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53 };
 
     enum class ClassActivation { Softmax, Sigmoid };
 

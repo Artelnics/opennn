@@ -14,6 +14,10 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "profiler.h"
+#ifdef OPENNN_HAS_CUDA
+#  include "kernel.cuh"
+#  include <cuda_runtime.h>
+#endif
 
 namespace opennn
 {
@@ -55,9 +59,28 @@ void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     const TensorView& input = get_input(fp, layer);
     TensorView& output = get_output(fp, layer);
 
-    throw_if(input.is_cuda(),
-             "DetectionOp GPU path is not implemented yet.");
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        throw_if(grid_size != grid_width,
+                 "DetectionOp GPU: non-square grids not supported.");
 
+        const Index anchor_bytes = Index(anchors.size()) * 2 * Index(sizeof(float));
+        if (device_anchors.bytes < anchor_bytes)
+        {
+            device_anchors.resize_bytes(anchor_bytes, Device::CUDA);
+            vector<float> flat;
+            flat.reserve(anchors.size() * 2);
+            for (const auto& a : anchors) { flat.push_back(a[0]); flat.push_back(a[1]); }
+            cudaMemcpyAsync(device_anchors.as<float>(), flat.data(), size_t(anchor_bytes),
+                            cudaMemcpyHostToDevice, device::get_compute_stream());
+        }
+        detection_forward_cuda(input.shape[0], grid_size, boxes_per_cell, classes_number,
+                               input.shape[3], static_cast<int>(class_activation),
+                               device_anchors.as<float>(), input.as<float>(), output.as<float>());
+        return;
+    }
+#endif
     apply(input, output);
 }
 
@@ -83,8 +106,8 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
 
                     dst[base + 0] = yolo_sigmoid(src[base + 0]);
                     dst[base + 1] = yolo_sigmoid(src[base + 1]);
-                    dst[base + 2] = exp(src[base + 2]) * anchors[size_t(box)][0];
-                    dst[base + 3] = exp(src[base + 3]) * anchors[size_t(box)][1];
+                    dst[base + 2] = exp(clamp(src[base + 2], -4.0f, 4.0f)) * anchors[size_t(box)][0];
+                    dst[base + 3] = exp(clamp(src[base + 3], -4.0f, 4.0f)) * anchors[size_t(box)][1];
                     dst[base + 4] = yolo_sigmoid(src[base + 4]);
 
                     if (class_activation == ClassActivation::Sigmoid)
@@ -120,9 +143,15 @@ void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
 
     if (input_delta.empty()) return;
 
-    throw_if(output_delta.is_cuda(),
-             "DetectionOp GPU path is not implemented yet.");
-
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
+        detection_backward_cuda(output.shape[0], grid_size, boxes_per_cell, classes_number,
+                                output.shape[3], static_cast<int>(class_activation),
+                                output.as<float>(), output_delta.as<float>(), input_delta.as<float>());
+        return;
+    }
+#endif
     apply_delta(output, output_delta, input_delta);
 }
 

@@ -558,7 +558,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
         return;
 #endif
 
-    if (input.shape[0] > planned_batch_size)
+    if (input.shape[0] != planned_batch_size)
         plan_convolution_algorithms(input, output);
 
     void* workspace = ensure_cudnn_conv_workspace(cudnn_workspace_size_);

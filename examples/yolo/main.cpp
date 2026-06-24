@@ -12,11 +12,16 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <random>
 #include <string>
 #include <vector>
 
+#ifdef OPENNN_HAS_CUDA
+#  include <cuda_runtime.h>
+#endif
+#include "../../opennn/image_processing.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/configuration.h"
 #include "../../opennn/forward_propagation.h"
@@ -24,6 +29,7 @@
 #include "../../opennn/non_max_suppression_layer.h"
 #include "../../opennn/random_utilities.h"
 #include "../../opennn/standard_networks.h"
+#include "../../opennn/loss.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/yolo_dataset.h"
 
@@ -254,8 +260,28 @@ int main()
     {
         std::cout << "OpenNN. YOLO Example." << std::endl;
 
+        // Check 1: CPU self-consistency — does backward match forward's finite differences?
+        {
+            const float grad_err = opennn::yolo_loss_gradient_check_cpu();
+            std::cout << "YOLO loss check 1 (CPU gradient self-consistency): max rel err = "
+                      << std::scientific << std::setprecision(3) << grad_err;
+            // Threshold 1e-2: float32 BCE uses log(p+ε) in forward but ∂/∂p of log(p) in backward.
+            // The ε-mismatch gives ~3e-3 relative error — acceptable for single-precision.
+            std::cout << (grad_err < 1e-2f ? "  [PASS]\n" : "  [FAIL — forward/backward inconsistent!]\n");
+        }
+
+        // Check 2: independent expected-value verification — does the forward compute
+        // the RIGHT mathematical objective? (sign, lambda, GIoU formula, gradient direction)
+        {
+            std::cout << "YOLO loss check 2 (expected values & gradient directions):\n";
+            const float ev_err = opennn::yolo_loss_expected_value_check_cpu();
+            std::cout << "  max absolute error vs. hand-computed: "
+                      << std::scientific << std::setprecision(3) << ev_err;
+            std::cout << (ev_err < 1e-4f ? "  [PASS]\n" : "  [FAIL — math objective is wrong!]\n");
+        }
+
         set_seed(42);
-        Configuration::instance().set(Device::CPU, Type::FP32);
+        Configuration::instance().set(Device::CUDA, Type::FP32);
 
         // ===== Configuration toggles =====
         //
@@ -267,18 +293,20 @@ int main()
         // The converter writes YOLO-format labels into <data_dir>/voc_labels
         // (only the first time; subsequent runs reuse them).
         // const auto backbone = YoloNetwork::Backbone::Vgg;
-        const auto backbone = YoloNetwork::Backbone::DarknetTiny;
+        // const auto backbone = YoloNetwork::Backbone::DarknetTiny;
+        // const auto backbone = YoloNetwork::Backbone::DarknetTinyV3;
+        const auto backbone = YoloNetwork::Backbone::Darknet53;
 
         // Softmax = mutually-exclusive classes (VOC, synthetic). Sigmoid =
         // independent per-class labels (YOLOv3-style, multi-label datasets).
         // Default stays Softmax so existing baselines reproduce exactly.
-        const auto class_activation = YoloNetwork::ClassActivation::Softmax;
-        // const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
+        // const auto class_activation = YoloNetwork::ClassActivation::Softmax;
+        const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
-        // FPN (YOLO v3): 3 detection heads at strides 32/16/8 with top-down
-        // upsample+concatenation. Requires Backbone::DarknetTiny and 9 anchors
-        // (3 per scale, smallest→stride-8, largest→stride-32). Cross-scale
-        // NMS for inference runs via decode_yolo_fpn_detections below.
+        // FPN (YOLO v3-tiny): 2 detection heads at strides 32/16 with top-down
+        // upsample+concatenation. DarknetTinyV3 uses 6 anchors (3 per scale).
+        // DarknetTiny (residual) uses 9 anchors (3 per scale, 3-head).
+        // Cross-scale NMS for inference runs via decode_yolo_fpn_detections below.
         const auto head_style = YoloNetwork::HeadStyle::FPN;
         // const auto head_style = YoloNetwork::HeadStyle::Single;
 
@@ -290,9 +318,13 @@ int main()
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
         // const auto body_activation = YoloNetwork::BodyActivation::ReLU;
 
-        const bool use_voc = false;
-        const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
-        const std::string voc_image_set = "trainval_small";
+        const bool use_voc = true;
+        const std::filesystem::path voc_root = "/home/artelnics/VOCdevkit/VOC2007";
+        const std::string voc_image_set = "trainval";
+
+        // Leave empty for all 20 VOC classes.
+        // Set to a small list (e.g. {"dog","cat","car"}) for a simpler experiment.
+        const std::vector<std::string> voc_class_filter = {}; //{"dog", "cat", "car"};
 
         // ===== Dataset =====
 
@@ -307,11 +339,42 @@ int main()
         if (use_voc)
         {
             images_dir = voc_root / "JPEGImages";
-            labels_dir = data_dir / "voc_labels";
+            // Use a separate labels dir when filtering so the 20-class cache is untouched
+            labels_dir = data_dir / (voc_class_filter.empty() ? "voc_labels" : "voc_labels_filtered");
             const Index converted =
-                YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir);
+                YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir, voc_class_filter);
             std::cout << "Converted " << converted
                       << " VOC samples to YOLO format in " << labels_dir << "\n";
+
+            // When filtering, only use images that actually have filtered-class objects.
+            // Without this, the ~3000 images with no labels are treated as all-background
+            // and teach the model to suppress everything, collapsing mAP.
+            if (!voc_class_filter.empty())
+            {
+                const std::filesystem::path filtered_images_dir = data_dir / "voc_images_filtered";
+                std::filesystem::create_directories(filtered_images_dir);
+                Index linked = 0;
+                for (const auto& entry : std::filesystem::directory_iterator(labels_dir))
+                {
+                    if (entry.path().extension() != ".txt") continue;
+                    if (entry.path().stem().string() == "voc") continue;
+                    const std::string stem = entry.path().stem().string();
+                    for (const char* ext : {".jpg", ".jpeg", ".JPG", ".JPEG"})
+                    {
+                        const auto src = images_dir / (stem + ext);
+                        if (std::filesystem::exists(src))
+                        {
+                            const auto dst = filtered_images_dir / (stem + ext);
+                            if (!std::filesystem::exists(dst))
+                                std::filesystem::create_symlink(src, dst);
+                            ++linked;
+                            break;
+                        }
+                    }
+                }
+                images_dir = filtered_images_dir;
+                std::cout << "Filtered to " << linked << " images containing the requested classes.\n";
+            }
 
             grid_size = 13;
             boxes_per_cell = 5;
@@ -335,14 +398,51 @@ int main()
             anchors = {{0.25f, 0.25f}, {0.5f, 0.5f}};
         }
 
-        // FPN needs 9 anchors, 3 per scale. Override the dataset-builder anchors
-        // for the smoke path. boxes_per_head ends up = 3 across all heads.
+        // FPN anchor setup: DarknetTinyV3 uses 6 anchors (2-head: small 26×26 +
+        // large 13×13). DarknetTiny (3-head residual) uses 9 anchors.
+        // boxes_per_head ends up = 3 across all heads.
+        const bool is_v3std    = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
+        const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
         if (head_style == YoloNetwork::HeadStyle::FPN)
         {
-            anchors = {
-                {0.05f, 0.05f}, {0.08f, 0.08f}, {0.12f, 0.12f},  // small head
-                {0.18f, 0.18f}, {0.25f, 0.25f}, {0.32f, 0.32f},  // medium head
-                {0.40f, 0.40f}, {0.55f, 0.55f}, {0.75f, 0.75f}}; // large head
+            if (is_v3std)
+            {
+                // Standard YOLOv3-tiny anchors for VOC (image-fraction units).
+                // Sorted smallest→largest; FPN ctor assigns small→26×26, large→13×13.
+                if (use_voc)
+                {
+                    anchors = {
+                        {0.024f, 0.031f}, {0.038f, 0.072f}, {0.079f, 0.055f},  // small head (26×26)
+                        {0.279f, 0.216f}, {0.375f, 0.476f}, {0.896f, 0.783f}}; // large head (13×13)
+                }
+                else
+                {
+                    anchors = {
+                        {0.08f, 0.08f}, {0.15f, 0.15f}, {0.25f, 0.25f},  // small head
+                        {0.40f, 0.40f}, {0.55f, 0.55f}, {0.75f, 0.75f}}; // large head
+                }
+            }
+            else
+            {
+                // DarknetTiny / Darknet53 (3-head FPN): 9 anchors.
+                if (use_voc)
+                {
+                    // YOLOv3-style anchors k-means'd on VOC 2007 (image-fraction units).
+                    // Sorted smallest to largest so the FPN ctor assigns small→stride-8,
+                    // large→stride-32 automatically.
+                    anchors = {
+                        {0.024f, 0.031f}, {0.038f, 0.072f}, {0.079f, 0.055f}, // small
+                        {0.072f, 0.147f}, {0.149f, 0.108f}, {0.142f, 0.286f}, // medium
+                        {0.279f, 0.216f}, {0.375f, 0.476f}, {0.896f, 0.783f}};// large
+                }
+                else
+                {
+                    anchors = {
+                        {0.05f, 0.05f}, {0.08f, 0.08f}, {0.12f, 0.12f},  // small head
+                        {0.18f, 0.18f}, {0.25f, 0.25f}, {0.32f, 0.32f},  // medium head
+                        {0.40f, 0.40f}, {0.55f, 0.55f}, {0.75f, 0.75f}}; // large head
+                }
+            }
             boxes_per_cell = 3;
         }
 
@@ -357,34 +457,64 @@ int main()
         YoloDataset dataset(images_dir, labels_dir, input_shape,
                             grid_size, boxes_per_cell, ctor_anchors);
 
-        // FPN dataset configuration: 3 grid scales (stride 32 / 16 / 8) and
-        // 3 anchor groups (small→medium→large by area) — must match the
-        // YoloNetwork FPN constructor's auto-sorted assignment.
+        // FPN dataset configuration: grid scales and anchor groups per head.
+        // DarknetTinyV3: 2 heads (13×13 large, 26×26 small).
+        // DarknetTiny / Darknet53: 3 heads (13×13 large, 26×26 medium, 52×52 small).
         if (head_style == YoloNetwork::HeadStyle::FPN)
         {
-            const std::vector<Index> head_grids = {
-                grid_size,         // stride 32 head: matches "grid_size" param
-                grid_size * 2,     // stride 16
-                grid_size * 4      // stride 8
-            };
-            const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
-                {anchors[6], anchors[7], anchors[8]},  // large head (largest 3)
-                {anchors[3], anchors[4], anchors[5]},  // medium head
-                {anchors[0], anchors[1], anchors[2]},  // small head
-            };
-            dataset.set_multi_scale_heads(head_grids, head_anchors);
+            if (is_v3std)
+            {
+                // 2-head: stride-32 (13×13) and stride-16 (26×26)
+                const std::vector<Index> head_grids = {
+                    grid_size,         // 13×13 large head
+                    grid_size * 2,     // 26×26 small head
+                };
+                const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
+                    {anchors[3], anchors[4], anchors[5]},  // large head (largest 3)
+                    {anchors[0], anchors[1], anchors[2]},  // small head
+                };
+                dataset.set_multi_scale_heads(head_grids, head_anchors);
+            }
+            else
+            {
+                // 3-head: stride-32 / stride-16 / stride-8
+                const std::vector<Index> head_grids = {
+                    grid_size,         // stride 32 head: matches "grid_size" param
+                    grid_size * 2,     // stride 16
+                    grid_size * 4      // stride 8
+                };
+                const std::vector<std::vector<std::array<float, 2>>> head_anchors = {
+                    {anchors[6], anchors[7], anchors[8]},  // large head (largest 3)
+                    {anchors[3], anchors[4], anchors[5]},  // medium head
+                    {anchors[0], anchors[1], anchors[2]},  // small head
+                };
+                dataset.set_multi_scale_heads(head_grids, head_anchors);
+            }
         }
 
-        // Class signal in this demo is color (red vs blue) — disable hue/sat jitter
-        // so we don't erase it. Geometric augmentation (flip + crop) is what we need:
-        // it attacks position-conditional overfit visible in earlier demo runs.
         YoloDataset::AugmentationConfig aug;
-        aug.jitter = 0.2f;
-        aug.flip = true;
-        aug.exposure = 1.2f;
-        aug.saturation = 1.0f;
-        aug.hue = 0.0f;
-        aug.enabled = false;
+        if (use_voc)
+        {
+            // Standard YOLO augmentation for real detection data.
+            aug.jitter = 0.2f;
+            aug.flip = true;
+            aug.exposure = 1.5f;
+            aug.saturation = 1.5f;
+            aug.hue = 0.1f;
+            aug.enabled = true;
+            aug.mosaic = false;
+        }
+        else
+        {
+            // Synthetic demo: class signal is color — disable hue/sat jitter so
+            // we don't erase it. Geometric augmentation (flip + crop) is still on.
+            aug.jitter = 0.2f;
+            aug.flip = true;
+            aug.exposure = 1.2f;
+            aug.saturation = 1.0f;
+            aug.hue = 0.0f;
+            aug.enabled = false;
+        }
         dataset.set_augmentation(aug);
 
         // 70% training, 30% selection (held-out) — gives a generalization signal:
@@ -395,9 +525,9 @@ int main()
 
         // Network.
 
-        // Network anchors: FPN needs all 9 (the dataset only stores its 3
-        // single-scale ctor anchors after multi-scale config). Single-head
-        // continues to use the dataset's anchor list.
+        // Network anchors: FPN needs all 6 (DarknetTinyV3) or 9 (DarknetTiny)
+        // anchors (the dataset only stores its 3 single-scale ctor anchors after
+        // multi-scale config). Single-head continues to use the dataset's anchor list.
         const std::vector<std::array<float, 2>>& network_anchors =
             head_style == YoloNetwork::HeadStyle::FPN ? anchors : dataset.get_anchors();
 
@@ -410,8 +540,12 @@ int main()
                                  head_style,
                                  body_activation);
 
+        std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU") << "\n";
         std::cout << "Network: backbone="
-                  << (backbone == YoloNetwork::Backbone::Vgg ? "Vgg" : "DarknetTiny")
+                  << (backbone == YoloNetwork::Backbone::Vgg          ? "Vgg"
+                    : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "DarknetTinyV3"
+                    : backbone == YoloNetwork::Backbone::Darknet53     ? "Darknet53"
+                    :                                                     "DarknetTiny")
                   << ", class_activation="
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
@@ -444,27 +578,46 @@ int main()
         // geometry-coupled YOLO loss (especially when GIoU/DIoU is enabled).
         // Default weight 0.001 — matches every other example in the repo.
         training_strategy.get_loss()->set_regularization("L2");
+        training_strategy.get_loss()->set_yolo_lambda_noobj(1.0f);      // raised from 0.5: suppress the massive false-positive rate
+        training_strategy.get_loss()->set_yolo_lambda_class(2.0f);
+        training_strategy.get_loss()->set_yolo_focal_gamma(2.0f);      // focal loss on class BCE
+        training_strategy.get_loss()->set_yolo_obj_focal_gamma(2.0f);  // focal loss on objectness BCE
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(8);
-        adam->set_maximum_epochs(head_style == YoloNetwork::HeadStyle::FPN ? 1 : 5);
+        adam->set_batch_size(4);  // Darknet53: batch=8 needs ~6GB; batch=4 uses ~3.3GB
         adam->set_display_period(1);
         // Tighter global gradient clip than the 1.0 default — Adam is
         // scale-invariant so this matters less for the step magnitude, but it
         // still bounds the second-moment estimate's growth rate, which helps
         // keep the t_w/t_h logits from saturating exp() under GIoU.
         adam->set_gradient_clip_norm(0.1f);
+        // Restore best-validation weights when plateau detected (15 consecutive
+        // epochs without improvement). The optimizer snapshots best parameters
+        // internally and restores them on early-stop, so save_parameters_binary
+        // below always captures the best-val checkpoint for that round.
+        adam->set_maximum_validation_failures(40);  // raised: ensures early-stop fires before max_epochs
 
-        // Skip training if weights already exist on disk — lets you iterate on
-        // visualization / inference code without retraining. Delete the file to
-        // force a fresh training run. The filename encodes the backbone so
-        // switching architectures doesn't try to load incompatible weights.
+        // Training control:
+        //   resume_training = true  → load weights if they exist, then continue
+        //                             training from the saved epoch count.
+        //   resume_training = false → if weights exist, skip training entirely
+        //                             (visualization / inference only).
+        // Delete the weights file (and epochs_done.txt) to train from scratch.
+        const bool resume_training = true;
+
+        const std::string filter_tag = voc_class_filter.empty() ? "" :
+            "_" + std::to_string(voc_class_filter.size()) + "cls";
         const std::string weights_filename = std::string("yolo_weights_") +
-            (backbone == YoloNetwork::Backbone::Vgg ? "vgg" : "darknet") +
+            (backbone == YoloNetwork::Backbone::Vgg           ? "vgg"
+           : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "darknet_v3std"
+           : backbone == YoloNetwork::Backbone::Darknet53     ? "darknet53"
+           :                                                     "darknet") +
             (head_style == YoloNetwork::HeadStyle::FPN ? "_fpn" : "") +
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
-            std::string(".bin");
+            (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
+            filter_tag +
+            std::string("_bce_ig_bgfocal.bin");  // bgfocal = focal on bg objectness only (asymmetric)
         std::filesystem::path weights_path = data_dir / weights_filename;
         // Backward-compat: load the Phase 2 committed weights file if present.
         const std::filesystem::path legacy_weights = data_dir / "yolo_weights.bin";
@@ -472,20 +625,94 @@ int main()
         &&  !std::filesystem::exists(weights_path)
         &&   std::filesystem::exists(legacy_weights))
             weights_path = legacy_weights;
-        if (std::filesystem::exists(weights_path))
+
+        const bool weights_exist = std::filesystem::exists(weights_path);
+        if (weights_exist)
         {
             yolo_network.load_parameters_binary(weights_path);
-            std::cout << "\nLoaded weights from " << weights_path
-                      << " (skipping training). Delete this file to retrain.\n";
+            std::cout << "\nLoaded weights from " << weights_path << ".\n";
         }
-        else
+
+        // Load Darknet pretrained backbone weights (only on first run — skip when
+        // resuming from a fine-tuned checkpoint, which already has better weights).
+        const bool needs_darknet_backbone =
+            (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
+             backbone == YoloNetwork::Backbone::Darknet53) && !weights_exist;
+        if (needs_darknet_backbone)
         {
-            std::cout << "\nStarting training...\n";
-            training_strategy.train();
-            std::cout << "Training returned (no crash).\n";
-            yolo_network.save_parameters_binary(weights_path);
-            std::cout << "Saved trained weights to " << weights_path
-                      << " (" << yolo_network.get_parameters_number() << " parameters)\n";
+            const bool is53 = (backbone == YoloNetwork::Backbone::Darknet53);
+            const std::filesystem::path darknet_weights = data_dir /
+                (is53 ? "darknet53.conv.74" : "yolov3-tiny.weights");
+            const Index n_backbone_convs = is53 ? 52 : 8;
+            if (std::filesystem::exists(darknet_weights))
+            {
+                const Index loaded = YoloDataset::load_darknet_backbone(
+                    yolo_network, darknet_weights, n_backbone_convs);
+                std::cout << "Loaded " << loaded
+                          << " backbone layers from " << darknet_weights << "\n";
+            }
+            else
+            {
+                std::cout << "Darknet pretrained weights not found at " << darknet_weights << ".\n";
+                if (is53)
+                    std::cout << "Download darknet53.conv.74 from "
+                              << "https://pjreddie.com/media/files/darknet53.conv.74 "
+                              << "and place it in " << data_dir << "\n";
+                else
+                    std::cout << "Download yolov3-tiny.weights from "
+                              << "https://pjreddie.com/media/files/yolov3-tiny.weights "
+                              << "and place it in " << data_dir << "\n";
+                std::cout << "Training from scratch instead.\n";
+            }
+        }
+
+        // LR step-decay schedule (YOLO convention).
+        // epochs_done.txt tracks progress so resume always picks the right stage.
+        struct TrainingRound { float lr; int epochs; };
+        const std::vector<TrainingRound> lr_schedule = {
+            {1e-4f,   5},   // warmup
+            {5e-4f, 120},   // main training — 5e-4 not 1e-3: pretrained backbone degrades at high LR
+            {1e-4f,  80},   // fine-tune 1
+            {1e-5f,  60},   // fine-tune 2
+        };
+        // Each phase > max_validation_failures=40 → early stopping always fires first,
+        // guaranteeing best-val weights are saved at the end of every phase.
+
+        // Epochs file is scoped to the weights filename so switching variants
+        // (backbone, class activation, head style) always starts from 0.
+        const std::filesystem::path epochs_file =
+            data_dir / (weights_filename.substr(0, weights_filename.size() - 4) + "_epochs.txt");
+        int epochs_done = 0;
+        if (std::filesystem::exists(epochs_file))
+        {
+            std::ifstream ef(epochs_file);
+            ef >> epochs_done;
+        }
+        std::cout << "Epochs completed so far: " << epochs_done << "\n";
+
+        if (resume_training || !std::filesystem::exists(weights_path))
+        {
+            int cumulative = 0;
+            for (const TrainingRound& rnd : lr_schedule)
+            {
+                const int round_end = cumulative + rnd.epochs;
+                if (epochs_done >= round_end) { cumulative = round_end; continue; }
+
+                const int to_run = round_end - epochs_done;
+                adam->set_learning_rate(rnd.lr);
+                adam->set_maximum_epochs(to_run);
+                std::cout << "\nTraining: lr=" << rnd.lr
+                          << " for " << to_run << " epochs"
+                          << " (target epoch " << round_end << ").\n";
+                training_strategy.train();
+                epochs_done = round_end;
+                cumulative  = round_end;
+
+                yolo_network.save_parameters_binary(weights_path);
+                { std::ofstream ef(epochs_file); ef << epochs_done; }
+                std::cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
+            }
+            std::cout << "Training complete (" << epochs_done << " total epochs).\n";
         }
 
         // FPN mode: gather per-head Detection layer outputs from a manual
@@ -543,6 +770,7 @@ int main()
                 yolo_network.forward_propagate(input_views, forward_propagation, /*is_training=*/false);
 
                 std::vector<YoloFpnHead> fpn_heads;
+                std::vector<std::vector<float>> fpn_cpu_buffers; // keep CPU copies alive
                 const auto& layers = yolo_network.get_layers();
                 for (size_t li = 0; li < layers.size(); ++li)
                 {
@@ -553,7 +781,51 @@ int main()
                     const Index channels = head_shape[2];
                     const Index classes_n = Index(dataset.get_classes_number());
                     const Index boxes_per_head = channels / (5 + classes_n);
-                    fpn_heads.push_back({ view.as<float>(), head_shape[0], boxes_per_head, classes_n });
+
+                    const float* data_ptr = view.as<float>();
+#ifdef OPENNN_HAS_CUDA
+                    if (view.is_cuda())
+                    {
+                        fpn_cpu_buffers.emplace_back(size_t(view.size()));
+                        cudaMemcpy(fpn_cpu_buffers.back().data(), data_ptr,
+                                   size_t(view.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+                        data_ptr = fpn_cpu_buffers.back().data();
+                    }
+#endif
+                    fpn_heads.push_back({ data_ptr, head_shape[0], boxes_per_head, classes_n });
+                }
+
+                // Raw-score diagnostics — printed before NMS so we can see what
+                // the model is actually predicting even when nothing survives.
+                {
+                    float max_obj = 0.f, max_score = 0.f;
+                    int above_001 = 0, above_01 = 0, above_025 = 0;
+                    for (const YoloFpnHead& h : fpn_heads)
+                    {
+                        const Index vpb = 5 + h.classes_number;
+                        const Index chan = h.boxes_per_cell * vpb;
+                        for (Index r = 0; r < h.grid_size; ++r)
+                        for (Index c = 0; c < h.grid_size; ++c)
+                        for (Index b = 0; b < h.boxes_per_cell; ++b)
+                        {
+                            const Index base = (r * h.grid_size + c) * chan + b * vpb;
+                            const float obj = h.data[base + 4];
+                            float best_p = 0.f;
+                            for (Index cl = 0; cl < h.classes_number; ++cl)
+                                best_p = std::max(best_p, h.data[base + 5 + cl]);
+                            const float score = obj * best_p;
+                            max_obj   = std::max(max_obj,   obj);
+                            max_score = std::max(max_score, score);
+                            if (score >= 0.01f)  ++above_001;
+                            if (score >= 0.1f)   ++above_01;
+                            if (score >= 0.25f)  ++above_025;
+                        }
+                    }
+                    std::cout << "  Raw : max_obj=" << max_obj
+                              << " max_score=" << max_score
+                              << " boxes≥0.01:" << above_001
+                              << " ≥0.1:" << above_01
+                              << " ≥0.25:" << above_025 << "\n";
                 }
 
                 detections = decode_yolo_fpn_detections(
@@ -561,7 +833,9 @@ int main()
                     /*original_height=*/input_shape[0],
                     /*original_width=*/input_shape[1],
                     /*network_height=*/input_shape[0],
-                    /*network_width=*/input_shape[1]);
+                    /*network_width=*/input_shape[1],
+                    /*confidence_threshold=*/0.001f,
+                    /*iou_threshold=*/0.45f);
             }
             else
             {
@@ -591,7 +865,32 @@ int main()
             const int gt_x1 = int(std::round((gt_cx + gt_w * 0.5f) * float(W))) - 1;
             const int gt_y1 = int(std::round((gt_cy + gt_h * 0.5f) * float(H))) - 1;
 
-            Image24 img = read_bmp24(image_path);
+            // Load image — supports BMP (synthetic) and JPEG/PNG (VOC)
+            Image24 img;
+            if (image_path.extension() == ".bmp" || image_path.extension() == ".BMP")
+            {
+                img = read_bmp24(image_path);
+            }
+            else
+            {
+                const auto raw = opennn::load_image(image_path);
+                const int rH = int(raw.dimension(0));
+                const int rW = int(raw.dimension(1));
+                img.width = rW; img.height = rH;
+                img.rgb.resize(size_t(rH * rW * 3));
+                const int ch = int(raw.dimension(2));
+                for (int py = 0; py < rH; ++py)
+                    for (int px = 0; px < rW; ++px)
+                    {
+                        const float r = raw(py, px, 0);
+                        const float g = ch > 1 ? raw(py, px, 1) : r;
+                        const float b = ch > 2 ? raw(py, px, 2) : r;
+                        const size_t idx = size_t((py * rW + px) * 3);
+                        img.rgb[idx + 0] = uint8_t(std::clamp(int(r), 0, 255));
+                        img.rgb[idx + 1] = uint8_t(std::clamp(int(g), 0, 255));
+                        img.rgb[idx + 2] = uint8_t(std::clamp(int(b), 0, 255));
+                    }
+            }
             draw_rect_outline(img, gt_x0, gt_y0, gt_x1, gt_y1, box_color_by_role[0], 2);
 
             std::sort(detections.begin(), detections.end(),
@@ -740,6 +1039,185 @@ int main()
 
         std::cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
+
+        // ===== VOC mAP@0.5 =====
+        // Standard 11-point interpolated AP per class, averaged to mAP.
+        // GT boxes are taken from the YOLO .txt label files (normalized to the
+        // original image). Predictions are decoded in the 416x416 letterbox
+        // space and normalized by the network input size. For non-square images
+        // this introduces a small coordinate mismatch near borders — acceptable
+        // for Phase 3 relative comparisons.
+        {
+            std::cout << "\nComputing VOC mAP@0.5 on "
+                      << selection_indices.size() << " validation images...\n";
+
+            struct GtBox { int cls; float cx, cy, w, h; };
+            struct Pred  { int img_k, cls; float score, cx, cy, w, h; };
+
+            const int N_cls = int(dataset.get_classes_number());
+            const int N_val = int(selection_indices.size());
+
+            // Load all GT boxes (all objects, not just first) for every image.
+            std::vector<std::vector<GtBox>> val_gt(N_val);
+            for (int k = 0; k < N_val; ++k)
+            {
+                const Index s = selection_indices[size_t(k)];
+                const std::filesystem::path img_path = dataset.get_image_path(s);
+                std::filesystem::path lbl = labels_dir / img_path.filename();
+                lbl.replace_extension(".txt");
+                std::ifstream f(lbl);
+                int c; float cx, cy, w, h;
+                while (f >> c >> cx >> cy >> w >> h)
+                    val_gt[k].push_back({c, cx, cy, w, h});
+            }
+
+            // Run inference on every validation image; store predictions per class.
+            std::vector<std::vector<Pred>> cls_preds(N_cls);
+            for (int k = 0; k < N_val; ++k)
+            {
+                const Index s = selection_indices[size_t(k)];
+                dataset.fill_inputs({s}, {}, input_buffer.data(), false, false);
+                std::copy(input_buffer.begin(), input_buffer.end(), input.data());
+
+                std::vector<YoloDetection> dets;
+                if (is_fpn)
+                {
+                    ForwardPropagation fp_m(1, &yolo_network);
+                    const std::vector<TensorView> iv = {
+                        TensorView(input.data(),
+                                   {1, input.dimension(1), input.dimension(2), input.dimension(3)},
+                                   Type::FP32)
+                    };
+                    yolo_network.forward_propagate(iv, fp_m, false);
+
+                    std::vector<YoloFpnHead> heads;
+                    std::vector<std::vector<float>> cpu_bufs;
+                    const auto& all_layers = yolo_network.get_layers();
+                    for (size_t li = 0; li < all_layers.size(); ++li)
+                    {
+                        if (!all_layers[li] || all_layers[li]->get_type() != LayerType::Detection)
+                            continue;
+                        const Shape hs = all_layers[li]->get_output_shape();
+                        const TensorView view = fp_m.forward_slots[li].back();
+                        const float* ptr = view.as<float>();
+#ifdef OPENNN_HAS_CUDA
+                        if (view.is_cuda())
+                        {
+                            cpu_bufs.emplace_back(size_t(view.size()));
+                            cudaMemcpy(cpu_bufs.back().data(), ptr,
+                                       size_t(view.size()) * sizeof(float),
+                                       cudaMemcpyDeviceToHost);
+                            ptr = cpu_bufs.back().data();
+                        }
+#endif
+                        heads.push_back({ptr, hs[0],
+                                         hs[2] / (5 + Index(N_cls)),
+                                         Index(N_cls)});
+                    }
+                    dets = decode_yolo_fpn_detections(heads,
+                               input_shape[0], input_shape[1],
+                               input_shape[0], input_shape[1],
+                               0.001f, 0.45f);
+                }
+                else
+                {
+                    const MatrixR outputs = yolo_network.calculate_outputs(input);
+                    dets = decode_yolo_detections(outputs.data(), max_boxes,
+                               input_shape[0], input_shape[1],
+                               input_shape[0], input_shape[1]);
+                }
+
+                const float IW = float(input_shape[1]), IH = float(input_shape[0]);
+                for (const auto& d : dets)
+                {
+                    if (d.class_id < 0 || d.class_id >= N_cls) continue;
+                    cls_preds[d.class_id].push_back({k, int(d.class_id), d.score,
+                        d.center_x / IW, d.center_y / IH,
+                        d.width    / IW, d.height   / IH});
+                }
+            }
+
+            // IoU between two boxes in cx/cy/w/h normalized coordinates.
+            auto iou_box = [](float cx1, float cy1, float w1, float h1,
+                              float cx2, float cy2, float w2, float h2) -> float
+            {
+                const float lx = std::max(cx1 - w1 * 0.5f, cx2 - w2 * 0.5f);
+                const float ly = std::max(cy1 - h1 * 0.5f, cy2 - h2 * 0.5f);
+                const float rx = std::min(cx1 + w1 * 0.5f, cx2 + w2 * 0.5f);
+                const float ry = std::min(cy1 + h1 * 0.5f, cy2 + h2 * 0.5f);
+                const float inter = std::max(0.f, rx - lx) * std::max(0.f, ry - ly);
+                return inter / std::max(w1 * h1 + w2 * h2 - inter, 1e-6f);
+            };
+
+            float total_ap = 0.f;
+            int classes_with_gt = 0;
+            for (int c = 0; c < N_cls; ++c)
+            {
+                int n_gt = 0;
+                for (const auto& gts : val_gt)
+                    for (const auto& g : gts) if (g.cls == c) ++n_gt;
+                if (n_gt == 0) continue;
+                ++classes_with_gt;
+
+                auto& preds = cls_preds[c];
+                std::sort(preds.begin(), preds.end(),
+                          [](const Pred& a, const Pred& b){ return a.score > b.score; });
+
+                std::vector<std::vector<bool>> matched(N_val);
+                for (int k = 0; k < N_val; ++k)
+                    matched[k].assign(val_gt[k].size(), false);
+
+                float cum_tp = 0.f, cum_fp = 0.f;
+                std::vector<float> prec, rec;
+                for (const auto& p : preds)
+                {
+                    float best_iou = 0.5f; // IoU threshold for a true positive
+                    int best_gi = -1;
+                    for (int gi = 0; gi < int(val_gt[p.img_k].size()); ++gi)
+                    {
+                        const GtBox& g = val_gt[p.img_k][size_t(gi)];
+                        if (g.cls != c || matched[p.img_k][size_t(gi)]) continue;
+                        const float iou = iou_box(p.cx, p.cy, p.w, p.h,
+                                                   g.cx, g.cy, g.w, g.h);
+                        if (iou > best_iou) { best_iou = iou; best_gi = gi; }
+                    }
+                    if (best_gi >= 0)
+                    {
+                        ++cum_tp;
+                        matched[p.img_k][size_t(best_gi)] = true;
+                    }
+                    else
+                        ++cum_fp;
+
+                    prec.push_back(cum_tp / (cum_tp + cum_fp));
+                    rec .push_back(cum_tp / float(n_gt));
+                }
+
+                // 11-point VOC interpolation: max precision at each recall level.
+                float ap = 0.f;
+                for (int ri = 0; ri <= 10; ++ri)
+                {
+                    const float r = float(ri) * 0.1f;
+                    float max_p = 0.f;
+                    for (size_t pi = 0; pi < prec.size(); ++pi)
+                        if (rec[pi] >= r) max_p = std::max(max_p, prec[pi]);
+                    ap += max_p;
+                }
+                ap /= 11.f;
+                total_ap += ap;
+                std::cout << "  " << std::left << std::setw(14)
+                          << class_names[size_t(c)]
+                          << "AP=" << std::fixed << std::setprecision(3) << ap
+                          << "  (GT=" << n_gt << " pred=" << preds.size() << ")\n";
+            }
+
+            const float mAP = classes_with_gt > 0
+                ? total_ap / float(classes_with_gt) : 0.f;
+            std::cout << "mAP@0.5: " << std::fixed << std::setprecision(3) << mAP
+                      << "  (" << classes_with_gt << "/" << N_cls
+                      << " classes with GT in validation set)\n";
+        }
+
         std::cout << "Bye!" << std::endl;
 
         return 0;

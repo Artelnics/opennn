@@ -278,4 +278,33 @@ void detection_backward_cuda(const Index batch_size,
                              const float* output_delta,
                              float* input_delta);
 
+// Nearest-neighbor upsample (NHWC).
+void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                           const float* src, float* dst);
+void upsample_backward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                            const float* out_delta, float* in_delta);
+
+// Channel concatenation (NHWC) — one call per input slice.
+void concat_forward_slice_cuda(int batch, int H, int W,
+                               int slice_ch, int total_ch, int ch_offset,
+                               const float* src, float* dst);
+void concat_backward_slice_cuda(int batch, int H, int W,
+                                int slice_ch, int total_ch, int ch_offset,
+                                const float* out_delta, float* in_delta);
+
+// GIoU YOLO loss — one thread per (batch * grid * grid * box).
+// error_accumulator must be pre-zeroed on device; result is added atomically.
+void yolo_error_cuda(const float* output, const float* target, float* error_accumulator,
+                     int batch, int grid, int boxes_per_cell, int values_per_box,
+                     int classes_number, int sigmoid_classes,
+                     float lambda_giou, float lambda_noobj, float lambda_class,
+                     float focal_gamma, float obj_focal_gamma);
+
+// GIoU YOLO gradient — delta is zeroed inside, then filled per-box.
+void yolo_gradient_cuda(const float* output, const float* target, float* delta,
+                        int batch, int grid, int boxes_per_cell, int values_per_box,
+                        int classes_number, int sigmoid_classes, float inv_batch,
+                        float lambda_giou, float lambda_noobj, float lambda_class,
+                        float focal_gamma, float obj_focal_gamma);
+
 #endif // KERNEL_CUH

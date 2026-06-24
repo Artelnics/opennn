@@ -142,6 +142,18 @@ public:
 
     void print() const {}
 
+    void set_yolo_lambda_giou(float v)      { yolo_lambda_giou      = v; }
+    void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
+    void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }
+    void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
+    void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
+
+    float get_yolo_lambda_giou()      const { return yolo_lambda_giou;      }
+    float get_yolo_lambda_noobj()     const { return yolo_lambda_noobj;      }
+    float get_yolo_lambda_class()     const { return yolo_lambda_class;      }
+    float get_yolo_focal_gamma()      const { return yolo_focal_gamma;       }
+    float get_yolo_obj_focal_gamma()  const { return yolo_obj_focal_gamma;   }
+
 private:
 
     void check_neural_network() const
@@ -173,8 +185,15 @@ protected:
     float negatives_weight = 1.0f;
     float minkowski_parameter = 1.5f;
 
+    float yolo_lambda_giou     = 5.0f;
+    float yolo_lambda_noobj    = 0.5f;
+    float yolo_lambda_class    = 1.0f;
+    float yolo_focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
+    float yolo_obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
+    mutable Buffer yolo_target_device{Device::CUDA};
 
     Regularization regularization_method = Regularization::L2;
     float regularization_weight = 0.001f;
@@ -184,6 +203,15 @@ protected:
 
     string name = "Loss";
 };
+
+// CPU numerical gradient check: returns max relative error between analytical
+// and finite-difference gradients. Below 1e-4 means the loss is self-consistent.
+float yolo_loss_gradient_check_cpu();
+
+// CPU expected-value check: compares forward loss against hand-computed expected
+// values, and verifies gradient directions are correct (not just self-consistent).
+// Returns max absolute error; prints per-test results. Below 1e-4 means correct.
+float yolo_loss_expected_value_check_cpu();
 
 }
 

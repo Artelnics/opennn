@@ -9,11 +9,14 @@
 #pragma once
 
 #include <atomic>
+#include <cstdio>
 
 #include "image_dataset.h"
 
 namespace opennn
 {
+
+class NeuralNetwork;
 
 struct YoloDetection
 {
@@ -125,13 +128,25 @@ public:
         float hue = 0.1f;
         bool flip = true;
         bool enabled = true;
+        bool mosaic = false;
     };
 
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
 
+    // class_filter: if non-empty, only convert objects whose class name is in the list
+    // and remap class IDs to 0-indexed within the filter (writes a custom .names file).
     static Index convert_voc_to_yolo(const filesystem::path& voc_root,
                                      const string& image_set,
-                                     const filesystem::path& output_labels_dir);
+                                     const filesystem::path& output_labels_dir,
+                                     const vector<string>& class_filter = {});
+
+    // Load the first n_backbone_convs convolutional layers of network from a
+    // Darknet binary weights file (e.g. yolov3-tiny.weights).  The file header
+    // (20 bytes: 3×int32 + 1×int64) is consumed before walking layers.
+    // Returns the number of conv layers actually loaded.
+    static Index load_darknet_backbone(NeuralNetwork& network,
+                                       const filesystem::path& weights_path,
+                                       Index n_backbone_convs);
 
 private:
 

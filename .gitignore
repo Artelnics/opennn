@@ -328,6 +328,12 @@ tests/data/*.xml
 /run_n2o.bat
 
 # Large local example data
+yolo_voc_data/
+yolo_data/
+
+# Darknet/YOLO weight files
+*.weights
+*.conv.*
 
 # Generated example data caches (regenerated at runtime from the source CSV/TXT/images)
 *.bin
