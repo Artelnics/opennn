@@ -61,6 +61,8 @@ ActivationFunction activation_function_from_string(const string& name)
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
+    X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, cudnnPoolingDescriptor_t)) \
+    X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cudnnPoolingDescriptor_t)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
     X(merge_heads_gpu, (const TensorView&, TensorView&))
 
@@ -849,6 +851,193 @@ void average_pooling_3d_backward(const TensorView& input,
     average_pooling_3d_backward_cpu(input, output_delta, input_delta);
 }
 
+namespace {
+
+struct PoolWindow
+{
+    Index batch, channel, out_row, out_col;
+    Index in_row_start, pr_start, pr_end;
+    Index in_col_start, pc_start, pc_end;
+};
+
+template<typename Visit>
+void for_each_pool_window(Index batch_size, Index input_channels,
+                          Index input_height, Index input_width,
+                          Index output_height, Index output_width,
+                          Index pool_height, Index pool_width,
+                          Index row_stride, Index column_stride,
+                          Index padding_height, Index padding_width,
+                          Visit&& visit)
+{
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index c = 0; c < input_channels; ++c)
+            for (Index out_row = 0; out_row < output_height; ++out_row)
+            {
+                const Index in_row_start = out_row * row_stride - padding_height;
+                const Index pr_start = max(Index(0), -in_row_start);
+                const Index pr_end   = min(pool_height, input_height - in_row_start);
+
+                for (Index out_col = 0; out_col < output_width; ++out_col)
+                {
+                    const Index in_col_start = out_col * column_stride - padding_width;
+                    const Index pc_start = max(Index(0), -in_col_start);
+                    const Index pc_end   = min(pool_width, input_width - in_col_start);
+
+                    visit(PoolWindow{b, c, out_row, out_col,
+                                     in_row_start, pr_start, pr_end,
+                                     in_col_start, pc_start, pc_end});
+                }
+            }
+}
+
+}
+
+static void pooling_2d_forward_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                                   Index input_height, Index input_width, Index input_channels,
+                                   Index pool_height, Index pool_width,
+                                   Index row_stride, Index column_stride,
+                                   Index padding_height, Index padding_width,
+                                   bool max_pooling)
+{
+    const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs      = output.as_tensor<4>();
+
+    const Index batch_size    = inputs.dimension(0);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width  = outputs.dimension(2);
+
+    if (max_pooling)
+    {
+        const bool write_indices = !maximal_indices.empty();
+        TensorMap4 indices_map = write_indices ? maximal_indices.as_tensor<4>() : TensorMap4(nullptr, 0, 0, 0, 0);
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+            [&](const PoolWindow& window) {
+                float best = NEG_INFINITY;
+                Index argmax = 0;
+                for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                    for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    {
+                        const float value = inputs(window.batch, window.in_row_start + pr,
+                                                window.in_col_start + pc, window.channel);
+                        if (value > best) { best = value; argmax = pr * pool_width + pc; }
+                    }
+                outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
+                if (write_indices)
+                    indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
+            });
+        return;
+    }
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                         output_height, output_width, pool_height, pool_width,
+                         row_stride, column_stride, padding_height, padding_width,
+        [&](const PoolWindow& window) {
+            float sum = 0;
+            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    sum += inputs(window.batch, window.in_row_start + pr,
+                                  window.in_col_start + pc, window.channel);
+            outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
+        });
+}
+
+void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                        Index input_height, Index input_width, Index input_channels,
+                        Index pool_height, Index pool_width,
+                        Index row_stride, Index column_stride,
+                        Index padding_height, Index padding_width,
+                        bool max_pooling,
+                        cudnnPoolingDescriptor_t pooling_descriptor)
+{
+    if (input.is_cuda()) { pooling_2d_forward_gpu(input, output, pooling_descriptor); return; }
+    pooling_2d_forward_cpu(input, output, maximal_indices,
+                           input_height, input_width, input_channels,
+                           pool_height, pool_width,
+                           row_stride, column_stride,
+                           padding_height, padding_width,
+                           max_pooling);
+}
+
+static void pooling_2d_backward_cpu(const TensorView& output_delta, const TensorView& maximal_indices,
+                                    TensorView& input_delta,
+                                    Index input_height, Index input_width, Index input_channels,
+                                    Index pool_height, Index pool_width,
+                                    Index row_stride, Index column_stride,
+                                    Index padding_height, Index padding_width,
+                                    bool max_pooling)
+{
+    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
+    TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
+
+    const Index batch_size    = output_deltas.dimension(0);
+    const Index output_height = output_deltas.dimension(1);
+    const Index output_width  = output_deltas.dimension(2);
+
+    if (max_pooling)
+    {
+        const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
+
+        #pragma omp parallel for collapse(2)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index c = 0; c < input_channels; ++c)
+                for (Index out_row = 0; out_row < output_height; ++out_row)
+                {
+                    const Index in_row_start = out_row * row_stride - padding_height;
+                    for (Index out_col = 0; out_col < output_width; ++out_col)
+                    {
+                        const Index in_col_start = out_col * column_stride - padding_width;
+                        const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
+                        const Index in_row = in_row_start + argmax / pool_width;
+                        const Index in_col = in_col_start + argmax % pool_width;
+                        if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
+                            continue;
+                        input_deltas(b, in_row, in_col, c)
+                            += output_deltas(b, out_row, out_col, c);
+                    }
+                }
+        return;
+    }
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                         output_height, output_width, pool_height, pool_width,
+                         row_stride, column_stride, padding_height, padding_width,
+        [&](const PoolWindow& window) {
+            const float avg_delta = output_deltas(window.batch, window.out_row, window.out_col, window.channel) * inv_pool_size;
+            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    input_deltas(window.batch, window.in_row_start + pr,
+                                 window.in_col_start + pc, window.channel) += avg_delta;
+        });
+}
+
+void pooling_2d_backward(const TensorView& input, const TensorView& output,
+                         const TensorView& output_delta, const TensorView& maximal_indices,
+                         TensorView& input_delta,
+                         Index input_height, Index input_width, Index input_channels,
+                         Index pool_height, Index pool_width,
+                         Index row_stride, Index column_stride,
+                         Index padding_height, Index padding_width,
+                         bool max_pooling,
+                         cudnnPoolingDescriptor_t pooling_descriptor)
+{
+    if (output_delta.is_cuda())
+    {
+        pooling_2d_backward_gpu(input, output, output_delta, input_delta, pooling_descriptor);
+        return;
+    }
+    pooling_2d_backward_cpu(output_delta, maximal_indices, input_delta,
+                            input_height, input_width, input_channels,
+                            pool_height, pool_width,
+                            row_stride, column_stride,
+                            padding_height, padding_width,
+                            max_pooling);
+}
+
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
@@ -1306,6 +1495,32 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                             to_int(input.shape[1]),
                                             to_int(input.shape[2]));
     });
+}
+
+static void pooling_2d_forward_gpu(const TensorView& input, TensorView& output, cudnnPoolingDescriptor_t pooling_descriptor)
+{
+    CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
+        pooling_descriptor,
+        &one,
+        input.get_descriptor(), input.data,
+        &zero,
+        output.get_descriptor(), output.data));
+}
+
+static void pooling_2d_backward_gpu(const TensorView& input,
+                                    const TensorView& output,
+                                    const TensorView& output_delta,
+                                    TensorView& input_delta,
+                                    cudnnPoolingDescriptor_t pooling_descriptor)
+{
+    CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
+        pooling_descriptor,
+        &one,
+        output.get_descriptor(),       output.data,
+        output_delta.get_descriptor(), output_delta.data,
+        input.get_descriptor(),        input.data,
+        &zero,
+        input_delta.get_descriptor(),  input_delta.data));
 }
 
 static void split_heads_gpu(const TensorView& source, TensorView& destination)

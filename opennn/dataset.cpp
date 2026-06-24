@@ -121,8 +121,9 @@ string Dataset::get_storage_mode_string() const
 {
     switch (storage_mode)
     {
-    case StorageMode::Matrix:     return "Matrix";
-    case StorageMode::BinaryFile: return "BinaryFile";
+    case StorageMode::Matrix:           return "Matrix";
+    case StorageMode::BinaryFile:       return "BinaryFile";
+    case StorageMode::GPUPersistantData: return "GPUPersistantData";
     }
 
     return "Matrix";
@@ -142,6 +143,12 @@ void Dataset::set_storage_mode(const string& new_storage_mode)
         return;
     }
 
+    if (new_storage_mode == "GPUPersistantData")
+    {
+        set_storage_mode(StorageMode::GPUPersistantData);
+        return;
+    }
+
     throw runtime_error(format("Unknown dataset storage mode: {}", new_storage_mode));
 }
 
@@ -158,8 +165,9 @@ void Dataset::set_data(const MatrixR& new_data)
 
 void Dataset::enable_device_residency()
 {
+    // Residency is gated by StorageMode::GPUPersistantData in the optimizer;
+    // here we only upload the host matrix that backs this dataset.
     if (!device::is_cuda_build()) return;
-    if (storage_mode != StorageMode::Matrix) return;
     if (data.size() == 0) return;
     if (is_device_resident()) return;
 

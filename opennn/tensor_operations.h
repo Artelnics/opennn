@@ -85,6 +85,23 @@ void average_pooling_3d_forward(const TensorView& input, TensorView& output);
 void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta);
 void average_pooling_3d_backward(const TensorView& input, const TensorView& output_delta, TensorView& input_delta);
 
+void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                        Index input_height, Index input_width, Index input_channels,
+                        Index pool_height, Index pool_width,
+                        Index row_stride, Index column_stride,
+                        Index padding_height, Index padding_width,
+                        bool max_pooling,
+                        cudnnPoolingDescriptor_t pooling_descriptor = nullptr);
+void pooling_2d_backward(const TensorView& input, const TensorView& output,
+                         const TensorView& output_delta, const TensorView& maximal_indices,
+                         TensorView& input_delta,
+                         Index input_height, Index input_width, Index input_channels,
+                         Index pool_height, Index pool_width,
+                         Index row_stride, Index column_stride,
+                         Index padding_height, Index padding_width,
+                         bool max_pooling,
+                         cudnnPoolingDescriptor_t pooling_descriptor = nullptr);
+
 void split_heads(const TensorView& source, TensorView& destination);
 void merge_heads(const TensorView& source, TensorView& destination);
 

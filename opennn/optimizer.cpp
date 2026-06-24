@@ -183,7 +183,7 @@ void Optimizer::reset_graph_capture()
 
 bool Optimizer::cuda_graph_requested() const
 {
-    return use_cuda_graph.value_or(env_flag_enabled("OPENNN_CUDA_GRAPH"));
+    return use_cuda_graph;
 }
 
 void Optimizer::to_JSON(JsonWriter& printer) const
@@ -1003,7 +1003,9 @@ void Optimizer::setup_device_training()
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    if (env_flag_enabled("OPENNN_GPU_RESIDENT_DATA"))
+    // Datasets in StorageMode::GPUPersistantData keep their data mirrored on the
+    // device; this is the single switch for GPU-resident training (no env flag).
+    if (loss->get_dataset()->get_storage_mode() == Dataset::StorageMode::GPUPersistantData)
         loss->get_dataset()->enable_device_residency();
 }
 

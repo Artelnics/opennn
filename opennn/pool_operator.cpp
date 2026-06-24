@@ -73,7 +73,7 @@ void PoolOp::set(Index input_h, Index input_w, Index input_c,
 #endif
 }
 
-void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     auto& forward_slots = fp.forward_slots[layer];
     const TensorView& input = get_input(fp, layer);
@@ -82,12 +82,13 @@ void PoolOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_tra
     TensorView empty;
     TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
 
-    if (input.is_cuda())
-    {
-        apply_gpu(input, output);
-        return;
-    }
-    apply_cpu(input, output, indices, is_training);
+    pooling_2d_forward(input, output, indices,
+                       input_height, input_width, input_channels,
+                       pool_height, pool_width,
+                       row_stride, column_stride,
+                       padding_height, padding_width,
+                       method == Max,
+                       pooling_descriptor);
 }
 
 void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
@@ -101,178 +102,15 @@ void PoolOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t 
     TensorView empty;
     const TensorView& indices = view_at_slot_or(forward_slots, output_slots, 1, empty);
 
-    if (output_delta.is_cuda())
-    {
-        const TensorView& input = get_input(fp, layer);
-        const TensorView& output = get_output(fp, layer);
-        apply_delta_gpu(input, output, output_delta, input_delta);
-        return;
-    }
-
-    apply_delta_cpu(output_delta, indices, input_delta);
+    pooling_2d_backward(get_input(fp, layer), get_output(fp, layer),
+                        output_delta, indices, input_delta,
+                        input_height, input_width, input_channels,
+                        pool_height, pool_width,
+                        row_stride, column_stride,
+                        padding_height, padding_width,
+                        method == Max,
+                        pooling_descriptor);
 }
-
-namespace {
-
-struct PoolWindow
-{
-    Index batch, channel, out_row, out_col;
-    Index in_row_start, pr_start, pr_end;
-    Index in_col_start, pc_start, pc_end;
-};
-
-template<typename Visit>
-void for_each_pool_window(const PoolOp& p,
-                           Index batch_size, Index output_height, Index output_width,
-                           Visit&& visit)
-{
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index c = 0; c < p.input_channels; ++c)
-            for (Index out_row = 0; out_row < output_height; ++out_row)
-            {
-                const Index in_row_start = out_row * p.row_stride - p.padding_height;
-                const Index pr_start = max(Index(0), -in_row_start);
-                const Index pr_end   = min(p.pool_height, p.input_height - in_row_start);
-
-                for (Index out_col = 0; out_col < output_width; ++out_col)
-                {
-                    const Index in_col_start = out_col * p.column_stride - p.padding_width;
-                    const Index pc_start = max(Index(0), -in_col_start);
-                    const Index pc_end   = min(p.pool_width, p.input_width - in_col_start);
-
-                    visit(PoolWindow{b, c, out_row, out_col,
-                                     in_row_start, pr_start, pr_end,
-                                     in_col_start, pc_start, pc_end});
-                }
-            }
-}
-
-}
-
-void PoolOp::apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training)
-{
-    const TensorMap4 inputs = input.as_tensor<4>();
-    TensorMap4 outputs      = output.as_tensor<4>();
-
-    const Index batch_size    = inputs.dimension(0);
-    const Index output_height = outputs.dimension(1);
-    const Index output_width  = outputs.dimension(2);
-
-    if (method == Max)
-    {
-        const bool write_indices = !maximal_indices.empty();
-        TensorMap4 indices_map = write_indices ? maximal_indices.as_tensor<4>() : TensorMap4(nullptr, 0, 0, 0, 0);
-        for_each_pool_window(*this, batch_size, output_height, output_width,
-            [&](const PoolWindow& window) {
-                float best = NEG_INFINITY;
-                Index argmax = 0;
-                for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                    for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    {
-                        const float value = inputs(window.batch, window.in_row_start + pr,
-                                                window.in_col_start + pc, window.channel);
-                        if (value > best) { best = value; argmax = pr * pool_width + pc; }
-                    }
-                outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
-                if (write_indices)
-                    indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
-            });
-        return;
-    }
-
-    const float inv_pool_size = 1.0f / (pool_height * pool_width);
-    for_each_pool_window(*this, batch_size, output_height, output_width,
-        [&](const PoolWindow& window) {
-            float sum = 0;
-            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    sum += inputs(window.batch, window.in_row_start + pr,
-                                  window.in_col_start + pc, window.channel);
-            outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
-        });
-}
-
-void PoolOp::apply_delta_cpu(const TensorView& output_delta,
-                           const TensorView& maximal_indices,
-                           TensorView& input_delta) const
-{
-    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
-    TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
-
-    const Index batch_size    = output_deltas.dimension(0);
-    const Index output_height = output_deltas.dimension(1);
-    const Index output_width  = output_deltas.dimension(2);
-
-    if (method == Max)
-    {
-        const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
-
-        #pragma omp parallel for collapse(2)
-        for (Index b = 0; b < batch_size; ++b)
-            for (Index c = 0; c < input_channels; ++c)
-                for (Index out_row = 0; out_row < output_height; ++out_row)
-                {
-                    const Index in_row_start = out_row * row_stride - padding_height;
-                    for (Index out_col = 0; out_col < output_width; ++out_col)
-                    {
-                        const Index in_col_start = out_col * column_stride - padding_width;
-                        const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
-                        const Index in_row = in_row_start + argmax / pool_width;
-                        const Index in_col = in_col_start + argmax % pool_width;
-                        if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
-                            continue;
-                        input_deltas(b, in_row, in_col, c)
-                            += output_deltas(b, out_row, out_col, c);
-                    }
-                }
-        return;
-    }
-
-    const float inv_pool_size = 1.0f / (pool_height * pool_width);
-    for_each_pool_window(*this, batch_size, output_height, output_width,
-        [&](const PoolWindow& window) {
-            const float avg_delta = output_deltas(window.batch, window.out_row, window.out_col, window.channel) * inv_pool_size;
-            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
-                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
-                    input_deltas(window.batch, window.in_row_start + pr,
-                                 window.in_col_start + pc, window.channel) += avg_delta;
-        });
-}
-
-#ifdef OPENNN_HAS_CUDA
-
-void PoolOp::apply_gpu(const TensorView& input, TensorView& output)
-{
-    CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
-        pooling_descriptor,
-        &one,
-        input.get_descriptor(), input.data,
-        &zero,
-        output.get_descriptor(), output.data));
-}
-
-void PoolOp::apply_delta_gpu(const TensorView& input,
-                           const TensorView& output,
-                           const TensorView& output_delta,
-                           TensorView& input_delta) const
-{
-    CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
-        pooling_descriptor,
-        &one,
-        output.get_descriptor(),       output.data,
-        output_delta.get_descriptor(), output_delta.data,
-        input.get_descriptor(),        input.data,
-        &zero,
-        input_delta.get_descriptor(),  input_delta.data));
-}
-
-#else
-
-void PoolOp::apply_gpu(const TensorView&, TensorView&)                                                { throw runtime_error("Pool::apply_gpu: CUDA support not compiled in."); }
-void PoolOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Pool::apply_delta_gpu: CUDA support not compiled in."); }
-
-#endif
 
 }
 

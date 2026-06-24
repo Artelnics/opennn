@@ -10,7 +10,6 @@
 
 #include <array>
 #include <functional>
-#include <optional>
 #include "batch.h"
 #include "device_backend.h"
 #include "json.h"
@@ -55,6 +54,10 @@ public:
     int  get_workers_number() const { return workers_number; }
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
+    bool get_cuda_graph() const { return use_cuda_graph; }
+
+    void set_shuffle(bool enabled) { shuffle_samples = enabled; }
+    bool get_shuffle() const { return shuffle_samples; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -210,6 +213,10 @@ protected:
 
     bool display = true;
 
+    // Shuffle the training samples each epoch. Toggle from code with
+    // set_shuffle(); recurrent/LSTM networks always train in order regardless.
+    bool shuffle_samples = true;
+
     string name;
 
     int workers_number = 2;
@@ -231,7 +238,9 @@ protected:
     array<CudaEvent, 2> graph_fork_events;
     array<CudaEvent, graph_slots_count> graph_copy_done_events;
     function<void(BackPropagation&)> graph_update;
-    optional<bool> use_cuda_graph;
+    // CUDA graph capture/replay is opt-in. Toggle from code with set_cuda_graph();
+    // there is no environment-variable fallback.
+    bool use_cuda_graph = false;
 };
 
 }

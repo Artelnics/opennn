@@ -58,7 +58,7 @@ public:
     virtual ~Dataset() = default;
 
     enum class Separator{Space, Tab, Comma, Semicolon};
-    enum class StorageMode{Matrix, BinaryFile};
+    enum class StorageMode{Matrix, BinaryFile, GPUPersistantData};
 
     virtual Index get_samples_number() const { return ssize(sample_roles); }
 

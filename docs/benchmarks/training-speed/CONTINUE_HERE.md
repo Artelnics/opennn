@@ -73,10 +73,10 @@ DLLs on PATH:
 
 ### Run OpenNN (Windows)
 ```
-set OPENNN_GPU_RESIDENT_DATA=1
-set OPENNN_CUDA_GRAPH=1
 opennn_speed.exe <csv> 1000 30 1000 bf16
 ```
+(GPU-resident data and CUDA graphs are now built into `opennn_speed.cpp` via
+`StorageMode::GPUPersistantData` and `set_cuda_graph(true)`; no env flags.)
 Datasets: `%TEMP%\opennndata\rb_200k_1000.csv`, `rb_500k_1000.csv` (regen with
 `docs\benchmarks\capacity\generate_rosenbrock.exe 1000 <samples> <out> 1234`).
 

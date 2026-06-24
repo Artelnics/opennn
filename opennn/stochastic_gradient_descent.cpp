@@ -282,7 +282,8 @@ TrainingResult StochasticGradientDescent::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    const bool shuffle = !neural_network->has(LayerType::Recurrent)
+    const bool shuffle = shuffle_samples
+                      && !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
     float current_learning_rate = initial_learning_rate;

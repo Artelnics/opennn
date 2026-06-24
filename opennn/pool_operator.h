@@ -44,18 +44,6 @@ struct PoolOp : Operator
 
     void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
     void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-private:
-    void apply_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
-    void apply_gpu(const TensorView& input, TensorView& output);
-
-    void apply_delta_cpu(const TensorView& output_delta,
-                         const TensorView& maximal_indices,
-                         TensorView& input_delta) const;
-    void apply_delta_gpu(const TensorView& input,
-                         const TensorView& output,
-                         const TensorView& output_delta,
-                         TensorView& input_delta) const;
 };
 
 }

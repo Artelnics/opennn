@@ -64,7 +64,7 @@ inline bool autotune_enabled()
 }
 
 // With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
-// (per-label totals printed at exit). Incompatible with OPENNN_CUDA_GRAPH=1.
+// (per-label totals printed at exit). Incompatible with set_cuda_graph(true).
 inline bool graph_timing_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_GRAPH_TIMING");

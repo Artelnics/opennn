@@ -48,6 +48,7 @@ int main(int argc, char* argv[])
         Configuration::instance().set(Device::CUDA, training_type);
 
         TabularDataset dataset(csv_path, ",", false, false);
+        dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);
         if (!std::getenv("OPENNN_BENCH_SCALERS"))
             dataset.set_variable_scalers("None");  // PyTorch/TF train on raw data; keep the protocols identical
@@ -69,6 +70,7 @@ int main(int argc, char* argv[])
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(batch);
+        adam->set_cuda_graph(true);          // capture/replay the training step
         adam->set_display_period(1000000);   // silence per-epoch printing
         adam->set_gradient_clip_norm(0.0f);  // match PyTorch/TF default (no clipping)
 
