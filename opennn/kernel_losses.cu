@@ -3,7 +3,7 @@
 template<typename T>
 __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float out = static_cast<float>(outputs[i]);
         const float tgt = targets[i];
@@ -37,7 +37,7 @@ __global__ void binary_cross_entropy_gradient_kernel(
     const T* __restrict__ outputs,
     const float epsilon, const float scaling_factor)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float out = static_cast<float>(outputs[i]);
         const float tgt = targets[i];
@@ -62,7 +62,7 @@ template void binary_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index, __n
 template<typename T>
 __global__ void categorical_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float tgt = targets[i];
         term_results[i] = (tgt > 0.0f) ? tgt * logf(static_cast<float>(outputs[i]) + epsilon) : 0.0f;
@@ -91,7 +91,7 @@ __global__ void categorical_cross_entropy_gradient_kernel(
     const T* __restrict__ outputs,
     const float scaling_factor)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
         deltas[i] = static_cast<T>((static_cast<float>(outputs[i]) - targets[i]) * scaling_factor);
 }
 
@@ -112,7 +112,7 @@ template void categorical_cross_entropy_gradient_cuda<__nv_bfloat16>(const Index
 template<typename T>
 __global__ void weighted_squared_error_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float positives_weight, const float negatives_weight)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;
@@ -146,7 +146,7 @@ __global__ void weighted_squared_error_gradient_kernel(
     const float negatives_weight,
     const float scaling_factor)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;
@@ -179,7 +179,7 @@ __global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
                                                          float* __restrict__ correct_mask,
                                                          const float epsilon)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < total_tokens; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < total_tokens; idx += Index(blockDim.x) * gridDim.x)
     {
         const int target_class = static_cast<int>(targets[idx]);
         const bool valid = target_class > 0 && target_class < vocab_size;
@@ -243,7 +243,7 @@ __global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
         scale_factor = active_count > 0.0f ? 1.0f / active_count : 0.0f;
     }
 
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int token_index = idx / vocab_size;
         const int class_index = idx % vocab_size;
@@ -352,13 +352,13 @@ __global__ void l1_gradient_kernel(
 {
     constexpr int vec_width = 16 / sizeof(T);
 
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
 
     float4* const       d_v = reinterpret_cast<float4*>(deltas);
     const float4* const p_v = reinterpret_cast<const float4*>(parameters);
 
-    for (int i = tid; i < n_vec; i += stride)
+    for (Index i = tid; i < n_vec; i += stride)
     {
         float4 d_chunk = d_v[i];
         float4 p_chunk = p_v[i];
@@ -373,7 +373,7 @@ __global__ void l1_gradient_kernel(
     }
 
     const int tail_start = n_vec * vec_width;
-    for (int i = tail_start + tid; i < n; i += stride)
+    for (Index i = tail_start + tid; i < n; i += stride)
         l1_gradient_one(deltas[i], parameters[i], weight);
 }
 

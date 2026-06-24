@@ -253,18 +253,30 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
-                         Index batch_size)
+                         Index batch_size,
+                         bool prefetch_only)
     {
         for (int i = 0; i < pool_size; ++i)
         {
-            pool.push_back(make_unique<Batch>(batch_size, &dataset, config));
+            pool.push_back(make_unique<Batch>(batch_size, &dataset, config, prefetch_only));
             queue.push(pool.back().get());
         }
     };
 
+    // On GPU the prefetch pool only stages data into the fixed compute batch, so
+    // pool slots need no device buffers (saves pool_size device batch copies). This
+    // is unsafe only if validation reuses the training pool to compute directly on
+    // it (no fixed batch in evaluate_epoch) -- then the pool keeps its buffers.
+    const bool validation_reuses_training_pool =
+        has_validation && validation_batch_size == training_batch_size;
+    const bool training_prefetch_only = neural_network.is_gpu()
+                                     && device::is_cuda_build()
+                                     && !validation_reuses_training_pool;
+
     fill_pool(pools.training_empty_queue,
               pools.training_pool,
-              training_batch_size);
+              training_batch_size,
+              training_prefetch_only);
 
     graph_slots = {};
 
@@ -282,13 +294,15 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             }
     }
 
-    pools.validation_uses_training_pool =
-        has_validation && validation_batch_size == training_batch_size;
+    pools.validation_uses_training_pool = validation_reuses_training_pool;
 
+    // Validation computes directly on its pool batch (evaluate_epoch sets no fixed
+    // device batch), so validation pool slots must keep their device buffers.
     if (has_validation && !pools.validation_uses_training_pool)
         fill_pool(pools.validation_empty_queue,
                   pools.validation_pool,
-                  validation_batch_size);
+                  validation_batch_size,
+                  /*prefetch_only=*/false);
 }
 
 unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
@@ -469,7 +483,11 @@ Index Optimizer::get_maximum_batch_size() const
             single_batch += b * target_shape.size() * Index(sizeof(float));
         if (!decoder_shape.empty())
             single_batch += b * decoder_shape.size() * Index(sizeof(float));
-        return Index(batch_pool_size) * single_batch;
+        // On GPU the prefetch pool is host-only and compute runs on a single fixed
+        // device batch, so only one device batch copy lives in VRAM; on CPU each of
+        // the batch_pool_size slots holds a device (host) copy.
+        const Index device_batch_copies = on_gpu ? Index(1) : Index(batch_pool_size);
+        return device_batch_copies * single_batch;
     };
 
     auto bytes_for_run = [&](Index b) -> Index {

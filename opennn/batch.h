@@ -34,7 +34,8 @@ struct Batch
 {
     Batch(Index,
           const Dataset*,
-          const Configuration::Resolved&);
+          const Configuration::Resolved&,
+          bool prefetch_only = false);
     ~Batch();
 
     Batch(const Batch&)            = delete;
@@ -44,7 +45,8 @@ struct Batch
 
     void set(Index,
              const Dataset*,
-             const Configuration::Resolved&);
+             const Configuration::Resolved&,
+             bool prefetch_only = false);
 
     void fill(const vector<Index>&,
               const vector<Index>&,
@@ -79,6 +81,11 @@ struct Batch
     Index current_sample_count = 0;
     bool needs_device_copy = true;
     bool input_is_bf16 = false;
+    // A prefetch-only batch stages data into a separate fixed compute batch and is
+    // never computed on itself, so on GPU it omits its own device input/target
+    // buffers (it keeps only the pinned-host buffers and gather indices used to
+    // stage). Saves one device batch copy per pool slot.
+    bool prefetch_only = false;
 
     const Dataset* dataset = nullptr;
     Configuration::Resolved config;

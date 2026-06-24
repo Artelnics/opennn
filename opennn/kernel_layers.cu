@@ -8,7 +8,7 @@ __global__ void bounding_kernel(const int n, const int features,
                                 const float* __restrict__ upper,
                                 TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const float x = static_cast<float>(input[i]);
@@ -44,7 +44,7 @@ __global__ void scale_kernel(const int n, const int features,
                              const float min_range, const float max_range,
                              TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const int code = static_cast<int>(scalers[f]);
@@ -114,7 +114,7 @@ __global__ void unscale_kernel(const int n, const int features,
                                const float min_range, const float max_range,
                                TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const int code = static_cast<int>(scalers[f]);
@@ -178,7 +178,7 @@ __global__ void diff_to_fp32_kernel(const int n,
                                     const float* __restrict__ target,
                                     float* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
         output[i] = static_cast<float>(input[i]) - target[i];
 }
 
@@ -200,7 +200,7 @@ __global__ void scaled_diff_kernel(const int n,
                                    const float scale,
                                    TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float d = static_cast<float>(input[i]) - target[i];
         output[i] = static_cast<TOut>(scale * d);
@@ -226,7 +226,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int token_index = i / embedding_dimension;
         const int dim_index = i % embedding_dimension;
@@ -266,7 +266,7 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int token_index = i / embedding_dimension;
         const int dim_index = i % embedding_dimension;
@@ -298,7 +298,7 @@ template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, 
 template<typename T>
 __global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int d = i % D;
         const int q = (i / D) % Q;
@@ -315,7 +315,7 @@ __global__ void swap_heads_vec_kernel(const int n_vec, const T* __restrict__ in,
     const float4* const in_v  = reinterpret_cast<const float4*>(in);
     float4* const       out_v = reinterpret_cast<float4*>(out);
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n_vec; i += Index(blockDim.x) * gridDim.x)
     {
         const int d = i % D_vec;
         const int q = (i / D_vec) % Q;
@@ -360,7 +360,7 @@ template void merge_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*,
 template<typename T>
 __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ source_input, T* __restrict__ padding_mask, const int embedding_dimension)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < num_tokens; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < num_tokens; i += Index(blockDim.x) * gridDim.x)
     {
         const T* token = source_input + i * embedding_dimension;
         bool is_pad = true;
@@ -375,7 +375,7 @@ __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weight
                                          const int heads_number, const int query_sequence_length,
                                          const int source_sequence_length, const bool use_causal_mask)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int sk = i % source_sequence_length;
         const int sq = (i / source_sequence_length) % query_sequence_length;
@@ -475,7 +475,7 @@ template void attention_sequence_lengths_cuda<__nv_bfloat16>(int, int, int, int,
 template<typename T>
 __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -510,7 +510,7 @@ template void max_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv
 template<typename T>
 __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient, const float* __restrict__ indices, const int S, const int F)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -594,7 +594,7 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
                                                   const float* __restrict__ valid_mask,
                                                   const float* __restrict__ counts)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -652,7 +652,7 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
                                                    const float* __restrict__ valid_mask,
                                                    const float* __restrict__ counts)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -1009,7 +1009,7 @@ template<typename T>
 __global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
 {
     // Function codes mirror ActivationFunction values.
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const float x = static_cast<float>(data[idx]);
         float y = x;
@@ -1042,7 +1042,7 @@ template void activation_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*
 template<typename T>
 __global__ void activation_backward_kernel(const int n, const T* __restrict__ outputs, T* __restrict__ delta, const int function)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const float y = static_cast<float>(outputs[idx]);
         const float d = static_cast<float>(delta[idx]);
@@ -1467,9 +1467,9 @@ __global__ void detection_forward_kernel(const int batch_size,
     const int values_per_box = 5 + classes_number;
     const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
          idx < total;
-         idx += blockDim.x * gridDim.x)
+         idx += Index(blockDim.x) * gridDim.x)
     {
         const int box = idx % boxes_per_cell;
         const int t   = idx / boxes_per_cell;
@@ -1554,9 +1554,9 @@ __global__ void detection_backward_kernel(const int batch_size,
     const int values_per_box = 5 + classes_number;
     const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
          idx < total;
-         idx += blockDim.x * gridDim.x)
+         idx += Index(blockDim.x) * gridDim.x)
     {
         const int box = idx % boxes_per_cell;
         const int t   = idx / boxes_per_cell;
