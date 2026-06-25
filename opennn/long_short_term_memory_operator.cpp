@@ -16,8 +16,15 @@
 #include "back_propagation.h"
 #include "profiler.h"
 
+#include <atomic>
+
 namespace opennn
 {
+
+// LSTM scalar fallback path. Off by default; set from code (no environment var).
+namespace { std::atomic<bool> lstm_scalar_flag{false}; }
+void set_lstm_scalar(bool enabled) { lstm_scalar_flag.store(enabled, std::memory_order_relaxed); }
+bool lstm_scalar_enabled() { return lstm_scalar_flag.load(std::memory_order_relaxed); }
 
 namespace
 {
@@ -254,7 +261,7 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
-    static const bool lstm_scalar = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    const bool lstm_scalar = lstm_scalar_enabled();
     if (!lstm_scalar && H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
@@ -505,7 +512,7 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
     float* gUg = candidate_recurrent_weight_gradient.as<float>();
     float* gUo = output_recurrent_weight_gradient.as<float>();
 
-    static const bool lstm_scalar_bwd = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    const bool lstm_scalar_bwd = lstm_scalar_enabled();
     if (!lstm_scalar_bwd && H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();

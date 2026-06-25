@@ -17,6 +17,12 @@
 namespace opennn
 {
 
+// Directory for the ImageDataset binary cache. Empty => default <data>/.cache.
+// Set from code with set_image_cache_dir(); there is no environment variable.
+namespace { std::string& image_cache_dir_storage() { static std::string dir; return dir; } }
+void set_image_cache_dir(const string& dir) { image_cache_dir_storage() = dir; }
+string get_image_cache_dir() { return image_cache_dir_storage(); }
+
 namespace {
 
 bool has_augmentation_transform(const AugmentationSettings& augmentation)
@@ -75,9 +81,9 @@ filesystem::path image_cache_path(const filesystem::path& data_path,
                                   Index width,
                                   Index channels)
 {
-    const char* cache_root = getenv("OPENNN_IMAGE_CACHE_DIR");
+    const string& cache_root = image_cache_dir_storage();
 
-    if (cache_root && cache_root[0] != '\0')
+    if (!cache_root.empty())
     {
         const uint64_t hash = fnv1a_64(resolved_dataset_key(data_path).generic_string());
 

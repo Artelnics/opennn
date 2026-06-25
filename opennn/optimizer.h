@@ -59,6 +59,9 @@ public:
     void set_shuffle(bool enabled) { shuffle_samples = enabled; }
     bool get_shuffle() const { return shuffle_samples; }
 
+    void set_batch_pool_size(int size) { batch_pool_size_override = size; }
+    int  get_batch_pool_size_override() const { return batch_pool_size_override; }
+
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
@@ -216,6 +219,11 @@ protected:
     // Shuffle the training samples each epoch. Toggle from code with
     // set_shuffle(); recurrent/LSTM networks always train in order regardless.
     bool shuffle_samples = true;
+
+    // Prefetch-pool depth override (0 = auto). Set from code with
+    // set_batch_pool_size(); each pooled Batch holds a full input+target copy
+    // on the GPU, so lowering it trades prefetch overlap for a larger max batch.
+    int batch_pool_size_override = 0;
 
     string name;
 

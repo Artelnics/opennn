@@ -47,8 +47,8 @@ inline int device_sm_version()
 
 inline bool frontend_enabled()
 {
-    static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
-    if (legacy_forced) return false;
+    // Legacy v7 API is forced from code with device::set_conv_legacy(true).
+    if (device::conv_legacy_forced()) return false;
     // cuDNN-frontend batchnorm/conv graph API requires SM 8.0+ (Ampere).
     // Silently skip on older hardware to avoid per-layer warning spam.
     return device_sm_version() >= 800;
@@ -56,11 +56,8 @@ inline bool frontend_enabled()
 
 inline bool autotune_enabled()
 {
-    static const bool disabled = [] {
-        const char* value = getenv("OPENNN_CONV_AUTOTUNE");
-        return value && value[0] == '0';
-    }();
-    return !disabled;
+    // On by default; toggle from code with device::set_conv_autotune(false).
+    return device::conv_autotune_enabled();
 }
 
 // With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events

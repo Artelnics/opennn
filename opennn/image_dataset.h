@@ -15,6 +15,12 @@
 namespace opennn
 {
 
+// Directory for the ImageDataset binary image cache. Empty (the default) uses
+// <data_path>/.cache. Set from code before constructing the dataset; there is
+// no environment variable.
+void set_image_cache_dir(const string&);
+string get_image_cache_dir();
+
 struct AugmentationSettings
 {
     bool enabled = false;

@@ -392,11 +392,11 @@ int Optimizer::get_batch_workers_number(const NeuralNetwork& neural_network) con
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
-    // OPENNN_BATCH_POOL overrides the prefetch-pool depth. Each pooled Batch holds
-    // a full input+target copy on the GPU, so lowering this trades a little
+    // set_batch_pool_size() overrides the prefetch-pool depth. Each pooled Batch
+    // holds a full input+target copy on the GPU, so lowering this trades a little
     // prefetch overlap for a larger max batch. Default keeps 3.
-    if (const char* pool = std::getenv("OPENNN_BATCH_POOL"))
-        return max(1, atoi(pool));
+    if (batch_pool_size_override > 0)
+        return max(1, batch_pool_size_override);
     return neural_network.is_gpu()
         ? max(get_batch_workers_number(neural_network) + 1, 3)
         : 1;

@@ -20,6 +20,11 @@ namespace
 {
 
 std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+std::atomic_bool cuda_scratch_growth_forbidden_runtime{false};
+std::atomic_bool gemm_autotune_enabled_flag{false};
+std::atomic_bool bf16_compute_plain_flag{false};
+std::atomic_bool conv_autotune_enabled_flag{true};
+std::atomic_bool conv_legacy_forced_flag{false};
 
 void throw_if_auto(Device device_type)
 {
@@ -121,13 +126,62 @@ size_t available_memory()
 
 bool cuda_allocation_growth_forbidden() noexcept
 {
-    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed)
-        || env_flag_enabled("OPENNN_CUDA_NO_ALLOC_GROWTH");
+    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed);
 }
 
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
+bool cuda_scratch_growth_forbidden() noexcept
+{
+    return cuda_scratch_growth_forbidden_runtime.load(std::memory_order_relaxed);
+}
+
+void set_cuda_scratch_growth_forbidden(bool forbidden) noexcept
+{
+    cuda_scratch_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
+bool gemm_autotune_enabled() noexcept
+{
+    return gemm_autotune_enabled_flag.load(std::memory_order_relaxed);
+}
+
+void set_gemm_autotune(bool enabled) noexcept
+{
+    gemm_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
+}
+
+bool bf16_compute_plain() noexcept
+{
+    return bf16_compute_plain_flag.load(std::memory_order_relaxed);
+}
+
+void set_bf16_compute_plain(bool enabled) noexcept
+{
+    bf16_compute_plain_flag.store(enabled, std::memory_order_relaxed);
+}
+
+bool conv_autotune_enabled() noexcept
+{
+    return conv_autotune_enabled_flag.load(std::memory_order_relaxed);
+}
+
+void set_conv_autotune(bool enabled) noexcept
+{
+    conv_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
+}
+
+bool conv_legacy_forced() noexcept
+{
+    return conv_legacy_forced_flag.load(std::memory_order_relaxed);
+}
+
+void set_conv_legacy(bool forced) noexcept
+{
+    conv_legacy_forced_flag.store(forced, std::memory_order_relaxed);
 }
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
@@ -675,8 +729,8 @@ namespace
             // bf16 multiply with the fast tensor-core accumulation path (the
             // analogue of FAST_TF32 for fp32). Plain CUBLAS_COMPUTE_32F left the
             // heuristic on a non-tensor-core algorithm, so bf16 got no speedup.
-            static const bool plain = std::getenv("OPENNN_BF16_COMPUTE_PLAIN") != nullptr;
-            return plain ? CUBLAS_COMPUTE_32F : CUBLAS_COMPUTE_32F_FAST_16BF;
+            return device::bf16_compute_plain() ? CUBLAS_COMPUTE_32F
+                                                : CUBLAS_COMPUTE_32F_FAST_16BF;
         }
         return CUBLAS_COMPUTE_DTYPE;
     }
@@ -691,7 +745,7 @@ namespace
     bool workspace_growth_forbidden() noexcept
     {
         return device::cuda_allocation_growth_forbidden()
-            || env_flag_enabled("OPENNN_CUDA_NO_SCRATCH_GROWTH");
+            || device::cuda_scratch_growth_forbidden();
     }
 
     template <typename T>
@@ -829,13 +883,10 @@ LtMatmulPlan& get_lt_gemm_plan(
         CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
         &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-    // Autotuning (OPENNN_GEMM_AUTOTUNE=1) asks for several candidate algorithms;
-    // the first real matmul times them and keeps the fastest. Otherwise take the
-    // single first heuristic (cuBLASLt's default best guess), as before.
-    static const bool autotune = [] {
-        const char* v = std::getenv("OPENNN_GEMM_AUTOTUNE");
-        return v && v[0] == '1';
-    }();
+    // Autotuning (device::set_gemm_autotune(true)) asks for several candidate
+    // algorithms; the first real matmul times them and keeps the fastest.
+    // Otherwise take the single first heuristic (cuBLASLt's default best guess).
+    const bool autotune = device::gemm_autotune_enabled();
     constexpr int max_candidates = 16;
 
     cublasLtMatmulHeuristicResult_t heuristics[max_candidates] = {};

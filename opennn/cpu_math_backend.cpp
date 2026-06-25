@@ -10,6 +10,8 @@
 #include "tensor_operations.h"
 #include "string_utilities.h"
 
+#include <atomic>
+
 #ifdef EIGEN_USE_MKL_ALL
 #include <mkl_cblas.h>
 #include <mkl_vml.h>
@@ -18,9 +20,14 @@
 namespace opennn::cpu_math
 {
 
+// Fast MKL VML path. Off by default; toggled from code with set_mkl_fast_vml().
+namespace { std::atomic<bool> mkl_fast_vml_flag{false}; }
+void set_mkl_fast_vml(bool enabled) { mkl_fast_vml_flag.store(enabled, std::memory_order_relaxed); }
+bool mkl_fast_vml_enabled() { return mkl_fast_vml_flag.load(std::memory_order_relaxed); }
+
 #ifdef EIGEN_USE_MKL_ALL
 
-static bool fast_vml_enabled() { static const bool enabled = env_flag_enabled("OPENNN_MKL_FAST_VML"); return enabled; }
+static bool fast_vml_enabled() { return mkl_fast_vml_enabled(); }
 
 static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
 {
