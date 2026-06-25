@@ -46,7 +46,9 @@ echo "############ $DATASET ResNet-50 training-speed benchmark (GPU) ###########
 echo "epochs=$EPOCHS batch=$BATCH dataset=$DATASET"
 
 echo "==== OpenNN (CUDA, fp32, GPU-resident data, CUDA graph) ===="
-o=$(OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$DATA_DIR/train" "$EPOCHS" "$BATCH" fp32 2>&1)
+# GPU-resident data (CIFAR) and the CUDA graph are enabled inside
+# opennn_resnet50_speed.cpp, not via environment variables.
+o=$(LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$DATA_DIR/train" "$EPOCHS" "$BATCH" fp32 2>&1)
 echo "$o" | grep -E "samples_per_sec|epoch_s|parameters|RESULT"
 ONN=$(echo "$o" | extract samples_per_sec)
 
@@ -124,7 +126,7 @@ result = {
         },
     },
     "commands": {
-        "opennn": "OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 opennn_resnet50_speed",
+        "opennn": "opennn_resnet50_speed (CUDA graph + GPU-resident data enabled in code)",
         "pytorch_eager": "python pytorch_resnet50_speed.py",
         "pytorch_compile": "python pt_compile_probe.py",
     },

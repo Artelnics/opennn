@@ -4,7 +4,11 @@
 //   grows and binary-searches the batch size around this program so CUDA OOMs
 //   cannot poison later trials.
 //
-//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32]
+//   CUDA graph, sample shuffle and cuDNN conv autotune are all turned off in
+//   code (no environment variables); the prefetch-pool depth is set with the
+//   optional [batch_pool] argument (the pool1 engine passes 1).
+//
+//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32] [batch_pool]
 
 #include <cmath>
 #include <filesystem>
@@ -15,6 +19,7 @@
 
 #include "../../../opennn/adaptive_moment_estimation.h"
 #include "../../../opennn/configuration.h"
+#include "../../../opennn/device_backend.h"
 #include "../../../opennn/image_dataset.h"
 #include "../../../opennn/memory_debug.h"
 #include "../../../opennn/random_utilities.h"
@@ -120,6 +125,7 @@ int main(int argc, char* argv[])
     const std::string data_dir = argc > 1 ? argv[1] : "../resnet50-training-speed/cifar10";
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
+    const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;   // 0 = library default
 
     try
     {
@@ -130,6 +136,10 @@ int main(int argc, char* argv[])
 
         set_seed(42);
         Configuration::instance().set(Device::CUDA, Type::FP32);
+
+        // Conv autotune trials several algorithms, each needing workspace; disable
+        // it so the max-batch probe is not skewed by autotune scratch growth.
+        device::set_conv_autotune(false);
 
         TempImageTree temp_images;
         const std::filesystem::path trial_data_path =
@@ -165,6 +175,15 @@ int main(int argc, char* argv[])
         adam->set_display(false);
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
+
+        // Max-batch probe: one batch == the whole set, so there is no step-to-step
+        // overlap for a CUDA graph to amortise and nothing to shuffle. Both are
+        // therefore left off in code (no environment switch).
+        adam->set_cuda_graph(false);
+        adam->set_shuffle(false);
+        // Prefetch-pool depth (0 = library default); the pool1 engine passes 1 to
+        // hold the fewest device batch copies and reach the largest batch.
+        adam->set_batch_pool_size(batch_pool);
 
         const TrainingResult result = training_strategy.train();
         const float training_error = result.get_training_error();

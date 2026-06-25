@@ -96,7 +96,7 @@ Each result JSON should contain:
     }
   },
   "commands": {
-    "opennn": "OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 opennn_resnet50_speed",
+    "opennn": "opennn_resnet50_speed (CUDA graph + GPU-resident data enabled in code)",
     "pytorch_compile": "python pt_compile_probe.py",
     "pytorch_eager": "python pytorch_resnet50_speed.py"
   },

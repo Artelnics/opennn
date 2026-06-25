@@ -200,14 +200,11 @@ def expanded_engines(value):
 def command_for(engine, data_dir, batch, opennn_bin, memory_fraction, memory_limit_mb):
     env = {}
     if engine in {"opennn_pool1", "opennn_default"}:
-        cmd = [opennn_bin, data_dir, str(batch), "fp32"]
-        env.update({
-            "OPENNN_CUDA_GRAPH": "1",
-            "OPENNN_NO_SHUFFLE": "1",
-            "OPENNN_CONV_AUTOTUNE": "0",
-        })
-        if engine == "opennn_pool1":
-            env["OPENNN_BATCH_POOL"] = "1"
+        # CUDA graph, shuffle and conv autotune are all set in the benchmark code.
+        # The prefetch-pool depth is the 4th positional arg: pool1 -> 1 (fewest
+        # device batch copies, largest reachable batch), default -> 0 (library auto).
+        batch_pool = "1" if engine == "opennn_pool1" else "0"
+        cmd = [opennn_bin, data_dir, str(batch), "fp32", batch_pool]
     elif engine in {"pytorch_compile", "pytorch_eager"}:
         path = "compile" if engine == "pytorch_compile" else "eager"
         cmd = [

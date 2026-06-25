@@ -100,7 +100,8 @@ Sweeping the batches-per-epoch makes it unmistakable:
 
 **When the per-step pipeline cost is amortized over real work, OpenNN's faster
 kernels win by 1.30–1.35×.** The resident CUDA-graph mega-launch
-(`OPENNN_CUDA_GRAPH=1`, the same mechanism that carried the ResNet note) recovers
+(the CUDA graph, on by default in the benchmark and the same mechanism that
+carried the ResNet note) recovers
 about **+23 %** of the multi-batch case by bundling eight steps per launch, but
 does not fully close it: the residual is the cross-stream gather coordination
 that runs even inside the graph's host loop. Three candidate explanations were
@@ -124,7 +125,8 @@ ceiling, the largest batch that completes one training step (forward + backward 
 Adam) is:
 
 * **PyTorch: 399,507.** Holds one copy of the batch on the device.
-* **OpenNN: 306,708 by default → 482,344 with `OPENNN_BATCH_POOL=1`.** OpenNN's
+* **OpenNN: 306,708 by default → 482,344 with prefetch-pool depth 1
+  (`set_batch_pool_size(1)`).** OpenNN's
   prefetch pool holds three `Batch` objects by default — three device copies of
   the input — to overlap loading with compute. Dropping the pool to one copy
   fits **57 % more samples** (and beats PyTorch by 1.21×) at a ≈6 % throughput
@@ -155,8 +157,9 @@ WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 + CUDA
 * The training-throughput headline (1.30–1.35×) is at low mini-batches per
   epoch, where OpenNN's faster kernels are not masked by its per-step pipeline
   coordination; at many mini-batches per epoch the coordination overhead
-  compounds and PyTorch leads until the mega-graph (`OPENNN_CUDA_GRAPH=1`) closes
-  part of the gap. The honest statement is that OpenNN's *compute* is faster and
+  compounds and PyTorch leads until the mega-graph (the CUDA graph enabled in
+  the benchmark code) closes part of the gap. The honest statement is that
+  OpenNN's *compute* is faster and
   its *data pipeline* is the cost — the article reports both and the sweep that
   separates them.
 * OpenNN's inference win requires the device-resident path
@@ -168,7 +171,7 @@ WSL2 Ubuntu 24.04 on Windows 11 (i7-12700H). OpenNN built with g++ 13.3 + CUDA
   spill-on-overflow was observed directly. On native Linux without the spill the
   ceiling is the same physics.
 * OpenNN's default training max batch (306,708) is below PyTorch's; the win
-  requires `OPENNN_BATCH_POOL=1`, which trades ≈6 % throughput for the larger
+  requires prefetch-pool depth 1 (`set_batch_pool_size(1)`), which trades ≈6 % throughput for the larger
   batch and is appropriate only when the data is GPU-resident.
 * Single consumer laptop GPU under WSL2; the pipeline-coordination share is
   largest exactly here (high CUDA-API issue latency). On native Linux the
@@ -189,14 +192,15 @@ machine-specific — edit them for your tree):
 LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_rosenbrock_resident_infer 8000 500 1000 1000
 python pytorch_rosenbrock_throughput.py inference 8000 500 1000 1000
 
-# Training speed — args: mode samples batch iters inputs hidden
+# Training speed — args: mode samples batch iters inputs hidden [cuda_graph 0|1]
+# Data is kept GPU-resident in code; the trailing 0/1 toggles the CUDA mega-graph.
 ./build_tput.sh
-OPENNN_GPU_RESIDENT_DATA=1 ./opennn_rosenbrock_throughput train 8000 8000 200 1000 1000   # 1 batch/epoch
-OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1 ./opennn_rosenbrock_throughput train 400000 8000 20 1000 1000
+./opennn_rosenbrock_throughput train 8000 8000 200 1000 1000 0     # eager, 1 batch/epoch
+./opennn_rosenbrock_throughput train 400000 8000 20 1000 1000 1    # mega-graph
 python pytorch_rosenbrock_throughput.py train 8000 200 1000 1000
 
 # Max batch (fresh process per trial; auto VRAM-bound) — args: inputs hidden
 ./build_trial.sh
-./run_maxbatch.sh 1000 1000                    # OpenNN; OPENNN_BATCH_POOL=1 for the larger train batch
+./run_maxbatch.sh 1000 1000                    # OpenNN; uses pool depth 1 (set in code) for the larger train batch
 python pytorch_rosenbrock_maxbatch.py 1000 1000   # PyTorch, capped to physical VRAM
 ```

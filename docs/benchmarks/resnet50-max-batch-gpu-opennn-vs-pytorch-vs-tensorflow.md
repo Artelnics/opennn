@@ -13,7 +13,8 @@ search, then records both the largest passing batch and the next failing batch.
 ## The result
 
 On this RTX 4080 run, TensorFlow XLA fits the largest batch, PyTorch
-`torch.compile` is second, and OpenNN with `OPENNN_BATCH_POOL=1` is third. The
+`torch.compile` is second, and OpenNN with prefetch-pool depth 1
+(`set_batch_pool_size(1)`) is third. The
 OpenNN number below is the corrected BinaryFile-cache run; PyTorch and
 TensorFlow are from the same-machine full 3-way run because their protocol did
 not change.
@@ -56,9 +57,8 @@ than the source dataset size, the Python frameworks repeat CIFAR-10 samples
 deterministically by modulo indexing. The OpenNN trial builds a temporary image
 tree of exactly the requested batch size from the same CIFAR-10 training images,
 lets `ImageDataset` build/read its `BinaryFile` image cache, and then runs a
-single full-batch training step. The trial does not enable
-`OPENNN_GPU_RESIDENT_DATA`, so the whole dataset is not staged as a
-GPU-resident matrix.
+single full-batch training step. The trial does not enable GPU-resident
+data, so the whole dataset is not staged as a GPU-resident matrix.
 
 ## Machine and software
 
@@ -100,7 +100,8 @@ capture strategy, batch buffering, or allocator behavior.
 * TensorFlow reserves a large amount of GPU memory up front in this environment.
   The runner records the observed peak and still gates every candidate by the
   configured physical VRAM cap.
-* OpenNN is reported with `OPENNN_BATCH_POOL=1` because this benchmark is about
+* OpenNN is reported with prefetch-pool depth 1 (`set_batch_pool_size(1)`,
+  the pool1 engine) because this benchmark is about
   capacity. The default prefetch pool is useful for throughput-oriented
   streaming workloads, but it holds extra batch buffers and lowers the maximum
   batch that fits. The dataset itself is not GPU-resident; it is read through

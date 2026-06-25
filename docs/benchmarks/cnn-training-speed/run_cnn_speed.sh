@@ -27,9 +27,10 @@ echo "############ MNIST CNN training-speed benchmark (GPU) ############"
 echo "epochs=$EPOCHS batch=$BATCH"
 
 echo "==== OpenNN (CUDA, fp32, GPU-resident data) ===="
-# OPENNN_GPU_RESIDENT_DATA keeps the dataset on the GPU and gathers batches
-# device-side — the analogue of the GPU-resident tensors in the PyTorch script.
-o=$(OPENNN_GPU_RESIDENT_DATA=1 LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$MNIST_DIR" "$EPOCHS" "$BATCH" fp32 2>/dev/null)
+# GPU-resident data (the dataset stays on the GPU and batches are gathered
+# device-side, the analogue of the GPU-resident tensors in the PyTorch script)
+# is enabled inside opennn_cnn_speed.cpp, not via an environment variable.
+o=$(LD_LIBRARY_PATH="$WSL_CUDA:${LD_LIBRARY_PATH:-}" "$OPENNN_BIN" "$MNIST_DIR" "$EPOCHS" "$BATCH" fp32 2>/dev/null)
 echo "$o" | grep -E "samples_per_sec|epoch_s|RESULT"
 ONN=$(echo "$o" | extract samples_per_sec)
 

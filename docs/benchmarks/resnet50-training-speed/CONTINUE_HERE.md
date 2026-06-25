@@ -97,8 +97,9 @@ Since the last entry:
   beta absorbs it; matches torchvision bias=False). Kills the per-conv bgrad
   reduction graph (53 graph executions/step) + the fwd bias add. Param count
   drops by exactly the 26,560 biases.
-- **OPENNN_CUDA_GRAPH=1 now pays** (+4%) — it was neutral before the step
+- **The CUDA graph now pays** (+4%) — it was neutral before the step
   became launch-overhead-sensitive; re-test config levers after big changes.
+  (Enabled in code via `set_cuda_graph`; on by default in the benchmark.)
 
 ## Measured budgets (the map for the last 10%)
 
@@ -177,7 +178,7 @@ workspace, keeps the fastest (frontend `Graph::autotune`), then allocates the
 persistent workspace for the winner only. This is the `cudnn.benchmark=True`
 equivalent. Conv graphs only (pure → safe to execute repeatedly); BN graphs
 deliberately excluded (in-place backward DY==DX would corrupt step-1
-gradients if executed ~100x). `OPENNN_CONV_AUTOTUNE=0` disables. GOTCHA: do
+gradients if executed ~100x). `device::set_conv_autotune(false)` disables. GOTCHA: do
 NOT pre-allocate `get_autotune_workspace_size()` per graph at build time —
 max-over-all-plans for ~90 graphs OOMs the 6 GB card (that bug cost one run).
 
@@ -185,7 +186,7 @@ Probes that settled the diagnosis (all on WSL, fp32 b128):
 - `NVIDIA_TF32_OVERRIDE=0` → 745/s (4x slower) → our convs were ALREADY on
   TF32 tensor cores; precision parity with PyTorch, not the gap.
 - `NVIDIA_TF32_OVERRIDE=1` → 1,266/s — breaks engine selection, never use.
-- `OPENNN_CUDA_GRAPH=1` → 2,680/s pre-autotune, 3,654/s post-autotune —
+- CUDA graph on → 2,680/s pre-autotune, 3,654/s post-autotune —
   capture works (sane training) but never helps; loop is kernel-bound.
 
 ## DONE 2026-06-12: BN+ReLU fusion implemented — wall-clock NEUTRAL
@@ -282,8 +283,9 @@ samples/s vs torch.compile 5,772.
   benchenv cudnn, opennn-wsl eigen + cudnn_frontend; link libopennn.a +
   benchenv libcudnn.so.9 + cuda-12.9 cudart/cublas/cublasLt/nvrtc + libjpeg.a
   + tbb + gomp + stubs/libcuda.so).
-- Run: `OPENNN_GPU_RESIDENT_DATA=1 LD_LIBRARY_PATH=/usr/lib/wsl/lib
+- Run: `LD_LIBRARY_PATH=/usr/lib/wsl/lib
   ./opennn_resnet50_speed cifar10/train 3 128 fp32`
+  (GPU-resident data is enabled in code for the CIFAR path)
 - The benchmark builds the net via `opennn::ResNet` (standard_networks,
   bottleneck [3,4,6,3]) since 2026-06-12 — verified identical parameter count
   (23,555,088; 90 layers incl. the no-op global avg pool) and throughput

@@ -53,14 +53,15 @@ three specific costs, each now fixed in the library:
    now run through the cudnn-frontend graph API (the engine interface
    PyTorch uses), with conv + bias + ReLU fused into a single forward graph
    when the layer requests it. The v7 path is kept as an automatic fallback
-   (`OPENNN_CONV_LEGACY=1` forces it).
+   (`device::set_conv_legacy(true)` forces it).
 3. **Host-side batch assembly.** Each batch was assembled by re-reading the
    image cache (one `pread` per image), casting, scaling, and copying to the
    GPU — 1.7 ms per 128-image batch, more than the GPU math it fed.
    `ImageDataset` now supports the library's GPU-resident dataset mode
-   (`OPENNN_GPU_RESIDENT_DATA=1`): the scaled pixels and one-hot targets are
-   staged once and batches are gathered device-side, the same arrangement the
-   PyTorch script uses. MNIST resident is 31 MB.
+   (enabled in the benchmark code via the `GPUPersistantData` storage mode):
+   the scaled pixels and one-hot targets are staged once and batches are
+   gathered device-side, the same arrangement the PyTorch script uses.
+   MNIST resident is 31 MB.
 
 With those fixed, the per-step pipeline that remains (native loop, device
 gather, cuDNN engines, fused Adam) is simply leaner than eager PyTorch's
@@ -111,8 +112,8 @@ and the runner are in [`docs/benchmarks/cnn-training-speed/`](cnn-training-speed
 python prepare_mnist.py ../../../examples/mnist/data   # BMP folders -> npy
 ./run_cnn_speed.sh 40 128                              # all three engines + summary
 ./run_cnn_speed.sh 40 1024
-# or individually:
-OPENNN_GPU_RESIDENT_DATA=1 ./opennn_cnn_speed <data_path> [epochs] [batch] [fp32|bf16]
+# or individually (GPU-resident data is enabled inside opennn_cnn_speed.cpp):
+./opennn_cnn_speed <data_path> [epochs] [batch] [fp32|bf16]
 python pytorch_cnn_speed.py [epochs] [batch]
 python tensorflow_cnn_speed.py [epochs] [batch]
 ```

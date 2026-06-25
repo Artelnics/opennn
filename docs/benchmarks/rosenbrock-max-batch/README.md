@@ -19,7 +19,7 @@ engine **alone** with the GPU idle in between (`nvidia-smi` shows 0 MiB) — on 
 | Inference speed (b≥2000) | 3.8–4.4 M samples/s | 2.5–2.8 M | **OpenNN 1.43–1.56×** |
 | Training speed (few steps/epoch) | 1.7 M samples/s | 1.3 M | **OpenNN 1.30–1.35×** |
 | Training speed (many steps/epoch) | 0.9 M samples/s | 1.3 M | PyTorch (see note) |
-| Max train batch | 482,344 (`OPENNN_BATCH_POOL=1`) | 399,507 | **OpenNN 1.21×** |
+| Max train batch | 482,344 (pool depth 1, `set_batch_pool_size(1)`) | 399,507 | **OpenNN 1.21×** |
 | Max inference batch (VRAM-bound) | ~524 K | ~535 K | ~tie |
 
 ### The inference-speed win
@@ -33,7 +33,7 @@ faster than the old path** and beats PyTorch 1.43–1.56×. See
 
 ### The max-batch win
 OpenNN's GPU prefetch pool holds ≥3 `Batch` objects, each a full input+target
-copy on the GPU. `OPENNN_BATCH_POOL=1` drops this to one copy → **+57% max batch**
+copy on the GPU. Prefetch-pool depth 1 (`set_batch_pool_size(1)`) drops this to one copy → **+57% max batch**
 (482 K vs PyTorch's 399 K) at ~6% throughput cost on GPU-resident data. Default
 stays 3 (keeps prefetch overlap, important for disk-streamed data like ResNet).
 
@@ -43,7 +43,8 @@ than PyTorch's (3.69 ms vs 4.98 ms at b=8000). OpenNN **wins training speed
 1.30–1.35×** when there are few batches per epoch. The apparent loss at *many*
 steps/epoch is **not compute** — it is per-step host-side pipeline coordination
 (gather + transfer-stream events) that compounds with batch count. The resident
-mega-graph (`OPENNN_GPU_RESIDENT_DATA=1 OPENNN_CUDA_GRAPH=1`) recovers ~+23% of
+mega-graph (GPU-resident data is enabled in code; the CUDA graph is on by
+default and can be toggled with the trailing `cuda_graph` arg) recovers ~+23% of
 it. Ruled out as causes (measured): cuBLASLt algorithm choice, graph group size,
 and the gather kernel. Full closure would require gathering *inside* the captured
 graph (reading the resident dataset directly) — a larger re-architecture.
@@ -88,10 +89,10 @@ to match your machine, then:
 ./build_resident.sh
 LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_rosenbrock_resident_infer 8000 500 1000 1000
 
-# OpenNN train/inference throughput  (args: mode samples batch iters inputs hidden)
-# Set GPU_RESIDENT for a fair train number; for the mega-graph add OPENNN_CUDA_GRAPH=1.
+# OpenNN train/inference throughput  (args: mode samples batch iters inputs hidden [cuda_graph 0|1])
+# Train data is kept GPU-resident in code; the mega-graph is on by default (pass 0 to disable).
 ./build_tput.sh
-OPENNN_GPU_RESIDENT_DATA=1 ./opennn_rosenbrock_throughput train 100000 8000 20 1000 1000
+./opennn_rosenbrock_throughput train 100000 8000 20 1000 1000
 ./opennn_rosenbrock_throughput inference 8000 8000 500 1000 1000
 
 # OpenNN max batch (fresh process per trial; auto VRAM-bound)
@@ -113,8 +114,9 @@ python pytorch_rosenbrock_maxbatch.py 1000 1000
 - **OpenNN faults (CUDA error 700, sticky) on OOM** instead of throwing cleanly,
   which corrupts the context — so an in-process binary search converges on
   garbage. The driver runs **one fresh process per batch trial**.
-- **Always set `OPENNN_GPU_RESIDENT_DATA=1` for training**, or every batch does a
-  host gather + H2D copy and starves the GPU; PyTorch keeps data on-device by
-  default, so omitting it makes the comparison unfair to OpenNN.
+- **Training data must stay GPU-resident**, or every batch does a host gather +
+  H2D copy and starves the GPU; PyTorch keeps data on-device by default, so not
+  doing it makes the comparison unfair to OpenNN. `opennn_rosenbrock_throughput.cpp`
+  enables it in code (`set_storage_mode(GPUPersistantData)`), no env var needed.
 - **OpenNN block-buffers `std::cout` to a pipe** — add `std::cout << std::unitbuf`
   in benchmarks, and never pipe a watched run through `grep` (it buffers too).

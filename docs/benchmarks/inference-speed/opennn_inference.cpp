@@ -8,7 +8,10 @@
 //   Reports median seconds per full pass over the dataset, samples/second
 //   (throughput), and milliseconds per batch (latency).
 //
-//   usage:  opennn_inference <csv_path> <features> [batch] [reps]
+//   The optional [fast_vml 0|1] argument turns on MKL's enhanced-performance VML
+//   tanh mode (set in code via cpu_math::set_mkl_fast_vml; no environment var).
+//
+//   usage:  opennn_inference <csv_path> <features> [batch] [reps] [fast_vml 0|1]
 
 #include <algorithm>
 #include <chrono>
@@ -21,6 +24,7 @@
 #include "../../../opennn/dense_layer.h"
 #include "../../../opennn/forward_propagation.h"
 #include "../../../opennn/configuration.h"
+#include "../../../opennn/cpu_math_backend.h"
 #include "../../../opennn/random_utilities.h"
 
 using namespace opennn;
@@ -32,7 +36,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage: opennn_inference <csv_path> <features> [batch] [reps]\n";
+            std::cerr << "usage: opennn_inference <csv_path> <features> [batch] [reps] [fast_vml 0|1]\n";
             return 2;
         }
 
@@ -40,9 +44,13 @@ int main(int argc, char* argv[])
         const Index features = Index(std::stoll(argv[2]));
         const Index batch = (argc > 3) ? Index(std::stoll(argv[3])) : 1000;
         const Index reps = (argc > 4) ? Index(std::stoll(argv[4])) : 30;
+        const bool fast_vml = (argc > 5) ? (std::stoi(argv[5]) != 0) : false;
 
         set_seed(42);
         Configuration::instance().set(Device::CPU, Type::FP32);
+
+        // MKL enhanced-performance VML tanh (optional), set in code (no env var).
+        if (fast_vml) cpu_math::set_mkl_fast_vml(true);
 
         TabularDataset dataset(csv_path, ",", false, false);
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);

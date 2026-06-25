@@ -67,10 +67,10 @@ def engine_cmd(engine, dataset, epochs, batch, bf16):
     data_dir = os.path.join(HERE, dataset)
     env = {}
     if engine == "opennn":
+        # GPU-resident data (CIFAR fits in VRAM) and the CUDA graph are enabled in
+        # the benchmark code (opennn_resnet50_speed.cpp); no env vars needed.
         cmd = [OPENNN_BIN, os.path.join(data_dir, "train"),
                str(epochs), str(batch), "bf16" if bf16 else "fp32"]
-        env["OPENNN_GPU_RESIDENT_DATA"] = "1"
-        env["OPENNN_CUDA_GRAPH"] = "1"
     elif engine == "pytorch":
         cmd = [PY, os.path.join(HERE, "pytorch_resnet50_speed.py"),
                str(epochs), str(batch), data_dir]

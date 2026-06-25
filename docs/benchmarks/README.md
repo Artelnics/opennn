@@ -93,7 +93,7 @@ infers in one self-contained binary.
 * **[GPU ResNet-50 max training batch](resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md)** — a
   capacity benchmark on ResNet-50/CIFAR-10, fp32, one full training step. On the current RTX 4080
   run, TensorFlow XLA fits the largest batch (11,760), PyTorch `torch.compile` fits 9,216, and
-  OpenNN with the `ImageDataset` BinaryFile path and `OPENNN_BATCH_POOL=1` fits 4,752. This is
+  OpenNN with the `ImageDataset` BinaryFile path and prefetch-pool depth 1 (`set_batch_pool_size(1)`) fits 4,752. This is
   useful memory-regression evidence, not an OpenNN headline win.
 * **[GPU dense max batch & speed](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md)** — a
   purely dense 1000→1000→1 MLP on the GPU: OpenNN runs inference 1.43–1.56× faster than PyTorch

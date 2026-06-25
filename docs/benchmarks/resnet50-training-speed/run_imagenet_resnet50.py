@@ -219,11 +219,15 @@ def engine_command(engine, train_dir, data_arg, epochs, batch, precision, worker
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
 
     if engine == "opennn":
-        cmd = [opennn_bin, str(train_dir), str(epochs), str(batch), precision, str(image_size)]
-        if cuda_graph:
-            env["OPENNN_CUDA_GRAPH"] = "1"
+        # CUDA graph is driven by the benchmark's own positional arg (1/0), not by
+        # an env var. The 224px ImageNet data is too large to stay GPU-resident, so
+        # opennn_resnet50_speed.cpp leaves residency off for image_size>0 anyway.
+        cmd = [opennn_bin, str(train_dir), str(epochs), str(batch), precision,
+               str(image_size), "1" if cuda_graph else "0"]
+        # Image-cache dir is passed as a positional arg (set in code via
+        # set_image_cache_dir), not as an environment variable.
         if opennn_cache_dir:
-            env["OPENNN_IMAGE_CACHE_DIR"] = str(opennn_cache_dir)
+            cmd.append(str(opennn_cache_dir))
         if Path("/usr/lib/wsl/lib").exists():
             env["LD_LIBRARY_PATH"] = "/usr/lib/wsl/lib:" + os.environ.get("LD_LIBRARY_PATH", "")
     elif engine in ("pytorch_fast", "pytorch_eager"):
@@ -284,8 +288,9 @@ def main():
     parser.add_argument("--gpu-index", type=int, default=env_gpu_index(),
                         help="Physical GPU index for CUDA_VISIBLE_DEVICES and nvidia-smi sampling")
     parser.add_argument("--opennn-bin", default=default_opennn_bin())
-    parser.add_argument("--opennn-cache-dir", default=os.environ.get("OPENNN_IMAGE_CACHE_DIR"),
-                        help="Directory for OpenNN's uint8 image cache")
+    parser.add_argument("--opennn-cache-dir", default=None,
+                        help="Directory for OpenNN's uint8 image cache "
+                             "(passed to the benchmark as a positional arg, set in code)")
     parser.add_argument("--no-cuda-graph", action="store_true")
     parser.add_argument("--require-gpu-idle", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
