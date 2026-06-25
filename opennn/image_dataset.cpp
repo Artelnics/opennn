@@ -247,8 +247,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
-    if (!augmentation.enabled) return;
-    if (batch_size <= 0) return;
+    if (!augmentation.enabled || batch_size <= 0) return;
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];

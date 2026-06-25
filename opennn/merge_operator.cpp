@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M E R G E   O P E R A T O R   S O U R C E
@@ -18,31 +18,31 @@
 namespace opennn
 {
 
-void MergeOp::set(Index new_heads_number, Index new_query_sequence_length, Index new_head_dimension, Type new_compute_dtype)
+void MergeOperator::set(Index new_heads_number, Index new_query_sequence_length, Index new_head_dimension, Type new_compute_dtype)
 {
     heads_number          = new_heads_number;
     query_sequence_length = new_query_sequence_length;
     head_dimension        = new_head_dimension;
 }
 
-void MergeOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void MergeOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
-    const Index batch_size = fp.batch_size;
+    const Index batch_size = forward_propagation.batch_size;
 
-    const TensorView source_4d = get_input(fp, layer)
+    const TensorView source_4d = get_input(forward_propagation, layer)
         .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
-    TensorView dest_4d = get_output(fp, layer).reshape({batch_size, query_sequence_length, heads_number, head_dimension});
+    TensorView dest_4d = get_output(forward_propagation, layer).reshape({batch_size, query_sequence_length, heads_number, head_dimension});
 
     merge_heads(source_4d, dest_4d);
 }
 
-void MergeOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void MergeOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    const Index batch_size = fp.batch_size;
+    const Index batch_size = forward_propagation.batch_size;
 
-    const TensorView concat_gradient_4d = get_output_delta(bp, layer)
+    const TensorView concat_gradient_4d = get_output_delta(back_propagation, layer)
         .reshape({batch_size, query_sequence_length, heads_number, head_dimension});
-    TensorView heads_gradient_4d = get_input(fp, layer)
+    TensorView heads_gradient_4d = get_input(forward_propagation, layer)
         .reshape({batch_size, heads_number, query_sequence_length, head_dimension});
 
     split_heads(concat_gradient_4d, heads_gradient_4d);

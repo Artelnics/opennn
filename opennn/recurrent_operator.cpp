@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E C U R R E N T   O P E R A T O R   S O U R C E
@@ -19,10 +19,10 @@
 namespace opennn
 {
 
-void RecurrentOp::set(Index new_input_features,
+void RecurrentOperator::set(Index new_input_features,
                       Index new_time_steps,
                       Index new_output_features,
-                      ActivationOp::Function new_activation,
+                      ActivationFunction new_activation,
                       Type new_weight_type)
 {
     input_features  = new_input_features;
@@ -32,7 +32,7 @@ void RecurrentOp::set(Index new_input_features,
     weight_type     = new_weight_type;
 }
 
-vector<TensorSpec> RecurrentOp::parameter_specs() const
+vector<TensorSpec> RecurrentOperator::parameter_specs() const
 {
     return {
         {{output_features},                   weight_type},
@@ -41,7 +41,7 @@ vector<TensorSpec> RecurrentOp::parameter_specs() const
     };
 }
 
-void RecurrentOp::link_parameters(span<const TensorView> views)
+void RecurrentOperator::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 3) return;
     bias              = views[0];
@@ -49,7 +49,7 @@ void RecurrentOp::link_parameters(span<const TensorView> views)
     recurrent_weights = views[2];
 }
 
-void RecurrentOp::link_gradients(span<const TensorView> views)
+void RecurrentOperator::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 3) return;
     bias_gradient              = views[0];
@@ -57,14 +57,14 @@ void RecurrentOp::link_gradients(span<const TensorView> views)
     recurrent_weight_gradient  = views[2];
 }
 
-void RecurrentOp::set_parameters_random()
+void RecurrentOperator::set_parameters_random()
 {
     if (!input_weights.empty())     set_random_uniform(input_weights.as_vector());
     if (!recurrent_weights.empty()) set_random_uniform(recurrent_weights.as_vector());
     if (!bias.empty())              bias.setZero();
 }
 
-void RecurrentOp::set_parameters_glorot()
+void RecurrentOperator::set_parameters_glorot()
 {
     if (!input_weights.empty())
     {
@@ -79,10 +79,10 @@ void RecurrentOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    auto& forward_slots = fp.forward_slots[layer];
-    const TensorView& input             = get_input(fp, layer);
+    auto& forward_slots = forward_propagation.forward_slots[layer];
+    const TensorView& input             = get_input(forward_propagation, layer);
     TensorView& output                  = forward_slots[output_slots[0]];
     TensorView& hidden_states           = forward_slots[output_slots[1]];
     TensorView& activation_derivatives  = forward_slots[output_slots[2]];
@@ -95,15 +95,15 @@ void RecurrentOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool i
     apply(input, hidden_states, activation_derivatives, output, is_training);
 }
 
-void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = fp.forward_slots[layer];
-    auto& backward_slots = bp.backward_slots[layer];
+    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& backward_slots = back_propagation.backward_slots[layer];
 
-    const TensorView& input                    = get_input(fp, layer);
+    const TensorView& input                    = get_input(forward_propagation, layer);
     const TensorView& hidden_states            = forward_slots[output_slots[1]];
     const TensorView& activation_derivatives   = forward_slots[output_slots[2]];
-    const TensorView& output_delta             = get_output_delta(bp, layer);
+    const TensorView& output_delta             = get_output_delta(back_propagation, layer);
 
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
@@ -124,7 +124,7 @@ void RecurrentOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
-void RecurrentOp::apply(const TensorView& input,
+void RecurrentOperator::apply(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
                             TensorView& output,
@@ -164,7 +164,7 @@ void RecurrentOp::apply(const TensorView& input,
         if (t > 0)
             step_hidden.noalias() += prev_hidden * w_rec_map;
 
-        using F = ActivationOp::Function;
+        using F = ActivationFunction;
         switch (activation)
         {
         case F::Tanh:
@@ -187,7 +187,7 @@ void RecurrentOp::apply(const TensorView& input,
                 step_derivs.setOnes();
             break;
         case F::Softmax:
-        case F::LeakyReLU: throw runtime_error("RecurrentOp: unsupported activation.");
+        case F::LeakyReLU: throw runtime_error("RecurrentOperator: unsupported activation.");
         }
 
         for (Index i = 0; i < batch_size; ++i)
@@ -215,7 +215,7 @@ void RecurrentOp::apply(const TensorView& input,
     }
 }
 
-void RecurrentOp::apply_delta(const TensorView& input,
+void RecurrentOperator::apply_delta(const TensorView& input,
                               const TensorView& hidden_states,
                               const TensorView& activation_derivatives,
                               const TensorView& output_delta,
@@ -332,12 +332,12 @@ void require_same_recurrent_dtype(const TensorView& reference,
 {
     for (const auto& [view, name] : views)
         throw_if(view->data && !view->empty() && view->type != reference.type,
-                 format("RecurrentOp CUDA: {} dtype does not match recurrent compute dtype.", name));
+                 format("RecurrentOperator CUDA: {} dtype does not match recurrent compute dtype.", name));
 }
 
 }
 
-void RecurrentOp::apply_gpu(const TensorView& input,
+void RecurrentOperator::apply_gpu(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
                             TensorView& output,
@@ -423,7 +423,7 @@ void RecurrentOp::apply_gpu(const TensorView& input,
     });
 }
 
-void RecurrentOp::apply_delta_gpu(const TensorView& input,
+void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                                   const TensorView& hidden_states,
                                   const TensorView& activation_derivatives,
                                   const TensorView& output_delta,
@@ -465,8 +465,8 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
                                        Index(sizeof(Scalar)));
 
         const cudaDataType_t axpy_dtype =
-            (output_delta.type == Type::FP32) ? CUDA_R_32F :
-            (output_delta.type == Type::BF16) ? CUDA_R_16BF :
+            (output_delta.is_fp32()) ? CUDA_R_32F :
+            (output_delta.is_bf16()) ? CUDA_R_16BF :
                                                  CUDA_R_32F;
 
         for (Index t = time_steps; t-- > 0;)
@@ -546,17 +546,17 @@ void RecurrentOp::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void RecurrentOp::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
 {
-    throw runtime_error("RecurrentOp::apply_gpu: CUDA support not compiled in.");
+    throw runtime_error("RecurrentOperator::apply_gpu: CUDA support not compiled in.");
 }
 
-void RecurrentOp::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
+void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
                                   const TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&,
                                   TensorView&, TensorView&) const
 {
-    throw runtime_error("RecurrentOp::apply_delta_gpu: CUDA support not compiled in.");
+    throw runtime_error("RecurrentOperator::apply_delta_gpu: CUDA support not compiled in.");
 }
 
 #endif

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E V I C E   B A C K E N D
@@ -807,14 +807,14 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 {
     if (input.type == target_type) return input.data;
 
-    if (input.type == Type::FP32 && target_type == Type::BF16)
+    if (input.is_fp32() && target_type == Type::BF16)
     {
         bfloat16* dst = ensure_bf16_input_workspace(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
         return dst;
     }
 
-    if (input.type == Type::BF16 && target_type == Type::FP32)
+    if (input.is_bf16() && target_type == Type::FP32)
     {
         float* dst = ensure_bf16_to_fp32_workspace(input.size());
         cast_bf16_to_fp32_cuda(input.size(), input.as<bfloat16>(), dst);

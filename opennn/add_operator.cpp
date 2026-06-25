@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A D D   O P E R A T O R   S O U R C E
@@ -18,38 +18,26 @@
 namespace opennn
 {
 
-void AddOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void AdditionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const vector<TensorView>& inputs = get_inputs(fp, layer);
-    TensorView& output               = get_output(fp, layer);
+    const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
+    TensorView& output               = get_output(forward_propagation, layer);
 
-    check(inputs, output);
-
-    add(inputs[0], inputs[1], output);
-    for (size_t i = 2; i < inputs.size(); ++i)
+    copy(inputs[0], output);
+    for (size_t i = 1; i < inputs.size(); ++i)
         add(output, inputs[i], output);
 }
 
-void AddOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+void AdditionOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
     for (size_t i = 0; i < input_delta_slots.size(); ++i)
     {
-        TensorView& input_delta = get_input_delta(bp, layer, i);
+        TensorView& input_delta = get_input_delta(back_propagation, layer, i);
         if (!input_delta.empty())
             copy(output_delta, input_delta);
     }
-}
-
-void AddOp::check(const vector<TensorView>& inputs, const TensorView& output) const
-{
-    throw_if(inputs.size() < 2,
-             "Add: needs at least 2 inputs.");
-
-    for (const TensorView& input : inputs)
-        throw_if(input.size() != output.size(),
-                 "Add: tensor dimensions do not match.");
 }
 
 }

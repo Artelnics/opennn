@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L 3 D   O P E R A T O R   S O U R C E
@@ -18,11 +18,11 @@
 namespace opennn
 {
 
-void Pool3dOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
-    TensorView& indices     = get_output(fp, layer, 1);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
+    TensorView& indices     = get_output(forward_propagation, layer, 1);
 
     if (method == Max)
         max_pooling_3d_forward(input, output, indices, is_training);
@@ -30,16 +30,16 @@ void Pool3dOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_t
         average_pooling_3d_forward(input, output);
 }
 
-void Pool3dOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void Pool3dOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& output_delta = get_output_delta(bp, layer);
-    TensorView& input_delta        = get_input_delta(bp, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
+    TensorView& input_delta        = get_input_delta(back_propagation, layer);
     if (input_delta.empty()) return;
 
     if (method == Max)
-        max_pooling_3d_backward(get_output(fp, layer, 1), output_delta, input_delta);
+        max_pooling_3d_backward(get_output(forward_propagation, layer, 1), output_delta, input_delta);
     else
-        average_pooling_3d_backward(get_input(fp, layer), output_delta, input_delta);
+        average_pooling_3d_backward(get_input(forward_propagation, layer), output_delta, input_delta);
 }
 
 }

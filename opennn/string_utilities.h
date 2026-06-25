@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S T R I N G S
@@ -32,9 +32,9 @@ namespace opennn
 
     string get_trimmed(const string&);
 
-    float parse_float(const string&, const string& context);
-    int   parse_int  (const string&, const string& context);
-    long  parse_long (const string&, const string& context);
+    float parse_float(const string&, const string&);
+    int   parse_int  (const string&, const string&);
+    long  parse_long (const string&, const string&);
 
     void replace(string&, const string&, const string&);
 
@@ -68,7 +68,7 @@ namespace opennn
         return buffer.str();
     }
 
-    void string_to_vector(const string& input, VectorR& values);
+    void string_to_vector(const string&, VectorR&);
 
     template <typename T, size_t Rank>
     string tensor_to_string(const TensorR<Rank>& values, const string& separator = " ")
@@ -99,5 +99,5 @@ namespace opennn
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

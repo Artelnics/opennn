@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "../opennn/yolo_dataset.h"
 
@@ -86,7 +86,7 @@ TEST(YoloInference, DecodeDetectionsSquareImageNoPadding)
 
 namespace {
 
-// Writes a post-DetectionOp box into `buffer` (shape [grid, grid, boxes_per_cell*(5+classes)]).
+// Writes a post-DetectionOperator box into `buffer` (shape [grid, grid, boxes_per_cell*(5+classes)]).
 // cx,cy,w,h are normalized image coords; class_probs is a 0/1 one-hot over `classes`.
 void plant_fpn_box(vector<float>& buffer,
                    Index grid, Index boxes_per_cell, Index classes,

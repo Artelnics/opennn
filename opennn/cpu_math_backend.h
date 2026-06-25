@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C P U   M A T H   B A C K E N D
@@ -25,10 +25,10 @@ bool mkl_fast_vml_enabled();
 
 bool try_activation_forward(TensorView&, ActivationFunction);
 
-bool try_linear_forward(const TensorView& input,
-                        const TensorView& weights,
-                        const TensorView& bias,
-                        TensorView& output,
-                        bool fuse_relu);
+bool try_linear_forward(const TensorView&,
+                        const TensorView&,
+                        const TensorView&,
+                        TensorView&,
+                        bool);
 
 }

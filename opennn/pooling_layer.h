@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   C L A S S   H E A D E R
@@ -55,7 +55,7 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
 
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
@@ -93,7 +93,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    PoolOp pool;
+    PoolOperator pool;
 
     enum Forward {Input, MaximalIndices, Output};
 
@@ -103,5 +103,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

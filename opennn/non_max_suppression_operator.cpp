@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N O N   M A X   S U P P R E S S I O N   O P E R A T O R   S O U R C E
@@ -44,15 +44,15 @@ float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
 }
 
 
-void NonMaxSuppressionOp::set(const Shape& input_shape,
+void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               Index new_boxes_per_cell,
                               float new_confidence_threshold,
                               float new_iou_threshold)
 {
     throw_if(input_shape.rank != 3,
-             "NonMaxSuppressionOp: input shape must be rank 3.");
+             "NonMaxSuppressionOperator: input shape must be rank 3.");
     throw_if(new_boxes_per_cell <= 0,
-             "NonMaxSuppressionOp: boxes_per_cell must be positive.");
+             "NonMaxSuppressionOperator: boxes_per_cell must be positive.");
 
     grid_size = input_shape[0];
     grid_width = input_shape[1];
@@ -62,17 +62,17 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
 
     const Index channels = input_shape[2];
     throw_if(channels % boxes_per_cell != 0,
-             "NonMaxSuppressionOp: channels must be divisible by boxes_per_cell.");
+             "NonMaxSuppressionOperator: channels must be divisible by boxes_per_cell.");
 
     classes_number = channels / boxes_per_cell - 5;
     throw_if(classes_number <= 0,
-             "NonMaxSuppressionOp: classes_number must be positive.");
+             "NonMaxSuppressionOperator: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
 
     if (is_training) return; // loss reads Detection output directly; NMS output not used during training
 
@@ -99,7 +99,7 @@ void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer
     apply(input, output);
 }
 
-void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) const
+void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C U D N N   F R O N T E N D   U T I L I T I E S   H E A D E R
@@ -8,7 +8,7 @@
 
 #pragma once
 
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
 
 #include <cudnn_frontend.h>
 
@@ -88,8 +88,8 @@ inline map<string, pair<double, long>>& graph_times()
 }
 
 template<typename TensorMap>
-inline void execute_graph(cudnn_frontend::graph::Graph& graph, TensorMap& tensors,
-                          void* workspace, const string& what, const string& timing_label)
+inline void execute_graph(cudnn_frontend::graph::Graph&, TensorMap&,
+                          void*, const string&, const string&)
 {
     if (timing_label.empty())
     {
@@ -136,7 +136,7 @@ bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
         body(*cache);
         return true;
     }
-    catch (const exception& e)
+    catch (const exception&)
     {
         cache->disabled = true;
         cerr << label << ": cudnn-frontend path unavailable (" << e.what()
@@ -160,7 +160,7 @@ inline shared_ptr<cudnn_frontend::graph::Graph> new_graph()
 }
 
 inline shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-nhwc_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
+nhwc_tensor(cudnn_frontend::graph::Graph&, const char*,
             int64_t n, int64_t c, int64_t h, int64_t w)
 {
     return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
@@ -169,7 +169,7 @@ nhwc_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
                         .set_stride(nhwc_strides(c, h, w)));
 }
 
-inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& tensor,
+inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>&,
                      int64_t n, int64_t c, int64_t h, int64_t w)
 {
     tensor->set_output(true)
@@ -177,10 +177,10 @@ inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>
            .set_stride(nhwc_strides(c, h, w));
 }
 
-// With request_autotune, every candidate plan is built so the first execution
-// can time them and keep the fastest (cudnn.benchmark=True equivalent);
+// With, every candidate plan is built so the first execution
+// can time them and keep the fastest (cudnn.benchmark=True);
 // returns whether that mode is active for this graph.
-inline bool finalize(cudnn_frontend::graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
+inline bool finalize(cudnn_frontend::graph::Graph&, int64_t&, const string&,
                      bool request_autotune = false)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
@@ -210,8 +210,8 @@ inline bool finalize(cudnn_frontend::graph::Graph& graph, int64_t& workspace_byt
 // throwaway max-size workspace, keeps the fastest, then allocates the
 // persistent workspace for the chosen plan only.
 template<typename TensorMap>
-inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
-                         TensorMap& tensors, int64_t& workspace_bytes)
+inline void autotune_now(bool&, cudnn_frontend::graph::Graph&,
+                         TensorMap&, int64_t&)
 {
     if (!pending) return;
     pending = false;
@@ -232,8 +232,8 @@ inline void autotune_now(bool& pending, cudnn_frontend::graph::Graph& graph,
 // norm): times the plans on throwaway buffers so repeated execution cannot
 // corrupt training data.
 template<typename TensorMap>
-inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& graph,
-                                  const TensorMap& tensors, int64_t& workspace_bytes)
+inline void autotune_with_scratch(bool&, cudnn_frontend::graph::Graph&,
+                                  const TensorMap&, int64_t&)
 {
     if (!pending) return;
 
@@ -262,5 +262,5 @@ inline void autotune_with_scratch(bool& pending, cudnn_frontend::graph::Graph& g
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

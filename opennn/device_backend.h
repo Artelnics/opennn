@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E V I C E   B A C K E N D
@@ -199,7 +199,7 @@ public:
 
     static Backend& instance();
     ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int num_threads);
+    void set_threads_number(int);
 
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
@@ -230,36 +230,36 @@ inline ThreadPoolDevice& get_device()
 
 struct TensorView;
 
-bfloat16* ensure_bf16_gradient_workspace(Index n_elements);
+bfloat16* ensure_bf16_gradient_workspace(Index);
 
-float* ensure_bf16_to_fp32_workspace(Index n_elements);
+float* ensure_bf16_to_fp32_workspace(Index);
 
-void* ensure_cudnn_conv_workspace(size_t min_bytes);
+void* ensure_cudnn_conv_workspace(size_t);
 
-const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
+const void* data_for_gemm_dtype(const TensorView&, Type);
 
-const void* bias_for_gemm_bf16(const TensorView& bias);
+const void* bias_for_gemm_bf16(const TensorView&);
 
 void run_lt_matmul_cached(
-    int m, int n, int k,
+    int, int, int,
     cublasOperation_t transA,
     cublasOperation_t transB,
     cublasLtEpilogue_t epilogue,
-    const void* a_data, const void* b_data, void* c_data,
-    const void* bias_pointer,
+    const void*, const void*, void*,
+    const void*,
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                               int m, int n, int k,
-                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
-                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
-                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
-                               int batch_count,
+                               int, int, int,
+                               const void*, cudaDataType_t Atype, int, long long stride_a,
+                               const void*, cudaDataType_t Btype, int, long long stride_b,
+                               void*, cudaDataType_t Ctype, int, long long stride_c,
+                               int,
                                float alpha = 1.0f, float beta = 0.0f);
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

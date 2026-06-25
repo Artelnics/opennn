@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N V O L U T I O N   O P E R A T O R   S O U R C E
@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifdef HAVE_CUDNN_FRONTEND
+#ifdef OPENNN_HAS_CUDA
 #include <cudnn_frontend.h>
 #endif
 
@@ -29,7 +29,7 @@ namespace opennn
 namespace
 {
 
-void configure_convolution_descriptors(ConvolutionOp& op)
+void configure_convolution_descriptors(ConvolutionOperator& op)
 {
     op.planned_batch_size = 0;
 
@@ -69,9 +69,9 @@ void configure_convolution_descriptors(ConvolutionOp& op)
 #endif
 
 
-struct ConvolutionOp::ConvGraphCache
+struct ConvolutionOperator::ConvGraphCache
 {
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
     struct Entry
     {
         shared_ptr<cudnn_frontend::graph::Graph> fwd, wgrad, bgrad, dgrad;
@@ -95,11 +95,11 @@ struct ConvolutionOp::ConvGraphCache
     bool disabled = false;
 };
 
-ConvolutionOp::ConvolutionOp() = default;
+ConvolutionOperator::ConvolutionOperator() = default;
 
-ConvolutionOp::~ConvolutionOp() = default;
+ConvolutionOperator::~ConvolutionOperator() = default;
 
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
 
 namespace cudnn_fe
 {
@@ -113,7 +113,7 @@ struct Dims
     int64_t row_stride, column_stride;
 };
 
-Dims make_dims(const ConvolutionOp& op, int64_t batch)
+Dims make_dims(const ConvolutionOperator& op, int64_t batch)
 {
     return {
         batch, op.kernel_channels, op.input_height, op.input_width,
@@ -149,7 +149,7 @@ krsc_tensor(cudnn_frontend::graph::Graph& graph, const char* name, const Dims& d
                         .set_stride(krsc_strides(d)));
 }
 
-void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
+void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d,
                    bool fuse_relu, bool use_bias)
 {
     auto graph = new_graph();
@@ -183,7 +183,7 @@ void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
     entry.fwd = graph;
 }
 
-void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d)
 {
     auto graph = new_graph();
 
@@ -200,7 +200,7 @@ void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
     entry.wgrad = graph;
 }
 
-void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d)
 {
     auto graph = new_graph();
 
@@ -217,7 +217,7 @@ void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
     entry.bgrad = graph;
 }
 
-void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& d)
 {
     auto graph = new_graph();
 
@@ -232,7 +232,7 @@ void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
     entry.dgrad = graph;
 }
 
-string timing_label(const ConvolutionOp& op, const char* kind)
+string timing_label(const ConvolutionOperator& op, const char* kind)
 {
     if (!graph_timing_enabled()) return {};
     return format("{} {}x{}x{} k{}x{}x{} s{}", kind,
@@ -245,7 +245,7 @@ string timing_label(const ConvolutionOp& op, const char* kind)
 #endif
 
 
-void ConvolutionOp::set(Index new_input_h, Index new_input_w,
+void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
                       Index new_row_stride, Index new_column_stride,
                       Index new_padding_h, Index new_padding_w,
@@ -268,7 +268,7 @@ void ConvolutionOp::set(Index new_input_h, Index new_input_w,
 #endif
 }
 
-vector<TensorSpec> ConvolutionOp::parameter_specs() const
+vector<TensorSpec> ConvolutionOperator::parameter_specs() const
 {
     // The bias is redundant under batch normalization (its beta absorbs it).
     if (!use_bias)
@@ -280,28 +280,28 @@ vector<TensorSpec> ConvolutionOp::parameter_specs() const
     };
 }
 
-void ConvolutionOp::link_parameters(span<const TensorView> views)
+void ConvolutionOperator::link_parameters(span<const TensorView> views)
 {
     if (views.empty()) return;
     bias    = use_bias ? views[0] : TensorView{};
     weights = views[use_bias ? 1 : 0];
 }
 
-void ConvolutionOp::link_gradients(span<const TensorView> views)
+void ConvolutionOperator::link_gradients(span<const TensorView> views)
 {
     if (views.empty()) return;
     bias_gradient   = use_bias ? views[0] : TensorView{};
     weight_gradient = views[use_bias ? 1 : 0];
 }
 
-void ConvolutionOp::set_parameters_random()
+void ConvolutionOperator::set_parameters_random()
 {
     if (weights.empty()) return;
     set_random_uniform(weights.as_vector());
     if (!bias.empty()) bias.setZero();
 }
 
-void ConvolutionOp::set_parameters_glorot()
+void ConvolutionOperator::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const Index kernel_area = kernel_height * kernel_width;
@@ -311,15 +311,15 @@ void ConvolutionOp::set_parameters_glorot()
 }
 
 
-void ConvolutionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
 
     apply(input, output);
 }
 
-void ConvolutionOp::apply_delta(const TensorView& input,
+void ConvolutionOperator::apply_delta(const TensorView& input,
                                 const TensorView& output_delta,
                                 TensorView& input_delta) const
 {
@@ -331,7 +331,7 @@ void ConvolutionOp::apply_delta(const TensorView& input,
     apply_delta_cpu(input, output_delta, input_delta);
 }
 
-void ConvolutionOp::apply(const TensorView& input, TensorView& output)
+void ConvolutionOperator::apply(const TensorView& input, TensorView& output)
 {
     if (input.is_cuda())
     {
@@ -341,12 +341,12 @@ void ConvolutionOp::apply(const TensorView& input, TensorView& output)
     apply_cpu(input, output);
 }
 
-void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& backward_slots = bp.backward_slots[layer];
+    auto& backward_slots = back_propagation.backward_slots[layer];
 
-    const TensorView& input        = get_input(fp, layer);
-    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& input        = get_input(forward_propagation, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
@@ -354,7 +354,7 @@ void ConvolutionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     apply_delta(input, output_delta, input_delta);
 }
 
-array<pair<Index, Index>, 4> ConvolutionOp::nhwc_padding() const
+array<pair<Index, Index>, 4> ConvolutionOperator::nhwc_padding() const
 {
     return {
         make_pair(Index(0), Index(0)),
@@ -364,7 +364,7 @@ array<pair<Index, Index>, 4> ConvolutionOp::nhwc_padding() const
     };
 }
 
-void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
+void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
 {
     const TensorMap4 inputs = input.as_tensor<4>();
     const VectorMap biases = use_bias ? bias.as_vector() : VectorMap(nullptr, 0);
@@ -407,7 +407,7 @@ void ConvolutionOp::apply_cpu(const TensorView& input, TensorView& output)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-void ConvolutionOp::apply_delta_cpu(const TensorView& input,
+void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
 {
@@ -478,7 +478,7 @@ void ConvolutionOp::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
+void ConvolutionOperator::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
     cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
@@ -529,13 +529,13 @@ void ConvolutionOp::plan_convolution_algorithms(const TensorView& input, const T
 }
 
 
-void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
+void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 {
     PROFILE_SCOPE("op:conv_fwd");
 
-#ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
-        && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOp", [&](ConvGraphCache& cache)
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_fp32() && cudnn_fe::frontend_enabled()
+        && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.fwd)
@@ -599,18 +599,18 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
                                    output.get_descriptor(), output.data));
 }
 
-void ConvolutionOp::apply_delta_gpu(const TensorView& input,
+void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
 {
     PROFILE_SCOPE("op:conv_bwd");
 
     assert(output_delta.type == input.type);
-    assert(weight_gradient.type == Type::FP32);
+    assert(weight_gradient.is_fp32());
 
-#ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
-        && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOp", [&](ConvGraphCache& cache)
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_fp32() && cudnn_fe::frontend_enabled()
+        && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         const cudnn_fe::Dims dims = cudnn_fe::make_dims(*this, input.shape[0]);
@@ -665,9 +665,9 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
     // The legacy algorithms are planned in the forward pass only when the
     // frontend path is not in use; plan here if this is the first legacy call.
     if (input.shape[0] > planned_batch_size)
-        const_cast<ConvolutionOp*>(this)->plan_convolution_algorithms(input, output_delta);
+        const_cast<ConvolutionOperator*>(this)->plan_convolution_algorithms(input, output_delta);
 
-    const bool bf16 = (input.type == Type::BF16);
+    const bool bf16 = (input.is_bf16());
 
     void* weight_gradient_buffer = weight_gradient.data;
     bfloat16* weight_gradient_bf16_workspace = nullptr;
@@ -729,8 +729,8 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOp::apply_gpu(const TensorView&, TensorView&)                                       { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
-void ConvolutionOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
+void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                       { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
+void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif
 

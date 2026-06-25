@@ -1,4 +1,4 @@
-#ifndef KERNEL_CUH
+﻿#ifndef KERNEL_CUH
 #define KERNEL_CUH
 
 #include <cstdint>
@@ -249,11 +249,11 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* activation_derivatives,
                                       T* delta);
 
-// YOLO DetectionOp
+// YOLO DetectionOperator
 
 // Apply sigmoid(xy), exp(wh)*anchor, sigmoid(obj), softmax|sigmoid(classes)
 // per box across the (batch, grid, grid, boxes_per_cell) tile.
-// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOp::ClassActivation).
+// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOperator::ClassActivation).
 // anchors layout: flat [aw0, ah0, aw1, ah1, ...] of length 2*boxes_per_cell.
 void detection_forward_cuda(const Index batch_size,
                             const Index grid_size,

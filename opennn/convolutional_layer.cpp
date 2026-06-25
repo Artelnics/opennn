@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N V O L U T I O N A L   L A Y E R   C L A S S
@@ -125,19 +125,36 @@ void Convolutional::update_convolution_operator()
         batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
     }
 
-    activation.input_slots  = {Output};
-    activation.output_slots = {Output};
+    activation_operator.input_slots  = {Output};
+    activation_operator.output_slots = {Output};
 
-    const bool relu = (activation.function == ActivationOp::Function::ReLU);
+    const bool relu = (activation_operator.activation_function == ActivationFunction::ReLU);
     const bool fuse_bn_relu = relu && batch_norm.active();
     const bool fuse_bn_add  = residual && batch_norm.active();
 
-    convolution.fused_activation  = (relu && !batch_norm.active()) ? activation.descriptor.handle : nullptr;
+    if (relu && !batch_norm.active())
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (!convolution.fused_activation)
+        {
+            CHECK_CUDNN(cudnnCreateActivationDescriptor(&convolution.fused_activation.handle));
+            convolution.fused_activation.deleter = &cudnnDestroyActivationDescriptor;
+        }
+        CHECK_CUDNN(cudnnSetActivationDescriptor(convolution.fused_activation,
+                                                 CUDNN_ACTIVATION_RELU,
+                                                 CUDNN_PROPAGATE_NAN,
+                                                 0.0));
+#endif
+    }
+    else
+    {
+        convolution.fused_activation.reset();
+    }
     batch_norm.fuse_relu          = fuse_bn_relu;
     batch_norm.fuse_add           = fuse_bn_add;
     batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;
-    activation.forward_fused      = relu;
-    activation.backward_fused     = fuse_bn_relu;
+    activation_operator.forward_fused      = relu;
+    activation_operator.backward_fused     = fuse_bn_relu;
 }
 
 void Convolutional::set(const Shape& new_input_shape,
@@ -189,10 +206,10 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_label(new_label);
 
-    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
-    throw_if(function == ActivationOp::Function::Softmax,
+    const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
+    throw_if(function == ActivationFunction::Softmax,
              "Softmax is not a valid activation for a convolutional layer.");
-    activation.set_function(function);
+    activation_operator.set_activation_function(function);
 
     batch_norm.features = new_batch_normalization ? kernels_number : 0;
 
@@ -240,12 +257,12 @@ void Convolutional::set_convolution_type(const string& new_convolution_type)
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
+    const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
 
-    throw_if(function == ActivationOp::Function::Softmax,
+    throw_if(function == ActivationFunction::Softmax,
              "Softmax is not a valid activation for a convolutional layer.");
 
-    activation.set_function(function);
+    activation_operator.set_activation_function(function);
     update_convolution_operator();
 }
 

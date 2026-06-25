@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E G I S T R Y   C L A S S   H E A D E R
@@ -33,12 +33,12 @@ public:
         return registry;
     }
 
-    void register_component(const std::string& name, Creator creator)
+    void register_component(const std::string&, Creator)
     {
         creators[name] = std::move(creator);
     }
 
-    std::unique_ptr<T> create(const std::string& name) const
+    std::unique_ptr<T> create(const std::string&) const
     {
         auto it = creators.find(name);
 
@@ -79,5 +79,5 @@ void register_classes();
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
 #include "../opennn/tensor_types.h"
@@ -11,9 +11,9 @@
 using namespace opennn;
 
 
-TEST(BatchNormOperatorTest, DefaultIsInactive)
+TEST(BatchNormOperatoreratorTest, DefaultIsInactive)
 {
-    BatchNormOp batch_norm;
+    BatchNormOperator batch_norm;
 
     EXPECT_FALSE(batch_norm.active());
     EXPECT_EQ(batch_norm.features, 0);
@@ -22,9 +22,9 @@ TEST(BatchNormOperatorTest, DefaultIsInactive)
 }
 
 
-TEST(BatchNormOperatorTest, SetActivatesAndStoresMomentum)
+TEST(BatchNormOperatoreratorTest, SetActivatesAndStoresMomentum)
 {
-    BatchNormOp batch_norm;
+    BatchNormOperator batch_norm;
     batch_norm.set(7, 0.25f);
 
     EXPECT_TRUE(batch_norm.active());
@@ -33,20 +33,20 @@ TEST(BatchNormOperatorTest, SetActivatesAndStoresMomentum)
 }
 
 
-TEST(BatchNormOperatorTest, SetRejectsInvalidMomentum)
+TEST(BatchNormOperatoreratorTest, SetRejectsInvalidMomentum)
 {
-    BatchNormOp batch_norm;
+    BatchNormOperator batch_norm;
 
     EXPECT_ANY_THROW(batch_norm.set(4, 1.0f));
     EXPECT_ANY_THROW(batch_norm.set(4, -0.1f));
 }
 
 
-TEST(BatchNormOperatorTest, ParameterAndStateSpecsMatchFeatures)
+TEST(BatchNormOperatoreratorTest, ParameterAndStateSpecsMatchFeatures)
 {
     const Index features = 5;
 
-    BatchNormOp batch_norm;
+    BatchNormOperator batch_norm;
     batch_norm.set(features);
 
     const vector<TensorSpec> parameter_specs = batch_norm.parameter_specs();
@@ -64,7 +64,7 @@ TEST(BatchNormOperatorTest, ParameterAndStateSpecsMatchFeatures)
 }
 
 
-TEST(BatchNormOperatorTest, LinkAndInitDefaults)
+TEST(BatchNormOperatoreratorTest, LinkAndInitDefaults)
 {
     const Index features = 4;
 
@@ -78,7 +78,7 @@ TEST(BatchNormOperatorTest, LinkAndInitDefaults)
     running_mean_storage.setConstant(7.0f);
     running_variance_storage.setConstant(5.0f);
 
-    BatchNormOp batch_norm;
+    BatchNormOperator batch_norm;
     batch_norm.set(features);
 
     vector<TensorView> parameter_views = {
@@ -103,7 +103,7 @@ TEST(BatchNormOperatorTest, LinkAndInitDefaults)
 }
 
 
-TEST(BatchNormOperatorTest, DenseEnablesBatchNormalization)
+TEST(BatchNormOperatoreratorTest, DenseEnablesBatchNormalization)
 {
     opennn::Dense dense({6}, {4}, "Identity", true);
 
@@ -111,7 +111,7 @@ TEST(BatchNormOperatorTest, DenseEnablesBatchNormalization)
 }
 
 
-TEST(BatchNormOperatorTest, DenseDisabledByDefault)
+TEST(BatchNormOperatoreratorTest, DenseDisabledByDefault)
 {
     opennn::Dense dense({6}, {4}, "Identity");
 
@@ -119,7 +119,7 @@ TEST(BatchNormOperatorTest, DenseDisabledByDefault)
 }
 
 
-TEST(BatchNormOperatorTest, ForwardTrainingNormalizesPerFeature)
+TEST(BatchNormOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 {
     const Index batch_size = 32;
     const Index inputs_number = 5;
@@ -157,7 +157,7 @@ TEST(BatchNormOperatorTest, ForwardTrainingNormalizesPerFeature)
 }
 
 
-TEST(BatchNormOperatorTest, ForwardInferenceUsesRunningStatistics)
+TEST(BatchNormOperatoreratorTest, ForwardInferenceUsesRunningStatistics)
 {
     const Index batch_size = 8;
     const Index inputs_number = 4;
@@ -186,7 +186,7 @@ TEST(BatchNormOperatorTest, ForwardInferenceUsesRunningStatistics)
 }
 
 
-TEST(BatchNormOperatorTest, InferenceIsDeterministicAcrossRows)
+TEST(BatchNormOperatoreratorTest, InferenceIsDeterministicAcrossRows)
 {
     const Index batch_size = 5;
     const Index inputs_number = 4;
@@ -215,7 +215,7 @@ TEST(BatchNormOperatorTest, InferenceIsDeterministicAcrossRows)
 }
 
 
-TEST(BatchNormOperatorTest, GradientMatchesFiniteDifferences)
+TEST(BatchNormOperatoreratorTest, GradientMatchesFiniteDifferences)
 {
     const Index samples_number = 16;
     const Index inputs_number = 4;

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S   H E A D E R
@@ -116,19 +116,19 @@ public:
     bool back_propagate_device_metrics(const Batch&,
                                        ForwardPropagation&,
                                        BackPropagation&,
-                                       float* error_sum_device,
-                                       float* accuracy_sum_device) const;
+                                       float*,
+                                       float*) const;
 
     bool calculate_error_device_metrics(const Batch&,
                                         const ForwardPropagation&,
-                                        float* error_sum_device,
-                                        float* accuracy_sum_device) const;
+                                        float*,
+                                        float*) const;
 
     float calculate_regularization(const VectorR&) const;
     float calculate_regularization(const TensorView&) const;
 
     void add_regularization_gradient(BackPropagation&) const;
-    void add_regularization_gradient(const TensorView& gradient) const;
+    void add_regularization_gradient(const TensorView&) const;
 
     void from_JSON(const JsonDocument&);
 
@@ -216,5 +216,5 @@ float yolo_loss_expected_value_check_cpu();
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

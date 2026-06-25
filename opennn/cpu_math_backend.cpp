@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C P U   M A T H   B A C K E N D
@@ -67,7 +67,7 @@ static void add_bias(TensorView& output, const TensorView& bias, Index rows, Ind
 
 bool try_activation_forward(TensorView& output, ActivationFunction function)
 {
-    if (function != ActivationFunction::Tanh || output.type != Type::FP32) return false;
+    if (function != ActivationFunction::Tanh || !output.is_fp32()) return false;
 
     float* values = output.as<float>();
     const int size = to_int(output.size());
@@ -86,10 +86,10 @@ bool try_linear_forward(const TensorView& input,
                         TensorView& output,
                         bool fuse_relu)
 {
-    if (input.type != Type::FP32
-        || weights.type != Type::FP32
-        || bias.type != Type::FP32
-        || output.type != Type::FP32
+    if (!input.is_fp32()
+        || !weights.is_fp32()
+        || !bias.is_fp32()
+        || !output.is_fp32()
         || input.shape.rank == 0
         || weights.shape.rank != 2
         || bias.shape.rank != 1)

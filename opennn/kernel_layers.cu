@@ -1,4 +1,4 @@
-#include "kernel_common.cuh"
+﻿#include "kernel_common.cuh"
 #include <curand_kernel.h>
 
 template<typename TIn, typename TOut>
@@ -1442,9 +1442,9 @@ template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const
 
 
 // -----------------------------------------------------------------------------
-// YOLO DetectionOp
+// YOLO DetectionOperator
 // -----------------------------------------------------------------------------
-// CPU reference: operators.cpp:DetectionOp::apply / apply_delta.
+// CPU reference: operators.cpp:DetectionOperator::apply / apply_delta.
 // Thread layout: one thread per box. Tile = (batch, grid, grid, boxes_per_cell);
 // each thread owns a contiguous span of (5 + classes_number) floats in NHWC
 // layout (channels-last), matching the CPU loop's `base` index arithmetic.

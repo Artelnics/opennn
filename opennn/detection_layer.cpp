@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E T E C T I O N   L A Y E R   C L A S S
@@ -17,9 +17,9 @@ namespace opennn
 namespace
 {
 
-const EnumMap<DetectionOp::ClassActivation>& class_activation_map()
+const EnumMap<DetectionOperator::ClassActivation>& class_activation_map()
 {
-    using ClassActivation = DetectionOp::ClassActivation;
+    using ClassActivation = DetectionOperator::ClassActivation;
     static const vector<EnumMap<ClassActivation>::Entry> entries = {
         {ClassActivation::Softmax, "Softmax"},
         {ClassActivation::Sigmoid, "Sigmoid"}

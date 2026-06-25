@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -141,9 +141,9 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
+static MatrixR activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     switch (activation_function)
     {
     case Identity:

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R
@@ -73,8 +73,8 @@ void LongShortTermMemory::configure_operators()
 
     lstm_op.return_sequences = return_sequences;
 
-    using enum LongShortTermMemoryOp::ForwardSlot;
-    using enum LongShortTermMemoryOp::BackwardSlot;
+    using enum LongShortTermMemoryOperator::ForwardSlot;
+    using enum LongShortTermMemoryOperator::BackwardSlot;
 
     lstm_op.input_slots = {InputSlot};
     lstm_op.output_slots = {
@@ -141,9 +141,9 @@ void LongShortTermMemory::set_output_shape(const Shape& new_output_shape)
 
 void LongShortTermMemory::set_activation_function(const string& new_activation_function)
 {
-    const ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
+    const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
 
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
              format("LongShortTermMemory: unsupported activation function \"{}\".", new_activation_function));
 
@@ -152,9 +152,9 @@ void LongShortTermMemory::set_activation_function(const string& new_activation_f
 
 void LongShortTermMemory::set_recurrent_activation_function(const string& new_recurrent_activation_function)
 {
-    const ActivationOp::Function function = ActivationOp::from_string(new_recurrent_activation_function);
+    const ActivationFunction function = ActivationOperator::from_string(new_recurrent_activation_function);
 
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
              format("LongShortTermMemory: unsupported recurrent activation function \"{}\".",
                     new_recurrent_activation_function));
@@ -171,8 +171,8 @@ void LongShortTermMemory::read_JSON_body(const Json* lstm_layer_element)
 
 void LongShortTermMemory::write_JSON_body(JsonWriter& printer) const
 {
-    add_json_field(printer, "Activation", ActivationOp::to_string(lstm_op.activation_function));
-    add_json_field(printer, "RecurrentActivation", ActivationOp::to_string(lstm_op.recurrent_activation_function));
+    add_json_field(printer, "Activation", ActivationOperator::to_string(lstm_op.activation_function));
+    add_json_field(printer, "RecurrentActivation", ActivationOperator::to_string(lstm_op.recurrent_activation_function));
 }
 
 string LongShortTermMemory::write_expression(const vector<string>& feature_names,
@@ -197,8 +197,8 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
     MatrixMap Ug = parameters[10].as_matrix();
     MatrixMap Uo = parameters[11].as_matrix();
 
-    const string act = ActivationOp::to_string(lstm_op.activation_function);
-    const string ract = ActivationOp::to_string(lstm_op.recurrent_activation_function);
+    const string act = ActivationOperator::to_string(lstm_op.activation_function);
+    const string ract = ActivationOperator::to_string(lstm_op.recurrent_activation_function);
 
     const Index T = get_time_steps();
     const Index F = get_input_features();

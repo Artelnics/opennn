@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A C T I V A T I O N   O P E R A T O R   H E A D E R
@@ -13,38 +13,31 @@
 namespace opennn
 {
 
-struct ActivationOp : Operator
+struct ActivationOperator : Operator
 {
-    using Function = ActivationFunction;
+    static const EnumMap<ActivationFunction>& map() { return activation_function_map(); }
+    static ActivationFunction from_string(const string& name) { return activation_function_from_string(name); }
+    static const string& to_string(ActivationFunction function) { return activation_function_to_string(function); }
 
-    static const EnumMap<Function>& map() { return activation_function_map(); }
-    static Function from_string(const string& name) { return activation_function_from_string(name); }
-    static const string& to_string(Function function) { return activation_function_to_string(function); }
-    static cudnnActivationMode_t to_cudnn_mode(Function function);
+    ActivationFunction activation_function = ActivationFunction::Identity;
 
-    Function function = Function::Identity;
-
-    CudnnDescriptor<cudnnActivationDescriptor_t> descriptor;
-
-    vector<size_t> output_slots_backward;
+    size_t save_slot = SIZE_MAX;
 
     bool forward_fused = false;
     bool backward_fused = false;
 
-    void set_function(Function new_function);
-    void set_function(const string& name);
+    void set_activation_function(ActivationFunction);
+    void set_activation_function(const string&);
 
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void apply_delta(const TensorView& outputs, TensorView& delta) const;
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
 
-    void to_JSON(JsonWriter& w) const override;
-    void from_JSON(const Json* parent) override;
-
-    ActivationOp() = default;
-    ActivationOp(const ActivationOp&) = delete;
-    ActivationOp& operator=(const ActivationOp&) = delete;
+    ActivationOperator() = default;
+    ActivationOperator(const ActivationOperator&) = delete;
+    ActivationOperator& operator=(const ActivationOperator&) = delete;
 };
 
 }

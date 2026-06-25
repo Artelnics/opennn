@@ -1044,10 +1044,8 @@ void Optimizer::sync_device(bool on_gpu)
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
 {
-    if (max_norm <= 0.0f) return;
-
     const Index gradient_size = gradient.size_in_floats();
-    if (gradient_size <= 0) return;
+    if (max_norm <= 0.0f || gradient_size <= 0) return;
 
     if (gradient.device_type == Device::CUDA)
     {

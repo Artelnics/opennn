@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   S O U R C E
@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number,
+void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)
 {
     input_features = new_input_features;
@@ -27,12 +27,12 @@ void MultiHeadProjectionOp::set(Index new_input_features, Index new_heads_number
     combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
 }
 
-void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
-    auto& forward_slots = fp.forward_slots[layer];
-    const auto& input_views = get_inputs(fp, layer);
+    auto& forward_slots = forward_propagation.forward_slots[layer];
+    const auto& input_views = get_inputs(forward_propagation, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
-    TensorView& head_output = get_output(fp, layer);
+    TensorView& head_output = get_output(forward_propagation, layer);
 
     const Index batch_size     = input.shape[0];
     const Index seq_len        = input.shape[1];
@@ -49,16 +49,16 @@ void MultiHeadProjectionOp::forward_propagate(ForwardPropagation& fp, size_t lay
     split_heads(scratch_4d, head_output);
 }
 
-void MultiHeadProjectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = fp.forward_slots[layer];
-    auto& backward_slots = bp.backward_slots[layer];
+    auto& forward_slots = forward_propagation.forward_slots[layer];
+    auto& backward_slots = back_propagation.backward_slots[layer];
 
-    const auto& input_views = get_inputs(fp, layer);
+    const auto& input_views = get_inputs(forward_propagation, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
     const bool self_attention = (input_views.size() == 1);
 
-    const TensorView& head_delta = get_output_delta(bp, layer);
+    const TensorView& head_delta = get_output_delta(back_propagation, layer);
 
     const Index batch_size     = input.shape[0];
     const Index seq_len        = input.shape[1];

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
 #include "../opennn/tensor_types.h"
@@ -23,7 +23,7 @@ TEST(Dense2dTest, GeneralConstructor)
 {
     opennn::Dense dense_layer({10}, {3}, "Identity");
 
-    EXPECT_EQ(dense_layer.get_activation_function(), ActivationOp::Function::Identity);
+    EXPECT_EQ(dense_layer.get_activation_function(), ActivationFunction::Identity);
 
     EXPECT_EQ(dense_layer.get_input_shape()[0], 10);
     EXPECT_EQ(dense_layer.get_output_shape()[0], 3);
@@ -105,7 +105,7 @@ TEST(Dense3dTest, GeneralConstructor)
 
     opennn::Dense dense_layer({sequence_length, input_embedding}, {output_embedding}, "Identity");
 
-    EXPECT_EQ(dense_layer.get_activation_function(), ActivationOp::Function::Identity);
+    EXPECT_EQ(dense_layer.get_activation_function(), ActivationFunction::Identity);
 
     EXPECT_EQ(dense_layer.get_input_shape()[0], sequence_length);
     EXPECT_EQ(dense_layer.get_input_shape()[1], input_embedding);

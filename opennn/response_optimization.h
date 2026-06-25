@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E S P O N S E   O P T I M I Z A T I O N   C L A S S   H E A D E R
@@ -50,23 +50,23 @@ public:
         Domain() = default;
         virtual ~Domain() = default;
 
-        Domain(const vector<Variable>& variables,
-               const vector<Descriptives>& descriptives,
+        Domain(const vector<Variable>&,
+               const vector<Descriptives>&,
                const float deformation_domain_factor = 1.0f)
         {
             set(variables, descriptives, deformation_domain_factor);
         }
 
-        void set(const vector<Variable>& variables,
-                 const vector<Descriptives>& descriptives,
+        void set(const vector<Variable>&,
+                 const vector<Descriptives>&,
                  const float deformation_domain_factor = 1.0f);
 
-        void bound(const vector<Variable>& variables, const vector<UnivariateConstraint>& constraints);
+        void bound(const vector<Variable>&, const vector<UnivariateConstraint>&);
 
-        void reshape(const float zoom_factor,
-                     const VectorR& center,
-                     const MatrixR& points_inputs,
-                     const vector<Variable>& vars);
+        void reshape(const float,
+                     const VectorR&,
+                     const MatrixR&,
+                     const vector<Variable>&);
 
         VectorR inferior_frontier;
         VectorR superior_frontier;
@@ -74,7 +74,7 @@ public:
 
     struct Objectives
     {
-        Objectives(const ResponseOptimization& response_optimization);
+        Objectives(const ResponseOptimization&);
 
         MatrixR source_and_column;
 
@@ -82,11 +82,11 @@ public:
 
         MatrixR scale_and_offset;
 
-        MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
+        MatrixR extract(const MatrixR&, const MatrixR&) const;
 
-        void normalize(MatrixR& objective_matrix) const;
+        void normalize(MatrixR&) const;
 
-        bool update_utopian_from_points(const MatrixR& unnormalized_objective_values);
+        bool update_utopian_from_points(const MatrixR&);
     };
 
     ResponseOptimization(NeuralNetwork* = nullptr);
@@ -96,60 +96,60 @@ public:
     void set(NeuralNetwork* = nullptr);
 
     void clear_constraints();
-    void clear_constraints(const string& name);
+    void clear_constraints(const string&);
 
     void clear_objectives();
-    void clear_objectives(const string& name);
+    void clear_objectives(const string&);
 
     void clear_time_roles();
-    void clear_time_roles(const string& name);
+    void clear_time_roles(const string&);
 
-    void set_constraint(const string& name, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
+    void set_constraint(const string&, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
 
-    void set_constraint(const string& name, const vector<float>& allowed_values);
+    void set_constraint(const string&, const vector<float>&);
 
-    void set_cardinality_constraint(const vector<string>& variable_names, Index k);
+    void set_cardinality_constraint(const vector<string>&, Index);
     void clear_cardinality_constraints();
 
-    void set_objective(const string& name, const Sense sense);
+    void set_objective(const string&, const Sense);
 
-    void set_time_role(const string& name, const TimeType role);
+    void set_time_role(const string&, const TimeType);
 
-    void set_formula_constraint(const string& expression,
-                                ComparisonOperator comparison,
+    void set_formula_constraint(const string&,
+                                ComparisonOperator,
                                 float low = 0.0f, float up = 0.0f);
 
-    void set_formula_constraint(function<float(const VectorR&, const VectorR&)> callback,
-                                ComparisonOperator comparison,
+    void set_formula_constraint(function<float(const VectorR&, const VectorR&)>,
+                                ComparisonOperator,
                                 float low = 0.0f, float up = 0.0f);
 
-    void set_formula_constraint(const string& expression, const vector<float>& allowed_values);
+    void set_formula_constraint(const string&, const vector<float>&);
 
     void clear_formula_constraints();
 
-    void set_min_feasible_ratio(float new_ratio);
-    void set_max_oversample_factor(Index new_factor);
-    void set_exploration_ratio(float new_ratio);
+    void set_min_feasible_ratio(float);
+    void set_max_oversample_factor(Index);
+    void set_exploration_ratio(float);
 
-    void set_fixed_history(const Tensor3& history);
+    void set_fixed_history(const Tensor3&);
     void clear_fixed_history();
 
-    void set_iterations(const int iterations);
-    void set_zoom_factor(float new_zoom_factor);
-    void set_evaluations_number(const int new_evaluations_number);
-    void set_relative_tolerance(float new_relative_tolerance);
-    void set_max_pareto_number(const Index new_max_pareto_number);
-    void set_max_total_evaluations(const Index new_max_total_evaluations);
-    void set_initial_sampling_factor(const Index new_initial_sampling_factor);
+    void set_iterations(const int);
+    void set_zoom_factor(float);
+    void set_evaluations_number(const int);
+    void set_relative_tolerance(float);
+    void set_max_pareto_number(const Index);
+    void set_max_total_evaluations(const Index);
+    void set_initial_sampling_factor(const Index);
 
-    void set_branch_mode(const BranchMode new_branch_mode);
+    void set_branch_mode(const BranchMode);
 
-    void set_deformation_domain_factor(float new_deformation_domain_factor);
+    void set_deformation_domain_factor(float);
     float get_deformation_domain_factor();
 
-    vector<Descriptives> get_descriptives(const string& role) const;
+    vector<Descriptives> get_descriptives(const string&) const;
 
-    const pair<vector<Variable>, vector<Descriptives>>& get_variables_and_descriptives(const string& role) const;
+    const pair<vector<Variable>, vector<Descriptives>>& get_variables_and_descriptives(const string&) const;
 
     vector<float> get_utopian_point() const;
 
@@ -157,50 +157,50 @@ public:
 
     const vector<CardinalityConstraint>& get_cardinality_constraints() const { return constraint_set.cardinality; }
 
-    pair<Index, VectorR> get_advised_point(const MatrixR& pareto_front,
+    pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
 
     Domain get_original_domain(const string role) const;
 
-    MatrixR calculate_random_inputs(const Domain& input_domain, Index evaluations_count = -1) const;
+    MatrixR calculate_random_inputs(const Domain&, Index evaluations_count = -1) const;
 
-    Lattice build_input_lattice(const vector<Variable>& variables,
-                                const vector<Index>& feature_dimensions,
-                                const Domain& input_domain,
-                                map<string, Index>& scalar_column_of) const;
+    Lattice build_input_lattice(const vector<Variable>&,
+                                const vector<Index>&,
+                                const Domain&,
+                                map<string, Index>&) const;
 
-    vector<vector<Index>> resolve_cardinality_columns(const Domain& input_domain,
-                                                      const map<string, Index>& scalar_column_of,
-                                                      const vector<char>& fixed_mask,
-                                                      float discrete_explore,
-                                                      MatrixR& random_inputs) const;
+    vector<vector<Index>> resolve_cardinality_columns(const Domain&,
+                                                      const map<string, Index>&,
+                                                      const vector<char>&,
+                                                      float,
+                                                      MatrixR&) const;
 
-    Tensor3 combine_input(const MatrixR& present_random_values) const;
+    Tensor3 combine_input(const MatrixR&) const;
 
-    MatrixR calculate_outputs(const MatrixR& input) const;
+    MatrixR calculate_outputs(const MatrixR&) const;
 
-    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
-                                                                const MatrixR& outputs,
-                                                                const Domain& output_domain) const;
+    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR&,
+                                                                const MatrixR&,
+                                                                const Domain&) const;
 
-    pair<MatrixR, MatrixR> sample_feasible_points(const Domain& input_domain,
-                                                                const Domain& output_domain,
+    pair<MatrixR, MatrixR> sample_feasible_points(const Domain&,
+                                                                const Domain&,
                                                                 const Index evaluations_multiplier = 1) const;
 
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
-                                                                  const MatrixR& feasible_outputs,
-                                                                  const Objectives& objectives) const;
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&,
+                                                                  const MatrixR&,
+                                                                  const Objectives&) const;
 
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
-                                                                  const MatrixR& feasible_outputs,
-                                                                  const Objectives& objectives,
-                                                                  const MatrixR& normalized_objective_matrix) const;
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&,
+                                                                  const MatrixR&,
+                                                                  const Objectives&,
+                                                                  const MatrixR&) const;
 
-    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
+    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR&, const MatrixR&, const MatrixR&) const;
 
-    pair<float, float> calculate_quality_metrics(const MatrixR& inputs,
-                                                               const MatrixR& outputs,
-                                                               const Objectives& objectives) const;
+    pair<float, float> calculate_quality_metrics(const MatrixR&,
+                                                               const MatrixR&,
+                                                               const Objectives&) const;
 
     MatrixR perform_single_objective_optimization() const;
 
@@ -214,31 +214,31 @@ public:
 
     Index get_evaluations_used() const;
 
-    vector<NamedColumn> build_input_columns(const vector<Variable>& variables) const;
-    vector<NamedColumn> build_output_columns(const vector<Variable>& variables) const;
+    vector<NamedColumn> build_input_columns(const vector<Variable>&) const;
+    vector<NamedColumn> build_output_columns(const vector<Variable>&) const;
 
-    UnivariateConstraint get_constraint(const string& name) const;
-    bool is_objective(const string& name) const;
-    Sense get_sense(const string& name) const;
-    bool is_history(const string& name) const;
-    static bool is_past(const TimeType role);
+    UnivariateConstraint get_constraint(const string&) const;
+    bool is_objective(const string&) const;
+    Sense get_sense(const string&) const;
+    bool is_history(const string&) const;
+    static bool is_past(const TimeType);
 
     bool is_forecasting() const { return fixed_history.size() > 0; }
 
-    bool row_satisfies_formula_constraints(const VectorR& input_row,
-                                                         const VectorR& output_row) const;
+    bool row_satisfies_formula_constraints(const VectorR&,
+                                                         const VectorR&) const;
 
-    pair<MatrixR, MatrixR> generate_feasible_points(const Domain& input_domain,
-                                                                  const Domain& output_domain,
-                                                                  Index evaluations_count) const;
+    pair<MatrixR, MatrixR> generate_feasible_points(const Domain&,
+                                                                  const Domain&,
+                                                                  Index) const;
 
     void initialize_network_differential() const;
 
-    void restore_cardinality_columns(Domain& domain, const Domain& original) const;
+    void restore_cardinality_columns(Domain&, const Domain&) const;
 
     void promote_single_variable_constraints();
 
-    vector<char> discrete_column_mask(const vector<Variable>& variables) const;
+    vector<char> discrete_column_mask(const vector<Variable>&) const;
 
 private:
 
@@ -286,5 +286,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S   H E A D E R
@@ -47,14 +47,14 @@ public:
         return collect_layer_specs([](const Layer& layer) { return layer.get_state_specs(); });
     }
 
-    vector<vector<TensorSpec>> get_forward_specs(Index batch_size) const
+    vector<vector<TensorSpec>> get_forward_specs(Index) const
     {
         auto specs = collect_layer_specs([batch_size](const Layer& layer) { return layer.get_forward_specs(batch_size); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
 
-    vector<vector<TensorSpec>> get_backward_specs(Index batch_size) const
+    vector<vector<TensorSpec>> get_backward_specs(Index) const
     {
         auto specs = collect_layer_specs([batch_size](const Layer& layer) { return layer.get_backward_specs(batch_size); });
         if (!is_gpu()) force_specs_to_fp32(specs);
@@ -97,8 +97,8 @@ public:
     const Layer* get_first(const string&) const;
     const Layer* get_first(LayerType) const;
 
-    void set_source_layers(const vector<vector<Index>>& new_source_layers);
-    void set_source_layers(const Index layer_index, const vector<Index>& new_sources);
+    void set_source_layers(const vector<vector<Index>>&);
+    void set_source_layers(const Index, const vector<Index>&);
 
     void set_source_layers(const string&, const vector<string>&);
     void set_source_layers(const string&, initializer_list<string>);
@@ -129,8 +129,8 @@ public:
     ActivationFunction get_output_activation() const;
     Index get_parameters_number() const;
 
-    void set_parameters(const VectorR& new_parameters);
-    void set_states(const VectorR& new_states);
+    void set_parameters(const VectorR&);
+    void set_states(const VectorR&);
     void set_parameters_random();
     void set_parameters_glorot();
     void link_parameters();
@@ -141,10 +141,10 @@ public:
     // Device-resident inference: input already on GPU, caller-owned persistent
     // ForwardPropagation (activations allocated once), parameters uploaded only
     // when upload_parameters=true (skip on repeat calls with unchanged weights).
-    // Output is left on the GPU; returns its TensorView (no D2H copy). This is
+    // Output is left on the GPU; returns its TensorView (no D2H). This is
     // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
-    TensorView calculate_outputs_resident(const vector<TensorView>& gpu_inputs,
-                                          ForwardPropagation& forward_propagation,
+    TensorView calculate_outputs_resident(const vector<TensorView>&,
+                                          ForwardPropagation&,
                                           bool upload_parameters = true);
 
     MatrixR calculate_outputs(const MatrixR&);
@@ -178,9 +178,9 @@ public:
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool is_training,
-                          Index first_layer_index,
-                          Index last_layer_index) const;
+                          bool,
+                          Index,
+                          Index) const;
 
     void forward_propagate(const vector<TensorView>&,
                           const VectorR&,
@@ -257,5 +257,5 @@ protected:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

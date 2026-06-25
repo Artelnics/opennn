@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   S O U R C E
@@ -362,7 +362,7 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         return;
     case LeakyReLU:
         // Negative-side output is slope * pre-activation, so sign(y) == sign(x)
-        // for any positive slope — we can recover the gate from y alone.
+        // for any positive slope â€” we can recover the gate from y alone.
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
     }
@@ -1280,7 +1280,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
     // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
     // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
-    const void* bias_for_gemm = (bias.data && output.type == Type::BF16 && bias.type == Type::FP32)
+    const void* bias_for_gemm = (bias.data && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
         : bias.data;
 
@@ -1295,7 +1295,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     }
     catch (const runtime_error& e)
     {
-        const bool unsupported_bf16_lt = output.type == Type::BF16
+        const bool unsupported_bf16_lt = output.is_bf16()
                                       && (epilogue == CUBLASLT_EPILOGUE_BIAS
                                           || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
                                       && string(e.what()).find("CuBLAS Error: 15") != string::npos;
@@ -1322,7 +1322,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
 
         linear_forward_cpu(input_cpu, weights_cpu, bias_cpu, output_cpu, epilogue);
 
-        if (output.type == Type::FP32)
+        if (output.is_fp32())
         {
             device::copy_async(output.data,
                                output_host.data(),

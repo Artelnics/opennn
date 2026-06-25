@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O M B I N A T I O N   O P E R A T O R   S O U R C E
@@ -19,14 +19,14 @@
 namespace opennn
 {
 
-void CombinationOp::set(Index new_input_features, Index new_output_features, Type new_weight_type)
+void CombinationOperator::set(Index new_input_features, Index new_output_features, Type new_weight_type)
 {
     input_features  = new_input_features;
     output_features = new_output_features;
     weight_type     = new_weight_type;
 }
 
-vector<TensorSpec> CombinationOp::parameter_specs() const
+vector<TensorSpec> CombinationOperator::parameter_specs() const
 {
     return {
         {{output_features},                  weight_type},
@@ -34,28 +34,28 @@ vector<TensorSpec> CombinationOp::parameter_specs() const
     };
 }
 
-void CombinationOp::link_parameters(span<const TensorView> views)
+void CombinationOperator::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias    = views[0];
     weights = views[1];
 }
 
-void CombinationOp::link_gradients(span<const TensorView> views)
+void CombinationOperator::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     bias_gradient   = views[0];
     weight_gradient = views[1];
 }
 
-void CombinationOp::set_parameters_random()
+void CombinationOperator::set_parameters_random()
 {
     if (weights.empty()) return;
     set_random_uniform(weights.as_vector());
     if (!bias.empty()) bias.setZero();
 }
 
-void CombinationOp::set_parameters_glorot()
+void CombinationOperator::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const float limit = glorot_limit(input_features, output_features);
@@ -63,19 +63,19 @@ void CombinationOp::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-void CombinationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:combination_fwd");
-    apply(get_input(fp, layer), get_output(fp, layer),
+    apply(get_input(forward_propagation, layer), get_output(forward_propagation, layer),
           fuse_relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
 
-void CombinationOp::apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
+void CombinationOperator::apply(const TensorView& input, TensorView& output, cublasLtEpilogue_t epilogue)
 {
     linear_forward(input, weights, bias, output, epilogue);
 }
 
-void CombinationOp::apply_delta(const TensorView& output_delta,
+void CombinationOperator::apply_delta(const TensorView& output_delta,
                               const TensorView& input,
                               TensorView& input_delta,
                               bool accumulate_input_delta) const
@@ -84,13 +84,13 @@ void CombinationOp::apply_delta(const TensorView& output_delta,
                     input_delta, accumulate_input_delta);
 }
 
-void CombinationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
     PROFILE_SCOPE("op:combination_bwd");
-    auto& backward_slots = bp.backward_slots[layer];
+    auto& backward_slots = back_propagation.backward_slots[layer];
 
-    const TensorView& input        = get_input(fp, layer);
-    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& input        = get_input(forward_propagation, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);

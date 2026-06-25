@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   U P S A M P L E   O P E R A T O R   S O U R C E
@@ -21,7 +21,7 @@
 namespace opennn
 {
 
-void UpsampleOp::set(Index in_h, Index in_w, Index ch, Index scale)
+void UpsampleOperator::set(Index in_h, Index in_w, Index ch, Index scale)
 {
     throw_if(scale < 1,
              "Upsample: scale_factor must be >= 1.");
@@ -31,10 +31,10 @@ void UpsampleOp::set(Index in_h, Index in_w, Index ch, Index scale)
     scale_factor = scale;
 }
 
-void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
@@ -48,7 +48,7 @@ void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     apply(input, output);
 }
 
-void UpsampleOp::apply(const TensorView& input, TensorView& output) const
+void UpsampleOperator::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index out_h = input_height * scale_factor;
@@ -73,10 +73,10 @@ void UpsampleOp::apply(const TensorView& input, TensorView& output) const
         }
 }
 
-void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& output_delta = get_output_delta(bp, layer);
-    TensorView& input_delta = get_input_delta(bp, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
+    TensorView& input_delta = get_input_delta(back_propagation, layer);
     if (input_delta.empty()) return;
 
 #ifdef OPENNN_HAS_CUDA
@@ -91,7 +91,7 @@ void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t
     apply_delta(output_delta, input_delta);
 }
 
-void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_delta) const
+void UpsampleOperator::apply_delta(const TensorView& output_delta, TensorView& input_delta) const
 {
     const Index batch_size = input_delta.shape[0];
     const Index out_h = input_height * scale_factor;

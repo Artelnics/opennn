@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L A Y E R   C L A S S   H E A D E R
@@ -144,25 +144,25 @@ public:
 
     Index get_outputs_number() const { return get_output_shape().size(); }
     
-    virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
     {
         for (Operator* op : get_operators())
-            op->forward_propagate(fp, layer, is_training);
+            op->forward_propagate(forward_propagation, layer, is_training);
     }
 
-    virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const
+    virtual void back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t i) const
     {
         for (Operator* op : views::reverse(get_operators()))
-            op->back_propagate(fp, bp, i);
+            op->back_propagate(forward_propagation, back_propagation, i);
     }
 
-    virtual void from_JSON(const JsonDocument& document);
+    virtual void from_JSON(const JsonDocument&);
 
     virtual void read_JSON_body(const Json*) {}
 
-    virtual void load_state_from_JSON(const JsonDocument& document);
+    virtual void load_state_from_JSON(const JsonDocument&);
 
-    virtual void to_JSON(JsonWriter& writer) const;
+    virtual void to_JSON(JsonWriter&) const;
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
@@ -186,9 +186,9 @@ public:
 
     virtual void on_compute_dtype_changed() {}
 
-    virtual float* link_states(float* pointer, Device device);
+    virtual float* link_states(float*, Device);
 
-    float* link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device);
+    float* link_gradients(float*, vector<TensorView>&, Device);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const { return parameters; }
@@ -199,7 +199,7 @@ protected:
 
     Layer() = default;
 
-    Layer(LayerType t, bool trainable = true)
+    Layer(LayerType, bool trainable = true)
         : layer_type(t), is_trainable(trainable) {}
 
     enum Forward {Input, Output};
@@ -222,15 +222,15 @@ protected:
     vector<Operator*> operators;
 
     float* link_views_to_operators(
-        vector<TensorView>& views, float* pointer,
+        vector<TensorView>&, float*,
         vector<TensorSpec> (Operator::*specs_fn)() const,
         void (Operator::*link_fn)(span<const TensorView>),
-        Device device);
+        Device);
 
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

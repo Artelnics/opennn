@@ -38,6 +38,7 @@ struct ForwardPropagation
     Buffer device_fp32_input_staging{Device::CUDA};
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
+    vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
 };
 
 }

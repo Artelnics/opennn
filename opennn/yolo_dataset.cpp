@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   Y O L O   D A T A S E T   C L A S S
@@ -958,7 +958,7 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
     vector<array<float, 6>> candidates;
 
     // Each candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id).
-    // Decoded output from DetectionOp: x,y are sigmoid([0,1]) cell-relative
+    // Decoded output from DetectionOperator: x,y are sigmoid([0,1]) cell-relative
     // offsets; w,h are already image-normalized (anchor * exp(raw)).
     for (const YoloFpnHead& head : heads)
     {
@@ -1525,8 +1525,7 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 
 void YoloDataset::load_images_to_ram() const
 {
-    if (!images_ram.empty()) return;
-    if (samples_number == 0 || cache_image_record_bytes == 0) return;
+    if (!images_ram.empty() || samples_number == 0 || cache_image_record_bytes == 0) return;
 
     throw_if(!image_cache_reader.is_open(),
              "YoloDataset::load_images_to_ram: image cache is not open.");

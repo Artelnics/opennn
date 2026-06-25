@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #if defined(__INTELLISENSE__) && !defined(OPENNN_HAS_CUDA)
 #define OPENNN_HAS_CUDA
@@ -75,7 +75,7 @@
 #include "../opennn/kernel.cuh"
 
 template <typename T>
-void check_cuda_status(T status, const char* msg,
+void check_cuda_status(T, const char*,
                        std::source_location loc = std::source_location::current())
 {
     if (status != 0)
@@ -137,7 +137,7 @@ namespace opennn {
 
 using bfloat16 = __nv_bfloat16;
 
-inline void throw_if(bool condition, const string& message,
+inline void throw_if(bool, const string&,
                      const source_location& loc = source_location::current())
 {
     if (condition)
@@ -152,7 +152,7 @@ constexpr float QUIET_NAN = numeric_limits<float>::quiet_NaN();
 constexpr float SOFTMAX_MASK_VALUE = float(-1e9f);
 
 template <typename T>
-ostream& operator<<(ostream& os, const vector<T>& vec)
+ostream& operator<<(ostream&, const vector<T>&)
 {
     os << "[ ";
     for (size_t i = 0; i < vec.size(); ++i)
@@ -203,5 +203,5 @@ using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMa
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "../opennn/tensor_types.h"
 #include "../opennn/tensor_operations.h"
 #include "../opennn/dropout_operator.h"
@@ -9,9 +9,9 @@
 using namespace opennn;
 
 
-TEST(DropoutOperatorTest, ActiveFlagReflectsRate)
+TEST(DropoutOperatoreratorTest, ActiveFlagReflectsRate)
 {
-    DropoutOp dropout;
+    DropoutOperator dropout;
 
     EXPECT_FALSE(dropout.active());
 
@@ -23,9 +23,9 @@ TEST(DropoutOperatorTest, ActiveFlagReflectsRate)
 }
 
 
-TEST(DropoutOperatorTest, SetRateRejectsOutOfRange)
+TEST(DropoutOperatoreratorTest, SetRateRejectsOutOfRange)
 {
-    DropoutOp dropout;
+    DropoutOperator dropout;
 
     EXPECT_THROW(dropout.set_rate(-0.1f), std::exception);
     EXPECT_THROW(dropout.set_rate(1.0f), std::exception);

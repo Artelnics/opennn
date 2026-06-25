@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   U P S A M P L E   L A Y E R   C L A S S   H E A D E R
@@ -25,7 +25,7 @@ public:
     Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
-    void set(const Shape&, Index scale_factor, const string&);
+    void set(const Shape&, Index, const string&);
     void set_input_shape(const Shape&) override;
     void set_output_shape(const Shape&) override {}
     void set_scale_factor(Index);
@@ -35,7 +35,7 @@ public:
 
 private:
 
-    UpsampleOp upsample;
+    UpsampleOperator upsample;
 
     void configure_operator();
 };
@@ -43,5 +43,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

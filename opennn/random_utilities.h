@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R A N D O M   U T I L I T I E S
@@ -26,7 +26,7 @@ namespace opennn
 
     void set_random_integer(MatrixR&, Index, Index);
 
-    void shuffle(VectorB& vector_to_shuffle);
+    void shuffle(VectorB&);
 
     template<typename T>
     void shuffle_vector(vector<T>&);
@@ -46,8 +46,8 @@ namespace opennn
     // `force_off` to 0, and the remaining k - |force_on| ones are chosen uniformly at random from
     // the free indices. Returns false (with `out` cleared) when exactly-k is infeasible: an index
     // forced both on and off, more than k forced on, or too few free indices to reach k.
-    bool draw_k_hot(Index count, Index k, const vector<char>& force_on,
-                    const vector<char>& force_off, vector<float>& out);
+    bool draw_k_hot(Index, Index, const vector<char>&,
+                    const vector<char>&, vector<float>&);
 
     void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
@@ -60,5 +60,5 @@ namespace opennn
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

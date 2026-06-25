@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S
@@ -669,14 +669,14 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         {
             const TensorView& source = input_view[i];
             if (source.empty()) continue;
-            if (source.device == Device::CUDA) continue;
+            if (source.is_cuda()) continue;
 
             throw_if(source.device == Device::Auto,
                      "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
 
             // Embedding inputs are float-backed token ids; keep them FP32 so ids stay exact.
             const bool cast_input_to_bf16 = config.training_type == Type::BF16
-                                         && source.type == Type::FP32
+                                         && source.is_fp32()
                                          && !input_feeds_embedding(i);
 
             Buffer& input_buffer = forward_propagation.device_input_buffers[i];
@@ -737,6 +737,10 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                         input_index, input_view.size()));
         return input_view[input_index];
     };
+
+    for (const auto& [layer_i, source_j, ext_idx] : forward_propagation.passthrough_overrides)
+        if (Index(layer_i) >= first_layer_index)
+            forward_propagation.input_views[layer_i][source_j] = pick_input(ext_idx);
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {

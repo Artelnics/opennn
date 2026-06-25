@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A C T I V A T I O N   L A Y E R   C L A S S
@@ -27,7 +27,7 @@ void Activation::set(const Shape& new_input_shape,
                      const string& new_label)
 {
     set_input_shape(new_input_shape);
-    activation.set_function(new_activation);
+    activation_operator.set_activation_function(new_activation);
 
     set_label(new_label);
 }

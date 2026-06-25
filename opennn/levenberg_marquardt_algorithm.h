@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -75,9 +75,9 @@ private:
    void calculate_squared_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
    void calculate_error(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
-   void compute_jacobian(const Batch& batch,
-                         const ForwardPropagation& forward_propagation,
-                         BackPropagationLM& back_propagation_lm);
+   void compute_jacobian(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagationLM&);
 
    float initial_damping_parameter = 0.0f;
 
@@ -97,5 +97,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

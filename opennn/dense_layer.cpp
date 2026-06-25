@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E N S E   L A Y E R   C L A S S
@@ -66,21 +66,18 @@ void Dense::configure_operators()
         batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
     }
 
-    activation.input_slots  = {Output};
-    activation.output_slots = {Output};
+    activation_operator.input_slots  = {Output};
+    activation_operator.output_slots = {Output};
 
-    const bool fuse_relu = (activation.function == ActivationOp::Function::ReLU)
+    const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
     combination.fuse_relu    = fuse_relu;
-    activation.forward_fused = fuse_relu;
+    activation_operator.forward_fused = fuse_relu;
 
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
-    dropout.save_slots   = {ActivationView};
 
-    activation.output_slots_backward = dropout.active()
-        ? vector<size_t>{ActivationView}
-        : vector<size_t>{};
+    activation_operator.save_slot = dropout.active() ? ActivationView : SIZE_MAX;
 }
 
 void Dense::set_batch_normalization(bool enable)
@@ -108,10 +105,10 @@ void Dense::set(const Shape& new_input_shape,
     input_shape = new_input_shape;
     output_features = new_output_shape.back();
 
-    ActivationOp::Function function = ActivationOp::from_string(new_activation_function);
-    if (function == ActivationOp::Function::Softmax && get_outputs_number() == 1)
-        function = ActivationOp::Function::Sigmoid;
-    activation.set_function(function);
+    ActivationFunction function = ActivationOperator::from_string(new_activation_function);
+    if (function == ActivationFunction::Softmax && get_outputs_number() == 1)
+        function = ActivationFunction::Sigmoid;
+    activation_operator.set_activation_function(function);
 
     batch_norm.features = new_batch_normalization ? output_features : 0;
 
@@ -134,12 +131,12 @@ void Dense::set_output_shape(const Shape& new_output_shape)
 
 void Dense::set_activation_function(const string& name)
 {
-    ActivationOp::Function function = ActivationOp::from_string(name);
+    ActivationFunction function = ActivationOperator::from_string(name);
 
-    if (function == ActivationOp::Function::Softmax && get_outputs_number() == 1)
-        function = ActivationOp::Function::Sigmoid;
+    if (function == ActivationFunction::Softmax && get_outputs_number() == 1)
+        function = ActivationFunction::Sigmoid;
 
-    activation.set_function(function);
+    activation_operator.set_activation_function(function);
     configure_operators();
 }
 
@@ -165,7 +162,7 @@ string Dense::write_expression(const vector<string>& input_names,
     const float* bias_data = parameters[0].as<float>();
     const float* weight_data = parameters[1].as<float>();
 
-    const string& activation_function_local = ActivationOp::to_string(get_activation_function());
+    const string& activation_function_local = ActivationOperator::to_string(get_activation_function());
 
     ostringstream buffer;
 

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S C A L I N G   L A Y E R   C L A S S
@@ -79,6 +79,25 @@ void Scaling::set_scalers(const string& scaler)
     ranges::fill(scalers, method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
+}
+
+bool Scaling::is_passthrough() const
+{
+    return ranges::all_of(scalers, [](ScalerMethod m) { return m == ScalerMethod::None; });
+}
+
+vector<TensorSpec> Scaling::get_forward_specs(Index batch_size) const
+{
+    if (is_passthrough())
+        return {};
+    return Layer::get_forward_specs(batch_size);
+}
+
+void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+{
+    if (is_passthrough())
+        return;
+    Layer::forward_propagate(forward_propagation, layer, is_training);
 }
 
 float* Scaling::link_states(float* pointer, Device device)

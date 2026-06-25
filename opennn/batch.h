@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A T C H   S T R U C T   H E A D E R
@@ -142,7 +142,7 @@ struct BatchPools
 
 struct BatchPrefetchSession
 {
-    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, Index batches_number)
+    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>&, Index)
         : empty_queue(queue),
           ready_batches(size_t(batches_number))
     {
@@ -165,7 +165,7 @@ struct BatchPrefetchSession
     BatchPrefetchSession(const BatchPrefetchSession&) = delete;
     BatchPrefetchSession& operator=(const BatchPrefetchSession&) = delete;
 
-    Batch* wait(Index iteration)
+    Batch* wait(Index)
     {
         Batch* batch = nullptr;
         while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))
@@ -210,5 +210,5 @@ struct BatchPrefetchSession
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

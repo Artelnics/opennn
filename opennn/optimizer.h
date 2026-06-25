@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R
@@ -82,7 +82,7 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    static float get_elapsed_time(const time_t& beginning_time);
+    static float get_elapsed_time(const time_t&);
 
 protected:
 
@@ -90,20 +90,20 @@ protected:
     void set_scaling();
     void set_unscaling();
 
-    bool check_stopping_condition(TrainingResult&, Index epoch, float elapsed_time,
-                                   float training_error, Index validation_failures,
-                                   float training_loss, bool has_validation) const;
+    bool check_stopping_condition(TrainingResult&, Index, float,
+                                   float, Index,
+                                   float, bool) const;
 
     // Track the lowest-validation-error parameters/states seen so far. On a new
     // best, snapshot them and reset validation_failures; otherwise count one
     // failure (epochs-since-best). Used by every optimizer's epoch loop.
-    void update_best_parameters(NeuralNetwork* neural_network, float validation_error,
-                                Index epoch, Index& validation_failures);
+    void update_best_parameters(NeuralNetwork*, float,
+                                Index, Index&);
 
     // If training stopped on MaximumValidationErrorIncreases, restore the
     // snapshot taken by update_best_parameters so the final model is the best
     // one, not the last (possibly worse) epoch's.
-    void restore_best_parameters(NeuralNetwork* neural_network, TrainingResult& results);
+    void restore_best_parameters(NeuralNetwork*, TrainingResult&);
 
     void reset_best_parameters();
 
@@ -113,89 +113,89 @@ protected:
     void setup_device_training();
     void teardown_device_training();
 
-    void warmup_device_training(ForwardPropagation& training_forward_propagation,
-                                BackPropagation& training_back_propagation,
-                                ThreadSafeQueue<Batch*>& training_empty_queue,
-                                const vector<vector<Index>>& training_batches,
-                                const vector<Index>& input_feature_indices,
-                                const vector<Index>& decoder_feature_indices,
-                                const vector<Index>& target_feature_indices,
-                                const function<void(BackPropagation&)>& update,
+    void warmup_device_training(ForwardPropagation&,
+                                BackPropagation&,
+                                ThreadSafeQueue<Batch*>&,
+                                const vector<vector<Index>>&,
+                                const vector<Index>&,
+                                const vector<Index>&,
+                                const vector<Index>&,
+                                const function<void(BackPropagation&)>&,
                                 ForwardPropagation* validation_forward_propagation = nullptr,
                                 ThreadSafeQueue<Batch*>* validation_empty_queue = nullptr,
                                 const vector<vector<Index>>* validation_batches = nullptr,
                                 Batch* fixed_training_batch = nullptr);
 
-    void prefetch_batch(Batch& batch);
+    void prefetch_batch(Batch&);
 
-    void sync_device(bool on_gpu);
+    void sync_device(bool);
 
-    static void clip_gradient_norm(Buffer& gradient, float max_norm);
+    static void clip_gradient_norm(Buffer&, float);
 
     bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
 
-    void display_epoch_results(Index epoch, float training_error, float training_accuracy,
-                               float validation_error, float validation_accuracy,
-                               bool has_validation, bool is_token_cross_entropy,
-                               float elapsed_time) const;
+    void display_epoch_results(Index, float, float,
+                               float, float,
+                               bool, bool,
+                               float) const;
 
-    void warn_dropped_samples(Index batch_size,
-                              Index samples_number,
-                              const char* context) const;
+    void warn_dropped_samples(Index,
+                              Index,
+                              const char*) const;
 
     void setup_batch_pools(BatchPools&,
                            Dataset&,
                            NeuralNetwork&,
-                           Index training_batch_size,
-                           Index validation_batch_size,
-                           bool has_validation);
+                           Index,
+                           Index,
+                           bool);
 
     struct WorkerProfileCounters;
 
     unique_ptr<BatchPrefetchSession> start_batch_prefetch(
-        ThreadSafeQueue<Batch*>& empty_queue,
-        const vector<vector<Index>>& batches,
-        const vector<Index>& input_feature_indices,
-        const vector<Index>& decoder_feature_indices,
-        const vector<Index>& target_feature_indices,
-        bool is_training,
+        ThreadSafeQueue<Batch*>&,
+        const vector<vector<Index>>&,
+        const vector<Index>&,
+        const vector<Index>&,
+        const vector<Index>&,
+        bool,
         WorkerProfileCounters* profile_counters = nullptr);
 
     int get_batch_workers_number(const NeuralNetwork&) const;
     int get_batch_pool_size(const NeuralNetwork&) const;
 
     struct EpochLoopContext;
-    Loss::EvaluationResult run_epoch_loop(EpochLoopContext& context);
+    Loss::EvaluationResult run_epoch_loop(EpochLoopContext&);
 
     void reset_graph_capture();
 
     bool cuda_graph_requested() const;
-    bool graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const;
-    Loss::EvaluationResult run_graph_epoch(ForwardPropagation& forward_propagation,
-                                           BackPropagation& back_propagation,
-                                           ThreadSafeQueue<Batch*>& empty_queue,
-                                           const vector<vector<Index>>& batches,
-                                           const vector<Index>& input_feature_indices,
-                                           const vector<Index>& decoder_feature_indices,
-                                           const vector<Index>& target_feature_indices,
-                                           Batch* fixed_device_batch);
+    bool graph_epoch_enabled(bool, Batch*) const;
+    Loss::EvaluationResult run_graph_epoch(ForwardPropagation&,
+                                           BackPropagation&,
+                                           ThreadSafeQueue<Batch*>&,
+                                           const vector<vector<Index>>&,
+                                           const vector<Index>&,
+                                           const vector<Index>&,
+                                           const vector<Index>&,
+                                           Batch*);
 
-    Loss::EvaluationResult train_epoch(ForwardPropagation& forward_propagation,
-                                       BackPropagation& back_propagation,
-                                       ThreadSafeQueue<Batch*>& empty_queue,
-                                       const vector<vector<Index>>& batches,
-                                       const vector<Index>& input_feature_indices,
-                                       const vector<Index>& decoder_feature_indices,
-                                       const vector<Index>& target_feature_indices,
-                                       const function<void(BackPropagation&)>& update,
+    Loss::EvaluationResult train_epoch(ForwardPropagation&,
+                                       BackPropagation&,
+                                       ThreadSafeQueue<Batch*>&,
+                                       const vector<vector<Index>>&,
+                                       const vector<Index>&,
+                                       const vector<Index>&,
+                                       const vector<Index>&,
+                                       const function<void(BackPropagation&)>&,
                                        Batch* fixed_device_batch = nullptr);
 
-    Loss::EvaluationResult evaluate_epoch(ForwardPropagation& forward_propagation,
-                                          ThreadSafeQueue<Batch*>& empty_queue,
-                                          const vector<vector<Index>>& batches,
-                                          const vector<Index>& input_feature_indices,
-                                          const vector<Index>& decoder_feature_indices,
-                                          const vector<Index>& target_feature_indices);
+    Loss::EvaluationResult evaluate_epoch(ForwardPropagation&,
+                                          ThreadSafeQueue<Batch*>&,
+                                          const vector<vector<Index>>&,
+                                          const vector<Index>&,
+                                          const vector<Index>&,
+                                          const vector<Index>&);
 
     Loss* loss = nullptr;
 
@@ -254,5 +254,5 @@ protected:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

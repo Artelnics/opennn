@@ -1,4 +1,4 @@
-# YOLO in OpenNN — Audit & Roadmap
+﻿# YOLO in OpenNN — Audit & Roadmap
 
 Audit date: 2026-05-22
 Branch: `dev-refactor`
@@ -11,10 +11,10 @@ Scope: assessment only — no code changes.
 | Component | Location | Status | Notes |
 |---|---|---|---|
 | `YoloDataset` (label parsing, cache, letterbox, k-means anchors, target encoding) | `opennn/yolo_dataset.{h,cpp}` | Complete (CPU) | BMP-only |
-| `DetectionOp` forward (sigmoid x/y/obj, exp·anchor for w/h, softmax classes) | `opennn/operators.cpp:3046-3098` | Complete (CPU) | GPU path throws |
-| `DetectionOp::apply_delta` (backward) | `opennn/operators.cpp:3100-3149` | Complete (CPU) | Math verified: see §3 |
+| `DetectionOperator` forward (sigmoid x/y/obj, exp·anchor for w/h, softmax classes) | `opennn/operators.cpp:3046-3098` | Complete (CPU) | GPU path throws |
+| `DetectionOperator::apply_delta` (backward) | `opennn/operators.cpp:3100-3149` | Complete (CPU) | Math verified: see §3 |
 | `Detection` layer wrapper + JSON I/O | `opennn/detection_layer.{h,cpp}` | Complete | |
-| `NonMaxSuppressionOp` (per-class greedy NMS) | `opennn/operators.cpp:3151-3261` | Complete (CPU) | GPU path throws |
+| `NonMaxSuppressionOperator` (per-class greedy NMS) | `opennn/operators.cpp:3151-3261` | Complete (CPU) | GPU path throws |
 | `NonMaxSuppression` layer wrapper | `opennn/non_max_suppression_layer.{h,cpp}` | Partial | Missing JSON I/O — see §2.1 |
 | YOLO loss (`Loss::Error::Yolo`, `yolo_error_cpu`, `yolo_gradient_cpu`, `yolo_loss_iou`) | `opennn/loss.cpp:27-181, 315-317, 534-536` | Complete (CPU) | GPU path explicitly returns `false`/throws |
 | `YoloNetwork` minimal builder (5×conv+pool → conv1024 → 1×1 logits → Detection → NMS) | `opennn/standard_networks.cpp:363-420` | Complete | v2-style: anchors + softmax class, single scale |
@@ -51,8 +51,8 @@ Scope: assessment only — no code changes.
 ### 2.2 Missing components
 
 - **No `examples/yolo/main.cpp`.** Every other capability (mnist, breast_cancer, …) has an example; YOLO has none. This is the single most visible gap.
-- **No tests for `DetectionOp` forward/backward.** Only `YoloDataset` is covered.
-- **No tests for `NonMaxSuppressionOp`.**
+- **No tests for `DetectionOperator` forward/backward.** Only `YoloDataset` is covered.
+- **No tests for `NonMaxSuppressionOperator`.**
 - **No test for `yolo_error_cpu` / `yolo_gradient_cpu` against numerical derivatives.** This is the highest-risk code (gradient math is easy to get subtly wrong).
 - **No end-to-end smoke test** (`YoloNetwork` + `Loss::Error::Yolo` + `YoloDataset` + `TrainingStrategy` → assert loss decreases over N steps).
 - **No inference helper** to:
@@ -73,11 +73,11 @@ Scope: assessment only — no code changes.
 I verified the YOLO backward chain by hand:
 
 - **Coordinate loss**: `(sqrt(out_w) - sqrt(target_w))^2`. Gradient wrt `out_w` = `(sqrt_out − sqrt_target) / sqrt_out`. Code at `loss.cpp:167-168` matches.
-- **DetectionOp w/h backward**: `out_w = exp(logit) · anchor`, so `d(out_w)/d(logit) = out_w`. Hence `in_delta[w] = delta[w] · out[w]`. `operators.cpp:3137-3138` matches.
+- **DetectionOperator w/h backward**: `out_w = exp(logit) · anchor`, so `d(out_w)/d(logit) = out_w`. Hence `in_delta[w] = delta[w] · out[w]`. `operators.cpp:3137-3138` matches.
 - **Objectness**: target=IoU when object present, else 0; loss is `(out − target)^2`; sigmoid Jacobian `out·(1−out)` applied in `apply_delta`. Matches.
-- **Class softmax + cross-entropy**: loss gradient wrt softmax probability is `−t/p`; DetectionOp's `apply_delta` performs the softmax-Jacobian transform (`delta[c] − dot`). Chain rule is correct.
+- **Class softmax + cross-entropy**: loss gradient wrt softmax probability is `−t/p`; DetectionOperator's `apply_delta` performs the softmax-Jacobian transform (`delta[c] − dot`). Chain rule is correct.
 
-**No math errors found.** The non-obvious risk is that the loss reads the *decoded* output (post-DetectionOp), so all gradients must pass through DetectionOp's backward — they do, since Detection is a trainable layer.
+**No math errors found.** The non-obvious risk is that the loss reads the *decoded* output (post-DetectionOperator), so all gradients must pass through DetectionOperator's backward — they do, since Detection is a trainable layer.
 
 **Confirmed approximation (v1 paper):** `yolo_gradient_cpu` treats `iou(target_box, output_box)` as a constant when computing `dE/d(out[0..3])`, missing the chain-rule contribution from the objectness loss `(out[4] - iou)^2` back through the box coords. This is the documented v1 formulation and matches reference implementations; numerical-vs-analytical gradient differs by ~0.1-0.2 on the affected coordinates as expected. A v3+ rewrite would differentiate through (G)IoU.
 
@@ -123,7 +123,7 @@ I verified the YOLO backward chain by hand:
 
 ### Phase 5 — YOLO v8 (anchor-free) — this is the biggest jump
 
-21. **Anchor-free detection head**: replace `DetectionOp`'s `exp·anchor` decode with direct distance-to-grid-boundary regression. New op + new dataset target encoding.
+21. **Anchor-free detection head**: replace `DetectionOperator`'s `exp·anchor` decode with direct distance-to-grid-boundary regression. New op + new dataset target encoding.
 22. **Decoupled head**: separate conv branches for box-regression vs class-classification.
 23. **Distribution Focal Loss (DFL)**: regress box edges as a discrete distribution over 16 bins, integrate via softmax expectation. New op.
 24. **Task-Aligned Assigner**: replace fixed IoU-best-anchor assignment with dynamic assignment using `score^α · IoU^β` per gt-anchor pair. New code path in `YoloDataset`.
@@ -139,7 +139,7 @@ I verified the YOLO backward chain by hand:
 
 ## 5. Risks / open questions
 
-- **GPU YOLO path is now fully implemented** (as of 2026-06-16). DetectionOp, NMS, GIoU loss, UpsampleOp, and ConcatenationOp all have working CUDA kernels. VOC training on RTX 2080 runs at ~69 sec/epoch. No longer a blocker.
+- **GPU YOLO path is now fully implemented** (as of 2026-06-16). DetectionOperator, NMS, GIoU loss, UpsampleOperator, and ConcatenationOperator all have working CUDA kernels. VOC training on RTX 2080 runs at ~69 sec/epoch. No longer a blocker.
 - **`YoloNetwork` enforces `input_H/W == grid_size * 32`** (`standard_networks.cpp:372-373`). That's a 5-pool stride-32 architecture — locks input to 13×32=416 or 7×32=224. Multi-scale training needs this relaxed.
 - **No pretrained weights loader.** v3+ practically requires ImageNet-pretrained backbones; without that, training a usable detector from scratch is slow.
 - **No mAP / COCO evaluation harness.** Hard to know if "training works" actually means "detector is good." Phase 1 should add at least a per-class precision/recall test on a held-out tiny set.
@@ -322,10 +322,10 @@ Smoke test on 200-image VOC subset started cleanly: `Converted 200 VOC samples t
 
 **GPU YOLO discovery.** Investigated GPU path before recommending the user's Windows GPU machine. Found:
 - `Convolutional`, `Addition`, `Activation`, `BatchNorm` all have `IF_GPU({...})` paths via cuDNN/cuBLAS.
-- `DetectionOp::apply` and `apply_delta`: `IF_GPU({ throw runtime_error("DetectionOp GPU path is not implemented yet."); })`. Same for `NonMaxSuppressionOp::apply`.
+- `DetectionOperator::apply` and `apply_delta`: `IF_GPU({ throw runtime_error("DetectionOperator GPU path is not implemented yet."); })`. Same for `NonMaxSuppressionOperator::apply`.
 - `loss.cpp::check_yolo_loss` throws on GPU; `yolo_error_cpu` and `yolo_gradient_cpu` have no GPU counterparts.
 
-So even on a GPU box, setting `Device::CUDA` crashes during the first forward pass at the Detection layer. The backbone *would* use GPU, but the YOLO-specific tail is missing. **Implementing it is ~2-4 days work** (DetectionOp fwd+bwd ≈ 1 day, yolo_loss CUDA ≈ 1 day, NMS forward ≈ half day, plumbing + testing ≈ half day). Documented in project memory `project_yolo_gpu_todo.md`.
+So even on a GPU box, setting `Device::CUDA` crashes during the first forward pass at the Detection layer. The backbone *would* use GPU, but the YOLO-specific tail is missing. **Implementing it is ~2-4 days work** (DetectionOperator fwd+bwd ≈ 1 day, yolo_loss CUDA ≈ 1 day, NMS forward ≈ half day, plumbing + testing ≈ half day). Documented in project memory `project_yolo_gpu_todo.md`.
 
 **Files touched 2026-05-28 (still uncommitted on `dev-refactor`):**
 - `opennn/adaptive_moment_estimation.{h,cpp}` — `set_gradient_clip_norm()` member + setter. Default 1.0 preserves all existing examples.
@@ -336,9 +336,9 @@ So even on a GPU box, setting `Device::CUDA` crashes during the first forward pa
 
 **Phase 3 status: 2 of 4 items shipped (§13, §16). Remaining:**
 - **§14 FPN heads** — multi-scale detection at strides 32/16/8. Needs an Upsample layer (may not exist in OpenNN — to check) and three detection heads concat'd from intermediate backbone outputs. Bigger scope, maybe 2-3 hrs of focused work. CPU-validatable in structure.
-- **§15 per-class sigmoid** — DetectionOp variant: replace softmax classes with sigmoid, replace cross-entropy class loss with BCE. Opt-in flag. Smaller scope, ~30-60 min.
+- **§15 per-class sigmoid** — DetectionOperator variant: replace softmax classes with sigmoid, replace cross-entropy class loss with BCE. Opt-in flag. Smaller scope, ~30-60 min.
 - **LeakyReLU activation** — needed for faithful Darknet-53 (~1-2% mAP gain). Extend `ActivationFunction` enum + CPU and cuDNN dispatch. Separate task.
-- **GPU kernels for YOLO ops** — **COMPLETE as of 2026-06-16.** DetectionOp, NMS, GIoU loss, Upsample, Concatenation all implemented. VOC 2007 GPU training validated (~69 s/epoch on RTX 2080). See session log 2026-06-16.
+- **GPU kernels for YOLO ops** — **COMPLETE as of 2026-06-16.** DetectionOperator, NMS, GIoU loss, Upsample, Concatenation all implemented. VOC 2007 GPU training validated (~69 s/epoch on RTX 2080). See session log 2026-06-16.
 
 **What's *not* validated and why:** full Darknet-Tiny + GIoU + L2 + VOC training convergence. GPU training is now unblocked (30 epochs ran, loss 59→19, still decreasing). Full convergence requires ~150–300 epochs. The "does DarknetTiny + GIoU actually beat Phase 2 Vgg" empirical question can now be answered once training runs to convergence.
 
@@ -352,7 +352,7 @@ Two pieces landed today; §14 paused mid-flight at the architectural-rework step
 
 **§15 per-class sigmoid + BCE — shipped, opt-in.**
 
-`DetectionOp` (`opennn/operators.h`) gained `enum class ClassActivation { Softmax, Sigmoid }` + a `class_activation` field, default `Softmax`. Forward and backward branch on it:
+`DetectionOperator` (`opennn/operators.h`) gained `enum class ClassActivation { Softmax, Sigmoid }` + a `class_activation` field, default `Softmax`. Forward and backward branch on it:
 - Forward (`apply`): Sigmoid path runs `yolo_sigmoid` per class independently; Softmax keeps the existing max-subtract+exp+normalize.
 - Backward (`apply_delta`): Sigmoid Jacobian is `s*(1-s)` per class (no cross-term); Softmax keeps the existing `s * (delta - dot)` form.
 
@@ -360,14 +360,14 @@ Two pieces landed today; §14 paused mid-flight at the architectural-rework step
 
 `loss.cpp` gained a `yolo_uses_sigmoid_classes(NeuralNetwork*)` helper that walks layers, finds the `Detection` layer, and returns whether it's sigmoid mode. Both `yolo_error_cpu` and `yolo_gradient_cpu` got a `sigmoid_classes` bool parameter:
 - Forward error: Sigmoid path sums BCE `-(t*log(p) + (1-t)*log(1-p))` over ALL classes (independent labels). Softmax keeps CE `-log(p_target)` only on the responsible class.
-- Backward delta: Sigmoid path writes `(p - t) / (p * (1-p))` which the DetectionOp's sigmoid Jacobian then collapses to the clean `(p - t)` per class. Softmax keeps `-t/p`.
+- Backward delta: Sigmoid path writes `(p - t) / (p * (1-p))` which the DetectionOperator's sigmoid Jacobian then collapses to the clean `(p - t)` per class. Softmax keeps `-t/p`.
 
 `YoloNetwork` ctor (`opennn/standard_networks.{h,cpp}`) gained a `ClassActivation` parameter (default `Softmax`) that flows to the `Detection` layer after construction. Example (`examples/yolo/main.cpp`) has the toggle commented out — `Softmax` is the live default. Build clean; all existing call sites work bit-for-bit unchanged.
 
 **§14 prep — Upsample + Concatenate layers, the missing primitives for FPN.**
 
 Two new layer files plus a new `LayerType` enum entry each:
-- `Upsample` (`opennn/upsample_layer.{h,cpp}` + `UpsampleOp` in `operators.{h,cpp}`): nearest-neighbor along H,W by an integer `scale_factor` (default 2). Forward tiles each input pixel into a `scale × scale` output block. Backward sums each input pixel's gradient over its corresponding output block (parallelized over batch + input rows — no atomic needed). JSON I/O writes `ScaleFactor`. Not trainable (no parameters) but does produce an input delta so gradients flow upstream.
+- `Upsample` (`opennn/upsample_layer.{h,cpp}` + `UpsampleOperator` in `operators.{h,cpp}`): nearest-neighbor along H,W by an integer `scale_factor` (default 2). Forward tiles each input pixel into a `scale × scale` output block. Backward sums each input pixel's gradient over its corresponding output block (parallelized over batch + input rows — no atomic needed). JSON I/O writes `ScaleFactor`. Not trainable (no parameters) but does produce an input delta so gradients flow upstream.
 - `Concatenate` (`opennn/concatenate_layer.{h,cpp}` + `ConcatenateOp` in `operators.{h,cpp}`): n-ary join along channel axis. All inputs must agree on H,W; output channels = sum of per-input channels. Forward copies each input into its channel slice of the output. Backward splits the output delta back into per-input slices. Wiring follows the existing Addition convention: a single forward input-slot holding a vector of input tensors, one backward delta slot per input. JSON I/O writes `InputChannels` as a space-separated list.
 
 Both layers build cleanly into `libopennn.a`. The `yolo` example links unchanged. CPU-only — GPU paths throw `not implemented yet`. The layers are *general-purpose*, not YOLO-specific: usable for any FPN/U-Net/decoder construction.
@@ -375,7 +375,7 @@ Both layers build cleanly into `libopennn.a`. The `yolo` example links unchanged
 **§14 paused mid-flight.** The remaining FPN architecture work — wiring three detection heads with upsample+concat skip connections through `YoloNetwork`, multi-scale target encoding in `YoloDataset`, multi-output loss, cross-scale NMS — is its own 1–2 session piece. The Upsample + Concatenate primitives are useful regardless and worth shipping standalone (a "FPN-prep" commit).
 
 **Files touched 2026-05-29 (still uncommitted on `dev-refactor`):**
-- `opennn/operators.{h,cpp}` — `UpsampleOp` + `ConcatenateOp` forward/backward; `DetectionOp::ClassActivation` enum + branched apply/apply_delta.
+- `opennn/operators.{h,cpp}` — `UpsampleOperator` + `ConcatenateOp` forward/backward; `DetectionOperator::ClassActivation` enum + branched apply/apply_delta.
 - `opennn/upsample_layer.{h,cpp}` — new layer (CPU only).
 - `opennn/concatenate_layer.{h,cpp}` — new layer (CPU only).
 - `opennn/layer.h` — `LayerType::Upsample` + `LayerType::Concatenate` enum entries + string map.
@@ -478,7 +478,7 @@ Built the helper (clean compile), unit-tested the decode logic, and wired it int
 3. `DecodeFpnKeepsOverlappingDifferentClassesAcrossScales` — same geometry, different classes (0 and 1). Verifies class-aware NMS keeps both.
 4. `DecodeFpnConfidenceThresholdFiltersLowScores` — single head, two boxes (0.9 / 0.3), threshold 0.5. Verifies threshold gates `objectness * max_class_prob`, not raw objectness.
 
-Test helper `plant_fpn_box(buffer, grid, boxes_per_cell, classes, slot, cx, cy, w, h, obj, class_id)` writes a post-DetectionOp box into the right cell of a head buffer — keeps the test bodies short and the box layout in one place.
+Test helper `plant_fpn_box(buffer, grid, boxes_per_cell, classes, slot, cx, cy, w, h, obj, class_id)` writes a post-DetectionOperator box into the right cell of a head buffer — keeps the test bodies short and the box layout in one place.
 
 **Wiring into the example** (`examples/yolo/main.cpp`):
 - Removed the `if (head_style == FPN) { early-return; }` block.
@@ -538,15 +538,15 @@ All remaining GPU stubs replaced with working CUDA kernels. End-to-end GPU train
 
 **GPU kernels added:**
 
-- **`DetectionOp::forward_propagate` / `back_propagate`** (`opennn/detection_operator.cpp`): replaced `throw_if(is_cuda)` stubs with calls to the existing `detection_forward_cuda` / `detection_backward_cuda` (already in `kernel_layers.cu`). Anchors are lazily uploaded to a `mutable Buffer device_anchors` on the first GPU forward pass via `cudaMemcpyAsync`.
+- **`DetectionOperator::forward_propagate` / `back_propagate`** (`opennn/detection_operator.cpp`): replaced `throw_if(is_cuda)` stubs with calls to the existing `detection_forward_cuda` / `detection_backward_cuda` (already in `kernel_layers.cu`). Anchors are lazily uploaded to a `mutable Buffer device_anchors` on the first GPU forward pass via `cudaMemcpyAsync`.
 
-- **`NonMaxSuppressionOp`** (`opennn/non_max_suppression_operator.cpp`): during training, NMS is a no-op (`if (is_training) return` — loss reads Detection output directly). During inference, a CPU fallback is used: `cudaMemcpy` to CPU staging → `apply()` → `cudaMemcpy` back.
+- **`NonMaxSuppressionOperator`** (`opennn/non_max_suppression_operator.cpp`): during training, NMS is a no-op (`if (is_training) return` — loss reads Detection output directly). During inference, a CPU fallback is used: `cudaMemcpy` to CPU staging → `apply()` → `cudaMemcpy` back.
 
 - **YOLO GIoU loss** (`opennn/kernel_losses.cu`, `opennn/loss.cpp`): new `yolo_error_cuda` / `yolo_gradient_cuda` device functions and wrappers. One thread per box; `atomicAdd` to scalar accumulator for the error; direct delta writes for gradient (delta is pre-zeroed by the caller). Key fix: `batch.get_targets()` returns a CUDA-side pointer in GPU mode — must `cudaMemcpy` to a CPU staging buffer before the existing multi-head CPU dispatcher reads it. GPU multi-head dispatch wired in `calculate_error` and `calculate_output_deltas` for FPN (multi-head) paths. Constants: `YOLO_LAMBDA_GIOU=5.0f`, `YOLO_LAMBDA_NOOBJ=0.5f`, `YOLO_GRAD_CLIP=10.0f`.
 
-- **`UpsampleOp`** (`opennn/upsample_operator.cpp`, `opennn/kernel_layers.cu`): nearest-neighbor NHWC upsample forward (tile each pixel into scale×scale block) and backward (sum input pixel's grad over its output block). Called `upsample_forward_cuda` / `upsample_backward_cuda`.
+- **`UpsampleOperator`** (`opennn/upsample_operator.cpp`, `opennn/kernel_layers.cu`): nearest-neighbor NHWC upsample forward (tile each pixel into scale×scale block) and backward (sum input pixel's grad over its output block). Called `upsample_forward_cuda` / `upsample_backward_cuda`.
 
-- **`ConcatenationOp`** (`opennn/concatenation_operator.cpp`, `opennn/kernel_layers.cu`): channel-axis concat in NHWC layout. One kernel call per input slice: `concat_forward_slice_cuda` / `concat_backward_slice_cuda`.
+- **`ConcatenationOperator`** (`opennn/concatenation_operator.cpp`, `opennn/kernel_layers.cu`): channel-axis concat in NHWC layout. One kernel call per input slice: `concat_forward_slice_cuda` / `concat_backward_slice_cuda`.
 
 **Other fixes:**
 

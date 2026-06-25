@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S   H E A D E R
@@ -36,7 +36,7 @@ template<> struct TypeInfo<Type::BF16>
 };
 
 template<Type... Supported, typename F>
-void visit_type(Type t, F&& f)
+void visit_type(Type, F&&)
 {
     bool matched = false;
     ([&]
@@ -51,7 +51,7 @@ void visit_type(Type t, F&& f)
 }
 
 template<Type... Supported, typename F>
-void visit_type_pair(Type t_in, Type t_out, F&& f)
+void visit_type_pair(Type, Type, F&&)
 {
     visit_type<Supported...>(t_in, [&](auto in_info)
     {
@@ -303,7 +303,7 @@ struct Buffer
         device::set_zero(data, bytes, device_type);
     }
 
-    void migrate_to(Device target_device, cudaStream_t stream = nullptr)
+    void migrate_to(Device, cudaStream_t stream = nullptr)
     {
         if (device_type == target_device || !data) return;
 
@@ -320,7 +320,7 @@ struct Buffer
     Buffer& operator=(const Buffer&) = delete;
 
     Buffer(Buffer&& other) noexcept : Buffer() { swap(other); }
-    Buffer& operator=(Buffer&& other) noexcept
+    Buffer& operator=(Buffer&&) noexcept
     {
         if (this == &other) return *this;
 
@@ -338,7 +338,7 @@ struct Buffer
 
     ~Buffer() { free_buffer(); }
 
-    void swap(Buffer& other) noexcept
+    void swap(Buffer&) noexcept
     {
         std::swap(data, other.data);
         std::swap(bytes, other.bytes);
@@ -376,6 +376,8 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
     bool is_cuda() const noexcept { return device == Device::CUDA; }
+    bool is_fp32() const noexcept { return type == Type::FP32; }
+    bool is_bf16() const noexcept { return type == Type::BF16; }
 
     template<typename T>
     T* as() const noexcept
@@ -392,7 +394,7 @@ struct TensorView
     cudaDataType_t cuda_dtype() const { return to_cuda(type); }
 
     template<typename F>
-    void dispatch(F&& fn) const
+    void dispatch(F&&) const
     {
         visit_type<Type::FP32, Type::BF16>(type, [&](auto info)
         {
@@ -400,7 +402,7 @@ struct TensorView
         });
     }
 
-    TensorView reshape(const Shape& new_shape) const
+    TensorView reshape(const Shape&) const
     { return TensorView(data, new_shape, type, device); }
 
     MatrixMap as_matrix() const
@@ -413,7 +415,7 @@ struct TensorView
         return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
-    MatrixMap as_matrix(Index matrix_index) const
+    MatrixMap as_matrix(Index) const
     {
         throw_if(shape.rank < 2, "TensorView::as_matrix(matrix_index) requires rank >= 2.");
         throw_if(shape.size() > 0 && !data, "TensorView::as_matrix(matrix_index) requires non-null data.");
@@ -427,7 +429,7 @@ struct TensorView
                  format("TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
                         matrix_index, matrix_count));
 
-        return MatrixMap(reinterpret_cast<float*>(data) + matrix_index * matrix_element_count,
+        return MatrixMap(reinterpret_cast<float*>(data) + matrix_index *,
                          row_count,
                          column_count);
     }
@@ -461,7 +463,7 @@ struct TensorView
     }
 
     template<int Rank>
-    TensorMapR<Rank> as_tensor(Index batch_index) const
+    TensorMapR<Rank> as_tensor(Index) const
     {
         throw_if(shape.rank != Rank + 1,
                  format("TensorView::as_tensor(batch_index) requires rank {}, got {}.",
@@ -474,10 +476,10 @@ struct TensorView
         Eigen::array<Index, Rank> dims;
         for (int i = 0; i < Rank; ++i) dims[i] = shape[i + 1];
         const Index slice_element_count = shape.size() / shape[0];
-        return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index * slice_element_count, dims);
+        return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index *, dims);
     }
 
-    void fill(float value);
+    void fill(float);
     void setZero() { fill(0.0f); }
     void set_zero_async() const;
 
@@ -486,13 +488,13 @@ struct TensorView
     cudnnTensorDescriptor_t get_descriptor() const;
 
 private:
-    void set_descriptor(const Shape& shape) const;
+    void set_descriptor(const Shape&) const;
 
 };
 
-inline TensorView& view_at_slot_or(vector<TensorView>& views,
-                                   const vector<size_t>& slots, size_t i,
-                                   TensorView& fallback)
+inline TensorView& view_at_slot_or(vector<TensorView>&,
+                                   const vector<size_t>&, size_t,
+                                   TensorView&)
 {
     return i < slots.size() ? views[slots[i]] : fallback;
 }
@@ -503,7 +505,7 @@ using array = Eigen::array<T, N>;
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
-inline bool is_contiguous(const vector<Index>& indices)
+inline bool is_contiguous(const vector<Index>&)
 {
     return ranges::adjacent_find(indices,
         [](Index a, Index b) { return b != a + 1; }) == indices.end();
@@ -528,12 +530,12 @@ inline void TensorView::set_zero_async() const
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 
-void copy_device_to_host_float(const void* device_src, Type src_dtype,
-                               Index element_count, float* host_dst,
+void copy_device_to_host_float(const void*, Type,
+                               Index, float*,
                                cudaStream_t stream);
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

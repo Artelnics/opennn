@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E T E C T I O N   O P E R A T O R   S O U R C E
@@ -33,12 +33,12 @@ float yolo_sigmoid(float x)
 }
 
 
-void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors)
+void DetectionOperator::set(const Shape& input_shape, const vector<array<float, 2>>& new_anchors)
 {
     throw_if(input_shape.rank != 3,
-             "DetectionOp: input shape must be rank 3.");
+             "DetectionOperator: input shape must be rank 3.");
     throw_if(new_anchors.empty(),
-             "DetectionOp: anchors are empty.");
+             "DetectionOperator: anchors are empty.");
 
     grid_size = input_shape[0];
     grid_width = input_shape[1];
@@ -47,23 +47,23 @@ void DetectionOp::set(const Shape& input_shape, const vector<array<float, 2>>& n
 
     const Index channels = input_shape[2];
     throw_if(channels % boxes_per_cell != 0,
-             "DetectionOp: channels must be divisible by boxes_per_cell.");
+             "DetectionOperator: channels must be divisible by boxes_per_cell.");
 
     classes_number = channels / boxes_per_cell - 5;
     throw_if(classes_number <= 0,
-             "DetectionOp: classes_number must be positive.");
+             "DetectionOperator: classes_number must be positive.");
 }
 
-void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void DetectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
         throw_if(grid_size != grid_width,
-                 "DetectionOp GPU: non-square grids not supported.");
+                 "DetectionOperator GPU: non-square grids not supported.");
 
         const Index anchor_bytes = Index(anchors.size()) * 2 * Index(sizeof(float));
         if (device_anchors.bytes < anchor_bytes)
@@ -84,7 +84,7 @@ void DetectionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
     apply(input, output);
 }
 
-void DetectionOp::apply(const TensorView& input, TensorView& output) const
+void DetectionOperator::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
@@ -135,11 +135,11 @@ void DetectionOp::apply(const TensorView& input, TensorView& output) const
             }
 }
 
-void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void DetectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& output = get_output(fp, layer);
-    const TensorView& output_delta = get_output_delta(bp, layer);
-    TensorView& input_delta = get_input_delta(bp, layer);
+    const TensorView& output = get_output(forward_propagation, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
+    TensorView& input_delta = get_input_delta(back_propagation, layer);
 
     if (input_delta.empty()) return;
 
@@ -155,7 +155,7 @@ void DetectionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
     apply_delta(output, output_delta, input_delta);
 }
 
-void DetectionOp::apply_delta(const TensorView& output,
+void DetectionOperator::apply_delta(const TensorView& output,
                               const TensorView& output_delta,
                               TensorView& input_delta) const
 {

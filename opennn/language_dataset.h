@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L A N G U A G E   D A T A S E T   C L A S S   H E A D E R
@@ -49,19 +49,19 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool is_training,
+                     bool,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int = -1) const override;
 
     bool supports_bf16_inputs() const override { return false; }
@@ -79,33 +79,33 @@ public:
 
 private:
 
-    void fill_sequences(const vector<Index>& sample_indices,
-                        const vector<Index>& variable_indices,
-                        float* output_data,
-                        int contiguous,
-                        Index sequence_length,
-                        Index record_offset,
-                        Index shift,
-                        const char* context) const;
+    void fill_sequences(const vector<Index>&,
+                        const vector<Index>&,
+                        float*,
+                        int,
+                        Index,
+                        Index,
+                        Index,
+                        const char*) const;
 
     void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
 
     void update_input_vocabulary_map();
     void update_target_vocabulary_map();
 
-    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>& vocabulary) const;
+    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>&) const;
 
-    void load_documents(string& buffer,
-                        vector<vector<string_view>>& input_documents,
-                        vector<vector<string_view>>& target_documents) const;
+    void load_documents(string&,
+                        vector<vector<string_view>>&,
+                        vector<vector<string_view>>&) const;
 
     void encode_streaming(const vector<vector<string_view>>&,
                           const vector<vector<string_view>>&,
-                          vector<vector<Index>>& input_indices,
-                          vector<vector<Index>>& target_indices) const;
+                          vector<vector<Index>>&,
+                          vector<vector<Index>>&) const;
 
-    void write_binary_cache(const vector<vector<Index>>& input_indices,
-                            const vector<vector<Index>>& target_indices);
+    void write_binary_cache(const vector<vector<Index>>&,
+                            const vector<vector<Index>>&);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
@@ -126,5 +126,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

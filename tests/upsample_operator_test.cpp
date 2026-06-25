@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
 #include "../opennn/tensor_types.h"
@@ -11,7 +11,7 @@
 
 using namespace opennn;
 
-class UpsampleOperatorTest : public ::testing::Test
+class UpsampleOperatoreratorTest : public ::testing::Test
 {
 protected:
     const Index height = 3;
@@ -22,7 +22,7 @@ protected:
 };
 
 
-TEST_F(UpsampleOperatorTest, Constructor)
+TEST_F(UpsampleOperatoreratorTest, Constructor)
 {
     Upsample upsample_layer(input_shape, scale_factor);
 
@@ -33,7 +33,7 @@ TEST_F(UpsampleOperatorTest, Constructor)
 }
 
 
-TEST_F(UpsampleOperatorTest, OutputShapeDependsOnScaleFactor)
+TEST_F(UpsampleOperatoreratorTest, OutputShapeDependsOnScaleFactor)
 {
     Upsample upsample_layer(input_shape, 3);
 
@@ -45,7 +45,7 @@ TEST_F(UpsampleOperatorTest, OutputShapeDependsOnScaleFactor)
 }
 
 
-TEST_F(UpsampleOperatorTest, EmptyInputShapeGivesEmptyOutputShape)
+TEST_F(UpsampleOperatoreratorTest, EmptyInputShapeGivesEmptyOutputShape)
 {
     Upsample upsample_layer;
 
@@ -54,7 +54,7 @@ TEST_F(UpsampleOperatorTest, EmptyInputShapeGivesEmptyOutputShape)
 }
 
 
-TEST_F(UpsampleOperatorTest, ForwardOutputShape)
+TEST_F(UpsampleOperatoreratorTest, ForwardOutputShape)
 {
     const Index batch_size = 2;
 
@@ -80,7 +80,7 @@ TEST_F(UpsampleOperatorTest, ForwardOutputShape)
 }
 
 
-TEST_F(UpsampleOperatorTest, ForwardConstantReplication)
+TEST_F(UpsampleOperatoreratorTest, ForwardConstantReplication)
 {
     const Index batch_size = 1;
 
@@ -103,7 +103,7 @@ TEST_F(UpsampleOperatorTest, ForwardConstantReplication)
 }
 
 
-TEST_F(UpsampleOperatorTest, ForwardPixelReplication)
+TEST_F(UpsampleOperatoreratorTest, ForwardPixelReplication)
 {
     const Index batch_size = 1;
     const Index out_h = height * scale_factor;
@@ -141,7 +141,7 @@ TEST_F(UpsampleOperatorTest, ForwardPixelReplication)
 }
 
 
-TEST_F(UpsampleOperatorTest, ForwardBatchIndependence)
+TEST_F(UpsampleOperatoreratorTest, ForwardBatchIndependence)
 {
     const Index batch_size = 2;
     const Index out_h = height * scale_factor;
@@ -179,7 +179,7 @@ TEST_F(UpsampleOperatorTest, ForwardBatchIndependence)
 }
 
 
-TEST_F(UpsampleOperatorTest, ScaleFactorOneIsIdentity)
+TEST_F(UpsampleOperatoreratorTest, ScaleFactorOneIsIdentity)
 {
     const Index batch_size = 1;
 
@@ -211,7 +211,7 @@ TEST_F(UpsampleOperatorTest, ScaleFactorOneIsIdentity)
 }
 
 
-TEST_F(UpsampleOperatorTest, BackPropagateDeltaAccumulation)
+TEST_F(UpsampleOperatoreratorTest, BackPropagateDeltaAccumulation)
 {
     const Index samples_number = 5;
     const Index targets_number = 1;

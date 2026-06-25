@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N C A T E N A T I O N   O P E R A T O R   H E A D E R
@@ -13,20 +13,20 @@
 namespace opennn
 {
 
-struct ConcatenationOp : Operator
+struct ConcatenationOperator : Operator
 {
     Index height = 0;
     Index width = 0;
     vector<Index> input_channels;
 
-    void set(Index h, Index w, const vector<Index>& per_input_channels);
+    void set(Index, Index, const vector<Index>&);
 
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

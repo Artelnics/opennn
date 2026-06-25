@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -23,11 +23,11 @@ public:
     FileReader(FileReader&&)                 = delete;
     FileReader& operator=(FileReader&&)      = delete;
 
-    void open(const filesystem::path& path);
+    void open(const filesystem::path&);
     void close();
     bool is_open() const;
 
-    void read_at(void* buffer, size_t bytes, uint64_t offset) const;
+    void read_at(void*, size_t, uint64_t offset) const;
 
     uint64_t file_size() const;
 
@@ -50,11 +50,11 @@ public:
     FileWriter(FileWriter&&)                 = delete;
     FileWriter& operator=(FileWriter&&)      = delete;
 
-    void open(const filesystem::path& tmp_path);
+    void open(const filesystem::path&);
 
-    void write(const void* buffer, size_t bytes);
+    void write(const void*, size_t);
 
-    void finish_with_rename(const filesystem::path& final_path);
+    void finish_with_rename(const filesystem::path&);
 
 private:
     filesystem::path tmp_path_;
@@ -73,7 +73,7 @@ public:
     FileMapping(FileMapping&&) noexcept;
     FileMapping& operator=(FileMapping&&) noexcept;
 
-    bool map(const filesystem::path& path);
+    bool map(const filesystem::path&);
     void reset();
 
     const char* data() const { return data_; }
@@ -109,18 +109,18 @@ public:
         char                separator = ',';
     };
 
-    explicit CsvReader(Configuration new_configuration)
+    explicit CsvReader(Configuration)
         : configuration(std::move(new_configuration))
     {
     }
 
-    Result read(const filesystem::path& path) const;
+    Result read(const filesystem::path&) const;
 
 private:
 
     Configuration configuration;
 
-    void parse(Result& out) const;
+    void parse(Result&) const;
 };
 
 bool is_numeric_string(string_view);
@@ -139,5 +139,5 @@ time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = Au
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

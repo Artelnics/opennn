@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S
@@ -81,7 +81,7 @@ void TensorView::set_descriptor(const Shape&) const
 
 static bool uses_cuda_fill(const TensorView& view)
 {
-    return view.device == Device::CUDA;
+    return view.is_cuda();
 }
 
 static void fill_cuda(const TensorView&, float)

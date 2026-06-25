@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   E N U M   M A P
@@ -20,7 +20,7 @@ struct EnumMap
 
     const vector<Entry>& entries;
 
-    const string& to_string(Enum value) const
+    const string& to_string(Enum) const
     {
         for (const auto& [enum_value, name] : entries)
             if (enum_value == value)
@@ -28,7 +28,7 @@ struct EnumMap
         throw runtime_error("Unknown enum value");
     }
 
-    Enum from_string(const string& name) const
+    Enum from_string(const string&) const
     {
         for (const auto& [enum_value, entry_name] : entries)
             if (entry_name == name)
@@ -36,7 +36,7 @@ struct EnumMap
         throw runtime_error(format("Unknown enum string: {}", name));
     }
 
-    Enum from_string(const string& name, Enum fallback) const
+    Enum from_string(const string&, Enum) const
     {
         for (const auto& [enum_value, entry_name] : entries)
             if (entry_name == name)
@@ -48,5 +48,5 @@ struct EnumMap
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.
