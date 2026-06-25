@@ -23,6 +23,8 @@ extern "C" {
 namespace opennn
 {
 
+namespace {
+
 struct RGBQuad
 {
     uint8_t blue;
@@ -30,8 +32,6 @@ struct RGBQuad
     uint8_t red;
     uint8_t reserved;
 };
-
-namespace {
 
 struct BmpHeader
 {
