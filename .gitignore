@@ -338,3 +338,17 @@ yolo_data/
 # Generated example data caches (regenerated at runtime from the source CSV/TXT/images)
 *.bin
 **/.cache/
+
+# Compiled benchmark binaries (ELF, no extension) + generated run outputs
+docs/benchmarks/inference-speed/opennn_inference
+docs/benchmarks/inference-speed/opennn_inference_mkl
+docs/benchmarks/inference-speed/opennn_inference_mkl_auto
+docs/benchmarks/inference-speed/rosenbrock_infer.csv
+docs/benchmarks/memory/opennn_memory_cpu
+docs/benchmarks/memory/sum.csv
+docs/benchmarks/startup/opennn_startup_cpu
+docs/benchmarks/training-speed/opennn_speed
+docs/benchmarks/export/model.c
+docs/benchmarks/export/model.py
+docs/benchmarks/export/sum.csv
+docs/benchmarks/results/*.json
