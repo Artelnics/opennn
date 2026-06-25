@@ -21,8 +21,6 @@ struct AttentionOperator : Operator
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
     bool  use_causal_mask = false;
-    Type  compute_dtype = Type::FP32;
-
     bool use_sdpa = false;
 
     MatrixR causal_mask;

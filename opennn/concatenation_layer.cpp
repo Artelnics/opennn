@@ -51,21 +51,14 @@ void Concatenation::set(const Shape& new_input_shape,
     concatenation.input_delta_slots.resize(per_input_channels.size());
     iota(concatenation.input_delta_slots.begin(), concatenation.input_delta_slots.end(), size_t(1));
 
-    configure_operator();
 }
 
 void Concatenation::set_input_shape(const Shape& new_input_shape)
 {
     check_rank(new_input_shape, {3}, "Concatenation", "input");
     input_shape = new_input_shape;
-    configure_operator();
 }
 
-void Concatenation::configure_operator()
-{
-    if (input_shape.empty()) return;
-    concatenation.set(input_shape[0], input_shape[1], concatenation.input_channels);
-}
 
 void Concatenation::read_JSON_body(const Json* root)
 {

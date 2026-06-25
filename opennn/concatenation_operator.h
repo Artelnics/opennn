@@ -15,11 +15,7 @@ namespace opennn
 
 struct ConcatenationOperator : Operator
 {
-    Index height = 0;
-    Index width = 0;
     vector<Index> input_channels;
-
-    void set(Index, Index, const vector<Index>&);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

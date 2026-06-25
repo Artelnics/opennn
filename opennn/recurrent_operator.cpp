@@ -23,21 +23,21 @@ void RecurrentOperator::set(Index new_input_features,
                       Index new_time_steps,
                       Index new_output_features,
                       ActivationFunction new_activation,
-                      Type new_weight_type)
+                      Type new_compute_dtype)
 {
     input_features  = new_input_features;
     time_steps      = new_time_steps;
     output_features = new_output_features;
     activation      = new_activation;
-    weight_type     = new_weight_type;
+    compute_dtype   = new_compute_dtype;
 }
 
 vector<TensorSpec> RecurrentOperator::parameter_specs() const
 {
     return {
-        {{output_features},                   weight_type},
-        {{input_features, output_features},   weight_type},
-        {{output_features, output_features},  weight_type},
+        {{output_features},                   compute_dtype},
+        {{input_features, output_features},   compute_dtype},
+        {{output_features, output_features},  compute_dtype},
     };
 }
 

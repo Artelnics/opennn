@@ -21,17 +21,6 @@
 namespace opennn
 {
 
-void ConcatenationOperator::set(Index h, Index w, const vector<Index>& per_input_channels)
-{
-    throw_if(per_input_channels.empty(),
-             "Concatenation: needs at least 1 input.");
-    for (Index c : per_input_channels)
-        throw_if(c <= 0, "Concatenation: per-input channels must be positive.");
-    height = h;
-    width = w;
-    input_channels = per_input_channels;
-}
-
 void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
@@ -40,12 +29,14 @@ void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propag
     throw_if(inputs.size() != input_channels.size(),
              "Concatenation: input count mismatch.");
 
-    const Index batch_size = output.shape[0];
-    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
+    const Index total_channels = output.shape[3];
 
 #ifdef OPENNN_HAS_CUDA
     if (output.is_cuda())
     {
+        const Index batch_size = output.shape[0];
+        const Index height     = inputs[0].shape[1];
+        const Index width      = inputs[0].shape[2];
         Index ch_offset = 0;
         for (size_t i = 0; i < inputs.size(); ++i)
         {
@@ -59,24 +50,20 @@ void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propag
 #endif
 
     float* dst = output.as<float>();
+    const Index pixels = output.size() / total_channels;
 
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index h = 0; h < height; ++h)
-            for (Index w = 0; w < width; ++w)
-            {
-                const Index out_idx = ((b * height + h) * width + w) * total_channels;
-                Index ch_offset = 0;
-                for (size_t i = 0; i < inputs.size(); ++i)
-                {
-                    const Index in_c = input_channels[i];
-                    const float* src = inputs[i].as<float>();
-                    const Index in_idx = ((b * height + h) * width + w) * in_c;
-                    for (Index c = 0; c < in_c; ++c)
-                        dst[out_idx + ch_offset + c] = src[in_idx + c];
-                    ch_offset += in_c;
-                }
-            }
+    #pragma omp parallel for
+    for (Index pixel = 0; pixel < pixels; ++pixel)
+    {
+        float* out_row = dst + pixel * total_channels;
+        Index ch_offset = 0;
+        for (size_t i = 0; i < inputs.size(); ++i)
+        {
+            const Index in_c = inputs[i].shape[3];
+            memcpy(out_row + ch_offset, inputs[i].as<float>() + pixel * in_c, in_c * sizeof(float));
+            ch_offset += in_c;
+        }
+    }
 }
 
 void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
@@ -91,12 +78,14 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 
     if (!needs_input_delta) return;
 
-    const Index batch_size = output_delta.shape[0];
-    const Index total_channels = accumulate(input_channels.begin(), input_channels.end(), Index(0));
+    const Index total_channels = output_delta.shape[3];
 
 #ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
+        const Index batch_size = output_delta.shape[0];
+        const Index height     = output_delta.shape[1];
+        const Index width      = output_delta.shape[2];
         Index ch_offset = 0;
         for (size_t i = 0; i < input_channels.size(); ++i)
         {
@@ -112,30 +101,22 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
 #endif
 
     const float* delta = output_delta.as<float>();
+    const Index pixels = output_delta.size() / total_channels;
 
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index h = 0; h < height; ++h)
-            for (Index w = 0; w < width; ++w)
-            {
-                const Index out_idx = ((b * height + h) * width + w) * total_channels;
-                Index ch_offset = 0;
-                for (size_t i = 0; i < input_channels.size(); ++i)
-                {
-                    const Index in_c = input_channels[i];
-                    TensorView& in_delta = get_input_delta(back_propagation, layer, i);
-                    if (in_delta.empty())
-                    {
-                        ch_offset += in_c;
-                        continue;
-                    }
-                    float* dst = in_delta.as<float>();
-                    const Index in_idx = ((b * height + h) * width + w) * in_c;
-                    for (Index c = 0; c < in_c; ++c)
-                        dst[in_idx + c] = delta[out_idx + ch_offset + c];
-                    ch_offset += in_c;
-                }
-            }
+    #pragma omp parallel for
+    for (Index pixel = 0; pixel < pixels; ++pixel)
+    {
+        const float* delta_row = delta + pixel * total_channels;
+        Index ch_offset = 0;
+        for (size_t i = 0; i < input_channels.size(); ++i)
+        {
+            const Index in_c = input_channels[i];
+            TensorView& in_delta = get_input_delta(back_propagation, layer, i);
+            if (!in_delta.empty())
+                memcpy(in_delta.as<float>() + pixel * in_c, delta_row + ch_offset, in_c * sizeof(float));
+            ch_offset += in_c;
+        }
+    }
 }
 
 }

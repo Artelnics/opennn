@@ -261,7 +261,7 @@ void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
     column_stride    = new_column_stride;
     padding_height   = new_padding_h;
     padding_width    = new_padding_w;
-    compute_dtype = new_compute_dtype;
+    compute_dtype    = new_compute_dtype;
 
 #ifdef OPENNN_HAS_CUDA
     configure_convolution_descriptors(*this);
@@ -316,29 +316,8 @@ void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagat
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
 
-    apply(input, output);
-}
-
-void ConvolutionOperator::apply_delta(const TensorView& input,
-                                const TensorView& output_delta,
-                                TensorView& input_delta) const
-{
-    if (output_delta.is_cuda())
-    {
-        apply_delta_gpu(input, output_delta, input_delta);
-        return;
-    }
-    apply_delta_cpu(input, output_delta, input_delta);
-}
-
-void ConvolutionOperator::apply(const TensorView& input, TensorView& output)
-{
-    if (input.is_cuda())
-    {
-        apply_gpu(input, output);
-        return;
-    }
-    apply_cpu(input, output);
+    if (input.is_cuda()) apply_gpu(input, output);
+    else                  apply_cpu(input, output);
 }
 
 void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -351,17 +330,8 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     TensorView empty;
     TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
 
-    apply_delta(input, output_delta, input_delta);
-}
-
-array<pair<Index, Index>, 4> ConvolutionOperator::nhwc_padding() const
-{
-    return {
-        make_pair(Index(0), Index(0)),
-        make_pair(padding_height, padding_height),
-        make_pair(padding_width,  padding_width),
-        make_pair(Index(0), Index(0))
-    };
+    if (output_delta.is_cuda()) apply_delta_gpu(input, output_delta, input_delta);
+    else                         apply_delta_cpu(input, output_delta, input_delta);
 }
 
 void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
@@ -374,7 +344,12 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
     const array<Index, 3> conv_dims({1, 2, 3});
     const array<Index, 3> out_slice_shape({batch_size, output.shape[1], output.shape[2]});
 
-    const auto input_paddings = nhwc_padding();
+    const array<pair<Index, Index>, 4> input_paddings = {
+        make_pair(Index(0), Index(0)),
+        make_pair(padding_height, padding_height),
+        make_pair(padding_width,  padding_width),
+        make_pair(Index(0), Index(0))
+    };
 
     TensorMap4 outputs = output.as_tensor<4>();
 
@@ -533,7 +508,6 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 {
     PROFILE_SCOPE("op:conv_fwd");
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_fp32() && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
@@ -542,7 +516,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
             // The only fused activation the layer requests is ReLU
             // (see Convolutional::update_convolution_operator).
             cudnn_fe::build_forward(entry, cudnn_fe::make_dims(*this, input.shape[0]),
-                                    fused_activation != nullptr, use_bias);
+                                    bool(fused_activation), use_bias);
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.fwd_X] = input.data;
@@ -556,7 +530,6 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
                                 "forward execute", cudnn_fe::timing_label(*this, "conv_fwd"));
     }))
         return;
-#endif
 
     if (input.shape[0] != planned_batch_size)
         plan_convolution_algorithms(input, output);
@@ -608,7 +581,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
     assert(output_delta.type == input.type);
     assert(weight_gradient.is_fp32());
 
-#ifdef OPENNN_HAS_CUDA
     if (input.is_fp32() && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
@@ -660,12 +632,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
         }
     }))
         return;
-#endif
-
-    // The legacy algorithms are planned in the forward pass only when the
-    // frontend path is not in use; plan here if this is the first legacy call.
-    if (input.shape[0] > planned_batch_size)
-        const_cast<ConvolutionOperator*>(this)->plan_convolution_algorithms(input, output_delta);
 
     const bool bf16 = (input.is_bf16());
 
@@ -729,7 +695,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                       { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
+void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
 void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
 
 #endif

@@ -89,6 +89,8 @@ struct Operator
     virtual void from_JSON(const Json*)       {}
     virtual void load_state_from_JSON(const Json*) {}
 
+    Type compute_dtype = Type::FP32;
+
     vector<size_t> input_slots = {0};
     vector<size_t> output_slots = {1};
 

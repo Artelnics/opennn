@@ -19,7 +19,6 @@ struct MultiHeadProjectionOperator : Operator
     CombinationOperator combination;
 
     Index input_features = 0;
-    Type  compute_dtype  = Type::FP32;
 
     size_t input_view_index = 0;
 

@@ -38,8 +38,6 @@ public:
 private:
 
     ConcatenationOperator concatenation;
-
-    void configure_operator();
 };
 
 }

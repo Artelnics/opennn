@@ -30,7 +30,6 @@ struct RecurrentOperator : Operator
     Index input_features  = 0;
     Index time_steps      = 0;
     Index output_features = 0;
-    Type  weight_type     = Type::FP32;
     ActivationFunction activation = ActivationFunction::Tanh;
 
     bool return_sequences = false;

@@ -45,7 +45,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     TensorView  input_2d    = input.reshape({rows, input_features});
 
-    combination.apply(input_2d, scratch_2d);
+    linear_forward(input_2d, combination.weights, combination.bias, scratch_2d);
     split_heads(scratch_4d, head_output);
 }
 
@@ -79,7 +79,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         : input_delta.reshape({rows, input_features});
     const bool  accumulate     = self_attention ? accumulate_input_delta_self : accumulate_input_delta_cross;
 
-    combination.apply_delta(scratch_2d, input_2d, input_delta_2d, accumulate);
+    linear_backward(scratch_2d, input_2d, combination.weights, combination.weight_gradient, combination.bias_gradient, input_delta_2d, accumulate);
 }
 
 }

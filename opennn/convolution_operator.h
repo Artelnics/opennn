@@ -28,7 +28,6 @@ struct ConvolutionOperator : Operator
     Index padding_height = 0;
     Index padding_width = 0;
 
-    Type compute_dtype = Type::FP32;
     bool use_bias = true;
 
     TensorView weights;
@@ -75,12 +74,6 @@ struct ConvolutionOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void apply(const TensorView&, TensorView&);
-
-    void apply_delta(const TensorView&,
-                     const TensorView&,
-                     TensorView&) const;
-
 private:
     void apply_cpu(const TensorView&, TensorView&);
     void apply_gpu(const TensorView&, TensorView&);
@@ -90,8 +83,6 @@ private:
     void apply_delta_gpu(const TensorView&, const TensorView&,
                          TensorView&) const;
     void plan_convolution_algorithms(const TensorView&, const TensorView&);
-
-    array<pair<Index, Index>, 4> nhwc_padding() const;
 };
 
 }

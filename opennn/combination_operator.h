@@ -17,8 +17,6 @@ struct CombinationOperator : Operator
 {
     Index input_features  = 0;
     Index output_features = 0;
-    Type  weight_type     = Type::FP32;
-
     bool  fuse_relu       = false;
 
     TensorView weights;
@@ -27,7 +25,7 @@ struct CombinationOperator : Operator
     TensorView weight_gradient;
     TensorView bias_gradient;
 
-    void set(Index, Index, Type new_weight_type = Type::FP32);
+    void set(Index, Index, Type new_compute_dtype = Type::FP32);
 
     vector<TensorSpec> parameter_specs() const override;
     void link_parameters(span<const TensorView>) override;
@@ -39,12 +37,7 @@ struct CombinationOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void apply(const TensorView&, TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
 
-    void apply_delta(const TensorView&,
-                     const TensorView&,
-                     TensorView&,
-                     bool accumulate_input_delta = false) const;
 };
 
 }
