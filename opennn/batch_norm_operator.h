@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-struct BatchNormOperator : Operator
+struct BatchNormalizationOperator : Operator
 {
     Index features = 0;
     float momentum = 0.1f;
@@ -31,11 +31,13 @@ struct BatchNormOperator : Operator
 
     bool active() const { return features > 0; }
 
-    BatchNormOperator();
-    ~BatchNormOperator() override;
+    BatchNormalizationOperator();
+    ~BatchNormalizationOperator() override;
 
-    struct BnGraphCache;
-    mutable unique_ptr<BnGraphCache> bn_graph_cache;
+#ifdef OPENNN_HAS_CUDA
+    struct BatchNormalizationGraphCache;
+    mutable unique_ptr<BatchNormalizationGraphCache> bn_graph_cache;
+#endif
 
     void set(Index, float new_momentum = 0.1f);
 
@@ -53,9 +55,6 @@ struct BatchNormOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void update_inference_cache();
-    void invalidate_inference_cache() { inference_cache_dirty = true; }
-
     void to_JSON(JsonWriter&) const override;
     void from_JSON(const Json*) override;
     void load_state_from_JSON(const Json*) override;
@@ -64,6 +63,9 @@ private:
     VectorR inference_scale;
     VectorR inference_shift;
     bool    inference_cache_dirty = true;
+
+    void update_inference_cache();
+    void invalidate_inference_cache() { inference_cache_dirty = true; }
 
     mutable VectorR delta_scale_scratch;
 

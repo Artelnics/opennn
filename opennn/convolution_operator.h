@@ -49,8 +49,10 @@ struct ConvolutionOperator : Operator
 
     Index planned_batch_size = 0;
 
+#ifdef OPENNN_HAS_CUDA
     struct ConvGraphCache;
     mutable unique_ptr<ConvGraphCache> conv_graph_cache;
+#endif
 
     void set(Index, Index,
              Index, Index, Index, Index,

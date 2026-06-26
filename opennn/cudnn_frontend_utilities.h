@@ -24,7 +24,7 @@
 // the path for that operator and falls back to the legacy implementation.
 namespace opennn
 {
-namespace cudnn_fe
+namespace cudnn_frontend
 {
 
 inline const auto check_status = [](auto status, const string& what) {
@@ -256,7 +256,7 @@ inline void autotune_with_scratch(bool&, cudnn_frontend::graph::Graph&,
     autotune_now(pending, graph, scratch, workspace_bytes);
 }
 
-}  // namespace cudnn_fe
+}  // namespace cudnn_frontend
 }  // namespace opennn
 
 #endif

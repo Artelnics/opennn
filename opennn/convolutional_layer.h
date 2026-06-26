@@ -111,7 +111,7 @@ private:
 
     ConvolutionOperator convolution;
     ActivationOperator  activation;
-    BatchNormOperator   batch_norm;
+    BatchNormalizationOperator   batch_norm;
 
     enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};
 

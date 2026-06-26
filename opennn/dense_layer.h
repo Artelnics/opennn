@@ -69,7 +69,7 @@ private:
 
     CombinationOperator combination;
     ActivationOperator  activation;
-    BatchNormOperator   batch_norm;
+    BatchNormalizationOperator   batch_norm;
     DropoutOperator     dropout;
 
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};

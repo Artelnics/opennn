@@ -182,6 +182,8 @@ cudnn_frontend::DataType_t to_cudnn_frontend_dtype(Type t)
 
 #endif
 
+#ifdef OPENNN_HAS_CUDA
+
 struct AttentionOperator::SDPACache
 {
     struct CacheKey
@@ -208,8 +210,6 @@ struct AttentionOperator::SDPACache
                                 Index(k.dropout_active), Index(k.causal), Index(k.is_training));
         }
     };
-
-#ifdef OPENNN_HAS_CUDA
     struct Entry
     {
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
@@ -301,10 +301,7 @@ struct AttentionOperator::SDPACache
             device::deallocate(Device::CUDA, e.seq_len_kv_buf, 0);
         }
     }
-#endif  // OPENNN_HAS_CUDA
 };
-
-#ifdef OPENNN_HAS_CUDA
 
 namespace
 {

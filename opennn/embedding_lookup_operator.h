@@ -19,8 +19,8 @@ struct EmbeddingLookupOperator : Operator
     Index sequence_length     = 0;
     Index embedding_dimension = 0;
 
-    bool  scale_embedding         = false;
-    bool  add_positional_encoding = false;
+    bool scale_embedding         = false;
+    bool add_positional_encoding = false;
 
     TensorView weights;
     TensorView positional_encoding;
