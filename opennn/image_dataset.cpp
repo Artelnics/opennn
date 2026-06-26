@@ -654,7 +654,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         variables[pixels_number].scaler = "None";
     }
 
-    Index progress_counter = 0;
+    if (display)
+        cout << "Loading images..." << endl;
 
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
@@ -680,13 +681,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
                 if (i >= images_number(k) && i < images_number(k + 1))
                     data(i, k + pixels_number) = 1;
                 else
-                    data(i, k + pixels_number) = 0; 
-
-        #pragma omp atomic
-        progress_counter++;
-
-        if (omp_get_thread_num() == 0 && display)
-            display_progress_bar(progress_counter, samples_number);
+                    data(i, k + pixels_number) = 0;
     }
 
     if (display)
@@ -699,7 +694,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         const long long seconds = (total_milliseconds % 60000) / 1000;
         const long long milliseconds = total_milliseconds % 1000;
 
-        cout << "\nImage dataset loaded in: "
+        cout << "Image dataset loaded in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;
