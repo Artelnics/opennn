@@ -973,27 +973,25 @@ void TabularDataset::set_data_binary_classification()
     mark_data_changed();
 }
 
-namespace {
-
-float parse_float_or_nan(string_view token)
+static float parse_float_or_nan(string_view token)
 {
     float value;
     auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
     return (ec == errc{} && ptr == token.data() + token.size()) ? value : NAN;
 }
 
-bool is_missing_token(string_view token, string_view missing_label)
+static bool is_missing_token(string_view token, string_view missing_label)
 {
     return token.empty() || token == missing_label;
 }
 
-void parse_numeric_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_numeric_token(MatrixR& data, Index sample_index, Index feature_index,
                          string_view token, string_view missing_label)
 {
     data(sample_index, feature_index) = is_missing_token(token, missing_label) ? NAN : parse_float_or_nan(token);
 }
 
-void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index,
                           string_view token, string_view missing_label,
                           Index gmt, const DateFormat& date_format)
 {
@@ -1010,7 +1008,7 @@ void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index
     }
 }
 
-void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Index>& feature_indices,
+static void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Index>& feature_indices,
                              string_view token, string_view missing_label,
                              const unordered_map<string_view, Index>& category_map)
 {
@@ -1025,7 +1023,7 @@ void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Ind
     }
 }
 
-void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
                         string_view token, string_view missing_label,
                         const vector<string>& categories)
 {
@@ -1044,7 +1042,7 @@ void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
     }
 }
 
-DateFormat infer_dataset_date_format(const vector<Variable>& variables,
+static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
                                      const vector<string_view>& sample_lines,
                                      char separator,
                                      bool has_sample_ids,
@@ -1093,8 +1091,6 @@ DateFormat infer_dataset_date_format(const vector<Variable>& variables,
     }
 
     return Auto;
-}
-
 }
 
 void TabularDataset::read_csv()

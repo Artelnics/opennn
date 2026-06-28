@@ -7,17 +7,18 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 # Vision module: YOLO, ResNet, ImageClassification, Transformer, and their
 # layers (convolutional, pooling, flatten, embedding, multihead-attention,
-# normalization_3d, detection, transformer_decoder) plus image/yolo
-# datasets. Default ON so colleagues building the full library are
-# unaffected; set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only
-# users who hit MSVC link.exe LNK1327 against the full vision lib.
+# normalization_3d, detection, transformer_decoder) plus yolo_dataset.
+# image_dataset and image_processing are always compiled so tabular pipelines
+# that feed images can use ImageDataset without a full vision build. Default ON;
+# set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only users who hit MSVC
+# link.exe LNK1327 against the full vision lib.
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|image_dataset|image_processing|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|yolo_dataset)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
@@ -52,14 +53,12 @@ endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
-if(OpenNN_BUILD_VISION)
-    include(FetchContent)
+include(FetchContent)
 
-    # ZLIB is only needed by the PNG support in image_dataset /
-    # image_processing, which are excluded when the slim opennn_core lib is
-    # requested. Keep system packages preferred, but fetch a pinned fallback so
-    # Windows/CUDA builds do not require a separate zlib install.
-    find_package(ZLIB QUIET)
+# image_dataset and image_processing are always compiled; they need ZLIB (PNG)
+# and JPEG. Keep system packages preferred, but fetch pinned fallbacks so
+# Windows/CUDA builds do not require a separate install.
+find_package(ZLIB QUIET)
     if(ZLIB_FOUND)
         target_include_directories(opennn PUBLIC ${ZLIB_INCLUDE_DIRS})
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -146,7 +145,6 @@ if(OpenNN_BUILD_VISION)
         target_include_directories(opennn SYSTEM PUBLIC ${_opennn_jpeg_include_dir})
         target_link_libraries(opennn PUBLIC opennn_jpeg)
     endif()
-endif()
 
 # stdc++fs is only needed on GCC < 9; modern toolchains have std::filesystem
 # in libstdc++ itself and the link library may not exist in the sysroot.
@@ -338,17 +336,26 @@ target_compile_definitions(opennn PUBLIC
     $<$<NOT:$<CONFIG:Debug>>:EIGEN_NO_DEBUG>
 )
 
-# Precompiled header for C++ TUs only (CUDA .cu files compile with nvcc and
-# don't reliably reuse host PCH). pch.h pulls in CUDA / cuDNN / Eigen / STL.
-target_precompile_headers(opennn PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
-)
+# Precompiled header: MSVC uses the CMake PCH binary mechanism (every .cpp
+# force-includes pch.h via /Yu). GCC's cmake PCH binary causes pragma-once
+# failures when headers (e.g. tensor_types.h) also textually include pch.h:
+# the binary PCH and textual pragma-once tables are separate so the guard is
+# not seen and pch.h is redefined. Instead, force-include pch.h textually on
+# GCC; #pragma once then works correctly across all TUs.
+if(MSVC)
+    target_precompile_headers(opennn PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
+    )
+else()
+    target_compile_options(opennn PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-include ${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
+    )
+endif()
 
-# These operator TUs pull in cudnn-frontend, which has names (`half`,
-# `bfloat16`) that collide with Eigen names brought into global scope by
-# pch.h's `using namespace Eigen`. Disable PCH on them so cudnn-frontend is
-# parsed in a clean scope and the files pick up Eigen/std the regular way.
-if(OPENNN_HAS_CUDA)
+# On MSVC, these TUs use SKIP_PRECOMPILE_HEADERS to avoid the half/bfloat16
+# conflict. On GCC (-include pch.h), the three files disambiguate `half` via
+# `using half = ::__half;` before the cudnn-frontend include.
+if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
         ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/batch_norm_operator.cpp

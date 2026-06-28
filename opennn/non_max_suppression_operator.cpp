@@ -18,10 +18,7 @@
 namespace opennn
 {
 
-namespace
-{
-
-float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
+static float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
 {
     const float a_left = a[0] - 0.5f * a[2];
     const float a_top = a[1] - 0.5f * a[3];
@@ -40,9 +37,6 @@ float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
 
     return area > 0.0f ? inter / area : 0.0f;
 }
-
-}
-
 
 void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               Index new_boxes_per_cell,

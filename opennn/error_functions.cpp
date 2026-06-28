@@ -87,30 +87,6 @@ OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
 #undef OPENNN_CUDA_STUB
 #undef OPENNN_CUDA_STUBS
 
-template<typename T> void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
-{ throw runtime_error("binary_cross_entropy_cuda requires CUDA support."); }
-
-template<typename T> void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float)
-{ throw runtime_error("binary_cross_entropy_gradient_cuda requires CUDA support."); }
-
-template<typename T> void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float)
-{ throw runtime_error("categorical_cross_entropy_cuda requires CUDA support."); }
-
-template<typename T> void categorical_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float)
-{ throw runtime_error("categorical_cross_entropy_gradient_cuda requires CUDA support."); }
-
-template<typename T> void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float)
-{ throw runtime_error("weighted_squared_error_cuda requires CUDA support."); }
-
-template<typename T> void weighted_squared_error_gradient_cuda(const Index, T*, const float*, const T*, const float, const float, const float)
-{ throw runtime_error("weighted_squared_error_gradient_cuda requires CUDA support."); }
-
-template<typename T> void cross_entropy_3d_multiple_forward_cuda(const Index, const int, const T*, const float*, float*, float*, float*, const float)
-{ throw runtime_error("cross_entropy_3d_multiple_forward_cuda requires CUDA support."); }
-
-template<typename T> void cross_entropy_3d_multiple_backward_cuda(const Index, const int, const T*, const float*, T*, const float)
-{ throw runtime_error("cross_entropy_3d_multiple_backward_cuda requires CUDA support."); }
-
 #endif
 
 void mean_squared_error(const TensorView& input, const TensorView& target, float& error,

@@ -9,11 +9,141 @@
 #include "tensor_operations.h"
 #include "cpu_math_backend.h"
 #include "device_backend.h"
+#include "operator.h"
 #include "random_utilities.h"
 #include "profiler.h"
 
+#include <atomic>
+
+#ifdef EIGEN_USE_MKL_ALL
+#include <mkl_cblas.h>
+#include <mkl_vml.h>
+#endif
+
+static atomic<bool> mkl_fast_vml_flag{false};
+
+namespace opennn::cpu_math
+{
+void set_mkl_fast_vml(bool e) { mkl_fast_vml_flag.store(e, memory_order_relaxed); }
+bool mkl_fast_vml_enabled()   { return mkl_fast_vml_flag.load(memory_order_relaxed); }
+}
+
 namespace opennn
 {
+
+#ifdef EIGEN_USE_MKL_ALL
+
+static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
+{
+    float* y = output.as<float>();
+    const float* b = bias.as<float>();
+
+    if (!fuse_relu && columns > 1)
+    {
+        static thread_local vector<float> ones;
+        if (ssize(ones) < rows) ones.assign(size_t(rows), 1.0f);
+        cblas_sger(CblasRowMajor,
+                   to_int(rows),
+                   to_int(columns),
+                   1.0f,
+                   ones.data(),
+                   1,
+                   b,
+                   1,
+                   y,
+                   to_int(columns));
+        return;
+    }
+
+    const bool parallel_bias = rows * columns >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel_bias)
+    for (Index i = 0; i < rows; ++i)
+    {
+        float* row = y + i * columns;
+        for (Index j = 0; j < columns; ++j)
+        {
+            const float value = row[j] + b[j];
+            row[j] = fuse_relu ? max(value, 0.0f) : value;
+        }
+    }
+}
+
+static bool try_activation_forward(TensorView& output, ActivationFunction function)
+{
+    if (function != ActivationFunction::Tanh || !output.is_fp32()) return false;
+
+    float* values = output.as<float>();
+    const int size = to_int(output.size());
+
+    if (cpu_math::mkl_fast_vml_enabled())
+        vmsTanh(size, values, values, VML_EP);
+    else
+        vsTanh(size, values, values);
+
+    return true;
+}
+
+static bool try_linear_forward(const TensorView& input,
+                                const TensorView& weights,
+                                const TensorView& bias,
+                                TensorView& output,
+                                bool fuse_relu)
+{
+    if (!input.is_fp32()
+        || !weights.is_fp32()
+        || !bias.is_fp32()
+        || !output.is_fp32()
+        || input.shape.rank == 0
+        || weights.shape.rank != 2
+        || bias.shape.rank != 1)
+        return false;
+
+    const Index input_columns = input.shape.back();
+    const Index output_columns = weights.shape.back();
+
+    if (input_columns <= 0
+        || output_columns <= 0
+        || input.size() % input_columns != 0
+        || weights.shape[0] != input_columns
+        || bias.size() != output_columns)
+        return false;
+
+    const Index rows = input.size() / input_columns;
+
+    if (rows <= 0 || output.size() != rows * output_columns)
+        return false;
+
+    const int m = to_int(rows);
+    const int n = to_int(output_columns);
+    const int k = to_int(input_columns);
+
+    cblas_sgemm(CblasRowMajor,
+                CblasNoTrans,
+                CblasNoTrans,
+                m,
+                n,
+                k,
+                1.0f,
+                input.as<float>(),
+                k,
+                weights.as<float>(),
+                n,
+                0.0f,
+                output.as<float>(),
+                n);
+
+    add_bias(output, bias, rows, output_columns, fuse_relu);
+    return true;
+}
+
+#else
+
+static bool try_activation_forward(TensorView&, ActivationFunction)   { return false; }
+static bool try_linear_forward(const TensorView&, const TensorView&,
+                                const TensorView&, TensorView&, bool) { return false; }
+
+#endif
 
 const EnumMap<ActivationFunction>& activation_function_map()
 {
@@ -61,8 +191,8 @@ ActivationFunction activation_function_from_string(const string& name)
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
-    X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, cudnnPoolingDescriptor_t)) \
-    X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cudnnPoolingDescriptor_t)) \
+    X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
+    X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
     X(merge_heads_gpu, (const TensorView&, TensorView&))
 
@@ -315,7 +445,7 @@ void softmax(TensorView& output)
 
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
-    if (cpu_math::try_activation_forward(output, function)) return;
+    if (try_activation_forward(output, function)) return;
 
     auto a = output.as_vector().array();
 
@@ -434,7 +564,7 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 {
     const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
 
-    if (cpu_math::try_linear_forward(input, weights, bias, output, fuse_relu)) return;
+    if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
     output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + bias.as_vector().transpose();
@@ -950,10 +1080,9 @@ void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView&
                         Index pool_height, Index pool_width,
                         Index row_stride, Index column_stride,
                         Index padding_height, Index padding_width,
-                        bool max_pooling,
-                        cudnnPoolingDescriptor_t pooling_descriptor)
+                        bool max_pooling)
 {
-    if (input.is_cuda()) { pooling_2d_forward_gpu(input, output, pooling_descriptor); return; }
+    if (input.is_cuda()) { pooling_2d_forward_gpu(input, output, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride); return; }
     pooling_2d_forward_cpu(input, output, maximal_indices,
                            input_height, input_width, input_channels,
                            pool_height, pool_width,
@@ -1022,12 +1151,11 @@ void pooling_2d_backward(const TensorView& input, const TensorView& output,
                          Index pool_height, Index pool_width,
                          Index row_stride, Index column_stride,
                          Index padding_height, Index padding_width,
-                         bool max_pooling,
-                         cudnnPoolingDescriptor_t pooling_descriptor)
+                         bool max_pooling)
 {
     if (output_delta.is_cuda())
     {
-        pooling_2d_backward_gpu(input, output, output_delta, input_delta, pooling_descriptor);
+        pooling_2d_backward_gpu(input, output, output_delta, input_delta, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride);
         return;
     }
     pooling_2d_backward_cpu(output_delta, maximal_indices, input_delta,
@@ -1497,10 +1625,28 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
     });
 }
 
-static void pooling_2d_forward_gpu(const TensorView& input, TensorView& output, cudnnPoolingDescriptor_t pooling_descriptor)
+static CudnnDescriptor<cudnnPoolingDescriptor_t> make_pooling_descriptor(
+    bool max_pooling, Index pool_h, Index pool_w, Index pad_h, Index pad_w, Index stride_h, Index stride_w)
 {
+    CudnnDescriptor<cudnnPoolingDescriptor_t> desc;
+    CHECK_CUDNN(cudnnCreatePoolingDescriptor(&desc.handle));
+    desc.deleter = &cudnnDestroyPoolingDescriptor;
+    CHECK_CUDNN(cudnnSetPooling2dDescriptor(desc,
+        max_pooling ? CUDNN_POOLING_MAX : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
+        CUDNN_PROPAGATE_NAN,
+        to_int(pool_h), to_int(pool_w),
+        to_int(pad_h), to_int(pad_w),
+        to_int(stride_h), to_int(stride_w)));
+    return desc;
+}
+
+static void pooling_2d_forward_gpu(const TensorView& input, TensorView& output,
+                                   bool max_pooling, Index pool_h, Index pool_w,
+                                   Index pad_h, Index pad_w, Index stride_h, Index stride_w)
+{
+    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
     CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
-        pooling_descriptor,
+        desc,
         &one,
         input.get_descriptor(), input.data,
         &zero,
@@ -1511,10 +1657,12 @@ static void pooling_2d_backward_gpu(const TensorView& input,
                                     const TensorView& output,
                                     const TensorView& output_delta,
                                     TensorView& input_delta,
-                                    cudnnPoolingDescriptor_t pooling_descriptor)
+                                    bool max_pooling, Index pool_h, Index pool_w,
+                                    Index pad_h, Index pad_w, Index stride_h, Index stride_w)
 {
+    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
     CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
-        pooling_descriptor,
+        desc,
         &one,
         output.get_descriptor(),       output.data,
         output_delta.get_descriptor(), output_delta.data,

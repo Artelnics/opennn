@@ -683,19 +683,21 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             if (cast_input_to_bf16)
             {
-                Buffer& fp32_buffer = forward_propagation.device_fp32_input_staging;
-                fp32_buffer.grow_to(source.byte_size());
-                device::copy_async(fp32_buffer.data,
-                                   source.data,
-                                   source.byte_size(),
+                const Index n = source.size();
+                vector<uint16_t> bf16_cpu(size_t(n), uint16_t(0));
+                const float* src = source.as<float>();
+                for (Index j = 0; j < n; ++j)
+                {
+                    uint32_t bits;
+                    memcpy(&bits, &src[j], sizeof(float));
+                    bf16_cpu[size_t(j)] = static_cast<uint16_t>(bits >> 16);
+                }
+                input_buffer.resize_bytes(n * Index(sizeof(uint16_t)), Device::CUDA);
+                device::copy_async(input_buffer.data,
+                                   bf16_cpu.data(),
+                                   size_t(n) * sizeof(uint16_t),
                                    device::CopyKind::HostToDevice,
                                    stream);
-
-                input_buffer.resize_bytes(source.size() * Index(sizeof(bfloat16)), Device::CUDA);
-                cast_fp32_to_bf16_cuda(source.size(),
-                                       fp32_buffer.as<float>(),
-                                       input_buffer.as<bfloat16>(),
-                                       stream);
                 input_views_device[i].type = Type::BF16;
             }
             else
@@ -822,10 +824,6 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-#ifdef OPENNN_NO_VISION
-    (void)image_path;
-    throw runtime_error("calculate_image_output requires OpenNN_BUILD_VISION=ON.");
-#else
     Tensor3 image = load_image(image_path);
 
     const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
@@ -855,7 +853,6 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Matrix outputs = calculate_outputs(input_data);
 
     return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
-#endif // OPENNN_NO_VISION
 }
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)

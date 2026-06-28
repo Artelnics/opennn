@@ -10,10 +10,10 @@
 using namespace opennn;
 
 
-static ConcatenationOperator make_operator(Index height, Index width, const vector<Index>& per_input_channels)
+static ConcatenationOperator make_operator(Index, Index, const vector<Index>& per_input_channels)
 {
     ConcatenationOperator op;
-    op.set(height, width, per_input_channels);
+    op.input_channels = per_input_channels;
     op.input_slots = {0};
     op.output_slots = {1};
     op.output_delta_slots = {0};
@@ -26,28 +26,11 @@ static ConcatenationOperator make_operator(Index height, Index width, const vect
 TEST(ConcatenationOperatoreratorTest, SetStoresGeometry)
 {
     ConcatenationOperator op;
-    op.set(4, 5, {2, 3});
+    op.input_channels = {2, 3};
 
-    EXPECT_EQ(op.height, 4);
-    EXPECT_EQ(op.width, 5);
     ASSERT_EQ(op.input_channels.size(), size_t(2));
     EXPECT_EQ(op.input_channels[0], 2);
     EXPECT_EQ(op.input_channels[1], 3);
-}
-
-
-TEST(ConcatenationOperatoreratorTest, SetRejectsEmptyInputs)
-{
-    ConcatenationOperator op;
-    EXPECT_ANY_THROW(op.set(2, 2, {}));
-}
-
-
-TEST(ConcatenationOperatoreratorTest, SetRejectsNonPositiveChannels)
-{
-    ConcatenationOperator op;
-    EXPECT_ANY_THROW(op.set(2, 2, {2, 0}));
-    EXPECT_ANY_THROW(op.set(2, 2, {-1}));
 }
 
 

@@ -26,10 +26,7 @@ namespace { std::atomic<bool> lstm_scalar_flag{false}; }
 void set_lstm_scalar(bool enabled) { lstm_scalar_flag.store(enabled, std::memory_order_relaxed); }
 bool lstm_scalar_enabled() { return lstm_scalar_flag.load(std::memory_order_relaxed); }
 
-namespace
-{
-
-float lstm_activate(ActivationFunction function, float x)
+static float lstm_activate(ActivationFunction function, float x)
 {
     using enum ActivationFunction;
     switch (function)
@@ -44,7 +41,7 @@ float lstm_activate(ActivationFunction function, float x)
     return x;
 }
 
-float lstm_derivative_from_output(ActivationFunction function, float y)
+static float lstm_derivative_from_output(ActivationFunction function, float y)
 {
     using enum ActivationFunction;
     switch (function)
@@ -59,11 +56,9 @@ float lstm_derivative_from_output(ActivationFunction function, float y)
     return 1.0f;
 }
 
-void zero_if_linked(const TensorView& view)
+static void zero_if_linked(const TensorView& view)
 {
     if (view.data) const_cast<TensorView&>(view).setZero();
-}
-
 }
 
 

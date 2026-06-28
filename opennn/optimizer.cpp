@@ -119,7 +119,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return sums;
 
         float host[2] = {0.0f, 0.0f};
-        cudaStream_t stream = Backend::get_compute_stream();
+        const cudaStream_t stream = Backend::get_compute_stream();
         device::copy_async(host, values().data, Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -418,7 +418,6 @@ Index Optimizer::get_maximum_batch_size() const
 
     const bool on_gpu = neural_network->is_gpu();
 
-
     Index available_bytes = 0;
     if (on_gpu)
     {
@@ -444,7 +443,6 @@ Index Optimizer::get_maximum_batch_size() const
     }
 
     const Index budget = Index(double(available_bytes) * 0.8);
-
 
     const Index parameters_number       = neural_network->get_parameters_number();
     const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
@@ -558,7 +556,6 @@ void Optimizer::set_scaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
 
@@ -580,9 +577,6 @@ void Optimizer::set_scaling()
 
             case 3:
             {
-#ifdef OPENNN_NO_VISION
-                throw runtime_error("Rank-3 (image) scaling requires the vision build (OPENNN_NO_VISION is set).");
-#else
                 auto* image_dataset = dynamic_cast<ImageDataset*>(dataset);
                 throw_if(!image_dataset, "Expected ImageDataset.");
 
@@ -590,7 +584,6 @@ void Optimizer::set_scaling()
                                                  scaling_layer->get_scalers(),
                                                  scaling_layer->get_min_range(),
                                                  scaling_layer->get_max_range());
-#endif
                 break;
             }
 
@@ -602,7 +595,6 @@ void Optimizer::set_scaling()
 
     if (!neural_network->has(LayerType::Unscaling))
         return;
-
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -621,28 +613,22 @@ void Optimizer::set_scaling()
         target_variable_scalers = tabular_dataset->get_feature_scalers("Target");
     }
 
-    vector<Descriptives> unscaling_layer_descriptives;
-    vector<string> unscaling_layer_scalers;
-    unscaling_layer_descriptives.reserve(target_feature_indices.size());
-    unscaling_layer_scalers.reserve(target_feature_indices.size());
+    vector<Descriptives> unscaling_descriptives;
+    vector<string> unscaling_scalers;
 
     for (size_t i = 0; i < target_feature_indices.size(); ++i)
     {
-        const Index target_index = target_feature_indices[i];
-
-        auto it = ranges::find(input_feature_indices, target_index);
-
+        auto it = ranges::find(input_feature_indices, target_feature_indices[i]);
         if (it != input_feature_indices.end())
         {
-            const Index input_pos = distance(input_feature_indices.begin(), it);
-
-            unscaling_layer_descriptives.push_back(input_variable_descriptives[input_pos]);
-            unscaling_layer_scalers.push_back(input_variable_scalers[input_pos]);
+            const Index p = distance(input_feature_indices.begin(), it);
+            unscaling_descriptives.push_back(input_variable_descriptives[p]);
+            unscaling_scalers.push_back(input_variable_scalers[p]);
         }
         else
         {
-            unscaling_layer_descriptives.push_back(target_variable_descriptives[i]);
-            unscaling_layer_scalers.push_back(target_variable_scalers[i]);
+            unscaling_descriptives.push_back(target_variable_descriptives[i]);
+            unscaling_scalers.push_back(target_variable_scalers[i]);
         }
     }
 
@@ -650,36 +636,32 @@ void Optimizer::set_scaling()
     throw_if(!unscaling_layer, "Expected Unscaling layer.");
 
     const Index unscaling_outputs = unscaling_layer->get_outputs_number();
+    const Index n = ssize(unscaling_descriptives);
 
-    if (auto* ts_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-        ts_dataset && ts_dataset->get_multi_target()
-        && unscaling_outputs > ssize(unscaling_layer_descriptives))
+    if (auto* ts = dynamic_cast<TimeSeriesDataset*>(dataset);
+        ts && ts->get_multi_target() && n > 0
+        && unscaling_outputs == n * ts->get_future_time_steps())
     {
-        const Index n_targets = ssize(unscaling_layer_descriptives);
-        const Index future_steps = ts_dataset->get_future_time_steps();
-
-        if (n_targets > 0 && unscaling_outputs == n_targets * future_steps)
-        {
-            vector<Descriptives> expanded_desc;
-            vector<string> expanded_scalers;
-            expanded_desc.reserve(unscaling_outputs);
-            expanded_scalers.reserve(unscaling_outputs);
-            for (Index i = 0; i < n_targets; ++i)
-                for (Index j = 0; j < future_steps; ++j)
-                {
-                    expanded_desc.push_back(unscaling_layer_descriptives[i]);
-                    expanded_scalers.push_back(unscaling_layer_scalers[i]);
-                }
-            unscaling_layer_descriptives = move(expanded_desc);
-            unscaling_layer_scalers      = move(expanded_scalers);
-        }
+        const Index steps = ts->get_future_time_steps();
+        vector<Descriptives> expanded_desc;
+        vector<string> expanded_scalers;
+        expanded_desc.reserve(unscaling_outputs);
+        expanded_scalers.reserve(unscaling_outputs);
+        for (Index i = 0; i < n; ++i)
+            for (Index j = 0; j < steps; ++j)
+            {
+                expanded_desc.push_back(unscaling_descriptives[i]);
+                expanded_scalers.push_back(unscaling_scalers[i]);
+            }
+        unscaling_descriptives = move(expanded_desc);
+        unscaling_scalers      = move(expanded_scalers);
     }
 
-    throw_if(ssize(unscaling_layer_descriptives) != unscaling_outputs,
+    throw_if(ssize(unscaling_descriptives) != unscaling_outputs,
              "Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
 
-    unscaling_layer->set_descriptives(unscaling_layer_descriptives);
-    unscaling_layer->set_scalers(unscaling_layer_scalers);
+    unscaling_layer->set_descriptives(unscaling_descriptives);
+    unscaling_layer->set_scalers(unscaling_scalers);
 }
 
 void Optimizer::set_unscaling()
@@ -760,7 +742,7 @@ void Optimizer::warmup_device_training(
         || training_batches.empty())
         return;
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    const cudaStream_t stream = Backend::get_compute_stream();
 
     const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
     const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
@@ -945,7 +927,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float vali
         const size_t bytes = size_t(size) * sizeof(float);
         if (neural_network->is_gpu() && device::is_cuda_build())
         {
-            cudaStream_t stream = Backend::get_compute_stream();
+            const cudaStream_t stream = Backend::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
                                device::CopyKind::DeviceToHost, stream);
             device::synchronize(stream);
@@ -1048,15 +1030,14 @@ void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
     if (max_norm <= 0.0f || gradient_size <= 0) return;
 
     if (gradient.device_type == Device::CUDA)
-    {
         clip_gradient_norm_device(gradient, gradient_size, max_norm);
-        return;
+    else
+    {
+        VectorMap gradient_view(gradient.as<float>(), gradient_size);
+        const float gradient_norm = gradient_view.norm();
+        if (gradient_norm > max_norm)
+            gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
     }
-
-    VectorMap gradient_view(gradient.as<float>(), gradient_size);
-    const float gradient_norm = gradient_view.norm();
-    if (gradient_norm > max_norm)
-        gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
 }
 
 bool Optimizer::graph_epoch_enabled(bool use_device_metrics, Batch* fixed_device_batch) const
@@ -1085,8 +1066,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetricSums device_metrics;
     device_metrics.reset();
 
-    cudaStream_t compute = Backend::get_compute_stream();
-    cudaStream_t transfer = Backend::get_transfer_stream();
+    const cudaStream_t compute = Backend::get_compute_stream();
+    const cudaStream_t transfer = Backend::get_transfer_stream();
 
     // Slot ring: [0] is the shared fixed device batch; the rest come from the
     // dedicated graph slot pool. The staged path needs the full ring (two
@@ -1228,6 +1209,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const bool resident_gather = loss->get_dataset()->is_device_resident()
                               && !fixed_device_batch->input_is_bf16;
 
+    constexpr Index M = Index(graph_group_size);
     Batch* host_batch = nullptr;
     try
     {
@@ -1241,7 +1223,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             // is illegal to capture), each rejoined onto compute by an event; the
             // graph then captures only the M compute steps. One launch per group
             // amortizes the per-step launch the single-step resident path paid.
-            constexpr Index M = Index(graph_group_size);
             const Index groups = batches_number / M;
 
             for (Index group = 0; group < groups; ++group)
@@ -1308,7 +1289,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             // two groups ping-pong over the ring. Per group the host pays one
             // event sync, M small memcpys and one launch — cheap enough on
             // WSL's expensive CUDA API to keep the GPU permanently fed.
-            constexpr Index M = Index(graph_group_size);
             const Index groups = batches_number / M;
 
             for (Index group = 0; group < groups; ++group)
@@ -1413,39 +1393,31 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
                 if (staged_h2d)
                 {
-                    PROFILE_SCOPE_HOST("step:stage_copy");
-                    // Whatever last read this slot must finish before the host
-                    // overwrites its staging.
-                    if (slot.h2d_done_recorded)
-                        device::synchronize_event(slot.h2d_done_event);
-
-                    stage_into_slot(*host_batch, slot);
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
-                }
-                else
-                {
-                    PROFILE_SCOPE_HOST("step:h2d_issue");
-                    // The graph that last read this slot must finish before the
-                    // upload overwrites it (the slot's event is recorded on
-                    // compute below).
-                    if (slot.h2d_done_recorded)
-                        device::stream_wait_event(transfer, slot.h2d_done_event);
-
-                    host_batch->upload_to_device_batch_async(slot, transfer);
-                    host_batch->wait_h2d_on_compute_stream();
-                }
-
-                // Staged H2D never uses per-slot graphs here (the mega/hybrid
-                // paths above own that); run it eagerly. Otherwise capture or
-                // replay the single compute step.
-                if (staged_h2d)
-                {
+                    {
+                        PROFILE_SCOPE_HOST("step:stage_copy");
+                        // Whatever last read this slot must finish before the host
+                        // overwrites its staging.
+                        if (slot.h2d_done_recorded)
+                            device::synchronize_event(slot.h2d_done_event);
+                        stage_into_slot(*host_batch, slot);
+                        empty_queue.push(host_batch);
+                        host_batch = nullptr;
+                    }
                     issue_slot_h2d(slot, compute);
                     run_compute_step(slot);
                 }
                 else
                 {
+                    {
+                        PROFILE_SCOPE_HOST("step:h2d_issue");
+                        // The graph that last read this slot must finish before the
+                        // upload overwrites it (the slot's event is recorded on
+                        // compute below).
+                        if (slot.h2d_done_recorded)
+                            device::stream_wait_event(transfer, slot.h2d_done_event);
+                        host_batch->upload_to_device_batch_async(slot, transfer);
+                        host_batch->wait_h2d_on_compute_stream();
+                    }
                     const auto run_slot = [&] { run_compute_step(slot); };
                     capture_or_run(exec, run_slot, run_slot);
                 }
@@ -1706,6 +1678,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     context.on_gpu = on_gpu;
     context.fixed_device_batch = fixed_device_batch;
     context.worker_profile = profile_this ? &worker_profile : nullptr;
+
     context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
     {
         {
@@ -1808,7 +1781,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        /*is_training=*/false);
+                        false);
 
             neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
 
@@ -1860,8 +1833,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     if (use_device_metrics)
         return average_epoch_metrics(device_metrics.read(), batches_number, tracks_accuracy);
 
-    epoch_result = average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
-    return epoch_result;
+    return average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
 }
 
 }
