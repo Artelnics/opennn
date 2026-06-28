@@ -44,12 +44,8 @@ void set_gemm_autotune(bool) noexcept;
 bool bf16_compute_plain() noexcept;
 void set_bf16_compute_plain(bool) noexcept;
 
-// cuDNN convolution/batchnorm engine selection (read by the cudnn-frontend path).
-// Autotune is on by default; conv_legacy forces the legacy v7 API.
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
-bool conv_legacy_forced() noexcept;
-void set_conv_legacy(bool) noexcept;
 
 class CudaAllocationGrowthGuard
 {

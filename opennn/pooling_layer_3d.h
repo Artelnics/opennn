@@ -35,7 +35,7 @@ public:
 
     void set(const Shape&, const PoolingMethod&, const string&);
 
-    void set_input_shape(const Shape&) override
+    void set_input_shape(const Shape& new_input_shape) override
     {
         set(new_input_shape, pooling_method, get_label());
     }

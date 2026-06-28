@@ -17,7 +17,7 @@ Activation::Activation(const Shape& new_input_shape,
                        const string& new_name)
     : Layer(LayerType::Activation)
 {
-    operators = {&activation};
+    operators = {&activation_operator};
 
     set(new_input_shape, new_activation, new_name);
 }

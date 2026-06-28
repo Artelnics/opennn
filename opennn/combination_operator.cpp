@@ -80,8 +80,7 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
     linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta, false);
 }

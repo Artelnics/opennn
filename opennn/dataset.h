@@ -34,12 +34,12 @@ inline const EnumMap<SampleRole>& sample_role_map()
     return map;
 }
 
-inline const string& sample_role_to_string(SampleRole)
+inline const string& sample_role_to_string(SampleRole role)
 {
     return sample_role_map().to_string(role);
 }
 
-inline SampleRole string_to_sample_role(const string&)
+inline SampleRole string_to_sample_role(const string& name)
 {
     if (name == "0") return SampleRole::Training;
     if (name == "1") return SampleRole::Validation;

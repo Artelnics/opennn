@@ -105,8 +105,7 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
     const TensorView& activation_derivatives   = forward_slots[output_slots[2]];
     const TensorView& output_delta             = get_output_delta(back_propagation, layer);
 
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
     if (output_delta.is_cuda())
     {
@@ -154,9 +153,9 @@ void RecurrentOperator::apply(const TensorView& input,
     for (Index t = 0; t < time_steps; ++t)
     {
         for (Index i = 0; i < batch_size; ++i)
-            std::memcpy(step_input.data() + i * input_features,
-                        input_data + i * in_stride_b + t * in_stride_t,
-                        input_features * sizeof(float));
+            memcpy(step_input.data() + i * input_features,
+                   input_data + i * in_stride_b + t * in_stride_t,
+                   input_features * sizeof(float));
 
         step_hidden.noalias() = step_input * w_in_map;
         step_hidden.rowwise() += bias_map.transpose();
@@ -191,28 +190,24 @@ void RecurrentOperator::apply(const TensorView& input,
         }
 
         for (Index i = 0; i < batch_size; ++i)
-            std::memcpy(hidden_data + i * h_stride_b + t * h_stride_t,
-                        step_hidden.data() + i * output_features,
-                        output_features * sizeof(float));
+            memcpy(hidden_data + i * h_stride_b + t * h_stride_t,
+                   step_hidden.data() + i * output_features,
+                   output_features * sizeof(float));
 
         if (derivs_data)
             for (Index i = 0; i < batch_size; ++i)
-                std::memcpy(derivs_data + i * h_stride_b + t * h_stride_t,
-                            step_derivs.data() + i * output_features,
-                            output_features * sizeof(float));
+                memcpy(derivs_data + i * h_stride_b + t * h_stride_t,
+                       step_derivs.data() + i * output_features,
+                       output_features * sizeof(float));
 
         prev_hidden = step_hidden;
     }
 
     if (return_sequences)
-    {
-        std::memcpy(output.as<float>(), hidden_data,
-                    batch_size * time_steps * output_features * sizeof(float));
-    }
+        memcpy(output.as<float>(), hidden_data,
+               batch_size * time_steps * output_features * sizeof(float));
     else
-    {
         output.as_matrix() = prev_hidden;
-    }
 }
 
 void RecurrentOperator::apply_delta(const TensorView& input,
@@ -264,7 +259,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
         if (return_sequences)
         {
             for (Index i = 0; i < batch_size; ++i)
-                std::memcpy(step_out_delta.data() + i * output_features,
+                memcpy(step_out_delta.data() + i * output_features,
                             seq_delta_data + i * h_stride_b + t * h_stride_t,
                             output_features * sizeof(float));
             delta = next_carry + step_out_delta;
@@ -279,14 +274,14 @@ void RecurrentOperator::apply_delta(const TensorView& input,
         }
 
         for (Index i = 0; i < batch_size; ++i)
-            std::memcpy(step_derivs.data() + i * output_features,
+            memcpy(step_derivs.data() + i * output_features,
                         derivs_data + i * h_stride_b + t * h_stride_t,
                         output_features * sizeof(float));
 
         delta.array() *= step_derivs.array();
 
         for (Index i = 0; i < batch_size; ++i)
-            std::memcpy(step_input.data() + i * input_features,
+            memcpy(step_input.data() + i * input_features,
                         input_data + i * in_stride_b + t * in_stride_t,
                         input_features * sizeof(float));
 
@@ -296,7 +291,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
         if (t > 0)
         {
             for (Index i = 0; i < batch_size; ++i)
-                std::memcpy(step_prev_h.data() + i * output_features,
+                memcpy(step_prev_h.data() + i * output_features,
                             hidden_data + i * h_stride_b + (t - 1) * h_stride_t,
                             output_features * sizeof(float));
 
@@ -309,7 +304,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
             step_in_delta.noalias() = delta * w_in_map.transpose();
 
             for (Index i = 0; i < batch_size; ++i)
-                std::memcpy(input_delta_data + i * in_stride_b + t * in_stride_t,
+                memcpy(input_delta_data + i * in_stride_b + t * in_stride_t,
                             step_in_delta.data() + i * input_features,
                             input_features * sizeof(float));
         }
@@ -318,23 +313,18 @@ void RecurrentOperator::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-namespace
-{
-
-void zero_device_view(const TensorView& view)
+static void zero_device_view(const TensorView& view)
 {
     if (!view.data || view.empty()) return;
     device::set_zero_async(view.data, view.byte_size(), Backend::get_compute_stream());
 }
 
-void require_same_recurrent_dtype(const TensorView& reference,
-                                  initializer_list<pair<const TensorView*, const char*>> views)
+static void require_same_recurrent_dtype(const TensorView& reference,
+                                         initializer_list<pair<const TensorView*, const char*>> views)
 {
     for (const auto& [view, name] : views)
         throw_if(view->data && !view->empty() && view->type != reference.type,
                  format("RecurrentOperator CUDA: {} dtype does not match recurrent compute dtype.", name));
-}
-
 }
 
 void RecurrentOperator::apply_gpu(const TensorView& input,

@@ -109,7 +109,7 @@ public:
         char                separator = ',';
     };
 
-    explicit CsvReader(Configuration)
+    explicit CsvReader(Configuration new_configuration)
         : configuration(std::move(new_configuration))
     {
     }

@@ -28,7 +28,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();
-    device_fp32_input_staging.resize_bytes(0, Device::CUDA);
     passthrough_overrides.clear();
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
@@ -66,7 +65,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
-            if (shape.size() == 0) continue;
+            if (shape.empty()) continue;
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(specs[j]);
         }

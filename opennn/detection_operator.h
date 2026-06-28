@@ -30,10 +30,6 @@ struct DetectionOperator : Operator
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
-
-private:
-    void apply(const TensorView&, TensorView&) const;
-    void apply_delta(const TensorView&, const TensorView&, TensorView&) const;
 };
 
 }

@@ -47,14 +47,14 @@ public:
         return collect_layer_specs([](const Layer& layer) { return layer.get_state_specs(); });
     }
 
-    vector<vector<TensorSpec>> get_forward_specs(Index) const
+    vector<vector<TensorSpec>> get_forward_specs(Index batch_size) const
     {
         auto specs = collect_layer_specs([batch_size](const Layer& layer) { return layer.get_forward_specs(batch_size); });
         if (!is_gpu()) force_specs_to_fp32(specs);
         return specs;
     }
 
-    vector<vector<TensorSpec>> get_backward_specs(Index) const
+    vector<vector<TensorSpec>> get_backward_specs(Index batch_size) const
     {
         auto specs = collect_layer_specs([batch_size](const Layer& layer) { return layer.get_backward_specs(batch_size); });
         if (!is_gpu()) force_specs_to_fp32(specs);

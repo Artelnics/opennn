@@ -59,13 +59,14 @@ struct BatchNormalizationOperator : Operator
     void from_JSON(const Json*) override;
     void load_state_from_JSON(const Json*) override;
 
+    void invalidate_inference_cache() { inference_cache_dirty = true; }
+
 private:
     VectorR inference_scale;
     VectorR inference_shift;
     bool    inference_cache_dirty = true;
 
     void update_inference_cache();
-    void invalidate_inference_cache() { inference_cache_dirty = true; }
 
     mutable VectorR delta_scale_scratch;
 

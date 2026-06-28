@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-struct LayerNormOperator : Operator
+struct LayerNormalizationOperator : Operator
 {
     Index sequence_length     = 0;
     Index embedding_dimension = 0;

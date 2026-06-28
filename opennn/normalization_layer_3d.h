@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "layer_norm_operator.h"
+#include "layer_normalization_operator.h"
 
 namespace opennn
 {
@@ -45,7 +45,7 @@ private:
     Index sequence_length = 0;
     Index embedding_dimension = 0;
 
-    LayerNormOperator layer_norm;
+    LayerNormalizationOperator layer_normalization;
 
     enum Forward {Input, Means, StandardDeviations, NormalizedInput, Output};
 };

@@ -556,7 +556,7 @@ void bilinear_resize_uint8(const uint8_t* src,
 {
     if (src_h == dst_h && src_w == dst_w)
     {
-        std::memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
+        memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
         return;
     }
 
@@ -634,7 +634,7 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         out.push_back(box);
     }
 
-    boxes = std::move(out);
+    boxes = move(out);
 }
 
 void make_target(const vector<YoloDataset::Box>& boxes,
@@ -1221,7 +1221,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
-        anchors = std::move(cached_anchors);
+        anchors = move(cached_anchors);
         classes_number = Index(target_header.classes_number);
         if (class_names.empty())
         {
@@ -1421,7 +1421,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     boxes_cache_reader.open(boxes_cache_path);
     target_data_offset = target_header.targets_offset;
     boxes_data_offset = boxes_header.boxes_byte_offset;
-    boxes_offsets = std::move(offsets);
+    boxes_offsets = move(offsets);
 
     setup_metadata(Index(image_paths.size()));
 

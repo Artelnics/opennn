@@ -199,7 +199,7 @@ protected:
 
     Layer() = default;
 
-    Layer(LayerType, bool trainable = true)
+    Layer(LayerType t, bool trainable = true)
         : layer_type(t), is_trainable(trainable) {}
 
     enum Forward {Input, Output};

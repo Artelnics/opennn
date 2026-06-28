@@ -57,14 +57,14 @@ void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false);
 
-void layer_norm_forward(const TensorView&, const TensorView&, const TensorView&,
+void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
                         TensorView&, TensorView&,
                         TensorView&, TensorView&);
-void layer_norm_add_forward(const TensorView&, const TensorView&,
+void layer_normalization_add_forward(const TensorView&, const TensorView&,
                             const TensorView&, const TensorView&,
                             TensorView&, TensorView&,
                             TensorView&, TensorView&, TensorView&);
-void layer_norm_backward(const TensorView&, const TensorView&,
+void layer_normalization_backward(const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
@@ -89,8 +89,7 @@ void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
                         Index, Index,
                         Index, Index,
                         Index, Index,
-                        bool,
-                        cudnnPoolingDescriptor_t pooling_descriptor = nullptr);
+                        bool);
 void pooling_2d_backward(const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          TensorView&,
@@ -98,8 +97,7 @@ void pooling_2d_backward(const TensorView&, const TensorView&,
                          Index, Index,
                          Index, Index,
                          Index, Index,
-                         bool,
-                         cudnnPoolingDescriptor_t pooling_descriptor = nullptr);
+                         bool);
 
 void split_heads(const TensorView&, TensorView&);
 void merge_heads(const TensorView&, TensorView&);

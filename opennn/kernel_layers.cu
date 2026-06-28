@@ -86,7 +86,7 @@ void scale_cuda(const Index n, const int features,
                 const float* minimums, const float* maximums,
                 const float* means, const float* stds,
                 const float* scalers,
-                float min_range, float max_range,
+                const float min_range, const float max_range,
                 TOut* output)
 {
     if (n == 0) return;
@@ -155,7 +155,7 @@ void unscale_cuda(const Index n, const int features,
                   const float* minimums, const float* maximums,
                   const float* means, const float* stds,
                   const float* scalers,
-                  float min_range, float max_range,
+                  const float min_range, const float max_range,
                   TOut* output)
 {
     if (n == 0) return;
@@ -209,7 +209,7 @@ __global__ void scaled_diff_kernel(const int n,
 
 template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
-                            float scale, TOut* output)
+                            const float scale, TOut* output)
 {
     if (n == 0) return;
     const int total = checked_int(n);
@@ -614,11 +614,11 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
 }
 
 template<typename T>
-static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
+static void prepare_pooling_valid_mask(const int B, const int S, const int F, const T* in,
                                        float*& valid_mask, float*& counts)
 {
     const int BS = checked_int(Index(B) * S);
-    cudaStream_t stream = opennn::device::get_compute_stream();
+    const cudaStream_t stream = opennn::device::get_compute_stream();
 
     float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
@@ -1015,7 +1015,7 @@ __global__ void activation_forward_kernel(const int n, T* __restrict__ data, con
         float y = x;
 
         if (function == activation_sigmoid)
-            y = 1.0f / (1.0f + expf(-x));
+            y = sigmoid_f(x);
         else if (function == activation_tanh)
             y = tanhf(x);
         else if (function == activation_relu)
@@ -1449,11 +1449,6 @@ template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const
 // each thread owns a contiguous span of (5 + classes_number) floats in NHWC
 // layout (channels-last), matching the CPU loop's `base` index arithmetic.
 
-__device__ __forceinline__ float yolo_sigmoid_device(float x)
-{
-    return 1.0f / (1.0f + __expf(-x));
-}
-
 __global__ void detection_forward_kernel(const int batch_size,
                                          const int grid_size,
                                          const int boxes_per_cell,
@@ -1484,16 +1479,16 @@ __global__ void detection_forward_kernel(const int batch_size,
         const float aw = anchors[box * 2 + 0];
         const float ah = anchors[box * 2 + 1];
 
-        dst[base + 0] = yolo_sigmoid_device(src[base + 0]);
-        dst[base + 1] = yolo_sigmoid_device(src[base + 1]);
+        dst[base + 0] = sigmoid_f(src[base + 0]);
+        dst[base + 1] = sigmoid_f(src[base + 1]);
         dst[base + 2] = __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f)) * aw;
         dst[base + 3] = __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f)) * ah;
-        dst[base + 4] = yolo_sigmoid_device(src[base + 4]);
+        dst[base + 4] = sigmoid_f(src[base + 4]);
 
         if (class_activation == class_activation_sigmoid)
         {
             for (int c = 0; c < classes_number; ++c)
-                dst[base + 5 + c] = yolo_sigmoid_device(src[base + 5 + c]);
+                dst[base + 5 + c] = sigmoid_f(src[base + 5 + c]);
         }
         else  // Softmax
         {
@@ -1676,7 +1671,7 @@ __global__ void upsample_backward_kernel(
     }
 }
 
-void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+void upsample_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
                            const float* src, float* dst)
 {
     const int n = batch * (in_h * scale) * (in_w * scale) * channels;
@@ -1686,7 +1681,7 @@ void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scal
         n, src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale));
 }
 
-void upsample_backward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+void upsample_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
                             const float* out_delta, float* in_delta)
 {
     const int n = batch * in_h * in_w * channels;
@@ -1736,8 +1731,8 @@ __global__ void concat_backward_slice_kernel(
     }
 }
 
-void concat_forward_slice_cuda(int batch, int H, int W,
-                               int slice_ch, int total_ch, int ch_offset,
+void concat_forward_slice_cuda(const int batch, const int H, const int W,
+                               const int slice_ch, const int total_ch, const int ch_offset,
                                const float* src, float* dst)
 {
     const int n = batch * H * W * slice_ch;
@@ -1747,8 +1742,8 @@ void concat_forward_slice_cuda(int batch, int H, int W,
         n, src, dst, H, W, slice_ch, total_ch, ch_offset));
 }
 
-void concat_backward_slice_cuda(int batch, int H, int W,
-                                int slice_ch, int total_ch, int ch_offset,
+void concat_backward_slice_cuda(const int batch, const int H, const int W,
+                                const int slice_ch, const int total_ch, const int ch_offset,
                                 const float* out_delta, float* in_delta)
 {
     const int n = batch * H * W * slice_ch;

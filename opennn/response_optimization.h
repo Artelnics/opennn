@@ -50,8 +50,8 @@ public:
         Domain() = default;
         virtual ~Domain() = default;
 
-        Domain(const vector<Variable>&,
-               const vector<Descriptives>&,
+        Domain(const vector<Variable>& variables,
+               const vector<Descriptives>& descriptives,
                const float deformation_domain_factor = 1.0f)
         {
             set(variables, descriptives, deformation_domain_factor);

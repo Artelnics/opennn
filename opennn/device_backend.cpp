@@ -24,7 +24,6 @@ std::atomic_bool cuda_scratch_growth_forbidden_runtime{false};
 std::atomic_bool gemm_autotune_enabled_flag{false};
 std::atomic_bool bf16_compute_plain_flag{false};
 std::atomic_bool conv_autotune_enabled_flag{true};
-std::atomic_bool conv_legacy_forced_flag{false};
 
 void throw_if_auto(Device device_type)
 {
@@ -174,15 +173,6 @@ void set_conv_autotune(bool enabled) noexcept
     conv_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
 }
 
-bool conv_legacy_forced() noexcept
-{
-    return conv_legacy_forced_flag.load(std::memory_order_relaxed);
-}
-
-void set_conv_legacy(bool forced) noexcept
-{
-    conv_legacy_forced_flag.store(forced, std::memory_order_relaxed);
-}
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
     : active(enabled && is_cuda_build())

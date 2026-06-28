@@ -34,8 +34,8 @@ struct Descriptives
 
 };
 
-inline VectorR descriptives_field(const vector<Descriptives>&,
-                                  float Descriptives::*)
+inline VectorR descriptives_field(const vector<Descriptives>& descriptives,
+                                  float Descriptives::* member)
 {
     VectorR values(ssize(descriptives));
     for (Index i = 0; i < values.size(); ++i)
@@ -125,7 +125,7 @@ inline bool row_finite(const MatrixR& matrix, Index i) { return matrix.row(i).ar
 VectorR filter_missing_values(const VectorR&);
 
 template<typename InputType, typename TargetType>
-pair<InputType, TargetType> filter_missing_values(const InputType&, const TargetType&)
+pair<InputType, TargetType> filter_missing_values(const InputType& x, const TargetType& y)
 {
     throw_if(x.rows() != y.rows(),
              "filter_missing_values: row count mismatch");
@@ -141,7 +141,7 @@ pair<InputType, TargetType> filter_missing_values(const InputType&, const Target
 }
 
 template <typename T>
-inline bool is_binary(const T&)
+inline bool is_binary(const T& tensor)
 {
     return all_of(tensor.data(), tensor.data() + tensor.size(),
                   [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
@@ -150,7 +150,7 @@ inline bool is_binary(const T&)
 vector<Index> build_feasible_rows_mask(const MatrixR&, const VectorR&, const VectorR&);
 
 template <typename T>
-inline bool is_constant(const T&)
+inline bool is_constant(const T& tensor)
 {
     const float* data = tensor.data();
     const float* end = data + tensor.size();
@@ -166,7 +166,7 @@ inline bool is_constant(const T&)
                   [reference_value](float value) { return isnan(value) || abs(reference_value - value) <= numeric_limits<float>::min(); });
 }
 
-inline vector<Index> get_true_indices(const VectorB&)
+inline vector<Index> get_true_indices(const VectorB& flags)
 {
     vector<Index> indices;
     indices.reserve(flags.size());

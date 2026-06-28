@@ -30,8 +30,6 @@ struct PoolOperator : Operator
 
     Method method = Max;
 
-    CudnnDescriptor<cudnnPoolingDescriptor_t> pooling_descriptor;
-
     void set(Index, Index, Index,
              Index, Index,
              Index, Index,

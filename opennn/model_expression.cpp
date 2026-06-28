@@ -332,7 +332,7 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
     string processed = line;
     replace_all_appearances(processed, "[", "_");
     replace_all_appearances(processed, "]", "_");
-    const size_t count = std::min(input_names.size(), fixed_input_names.size());
+    const size_t count = min(input_names.size(), fixed_input_names.size());
     for (size_t i = 0; i < count; ++i)
     {
         const string& raw = input_names[i];

@@ -22,14 +22,11 @@
 
 static atomic<bool> mkl_fast_vml_flag{false};
 
-namespace opennn::cpu_math
-{
-void set_mkl_fast_vml(bool e) { mkl_fast_vml_flag.store(e, memory_order_relaxed); }
-bool mkl_fast_vml_enabled()   { return mkl_fast_vml_flag.load(memory_order_relaxed); }
-}
-
 namespace opennn
 {
+
+void set_mkl_fast_vml(bool e) { mkl_fast_vml_flag.store(e, memory_order_relaxed); }
+static bool mkl_fast_vml_enabled() { return mkl_fast_vml_flag.load(memory_order_relaxed); }
 
 #ifdef EIGEN_USE_MKL_ALL
 
@@ -76,7 +73,7 @@ static bool try_activation_forward(TensorView& output, ActivationFunction functi
     float* values = output.as<float>();
     const int size = to_int(output.size());
 
-    if (cpu_math::mkl_fast_vml_enabled())
+    if (mkl_fast_vml_enabled())
         vmsTanh(size, values, values, VML_EP);
     else
         vsTanh(size, values, values);
@@ -141,7 +138,7 @@ static bool try_linear_forward(const TensorView& input,
 
 static bool try_activation_forward(TensorView&, ActivationFunction)   { return false; }
 static bool try_linear_forward(const TensorView&, const TensorView&,
-                                const TensorView&, TensorView&, bool) { return false; }
+                               const TensorView&, TensorView&, bool) { return false; }
 
 #endif
 
@@ -183,8 +180,8 @@ ActivationFunction activation_function_from_string(const string& name)
     X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
-    X(layer_norm_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
-    X(layer_norm_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
+    X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
+    X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
     X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, Index, Index, bool)) \
     X(max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool)) \
@@ -580,7 +577,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
     weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
     bias_gradient.as_vector().noalias()   = output_delta.as_flat_matrix().colwise().sum();
 
-    if (!input_delta.data || input_delta.size() == 0) return;
+    if (!input_delta.data || input_delta.empty()) return;
 
     auto input_delta_mat = input_delta.as_flat_matrix();
     const auto product   = output_delta.as_flat_matrix() * weights.as_matrix().transpose();
@@ -610,7 +607,7 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
                         input_delta, accumulate_input_delta);
 }
 
-static void layer_norm_forward_cpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+static void layer_normalization_forward_cpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& output)
 {
@@ -657,7 +654,7 @@ static void layer_norm_forward_cpu(const TensorView& input, const TensorView& ga
     }
 }
 
-static void layer_norm_backward_cpu(const TensorView& output_delta,
+static void layer_normalization_backward_cpu(const TensorView& output_delta,
                              const TensorView& standard_deviations,
                              const TensorView& normalized,
                              const TensorView& gamma,
@@ -708,17 +705,17 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
     }
 }
 
-void layer_norm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+void layer_normalization_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                         TensorView& means, TensorView& standard_deviations,
                         TensorView& normalized, TensorView& output)
 {
-    if (input.is_cuda()) { layer_norm_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; }
-    layer_norm_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
+    if (input.is_cuda()) { layer_normalization_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; }
+    layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
 // Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
 // (the residual-stream value the backward needs) and LayerNorm(sum) to output.
-void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+void layer_normalization_add_forward(const TensorView& input, const TensorView& residual,
                             const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& sum, TensorView& output)
@@ -741,10 +738,10 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
 #endif
     // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
-    layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
+    layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
 }
 
-void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
+void layer_normalization_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,
                          const TensorView& gamma_gradient, const TensorView& beta_gradient,
@@ -752,11 +749,11 @@ void layer_norm_backward(const TensorView& input, const TensorView& output_delta
 {
     if (input.is_cuda())
     {
-        layer_norm_backward_gpu(input, output_delta, means, standard_deviations, gamma,
+        layer_normalization_backward_gpu(input, output_delta, means, standard_deviations, gamma,
                                 gamma_gradient, beta_gradient, input_delta);
         return;
     }
-    layer_norm_backward_cpu(output_delta, standard_deviations, normalized, gamma,
+    layer_normalization_backward_cpu(output_delta, standard_deviations, normalized, gamma,
                             gamma_gradient, beta_gradient, input_delta);
 }
 
@@ -1307,7 +1304,7 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const size_t rank_b = input_b.get_rank();
 
     int rows_a = to_int(input_a.shape[rank_a - 2]);
-    int cols_a = to_int(input_a.shape[rank_a - 1]);
+    const int cols_a = to_int(input_a.shape[rank_a - 1]);
     const int rows_b = to_int(input_b.shape[rank_b - 2]);
     const int cols_b = to_int(input_b.shape[rank_b - 1]);
 
@@ -1495,13 +1492,13 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         output_delta.cuda_dtype(),
         CUDA_R_32F);
 
-    if (!input_delta.data || input_delta.size() == 0) return;
+    if (!input_delta.data || input_delta.empty()) return;
 
     multiply(output_delta, false, weights, true, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);
 }
 
-static void layer_norm_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+static void layer_normalization_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations, TensorView& output)
 {
     const int rows = to_int(input.size() / input.shape.back());
@@ -1516,7 +1513,7 @@ static void layer_norm_forward_gpu(const TensorView& input, const TensorView& ga
     });
 }
 
-static void layer_norm_backward_gpu(const TensorView& input, const TensorView& output_delta,
+static void layer_normalization_backward_gpu(const TensorView& input, const TensorView& output_delta,
                              const TensorView& means, const TensorView& standard_deviations,
                              const TensorView& gamma,
                              const TensorView& gamma_gradient, const TensorView& beta_gradient,

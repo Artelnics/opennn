@@ -21,7 +21,7 @@ Convolutional::Convolutional(const Shape& new_input_shape,
                              const string& new_label)
     : Layer(LayerType::Convolutional)
 {
-    operators = {&convolution, &batch_norm, &activation};
+    operators = {&convolution, &batch_norm, &activation_operator};
 
     set(new_input_shape,
         new_kernel_shape,
@@ -132,24 +132,7 @@ void Convolutional::update_convolution_operator()
     const bool fuse_bn_relu = relu && batch_norm.active();
     const bool fuse_bn_add  = residual && batch_norm.active();
 
-    if (relu && !batch_norm.active())
-    {
-#ifdef OPENNN_HAS_CUDA
-        if (!convolution.fused_activation)
-        {
-            CHECK_CUDNN(cudnnCreateActivationDescriptor(&convolution.fused_activation.handle));
-            convolution.fused_activation.deleter = &cudnnDestroyActivationDescriptor;
-        }
-        CHECK_CUDNN(cudnnSetActivationDescriptor(convolution.fused_activation,
-                                                 CUDNN_ACTIVATION_RELU,
-                                                 CUDNN_PROPAGATE_NAN,
-                                                 0.0));
-#endif
-    }
-    else
-    {
-        convolution.fused_activation.reset();
-    }
+    convolution.fuse_relu = relu && !batch_norm.active();
     batch_norm.fuse_relu          = fuse_bn_relu;
     batch_norm.fuse_add           = fuse_bn_add;
     batch_norm.residual_delta_slot = fuse_bn_add ? 2 : 0;

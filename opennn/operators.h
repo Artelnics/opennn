@@ -18,7 +18,7 @@
 #include "recurrent_operator.h"
 #include "batch_norm_operator.h"
 #include "convolution_operator.h"
-#include "layer_norm_operator.h"
+#include "layer_normalization_operator.h"
 #include "multihead_projection_operator.h"
 #include "attention_operator.h"
 #include "merge_operator.h"

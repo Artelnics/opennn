@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "layer_norm_operator.h"
+#include "layer_normalization_operator.h"
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
@@ -18,38 +18,38 @@
 namespace opennn
 {
 
-void LayerNormOperator::set(Index new_sequence_length, Index new_embedding_dimension)
+void LayerNormalizationOperator::set(Index new_sequence_length, Index new_embedding_dimension)
 {
     sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
 }
 
-vector<TensorSpec> LayerNormOperator::parameter_specs() const
+vector<TensorSpec> LayerNormalizationOperator::parameter_specs() const
 {
     return vector<TensorSpec>(2, {Shape{embedding_dimension}, Type::FP32});
 }
 
-void LayerNormOperator::link_parameters(span<const TensorView> views)
+void LayerNormalizationOperator::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma = views[0];
     beta  = views[1];
 }
 
-void LayerNormOperator::link_gradients(span<const TensorView> views)
+void LayerNormalizationOperator::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 2) return;
     gamma_gradient = views[0];
     beta_gradient  = views[1];
 }
 
-void LayerNormOperator::init_defaults()
+void LayerNormalizationOperator::init_defaults()
 {
     if (gamma.data) gamma.as_vector().setOnes();
     if (beta.data)  beta.as_vector().setZero();
 }
 
-void LayerNormOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& means       = get_output(forward_propagation, layer);
@@ -62,14 +62,14 @@ void LayerNormOperator::forward_propagate(ForwardPropagation& forward_propagatio
         // The residual is the second gathered source input; `normalized` slot
         // holds the post-add sum (mirrors BatchNormOperator's fuse_add).
         const TensorView& residual = forward_propagation.input_views[layer][1];
-        layer_norm_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
+        layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
         return;
     }
 
-    layer_norm_forward(input, gamma, beta, means, stds, normalized, output);
+    layer_normalization_forward(input, gamma, beta, means, stds, normalized, output);
 }
 
-void LayerNormOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
+void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
     const TensorView& stds         = get_output(forward_propagation, layer, 1);
     const TensorView& normalized   = get_output(forward_propagation, layer, 2);
@@ -81,7 +81,7 @@ void LayerNormOperator::back_propagate(ForwardPropagation& forward_propagation, 
     // both inputs, so the residual input_delta (slot 1) is a copy of input_delta.
     const TensorView& norm_input = fuse_add ? normalized : get_input(forward_propagation, layer);
 
-    layer_norm_backward(norm_input, output_delta, get_output(forward_propagation, layer),
+    layer_normalization_backward(norm_input, output_delta, get_output(forward_propagation, layer),
                         stds, normalized, gamma, gamma_gradient, beta_gradient,
                         input_delta);
 

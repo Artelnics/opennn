@@ -52,7 +52,7 @@ public:
     void set_input_shape(const Shape&) override;
     void on_compute_dtype_changed() override;
 
-    void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
+    void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }
 
     static constexpr Index default_sdpa_min_sequence_length = 192;
 

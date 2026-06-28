@@ -12,7 +12,6 @@
 
 #include "convolution_operator.h"
 #include "device_backend.h"
-#include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
 #include "string_utilities.h"
@@ -24,53 +23,7 @@
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-namespace
-{
-
-void configure_convolution_descriptors(ConvolutionOperator& op)
-{
-    op.planned_batch_size = 0;
-
-    if (op.kernels_number <= 0) return;
-
-    if (!op.kernel_descriptor)
-    {
-        CHECK_CUDNN(cudnnCreateFilterDescriptor(&op.kernel_descriptor.handle));
-        op.kernel_descriptor.deleter = &cudnnDestroyFilterDescriptor;
-    }
-
-    CHECK_CUDNN(cudnnSetFilter4dDescriptor(op.kernel_descriptor,
-                                           to_cudnn(op.compute_dtype),
-                                           CUDNN_TENSOR_NHWC,
-                                           to_int(op.kernels_number), to_int(op.kernel_channels),
-                                           to_int(op.kernel_height),  to_int(op.kernel_width)));
-
-    if (!op.convolution_descriptor)
-    {
-        CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&op.convolution_descriptor.handle));
-        op.convolution_descriptor.deleter = &cudnnDestroyConvolutionDescriptor;
-    }
-
-    CHECK_CUDNN(cudnnSetConvolution2dDescriptor(op.convolution_descriptor,
-                                                to_int(op.padding_height), to_int(op.padding_width),
-                                                to_int(op.row_stride), to_int(op.column_stride),
-                                                1, 1,
-                                                CUDNN_CROSS_CORRELATION,
-                                                CUDNN_DATA_FLOAT));
-
-    CHECK_CUDNN(cudnnSetConvolutionMathType(op.convolution_descriptor,
-                                            CUDNN_TENSOR_OP_MATH_ALLOW_CONVERSION));
-}
-
-}
-
-#endif
-
-
 ConvolutionOperator::ConvolutionOperator() = default;
-
 ConvolutionOperator::~ConvolutionOperator() = default;
 
 #ifdef OPENNN_HAS_CUDA
@@ -100,6 +53,7 @@ struct ConvolutionOperator::ConvGraphCache
 
 namespace cudnn_frontend
 {
+using namespace ::cudnn_frontend;
 
 struct Dims
 {
@@ -137,10 +91,10 @@ Attributes conv_attributes(const Dims& d)
            .set_dilation({1, 1});
 }
 
-shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-krsc_tensor(cudnn_frontend::graph::Graph& graph, const char* name, const Dims& d)
+shared_ptr<graph::Tensor_attributes>
+krsc_tensor(graph::Graph& graph, const char* name, const Dims& d)
 {
-    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+    return graph.tensor(graph::Tensor_attributes()
                         .set_name(name)
                         .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                         .set_stride(krsc_strides(d)));
@@ -155,24 +109,24 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
     entry.fwd_W = krsc_tensor(*graph, "W", d);
 
     entry.fwd_Y = graph->conv_fprop(entry.fwd_X, entry.fwd_W,
-                                    conv_attributes<cudnn_frontend::graph::Conv_fprop_attributes>(d));
+                                    conv_attributes<graph::Conv_fprop_attributes>(d));
 
     if (use_bias)
     {
-        entry.fwd_B = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
+        entry.fwd_B = graph->tensor(graph::Tensor_attributes()
                                     .set_name("B")
                                     .set_dim({1, d.kernels, 1, 1})
                                     .set_stride({d.kernels, 1, d.kernels, d.kernels}));
 
         entry.fwd_Y = graph->pointwise(entry.fwd_Y, entry.fwd_B,
-                                       cudnn_frontend::graph::Pointwise_attributes()
-                                       .set_mode(cudnn_frontend::PointwiseMode_t::ADD));
+                                       graph::Pointwise_attributes()
+                                       .set_mode(PointwiseMode_t::ADD));
     }
 
     if (fuse_relu)
         entry.fwd_Y = graph->pointwise(entry.fwd_Y,
-                                       cudnn_frontend::graph::Pointwise_attributes()
-                                       .set_mode(cudnn_frontend::PointwiseMode_t::RELU_FWD));
+                                       graph::Pointwise_attributes()
+                                       .set_mode(PointwiseMode_t::RELU_FWD));
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
@@ -188,7 +142,7 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.wgrad_X  = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
 
     entry.wgrad_DW = graph->conv_wgrad(entry.wgrad_DY, entry.wgrad_X,
-                                       conv_attributes<cudnn_frontend::graph::Conv_wgrad_attributes>(d));
+                                       conv_attributes<graph::Conv_wgrad_attributes>(d));
     entry.wgrad_DW->set_output(true)
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
@@ -204,8 +158,8 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.bgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
 
     entry.bgrad_DB = graph->reduction(entry.bgrad_DY,
-                                      cudnn_frontend::graph::Reduction_attributes()
-                                      .set_mode(cudnn_frontend::ReductionMode_t::ADD));
+                                      graph::Reduction_attributes()
+                                      .set_mode(ReductionMode_t::ADD));
     entry.bgrad_DB->set_output(true)
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
@@ -222,7 +176,7 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.dgrad_W  = krsc_tensor(*graph, "W", d);
 
     entry.dgrad_DX = graph->conv_dgrad(entry.dgrad_DY, entry.dgrad_W,
-                                       conv_attributes<cudnn_frontend::graph::Conv_dgrad_attributes>(d));
+                                       conv_attributes<graph::Conv_dgrad_attributes>(d));
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
     entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace_bytes, "dgrad", autotune_enabled());
@@ -237,7 +191,7 @@ string timing_label(const ConvolutionOperator& op, const char* kind)
                   op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
 }
 
-}  // namespace cudnn_frontend
+}
 
 #endif
 
@@ -260,9 +214,6 @@ void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
     padding_width    = new_padding_w;
     compute_dtype    = new_compute_dtype;
 
-#ifdef OPENNN_HAS_CUDA
-    configure_convolution_descriptors(*this);
-#endif
 }
 
 vector<TensorSpec> ConvolutionOperator::parameter_specs() const
@@ -324,8 +275,7 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     const TensorView& input        = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    TensorView empty;
-    TensorView& input_delta = view_at_slot_or(backward_slots, input_delta_slots, 0, empty);
+    TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
     if (output_delta.is_cuda()) apply_delta_gpu(input, output_delta, input_delta);
     else                         apply_delta_cpu(input, output_delta, input_delta);
@@ -364,14 +314,10 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
         const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
         const float bias_value = use_bias ? biases(kernel_index) : 0.0f;
 
-        if (row_stride == 1 && column_stride == 1)
-            outputs.chip(kernel_index, 3).device(get_device()) =
-                padded_inputs.convolve(kernel_map, conv_dims).reshape(out_slice_shape) + bias_value;
-        else
-            outputs.chip(kernel_index, 3).device(get_device()) =
-                padded_inputs.convolve(kernel_map, conv_dims)
-                             .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
-                             .reshape(out_slice_shape) + bias_value;
+        outputs.chip(kernel_index, 3).device(get_device()) =
+            padded_inputs.convolve(kernel_map, conv_dims)
+                         .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
+                         .reshape(out_slice_shape) + bias_value;
     }
 }
 
@@ -450,70 +396,19 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void ConvolutionOperator::plan_convolution_algorithms(const TensorView& input, const TensorView& output)
-{
-    cudnnHandle_t handle = Backend::get_cudnn_handle();
-    cudnnTensorDescriptor_t input_desc  = input.get_descriptor();
-    cudnnTensorDescriptor_t output_desc = output.get_descriptor();
-
-    auto pick_algo = [](auto* perfs, int count, auto fallback) {
-        for (int i = 0; i < count; ++i)
-            if (perfs[i].status == CUDNN_STATUS_SUCCESS)
-                return perfs[i].algo;
-        return fallback;
-    };
-
-    int count = 0;
-
-    cudnnConvolutionFwdAlgoPerf_t fwd_perf[CUDNN_CONVOLUTION_FWD_ALGO_COUNT];
-    CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
-        handle, input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-        CUDNN_CONVOLUTION_FWD_ALGO_COUNT, &count, fwd_perf));
-    algorithm_forward = pick_algo(fwd_perf, count, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM);
-
-    cudnnConvolutionBwdDataAlgoPerf_t bwd_data_perf[CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT];
-    CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
-        handle, kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-        CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT, &count, bwd_data_perf));
-    algorithm_data = pick_algo(bwd_data_perf, count, CUDNN_CONVOLUTION_BWD_DATA_ALGO_1);
-
-    cudnnConvolutionBwdFilterAlgoPerf_t bwd_filter_perf[CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT];
-    CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
-        handle, input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-        CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT, &count, bwd_filter_perf));
-    algorithm_filter = pick_algo(bwd_filter_perf, count, CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1);
-
-    size_t fwd_ws = 0, bwd_data_ws = 0, bwd_filter_ws = 0;
-    CHECK_CUDNN(cudnnGetConvolutionForwardWorkspaceSize(
-        handle, input_desc, kernel_descriptor, convolution_descriptor, output_desc,
-        algorithm_forward, &fwd_ws));
-    CHECK_CUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(
-        handle, kernel_descriptor, output_desc, convolution_descriptor, input_desc,
-        algorithm_data, &bwd_data_ws));
-    CHECK_CUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(
-        handle, input_desc, output_desc, convolution_descriptor, kernel_descriptor,
-        algorithm_filter, &bwd_filter_ws));
-
-    cudnn_workspace_size_ = max({fwd_ws, bwd_data_ws, bwd_filter_ws});
-    ensure_cudnn_conv_workspace(cudnn_workspace_size_);
-
-    planned_batch_size = input.shape[0];
-}
-
-
 void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 {
     PROFILE_SCOPE("op:conv_fwd");
 
-    if (input.is_fp32() && cudnn_frontend::frontend_enabled()
+    throw_if(!input.is_fp32(), "ConvolutionOperator: GPU convolution requires FP32 input.");
+
+    const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.fwd)
-            // The only fused activation the layer requests is ReLU
-            // (see Convolutional::update_convolution_operator).
             cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.shape[0]),
-                                    bool(fused_activation), use_bias);
+                                    fuse_relu, use_bias);
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.fwd_X] = input.data;
@@ -525,48 +420,9 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 
         cudnn_frontend::execute_graph(*entry.fwd, tensors, cudnn_frontend::shared_workspace(entry.fwd_workspace_bytes),
                                 "forward execute", cudnn_frontend::timing_label(*this, "conv_fwd"));
-    }))
-        return;
+    });
 
-    if (input.shape[0] != planned_batch_size)
-        plan_convolution_algorithms(input, output);
-
-    void* workspace = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
-
-    if (fused_activation)
-    {
-        CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
-            Backend::get_cudnn_handle(),
-            &one,
-            input.get_descriptor(),  input.data,
-            kernel_descriptor,        weights.data,
-            convolution_descriptor,
-            algorithm_forward,
-            workspace, cudnn_workspace_size_,
-            &zero,
-            output.get_descriptor(), output.data,
-            bias.get_descriptor(),   bias.data,
-            fused_activation,
-            output.get_descriptor(), output.data));
-        return;
-    }
-
-    CHECK_CUDNN(cudnnConvolutionForward(Backend::get_cudnn_handle(),
-                                        &one,
-                                        input.get_descriptor(),  input.data,
-                                        kernel_descriptor,        weights.data,
-                                        convolution_descriptor,
-                                        algorithm_forward,
-                                        workspace, cudnn_workspace_size_,
-                                        &zero,
-                                        output.get_descriptor(), output.data));
-
-    if (use_bias)
-        CHECK_CUDNN(cudnnAddTensor(Backend::get_cudnn_handle(),
-                                   &one,
-                                   bias.get_descriptor(), bias.data,
-                                   &one,
-                                   output.get_descriptor(), output.data));
+    throw_if(!ran, "ConvolutionOperator: GPU convolution requires SM 8.0+ (Ampere).");
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
@@ -578,11 +434,13 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
     assert(output_delta.type == input.type);
     assert(weight_gradient.is_fp32());
 
-    if (input.is_fp32() && cudnn_frontend::frontend_enabled()
+    throw_if(!input.is_fp32(), "ConvolutionOperator: GPU convolution backward requires FP32.");
+
+    const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
-        const cudnn_frontend::Dims dims = cudnn_frontend::make_dims(*this, input.shape[0]);
+        const auto dims = cudnn_frontend::make_dims(*this, input.shape[0]);
 
         if (!entry.wgrad) cudnn_frontend::build_wgrad(entry, dims);
 
@@ -598,9 +456,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (use_bias)
         {
-            // cudnnConvolutionBackwardBias is pathologically slow on NHWC
-            // deltas (~2 ms for a 16-channel reduction); use a frontend
-            // reduction graph instead.
             if (!entry.bgrad) cudnn_frontend::build_bgrad(entry, dims);
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
@@ -627,67 +482,9 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
             cudnn_frontend::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_frontend::shared_workspace(entry.dgrad_workspace_bytes),
                                     "dgrad execute", cudnn_frontend::timing_label(*this, "conv_dgrad"));
         }
-    }))
-        return;
+    });
 
-    const bool bf16 = (input.is_bf16());
-
-    void* weight_gradient_buffer = weight_gradient.data;
-    bfloat16* weight_gradient_bf16_workspace = nullptr;
-
-    if (bf16)
-    {
-        weight_gradient_bf16_workspace = ensure_bf16_gradient_workspace(weight_gradient.size());
-        weight_gradient_buffer = weight_gradient_bf16_workspace;
-    }
-
-    void* workspace = ensure_cudnn_conv_workspace(cudnn_workspace_size_);
-
-    CHECK_CUDNN(cudnnConvolutionBackwardFilter(Backend::get_cudnn_handle(),
-        &one,
-        input.get_descriptor(),        input.data,
-        output_delta.get_descriptor(), output_delta.data,
-        convolution_descriptor,
-        algorithm_filter,
-        workspace, cudnn_workspace_size_,
-        &zero,
-        kernel_descriptor, weight_gradient_buffer));
-
-    if (use_bias)
-    {
-        TensorView output_delta_for_bias = output_delta;
-
-        if (bf16)
-        {
-            float* const output_delta_fp32 = ensure_bf16_to_fp32_workspace(output_delta.size());
-            cast_bf16_to_fp32_cuda(output_delta.size(),
-                                   output_delta.as<bfloat16>(),
-                                   output_delta_fp32);
-
-            output_delta_for_bias = TensorView(output_delta_fp32, output_delta.shape, Type::FP32, Device::CUDA);
-        }
-
-        CHECK_CUDNN(cudnnConvolutionBackwardBias(Backend::get_cudnn_handle(),
-            &one,
-            output_delta_for_bias.get_descriptor(), output_delta_for_bias.data,
-            &zero,
-            bias_gradient.get_descriptor(), bias_gradient.data));
-    }
-
-    if (bf16)
-        cast_bf16_to_fp32_cuda(weight_gradient.size(), weight_gradient_bf16_workspace, weight_gradient.as_float());
-
-    if (!input_delta.data || input_delta.size() == 0) return;
-
-    CHECK_CUDNN(cudnnConvolutionBackwardData(Backend::get_cudnn_handle(),
-        &one,
-        kernel_descriptor, weights.data,
-        output_delta.get_descriptor(), output_delta.data,
-        convolution_descriptor,
-        algorithm_data,
-        workspace, cudnn_workspace_size_,
-        &zero,
-        input_delta.get_descriptor(), input_delta.data));
+    throw_if(!ran, "ConvolutionOperator: GPU convolution backward requires SM 8.0+ (Ampere).");
 }
 
 #else

@@ -36,18 +36,7 @@ struct ConvolutionOperator : Operator
     TensorView weight_gradient;
     TensorView bias_gradient;
 
-    CudnnDescriptor<cudnnActivationDescriptor_t> fused_activation;
-
-    CudnnDescriptor<cudnnFilterDescriptor_t>      kernel_descriptor;
-    CudnnDescriptor<cudnnConvolutionDescriptor_t> convolution_descriptor;
-
-    cudnnConvolutionFwdAlgo_t       algorithm_forward = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-    cudnnConvolutionBwdDataAlgo_t   algorithm_data    = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
-    cudnnConvolutionBwdFilterAlgo_t algorithm_filter  = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
-
-    size_t cudnn_workspace_size_ = 0;
-
-    Index planned_batch_size = 0;
+    bool fuse_relu = false;
 
 #ifdef OPENNN_HAS_CUDA
     struct ConvGraphCache;
@@ -84,7 +73,6 @@ private:
                          TensorView&) const;
     void apply_delta_gpu(const TensorView&, const TensorView&,
                          TensorView&) const;
-    void plan_convolution_algorithms(const TensorView&, const TensorView&);
 };
 
 }

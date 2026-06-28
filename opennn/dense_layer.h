@@ -68,7 +68,7 @@ private:
     Index output_features = 0;
 
     CombinationOperator combination;
-    ActivationOperator  activation;
+    ActivationOperator  activation_operator;
     BatchNormalizationOperator   batch_norm;
     DropoutOperator     dropout;
 

@@ -76,7 +76,7 @@ bool has_bom(string_view s)
 
 FileMapping::~FileMapping() { reset(); }
 
-FileMapping::FileMapping(FileMapping&& other) noexcept { *this = std::move(other); }
+FileMapping::FileMapping(FileMapping&& other) noexcept { *this = move(other); }
 
 FileMapping& FileMapping::operator=(FileMapping&& other) noexcept
 {

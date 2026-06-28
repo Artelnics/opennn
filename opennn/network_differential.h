@@ -28,7 +28,7 @@ struct NetworkDifferential
         VectorR bias;
         ActivationFunction activation = ActivationFunction::Identity;
         vector<ScalerMethod> methods;
-        VectorR, maximum, mean, deviation;
+        VectorR minimum, maximum, mean, deviation;
         float min_range = -1.0f, max_range = 1.0f;
         bool bounding_active = true;
     };
@@ -111,7 +111,7 @@ struct NetworkDifferential
         return d;
     }
 
-    VectorR unscale_forward(const LayerSnapshot&, const VectorR&) const
+    VectorR unscale_forward(const LayerSnapshot& layer, const VectorR& in) const
     {
         VectorR out(in.size());
         for (Index j = 0; j < in.size(); ++j)
@@ -130,7 +130,7 @@ struct NetworkDifferential
         return out;
     }
 
-    VectorR unscale_derivative(const LayerSnapshot&, const VectorR&) const
+    VectorR unscale_derivative(const LayerSnapshot& layer, const VectorR& in) const
     {
         VectorR d(in.size());
         for (Index j = 0; j < in.size(); ++j)
@@ -146,7 +146,7 @@ struct NetworkDifferential
         return d;
     }
 
-    VectorR bound_derivative(const LayerSnapshot&, const VectorR&) const
+    VectorR bound_derivative(const LayerSnapshot& layer, const VectorR& in) const
     {
         if (!layer.bounding_active) return VectorR::Ones(in.size());
 
@@ -158,7 +158,7 @@ struct NetworkDifferential
 
     void build(const NeuralNetwork&);
 
-    VectorR forward(const VectorR&) const
+    VectorR forward(const VectorR& x) const
     {
         const size_t layers_number = layers.size();
         layer_inputs.assign(layers_number, VectorR());
@@ -189,7 +189,7 @@ struct NetworkDifferential
         return activation;
     }
 
-    VectorR vjp(const VectorR&, const VectorR&) const
+    VectorR vjp(const VectorR& x, const VectorR& cotangent) const
     {
         if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
             forward(x);

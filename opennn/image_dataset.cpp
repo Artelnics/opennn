@@ -380,7 +380,7 @@ void ImageDataset::read_images()
         ranges::sort(folder_files);
         for (auto& p : folder_files)
         {
-            paths.emplace_back(std::move(p));
+            paths.emplace_back(move(p));
             labels.push_back(int32_t(i));
         }
     }
@@ -439,7 +439,7 @@ void ImageDataset::read_images()
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    sample_labels = std::move(labels);
+    sample_labels = move(labels);
 
     sample_roles.assign(samples_number, SampleRole::Training);
 

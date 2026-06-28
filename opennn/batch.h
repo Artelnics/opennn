@@ -142,7 +142,7 @@ struct BatchPools
 
 struct BatchPrefetchSession
 {
-    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>&, Index)
+    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, Index batches_number)
         : empty_queue(queue),
           ready_batches(size_t(batches_number))
     {
@@ -165,7 +165,7 @@ struct BatchPrefetchSession
     BatchPrefetchSession(const BatchPrefetchSession&) = delete;
     BatchPrefetchSession& operator=(const BatchPrefetchSession&) = delete;
 
-    Batch* wait(Index)
+    Batch* wait(Index iteration)
     {
         Batch* batch = nullptr;
         while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))

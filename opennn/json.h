@@ -115,7 +115,7 @@ string read_json_string_fallback(const Json*,
 const Json* require_json_field(const Json*, const string&);
 
 template<typename Func>
-void for_json_items(const Json*, const char*, long count, Func)
+void for_json_items(const Json* parent, const char* tag, long count, Func func)
 {
     throw_if(!parent || !parent->is_object(),
              format("Missing JSON parent for: {}", tag));

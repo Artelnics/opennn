@@ -267,7 +267,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                 for (Index sample = 0; sample < batch_size; ++sample)
                     previous_delta(sample * outputs_number + j, k) *= previous_act_deriv(sample, k);
 
-        delta = std::move(previous_delta);
+        delta = move(previous_delta);
     }
 }
 

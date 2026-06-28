@@ -905,9 +905,10 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_host();
+        self->copy_states_host();
 
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -981,7 +982,7 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.close_element();
 
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_device();
+        self->copy_states_device();
 }
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
@@ -1133,9 +1134,10 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     throw_if(!file.is_open(),
              format("Cannot open binary file for writing: {}\n", file_name.string()));
 
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_parameters_host();
+        self->copy_parameters_host();
 
     const Index parameters_number = parameters.size_in_floats();
 
@@ -1144,10 +1146,8 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 
     throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
-    file.close();
-
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_parameters_device();
+        self->copy_parameters_device();
 }
 
 void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
@@ -1157,19 +1157,18 @@ void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
     throw_if(!file.is_open(),
              format("Cannot open binary file for writing: {}\n", file_name.string()));
 
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (states.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_host();
+        self->copy_states_host();
 
     if (states.bytes > 0)
         file.write(reinterpret_cast<const char*>(states.data), states.bytes);
 
     throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
-    file.close();
-
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_device();
+        self->copy_states_device();
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)
@@ -1207,7 +1206,6 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     if (was_on_device) copy_parameters_device();
 
     throw_if(!file, format("Error reading binary file: {}", file_name.string()));
-
 }
 
 void NeuralNetwork::load_states_binary(const filesystem::path& file_name)

@@ -12,7 +12,6 @@
 #include "random_utilities.h"
 
 #include <cctype>
-#include <Eigen/Dense>
 
 namespace opennn
 {

@@ -110,7 +110,7 @@ private:
     bool residual = false;
 
     ConvolutionOperator convolution;
-    ActivationOperator  activation;
+    ActivationOperator  activation_operator;
     BatchNormalizationOperator   batch_norm;
 
     enum Forward {Input, ConvolutionView, BatchNormMean, BatchNormInverseVariance, Output};

@@ -20,7 +20,7 @@ class ThreadSafeQueue
 {
 public:
 
-    void push(T)
+    void push(T item)
     {
         { lock_guard<mutex> lock(mutex_); queue_.push(move(item)); }
         cond_.notify_one();

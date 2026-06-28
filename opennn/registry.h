@@ -33,12 +33,12 @@ public:
         return registry;
     }
 
-    void register_component(const std::string&, Creator)
+    void register_component(const std::string& name, Creator creator)
     {
         creators[name] = std::move(creator);
     }
 
-    std::unique_ptr<T> create(const std::string&) const
+    std::unique_ptr<T> create(const std::string& name) const
     {
         auto it = creators.find(name);
 
