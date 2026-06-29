@@ -337,7 +337,7 @@ struct Parser
         if (match("true"))  { Json j; j.kind = Json::Kind::Bool; j.bool_value = true;  return j; }
         if (match("false")) { Json j; j.kind = Json::Kind::Bool; j.bool_value = false; return j; }
         if (match("null"))  return Json{};
-        fail(string("unexpected character '") + c + "'");
+        fail(format("unexpected character '{}'", c));
     }
 
     Json parse_object()

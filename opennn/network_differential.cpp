@@ -104,8 +104,7 @@ void NetworkDifferential::build(const NeuralNetwork& network)
                 (bounding->get_bounding_method() == Bounding::BoundingMethod::Bounding);
         }
         else
-            throw runtime_error("NetworkDifferential: unsupported layer type '"
-                                + layer_type_to_string(type) + "' for analytic Jacobian");
+            throw runtime_error(format("Unsupported layer type '{}' for analytic Jacobian", layer_type_to_string(type)));
 
         layers.push_back(move(snapshot));
     }

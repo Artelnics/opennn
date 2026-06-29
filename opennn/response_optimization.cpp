@@ -405,7 +405,7 @@ vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) 
         if (neural_network->has("Unscaling"))
             return static_cast<Unscaling*>(neural_network->get_first("Unscaling"))->get_descriptives();
 
-    throw runtime_error("ResponseOptimization: Required Scaling/Unscaling layer for role '" + role + "' not found.");
+    throw runtime_error(format("Required Scaling/Unscaling layer for role '{}' not found.", role));
 }
 
 const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_variables_and_descriptives(const string& role) const
