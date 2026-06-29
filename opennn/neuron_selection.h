@@ -57,10 +57,7 @@ public:
 
     virtual NeuronsSelectionResult perform_neurons_selection() = 0;
 
-    string get_name() const
-    {
-        return name;
-    }
+    string get_name() const { return name; }
 
     virtual void from_JSON(const JsonDocument&) = 0;
 

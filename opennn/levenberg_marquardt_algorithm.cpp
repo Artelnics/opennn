@@ -549,20 +549,11 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     const Index parameters_number = neural_network->get_parameters_size();
     const Index total_error_terms = new_samples_number * outputs_number;
 
-    errors.resize(total_error_terms);
-    errors.setZero();
-
-    squared_errors.resize(total_error_terms);
-    squared_errors.setZero();
-
-    squared_errors_jacobian.resize(total_error_terms, parameters_number);
-    squared_errors_jacobian.setZero();
-
-    gradient.resize(parameters_number);
-    gradient.setZero();
-
-    hessian.resize(parameters_number, parameters_number);
-    hessian.setZero();
+    errors                  = VectorR::Zero(total_error_terms);
+    squared_errors          = VectorR::Zero(total_error_terms);
+    squared_errors_jacobian = MatrixR::Zero(total_error_terms, parameters_number);
+    gradient                = VectorR::Zero(parameters_number);
+    hessian                 = MatrixR::Zero(parameters_number, parameters_number);
 }
 }
 

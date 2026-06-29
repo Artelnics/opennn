@@ -84,8 +84,7 @@ void print(ostream& os)
             rows.push_back(entry);
     }
 
-    ranges::sort(rows, {}, &Entry::bytes);
-    ranges::reverse(rows);
+    ranges::sort(rows, greater<>{}, &Entry::bytes);
 
     Index total = 0;
     for (const Entry& row : rows) total += row.bytes;

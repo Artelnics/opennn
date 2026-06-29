@@ -392,17 +392,11 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         const float length = (max - min) /float(bins_number);
         const float inv_length = 1.0f / length;
 
-        minimums(0) = min;
-        maximums(0) = min + length;
-        centers(0) = (maximums(0) + minimums(0)) /2.0f;
-
-
-        for (Index i = 1; i < bins_number; ++i)
+        for (Index i = 0; i < bins_number; ++i)
         {
-            minimums(i) = minimums(i - 1) + length;
-            maximums(i) = maximums(i - 1) + length;
-
-            centers(i) = (maximums(i) + minimums(i)) /2.0f;
+            minimums(i) = min + i * length;
+            maximums(i) = min + (i + 1) * length;
+            centers(i)  = min + (i + 0.5f) * length;
         }
 
 

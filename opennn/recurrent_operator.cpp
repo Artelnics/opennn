@@ -385,9 +385,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
         }
 
         if (return_sequences)
-        {
             copy(hidden_states, output);
-        }
         else
         {
             TensorView final_hidden(prev_hidden_buf.data, step_hidden_shape, output.type, Device::CUDA);

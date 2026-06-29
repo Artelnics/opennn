@@ -43,7 +43,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
     NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
-    if (display) cout << "Performing growing neuron selection..." << "\n";
+    if (display) cout << "Performing growing neuron selection...\n";
 
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();

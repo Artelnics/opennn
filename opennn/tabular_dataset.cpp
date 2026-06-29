@@ -996,16 +996,14 @@ static void parse_datetime_token(MatrixR& data, Index sample_index, Index featur
                           Index gmt, const DateFormat& date_format)
 {
     if (is_missing_token(token, missing_label))
-        data(sample_index, feature_index) = NAN;
-    else
     {
-        const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
-
-        throw_if(timestamp == -1,
-                 "Date format is unsupported or date is prior to 1970.");
-
-        data(sample_index, feature_index) = timestamp;
+        data(sample_index, feature_index) = NAN;
+        return;
     }
+
+    const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
+    throw_if(timestamp == -1, "Date format is unsupported or date is prior to 1970.");
+    data(sample_index, feature_index) = timestamp;
 }
 
 static void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Index>& feature_indices,

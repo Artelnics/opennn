@@ -58,7 +58,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    if (display) cout << "Performing growing input selection..." << "\n";
+    if (display) cout << "Performing growing input selection...\n";
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
@@ -71,7 +71,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
     const vector<string> variable_names = dataset->get_variable_names();
 
-    if (display) cout << "Calculating correlations..." << "\n";
+    if (display) cout << "Calculating correlations...\n";
 
     const VectorR total_correlations =
         get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations()).col(0).array().abs();
@@ -113,7 +113,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     {
         if (variable_index >= correlations_rank_descending.size())
         {
-            if (display) cout << "\nAll the variables has been used." << "\n";
+            if (display) cout << "\nAll the variables has been used.\n";
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             continue;
         }
@@ -137,10 +137,9 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
         if (display)
         {
-            cout << "\n"
-                << "Epoch: " << epoch + 1 << "\n"
+            cout << "\nEpoch: " << epoch + 1 << "\n"
                 << "Input variables number: " << input_variables_number << "\n"
-                << "Inputs: " << "\n";
+                << "Inputs: \n";
 
             cout << dataset->get_variable_names("Input");
         }
@@ -182,7 +181,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
         if (previous_validation_error < minimum_validation_error)
         {
-            if (display) cout << "Validation failure" << "\n";
+            if (display) cout << "Validation failure\n";
             ++validation_failures;
 
             dataset->set_variable_role(current_variable_index,

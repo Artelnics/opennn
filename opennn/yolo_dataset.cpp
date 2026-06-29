@@ -1405,9 +1405,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     for (const auto& sample_boxes : labels)
         for (const auto& box : sample_boxes)
         {
-            YoloBoxRecord rec{};
-            rec.class_id = int32_t(box.class_id);
-            rec.x = box.x; rec.y = box.y; rec.w = box.w; rec.h = box.h;
+            const YoloBoxRecord rec{int32_t(box.class_id), box.x, box.y, box.w, box.h};
             boxes_writer.write(&rec, sizeof(rec));
         }
 
@@ -1533,8 +1531,7 @@ void YoloDataset::load_images_to_ram() const
 
 void YoloDataset::load_targets_to_ram() const
 {
-    if (!targets_ram.empty()) return;
-    if (samples_number == 0 || cache_target_record_floats == 0) return;
+    if (!targets_ram.empty() || samples_number == 0 || cache_target_record_floats == 0) return;
 
     throw_if(!target_cache_reader.is_open(),
              "YoloDataset::load_targets_to_ram: target cache is not open.");

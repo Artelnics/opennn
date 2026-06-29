@@ -136,7 +136,7 @@ TensorView ForwardPropagation::get_outputs() const
 
 void ForwardPropagation::print() const
 {
-    cout << "Neural network forward propagation" << "\n";
+    cout << "Neural network forward propagation\n";
 
     if (!neural_network)
     {

@@ -652,15 +652,9 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
             case ComparisonOperator::AllowedSet:
                 if (!constraint.allowed_values.empty())
                 {
-                    float lowest = constraint.allowed_values.front();
-                    float highest = constraint.allowed_values.front();
-                    for (const float value : constraint.allowed_values)
-                    {
-                        lowest = min(lowest, value);
-                        highest = max(highest, value);
-                    }
-                    inferior = max(inferior, lowest);
-                    superior = min(superior, highest);
+                    const auto [lo, hi] = minmax_element(constraint.allowed_values.begin(), constraint.allowed_values.end());
+                    inferior = max(inferior, *lo);
+                    superior = min(superior, *hi);
                 }
                 break;
             default:
@@ -1315,10 +1309,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
     }
     else
     {
-        const SurrogateBatchForward batch_forward = [this](const MatrixR& x) -> MatrixR
-        {
-            return calculate_outputs(x);
-        };
+        const SurrogateBatchForward batch_forward = [this](const MatrixR& x) -> MatrixR { return calculate_outputs(x); };
 
         repair_output_constraints(random_inputs,
                                   input_domain.inferior_frontier,
