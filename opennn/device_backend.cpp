@@ -19,11 +19,7 @@ namespace opennn::device
 namespace
 {
 
-std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
-std::atomic_bool cuda_scratch_growth_forbidden_runtime{false};
-std::atomic_bool gemm_autotune_enabled_flag{false};
-std::atomic_bool bf16_compute_plain_flag{false};
-std::atomic_bool conv_autotune_enabled_flag{true};
+atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 
 void throw_if_auto(Device device_type)
 {
@@ -31,17 +27,6 @@ void throw_if_auto(Device device_type)
              "device backend expects a resolved device.");
 }
 
-CopyKind copy_kind(Device source, Device target)
-{
-    throw_if_auto(source);
-    throw_if_auto(target);
-
-    if (source == Device::CUDA && target == Device::CUDA) return CopyKind::DeviceToDevice;
-    if (source == Device::CUDA) return CopyKind::DeviceToHost;
-    if (target == Device::CUDA) return CopyKind::HostToDevice;
-
-    return CopyKind::HostToHost;
-}
 
 #ifndef OPENNN_HAS_CUDA
 [[noreturn]] void throw_cuda_unavailable()
@@ -50,54 +35,15 @@ CopyKind copy_kind(Device source, Device target)
 }
 #endif
 
-#ifdef OPENNN_HAS_CUDA
-
-cudaMemcpyKind to_cuda_copy_kind(CopyKind kind)
-{
-    switch (kind)
-    {
-        case CopyKind::HostToHost:     return cudaMemcpyHostToHost;
-        case CopyKind::HostToDevice:   return cudaMemcpyHostToDevice;
-        case CopyKind::DeviceToHost:   return cudaMemcpyDeviceToHost;
-        case CopyKind::DeviceToDevice: return cudaMemcpyDeviceToDevice;
-    }
-
-    throw runtime_error("unsupported CUDA copy kind.");
-}
-
-#endif
-
 void* allocate_cuda(Index byte_count)
 {
 #ifdef OPENNN_HAS_CUDA
     throw_if(cuda_allocation_growth_forbidden(),
-             format("CUDA allocation of {} bytes while CUDA allocation growth is forbidden "
-                    "(warmup incomplete before CUDA graph capture).",
-                    byte_count));
+             format("CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count));
     void* device_pointer = nullptr;
     CHECK_CUDA(cudaMalloc(&device_pointer, static_cast<size_t>(byte_count)));
     return device_pointer;
 #else
-    (void)byte_count;
-    throw_cuda_unavailable();
-#endif
-}
-
-void deallocate_cuda(void* pointer)
-{
-#ifdef OPENNN_HAS_CUDA
-    cudaFree(pointer);
-#else
-    (void)pointer;
-#endif
-}
-
-void set_zero_cuda(void* data, Index byte_count)
-{
-#ifdef OPENNN_HAS_CUDA
-    CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
-#else
-    (void)data;
     (void)byte_count;
     throw_cuda_unavailable();
 #endif
@@ -153,54 +99,13 @@ size_t available_memory()
 
 bool cuda_allocation_growth_forbidden() noexcept
 {
-    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed);
+    return cuda_allocation_growth_forbidden_runtime.load(memory_order_relaxed);
 }
 
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
-    cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+    cuda_allocation_growth_forbidden_runtime.store(forbidden, memory_order_relaxed);
 }
-
-bool cuda_scratch_growth_forbidden() noexcept
-{
-    return cuda_scratch_growth_forbidden_runtime.load(std::memory_order_relaxed);
-}
-
-void set_cuda_scratch_growth_forbidden(bool forbidden) noexcept
-{
-    cuda_scratch_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
-}
-
-bool gemm_autotune_enabled() noexcept
-{
-    return gemm_autotune_enabled_flag.load(std::memory_order_relaxed);
-}
-
-void set_gemm_autotune(bool enabled) noexcept
-{
-    gemm_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
-}
-
-bool bf16_compute_plain() noexcept
-{
-    return bf16_compute_plain_flag.load(std::memory_order_relaxed);
-}
-
-void set_bf16_compute_plain(bool enabled) noexcept
-{
-    bf16_compute_plain_flag.store(enabled, std::memory_order_relaxed);
-}
-
-bool conv_autotune_enabled() noexcept
-{
-    return conv_autotune_enabled_flag.load(std::memory_order_relaxed);
-}
-
-void set_conv_autotune(bool enabled) noexcept
-{
-    conv_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
-}
-
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
     : active(enabled && is_cuda_build())
@@ -239,7 +144,9 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
 
     if (device_type == Device::CUDA)
     {
-        deallocate_cuda(pointer);
+#ifdef OPENNN_HAS_CUDA
+        cudaFree(pointer);
+#endif
         return;
     }
 
@@ -256,7 +163,11 @@ void set_zero(void* data, Index byte_count, Device device_type)
 
     if (device_type == Device::CUDA)
     {
-        set_zero_cuda(data, byte_count);
+#ifdef OPENNN_HAS_CUDA
+        CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
+#else
+        throw_cuda_unavailable();
+#endif
         return;
     }
 
@@ -289,13 +200,19 @@ void copy_async(void* destination,
     if (byte_count == 0 || !destination || !source) return;
 
 #ifdef OPENNN_HAS_CUDA
-    const cudaMemcpyKind cuda_kind = to_cuda_copy_kind(kind);
+    cudaMemcpyKind cuda_kind;
+    switch (kind)
+    {
+        case CopyKind::HostToHost:     cuda_kind = cudaMemcpyHostToHost;     break;
+        case CopyKind::HostToDevice:   cuda_kind = cudaMemcpyHostToDevice;   break;
+        case CopyKind::DeviceToHost:   cuda_kind = cudaMemcpyDeviceToHost;   break;
+        case CopyKind::DeviceToDevice: cuda_kind = cudaMemcpyDeviceToDevice; break;
+    }
 
     if (stream)
         CHECK_CUDA(cudaMemcpyAsync(destination, source,
                                    static_cast<size_t>(byte_count),
-                                   cuda_kind,
-                                   stream));
+                                   cuda_kind, stream));
     else
         CHECK_CUDA(cudaMemcpy(destination, source,
                               static_cast<size_t>(byte_count),
@@ -314,7 +231,15 @@ void copy_async(void* destination,
                 Device target_device,
                 cudaStream_t stream)
 {
-    copy_async(destination, source, byte_count, copy_kind(source_device, target_device), stream);
+    throw_if_auto(source_device);
+    throw_if_auto(target_device);
+
+    CopyKind kind = CopyKind::HostToHost;
+    if (source_device == Device::CUDA && target_device == Device::CUDA) kind = CopyKind::DeviceToDevice;
+    else if (source_device == Device::CUDA)                             kind = CopyKind::DeviceToHost;
+    else if (target_device == Device::CUDA)                             kind = CopyKind::HostToDevice;
+
+    copy_async(destination, source, byte_count, kind, stream);
 }
 
 void synchronize(cudaStream_t stream)
@@ -402,7 +327,7 @@ cudaEvent_t create_event()
 #ifdef OPENNN_HAS_CUDA
     return create_event(cudaEventDisableTiming);
 #else
-    return create_event(0);
+    return nullptr;
 #endif
 }
 
@@ -621,11 +546,6 @@ namespace
         cublasLtMatmulAlgo_t   algorithm{};
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
-        // Autotuning: cuBLASLt's first heuristic is not always the fastest, so we
-        // keep the top candidates and, on the first real matmul, time each and
-        // lock in the quickest. `tuned` marks that selection as done.
-        vector<cublasLtMatmulHeuristicResult_t> candidates;
-        bool                   tuned = false;
 
         LtMatmulPlan() = default;
         LtMatmulPlan(const LtMatmulPlan&) = delete;
@@ -642,8 +562,6 @@ namespace
             swap(algorithm, other.algorithm);
             swap(has_algorithm, other.has_algorithm);
             swap(workspace_bytes, other.workspace_bytes);
-            swap(candidates, other.candidates);
-            swap(tuned, other.tuned);
         }
 
         ~LtMatmulPlan()
@@ -679,7 +597,7 @@ namespace
         }
     };
 
-    struct CudaGemmThreadState
+    struct CudaMatmulThreadState
     {
         Buffer workspace{Device::CUDA};
 
@@ -687,41 +605,22 @@ namespace
         Buffer bf16_gradient{Device::CUDA};
         Buffer bf16_to_fp32{Device::CUDA};
 
-        unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_gemm_plans;
+        unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_matmul_plans;
     };
 
-    CudaGemmThreadState& thread_state()
+    CudaMatmulThreadState& thread_state()
     {
-        thread_local CudaGemmThreadState state;
+        thread_local CudaMatmulThreadState state;
         return state;
     }
 
     constexpr size_t cublas_lt_workspace_search_bytes = 32ull * 1024 * 1024;
 
-    cublasComputeType_t gemm_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
+    cublasComputeType_t matmul_compute_type(cudaDataType_t a_type, cudaDataType_t b_type = CUDA_R_32F)
     {
         if (a_type == CUDA_R_16BF || b_type == CUDA_R_16BF)
-        {
-            // bf16 multiply with the fast tensor-core accumulation path (the
-            // analogue of FAST_TF32 for fp32). Plain CUBLAS_COMPUTE_32F left the
-            // heuristic on a non-tensor-core algorithm, so bf16 got no speedup.
-            return device::bf16_compute_plain() ? CUBLAS_COMPUTE_32F
-                                                : CUBLAS_COMPUTE_32F_FAST_16BF;
-        }
+            return CUBLAS_COMPUTE_32F_FAST_16BF;
         return CUBLAS_COMPUTE_DTYPE;
-    }
-
-    struct LtMatmulPreferenceGuard
-    {
-        cublasLtMatmulPreference_t pref = nullptr;
-        LtMatmulPreferenceGuard() { CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref)); }
-        ~LtMatmulPreferenceGuard() { cublasLtMatmulPreferenceDestroy(pref); }
-    };
-
-    bool workspace_growth_forbidden() noexcept
-    {
-        return device::cuda_allocation_growth_forbidden()
-            || device::cuda_scratch_growth_forbidden();
     }
 
     template <typename T>
@@ -729,9 +628,8 @@ namespace
     {
         if (n * Index(sizeof(T)) > workspace_buffer.bytes && workspace_buffer.data)
         {
-            throw_if(workspace_growth_forbidden(),
-                     "ensure_workspace: workspace allocation growth is forbidden "
-                     "(warmup incomplete before CUDA graph capture).");
+            throw_if(device::cuda_allocation_growth_forbidden(),
+                     "workspace growth forbidden (warmup incomplete).");
             device::synchronize(Backend::get_compute_stream());
         }
         
@@ -756,6 +654,75 @@ namespace
     bfloat16* ensure_bf16_input_workspace(Index n)
     {
         return ensure_workspace<bfloat16>(thread_state().bf16_input, n);
+    }
+
+    LtMatmulPlan& get_lt_matmul_plan(
+        int m, int n, int k,
+        cublasOperation_t transA,
+        cublasOperation_t transB,
+        cublasLtEpilogue_t epilogue,
+        cudaDataType_t io_dtype,
+        cudaDataType_t out_dtype)
+    {
+        const LtMatmulPlanKey key{m, n, k,
+                                  int(transA), int(transB), int(epilogue),
+                                  int(io_dtype), int(out_dtype)};
+        auto& plans = thread_state().lt_matmul_plans;
+        auto it = plans.find(key);
+        if (it != plans.end()) return it->second;
+
+        throw_if(device::cuda_allocation_growth_forbidden(), "matmul plan forbidden (warmup incomplete).");
+
+        LtMatmulPlan plan;
+
+        CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, matmul_compute_type(io_dtype), CUDA_R_32F));
+
+        auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
+        {
+            CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor, attr, &value, sizeof(value)));
+        };
+
+        set_desc(CUBLASLT_MATMUL_DESC_TRANSA,   transA);
+        set_desc(CUBLASLT_MATMUL_DESC_TRANSB,   transB);
+        set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
+        set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
+
+        const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
+        const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
+        const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
+        const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
+
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  io_dtype,  a_rows, a_cols, a_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  io_dtype,  b_rows, b_cols, b_rows));
+        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, m));
+
+        cublasLtMatmulPreference_t pref = nullptr;
+        CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&pref));
+        CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref,
+            CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+            &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
+
+        cublasLtMatmulHeuristicResult_t heuristic{};
+        int returned_results = 0;
+        CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
+                                                    plan.matmul_descriptor,
+                                                    plan.a_matrix_layout,
+                                                    plan.b_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    plan.output_matrix_layout,
+                                                    pref, 1,
+                                                    &heuristic, &returned_results));
+        cublasLtMatmulPreferenceDestroy(pref);
+
+        if (returned_results > 0)
+        {
+            plan.algorithm = heuristic.algo;
+            plan.has_algorithm = true;
+            plan.workspace_bytes = heuristic.workspaceSize;
+            ensure_shared_scratch(plan.workspace_bytes);
+        }
+
+        return plans.emplace(key, move(plan)).first->second;
     }
 }
 
@@ -805,94 +772,6 @@ const void* bias_for_gemm_bf16(const TensorView& bias)
     return dst;
 }
 
-namespace
-{
-LtMatmulPlan& get_lt_gemm_plan(
-    int m, int n, int k,
-    cublasOperation_t transA,
-    cublasOperation_t transB,
-    cublasLtEpilogue_t epilogue,
-    cudaDataType_t io_dtype,
-    cudaDataType_t out_dtype)
-{
-    const LtMatmulPlanKey key{m, n, k,
-                              int(transA), int(transB), int(epilogue),
-                              int(io_dtype), int(out_dtype)};
-    auto& plans = thread_state().lt_gemm_plans;
-    auto it = plans.find(key);
-    if (it != plans.end()) return it->second;
-
-    throw_if(workspace_growth_forbidden(),
-             "get_lt_gemm_plan: new GEMM plan requested while workspace growth is forbidden "
-             "(unseen shape during CUDA graph capture; warmup incomplete).");
-
-    LtMatmulPlan plan;
-
-    CHECK_CUBLAS(cublasLtMatmulDescCreate(&plan.matmul_descriptor, gemm_compute_type(io_dtype), CUDA_R_32F));
-
-    auto set_desc = [&](cublasLtMatmulDescAttributes_t attr, const auto& value)
-    {
-        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor, attr, &value, sizeof(value)));
-    };
-
-    set_desc(CUBLASLT_MATMUL_DESC_TRANSA,   transA);
-    set_desc(CUBLASLT_MATMUL_DESC_TRANSB,   transB);
-    set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
-    set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
-
-    const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
-    const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
-    const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
-    const int b_cols = (transB == CUBLAS_OP_N) ? n : k;
-
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.a_matrix_layout,  io_dtype,  a_rows, a_cols, a_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.b_matrix_layout,  io_dtype,  b_rows, b_cols, b_rows));
-    CHECK_CUBLAS(cublasLtMatrixLayoutCreate(&plan.output_matrix_layout, out_dtype, m, n, m));
-
-    LtMatmulPreferenceGuard pref;
-    CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(pref.pref,
-        CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
-        &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
-
-    // Autotuning (device::set_gemm_autotune(true)) asks for several candidate
-    // algorithms; the first real matmul times them and keeps the fastest.
-    // Otherwise take the single first heuristic (cuBLASLt's default best guess).
-    const bool autotune = device::gemm_autotune_enabled();
-    constexpr int max_candidates = 16;
-
-    cublasLtMatmulHeuristicResult_t heuristics[max_candidates] = {};
-    int returned_results = 0;
-    CHECK_CUBLAS(cublasLtMatmulAlgoGetHeuristic(Backend::get_cublas_lt_handle(),
-                                                plan.matmul_descriptor,
-                                                plan.a_matrix_layout,
-                                                plan.b_matrix_layout,
-                                                plan.output_matrix_layout,
-                                                plan.output_matrix_layout,
-                                                pref.pref,
-                                                autotune ? max_candidates : 1,
-                                                heuristics, &returned_results));
-
-    if (returned_results > 0)
-    {
-        plan.algorithm = heuristics[0].algo;
-        plan.has_algorithm = true;
-        plan.workspace_bytes = heuristics[0].workspaceSize;
-
-        if (autotune && returned_results > 1)
-        {
-            plan.candidates.assign(heuristics, heuristics + returned_results);
-            for (int i = 0; i < returned_results; ++i)
-                ensure_shared_scratch(heuristics[i].workspaceSize);
-        }
-
-        // Grow the global workspace to fit this plan's chosen algorithm.
-        ensure_shared_scratch(plan.workspace_bytes);
-    }
-
-    return plans.emplace(key, move(plan)).first->second;
-}
-}
-
 void run_lt_matmul_cached(
     int m, int n, int k,
     cublasOperation_t transA,
@@ -903,59 +782,10 @@ void run_lt_matmul_cached(
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype)
 {
-    LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
+    LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
-
-    // One-time autotune: with real operands in hand, time each candidate
-    // algorithm on this stream and keep the fastest. Safe to do here because it
-    // produces correct output every iteration; only the algo choice changes.
-    if (!plan.tuned && !plan.candidates.empty())
-    {
-        cudaStream_t stream = Backend::get_compute_stream();
-        auto time_algo = [&](const cublasLtMatmulAlgo_t& algo, size_t ws_bytes) -> float {
-            CudaEvent a(cudaEventDefault), b(cudaEventDefault);   // RAII: no leak on throw
-            void* ws = ensure_shared_scratch(ws_bytes);
-            // 2 warmup + 5 timed runs. CHECK_CUBLAS each call: an algorithm that
-            // returns a non-success status (e.g. NOT_SUPPORTED for this shape) does
-            // little work and would otherwise time as "fast" and get selected,
-            // corrupting every later real matmul. The throw is caught below and the
-            // candidate is skipped.
-            for (int w = 0; w < 2; ++w)
-                CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
-                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
-                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                               &algo, ws, ws_bytes, stream));
-            cudaEventRecord(a.handle, stream);
-            for (int t = 0; t < 5; ++t)
-                CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(), plan.matmul_descriptor,
-                               &one, a_data, plan.a_matrix_layout, b_data, plan.b_matrix_layout,
-                               &zero, c_data, plan.output_matrix_layout, c_data, plan.output_matrix_layout,
-                               &algo, ws, ws_bytes, stream));
-            cudaEventRecord(b.handle, stream);
-            cudaEventSynchronize(b.handle);
-            float ms = 0.0f; cudaEventElapsedTime(&ms, a.handle, b.handle);
-            return ms;
-        };
-        float best_ms = 1e30f;
-        for (const auto& cand : plan.candidates)
-        {
-            float ms;
-            try { ms = time_algo(cand.algo, cand.workspaceSize); }
-            catch (...) { continue; }                 // skip an algo that errors
-            if (ms < best_ms)
-            {
-                best_ms = ms;
-                plan.algorithm = cand.algo;
-                plan.workspace_bytes = cand.workspaceSize;
-                plan.has_algorithm = true;
-            }
-        }
-        ensure_shared_scratch(plan.workspace_bytes);
-        plan.tuned = true;
-        plan.candidates.clear();
-    }
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
@@ -978,7 +808,7 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
                                int batch_count,
                                float alpha, float beta)
 {
-    const cublasComputeType_t compute = gemm_compute_type(Atype, Btype);
+    const cublasComputeType_t compute = matmul_compute_type(Atype, Btype);
     CHECK_CUBLAS(cublasGemmStridedBatchedEx(Backend::get_cublas_handle(),
                                             transa, transb,
                                             m, n, k,

@@ -36,23 +36,6 @@ size_t available_memory();
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
-// GPU backend toggles, all controlled from code (no environment variables).
-// cuBLASLt scratch (workspace) growth lock, independent of the allocation lock.
-bool cuda_scratch_growth_forbidden() noexcept;
-void set_cuda_scratch_growth_forbidden(bool) noexcept;
-
-// GEMM (cuBLASLt) algorithm autotuning. Off by default: keep cuBLASLt's first
-// heuristic. Enable to time several candidates on the first matmul.
-bool gemm_autotune_enabled() noexcept;
-void set_gemm_autotune(bool) noexcept;
-
-// bf16 cuBLAS compute type. Off by default uses the fast tensor-core path
-// (COMPUTE_32F_FAST_16BF); enable "plain" to fall back to COMPUTE_32F.
-bool bf16_compute_plain() noexcept;
-void set_bf16_compute_plain(bool) noexcept;
-
-bool conv_autotune_enabled() noexcept;
-void set_conv_autotune(bool) noexcept;
 
 class CudaAllocationGrowthGuard
 {

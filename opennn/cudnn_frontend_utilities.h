@@ -46,11 +46,7 @@ inline bool frontend_enabled()
     return device_sm_version() >= 800;
 }
 
-inline bool autotune_enabled()
-{
-    // On by default; toggle from code with device::set_conv_autotune(false).
-    return device::conv_autotune_enabled();
-}
+inline bool autotune_enabled() { return true; }
 
 // With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
 // (per-label totals printed at exit). Incompatible with set_cuda_graph(true).
