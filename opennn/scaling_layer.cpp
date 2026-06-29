@@ -153,7 +153,7 @@ void Scaling::refresh_op_storage(Device device)
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    scale_op.minimums            = TensorView(base + 0 * features, shape, Type::FP32, device);
+    scale_op.minimums            = TensorView(base, shape, Type::FP32, device);
     scale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32, device);
     scale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
     scale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);

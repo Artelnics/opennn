@@ -141,7 +141,7 @@ void Bounding::refresh_op_storage(Device device)
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
-    bound.lower = TensorView(base + 0 * features, shape, Type::FP32, device);
+    bound.lower = TensorView(base, shape, Type::FP32, device);
     bound.upper = TensorView(base + 1 * features, shape, Type::FP32, device);
 
     op_storage_dirty = false;

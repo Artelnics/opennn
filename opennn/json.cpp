@@ -75,8 +75,6 @@ string Json::as_string() const
     case Array:
     case Object: return dump(0);
     }
-
-    return "";
 }
 
 long long Json::as_long() const
@@ -91,8 +89,6 @@ long long Json::as_long() const
     case Array:
     case Object: return 0;
     }
-
-    return 0;
 }
 
 double Json::as_double() const
@@ -107,8 +103,6 @@ double Json::as_double() const
     case Array:
     case Object: return 0.0;
     }
-
-    return 0.0;
 }
 
 bool Json::as_bool() const
@@ -123,8 +117,6 @@ bool Json::as_bool() const
     case Array:
     case Object: return false;
     }
-
-    return false;
 }
 static void escape_string(string& out, const string& s)
 {

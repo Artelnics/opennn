@@ -127,7 +127,7 @@ void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& outpu
                         continue;
 
                     candidates.push_back({
-                        (float(col) + src[base + 0]) / float(grid_width),
+                        (float(col) + src[base]) / float(grid_width),
                         (float(row) + src[base + 1]) / float(grid_size),
                         src[base + 2],
                         src[base + 3],

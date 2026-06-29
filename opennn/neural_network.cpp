@@ -1094,8 +1094,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     VectorR json_parameters;
     string_to_vector(parameters_text, json_parameters);
 
-    if (json_parameters.size() <= 0) return;
-
     if (json_parameters.size() != parameters.size_in_floats())
     {
         cout << "Warning: JSON parameter size (" << json_parameters.size()

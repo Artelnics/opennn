@@ -61,6 +61,7 @@ void Embedding::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
         {"VocabularySize", to_string(get_vocabulary_size())},
+        {"OutputDimensions", shape_to_string(get_output_shape())},
         {"ScaleEmbedding", to_string(embedding_lookup.scale_embedding)},
         {"AddPositionalEncoding", to_string(embedding_lookup.add_positional_encoding)}
     });

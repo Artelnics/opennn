@@ -121,8 +121,6 @@ static pair<float, float> scaling_affine(ScalerMethod scaler,
     case ScalerMethod::None:
     case ScalerMethod::Logarithm:
         return {1.0f, 0.0f};
-    default:
-        return {1.0f, 0.0f};
     }
 }
 

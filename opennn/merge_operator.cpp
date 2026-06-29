@@ -23,6 +23,7 @@ void MergeOperator::set(Index new_heads_number, Index new_query_sequence_length,
     heads_number          = new_heads_number;
     query_sequence_length = new_query_sequence_length;
     head_dimension        = new_head_dimension;
+    compute_dtype         = new_compute_dtype;
 }
 
 void MergeOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)

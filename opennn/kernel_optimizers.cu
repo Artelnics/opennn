@@ -470,7 +470,7 @@ static void gather_rows_launch(const float* matrix, const int* row_indices, TDst
     const int cols = checked_int(n_cols);
     const int threads = cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
 
-    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads > 0 ? threads : 32, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads, 0, stream>>>(
         matrix, row_indices, out, rows, cols, checked_int(matrix_cols), checked_int(col_offset)));
 }
 
