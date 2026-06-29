@@ -86,7 +86,7 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
 {
     if (shape.empty()) return;
-    for (int r : allowed) if (int(shape.rank) == r) return;
+    if (ranges::any_of(allowed, [&](int r){ return int(shape.rank) == r; })) return;
 
     string allowed_str;
     auto it = allowed.begin();

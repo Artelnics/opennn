@@ -57,8 +57,7 @@ void ResponseOptimization::set_cardinality_constraint(const vector<string>& vari
              "ResponseOptimization: cardinality constraint needs at least one indicator variable");
 
     throw_if(k < 0 || k > static_cast<Index>(variable_names.size()),
-             "ResponseOptimization: cardinality target k=" + to_string(k)
-             + " is out of range for " + to_string(variable_names.size()) + " indicator(s)");
+             format("ResponseOptimization: cardinality target k={} is out of range for {} indicator(s)", k, variable_names.size()));
 
     constraint_set.cardinality.push_back({ variable_names, k });
 }
@@ -390,17 +389,9 @@ float ResponseOptimization::get_deformation_domain_factor()
 
 Index ResponseOptimization::get_objectives_number() const
 {
-    Index objectives_number = 0;
-
-    for (const Variable& variable : get_variables_and_descriptives("Input").first)
-        if (is_objective(variable.name))
-            objectives_number++;
-
-    for (const Variable& variable : get_variables_and_descriptives("Target").first)
-        if (is_objective(variable.name))
-            objectives_number++;
-
-    return objectives_number;
+    const auto is_obj = [&](const Variable& v){ return is_objective(v.name); };
+    return ranges::count_if(get_variables_and_descriptives("Input").first, is_obj)
+         + ranges::count_if(get_variables_and_descriptives("Target").first, is_obj);
 }
 
 vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
@@ -522,8 +513,7 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
     const size_t variables_number = variables.size();
 
     throw_if(descriptives.size() != variables_number,
-             "ResponseOptimization: Descriptives count (" + to_string(descriptives.size()) +
-             ") does not match variables count (" + to_string(variables_number) + ") for " + role);
+             format("ResponseOptimization: Descriptives count ({}) does not match variables count ({}) for {}", descriptives.size(), variables_number, role));
 
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
@@ -800,8 +790,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
             if (!drawn)
                 throw_if(!draw_k_hot(count, group.k, force_on, force_off, draw),
-                         "ResponseOptimization: cardinality constraint (k=" + to_string(group.k)
-                         + ") is infeasible under the current box pins.");
+                         format("ResponseOptimization: cardinality constraint (k={}) is infeasible under the current box pins.", group.k));
 
             for (Index c = 0; c < count; ++c)
                 random_inputs(r, columns[c]) = draw[c];
@@ -1272,17 +1261,10 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
     const Index final_feasible_count = feasible_result.first.rows();
 
     throw_if(final_feasible_count == 0,
-             "ResponseOptimization: formula constraints appear infeasible — "
-             "no feasible points found after adaptive oversampling up to "
-             + to_string(current_evaluations) + " evaluations.");
+             format("ResponseOptimization: formula constraints appear infeasible — no feasible points found after adaptive oversampling up to {} evaluations.", current_evaluations));
 
     throw_if(early_stop_triggered,
-             "ResponseOptimization: formula constraints are too tight — "
-             "feasibility ratio stayed below "
-             + to_string(low_ratio_threshold)
-             + " over consecutive oversampling attempts (up to "
-             + to_string(current_evaluations) + " evaluations, "
-             + to_string(final_feasible_count) + " feasible points found).");
+             format("ResponseOptimization: formula constraints are too tight — feasibility ratio stayed below {} over consecutive oversampling attempts (up to {} evaluations, {} feasible points found).", low_ratio_threshold, current_evaluations, final_feasible_count));
 
     return feasible_result;
 }
@@ -2164,12 +2146,11 @@ void ResponseOptimization::initialize_network_differential() const
     // non-callback output constraint that the analytic Jacobian could repair.
     const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)
     {
-        for (const MultivariateConstraint& constraint : list)
-            if (!constraint.uses_callback
-                && constraint.comparison_operator != ComparisonOperator::None
-                && constraint.compiled.scope != FormulaScope::InputsOnly)
-                return true;
-        return false;
+        return ranges::any_of(list, [](const MultivariateConstraint& c){
+            return !c.uses_callback
+                && c.comparison_operator != ComparisonOperator::None
+                && c.compiled.scope != FormulaScope::InputsOnly;
+        });
     };
 
     bool has_output = has_output_constraint(constraint_set.multivariate);

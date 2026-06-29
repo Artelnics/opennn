@@ -67,6 +67,42 @@ cudaMemcpyKind to_cuda_copy_kind(CopyKind kind)
 
 #endif
 
+void* allocate_cuda(Index byte_count)
+{
+#ifdef OPENNN_HAS_CUDA
+    throw_if(cuda_allocation_growth_forbidden(),
+             format("CUDA allocation of {} bytes while CUDA allocation growth is forbidden "
+                    "(warmup incomplete before CUDA graph capture).",
+                    byte_count));
+    void* device_pointer = nullptr;
+    CHECK_CUDA(cudaMalloc(&device_pointer, static_cast<size_t>(byte_count)));
+    return device_pointer;
+#else
+    (void)byte_count;
+    throw_cuda_unavailable();
+#endif
+}
+
+void deallocate_cuda(void* pointer)
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaFree(pointer);
+#else
+    (void)pointer;
+#endif
+}
+
+void set_zero_cuda(void* data, Index byte_count)
+{
+#ifdef OPENNN_HAS_CUDA
+    CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
+#else
+    (void)data;
+    (void)byte_count;
+    throw_cuda_unavailable();
+#endif
+}
+
 }
 
 bool is_cuda_build() noexcept
@@ -198,19 +234,7 @@ void* allocate(Device device_type, Index byte_count)
     if (byte_count == 0) return nullptr;
 
     if (device_type == Device::CUDA)
-    {
-#ifdef OPENNN_HAS_CUDA
-        throw_if(cuda_allocation_growth_forbidden(),
-                 format("CUDA allocation of {} bytes while CUDA allocation growth is forbidden "
-                        "(warmup incomplete before CUDA graph capture).",
-                        byte_count));
-        void* device_pointer = nullptr;
-        CHECK_CUDA(cudaMalloc(&device_pointer, static_cast<size_t>(byte_count)));
-        return device_pointer;
-#else
-        throw_cuda_unavailable();
-#endif
-    }
+        return allocate_cuda(byte_count);
 
     return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
 }
@@ -223,9 +247,7 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
 
     if (device_type == Device::CUDA)
     {
-#ifdef OPENNN_HAS_CUDA
-        cudaFree(pointer);
-#endif
+        deallocate_cuda(pointer);
         return;
     }
 
@@ -242,11 +264,7 @@ void set_zero(void* data, Index byte_count, Device device_type)
 
     if (device_type == Device::CUDA)
     {
-#ifdef OPENNN_HAS_CUDA
-        CHECK_CUDA(cudaMemset(data, 0, static_cast<size_t>(byte_count)));
-#else
-        throw_cuda_unavailable();
-#endif
+        set_zero_cuda(data, byte_count);
         return;
     }
 

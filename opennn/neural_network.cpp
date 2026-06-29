@@ -291,9 +291,7 @@ static void validate_source_indices(const vector<Index>& sources, Index layer_in
     {
         if (src < 0) continue;
         throw_if(src >= layers_count || src >= layer_index,
-                 "NeuralNetwork::set_source_layers: source index "
-                 + to_string(src) + " is not a previous layer for layer "
-                 + to_string(layer_index) + ".");
+                 format("NeuralNetwork::set_source_layers: source index {} is not a previous layer for layer {}.", src, layer_index));
     }
 }
 
@@ -303,25 +301,17 @@ static void validate_source_arity(const Layer& layer,
 {
     if (const auto* addition = dynamic_cast<const Addition*>(&layer);
         addition && ssize(sources) != addition->get_inputs_number())
-        throw runtime_error("NeuralNetwork::set_source_layers: Addition layer "
-                            + to_string(layer_index) + " expects "
-                            + to_string(addition->get_inputs_number()) + " sources, got "
-                            + to_string(sources.size()) + ".");
+        throw runtime_error(format("NeuralNetwork::set_source_layers: Addition layer {} expects {} sources, got {}.", layer_index, addition->get_inputs_number(), sources.size()));
 
     if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
         convolutional && convolutional->get_residual() && ssize(sources) != 2)
-        throw runtime_error("NeuralNetwork::set_source_layers: residual Convolutional layer "
-                            + to_string(layer_index) + " expects 2 sources, got "
-                            + to_string(sources.size()) + ".");
+        throw runtime_error(format("NeuralNetwork::set_source_layers: residual Convolutional layer {} expects 2 sources, got {}.", layer_index, sources.size()));
 }
 
 void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_layers)
 {
     throw_if(ssize(new_source_layers) != ssize(layers),
-             "NeuralNetwork::set_source_layers: outer size ("
-             + to_string(new_source_layers.size())
-             + ") must match layers count ("
-             + to_string(layers.size()) + ").");
+             format("NeuralNetwork::set_source_layers: outer size ({}) must match layers count ({}).", new_source_layers.size(), layers.size()));
 
     for (Index i = 0; i < ssize(new_source_layers); ++i)
     {
@@ -335,8 +325,7 @@ void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_la
 void NeuralNetwork::set_source_layers(const Index layer_index, const vector<Index>& new_sources)
 {
     throw_if(layer_index < 0 || layer_index >= ssize(layers),
-             "NeuralNetwork::set_source_layers: layer index "
-             + to_string(layer_index) + " out of range.");
+             format("NeuralNetwork::set_source_layers: layer index {} out of range.", layer_index));
 
     validate_source_indices(new_sources, layer_index, ssize(layers));
     validate_source_arity(*layers[layer_index], new_sources, layer_index);
@@ -467,11 +456,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 
     const Index expected_size = get_parameters_size();
     throw_if(expected_size > 0 && new_parameters.size() != expected_size,
-             "NeuralNetwork::set_parameters: size mismatch (got "
-             + to_string(new_parameters.size())
-             + ", expected " + to_string(expected_size)
-             + "). Make sure the network is compiled with the same "
-             + "architecture as the one that produced this snapshot.");
+             format("NeuralNetwork::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size));
 
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
@@ -508,9 +493,7 @@ void NeuralNetwork::set_states(const VectorR& new_states)
     }
 
     throw_if(new_states.size() != expected_size,
-             "NeuralNetwork::set_states: size mismatch (got "
-             + to_string(new_states.size())
-             + ", expected " + to_string(expected_size) + ").");
+             format("NeuralNetwork::set_states: size mismatch (got {}, expected {}).", new_states.size(), expected_size));
 
     const Index byte_count = new_states.size() * Index(sizeof(float));
 
@@ -1050,9 +1033,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 if (text.empty()) continue;
 
                 throw_if(layer_index < 0 || layer_index >= ssize(layers),
-                         "NeuralNetwork::from_JSON: SourceLayer index "
-                         + to_string(layer_index) + " out of range (have "
-                         + to_string(layers.size()) + " layers).");
+                         format("NeuralNetwork::from_JSON: SourceLayer index {} out of range (have {} layers).", layer_index, layers.size()));
 
                 set_source_layers(layer_index, string_to_source_indices(text));
             }

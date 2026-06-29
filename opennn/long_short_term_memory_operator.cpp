@@ -485,9 +485,8 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         MatrixR step_in(batch_size, F), prev_h(batch_size, H), c_prev_m(batch_size, H);
         MatrixR DF(batch_size, H), DI(batch_size, H), DG(batch_size, H), DO(batch_size, H);
         MatrixR DX(batch_size, F);
-        MatrixR dh_next(batch_size, H), dc_next(batch_size, H);
-        dh_next.setZero();
-        dc_next.setZero();
+        MatrixR dh_next = MatrixR::Zero(batch_size, H);
+        MatrixR dc_next = MatrixR::Zero(batch_size, H);
 
         for (Index t = T; t-- > 0;)
         {

@@ -119,10 +119,7 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     const VectorMap target = batch.get_targets().as_vector();
 
     throw_if(output.size() != target.size() || output.size() != back_propagation_lm.errors.size(),
-             "LevenbergMarquardtAlgorithm: outputs (" + to_string(output.size())
-             + "), targets (" + to_string(target.size())
-             + ") and errors (" + to_string(back_propagation_lm.errors.size())
-             + ") sizes do not match. The dataset target count does not match the network outputs.");
+             format("LevenbergMarquardtAlgorithm: outputs ({}), targets ({}) and errors ({}) sizes do not match. The dataset target count does not match the network outputs.", output.size(), target.size(), back_propagation_lm.errors.size()));
 
     back_propagation_lm.errors.noalias() = output - target;
 }
