@@ -186,10 +186,9 @@ struct NetworkDifferential
                          * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
             else
             {
-                const VectorR through_activation =
-                    (carried.array()
-                   * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
-                carried = layer.weights * through_activation;
+                carried = layer.weights
+                        * (carried.array()
+                         * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
             }
         }
         return carried;

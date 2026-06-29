@@ -306,9 +306,7 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     const Index classes_number = yolo_dataset->get_classes_number();
     const Index batch_size = output.shape[0];
 
-    Loss::EvaluationResult result;
-    result.error = yolo_error_kernel(output, target, boxes_per_cell, classes_number, sigmoid_classes, lam) / float(batch_size);
-    return result;
+    return {.error = yolo_error_kernel(output, target, boxes_per_cell, classes_number, sigmoid_classes, lam) / float(batch_size)};
 }
 
 #ifdef _MSC_VER
@@ -483,9 +481,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
         head_offset += head_floats;
     }
 
-    Loss::EvaluationResult result;
-    result.error = total_error / float(batch_size);
-    return result;
+    return {.error = total_error / float(batch_size)};
 }
 
 void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
@@ -616,9 +612,7 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
     float total_error = 0.0f;
     cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
 
-    Loss::EvaluationResult result;
-    result.error = total_error / float(batch_size);
-    return result;
+    return {.error = total_error / float(batch_size)};
 }
 
 void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,

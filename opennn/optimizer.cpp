@@ -1793,9 +1793,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         empty_queue.push(batch);
 
-        epoch_result = average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
-
-        return epoch_result;
+        return average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
     }
 
     EpochLoopContext context;

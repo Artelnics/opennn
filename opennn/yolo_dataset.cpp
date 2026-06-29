@@ -244,10 +244,7 @@ vector<array<float, 2>> calculate_yolo_anchors(const vector<vector<YoloDataset::
                 boxes.push_back({box.w, box.h});
 
     if (boxes.empty())
-    {
-        vector<array<float, 2>> fallback(size_t(boxes_per_cell), {0.1f, 0.1f});
-        return fallback;
-    }
+        return vector<array<float, 2>>(size_t(boxes_per_cell), {0.1f, 0.1f});
 
     vector<array<float, 2>> anchors(static_cast<size_t>(boxes_per_cell));
     for (Index i = 0; i < boxes_per_cell; ++i)

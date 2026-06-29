@@ -279,9 +279,8 @@ void ResponseOptimization::clear_time_roles(const string& name)
 
 UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
-    const map<string, UnivariateConstraint>::const_iterator constraint_iterator = constraint_set.univariate.find(name);
-
-    return (constraint_iterator != constraint_set.univariate.end()) ? constraint_iterator->second : UnivariateConstraint(ComparisonOperator::None);
+    const auto it = constraint_set.univariate.find(name);
+    return it != constraint_set.univariate.end() ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
 
@@ -305,9 +304,8 @@ bool ResponseOptimization::is_past(const TimeType role)
 
 bool ResponseOptimization::is_history(const string& name) const
 {
-    const map<string, TimeType>::const_iterator role_iterator = time_roles.find(name);
-
-    return role_iterator != time_roles.end() && is_past(role_iterator->second);
+    const auto it = time_roles.find(name);
+    return it != time_roles.end() && is_past(it->second);
 }
 
 

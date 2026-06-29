@@ -35,9 +35,7 @@ bool is_printable_token(Index token_id)
 
 TransformerDecoder::SamplingConfig greedy_config()
 {
-    TransformerDecoder::SamplingConfig config;
-    config.temperature = 0.0f;
-    return config;
+    return {.temperature = 0.0f};
 }
 
 Index sample_token(VectorR& probabilities,

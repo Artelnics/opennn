@@ -53,9 +53,7 @@ Index interpolate_gap(MatrixR& data,
         else
         {
             const float fraction = float(i + 1) / float(n_missing + 1);
-            const float value_interpolated = lerp(prev_value, next_value, fraction);
-
-            data(sample_i, feature_index) = value_interpolated;
+            data(sample_i, feature_index) = lerp(prev_value, next_value, fraction);
         }
     }
 
@@ -209,24 +207,10 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_codification(read_json_string(data_source_element, "Codification"));
 
 
-    const Json* variables_element = data_set_element->find("Variables");
-
-    variables_from_JSON(variables_element);
-
-
-    const Json* samples_element = data_set_element->find("Samples");
-
-    samples_from_JSON(samples_element);
-
-
-    const Json* missing_values_element = data_set_element->find("MissingValues");
-
-    missing_values_from_JSON(missing_values_element);
-
-
-    const Json* preview_data_element = data_set_element->find("PreviewData");
-
-    preview_data_from_JSON(preview_data_element);
+    variables_from_JSON(data_set_element->find("Variables"));
+    samples_from_JSON(data_set_element->find("Samples"));
+    missing_values_from_JSON(data_set_element->find("MissingValues"));
+    preview_data_from_JSON(data_set_element->find("PreviewData"));
 
     set_display(read_json_bool(data_set_element, "Display"));
 

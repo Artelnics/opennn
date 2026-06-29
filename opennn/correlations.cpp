@@ -116,21 +116,15 @@ VectorR cross_correlations(const VectorR& x,
 
 Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
-    Correlation exponential_correlation;
-
     if ((y.array() <= 0.0f).any())
-    {
-        exponential_correlation.coefficient = NAN;
-        return exponential_correlation;
-    }
+        return {.coefficient = NAN};
 
     const VectorR log_y = y.array().log().matrix();
 
-    exponential_correlation = linear_correlation(x, log_y);
-
-    exponential_correlation.form = Correlation::Form::Exponential;
-    exponential_correlation.intercept = exp(exponential_correlation.intercept);
-    return exponential_correlation;
+    Correlation result = linear_correlation(x, log_y);
+    result.form = Correlation::Form::Exponential;
+    result.intercept = exp(result.intercept);
+    return result;
 }
 
 MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
@@ -262,21 +256,14 @@ Correlation linear_correlation_spearman(const VectorR& x, const VectorR& y)
 Correlation logarithmic_correlation(const VectorR& x,
                                     const VectorR& y)
 {
-    Correlation logarithmic_correlation;
-
     if ((x.array() <= 0.0f).any())
-    {
-        logarithmic_correlation.coefficient = NAN;
-        return logarithmic_correlation;
-    }
+        return {.coefficient = NAN};
 
     const VectorR log_x = x.array().log().matrix();
 
-    logarithmic_correlation = linear_correlation(log_x, y);
-
-    logarithmic_correlation.form = Correlation::Form::Logarithmic;
-
-    return logarithmic_correlation;
+    Correlation result = linear_correlation(log_x, y);
+    result.form = Correlation::Form::Logarithmic;
+    return result;
 }
 
 static Correlation fit_logistic_correlation(const VectorR& input, const VectorR& target, const string& scaler)
@@ -661,23 +648,16 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
 Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
-    Correlation power_correlation;
-
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
-    {
-        power_correlation.coefficient = NAN;
-        return power_correlation;
-    }
+        return {.coefficient = NAN};
 
     const VectorR log_x = x.array().log().matrix();
     const VectorR log_y = y.array().log().matrix();
 
-    power_correlation = linear_correlation(log_x, log_y);
-
-    power_correlation.form = Correlation::Form::Power;
-    power_correlation.intercept = exp(power_correlation.intercept);
-
-    return power_correlation;
+    Correlation result = linear_correlation(log_x, log_y);
+    result.form = Correlation::Form::Power;
+    result.intercept = exp(result.intercept);
+    return result;
 }
 
 void Correlation::set_perfect()
