@@ -22,7 +22,14 @@ enum class CopyKind
     DeviceToDevice
 };
 
-bool is_cuda_build() noexcept;
+constexpr bool is_cuda_build() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    return true;
+#else
+    return false;
+#endif
+}
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();

@@ -105,14 +105,6 @@ void set_zero_cuda(void* data, Index byte_count)
 
 }
 
-bool is_cuda_build() noexcept
-{
-#ifdef OPENNN_HAS_CUDA
-    return true;
-#else
-    return false;
-#endif
-}
 
 bool has_cuda_device() noexcept
 {
@@ -408,11 +400,10 @@ cudaEvent_t create_event(unsigned flags)
 cudaEvent_t create_event()
 {
 #ifdef OPENNN_HAS_CUDA
-    constexpr unsigned default_flags = cudaEventDisableTiming;
+    return create_event(cudaEventDisableTiming);
 #else
-    constexpr unsigned default_flags = 0;
+    return create_event(0);
 #endif
-    return create_event(default_flags);
 }
 
 void destroy_event(cudaEvent_t event)
@@ -572,35 +563,12 @@ Backend::Backend()
 Backend::~Backend()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (operator_sum_descriptor)
-    {
-        cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-        operator_sum_descriptor = nullptr;
-    }
-
-    if (cublas_lt_handle)
-    {
-        cublasLtDestroy(cublas_lt_handle);
-        cublas_lt_handle = nullptr;
-    }
-
-    if (cublas_handle)
-    {
-        cublasDestroy(cublas_handle);
-        cublas_handle = nullptr;
-    }
-
-    if (cudnn_handle)
-    {
-        cudnnDestroy(cudnn_handle);
-        cudnn_handle = nullptr;
-    }
-
-    device::destroy_stream(compute_stream);
-    compute_stream = nullptr;
-
-    device::destroy_stream(transfer_stream);
-    transfer_stream = nullptr;
+    if (operator_sum_descriptor) { cudnnDestroyOpTensorDescriptor(operator_sum_descriptor); operator_sum_descriptor = nullptr; }
+    if (cublas_lt_handle)        { cublasLtDestroy(cublas_lt_handle);                       cublas_lt_handle = nullptr; }
+    if (cublas_handle)           { cublasDestroy(cublas_handle);                             cublas_handle = nullptr; }
+    if (cudnn_handle)            { cudnnDestroy(cudnn_handle);                               cudnn_handle = nullptr; }
+    device::destroy_stream(compute_stream);  compute_stream = nullptr;
+    device::destroy_stream(transfer_stream); transfer_stream = nullptr;
 #endif
 }
 
@@ -785,11 +753,6 @@ namespace
         return pointer;
     }
 
-    void* ensure_cublas_lt_workspace(size_t min_bytes)
-    {
-        return ensure_shared_scratch(min_bytes);
-    }
-
     bfloat16* ensure_bf16_input_workspace(Index n)
     {
         return ensure_workspace<bfloat16>(thread_state().bf16_input, n);
@@ -919,11 +882,11 @@ LtMatmulPlan& get_lt_gemm_plan(
         {
             plan.candidates.assign(heuristics, heuristics + returned_results);
             for (int i = 0; i < returned_results; ++i)
-                ensure_cublas_lt_workspace(heuristics[i].workspaceSize);
+                ensure_shared_scratch(heuristics[i].workspaceSize);
         }
 
         // Grow the global workspace to fit this plan's chosen algorithm.
-        ensure_cublas_lt_workspace(plan.workspace_bytes);
+        ensure_shared_scratch(plan.workspace_bytes);
     }
 
     return plans.emplace(key, move(plan)).first->second;
@@ -953,7 +916,7 @@ void run_lt_matmul_cached(
         cudaStream_t stream = Backend::get_compute_stream();
         auto time_algo = [&](const cublasLtMatmulAlgo_t& algo, size_t ws_bytes) -> float {
             CudaEvent a(cudaEventDefault), b(cudaEventDefault);   // RAII: no leak on throw
-            void* ws = ensure_cublas_lt_workspace(ws_bytes);
+            void* ws = ensure_shared_scratch(ws_bytes);
             // 2 warmup + 5 timed runs. CHECK_CUBLAS each call: an algorithm that
             // returns a non-success status (e.g. NOT_SUPPORTED for this shape) does
             // little work and would otherwise time as "fast" and get selected,
@@ -989,7 +952,7 @@ void run_lt_matmul_cached(
                 plan.has_algorithm = true;
             }
         }
-        ensure_cublas_lt_workspace(plan.workspace_bytes);
+        ensure_shared_scratch(plan.workspace_bytes);
         plan.tuned = true;
         plan.candidates.clear();
     }
@@ -1003,7 +966,7 @@ void run_lt_matmul_cached(
                                 c_data, plan.output_matrix_layout,
                                 c_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
-                                ensure_cublas_lt_workspace(plan.workspace_bytes), plan.workspace_bytes,
+                                ensure_shared_scratch(plan.workspace_bytes), plan.workspace_bytes,
                                 Backend::get_compute_stream()));
 }
 
