@@ -104,31 +104,14 @@ bool NeuralNetwork::has(LayerType type) const
                           [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
-static vector<string> get_feature_names_from(const vector<Variable>& variables)
-{
-    vector<string> feature_names;
-    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
-
-    for (const auto& variable : variables)
-    {
-        vector<string> names = variable.get_names();
-        feature_names.insert(feature_names.end(),
-                             make_move_iterator(names.begin()),
-                             make_move_iterator(names.end()));
-    }
-
-    return feature_names;
-}
-
 vector<string> NeuralNetwork::get_input_feature_names() const
 {
-    return get_feature_names_from(input_variables);
+    return get_variable_feature_names(input_variables);
 }
 
 vector<string> NeuralNetwork::get_output_feature_names() const
 {
-    return get_feature_names_from(output_variables);
+    return get_variable_feature_names(output_variables);
 }
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
@@ -1085,7 +1068,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
-    std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+    copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
     if (was_on_device) copy_parameters_device();
 }
 

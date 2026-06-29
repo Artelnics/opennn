@@ -969,7 +969,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     const vector<vector<Index>> cardinality_columns =
         resolve_cardinality_columns(input_domain, scalar_column_of, fixed_mask, discrete_explore, random_inputs);
 
-    std::set<Index> grouped_columns;
+    set<Index> grouped_columns;
     for (const vector<Index>& group : cardinality_columns)
         grouped_columns.insert(group.begin(), group.end());
 
