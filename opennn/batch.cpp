@@ -165,8 +165,8 @@ Index Batch::get_samples_number() const
 
 void Batch::print() const
 {
-    cout << "Batch" << "\n"
-         << "Inputs:" << "\n"
+    cout << "Batch\n"
+         << "Inputs:\n"
          << "Input shape:" << input.shape << "\n";
 
     if (input.buffer.data)
@@ -193,16 +193,16 @@ void Batch::print() const
     cout << "\n";
 
     if (!decoder.shape.empty())
-        cout << "Decoder:" << "\n"
+        cout << "Decoder:\n"
              << "Decoder shape:" << decoder.shape << "\n";
 
-    cout << "Targets:" << "\n"
+    cout << "Targets:\n"
          << "Target shape:" << target.shape << "\n";
 
     if (target.buffer.data && target.shape.rank == 2)
     {
         if (uses_cuda())
-            cout << "<CUDA target data not printed>" << "\n";
+            cout << "<CUDA target data not printed>\n";
         else
             cout << MatrixMap(const_cast<float*>(target.buffer.as<float>()),
                               target.shape[0],

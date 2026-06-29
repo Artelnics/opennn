@@ -279,7 +279,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     damping_parameter = initial_damping_parameter;
 
 
-    if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";
+    if (display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
     TrainingResult results(maximum_epochs+1);
 

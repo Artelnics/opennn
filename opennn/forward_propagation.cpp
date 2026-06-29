@@ -140,7 +140,7 @@ void ForwardPropagation::print() const
 
     if (!neural_network)
     {
-        cout << "Neural network is not set." << "\n";
+        cout << "Neural network is not set.\n";
         return;
     }
 

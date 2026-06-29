@@ -375,7 +375,7 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     if (y_filter.cols() > 50)
     {
-        cout << "Warning: Y variable has too many categories." << "\n";
+        cout << "Warning: Y variable has too many categories.\n";
 
         correlation.coefficient = NAN;
         return correlation;
@@ -468,7 +468,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     if (x.cols() > 50 || y.cols() > 50)
     {
-        cout << "Warning: One variable has too many categories." << "\n";
+        cout << "Warning: One variable has too many categories.\n";
 
         correlation.coefficient = NAN;
         return correlation;
@@ -687,7 +687,7 @@ static const char* form_to_string(Correlation::Form form)
 
 void Correlation::print() const
 {
-    cout << "Correlation" << "\n"
+    cout << "Correlation\n"
          << "Type: " << form_to_string(form) << "\n"
          << "Intercept: " << intercept << "\n"
          << "Slope: " << slope << "\n"
