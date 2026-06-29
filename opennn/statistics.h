@@ -178,6 +178,8 @@ inline vector<Index> get_true_indices(const VectorB& flags)
     return indices;
 }
 
+VectorR local_outlier_factor(const MatrixR&, Index);
+
 VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);

@@ -260,7 +260,7 @@ private:
     Index max_iterations = 20;
     Index min_iterations = 4;
     Index initial_sampling_factor = 1;
-    Index max_pareto_number = 10000;
+    Index max_pareto_number = 2000;
     Index max_total_evaluations = 0;
     Index max_oversample_factor = 8;
     float zoom_factor = 0.85f;

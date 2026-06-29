@@ -145,6 +145,7 @@ MatrixR append_columns(const MatrixR&, const MatrixR&);
 VectorR slice_rows(const VectorR&, const vector<Index>&);
 MatrixR slice_rows(const MatrixR&, const vector<Index>&);
 VectorI get_nearest_points(const MatrixR&, const VectorR&, int = 1);
+MatrixR calculate_distances(const MatrixR&);
 vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Index>&, Index, float, float);
 
 }

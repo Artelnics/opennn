@@ -1782,6 +1782,18 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neig
 }
 
 
+MatrixR calculate_distances(const MatrixR& points)
+{
+    const VectorR squared_norms = points.rowwise().squaredNorm();
+
+    MatrixR squared_distances = -2.0f * points * points.transpose();
+    squared_distances.colwise() += squared_norms;
+    squared_distances.rowwise() += squared_norms.transpose();
+
+    return squared_distances.cwiseMax(0.0f).cwiseSqrt();
+}
+
+
 vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
                                                 const vector<Index>& selected_indices,
                                                 const Index column_index,

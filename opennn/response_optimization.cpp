@@ -1851,6 +1851,75 @@ pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR
 }
 
 
+static vector<Index> reselect_pareto_front(const MatrixR& objective_matrix, const Index maximum_number)
+{
+    const Index points_number = objective_matrix.rows();
+
+    vector<Index> selection(points_number);
+    iota(selection.begin(), selection.end(), 0);
+
+    if (points_number <= maximum_number)
+        return selection;
+
+    const Index objectives_number = objective_matrix.cols();
+    const Index cluster_size = 3;
+    const Index outlier_number = Index(0.25f * maximum_number);
+    const Index hole_number = Index(0.15f * maximum_number);
+
+    const MatrixR distances = calculate_distances(objective_matrix);
+
+    vector<char> chosen(points_number, 0);
+    selection.clear();
+    selection.reserve(maximum_number);
+
+    const auto take = [&](const Index point)
+    {
+        if (Index(selection.size()) < maximum_number && !chosen[point])
+        {
+            chosen[point] = 1;
+            selection.push_back(point);
+        }
+    };
+
+    const auto take_ranked = [&](const VectorI& ranking, const Index quota)
+    {
+        for (Index i = 0, taken = 0; i < ranking.size() && taken < quota; i++)
+            if (!chosen[ranking(i)]) { take(ranking(i)); taken++; }
+    };
+
+    for (Index j = 0; j < objectives_number; j++)
+        for (const Index extreme : {maximal_index(objective_matrix.col(j)), minimal_index(objective_matrix.col(j))})
+        {
+            const VectorI cluster = get_nearest_points(objective_matrix, objective_matrix.row(extreme).transpose(), cluster_size);
+            for (Index i = 0; i < cluster.size(); i++)
+                take(cluster(i));
+        }
+
+    take_ranked(maximal_indices(local_outlier_factor(objective_matrix, 20), points_number), outlier_number);
+
+    MatrixR gap_distances = distances;
+    gap_distances.diagonal().setConstant(MAX);
+    take_ranked(maximal_indices(gap_distances.rowwise().minCoeff(), points_number), hole_number);
+
+    VectorR minimum_distance = VectorR::Constant(points_number, MAX);
+    for (const Index point : selection)
+        minimum_distance = minimum_distance.cwiseMin(distances.col(point));
+    for (Index i = 0; i < points_number; i++)
+        if (chosen[i]) minimum_distance(i) = -MAX;
+
+    while (Index(selection.size()) < maximum_number)
+    {
+        const Index farthest = maximal_index(minimum_distance);
+        if (minimum_distance(farthest) < 0.0f) break;
+        take(farthest);
+        minimum_distance = minimum_distance.cwiseMin(distances.col(farthest));
+        minimum_distance(farthest) = -MAX;
+    }
+
+    return selection;
+}
+
+
 MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
     Objectives objectives(*this);
@@ -1937,12 +2006,17 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << endl;
 
-        if (max_pareto_number > 0 && global_pareto_inputs.rows() >= max_pareto_number)
+        if (max_pareto_number > 0 && global_pareto_inputs.rows() > max_pareto_number)
         {
-            cout << "> [Pareto cap] Front reached " << global_pareto_inputs.rows()
-                 << " points (cap=" << max_pareto_number
-                 << "). Stopping at iteration " << i + 1 << "." << endl;
-            break;
+            MatrixR pareto_objectives = objectives.extract(global_pareto_inputs, global_pareto_outputs);
+            objectives.normalize(pareto_objectives);
+
+            const vector<Index> selection = reselect_pareto_front(pareto_objectives, max_pareto_number);
+
+            global_pareto_inputs = slice_rows(global_pareto_inputs, selection);
+            global_pareto_outputs = slice_rows(global_pareto_outputs, selection);
+
+            cout << "  - Pareto front reselected to " << global_pareto_inputs.rows() << " representatives." << endl;
         }
 
         if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
