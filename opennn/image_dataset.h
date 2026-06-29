@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   I M A G E   D A T A S E T   C L A S S   H E A D E R
@@ -14,6 +14,12 @@
 
 namespace opennn
 {
+
+// Directory for the ImageDataset binary image cache. Empty (the default) uses
+// <data_path>/.cache. Set from code before constructing the dataset; there is
+// no environment variable.
+void set_image_cache_dir(const string&);
+string get_image_cache_dir();
 
 struct AugmentationSettings
 {
@@ -42,8 +48,8 @@ public:
     void set_augmentation(const AugmentationSettings& new_augmentation) { augmentation = new_augmentation; }
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,
-                           float min_range,
-                           float max_range);
+                           float,
+                           float);
 
     VectorI calculate_target_distribution() const override;
 
@@ -57,20 +63,20 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool is_training,
+                     bool,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int = -1) const override;
 
     void augment_inputs(float*, Index) const override;
 
 private:
 
-    void write_image_cache(const vector<filesystem::path>& paths);
+    void write_image_cache(const vector<filesystem::path>&);
 
     AugmentationSettings augmentation;
 
@@ -90,5 +96,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

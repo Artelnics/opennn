@@ -67,8 +67,8 @@ replayed only *one* step per launch. Extending it to bundle **8 steps into a
 single captured graph** — issuing the 8 device-side batch gathers on the
 transfer stream outside the graph, then capturing only the 8 compute steps —
 amortizes the per-step launch and cross-stream waits eightfold. That single
-change took 5,200 → 8,433 samples/s (`OPENNN_CUDA_GRAPH=1`, the benchmark
-default).
+change took 5,200 → 8,433 samples/s (CUDA graph on, the benchmark default;
+`opennn_resnet50_speed.cpp` enables it in code via `set_cuda_graph`).
 
 A third small fix made the architecture buildable at all: **`Same`-padded
 convolutions on small feature maps** — the layer rejected kernels larger than
@@ -76,8 +76,9 @@ the input even when padding makes the shape valid (ResNet's stage-4 3×3
 convolutions on 2×2 maps); the check now applies only to unpadded
 convolutions. Everything else was in place from the MNIST work: the
 cudnn-frontend convolution graphs, fused conv+bias(+ReLU) forward graphs, and
-the GPU-resident `ImageDataset` mode (`OPENNN_GPU_RESIDENT_DATA=1`) that stages
-the 614 MB dataset once and gathers batches device-side.
+the GPU-resident `ImageDataset` mode (enabled in code via the
+`GPUPersistantData` storage mode) that stages the 614 MB dataset once and
+gathers batches device-side.
 
 ## Setup
 
@@ -107,8 +108,9 @@ CUDA 12.9.86 + cuDNN 9.23; PyTorch 2.6.0 (cu124 wheels) on CPython 3.12.
 ## Caveats
 
 * The comparison is fp32 on all three engines, all timed on the same session.
-  OpenNN's number requires `OPENNN_CUDA_GRAPH=1` and a GPU-resident dataset —
-  the CUDA-graph mega-launch is the headline result, not the eager loop (which
+  OpenNN's number requires the CUDA graph and a GPU-resident dataset (both
+  enabled in the benchmark code) — the CUDA-graph mega-launch is the headline
+  result, not the eager loop (which
   lands ~5,200 samples/s, still 1.3× eager PyTorch). `torch.compile` is the
   fair opponent for a graph-replaying engine, and OpenNN is 1.6× ahead of it
   here; the official runner now records both PyTorch eager and
@@ -135,8 +137,8 @@ in [`docs/benchmarks/resnet50-training-speed/`](resnet50-training-speed/):
 python prepare_cifar10.py cifar10        # downloads CIFAR-10, writes BMPs + npy
 python prepare_cifar100.py cifar100      # CIFAR-100 (100-class fine labels)
 ./run_resnet50.sh 5 128 cifar10          # OpenNN + PyTorch eager + torch.compile + result JSON
-# or individually:
-OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 ./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16]
+# or individually (CUDA graph on by default + CIFAR data GPU-resident, both in code):
+./opennn_resnet50_speed cifar10/train [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1]
 python pytorch_resnet50_speed.py [epochs] [batch] cifar10
 python pt_compile_probe.py [epochs] [batch] cifar10
 ```

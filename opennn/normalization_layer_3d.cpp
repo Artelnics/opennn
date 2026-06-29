@@ -17,11 +17,11 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
                                  const string& new_name)
     : Layer(LayerType::Normalization3d)
 {
-    operators = {&layer_norm};
+    operators = {&layer_normalization};
 
     set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), new_name);
 
-    layer_norm.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
+    layer_normalization.output_slots = {Means, StandardDeviations, NormalizedInput, Output};
 }
 
 Shape Normalization3d::get_input_shape() const
@@ -38,7 +38,7 @@ vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
     // The NormalizedInput slot is unused on CUDA in the plain path, but the
     // fused residual-add path stores the post-add sum there, so it must be sized.
-    const bool need_sum = layer_norm.fuse_add || get_compute_device() != Device::CUDA;
+    const bool need_sum = layer_normalization.fuse_add || get_compute_device() != Device::CUDA;
     return {
         {{batch_size, sequence_length},                      Type::FP32},
         {{batch_size, sequence_length},                      Type::FP32},
@@ -51,19 +51,19 @@ vector<TensorSpec> Normalization3d::get_backward_specs(Index batch_size) const
 {
     // Fused norm has two source layers (main, residual), so the backward must
     // provide a gradient buffer for each, mirroring the Addition layer.
-    const Index inputs = layer_norm.fuse_add ? 2 : 1;
+    const Index inputs = layer_normalization.fuse_add ? 2 : 1;
     return vector<TensorSpec>(size_t(inputs),
         {Shape{batch_size, sequence_length, embedding_dimension}, compute_dtype});
 }
 
 void Normalization3d::set_fuse_add(bool on)
 {
-    layer_norm.fuse_add = on;
+    layer_normalization.fuse_add = on;
     // The compute reads the main input via slot 0 and the residual directly from
     // the second gathered source, so input_slots stays {0}. The backward routes a
     // gradient to each of the two source layers: slot 1 -> main, slot 2 -> residual.
-    layer_norm.input_delta_slots   = on ? vector<size_t>{1, 2} : vector<size_t>{1};
-    layer_norm.residual_delta_slot = on ? 2 : 0;
+    layer_normalization.input_delta_slots   = on ? vector<size_t>{1, 2} : vector<size_t>{1};
+    layer_normalization.residual_delta_slot = on ? 2 : 0;
 }
 
 void Normalization3d::set(Index new_sequence_length,
@@ -75,7 +75,7 @@ void Normalization3d::set(Index new_sequence_length,
 
     set_label(new_label);
 
-    layer_norm.set(sequence_length, embedding_dimension);
+    layer_normalization.set(sequence_length, embedding_dimension);
 }
 
 void Normalization3d::set_input_shape(const Shape& new_input_shape)

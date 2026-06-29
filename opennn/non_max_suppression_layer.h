@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N O N   M A X   S U P P R E S S I O N   L A Y E R   H E A D E R
@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "non_max_suppression_operator.h"
 
 namespace opennn
 {
@@ -29,9 +29,9 @@ public:
     vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
 
     void set(const Shape&,
-             Index boxes_per_cell,
-             float confidence_threshold,
-             float iou_threshold,
+             Index,
+             float,
+             float,
              const string&);
 
     void set_input_shape(const Shape&) override;
@@ -42,7 +42,7 @@ public:
 
 private:
 
-    NonMaxSuppressionOp nms;
+    NonMaxSuppressionOperator nms;
 
     void configure_operator();
 };
@@ -50,5 +50,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

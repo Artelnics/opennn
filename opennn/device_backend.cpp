@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E V I C E   B A C K E N D
@@ -9,6 +9,7 @@
 #include "device_backend.h"
 #include "tensor_types.h"
 #include "string_utilities.h"
+#include "memory_debug.h"
 
 #include <atomic>
 
@@ -19,6 +20,10 @@ namespace
 {
 
 std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+std::atomic_bool cuda_scratch_growth_forbidden_runtime{false};
+std::atomic_bool gemm_autotune_enabled_flag{false};
+std::atomic_bool bf16_compute_plain_flag{false};
+std::atomic_bool conv_autotune_enabled_flag{true};
 
 void throw_if_auto(Device device_type)
 {
@@ -120,14 +125,54 @@ size_t available_memory()
 
 bool cuda_allocation_growth_forbidden() noexcept
 {
-    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed)
-        || env_flag_enabled("OPENNN_CUDA_NO_ALLOC_GROWTH");
+    return cuda_allocation_growth_forbidden_runtime.load(std::memory_order_relaxed);
 }
 
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
 }
+
+bool cuda_scratch_growth_forbidden() noexcept
+{
+    return cuda_scratch_growth_forbidden_runtime.load(std::memory_order_relaxed);
+}
+
+void set_cuda_scratch_growth_forbidden(bool forbidden) noexcept
+{
+    cuda_scratch_growth_forbidden_runtime.store(forbidden, std::memory_order_relaxed);
+}
+
+bool gemm_autotune_enabled() noexcept
+{
+    return gemm_autotune_enabled_flag.load(std::memory_order_relaxed);
+}
+
+void set_gemm_autotune(bool enabled) noexcept
+{
+    gemm_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
+}
+
+bool bf16_compute_plain() noexcept
+{
+    return bf16_compute_plain_flag.load(std::memory_order_relaxed);
+}
+
+void set_bf16_compute_plain(bool enabled) noexcept
+{
+    bf16_compute_plain_flag.store(enabled, std::memory_order_relaxed);
+}
+
+bool conv_autotune_enabled() noexcept
+{
+    return conv_autotune_enabled_flag.load(std::memory_order_relaxed);
+}
+
+void set_conv_autotune(bool enabled) noexcept
+{
+    conv_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
+}
+
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
     : active(enabled && is_cuda_build())
@@ -674,8 +719,8 @@ namespace
             // bf16 multiply with the fast tensor-core accumulation path (the
             // analogue of FAST_TF32 for fp32). Plain CUBLAS_COMPUTE_32F left the
             // heuristic on a non-tensor-core algorithm, so bf16 got no speedup.
-            static const bool plain = std::getenv("OPENNN_BF16_COMPUTE_PLAIN") != nullptr;
-            return plain ? CUBLAS_COMPUTE_32F : CUBLAS_COMPUTE_32F_FAST_16BF;
+            return device::bf16_compute_plain() ? CUBLAS_COMPUTE_32F
+                                                : CUBLAS_COMPUTE_32F_FAST_16BF;
         }
         return CUBLAS_COMPUTE_DTYPE;
     }
@@ -690,7 +735,7 @@ namespace
     bool workspace_growth_forbidden() noexcept
     {
         return device::cuda_allocation_growth_forbidden()
-            || env_flag_enabled("OPENNN_CUDA_NO_SCRATCH_GROWTH");
+            || device::cuda_scratch_growth_forbidden();
     }
 
     template <typename T>
@@ -707,9 +752,24 @@ namespace
         return workspace_buffer.ensure<T>(n);
     }
 
+    // cublasLt and the cuDNN-frontend graphs all draw scratch from this one
+    // buffer (ops run serially on the compute stream, so the live peak is the
+    // max single workspace, not the sum). Record each growth delta so
+    // memory_debug telescopes to the final buffer size, the achieved floor.
+    void* ensure_shared_scratch(size_t min_bytes)
+    {
+        Buffer& buffer = thread_state().workspace;
+        const Index before = buffer.bytes;
+        void* pointer = ensure_workspace<uint8_t>(buffer, Index(min_bytes));
+        if (buffer.bytes > before)
+            memory_debug::record("workspace.cudnn_frontend", "shared_scratch",
+                                 buffer.bytes - before, "high_water");
+        return pointer;
+    }
+
     void* ensure_cublas_lt_workspace(size_t min_bytes)
     {
-        return ensure_workspace<uint8_t>(thread_state().workspace, Index(min_bytes));
+        return ensure_shared_scratch(min_bytes);
     }
 
     bfloat16* ensure_bf16_input_workspace(Index n)
@@ -730,21 +790,21 @@ float* ensure_bf16_to_fp32_workspace(Index n)
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)
 {
-    return ensure_workspace<uint8_t>(thread_state().workspace, Index(min_bytes));
+    return ensure_shared_scratch(min_bytes);
 }
 
 const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 {
     if (input.type == target_type) return input.data;
 
-    if (input.type == Type::FP32 && target_type == Type::BF16)
+    if (input.is_fp32() && target_type == Type::BF16)
     {
         bfloat16* dst = ensure_bf16_input_workspace(input.size());
         cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
         return dst;
     }
 
-    if (input.type == Type::BF16 && target_type == Type::FP32)
+    if (input.is_bf16() && target_type == Type::FP32)
     {
         float* dst = ensure_bf16_to_fp32_workspace(input.size());
         cast_bf16_to_fp32_cuda(input.size(), input.as<bfloat16>(), dst);
@@ -766,7 +826,7 @@ const void* bias_for_gemm_bf16(const TensorView& bias)
 
 namespace
 {
-const LtMatmulPlan& get_lt_gemm_plan(
+LtMatmulPlan& get_lt_gemm_plan(
     int m, int n, int k,
     cublasOperation_t transA,
     cublasOperation_t transB,
@@ -813,13 +873,10 @@ const LtMatmulPlan& get_lt_gemm_plan(
         CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
         &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
-    // Autotuning (OPENNN_GEMM_AUTOTUNE=1) asks for several candidate algorithms;
-    // the first real matmul times them and keeps the fastest. Otherwise take the
-    // single first heuristic (cuBLASLt's default best guess), as before.
-    static const bool autotune = [] {
-        const char* v = std::getenv("OPENNN_GEMM_AUTOTUNE");
-        return v && v[0] == '1';
-    }();
+    // Autotuning (device::set_gemm_autotune(true)) asks for several candidate
+    // algorithms; the first real matmul times them and keeps the fastest.
+    // Otherwise take the single first heuristic (cuBLASLt's default best guess).
+    const bool autotune = device::gemm_autotune_enabled();
     constexpr int max_candidates = 16;
 
     cublasLtMatmulHeuristicResult_t heuristics[max_candidates] = {};
@@ -865,8 +922,7 @@ void run_lt_matmul_cached(
     cudaDataType_t io_dtype,
     cudaDataType_t out_dtype)
 {
-    LtMatmulPlan& plan = const_cast<LtMatmulPlan&>(
-        get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype));
+    LtMatmulPlan& plan = get_lt_gemm_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));

@@ -8,6 +8,7 @@
 
 #include "forward_propagation.h"
 #include "neural_network.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -27,7 +28,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();
-    device_fp32_input_buffers.clear();
+    passthrough_overrides.clear();
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
 
@@ -46,17 +47,25 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const Index total_bytes = get_aligned_bytes(forward_specs);
     data.resize_bytes(total_bytes, neural_network->get_device());
     data.setZero();
+    memory_debug::record("forward", "ForwardPropagation::data", total_bytes,
+                         format("batch={}", batch_size));
 
     uint8_t* cursor = data.as<uint8_t>();
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
+        const Index layer_bytes = get_aligned_bytes(specs);
+        if (layer_bytes > 0)
+            memory_debug::record("forward.layer",
+                                 format("{}:{}", i, layers[i]->get_label()),
+                                 layer_bytes,
+                                 format("batch={}", batch_size));
         forward_slots[i].assign(specs.size() + 1, TensorView{});
 
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
-            if (shape.size() == 0) continue;
+            if (shape.empty()) continue;
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(specs[j]);
         }
@@ -68,9 +77,27 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t j = 0; j < sources.size(); ++j)
         {
             const Index source_layer = sources[j];
-            if (source_layer < 0 || forward_specs[source_layer].empty()) continue;
+            if (source_layer < 0) continue;  // external input — set in forward_propagate
 
-            input_views[i][j] = forward_slots[source_layer].back();
+            if (!forward_specs[source_layer].empty())
+            {
+                input_views[i][j] = forward_slots[source_layer].back();
+                continue;
+            }
+
+            // Passthrough layer (empty specs): follow the chain upstream
+            Index resolved = source_layer;
+            while (resolved >= 0 && forward_specs[resolved].empty())
+            {
+                const auto& up = source_layers[resolved];
+                if (up.empty()) { resolved = -1; break; }
+                resolved = up[0];
+            }
+
+            if (resolved >= 0)
+                input_views[i][j] = forward_slots[resolved].back();
+            else
+                passthrough_overrides.emplace_back(i, j, size_t(-resolved - 1));
         }
     }
 }

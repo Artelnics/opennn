@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   Y O L O   D A T A S E T   C L A S S
@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "yolo_dataset.h"
+#include "convolutional_layer.h"
+#include "neural_network.h"
 #include "image_processing.h"
 #include "io_utilities.h"
 #include "json.h"
@@ -73,7 +75,7 @@ static_assert(sizeof(YoloTargetCacheHeader) == 64);
 static_assert(sizeof(YoloBoxesCacheHeader) == 64);
 static_assert(sizeof(YoloBoxRecord) == 20);
 
-constexpr uint32_t YOLO_CACHE_VERSION = 2;
+constexpr uint32_t YOLO_CACHE_VERSION = 3;  // bumped: anchor-IoU soft objectness targets
 constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
@@ -554,7 +556,7 @@ void bilinear_resize_uint8(const uint8_t* src,
 {
     if (src_h == dst_h && src_w == dst_w)
     {
-        std::memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
+        memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
         return;
     }
 
@@ -632,7 +634,7 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         out.push_back(box);
     }
 
-    boxes = std::move(out);
+    boxes = move(out);
 }
 
 void make_target(const vector<YoloDataset::Box>& boxes,
@@ -654,14 +656,25 @@ void make_target(const vector<YoloDataset::Box>& boxes,
         const Index col = min<Index>(grid_size - 1, max<Index>(0, Index(floor(box.x * grid_size))));
         const Index row = min<Index>(grid_size - 1, max<Index>(0, Index(floor(box.y * grid_size))));
         const Index anchor = best_anchor_for_box(box, anchors);
+        const float best_iou = yolo_iou_wh({box.w, box.h}, anchors[size_t(anchor)]);
         const Index base = (row * grid_size + col) * channels + anchor * values_per_box;
 
         target[base + 0] = box.x * grid_size - float(col);
         target[base + 1] = box.y * grid_size - float(row);
         target[base + 2] = box.w;
         target[base + 3] = box.h;
-        target[base + 4] = 1.0f;
+        target[base + 4] = max(best_iou, 0.5f);  // soft anchor-IoU objectness target
         target[base + 5 + box.class_id] = 1.0f;
+
+        // Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
+        for (Index j = 0; j < boxes_per_cell; ++j)
+        {
+            if (j == anchor) continue;
+            if (yolo_iou_wh({box.w, box.h}, anchors[size_t(j)]) < 0.5f) continue;
+            const Index base_j = (row * grid_size + col) * channels + j * values_per_box;
+            if (target[base_j + 4] < 0.5f)
+                target[base_j + 4] = -1.0f;
+        }
     }
 }
 
@@ -719,8 +732,27 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
         target[base + 1] = box.y * grid_h - float(row);
         target[base + 2] = box.w;
         target[base + 3] = box.h;
-        target[base + 4] = 1.0f;
+        target[base + 4] = max(best_iou, 0.5f);  // soft anchor-IoU objectness target
         target[base + 5 + box.class_id] = 1.0f;
+
+        // Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
+        for (size_t i = 0; i < head_anchors.size(); ++i)
+        {
+            const vector<array<float, 2>>& anchors_i = head_anchors[i];
+            for (Index j = 0; j < ssize(anchors_i); ++j)
+            {
+                if (i == best_head && j == best_anchor_in_head) continue;
+                if (yolo_iou_wh({box.w, box.h}, anchors_i[size_t(j)]) < 0.5f) continue;
+                const Index grid_i  = head_grid_sizes[i];
+                const Index col_i   = min<Index>(grid_i-1, max<Index>(0, Index(floor(box.x * grid_i))));
+                const Index row_i   = min<Index>(grid_i-1, max<Index>(0, Index(floor(box.y * grid_i))));
+                const Index base_i  = head_offsets[i]
+                                    + (row_i * grid_i + col_i) * head_channels
+                                    + j * values_per_box;
+                if (target[base_i + 4] < 0.5f)
+                    target[base_i + 4] = -1.0f;
+            }
+        }
     }
 }
 
@@ -808,7 +840,8 @@ const vector<string>& voc_class_names()
 
 Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
                                        const string& image_set,
-                                       const filesystem::path& output_labels_dir)
+                                       const filesystem::path& output_labels_dir,
+                                       const vector<string>& class_filter)
 {
     throw_if(!filesystem::is_directory(voc_root),
              format("VOC root is not a directory: {}", voc_root.string()));
@@ -826,16 +859,18 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     filesystem::create_directories(output_labels_dir);
 
-    const vector<string>& classes = voc_class_names();
+    // Build class→id mapping. With a filter, only the listed classes are kept
+    // and IDs are remapped to 0-indexed within the filter.
+    const vector<string>& active_classes = class_filter.empty() ? voc_class_names() : class_filter;
     unordered_map<string, Index> class_index;
-    for (Index i = 0; i < ssize(classes); ++i)
-        class_index[classes[size_t(i)]] = i;
+    for (Index i = 0; i < ssize(active_classes); ++i)
+        class_index[active_classes[size_t(i)]] = i;
 
     ofstream names_file(output_labels_dir / "voc.names");
     throw_if(!names_file,
              format("Cannot write VOC names file in {}",
                     output_labels_dir.string()));
-    for (const string& name : classes)
+    for (const string& name : active_classes)
         names_file << name << '\n';
     names_file.close();
 
@@ -853,27 +888,30 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const VocAnnotation ann = parse_voc_xml(xml_path);
 
-        const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
-        ofstream out(out_path);
-        throw_if(!out,
-                 format("Cannot write YOLO label: {}", out_path.string()));
-
+        // Collect surviving boxes (matching the class filter)
+        vector<pair<Index, array<float,4>>> kept_boxes;
         for (const VocBox& box : ann.boxes)
         {
             const auto it = class_index.find(box.class_name);
             if (it == class_index.end())
                 continue;
-
-            const float cx = 0.5f * (box.xmin + box.xmax) / ann.width;
-            const float cy = 0.5f * (box.ymin + box.ymax) / ann.height;
-            const float bw = (box.xmax - box.xmin) / ann.width;
-            const float bh = (box.ymax - box.ymin) / ann.height;
-
             auto clamp01 = [](float v) { return min(1.0f, max(0.0f, v)); };
-            out << it->second << ' '
-                << clamp01(cx) << ' ' << clamp01(cy) << ' '
-                << clamp01(bw) << ' ' << clamp01(bh) << '\n';
+            const float cx = clamp01(0.5f * (box.xmin + box.xmax) / ann.width);
+            const float cy = clamp01(0.5f * (box.ymin + box.ymax) / ann.height);
+            const float bw = clamp01((box.xmax - box.xmin) / ann.width);
+            const float bh = clamp01((box.ymax - box.ymin) / ann.height);
+            kept_boxes.push_back({it->second, {cx, cy, bw, bh}});
         }
+
+        // With a filter, skip images that have no objects of the requested classes
+        if (!class_filter.empty() && kept_boxes.empty())
+            continue;
+
+        const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
+        ofstream out(out_path);
+        throw_if(!out, format("Cannot write YOLO label: {}", out_path.string()));
+        for (const auto& [id, b] : kept_boxes)
+            out << id << ' ' << b[0] << ' ' << b[1] << ' ' << b[2] << ' ' << b[3] << '\n';
         ++converted;
     }
 
@@ -920,7 +958,7 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
     vector<array<float, 6>> candidates;
 
     // Each candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id).
-    // Decoded output from DetectionOp: x,y are sigmoid([0,1]) cell-relative
+    // Decoded output from DetectionOperator: x,y are sigmoid([0,1]) cell-relative
     // offsets; w,h are already image-normalized (anchor * exp(raw)).
     for (const YoloFpnHead& head : heads)
     {
@@ -1183,7 +1221,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
-        anchors = std::move(cached_anchors);
+        anchors = move(cached_anchors);
         classes_number = Index(target_header.classes_number);
         if (class_names.empty())
         {
@@ -1383,7 +1421,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     boxes_cache_reader.open(boxes_cache_path);
     target_data_offset = target_header.targets_offset;
     boxes_data_offset = boxes_header.boxes_byte_offset;
-    boxes_offsets = std::move(offsets);
+    boxes_offsets = move(offsets);
 
     setup_metadata(Index(image_paths.size()));
 
@@ -1487,8 +1525,7 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 
 void YoloDataset::load_images_to_ram() const
 {
-    if (!images_ram.empty()) return;
-    if (samples_number == 0 || cache_image_record_bytes == 0) return;
+    if (!images_ram.empty() || samples_number == 0 || cache_image_record_bytes == 0) return;
 
     throw_if(!image_cache_reader.is_open(),
              "YoloDataset::load_images_to_ram: image cache is not open.");
@@ -1509,6 +1546,81 @@ void YoloDataset::load_targets_to_ram() const
     target_cache_reader.read_at(targets_ram.data(),
                                 targets_ram.size() * sizeof(float),
                                 target_data_offset);
+}
+
+// Blit a bilinearly-resized source image into a sub-rectangle of a canvas.
+// src:        source pixels, shape [src_h, src_w, channels]
+// canvas:     destination buffer, shape [canvas_h, canvas_w, channels]
+// canvas_w:   width of the full canvas (stride)
+// dst_x/y:   top-left corner of the destination rectangle in the canvas
+// qw/qh:     width/height of the destination rectangle
+void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
+                               uint8_t* canvas, Index canvas_w,
+                               Index dst_x, Index dst_y, Index qw, Index qh,
+                               Index channels)
+{
+    for (Index oy = 0; oy < qh; ++oy)
+    {
+        const float sy_f = (float(oy) + 0.5f) * float(src_h) / float(qh) - 0.5f;
+        const Index sy0 = max<Index>(0, min(src_h - 1, Index(sy_f)));
+        const Index sy1 = min(sy0 + 1, src_h - 1);
+        const float dy  = sy_f - float(sy0);
+
+        for (Index ox = 0; ox < qw; ++ox)
+        {
+            const float sx_f = (float(ox) + 0.5f) * float(src_w) / float(qw) - 0.5f;
+            const Index sx0 = max<Index>(0, min(src_w - 1, Index(sx_f)));
+            const Index sx1 = min(sx0 + 1, src_w - 1);
+            const float dx  = sx_f - float(sx0);
+
+            const Index dst_off = ((dst_y + oy) * canvas_w + (dst_x + ox)) * channels;
+            for (Index c = 0; c < channels; ++c)
+            {
+                const float v00 = float(src[(sy0 * src_w + sx0) * channels + c]);
+                const float v01 = float(src[(sy0 * src_w + sx1) * channels + c]);
+                const float v10 = float(src[(sy1 * src_w + sx0) * channels + c]);
+                const float v11 = float(src[(sy1 * src_w + sx1) * channels + c]);
+                const float top = v00 * (1.f - dx) + v01 * dx;
+                const float bot = v10 * (1.f - dx) + v11 * dx;
+                canvas[dst_off + c] = uint8_t(min(255.f, max(0.f, top * (1.f - dy) + bot * dy + 0.5f)));
+            }
+        }
+    }
+}
+
+struct MosaicParams
+{
+    Index companions[3];
+    float cx_frac;
+    float cy_frac;
+};
+
+// Derive mosaic companion indices and cut point from the same epoch/sample seed
+// used by derive_augmentation_params, but with a different hash so the two
+// streams are independent.
+MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
+                                  Index samples_number)
+{
+    uint64_t state = splitmix64(
+        splitmix64(epoch_seed * 0x9E3779B97F4A7C15ull + sample_index)
+        + 0xCAFEBABEDEADBEEFull);
+
+    auto rand_idx = [&]() -> Index {
+        state = splitmix64(state);
+        return Index(state % uint64_t(samples_number));
+    };
+    auto rand_frac = [&](float lo, float hi) -> float {
+        state = splitmix64(state);
+        return lo + (hi - lo) * float(state >> 40) / float(1ull << 24);
+    };
+
+    MosaicParams mp{};
+    mp.companions[0] = rand_idx();
+    mp.companions[1] = rand_idx();
+    mp.companions[2] = rand_idx();
+    mp.cx_frac = rand_frac(0.3f, 0.7f);
+    mp.cy_frac = rand_frac(0.3f, 0.7f);
+    return mp;
 }
 
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -1566,7 +1678,59 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
             const uint8_t* image_bytes = pixels.data();
 
-            if (augment)
+            if (augment && augmentation.mosaic)
+            {
+                const Index H = cache_input_shape[0];
+                const Index W = cache_input_shape[1];
+                const Index C = cache_input_shape[2];
+                const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
+                const Index cut_x = max<Index>(1, min(W - 1, Index(mp.cx_frac * float(W))));
+                const Index cut_y = max<Index>(1, min(H - 1, Index(mp.cy_frac * float(H))));
+
+                struct Quad { Index si; Index dst_x, dst_y, qw, qh; };
+                const Quad quads[4] = {
+                    {sample_index,         0,     0,     cut_x,   cut_y},
+                    {mp.companions[0], cut_x,     0, W - cut_x,   cut_y},
+                    {mp.companions[1],     0, cut_y,     cut_x, H - cut_y},
+                    {mp.companions[2], cut_x, cut_y, W - cut_x, H - cut_y},
+                };
+
+                aug_pixels.resize(size_t(H) * size_t(W) * size_t(C));
+
+                // Color-only cfg for per-quadrant jitter (no geometric crop/flip inside mosaic)
+                const ::opennn::AugmentationConfig color_cfg{
+                    0.0f, cfg.exposure, cfg.saturation, cfg.hue, false
+                };
+
+                thread_local vector<uint8_t> mosaic_src;
+                thread_local vector<uint8_t> quad_buf;
+
+                for (const Quad& q : quads)
+                {
+                    mosaic_src.resize(size_t(cache_image_record_bytes));
+                    if (matrix_storage)
+                        copy_n(images_ram.data() + size_t(q.si) * size_t(cache_image_record_bytes),
+                               size_t(cache_image_record_bytes), mosaic_src.data());
+                    else
+                    {
+                        const uint64_t off = sizeof(YoloImageCacheHeader)
+                            + uint64_t(q.si) * uint64_t(cache_image_record_bytes);
+                        image_cache_reader.read_at(mosaic_src.data(),
+                                                   size_t(cache_image_record_bytes), off);
+                    }
+
+                    quad_buf.assign(mosaic_src.begin(), mosaic_src.end());
+                    const AugmentationParams qp = derive_augmentation_params(
+                        epoch_seed, uint64_t(q.si), color_cfg);
+                    apply_color_jitter(quad_buf.data(), H, W, C, qp);
+
+                    blit_resized_into_canvas(quad_buf.data(), H, W,
+                                             aug_pixels.data(), W,
+                                             q.dst_x, q.dst_y, q.qw, q.qh, C);
+                }
+                image_bytes = aug_pixels.data();
+            }
+            else if (augment)
             {
                 const ::opennn::AugmentationConfig free_cfg{
                     cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
@@ -1642,26 +1806,88 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
             if (reencode)
             {
-                vector<Box> boxes;
-                read_sample_boxes(sample_index, boxes);
+                float* const target_ptr = target_data + i * target_record_floats;
 
-                if (augment)
+                if (augment && augmentation.mosaic)
                 {
-                    const ::opennn::AugmentationConfig free_cfg{
-                        cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
-                    };
-                    const AugmentationParams p = derive_augmentation_params(
-                        epoch_seed, uint64_t(sample_index), free_cfg);
-                    apply_geometric_to_boxes(boxes, p);
-                }
+                    const Index H = cache_input_shape[0];
+                    const Index W = cache_input_shape[1];
+                    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
+                    const Index cut_x = max<Index>(1, min(W - 1, Index(mp.cx_frac * float(W))));
+                    const Index cut_y = max<Index>(1, min(H - 1, Index(mp.cy_frac * float(H))));
 
-                if (is_multi_scale())
-                    make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
-                                            boxes_per_head, classes_number,
-                                            target_data + i * target_record_floats);
+                    struct Quad { Index si; Index dst_x, dst_y, qw, qh; };
+                    const Quad quads[4] = {
+                        {sample_index,         0,     0,     cut_x,   cut_y},
+                        {mp.companions[0], cut_x,     0, W - cut_x,   cut_y},
+                        {mp.companions[1],     0, cut_y,     cut_x, H - cut_y},
+                        {mp.companions[2], cut_x, cut_y, W - cut_x, H - cut_y},
+                    };
+
+                    vector<Box> mosaic_boxes;
+                    vector<Box> quad_boxes;
+
+                    for (const Quad& q : quads)
+                    {
+                        read_sample_boxes(q.si, quad_boxes);
+                        const float qw_frac = float(q.qw) / float(W);
+                        const float qh_frac = float(q.qh) / float(H);
+                        const float ox_frac = float(q.dst_x) / float(W);
+                        const float oy_frac = float(q.dst_y) / float(H);
+
+                        for (const Box& src : quad_boxes)
+                        {
+                            const float raw_cx = src.x * qw_frac + ox_frac;
+                            const float raw_cy = src.y * qh_frac + oy_frac;
+                            const float raw_w  = src.w * qw_frac;
+                            const float raw_h  = src.h * qh_frac;
+
+                            const float x0 = max(raw_cx - raw_w * 0.5f, ox_frac);
+                            const float y0 = max(raw_cy - raw_h * 0.5f, oy_frac);
+                            const float x1 = min(raw_cx + raw_w * 0.5f, ox_frac + qw_frac);
+                            const float y1 = min(raw_cy + raw_h * 0.5f, oy_frac + qh_frac);
+
+                            if (x1 - x0 < 1e-3f || y1 - y0 < 1e-3f) continue;
+
+                            Box out;
+                            out.class_id = src.class_id;
+                            out.x = 0.5f * (x0 + x1);
+                            out.y = 0.5f * (y0 + y1);
+                            out.w = x1 - x0;
+                            out.h = y1 - y0;
+                            mosaic_boxes.push_back(out);
+                        }
+                    }
+
+                    if (is_multi_scale())
+                        make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
+                                                boxes_per_head, classes_number, target_ptr);
+                    else
+                        make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
+                                    classes_number, target_ptr);
+                }
                 else
-                    make_target(boxes, anchors, grid_size, boxes_per_cell, classes_number,
-                                target_data + i * target_record_floats);
+                {
+                    vector<Box> boxes;
+                    read_sample_boxes(sample_index, boxes);
+
+                    if (augment)
+                    {
+                        const ::opennn::AugmentationConfig free_cfg{
+                            cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
+                        };
+                        const AugmentationParams p = derive_augmentation_params(
+                            epoch_seed, uint64_t(sample_index), free_cfg);
+                        apply_geometric_to_boxes(boxes, p);
+                    }
+
+                    if (is_multi_scale())
+                        make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                                boxes_per_head, classes_number, target_ptr);
+                    else
+                        make_target(boxes, anchors, grid_size, boxes_per_cell,
+                                    classes_number, target_ptr);
+                }
             }
             else
             {
@@ -1729,6 +1955,43 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     set_storage_mode(source->has("StorageMode")
                    ? read_json_string(source, "StorageMode")
                    : "BinaryFile");
+}
+
+Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
+                                          const filesystem::path& weights_path,
+                                          Index n_backbone_convs)
+{
+    FILE* f = fopen(weights_path.string().c_str(), "rb");
+    throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
+
+    // Darknet header: 3 x int32 (major, minor, revision) + 1 x int64 (seen)
+    int32_t header[3];
+    int64_t seen;
+    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
+             "load_darknet_backbone: failed to read header int32s.");
+    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
+             "load_darknet_backbone: failed to read header seen.");
+
+    std::cout << "Darknet weights header: major=" << header[0]
+              << " minor=" << header[1]
+              << " revision=" << header[2]
+              << " seen=" << seen << "\n";
+
+    Index loaded = 0;
+    const auto& layers = network.get_layers();
+    for (size_t li = 0; li < layers.size() && loaded < n_backbone_convs; ++li)
+    {
+        auto* conv = dynamic_cast<Convolutional*>(layers[li].get());
+        if (!conv) continue;
+
+        conv->load_darknet_weights(f);
+        ++loaded;
+        std::cout << "Loaded backbone conv " << loaded << "/" << n_backbone_convs
+                  << " from " << weights_path << "\n";
+    }
+
+    fclose(f);
+    return loaded;
 }
 
 }

@@ -40,8 +40,9 @@ PY = os.environ.get("BENCH_PYTHON", sys.executable)
 # the identical (mode, batch, iters, inputs, hidden) workload.
 def opennn_cmd(mode, batch, iters, inputs, hidden):
     env = {}
-    if mode == "train":
-        env = {"OPENNN_GPU_RESIDENT_DATA": "1", "OPENNN_CUDA_GRAPH": "1"}
+    # GPU-resident data and the CUDA mega-graph are enabled inside the OpenNN
+    # benchmark code (opennn_rosenbrock_throughput.cpp: residency always on for
+    # train, graph on by default), not via environment variables.
     # OpenNN train takes a dataset size; use batch*1 so one epoch == `iters` steps
     # would need iters batches. To match a fixed (batch x iters) sample count with
     # the others, drive `iters` steps of `batch` at samples=batch (1 batch/epoch),

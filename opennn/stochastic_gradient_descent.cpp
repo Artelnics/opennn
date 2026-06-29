@@ -24,16 +24,16 @@ namespace opennn
 
 static void update_parameters_cuda(NeuralNetwork* neural_network,
                                    BackPropagation& back_propagation,
-                                   OptimizerData& optimization_data,
+                                   OptimizerData& optimizer_data,
                                    float current_learning_rate,
                                    float momentum,
                                    bool nesterov)
 {
     const Index parameters_number = neural_network->get_parameters_size();
 
-    float* const velocity_ptr = optimization_data.views.empty()
+    float* const velocity_ptr = optimizer_data.views.empty()
         ? nullptr
-        : optimization_data.views[StochasticGradientDescent::Velocity].as<float>();
+        : optimizer_data.views[StochasticGradientDescent::Velocity].as<float>();
 
     PROFILE_SCOPE("optim:sgd_update_cuda");
     sgd_update_cuda(
@@ -113,22 +113,22 @@ void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 }
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
-                                                  OptimizerData& optimization_data,
+                                                  OptimizerData& optimizer_data,
                                                   float current_learning_rate) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    optimization_data.iteration++;
+    optimizer_data.iteration++;
 
     if (current_learning_rate == 0.0f)
         return;
 
-    throw_if(momentum > 0.0f && optimization_data.views.empty(),
+    throw_if(momentum > 0.0f && optimizer_data.views.empty(),
              "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
 
     if (neural_network->is_gpu())
     {
-        update_parameters_cuda(neural_network, back_propagation, optimization_data,
+        update_parameters_cuda(neural_network, back_propagation, optimizer_data,
                                current_learning_rate, momentum, nesterov);
         return;
     }
@@ -151,7 +151,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
     else
     {
-        VectorMap velocity = optimization_data.views[Velocity].as_vector();
+        VectorMap velocity = optimizer_data.views[Velocity].as_vector();
 
         #pragma omp parallel for
         for (Index i = 0; i < parameters_size; ++i)
@@ -165,27 +165,27 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 }
 
 void StochasticGradientDescent::update_parameters_capturable(BackPropagation& back_propagation,
-                                                             OptimizerData& optimization_data) const
+                                                             OptimizerData& optimizer_data) const
 {
 #ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    float* const velocity_ptr = optimization_data.views.empty()
+    float* const velocity_ptr = optimizer_data.views.empty()
         ? nullptr
-        : optimization_data.views[Velocity].as<float>();
+        : optimizer_data.views[Velocity].as<float>();
 
     sgd_update_capturable_cuda(
         neural_network->get_parameters_size(),
         neural_network->get_parameters_data(),
         velocity_ptr,
         back_propagation.gradient.as<float>(),
-        optimization_data.graph_effective_lr.as<float>(),
+        optimizer_data.graph_effective_lr.as<float>(),
         momentum,
         nesterov,
         neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
 #else
-    (void)back_propagation; (void)optimization_data;
+    (void)back_propagation; (void)optimizer_data;
     throw runtime_error("update_parameters_capturable requires CUDA support.");
 #endif
 }
@@ -267,11 +267,11 @@ TrainingResult StochasticGradientDescent::train()
 
 
     const Index parameters_number = neural_network->get_parameters_size();
-    OptimizerData optimization_data;
+    OptimizerData optimizer_data;
     if (momentum > 0.0f)
-        optimization_data.set({Shape{parameters_number}}, neural_network->get_device());
+        optimizer_data.set({Shape{parameters_number}}, neural_network->get_device());
 
-    optimization_data.iteration = 1;
+    optimizer_data.iteration = 1;
 
     float training_error = 0.0f;
     float training_accuracy = 0.0f;
@@ -282,12 +282,13 @@ TrainingResult StochasticGradientDescent::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    const bool shuffle = !neural_network->has(LayerType::Recurrent)
+    const bool shuffle = shuffle_samples
+                      && !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 
     float current_learning_rate = initial_learning_rate;
     const auto training_update = [&](BackPropagation& back_propagation) {
-        update_parameters(back_propagation, optimization_data, current_learning_rate);
+        update_parameters(back_propagation, optimizer_data, current_learning_rate);
     };
 
 #ifdef OPENNN_HAS_CUDA
@@ -295,11 +296,11 @@ TrainingResult StochasticGradientDescent::train()
 
     if (on_gpu)
     {
-        optimization_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
-        optimization_data.graph_effective_lr.setZero();
+        optimizer_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
+        optimizer_data.graph_effective_lr.setZero();
 
         graph_update = [&](BackPropagation& back_propagation) {
-            update_parameters_capturable(back_propagation, optimization_data);
+            update_parameters_capturable(back_propagation, optimizer_data);
         };
     }
 #endif
@@ -312,13 +313,13 @@ TrainingResult StochasticGradientDescent::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        OptimizerData warmup_optimization_data;
+        OptimizerData warmup_optimizer_data;
         if (momentum > 0.0f)
-            warmup_optimization_data.set({Shape{parameters_number}}, neural_network->get_device());
-        warmup_optimization_data.iteration = 1;
+            warmup_optimizer_data.set({Shape{parameters_number}}, neural_network->get_device());
+        warmup_optimizer_data.iteration = 1;
 
         const auto warmup_update = [&](BackPropagation& back_propagation) {
-            update_parameters(back_propagation, warmup_optimization_data, initial_learning_rate);
+            update_parameters(back_propagation, warmup_optimizer_data, initial_learning_rate);
         };
 
         warmup_device_training(training_forward_propagation,
@@ -336,17 +337,16 @@ TrainingResult StochasticGradientDescent::train()
 
 #ifdef OPENNN_HAS_CUDA
         // The graph epoch path ignores warmup_update and steps the real
-        // optimization_data (the captured graph references its buffers), so the
+        // optimizer_data (the captured graph references its buffers), so the
         // warmup leaves the velocity non-zero while the model state is restored.
         if (graph_update && momentum > 0.0f)
-            optimization_data.data.setZero();
+            optimizer_data.data.setZero();
 #endif
     }
 
     time_t beginning_time;
     time(&beginning_time);
     float elapsed_time = 0.0f;
-
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
@@ -361,7 +361,7 @@ TrainingResult StochasticGradientDescent::train()
 
 #ifdef OPENNN_HAS_CUDA
             if (graph_update && on_gpu)
-                set_scalar_device_cuda(optimization_data.graph_effective_lr.as<float>(),
+                set_scalar_device_cuda(optimizer_data.graph_effective_lr.as<float>(),
                                        current_learning_rate,
                                        Backend::get_compute_stream());
 #endif

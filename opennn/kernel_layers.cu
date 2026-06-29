@@ -1,4 +1,4 @@
-#include "kernel_common.cuh"
+﻿#include "kernel_common.cuh"
 #include <curand_kernel.h>
 
 template<typename TIn, typename TOut>
@@ -8,7 +8,7 @@ __global__ void bounding_kernel(const int n, const int features,
                                 const float* __restrict__ upper,
                                 TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const float x = static_cast<float>(input[i]);
@@ -44,7 +44,7 @@ __global__ void scale_kernel(const int n, const int features,
                              const float min_range, const float max_range,
                              TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const int code = static_cast<int>(scalers[f]);
@@ -86,7 +86,7 @@ void scale_cuda(const Index n, const int features,
                 const float* minimums, const float* maximums,
                 const float* means, const float* stds,
                 const float* scalers,
-                float min_range, float max_range,
+                const float min_range, const float max_range,
                 TOut* output)
 {
     if (n == 0) return;
@@ -114,7 +114,7 @@ __global__ void unscale_kernel(const int n, const int features,
                                const float min_range, const float max_range,
                                TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int f = i % features;
         const int code = static_cast<int>(scalers[f]);
@@ -155,7 +155,7 @@ void unscale_cuda(const Index n, const int features,
                   const float* minimums, const float* maximums,
                   const float* means, const float* stds,
                   const float* scalers,
-                  float min_range, float max_range,
+                  const float min_range, const float max_range,
                   TOut* output)
 {
     if (n == 0) return;
@@ -178,7 +178,7 @@ __global__ void diff_to_fp32_kernel(const int n,
                                     const float* __restrict__ target,
                                     float* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
         output[i] = static_cast<float>(input[i]) - target[i];
 }
 
@@ -200,7 +200,7 @@ __global__ void scaled_diff_kernel(const int n,
                                    const float scale,
                                    TOut* __restrict__ output)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const float d = static_cast<float>(input[i]) - target[i];
         output[i] = static_cast<TOut>(scale * d);
@@ -209,7 +209,7 @@ __global__ void scaled_diff_kernel(const int n,
 
 template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
-                            float scale, TOut* output)
+                            const float scale, TOut* output)
 {
     if (n == 0) return;
     const int total = checked_int(n);
@@ -226,7 +226,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int token_index = i / embedding_dimension;
         const int dim_index = i % embedding_dimension;
@@ -266,7 +266,7 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int token_index = i / embedding_dimension;
         const int dim_index = i % embedding_dimension;
@@ -298,7 +298,7 @@ template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, 
 template<typename T>
 __global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int d = i % D;
         const int q = (i / D) % Q;
@@ -315,7 +315,7 @@ __global__ void swap_heads_vec_kernel(const int n_vec, const T* __restrict__ in,
     const float4* const in_v  = reinterpret_cast<const float4*>(in);
     float4* const       out_v = reinterpret_cast<float4*>(out);
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_vec; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n_vec; i += Index(blockDim.x) * gridDim.x)
     {
         const int d = i % D_vec;
         const int q = (i / D_vec) % Q;
@@ -360,7 +360,7 @@ template void merge_heads_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*,
 template<typename T>
 __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ source_input, T* __restrict__ padding_mask, const int embedding_dimension)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < num_tokens; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < num_tokens; i += Index(blockDim.x) * gridDim.x)
     {
         const T* token = source_input + i * embedding_dimension;
         bool is_pad = true;
@@ -375,7 +375,7 @@ __global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weight
                                          const int heads_number, const int query_sequence_length,
                                          const int source_sequence_length, const bool use_causal_mask)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
         const int sk = i % source_sequence_length;
         const int sq = (i / source_sequence_length) % query_sequence_length;
@@ -475,7 +475,7 @@ template void attention_sequence_lengths_cuda<__nv_bfloat16>(int, int, int, int,
 template<typename T>
 __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, float* __restrict__ indices, const int S, const int F)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -510,7 +510,7 @@ template void max_pooling_3d_forward_cuda<__nv_bfloat16>(const Index, const __nv
 template<typename T>
 __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict__ delta, T* __restrict__ in_gradient, const float* __restrict__ indices, const int S, const int F)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -594,7 +594,7 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
                                                   const float* __restrict__ valid_mask,
                                                   const float* __restrict__ counts)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -614,11 +614,11 @@ __global__ void average_pooling_3d_forward_kernel(const int n, const T* __restri
 }
 
 template<typename T>
-static void prepare_pooling_valid_mask(int B, int S, int F, const T* in,
+static void prepare_pooling_valid_mask(const int B, const int S, const int F, const T* in,
                                        float*& valid_mask, float*& counts)
 {
     const int BS = checked_int(Index(B) * S);
-    cudaStream_t stream = opennn::device::get_compute_stream();
+    const cudaStream_t stream = opennn::device::get_compute_stream();
 
     float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
@@ -652,7 +652,7 @@ __global__ void average_pooling_3d_backward_kernel(const int n, const T* __restr
                                                    const float* __restrict__ valid_mask,
                                                    const float* __restrict__ counts)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const int f = idx % F;
         const int b = idx / F;
@@ -1008,21 +1008,20 @@ template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const
 template<typename T>
 __global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
 {
-    // function code = static_cast<int>(ActivationFunction). Branches must stay
-    // in sync with the enum order in tensor_utilities.h.
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    // Function codes mirror ActivationFunction values.
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const float x = static_cast<float>(data[idx]);
         float y = x;
 
-        if (function == 1)
-            y = 1.0f / (1.0f + expf(-x));
-        else if (function == 2)
+        if (function == activation_sigmoid)
+            y = sigmoid_f(x);
+        else if (function == activation_tanh)
             y = tanhf(x);
-        else if (function == 3)
+        else if (function == activation_relu)
             y = fmaxf(x, 0.0f);
-        else if (function == 5)
-            y = x >= 0.0f ? x : 0.1f * x;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
+        else if (function == activation_leaky_relu)
+            y = x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
 
         data[idx] = static_cast<T>(y);
     }
@@ -1043,20 +1042,20 @@ template void activation_forward_cuda<__nv_bfloat16>(const Index, __nv_bfloat16*
 template<typename T>
 __global__ void activation_backward_kernel(const int n, const T* __restrict__ outputs, T* __restrict__ delta, const int function)
 {
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n; idx += blockDim.x * gridDim.x)
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
     {
         const float y = static_cast<float>(outputs[idx]);
         const float d = static_cast<float>(delta[idx]);
         float out = d;
 
-        if (function == 1)
+        if (function == activation_sigmoid)
             out = d * y * (1.0f - y);
-        else if (function == 2)
+        else if (function == activation_tanh)
             out = d * (1.0f - y * y);
-        else if (function == 3)
+        else if (function == activation_relu)
             out = y > 0.0f ? d : 0.0f;
-        else if (function == 5)
-            out = y >= 0.0f ? d : 0.1f * d;  // LeakyReLU; slope tracks LEAKY_RELU_SLOPE.
+        else if (function == activation_leaky_relu)
+            out = y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
 
         delta[idx] = static_cast<T>(out);
     }
@@ -1443,17 +1442,12 @@ template void rnn_step_fused_backward_pre_cuda<__nv_bfloat16>(const Index, const
 
 
 // -----------------------------------------------------------------------------
-// YOLO DetectionOp
+// YOLO DetectionOperator
 // -----------------------------------------------------------------------------
-// CPU reference: operators.cpp:DetectionOp::apply / apply_delta.
+// CPU reference: operators.cpp:DetectionOperator::apply / apply_delta.
 // Thread layout: one thread per box. Tile = (batch, grid, grid, boxes_per_cell);
 // each thread owns a contiguous span of (5 + classes_number) floats in NHWC
 // layout (channels-last), matching the CPU loop's `base` index arithmetic.
-
-__device__ __forceinline__ float yolo_sigmoid_device(float x)
-{
-    return 1.0f / (1.0f + __expf(-x));
-}
 
 __global__ void detection_forward_kernel(const int batch_size,
                                          const int grid_size,
@@ -1468,9 +1462,9 @@ __global__ void detection_forward_kernel(const int batch_size,
     const int values_per_box = 5 + classes_number;
     const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
          idx < total;
-         idx += blockDim.x * gridDim.x)
+         idx += Index(blockDim.x) * gridDim.x)
     {
         const int box = idx % boxes_per_cell;
         const int t   = idx / boxes_per_cell;
@@ -1485,16 +1479,16 @@ __global__ void detection_forward_kernel(const int batch_size,
         const float aw = anchors[box * 2 + 0];
         const float ah = anchors[box * 2 + 1];
 
-        dst[base + 0] = yolo_sigmoid_device(src[base + 0]);
-        dst[base + 1] = yolo_sigmoid_device(src[base + 1]);
-        dst[base + 2] = __expf(src[base + 2]) * aw;
-        dst[base + 3] = __expf(src[base + 3]) * ah;
-        dst[base + 4] = yolo_sigmoid_device(src[base + 4]);
+        dst[base + 0] = sigmoid_f(src[base + 0]);
+        dst[base + 1] = sigmoid_f(src[base + 1]);
+        dst[base + 2] = __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f)) * aw;
+        dst[base + 3] = __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f)) * ah;
+        dst[base + 4] = sigmoid_f(src[base + 4]);
 
-        if (class_activation == 1)  // Sigmoid
+        if (class_activation == class_activation_sigmoid)
         {
             for (int c = 0; c < classes_number; ++c)
-                dst[base + 5 + c] = yolo_sigmoid_device(src[base + 5 + c]);
+                dst[base + 5 + c] = sigmoid_f(src[base + 5 + c]);
         }
         else  // Softmax
         {
@@ -1555,9 +1549,9 @@ __global__ void detection_backward_kernel(const int batch_size,
     const int values_per_box = 5 + classes_number;
     const int total = batch_size * grid_size * grid_size * boxes_per_cell;
 
-    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
          idx < total;
-         idx += blockDim.x * gridDim.x)
+         idx += Index(blockDim.x) * gridDim.x)
     {
         const int box = idx % boxes_per_cell;
         const int t   = idx / boxes_per_cell;
@@ -1580,7 +1574,7 @@ __global__ void detection_backward_kernel(const int batch_size,
         in_delta[base + 3] = delta[base + 3] * out[base + 3];
         in_delta[base + 4] = delta[base + 4] * oo * (1.0f - oo);
 
-        if (class_activation == 1)  // Sigmoid
+        if (class_activation == class_activation_sigmoid)
         {
             for (int c = 0; c < classes_number; ++c)
             {
@@ -1625,4 +1619,136 @@ void detection_backward_cuda(const Index batch_size,
         checked_int(channels),
         class_activation,
         output, output_delta, input_delta));
+}
+
+// ── Nearest-neighbor upsample (NHWC layout) ───────────────────────────────────
+
+__global__ void upsample_forward_kernel(
+    const int n,               // total output elements = batch * out_h * out_w * channels
+    const float* __restrict__ src,
+    float* __restrict__ dst,
+    const int in_h, const int in_w,
+    const int out_h, const int out_w,
+    const int channels, const int scale)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % channels;
+        const int ow = (i / channels) % out_w;
+        const int oh = (i / channels / out_w) % out_h;
+        const int b  =  i / channels / out_w / out_h;
+
+        const int iw = ow / scale;
+        const int ih = oh / scale;
+        dst[i] = src[((b * in_h + ih) * in_w + iw) * channels + c];
+    }
+}
+
+__global__ void upsample_backward_kernel(
+    const int n,               // total input elements = batch * in_h * in_w * channels
+    const float* __restrict__ out_delta,
+    float* __restrict__ in_delta,
+    const int in_h, const int in_w,
+    const int out_h, const int out_w,
+    const int channels, const int scale)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % channels;
+        const int iw = (i / channels) % in_w;
+        const int ih = (i / channels / in_w) % in_h;
+        const int b  =  i / channels / in_w / in_h;
+
+        float acc = 0.0f;
+        for (int dh = 0; dh < scale; ++dh)
+            for (int dw = 0; dw < scale; ++dw)
+            {
+                const int oh = ih * scale + dh;
+                const int ow = iw * scale + dw;
+                acc += out_delta[((b * out_h + oh) * out_w + ow) * channels + c];
+            }
+        in_delta[i] = acc;
+    }
+}
+
+void upsample_forward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
+                           const float* src, float* dst)
+{
+    const int n = batch * (in_h * scale) * (in_w * scale) * channels;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(upsample_forward_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale));
+}
+
+void upsample_backward_cuda(const int batch, const int in_h, const int in_w, const int channels, const int scale,
+                            const float* out_delta, float* in_delta)
+{
+    const int n = batch * in_h * in_w * channels;
+    if (n == 0) return;
+    cudaMemsetAsync(in_delta, 0, size_t(n) * sizeof(float), opennn::device::get_compute_stream());
+    OPENNN_CUDA_LAUNCH(upsample_backward_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale));
+}
+
+// ── Channel concatenation (NHWC) ─────────────────────────────────────────────
+// One call per input slice; each thread handles one element of that slice.
+
+// Forward: copies src[b][h][w][c_local] → dst[b][h][w][ch_offset + c_local]
+__global__ void concat_forward_slice_kernel(
+    const int n,                        // batch * H * W * slice_ch
+    const float* __restrict__ src,
+    float* __restrict__ dst,
+    const int H, const int W,
+    const int slice_ch, const int total_ch, const int ch_offset)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % slice_ch;
+        const int w  = (i / slice_ch) % W;
+        const int h  = (i / slice_ch / W) % H;
+        const int b  =  i / slice_ch / W / H;
+        dst[((b * H + h) * W + w) * total_ch + ch_offset + c] = src[i];
+    }
+}
+
+// Backward: copies out_delta[b][h][w][ch_offset + c_local] → in_delta[b][h][w][c_local]
+__global__ void concat_backward_slice_kernel(
+    const int n,
+    const float* __restrict__ out_delta,
+    float* __restrict__ in_delta,
+    const int H, const int W,
+    const int slice_ch, const int total_ch, const int ch_offset)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int c  = i % slice_ch;
+        const int w  = (i / slice_ch) % W;
+        const int h  = (i / slice_ch / W) % H;
+        const int b  =  i / slice_ch / W / H;
+        in_delta[i] = out_delta[((b * H + h) * W + w) * total_ch + ch_offset + c];
+    }
+}
+
+void concat_forward_slice_cuda(const int batch, const int H, const int W,
+                               const int slice_ch, const int total_ch, const int ch_offset,
+                               const float* src, float* dst)
+{
+    const int n = batch * H * W * slice_ch;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(concat_forward_slice_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, src, dst, H, W, slice_ch, total_ch, ch_offset));
+}
+
+void concat_backward_slice_cuda(const int batch, const int H, const int W,
+                                const int slice_ch, const int total_ch, const int ch_offset,
+                                const float* out_delta, float* in_delta)
+{
+    const int n = batch * H * W * slice_ch;
+    if (n == 0) return;
+    OPENNN_CUDA_LAUNCH(concat_backward_slice_kernel<<<grid_size_for(n), block_size, 0,
+        opennn::device::get_compute_stream()>>>(
+        n, out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset));
 }

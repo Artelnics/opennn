@@ -6,10 +6,14 @@
 //   compute actually matters. Times only the training loop (CUDA init excluded)
 //   and reports samples/sec, so pool=1 vs 2 vs 3 can be compared fairly.
 //
-//   Data is GPU-resident (synthetic in-memory dataset) -- "preparing a batch" is
-//   just an index gather, the cheap case. Set OPENNN_BATCH_POOL to vary depth.
+//   Train data is GPU-resident (synthetic in-memory dataset) -- "preparing a batch"
+//   is just an index gather, the cheap case. Residency is enabled in this code (no
+//   environment switch). Vary the prefetch-pool depth with the [batch_pool] argument.
 //
-//   usage: opennn_rosenbrock_throughput [mode] [samples] [batch] [iters] [inputs] [hidden]
+//   The CUDA mega-graph is on by default and can be toggled with the optional
+//   [cuda_graph 0|1] argument, so a run can compare graph on/off without env vars.
+//
+//   usage: opennn_rosenbrock_throughput [mode] [samples] [batch] [iters] [inputs] [hidden] [cuda_graph 0|1] [batch_pool]
 //          mode = train | inference
 
 #include <chrono>
@@ -39,6 +43,8 @@ int main(int argc, char* argv[])
     const Index iters   = argc > 4 ? Index(std::stoll(argv[4])) : 10;
     const Index inputs  = argc > 5 ? Index(std::stoll(argv[5])) : 1000;
     const Index hidden  = argc > 6 ? Index(std::stoll(argv[6])) : 1000;
+    const bool cuda_graph = argc > 7 ? (std::stoi(argv[7]) != 0) : true;
+    const int  batch_pool = argc > 8 ? std::stoi(argv[8]) : 0;   // 0 = library default
 
     try
     {
@@ -70,6 +76,9 @@ int main(int argc, char* argv[])
         TabularDataset dataset(samples, Shape{inputs}, Shape{1});
         dataset.set_data_random();
         dataset.set_sample_roles("Training");
+        // Keep the synthetic set GPU-resident so a batch is just a device-side
+        // gather (the regime this throughput benchmark measures). Enabled in code.
+        dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
 
         TrainingStrategy training_strategy(&network, &dataset);
         training_strategy.set_loss("MeanSquaredError");
@@ -81,6 +90,8 @@ int main(int argc, char* argv[])
         adam->set_batch_size(batch);
         adam->set_display(false);
         adam->set_gradient_clip_norm(0.0f);
+        adam->set_cuda_graph(cuda_graph);
+        adam->set_batch_pool_size(batch_pool);   // 0 = library default depth
 
         // Warmup epoch (autotune, allocations) excluded from timing.
         adam->set_maximum_epochs(1);
@@ -95,6 +106,7 @@ int main(int argc, char* argv[])
         const double per_epoch = s / double(iters);
         std::cout << "mode=train samples=" << samples << " batch=" << batch
                   << " precision=" << (use_bf16 ? "bf16" : "fp32")
+                  << " cuda_graph=" << cuda_graph
                   << " steps_per_epoch=" << (samples / batch) << "\n";
         std::cout << "epoch_s=" << per_epoch << "\n";
         std::cout << "samples_per_sec=" << long(double(samples) / per_epoch) << "\n";

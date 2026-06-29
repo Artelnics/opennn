@@ -43,10 +43,10 @@ def engine_cmd(engine, epochs, batch, bf16):
     args = [str(epochs), str(batch)]
     env = {}
     if engine == "opennn":
-        # OpenNN takes precision as a positional arg; data stays GPU-resident.
+        # OpenNN takes precision as a positional arg; GPU-resident data is enabled
+        # in the benchmark code (opennn_cnn_speed.cpp), not via an env var.
         cmd = [OPENNN_BIN, MNIST_DIR, str(epochs), str(batch),
                "bf16" if bf16 else "fp32"]
-        env["OPENNN_GPU_RESIDENT_DATA"] = "1"
     elif engine == "pytorch":
         cmd = [PY, os.path.join(HERE, "pytorch_cnn_speed.py")] + args
         env["PT_FAST"] = "1"

@@ -37,8 +37,8 @@ __global__ void adam_update_kernel(
     const float lr  = effective_lr  ? *effective_lr  : lr_scalar;
     const float eps = effective_eps ? *effective_eps : eps_scalar;
 
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
 
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
     float4* __restrict__ const       m4 = reinterpret_cast<float4*>(m);
@@ -46,7 +46,7 @@ __global__ void adam_update_kernel(
     const float4* __restrict__ const g4 = reinterpret_cast<const float4*>(gradients);
     __nv_bfloat162* __restrict__ const bf2 = reinterpret_cast<__nv_bfloat162*>(parameters_bf16_mirror);
 
-    for (int i = tid; i < n_vec; i += stride)
+    for (Index i = tid; i < n_vec; i += stride)
     {
         float4 P = p4[i];
         float4 M = m4[i];
@@ -70,7 +70,7 @@ __global__ void adam_update_kernel(
     }
 
     const int tail_start = n_vec * 4;
-    for (int i = tail_start + tid; i < n; i += stride)
+    for (Index i = tail_start + tid; i < n; i += stride)
     {
         adam_update_one(parameters[i], m[i], v[i], gradients[i],
                         beta_1, one_minus_beta_1, beta_2, one_minus_beta_2,
@@ -215,8 +215,8 @@ __global__ void sgd_update_kernel(
 {
     const float lr = learning_rate_device ? *learning_rate_device : learning_rate_scalar;
 
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
     const bool has_momentum = momentum > 0.0f;
 
     float4* __restrict__ const       p4 = reinterpret_cast<float4*>(parameters);
@@ -226,7 +226,7 @@ __global__ void sgd_update_kernel(
 
     if (has_momentum)
     {
-        for (int i = tid; i < n_vec; i += stride)
+        for (Index i = tid; i < n_vec; i += stride)
         {
             float4 P = p4[i];
             float4 V = v4[i];
@@ -248,7 +248,7 @@ __global__ void sgd_update_kernel(
         }
 
         const int tail_start = n_vec * 4;
-        for (int i = tail_start + tid; i < n; i += stride)
+        for (Index i = tail_start + tid; i < n; i += stride)
         {
             sgd_update_one(parameters[i], velocity[i], gradients[i],
                            lr, momentum, nesterov);
@@ -258,7 +258,7 @@ __global__ void sgd_update_kernel(
     }
     else
     {
-        for (int i = tid; i < n_vec; i += stride)
+        for (Index i = tid; i < n_vec; i += stride)
         {
             float4 P = p4[i];
             const float4 G = g4[i];
@@ -278,7 +278,7 @@ __global__ void sgd_update_kernel(
         }
 
         const int tail_start = n_vec * 4;
-        for (int i = tail_start + tid; i < n; i += stride)
+        for (Index i = tail_start + tid; i < n; i += stride)
         {
             parameters[i] -= lr * gradients[i];
             if (parameters_bf16_mirror)
@@ -376,9 +376,9 @@ __global__ void clip_apply_kernel(const int n,
     if (norm <= max_norm) return;
     const float scale = max_norm / (norm + eps);
 
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
-    for (int i = tid; i < n; i += stride)
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
+    for (Index i = tid; i < n; i += stride)
         gradient[i] *= scale;
 }
 
@@ -400,13 +400,13 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
                                          const float* __restrict__ src,
                                          __nv_bfloat16* __restrict__ dst)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
 
     const float4* __restrict__ const src4 = reinterpret_cast<const float4*>(src);
     __nv_bfloat162* __restrict__ const dst2 = reinterpret_cast<__nv_bfloat162*>(dst);
 
-    for (int i = tid; i < n_vec; i += stride)
+    for (Index i = tid; i < n_vec; i += stride)
     {
         const float4 in = src4[i];
         dst2[i * 2 + 0] = __floats2bfloat162_rn(in.x, in.y);
@@ -414,7 +414,7 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
     }
 
     const int tail_start = n_vec * 4;
-    for (int i = tail_start + tid; i < n; i += stride)
+    for (Index i = tail_start + tid; i < n; i += stride)
         dst[i] = __float2bfloat16(src[i]);
 }
 
@@ -494,9 +494,9 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
                                          const __nv_bfloat16* __restrict__ src,
                                          float* __restrict__ dst)
 {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    const int stride = blockDim.x * gridDim.x;
-    for (int i = tid; i < n; i += stride)
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
+    for (Index i = tid; i < n; i += stride)
         dst[i] = __bfloat162float(src[i]);
 }
 

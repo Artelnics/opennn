@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   S O U R C E
@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifdef HAVE_CUDNN_FRONTEND
+#ifdef OPENNN_HAS_CUDA
 #include <cudnn_frontend.h>
 #endif
 
@@ -29,7 +29,7 @@ namespace opennn
 namespace
 {
 
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
 constexpr bool cudnn_frontend_available = true;
 #else
 constexpr bool cudnn_frontend_available = false;
@@ -38,7 +38,7 @@ constexpr bool cudnn_frontend_available = false;
 }
 
 
-void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
+void AttentionOperator::set(Index new_heads_number, Index new_head_dimension,
                     Index new_query_sequence_length, Index new_source_sequence_length,
                     bool new_use_causal_mask, Type new_compute_dtype)
 {
@@ -60,16 +60,16 @@ void AttentionOp::set(Index new_heads_number, Index new_head_dimension,
     }
 }
 
-float AttentionOp::scaling_factor() const
+float AttentionOperator::scaling_factor() const
 {
     return (head_dimension == 0) ? 0.25f : 1.0f / float(sqrt(head_dimension));
 }
 
-bool AttentionOp::get_contiguous_source_lengths(const TensorView& source_input,
+bool AttentionOperator::get_contiguous_source_lengths(const TensorView& source_input,
                                                 vector<Index>& lengths,
                                                 bool& has_padding)
 {
-    if (source_input.shape.rank != 3 || source_input.type != Type::FP32)
+    if (source_input.shape.rank != 3 || !source_input.is_fp32())
         return false;
 
     const Index batch_size          = source_input.shape[0];
@@ -108,7 +108,7 @@ bool AttentionOp::get_contiguous_source_lengths(const TensorView& source_input,
     return true;
 }
 
-void AttentionOp::softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length)
+void AttentionOperator::softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length)
 {
     for (Index row = 0; row < rows; ++row)
     {
@@ -118,7 +118,7 @@ void AttentionOp::softmax_rows_prefix(float* matrix, Index rows, Index cols, Ind
     }
 }
 
-Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_weights,
+Index AttentionOperator::infer_attention_prefix_length(const TensorView& attention_weights,
                                                  Index batch_index)
 {
     const auto& shape = attention_weights.shape;
@@ -132,7 +132,7 @@ Index AttentionOp::infer_attention_prefix_length(const TensorView& attention_wei
     return length;
 }
 
-vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
+vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
     if (use_sdpa && !dropout.active())
         return vector<TensorSpec>(2, {Shape{}, compute_dtype});
@@ -147,7 +147,7 @@ vector<TensorSpec> AttentionOp::forward_scratch_specs(Index batch_size) const
     };
 }
 
-TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
+TensorSpec AttentionOperator::backward_scratch_spec(Index batch_size) const
 {
     if (use_sdpa)
         return {Shape{}, compute_dtype};
@@ -156,13 +156,13 @@ TensorSpec AttentionOp::backward_scratch_spec(Index batch_size) const
             compute_dtype};
 }
 
-bool AttentionOp::sdpa_supported(Type dtype, Device device)
+bool AttentionOperator::sdpa_supported(Type dtype, Device device)
 {
     return cudnn_frontend_available && device == Device::CUDA
         && (dtype == Type::BF16 || dtype == Type::FP32);
 }
 
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
 
 namespace
 {
@@ -182,7 +182,9 @@ cudnn_frontend::DataType_t to_cudnn_frontend_dtype(Type t)
 
 #endif
 
-struct AttentionOp::SDPACache
+#ifdef OPENNN_HAS_CUDA
+
+struct AttentionOperator::SDPACache
 {
     struct CacheKey
     {
@@ -208,8 +210,6 @@ struct AttentionOp::SDPACache
                                 Index(k.dropout_active), Index(k.causal), Index(k.is_training));
         }
     };
-
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
     struct Entry
     {
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
@@ -301,10 +301,7 @@ struct AttentionOp::SDPACache
             device::deallocate(Device::CUDA, e.seq_len_kv_buf, 0);
         }
     }
-#endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
 };
-
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
 
 namespace
 {
@@ -355,8 +352,8 @@ void finalize_sdpa_graph(cudnn_frontend::graph::Graph& graph, cudnnHandle_t hand
     sdpa_check(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 }
 
-void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
-                                   const AttentionOp::SDPACache::CacheKey& k,
+void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
+                                   const AttentionOperator::SDPACache::CacheKey& k,
                                    const TensorView& source_input)
 {
     const bool ok = source_input.shape.rank == 3 && source_input.shape[0] == k.batch_size && source_input.shape[1] == k.src_seq
@@ -388,8 +385,8 @@ void refresh_sdpa_sequence_lengths(AttentionOp::SDPACache::Entry& entry,
 
 }  // namespace
 
-static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
-                                      const AttentionOp::SDPACache::CacheKey& k,
+static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
+                                      const AttentionOperator::SDPACache::CacheKey& k,
                                       cudnnHandle_t handle,
                                       float dropout_rate)
 {
@@ -464,8 +461,8 @@ static void build_sdpa_forward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.fwd_graph = graph;
 }
 
-static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
-                                       const AttentionOp::SDPACache::CacheKey& k,
+static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry,
+                                       const AttentionOperator::SDPACache::CacheKey& k,
                                        cudnnHandle_t handle,
                                        float dropout_rate)
 {
@@ -534,65 +531,74 @@ static void build_sdpa_backward_graph(AttentionOp::SDPACache::Entry& entry,
     entry.bwd_graph = graph;
 }
 
-#endif  // OPENNN_HAS_CUDA && HAVE_CUDNN_FRONTEND
+#endif  // OPENNN_HAS_CUDA
 
-AttentionOp::AttentionOp() = default;
-AttentionOp::~AttentionOp() = default;
-AttentionOp::AttentionOp(AttentionOp&&) noexcept = default;
-AttentionOp& AttentionOp::operator=(AttentionOp&&) noexcept = default;
+AttentionOperator::AttentionOperator() = default;
+AttentionOperator::~AttentionOperator() = default;
+AttentionOperator::AttentionOperator(AttentionOperator&&) noexcept = default;
+AttentionOperator& AttentionOperator::operator=(AttentionOperator&&) noexcept = default;
 
-void AttentionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    auto& forward_slots = fp.forward_slots[layer];
+    auto& forward_slots = forward_propagation.forward_slots[layer];
 
-    const auto& src_views = get_inputs(fp, layer, 3);
+    const auto& src_views = get_inputs(forward_propagation, layer, 3);
     const TensorView& source_input = src_views[min(source_view_index, src_views.size() - 1)];
 
-    const TensorView& query = get_input(fp, layer);
+    const TensorView& query = get_input(forward_propagation, layer);
 
     TensorView attention_out = forward_slots[scratch_slots[0]].reshape(
-        {fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
+        {forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-    if (query.is_cuda())
+#ifdef OPENNN_HAS_CUDA
+    if (use_sdpa && query.is_cuda())
     {
-        apply_gpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
-                  get_output(fp, layer), get_output(fp, layer, 1),
-                  attention_out, forward_slots[scratch_slots[0]].as<float>(), is_training);
+        apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
+                           attention_out, is_training);
         return;
     }
-    apply_cpu(query, get_input(fp, layer, 1), get_input(fp, layer, 2), source_input,
-              get_output(fp, layer), get_output(fp, layer, 1),
-              attention_out, forward_slots[scratch_slots[0]].as<float>(), is_training);
+#endif
+    apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
+                  get_output(forward_propagation, layer), get_output(forward_propagation, layer, 1),
+                  attention_out, forward_slots[scratch_slots[0]].as<float>(), is_training);
 }
 
-void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& forward_slots = fp.forward_slots[layer];
+    auto& forward_slots = forward_propagation.forward_slots[layer];
 
-    const TensorView& query             = get_input(fp, layer);
-    const TensorView& key               = get_input(fp, layer, 1);
-    const TensorView& value             = get_input(fp, layer, 2);
+    const TensorView& query             = get_input(forward_propagation, layer);
+    const TensorView& key               = get_input(forward_propagation, layer, 1);
+    const TensorView& value             = get_input(forward_propagation, layer, 2);
     const TensorView& attention_output  = forward_slots[attention_output_slots[0]];
-    const TensorView& attention_weights = get_output(fp, layer);
-    const TensorView& attention_weights_dropped = get_output(fp, layer, 1);
+    const TensorView& attention_weights = get_output(forward_propagation, layer);
+    const TensorView& attention_weights_dropped = get_output(forward_propagation, layer, 1);
 
     const TensorView output_delta = forward_slots[scratch_slots[0]]
-        .reshape({fp.batch_size, query.shape[1], query.shape[2], query.shape[3]});
+        .reshape({forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
-    TensorView& attention_weight_delta = get_output_delta(bp, layer);
-    TensorView& query_delta            = get_output_delta(bp, layer, 1);
-    TensorView& key_delta              = get_output_delta(bp, layer, 2);
-    TensorView& value_delta            = get_output_delta(bp, layer, 3);
+    TensorView& attention_weight_delta = get_output_delta(back_propagation, layer);
+    TensorView& query_delta            = get_output_delta(back_propagation, layer, 1);
+    TensorView& key_delta              = get_output_delta(back_propagation, layer, 2);
+    TensorView& value_delta            = get_output_delta(back_propagation, layer, 3);
 
+#ifdef OPENNN_HAS_CUDA
     if (output_delta.is_cuda())
     {
-        apply_delta_gpu(query, key, value, attention_output,
-                        attention_weights, attention_weights_dropped,
-                        output_delta,
-                        attention_weight_delta,
-                        query_delta, key_delta, value_delta);
+        if (use_sdpa)
+        {
+            apply_sdpa_backward(query, key, value, attention_output,
+                                output_delta,
+                                query_delta, key_delta, value_delta);
+            return;
+        }
+        apply_delta_gpu_unfused(query, key, value,
+                                attention_weights, attention_weights_dropped,
+                                output_delta, attention_weight_delta,
+                                query_delta, key_delta, value_delta);
         return;
     }
+#endif
     apply_delta_cpu(query, key, value, attention_output,
                     attention_weights, attention_weights_dropped,
                     output_delta,
@@ -600,25 +606,24 @@ void AttentionOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, si
                     query_delta, key_delta, value_delta);
 }
 
-void AttentionOp::apply_cpu(const TensorView& query,
-                          const TensorView& key,
-                          const TensorView& value,
-                          const TensorView& source_input,
-                          TensorView& attention_weights,
-                          TensorView& attention_weights_dropped,
-                          TensorView& output,
-                          [[maybe_unused]] void* scratch,
-                          bool is_training)
+void AttentionOperator::apply_unfused(const TensorView& query,
+                              const TensorView& key,
+                              const TensorView& value,
+                              const TensorView& source_input,
+                              TensorView& attention_weights,
+                              TensorView& attention_weights_dropped,
+                              TensorView& output,
+                              [[maybe_unused]] void* scratch,
+                              bool is_training)
 {
-    if (query.device != Device::CUDA
+    if (!query.is_cuda()
         && !use_causal_mask
         && !dropout.active()
-        && compute_dtype == Type::FP32
-        && query.type == Type::FP32
-        && key.type == Type::FP32
-        && value.type == Type::FP32
-        && attention_weights.type == Type::FP32
-        && output.type == Type::FP32
+        && query.is_fp32()
+        && key.is_fp32()
+        && value.is_fp32()
+        && attention_weights.is_fp32()
+        && output.is_fp32()
         && source_input.shape.rank == 3
         && attention_weights.shape.rank == 4)
     {
@@ -659,92 +664,79 @@ void AttentionOp::apply_cpu(const TensorView& query,
 
     multiply(query, false, key, true, attention_weights, scaling_factor(), 0.0f);
 
-    {
-        const Index batch_size = source_input.shape[0];
-        const Index source_sequence_length = source_input.shape[1];
-        const Index embedding_dimension = source_input.shape[2];
-        const Index query_sequence_length = attention_weights.shape[2];
+    const Index batch_size = source_input.shape[0];
+    const Index source_sequence_length = source_input.shape[1];
+    const Index embedding_dimension = source_input.shape[2];
+    const Index query_sequence_length = attention_weights.shape[2];
 
 #ifdef OPENNN_HAS_CUDA
-        if (attention_weights.is_cuda())
-            attention_weights.dispatch([&](auto tag) {
-                using T = decltype(tag);
-                attention_masks_cuda<T>(to_int(batch_size),
-                                        to_int(heads_number),
-                                        to_int(query_sequence_length),
-                                        to_int(source_sequence_length),
-                                        to_int(embedding_dimension),
-                                        source_input.as<T>(),
-                                        attention_weights.as<T>(),
-                                        reinterpret_cast<T*>(scratch),
-                                        use_causal_mask);
-            });
-        else
+    if (attention_weights.is_cuda())
+        attention_weights.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            attention_masks_cuda<T>(to_int(batch_size),
+                                    to_int(heads_number),
+                                    to_int(query_sequence_length),
+                                    to_int(source_sequence_length),
+                                    to_int(embedding_dimension),
+                                    source_input.as<T>(),
+                                    attention_weights.as<T>(),
+                                    reinterpret_cast<T*>(scratch),
+                                    use_causal_mask);
+        });
+    else
 #endif
+    {
+        const Index att_rows_per_batch = heads_number * query_sequence_length;
+
+        #pragma omp parallel for
+        for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         {
-            const Index att_rows_per_batch = heads_number * query_sequence_length;
+            const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+            float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
 
-            #pragma omp parallel for
-            for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            for (Index source_index = 0; source_index < source_sequence_length; ++source_index)
             {
-                const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
-                float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
+                const float* source_row = source_batch + source_index * embedding_dimension;
+                const float max_abs = Map<const Array<float, Dynamic, 1>>(source_row, embedding_dimension).abs().maxCoeff();
+                if (max_abs > EPSILON) continue;
 
-                for (Index source_index = 0; source_index < source_sequence_length; ++source_index)
-                {
-                    const float* source_row = source_batch + source_index * embedding_dimension;
-                    const float max_abs = Map<const Array<float, Dynamic, 1>>(source_row, embedding_dimension).abs().maxCoeff();
-                    if (max_abs > EPSILON) continue;
-
-                    for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
-                        attention_batch[row_index * source_sequence_length + source_index] = SOFTMAX_MASK_VALUE;
-                }
+                for (Index row_index = 0; row_index < att_rows_per_batch; ++row_index)
+                    attention_batch[row_index * source_sequence_length + source_index] = SOFTMAX_MASK_VALUE;
             }
+        }
 
-            if (use_causal_mask)
-            {
-                const Index batch_heads = batch_size * heads_number;
-                MatrixMap attention_flat = attention_weights.as_flat_matrix();
-                attention_flat += causal_mask.replicate(batch_heads, 1);
-            }
+        if (use_causal_mask)
+        {
+            const Index batch_heads = batch_size * heads_number;
+            MatrixMap attention_flat = attention_weights.as_flat_matrix();
+            attention_flat += causal_mask.replicate(batch_heads, 1);
         }
     }
 
     softmax(attention_weights);
 
-    const bool apply_dropout = is_training && dropout.active();
-    TensorView& used = apply_dropout ? attention_weights_dropped : attention_weights;
-
-    if (apply_dropout)
+    if (is_training && dropout.active())
     {
-        copy(attention_weights, used);
-        dropout_forward(used, dropout.mask, dropout.rate);
+        copy(attention_weights, attention_weights_dropped);
+        dropout_forward(attention_weights_dropped, dropout.mask, dropout.rate);
+        multiply(attention_weights_dropped, false, value, false, output);
     }
-
-    multiply(used, false, value, false, output);
+    else
+    {
+        multiply(attention_weights, false, value, false, output);
+    }
 }
 
-void AttentionOp::apply_gpu(const TensorView& query,
-                          const TensorView& key,
-                          const TensorView& value,
-                          const TensorView& source_input,
-                          TensorView& attention_weights,
-                          TensorView& attention_weights_dropped,
-                          TensorView& output,
-                          void* scratch,
-                          bool is_training)
+void AttentionOperator::apply_sdpa_forward(const TensorView& query,
+                               const TensorView& key,
+                               const TensorView& value,
+                               const TensorView& source_input,
+                               TensorView& output,
+                               bool is_training)
 {
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    if (!use_sdpa)
-    {
-        apply_cpu(query, key, value, source_input,
-                  attention_weights, attention_weights_dropped,
-                  output, scratch, is_training);
-        return;
-    }
-
+#ifdef OPENNN_HAS_CUDA
     throw_if(!sdpa_supported(query.type, query.device),
-             "AttentionOp: SDPA backend selected by the layer "
+             "AttentionOperator: SDPA backend selected by the layer "
              "but not supported (build without HAVE_CUDNN_FRONTEND, "
              "unsupported dtype, or CPU runtime).");
 
@@ -752,15 +744,14 @@ void AttentionOp::apply_gpu(const TensorView& query,
 
     const bool dropout_in_graph = dropout.active() && is_training;
 
-    const bool fp32_via_bf16 = (query.type == Type::FP32);
-    const Type graph_dtype = fp32_via_bf16 ? Type::BF16 : query.type;
+    const bool fp32_via_bf16 = query.is_fp32();
     SDPACache::CacheKey ck{
         query.shape[0],
         query.shape[2],
         key.shape[2],
         heads_number,
         head_dimension,
-        graph_dtype,
+        Type::BF16,
         dropout_in_graph,
         use_causal_mask,
         is_training
@@ -797,23 +788,32 @@ void AttentionOp::apply_gpu(const TensorView& query,
         const Index kv_elems = key.size();
         const Index o_elems  = output.size();
         if (q_elems > entry.q_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.q_bf16_buf, 0);
-          entry.q_bf16_buf = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
-          entry.q_bf16_elems = q_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.q_bf16_buf, 0);
+            entry.q_bf16_buf   = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
+            entry.q_bf16_elems = q_elems;
+        }
         if (kv_elems > entry.kv_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.k_bf16_buf, 0);
-          device::deallocate(Device::CUDA, entry.v_bf16_buf, 0);
-          entry.k_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
-          entry.v_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
-          entry.kv_bf16_elems = kv_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.k_bf16_buf, 0);
+            device::deallocate(Device::CUDA, entry.v_bf16_buf, 0);
+            entry.k_bf16_buf    = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+            entry.v_bf16_buf    = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+            entry.kv_bf16_elems = kv_elems;
+        }
         if (o_elems > entry.o_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.o_bf16_buf, 0);
-          entry.o_bf16_buf = device::allocate(Device::CUDA, o_elems * Index(sizeof(bfloat16)));
-          entry.o_bf16_elems = o_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.o_bf16_buf, 0);
+            entry.o_bf16_buf   = device::allocate(Device::CUDA, o_elems * Index(sizeof(bfloat16)));
+            entry.o_bf16_elems = o_elems;
+        }
         cast_fp32_to_bf16_cuda(q_elems,  query.as<float>(), static_cast<bfloat16*>(entry.q_bf16_buf), cstream);
         cast_fp32_to_bf16_cuda(kv_elems, key.as<float>(),   static_cast<bfloat16*>(entry.k_bf16_buf), cstream);
         cast_fp32_to_bf16_cuda(kv_elems, value.as<float>(), static_cast<bfloat16*>(entry.v_bf16_buf), cstream);
-        q_ptr = entry.q_bf16_buf; k_ptr = entry.k_bf16_buf; v_ptr = entry.v_bf16_buf; o_ptr = entry.o_bf16_buf;
+        q_ptr = entry.q_bf16_buf;
+        k_ptr = entry.k_bf16_buf;
+        v_ptr = entry.v_bf16_buf;
+        o_ptr = entry.o_bf16_buf;
     }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
     tp[entry.fwd_Q] = q_ptr;
@@ -835,15 +835,11 @@ void AttentionOp::apply_gpu(const TensorView& query,
     if (fp32_via_bf16)
         cast_bf16_to_fp32_cuda(output.size(), static_cast<const bfloat16*>(entry.o_bf16_buf),
                                output.as<float>());
-#else
-    apply_cpu(query, key, value, source_input,
-              attention_weights, attention_weights_dropped,
-              output, scratch, is_training);
 #endif
 }
 
 template<typename SoftmaxBwd>
-void AttentionOp::apply_delta_unfused(const TensorView& query,
+void AttentionOperator::apply_delta_unfused(const TensorView& query,
                                      const TensorView& key,
                                      const TensorView& value,
                                      const TensorView& attention_weights,
@@ -873,7 +869,7 @@ void AttentionOp::apply_delta_unfused(const TensorView& query,
     multiply(attention_weight_delta, true,  query, false, key_delta,   scale, 0.0f);
 }
 
-void AttentionOp::apply_delta_cpu(const TensorView& query,
+void AttentionOperator::apply_delta_cpu(const TensorView& query,
                                 const TensorView& key,
                                 const TensorView& value,
                                 const TensorView& /*attention_output*/,
@@ -885,19 +881,10 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-    if (query.device != Device::CUDA
+    if (!query.is_cuda()
         && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
-        && query.type == Type::FP32
-        && key.type == Type::FP32
-        && value.type == Type::FP32
-        && attention_weights.type == Type::FP32
-        && output_delta.type == Type::FP32
-        && attention_weight_delta.type == Type::FP32
-        && query_delta.type == Type::FP32
-        && key_delta.type == Type::FP32
-        && value_delta.type == Type::FP32
         && attention_weights.shape.rank == 4
         && attention_weight_delta.shape.rank == 4)
     {
@@ -987,7 +974,7 @@ void AttentionOp::apply_delta_cpu(const TensorView& query,
 
 #ifdef OPENNN_HAS_CUDA
 
-void AttentionOp::apply_delta_gpu_unfused(const TensorView& query,
+void AttentionOperator::apply_delta_gpu_unfused(const TensorView& query,
                                         const TensorView& key,
                                         const TensorView& value,
                                         const TensorView& attention_weights,
@@ -1016,43 +1003,30 @@ void AttentionOp::apply_delta_gpu_unfused(const TensorView& query,
 
 #endif
 
-void AttentionOp::apply_delta_gpu(const TensorView& query,
+void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                 const TensorView& key,
                                 const TensorView& value,
                                 const TensorView& attention_output,
-                                const TensorView& attention_weights,
-                                const TensorView& attention_weights_dropped,
                                 const TensorView& output_delta,
-                                TensorView& attention_weight_delta,
                                 TensorView& query_delta,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
-    if (!use_sdpa)
-    {
-        apply_delta_gpu_unfused(query, key, value,
-                                attention_weights, attention_weights_dropped,
-                                output_delta, attention_weight_delta,
-                                query_delta, key_delta, value_delta);
-        return;
-    }
-
+#ifdef OPENNN_HAS_CUDA
     throw_if(!sdpa_supported(query.type, query.device) || !sdpa_cache,
-             "AttentionOp: SDPA backward called without a live SDPA "
+             "AttentionOperator: SDPA backward called without a live SDPA "
              "forward graph (use_sdpa set inconsistently between fwd/bwd).");
 
     const bool dropout_in_graph = dropout.active();
 
-    const bool fp32_via_bf16 = (query.type == Type::FP32);
-    const Type graph_dtype = fp32_via_bf16 ? Type::BF16 : query.type;
+    const bool fp32_via_bf16 = query.is_fp32();
     SDPACache::CacheKey ck{
         query.shape[0],
         query.shape[2],
         key.shape[2],
         heads_number,
         head_dimension,
-        graph_dtype,
+        Type::BF16,
         dropout_in_graph,
         use_causal_mask,
         true
@@ -1060,7 +1034,7 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
 
     SDPACache::Entry* entry_ptr = sdpa_cache->find_entry(ck);
     throw_if(!entry_ptr || !entry_ptr->fwd_graph,
-             "AttentionOp::apply_delta_gpu: SDPA forward did not populate "
+             "AttentionOperator::apply_delta_gpu: SDPA forward did not populate "
              "a cache entry for this shape. Cache key drifted between "
              "forward and backward (likely batch size changing across "
              "iterations under use_sdpa).");
@@ -1081,11 +1055,11 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
                            Backend::get_compute_stream());
     }
 
-    void* bq = const_cast<float*>(query.as<float>());
-    void* bk = const_cast<float*>(key.as<float>());
-    void* bv = const_cast<float*>(value.as<float>());
-    void* bo = const_cast<float*>(attention_output.as<float>());
-    void* bdo = const_cast<float*>(output_delta.as<float>());
+    void* bq  = query.data;
+    void* bk  = key.data;
+    void* bv  = value.data;
+    void* bo  = attention_output.data;
+    void* bdo = output_delta.data;
     void* bdq = query_delta.data;
     void* bdk = key_delta.data;
     void* bdv = value_delta.data;
@@ -1096,25 +1070,35 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
         const Index kv_elems = key.size();
         const Index do_elems = output_delta.size();
         // reuse the forward's cast Q/K/V/O (same iteration's forward populated them)
-        bq = entry.q_bf16_buf; bk = entry.k_bf16_buf;
-        bv = entry.v_bf16_buf; bo = entry.o_bf16_buf;
+        bq  = entry.q_bf16_buf;
+        bk  = entry.k_bf16_buf;
+        bv  = entry.v_bf16_buf;
+        bo  = entry.o_bf16_buf;
         if (do_elems > entry.do_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.do_bf16_buf, 0);
-          entry.do_bf16_buf = device::allocate(Device::CUDA, do_elems * Index(sizeof(bfloat16)));
-          entry.do_bf16_elems = do_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.do_bf16_buf, 0);
+            entry.do_bf16_buf   = device::allocate(Device::CUDA, do_elems * Index(sizeof(bfloat16)));
+            entry.do_bf16_elems = do_elems;
+        }
         if (q_elems > entry.dq_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.dq_bf16_buf, 0);
-          entry.dq_bf16_buf = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
-          entry.dq_bf16_elems = q_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.dq_bf16_buf, 0);
+            entry.dq_bf16_buf   = device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16)));
+            entry.dq_bf16_elems = q_elems;
+        }
         if (kv_elems > entry.dkv_bf16_elems)
-        { device::deallocate(Device::CUDA, entry.dk_bf16_buf, 0);
-          device::deallocate(Device::CUDA, entry.dv_bf16_buf, 0);
-          entry.dk_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
-          entry.dv_bf16_buf = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
-          entry.dkv_bf16_elems = kv_elems; }
+        {
+            device::deallocate(Device::CUDA, entry.dk_bf16_buf, 0);
+            device::deallocate(Device::CUDA, entry.dv_bf16_buf, 0);
+            entry.dk_bf16_buf    = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+            entry.dv_bf16_buf    = device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16)));
+            entry.dkv_bf16_elems = kv_elems;
+        }
         cast_fp32_to_bf16_cuda(do_elems, output_delta.as<float>(), static_cast<bfloat16*>(entry.do_bf16_buf), cstream);
         bdo = entry.do_bf16_buf;
-        bdq = entry.dq_bf16_buf; bdk = entry.dk_bf16_buf; bdv = entry.dv_bf16_buf;
+        bdq = entry.dq_bf16_buf;
+        bdk = entry.dk_bf16_buf;
+        bdv = entry.dv_bf16_buf;
     }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tp;
     tp[entry.bwd_Q]     = bq;
@@ -1143,16 +1127,6 @@ void AttentionOp::apply_delta_gpu(const TensorView& query,
         cast_bf16_to_fp32_cuda(key.size(),   static_cast<const bfloat16*>(entry.dk_bf16_buf), key_delta.as<float>());
         cast_bf16_to_fp32_cuda(value.size(), static_cast<const bfloat16*>(entry.dv_bf16_buf), value_delta.as<float>());
     }
-#elif defined(OPENNN_HAS_CUDA)
-    apply_delta_gpu_unfused(query, key, value,
-                            attention_weights, attention_weights_dropped,
-                            output_delta, attention_weight_delta,
-                            query_delta, key_delta, value_delta);
-#else
-    apply_delta_cpu(query, key, value, attention_output,
-                    attention_weights, attention_weights_dropped,
-                    output_delta, attention_weight_delta,
-                    query_delta, key_delta, value_delta);
 #endif
 }
 

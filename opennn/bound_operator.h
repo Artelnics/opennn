@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B O U N D   O P E R A T O R   H E A D E R
@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-struct BoundOp : Operator
+struct BoundOperator : Operator
 {
     enum class Method { NoBounding, Bounding };
 
@@ -22,11 +22,11 @@ struct BoundOp : Operator
     TensorView lower;
     TensorView upper;
 
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A C K   P R O P A G A T I O N   H E A D E R
@@ -24,7 +24,7 @@ struct BackPropagation
 
     void set(const Index = 0, Loss* = nullptr);
 
-    void accumulate_output_deltas(size_t layer_index);
+    void accumulate_output_deltas(size_t);
 
     const NeuralNetwork* neural_network = nullptr;
 
@@ -54,11 +54,11 @@ struct BackPropagation
 
 private:
 
-    void setup_delta_pool(const vector<vector<TensorSpec>>& backward_specs);
+    void setup_delta_pool(const vector<vector<TensorSpec>>&);
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

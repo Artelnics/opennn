@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S
@@ -167,7 +167,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 bool MultiHeadAttention::should_use_sdpa() const
 {
     if (!sdpa_auto) return false;
-    if (!AttentionOp::sdpa_supported(compute_dtype, compute_device)) return false;
+    if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter > sdpa_min_sequence_length;

@@ -291,7 +291,7 @@ int main(int argc, char** argv)
         //    The model below is smaller than the paper so the subset trains in
         //    reasonable time; paper base is d_model=512, h=8, d_ff=2048, N=6.
         // --------------------------------------------------------------------
-#if 0
+#if 1
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -299,9 +299,9 @@ int main(int argc, char** argv)
         set_seed(42);
 
         const filesystem::path dataset_path =
-            "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.subset.txt";
+            "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.cap60.txt";
 
-        LanguageDataset language_dataset(dataset_path);
+        LanguageDataset language_dataset(dataset_path, 37000);
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
         const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();
@@ -312,11 +312,11 @@ int main(int argc, char** argv)
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Smaller-than-paper transformer (subset-friendly). Paper base: 512/8/2048/6.
-        const Index embedding_dimension    = 256;
+        // Paper-base transformer ("Attention Is All You Need"): 512/8/2048/6.
+        const Index embedding_dimension    = 512;
         const Index heads_number           = 8;
-        const Index feed_forward_dimension  = 1024;
-        const Index layers_number           = 2;
+        const Index feed_forward_dimension  = 2048;
+        const Index layers_number           = 6;
 
         Transformer transformer(input_sequence_length,
                                 decoder_sequence_length,
@@ -329,40 +329,49 @@ int main(int argc, char** argv)
 
         cout << "Transformer params=" << transformer.get_parameters_number() << endl;
 
-        TrainingStrategy training_strategy(&transformer, &language_dataset);
-        training_strategy.set_loss("CrossEntropyError3d");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        const filesystem::path parameters_path =
+            "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de_parameters_paperbase.bin";
 
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-        adam->set_batch_size(16);
-        adam->set_learning_rate(0.0005f);
-        adam->set_maximum_epochs(50);
-        adam->set_display_period(5);
-
-        const auto t0 = steady_clock::now();
-        training_strategy.train();
-        const auto t1 = steady_clock::now();
-        cout << "\nTotal training time: "
-             << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
-
-        // Inference (TransformerDecoder is GPU-only).
-        const vector<string> test_sources = {
-            "i am hungry",
-            "you are happy",
-            "he is tired",
-            "i see the cat"
-        };
-
-        TransformerDecoder decoder(transformer, language_dataset);
-        cout << "\n================ TRANSLATIONS ================\n";
-        for (Index i = 0; i < Index(test_sources.size()); ++i)
+        if (filesystem::exists(parameters_path))
         {
-            cout << "EN: " << test_sources[i] << "\n"
-                 << "DE: " << decoder.decode(test_sources[i]) << "\n" << endl;
+            cout << "Found saved parameters at " << parameters_path
+                 << "\n-> skipping training, loading weights for inference." << endl;
+            transformer.load_parameters_binary(parameters_path);
+        }
+        else
+        {
+            cout << "No saved parameters at " << parameters_path
+                 << "\n-> training from scratch." << endl;
+
+            TrainingStrategy training_strategy(&transformer, &language_dataset);
+            training_strategy.set_loss("CrossEntropyError3d");
+            training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+            if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+            adam->set_batch_size(64);
+            adam->set_learning_rate(0.0005f);
+            adam->set_maximum_epochs(1);
+            adam->set_maximum_time(288000.0f);
+            adam->set_maximum_validation_failures(1000000);
+            adam->set_display_period(1);
+
+            const auto t0 = steady_clock::now();
+            training_strategy.train();
+            const auto t1 = steady_clock::now();
+            cout << "\nTotal training time: "
+                 << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
+
+            transformer.save_parameters_binary(parameters_path);
+            cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        cout << "Bye!" << endl;
+        // Inference (TransformerDecoder is GPU-only): interactive EN->DE chat.
+        // Type an English sentence and press Enter; empty line or Ctrl+D exits.
+        TransformerDecoder decoder(transformer, language_dataset);
+        cout << "\n================ EN -> DE CHAT ================" << endl;
+        decoder.chat();
+
         return 0;
 #endif
 
@@ -381,7 +390,7 @@ int main(int argc, char** argv)
         //    Network correctly uses Sigmoid when the output size is 1.
         //    Args: argv[1] = batch size (default 32), argv[2] = max epochs (50).
         // --------------------------------------------------------------------
-#if 1
+#if 0
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(32);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(50);
 

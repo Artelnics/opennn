@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S T A N D A R D   N E T W O R K S  C L A S S   H E A D E R
@@ -19,9 +19,9 @@ class ApproximationNetwork : public NeuralNetwork
 
 public:
 
-    ApproximationNetwork(const Shape& input_shape,
-                         const Shape& complexity_dimensions,
-                         const Shape& output_shape,
+    ApproximationNetwork(const Shape&,
+                         const Shape&,
+                         const Shape&,
                          const string& hidden_activation = "Tanh");
 };
 
@@ -30,9 +30,9 @@ class ClassificationNetwork : public NeuralNetwork
 
 public:
 
-    ClassificationNetwork(const Shape& input_shape,
-                          const Shape& complexity_dimensions,
-                          const Shape& output_shape);
+    ClassificationNetwork(const Shape&,
+                          const Shape&,
+                          const Shape&);
 };
 
 class ForecastingNetwork : public NeuralNetwork
@@ -40,9 +40,9 @@ class ForecastingNetwork : public NeuralNetwork
 
 public:
 
-    ForecastingNetwork(const Shape& input_shape,
-                       const Shape& complexity_dimensions,
-                       const Shape& output_shape);
+    ForecastingNetwork(const Shape&,
+                       const Shape&,
+                       const Shape&);
 };
 
 class ForecastingLstmNetwork : public NeuralNetwork
@@ -50,9 +50,9 @@ class ForecastingLstmNetwork : public NeuralNetwork
 
 public:
 
-    ForecastingLstmNetwork(const Shape& input_shape,
-                           const Shape& complexity_dimensions,
-                           const Shape& output_shape);
+    ForecastingLstmNetwork(const Shape&,
+                           const Shape&,
+                           const Shape&);
 };
 
 class AutoAssociationNetwork : public NeuralNetwork
@@ -60,9 +60,9 @@ class AutoAssociationNetwork : public NeuralNetwork
 
 public:
 
-    AutoAssociationNetwork(const Shape& input_shape,
-                           const Shape& complexity_dimensions,
-                           const Shape& output_shape);
+    AutoAssociationNetwork(const Shape&,
+                           const Shape&,
+                           const Shape&);
 };
 
 #ifndef OPENNN_NO_VISION
@@ -72,9 +72,9 @@ class ImageClassificationNetwork : public NeuralNetwork
 
 public:
 
-    ImageClassificationNetwork(const Shape& input_shape,
-                               const Shape& complexity_dimensions,
-                               const Shape& output_shape);
+    ImageClassificationNetwork(const Shape&,
+                               const Shape&,
+                               const Shape&);
 };
 
 class ResNet : public NeuralNetwork
@@ -82,10 +82,10 @@ class ResNet : public NeuralNetwork
 
 public:
 
-    ResNet(const Shape& input_shape,
-           const vector<Index>& blocks_per_stage,
-           const Shape& initial_filters,
-           const Shape& output_shape,
+    ResNet(const Shape&,
+           const vector<Index>&,
+           const Shape&,
+           const Shape&,
            bool use_bottleneck = false);
 };
 
@@ -93,7 +93,7 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
-    enum class Backbone { Vgg, DarknetTiny };
+    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53 };
 
     enum class ClassActivation { Softmax, Sigmoid };
 
@@ -101,16 +101,16 @@ public:
 
     // ReLU = the activation used since Phase 1 — preserves saved-weight effect.
     // LeakyReLU = Darknet/YOLO-v3 convention (slope 0.1) — applied uniformly
-    // to every conv in the backbone (Vgg or DarknetTiny stages, residual
+    // to every conv in the backbone (Vgg or DarknetTiny, residual
     // blocks, FPN lateral convs). The Detection layer's class activation and
     // the final logits stay as-is. Switching this changes forward outputs even
     // with identical parameters, so saved Phase 1/2 weights should not be
     // loaded across this flag.
     enum class BodyActivation { ReLU, LeakyReLU };
 
-    YoloNetwork(const Shape& input_shape,
-                Index classes_number,
-                const vector<array<float, 2>>& anchors,
+    YoloNetwork(const Shape&,
+                Index,
+                const vector<array<float, 2>>&,
                 Index grid_size = 13,
                 Backbone backbone = Backbone::Vgg,
                 ClassActivation class_activation = ClassActivation::Softmax,
@@ -123,9 +123,9 @@ class TextClassificationNetwork : public NeuralNetwork
 
 public:
 
-    TextClassificationNetwork(const Shape& input_shape,
-                              const Shape& complexity_dimensions,
-                              const Shape& output_shape,
+    TextClassificationNetwork(const Shape&,
+                              const Shape&,
+                              const Shape&,
                               PoolingMethod pooling_method = PoolingMethod::AveragePooling);
 };
 
@@ -135,14 +135,14 @@ public:
 
     Transformer() = default;
 
-    Transformer(Index input_sequence_length,
-                Index decoder_sequence_length,
-                Index input_vocabulary_size,
-                Index output_vocabulary_size,
-                Index embedding_dimension,
-                Index heads_number,
-                Index feed_forward_dimension,
-                Index layers_number);
+    Transformer(Index,
+                Index,
+                Index,
+                Index,
+                Index,
+                Index,
+                Index,
+                Index);
 
     Index get_input_sequence_length() const;
     Index get_decoder_sequence_length() const;
@@ -159,5 +159,5 @@ public:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

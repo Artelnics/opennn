@@ -45,9 +45,11 @@ $env:OMP_DYNAMIC = "FALSE"
 $env:MKL_NUM_THREADS = "28"
 $env:OMP_NUM_THREADS = "28"
 $env:KMP_BLOCKTIME = "0"
-$env:OPENNN_MKL_FAST_VML = "1"
 $env:OPENNN_MKL_PACKED_GEMM = "1"
 ```
+
+(MKL fast VML is no longer an environment variable — pass `1` as the `[fast_vml]`
+argument to `opennn_inference`, which calls `cpu_math::set_mkl_fast_vml(true)`.)
 
 The Python engines were measured in a temporary Python 3.13 venv with `onnxruntime 1.26.0`,
 `torch 2.10.0+cpu`, and `tensorflow 2.21.0`. Competitors were also checked with their best
@@ -82,7 +84,7 @@ available.
   topology, MKL version, and framework version matter.
 * `OPENNN_MKL_PACKED_GEMM=1` is an inference optimization for fixed weights. Leave it off while
   weights are changing.
-* `OPENNN_MKL_FAST_VML=1` uses MKL's enhanced-performance tanh mode. Accuracy parity is covered
+* The `[fast_vml 1]` argument (set in code via `cpu_math::set_mkl_fast_vml`) uses MKL's enhanced-performance tanh mode. Accuracy parity is covered
   separately in the [accuracy benchmark](accuracy-opennn-vs-pytorch-vs-tensorflow.md).
 * ONNX Runtime remains extremely competitive: in this run the margin between OpenNN and ORT is
   about 0.4%.

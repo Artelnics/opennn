@@ -1,4 +1,4 @@
-#ifndef KERNEL_CUH
+﻿#ifndef KERNEL_CUH
 #define KERNEL_CUH
 
 #include <cstdint>
@@ -249,11 +249,11 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* activation_derivatives,
                                       T* delta);
 
-// YOLO DetectionOp
+// YOLO DetectionOperator
 
 // Apply sigmoid(xy), exp(wh)*anchor, sigmoid(obj), softmax|sigmoid(classes)
 // per box across the (batch, grid, grid, boxes_per_cell) tile.
-// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOp::ClassActivation).
+// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOperator::ClassActivation).
 // anchors layout: flat [aw0, ah0, aw1, ah1, ...] of length 2*boxes_per_cell.
 void detection_forward_cuda(const Index batch_size,
                             const Index grid_size,
@@ -277,5 +277,34 @@ void detection_backward_cuda(const Index batch_size,
                              const float* output,
                              const float* output_delta,
                              float* input_delta);
+
+// Nearest-neighbor upsample (NHWC).
+void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                           const float* src, float* dst);
+void upsample_backward_cuda(int batch, int in_h, int in_w, int channels, int scale,
+                            const float* out_delta, float* in_delta);
+
+// Channel concatenation (NHWC) — one call per input slice.
+void concat_forward_slice_cuda(int batch, int H, int W,
+                               int slice_ch, int total_ch, int ch_offset,
+                               const float* src, float* dst);
+void concat_backward_slice_cuda(int batch, int H, int W,
+                                int slice_ch, int total_ch, int ch_offset,
+                                const float* out_delta, float* in_delta);
+
+// GIoU YOLO loss — one thread per (batch * grid * grid * box).
+// error_accumulator must be pre-zeroed on device; result is added atomically.
+void yolo_error_cuda(const float* output, const float* target, float* error_accumulator,
+                     int batch, int grid, int boxes_per_cell, int values_per_box,
+                     int classes_number, int sigmoid_classes,
+                     float lambda_giou, float lambda_noobj, float lambda_class,
+                     float focal_gamma, float obj_focal_gamma);
+
+// GIoU YOLO gradient — delta is zeroed inside, then filled per-box.
+void yolo_gradient_cuda(const float* output, const float* target, float* delta,
+                        int batch, int grid, int boxes_per_cell, int values_per_box,
+                        int classes_number, int sigmoid_classes, float inv_batch,
+                        float lambda_giou, float lambda_noobj, float lambda_class,
+                        float focal_gamma, float obj_focal_gamma);
 
 #endif // KERNEL_CUH

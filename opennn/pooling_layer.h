@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   C L A S S   H E A D E R
@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "pool_operator.h"
 
 namespace opennn
 {
@@ -20,19 +20,8 @@ enum class PoolingMethod
     AveragePooling
 };
 
-inline const string& pooling_method_to_string(PoolingMethod method)
-{
-    static const string max_str = "MaxPooling";
-    static const string avg_str = "AveragePooling";
-    return method == PoolingMethod::MaxPooling ? max_str : avg_str;
-}
-
-inline PoolingMethod string_to_pooling_method(const string& name)
-{
-    if (name == "MaxPooling")     return PoolingMethod::MaxPooling;
-    if (name == "AveragePooling") return PoolingMethod::AveragePooling;
-    throw runtime_error(format("Unknown pooling method: {}", name));
-}
+const string& pooling_method_to_string(PoolingMethod);
+PoolingMethod string_to_pooling_method(const string&);
 
 class Pooling final : public Layer
 {
@@ -66,7 +55,7 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
 
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
@@ -104,7 +93,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    PoolOp pool;
+    PoolOperator pool;
 
     enum Forward {Input, MaximalIndices, Output};
 
@@ -114,5 +103,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

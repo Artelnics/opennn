@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S   H E A D E R
@@ -376,6 +376,8 @@ struct TensorView
 
     bool empty() const noexcept { return shape.empty(); }
     bool is_cuda() const noexcept { return device == Device::CUDA; }
+    bool is_fp32() const noexcept { return type == Type::FP32; }
+    bool is_bf16() const noexcept { return type == Type::BF16; }
 
     template<typename T>
     T* as() const noexcept
@@ -477,7 +479,7 @@ struct TensorView
         return TensorMapR<Rank>(reinterpret_cast<float*>(data) + batch_index * slice_element_count, dims);
     }
 
-    void fill(float value);
+    void fill(float);
     void setZero() { fill(0.0f); }
     void set_zero_async() const;
 
@@ -486,15 +488,14 @@ struct TensorView
     cudnnTensorDescriptor_t get_descriptor() const;
 
 private:
-    void set_descriptor(const Shape& shape) const;
+    void set_descriptor(const Shape&) const;
 
 };
 
-inline TensorView& view_at_slot_or(vector<TensorView>& views,
-                                   const vector<size_t>& slots, size_t i,
-                                   TensorView& fallback)
+inline TensorView& slot_or(vector<TensorView>& views, const vector<size_t>& slots, size_t i)
 {
-    return i < slots.size() ? views[slots[i]] : fallback;
+    static TensorView empty;
+    return i < slots.size() ? views[slots[i]] : empty;
 }
 
 template<typename T, size_t N>
@@ -528,12 +529,12 @@ inline void TensorView::set_zero_async() const
 inline const float one = 1.0f;
 inline const float zero = 0.0f;
 
-void copy_device_to_host_float(const void* device_src, Type src_dtype,
-                               Index element_count, float* host_dst,
+void copy_device_to_host_float(const void*, Type,
+                               Index, float*,
                                cudaStream_t stream);
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

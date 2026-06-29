@@ -1,0 +1,6 @@
+data/
+data-smoke/
+raw/
+*.csv
+*.csv.gz
+*.zip

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   I N P U T S   S E L E C T I O N   C L A S S   H E A D E R
@@ -73,7 +73,7 @@ public:
 
 protected:
 
-    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index input_features_number);
+    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
 
     TrainingStrategy* training_strategy = nullptr;
 
@@ -101,7 +101,7 @@ struct InputsSelectionResult
 
     void set(const Index = 0);
 
-    void resize_history(const Index new_size);
+    void resize_history(const Index);
 
     void print() const;
 
@@ -136,5 +136,5 @@ struct InputsSelectionResult
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

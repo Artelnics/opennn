@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D A T A   S E T   C L A S S   H E A D E R
@@ -58,7 +58,7 @@ public:
     virtual ~Dataset() = default;
 
     enum class Separator{Space, Tab, Comma, Semicolon};
-    enum class StorageMode{Matrix, BinaryFile};
+    enum class StorageMode{Matrix, BinaryFile, GPUPersistantData};
 
     virtual Index get_samples_number() const { return ssize(sample_roles); }
 
@@ -94,7 +94,7 @@ public:
 
     VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
-    vector<VariableType> get_variable_types(const vector<Index>& indices) const;
+    vector<VariableType> get_variable_types(const vector<Index>&) const;
     Index get_features_number() const;
     Index get_features_number(const string&) const;
 
@@ -150,7 +150,7 @@ public:
 
     void set_sample_roles(const vector<string>&);
     void set_sample_roles(const vector<Index>&, const string&);
-    void set_variables(const vector<Variable>& new_variables);
+    void set_variables(const vector<Variable>&);
 
     void set_default_variable_names();
 
@@ -168,7 +168,7 @@ public:
     void set_variable_types(const VariableType&);
     void set_variable_names(const vector<string>&);
 
-    void set_variables_number(const Index new_size);
+    void set_variables_number(const Index);
 
     void set_feature_names(const vector<string>&);
 
@@ -176,7 +176,7 @@ public:
 
     void set_shape(const string&, const Shape&);
     virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
-    virtual void set_data_path(const filesystem::path& new_data_path);
+    virtual void set_data_path(const filesystem::path&);
     virtual void set_storage_mode(StorageMode);
     virtual void set_storage_mode(const string&);
 
@@ -233,7 +233,7 @@ public:
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
                              float*,
-                             bool is_training,
+                             bool,
                              int contiguous = -1) const;
 
     virtual void augment_inputs(float*, Index) const {}
@@ -241,23 +241,23 @@ public:
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool is_training,
+                              bool,
                               int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool is_training,
+                              bool,
                               int contiguous = -1) const;
 
     virtual bool supports_bf16_inputs() const { return true; }
 
     void fill_batch(Batch&,
-                    const vector<Index>& sample_indices,
-                    const vector<Index>& input_indices,
-                    const vector<Index>& decoder_indices,
-                    const vector<Index>& target_indices,
-                    bool is_training) const;
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    bool) const;
 
 protected:
 
@@ -265,7 +265,7 @@ protected:
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
-    void set_default_variable_roles_implementation(bool forecasting);
+    void set_default_variable_roles_implementation(bool);
 
     void read_data_file_preview(const vector<string_view>&, char);
     void check_separators(string_view) const;
@@ -313,5 +313,5 @@ protected:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

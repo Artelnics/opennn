@@ -17,9 +17,13 @@
 namespace opennn
 {
 
-namespace {
+// Directory for the ImageDataset binary cache. Empty => default <data>/.cache.
+// Set from code with set_image_cache_dir(); there is no environment variable.
+namespace { std::string& image_cache_dir_storage() { static std::string dir; return dir; } }
+void set_image_cache_dir(const string& dir) { image_cache_dir_storage() = dir; }
+string get_image_cache_dir() { return image_cache_dir_storage(); }
 
-bool has_augmentation_transform(const AugmentationSettings& augmentation)
+static bool has_augmentation_transform(const AugmentationSettings& augmentation)
 {
     return augmentation.reflection_axis_x
         || augmentation.reflection_axis_y
@@ -31,7 +35,7 @@ bool has_augmentation_transform(const AugmentationSettings& augmentation)
         || augmentation.vertical_translation_maximum != 0.0f;
 }
 
-float sample_augmentation_value(float minimum, float maximum)
+static float sample_augmentation_value(float minimum, float maximum)
 {
     if (minimum == maximum)
         return minimum;
@@ -39,12 +43,12 @@ float sample_augmentation_value(float minimum, float maximum)
     return random_uniform(min(minimum, maximum), max(minimum, maximum));
 }
 
-Index sample_augmentation_shift(float minimum, float maximum)
+static Index sample_augmentation_shift(float minimum, float maximum)
 {
     return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
 }
 
-uint64_t fnv1a_64(const string& value)
+static uint64_t fnv1a_64(const string& value)
 {
     uint64_t hash = 14695981039346656037ull;
 
@@ -57,7 +61,7 @@ uint64_t fnv1a_64(const string& value)
     return hash;
 }
 
-filesystem::path resolved_dataset_key(const filesystem::path& path)
+static filesystem::path resolved_dataset_key(const filesystem::path& path)
 {
     try
     {
@@ -69,15 +73,15 @@ filesystem::path resolved_dataset_key(const filesystem::path& path)
     }
 }
 
-filesystem::path image_cache_path(const filesystem::path& data_path,
+static filesystem::path image_cache_path(const filesystem::path& data_path,
                                   Index samples_number,
                                   Index height,
                                   Index width,
                                   Index channels)
 {
-    const char* cache_root = getenv("OPENNN_IMAGE_CACHE_DIR");
+    const string& cache_root = image_cache_dir_storage();
 
-    if (cache_root && cache_root[0] != '\0')
+    if (!cache_root.empty())
     {
         const uint64_t hash = fnv1a_64(resolved_dataset_key(data_path).generic_string());
 
@@ -92,7 +96,7 @@ filesystem::path image_cache_path(const filesystem::path& data_path,
     return data_path / ".cache" / "images.bin";
 }
 
-pair<float, float> scaling_affine(ScalerMethod scaler,
+static pair<float, float> scaling_affine(ScalerMethod scaler,
                                   const Descriptives& descriptives,
                                   float min_range,
                                   float max_range)
@@ -121,8 +125,6 @@ pair<float, float> scaling_affine(ScalerMethod scaler,
         return {1.0f, 0.0f};
     }
 }
-
-}  // namespace
 
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
@@ -241,8 +243,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 {
-    if (!augmentation.enabled) return;
-    if (batch_size <= 0) return;
+    if (!augmentation.enabled || batch_size <= 0) return;
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];
@@ -379,7 +380,7 @@ void ImageDataset::read_images()
         ranges::sort(folder_files);
         for (auto& p : folder_files)
         {
-            paths.emplace_back(std::move(p));
+            paths.emplace_back(move(p));
             labels.push_back(int32_t(i));
         }
     }
@@ -438,7 +439,7 @@ void ImageDataset::read_images()
     target_variable.set_categories(categories);
     target_variable.scaler = ScalerMethod::None;
 
-    sample_labels = std::move(labels);
+    sample_labels = move(labels);
 
     sample_roles.assign(samples_number, SampleRole::Training);
 

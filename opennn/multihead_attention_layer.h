@@ -1,4 +1,4 @@
-//  OpenNN: Open Neural Networks Library
+﻿//  OpenNN: Open Neural Networks Library
 //  www.opennn.net
 //
 //  M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S   H E A D E R
@@ -23,8 +23,8 @@ public:
                        Index = 0,
                        const string& = {});
 
-    MultiHeadAttention(const Shape& new_query_dimensions,
-                       const Shape& new_source_dimensions,
+    MultiHeadAttention(const Shape&,
+                       const Shape&,
                        Index = 0,
                        const string& = {});
 
@@ -39,8 +39,8 @@ public:
     {
         return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
     }
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
-    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
+    vector<TensorSpec> get_backward_specs(Index) const override;
 
     void set(Index = 0,
              Index = 0,
@@ -52,12 +52,12 @@ public:
     void set_input_shape(const Shape&) override;
     void on_compute_dtype_changed() override;
 
-    void set_dropout_rate(float new_dropout_rate) { attention.set_dropout_rate(new_dropout_rate); }
+    void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }
 
     static constexpr Index default_sdpa_min_sequence_length = 192;
 
-    void set_sdpa_auto(bool new_sdpa_auto);
-    void set_sdpa_min_sequence_length(Index new_threshold);
+    void set_sdpa_auto(bool);
+    void set_sdpa_min_sequence_length(Index);
 
     bool  get_sdpa_auto() const { return sdpa_auto; }
     Index get_sdpa_min_sequence_length() const { return sdpa_min_sequence_length; }
@@ -77,12 +77,12 @@ private:
     bool  sdpa_auto = true;
     Index sdpa_min_sequence_length = default_sdpa_min_sequence_length;
 
-    MultiHeadProjectionOp query_projection;
-    MultiHeadProjectionOp key_projection;
-    MultiHeadProjectionOp value_projection;
-    CombinationOp         output_projection;
-    AttentionOp           attention;
-    MergeOp               merge;
+    MultiHeadProjectionOperator query_projection;
+    MultiHeadProjectionOperator key_projection;
+    MultiHeadProjectionOperator value_projection;
+    CombinationOperator         output_projection;
+    AttentionOperator           attention;
+    MergeOperator               merge;
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
                   ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};
@@ -101,5 +101,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

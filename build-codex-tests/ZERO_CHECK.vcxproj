@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ResolveNugetPackages>false</ResolveNugetPackages>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{16C9CEAB-8CED-396B-AEC3-0CA65DF02850}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>ZERO_CHECK</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PreBuildEvent>
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message>Checking File Globs</Message>
+      <Command>setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -P C:/tests_delete/opennn/build-codex-tests/CMakeFiles/VerifyGlobs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PreBuildEvent>
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message>Checking File Globs</Message>
+      <Command>setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -P C:/tests_delete/opennn/build-codex-tests/CMakeFiles/VerifyGlobs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PreBuildEvent>
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message>Checking File Globs</Message>
+      <Command>setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -P C:/tests_delete/opennn/build-codex-tests/CMakeFiles/VerifyGlobs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PreBuildEvent>
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message>Checking File Globs</Message>
+      <Command>setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -P C:/tests_delete/opennn/build-codex-tests/CMakeFiles/VerifyGlobs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\tests_delete\opennn\build-codex-tests\CMakeFiles\e52e478054a18dab141643ac8b97e1be\generate.stamp.rule">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/tests_delete/opennn -BC:/tests_delete/opennn/build-codex-tests --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/tests_delete/opennn/build-codex-tests/OpenNN_Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.3\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPack.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPackComponent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIPOSupported.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\PatchInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\RepositoryInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\UpdateInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\cfgcmd.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\download.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\extractfile.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\mkdirs.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\shared_internal_commands.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindJPEG.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Templates\CPackConfig.cmake.in;C:\tests_delete\opennn\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCXXCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeRCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeSystem.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\cmake\Version.in;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CXX11\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googlemock\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\cmake\internal_utils.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\zconf.h.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\contrib\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_exclude_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_no_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_wrong_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlib.pc.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlibConfig.cmake.in;C:\tests_delete\opennn\build-codex-tests\opennn\opennn_libjpeg_turbo_ep-prefix\tmp\opennn_libjpeg_turbo_ep-mkdirs.cmake;C:\tests_delete\opennn\opennn\CMakeLists.txt;C:\tests_delete\opennn\tests\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\tests_delete\opennn\build-codex-tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CXX11\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\opennn\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\test\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\contrib\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googlemock\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googletest\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/tests_delete/opennn -BC:/tests_delete/opennn/build-codex-tests --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/tests_delete/opennn/build-codex-tests/OpenNN_Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.3\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPack.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPackComponent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIPOSupported.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\PatchInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\RepositoryInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\UpdateInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\cfgcmd.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\download.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\extractfile.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\mkdirs.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\shared_internal_commands.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindJPEG.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Templates\CPackConfig.cmake.in;C:\tests_delete\opennn\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCXXCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeRCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeSystem.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\cmake\Version.in;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CXX11\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googlemock\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\cmake\internal_utils.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\zconf.h.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\contrib\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_exclude_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_no_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_wrong_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlib.pc.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlibConfig.cmake.in;C:\tests_delete\opennn\build-codex-tests\opennn\opennn_libjpeg_turbo_ep-prefix\tmp\opennn_libjpeg_turbo_ep-mkdirs.cmake;C:\tests_delete\opennn\opennn\CMakeLists.txt;C:\tests_delete\opennn\tests\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\tests_delete\opennn\build-codex-tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CXX11\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\opennn\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\test\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\contrib\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googlemock\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googletest\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/tests_delete/opennn -BC:/tests_delete/opennn/build-codex-tests --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/tests_delete/opennn/build-codex-tests/OpenNN_Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.3\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPack.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPackComponent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIPOSupported.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\PatchInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\RepositoryInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\UpdateInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\cfgcmd.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\download.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\extractfile.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\mkdirs.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\shared_internal_commands.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindJPEG.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Templates\CPackConfig.cmake.in;C:\tests_delete\opennn\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCXXCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeRCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeSystem.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\cmake\Version.in;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CXX11\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googlemock\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\cmake\internal_utils.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\zconf.h.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\contrib\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_exclude_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_no_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_wrong_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlib.pc.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlibConfig.cmake.in;C:\tests_delete\opennn\build-codex-tests\opennn\opennn_libjpeg_turbo_ep-prefix\tmp\opennn_libjpeg_turbo_ep-mkdirs.cmake;C:\tests_delete\opennn\opennn\CMakeLists.txt;C:\tests_delete\opennn\tests\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\tests_delete\opennn\build-codex-tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CXX11\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\opennn\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\test\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\contrib\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googlemock\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googletest\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Checking Build System</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/tests_delete/opennn -BC:/tests_delete/opennn/build-codex-tests --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/tests_delete/opennn/build-codex-tests/OpenNN_Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.3\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeParseImplicitLinkInfo.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPack.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CPackComponent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIPOSupported.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckIncludeFileCXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\CheckTypeSize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\PatchInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\RepositoryInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\UpdateInfo.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\cfgcmd.txt.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\download.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\extractfile.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\mkdirs.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\ExternalProject\shared_internal_commands.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindJPEG.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindOpenMP.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\FindZLIB.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\SelectLibraryConfigurations.cmake;C:\Program Files\CMake\share\cmake-4.3\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-4.3\Templates\CPackConfig.cmake.in;C:\tests_delete\opennn\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeCXXCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeRCCompiler.cmake;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\4.3.1\CMakeSystem.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\cmake\Version.in;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-src\unsupported\Eigen\CXX11\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googlemock\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-src\googletest\cmake\internal_utils.cmake;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\zconf.h.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\contrib\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_exclude_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\add_subdirectory_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_no_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\test\find_package_wrong_components_test.cmake.in;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlib.pc.cmakein;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-src\zlibConfig.cmake.in;C:\tests_delete\opennn\build-codex-tests\opennn\opennn_libjpeg_turbo_ep-prefix\tmp\opennn_libjpeg_turbo_ep-mkdirs.cmake;C:\tests_delete\opennn\opennn\CMakeLists.txt;C:\tests_delete\opennn\tests\CMakeLists.txt;C:\tests_delete\opennn\build-codex-tests\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\tests_delete\opennn\build-codex-tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\eigen-build\unsupported\Eigen\CXX11\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\opennn\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\test\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\opennn_zlib-build\contrib\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\tests\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googlemock\CMakeFiles\generate.stamp;C:\tests_delete\opennn\build-codex-tests\_deps\googletest-build\googletest\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

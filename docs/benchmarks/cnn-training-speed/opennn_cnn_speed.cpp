@@ -42,6 +42,10 @@ int main(int argc, char* argv[])
 
         ImageDataset dataset(data_path);
         dataset.set_sample_roles("Training");
+        // Keep the whole dataset mirrored on the GPU and gather batches device-side
+        // -- the analogue of the GPU-resident tensors in the PyTorch/TF scripts.
+        // Enabled in code; there is no environment switch.
+        dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         const Index samples = dataset.get_samples_number();
 
         std::cout << "samples=" << samples << " batch=" << batch

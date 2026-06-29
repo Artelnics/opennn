@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   H E A D E R
@@ -15,81 +15,92 @@
 namespace opennn
 {
 
-// LeakyReLU appended last so existing values 0..4 stay stable.
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU };
 
-// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
-inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
-
 const EnumMap<ActivationFunction>& activation_function_map();
-const string& activation_function_to_string(ActivationFunction function);
-ActivationFunction activation_function_from_string(const string& name);
+const string& activation_function_to_string(ActivationFunction);
+ActivationFunction activation_function_from_string(const string&);
 
-void bound(const TensorView& input, const TensorView& lower_bounds, const TensorView& upper_bounds, TensorView& output);
+void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
-void scale(const TensorView& input,
-           const TensorView& minimums, const TensorView& maximums,
-           const TensorView& means, const TensorView& standard_deviations,
-           const TensorView& scalers,
-           float min_range, float max_range,
-           TensorView& output);
+void scale(const TensorView&,
+           const TensorView&, const TensorView&,
+           const TensorView&, const TensorView&,
+           const TensorView&,
+           float, float,
+           TensorView&);
 
-void unscale(const TensorView& input,
-             const TensorView& minimums, const TensorView& maximums,
-             const TensorView& means, const TensorView& standard_deviations,
-             const TensorView& scalers,
-             float min_range, float max_range,
-             TensorView& output);
+void unscale(const TensorView&,
+             const TensorView&, const TensorView&,
+             const TensorView&, const TensorView&,
+             const TensorView&,
+             float, float,
+             TensorView&);
 
-void copy(const TensorView& source, TensorView& destination);
+void copy(const TensorView&, TensorView&);
 
-void add(const TensorView& input_1, const TensorView& input_2, TensorView& output);
+void add(const TensorView&, const TensorView&, TensorView&);
 
-void multiply(const TensorView& input_a, bool transpose_a, const TensorView& input_b, bool transpose_b, TensorView& output, float alpha = 1.0f, float beta = 0.0f);
+void multiply(const TensorView&, bool, const TensorView&, bool, TensorView&, float alpha = 1.0f, float beta = 0.0f);
 
-void softmax(TensorView& output);
+void softmax(TensorView&);
 
-void activation_forward(TensorView& output, ActivationFunction function);
-void activation_backward(const TensorView& outputs, TensorView& delta, ActivationFunction function);
+void activation_forward(TensorView&, ActivationFunction);
+void activation_backward(const TensorView&, TensorView&, ActivationFunction);
 
-void dropout_forward(TensorView& output, Buffer& mask, float rate);
-void dropout_backward(TensorView& delta, const Buffer& mask, float rate);
+void dropout_forward(TensorView&, Buffer&, float);
+void dropout_backward(TensorView&, const Buffer&, float);
 
-void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                    TensorView& output, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
-void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
-                     const TensorView& weight_gradient, const TensorView& bias_gradient,
-                     TensorView& input_delta, bool accumulate_input_delta = false);
+void linear_forward(const TensorView&, const TensorView&, const TensorView&,
+                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
+void linear_backward(const TensorView&, const TensorView&, const TensorView&,
+                     const TensorView&, const TensorView&,
+                     TensorView&, bool accumulate_input_delta = false);
 
-void layer_norm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
-                        TensorView& means, TensorView& standard_deviations,
-                        TensorView& normalized, TensorView& output);
-void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
-                            const TensorView& gamma, const TensorView& beta,
-                            TensorView& means, TensorView& standard_deviations,
-                            TensorView& normalized, TensorView& sum, TensorView& output);
-void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
-                         const TensorView& means, const TensorView& standard_deviations,
-                         const TensorView& normalized, const TensorView& gamma,
-                         const TensorView& gamma_gradient, const TensorView& beta_gradient,
-                         TensorView& input_delta);
+void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
+                        TensorView&, TensorView&,
+                        TensorView&, TensorView&);
+void layer_normalization_add_forward(const TensorView&, const TensorView&,
+                            const TensorView&, const TensorView&,
+                            TensorView&, TensorView&,
+                            TensorView&, TensorView&, TensorView&);
+void layer_normalization_backward(const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         TensorView&);
 
-void embedding_lookup_forward(const TensorView& indices, const TensorView& weights,
-                              const TensorView& positional_encoding, TensorView& output,
-                              Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                              bool scale_embedding, bool add_positional_encoding);
-void embedding_lookup_backward(const TensorView& indices, const TensorView& output_delta,
-                               const TensorView& weight_gradient,
-                               Index embedding_dimension, Index vocabulary_size,
-                               bool scale_embedding);
+void embedding_lookup_forward(const TensorView&, const TensorView&,
+                              const TensorView&, TensorView&,
+                              Index, Index, Index,
+                              bool, bool);
+void embedding_lookup_backward(const TensorView&, const TensorView&,
+                               const TensorView&,
+                               Index, Index,
+                               bool);
 
-void max_pooling_3d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool is_training);
-void average_pooling_3d_forward(const TensorView& input, TensorView& output);
-void max_pooling_3d_backward(const TensorView& maximal_indices, const TensorView& output_delta, TensorView& input_delta);
-void average_pooling_3d_backward(const TensorView& input, const TensorView& output_delta, TensorView& input_delta);
+void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool);
+void average_pooling_3d_forward(const TensorView&, TensorView&);
+void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
+void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
 
-void split_heads(const TensorView& source, TensorView& destination);
-void merge_heads(const TensorView& source, TensorView& destination);
+void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
+                        Index, Index, Index,
+                        Index, Index,
+                        Index, Index,
+                        Index, Index,
+                        bool);
+void pooling_2d_backward(const TensorView&, const TensorView&,
+                         const TensorView&, const TensorView&,
+                         TensorView&,
+                         Index, Index, Index,
+                         Index, Index,
+                         Index, Index,
+                         Index, Index,
+                         bool);
+
+void split_heads(const TensorView&, TensorView&);
+void merge_heads(const TensorView&, TensorView&);
 
 MatrixR append_rows(const MatrixR&, const MatrixR&);
 MatrixR append_columns(const MatrixR&, const MatrixR&);
@@ -101,5 +112,5 @@ vector<Index> filter_selected_indices_by_column(const MatrixR&, const vector<Ind
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

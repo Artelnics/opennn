@@ -202,11 +202,7 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    static const bool no_shuffle = [] {
-        const char* v = std::getenv("OPENNN_NO_SHUFFLE");
-        return v && v[0] == '1';
-    }();
-    const bool shuffle = !no_shuffle
+    const bool shuffle = shuffle_samples
                       && !neural_network->has(LayerType::Recurrent)
                       && !neural_network->has(LayerType::LongShortTermMemory);
 

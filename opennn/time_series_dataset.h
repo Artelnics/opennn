@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R
@@ -32,7 +32,7 @@ public:
     Index get_future_time_steps() const;
     bool get_multi_target() const;
 
-    Tensor3 get_data(const string& sample_role, const string& feature_role) const;
+    Tensor3 get_data(const string&, const string&) const;
 
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
@@ -52,13 +52,13 @@ public:
     void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
                            float*,
-                           bool is_training,
+                           bool,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             float*,
-                            bool is_training,
+                            bool,
                             int contiguous = -1) const override;
 
     void resize_input_shape(Index) override;
@@ -75,5 +75,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

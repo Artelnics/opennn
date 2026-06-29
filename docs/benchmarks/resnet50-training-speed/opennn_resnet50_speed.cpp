@@ -5,7 +5,13 @@
 //   Adam, fp32/bf16. By default the image shape comes from the first file
 //   (CIFAR path); pass image_size=224 for the full ImageNet benchmark.
 //
-//   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size]
+//   CUDA graph capture and GPU-resident data are enabled from this code, not
+//   from environment variables. The graph is on by default and can be turned off
+//   with the optional [cuda_graph 0|1] argument (used by the ImageNet runner's
+//   --no-cuda-graph). Data is kept GPU-resident automatically for the small CIFAR
+//   path (image_size==0); the 224px ImageNet path is too large and stays host-staged.
+//
+//   usage:  opennn_resnet50_speed <data_path> [epochs] [batch] [fp32|bf16] [image_size] [cuda_graph 0|1] [cache_dir]
 
 #include <chrono>
 #include <iostream>
@@ -31,10 +37,17 @@ int main(int argc, char* argv[])
         const Index batch = argc > 3 ? Index(std::stoll(argv[3])) : 128;
         const std::string precision = argc > 4 ? argv[4] : "fp32";
         const Index image_size = argc > 5 ? Index(std::stoll(argv[5])) : 0;
+        const bool cuda_graph = argc > 6 ? (std::stoi(argv[6]) != 0) : true;
+        const std::string cache_dir = argc > 7 ? argv[7] : "";
 
         set_seed(42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
+
+        // Optional image-cache directory, set in code before the dataset is built
+        // (the cache path is computed at construction). Empty => default .cache.
+        if (!cache_dir.empty())
+            set_image_cache_dir(cache_dir);
 
         std::unique_ptr<ImageDataset> dataset_ptr =
             image_size > 0
@@ -42,10 +55,19 @@ int main(int argc, char* argv[])
                 : std::make_unique<ImageDataset>(data_path);
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
+
+        // CIFAR (image_size==0) fits in VRAM: keep it GPU-resident so each batch is
+        // a device-side gather. The 224px ImageNet path is too large, so it stays
+        // host-staged. Enabled in code; there is no environment switch.
+        const bool gpu_resident = (image_size == 0);
+        if (gpu_resident)
+            dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
         const Index samples = dataset.get_samples_number();
 
         std::cout << "samples=" << samples << " batch=" << batch
-                  << " epochs=" << timed_epochs << " precision=" << precision;
+                  << " epochs=" << timed_epochs << " precision=" << precision
+                  << " cuda_graph=" << cuda_graph << " gpu_resident=" << gpu_resident;
         if (image_size > 0) std::cout << " image_size=" << image_size;
         std::cout << "\n";
 
@@ -68,6 +90,7 @@ int main(int argc, char* argv[])
         adam->set_batch_size(batch);
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
+        adam->set_cuda_graph(cuda_graph);
 
         adam->set_maximum_epochs(2);
         training_strategy.train();

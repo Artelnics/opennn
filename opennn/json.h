@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   J S O N   M I N I M A L   S U P P O R T
@@ -53,17 +53,17 @@ public:
     bool is_string() const { return kind == Kind::String; }
     bool is_array()  const { return kind == Kind::Array; }
     bool is_object() const { return kind == Kind::Object; }
-    bool         has(const string& key) const;
-    const Json*  find(const string& key) const;
-    const Json&  at(const string& key) const;
-    Json&        operator[](const string& key);
-    Json& set(const string& key, Json value);
-    void push_back(Json value);
+    bool         has(const string&) const;
+    const Json*  find(const string&) const;
+    const Json&  at(const string&) const;
+    Json&        operator[](const string&);
+    Json& set(const string&, Json);
+    void push_back(Json);
     string as_string() const;
     long long   as_long()   const;
     double      as_double() const;
     bool        as_bool()   const;
-    static Json  parse(const string& text);
+    static Json  parse(const string&);
     string  dump(int indent = 2) const;
 };
 
@@ -72,24 +72,24 @@ class JsonDocument
 public:
     Json root;
 
-    void load(const filesystem::path& path);
-    void save(const filesystem::path& path, int indent = 2) const;
-    const Json* first_child(const string& name) const;
+    void load(const filesystem::path&);
+    void save(const filesystem::path&, int indent = 2) const;
+    const Json* first_child(const string&) const;
     const Json* first_child() const { return &root; }
-    static JsonDocument wrap(const string& tag, Json value);
+    static JsonDocument wrap(const string&, Json);
 };
 
 class JsonWriter
 {
 public:
-    void open_element(const string& name);
+    void open_element(const string&);
     void close_element();
 
-    void begin_array(const string& name);
+    void begin_array(const string&);
     void end_array();
     void begin_array_object();
     void end_array_object();
-    void add_field(const string& name, const string& value);
+    void add_field(const string&, const string&);
 
     string c_str(int indent = 2) const;
 
@@ -98,21 +98,21 @@ private:
     vector<Json*>  stack;
     vector<string> name_stack;
 };
-void add_json_field(JsonWriter& writer,
-                    const string& name,
-                    const string& value);
+void add_json_field(JsonWriter&,
+                    const string&,
+                    const string&);
 
-void write_json(JsonWriter& writer,
-                initializer_list<pair<const char*, string>> props);
-float       read_json_float   (const Json* root, const string& field);
-long long   read_json_index  (const Json* root, const string& field);
-bool        read_json_bool   (const Json* root, const string& field);
-string read_json_string (const Json* root, const string& field);
+void write_json(JsonWriter&,
+                initializer_list<pair<const char*, string>>);
+float       read_json_float   (const Json*, const string&);
+long long   read_json_index  (const Json*, const string&);
+bool        read_json_bool   (const Json*, const string&);
+string read_json_string (const Json*, const string&);
 
-string read_json_string_fallback(const Json* root,
-                                      initializer_list<string> names);
+string read_json_string_fallback(const Json*,
+                                      initializer_list<string>);
 
-const Json* require_json_field(const Json* root, const string& field);
+const Json* require_json_field(const Json*, const string&);
 
 template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
@@ -128,7 +128,7 @@ void for_json_items(const Json* parent, const char* tag, long count, Func func)
         func(i, &arr->array_value[size_t(i)]);
 }
 
-JsonDocument load_json_file(const filesystem::path& file_name);
-const Json*  get_json_root (const JsonDocument& document, const string& tag);
+JsonDocument load_json_file(const filesystem::path&);
+const Json*  get_json_root (const JsonDocument&, const string&);
 
 }

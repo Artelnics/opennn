@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "training_result.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
@@ -81,8 +82,6 @@ void TrainingResult::save(const filesystem::path& file_name) const
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";
-
-    file.close();
 }
 
 void TrainingResult::print(const string &message) const
@@ -170,6 +169,8 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);
 
     data.resize_bytes(total_bytes, device);
+    memory_debug::record("optimizer", "OptimizerData::data", total_bytes,
+                         format("slots={}", slot_shapes.size()));
 
     if (total_bytes > 0)
     {

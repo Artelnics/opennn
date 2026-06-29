@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N O N   M A X   S U P P R E S S I O N   O P E R A T O R   S O U R C E
@@ -18,10 +18,7 @@
 namespace opennn
 {
 
-namespace
-{
-
-float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
+static float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
 {
     const float a_left = a[0] - 0.5f * a[2];
     const float a_top = a[1] - 0.5f * a[3];
@@ -41,18 +38,15 @@ float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
     return area > 0.0f ? inter / area : 0.0f;
 }
 
-}
-
-
-void NonMaxSuppressionOp::set(const Shape& input_shape,
+void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               Index new_boxes_per_cell,
                               float new_confidence_threshold,
                               float new_iou_threshold)
 {
     throw_if(input_shape.rank != 3,
-             "NonMaxSuppressionOp: input shape must be rank 3.");
+             "NonMaxSuppressionOperator: input shape must be rank 3.");
     throw_if(new_boxes_per_cell <= 0,
-             "NonMaxSuppressionOp: boxes_per_cell must be positive.");
+             "NonMaxSuppressionOperator: boxes_per_cell must be positive.");
 
     grid_size = input_shape[0];
     grid_width = input_shape[1];
@@ -62,24 +56,44 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
 
     const Index channels = input_shape[2];
     throw_if(channels % boxes_per_cell != 0,
-             "NonMaxSuppressionOp: channels must be divisible by boxes_per_cell.");
+             "NonMaxSuppressionOperator: channels must be divisible by boxes_per_cell.");
 
     classes_number = channels / boxes_per_cell - 5;
     throw_if(classes_number <= 0,
-             "NonMaxSuppressionOp: classes_number must be positive.");
+             "NonMaxSuppressionOperator: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
 
-    throw_if(input.is_cuda(),
-             "NonMaxSuppressionOp GPU path is not implemented yet.");
+    if (is_training) return; // loss reads Detection output directly; NMS output not used during training
+
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        // CPU fallback for inference: copy to host, run NMS, copy back
+        const size_t bytes = size_t(input.size()) * sizeof(float);
+        cpu_input_staging.resize(size_t(input.size()));
+        cudaMemcpy(cpu_input_staging.data(), input.as<float>(), bytes, cudaMemcpyDeviceToHost);
+
+        TensorView cpu_in{cpu_input_staging.data(), input.shape};
+
+        cpu_output_staging.resize(size_t(output.size()));
+        TensorView cpu_out{cpu_output_staging.data(), output.shape};
+
+        apply(cpu_in, cpu_out);
+
+        const size_t out_bytes = size_t(output.size()) * sizeof(float);
+        cudaMemcpy(output.as<float>(), cpu_output_staging.data(), out_bytes, cudaMemcpyHostToDevice);
+        return;
+    }
+#endif
     apply(input, output);
 }
 
-void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) const
+void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];

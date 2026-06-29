@@ -86,7 +86,7 @@ long long Json::as_long() const
     {
     case Number: return (long long)(number_value);
     case Bool:   return bool_value ? 1 : 0;
-    case String: return string_value.empty() ? 0LL : std::stoll(string_value);
+    case String: return string_value.empty() ? 0LL : stoll(string_value);
     case Null:
     case Array:
     case Object: return 0;
@@ -102,7 +102,7 @@ double Json::as_double() const
     {
     case Number: return number_value;
     case Bool:   return bool_value ? 1.0 : 0.0;
-    case String: return string_value.empty() ? 0.0 : std::stod(string_value);
+    case String: return string_value.empty() ? 0.0 : stod(string_value);
     case Null:
     case Array:
     case Object: return 0.0;

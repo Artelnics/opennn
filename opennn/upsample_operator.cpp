@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   U P S A M P L E   O P E R A T O R   S O U R C E
@@ -14,11 +14,14 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "profiler.h"
+#ifdef OPENNN_HAS_CUDA
+#  include "kernel.cuh"
+#endif
 
 namespace opennn
 {
 
-void UpsampleOp::set(Index in_h, Index in_w, Index ch, Index scale)
+void UpsampleOperator::set(Index in_h, Index in_w, Index ch, Index scale)
 {
     throw_if(scale < 1,
              "Upsample: scale_factor must be >= 1.");
@@ -28,25 +31,28 @@ void UpsampleOp::set(Index in_h, Index in_w, Index ch, Index scale)
     scale_factor = scale;
 }
 
-void UpsampleOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void UpsampleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
 
-    throw_if(input.is_cuda(),
-             "UpsampleOp GPU path is not implemented yet.");
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda())
+    {
+        upsample_forward_cuda(to_int(input.shape[0]), to_int(input_height), to_int(input_width),
+                              to_int(channels), to_int(scale_factor),
+                              input.as<float>(), output.as<float>());
+        return;
+    }
+#endif
 
-    apply(input, output);
-}
-
-void UpsampleOp::apply(const TensorView& input, TensorView& output) const
-{
     const Index batch_size = input.shape[0];
     const Index out_h = input_height * scale_factor;
     const Index out_w = input_width * scale_factor;
-
     const float* src = input.as<float>();
     float* dst = output.as<float>();
+
+    const size_t ch_bytes = size_t(channels) * sizeof(float);
 
     #pragma omp parallel for collapse(2)
     for (Index b = 0; b < batch_size; ++b)
@@ -56,32 +62,32 @@ void UpsampleOp::apply(const TensorView& input, TensorView& output) const
             for (Index ow = 0; ow < out_w; ++ow)
             {
                 const Index iw = ow / scale_factor;
-                const Index in_idx  = ((b * input_height + ih) * input_width + iw) * channels;
-                const Index out_idx = ((b * out_h + oh) * out_w + ow) * channels;
-                for (Index c = 0; c < channels; ++c)
-                    dst[out_idx + c] = src[in_idx + c];
+                memcpy(dst + (b * out_h + oh) * out_w * channels + ow * channels,
+                       src + (b * input_height + ih) * input_width * channels + iw * channels,
+                       ch_bytes);
             }
         }
 }
 
-void UpsampleOp::back_propagate(ForwardPropagation&, BackPropagation& bp, size_t layer) const
+void UpsampleOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& output_delta = get_output_delta(bp, layer);
-    TensorView& input_delta = get_input_delta(bp, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
+    TensorView& input_delta = get_input_delta(back_propagation, layer);
     if (input_delta.empty()) return;
 
-    throw_if(output_delta.is_cuda(),
-             "UpsampleOp GPU path is not implemented yet.");
+#ifdef OPENNN_HAS_CUDA
+    if (output_delta.is_cuda())
+    {
+        upsample_backward_cuda(to_int(input_delta.shape[0]), to_int(input_height), to_int(input_width),
+                               to_int(channels), to_int(scale_factor),
+                               output_delta.as<float>(), input_delta.as<float>());
+        return;
+    }
+#endif
 
-    apply_delta(output_delta, input_delta);
-}
-
-void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_delta) const
-{
     const Index batch_size = input_delta.shape[0];
     const Index out_h = input_height * scale_factor;
     const Index out_w = input_width * scale_factor;
-
     const float* delta = output_delta.as<float>();
     float* in_delta = input_delta.as<float>();
 
@@ -92,15 +98,13 @@ void UpsampleOp::apply_delta(const TensorView& output_delta, TensorView& input_d
         for (Index ih = 0; ih < input_height; ++ih)
             for (Index iw = 0; iw < input_width; ++iw)
             {
-                const Index in_idx = ((b * input_height + ih) * input_width + iw) * channels;
+                float* in_ptr = in_delta + ((b * input_height + ih) * input_width + iw) * channels;
                 for (Index dh = 0; dh < scale_factor; ++dh)
                     for (Index dw = 0; dw < scale_factor; ++dw)
                     {
-                        const Index oh = ih * scale_factor + dh;
-                        const Index ow = iw * scale_factor + dw;
-                        const Index out_idx = ((b * out_h + oh) * out_w + ow) * channels;
+                        const float* out_ptr = delta + ((b * out_h + ih * scale_factor + dh) * out_w + iw * scale_factor + dw) * channels;
                         for (Index c = 0; c < channels; ++c)
-                            in_delta[in_idx + c] += delta[out_idx + c];
+                            in_ptr[c] += out_ptr[c];
                     }
             }
 }

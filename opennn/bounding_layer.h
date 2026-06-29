@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B O U N D I N G   L A Y E R   C L A S S   H E A D E R
@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "bound_operator.h"
 
 namespace opennn
 {
@@ -18,7 +18,7 @@ class Bounding final : public Layer
 {
 public:
 
-    using BoundingMethod = BoundOp::Method;
+    using BoundingMethod = BoundOperator::Method;
 
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
@@ -46,8 +46,8 @@ public:
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
-    string write_expression(const vector<string>& input_names,
-                            const vector<string>& output_names) const override;
+    string write_expression(const vector<string>&,
+                            const vector<string>&) const override;
 
 private:
 
@@ -60,9 +60,9 @@ private:
     Device op_storage_device = Device::CPU;
     bool   op_storage_dirty = true;
 
-    BoundOp bound;
+    BoundOperator bound;
 
-    void refresh_op_storage(Device device);
+    void refresh_op_storage(Device);
 
     static const EnumMap<BoundingMethod>& bounding_method_map();
 };
@@ -70,5 +70,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

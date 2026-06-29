@@ -35,9 +35,10 @@ struct ForwardPropagation
 
     Buffer data;
     vector<Buffer> device_input_buffers;
-    vector<Buffer> device_fp32_input_buffers;
+    
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
+    vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
 };
 
 }

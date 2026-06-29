@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   3 D   C L A S S
@@ -53,7 +53,7 @@ void Pooling3d::set(const Shape& new_input_shape,
 void Pooling3d::set_pooling_method(PoolingMethod new_pooling_method)
 {
     pooling_method = new_pooling_method;
-    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOp::Max : Pool3dOp::Average;
+    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOperator::Max : Pool3dOperator::Average;
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)

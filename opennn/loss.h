@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S   H E A D E R
@@ -116,19 +116,19 @@ public:
     bool back_propagate_device_metrics(const Batch&,
                                        ForwardPropagation&,
                                        BackPropagation&,
-                                       float* error_sum_device,
-                                       float* accuracy_sum_device) const;
+                                       float*,
+                                       float*) const;
 
     bool calculate_error_device_metrics(const Batch&,
                                         const ForwardPropagation&,
-                                        float* error_sum_device,
-                                        float* accuracy_sum_device) const;
+                                        float*,
+                                        float*) const;
 
     float calculate_regularization(const VectorR&) const;
     float calculate_regularization(const TensorView&) const;
 
     void add_regularization_gradient(BackPropagation&) const;
-    void add_regularization_gradient(const TensorView& gradient) const;
+    void add_regularization_gradient(const TensorView&) const;
 
     void from_JSON(const JsonDocument&);
 
@@ -141,6 +141,18 @@ public:
     static float calculate_h(const float);
 
     void print() const {}
+
+    void set_yolo_lambda_giou(float v)      { yolo_lambda_giou      = v; }
+    void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
+    void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }
+    void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
+    void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
+
+    float get_yolo_lambda_giou()      const { return yolo_lambda_giou;      }
+    float get_yolo_lambda_noobj()     const { return yolo_lambda_noobj;      }
+    float get_yolo_lambda_class()     const { return yolo_lambda_class;      }
+    float get_yolo_focal_gamma()      const { return yolo_focal_gamma;       }
+    float get_yolo_obj_focal_gamma()  const { return yolo_obj_focal_gamma;   }
 
 private:
 
@@ -173,8 +185,15 @@ protected:
     float negatives_weight = 1.0f;
     float minkowski_parameter = 1.5f;
 
+    float yolo_lambda_giou     = 5.0f;
+    float yolo_lambda_noobj    = 0.5f;
+    float yolo_lambda_class    = 1.0f;
+    float yolo_focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
+    float yolo_obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
+    mutable Buffer yolo_target_device{Device::CUDA};
 
     Regularization regularization_method = Regularization::L2;
     float regularization_weight = 0.001f;
@@ -185,8 +204,17 @@ protected:
     string name = "Loss";
 };
 
+// CPU numerical gradient check: returns max relative error between analytical
+// and finite-difference gradients. Below 1e-4 means the loss is self-consistent.
+float yolo_loss_gradient_check_cpu();
+
+// CPU expected-value check: compares forward loss against hand-computed expected
+// values, and verifies gradient directions are correct (not just self-consistent).
+// Returns max absolute error; prints per-test results. Below 1e-4 means correct.
+float yolo_loss_expected_value_check_cpu();
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

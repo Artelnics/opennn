@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   I M A G E   P R O C E S S I N G   H E A D E R
@@ -18,10 +18,10 @@ Tensor3 load_image(const filesystem::path&);
 bool is_supported_image_file(const filesystem::path&);
 
 void load_image(const filesystem::path&,
-                float* dst,
-                Index expected_height,
-                Index expected_width,
-                Index expected_channels);
+                float*,
+                Index,
+                Index,
+                Index);
 
 Tensor3 resize_image(const Tensor3&, Index, Index);
 
@@ -33,5 +33,5 @@ void translate_image_y(TensorMap3&, Index);
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

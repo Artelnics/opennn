@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A N S F O R M E R   D E C O D E R   C L A S S
@@ -304,7 +304,7 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
     const TensorView output_view = forward_propagation->get_outputs();
     const Index vocabulary_size = output_view.shape[2];
     const Index slice_offset = (step_index - 1) * vocabulary_size;
-    if (output_view.type == Type::BF16)
+    if (output_view.is_bf16())
     {
         device::copy_async(bf16_staging.data(),
                            output_view.as<bfloat16>() + slice_offset,
@@ -318,7 +318,7 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
             memcpy(&distribution(i), &bits, sizeof(float));
         }
     }
-    else if (output_view.type == Type::FP32)
+    else if (output_view.is_fp32())
     {
         device::copy_async(distribution.data(),
                            output_view.as<float>() + slice_offset,

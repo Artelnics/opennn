@@ -8,20 +8,23 @@
 
 #include "batch.h"
 #include "device_backend.h"
+#include "memory_debug.h"
 
 namespace opennn
 {
 
 Batch::Batch(const Index new_samples_number,
              const Dataset* new_dataset,
-             const Configuration::Resolved& new_config)
+             const Configuration::Resolved& new_config,
+             const bool new_prefetch_only)
 {
-    set(new_samples_number, new_dataset, new_config);
+    set(new_samples_number, new_dataset, new_config, new_prefetch_only);
 }
 
 void Batch::set(const Index new_samples_number,
                 const Dataset* new_dataset,
-                const Configuration::Resolved& new_config)
+                const Configuration::Resolved& new_config,
+                const bool new_prefetch_only)
 {
     throw_if(!new_dataset, "dataset is not set.");
 
@@ -30,6 +33,7 @@ void Batch::set(const Index new_samples_number,
     samples_number = new_samples_number;
     current_sample_count = new_samples_number;
     needs_device_copy = true;
+    prefetch_only = new_prefetch_only;
 
     dataset = new_dataset;
     config = new_config;
@@ -67,7 +71,16 @@ void Batch::set(const Index new_samples_number,
         slot.features_number = dataset_shape.size();
 
         const Index element_bytes = on_gpu ? device_elem_bytes : Index(sizeof(float));
-        slot.buffer.resize_bytes(slot.shape.size() * element_bytes, batch_device);
+        const Index device_bytes = slot.shape.size() * element_bytes;
+        // A prefetch-only GPU batch stages from its pinned-host buffer into a
+        // separate fixed compute batch, so its own device buffer is never read or
+        // written -- skip it. This is the dominant per-pool-slot device saving.
+        const Index allocated_device_bytes = (on_gpu && prefetch_only) ? Index(0) : device_bytes;
+        slot.buffer.resize_bytes(allocated_device_bytes, batch_device);
+        memory_debug::record("batch.device",
+                             format("Batch::{}.buffer", role),
+                             allocated_device_bytes,
+                             format("samples={}", samples_number));
 
         if (!on_gpu) return;
 
@@ -79,6 +92,10 @@ void Batch::set(const Index new_samples_number,
             slot.host = static_cast<float*>(
                 device::allocate_pinned_host(size * Index(sizeof(float))));
             slot.host_allocated_size = size;
+            memory_debug::record("batch.pinned_host",
+                                 format("Batch::{}.host", role),
+                                 size * Index(sizeof(float)),
+                                 format("samples={}", samples_number));
         }
     };
 
@@ -86,22 +103,31 @@ void Batch::set(const Index new_samples_number,
     setup_buffer("Target",  target,  Index(sizeof(float)));
     setup_buffer("Decoder", decoder, Index(sizeof(float)));
 
-    if (!decoder.shape.empty())
+    // A prefetch-only GPU batch has no device input/target buffer (it stages from
+    // pinned host), so these views -- only read in CPU-compute mode -- are skipped.
+    if (!decoder.shape.empty() && decoder.buffer.data)
         input_views_host_cache.emplace_back(decoder.buffer.as<float>(), decoder.shape, Type::FP32, Device::CPU);
 
-    if (!input.shape.empty())
+    if (!input.shape.empty() && input.buffer.data)
         input_views_host_cache.emplace_back(input.buffer.as<float>(), input.shape, Type::FP32, Device::CPU);
 
-    if (!target.shape.empty())
+    if (!target.shape.empty() && target.buffer.data)
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
-    fp32_staging.resize_bytes(input_is_bf16
+    const Index fp32_staging_bytes = input_is_bf16
         ? samples_number * input.features_number * Index(sizeof(float))
-        : Index(0),
-        Device::CUDA);
+        : Index(0);
+    fp32_staging.resize_bytes(fp32_staging_bytes, Device::CUDA);
+    memory_debug::record("batch.device", "Batch::fp32_staging", fp32_staging_bytes,
+                         format("samples={}", samples_number));
 
     if (on_gpu)
+    {
         gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
+        memory_debug::record("batch.device", "Batch::gather_indices_device",
+                             samples_number * Index(sizeof(int)),
+                             format("samples={}", samples_number));
+    }
 
     if (on_gpu && !input.shape.empty() && input.buffer.data)
     {

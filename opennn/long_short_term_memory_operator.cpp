@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   O P E R A T O R   S O U R C E
@@ -16,53 +16,57 @@
 #include "back_propagation.h"
 #include "profiler.h"
 
+#include <atomic>
+
 namespace opennn
 {
 
-namespace
-{
+// LSTM scalar fallback path. Off by default; set from code (no environment var).
+namespace { atomic<bool> lstm_scalar_flag{false}; }
+void set_lstm_scalar(bool enabled) { lstm_scalar_flag.store(enabled, std::memory_order_relaxed); }
+bool lstm_scalar_enabled() { return lstm_scalar_flag.load(std::memory_order_relaxed); }
 
-float lstm_activate(ActivationOp::Function function, float x)
+static float lstm_activate(ActivationFunction function, float x)
 {
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     switch (function)
     {
         case Identity: return x;
         case Sigmoid:  return 1.0f / (1.0f + exp(-x));
         case Tanh:     return tanh(x);
         case ReLU:     return max(0.0f, x);
-        case Softmax:  return x;
+        case Softmax:
+        case LeakyReLU: throw runtime_error("LongShortTermMemoryOperator: unsupported activation.");
     }
     return x;
 }
 
-float lstm_derivative_from_output(ActivationOp::Function function, float y)
+static float lstm_derivative_from_output(ActivationFunction function, float y)
 {
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     switch (function)
     {
         case Identity: return 1.0f;
         case Sigmoid:  return y * (1.0f - y);
         case Tanh:     return 1.0f - y * y;
         case ReLU:     return y > 0.0f ? 1.0f : 0.0f;
-        case Softmax:  return 1.0f;
+        case Softmax:
+        case LeakyReLU: throw runtime_error("LongShortTermMemoryOperator: unsupported activation.");
     }
     return 1.0f;
 }
 
-void zero_if_linked(const TensorView& view)
+static void zero_if_linked(const TensorView& view)
 {
     if (view.data) const_cast<TensorView&>(view).setZero();
 }
 
-}
 
-
-void LongShortTermMemoryOp::set(Index new_input_features,
+void LongShortTermMemoryOperator::set(Index new_input_features,
                                 Index new_output_features,
                                 Index new_time_steps,
-                                ActivationOp::Function new_activation_function,
-                                ActivationOp::Function new_recurrent_activation_function)
+                                ActivationFunction new_activation_function,
+                                ActivationFunction new_recurrent_activation_function)
 {
     input_features = new_input_features;
     output_features = new_output_features;
@@ -71,7 +75,7 @@ void LongShortTermMemoryOp::set(Index new_input_features,
     recurrent_activation_function = new_recurrent_activation_function;
 }
 
-vector<TensorSpec> LongShortTermMemoryOp::parameter_specs() const
+vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
 {
     if (output_features == 0)
         return {};
@@ -96,7 +100,7 @@ vector<TensorSpec> LongShortTermMemoryOp::parameter_specs() const
     };
 }
 
-void LongShortTermMemoryOp::link_parameters(span<const TensorView> views)
+void LongShortTermMemoryOperator::link_parameters(span<const TensorView> views)
 {
     if (views.size() < 12) return;
 
@@ -116,7 +120,7 @@ void LongShortTermMemoryOp::link_parameters(span<const TensorView> views)
     output_recurrent_weights = views[11];
 }
 
-void LongShortTermMemoryOp::link_gradients(span<const TensorView> views)
+void LongShortTermMemoryOperator::link_gradients(span<const TensorView> views)
 {
     if (views.size() < 12) return;
 
@@ -136,7 +140,7 @@ void LongShortTermMemoryOp::link_gradients(span<const TensorView> views)
     output_recurrent_weight_gradient = views[11];
 }
 
-void LongShortTermMemoryOp::set_parameters_random()
+void LongShortTermMemoryOperator::set_parameters_random()
 {
     if (forget_bias.data) forget_bias.fill(1.0f);
     zero_if_linked(input_bias);
@@ -160,7 +164,7 @@ void LongShortTermMemoryOp::set_parameters_random()
     }
 }
 
-void LongShortTermMemoryOp::set_parameters_glorot()
+void LongShortTermMemoryOperator::set_parameters_glorot()
 {
     if (forget_bias.data) forget_bias.fill(1.0f);
     zero_if_linked(input_bias);
@@ -186,11 +190,11 @@ void LongShortTermMemoryOp::set_parameters_glorot()
     }
 }
 
-void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
+void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    auto& forward_slots = fp.forward_slots[layer];
+    auto& forward_slots = forward_propagation.forward_slots[layer];
 
-    TensorView& input = get_input(fp, layer);
+    TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = forward_slots[OutputSlot];
     TensorView& forget_gate = forward_slots[ForgetGateSlot];
     TensorView& input_gate = forward_slots[InputGateSlot];
@@ -210,7 +214,7 @@ void LongShortTermMemoryOp::forward_propagate(ForwardPropagation& fp, size_t lay
           cell_state, hidden_state, cell_activation);
 }
 
-void LongShortTermMemoryOp::apply(const TensorView& input,
+void LongShortTermMemoryOperator::apply(const TensorView& input,
                                       TensorView& output,
                                       TensorView& forget_gate,
                                       TensorView& input_gate,
@@ -252,7 +256,7 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
-    static const bool lstm_scalar = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    const bool lstm_scalar = lstm_scalar_enabled();
     if (!lstm_scalar && H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
@@ -275,7 +279,7 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
         for (Index t = 0; t < T; ++t)
         {
             for (Index b = 0; b < batch_size; ++b)
-                std::memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
+                memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
 
             Zf.noalias() = step_in * Wf_m;  Zf.rowwise() += bf_m.transpose();
             Zi.noalias() = step_in * Wi_m;  Zi.rowwise() += bi_m.transpose();
@@ -317,7 +321,7 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
             }
 
             for (Index b = 0; b < batch_size; ++b)
-                std::memcpy(prev_h.data() + b * H, hidden + (b * T + t) * H, H * sizeof(float));
+                memcpy(prev_h.data() + b * H, hidden + (b * T + t) * H, H * sizeof(float));
         }
 
         if (!return_sequences)
@@ -391,12 +395,12 @@ void LongShortTermMemoryOp::apply(const TensorView& input,
     }
 }
 
-void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    auto& backward_slots = bp.backward_slots[layer];
+    auto& backward_slots = back_propagation.backward_slots[layer];
     if (backward_slots.size() <= OutputDeltaScratchSlot) return;
 
-    const auto& forward_slots = fp.forward_slots[layer];
+    const auto& forward_slots = forward_propagation.forward_slots[layer];
 
     TensorView& input_delta = backward_slots[InputDeltaSlot];
     TensorView& hidden_delta = backward_slots[HiddenDeltaScratchSlot];
@@ -406,8 +410,8 @@ void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagati
     TensorView& candidate_delta = backward_slots[CandidateDeltaScratchSlot];
     TensorView& output_gate_delta = backward_slots[OutputDeltaScratchSlot];
 
-    const TensorView& input = get_input(fp, layer);
-    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
     const TensorView& forget_gate = forward_slots[ForgetGateSlot];
     const TensorView& input_gate = forward_slots[InputGateSlot];
     const TensorView& candidate_gate = forward_slots[CandidateGateSlot];
@@ -428,7 +432,7 @@ void LongShortTermMemoryOp::back_propagate(ForwardPropagation& fp, BackPropagati
                 hidden_state, cell_activation);
 }
 
-void LongShortTermMemoryOp::apply_delta(const TensorView& input,
+void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                                         const TensorView& output_delta,
                                         TensorView& input_delta,
                                         TensorView& hidden_delta_scratch,
@@ -503,7 +507,7 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
     float* gUg = candidate_recurrent_weight_gradient.as<float>();
     float* gUo = output_recurrent_weight_gradient.as<float>();
 
-    static const bool lstm_scalar_bwd = (std::getenv("OPENNN_LSTM_SCALAR") != nullptr);
+    const bool lstm_scalar_bwd = lstm_scalar_enabled();
     if (!lstm_scalar_bwd && H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
@@ -538,13 +542,13 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
         for (Index t = T; t-- > 0;)
         {
             for (Index b = 0; b < batch_size; ++b)
-                std::memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
+                memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
 
             if (t > 0)
                 for (Index b = 0; b < batch_size; ++b)
                 {
-                    std::memcpy(prev_h.data()   + b * H, hidden + (b * T + t - 1) * H, H * sizeof(float));
-                    std::memcpy(c_prev_m.data() + b * H, cells  + (b * T + t - 1) * H, H * sizeof(float));
+                    memcpy(prev_h.data()   + b * H, hidden + (b * T + t - 1) * H, H * sizeof(float));
+                    memcpy(c_prev_m.data() + b * H, cells  + (b * T + t - 1) * H, H * sizeof(float));
                 }
 
             if (return_sequences)
@@ -594,7 +598,7 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
                 DX.noalias() += DG * Wg_m.transpose();
                 DX.noalias() += DO * Wo_m.transpose();
                 for (Index b = 0; b < batch_size; ++b)
-                    std::memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
+                    memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
             }
 
             if (t > 0)
@@ -786,14 +790,14 @@ void LongShortTermMemoryOp::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
+void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
 {
-    using F_ = ActivationOp::Function;
+    using F_ = ActivationFunction;
     if (activation_function != F_::Tanh
         || recurrent_activation_function != F_::Sigmoid)
     {
         throw runtime_error(
-            "LongShortTermMemoryOp::apply_gpu: cuDNN CUDNN_LSTM only supports "
+            "LongShortTermMemoryOperator::apply_gpu: cuDNN CUDNN_LSTM only supports "
             "Tanh cell activation + Sigmoid gate activation. "
             "Reconfigure the layer or fall back to CPU.");
     }
@@ -919,14 +923,6 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
         CHECK_CUDNN(cudnnBuildRNNDynamic(
             Backend::get_cudnn_handle(), rnn_desc, int(batch_size)));
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-        std::cerr << "[lstm-gpu] cudnn buffers: weight=" << weight_space_buf.bytes
-                  << " work=" << workspace_buf.bytes
-                  << " reserve=" << reserve_space_buf.bytes
-                  << " y=" << y_buf.bytes
-                  << " B=" << batch_size << " T=" << T
-                  << " F=" << F << " H=" << H << "\n";
-#endif
     }
 
     cached_batch_size      = batch_size;
@@ -935,7 +931,7 @@ void LongShortTermMemoryOp::ensure_cudnn_setup_(Index batch_size) const
     cached_output_features = H;
 }
 
-void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
+void LongShortTermMemoryOperator::pack_weights_to_cudnn_() const
 {
     if (weight_space_buf.data && weight_space_buf.bytes > 0)
         device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
@@ -1003,7 +999,7 @@ void LongShortTermMemoryOp::pack_weights_to_cudnn_() const
     }
 }
 
-void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
+void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_() const
 {
     const TensorView* gW[8] = {
         &input_weight_gradient,
@@ -1061,72 +1057,21 @@ void LongShortTermMemoryOp::unpack_gradients_from_cudnn_() const
     }
 }
 
-void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
+void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
                                       bool return_seq) const
 {
-    if (!input.data || output_features == 0 || time_steps == 0) return;
-
     const Index batch_size = input.shape[0];
-    if (batch_size == 0) return;
+    if (!input.data || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
     device::synchronize(Backend::get_compute_stream());
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    {
-        static bool printed_version = false;
-        if (!printed_version)
-        {
-            std::cerr << "[lstm-gpu] cudnnGetVersion()=" << cudnnGetVersion()
-                      << " cudnnGetCudartVersion()=" << cudnnGetCudartVersion() << "\n";
-            printed_version = true;
-        }
-    }
-#endif
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    auto log = [&](const char* tag) {
-        device::synchronize(Backend::get_compute_stream());
-        std::cerr << "[lstm-gpu] " << tag << " B=" << batch_size
-                  << " T=" << time_steps << " F=" << input_features
-                  << " H=" << output_features << " ret_seq=" << return_seq << "\n";
-    };
-    log("enter apply_gpu");
-#endif
 
     ensure_cudnn_setup_(batch_size);
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after ensure_cudnn_setup_");
-#endif
 
     pack_weights_to_cudnn_();
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after pack_weights_to_cudnn_");
-#endif
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    auto where = [](const void* p) -> const char* {
-        if (!p) return "NULL";
-        cudaPointerAttributes a{};
-        if (cudaPointerGetAttributes(&a, p) != cudaSuccess) {
-            cudaGetLastError();
-            return "UNKNOWN";
-        }
-        switch (a.type) {
-            case cudaMemoryTypeHost:      return "HOST";
-            case cudaMemoryTypeDevice:    return "DEVICE";
-            case cudaMemoryTypeManaged:   return "MANAGED";
-            case cudaMemoryTypeUnregistered: return "UNREG";
-        }
-        return "?";
-    };
-    std::cerr << "[lstm-gpu] pointer kinds  input=" << where(input.data)
-              << "  weight=" << where(weight_space_buf.data)
-              << "  y=" << where(y_buf.data)
-              << "  workspace=" << where(workspace_buf.data)
-              << "  reserve=" << where(reserve_space_buf.data)
-              << "  seqLenDev=" << where(seq_lengths_dev_buf.data) << "\n";
-#endif
 
     CHECK_CUDNN(cudnnRNNForward(
         Backend::get_cudnn_handle(),
@@ -1140,9 +1085,6 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after cudnnRNNForward");
-#endif
 
     const Index H = output_features;
     const Index T = time_steps;
@@ -1163,7 +1105,7 @@ void LongShortTermMemoryOp::apply_gpu(const TensorView& input,
     }
 }
 
-void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
+void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
                                             const TensorView& output_delta,
                                             TensorView& input_delta,
                                             bool return_seq) const
@@ -1187,21 +1129,8 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
     zero_if_linked(candidate_recurrent_weight_gradient);
     zero_if_linked(output_recurrent_weight_gradient);
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    auto log = [&](const char* tag) {
-        device::synchronize(Backend::get_compute_stream());
-        std::cerr << "[lstm-gpu-bwd] " << tag
-                  << " B=" << batch_size << " T=" << time_steps
-                  << " F=" << input_features << " H=" << output_features
-                  << " ret_seq=" << return_seq << "\n";
-    };
-    log("enter apply_delta_gpu");
-#endif
 
     ensure_cudnn_setup_(batch_size);
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after ensure_cudnn_setup_");
-#endif
 
     const Index H = output_features;
     const Index T = time_steps;
@@ -1223,9 +1152,6 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
             static_cast<float*>(dy_buf.data));
     }
 
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("before cudnnRNNBackwardData_v8");
-#endif
 
     // cuDNN always writes dx; when the previous layer needs no gradient
     // (input_delta unlinked) give it a scratch sink sized (B, T, F).
@@ -1247,9 +1173,6 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after cudnnRNNBackwardData_v8");
-#endif
 
     device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
                            Backend::get_compute_stream());
@@ -1265,26 +1188,20 @@ void LongShortTermMemoryOp::apply_delta_gpu(const TensorView& input,
         size_t(dweight_space_buf.bytes), dweight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after cudnnRNNBackwardWeights_v8");
-#endif
 
     unpack_gradients_from_cudnn_();
-#ifdef OPENNN_LSTM_GPU_DEBUG
-    log("after unpack_gradients_from_cudnn_");
-#endif
 }
 
 #else
 
-void LongShortTermMemoryOp::apply_gpu(const TensorView&, TensorView&, bool) const
+void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool) const
 {
-    throw runtime_error("LongShortTermMemoryOp::apply_gpu: CUDA support not compiled in.");
+    throw runtime_error("LongShortTermMemoryOperator::apply_gpu: CUDA support not compiled in.");
 }
 
-void LongShortTermMemoryOp::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const
+void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const
 {
-    throw runtime_error("LongShortTermMemoryOp::apply_delta_gpu: CUDA support not compiled in.");
+    throw runtime_error("LongShortTermMemoryOperator::apply_delta_gpu: CUDA support not compiled in.");
 }
 
 #endif  // OPENNN_HAS_CUDA

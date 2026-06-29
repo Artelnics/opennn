@@ -19,6 +19,9 @@ Use these benchmark classes in new artifacts:
 - `training_throughput_with_quality`: fixed-epoch or fixed-step training with a
   reported quality metric; useful for engineering, not final headline training
   evidence until a quality target exists.
+- `training_capacity`: largest batch that completes forward, backward, and the
+  optimizer update under a stated physical VRAM or RAM cap. The quality rule
+  should at least gate finite loss after the training step.
 - `inference_offline`: batch throughput inference.
 - `inference_single_stream`: latency-oriented inference.
 - `footprint_or_packaging`: size, startup, dependencies, source LOC, or export.
@@ -93,7 +96,7 @@ Each result JSON should contain:
     }
   },
   "commands": {
-    "opennn": "OPENNN_CUDA_GRAPH=1 OPENNN_GPU_RESIDENT_DATA=1 opennn_resnet50_speed",
+    "opennn": "opennn_resnet50_speed (CUDA graph + GPU-resident data enabled in code)",
     "pytorch_compile": "python pt_compile_probe.py",
     "pytorch_eager": "python pytorch_resnet50_speed.py"
   },

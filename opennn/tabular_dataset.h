@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T A B U L A R   D A T A S E T   C L A S S   H E A D E R
@@ -128,7 +128,7 @@ public:
     void set_binary_variables();
 
     void set_data_random();
-    void set_data_integer(const Index vocabulary_size);
+    void set_data_integer(const Index);
     void set_data_rosenbrock();
     void set_data_binary_classification();
 
@@ -140,19 +140,19 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool is_training,
+                     bool,
                      int contiguous = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int contiguous = -1) const override;
 
 protected:
@@ -190,5 +190,5 @@ protected:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

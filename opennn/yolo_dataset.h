@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   Y O L O   D A T A S E T   C L A S S   H E A D E R
@@ -9,11 +9,14 @@
 #pragma once
 
 #include <atomic>
+#include <cstdio>
 
 #include "image_dataset.h"
 
 namespace opennn
 {
+
+class NeuralNetwork;
 
 struct YoloDetection
 {
@@ -25,14 +28,14 @@ struct YoloDetection
     Index class_id = 0;
 };
 
-vector<YoloDetection> decode_yolo_detections(const float* nms_output,
-                                             Index max_boxes,
-                                             Index original_height,
-                                             Index original_width,
-                                             Index network_height,
-                                             Index network_width);
+vector<YoloDetection> decode_yolo_detections(const float*,
+                                             Index,
+                                             Index,
+                                             Index,
+                                             Index,
+                                             Index);
 
-// Single Detection head's output, post-DetectionOp (x/y sigmoid, w/h = anchor*exp,
+// Single Detection head's output, post-DetectionOperator (x/y sigmoid, w/h = anchor*exp,
 // objectness sigmoid, class probs sigmoid/softmax). Used as input to cross-scale NMS.
 struct YoloFpnHead
 {
@@ -46,11 +49,11 @@ struct YoloFpnHead
 // head's already-decoded output, merges them in normalized image coords,
 // runs unified class-aware greedy NMS, then letterbox-unwarps to the original
 // image size. Single-sample (no batch dimension).
-vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& heads,
-                                                 Index original_height,
-                                                 Index original_width,
-                                                 Index network_height,
-                                                 Index network_width,
+vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
+                                                 Index,
+                                                 Index,
+                                                 Index,
+                                                 Index,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
@@ -69,8 +72,8 @@ public:
 
     YoloDataset() = default;
 
-    YoloDataset(const filesystem::path& images_dir,
-                const filesystem::path& labels_dir,
+    YoloDataset(const filesystem::path&,
+                const filesystem::path&,
                 const Shape& input_shape = {416, 416, 3},
                 Index grid_size = 13,
                 Index boxes_per_cell = 5,
@@ -88,11 +91,11 @@ public:
 
     bool is_multi_scale() const { return !head_grid_sizes.empty(); }
     Index get_boxes_per_head() const { return boxes_per_head; }
-    void set_multi_scale_heads(const vector<Index>& grid_sizes,
-                               const vector<vector<array<float, 2>>>& per_head_anchors);
+    void set_multi_scale_heads(const vector<Index>&,
+                               const vector<vector<array<float, 2>>>&);
 
-    void set(const filesystem::path& images_dir,
-             const filesystem::path& labels_dir,
+    void set(const filesystem::path&,
+             const filesystem::path&,
              const Shape& input_shape = {416, 416, 3},
              Index grid_size = 13,
              Index boxes_per_cell = 5,
@@ -106,13 +109,13 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool is_training,
+                     bool,
                      int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool is_training,
+                      bool,
                       int contiguous = -1) const override;
 
     void augment_inputs(float*, Index) const override {}
@@ -125,13 +128,25 @@ public:
         float hue = 0.1f;
         bool flip = true;
         bool enabled = true;
+        bool mosaic = false;
     };
 
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
 
-    static Index convert_voc_to_yolo(const filesystem::path& voc_root,
-                                     const string& image_set,
-                                     const filesystem::path& output_labels_dir);
+    // class_filter: if non-empty, only convert objects whose class name is in the list
+    // and remap class IDs to 0-indexed within the filter (writes a custom .names file).
+    static Index convert_voc_to_yolo(const filesystem::path&,
+                                     const string&,
+                                     const filesystem::path&,
+                                     const vector<string>& class_filter = {});
+
+    // Load the first n_backbone_convs convolutional layers of network from a
+    // Darknet binary weights file (e.g. yolov3-tiny.weights).  The file header
+    // (20 bytes: 3×int32 + 1×int64) is consumed before walking layers.
+    // Returns the number of conv layers actually loaded.
+    static Index load_darknet_backbone(NeuralNetwork&,
+                                       const filesystem::path&,
+                                       Index);
 
 private:
 
@@ -171,11 +186,11 @@ private:
     vector<vector<array<float, 2>>> head_anchors;
     Index boxes_per_head = 0;
 
-    void open_or_build_cache(const vector<array<float, 2>>& requested_anchors);
-    bool try_open_cache(const vector<array<float, 2>>& requested_anchors);
-    void build_cache(const vector<array<float, 2>>& requested_anchors);
-    void setup_metadata(Index new_samples_number);
-    void read_sample_boxes(Index sample_index, vector<Box>& out) const;
+    void open_or_build_cache(const vector<array<float, 2>>&);
+    bool try_open_cache(const vector<array<float, 2>>&);
+    void build_cache(const vector<array<float, 2>>&);
+    void setup_metadata(Index);
+    void read_sample_boxes(Index, vector<Box>&) const;
     void load_images_to_ram() const;
     void load_targets_to_ram() const;
 
@@ -186,5 +201,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

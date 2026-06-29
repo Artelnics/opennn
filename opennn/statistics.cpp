@@ -309,7 +309,7 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
 
-    if (data.size() == 0 || indices.size() == 0)
+    if (data.size() == 0 || indices.empty())
         return box_plot;
 
     const VectorR quartiles = opennn::quartiles(data, indices);

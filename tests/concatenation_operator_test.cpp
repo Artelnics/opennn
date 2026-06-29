@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "../opennn/tensor_types.h"
 #include "../opennn/concatenation_operator.h"
 #include "../opennn/concatenation_layer.h"
@@ -10,10 +10,10 @@
 using namespace opennn;
 
 
-static ConcatenationOp make_operator(Index height, Index width, const vector<Index>& per_input_channels)
+static ConcatenationOperator make_operator(Index, Index, const vector<Index>& per_input_channels)
 {
-    ConcatenationOp op;
-    op.set(height, width, per_input_channels);
+    ConcatenationOperator op;
+    op.input_channels = per_input_channels;
     op.input_slots = {0};
     op.output_slots = {1};
     op.output_delta_slots = {0};
@@ -23,35 +23,18 @@ static ConcatenationOp make_operator(Index height, Index width, const vector<Ind
 }
 
 
-TEST(ConcatenationOperatorTest, SetStoresGeometry)
+TEST(ConcatenationOperatoreratorTest, SetStoresGeometry)
 {
-    ConcatenationOp op;
-    op.set(4, 5, {2, 3});
+    ConcatenationOperator op;
+    op.input_channels = {2, 3};
 
-    EXPECT_EQ(op.height, 4);
-    EXPECT_EQ(op.width, 5);
     ASSERT_EQ(op.input_channels.size(), size_t(2));
     EXPECT_EQ(op.input_channels[0], 2);
     EXPECT_EQ(op.input_channels[1], 3);
 }
 
 
-TEST(ConcatenationOperatorTest, SetRejectsEmptyInputs)
-{
-    ConcatenationOp op;
-    EXPECT_ANY_THROW(op.set(2, 2, {}));
-}
-
-
-TEST(ConcatenationOperatorTest, SetRejectsNonPositiveChannels)
-{
-    ConcatenationOp op;
-    EXPECT_ANY_THROW(op.set(2, 2, {2, 0}));
-    EXPECT_ANY_THROW(op.set(2, 2, {-1}));
-}
-
-
-TEST(ConcatenationOperatorTest, ForwardConcatenatesChannels)
+TEST(ConcatenationOperatoreratorTest, ForwardConcatenatesChannels)
 {
     const Index batch_size = 2;
     const Index height = 1;
@@ -59,7 +42,7 @@ TEST(ConcatenationOperatorTest, ForwardConcatenatesChannels)
     const vector<Index> per_input_channels = {2, 3};
     const Index total_channels = 5;
 
-    ConcatenationOp op = make_operator(height, width, per_input_channels);
+    ConcatenationOperator op = make_operator(height, width, per_input_channels);
 
     Tensor4 input_a(batch_size, height, width, 2);
     Tensor4 input_b(batch_size, height, width, 3);
@@ -98,7 +81,7 @@ TEST(ConcatenationOperatorTest, ForwardConcatenatesChannels)
 }
 
 
-TEST(ConcatenationOperatorTest, ForwardSpatialLayout)
+TEST(ConcatenationOperatoreratorTest, ForwardSpatialLayout)
 {
     const Index batch_size = 1;
     const Index height = 2;
@@ -106,7 +89,7 @@ TEST(ConcatenationOperatorTest, ForwardSpatialLayout)
     const vector<Index> per_input_channels = {1, 1};
     const Index total_channels = 2;
 
-    ConcatenationOp op = make_operator(height, width, per_input_channels);
+    ConcatenationOperator op = make_operator(height, width, per_input_channels);
 
     Tensor4 input_a(batch_size, height, width, 1);
     Tensor4 input_b(batch_size, height, width, 1);
@@ -139,7 +122,7 @@ TEST(ConcatenationOperatorTest, ForwardSpatialLayout)
 }
 
 
-TEST(ConcatenationOperatorTest, BackwardSplitsDelta)
+TEST(ConcatenationOperatoreratorTest, BackwardSplitsDelta)
 {
     const Index batch_size = 2;
     const Index height = 1;
@@ -147,7 +130,7 @@ TEST(ConcatenationOperatorTest, BackwardSplitsDelta)
     const vector<Index> per_input_channels = {2, 3};
     const Index total_channels = 5;
 
-    ConcatenationOp op = make_operator(height, width, per_input_channels);
+    ConcatenationOperator op = make_operator(height, width, per_input_channels);
 
     Tensor4 output_delta(batch_size, height, width, total_channels);
     for (Index i = 0; i < output_delta.size(); ++i) output_delta.data()[i] = float(i + 1);
@@ -189,7 +172,7 @@ TEST(ConcatenationOperatorTest, BackwardSplitsDelta)
 }
 
 
-TEST(ConcatenationOperatorTest, BackwardSkipsEmptyInputDelta)
+TEST(ConcatenationOperatoreratorTest, BackwardSkipsEmptyInputDelta)
 {
     const Index batch_size = 1;
     const Index height = 1;
@@ -197,7 +180,7 @@ TEST(ConcatenationOperatorTest, BackwardSkipsEmptyInputDelta)
     const vector<Index> per_input_channels = {2, 2};
     const Index total_channels = 4;
 
-    ConcatenationOp op = make_operator(height, width, per_input_channels);
+    ConcatenationOperator op = make_operator(height, width, per_input_channels);
 
     Tensor4 output_delta(batch_size, height, width, total_channels);
     for (Index i = 0; i < output_delta.size(); ++i) output_delta.data()[i] = float(i + 1);

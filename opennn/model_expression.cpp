@@ -15,9 +15,7 @@
 namespace opennn
 {
 
-namespace {
-
-constexpr const char* c_header =
+static constexpr const char* c_header =
     "// Artificial Intelligence Techniques SL\n"
     "// artelnics@artelnics.com\n"
     "//\n"
@@ -25,7 +23,7 @@ constexpr const char* c_header =
     "//\n"
     "// Input names:";
 
-constexpr const char* php_header =
+static constexpr const char* php_header =
     "<!DOCTYPE html> \n"
     "<!--\n"
     "Artificial Intelligence Techniques SL\n"
@@ -33,7 +31,7 @@ constexpr const char* php_header =
     "Model exported to PHP API. Pass values via URL (e.g. ?num0=...&num1=...).\n\n"
     "\tInput Names: ";
 
-constexpr const char* php_subheader = R"HTML(
+static constexpr const char* php_subheader = R"HTML(
 -->
 
 
@@ -70,14 +68,14 @@ constexpr const char* php_subheader = R"HTML(
 
 )HTML";
 
-constexpr const char* javascript_header =
+static constexpr const char* javascript_header =
     "<!--\n"
     "Artificial Intelligence Techniques SL\n"
     "artelnics@artelnics.com\n\n"
     "Model exported to JavaScript. Form sliders set inputs; click the button to run neuralNetwork().\n\n"
     "Input Names:";
 
-constexpr const char* javascript_subheader = R"HTML(-->
+static constexpr const char* javascript_subheader = R"HTML(-->
 
 <!DOCTYPE HTML>
 <html lang="en">
@@ -235,19 +233,17 @@ color: #333;
 <table class="form-table">
 )HTML";
 
-constexpr const char* python_header =
+static constexpr const char* python_header =
     "''' \n"
     "Artificial Intelligence Techniques SL\n"
     "artelnics@artelnics.com\n\n"
     "Model exported to Python. Use NeuralNetwork().calculate_outputs([...]).\n\n"
     "Input Names: \n";
 
-constexpr const char* python_subheader =
+static constexpr const char* python_subheader =
     "\nFor batch prediction (input must be np.ndarray):\n"
     "\tnn.calculate_batch_output(np.array([[1, 2], [4, 5]]))\n"
     "''' \n";
-
-}
 
 ModelExpression::ModelExpression(const NeuralNetwork* neural_network) : neural_network(neural_network) {}
 
@@ -336,7 +332,7 @@ string ModelExpression::process_body_line(const string& line, const vector<strin
     string processed = line;
     replace_all_appearances(processed, "[", "_");
     replace_all_appearances(processed, "]", "_");
-    const size_t count = std::min(input_names.size(), fixed_input_names.size());
+    const size_t count = min(input_names.size(), fixed_input_names.size());
     for (size_t i = 0; i < count; ++i)
     {
         const string& raw = input_names[i];

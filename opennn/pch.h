@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #if defined(__INTELLISENSE__) && !defined(OPENNN_HAS_CUDA)
 #define OPENNN_HAS_CUDA
@@ -57,6 +57,7 @@
 #include <omp.h>
 
 #include <Eigen/Core>
+#include <Eigen/Cholesky>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
@@ -110,19 +111,9 @@ enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
 enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 132 };
 
 enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 14 };
-enum cudnnActivationMode_t           { CUDNN_ACTIVATION_IDENTITY = 0, CUDNN_ACTIVATION_SIGMOID = 1, CUDNN_ACTIVATION_RELU = 2, CUDNN_ACTIVATION_TANH = 3, CUDNN_ACTIVATION_ELU = 4 };
-enum cudnnPoolingMode_t              { CUDNN_POOLING_MAX = 0 };
-enum cudnnBatchNormMode_t            { CUDNN_BATCHNORM_PER_ACTIVATION = 0 };
-enum cudnnConvolutionFwdAlgo_t       { CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM = 0 };
-enum cudnnConvolutionBwdDataAlgo_t   { CUDNN_CONVOLUTION_BWD_DATA_ALGO_0 = 0 };
-enum cudnnConvolutionBwdFilterAlgo_t { CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0 = 0 };
 
 struct cudnnTensorStruct {};
 using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
-using cudnnFilterDescriptor_t      = void*;
-using cudnnConvolutionDescriptor_t = void*;
-using cudnnPoolingDescriptor_t     = void*;
-using cudnnActivationDescriptor_t  = void*;
 using cudnnDropoutDescriptor_t     = void*;
 using cudnnOpTensorDescriptor_t    = void*;
 using cudnnRNNDescriptor_t         = void*;
@@ -131,10 +122,11 @@ using cudnnRNNDataDescriptor_t     = void*;
 #endif
 
 using namespace std;
-using namespace Eigen;
+using Eigen::Index;
 
 namespace opennn {
 
+using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
 
 inline void throw_if(bool condition, const string& message,
@@ -167,31 +159,31 @@ ostream& operator<<(ostream& os, const vector<T>& vec)
 
 constexpr int Layout = Eigen::RowMajor;
 
-using MatrixR = Matrix<float, Dynamic, Dynamic, Layout>;
-using MatrixI = Matrix<Index, Dynamic, Dynamic, Layout>;
-using MatrixB = Matrix<bool, Dynamic, Dynamic, Layout>;
+using MatrixR = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Layout>;
+using MatrixI = Eigen::Matrix<Index, Eigen::Dynamic, Eigen::Dynamic, Layout>;
+using MatrixB = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic, Layout>;
 
-using VectorR = Matrix<float, Dynamic, 1>;
-using VectorI = Matrix<Index, Dynamic, 1>;
-using VectorB = Matrix<bool, Dynamic, 1>;
+using VectorR = Eigen::Matrix<float, Eigen::Dynamic, 1>;
+using VectorI = Eigen::Matrix<Index, Eigen::Dynamic, 1>;
+using VectorB = Eigen::Matrix<bool, Eigen::Dynamic, 1>;
 
-using VectorMap = Map<VectorR, AlignedMax>;
-using MatrixMap = Map<MatrixR, Layout | AlignedMax>;
+using VectorMap = Eigen::Map<VectorR, Eigen::AlignedMax>;
+using MatrixMap = Eigen::Map<MatrixR, Eigen::AlignedMax>;
 
-using Tensor0 = Tensor<float, 0, Layout | AlignedMax>;
-using Tensor2 = Tensor<float, 2, Layout | AlignedMax>;
-using Tensor3 = Tensor<float, 3, Layout | AlignedMax>;
-using Tensor4 = Tensor<float, 4, Layout | AlignedMax>;
-
-template <int Rank>
-using TensorR = Tensor<float, Rank, Layout | AlignedMax>;
-
-using TensorMap2 = TensorMap<Tensor<float, 2, Layout | AlignedMax>, AlignedMax>;
-using TensorMap3 = TensorMap<Tensor<float, 3, Layout | AlignedMax>, AlignedMax>;
-using TensorMap4 = TensorMap<Tensor<float, 4, Layout | AlignedMax>, AlignedMax>;
+using Tensor0 = Eigen::Tensor<float, 0, Layout | Eigen::AlignedMax>;
+using Tensor2 = Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>;
+using Tensor3 = Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>;
+using Tensor4 = Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>;
 
 template <int Rank>
-using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMax>;
+using TensorR = Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>;
+
+using TensorMap2 = Eigen::TensorMap<Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
+using TensorMap3 = Eigen::TensorMap<Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
+using TensorMap4 = Eigen::TensorMap<Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
+
+template <int Rank>
+using TensorMapR = Eigen::TensorMap<Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -203,5 +195,5 @@ using TensorMapR = TensorMap<Tensor<float, Rank, Layout | AlignedMax>, AlignedMa
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

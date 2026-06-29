@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   S O U R C E
@@ -9,11 +9,138 @@
 #include "tensor_operations.h"
 #include "cpu_math_backend.h"
 #include "device_backend.h"
+#include "operator.h"
 #include "random_utilities.h"
 #include "profiler.h"
 
+#include <atomic>
+
+#ifdef EIGEN_USE_MKL_ALL
+#include <mkl_cblas.h>
+#include <mkl_vml.h>
+#endif
+
+static atomic<bool> mkl_fast_vml_flag{false};
+
 namespace opennn
 {
+
+void set_mkl_fast_vml(bool e) { mkl_fast_vml_flag.store(e, memory_order_relaxed); }
+static bool mkl_fast_vml_enabled() { return mkl_fast_vml_flag.load(memory_order_relaxed); }
+
+#ifdef EIGEN_USE_MKL_ALL
+
+static void add_bias(TensorView& output, const TensorView& bias, Index rows, Index columns, bool fuse_relu)
+{
+    float* y = output.as<float>();
+    const float* b = bias.as<float>();
+
+    if (!fuse_relu && columns > 1)
+    {
+        static thread_local vector<float> ones;
+        if (ssize(ones) < rows) ones.assign(size_t(rows), 1.0f);
+        cblas_sger(CblasRowMajor,
+                   to_int(rows),
+                   to_int(columns),
+                   1.0f,
+                   ones.data(),
+                   1,
+                   b,
+                   1,
+                   y,
+                   to_int(columns));
+        return;
+    }
+
+    const bool parallel_bias = rows * columns >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel_bias)
+    for (Index i = 0; i < rows; ++i)
+    {
+        float* row = y + i * columns;
+        for (Index j = 0; j < columns; ++j)
+        {
+            const float value = row[j] + b[j];
+            row[j] = fuse_relu ? max(value, 0.0f) : value;
+        }
+    }
+}
+
+static bool try_activation_forward(TensorView& output, ActivationFunction function)
+{
+    if (function != ActivationFunction::Tanh || !output.is_fp32()) return false;
+
+    float* values = output.as<float>();
+    const int size = to_int(output.size());
+
+    if (mkl_fast_vml_enabled())
+        vmsTanh(size, values, values, VML_EP);
+    else
+        vsTanh(size, values, values);
+
+    return true;
+}
+
+static bool try_linear_forward(const TensorView& input,
+                                const TensorView& weights,
+                                const TensorView& bias,
+                                TensorView& output,
+                                bool fuse_relu)
+{
+    if (!input.is_fp32()
+        || !weights.is_fp32()
+        || !bias.is_fp32()
+        || !output.is_fp32()
+        || input.shape.rank == 0
+        || weights.shape.rank != 2
+        || bias.shape.rank != 1)
+        return false;
+
+    const Index input_columns = input.shape.back();
+    const Index output_columns = weights.shape.back();
+
+    if (input_columns <= 0
+        || output_columns <= 0
+        || input.size() % input_columns != 0
+        || weights.shape[0] != input_columns
+        || bias.size() != output_columns)
+        return false;
+
+    const Index rows = input.size() / input_columns;
+
+    if (rows <= 0 || output.size() != rows * output_columns)
+        return false;
+
+    const int m = to_int(rows);
+    const int n = to_int(output_columns);
+    const int k = to_int(input_columns);
+
+    cblas_sgemm(CblasRowMajor,
+                CblasNoTrans,
+                CblasNoTrans,
+                m,
+                n,
+                k,
+                1.0f,
+                input.as<float>(),
+                k,
+                weights.as<float>(),
+                n,
+                0.0f,
+                output.as<float>(),
+                n);
+
+    add_bias(output, bias, rows, output_columns, fuse_relu);
+    return true;
+}
+
+#else
+
+static bool try_activation_forward(TensorView&, ActivationFunction)   { return false; }
+static bool try_linear_forward(const TensorView&, const TensorView&,
+                               const TensorView&, TensorView&, bool) { return false; }
+
+#endif
 
 const EnumMap<ActivationFunction>& activation_function_map()
 {
@@ -36,7 +163,7 @@ const string& activation_function_to_string(ActivationFunction function)
 
 ActivationFunction activation_function_from_string(const string& name)
 {
-    return activation_function_map().from_string(name, ActivationFunction::Identity);
+    return activation_function_map().from_string(name);
 }
 
 #define OPENNN_GPU_OPS(X) \
@@ -53,14 +180,16 @@ ActivationFunction activation_function_from_string(const string& name)
     X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
-    X(layer_norm_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
-    X(layer_norm_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
+    X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
+    X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
     X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, Index, Index, bool)) \
     X(max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool)) \
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
+    X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
+    X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
     X(merge_heads_gpu, (const TensorView&, TensorView&))
 
@@ -313,7 +442,7 @@ void softmax(TensorView& output)
 
 static void activation_forward_cpu(TensorView& output, ActivationFunction function)
 {
-    if (cpu_math::try_activation_forward(output, function)) return;
+    if (try_activation_forward(output, function)) return;
 
     auto a = output.as_vector().array();
 
@@ -360,7 +489,7 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         return;
     case LeakyReLU:
         // Negative-side output is slope * pre-activation, so sign(y) == sign(x)
-        // for any positive slope — we can recover the gate from y alone.
+        // for any positive slope â€” we can recover the gate from y alone.
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
     }
@@ -432,7 +561,7 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 {
     const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
 
-    if (cpu_math::try_linear_forward(input, weights, bias, output, fuse_relu)) return;
+    if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
     output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
                                       + bias.as_vector().transpose();
@@ -448,7 +577,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
     weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
     bias_gradient.as_vector().noalias()   = output_delta.as_flat_matrix().colwise().sum();
 
-    if (!input_delta.data || input_delta.size() == 0) return;
+    if (!input_delta.data || input_delta.empty()) return;
 
     auto input_delta_mat = input_delta.as_flat_matrix();
     const auto product   = output_delta.as_flat_matrix() * weights.as_matrix().transpose();
@@ -478,7 +607,7 @@ void linear_backward(const TensorView& output_delta, const TensorView& input, co
                         input_delta, accumulate_input_delta);
 }
 
-static void layer_norm_forward_cpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+static void layer_normalization_forward_cpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& output)
 {
@@ -525,7 +654,7 @@ static void layer_norm_forward_cpu(const TensorView& input, const TensorView& ga
     }
 }
 
-static void layer_norm_backward_cpu(const TensorView& output_delta,
+static void layer_normalization_backward_cpu(const TensorView& output_delta,
                              const TensorView& standard_deviations,
                              const TensorView& normalized,
                              const TensorView& gamma,
@@ -576,17 +705,17 @@ static void layer_norm_backward_cpu(const TensorView& output_delta,
     }
 }
 
-void layer_norm_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+void layer_normalization_forward(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                         TensorView& means, TensorView& standard_deviations,
                         TensorView& normalized, TensorView& output)
 {
-    if (input.is_cuda()) { layer_norm_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; }
-    layer_norm_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
+    if (input.is_cuda()) { layer_normalization_forward_gpu(input, gamma, beta, means, standard_deviations, output); return; }
+    layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
 // Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
 // (the residual-stream value the backward needs) and LayerNorm(sum) to output.
-void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
+void layer_normalization_add_forward(const TensorView& input, const TensorView& residual,
                             const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
                             TensorView& normalized, TensorView& sum, TensorView& output)
@@ -609,10 +738,10 @@ void layer_norm_add_forward(const TensorView& input, const TensorView& residual,
 #endif
     // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
-    layer_norm_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
+    layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
 }
 
-void layer_norm_backward(const TensorView& input, const TensorView& output_delta,
+void layer_normalization_backward(const TensorView& input, const TensorView& output_delta,
                          const TensorView& means, const TensorView& standard_deviations,
                          const TensorView& normalized, const TensorView& gamma,
                          const TensorView& gamma_gradient, const TensorView& beta_gradient,
@@ -620,11 +749,11 @@ void layer_norm_backward(const TensorView& input, const TensorView& output_delta
 {
     if (input.is_cuda())
     {
-        layer_norm_backward_gpu(input, output_delta, means, standard_deviations, gamma,
+        layer_normalization_backward_gpu(input, output_delta, means, standard_deviations, gamma,
                                 gamma_gradient, beta_gradient, input_delta);
         return;
     }
-    layer_norm_backward_cpu(output_delta, standard_deviations, normalized, gamma,
+    layer_normalization_backward_cpu(output_delta, standard_deviations, normalized, gamma,
                             gamma_gradient, beta_gradient, input_delta);
 }
 
@@ -849,6 +978,191 @@ void average_pooling_3d_backward(const TensorView& input,
     average_pooling_3d_backward_cpu(input, output_delta, input_delta);
 }
 
+namespace {
+
+struct PoolWindow
+{
+    Index batch, channel, out_row, out_col;
+    Index in_row_start, pr_start, pr_end;
+    Index in_col_start, pc_start, pc_end;
+};
+
+template<typename Visit>
+void for_each_pool_window(Index batch_size, Index input_channels,
+                          Index input_height, Index input_width,
+                          Index output_height, Index output_width,
+                          Index pool_height, Index pool_width,
+                          Index row_stride, Index column_stride,
+                          Index padding_height, Index padding_width,
+                          Visit&& visit)
+{
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index c = 0; c < input_channels; ++c)
+            for (Index out_row = 0; out_row < output_height; ++out_row)
+            {
+                const Index in_row_start = out_row * row_stride - padding_height;
+                const Index pr_start = max(Index(0), -in_row_start);
+                const Index pr_end   = min(pool_height, input_height - in_row_start);
+
+                for (Index out_col = 0; out_col < output_width; ++out_col)
+                {
+                    const Index in_col_start = out_col * column_stride - padding_width;
+                    const Index pc_start = max(Index(0), -in_col_start);
+                    const Index pc_end   = min(pool_width, input_width - in_col_start);
+
+                    visit(PoolWindow{b, c, out_row, out_col,
+                                     in_row_start, pr_start, pr_end,
+                                     in_col_start, pc_start, pc_end});
+                }
+            }
+}
+
+}
+
+static void pooling_2d_forward_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                                   Index input_height, Index input_width, Index input_channels,
+                                   Index pool_height, Index pool_width,
+                                   Index row_stride, Index column_stride,
+                                   Index padding_height, Index padding_width,
+                                   bool max_pooling)
+{
+    const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs      = output.as_tensor<4>();
+
+    const Index batch_size    = inputs.dimension(0);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width  = outputs.dimension(2);
+
+    if (max_pooling)
+    {
+        const bool write_indices = !maximal_indices.empty();
+        TensorMap4 indices_map = write_indices ? maximal_indices.as_tensor<4>() : TensorMap4(nullptr, 0, 0, 0, 0);
+        for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                             output_height, output_width, pool_height, pool_width,
+                             row_stride, column_stride, padding_height, padding_width,
+            [&](const PoolWindow& window) {
+                float best = NEG_INFINITY;
+                Index argmax = 0;
+                for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                    for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    {
+                        const float value = inputs(window.batch, window.in_row_start + pr,
+                                                window.in_col_start + pc, window.channel);
+                        if (value > best) { best = value; argmax = pr * pool_width + pc; }
+                    }
+                outputs(window.batch, window.out_row, window.out_col, window.channel) = best;
+                if (write_indices)
+                    indices_map(window.batch, window.out_row, window.out_col, window.channel) = argmax;
+            });
+        return;
+    }
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                         output_height, output_width, pool_height, pool_width,
+                         row_stride, column_stride, padding_height, padding_width,
+        [&](const PoolWindow& window) {
+            float sum = 0;
+            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    sum += inputs(window.batch, window.in_row_start + pr,
+                                  window.in_col_start + pc, window.channel);
+            outputs(window.batch, window.out_row, window.out_col, window.channel) = sum * inv_pool_size;
+        });
+}
+
+void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                        Index input_height, Index input_width, Index input_channels,
+                        Index pool_height, Index pool_width,
+                        Index row_stride, Index column_stride,
+                        Index padding_height, Index padding_width,
+                        bool max_pooling)
+{
+    if (input.is_cuda()) { pooling_2d_forward_gpu(input, output, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride); return; }
+    pooling_2d_forward_cpu(input, output, maximal_indices,
+                           input_height, input_width, input_channels,
+                           pool_height, pool_width,
+                           row_stride, column_stride,
+                           padding_height, padding_width,
+                           max_pooling);
+}
+
+static void pooling_2d_backward_cpu(const TensorView& output_delta, const TensorView& maximal_indices,
+                                    TensorView& input_delta,
+                                    Index input_height, Index input_width, Index input_channels,
+                                    Index pool_height, Index pool_width,
+                                    Index row_stride, Index column_stride,
+                                    Index padding_height, Index padding_width,
+                                    bool max_pooling)
+{
+    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
+    TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
+
+    const Index batch_size    = output_deltas.dimension(0);
+    const Index output_height = output_deltas.dimension(1);
+    const Index output_width  = output_deltas.dimension(2);
+
+    if (max_pooling)
+    {
+        const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
+
+        #pragma omp parallel for collapse(2)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index c = 0; c < input_channels; ++c)
+                for (Index out_row = 0; out_row < output_height; ++out_row)
+                {
+                    const Index in_row_start = out_row * row_stride - padding_height;
+                    for (Index out_col = 0; out_col < output_width; ++out_col)
+                    {
+                        const Index in_col_start = out_col * column_stride - padding_width;
+                        const Index argmax = static_cast<Index>(max_indices(b, out_row, out_col, c));
+                        const Index in_row = in_row_start + argmax / pool_width;
+                        const Index in_col = in_col_start + argmax % pool_width;
+                        if (in_row < 0 || in_row >= input_height || in_col < 0 || in_col >= input_width)
+                            continue;
+                        input_deltas(b, in_row, in_col, c)
+                            += output_deltas(b, out_row, out_col, c);
+                    }
+                }
+        return;
+    }
+
+    const float inv_pool_size = 1.0f / (pool_height * pool_width);
+    for_each_pool_window(batch_size, input_channels, input_height, input_width,
+                         output_height, output_width, pool_height, pool_width,
+                         row_stride, column_stride, padding_height, padding_width,
+        [&](const PoolWindow& window) {
+            const float avg_delta = output_deltas(window.batch, window.out_row, window.out_col, window.channel) * inv_pool_size;
+            for (Index pr = window.pr_start; pr < window.pr_end; ++pr)
+                for (Index pc = window.pc_start; pc < window.pc_end; ++pc)
+                    input_deltas(window.batch, window.in_row_start + pr,
+                                 window.in_col_start + pc, window.channel) += avg_delta;
+        });
+}
+
+void pooling_2d_backward(const TensorView& input, const TensorView& output,
+                         const TensorView& output_delta, const TensorView& maximal_indices,
+                         TensorView& input_delta,
+                         Index input_height, Index input_width, Index input_channels,
+                         Index pool_height, Index pool_width,
+                         Index row_stride, Index column_stride,
+                         Index padding_height, Index padding_width,
+                         bool max_pooling)
+{
+    if (output_delta.is_cuda())
+    {
+        pooling_2d_backward_gpu(input, output, output_delta, input_delta, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride);
+        return;
+    }
+    pooling_2d_backward_cpu(output_delta, maximal_indices, input_delta,
+                            input_height, input_width, input_channels,
+                            pool_height, pool_width,
+                            row_stride, column_stride,
+                            padding_height, padding_width,
+                            max_pooling);
+}
+
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
@@ -990,7 +1304,7 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const size_t rank_b = input_b.get_rank();
 
     int rows_a = to_int(input_a.shape[rank_a - 2]);
-    int cols_a = to_int(input_a.shape[rank_a - 1]);
+    const int cols_a = to_int(input_a.shape[rank_a - 1]);
     const int rows_b = to_int(input_b.shape[rank_b - 2]);
     const int cols_b = to_int(input_b.shape[rank_b - 1]);
 
@@ -1091,7 +1405,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
     // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
     // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
-    const void* bias_for_gemm = (bias.data && output.type == Type::BF16 && bias.type == Type::FP32)
+    const void* bias_for_gemm = (bias.data && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
         : bias.data;
 
@@ -1106,7 +1420,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     }
     catch (const runtime_error& e)
     {
-        const bool unsupported_bf16_lt = output.type == Type::BF16
+        const bool unsupported_bf16_lt = output.is_bf16()
                                       && (epilogue == CUBLASLT_EPILOGUE_BIAS
                                           || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
                                       && string(e.what()).find("CuBLAS Error: 15") != string::npos;
@@ -1133,7 +1447,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
 
         linear_forward_cpu(input_cpu, weights_cpu, bias_cpu, output_cpu, epilogue);
 
-        if (output.type == Type::FP32)
+        if (output.is_fp32())
         {
             device::copy_async(output.data,
                                output_host.data(),
@@ -1178,13 +1492,13 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         output_delta.cuda_dtype(),
         CUDA_R_32F);
 
-    if (!input_delta.data || input_delta.size() == 0) return;
+    if (!input_delta.data || input_delta.empty()) return;
 
     multiply(output_delta, false, weights, true, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);
 }
 
-static void layer_norm_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
+static void layer_normalization_forward_gpu(const TensorView& input, const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations, TensorView& output)
 {
     const int rows = to_int(input.size() / input.shape.back());
@@ -1199,7 +1513,7 @@ static void layer_norm_forward_gpu(const TensorView& input, const TensorView& ga
     });
 }
 
-static void layer_norm_backward_gpu(const TensorView& input, const TensorView& output_delta,
+static void layer_normalization_backward_gpu(const TensorView& input, const TensorView& output_delta,
                              const TensorView& means, const TensorView& standard_deviations,
                              const TensorView& gamma,
                              const TensorView& gamma_gradient, const TensorView& beta_gradient,
@@ -1306,6 +1620,52 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                             to_int(input.shape[1]),
                                             to_int(input.shape[2]));
     });
+}
+
+static CudnnDescriptor<cudnnPoolingDescriptor_t> make_pooling_descriptor(
+    bool max_pooling, Index pool_h, Index pool_w, Index pad_h, Index pad_w, Index stride_h, Index stride_w)
+{
+    CudnnDescriptor<cudnnPoolingDescriptor_t> desc;
+    CHECK_CUDNN(cudnnCreatePoolingDescriptor(&desc.handle));
+    desc.deleter = &cudnnDestroyPoolingDescriptor;
+    CHECK_CUDNN(cudnnSetPooling2dDescriptor(desc,
+        max_pooling ? CUDNN_POOLING_MAX : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
+        CUDNN_PROPAGATE_NAN,
+        to_int(pool_h), to_int(pool_w),
+        to_int(pad_h), to_int(pad_w),
+        to_int(stride_h), to_int(stride_w)));
+    return desc;
+}
+
+static void pooling_2d_forward_gpu(const TensorView& input, TensorView& output,
+                                   bool max_pooling, Index pool_h, Index pool_w,
+                                   Index pad_h, Index pad_w, Index stride_h, Index stride_w)
+{
+    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
+    CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
+        desc,
+        &one,
+        input.get_descriptor(), input.data,
+        &zero,
+        output.get_descriptor(), output.data));
+}
+
+static void pooling_2d_backward_gpu(const TensorView& input,
+                                    const TensorView& output,
+                                    const TensorView& output_delta,
+                                    TensorView& input_delta,
+                                    bool max_pooling, Index pool_h, Index pool_w,
+                                    Index pad_h, Index pad_w, Index stride_h, Index stride_w)
+{
+    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
+    CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
+        desc,
+        &one,
+        output.get_descriptor(),       output.data,
+        output_delta.get_descriptor(), output_delta.data,
+        input.get_descriptor(),        input.data,
+        &zero,
+        input_delta.get_descriptor(),  input_delta.data));
 }
 
 static void split_heads_gpu(const TensorView& source, TensorView& destination)

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   3 D   C L A S S   H E A D E R
@@ -9,8 +9,8 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
 #include "pooling_layer.h"
+#include "pool3d_operator.h"
 
 namespace opennn
 {
@@ -31,7 +31,7 @@ public:
 
     PoolingMethod get_pooling_method() const { return pooling_method; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
 
     void set(const Shape&, const PoolingMethod&, const string&);
 
@@ -55,7 +55,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    Pool3dOp pool3d;
+    Pool3dOperator pool3d;
 
     enum Forward { Input, MaximalIndices, Output };
 };
@@ -63,5 +63,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

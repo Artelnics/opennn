@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -141,9 +141,9 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
+static MatrixR activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    using enum ActivationOp::Function;
+    using enum ActivationFunction;
     switch (activation_function)
     {
     case Identity:
@@ -157,6 +157,7 @@ static MatrixR activation_derivative(ActivationOp::Function activation_function,
         return 1.0f - outputs.array().square();
     case ReLU:
         return (outputs.array() > 0.0f).cast<float>();
+    case LeakyReLU: return outputs.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
     }
 
     return MatrixR::Ones(outputs.rows(), outputs.cols());
@@ -266,7 +267,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                 for (Index sample = 0; sample < batch_size; ++sample)
                     previous_delta(sample * outputs_number + j, k) *= previous_act_deriv(sample, k);
 
-        delta = std::move(previous_delta);
+        delta = move(previous_delta);
     }
 }
 

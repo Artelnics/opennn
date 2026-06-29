@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
 #include "../opennn/tensor_types.h"
@@ -11,7 +11,7 @@
 
 using namespace opennn;
 
-TEST(Pool3dOperatorTest, MaxConstructorShapes)
+TEST(Pool3dOperatoreratorTest, MaxConstructorShapes)
 {
     const Shape input_shape{3, 4};
     Pooling3d layer(input_shape, PoolingMethod::MaxPooling, "max_pool_3d");
@@ -24,7 +24,7 @@ TEST(Pool3dOperatorTest, MaxConstructorShapes)
     EXPECT_EQ(layer.get_output_shape(), Shape{4});
 }
 
-TEST(Pool3dOperatorTest, AverageConstructorShapes)
+TEST(Pool3dOperatoreratorTest, AverageConstructorShapes)
 {
     const Shape input_shape{5, 2};
     Pooling3d layer(input_shape, PoolingMethod::AveragePooling, "avg_pool_3d");
@@ -35,7 +35,7 @@ TEST(Pool3dOperatorTest, AverageConstructorShapes)
     EXPECT_EQ(layer.get_output_shape(), Shape{2});
 }
 
-TEST(Pool3dOperatorTest, SetPoolingMethodFromString)
+TEST(Pool3dOperatoreratorTest, SetPoolingMethodFromString)
 {
     Pooling3d layer({3, 4}, PoolingMethod::MaxPooling, "pool");
     layer.set_pooling_method("AveragePooling");
@@ -44,7 +44,7 @@ TEST(Pool3dOperatorTest, SetPoolingMethodFromString)
     EXPECT_EQ(layer.get_pooling_method(), PoolingMethod::MaxPooling);
 }
 
-TEST(Pool3dOperatorTest, ForwardMaxValuesAndShape)
+TEST(Pool3dOperatoreratorTest, ForwardMaxValuesAndShape)
 {
     const Index batch_size = 2;
     const Index seq = 3;
@@ -74,7 +74,7 @@ TEST(Pool3dOperatorTest, ForwardMaxValuesAndShape)
         EXPECT_NEAR(output_view.as<type>()[i], expected[i], 1e-6f);
 }
 
-TEST(Pool3dOperatorTest, ForwardAverageValuesWithPadding)
+TEST(Pool3dOperatoreratorTest, ForwardAverageValuesWithPadding)
 {
     const Index batch_size = 2;
     const Index seq = 3;
@@ -105,7 +105,7 @@ TEST(Pool3dOperatorTest, ForwardAverageValuesWithPadding)
         EXPECT_NEAR(output_view.as<type>()[i], expected[i], 1e-5f);
 }
 
-TEST(Pool3dOperatorTest, ForwardAverageAllPaddingIsZero)
+TEST(Pool3dOperatoreratorTest, ForwardAverageAllPaddingIsZero)
 {
     const Index batch_size = 1;
     const Index seq = 2;
@@ -129,7 +129,7 @@ TEST(Pool3dOperatorTest, ForwardAverageAllPaddingIsZero)
         EXPECT_NEAR(output_view.as<type>()[i], 0.0f, 1e-7f);
 }
 
-TEST(Pool3dOperatorTest, BackPropagateMaxGradient)
+TEST(Pool3dOperatoreratorTest, BackPropagateMaxGradient)
 {
     const Index samples_number = 6;
     const Index seq = 4;
@@ -158,7 +158,7 @@ TEST(Pool3dOperatorTest, BackPropagateMaxGradient)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-TEST(Pool3dOperatorTest, BackPropagateAverageGradient)
+TEST(Pool3dOperatoreratorTest, BackPropagateAverageGradient)
 {
     const Index samples_number = 6;
     const Index seq = 4;

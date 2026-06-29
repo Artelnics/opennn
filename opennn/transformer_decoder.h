@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A N S F O R M E R   D E C O D E R   C L A S S   H E A D E R
@@ -30,23 +30,23 @@ public:
         Index maximum_tokens = 0;
     };
 
-    using TokenCallback = function<void(const string& token)>;
+    using TokenCallback = function<void(const string&)>;
 
     TransformerDecoder(Transformer&, const LanguageDataset&);
     TransformerDecoder(const TransformerDecoder&) = delete;
     TransformerDecoder& operator=(const TransformerDecoder&) = delete;
     ~TransformerDecoder() = default;
 
-    string decode(const string& source);
-    string decode(const string& source, const SamplingConfig& config);
-    string decode(const string& source, const TokenCallback& on_token);
-    string decode(const string& source, const SamplingConfig& config, const TokenCallback& on_token);
+    string decode(const string&);
+    string decode(const string&, const SamplingConfig&);
+    string decode(const string&, const TokenCallback&);
+    string decode(const string&, const SamplingConfig&, const TokenCallback&);
 
-    string decode_to_stream(const string& source, ostream& out);
-    string decode_to_stream(const string& source, const SamplingConfig& config, ostream& out);
+    string decode_to_stream(const string&, ostream&);
+    string decode_to_stream(const string&, const SamplingConfig&, ostream&);
 
     void chat();
-    void chat(const SamplingConfig& config);
+    void chat(const SamplingConfig&);
 
 private:
 
@@ -74,8 +74,8 @@ private:
     Index output_projection_index = -1;
 
     void identify_layer_ranges();
-    void encode_source(const string& source);
-    Index decode_step(Index step_index, const SamplingConfig& config);
+    void encode_source(const string&);
+    Index decode_step(Index, const SamplingConfig&);
     void reset_per_prompt_state();
     string assemble_output_string() const;
 };
@@ -83,5 +83,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

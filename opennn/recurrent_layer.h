@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E C U R R E N T   L A Y E R   C L A S S   H E A D E R
@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "recurrent_operator.h"
 
 namespace opennn
 {
@@ -31,13 +31,13 @@ public:
                                 : Shape{output_features};
     }
 
-    void set_return_sequences(bool value);
+    void set_return_sequences(bool);
 
-    string get_activation_function() const { return ActivationOp::to_string(recurrent_op.activation); }
-    ActivationOp::Function get_output_activation() const override { return recurrent_op.activation; }
+    string get_activation_function() const { return ActivationOperator::to_string(recurrent_op.activation); }
+    ActivationFunction get_output_activation() const override { return recurrent_op.activation; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
-    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
+    vector<TensorSpec> get_backward_specs(Index) const override;
 
     void set(const Shape& = {},
              const Shape& = {},
@@ -53,8 +53,8 @@ public:
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
-    string write_expression(const vector<string>& input_names,
-                            const vector<string>& output_names) const override;
+    string write_expression(const vector<string>&,
+                            const vector<string>&) const override;
 
 private:
 
@@ -65,7 +65,7 @@ private:
     Index output_features = 0;
     bool  return_sequences = false;
 
-    RecurrentOp recurrent_op;
+    RecurrentOperator recurrent_op;
 
     void configure_operators();
 };
@@ -73,5 +73,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

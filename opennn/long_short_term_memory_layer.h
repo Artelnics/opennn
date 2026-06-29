@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R   H E A D E R
@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "long_short_term_memory_operator.h"
 
 namespace opennn
 {
@@ -36,15 +36,15 @@ public:
     Index get_output_features() const { return output_features; }
 
     bool get_return_sequences() const { return return_sequences; }
-    void set_return_sequences(bool value);
+    void set_return_sequences(bool);
 
     const TensorView& get_forget_bias()    const { return lstm_op.forget_bias; }
 
-    const ActivationOp::Function& get_activation_function() const { return lstm_op.activation_function; }
-    ActivationOp::Function get_output_activation() const override { return lstm_op.activation_function; }
+    const ActivationFunction& get_activation_function() const { return lstm_op.activation_function; }
+    ActivationFunction get_output_activation() const override { return lstm_op.activation_function; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size)  const override;
-    vector<TensorSpec> get_backward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index)  const override;
+    vector<TensorSpec> get_backward_specs(Index) const override;
 
     void set(const Shape& = {},
              const Shape& = {},
@@ -62,15 +62,15 @@ public:
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
 
-    string write_expression(const vector<string>& input_names,
-                            const vector<string>& output_names) const override;
+    string write_expression(const vector<string>&,
+                            const vector<string>&) const override;
 
 private:
 
     Index output_features = 0;
     bool  return_sequences = false;
 
-    LongShortTermMemoryOp lstm_op;
+    LongShortTermMemoryOperator lstm_op;
 
     void configure_operators();
 };
@@ -78,5 +78,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

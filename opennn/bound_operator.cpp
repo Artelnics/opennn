@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B O U N D   O P E R A T O R   S O U R C E
@@ -18,10 +18,10 @@
 namespace opennn
 {
 
-void BoundOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output      = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
 
     if (method == Method::NoBounding || !lower.data)
     {
