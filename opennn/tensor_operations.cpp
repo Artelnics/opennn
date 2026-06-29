@@ -167,6 +167,31 @@ ActivationFunction activation_function_from_string(const string& name)
     return activation_function_map().from_string(name);
 }
 
+VectorR activation_forward_values(ActivationFunction function, const VectorR& values)
+{
+    return values.unaryExpr([function](float value) { return activation_forward_value(function, value); });
+}
+
+MatrixR activation_forward_values(ActivationFunction function, const MatrixR& values)
+{
+    return values.unaryExpr([function](float value) { return activation_forward_value(function, value); });
+}
+
+VectorR activation_derivative_from_output_values(ActivationFunction function, const VectorR& values)
+{
+    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
+}
+
+MatrixR activation_derivative_from_output_values(ActivationFunction function, const MatrixR& values)
+{
+    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
+}
+
+MatrixR activation_derivative_from_output_values(ActivationFunction function, const MatrixMap& values)
+{
+    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
+}
+
 #define OPENNN_GPU_OPS(X) \
     X(bound_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(scale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&)) \
