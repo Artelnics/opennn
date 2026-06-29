@@ -85,12 +85,7 @@ static filesystem::path image_cache_path(const filesystem::path& data_path,
     {
         const uint64_t hash = fnv1a_64(resolved_dataset_key(data_path).generic_string());
 
-        ostringstream name;
-        name << "images-" << hex << hash << dec
-             << "-" << height << "x" << width << "x" << channels
-             << "-" << samples_number << ".bin";
-
-        return filesystem::path(cache_root) / name.str();
+        return filesystem::path(cache_root) / format("images-{:x}-{}x{}x{}-{}.bin", hash, height, width, channels, samples_number);
     }
 
     return data_path / ".cache" / "images.bin";
