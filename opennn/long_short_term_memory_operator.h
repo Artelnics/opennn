@@ -14,10 +14,6 @@
 namespace opennn
 {
 
-// Force the scalar LSTM kernel path (default off uses the vectorized path for
-// hidden size >= 64). Set from code; there is no environment variable.
-void set_lstm_scalar(bool);
-bool lstm_scalar_enabled();
 
 struct LongShortTermMemoryOperator : Operator
 {

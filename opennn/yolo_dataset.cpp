@@ -1629,7 +1629,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool augment = is_training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
-        ? augmentation_counter.fetch_add(1, std::memory_order_relaxed) + 1
+        ? augmentation_counter.fetch_add(1, memory_order_relaxed) + 1
         : 0;
 
     if (matrix_storage)
@@ -1776,7 +1776,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     const bool augment = is_training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
-        ? augmentation_counter.load(std::memory_order_relaxed)
+        ? augmentation_counter.load(memory_order_relaxed)
         : 0;
 
     AugmentationConfig cfg = augmentation;
@@ -1966,7 +1966,7 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
              "load_darknet_backbone: failed to read header seen.");
 
-    std::cout << "Darknet weights header: major=" << header[0]
+    cout << "Darknet weights header: major=" << header[0]
               << " minor=" << header[1]
               << " revision=" << header[2]
               << " seen=" << seen << "\n";
@@ -1980,7 +1980,7 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
 
         conv->load_darknet_weights(f);
         ++loaded;
-        std::cout << "Loaded backbone conv " << loaded << "/" << n_backbone_convs
+        cout << "Loaded backbone conv " << loaded << "/" << n_backbone_convs
                   << " from " << weights_path << "\n";
     }
 

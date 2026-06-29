@@ -336,7 +336,7 @@ void Convolutional::load_darknet_weights(FILE* f)
 
     // Read conv weights: Darknet layout [O, I, kH, kW], OpenNN layout [O, kH, kW, I]
     const size_t n_weights = static_cast<size_t>(total_weights);
-    std::vector<float> tmp(n_weights, 0.0f);
+    vector<float> tmp(n_weights, 0.0f);
     throw_if(fread(tmp.data(), sizeof(float), n_weights, f) != n_weights,
              "load_darknet_weights: short read on conv weights.");
 

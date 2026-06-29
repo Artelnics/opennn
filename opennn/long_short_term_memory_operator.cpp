@@ -16,7 +16,6 @@
 #include "back_propagation.h"
 #include "profiler.h"
 
-#include <atomic>
 #include <initializer_list>
 
 namespace opennn
@@ -25,8 +24,6 @@ namespace opennn
 namespace
 {
 
-// LSTM scalar fallback path. Off by default; set from code (no environment var).
-atomic<bool> lstm_scalar_flag{false};
 
 void link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
 {
@@ -53,8 +50,6 @@ void set_random_uniform_linked(initializer_list<const TensorView*> views, float 
 
 }
 
-void set_lstm_scalar(bool enabled) { lstm_scalar_flag.store(enabled, std::memory_order_relaxed); }
-bool lstm_scalar_enabled() { return lstm_scalar_flag.load(std::memory_order_relaxed); }
 
 void LongShortTermMemoryOperator::set(Index new_input_features,
                                 Index new_output_features,
@@ -212,8 +207,7 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
     const float* Ug = candidate_recurrent_weights.as<float>();
     const float* Uo = output_recurrent_weights.as<float>();
 
-    const bool lstm_scalar = lstm_scalar_enabled();
-    if (!lstm_scalar && H >= 64)
+    if (H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
         const MatrixMap Wi_m = input_weights.as_matrix();
@@ -457,8 +451,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
     float* gUg = candidate_recurrent_weight_gradient.as<float>();
     float* gUo = output_recurrent_weight_gradient.as<float>();
 
-    const bool lstm_scalar_bwd = lstm_scalar_enabled();
-    if (!lstm_scalar_bwd && H >= 64)
+    if (H >= 64)
     {
         const MatrixMap Wf_m = forget_weights.as_matrix();
         const MatrixMap Wi_m = input_weights.as_matrix();
@@ -1144,12 +1137,12 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool) const
 {
-    throw runtime_error("LongShortTermMemoryOperator::apply_gpu: CUDA support not compiled in.");
+    throw runtime_error("apply_gpu requires CUDA.");
 }
 
 void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const
 {
-    throw runtime_error("LongShortTermMemoryOperator::apply_delta_gpu: CUDA support not compiled in.");
+    throw runtime_error("apply_delta_gpu requires CUDA.");
 }
 
 #endif  // OPENNN_HAS_CUDA

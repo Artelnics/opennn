@@ -489,8 +489,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                { throw runtime_error("Convolution::apply_gpu: CUDA support not compiled in."); }
-void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("Convolution::apply_delta_gpu: CUDA support not compiled in."); }
+void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                { throw runtime_error("apply_gpu requires CUDA."); }
+void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("apply_delta_gpu requires CUDA."); }
 
 #endif
 

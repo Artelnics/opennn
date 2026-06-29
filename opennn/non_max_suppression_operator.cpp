@@ -160,7 +160,7 @@ void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& outpu
                 continue;
 
             float* out = dst + (b * max_boxes + kept_count) * 6;
-            std::copy(candidate.begin(), candidate.end(), out);
+            copy(candidate.begin(), candidate.end(), out);
             if (++kept_count == max_boxes)
                 break;
         }

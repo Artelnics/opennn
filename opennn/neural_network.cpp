@@ -1085,7 +1085,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device) copy_parameters_host();
-    std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
+    copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
     if (was_on_device) copy_parameters_device();
 }
 

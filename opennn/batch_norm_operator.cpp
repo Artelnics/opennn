@@ -595,12 +595,12 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 { throw runtime_error("BatchNorm::apply_inference_gpu: CUDA support not compiled in."); }
+void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 { throw runtime_error("apply_inference_gpu requires CUDA."); }
 void BatchNormalizationOperator::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&,
-                                    const TensorView&)                                                   { throw runtime_error("BatchNorm::apply_training_gpu: CUDA support not compiled in."); }
+                                    const TensorView&)                                                   { throw runtime_error("apply_training_gpu requires CUDA."); }
 void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&, const TensorView&,
                                     const TensorView&, const TensorView&, TensorView&,
-                                    TensorView&) const                                                  { throw runtime_error("BatchNorm::apply_delta_gpu: CUDA support not compiled in."); }
+                                    TensorView&) const                                                  { throw runtime_error("apply_delta_gpu requires CUDA."); }
 
 #endif
 

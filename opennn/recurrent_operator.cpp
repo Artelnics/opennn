@@ -519,7 +519,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
 void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
 {
-    throw runtime_error("RecurrentOperator::apply_gpu: CUDA support not compiled in.");
+    throw runtime_error("apply_gpu requires CUDA.");
 }
 
 void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
@@ -527,7 +527,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, co
                                   TensorView&, TensorView&, TensorView&,
                                   TensorView&, TensorView&) const
 {
-    throw runtime_error("RecurrentOperator::apply_delta_gpu: CUDA support not compiled in.");
+    throw runtime_error("apply_delta_gpu requires CUDA.");
 }
 
 #endif

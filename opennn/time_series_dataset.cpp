@@ -195,7 +195,7 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 
     const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
-    (void)require_json_field(data_source_element, "FileType");
+    require_json_field(data_source_element, "FileType");
 
     set_data_path(read_json_string(data_source_element, "Path"));
     set_separator_name(read_json_string(data_source_element, "Separator"));

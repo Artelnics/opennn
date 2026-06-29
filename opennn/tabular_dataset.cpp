@@ -1578,7 +1578,7 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     if (!any_categorical) return;
 
-    vector<std::set<string>> unique_categories(variables_number);
+    vector<set<string>> unique_categories(variables_number);
     for (const string_view line : sample_lines)
     {
         const vector<string_view> tokens = get_token_views(line, separator);

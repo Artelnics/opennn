@@ -580,7 +580,7 @@ bool is_supported_image_file(const filesystem::path& path)
 {
     string extension = path.extension().string();
     ranges::transform(extension, extension.begin(),
-                      [](unsigned char c) { return char(std::tolower(c)); });
+                      [](unsigned char c) { return char(tolower(c)); });
 
     return contains({".bmp", ".png", ".jpg", ".jpeg"}, extension);
 }

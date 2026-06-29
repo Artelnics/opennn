@@ -372,8 +372,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    if (data_source_element->has("Streaming"))
-        (void)read_json_bool(data_source_element, "Streaming");
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_codification(read_json_string(data_source_element, "Codification"));

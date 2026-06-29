@@ -19,7 +19,7 @@ namespace opennn
 
 // Directory for the ImageDataset binary cache. Empty => default <data>/.cache.
 // Set from code with set_image_cache_dir(); there is no environment variable.
-namespace { std::string& image_cache_dir_storage() { static std::string dir; return dir; } }
+namespace { string& image_cache_dir_storage() { static string dir; return dir; } }
 void set_image_cache_dir(const string& dir) { image_cache_dir_storage() = dir; }
 string get_image_cache_dir() { return image_cache_dir_storage(); }
 
@@ -303,8 +303,6 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    if (data_source_element->has("Streaming"))
-        (void)read_json_bool(data_source_element, "Streaming");
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
