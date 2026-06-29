@@ -1252,7 +1252,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
         cout << "> Adaptive oversampling: feasible ratio " << feasible_ratio
              << " below threshold " << min_feasible_ratio
              << ", increasing evaluations from " << current_evaluations
-             << " to " << next_evaluations << endl;
+             << " to " << next_evaluations << "\n";
 
         current_evaluations = next_evaluations;
     }
@@ -1534,7 +1534,7 @@ void ResponseOptimization::promote_single_variable_constraints()
             constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::LessEqualTo, 0.0f, new_hi);
 
         cout << "> Promoted single-variable constraint '" << formula_constraint.expression
-             << "' to a box on '" << name << "'." << endl;
+             << "' to a box on '" << name << "'." << "\n";
     }
 
     constraint_set.multivariate = move(kept);
@@ -1619,7 +1619,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     float previous_optimal_point = 0;
 
-    cout << "> Optimization loop starting with zoom factor: " << zoom_factor << endl;
+    cout << "> Optimization loop starting with zoom factor: " << zoom_factor << "\n";
 
     for (Index i = 0; i < max_iterations; i++)
     {
@@ -1627,7 +1627,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
         {
             cout << "> [Budget cap] Reached " << evaluations_used
                  << " surrogate evaluations (budget=" << max_total_evaluations
-                 << "). Stopping at iteration " << i + 1 << "." << endl;
+                 << "). Stopping at iteration " << i + 1 << "." << "\n";
             break;
         }
 
@@ -1635,7 +1635,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
         if (feasible_outputs.size() > 0 && !feasible_outputs.allFinite())
         {
-            cout << "Model produced NaN — aborting optimization loop." << endl;
+            cout << "Model produced NaN — aborting optimization loop." << "\n";
             break;
         }
 
@@ -1643,19 +1643,19 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
         {
             cout << "!!! [Critical] Zero feasible points found. "
                  << "Check if your constraints are too strict. "
-                 << "Aborting optimization loop." << endl;
+                 << "Aborting optimization loop." << "\n";
             break;
         }
 
-        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
-        cout << "  - Feasible points: " << feasible_inputs.rows() << endl;
+        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << "\n";
+        cout << "  - Feasible points: " << feasible_inputs.rows() << "\n";
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
         if (optimal_set.first.rows() == 0 || optimal_set.second.rows() == 0)
         {
             cout << "!!! [Critical] calculate_optimal_points returned empty. "
-                 << "Aborting optimization loop." << endl;
+                 << "Aborting optimization loop." << "\n";
             break;
         }
 
@@ -1665,11 +1665,11 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
         const float relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_sense(0,0) + 1e-6f));
 
-        cout << "  - Relative error: " << relative_error << endl;
+        cout << "  - Relative error: " << relative_error << "\n";
 
         if (relative_error < relative_tolerance && i > min_iterations)
         {
-            cout << "> Optimization loop stopped for reaching the relative tolerance desired: " << relative_tolerance << endl;
+            cout << "> Optimization loop stopped for reaching the relative tolerance desired: " << relative_tolerance << "\n";
             break;
         }
 
@@ -1905,7 +1905,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     if (first_feasible_inputs.rows() == 0)
     {
         cout << "!!! [Critical] Zero feasible points found. "
-             << "Check if your constraints are too strict." << endl;
+             << "Check if your constraints are too strict." << "\n";
         return MatrixR();
     }
 
@@ -1918,10 +1918,10 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     {
         const MatrixR initial_pareto_unnormalized = objectives.extract(global_pareto_inputs, global_pareto_outputs);
         if (objectives.update_utopian_from_points(initial_pareto_unnormalized))
-            cout << "> Utopian promoted from initial Pareto front." << endl;
+            cout << "> Utopian promoted from initial Pareto front." << "\n";
     }
 
-    cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << endl;
+    cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << "\n";
 
     vector<Domain> input_domains(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
@@ -1930,11 +1930,11 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     float previous_holes_magnitude = 0.0;
     float previous_area_covered = 0.0;
 
-    cout << "> Optimization loop starting with zoom factor: " << current_zoom << endl;
+    cout << "> Optimization loop starting with zoom factor: " << current_zoom << "\n";
 
     for (Index i = 0; i < max_iterations; i++)
     {
-        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
+        cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << "\n";
 
         vector<MatrixR> candidate_input_blocks { global_pareto_inputs };
         vector<MatrixR> candidate_output_blocks { global_pareto_outputs };
@@ -1959,7 +1959,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         const MatrixR candidate_inputs = stack_rows(candidate_input_blocks);
         const MatrixR candidate_outputs = stack_rows(candidate_output_blocks);
 
-        cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
+        cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << "\n";
 
         if (candidate_inputs.rows() == 0)
             break;
@@ -1975,7 +1975,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         global_pareto_inputs = pareto_pair.first;
         global_pareto_outputs = pareto_pair.second;
 
-        cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << endl;
+        cout << "  - New Pareto front size: " << global_pareto_inputs.rows()  << "\n";
 
         if (max_pareto_number > 0 && global_pareto_inputs.rows() > max_pareto_number)
         {
@@ -1987,14 +1987,14 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
             global_pareto_inputs = slice_rows(global_pareto_inputs, selection);
             global_pareto_outputs = slice_rows(global_pareto_outputs, selection);
 
-            cout << "  - Pareto front reselected to " << global_pareto_inputs.rows() << " representatives." << endl;
+            cout << "  - Pareto front reselected to " << global_pareto_inputs.rows() << " representatives." << "\n";
         }
 
         if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
         {
             cout << "> [Budget cap] Reached " << evaluations_used
                  << " surrogate evaluations (budget=" << max_total_evaluations
-                 << "). Stopping at iteration " << i + 1 << "." << endl;
+                 << "). Stopping at iteration " << i + 1 << "." << "\n";
             break;
         }
 
@@ -2003,7 +2003,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
             const MatrixR pareto_objective_unnormalized = objectives.extract(global_pareto_inputs, global_pareto_outputs);
             if (objectives.update_utopian_from_points(pareto_objective_unnormalized))
             {
-                cout << "  - Utopian promoted to better Pareto coordinate." << endl;
+                cout << "  - Utopian promoted to better Pareto coordinate." << "\n";
                 previous_holes_magnitude = 0.0;
                 previous_area_covered = 0.0;
             }
@@ -2014,14 +2014,14 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         const float current_hole = quality.first;
         const float current_boundary = quality.second;
 
-        cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << endl;
+        cout << "  - Internal Hole: " << current_hole << " | Boundary Gap: " << current_boundary << "\n";
 
         const float delta_hole = abs(current_hole - previous_holes_magnitude);
         const float delta_boundary = abs(current_boundary - previous_area_covered);
 
         if (i > min_iterations && delta_hole < relative_tolerance && delta_boundary < relative_tolerance)
         {
-            cout << "> [Convergence] Quality metrics stabilized. Stopping at iteration " << i + 1 << endl;
+            cout << "> [Convergence] Quality metrics stabilized. Stopping at iteration " << i + 1 << "\n";
             break;
         }
 
@@ -2041,8 +2041,8 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
         current_zoom *= zoom_factor;
     }
-    cout << "\n> [Optimization Complete] Assembling final results..." << endl;
-    cout << "> Total surrogate evaluations used: " << evaluations_used << endl;
+    cout << "\n> [Optimization Complete] Assembling final results..." << "\n";
+    cout << "> Total surrogate evaluations used: " << evaluations_used << "\n";
 
     return append_columns(global_pareto_inputs, global_pareto_outputs);
 }
@@ -2167,7 +2167,7 @@ void ResponseOptimization::initialize_network_differential() const
     catch (const exception& error)
     {
         cout << "!!! [Warning] Analytic surrogate Jacobian unavailable (" << error.what()
-             << "); falling back to the finite-difference VJP." << endl;
+             << "); falling back to the finite-difference VJP." << "\n";
         return;
     }
 
@@ -2232,12 +2232,12 @@ void ResponseOptimization::initialize_network_differential() const
     {
         network_jacobian.differential = move(candidate);
         cout << "> Analytic surrogate Jacobian active (forward error " << worst_forward_error
-             << ", VJP-vs-finite-difference error " << worst_vjp_error << ")." << endl;
+             << ", VJP-vs-finite-difference error " << worst_vjp_error << ")." << "\n";
     }
     else
         cout << "!!! [Warning] Analytic surrogate Jacobian failed validation (forward error "
              << worst_forward_error << ", VJP error " << worst_vjp_error
-             << "); falling back to the finite-difference VJP." << endl;
+             << "); falling back to the finite-difference VJP." << "\n";
 }
 
 
@@ -2385,7 +2385,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     cout << "> Branching: " << axes.size() << " axis(es) -> " << branches_number
          << (branch_mode == BranchMode::Budgeted ? " branch(es) (budgeted: successive-halving + dominated-drop)."
-                                                  : " branch(es) (exhaustive).") << endl;
+                                                  : " branch(es) (exhaustive).") << "\n";
 
     vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
     {
@@ -2439,7 +2439,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
         MatrixR result;
         try { result = solve_once(); }
-        catch (const exception& error) { cout << "    (branch infeasible: " << error.what() << ")" << endl; }
+        catch (const exception& error) { cout << "    (branch infeasible: " << error.what() << ")" << "\n"; }
 
         spent += evaluations_used;
 
@@ -2482,12 +2482,12 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
         for (Index branch = 0; branch < branches_number; ++branch)
         {
-            cout << "\n=== AllowedSet branch " << branch + 1 << " / " << branches_number << " ===" << endl;
+            cout << "\n=== AllowedSet branch " << branch + 1 << " / " << branches_number << " ===" << "\n";
             merge_into_incumbent(solve_branch(branch_values[branch], per_branch_budget));
         }
 
         evaluations_used = spent;
-        cout << "\n> AllowedSet: " << incumbent.rows() << " point(s) on the global front." << endl;
+        cout << "\n> AllowedSet: " << incumbent.rows() << " point(s) on the global front." << "\n";
         return incumbent;
     }
 
@@ -2516,7 +2516,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
         const Index cap = max(evaluations_number, pool / static_cast<Index>(live.size()));
 
         cout << "\n=== AllowedSet round " << round + 1 << " / " << rounds_number
-             << ": " << live.size() << " live branch(es), <= " << cap << " evals each ===" << endl;
+             << ": " << live.size() << " live branch(es), <= " << cap << " evals each ===" << "\n";
 
         vector<float> reward(live.size(), -1e30f);
         vector<MatrixR> round_objective(live.size());
@@ -2564,7 +2564,7 @@ MatrixR ResponseOptimization::perform_response_optimization()
     evaluations_used = spent;
 
     cout << "\n> AllowedSet: spent ~" << spent << " evaluations -> "
-         << incumbent.rows() << " point(s) on the global front." << endl;
+         << incumbent.rows() << " point(s) on the global front." << "\n";
 
     return incumbent;
 }
