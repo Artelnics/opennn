@@ -94,6 +94,8 @@ public:
     string c_str(int indent = 2) const;
 
 private:
+    void pop_scope();
+
     Json                root;
     vector<Json*>  stack;
     vector<string> name_stack;

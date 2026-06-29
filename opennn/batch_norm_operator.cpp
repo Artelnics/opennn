@@ -13,7 +13,6 @@
 #include "batch_norm_operator.h"
 #include "device_backend.h"
 #include "json.h"
-#include "random_utilities.h"
 #include "tensor_operations.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
@@ -90,7 +89,7 @@ void BatchNormalizationOperator::to_JSON(JsonWriter& w) const
 void BatchNormalizationOperator::from_JSON(const Json* parent)
 {
     if (parent && parent->has("Momentum"))
-        momentum = float(read_json_float(parent, "Momentum"));
+        momentum = read_json_float(parent, "Momentum");
 }
 
 void BatchNormalizationOperator::load_state_from_JSON(const Json* parent)

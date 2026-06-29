@@ -8,12 +8,9 @@
 
 #include "dropout_operator.h"
 #include "json.h"
-#include "random_utilities.h"
 #include "tensor_operations.h"
-#include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#include "profiler.h"
 
 namespace opennn
 {
@@ -49,7 +46,7 @@ void DropoutOperator::to_JSON(JsonWriter& w) const
 void DropoutOperator::from_JSON(const Json* parent)
 {
     if (parent && parent->has("DropoutRate"))
-        set_rate(float(read_json_float(parent, "DropoutRate")));
+        set_rate(read_json_float(parent, "DropoutRate"));
 }
 
 }

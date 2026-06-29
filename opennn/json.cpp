@@ -449,9 +449,7 @@ void JsonWriter::open_element(const string& name)
 
 void JsonWriter::close_element()
 {
-    if (stack.empty()) return;
-    stack.pop_back();
-    if (!name_stack.empty()) name_stack.pop_back();
+    pop_scope();
 }
 
 void JsonWriter::begin_array(const string& name)
@@ -467,9 +465,7 @@ void JsonWriter::begin_array(const string& name)
 
 void JsonWriter::end_array()
 {
-    if (stack.empty()) return;
-    stack.pop_back();
-    if (!name_stack.empty()) name_stack.pop_back();
+    pop_scope();
 }
 
 void JsonWriter::begin_array_object()
@@ -483,6 +479,11 @@ void JsonWriter::begin_array_object()
 }
 
 void JsonWriter::end_array_object()
+{
+    pop_scope();
+}
+
+void JsonWriter::pop_scope()
 {
     if (stack.empty()) return;
     stack.pop_back();
