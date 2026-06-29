@@ -56,11 +56,11 @@ public:
         return regularization_map().from_string(name);
     }
 
-    Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     virtual ~Loss() = default;
 
-    const NeuralNetwork* get_neural_network() const
+    const NeuralNetwork* get_neural_network() const noexcept
     {
         return neural_network;
     }
@@ -70,7 +70,7 @@ public:
         return neural_network;
     }
 
-    const Dataset* get_dataset() const
+    const Dataset* get_dataset() const noexcept
     {
         return dataset;
     }
@@ -105,7 +105,7 @@ public:
     void set_error(const Error&);
     void set_error(const string&);
 
-    Error get_error() const { return error; }
+    Error get_error() const noexcept { return error; }
 
     void back_propagate(const Batch&,
                         ForwardPropagation&,
@@ -137,7 +137,7 @@ public:
     void regularization_from_JSON(const JsonDocument&);
     void regularization_to_JSON(JsonWriter&) const;
 
-    const string& get_name() const { return name; }
+    const string& get_name() const noexcept { return name; }
     static float calculate_h(const float);
 
     void print() const {}
@@ -148,11 +148,11 @@ public:
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
 
-    float get_yolo_lambda_giou()      const { return yolo_lambda_giou;      }
-    float get_yolo_lambda_noobj()     const { return yolo_lambda_noobj;      }
-    float get_yolo_lambda_class()     const { return yolo_lambda_class;      }
-    float get_yolo_focal_gamma()      const { return yolo_focal_gamma;       }
-    float get_yolo_obj_focal_gamma()  const { return yolo_obj_focal_gamma;   }
+    float get_yolo_lambda_giou()      const noexcept { return yolo_lambda_giou;      }
+    float get_yolo_lambda_noobj()     const noexcept { return yolo_lambda_noobj;      }
+    float get_yolo_lambda_class()     const noexcept { return yolo_lambda_class;      }
+    float get_yolo_focal_gamma()      const noexcept { return yolo_focal_gamma;       }
+    float get_yolo_obj_focal_gamma()  const noexcept { return yolo_obj_focal_gamma;   }
 
 private:
 

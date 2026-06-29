@@ -10,7 +10,6 @@
 
 #include "configuration.h"
 #include "tensor_types.h"
-#include "dataset.h"
 #include "thread_safe_queue.h"
 
 #include <atomic>
@@ -19,6 +18,8 @@
 
 namespace opennn
 {
+
+class Dataset;
 
 struct BatchSlot
 {

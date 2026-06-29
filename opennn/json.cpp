@@ -40,8 +40,8 @@ const Json& Json::at(const string& key) const
 Json& Json::operator[](const string& key)
 {
     if (!is_object()) { kind = Kind::Object; object_value.clear(); }
-    for (auto& kv : object_value)
-        if (kv.first == key) return kv.second;
+    for (auto& [k, v] : object_value)
+        if (k == key) return v;
     object_value.emplace_back(key, Json{});
     return object_value.back().second;
 }
@@ -70,6 +70,8 @@ string Json::as_string() const
     case Array:
     case Object: return dump(0);
     }
+
+    throw runtime_error("JSON: invalid value kind");
 }
 
 long long Json::as_long() const
@@ -84,6 +86,8 @@ long long Json::as_long() const
     case Array:
     case Object: return 0;
     }
+
+    throw runtime_error("JSON: invalid value kind");
 }
 
 double Json::as_double() const
@@ -98,6 +102,8 @@ double Json::as_double() const
     case Array:
     case Object: return 0.0;
     }
+
+    throw runtime_error("JSON: invalid value kind");
 }
 
 bool Json::as_bool() const
@@ -112,6 +118,8 @@ bool Json::as_bool() const
     case Array:
     case Object: return false;
     }
+
+    throw runtime_error("JSON: invalid value kind");
 }
 static void escape_string(string& out, const string& s)
 {
@@ -517,8 +525,8 @@ void add_json_field(JsonWriter& writer,
 void write_json(JsonWriter& writer,
                 initializer_list<pair<const char*, string>> props)
 {
-    for (const auto& kv : props)
-        writer.add_field(kv.first, kv.second);
+    for (const auto& [key, value] : props)
+        writer.add_field(key, value);
 }
 
 float read_json_float(const Json* root, const string& field)

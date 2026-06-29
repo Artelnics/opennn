@@ -141,9 +141,9 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
 
 static MatrixR lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    if (activation_function == ActivationFunction::Softmax)
-        throw runtime_error("LevenbergMarquardtAlgorithm: Softmax activation is not supported "
-                            "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
+    throw_if(activation_function == ActivationFunction::Softmax,
+             "LevenbergMarquardtAlgorithm: Softmax activation is not supported "
+             "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
 
     return activation_derivative_from_output_values(activation_function, outputs);
 }

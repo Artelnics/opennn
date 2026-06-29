@@ -8,6 +8,8 @@
 
 #include "tensor_types.h"
 
+#include <algorithm>
+
 namespace opennn
 {
 
@@ -103,7 +105,7 @@ void TensorView::fill(float value)
 
     assert(type == Type::FP32);
     float* data_pointer = static_cast<float*>(data);
-    fill(data_pointer, data_pointer + size(), value);
+    std::fill(data_pointer, data_pointer + size(), value);
 }
 
 string shape_to_string(const Shape& shape, const string& separator)

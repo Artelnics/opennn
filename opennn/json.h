@@ -47,12 +47,12 @@ public:
     static Json make_object();
     static Json make_array();
 
-    bool is_null()   const { return kind == Kind::Null; }
-    bool is_bool()   const { return kind == Kind::Bool; }
-    bool is_number() const { return kind == Kind::Number; }
-    bool is_string() const { return kind == Kind::String; }
-    bool is_array()  const { return kind == Kind::Array; }
-    bool is_object() const { return kind == Kind::Object; }
+    bool is_null()   const noexcept { return kind == Kind::Null; }
+    bool is_bool()   const noexcept { return kind == Kind::Bool; }
+    bool is_number() const noexcept { return kind == Kind::Number; }
+    bool is_string() const noexcept { return kind == Kind::String; }
+    bool is_array()  const noexcept { return kind == Kind::Array; }
+    bool is_object() const noexcept { return kind == Kind::Object; }
     bool         has(const string&) const;
     const Json*  find(const string&) const;
     const Json&  at(const string&) const;
@@ -75,7 +75,7 @@ public:
     void load(const filesystem::path&);
     void save(const filesystem::path&, int indent = 2) const;
     const Json* first_child(const string&) const;
-    const Json* first_child() const { return &root; }
+    const Json* first_child() const noexcept { return &root; }
     static JsonDocument wrap(const string&, Json);
 };
 
@@ -103,6 +103,16 @@ private:
 void add_json_field(JsonWriter&,
                     const string&,
                     const string&);
+
+void save_json_file(const filesystem::path&, const JsonWriter&);
+
+template <typename Serializable>
+void save_json_file(const filesystem::path& file_name, const Serializable& serializable)
+{
+    JsonWriter writer;
+    serializable.to_JSON(writer);
+    save_json_file(file_name, writer);
+}
 
 void write_json(JsonWriter&,
                 initializer_list<pair<const char*, string>>);

@@ -40,8 +40,6 @@ public:
         set(new_input_shape, pooling_method, get_label());
     }
 
-    void set_output_shape(const Shape&) override {}
-
     void set_pooling_method(PoolingMethod);
     void set_pooling_method(const string&);
 

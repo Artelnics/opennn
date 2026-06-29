@@ -24,24 +24,24 @@ public:
                         const string& = "Sigmoid",
                         const string& = "long_short_term_memory_layer");
 
-    Shape get_input_shape()  const override { return input_shape; }
+    Shape get_input_shape()  const noexcept override { return input_shape; }
     Shape get_output_shape() const override
     {
         return return_sequences ? Shape{get_time_steps(), output_features}
                                 : Shape{output_features};
     }
 
-    Index get_time_steps()      const { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
-    Index get_input_features()  const { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
-    Index get_output_features() const { return output_features; }
+    Index get_time_steps()      const noexcept { return input_shape.rank == 2 ? input_shape[0] : Index(0); }
+    Index get_input_features()  const noexcept { return input_shape.rank == 2 ? input_shape[1] : Index(0); }
+    Index get_output_features() const noexcept { return output_features; }
 
-    bool get_return_sequences() const { return return_sequences; }
+    bool get_return_sequences() const noexcept { return return_sequences; }
     void set_return_sequences(bool);
 
-    const TensorView& get_forget_bias()    const { return lstm_op.forget_bias; }
+    const TensorView& get_forget_bias()    const noexcept { return lstm_op.forget_bias; }
 
-    const ActivationFunction& get_activation_function() const { return lstm_op.activation_function; }
-    ActivationFunction get_output_activation() const override { return lstm_op.activation_function; }
+    const ActivationFunction& get_activation_function() const noexcept { return lstm_op.activation_function; }
+    ActivationFunction get_output_activation() const noexcept override { return lstm_op.activation_function; }
 
     vector<TensorSpec> get_forward_specs(Index)  const override;
     vector<TensorSpec> get_backward_specs(Index) const override;

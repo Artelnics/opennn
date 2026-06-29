@@ -261,8 +261,8 @@ struct Buffer
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
 
-    Index size_in_floats() const { return bytes / Index(sizeof(float)); }
-    bool  empty() const { return bytes == 0; }
+    Index size_in_floats() const noexcept { return bytes / Index(sizeof(float)); }
+    bool  empty() const noexcept { return bytes == 0; }
 
     void resize_bytes(Index byte_count, Device allocation_device)
     {

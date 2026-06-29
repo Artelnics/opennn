@@ -109,11 +109,11 @@ public:
 
     virtual ~Layer() = default;
 
-    const string& get_label() const { return label; }
+    const string& get_label() const noexcept { return label; }
 
     const string& get_name() const { return layer_type_to_string(layer_type); }
 
-    LayerType get_type() const { return layer_type; }
+    LayerType get_type() const noexcept { return layer_type; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
@@ -121,7 +121,7 @@ public:
     void set_label(string new_label) { label = move(new_label); }
 
     Index get_parameters_number() const;
-    const vector<Operator*>& get_operators() const { return operators; }
+    const vector<Operator*>& get_operators() const noexcept { return operators; }
     virtual vector<TensorSpec> get_parameter_specs() const;
     virtual vector<TensorSpec> get_state_specs()     const;
     virtual vector<TensorSpec> get_forward_specs(Index batch_size) const
@@ -134,13 +134,13 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    virtual Shape get_input_shape() const { return input_shape; }
+    virtual Shape get_input_shape() const noexcept { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;
 
     virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
 
-    Index get_inputs_number() const { return get_input_shape().size(); }
+    Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
     
@@ -171,10 +171,10 @@ public:
 
     virtual void print() const {}
 
-    bool get_is_trainable() const { return is_trainable; }
+    bool get_is_trainable() const noexcept { return is_trainable; }
 
-    Type get_compute_dtype() const { return compute_dtype; }
-    Device get_compute_device() const { return compute_device; }
+    Type get_compute_dtype() const noexcept { return compute_dtype; }
+    Device get_compute_device() const noexcept { return compute_device; }
 
     void set_compute_dtype(Type new_compute_dtype)
     {
@@ -191,7 +191,7 @@ public:
     float* link_gradients(float*, vector<TensorView>&, Device);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
-    const vector<TensorView>& get_parameter_views() const { return parameters; }
+    const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
 
     void redistribute_parameters_to_operators();
 

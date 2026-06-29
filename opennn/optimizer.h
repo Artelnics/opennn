@@ -33,14 +33,14 @@ class Optimizer
 
 public:
 
-    Optimizer(Loss* = nullptr);
+    explicit Optimizer(Loss* = nullptr);
     virtual ~Optimizer();
 
     using StoppingCondition = opennn::StoppingCondition;
 
-    const Loss* get_loss() const { return loss; }
+    const Loss* get_loss() const noexcept { return loss; }
 
-    bool get_display() const { return display; }
+    bool get_display() const noexcept { return display; }
 
     void set(Loss* new_loss) { loss = new_loss; }
 
@@ -51,16 +51,16 @@ public:
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
     void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
-    int  get_workers_number() const { return workers_number; }
+    int  get_workers_number() const noexcept { return workers_number; }
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
-    bool get_cuda_graph() const { return use_cuda_graph; }
+    bool get_cuda_graph() const noexcept { return use_cuda_graph; }
 
     void set_shuffle(bool enabled) { shuffle_samples = enabled; }
-    bool get_shuffle() const { return shuffle_samples; }
+    bool get_shuffle() const noexcept { return shuffle_samples; }
 
     void set_batch_pool_size(int size) { batch_pool_size_override = size; }
-    int  get_batch_pool_size_override() const { return batch_pool_size_override; }
+    int  get_batch_pool_size_override() const noexcept { return batch_pool_size_override; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -71,7 +71,7 @@ public:
 
     Index get_maximum_batch_size() const;
 
-    const string& get_name() const { return name; }
+    const string& get_name() const noexcept { return name; }
 
     virtual void print() const {}
 
@@ -132,7 +132,7 @@ protected:
 
     static void clip_gradient_norm(Buffer&, float);
 
-    bool should_display(Index epoch) const { return display && epoch % display_period == 0; }
+    bool should_display(Index epoch) const noexcept { return display && epoch % display_period == 0; }
 
     void display_epoch_results(Index, float, float,
                                float, float,

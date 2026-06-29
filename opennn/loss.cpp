@@ -900,14 +900,14 @@ float yolo_loss_expected_value_check_cpu()
     const float errD = (ev_raw_logit_grad_bg > 0.0f) ? 0.0f : 1.0f;  // 0=pass, 1=fail
 
     // --- Report ---------------------------------------------------------------
-    printf("  [A] perfect overlap (coord_loss=0):   expected=%.4f  got=%.4f  err=%.2e\n",
-           expA, gotA, double(errA));
-    printf("  [B] non-overlap GIoU (coord≈8.889):   expected=%.4f  got=%.4f  err=%.2e\n",
-           expB, gotB, double(errB));
-    printf("  [C] fg obj grad direction (must be <0): %.4f → %s\n",
-           double(ev_raw_logit_grad_obj), (errC == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
-    printf("  [D] bg obj grad direction (must be >0): %.4f → %s\n",
-           double(ev_raw_logit_grad_bg), (errD == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
+    cerr << format("  [A] perfect overlap (coord_loss=0):   expected={:.4f}  got={:.4f}  err={:.2e}\n",
+                   expA, gotA, double(errA));
+    cerr << format("  [B] non-overlap GIoU (coord~=8.889):  expected={:.4f}  got={:.4f}  err={:.2e}\n",
+                   expB, gotB, double(errB));
+    cerr << format("  [C] fg obj grad direction (must be <0): {:.4f} -> {}\n",
+                   double(ev_raw_logit_grad_obj), (errC == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
+    cerr << format("  [D] bg obj grad direction (must be >0): {:.4f} -> {}\n",
+                   double(ev_raw_logit_grad_bg), (errD == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
 
     return max({errA, errB, errC, errD});
 #else

@@ -117,6 +117,8 @@ static pair<float, float> scaling_affine(ScalerMethod scaler,
     case ScalerMethod::Logarithm:
         return {1.0f, 0.0f};
     }
+
+    throw runtime_error("ImageDataset: invalid scaler method.");
 }
 
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()

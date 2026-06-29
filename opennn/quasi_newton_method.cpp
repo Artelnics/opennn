@@ -41,8 +41,6 @@ void QuasiNewtonMethod::set_default()
 
 void QuasiNewtonMethod::calculate_inverse_hessian(OptimizerData& optimization_data) const
 {
-    const Index parameters_number = optimization_data.views[ParameterDifferences].size();
-
     VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
     VectorMap gradient_difference = optimization_data.views[GradientDifference].as_vector();
 

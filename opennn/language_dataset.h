@@ -23,15 +23,15 @@ public:
                     Index maximum_vocabulary_size = 20000,
                     Index minimum_token_frequency = 1);
 
-    const vector<string>& get_target_vocabulary() const { return target_vocabulary; }
+    const vector<string>& get_target_vocabulary() const noexcept { return target_vocabulary; }
 
-    Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
-    Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
+    Index get_input_vocabulary_size() const noexcept { return input_vocabulary.size(); }
+    Index get_target_vocabulary_size() const noexcept { return target_vocabulary.size(); }
 
-    const unordered_map<string, Index>& get_input_vocabulary_map() const { return input_vocabulary_map; }
+    const unordered_map<string, Index>& get_input_vocabulary_map() const noexcept { return input_vocabulary_map; }
 
-    Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
-    Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
+    Index get_maximum_input_sequence_length() const noexcept { return maximum_input_sequence_length; }
+    Index get_maximum_target_sequence_length() const noexcept { return maximum_target_sequence_length; }
 
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
@@ -66,14 +66,14 @@ public:
 
     bool supports_bf16_inputs() const override { return false; }
 
-    inline static const string PAD_TOKEN   = "[PAD]";
-    inline static const string UNK_TOKEN   = "[UNK]";
-    inline static const string START_TOKEN = "[START]";
-    inline static const string END_TOKEN   = "[END]";
+    static constexpr string_view PAD_TOKEN   = "[PAD]";
+    static constexpr string_view UNK_TOKEN   = "[UNK]";
+    static constexpr string_view START_TOKEN = "[START]";
+    static constexpr string_view END_TOKEN   = "[END]";
 
-    inline static const float UNK_INDEX = 1.0f;
-    inline static const float START_INDEX = 2.0f;
-    inline static const float END_INDEX = 3.0f;
+    static constexpr float UNK_INDEX = 1.0f;
+    static constexpr float START_INDEX = 2.0f;
+    static constexpr float END_INDEX = 3.0f;
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 

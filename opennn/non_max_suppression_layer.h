@@ -35,7 +35,6 @@ public:
              const string&);
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override {}
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

@@ -930,7 +930,7 @@ void Dataset::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char separator)
+void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator)
 {
     if (all_lines.empty())
         return;
@@ -943,13 +943,13 @@ void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char 
 
     for (Index i = 0; i < first_rows; ++i)
     {
-        const vector<string_view> tokens = get_token_views(all_lines[i], separator);
+        const vector<string_view> tokens = get_token_views(all_lines[i], file_separator);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 
     if (all_lines.size() > num_first_rows_to_show)
     {
-        const vector<string_view> tokens = get_token_views(all_lines.back(), separator);
+        const vector<string_view> tokens = get_token_views(all_lines.back(), file_separator);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 }

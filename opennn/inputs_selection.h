@@ -32,14 +32,14 @@ public:
         MaximumValidationFailures
     };
 
-    InputsSelection(TrainingStrategy* = nullptr);
+    explicit InputsSelection(TrainingStrategy* = nullptr);
     virtual ~InputsSelection() = default;
 
-    const TrainingStrategy* get_training_strategy() const { return training_strategy; }
+    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
 
-    bool has_training_strategy() const { return training_strategy; }
+    bool has_training_strategy() const noexcept { return training_strategy; }
 
-    bool get_display() const { return display; }
+    bool get_display() const noexcept { return display; }
 
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;

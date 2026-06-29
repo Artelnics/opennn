@@ -193,13 +193,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
 void TrainingStrategy::save(const filesystem::path& file_name) const
 {
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
-
-    JsonWriter printer;
-    to_JSON(printer);
-    file << printer.c_str();
+    save_json_file(file_name, *this);
 }
 
 void TrainingStrategy::load(const filesystem::path& file_name)

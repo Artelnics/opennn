@@ -24,18 +24,18 @@ class TrainingStrategy
 
 public:
 
-    TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    const Dataset* get_dataset() const { return dataset; }
+    const Dataset* get_dataset() const noexcept { return dataset; }
     Dataset* get_dataset() { return dataset; }
 
-    const NeuralNetwork* get_neural_network() const { return neural_network; }
+    const NeuralNetwork* get_neural_network() const noexcept { return neural_network; }
     NeuralNetwork* get_neural_network() { return neural_network; }
 
-    const Loss* get_loss() const { return loss.get(); }
+    const Loss* get_loss() const noexcept { return loss.get(); }
     Loss* get_loss() { return loss.get(); }
 
-    const Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
+    const Optimizer* get_optimization_algorithm() const noexcept { return optimizer.get(); }
     Optimizer* get_optimization_algorithm() { return optimizer.get(); }
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();

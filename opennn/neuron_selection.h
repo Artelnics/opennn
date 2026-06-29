@@ -29,14 +29,14 @@ public:
         MaximumNeurons
     };
 
-    NeuronSelection(TrainingStrategy* = nullptr);
+    explicit NeuronSelection(TrainingStrategy* = nullptr);
     virtual ~NeuronSelection() = default;
 
-    const TrainingStrategy* get_training_strategy() const { return training_strategy; }
+    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
 
-    bool has_training_strategy() const { return training_strategy; }
+    bool has_training_strategy() const noexcept { return training_strategy; }
 
-    bool get_display() const { return display; }
+    bool get_display() const noexcept { return display; }
 
     void set(TrainingStrategy*);
 

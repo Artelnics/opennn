@@ -89,7 +89,7 @@ public:
         bool update_utopian_from_points(const MatrixR&);
     };
 
-    ResponseOptimization(NeuralNetwork* = nullptr);
+    explicit ResponseOptimization(NeuralNetwork* = nullptr);
 
     ~ResponseOptimization();
 
@@ -153,14 +153,14 @@ public:
 
     vector<float> get_utopian_point() const;
 
-    const map<string, vector<Index>>& get_category_frequencies() const { return sampling_memory.category_frequencies; }
+    const map<string, vector<Index>>& get_category_frequencies() const noexcept { return sampling_memory.category_frequencies; }
 
-    const vector<CardinalityConstraint>& get_cardinality_constraints() const { return constraint_set.cardinality; }
+    const vector<CardinalityConstraint>& get_cardinality_constraints() const noexcept { return constraint_set.cardinality; }
 
     pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
 
-    Domain get_original_domain(const string role) const;
+    Domain get_original_domain(string_view role) const;
 
     MatrixR calculate_random_inputs(const Domain&, Index evaluations_count = -1) const;
 

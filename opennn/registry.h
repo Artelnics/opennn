@@ -54,8 +54,8 @@ public:
         std::vector<std::string> names;
         names.reserve(creators.size());
 
-        for (const auto& pair : creators)
-            names.push_back(pair.first);
+        for (const auto& [name, creator] : creators)
+            names.push_back(name);
 
         return names;
     }

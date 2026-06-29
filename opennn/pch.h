@@ -21,6 +21,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include <algorithm>
+#include <bit>
 #include <ranges>
 #include <span>
 #include <numbers>

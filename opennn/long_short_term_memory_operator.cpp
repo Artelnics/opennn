@@ -30,9 +30,19 @@ void link_views(span<const TensorView> views, initializer_list<TensorView*> targ
     for (TensorView* target : targets) *target = views[index++];
 }
 
+void zero_if_linked(TensorView& view)
+{
+    if (view.data) view.setZero();
+}
+
 void zero_if_linked(const TensorView& view)
 {
     if (view.data) const_cast<TensorView&>(view).setZero();
+}
+
+void zero_linked(initializer_list<TensorView*> views)
+{
+    for (TensorView* view : views) zero_if_linked(*view);
 }
 
 void zero_linked(initializer_list<const TensorView*> views)

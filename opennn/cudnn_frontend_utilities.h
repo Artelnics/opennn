@@ -17,9 +17,7 @@
 #include "string_utilities.h"
 #include "memory_debug.h"
 
-namespace opennn
-{
-namespace cudnn_frontend
+namespace opennn::cudnn_frontend
 {
 using namespace ::cudnn_frontend;
 
@@ -242,8 +240,7 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     autotune_now(pending, graph, scratch, workspace_bytes);
 }
 
-}  // namespace cudnn_frontend
-}  // namespace opennn
+}  // namespace opennn::cudnn_frontend
 
 #endif
 

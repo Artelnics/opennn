@@ -11,6 +11,8 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
+#include <algorithm>
+
 namespace opennn
 {
 
@@ -156,7 +158,7 @@ void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& outpu
                 continue;
 
             float* out = dst + (b * max_boxes + kept_count) * 6;
-            copy(candidate.begin(), candidate.end(), out);
+            ranges::copy(candidate, out);
             if (++kept_count == max_boxes)
                 break;
         }

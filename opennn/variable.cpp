@@ -62,4 +62,20 @@ vector<string> Variable::get_names() const
        : vector<string>{name};
 }
 
+vector<string> get_variable_feature_names(const vector<Variable>& variables)
+{
+    vector<string> feature_names;
+    feature_names.reserve(size_t(get_features_number(variables)));
+
+    for (const Variable& variable : variables)
+    {
+        vector<string> names = variable.get_names();
+        feature_names.insert(feature_names.end(),
+                             make_move_iterator(names.begin()),
+                             make_move_iterator(names.end()));
+    }
+
+    return feature_names;
+}
+
 }

@@ -22,18 +22,18 @@ public:
 
     Scaling(const Shape& = {});
 
-    Shape get_output_shape() const override { return input_shape; }
+    Shape get_output_shape() const noexcept override { return input_shape; }
 
-    const vector<Descriptives>& get_descriptives() const { return descriptives; }
-    const vector<ScalerMethod>& get_scalers()      const { return scalers; }
+    const vector<Descriptives>& get_descriptives() const noexcept { return descriptives; }
+    const vector<ScalerMethod>& get_scalers()      const noexcept { return scalers; }
 
     VectorR get_minimums()            const;
     VectorR get_maximums()            const;
     VectorR get_means()               const;
     VectorR get_standard_deviations() const;
 
-    float get_min_range() const { return min_range; }
-    float get_max_range() const { return max_range; }
+    float get_min_range() const noexcept { return min_range; }
+    float get_max_range() const noexcept { return max_range; }
 
     void set(const Shape& = {});
     void set_input_shape(const Shape&) override;
@@ -57,7 +57,7 @@ public:
 
 protected:
 
-    Scaling(LayerType);
+    explicit Scaling(LayerType);
 
     vector<Descriptives> descriptives;
     vector<ScalerMethod> scalers;

@@ -22,10 +22,10 @@ public:
 
     Bounding(const Shape& = {0}, const string& = "bounding_layer");
 
-    Shape get_input_shape() const override { return output_shape; }
-    Shape get_output_shape() const override { return output_shape; }
+    Shape get_input_shape() const noexcept override { return output_shape; }
+    Shape get_output_shape() const noexcept override { return output_shape; }
 
-    const BoundingMethod& get_bounding_method() const { return bound.method; }
+    const BoundingMethod& get_bounding_method() const noexcept { return bound.method; }
 
     VectorR get_lower_bounds() const;
     VectorR get_upper_bounds() const;

@@ -22,9 +22,9 @@ class ModelSelection
 public:
 
 
-    ModelSelection(TrainingStrategy* = nullptr);
-    const TrainingStrategy* get_training_strategy() const { return training_strategy; }
-    bool has_training_strategy() const { return training_strategy; }
+    explicit ModelSelection(TrainingStrategy* = nullptr);
+    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
+    bool has_training_strategy() const noexcept { return training_strategy; }
     void set(TrainingStrategy* new_training_strategy) { training_strategy = new_training_strategy; }
 
     void set_default();

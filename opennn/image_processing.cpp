@@ -11,6 +11,7 @@
 #include "string_utilities.h"
 #include "tensor_types.h"
 
+#include <algorithm>
 #include <cctype>
 #include <csetjmp>
 #include <cstdio>
@@ -852,7 +853,7 @@ void translate_image_x(TensorMap3& image, Index shift)
 
     if (abs(shift) >= width)
     {
-        fill(data, data + height * row_size, 0.0f);
+        std::fill(data, data + height * row_size, 0.0f);
         return;
     }
 
@@ -867,12 +868,12 @@ void translate_image_x(TensorMap3& image, Index shift)
         if (shift > 0)
         {
             memmove(row + fill_size, row, size_t(move_size) * sizeof(float));
-            fill(row, row + fill_size, 0.0f);
+            std::fill(row, row + fill_size, 0.0f);
         }
         else
         {
             memmove(row, row + fill_size, size_t(move_size) * sizeof(float));
-            fill(row + move_size, row + row_size, 0.0f);
+            std::fill(row + move_size, row + row_size, 0.0f);
         }
     }
 }
@@ -890,7 +891,7 @@ void translate_image_y(TensorMap3& image, Index shift)
 
     if (abs(shift) >= height)
     {
-        fill(data, data + pixels, 0.0f);
+        std::fill(data, data + pixels, 0.0f);
         return;
     }
 
@@ -901,12 +902,12 @@ void translate_image_y(TensorMap3& image, Index shift)
     if (shift > 0)
     {
         memmove(data + fill_size, data, size_t(move_size) * sizeof(float));
-        fill(data, data + fill_size, 0.0f);
+        std::fill(data, data + fill_size, 0.0f);
     }
     else
     {
         memmove(data, data + fill_size, size_t(move_size) * sizeof(float));
-        fill(data + move_size, data + pixels, 0.0f);
+        std::fill(data + move_size, data + pixels, 0.0f);
     }
 }
 

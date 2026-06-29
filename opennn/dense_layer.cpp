@@ -153,14 +153,14 @@ void Dense::set_momentum(float new_momentum)
 string Dense::write_expression(const vector<string>& input_names,
                                const vector<string>& output_names) const
 {
-    const vector<TensorView>& parameters = get_parameter_views();
-    if (parameters.size() < 2 || !parameters[0].data || !parameters[1].data) return "";
+    const vector<TensorView>& parameter_views = get_parameter_views();
+    if (parameter_views.size() < 2 || !parameter_views[0].data || !parameter_views[1].data) return "";
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const float* bias_data = parameters[0].as<float>();
-    const float* weight_data = parameters[1].as<float>();
+    const float* bias_data = parameter_views[0].as<float>();
+    const float* weight_data = parameter_views[1].as<float>();
 
     const string& activation_function_local = ActivationOperator::to_string(get_activation_function());
 

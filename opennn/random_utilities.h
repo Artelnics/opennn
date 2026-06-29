@@ -36,7 +36,7 @@ namespace opennn
     template<typename T>
     void partial_shuffle(vector<T>& v, Index count)
     {
-        const Index n = static_cast<Index>(v.size());
+        const Index n = ssize(v);
         const Index limit = min(count, n - 1);
         for (Index i = 0; i < limit; ++i)
             swap(v[i], v[i + random_integer(0, n - 1 - i)]);

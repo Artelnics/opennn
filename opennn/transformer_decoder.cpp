@@ -75,8 +75,8 @@ Index sample_token(VectorR& probabilities,
                     indexed.begin() + config.top_k,
                     indexed.end(),
                     [](const auto& a, const auto& b) { return a.first > b.first; });
-        vector<bool> keep(vocabulary_size, false);
-        for (Index i = 0; i < config.top_k; ++i) keep[indexed[i].second] = true;
+        vector<char> keep(vocabulary_size, 0);
+        for (Index i = 0; i < config.top_k; ++i) keep[indexed[i].second] = 1;
         for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
     }
 
@@ -94,11 +94,11 @@ Index sample_token(VectorR& probabilities,
             ranges::sort(sorted_probabilities,
                          [](const auto& a, const auto& b) { return a.first > b.first; });
             float cumulative_probability = 0.0f;
-            vector<bool> keep(vocabulary_size, false);
+            vector<char> keep(vocabulary_size, 0);
             for (const auto& [probability, token_id] : sorted_probabilities)
             {
                 cumulative_probability += probability / total;
-                keep[token_id] = true;
+                keep[token_id] = 1;
                 if (cumulative_probability >= config.top_p) break;
             }
             for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
@@ -188,7 +188,7 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
 void TransformerDecoder::identify_layer_ranges()
 {
     const auto& layers = transformer.get_layers();
-    const Index layers_number = static_cast<Index>(layers.size());
+    const Index layers_number = ssize(layers);
 
     throw_if(layers_number < 4,
              format("TransformerDecoder: unexpected layer count ({}). Transformer must have at least decoder_embedding + encoder_embedding + cross_attention + output_projection.",
@@ -308,8 +308,7 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
         device::synchronize(stream);
         for (Index i = 0; i < vocabulary_size; ++i)
         {
-            const uint32_t bits = static_cast<uint32_t>(bf16_staging[size_t(i)]) << 16;
-            memcpy(&distribution(i), &bits, sizeof(float));
+            distribution(i) = bit_cast<float>(static_cast<uint32_t>(bf16_staging[size_t(i)]) << 16);
         }
     }
     else if (output_view.is_fp32())

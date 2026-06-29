@@ -22,7 +22,7 @@ public:
 
     enum DataSlot { Velocity };
 
-    StochasticGradientDescent(Loss* = nullptr);
+    explicit StochasticGradientDescent(Loss* = nullptr);
 
     void set_default();
 

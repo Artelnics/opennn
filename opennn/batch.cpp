@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "batch.h"
+#include "dataset.h"
 #include "device_backend.h"
 #include "memory_debug.h"
 

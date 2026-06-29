@@ -79,18 +79,18 @@ public:
                 Index boxes_per_cell = 5,
                 const vector<array<float, 2>>& anchors = {});
 
-    Index get_samples_number() const override { return samples_number; }
+    Index get_samples_number() const noexcept override { return samples_number; }
     using Dataset::get_samples_number;
 
-    Index get_grid_size() const { return grid_size; }
-    Index get_boxes_per_cell() const { return boxes_per_cell; }
-    Index get_classes_number() const { return ssize(class_names); }
-    const vector<array<float, 2>>& get_anchors() const { return anchors; }
-    const vector<string>& get_class_names() const { return class_names; }
+    Index get_grid_size() const noexcept { return grid_size; }
+    Index get_boxes_per_cell() const noexcept { return boxes_per_cell; }
+    Index get_classes_number() const noexcept { return ssize(class_names); }
+    const vector<array<float, 2>>& get_anchors() const noexcept { return anchors; }
+    const vector<string>& get_class_names() const noexcept { return class_names; }
     const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
 
-    bool is_multi_scale() const { return !head_grid_sizes.empty(); }
-    Index get_boxes_per_head() const { return boxes_per_head; }
+    bool is_multi_scale() const noexcept { return !head_grid_sizes.empty(); }
+    Index get_boxes_per_head() const noexcept { return boxes_per_head; }
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
 

@@ -27,35 +27,35 @@ public:
                   bool = false,
                   const string& = "convolutional_layer");
 
-    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
+    Shape get_input_shape() const noexcept override { return {input_height, input_width, input_channels}; }
     Shape get_output_shape() const override;
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_input_height() const { return input_height; }
-    Index get_input_width() const { return input_width; }
-    Index get_input_channels() const { return input_channels; }
+    Index get_input_height() const noexcept { return input_height; }
+    Index get_input_width() const noexcept { return input_width; }
+    Index get_input_channels() const noexcept { return input_channels; }
 
-    Index get_kernel_height() const { return kernel_height; }
-    Index get_kernel_width() const { return kernel_width; }
-    Index get_kernel_channels() const { return kernel_channels; }
-    Index get_kernels_number() const { return kernels_number; }
+    Index get_kernel_height() const noexcept { return kernel_height; }
+    Index get_kernel_width() const noexcept { return kernel_width; }
+    Index get_kernel_channels() const noexcept { return kernel_channels; }
+    Index get_kernels_number() const noexcept { return kernels_number; }
 
-    Index get_row_stride() const { return row_stride; }
-    Index get_column_stride() const { return column_stride; }
+    Index get_row_stride() const noexcept { return row_stride; }
+    Index get_column_stride() const noexcept { return column_stride; }
 
     Index get_padding_height() const;
     Index get_padding_width() const;
 
-    bool get_use_padding() const { return use_padding; }
+    bool get_use_padding() const noexcept { return use_padding; }
 
-    ActivationFunction get_activation_function() const { return activation_operator.activation_function; }
-    ActivationFunction get_output_activation() const override { return activation_operator.activation_function; }
+    ActivationFunction get_activation_function() const noexcept { return activation_operator.activation_function; }
+    ActivationFunction get_output_activation() const noexcept override { return activation_operator.activation_function; }
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
-    bool get_residual() const { return residual; }
+    bool get_residual() const noexcept { return residual; }
     void set_residual(bool);
 
     vector<TensorSpec> get_forward_specs(Index) const override;
@@ -70,7 +70,6 @@ public:
              const string& = "convolutional_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override {}
 
     void on_compute_dtype_changed() override { update_convolution_operator(); }
 

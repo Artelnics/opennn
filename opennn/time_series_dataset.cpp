@@ -255,7 +255,7 @@ void TimeSeriesDataset::impute_missing_values_unuse()
     const Index samples_number = get_samples_number();
     const Index lags = get_past_time_steps();
 
-    vector<bool> row_has_nan(samples_number);
+    vector<char> row_has_nan(samples_number);
     for (Index i = 0; i < samples_number; ++i)
         row_has_nan[i] = has_nan_row(i);
 
@@ -267,7 +267,7 @@ void TimeSeriesDataset::impute_missing_values_unuse()
     {
         const auto first = row_has_nan.begin() + i;
 
-        if (any_of(first, first + lags + 1, [](bool value) { return value; }))
+        if (any_of(first, first + lags + 1, [](char value) { return value != 0; }))
             set_sample_role(i, "None");
     }
 

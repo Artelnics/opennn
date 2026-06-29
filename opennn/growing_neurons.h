@@ -18,7 +18,7 @@ class GrowingNeurons final : public NeuronSelection
 
 public:
 
-    GrowingNeurons(TrainingStrategy* = nullptr);
+    explicit GrowingNeurons(TrainingStrategy* = nullptr);
 
     void set_default();
 

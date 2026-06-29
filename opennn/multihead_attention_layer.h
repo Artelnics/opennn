@@ -31,11 +31,11 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    Index get_query_sequence_length() const { return query_sequence_length; }
-    Index get_source_sequence_length() const { return source_sequence_length; }
-    Index get_embedding_dimension() const { return embedding_dimension; }
-    Index get_heads_number() const { return heads_number; }
-    Index get_head_dimension() const
+    Index get_query_sequence_length() const noexcept { return query_sequence_length; }
+    Index get_source_sequence_length() const noexcept { return source_sequence_length; }
+    Index get_embedding_dimension() const noexcept { return embedding_dimension; }
+    Index get_heads_number() const noexcept { return heads_number; }
+    Index get_head_dimension() const noexcept
     {
         return (heads_number == 0) ? 0 : Index(embedding_dimension / heads_number);
     }
@@ -59,8 +59,8 @@ public:
     void set_sdpa_auto(bool);
     void set_sdpa_min_sequence_length(Index);
 
-    bool  get_sdpa_auto() const { return sdpa_auto; }
-    Index get_sdpa_min_sequence_length() const { return sdpa_min_sequence_length; }
+    bool  get_sdpa_auto() const noexcept { return sdpa_auto; }
+    Index get_sdpa_min_sequence_length() const noexcept { return sdpa_min_sequence_length; }
 
     bool should_use_sdpa() const;
 

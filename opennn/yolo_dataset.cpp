@@ -157,11 +157,8 @@ uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
 
     for (const auto& anchor : anchors)
     {
-        uint32_t bits = 0;
-        memcpy(&bits, &anchor[0], sizeof(uint32_t));
-        mix(bits);
-        memcpy(&bits, &anchor[1], sizeof(uint32_t));
-        mix(bits);
+        mix(bit_cast<uint32_t>(anchor[0]));
+        mix(bit_cast<uint32_t>(anchor[1]));
     }
 
     return hash_value;
@@ -1980,8 +1977,7 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
 
         conv->load_darknet_weights(f);
         ++loaded;
-        cout << "Loaded backbone conv " << loaded << "/" << n_backbone_convs
-                  << " from " << weights_path << "\n";
+        cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path);
     }
 
     fclose(f);

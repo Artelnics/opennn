@@ -60,7 +60,7 @@ public:
     enum class Separator{Space, Tab, Comma, Semicolon};
     enum class StorageMode{Matrix, BinaryFile, GPUPersistantData};
 
-    virtual Index get_samples_number() const { return ssize(sample_roles); }
+    virtual Index get_samples_number() const noexcept { return ssize(sample_roles); }
 
     Index get_samples_number(const string&) const;
 
@@ -70,17 +70,17 @@ public:
 
     vector<Index> get_used_sample_indices() const;
 
-    const vector<SampleRole>& get_sample_roles() const { return sample_roles; }
+    const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
     vector<Index> get_sample_roles_vector() const;
 
     VectorI get_sample_role_numbers() const;
 
-    Index get_variables_number() const { return variables.size(); }
+    Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(const string&) const;
     Index get_used_variables_number() const;
 
-    const vector<Variable>& get_variables() const { return variables; }
+    const vector<Variable>& get_variables() const noexcept { return variables; }
     vector<Variable> get_variables(const string&) const;
 
     Index get_variable_index(const string&) const;
@@ -112,36 +112,36 @@ public:
 
     virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
-    const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
+    const vector<vector<string>>& get_data_file_preview() const noexcept { return data_file_preview; }
 
-    const filesystem::path& get_data_path() const { return data_path; }
-    StorageMode get_storage_mode() const { return storage_mode; }
+    const filesystem::path& get_data_path() const noexcept { return data_path; }
+    StorageMode get_storage_mode() const noexcept { return storage_mode; }
     string get_storage_mode_string() const;
 
-    const Separator& get_separator() const { return separator; }
+    const Separator& get_separator() const noexcept { return separator; }
     string get_separator_string() const;
     string get_separator_name() const;
 
-    const Codification& get_codification() const { return codification; }
+    const Codification& get_codification() const noexcept { return codification; }
     string get_codification_string() const;
 
-    bool get_display() const { return display; }
+    bool get_display() const noexcept { return display; }
 
-    virtual bool is_empty() const { return get_samples_number() == 0; }
+    virtual bool is_empty() const noexcept { return get_samples_number() == 0; }
 
-    Shape get_input_shape() const { return input_shape; }
-    Shape get_target_shape() const { return target_shape; }
+    Shape get_input_shape() const noexcept { return input_shape; }
+    Shape get_target_shape() const noexcept { return target_shape; }
 
-    const MatrixR& get_data() const { return data; }
+    const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
     void set_data_constant(float);
 
     virtual void enable_device_residency();
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
-    bool is_device_resident() const { return data_device.data != nullptr; }
+    bool is_device_resident() const noexcept { return data_device.data != nullptr; }
     const float* get_device_data() const { return data_device.as<float>(); }
-    Index get_data_columns() const { return data.cols(); }
-    Index get_device_data_columns() const { return device_data_columns; }
+    Index get_data_columns() const noexcept { return data.cols(); }
+    Index get_device_data_columns() const noexcept { return device_data_columns; }
 
     void set_default();
     void set_sample_roles(const string&);

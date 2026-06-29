@@ -12,6 +12,8 @@
 #include "tensor_types.h"
 #include "random_utilities.h"
 
+#include <set>
+
 namespace opennn
 {
 
@@ -1041,7 +1043,7 @@ static void parse_binary_token(MatrixR& data, Index sample_index, Index feature_
 
 static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
                                      const vector<string_view>& sample_lines,
-                                     char separator,
+                                     char file_separator,
                                      bool has_sample_ids,
                                      const string& missing_values_label)
 {
@@ -1057,7 +1059,7 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
 
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> row = get_token_views(line, separator);
+        const vector<string_view> row = get_token_views(line, file_separator);
 
         for (size_t col_index = 0; col_index < variables.size(); ++col_index)
         {
@@ -1099,15 +1101,15 @@ void TabularDataset::read_csv()
     configuration.line_validator = [this](string_view line) { check_separators(line); };
 
     CsvReader::Result parsed = CsvReader(configuration).read(data_path);
-    const char separator = parsed.separator;
+    const char file_separator = parsed.separator;
     vector<string_view>& lines = parsed.lines;
 
     throw_if(lines.empty(),
              format("File {} is empty or contains no valid data rows.", data_path.string()));
 
-    read_data_file_preview(lines, separator);
+    read_data_file_preview(lines, file_separator);
 
-    const vector<string_view> header_tokens = get_token_views(lines[0], separator);
+    const vector<string_view> header_tokens = get_token_views(lines[0], file_separator);
     if (has_header)
     {
         throw_if(has_numbers(header_tokens),
@@ -1135,7 +1137,7 @@ void TabularDataset::read_csv()
 
         for (const string_view line : lines)
         {
-            const vector<string_view> row = get_token_views(line, separator);
+            const vector<string_view> row = get_token_views(line, file_separator);
             if (row.empty())
                 continue;
 
@@ -1180,9 +1182,9 @@ void TabularDataset::read_csv()
     else
         set_default_variable_names();
 
-    infer_column_types(lines, separator);
+    infer_column_types(lines, file_separator);
 
-    const DateFormat date_format = infer_dataset_date_format(variables, lines, separator, has_sample_ids, missing_values_label);
+    const DateFormat date_format = infer_dataset_date_format(variables, lines, file_separator, has_sample_ids, missing_values_label);
 
     for (Variable& variable : variables)
         if (variable.is_categorical() && variable.get_categories_number() == 2)
@@ -1213,7 +1215,7 @@ void TabularDataset::read_csv()
 
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        const vector<string_view> tokens = get_token_views(lines[sample_index], separator);
+        const vector<string_view> tokens = get_token_views(lines[sample_index], file_separator);
 
         if (has_missing_values(tokens))
         {
@@ -1516,7 +1518,7 @@ void TabularDataset::calculate_missing_values_statistics()
     rows_missing_values_number = count_rows_with_nan();
 }
 
-void TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char separator)
+void TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char file_separator)
 {
     const Index variables_number = variables.size();
     const size_t total_rows = sample_lines.size();
@@ -1533,7 +1535,7 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     vector<vector<string_view>> sampled_tokens(rows_to_check);
     for (size_t i = 0; i < rows_to_check; ++i)
-        sampled_tokens[i] = get_token_views(sample_lines[row_indices[i]], separator);
+        sampled_tokens[i] = get_token_views(sample_lines[row_indices[i]], file_separator);
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
     {
@@ -1577,10 +1579,10 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     if (!any_categorical) return;
 
-    vector<set<string>> unique_categories(variables_number);
+    vector<std::set<string>> unique_categories(variables_number);
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> tokens = get_token_views(line, separator);
+        const vector<string_view> tokens = get_token_views(line, file_separator);
         for (Index col_index = 0; col_index < variables_number; ++col_index)
         {
             if (!variables[col_index].is_categorical()) continue;

@@ -22,7 +22,7 @@ public:
 
     enum DataSlot { GradientMoment, SquareGradientMoment };
 
-    AdaptiveMomentEstimation(Loss* = nullptr);
+    explicit AdaptiveMomentEstimation(Loss* = nullptr);
 
     void set_batch_size(const Index);
 
@@ -33,7 +33,7 @@ public:
     void set_beta_2(const float);
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
-    float get_gradient_clip_norm() const { return gradient_clip_norm; }
+    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
 
     TrainingResult train() override;
 

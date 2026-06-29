@@ -37,10 +37,6 @@ void Unscaling::set_input_shape(const Shape& new_input_shape)
     set(new_input_shape.dim_or_zero(0));
 }
 
-void Unscaling::set_output_shape(const Shape& /*new_output_shape*/)
-{
-}
-
 void Unscaling::read_JSON_body(const Json* root_element)
 {
     if (!root_element) return;

@@ -258,7 +258,7 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     {
         if (line.empty() || ranges::all_of(line, [](char c) { return isspace(static_cast<unsigned char>(c)); }))
             continue;
-        if (line.find("{") != string::npos)
+        if (line.find('{') != string::npos)
             break;
         if (line.back() != ';')
             line += ';';
@@ -1102,10 +1102,10 @@ vector<string> ModelExpression::fix_output_names(const string& str,
         if (token.empty() || ranges::all_of(token, [](char c) { return isspace(c); }))
             continue;
 
-        if (token.find("{") != string::npos)
+        if (token.find('{') != string::npos)
             break;
 
-        if (token.find("=") != string::npos)
+        if (token.find('=') != string::npos)
             tokens.push_back(token);
     }
 

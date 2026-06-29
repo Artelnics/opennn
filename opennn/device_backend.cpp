@@ -200,13 +200,14 @@ void copy_async(void* destination,
     if (byte_count == 0 || !destination || !source) return;
 
 #ifdef OPENNN_HAS_CUDA
-    cudaMemcpyKind cuda_kind;
+    cudaMemcpyKind cuda_kind = cudaMemcpyHostToHost;
     switch (kind)
     {
         case CopyKind::HostToHost:     cuda_kind = cudaMemcpyHostToHost;     break;
         case CopyKind::HostToDevice:   cuda_kind = cudaMemcpyHostToDevice;   break;
         case CopyKind::DeviceToHost:   cuda_kind = cudaMemcpyDeviceToHost;   break;
         case CopyKind::DeviceToDevice: cuda_kind = cudaMemcpyDeviceToDevice; break;
+        default: throw runtime_error("Invalid device copy kind.");
     }
 
     if (stream)

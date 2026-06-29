@@ -137,9 +137,9 @@ struct Variable
     vector<string> categories;
     ScalerMethod scaler = ScalerMethod::None;
     const string& get_role() const { return variable_role_to_string(role); }
-    VariableRole get_role_type() const { return role; }
+    VariableRole get_role_type() const noexcept { return role; }
     const string& get_scaler() const { return scaler_method_to_string(scaler); }
-    ScalerMethod get_scaler_type() const { return scaler; }
+    ScalerMethod get_scaler_type() const noexcept { return scaler; }
     const string& get_type_string() const;
     Index get_categories_number() const;
 
@@ -152,10 +152,10 @@ struct Variable
 
     void to_JSON(JsonWriter&) const;
 
-    bool is_binary() const { return type == VariableType::Binary; }
-    bool is_integer() const { return type == VariableType::Integer; }
-    bool is_categorical() const { return type == VariableType::Categorical; }
-    bool is_used() const { return role != VariableRole::None && role != VariableRole::Time; }
+    bool is_binary() const noexcept { return type == VariableType::Binary; }
+    bool is_integer() const noexcept { return type == VariableType::Integer; }
+    bool is_categorical() const noexcept { return type == VariableType::Categorical; }
+    bool is_used() const noexcept { return role != VariableRole::None && role != VariableRole::Time; }
 
     Index get_feature_count() const { return is_categorical() ? get_categories_number() : 1; }
 
@@ -163,6 +163,7 @@ struct Variable
 
 };
 
+vector<string> get_variable_feature_names(const vector<Variable>&);
 
 // Per-variable feature counts and their sum, for a list of variables.
 inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)

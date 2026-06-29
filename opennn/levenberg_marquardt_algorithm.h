@@ -18,7 +18,7 @@ struct ForwardPropagation;
 
 struct BackPropagationLM
 {
-    BackPropagationLM(const Index = 0, Loss* = nullptr);
+    explicit BackPropagationLM(const Index = 0, Loss* = nullptr);
     virtual ~BackPropagationLM() = default;
 
     void set(const Index = 0, Loss* = nullptr);
@@ -44,7 +44,7 @@ class LevenbergMarquardtAlgorithm final : public Optimizer
 
 public:
 
-   LevenbergMarquardtAlgorithm(Loss* = nullptr);
+   explicit LevenbergMarquardtAlgorithm(Loss* = nullptr);
    void set_default();
 
    void set_damping_parameter(const float);
