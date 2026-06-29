@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstring>
-#include <cstdlib>
 #include "registry.h"
 #include "dataset.h"
 #include "forward_propagation.h"

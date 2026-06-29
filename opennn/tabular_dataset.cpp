@@ -11,7 +11,6 @@
 #include "scaling.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
-#include <regex>
 
 namespace opennn
 {

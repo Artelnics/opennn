@@ -10,12 +10,7 @@
 #include "string_utilities.h"
 
 #include <cctype>
-#include <cmath>
 #include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 
 namespace opennn
 {
@@ -409,6 +404,15 @@ void JsonDocument::save(const filesystem::path& path, int indent) const
     throw_if(!out.is_open(),
              format("Cannot open JSON file: {}", path.string()));
     out << root.dump(indent);
+}
+
+void save_json_file(const filesystem::path& file_name, const JsonWriter& writer)
+{
+    ofstream file(file_name);
+
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
+
+    file << writer.c_str();
 }
 
 const Json* JsonDocument::first_child(const string& name) const

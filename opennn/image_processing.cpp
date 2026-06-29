@@ -14,7 +14,6 @@
 #include <cctype>
 #include <csetjmp>
 #include <cstdio>
-#include <memory>
 #include <zlib.h>
 extern "C" {
 #include <jpeglib.h>

@@ -11,10 +11,6 @@
 #include "random_utilities.h"
 #include "string_utilities.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstring>
-
 namespace opennn
 {
 

@@ -23,8 +23,6 @@
 #include "string_utilities.h"
 #include <atomic>
 #include <chrono>
-#include <cstring>
-#include <exception>
 #include <mutex>
 #include <stop_token>
 #include <thread>

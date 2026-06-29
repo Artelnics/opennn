@@ -11,8 +11,6 @@
 #include "tensor_types.h"
 #include "io_utilities.h"
 
-#include <fstream>
-
 namespace opennn
 {
 
