@@ -438,6 +438,84 @@ TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
 }
 
 
+// -----------------------------------------------------------------------------
+// Variable-wise block decomposition of the input-repair router
+// -----------------------------------------------------------------------------
+
+TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock)
+{
+    // Two constraint subsystems with no shared variable: an affine EQUALITY on {x0, x1}
+    // and a nonlinear disk on {x2, x3}. The router partitions them by connected component,
+    // so the affine block goes to the exact single-affine projector (equality met tightly)
+    // while only the nonlinear block goes to Gauss-Newton -- rather than the whole input
+    // vector being dragged through GN because one constraint happens to be nonlinear.
+    const vector<NamedColumn> inputs = make_named_columns({ "x0", "x1", "x2", "x3" });
+
+    auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
+    {
+        MultivariateConstraint constraint;
+        constraint.expression = expression;
+        constraint.comparison_operator = op;
+        constraint.low_bound = low;
+        constraint.up_bound = up;
+        constraint.compiled = compile_formula(expression, inputs, {});
+        constraint.kind = classify(constraint);
+        return constraint;
+    };
+
+    vector<MultivariateConstraint> constraints;
+    constraints.push_back(make_fc("x0 + x1", ComparisonOperator::EqualTo, float(5), float(5)));
+    constraints.push_back(make_fc("x2^2 + x3^2", ComparisonOperator::LessEqualTo, float(0), float(1)));
+
+    ASSERT_EQ(constraints[0].kind, ConstraintKind::AffineInput);
+    ASSERT_EQ(constraints[1].kind, ConstraintKind::NonlinearInput);
+
+    const Index n = 4;
+    const VectorR inferior = VectorR::Constant(n, float(-5));
+    const VectorR superior = VectorR::Constant(n, float(5));
+
+    const Index rows = 200;
+    MatrixR points(rows, n);
+    set_random_uniform(points, float(-5), float(5));
+
+    repair_inputs(points, inferior, superior, constraints);
+
+    for (Index r = 0; r < rows; ++r)
+        EXPECT_NEAR(points(r, 0) + points(r, 1), float(5), float(5e-3))
+            << "affine equality block not met exactly at row " << r
+            << " (it must be projected, not dragged through Gauss-Newton)";
+}
+
+
+TEST(ResponseOptimizationFormula, DisjointAffineAndNonlinearBlocksCoexist)
+{
+    // End-to-end: x0 + x1 == 5 (affine block) AND x2^2 + x3^2 <= 1 (nonlinear block), no
+    // shared variable. Every surviving result must satisfy both subsystems.
+    MinimalApproximation setup({ "x0", "x1", "x2", "x3" }, { "y" },
+                                float(-5), float(5),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_formula_constraint("x0 + x1", ComparisonOperator::EqualTo, float(5));
+    opt.set_formula_constraint("x2^2 + x3^2", ComparisonOperator::LessEqualTo, float(0), float(1));
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(1500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 0) + results(i, 1), float(5), float(5e-2))
+            << "affine block violated at row " << i;
+        EXPECT_LE(results(i, 2) * results(i, 2) + results(i, 3) * results(i, 3), float(1) + float(2e-2))
+            << "nonlinear block violated at row " << i;
+    }
+}
+
+
 TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },

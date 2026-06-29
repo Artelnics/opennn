@@ -1813,34 +1813,101 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 }
 
 
+namespace
+{
+
+// Partition the input-repairable constraints (AffineInput / NonlinearInput) into blocks whose
+// variable sets are pairwise disjoint -- the connected components of the variable-constraint
+// bipartite graph. Two constraints fall in the same block iff they share at least one input column
+// (directly or transitively). Each block can then be repaired independently with the projector
+// matched to its OWN kind, so a single nonlinear constraint no longer drags unrelated affine blocks
+// through Gauss-Newton. This is the standard independent-components decomposition (cf. SCIP
+// cons_components; Pierra's product-space projection), here applied to surrogate input repair.
+vector<vector<MultivariateConstraint>>
+partition_input_constraints_by_variable(const vector<MultivariateConstraint>& formula_constraints)
+{
+    vector<const MultivariateConstraint*> repairable;
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+        if (constraint.kind == ConstraintKind::AffineInput
+            || constraint.kind == ConstraintKind::NonlinearInput)
+            repairable.push_back(&constraint);
+
+    const Index constraint_number = static_cast<Index>(repairable.size());
+
+    vector<Index> parent(constraint_number);
+    for (Index i = 0; i < constraint_number; ++i)
+        parent[i] = i;
+
+    function<Index(Index)> find = [&](Index x)
+    {
+        while (parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+        return x;
+    };
+
+    // Union any two constraints that reference a common input column.
+    unordered_map<Index, Index> column_owner;
+
+    for (Index i = 0; i < constraint_number; ++i)
+        for (const Index column : repairable[i]->compiled.input_indices)
+        {
+            const auto found = column_owner.find(column);
+            if (found == column_owner.end())
+                column_owner[column] = i;
+            else
+                parent[find(i)] = find(found->second);
+        }
+
+    unordered_map<Index, vector<MultivariateConstraint>> blocks;
+    for (Index i = 0; i < constraint_number; ++i)
+        blocks[find(i)].push_back(*repairable[i]);
+
+    vector<vector<MultivariateConstraint>> result;
+    result.reserve(blocks.size());
+    for (auto& [root, block] : blocks)
+        result.push_back(move(block));
+
+    return result;
+}
+
+}
+
+
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
 {
-    const MultivariateConstraint* single_affine = nullptr;
-    Index affine_number = 0;
-    bool any_nonlinear = false;
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
+    // Each block holds constraints over a variable set disjoint from every other block, so repairing
+    // them one block at a time on the shared matrix is exact: an inner repairer only writes the
+    // columns its constraints reference, leaving the other blocks' columns untouched. The win is
+    // routing purity -- the affine blocks get Dykstra and only the genuinely nonlinear block gets
+    // Gauss-Newton, instead of the whole input vector being forced through GN by one nonlinear term.
+    for (const vector<MultivariateConstraint>& block :
+         partition_input_constraints_by_variable(formula_constraints))
     {
-        const ConstraintKind kind = constraint.kind;
+        const MultivariateConstraint* single_affine = nullptr;
+        Index affine_number = 0;
+        bool any_nonlinear = false;
 
-        if (kind == ConstraintKind::AffineInput)
+        for (const MultivariateConstraint& constraint : block)
         {
-            ++affine_number;
-            single_affine = &constraint;
+            if (constraint.kind == ConstraintKind::AffineInput)
+            {
+                ++affine_number;
+                single_affine = &constraint;
+            }
+            else if (constraint.kind == ConstraintKind::NonlinearInput)
+                any_nonlinear = true;
         }
-        else if (kind == ConstraintKind::NonlinearInput)
-            any_nonlinear = true;
-    }
 
-    if (any_nonlinear)
-        repair_nonlinear_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
-    else if (affine_number == 1)
-        repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
-    else if (affine_number >= 2)
-        repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
+        if (any_nonlinear)
+            repair_nonlinear_inputs(random_inputs, inferior_frontier, superior_frontier, block);
+        else if (affine_number == 1)
+            repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
+        else if (affine_number >= 2)
+            repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, block);
+    }
 }
 
 
