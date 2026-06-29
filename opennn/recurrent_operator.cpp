@@ -150,6 +150,10 @@ void RecurrentOperator::apply(const TensorView& input,
     MatrixR prev_hidden (batch_size, output_features);
     MatrixR step_derivs (batch_size, output_features);
 
+    using enum ActivationFunction;
+    throw_if(activation == Softmax || activation == LeakyReLU,
+             "RecurrentOperator: unsupported activation.");
+
     for (Index t = 0; t < time_steps; ++t)
     {
         for (Index i = 0; i < batch_size; ++i)
@@ -163,31 +167,10 @@ void RecurrentOperator::apply(const TensorView& input,
         if (t > 0)
             step_hidden.noalias() += prev_hidden * w_rec_map;
 
-        using F = ActivationFunction;
-        switch (activation)
-        {
-        case F::Tanh:
-            step_hidden = step_hidden.array().tanh();
-            if (is_training)
-                step_derivs = 1.0f - step_hidden.array().square();
-            break;
-        case F::Sigmoid:
-            step_hidden = (1.0f / (1.0f + (-step_hidden.array()).exp())).matrix();
-            if (is_training)
-                step_derivs = step_hidden.array() * (1.0f - step_hidden.array());
-            break;
-        case F::ReLU:
-            if (is_training)
-                step_derivs = (step_hidden.array() > 0.0f).cast<float>();
-            step_hidden = step_hidden.array().cwiseMax(0.0f);
-            break;
-        case F::Identity:
-            if (is_training)
-                step_derivs.setOnes();
-            break;
-        case F::Softmax:
-        case F::LeakyReLU: throw runtime_error("RecurrentOperator: unsupported activation.");
-        }
+        step_hidden = activation_forward_values(activation, step_hidden);
+
+        if (is_training)
+            step_derivs = activation_derivative_from_output_values(activation, step_hidden);
 
         for (Index i = 0; i < batch_size; ++i)
             memcpy(hidden_data + i * h_stride_b + t * h_stride_t,

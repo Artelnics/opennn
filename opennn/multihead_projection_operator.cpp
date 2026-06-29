@@ -40,7 +40,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     const Index heads_number   = head_output.shape[1];
     const Index head_dimension = head_output.shape[3];
 
-    TensorView&       scratch     = forward_slots[scratch_slots[0]];
+    TensorView&       scratch     = forward_slots[scratch_slot];
     TensorView        scratch_2d  = scratch.reshape({rows, input_features});
     const TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     const TensorView  input_2d    = input.reshape({rows, input_features});
@@ -66,7 +66,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
     const Index heads_number   = head_delta.shape[1];
     const Index head_dimension = head_delta.shape[3];
 
-    TensorView&       scratch     = forward_slots[scratch_slots[0]];
+    TensorView&       scratch     = forward_slots[scratch_slot];
     TensorView        scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     const TensorView  scratch_2d  = scratch.reshape({rows, input_features});
     const TensorView  input_2d    = input.reshape({rows, input_features});

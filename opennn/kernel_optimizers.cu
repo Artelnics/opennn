@@ -418,7 +418,7 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
         dst[i] = __float2bfloat16(src[i]);
 }
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream)
 {
     if (n == 0) return;
@@ -500,7 +500,7 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
         dst[i] = __bfloat162float(src[i]);
 }
 
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
+void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst)
 {
     if (n == 0) return;
     const int total = checked_int(n);

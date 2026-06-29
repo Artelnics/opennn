@@ -282,7 +282,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
     {
         assert(destination.fp32_staging.bytes >= input_values_count * Index(sizeof(float)));
         copy_to_device_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float));
-        cast_fp32_to_bf16_cuda(input_values_count,
+        cast_fp32_to_bf16(input_values_count,
                                destination.fp32_staging.as<float>(),
                                destination.input.buffer.as<bfloat16>(),
                                stream);

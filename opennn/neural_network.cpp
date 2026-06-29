@@ -1342,7 +1342,7 @@ void NeuralNetwork::cast_parameters_to_bf16()
     if (parameters_bf16_mirror.empty()) return;
     if (parameters.empty())      return;
 
-    cast_fp32_to_bf16_cuda(parameters.size_in_floats(),
+    cast_fp32_to_bf16(parameters.size_in_floats(),
                            parameters.as<float>(),
                            parameters_bf16_mirror.as<bfloat16>());
 }

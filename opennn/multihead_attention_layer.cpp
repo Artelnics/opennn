@@ -121,7 +121,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     for (auto* proj : {&query_projection, &key_projection, &value_projection})
     {
         proj->input_slots  = {Input};
-        proj->scratch_slots = {TransposeScratch};
+        proj->scratch_slot = TransposeScratch;
         proj->input_delta_slots_self = {InputQueryDelta};
     }
 
@@ -148,9 +148,8 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
     attention.input_slots  = {Query, Key, Value, Input};
     attention.output_slots = {AttentionWeights, AttentionWeightsDropped};
-    attention.scratch_slots = {TransposeScratch};
-    attention.source_view_index = 1;
-    attention.attention_output_slots = {ConcatenatedAttentionOutputs};
+    attention.scratch_slot = TransposeScratch;
+    attention.attention_output_slot = ConcatenatedAttentionOutputs;
     attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};

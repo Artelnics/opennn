@@ -21,6 +21,44 @@ const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
 ActivationFunction activation_function_from_string(const string&);
 
+inline float activation_forward_value(ActivationFunction function, float x)
+{
+    using enum ActivationFunction;
+    switch (function)
+    {
+    case Identity:  return x;
+    case Sigmoid:   return 1.0f / (1.0f + exp(-x));
+    case Tanh:      return tanh(x);
+    case ReLU:      return max(0.0f, x);
+    case LeakyReLU: return x >= 0.0f ? x : x * LEAKY_RELU_SLOPE;
+    case Softmax:   break;
+    }
+
+    throw runtime_error("activation_forward_value: Softmax must be handled separately.");
+}
+
+inline float activation_derivative_from_output_value(ActivationFunction function, float y)
+{
+    using enum ActivationFunction;
+    switch (function)
+    {
+    case Identity:  return 1.0f;
+    case Sigmoid:   return y * (1.0f - y);
+    case Tanh:      return 1.0f - y * y;
+    case ReLU:      return y > 0.0f ? 1.0f : 0.0f;
+    case LeakyReLU: return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE;
+    case Softmax:   break;
+    }
+
+    throw runtime_error("activation_derivative_from_output_value: Softmax must be handled separately.");
+}
+
+VectorR activation_forward_values(ActivationFunction, const VectorR&);
+MatrixR activation_forward_values(ActivationFunction, const MatrixR&);
+VectorR activation_derivative_from_output_values(ActivationFunction, const VectorR&);
+MatrixR activation_derivative_from_output_values(ActivationFunction, const MatrixR&);
+MatrixR activation_derivative_from_output_values(ActivationFunction, const MatrixMap&);
+
 void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 
 void scale(const TensorView&,

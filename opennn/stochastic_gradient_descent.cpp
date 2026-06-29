@@ -164,10 +164,10 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 }
 
+#ifdef OPENNN_HAS_CUDA
 void StochasticGradientDescent::update_parameters_capturable(BackPropagation& back_propagation,
                                                              OptimizerData& optimizer_data) const
 {
-#ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     float* const velocity_ptr = optimizer_data.views.empty()
@@ -184,11 +184,13 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         nesterov,
         neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
-#else
-    (void)back_propagation; (void)optimizer_data;
-    throw runtime_error("update_parameters_capturable requires CUDA support.");
-#endif
 }
+#else
+void StochasticGradientDescent::update_parameters_capturable(BackPropagation&, OptimizerData&) const
+{
+    throw runtime_error("update_parameters_capturable requires CUDA support.");
+}
+#endif
 
 TrainingResult StochasticGradientDescent::train()
 {
@@ -239,10 +241,10 @@ TrainingResult StochasticGradientDescent::train()
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
 
-
     set_names();
     set_scaling();
 
+    
     BatchPools batch_pools;
     setup_batch_pools(batch_pools,
                       *dataset,
@@ -264,7 +266,6 @@ TrainingResult StochasticGradientDescent::train()
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
 
     setup_device_training();
-
 
     const Index parameters_number = neural_network->get_parameters_size();
     OptimizerData optimizer_data;

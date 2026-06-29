@@ -22,7 +22,7 @@ struct MultiHeadProjectionOperator : Operator
 
     size_t input_view_index = 0;
 
-    vector<size_t> scratch_slots;
+    size_t scratch_slot = 0;
 
     vector<size_t> input_delta_slots_self;
     vector<size_t> input_delta_slots_cross;

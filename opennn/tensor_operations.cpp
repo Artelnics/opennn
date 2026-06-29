@@ -136,7 +136,7 @@ static bool try_linear_forward(const TensorView& input,
 
 #else
 
-static bool try_activation_forward(TensorView&, ActivationFunction)   { return false; }
+static bool try_activation_forward(TensorView&, ActivationFunction)  { return false; }
 static bool try_linear_forward(const TensorView&, const TensorView&,
                                const TensorView&, TensorView&, bool) { return false; }
 
@@ -152,6 +152,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::Softmax,   "Softmax"},
         {ActivationFunction::LeakyReLU, "LeakyReLU"}
     };
+    
     static const EnumMap<ActivationFunction> instance{entries};
     return instance;
 }
@@ -1464,7 +1465,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
                                output_fp32.bytes,
                                device::CopyKind::HostToDevice,
                                stream);
-            cast_fp32_to_bf16_cuda(output.size(),
+            cast_fp32_to_bf16(output.size(),
                                    output_fp32.as<float>(),
                                    output.as<bfloat16>(),
                                    stream);

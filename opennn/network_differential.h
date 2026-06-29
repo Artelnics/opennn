@@ -50,34 +50,6 @@ struct NetworkDifferential
         return floor_value;
     }
 
-    static VectorR activation_forward(const ActivationFunction function, const VectorR& z)
-    {
-        switch (function)
-        {
-        case ActivationFunction::Identity: return z;
-        case ActivationFunction::Sigmoid:  return (1.0f + (-z.array()).exp()).inverse();
-        case ActivationFunction::Tanh:     return z.array().tanh();
-        case ActivationFunction::ReLU:     return z.array().max(0.0f);
-        case ActivationFunction::LeakyReLU: return (z.array() >= 0.0f).select(z.array(), z.array() * LEAKY_RELU_SLOPE);
-        case ActivationFunction::Softmax:
-        default: throw runtime_error("NetworkDifferential: unsupported activation");
-        }
-    }
-
-    static VectorR activation_derivative(const ActivationFunction function, const VectorR& a)
-    {
-        switch (function)
-        {
-        case ActivationFunction::Identity: return VectorR::Ones(a.size());
-        case ActivationFunction::Sigmoid:  return a.array() * (1.0f - a.array());
-        case ActivationFunction::Tanh:     return 1.0f - a.array().square();
-        case ActivationFunction::ReLU:     return (a.array() > 0.0f).cast<float>();
-        case ActivationFunction::LeakyReLU: return a.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
-        case ActivationFunction::Softmax:
-        default: throw runtime_error("NetworkDifferential: unsupported activation");
-        }
-    }
-
     VectorR scale_forward(const LayerSnapshot& layer, const VectorR& in) const
     {
         VectorR out(in.size());
@@ -179,9 +151,10 @@ struct NetworkDifferential
             else if (layer.kind == Kind::Bound)
                 activation = layer.bounding_active ? activation.cwiseMax(layer.minimum).cwiseMin(layer.maximum).eval() : activation;
             else if (layer.kind == Kind::Activate)
-                activation = activation_forward(layer.activation, activation);
+                activation = activation_forward_values(layer.activation, activation);
             else
-                activation = activation_forward(layer.activation, (layer.weights.transpose() * activation + layer.bias).eval());
+                activation = activation_forward_values(layer.activation,
+                                                       (layer.weights.transpose() * activation + layer.bias).eval());
 
             layer_outputs[i] = activation;
         }
@@ -209,10 +182,13 @@ struct NetworkDifferential
             else if (layer.kind == Kind::Bound)
                 carried = (carried.array() * bound_derivative(layer, layer_inputs[i]).array()).matrix();
             else if (layer.kind == Kind::Activate)
-                carried = (carried.array() * activation_derivative(layer.activation, layer_outputs[i]).array()).matrix();
+                carried = (carried.array()
+                         * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
             else
             {
-                const VectorR through_activation = (carried.array() * activation_derivative(layer.activation, layer_outputs[i]).array()).matrix();
+                const VectorR through_activation =
+                    (carried.array()
+                   * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
                 carried = layer.weights * through_activation;
             }
         }

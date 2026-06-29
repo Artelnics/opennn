@@ -58,9 +58,9 @@ void adam_update_capturable_cuda(
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
+void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst);
 
 void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
                       const Index n_rows, const Index n_cols,

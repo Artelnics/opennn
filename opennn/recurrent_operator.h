@@ -85,11 +85,11 @@ private:
                          TensorView&,
                          TensorView&,
                          TensorView&) const;
-    mutable Buffer step_input_buf      {Device::CUDA};
-    mutable Buffer step_hidden_buf     {Device::CUDA};
-    mutable Buffer prev_hidden_buf     {Device::CUDA};
-    mutable Buffer step_derivs_buf     {Device::CUDA};
-    mutable Buffer step_seq_delta_buf  {Device::CUDA};
+    mutable Buffer step_input_buf     {Device::CUDA};
+    mutable Buffer step_hidden_buf    {Device::CUDA};
+    mutable Buffer prev_hidden_buf    {Device::CUDA};
+    mutable Buffer step_derivs_buf    {Device::CUDA};
+    mutable Buffer step_seq_delta_buf {Device::CUDA};
 };
 
 }

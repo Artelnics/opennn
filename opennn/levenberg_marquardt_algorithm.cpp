@@ -7,6 +7,7 @@
 
 #include "registry.h"
 #include "tensor_types.h"
+#include "tensor_operations.h"
 #include "dataset.h"
 #include "loss.h"
 #include "batch.h"
@@ -141,26 +142,13 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-static MatrixR activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
+static MatrixR lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    using enum ActivationFunction;
-    switch (activation_function)
-    {
-    case Identity:
-        return MatrixR::Ones(outputs.rows(), outputs.cols());
-    case Softmax:
+    if (activation_function == ActivationFunction::Softmax)
         throw runtime_error("LevenbergMarquardtAlgorithm: Softmax activation is not supported "
                             "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
-    case Sigmoid:
-        return outputs.array() * (1.0f - outputs.array());
-    case Tanh:
-        return 1.0f - outputs.array().square();
-    case ReLU:
-        return (outputs.array() > 0.0f).cast<float>();
-    case LeakyReLU: return outputs.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
-    }
 
-    return MatrixR::Ones(outputs.rows(), outputs.cols());
+    return activation_derivative_from_output_values(activation_function, outputs);
 }
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
@@ -218,7 +206,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     {
         const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
         const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
-        const MatrixR act_deriv = activation_derivative(
+        const MatrixR act_deriv = lm_activation_derivative(
             static_cast<const Dense*>(layers[last_layer].get())->get_activation_function(), outputs);
 
         for (Index j = 0; j < outputs_number; ++j)
@@ -257,7 +245,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
         const auto* previous_dense = static_cast<const Dense*>(layers[dense_indices[n - 1]].get());
         const MatrixR previous_act_deriv =
-            activation_derivative(previous_dense->get_activation_function(), inputs);
+            lm_activation_derivative(previous_dense->get_activation_function(), inputs);
 
         MatrixR previous_delta(rows, inputs_number);
         previous_delta.noalias() = delta * weights.transpose();

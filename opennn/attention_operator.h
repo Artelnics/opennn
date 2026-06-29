@@ -37,10 +37,8 @@ struct AttentionOperator : Operator
 
     TensorSpec backward_scratch_spec(Index) const;
 
-    size_t source_view_index = 1;
-
-    vector<size_t> scratch_slots;
-    vector<size_t> attention_output_slots;
+    size_t scratch_slot = 0;
+    size_t attention_output_slot = 0;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
@@ -69,12 +67,14 @@ private:
                        void*,
                        bool);
 
+#ifdef OPENNN_HAS_CUDA
     void apply_sdpa_forward(const TensorView&,
                             const TensorView&,
                             const TensorView&,
                             const TensorView&,
                             TensorView&,
                             bool);
+#endif
 
     void apply_delta_cpu(const TensorView&,
                          const TensorView&,
@@ -88,6 +88,7 @@ private:
                          TensorView&,
                          TensorView&) const;
 
+#ifdef OPENNN_HAS_CUDA
     void apply_sdpa_backward(const TensorView&,
                              const TensorView&,
                              const TensorView&,
@@ -96,17 +97,7 @@ private:
                              TensorView&,
                              TensorView&,
                              TensorView&) const;
-
-    void apply_delta_gpu_unfused(const TensorView&,
-                                 const TensorView&,
-                                 const TensorView&,
-                                 const TensorView&,
-                                 const TensorView&,
-                                 const TensorView&,
-                                 TensorView&,
-                                 TensorView&,
-                                 TensorView&,
-                                 TensorView&) const;
+#endif
 
     static bool get_contiguous_source_lengths(const TensorView&,
                                               vector<Index>&,

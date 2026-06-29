@@ -800,14 +800,14 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     if (input.is_fp32() && target_type == Type::BF16)
     {
         bfloat16* dst = ensure_bf16_input_workspace(input.size());
-        cast_fp32_to_bf16_cuda(input.size(), input.as<float>(), dst);
+        cast_fp32_to_bf16(input.size(), input.as<float>(), dst);
         return dst;
     }
 
     if (input.is_bf16() && target_type == Type::FP32)
     {
         float* dst = ensure_bf16_to_fp32_workspace(input.size());
-        cast_bf16_to_fp32_cuda(input.size(), input.as<bfloat16>(), dst);
+        cast_bf16_to_fp32(input.size(), input.as<bfloat16>(), dst);
         return dst;
     }
 
@@ -820,7 +820,7 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
-    cast_fp32_to_bf16_cuda(bias.size(), bias.as<float>(), dst);
+    cast_fp32_to_bf16(bias.size(), bias.as<float>(), dst);
     return dst;
 }
 

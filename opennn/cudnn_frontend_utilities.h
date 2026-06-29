@@ -136,6 +136,16 @@ bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
     }
 }
 
+inline DataType_t to_dtype(Type t)
+{
+    switch (t)
+    {
+        case Type::FP32: return DataType_t::FLOAT;
+        case Type::BF16: return DataType_t::BFLOAT16;
+        default:         return DataType_t::FLOAT;
+    }
+}
+
 inline vector<int64_t> nhwc_strides(int64_t c, int64_t h, int64_t w)
 {
     return {h * w * c, 1, w * c, c};
