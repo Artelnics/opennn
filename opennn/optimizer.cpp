@@ -204,13 +204,7 @@ void Optimizer::from_JSON(const JsonDocument& document)
 
 void Optimizer::save(const filesystem::path& file_name) const
 {
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
-
-    JsonWriter printer;
-    to_JSON(printer);
-    file << printer.c_str();
+    save_json_file(file_name, *this);
 }
 
 void Optimizer::load(const filesystem::path& file_name)
@@ -459,7 +453,7 @@ Index Optimizer::get_maximum_batch_size() const
     fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
     throw_if(fixed_bytes >= budget,
-             format("Optimizer::get_maximum_batch_size: fixed memory ({} MiB) exceeds 80% budget ({} MiB).",
+             format("Fixed memory ({} MiB) exceeds 80% GPU budget ({} MiB).",
                     fixed_bytes / (1ull << 20), budget / (1ull << 20)));
 
     const Index dynamic_budget = budget - fixed_bytes;
@@ -522,8 +516,7 @@ Index Optimizer::get_maximum_batch_size() const
     };
 
     throw_if(bytes_for_batch(1) > dynamic_budget,
-             format("Optimizer::get_maximum_batch_size: not enough memory for batch_size=1. "
-                    "Need {} MiB, available {} MiB.",
+             format("Not enough GPU memory for batch_size=1: need {} MiB, have {} MiB.",
                     bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
 
     Index lo = 1;
@@ -840,11 +833,17 @@ void Optimizer::display_epoch_results(const Index epoch,
     if (!should_display(epoch)) return;
 
     cout << "Training error: " << training_error << "\n";
-    if (is_token_cross_entropy) cout << "Training perplexity: " << exp(training_error) << "\n";
-    if (is_token_cross_entropy) cout << "Training accuracy: " << training_accuracy << "\n";
-    if (has_validation) cout << "Validation error: " << validation_error << "\n";
-    if (has_validation && is_token_cross_entropy) cout << "Validation perplexity: " << exp(validation_error) << "\n";
-    if (has_validation && is_token_cross_entropy) cout << "Validation accuracy: " << validation_accuracy << "\n";
+    if (is_token_cross_entropy) {
+        cout << "Training perplexity: " << exp(training_error) << "\n";
+        cout << "Training accuracy: " << training_accuracy << "\n";
+    }
+    if (has_validation) {
+        cout << "Validation error: " << validation_error << "\n";
+        if (is_token_cross_entropy) {
+            cout << "Validation perplexity: " << exp(validation_error) << "\n";
+            cout << "Validation accuracy: " << validation_accuracy << "\n";
+        }
+    }
     cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
 }
 

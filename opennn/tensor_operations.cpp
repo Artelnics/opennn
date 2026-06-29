@@ -810,9 +810,7 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
         if (token_id < 0 || token_id >= vocabulary_size)
         {
             if (!out_of_range_warned.exchange(true))
-                cerr << "EmbeddingLookup warning: token id " << token_id
-                     << " out of range [0, " << vocabulary_size
-                     << "); zeroing row. Further warnings suppressed.\n";
+                cerr << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
             output_mat.row(i).setZero();
             continue;
         }
@@ -1339,9 +1337,9 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
         rows_a = to_int(input_a.size() / cols_a);
     }
 
-    const int output_columns = transpose_b ? rows_b : cols_b;
-    const int output_rows = transpose_a ? cols_a : rows_a;
-    const int inner_dimension = transpose_a ? rows_a : cols_a;
+    const int cols_out = transpose_b ? rows_b : cols_b;
+    const int rows_out = transpose_a ? cols_a : rows_a;
+    const int inner_dim = transpose_a ? rows_a : cols_a;
 
     const cublasOperation_t operation_b = transpose_b ? CUBLAS_OP_T : CUBLAS_OP_N;
     const cublasOperation_t operation_a = transpose_a ? CUBLAS_OP_T : CUBLAS_OP_N;
@@ -1352,10 +1350,10 @@ static void multiply_gpu(const TensorView& input_a, bool transpose_a,
     const long long stride_output = output.shape[output.get_rank() - 2] * output.shape[output.get_rank() - 1];
 
     gemm_strided_batched_cuda(operation_b, operation_a,
-                              output_columns, output_rows, inner_dimension,
+                              cols_out, rows_out, inner_dim,
                               input_b.data, input_b.cuda_dtype(), cols_b, stride_b,
                               input_a.data, input_a.cuda_dtype(), cols_a, stride_a,
-                              output.data,  output.cuda_dtype(), output_columns, stride_output,
+                              output.data,  output.cuda_dtype(), cols_out, stride_output,
                               batch_count,
                               alpha, beta);
 }
