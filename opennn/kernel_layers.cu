@@ -1005,25 +1005,41 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
 
+// Function codes mirror ActivationFunction values.
+__device__ __forceinline__ float opennn_activation_value(float x, int function)
+{
+    if (function == activation_sigmoid)    return 1.0f / (1.0f + expf(-x));
+    if (function == activation_tanh)       return tanhf(x);
+    if (function == activation_relu)       return fmaxf(x, 0.0f);
+    if (function == activation_leaky_relu) return x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
+    return x;
+}
+
+__device__ __forceinline__ float opennn_activation_grad(float y, float d, int function)
+{
+    if (function == activation_sigmoid)    return d * y * (1.0f - y);
+    if (function == activation_tanh)       return d * (1.0f - y * y);
+    if (function == activation_relu)       return y > 0.0f ? d : 0.0f;
+    if (function == activation_leaky_relu) return y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
+    return d;
+}
+
 template<typename T>
 __global__ void activation_forward_kernel(const int n, T* __restrict__ data, const int function)
 {
-    // Function codes mirror ActivationFunction values.
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
+        data[idx] = static_cast<T>(opennn_activation_value(static_cast<float>(data[idx]), function));
+}
+
+// bf16 x2: 2 elements/thread => 4-byte (sector-optimal) coalesced transactions,
+// roughly halving the memory passes of this bandwidth-bound elementwise kernel.
+__global__ void activation_forward_kernel_bf162(const int n2, __nv_bfloat162* __restrict__ data, const int function)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n2; idx += blockDim.x * gridDim.x)
     {
-        const float x = static_cast<float>(data[idx]);
-        float y = x;
-
-        if (function == activation_sigmoid)
-            y = 1.0f / (1.0f + expf(-x));
-        else if (function == activation_tanh)
-            y = tanhf(x);
-        else if (function == activation_relu)
-            y = fmaxf(x, 0.0f);
-        else if (function == activation_leaky_relu)
-            y = x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
-
-        data[idx] = static_cast<T>(y);
+        const float2 f = __bfloat1622float2(data[idx]);
+        data[idx] = __floats2bfloat162_rn(opennn_activation_value(f.x, function),
+                                          opennn_activation_value(f.y, function));
     }
 }
 
@@ -1031,6 +1047,15 @@ template<typename T>
 void activation_forward_cuda(const Index n, T* data, const int function)
 {
     if (n == 0) return;
+
+    if constexpr (std::is_same_v<T, __nv_bfloat16>)
+        if ((n & 1) == 0)
+        {
+            const int n2 = checked_int(n / 2);
+            OPENNN_CUDA_LAUNCH(activation_forward_kernel_bf162<<<grid_size_for(n2), block_size, 0,
+                opennn::device::get_compute_stream()>>>(n2, reinterpret_cast<__nv_bfloat162*>(data), function));
+            return;
+        }
 
     const int total = checked_int(n);
     OPENNN_CUDA_LAUNCH(activation_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, data, function));
@@ -1043,21 +1068,19 @@ template<typename T>
 __global__ void activation_backward_kernel(const int n, const T* __restrict__ outputs, T* __restrict__ delta, const int function)
 {
     for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
+        delta[idx] = static_cast<T>(opennn_activation_grad(static_cast<float>(outputs[idx]),
+                                                           static_cast<float>(delta[idx]), function));
+}
+
+__global__ void activation_backward_kernel_bf162(const int n2, const __nv_bfloat162* __restrict__ outputs,
+                                                 __nv_bfloat162* __restrict__ delta, const int function)
+{
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n2; idx += blockDim.x * gridDim.x)
     {
-        const float y = static_cast<float>(outputs[idx]);
-        const float d = static_cast<float>(delta[idx]);
-        float out = d;
-
-        if (function == activation_sigmoid)
-            out = d * y * (1.0f - y);
-        else if (function == activation_tanh)
-            out = d * (1.0f - y * y);
-        else if (function == activation_relu)
-            out = y > 0.0f ? d : 0.0f;
-        else if (function == activation_leaky_relu)
-            out = y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
-
-        delta[idx] = static_cast<T>(out);
+        const float2 y = __bfloat1622float2(outputs[idx]);
+        const float2 d = __bfloat1622float2(delta[idx]);
+        delta[idx] = __floats2bfloat162_rn(opennn_activation_grad(y.x, d.x, function),
+                                           opennn_activation_grad(y.y, d.y, function));
     }
 }
 
@@ -1065,6 +1088,16 @@ template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function)
 {
     if (n == 0) return;
+
+    if constexpr (std::is_same_v<T, __nv_bfloat16>)
+        if ((n & 1) == 0)
+        {
+            const int n2 = checked_int(n / 2);
+            OPENNN_CUDA_LAUNCH(activation_backward_kernel_bf162<<<grid_size_for(n2), block_size, 0,
+                opennn::device::get_compute_stream()>>>(n2, reinterpret_cast<const __nv_bfloat162*>(outputs),
+                                                        reinterpret_cast<__nv_bfloat162*>(delta), function));
+            return;
+        }
 
     const int total = checked_int(n);
     OPENNN_CUDA_LAUNCH(activation_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, outputs, delta, function));
@@ -1377,6 +1410,40 @@ void rnn_accumulate_bias_grad_cuda(const Index batch,
 
 template void rnn_accumulate_bias_grad_cuda<float>        (const Index, const Index, const float*,         float*);
 template void rnn_accumulate_bias_grad_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, float*);
+
+// Column-sum of a (batch x features) delta into an fp32 bias gradient,
+// parallelised over both features (coalesced) and batch chunks (grid.y) so it
+// scales to very large batches — unlike rnn_accumulate_bias_grad which serialises
+// over the batch. The caller must zero bias_grad first (this atomicAdds).
+template<typename T>
+__global__ void bias_grad_sum_kernel(const int batch, const int features, const int chunk,
+                                     const T* __restrict__ delta, float* __restrict__ bias_grad)
+{
+    const int f = blockIdx.x * blockDim.x + threadIdx.x;
+    if (f >= features) return;
+    const long long b0 = (long long)blockIdx.y * chunk;
+    const long long b1 = min((long long)batch, b0 + chunk);
+    float acc = 0.0f;
+    for (long long b = b0; b < b1; ++b)
+        acc += static_cast<float>(delta[b * features + f]);
+    atomicAdd(bias_grad + f, acc);
+}
+
+template<typename T>
+void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta, float* bias_grad)
+{
+    if (batch == 0 || features == 0) return;
+    const int f = checked_int(features);
+    const int chunk = 2048;
+    const int n_chunks = int((batch + chunk - 1) / chunk);
+    const dim3 grid((f + block_size - 1) / block_size, n_chunks);
+    OPENNN_CUDA_LAUNCH(bias_grad_sum_kernel<T><<<grid, block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        checked_int(batch), f, chunk, delta, bias_grad));
+}
+
+template void bias_grad_sum_cuda<float>        (const Index, const Index, const float*,         float*);
+template void bias_grad_sum_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, float*);
 
 template<typename T>
 __global__ void rnn_step_fused_backward_pre_kernel(const int batch,

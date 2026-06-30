@@ -170,6 +170,13 @@ unsupported fork pattern doesn't disable the whole BN frontend.
 **3,903/3,842/3,705 samples/s (12.8 s/epoch)** vs ~2,950 before. Now 1.9x
 faster than PyTorch eager; remaining gap to torch.compile is 1.48x.
 
+> **NOTE (2026-06-26): conv autotune was REMOVED.** It OOMed in the fp32 frontend
+> path at realistic batches (its throwaway timing scratch blows up), and once the
+> conv workspace cap is in place (AUTO = largest layer activation) the heuristic
+> already lands on the fast plateau, so autotune gave no speed-up. `set_conv_autotune`
+> / `autotune_now` / `request_autotune` no longer exist. The paragraph below is kept
+> for historical context only.
+
 Implementation (`cudnn_frontend_utilities.h` + `convolution_operator.cpp`):
 `finalize(..., request_autotune)` builds ALL candidate plans
 (`BuildPlanPolicy_t::ALL`); on each conv graph's first execution

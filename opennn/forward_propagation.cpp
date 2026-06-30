@@ -9,6 +9,7 @@
 #include "forward_propagation.h"
 #include "neural_network.h"
 #include "memory_debug.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -18,7 +19,8 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
     set(new_batch_size, new_neural_network);
 }
 
-void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
+void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network,
+                             Buffer* external_storage)
 {
     throw_if(!new_neural_network, "neural network is not set.");
 
@@ -45,16 +47,32 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                     source_layers.size(), layers_number));
 
     const Index total_bytes = get_aligned_bytes(forward_specs);
-    data.resize_bytes(total_bytes, neural_network->get_device());
+
+    // Overlay this propagation on an external buffer (e.g. the training
+    // ForwardPropagation's, when validation is temporally disjoint) when it
+    // fits and lives on the same device; otherwise own the allocation.
+    if (external_storage
+        && external_storage->device_type == neural_network->get_device()
+        && external_storage->bytes >= total_bytes)
+        data.set_view(external_storage->data, total_bytes, external_storage->device_type);
+    else
+        data.resize_bytes(total_bytes, neural_network->get_device());
     data.setZero();
-    memory_debug::record("forward", "ForwardPropagation::data", total_bytes,
+    // Only owned storage counts as new VRAM; an aliased view reuses an existing
+    // buffer, so report it separately (zero new bytes) to keep the profiler honest.
+    memory_debug::record(data.owns ? "forward" : "forward.aliased",
+                         "ForwardPropagation::data",
+                         data.owns ? total_bytes : 0,
                          format("batch={}", batch_size));
 
     uint8_t* cursor = data.as<uint8_t>();
+    Index max_layer_bytes = 0;
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
         const Index layer_bytes = get_aligned_bytes(specs);
+        max_layer_bytes = std::max(max_layer_bytes, layer_bytes);
+
         if (layer_bytes > 0)
             memory_debug::record("forward.layer",
                                  format("{}:{}", i, layers[i]->get_label()),
@@ -82,6 +100,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             input_views[i][j] = forward_slots[source_layer].back();
         }
     }
+
+    // AUTO conv workspace cap = largest single-layer activation. Empirically the
+    // fastest memory/speed point for the cuDNN-frontend conv path across
+    // resolutions, batches and architectures; an explicit override (if set)
+    // takes precedence inside device::conv_workspace_limit_bytes().
+    device::set_conv_workspace_auto_limit_bytes(max_layer_bytes);
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const

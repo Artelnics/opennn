@@ -83,10 +83,6 @@ struct ConvolutionOp::ConvGraphCache
         int64_t wgrad_workspace_bytes = 0;
         int64_t bgrad_workspace_bytes = 0;
         int64_t dgrad_workspace_bytes = 0;
-        bool fwd_autotune = false;
-        bool wgrad_autotune = false;
-        bool bgrad_autotune = false;
-        bool dgrad_autotune = false;
     };
 
     map<Index, Entry> entries;
@@ -150,9 +146,9 @@ krsc_tensor(cudnn_frontend::graph::Graph& graph, const char* name, const Dims& d
 }
 
 void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
-                   bool fuse_relu, bool use_bias)
+                   bool fuse_relu, bool use_bias, cudnn_frontend::DataType_t data_type)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.fwd_X = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
     entry.fwd_W = krsc_tensor(*graph, "W", d);
@@ -179,30 +175,34 @@ void build_forward(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "forward", autotune_enabled());
+    finalize(*graph, entry.fwd_workspace_bytes, "forward");
     entry.fwd = graph;
 }
 
-void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_wgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
+                 cudnn_frontend::DataType_t data_type)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.wgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
     entry.wgrad_X  = nhwc_tensor(*graph, "X", d.batch, d.channels, d.height, d.width);
 
     entry.wgrad_DW = graph->conv_wgrad(entry.wgrad_DY, entry.wgrad_X,
                                        conv_attributes<cudnn_frontend::graph::Conv_wgrad_attributes>(d));
+    // DW flows at the I/O precision (bf16 inputs have no fp32-output wgrad
+    // engine); the bf16 path casts it to the FP32 master gradient at execute.
     entry.wgrad_DW->set_output(true)
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
 
-    entry.wgrad_autotune = finalize(*graph, entry.wgrad_workspace_bytes, "wgrad", autotune_enabled());
+    finalize(*graph, entry.wgrad_workspace_bytes, "wgrad");
     entry.wgrad = graph;
 }
 
-void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
+                 cudnn_frontend::DataType_t data_type)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.bgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
 
@@ -213,13 +213,14 @@ void build_bgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    entry.bgrad_autotune = finalize(*graph, entry.bgrad_workspace_bytes, "bgrad", autotune_enabled());
+    finalize(*graph, entry.bgrad_workspace_bytes, "bgrad");
     entry.bgrad = graph;
 }
 
-void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
+void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d,
+                 cudnn_frontend::DataType_t data_type)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.dgrad_DY = nhwc_tensor(*graph, "DY", d.batch, d.kernels, d.output_height, d.output_width);
     entry.dgrad_W  = krsc_tensor(*graph, "W", d);
@@ -228,7 +229,7 @@ void build_dgrad(ConvolutionOp::ConvGraphCache::Entry& entry, const Dims& d)
                                        conv_attributes<cudnn_frontend::graph::Conv_dgrad_attributes>(d));
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace_bytes, "dgrad", autotune_enabled());
+    finalize(*graph, entry.dgrad_workspace_bytes, "dgrad");
     entry.dgrad = graph;
 }
 
@@ -534,7 +535,7 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
     PROFILE_SCOPE("op:conv_fwd");
 
 #ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
+    if ((input.type == Type::FP32 || input.type == Type::BF16) && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOp", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
@@ -542,7 +543,8 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
             // The only fused activation the layer requests is ReLU
             // (see Convolutional::update_convolution_operator).
             cudnn_fe::build_forward(entry, cudnn_fe::make_dims(*this, input.shape[0]),
-                                    fused_activation != nullptr, use_bias);
+                                    fused_activation != nullptr, use_bias,
+                                    cudnn_fe::fe_io_dtype(input.type));
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.fwd_X] = input.data;
@@ -550,7 +552,6 @@ void ConvolutionOp::apply_gpu(const TensorView& input, TensorView& output)
         if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 
-        cudnn_fe::autotune_now(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
 
         cudnn_fe::execute_graph(*entry.fwd, tensors, cudnn_fe::shared_workspace(entry.fwd_workspace_bytes),
                                 "forward execute", cudnn_fe::timing_label(*this, "conv_fwd"));
@@ -609,51 +610,63 @@ void ConvolutionOp::apply_delta_gpu(const TensorView& input,
     assert(weight_gradient.type == Type::FP32);
 
 #ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
+    if ((input.type == Type::FP32 || input.type == Type::BF16) && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(conv_graph_cache, "ConvolutionOp", [&](ConvGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         const cudnn_fe::Dims dims = cudnn_fe::make_dims(*this, input.shape[0]);
+        const cudnn_frontend::DataType_t data_type = cudnn_fe::fe_io_dtype(input.type);
+        const bool to_bf16 = (input.type == Type::BF16);
 
-        if (!entry.wgrad) cudnn_fe::build_wgrad(entry, dims);
+        if (!entry.wgrad) cudnn_fe::build_wgrad(entry, dims, data_type);
+
+        // bf16 wgrad has no fp32-output engine, so DW is produced in bf16 and
+        // cast into the FP32 master gradient (same as the legacy path).
+        bfloat16* dw_bf16 = to_bf16 ? ensure_bf16_gradient_workspace(weight_gradient.size()) : nullptr;
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.wgrad_DY] = output_delta.data;
         tensors[entry.wgrad_X]  = input.data;
-        tensors[entry.wgrad_DW] = weight_gradient.data;
+        tensors[entry.wgrad_DW] = to_bf16 ? static_cast<void*>(dw_bf16) : weight_gradient.data;
 
-        cudnn_fe::autotune_now(entry.wgrad_autotune, *entry.wgrad, tensors, entry.wgrad_workspace_bytes);
 
         cudnn_fe::execute_graph(*entry.wgrad, tensors, cudnn_fe::shared_workspace(entry.wgrad_workspace_bytes),
                                 "wgrad execute", cudnn_fe::timing_label(*this, "conv_wgrad"));
+
+        if (to_bf16)
+            cast_bf16_to_fp32_cuda(weight_gradient.size(), dw_bf16, weight_gradient.as_float());
 
         if (use_bias)
         {
             // cudnnConvolutionBackwardBias is pathologically slow on NHWC
             // deltas (~2 ms for a 16-channel reduction); use a frontend
             // reduction graph instead.
-            if (!entry.bgrad) cudnn_fe::build_bgrad(entry, dims);
+            if (!entry.bgrad) cudnn_fe::build_bgrad(entry, dims, data_type);
+
+            // Reuse the gradient workspace; DW was already cast out above.
+            bfloat16* db_bf16 = to_bf16 ? ensure_bf16_gradient_workspace(bias_gradient.size()) : nullptr;
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> bgrad_tensors;
             bgrad_tensors[entry.bgrad_DY] = output_delta.data;
-            bgrad_tensors[entry.bgrad_DB] = bias_gradient.data;
+            bgrad_tensors[entry.bgrad_DB] = to_bf16 ? static_cast<void*>(db_bf16) : bias_gradient.data;
 
-            cudnn_fe::autotune_now(entry.bgrad_autotune, *entry.bgrad, bgrad_tensors, entry.bgrad_workspace_bytes);
 
             cudnn_fe::execute_graph(*entry.bgrad, bgrad_tensors, cudnn_fe::shared_workspace(entry.bgrad_workspace_bytes),
                                     "bgrad execute", cudnn_fe::timing_label(*this, "conv_bgrad"));
+
+            if (to_bf16)
+                cast_bf16_to_fp32_cuda(bias_gradient.size(), db_bf16, bias_gradient.as_float());
         }
 
         if (input_delta.data && input_delta.size() != 0)
         {
-            if (!entry.dgrad) cudnn_fe::build_dgrad(entry, dims);
+            if (!entry.dgrad) cudnn_fe::build_dgrad(entry, dims, data_type);
 
             unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> dgrad_tensors;
             dgrad_tensors[entry.dgrad_DY] = output_delta.data;
             dgrad_tensors[entry.dgrad_W]  = weights.data;
             dgrad_tensors[entry.dgrad_DX] = input_delta.data;
 
-            cudnn_fe::autotune_now(entry.dgrad_autotune, *entry.dgrad, dgrad_tensors, entry.dgrad_workspace_bytes);
 
             cudnn_fe::execute_graph(*entry.dgrad, dgrad_tensors, cudnn_fe::shared_workspace(entry.dgrad_workspace_bytes),
                                     "dgrad execute", cudnn_fe::timing_label(*this, "conv_dgrad"));

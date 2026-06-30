@@ -1359,13 +1359,41 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
 
-    run_lt_matmul_cached(
-        output_columns, input_columns, total_rows,
-        CUBLAS_OP_N, CUBLAS_OP_T,
-        CUBLASLT_EPILOGUE_BGRADA,
-        output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient.as<float>(),
-        output_delta.cuda_dtype(),
-        CUDA_R_32F);
+    if (output_delta.type == Type::BF16)
+    {
+        // The fused bias-gradient epilogue (BGRADA) has no bf16 tensor-core
+        // algorithm in cuBLASLt, so it falls back to a slow magma_sgemmEx kernel
+        // (~10x slower, ~80% of the bf16 step). Compute the weight gradient with a
+        // plain bf16 tensor-core GEMM (cast into the fp32 master gradient) and the
+        // bias gradient with a separate fp32 reduction.
+        bfloat16* dw_bf16 = ensure_bf16_gradient_workspace(weight_gradient.size());
+        run_lt_matmul_cached(
+            output_columns, input_columns, total_rows,
+            CUBLAS_OP_N, CUBLAS_OP_T,
+            CUBLASLT_EPILOGUE_DEFAULT,
+            output_delta.data, input_for_gemm, dw_bf16, nullptr,
+            output_delta.cuda_dtype(),
+            CUDA_R_16BF);
+        cast_bf16_to_fp32_cuda(weight_gradient.size(), dw_bf16, weight_gradient.as<float>());
+
+        if (bias_gradient.size() > 0)
+        {
+            device::set_zero_async(bias_gradient.data, bias_gradient.size() * Index(sizeof(float)),
+                                   Backend::get_compute_stream());
+            bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
+                                         output_delta.as<bfloat16>(), bias_gradient.as<float>());
+        }
+    }
+    else
+    {
+        run_lt_matmul_cached(
+            output_columns, input_columns, total_rows,
+            CUBLAS_OP_N, CUBLAS_OP_T,
+            CUBLASLT_EPILOGUE_BGRADA,
+            output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient.as<float>(),
+            output_delta.cuda_dtype(),
+            CUDA_R_32F);
+    }
 
     if (!input_delta.data || input_delta.size() == 0) return;
 

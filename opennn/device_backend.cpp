@@ -23,8 +23,13 @@ std::atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 std::atomic_bool cuda_scratch_growth_forbidden_runtime{false};
 std::atomic_bool gemm_autotune_enabled_flag{false};
 std::atomic_bool bf16_compute_plain_flag{false};
-std::atomic_bool conv_autotune_enabled_flag{true};
 std::atomic_bool conv_legacy_forced_flag{false};
+// Conv workspace cap. The effective limit is the explicit override when > 0,
+// otherwise the auto value (set per network by ForwardPropagation to the
+// largest single-layer activation). The auto fallback below is only used when
+// no forward pass has run yet (e.g. a bare conv outside a network).
+std::atomic<int64_t> conv_workspace_limit_override_flag{0};
+std::atomic<int64_t> conv_workspace_auto_limit_flag{512ll * 1024 * 1024};
 
 void throw_if_auto(Device device_type)
 {
@@ -164,16 +169,6 @@ void set_bf16_compute_plain(bool enabled) noexcept
     bf16_compute_plain_flag.store(enabled, std::memory_order_relaxed);
 }
 
-bool conv_autotune_enabled() noexcept
-{
-    return conv_autotune_enabled_flag.load(std::memory_order_relaxed);
-}
-
-void set_conv_autotune(bool enabled) noexcept
-{
-    conv_autotune_enabled_flag.store(enabled, std::memory_order_relaxed);
-}
-
 bool conv_legacy_forced() noexcept
 {
     return conv_legacy_forced_flag.load(std::memory_order_relaxed);
@@ -182,6 +177,25 @@ bool conv_legacy_forced() noexcept
 void set_conv_legacy(bool forced) noexcept
 {
     conv_legacy_forced_flag.store(forced, std::memory_order_relaxed);
+}
+
+int64_t conv_workspace_limit_bytes() noexcept
+{
+    const int64_t override_bytes = conv_workspace_limit_override_flag.load(std::memory_order_relaxed);
+    return override_bytes > 0
+        ? override_bytes
+        : conv_workspace_auto_limit_flag.load(std::memory_order_relaxed);
+}
+
+void set_conv_workspace_limit_bytes(int64_t bytes) noexcept
+{
+    conv_workspace_limit_override_flag.store(bytes, std::memory_order_relaxed);
+}
+
+void set_conv_workspace_auto_limit_bytes(int64_t bytes) noexcept
+{
+    if (bytes > 0)
+        conv_workspace_auto_limit_flag.store(bytes, std::memory_order_relaxed);
 }
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)

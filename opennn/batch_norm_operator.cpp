@@ -295,8 +295,6 @@ struct BatchNormOp::BnGraphCache
         int64_t fwd_workspace_bytes = 0;
         int64_t bwd_workspace_bytes = 0;
         bool bwd_forked = false;
-        bool fwd_autotune = false;
-        bool bwd_autotune = false;
     };
 
     map<Index, Entry> entries;
@@ -324,13 +322,16 @@ BnDims bn_dims(const TensorView& input, Index features)
     return {batch, features, int64_t(input.size()) / (batch * features)};
 }
 
+// Batch-norm scale/bias/mean/variance and their gradients are always FP32,
+// independent of the activation I/O precision (bf16 or fp32).
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 per_channel_tensor(cudnn_frontend::graph::Graph& graph, const char* name, int64_t channels)
 {
     return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
                         .set_name(name)
                         .set_dim({1, channels, 1, 1})
-                        .set_stride({channels, 1, channels, channels}));
+                        .set_stride({channels, 1, channels, channels})
+                        .set_data_type(cudnn_frontend::DataType_t::FLOAT));
 }
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
@@ -340,20 +341,22 @@ scalar_tensor(cudnn_frontend::graph::Graph& graph, const char* name)
                         .set_name(name)
                         .set_dim({1, 1, 1, 1})
                         .set_stride({1, 1, 1, 1})
-                        .set_is_pass_by_value(true));
+                        .set_is_pass_by_value(true)
+                        .set_data_type(cudnn_frontend::DataType_t::FLOAT));
 }
 
 void set_per_channel_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& tensor, int64_t channels)
 {
     tensor->set_output(true)
            .set_dim({1, channels, 1, 1})
-           .set_stride({channels, 1, channels, channels});
+           .set_stride({channels, 1, channels, channels})
+           .set_data_type(cudnn_frontend::DataType_t::FLOAT);
 }
 
 void build_bn_forward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
-                      bool fuse_relu, bool fuse_add)
+                      bool fuse_relu, bool fuse_add, cudnn_frontend::DataType_t data_type)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.fwd_X        = nhwc_tensor(*graph, "X", d.batch, d.channels, d.spatial, 1);
     entry.fwd_Scale    = per_channel_tensor(*graph, "SCALE", d.channels);
@@ -394,14 +397,14 @@ void build_bn_forward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "batchnorm forward", autotune_enabled());
+    finalize(*graph, entry.fwd_workspace_bytes, "batchnorm forward");
     entry.fwd = graph;
 }
 
 void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
-                       bool fuse_relu, bool fork_residual = false)
+                       bool fuse_relu, cudnn_frontend::DataType_t data_type, bool fork_residual = false)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(data_type);
 
     entry.bwd_DY     = nhwc_tensor(*graph, "DY", d.batch, d.channels, d.spatial, 1);
     entry.bwd_X      = nhwc_tensor(*graph, "X", d.batch, d.channels, d.spatial, 1);
@@ -454,7 +457,7 @@ void build_bn_backward(BatchNormOp::BnGraphCache::Entry& entry, const BnDims& d,
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    entry.bwd_autotune = finalize(*graph, entry.bwd_workspace_bytes, "batchnorm backward", autotune_enabled());
+    finalize(*graph, entry.bwd_workspace_bytes, "batchnorm backward");
     entry.bwd = graph;
 }
 
@@ -490,12 +493,13 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
     PROFILE_SCOPE("op:bn_fwd");
 
 #ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
+    if ((input.type == Type::FP32 || input.type == Type::BF16) && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(bn_graph_cache, "BatchNormOp", [&](BnGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.fwd)
-            cudnn_fe::build_bn_forward(entry, cudnn_fe::bn_dims(input, features), fuse_relu, fuse_add);
+            cudnn_fe::build_bn_forward(entry, cudnn_fe::bn_dims(input, features), fuse_relu, fuse_add,
+                                       cudnn_fe::fe_io_dtype(input.type));
 
         float epsilon_value = EPSILON;
         float momentum_value = momentum;
@@ -515,7 +519,6 @@ void BatchNormOp::apply_training_gpu(const TensorView& input,
         tensors[entry.fwd_NextMean] = running_mean.data;
         tensors[entry.fwd_NextVar]  = running_variance.data;
 
-        cudnn_fe::autotune_with_scratch(entry.fwd_autotune, *entry.fwd, tensors, entry.fwd_workspace_bytes);
 
         cudnn_fe::execute_graph(*entry.fwd, tensors, cudnn_fe::shared_workspace(entry.fwd_workspace_bytes),
                                 "batchnorm forward execute",
@@ -559,18 +562,19 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
     const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty();
 
 #ifdef HAVE_CUDNN_FRONTEND
-    if (input.type == Type::FP32 && cudnn_fe::frontend_enabled()
+    if ((input.type == Type::FP32 || input.type == Type::BF16) && cudnn_fe::frontend_enabled()
         && cudnn_fe::run_frontend(bn_graph_cache, "BatchNormOp", [&](BnGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
         if (!entry.bwd)
         {
             const cudnn_fe::BnDims dims = cudnn_fe::bn_dims(input, features);
+            const cudnn_frontend::DataType_t data_type = cudnn_fe::fe_io_dtype(input.type);
 
             if (want_fork)
                 try
                 {
-                    cudnn_fe::build_bn_backward(entry, dims, true, true);
+                    cudnn_fe::build_bn_backward(entry, dims, true, data_type, true);
                     entry.bwd_forked = true;
                 }
                 catch (const exception&)
@@ -581,7 +585,7 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
                 }
 
             if (!entry.bwd)
-                cudnn_fe::build_bn_backward(entry, dims, fuse_relu && !fuse_add);
+                cudnn_fe::build_bn_backward(entry, dims, fuse_relu && !fuse_add, data_type);
         }
 
         if (fuse_add && !entry.bwd_forked)
@@ -606,7 +610,6 @@ void BatchNormOp::apply_delta_gpu(const TensorView& input,
         tensors[entry.bwd_DScale] = gamma_gradient.data;
         tensors[entry.bwd_DBias]  = beta_gradient.data;
 
-        cudnn_fe::autotune_with_scratch(entry.bwd_autotune, *entry.bwd, tensors, entry.bwd_workspace_bytes);
 
         cudnn_fe::execute_graph(*entry.bwd, tensors, cudnn_fe::shared_workspace(entry.bwd_workspace_bytes),
                                 "batchnorm backward execute",

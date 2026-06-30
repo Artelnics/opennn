@@ -238,6 +238,12 @@ template<typename T>
 void rnn_accumulate_bias_grad_cuda(const Index batch, const Index features,
                                    const T* delta, float* bias_grad);
 
+// Batch-parallel column-sum of delta (batch x features) into fp32 bias_grad.
+// Caller must zero bias_grad first (atomicAdds). Scales to large batches.
+template<typename T>
+void bias_grad_sum_cuda(const Index batch, const Index features,
+                        const T* delta, float* bias_grad);
+
 template<typename T>
 void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const Index out_features,

@@ -15,6 +15,7 @@
 
 #include "../opennn/configuration.h"
 #include "../opennn/device_backend.h"
+#include "../opennn/memory_debug.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 
@@ -54,14 +55,20 @@ int main(int argc, char** argv)
         //    Network: Scaling -> 5x Dense(300, tanh) -> Dense(1, sigmoid).
         //    Args: argv[1] = batch size, argv[2] = max epochs.
         // --------------------------------------------------------------------
-#if 0
+#if 1
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(100);
-        const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(20);
+        const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(1);
+        const string precision = argc > 3 ? argv[3] : "fp32";
+        const string mode = argc > 4 ? argv[4] : "probe";   // "speed"/"speedval" = throughput
+        const bool speed_mode = (mode == "speed" || mode == "speedval");
+        const bool speed_with_val = (mode == "speedval");
+        const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
 
-        cout << "OpenNN. HIGGS 5x300 DNN GPU BF16 benchmark."
-             << " batch=" << batch_size << " max_epochs=" << maximum_epochs << endl;
+        cout << "OpenNN. HIGGS 5x300 DNN GPU benchmark."
+             << " batch=" << batch_size << " max_epochs=" << maximum_epochs
+             << " precision=" << precision << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::BF16);
+        Configuration::instance().set(Device::CUDA, training_type);
         Backend::instance();
         set_seed(42);
 
@@ -71,7 +78,18 @@ int main(int argc, char** argv)
         iota(input_variables.begin(), input_variables.end(), 1);
         dataset.set_variable_indices(input_variables, {0});
         dataset.set_variable_type(0, VariableType::Binary);
-        dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
+        if (speed_mode)
+        {
+            // Throughput mode, GPU-resident data. "speed" = all-train (no validation);
+            // "speedval" = keep the validation split so per-epoch validation runs.
+            if (speed_with_val)
+                dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
+            else
+                dataset.split_samples_sequential(1.0f, 0.0f, 0.0f);
+            dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+        }
+        else
+            dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
 
         cout << "[DATASET] train=" << dataset.get_sample_indices("Training").size()
              << " val="            << dataset.get_sample_indices("Validation").size()
@@ -79,12 +97,14 @@ int main(int argc, char** argv)
              << " input="          << dataset.get_shape("Input")[0]
              << " target="         << dataset.get_shape("Target")[0] << endl;
 
+        const string hidden_activation = argc > 6 ? argv[6] : "Tanh";
+
         NeuralNetwork network;
         network.add_layer(make_unique<Scaling>(dataset.get_shape("Input")));
 
         for (Index i = 0; i < 5; ++i)
             network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
-                                                         Shape{300}, "Tanh", false,
+                                                         Shape{300}, hidden_activation, false,
                                                          format("higgs_hidden_{}", i + 1)));
 
         network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(),
@@ -113,21 +133,48 @@ int main(int argc, char** argv)
         sgd->set_maximum_validation_failures(100);
         sgd->set_display_period(1);
 
+        if (speed_mode)
+        {
+            const bool use_graph = argc > 5 ? (stoi(argv[5]) != 0) : true;
+            sgd->set_cuda_graph(use_graph);
+            const Index timed_epochs = maximum_epochs;
+            sgd->set_maximum_epochs(2);             // warmup: absorb autotune / graph capture
+            training_strategy.train();
+            sgd->set_maximum_epochs(timed_epochs);
+            const auto s0 = steady_clock::now();
+            training_strategy.train();
+            const auto s1 = steady_clock::now();
+            const double epoch_s = (duration_cast<milliseconds>(s1 - s0).count() / 1000.0)
+                                 / double(timed_epochs);
+            const Index train_samples = dataset.get_sample_indices("Training").size();
+            cout << "epoch_s=" << epoch_s
+                 << " samples_per_sec=" << long(double(train_samples) / epoch_s) << endl;
+            cout << "RESULT=OK" << endl;
+            return 0;
+        }
+
         const auto t0 = steady_clock::now();
         training_strategy.train();
         const auto t1 = steady_clock::now();
         cout << "\nTotal training time: "
              << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
 
-        TestingAnalysis testing_analysis(&network, &dataset);
-        testing_analysis.set_batch_size(10000);
-        const TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
-        cout << "\nAUC: " << roc.area_under_curve
-             << "  optimal_threshold: " << roc.optimal_threshold << endl;
-        cout << "\nConfusion (threshold 0.5):\n"
-             << testing_analysis.calculate_confusion(0.5f) << endl;
+        // Skip the ROC/confusion testing analysis in probe mode (epochs<=1):
+        // the max-batch sweep only needs the training step to fit in memory.
+        if (maximum_epochs > 1)
+        {
+            TestingAnalysis testing_analysis(&network, &dataset);
+            testing_analysis.set_batch_size(10000);
+            const TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
+            cout << "\nAUC: " << roc.area_under_curve
+                 << "  optimal_threshold: " << roc.optimal_threshold << endl;
+            cout << "\nConfusion (threshold 0.5):\n"
+                 << testing_analysis.calculate_confusion(0.5f) << endl;
+        }
 
         cout << "Bye!" << endl;
+        memory_debug::print(cout);
+        cout << "RESULT=OK" << endl;
         return 0;
 #endif
 
@@ -291,7 +338,7 @@ int main(int argc, char** argv)
         //    The model below is smaller than the paper so the subset trains in
         //    reasonable time; paper base is d_model=512, h=8, d_ff=2048, N=6.
         // --------------------------------------------------------------------
-#if 1
+#if 0
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -465,6 +512,7 @@ int main(int argc, char** argv)
     catch (const exception& e)
     {
         cerr << e.what() << endl;
+        cout << "RESULT=ERROR" << endl;
         return 1;
     }
 }

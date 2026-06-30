@@ -21,7 +21,7 @@ struct ForwardPropagation
 
     ForwardPropagation(Index, NeuralNetwork*);
 
-    void set(Index, NeuralNetwork*);
+    void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr);
 
     TensorView get_last_trainable_layer_outputs() const;
 

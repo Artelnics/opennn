@@ -257,6 +257,7 @@ struct Buffer
     void* data = nullptr;
     Index bytes = 0;
     Device device_type = Device::CPU;
+    bool owns = true;   // false => non-owning view; the memory is freed by its owner.
 
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
@@ -283,6 +284,18 @@ struct Buffer
 
         data = device::allocate(allocation_device, byte_count);
         bytes = byte_count;
+    }
+
+    // Point at memory owned by another Buffer (non-owning view): the viewed
+    // memory must outlive this Buffer and is never freed or resized through it.
+    // Used to overlay a smaller, temporally-disjoint buffer onto a larger one.
+    void set_view(void* external_data, Index byte_count, Device view_device) noexcept
+    {
+        free_buffer();
+        data = external_data;
+        bytes = byte_count;
+        device_type = view_device;
+        owns = false;
     }
 
     void grow_to(Index minimum_bytes)
@@ -328,10 +341,12 @@ struct Buffer
         data = other.data;
         bytes = other.bytes;
         device_type = other.device_type;
+        owns = other.owns;
 
         other.data = nullptr;
         other.bytes = 0;
         other.device_type = Device::CPU;
+        other.owns = true;
 
         return *this;
     }
@@ -343,14 +358,16 @@ struct Buffer
         std::swap(data, other.data);
         std::swap(bytes, other.bytes);
         std::swap(device_type, other.device_type);
+        std::swap(owns, other.owns);
     }
 
 private:
     void free_buffer()
     {
-        if (data) device::deallocate(device_type, data, bytes);
+        if (data && owns) device::deallocate(device_type, data, bytes);
         data = nullptr;
         bytes = 0;
+        owns = true;
     }
 };
 

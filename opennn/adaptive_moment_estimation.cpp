@@ -175,9 +175,17 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    const unique_ptr<ForwardPropagation> validation_forward_propagation = has_validation
-        ? make_unique<ForwardPropagation>(validation_batch_size, neural_network)
-        : nullptr;
+    // Validation runs only at epoch boundaries, never concurrently with a
+    // training step, so its activations overlay the (then-idle) training
+    // ForwardPropagation buffer instead of reserving a second full buffer.
+    // set() falls back to its own allocation if the training buffer is smaller.
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+    if (has_validation)
+    {
+        validation_forward_propagation = make_unique<ForwardPropagation>();
+        validation_forward_propagation->set(validation_batch_size, neural_network,
+                                            &training_forward_propagation.data);
+    }
 
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
 

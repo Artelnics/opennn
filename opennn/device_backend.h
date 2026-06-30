@@ -45,11 +45,18 @@ bool bf16_compute_plain() noexcept;
 void set_bf16_compute_plain(bool) noexcept;
 
 // cuDNN convolution/batchnorm engine selection (read by the cudnn-frontend path).
-// Autotune is on by default; conv_legacy forces the legacy v7 API.
-bool conv_autotune_enabled() noexcept;
-void set_conv_autotune(bool) noexcept;
+// conv_legacy forces the legacy v7 API.
 bool conv_legacy_forced() noexcept;
 void set_conv_legacy(bool) noexcept;
+// Per-conv cuDNN-frontend workspace cap (bytes); bounds the shared scratch the
+// same way the cublasLt path does. By default the cap is AUTO: ForwardPropagation
+// sets it to the largest single-layer activation of the network (empirically the
+// fastest memory/speed point across resolutions, batches and architectures).
+// set_conv_workspace_limit_bytes(>0) pins an explicit override (e.g. the
+// max-batch probe forcing a small cap); pass 0 to return to AUTO.
+int64_t conv_workspace_limit_bytes() noexcept;            // effective limit (override else auto)
+void    set_conv_workspace_limit_bytes(int64_t) noexcept; // explicit override; 0 = AUTO
+void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept; // AUTO value (set per network)
 
 class CudaAllocationGrowthGuard
 {

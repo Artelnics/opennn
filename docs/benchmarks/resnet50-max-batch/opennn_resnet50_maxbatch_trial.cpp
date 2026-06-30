@@ -8,7 +8,8 @@
 //   code (no environment variables); the prefetch-pool depth is set with the
 //   optional [batch_pool] argument (the pool1 engine passes 1).
 //
-//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32] [batch_pool]
+//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32] [batch_pool] [workspace_mib]
+//          workspace_mib: 0 (default) = AUTO library policy; >0 = explicit conv workspace cap
 
 #include <cmath>
 #include <filesystem>
@@ -126,6 +127,7 @@ int main(int argc, char* argv[])
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
     const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;   // 0 = library default
+    const long ws_mib = argc > 5 ? std::stol(argv[5]) : 0;      // 0 = AUTO (library default); >0 = explicit cap MiB
 
     try
     {
@@ -137,9 +139,10 @@ int main(int argc, char* argv[])
         set_seed(42);
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
-        // Conv autotune trials several algorithms, each needing workspace; disable
-        // it so the max-batch probe is not skewed by autotune scratch growth.
-        device::set_conv_autotune(false);
+        // Conv workspace cap. Default (ws_mib == 0) leaves the library AUTO policy
+        // (cap = largest layer activation). A positive 5th arg pins an explicit cap.
+        if (ws_mib > 0)
+            device::set_conv_workspace_limit_bytes(int64_t(ws_mib) * 1024 * 1024);
 
         TempImageTree temp_images;
         const std::filesystem::path trial_data_path =
