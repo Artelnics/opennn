@@ -1,4 +1,4 @@
-#ifndef KERNEL_CUH
+﻿#ifndef KERNEL_CUH
 #define KERNEL_CUH
 
 #include <cstdint>
@@ -58,9 +58,9 @@ void adam_update_capturable_cuda(
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream = nullptr);
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst);
+void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst);
 
 void gather_rows_cuda(const float* matrix, const int* row_indices, float* out,
                       const Index n_rows, const Index n_cols,
@@ -255,11 +255,11 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
                                       const T* activation_derivatives,
                                       T* delta);
 
-// YOLO DetectionOp
+// YOLO DetectionOperator
 
 // Apply sigmoid(xy), exp(wh)*anchor, sigmoid(obj), softmax|sigmoid(classes)
 // per box across the (batch, grid, grid, boxes_per_cell) tile.
-// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOp::ClassActivation).
+// class_activation: 0 = softmax, 1 = sigmoid (mirrors DetectionOperator::ClassActivation).
 // anchors layout: flat [aw0, ah0, aw1, ah1, ...] of length 2*boxes_per_cell.
 void detection_forward_cuda(const Index batch_size,
                             const Index grid_size,

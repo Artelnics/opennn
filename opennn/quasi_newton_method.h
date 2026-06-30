@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -29,7 +29,7 @@ public:
         OldInverseHessian
     };
 
-    QuasiNewtonMethod(Loss* = nullptr);
+    explicit QuasiNewtonMethod(Loss* = nullptr);
     void set_default();
     void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
     void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , OptimizerData&);
@@ -63,5 +63,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

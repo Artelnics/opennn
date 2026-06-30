@@ -309,7 +309,7 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
 
-    if (data.size() == 0 || indices.size() == 0)
+    if (data.size() == 0 || indices.empty())
         return box_plot;
 
     const VectorR quartiles = opennn::quartiles(data, indices);
@@ -392,17 +392,11 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
         const float length = (max - min) /float(bins_number);
         const float inv_length = 1.0f / length;
 
-        minimums(0) = min;
-        maximums(0) = min + length;
-        centers(0) = (maximums(0) + minimums(0)) /2.0f;
-
-
-        for (Index i = 1; i < bins_number; ++i)
+        for (Index i = 0; i < bins_number; ++i)
         {
-            minimums(i) = minimums(i - 1) + length;
-            maximums(i) = maximums(i - 1) + length;
-
-            centers(i) = (maximums(i) + minimums(i)) /2.0f;
+            minimums(i) = min + i * length;
+            maximums(i) = min + (i + 1) * length;
+            centers(i)  = min + (i + 0.5f) * length;
         }
 
 
@@ -780,6 +774,53 @@ VectorI maximal_indices(const MatrixR& matrix)
     matrix.maxCoeff(&result(0), &result(1));
     return result;
 }
+
+VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
+{
+    const Index points_number = points.rows();
+
+    if (points_number <= 1)
+        return VectorR::Ones(points_number);
+
+    neighbors_number = min(neighbors_number, points_number - 1);
+
+    const MatrixR distances = calculate_distances(points);
+
+    vector<VectorI> neighbors(points_number);
+    VectorR neighbor_distance(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        VectorR row = distances.row(i).transpose();
+        row(i) = MAX;
+        neighbors[i] = maximal_indices(-row, neighbors_number);
+        neighbor_distance(i) = row(neighbors[i](neighbors_number - 1));
+    }
+
+    VectorR reachability_density(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float reachability_sum = 0.0f;
+        for (Index j = 0; j < neighbors_number; j++)
+            reachability_sum += max(neighbor_distance(neighbors[i](j)), distances(i, neighbors[i](j)));
+        reachability_density(i) = reachability_sum > EPSILON ? float(neighbors_number) / reachability_sum : MAX;
+    }
+
+    VectorR outlier_factor(points_number);
+
+    for (Index i = 0; i < points_number; i++)
+    {
+        float density_sum = 0.0f;
+        for (Index j = 0; j < neighbors_number; j++)
+            density_sum += reachability_density(neighbors[i](j));
+        outlier_factor(i) = reachability_density(i) > EPSILON
+            ? density_sum / (float(neighbors_number) * reachability_density(i)) : 1.0f;
+    }
+
+    return outlier_factor;
+}
+
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
 {
     const Index rows_unfiltered = outputs.rows();

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S
@@ -22,6 +22,8 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "model_expression.h"
+
+#include <algorithm>
 
 namespace opennn
 {
@@ -104,31 +106,14 @@ bool NeuralNetwork::has(LayerType type) const
                           [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
-static vector<string> get_feature_names_from(const vector<Variable>& variables)
-{
-    vector<string> feature_names;
-    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
-
-    for (const auto& variable : variables)
-    {
-        vector<string> names = variable.get_names();
-        feature_names.insert(feature_names.end(),
-                             make_move_iterator(names.begin()),
-                             make_move_iterator(names.end()));
-    }
-
-    return feature_names;
-}
-
 vector<string> NeuralNetwork::get_input_feature_names() const
 {
-    return get_feature_names_from(input_variables);
+    return get_variable_feature_names(input_variables);
 }
 
 vector<string> NeuralNetwork::get_output_feature_names() const
 {
-    return get_feature_names_from(output_variables);
+    return get_variable_feature_names(output_variables);
 }
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
@@ -291,9 +276,7 @@ static void validate_source_indices(const vector<Index>& sources, Index layer_in
     {
         if (src < 0) continue;
         throw_if(src >= layers_count || src >= layer_index,
-                 "NeuralNetwork::set_source_layers: source index "
-                 + to_string(src) + " is not a previous layer for layer "
-                 + to_string(layer_index) + ".");
+                 format("NeuralNetwork::set_source_layers: source index {} is not a previous layer for layer {}.", src, layer_index));
     }
 }
 
@@ -303,25 +286,17 @@ static void validate_source_arity(const Layer& layer,
 {
     if (const auto* addition = dynamic_cast<const Addition*>(&layer);
         addition && ssize(sources) != addition->get_inputs_number())
-        throw runtime_error("NeuralNetwork::set_source_layers: Addition layer "
-                            + to_string(layer_index) + " expects "
-                            + to_string(addition->get_inputs_number()) + " sources, got "
-                            + to_string(sources.size()) + ".");
+        throw runtime_error(format("NeuralNetwork::set_source_layers: Addition layer {} expects {} sources, got {}.", layer_index, addition->get_inputs_number(), sources.size()));
 
     if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
         convolutional && convolutional->get_residual() && ssize(sources) != 2)
-        throw runtime_error("NeuralNetwork::set_source_layers: residual Convolutional layer "
-                            + to_string(layer_index) + " expects 2 sources, got "
-                            + to_string(sources.size()) + ".");
+        throw runtime_error(format("NeuralNetwork::set_source_layers: residual Convolutional layer {} expects 2 sources, got {}.", layer_index, sources.size()));
 }
 
 void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_layers)
 {
     throw_if(ssize(new_source_layers) != ssize(layers),
-             "NeuralNetwork::set_source_layers: outer size ("
-             + to_string(new_source_layers.size())
-             + ") must match layers count ("
-             + to_string(layers.size()) + ").");
+             format("NeuralNetwork::set_source_layers: outer size ({}) must match layers count ({}).", new_source_layers.size(), layers.size()));
 
     for (Index i = 0; i < ssize(new_source_layers); ++i)
     {
@@ -335,8 +310,7 @@ void NeuralNetwork::set_source_layers(const vector<vector<Index>>& new_source_la
 void NeuralNetwork::set_source_layers(const Index layer_index, const vector<Index>& new_sources)
 {
     throw_if(layer_index < 0 || layer_index >= ssize(layers),
-             "NeuralNetwork::set_source_layers: layer index "
-             + to_string(layer_index) + " out of range.");
+             format("NeuralNetwork::set_source_layers: layer index {} out of range.", layer_index));
 
     validate_source_indices(new_sources, layer_index, ssize(layers));
     validate_source_arity(*layers[layer_index], new_sources, layer_index);
@@ -467,11 +441,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 
     const Index expected_size = get_parameters_size();
     throw_if(expected_size > 0 && new_parameters.size() != expected_size,
-             "NeuralNetwork::set_parameters: size mismatch (got "
-             + to_string(new_parameters.size())
-             + ", expected " + to_string(expected_size)
-             + "). Make sure the network is compiled with the same "
-             + "architecture as the one that produced this snapshot.");
+             format("NeuralNetwork::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size));
 
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
 
@@ -508,9 +478,7 @@ void NeuralNetwork::set_states(const VectorR& new_states)
     }
 
     throw_if(new_states.size() != expected_size,
-             "NeuralNetwork::set_states: size mismatch (got "
-             + to_string(new_states.size())
-             + ", expected " + to_string(expected_size) + ").");
+             format("NeuralNetwork::set_states: size mismatch (got {}, expected {}).", new_states.size(), expected_size));
 
     const Index byte_count = new_states.size() * Index(sizeof(float));
 
@@ -669,33 +637,33 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         {
             const TensorView& source = input_view[i];
             if (source.empty()) continue;
-            if (source.device == Device::CUDA) continue;
+            if (source.is_cuda()) continue;
 
             throw_if(source.device == Device::Auto,
                      "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
 
             // Embedding inputs are float-backed token ids; keep them FP32 so ids stay exact.
             const bool cast_input_to_bf16 = config.training_type == Type::BF16
-                                         && source.type == Type::FP32
+                                         && source.is_fp32()
                                          && !input_feeds_embedding(i);
 
             Buffer& input_buffer = forward_propagation.device_input_buffers[i];
 
             if (cast_input_to_bf16)
             {
-                Buffer& fp32_buffer = forward_propagation.device_fp32_input_staging;
-                fp32_buffer.grow_to(source.byte_size());
-                device::copy_async(fp32_buffer.data,
-                                   source.data,
-                                   source.byte_size(),
+                const Index n = source.size();
+                vector<uint16_t> bf16_cpu(size_t(n), uint16_t(0));
+                const float* src = source.as<float>();
+                for (Index j = 0; j < n; ++j)
+                {
+                    bf16_cpu[size_t(j)] = static_cast<uint16_t>(bit_cast<uint32_t>(src[j]) >> 16);
+                }
+                input_buffer.resize_bytes(n * Index(sizeof(uint16_t)), Device::CUDA);
+                device::copy_async(input_buffer.data,
+                                   bf16_cpu.data(),
+                                   size_t(n) * sizeof(uint16_t),
                                    device::CopyKind::HostToDevice,
                                    stream);
-
-                input_buffer.resize_bytes(source.size() * Index(sizeof(bfloat16)), Device::CUDA);
-                cast_fp32_to_bf16_cuda(source.size(),
-                                       fp32_buffer.as<float>(),
-                                       input_buffer.as<bfloat16>(),
-                                       stream);
                 input_views_device[i].type = Type::BF16;
             }
             else
@@ -737,6 +705,10 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                         input_index, input_view.size()));
         return input_view[input_index];
     };
+
+    for (const auto& [layer_i, source_j, ext_idx] : forward_propagation.passthrough_overrides)
+        if (Index(layer_i) >= first_layer_index)
+            forward_propagation.input_views[layer_i][source_j] = pick_input(ext_idx);
 
     for (Index i = first_layer_index; i <= last_layer_index; ++i)
     {
@@ -818,10 +790,6 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-#ifdef OPENNN_NO_VISION
-    (void)image_path;
-    throw runtime_error("calculate_image_output requires OpenNN_BUILD_VISION=ON.");
-#else
     Tensor3 image = load_image(image_path);
 
     const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
@@ -851,7 +819,6 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     const Matrix outputs = calculate_outputs(input_data);
 
     return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
-#endif // OPENNN_NO_VISION
 }
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
@@ -904,9 +871,10 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_host();
+        self->copy_states_host();
 
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -980,7 +948,7 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     printer.close_element();
 
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_device();
+        self->copy_states_device();
 }
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
@@ -1048,9 +1016,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
                 if (text.empty()) continue;
 
                 throw_if(layer_index < 0 || layer_index >= ssize(layers),
-                         "NeuralNetwork::from_JSON: SourceLayer index "
-                         + to_string(layer_index) + " out of range (have "
-                         + to_string(layers.size()) + " layers).");
+                         format("NeuralNetwork::from_JSON: SourceLayer index {} out of range (have {} layers).", layer_index, layers.size()));
 
                 set_source_layers(layer_index, string_to_source_indices(text));
             }
@@ -1092,8 +1058,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     VectorR json_parameters;
     string_to_vector(parameters_text, json_parameters);
 
-    if (json_parameters.size() <= 0) return;
-
     if (json_parameters.size() != parameters.size_in_floats())
     {
         cout << "Warning: JSON parameter size (" << json_parameters.size()
@@ -1132,9 +1096,10 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
     throw_if(!file.is_open(),
              format("Cannot open binary file for writing: {}\n", file_name.string()));
 
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (parameters.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_parameters_host();
+        self->copy_parameters_host();
 
     const Index parameters_number = parameters.size_in_floats();
 
@@ -1143,10 +1108,8 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 
     throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
-    file.close();
-
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_parameters_device();
+        self->copy_parameters_device();
 }
 
 void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
@@ -1156,19 +1119,18 @@ void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
     throw_if(!file.is_open(),
              format("Cannot open binary file for writing: {}\n", file_name.string()));
 
+    auto* self = const_cast<NeuralNetwork*>(this);
     const bool was_on_device = (states.device_type == Device::CUDA);
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_host();
+        self->copy_states_host();
 
     if (states.bytes > 0)
         file.write(reinterpret_cast<const char*>(states.data), states.bytes);
 
     throw_if(!file, format("Error writing binary file: {}\n", file_name.string()));
 
-    file.close();
-
     if (was_on_device)
-        const_cast<NeuralNetwork*>(this)->copy_states_device();
+        self->copy_states_device();
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)
@@ -1206,7 +1168,6 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     if (was_on_device) copy_parameters_device();
 
     throw_if(!file, format("Error reading binary file: {}", file_name.string()));
-
 }
 
 void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
@@ -1343,7 +1304,7 @@ void NeuralNetwork::cast_parameters_to_bf16()
     if (parameters_bf16_mirror.empty()) return;
     if (parameters.empty())      return;
 
-    cast_fp32_to_bf16_cuda(parameters.size_in_floats(),
+    cast_fp32_to_bf16(parameters.size_in_floats(),
                            parameters.as<float>(),
                            parameters_bf16_mirror.as<bfloat16>());
 }

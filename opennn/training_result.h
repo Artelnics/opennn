@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A I N I N G   R E S U L T   H E A D E R
@@ -27,7 +27,7 @@ struct OptimizerData
 
     virtual void print() const;
 
-    void set(const vector<Shape>& slot_shapes, Device device = Device::CPU);
+    void set(const vector<Shape>&, Device device = Device::CPU);
 
     Buffer data;
     vector<TensorView> views;
@@ -87,5 +87,5 @@ struct TrainingResult
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

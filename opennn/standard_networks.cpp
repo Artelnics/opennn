@@ -31,10 +31,7 @@
 namespace opennn
 {
 
-namespace
-{
-
-bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
+static bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
 {
     return ranges::equal(a, b, [](const auto& x, const auto& y)
     {
@@ -45,9 +42,9 @@ bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorS
     });
 }
 
-void recompile_if_specs_changed(NeuralNetwork& network,
-                                const vector<vector<TensorSpec>>& forward_before,
-                                const vector<vector<TensorSpec>>& backward_before)
+static void recompile_if_specs_changed(NeuralNetwork& network,
+                                       const vector<vector<TensorSpec>>& forward_before,
+                                       const vector<vector<TensorSpec>>& backward_before)
 {
     if (same_specs(forward_before, network.get_forward_specs(1))
         && same_specs(backward_before, network.get_backward_specs(1)))
@@ -65,8 +62,6 @@ void recompile_if_specs_changed(NeuralNetwork& network,
 
     if (parameters_snapshot.size() > 0)
         network.set_parameters(parameters_snapshot);
-}
-
 }
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
@@ -140,7 +135,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                                 last ? "recurrent_layer"
                                                      : format("recurrent_layer_{}", i + 1));
         if (!last) recurrent->set_return_sequences(true);
-        add_layer(std::move(recurrent));
+        add_layer(move(recurrent));
     }
 
     add_layer(make_unique<Dense>(get_output_shape(),
@@ -153,7 +148,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     auto bounding = make_unique<Bounding>(output_shape);
     bounding->set_bounding_method("NoBounding");
-    add_layer(std::move(bounding));
+    add_layer(move(bounding));
 
     compile();
     set_parameters_glorot();
@@ -163,8 +158,6 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape) : NeuralNetwork()
 {
-    clear();
-
     add_layer(make_unique<Scaling>(input_shape));
 
     const Index lstm_count = complexity_dimensions.rank;
@@ -178,7 +171,7 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                                                      last ? "long_short_term_memory_layer"
                                                           : format("long_short_term_memory_layer_{}", i + 1));
         if (!last) lstm->set_return_sequences(true);
-        add_layer(std::move(lstm));
+        add_layer(move(lstm));
     }
 
     add_layer(make_unique<Dense>(get_output_shape(),
@@ -191,7 +184,7 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 
     auto bounding = make_unique<Bounding>(output_shape);
     bounding->set_bounding_method("NoBounding");
-    add_layer(std::move(bounding));
+    add_layer(move(bounding));
 
     compile();
     set_parameters_glorot();
@@ -967,7 +960,6 @@ Transformer::Transformer(Index input_sequence_length,
         return get_layers_number() - 1;
     };
 
-
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
         embedding_dimension, "decoder_embedding");
@@ -983,7 +975,6 @@ Transformer::Transformer(Index input_sequence_length,
     encoder_embedding->set_add_positional_encoding(true);
     add_layer(move(encoder_embedding), {-2});
     Index current_encoder_index = get_layers_number() - 1;
-
 
     const Shape encoder_shape{input_sequence_length, embedding_dimension};
 
@@ -1012,7 +1003,6 @@ Transformer::Transformer(Index input_sequence_length,
     }
 
     const Index encoder_final_output_index = current_encoder_index;
-
 
     const Shape decoder_shape{decoder_sequence_length, embedding_dimension};
 

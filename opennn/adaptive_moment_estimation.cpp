@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstring>
-#include <cstdlib>
 #include "registry.h"
 #include "dataset.h"
 #include "forward_propagation.h"
@@ -404,10 +402,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     }
 }
 
+#ifdef OPENNN_HAS_CUDA
 void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& back_propagation,
                                                             OptimizerData& optimization_data) const
 {
-#ifdef OPENNN_HAS_CUDA
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     clip_gradient_norm(back_propagation.gradient, gradient_clip_norm);
@@ -424,11 +422,13 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
         optimization_data.graph_effective_eps.as<float>(),
         neural_network->get_parameters_bf16_mirror_data(),
         Backend::get_compute_stream());
-#else
-    (void)back_propagation; (void)optimization_data;
-    throw runtime_error("update_parameters_capturable requires CUDA support.");
-#endif
 }
+#else
+void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation&, OptimizerData&) const
+{
+    throw runtime_error("update_parameters_capturable requires CUDA support.");
+}
+#endif
 
 void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
 {

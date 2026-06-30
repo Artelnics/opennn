@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -7,6 +7,7 @@
 
 #include "registry.h"
 #include "tensor_types.h"
+#include "tensor_operations.h"
 #include "dataset.h"
 #include "loss.h"
 #include "batch.h"
@@ -118,10 +119,7 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     const VectorMap target = batch.get_targets().as_vector();
 
     throw_if(output.size() != target.size() || output.size() != back_propagation_lm.errors.size(),
-             "LevenbergMarquardtAlgorithm: outputs (" + to_string(output.size())
-             + "), targets (" + to_string(target.size())
-             + ") and errors (" + to_string(back_propagation_lm.errors.size())
-             + ") sizes do not match. The dataset target count does not match the network outputs.");
+             format("LevenbergMarquardtAlgorithm: outputs ({}), targets ({}) and errors ({}) sizes do not match. The dataset target count does not match the network outputs.", output.size(), target.size(), back_propagation_lm.errors.size()));
 
     back_propagation_lm.errors.noalias() = output - target;
 }
@@ -141,26 +139,13 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-static MatrixR activation_derivative(ActivationOp::Function activation_function, const MatrixMap& outputs)
+static MatrixR lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
 {
-    using enum ActivationOp::Function;
-    switch (activation_function)
-    {
-    case Identity:
-        return MatrixR::Ones(outputs.rows(), outputs.cols());
-    case Softmax:
-        throw runtime_error("LevenbergMarquardtAlgorithm: Softmax activation is not supported "
-                            "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
-    case Sigmoid:
-        return outputs.array() * (1.0f - outputs.array());
-    case Tanh:
-        return 1.0f - outputs.array().square();
-    case ReLU:
-        return (outputs.array() > 0.0f).cast<float>();
-    case LeakyReLU: return outputs.unaryExpr([](float y) { return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE; });
-    }
+    throw_if(activation_function == ActivationFunction::Softmax,
+             "LevenbergMarquardtAlgorithm: Softmax activation is not supported "
+             "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
 
-    return MatrixR::Ones(outputs.rows(), outputs.cols());
+    return activation_derivative_from_output_values(activation_function, outputs);
 }
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
@@ -218,7 +203,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     {
         const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
         const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
-        const MatrixR act_deriv = activation_derivative(
+        const MatrixR act_deriv = lm_activation_derivative(
             static_cast<const Dense*>(layers[last_layer].get())->get_activation_function(), outputs);
 
         for (Index j = 0; j < outputs_number; ++j)
@@ -257,7 +242,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
         const auto* previous_dense = static_cast<const Dense*>(layers[dense_indices[n - 1]].get());
         const MatrixR previous_act_deriv =
-            activation_derivative(previous_dense->get_activation_function(), inputs);
+            lm_activation_derivative(previous_dense->get_activation_function(), inputs);
 
         MatrixR previous_delta(rows, inputs_number);
         previous_delta.noalias() = delta * weights.transpose();
@@ -267,7 +252,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                 for (Index sample = 0; sample < batch_size; ++sample)
                     previous_delta(sample * outputs_number + j, k) *= previous_act_deriv(sample, k);
 
-        delta = std::move(previous_delta);
+        delta = move(previous_delta);
     }
 }
 
@@ -291,7 +276,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     damping_parameter = initial_damping_parameter;
 
 
-    if (display) cout << "Training with Levenberg-Marquardt algorithm..." << "\n";
+    if (display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
     TrainingResult results(maximum_epochs+1);
 
@@ -561,20 +546,11 @@ void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
     const Index parameters_number = neural_network->get_parameters_size();
     const Index total_error_terms = new_samples_number * outputs_number;
 
-    errors.resize(total_error_terms);
-    errors.setZero();
-
-    squared_errors.resize(total_error_terms);
-    squared_errors.setZero();
-
-    squared_errors_jacobian.resize(total_error_terms, parameters_number);
-    squared_errors_jacobian.setZero();
-
-    gradient.resize(parameters_number);
-    gradient.setZero();
-
-    hessian.resize(parameters_number, parameters_number);
-    hessian.setZero();
+    errors                  = VectorR::Zero(total_error_terms);
+    squared_errors          = VectorR::Zero(total_error_terms);
+    squared_errors_jacobian = MatrixR::Zero(total_error_terms, parameters_number);
+    gradient                = VectorR::Zero(parameters_number);
+    hessian                 = MatrixR::Zero(parameters_number, parameters_number);
 }
 }
 

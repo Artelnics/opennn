@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         Configuration::instance().set(Device::CPU, Type::FP32);
 
         // MKL enhanced-performance VML tanh (optional), set in code (no env var).
-        if (fast_vml) cpu_math::set_mkl_fast_vml(true);
+        if (fast_vml) set_mkl_fast_vml(true);
 
         TabularDataset dataset(csv_path, ",", false, false);
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);

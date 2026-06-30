@@ -107,7 +107,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
-            if (shape.size() == 0) continue;
+            if (shape.empty()) continue;
 
             const Index first_step = last_trainable_layer_index - layer_index;
             const Index source_layer = (j < sources.size()) ? sources[j] : Index(-1);
@@ -154,17 +154,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     Index live_bytes = 0;
     Index lower_bound_live_bytes = 0;
-    for (Index backward_step = 0; backward_step <= last_backward_step; ++backward_step)
-    {
-        for (size_t entry_index : entries_starting_at_backward_step[size_t(backward_step)])
-            live_bytes += get_aligned_bytes(delta_entries[entry_index].spec);
-
-        lower_bound_live_bytes = max(lower_bound_live_bytes, live_bytes);
-
-        for (size_t entry_index : entries_ending_at_backward_step[size_t(backward_step)])
-            live_bytes -= get_aligned_bytes(delta_entries[entry_index].spec);
-    }
-
     vector<pair<Index, Index>> free_blocks = {{0, numeric_limits<Index>::max()}};
     Index peak_bytes = 0;
 
@@ -172,35 +161,33 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     {
         for (size_t entry_index : entries_starting_at_backward_step[size_t(backward_step)])
         {
-            const Index entry_bytes = get_aligned_bytes(delta_entries[entry_index].spec);
-            Index byte_offset = Index(-1);
+            const Index bytes = get_aligned_bytes(delta_entries[entry_index].spec);
+            live_bytes += bytes;
 
-            auto it = ranges::find_if(free_blocks, [entry_bytes](const auto& block) { return block.second >= entry_bytes; });
-
+            auto it = ranges::find_if(free_blocks, [bytes](const auto& block) { return block.second >= bytes; });
             if (it != free_blocks.end())
             {
-                byte_offset = it->first;
-
-                if (it->second == entry_bytes)
+                delta_entries[entry_index].byte_offset = it->first;
+                if (it->second == bytes)
                     free_blocks.erase(it);
                 else
                 {
-                    it->first  += entry_bytes;
-                    it->second -= entry_bytes;
+                    it->first  += bytes;
+                    it->second -= bytes;
                 }
             }
-
-            delta_entries[entry_index].byte_offset = byte_offset;
-            peak_bytes = max(peak_bytes, byte_offset + entry_bytes);
+            peak_bytes = max(peak_bytes, delta_entries[entry_index].byte_offset + bytes);
         }
+
+        lower_bound_live_bytes = max(lower_bound_live_bytes, live_bytes);
 
         for (size_t entry_index : entries_ending_at_backward_step[size_t(backward_step)])
         {
-            const Index entry_bytes = get_aligned_bytes(delta_entries[entry_index].spec);
+            const Index bytes = get_aligned_bytes(delta_entries[entry_index].spec);
+            live_bytes -= bytes;
 
             auto it = ranges::lower_bound(free_blocks, delta_entries[entry_index].byte_offset, {}, &pair<Index, Index>::first);
-
-            it = free_blocks.insert(it, {delta_entries[entry_index].byte_offset, entry_bytes});
+            it = free_blocks.insert(it, {delta_entries[entry_index].byte_offset, bytes});
 
             if (it + 1 != free_blocks.end() && it->first + it->second == (it + 1)->first)
             {

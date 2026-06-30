@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N O N   M A X   S U P P R E S S I O N   O P E R A T O R   S O U R C E
@@ -7,21 +7,16 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_operator.h"
-#include "json.h"
-#include "random_utilities.h"
 #include "tensor_operations.h"
-#include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#include "profiler.h"
+
+#include <algorithm>
 
 namespace opennn
 {
 
-namespace
-{
-
-float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
+static float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
 {
     const float a_left = a[0] - 0.5f * a[2];
     const float a_top = a[1] - 0.5f * a[3];
@@ -41,18 +36,15 @@ float yolo_iou_xywh(const array<float, 6>& a, const array<float, 6>& b)
     return area > 0.0f ? inter / area : 0.0f;
 }
 
-}
-
-
-void NonMaxSuppressionOp::set(const Shape& input_shape,
+void NonMaxSuppressionOperator::set(const Shape& input_shape,
                               Index new_boxes_per_cell,
                               float new_confidence_threshold,
                               float new_iou_threshold)
 {
     throw_if(input_shape.rank != 3,
-             "NonMaxSuppressionOp: input shape must be rank 3.");
+             "NonMaxSuppressionOperator: input shape must be rank 3.");
     throw_if(new_boxes_per_cell <= 0,
-             "NonMaxSuppressionOp: boxes_per_cell must be positive.");
+             "NonMaxSuppressionOperator: boxes_per_cell must be positive.");
 
     grid_size = input_shape[0];
     grid_width = input_shape[1];
@@ -62,17 +54,17 @@ void NonMaxSuppressionOp::set(const Shape& input_shape,
 
     const Index channels = input_shape[2];
     throw_if(channels % boxes_per_cell != 0,
-             "NonMaxSuppressionOp: channels must be divisible by boxes_per_cell.");
+             "NonMaxSuppressionOperator: channels must be divisible by boxes_per_cell.");
 
     classes_number = channels / boxes_per_cell - 5;
     throw_if(classes_number <= 0,
-             "NonMaxSuppressionOp: classes_number must be positive.");
+             "NonMaxSuppressionOperator: classes_number must be positive.");
 }
 
-void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& input = get_input(fp, layer);
-    TensorView& output = get_output(fp, layer);
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
 
     if (is_training) return; // loss reads Detection output directly; NMS output not used during training
 
@@ -99,7 +91,7 @@ void NonMaxSuppressionOp::forward_propagate(ForwardPropagation& fp, size_t layer
     apply(input, output);
 }
 
-void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) const
+void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index channels = input.shape[3];
@@ -133,7 +125,7 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
                         continue;
 
                     candidates.push_back({
-                        (float(col) + src[base + 0]) / float(grid_width),
+                        (float(col) + src[base]) / float(grid_width),
                         (float(row) + src[base + 1]) / float(grid_size),
                         src[base + 2],
                         src[base + 3],
@@ -166,7 +158,7 @@ void NonMaxSuppressionOp::apply(const TensorView& input, TensorView& output) con
                 continue;
 
             float* out = dst + (b * max_boxes + kept_count) * 6;
-            std::copy(candidate.begin(), candidate.end(), out);
+            ranges::copy(candidate, out);
             if (++kept_count == max_boxes)
                 break;
         }

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R
@@ -25,7 +25,7 @@ class TestingAnalysis
 
 public:
 
-    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {
@@ -132,7 +132,7 @@ private:
     pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
 
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
-                                                bool target_positive, bool output_positive) const;
+                                                bool, bool) const;
 
     NeuralNetwork* neural_network = nullptr;
 
@@ -144,5 +144,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S
@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "tensor_types.h"
+
+#include <algorithm>
 
 namespace opennn
 {
@@ -81,7 +83,7 @@ void TensorView::set_descriptor(const Shape&) const
 
 static bool uses_cuda_fill(const TensorView& view)
 {
-    return view.device == Device::CUDA;
+    return view.is_cuda();
 }
 
 static void fill_cuda(const TensorView&, float)
@@ -164,9 +166,6 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const bool contiguous = (contiguous_hint >= 0) ? static_cast<bool>(contiguous_hint) : is_contiguous(column_indices);
 
-    // Small batch fills (e.g. batch_size 100 issued from concurrent worker
-    // threads) lose far more to the OpenMP fork-join and thread
-    // oversubscription than the copy itself costs; run those serially.
     const bool parallel_fill = rows_number * columns_number >= 65536;
 
     if (contiguous)
@@ -180,10 +179,8 @@ void fill_tensor_data(const MatrixR& matrix,
         #pragma omp parallel for schedule(static) if(parallel_fill)
         for (Index i = 0; i < rows_number; ++i)
         {
-            const Index src_row = row_indices[i];
-            const float* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-            float* dest_row_ptr = tensor_data + i * columns_number;
-
+            const float* src_row_ptr  = matrix_data + row_indices[i] * matrix_cols_number;
+            float*       dest_row_ptr = tensor_data + i * columns_number;
             for (Index j = 0; j < columns_number; ++j)
                 dest_row_ptr[j] = src_row_ptr[column_indices[j]];
         }
@@ -203,10 +200,8 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
                            device::CopyKind::DeviceToHost,
                            stream);
         device::synchronize(stream);
-        return;
     }
-
-    if (src_dtype == Type::BF16)
+    else if (src_dtype == Type::BF16)
     {
         vector<uint16_t> staging(static_cast<size_t>(element_count));
         device::copy_async(staging.data(), device_src,
@@ -219,10 +214,9 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
             const uint32_t bits = static_cast<uint32_t>(staging[size_t(i)]) << 16;
             memcpy(&host_dst[i], &bits, sizeof(float));
         }
-        return;
     }
-
-    throw runtime_error("copy_device_to_host_float: unsupported dtype.");
+    else
+        throw runtime_error("copy_device_to_host_float: unsupported dtype.");
 }
 
 }

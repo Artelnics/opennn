@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   Y O L O   D A T A S E T   C L A S S
@@ -157,11 +157,8 @@ uint64_t hash_anchors(const vector<array<float, 2>>& anchors)
 
     for (const auto& anchor : anchors)
     {
-        uint32_t bits = 0;
-        memcpy(&bits, &anchor[0], sizeof(uint32_t));
-        mix(bits);
-        memcpy(&bits, &anchor[1], sizeof(uint32_t));
-        mix(bits);
+        mix(bit_cast<uint32_t>(anchor[0]));
+        mix(bit_cast<uint32_t>(anchor[1]));
     }
 
     return hash_value;
@@ -244,10 +241,7 @@ vector<array<float, 2>> calculate_yolo_anchors(const vector<vector<YoloDataset::
                 boxes.push_back({box.w, box.h});
 
     if (boxes.empty())
-    {
-        vector<array<float, 2>> fallback(size_t(boxes_per_cell), {0.1f, 0.1f});
-        return fallback;
-    }
+        return vector<array<float, 2>>(size_t(boxes_per_cell), {0.1f, 0.1f});
 
     vector<array<float, 2>> anchors(static_cast<size_t>(boxes_per_cell));
     for (Index i = 0; i < boxes_per_cell; ++i)
@@ -556,7 +550,7 @@ void bilinear_resize_uint8(const uint8_t* src,
 {
     if (src_h == dst_h && src_w == dst_w)
     {
-        std::memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
+        memcpy(dst, src, size_t(src_h) * size_t(src_w) * size_t(channels));
         return;
     }
 
@@ -634,7 +628,7 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
         out.push_back(box);
     }
 
-    boxes = std::move(out);
+    boxes = move(out);
 }
 
 void make_target(const vector<YoloDataset::Box>& boxes,
@@ -958,7 +952,7 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
     vector<array<float, 6>> candidates;
 
     // Each candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id).
-    // Decoded output from DetectionOp: x,y are sigmoid([0,1]) cell-relative
+    // Decoded output from DetectionOperator: x,y are sigmoid([0,1]) cell-relative
     // offsets; w,h are already image-normalized (anchor * exp(raw)).
     for (const YoloFpnHead& head : heads)
     {
@@ -1221,7 +1215,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         ||  target_cache_reader.file_size() != expected_target_size)
             return false;
 
-        anchors = std::move(cached_anchors);
+        anchors = move(cached_anchors);
         classes_number = Index(target_header.classes_number);
         if (class_names.empty())
         {
@@ -1408,9 +1402,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     for (const auto& sample_boxes : labels)
         for (const auto& box : sample_boxes)
         {
-            YoloBoxRecord rec{};
-            rec.class_id = int32_t(box.class_id);
-            rec.x = box.x; rec.y = box.y; rec.w = box.w; rec.h = box.h;
+            const YoloBoxRecord rec{int32_t(box.class_id), box.x, box.y, box.w, box.h};
             boxes_writer.write(&rec, sizeof(rec));
         }
 
@@ -1421,7 +1413,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     boxes_cache_reader.open(boxes_cache_path);
     target_data_offset = target_header.targets_offset;
     boxes_data_offset = boxes_header.boxes_byte_offset;
-    boxes_offsets = std::move(offsets);
+    boxes_offsets = move(offsets);
 
     setup_metadata(Index(image_paths.size()));
 
@@ -1525,8 +1517,7 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 
 void YoloDataset::load_images_to_ram() const
 {
-    if (!images_ram.empty()) return;
-    if (samples_number == 0 || cache_image_record_bytes == 0) return;
+    if (!images_ram.empty() || samples_number == 0 || cache_image_record_bytes == 0) return;
 
     throw_if(!image_cache_reader.is_open(),
              "YoloDataset::load_images_to_ram: image cache is not open.");
@@ -1537,8 +1528,7 @@ void YoloDataset::load_images_to_ram() const
 
 void YoloDataset::load_targets_to_ram() const
 {
-    if (!targets_ram.empty()) return;
-    if (samples_number == 0 || cache_target_record_floats == 0) return;
+    if (!targets_ram.empty() || samples_number == 0 || cache_target_record_floats == 0) return;
 
     throw_if(!target_cache_reader.is_open(),
              "YoloDataset::load_targets_to_ram: target cache is not open.");
@@ -1636,7 +1626,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool augment = is_training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
-        ? augmentation_counter.fetch_add(1, std::memory_order_relaxed) + 1
+        ? augmentation_counter.fetch_add(1, memory_order_relaxed) + 1
         : 0;
 
     if (matrix_storage)
@@ -1783,7 +1773,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     const bool augment = is_training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
-        ? augmentation_counter.load(std::memory_order_relaxed)
+        ? augmentation_counter.load(memory_order_relaxed)
         : 0;
 
     AugmentationConfig cfg = augmentation;
@@ -1973,7 +1963,7 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
              "load_darknet_backbone: failed to read header seen.");
 
-    std::cout << "Darknet weights header: major=" << header[0]
+    cout << "Darknet weights header: major=" << header[0]
               << " minor=" << header[1]
               << " revision=" << header[2]
               << " seen=" << seen << "\n";
@@ -1987,8 +1977,7 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
 
         conv->load_darknet_weights(f);
         ++loaded;
-        std::cout << "Loaded backbone conv " << loaded << "/" << n_backbone_convs
-                  << " from " << weights_path << "\n";
+        cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
     }
 
     fclose(f);

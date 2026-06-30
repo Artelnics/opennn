@@ -381,7 +381,7 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
 
     errors(1) = sum_squared / (2.0f * float(batch_size));
 
-    errors(2) = std::sqrt(errors(1));
+    errors(2) = sqrt(errors(1));
 
     const VectorR targets_mean = mean(targets);
     const float normalization_coefficient =
@@ -874,8 +874,6 @@ void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_n
 
     file << "Goodness-of-fit analysis\n"
          << "Determination: " << determination << "\n";
-
-    file.close();
 }
 
 void TestingAnalysis::GoodnessOfFitAnalysis::print() const

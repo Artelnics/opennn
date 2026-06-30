@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S
@@ -91,16 +91,16 @@ void TrainingStrategy::set_default()
     }
 
 
-    const ActivationOp::Function output_activation = neural_network->get_output_activation();
+    const ActivationFunction output_activation = neural_network->get_output_activation();
 
-    if (output_activation == ActivationOp::Function::Softmax)
+    if (output_activation == ActivationFunction::Softmax)
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("QuasiNewtonMethod");
         return;
     }
 
-    if (output_activation == ActivationOp::Function::Sigmoid)
+    if (output_activation == ActivationFunction::Sigmoid)
     {
         set_loss("WeightedSquaredError");
         set_optimization_algorithm("QuasiNewtonMethod");
@@ -193,13 +193,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
 void TrainingStrategy::save(const filesystem::path& file_name) const
 {
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
-
-    JsonWriter printer;
-    to_JSON(printer);
-    file << printer.c_str();
+    save_json_file(file_name, *this);
 }
 
 void TrainingStrategy::load(const filesystem::path& file_name)

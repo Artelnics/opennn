@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "../opennn/non_max_suppression_layer.h"
 #include "../opennn/neural_network.h"
@@ -11,7 +11,7 @@ namespace {
 constexpr float tol = 1e-5f;
 
 // Encodes a "decoded" YOLO cell box into the layer's expected layout.
-// (Inputs are post-DetectionOp: x,y already in [0,1] cell-relative; w,h absolute;
+// (Inputs are post-DetectionOperator: x,y already in [0,1] cell-relative; w,h absolute;
 //  objectness in [0,1]; classes are a softmax-distribution.)
 void write_box(float* cell, Index box, Index values_per_box,
                float x_cell_rel, float y_cell_rel, float w_abs, float h_abs,

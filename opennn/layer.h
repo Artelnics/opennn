@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L A Y E R   C L A S S   H E A D E R
@@ -86,7 +86,7 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
                        const char* layer, const char* what)
 {
     if (shape.empty()) return;
-    for (int r : allowed) if (int(shape.rank) == r) return;
+    if (ranges::any_of(allowed, [&](int r){ return int(shape.rank) == r; })) return;
 
     string allowed_str;
     auto it = allowed.begin();
@@ -109,11 +109,11 @@ public:
 
     virtual ~Layer() = default;
 
-    const string& get_label() const { return label; }
+    const string& get_label() const noexcept { return label; }
 
     const string& get_name() const { return layer_type_to_string(layer_type); }
 
-    LayerType get_type() const { return layer_type; }
+    LayerType get_type() const noexcept { return layer_type; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
@@ -121,7 +121,7 @@ public:
     void set_label(string new_label) { label = move(new_label); }
 
     Index get_parameters_number() const;
-    const vector<Operator*>& get_operators() const { return operators; }
+    const vector<Operator*>& get_operators() const noexcept { return operators; }
     virtual vector<TensorSpec> get_parameter_specs() const;
     virtual vector<TensorSpec> get_state_specs()     const;
     virtual vector<TensorSpec> get_forward_specs(Index batch_size) const
@@ -134,35 +134,35 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    virtual Shape get_input_shape() const { return input_shape; }
+    virtual Shape get_input_shape() const noexcept { return input_shape; }
 
     virtual Shape get_output_shape() const = 0;
 
     virtual ActivationFunction get_output_activation() const { return ActivationFunction::Identity; }
 
-    Index get_inputs_number() const { return get_input_shape().size(); }
+    Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
     
-    virtual void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training)
+    virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
     {
         for (Operator* op : get_operators())
-            op->forward_propagate(fp, layer, is_training);
+            op->forward_propagate(forward_propagation, layer, is_training);
     }
 
-    virtual void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t i) const
+    virtual void back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t i) const
     {
         for (Operator* op : views::reverse(get_operators()))
-            op->back_propagate(fp, bp, i);
+            op->back_propagate(forward_propagation, back_propagation, i);
     }
 
-    virtual void from_JSON(const JsonDocument& document);
+    virtual void from_JSON(const JsonDocument&);
 
     virtual void read_JSON_body(const Json*) {}
 
-    virtual void load_state_from_JSON(const JsonDocument& document);
+    virtual void load_state_from_JSON(const JsonDocument&);
 
-    virtual void to_JSON(JsonWriter& writer) const;
+    virtual void to_JSON(JsonWriter&) const;
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
@@ -171,10 +171,10 @@ public:
 
     virtual void print() const {}
 
-    bool get_is_trainable() const { return is_trainable; }
+    bool get_is_trainable() const noexcept { return is_trainable; }
 
-    Type get_compute_dtype() const { return compute_dtype; }
-    Device get_compute_device() const { return compute_device; }
+    Type get_compute_dtype() const noexcept { return compute_dtype; }
+    Device get_compute_device() const noexcept { return compute_device; }
 
     void set_compute_dtype(Type new_compute_dtype)
     {
@@ -186,12 +186,12 @@ public:
 
     virtual void on_compute_dtype_changed() {}
 
-    virtual float* link_states(float* pointer, Device device);
+    virtual float* link_states(float*, Device);
 
-    float* link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device);
+    float* link_gradients(float*, vector<TensorView>&, Device);
 
     vector<TensorView>& get_parameter_views() { return parameters; }
-    const vector<TensorView>& get_parameter_views() const { return parameters; }
+    const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
 
     void redistribute_parameters_to_operators();
 
@@ -222,15 +222,15 @@ protected:
     vector<Operator*> operators;
 
     float* link_views_to_operators(
-        vector<TensorView>& views, float* pointer,
+        vector<TensorView>&, float*,
         vector<TensorSpec> (Operator::*specs_fn)() const,
         void (Operator::*link_fn)(span<const TensorView>),
-        Device device);
+        Device);
 
 };
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

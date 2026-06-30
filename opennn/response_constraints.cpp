@@ -12,7 +12,7 @@
 #include "random_utilities.h"
 
 #include <cctype>
-#include <Eigen/Dense>
+#include <set>
 
 namespace opennn
 {
@@ -378,19 +378,20 @@ AffineForm analyze_affine(const Ast& node)
 
     switch (node.kind)
     {
-    case Ast::Kind::Const:
+        using enum Ast::Kind;
+    case Const:
         result.constant = node.constant;
         return result;
 
-    case Ast::Kind::Input:
+    case Input:
         result.input_terms[node.index] = 1.0f;
         return result;
 
-    case Ast::Kind::Output:
+    case Output:
         result.output_terms[node.index] = 1.0f;
         return result;
 
-    case Ast::Kind::UnaryNeg:
+    case UnaryNeg:
     {
         AffineForm child_form = analyze_affine(*node.children[0]);
         if (!child_form.is_affine) { result.is_affine = false; return result; }
@@ -403,8 +404,8 @@ AffineForm analyze_affine(const Ast& node)
         return result;
     }
 
-    case Ast::Kind::Add:
-    case Ast::Kind::Sub:
+    case Add:
+    case Sub:
     {
         AffineForm left_form = analyze_affine(*node.children[0]);
         AffineForm right_form = analyze_affine(*node.children[1]);
@@ -419,7 +420,7 @@ AffineForm analyze_affine(const Ast& node)
         return result;
     }
 
-    case Ast::Kind::Mul:
+    case Mul:
     {
         AffineForm left_form = analyze_affine(*node.children[0]);
         AffineForm right_form = analyze_affine(*node.children[1]);
@@ -449,7 +450,7 @@ AffineForm analyze_affine(const Ast& node)
         return result;
     }
 
-    case Ast::Kind::Div:
+    case Div:
     {
         AffineForm left_form = analyze_affine(*node.children[0]);
         AffineForm right_form = analyze_affine(*node.children[1]);
@@ -470,7 +471,7 @@ AffineForm analyze_affine(const Ast& node)
         return result;
     }
 
-    case Ast::Kind::Pow:
+    case Pow:
     {
         AffineForm base_form = analyze_affine(*node.children[0]);
         AffineForm exponent_form = analyze_affine(*node.children[1]);
@@ -495,7 +496,7 @@ AffineForm analyze_affine(const Ast& node)
         return result;
     }
 
-    case Ast::Kind::Func:
+    case Func:
         result.is_affine = false;
         return result;
     }
@@ -506,8 +507,8 @@ AffineForm analyze_affine(const Ast& node)
 
 
 void collect_variable_references(const Ast& node,
-                                 set<Index>& input_references,
-                                 set<Index>& output_references)
+                                 std::set<Index>& input_references,
+                                 std::set<Index>& output_references)
 {
     if (node.kind == Ast::Kind::Input)  { input_references.insert(node.index);  return; }
     if (node.kind == Ast::Kind::Output) { output_references.insert(node.index); return; }
@@ -559,28 +560,29 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
 {
     switch (node.kind)
     {
-    case Ast::Kind::Const:
+        using enum Ast::Kind;
+    case Const:
         bytecode.push_back({RpnOp::Kind::PushConst, 0, node.constant});
         return;
 
-    case Ast::Kind::Input:
+    case Input:
         bytecode.push_back({RpnOp::Kind::PushInput, node.index, 0.0f});
         return;
 
-    case Ast::Kind::Output:
+    case Output:
         bytecode.push_back({RpnOp::Kind::PushOutput, node.index, 0.0f});
         return;
 
-    case Ast::Kind::UnaryNeg:
+    case UnaryNeg:
         emit_bytecode(*node.children[0], bytecode);
         bytecode.push_back({RpnOp::Kind::Neg, 0, 0.0f});
         return;
 
-    case Ast::Kind::Add:
-    case Ast::Kind::Sub:
-    case Ast::Kind::Mul:
-    case Ast::Kind::Div:
-    case Ast::Kind::Pow:
+    case Add:
+    case Sub:
+    case Mul:
+    case Div:
+    case Pow:
     {
         emit_bytecode(*node.children[0], bytecode);
         emit_bytecode(*node.children[1], bytecode);
@@ -596,7 +598,7 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
         return;
     }
 
-    case Ast::Kind::Func:
+    case Func:
     {
         for (const AstPtr& child : node.children)
             emit_bytecode(*child, bytecode);
@@ -764,27 +766,28 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 {
     switch (node.kind)
     {
-    case Ast::Kind::Const:
+        using enum Ast::Kind;
+    case Const:
         return make_const(0.0f);
 
-    case Ast::Kind::Input:
+    case Input:
         return make_const((!wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
 
-    case Ast::Kind::Output:
+    case Output:
         return make_const((wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
 
-    case Ast::Kind::UnaryNeg:
+    case UnaryNeg:
         return make_neg(differentiate(*node.children[0], wrt_is_output, wrt_index));
 
-    case Ast::Kind::Add:
+    case Add:
         return make_add(differentiate(*node.children[0], wrt_is_output, wrt_index),
                         differentiate(*node.children[1], wrt_is_output, wrt_index));
 
-    case Ast::Kind::Sub:
+    case Sub:
         return make_sub(differentiate(*node.children[0], wrt_is_output, wrt_index),
                         differentiate(*node.children[1], wrt_is_output, wrt_index));
 
-    case Ast::Kind::Mul:
+    case Mul:
     {
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
@@ -792,7 +795,7 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
                         make_mul(clone(*node.children[0]), move(db)));
     }
 
-    case Ast::Kind::Div:
+    case Div:
     {
         AstPtr da = differentiate(*node.children[0], wrt_is_output, wrt_index);
         AstPtr db = differentiate(*node.children[1], wrt_is_output, wrt_index);
@@ -802,7 +805,7 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         return make_div(move(numerator), move(denominator));
     }
 
-    case Ast::Kind::Pow:
+    case Pow:
     {
         float exponent;
         if (is_const(*node.children[1], exponent))
@@ -829,7 +832,7 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
         return make_mul(move(value), make_add(move(term1), move(term2)));
     }
 
-    case Ast::Kind::Func:
+    case Func:
     {
         const string& name = node.function_name;
         const Ast& u = *node.children[0];
@@ -871,39 +874,40 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
     {
         switch (operation.kind)
         {
-        case RpnOp::Kind::PushConst:  evaluation_stack.push_back(operation.constant); break;
-        case RpnOp::Kind::PushInput:  evaluation_stack.push_back(inputs_row(operation.index)); break;
-        case RpnOp::Kind::PushOutput: evaluation_stack.push_back(outputs_row(operation.index)); break;
-        case RpnOp::Kind::Neg: evaluation_stack.back() = -evaluation_stack.back(); break;
+            using enum RpnOp::Kind;
+        case PushConst:  evaluation_stack.push_back(operation.constant); break;
+        case PushInput:  evaluation_stack.push_back(inputs_row(operation.index)); break;
+        case PushOutput: evaluation_stack.push_back(outputs_row(operation.index)); break;
+        case Neg: evaluation_stack.back() = -evaluation_stack.back(); break;
 
-        case RpnOp::Kind::Add:
+        case Add:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() += right_operand; break; }
-        case RpnOp::Kind::Sub:
+        case Sub:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() -= right_operand; break; }
-        case RpnOp::Kind::Mul:
+        case Mul:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() *= right_operand; break; }
-        case RpnOp::Kind::Div:
+        case Div:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() /= right_operand; break; }
-        case RpnOp::Kind::Pow:
+        case Pow:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() = pow(evaluation_stack.back(), right_operand); break; }
 
-        case RpnOp::Kind::Sqrt: evaluation_stack.back() = sqrt(evaluation_stack.back()); break;
-        case RpnOp::Kind::Exp:  evaluation_stack.back() = exp(evaluation_stack.back()); break;
-        case RpnOp::Kind::Log:  evaluation_stack.back() = log(evaluation_stack.back()); break;
-        case RpnOp::Kind::Abs:  evaluation_stack.back() = abs(evaluation_stack.back()); break;
-        case RpnOp::Kind::Sin:  evaluation_stack.back() = sin(evaluation_stack.back()); break;
-        case RpnOp::Kind::Cos:  evaluation_stack.back() = cos(evaluation_stack.back()); break;
-        case RpnOp::Kind::Tan:  evaluation_stack.back() = tan(evaluation_stack.back()); break;
+        case Sqrt: evaluation_stack.back() = sqrt(evaluation_stack.back()); break;
+        case Exp:  evaluation_stack.back() = exp(evaluation_stack.back()); break;
+        case Log:  evaluation_stack.back() = log(evaluation_stack.back()); break;
+        case Abs:  evaluation_stack.back() = abs(evaluation_stack.back()); break;
+        case Sin:  evaluation_stack.back() = sin(evaluation_stack.back()); break;
+        case Cos:  evaluation_stack.back() = cos(evaluation_stack.back()); break;
+        case Tan:  evaluation_stack.back() = tan(evaluation_stack.back()); break;
 
-        case RpnOp::Kind::Min:
+        case Min:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() = min(evaluation_stack.back(), right_operand); break; }
-        case RpnOp::Kind::Max:
+        case Max:
         { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
           evaluation_stack.back() = max(evaluation_stack.back(), right_operand); break; }
         }
@@ -938,8 +942,8 @@ CompiledFormula compile_ast(const Ast& ast)
 
     CompiledFormula result;
 
-    set<Index> input_references;
-    set<Index> output_references;
+    std::set<Index> input_references;
+    std::set<Index> output_references;
     collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
@@ -1211,7 +1215,7 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
                                                 const Index n_in,
                                                 const Index n_out)
 {
-    const Index m = static_cast<Index>(formula_constraints.size());
+    const Index m = ssize(formula_constraints);
 
     LinearConstraintSet linear_set;
     linear_set.A     = MatrixR::Zero(m, n_in + n_out);
@@ -1234,27 +1238,29 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
 
         switch (formula_constraint.comparison_operator)
         {
-        case ComparisonOperator::EqualTo:
+            using enum ComparisonOperator;
+        case EqualTo:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             linear_set.upper(i) = low - c + bound_tolerance(low);
             break;
-        case ComparisonOperator::Between:
+        case Between:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             linear_set.upper(i) = up  - c + bound_tolerance(up);
             break;
-        case ComparisonOperator::GreaterEqualTo:
+        case GreaterEqualTo:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             break;
-        case ComparisonOperator::LessEqualTo:
+        case LessEqualTo:
             linear_set.upper(i) = up - c + bound_tolerance(up);
             break;
-        case ComparisonOperator::GreaterThan:
+        case GreaterThan:
             linear_set.lower(i) = low - c + EPSILON;
             break;
-        case ComparisonOperator::LessThan:
+        case LessThan:
             linear_set.upper(i) = up - c - EPSILON;
             break;
-        case ComparisonOperator::None:
+        case None:
+        case AllowedSet:
         default:
             break;
         }
@@ -1277,16 +1283,20 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 
     switch (constraint.comparison_operator)
     {
-    case ComparisonOperator::EqualTo:
+        using enum ComparisonOperator;
+    case EqualTo:
         return abs(value - low) <= bound_tolerance(low);
-    case ComparisonOperator::Between:
+    case Between:
         return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
-    case ComparisonOperator::GreaterEqualTo:
-    case ComparisonOperator::GreaterThan:
+    case GreaterEqualTo:
+    case GreaterThan:
         return value >= low - bound_tolerance(low);
-    case ComparisonOperator::LessEqualTo:
-    case ComparisonOperator::LessThan:
+    case LessEqualTo:
+    case LessThan:
         return value <= up + bound_tolerance(up);
+    case None:
+    case AllowedSet:
+        return true;
     default:
         return true;
     }
@@ -1335,21 +1345,23 @@ bool constraint_residual(const ComparisonOperator comparison, const float low, c
 
     switch (comparison)
     {
-    case ComparisonOperator::EqualTo:
+        using enum ComparisonOperator;
+    case EqualTo:
         residual = value - low; return true;
-    case ComparisonOperator::Between:
+    case Between:
         if (value < low) { residual = value - low; return true; }
         if (value > up)  { residual = value - up;  return true; }
         return false;
-    case ComparisonOperator::GreaterEqualTo:
-    case ComparisonOperator::GreaterThan:
+    case GreaterEqualTo:
+    case GreaterThan:
         if (value < low) { residual = value - low; return true; }
         return false;
-    case ComparisonOperator::LessEqualTo:
-    case ComparisonOperator::LessThan:
+    case LessEqualTo:
+    case LessThan:
         if (value > up) { residual = value - up; return true; }
         return false;
-    case ComparisonOperator::None:
+    case None:
+    case AllowedSet:
     default:
         return false;
     }
@@ -1370,7 +1382,7 @@ bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
     if (projectable.empty())
         return false;
 
-    const Index projectable_number = static_cast<Index>(projectable.size());
+    const Index projectable_number = ssize(projectable);
 
     MatrixR reduced_jacobian(projectable_number, jacobian.cols());
     VectorR reduced_rhs(projectable_number);
@@ -1476,7 +1488,7 @@ void gauss_newton_repair_row(VectorR& point,
                              const Index passes)
 {
     const Index inputs_number = point.size();
-    const bool has_mask = (static_cast<Index>(fixed_columns.size()) == inputs_number);
+    const bool has_mask = (ssize(fixed_columns) == inputs_number);
 
     vector<const MultivariateConstraint*> active;
     vector<float> residuals;
@@ -1488,7 +1500,7 @@ void gauss_newton_repair_row(VectorR& point,
         if (!collect_violations(constraints, point, output, active, residuals))
             break;
 
-        const Index active_number = static_cast<Index>(active.size());
+        const Index active_number = ssize(active);
 
         MatrixR jacobian(active_number, inputs_number);
         VectorR rhs(active_number);
@@ -1529,7 +1541,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     const Index rows_number = random_inputs.rows();
     const Index inputs_number = random_inputs.cols();
-    const Index constraints_number = static_cast<Index>(affine_constraints.size());
+    const Index constraints_number = ssize(affine_constraints);
 
     Index slacks_number = 0;
     for (const MultivariateConstraint* constraint : affine_constraints)
@@ -1564,11 +1576,12 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
         switch (constraint.comparison_operator)
         {
-        case ComparisonOperator::EqualTo:
+            using enum ComparisonOperator;
+        case EqualTo:
             right_hand_side(i) = low - constant;
             break;
 
-        case ComparisonOperator::Between:
+        case Between:
             augmented_matrix(i, inputs_number + slack_index) = -1;
             right_hand_side(i) = low - constant;
             slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
@@ -1576,8 +1589,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOperator::GreaterEqualTo:
-        case ComparisonOperator::GreaterThan:
+        case GreaterEqualTo:
+        case GreaterThan:
             augmented_matrix(i, inputs_number + slack_index) = -1;
             right_hand_side(i) = low - constant;
             slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
@@ -1585,8 +1598,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOperator::LessEqualTo:
-        case ComparisonOperator::LessThan:
+        case LessEqualTo:
+        case LessThan:
             augmented_matrix(i, inputs_number + slack_index) = 1;
             right_hand_side(i) = up - constant;
             slack_inferior(slack_index) = max(0.0f, up - expression_maximum);
@@ -1594,7 +1607,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
             ++slack_index;
             break;
 
-        case ComparisonOperator::None:
+        case None:
+        case AllowedSet:
         default:
             break;
         }
@@ -1671,7 +1685,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
 
     vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
 
-    const Index terms_number = static_cast<Index>(shuffled.size());
+    const Index terms_number = ssize(shuffled);
 
     for (Index r = 0; r < rows_number; ++r)
     {
@@ -1722,7 +1736,7 @@ void repair_single_affine_integer(MatrixR& random_inputs,
     const Index rows_number = random_inputs.rows();
 
     vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
-    const Index terms_number = static_cast<Index>(shuffled.size());
+    const Index terms_number = ssize(shuffled);
 
     for (Index r = 0; r < rows_number; ++r)
     {
@@ -1814,34 +1828,100 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 }
 
 
+namespace
+{
+
+// Partition the input-repairable constraints (AffineInput / NonlinearInput) into blocks whose
+// variable sets are pairwise disjoint -- the connected components of the variable-constraint
+// bipartite graph. Two constraints fall in the same block iff they share at least one input column
+// (directly or transitively). Each block can then be repaired independently with the projector
+// matched to its OWN kind, so a single nonlinear constraint no longer drags unrelated affine blocks
+// through Gauss-Newton. This is the standard independent-components decomposition (cf. SCIP
+// cons_components; Pierra's product-space projection), here applied to surrogate input repair.
+vector<vector<MultivariateConstraint>>
+partition_input_constraints_by_variable(const vector<MultivariateConstraint>& formula_constraints)
+{
+    vector<const MultivariateConstraint*> repairable;
+
+    for (const MultivariateConstraint& constraint : formula_constraints)
+        if (constraint.kind == ConstraintKind::AffineInput
+            || constraint.kind == ConstraintKind::NonlinearInput)
+            repairable.push_back(&constraint);
+
+    const Index constraint_number = ssize(repairable);
+
+    vector<Index> parent(constraint_number);
+    iota(parent.begin(), parent.end(), Index{0});
+
+    function<Index(Index)> find = [&](Index x)
+    {
+        while (parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+        return x;
+    };
+
+    // Union any two constraints that reference a common input column.
+    unordered_map<Index, Index> column_owner;
+
+    for (Index i = 0; i < constraint_number; ++i)
+        for (const Index column : repairable[i]->compiled.input_indices)
+        {
+            const auto found = column_owner.find(column);
+            if (found == column_owner.end())
+                column_owner[column] = i;
+            else
+                parent[find(i)] = find(found->second);
+        }
+
+    unordered_map<Index, vector<MultivariateConstraint>> blocks;
+    for (Index i = 0; i < constraint_number; ++i)
+        blocks[find(i)].push_back(*repairable[i]);
+
+    vector<vector<MultivariateConstraint>> result;
+    result.reserve(blocks.size());
+    for (auto& [root, block] : blocks)
+        result.push_back(move(block));
+
+    return result;
+}
+
+}
+
+
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
 {
-    const MultivariateConstraint* single_affine = nullptr;
-    Index affine_number = 0;
-    bool any_nonlinear = false;
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
+    // Each block holds constraints over a variable set disjoint from every other block, so repairing
+    // them one block at a time on the shared matrix is exact: an inner repairer only writes the
+    // columns its constraints reference, leaving the other blocks' columns untouched. The win is
+    // routing purity -- the affine blocks get Dykstra and only the genuinely nonlinear block gets
+    // Gauss-Newton, instead of the whole input vector being forced through GN by one nonlinear term.
+    for (const vector<MultivariateConstraint>& block :
+         partition_input_constraints_by_variable(formula_constraints))
     {
-        const ConstraintKind kind = constraint.kind;
+        const MultivariateConstraint* single_affine = nullptr;
+        Index affine_number = 0;
+        bool any_nonlinear = false;
 
-        if (kind == ConstraintKind::AffineInput)
+        for (const MultivariateConstraint& constraint : block)
         {
-            ++affine_number;
-            single_affine = &constraint;
+            if (constraint.kind == ConstraintKind::AffineInput)
+            {
+                ++affine_number;
+                single_affine = &constraint;
+            }
+            else if (constraint.kind == ConstraintKind::NonlinearInput)
+                any_nonlinear = true;
         }
-        else if (kind == ConstraintKind::NonlinearInput)
-            any_nonlinear = true;
-    }
 
-    if (any_nonlinear)
-        repair_nonlinear_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
-    else if (affine_number == 1)
-        repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
-    else if (affine_number >= 2)
-        repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, formula_constraints);
+        if (any_nonlinear)
+            repair_nonlinear_inputs(random_inputs, inferior_frontier, superior_frontier, block);
+        else if (affine_number == 1)
+            repair_single_affine_input(random_inputs, inferior_frontier, superior_frontier, *single_affine);
+        else if (affine_number >= 2)
+            repair_affine_inputs(random_inputs, inferior_frontier, superior_frontier, block);
+    }
 }
 
 
@@ -1853,11 +1933,9 @@ bool row_satisfies_input_affine(const VectorR& point,
 {
     const VectorR empty_outputs;
 
-    for (const MultivariateConstraint* constraint : input_constraints)
-        if (!constraint_is_satisfied(*constraint, point, empty_outputs))
-            return false;
-
-    return true;
+    return ranges::all_of(input_constraints, [&](const MultivariateConstraint* c) {
+        return constraint_is_satisfied(*c, point, empty_outputs);
+    });
 }
 
 
@@ -1883,8 +1961,8 @@ void cardinality_swap_row(VectorR& point,
         if (off_candidates.empty() || on_candidates.empty())
             break;
 
-        const Index off_column = off_candidates[random_integer(0, static_cast<Index>(off_candidates.size()) - 1)];
-        const Index on_column  = on_candidates [random_integer(0, static_cast<Index>(on_candidates.size())  - 1)];
+        const Index off_column = off_candidates[random_integer(0, ssize(off_candidates) - 1)];
+        const Index on_column  = on_candidates [random_integer(0, ssize(on_candidates)  - 1)];
 
         point(off_column) = round(point(off_column) - 1.0f);
         point(on_column)  = round(point(on_column)  + 1.0f);
@@ -1936,7 +2014,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 
         bool all_free_discrete = true;
         for (const pair<Index, float>& term : constraint.compiled.affine_input_terms)
-            if (term.first >= static_cast<Index>(fixed_mask.size())
+            if (term.first >= ssize(fixed_mask)
                 || !fixed_mask[term.first] || cardinality_set.count(term.first))
             { all_free_discrete = false; break; }
 

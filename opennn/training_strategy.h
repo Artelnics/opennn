@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S   H E A D E R
@@ -24,18 +24,18 @@ class TrainingStrategy
 
 public:
 
-    TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    const Dataset* get_dataset() const { return dataset; }
+    const Dataset* get_dataset() const noexcept { return dataset; }
     Dataset* get_dataset() { return dataset; }
 
-    const NeuralNetwork* get_neural_network() const { return neural_network; }
+    const NeuralNetwork* get_neural_network() const noexcept { return neural_network; }
     NeuralNetwork* get_neural_network() { return neural_network; }
 
-    const Loss* get_loss() const { return loss.get(); }
+    const Loss* get_loss() const noexcept { return loss.get(); }
     Loss* get_loss() { return loss.get(); }
 
-    const Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
+    const Optimizer* get_optimization_algorithm() const noexcept { return optimizer.get(); }
     Optimizer* get_optimization_algorithm() { return optimizer.get(); }
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
@@ -67,5 +67,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M E M O R Y   D E B U G   U T I L I T I E S
@@ -15,12 +15,12 @@ bool enabled();
 
 void reset();
 
-void record(const string& category,
-            const string& name,
-            Index bytes,
+void record(const string&,
+            const string&,
+            Index,
             const string& note = {});
 
-void print(ostream& os);
+void print(ostream&);
 
 }
 

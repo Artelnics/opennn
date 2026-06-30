@@ -78,12 +78,17 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
+__device__ __forceinline__ float sigmoid_f(float x)
+{
+    return 1.0f / (1.0f + expf(-x));
+}
+
 __device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)
 {
     switch (activation_id)
     {
         case activation_sigmoid:
-            h  = 1.0f / (1.0f + expf(-z));
+            h  = sigmoid_f(z);
             dh = h * (1.0f - h);
             break;
         case activation_tanh:

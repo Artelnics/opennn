@@ -389,40 +389,12 @@ void Dataset::set_default_variable_names()
 
 vector<string> Dataset::get_feature_names() const
 {
-    vector<string> feature_names;
-    feature_names.reserve(size_t(transform_reduce(variables.begin(), variables.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
-
-    for (const auto& variable : variables)
-    {
-        vector<string> names = variable.get_names();
-
-        feature_names.insert(feature_names.end(),
-                             make_move_iterator(names.begin()),
-                             make_move_iterator(names.end()));
-    }
-
-    return feature_names;
+    return get_variable_feature_names(variables);
 }
 
 vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
-    const auto vars = get_variables(variable_role);
-
-    vector<string> feature_names;
-    feature_names.reserve(size_t(transform_reduce(vars.begin(), vars.end(), Index(0), plus<>{},
-                                                  [](const Variable& variable) { return variable.get_feature_count(); })));
-
-    for (const auto& variable : vars)
-    {
-        vector<string> names = variable.get_names();
-
-        feature_names.insert(feature_names.end(),
-                             make_move_iterator(names.begin()),
-                             make_move_iterator(names.end()));
-    }
-
-    return feature_names;
+    return get_variable_feature_names(get_variables(variable_role));
 }
 
 Shape Dataset::get_shape(const string& variable_role) const
@@ -433,7 +405,7 @@ Shape Dataset::get_shape(const string& variable_role) const
     if (role == VariableRole::Target)  return target_shape;
     if (role == VariableRole::Decoder) return decoder_shape;
 
-    throw runtime_error("get_shape: Invalid variable role string: " + variable_role);
+    throw runtime_error(format("Invalid variable role string: {}", variable_role));
 }
 
 void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
@@ -447,7 +419,7 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
     else if (role == VariableRole::Decoder)
         decoder_shape = new_shape;
     else
-        throw runtime_error("set_shape: Invalid variable role string: " + variable_role);
+        throw runtime_error(format("Invalid variable role string: {}", variable_role));
 
     mark_data_changed();
 }
@@ -950,16 +922,7 @@ void Dataset::preview_data_from_JSON(const Json *preview_data_element)
 
 void Dataset::save(const filesystem::path& file_name) const
 {
-    ofstream file(file_name);
-
-    throw_if(!file.is_open(),
-             format("Cannot open file: {}", file_name.string()));
-
-    JsonWriter document;
-
-    to_JSON(document);
-
-    file << document.c_str();
+    save_json_file(file_name, *this);
 }
 
 void Dataset::load(const filesystem::path& file_name)
@@ -967,7 +930,7 @@ void Dataset::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char separator)
+void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator)
 {
     if (all_lines.empty())
         return;
@@ -980,13 +943,13 @@ void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char 
 
     for (Index i = 0; i < first_rows; ++i)
     {
-        const vector<string_view> tokens = get_token_views(all_lines[i], separator);
+        const vector<string_view> tokens = get_token_views(all_lines[i], file_separator);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 
     if (all_lines.size() > num_first_rows_to_show)
     {
-        const vector<string_view> tokens = get_token_views(all_lines.back(), separator);
+        const vector<string_view> tokens = get_token_views(all_lines.back(), file_separator);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 }

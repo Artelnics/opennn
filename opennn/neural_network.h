@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N E U R A L   N E T W O R K   C L A S S   H E A D E R
@@ -30,12 +30,12 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = {});
 
-    const Configuration::Resolved& get_config() const { return config; }
-    Device get_device() const { return config.device; }
-    bool is_gpu() const { return config.device == Device::CUDA; }
-    bool is_cpu() const { return config.device == Device::CPU; }
+    const Configuration::Resolved& get_config() const noexcept { return config; }
+    Device get_device() const noexcept { return config.device; }
+    bool is_gpu() const noexcept { return config.device == Device::CUDA; }
+    bool is_cpu() const noexcept { return config.device == Device::CPU; }
 
-    Type get_training_type()  const { return config.training_type; }
+    Type get_training_type()  const noexcept { return config.training_type; }
 
     vector<vector<TensorSpec>> get_parameter_specs() const
     {
@@ -67,29 +67,29 @@ public:
     bool has(const string&) const;
     bool has(LayerType) const;
 
-    bool is_empty() const { return layers.empty(); }
+    bool is_empty() const noexcept { return layers.empty(); }
 
     float* get_parameters_data() { return parameters.as<float>(); }
-    const float* get_parameters_data() const { return parameters.as<float>(); }
-    Index get_parameters_size() const { return parameters.size_in_floats(); }
-    Device get_parameters_device() const { return parameters.device_type; }
+    const float* get_parameters_data() const noexcept { return parameters.as<float>(); }
+    Index get_parameters_size() const noexcept { return parameters.size_in_floats(); }
+    Device get_parameters_device() const noexcept { return parameters.device_type; }
     float* get_states_data() { return states.as<float>(); }
-    const float* get_states_data() const { return states.as<float>(); }
-    Index get_states_buffer_size() const { return states.size_in_floats(); }
+    const float* get_states_data() const noexcept { return states.as<float>(); }
+    Index get_states_buffer_size() const noexcept { return states.size_in_floats(); }
 
-    const vector<Variable>& get_input_variables() const { return input_variables; }
+    const vector<Variable>& get_input_variables() const noexcept { return input_variables; }
     vector<string> get_input_feature_names() const;
 
-    const vector<Variable>& get_output_variables() const { return output_variables; }
+    const vector<Variable>& get_output_variables() const noexcept { return output_variables; }
     vector<string> get_output_feature_names() const;
 
-    const vector<unique_ptr<Layer>>& get_layers() const { return layers; }
+    const vector<unique_ptr<Layer>>& get_layers() const noexcept { return layers; }
     const unique_ptr<Layer>& get_layer(const Index layer_index) const { return layers[layer_index]; }
     const unique_ptr<Layer>& get_layer(const string&) const;
 
     Index get_layer_index(const string&) const;
 
-    const vector<vector<Index>>& get_source_layers() const { return source_layers; }
+    const vector<vector<Index>>& get_source_layers() const noexcept { return source_layers; }
     vector<vector<Index>> get_consumer_layers() const;
 
     Layer* get_first(const string&);
@@ -97,8 +97,8 @@ public:
     const Layer* get_first(const string&) const;
     const Layer* get_first(LayerType) const;
 
-    void set_source_layers(const vector<vector<Index>>& new_source_layers);
-    void set_source_layers(const Index layer_index, const vector<Index>& new_sources);
+    void set_source_layers(const vector<vector<Index>>&);
+    void set_source_layers(const Index, const vector<Index>&);
 
     void set_source_layers(const string&, const vector<string>&);
     void set_source_layers(const string&, initializer_list<string>);
@@ -114,7 +114,7 @@ public:
 
     void clear();
 
-    Index get_layers_number() const { return ssize(layers); }
+    Index get_layers_number() const noexcept { return ssize(layers); }
     Index get_layers_number(const string&) const;
     Index get_layers_number(LayerType) const;
 
@@ -129,8 +129,8 @@ public:
     ActivationFunction get_output_activation() const;
     Index get_parameters_number() const;
 
-    void set_parameters(const VectorR& new_parameters);
-    void set_states(const VectorR& new_states);
+    void set_parameters(const VectorR&);
+    void set_states(const VectorR&);
     void set_parameters_random();
     void set_parameters_glorot();
     void link_parameters();
@@ -141,10 +141,10 @@ public:
     // Device-resident inference: input already on GPU, caller-owned persistent
     // ForwardPropagation (activations allocated once), parameters uploaded only
     // when upload_parameters=true (skip on repeat calls with unchanged weights).
-    // Output is left on the GPU; returns its TensorView (no D2H copy). This is
+    // Output is left on the GPU; returns its TensorView (no D2H). This is
     // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
-    TensorView calculate_outputs_resident(const vector<TensorView>& gpu_inputs,
-                                          ForwardPropagation& forward_propagation,
+    TensorView calculate_outputs_resident(const vector<TensorView>&,
+                                          ForwardPropagation&,
                                           bool upload_parameters = true);
 
     MatrixR calculate_outputs(const MatrixR&);
@@ -178,9 +178,9 @@ public:
 
     void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
-                          bool is_training,
-                          Index first_layer_index,
-                          Index last_layer_index) const;
+                          bool,
+                          Index,
+                          Index) const;
 
     void forward_propagate(const vector<TensorView>&,
                           const VectorR&,
@@ -257,5 +257,5 @@ protected:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

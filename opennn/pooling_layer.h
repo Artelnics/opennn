@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   C L A S S   H E A D E R
@@ -34,28 +34,28 @@ public:
             const string& = "MaxPooling",
             const string& = "pooling_layer");
 
-    Shape get_input_shape() const override { return {input_height, input_width, input_channels}; }
+    Shape get_input_shape() const noexcept override { return {input_height, input_width, input_channels}; }
     Shape get_output_shape() const override;
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_input_height() const { return input_height; }
-    Index get_input_width() const { return input_width; }
-    Index get_input_channels() const { return input_channels; }
+    Index get_input_height() const noexcept { return input_height; }
+    Index get_input_width() const noexcept { return input_width; }
+    Index get_input_channels() const noexcept { return input_channels; }
 
-    Index get_pool_height() const { return pool_height; }
-    Index get_pool_width() const { return pool_width; }
+    Index get_pool_height() const noexcept { return pool_height; }
+    Index get_pool_width() const noexcept { return pool_width; }
 
-    Index get_row_stride() const { return row_stride; }
-    Index get_column_stride() const { return column_stride; }
+    Index get_row_stride() const noexcept { return row_stride; }
+    Index get_column_stride() const noexcept { return column_stride; }
 
-    Index get_padding_height() const { return padding_height; }
-    Index get_padding_width() const { return padding_width; }
+    Index get_padding_height() const noexcept { return padding_height; }
+    Index get_padding_width() const noexcept { return padding_width; }
 
-    PoolingMethod get_pooling_method() const { return pooling_method; }
+    PoolingMethod get_pooling_method() const noexcept { return pooling_method; }
 
-    vector<TensorSpec> get_forward_specs(Index batch_size) const override;
+    vector<TensorSpec> get_forward_specs(Index) const override;
 
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },
@@ -65,7 +65,6 @@ public:
              const string & = "pooling_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_output_shape(const Shape&) override {}
     void set_pool_size(Index, Index);
     void set_row_stride(Index);
     void set_column_stride(Index);
@@ -93,7 +92,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::MaxPooling;
 
-    PoolOp pool;
+    PoolOperator pool;
 
     enum Forward {Input, MaximalIndices, Output};
 
@@ -103,5 +102,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

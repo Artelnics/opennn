@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   B A T C H   S T R U C T   H E A D E R
@@ -10,7 +10,6 @@
 
 #include "configuration.h"
 #include "tensor_types.h"
-#include "dataset.h"
 #include "thread_safe_queue.h"
 
 #include <atomic>
@@ -19,6 +18,8 @@
 
 namespace opennn
 {
+
+class Dataset;
 
 struct BatchSlot
 {
@@ -210,5 +211,5 @@ struct BatchPrefetchSession
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

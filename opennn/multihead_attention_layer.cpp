@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S
@@ -39,7 +39,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
-Shape MultiHeadAttention::get_input_shape() const
+Shape MultiHeadAttention::get_input_shape() const noexcept
 {
     return { query_sequence_length, embedding_dimension };
 }
@@ -121,7 +121,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     for (auto* proj : {&query_projection, &key_projection, &value_projection})
     {
         proj->input_slots  = {Input};
-        proj->scratch_slots = {TransposeScratch};
+        proj->scratch_slot = TransposeScratch;
         proj->input_delta_slots_self = {InputQueryDelta};
     }
 
@@ -148,9 +148,8 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
     attention.input_slots  = {Query, Key, Value, Input};
     attention.output_slots = {AttentionWeights, AttentionWeightsDropped};
-    attention.scratch_slots = {TransposeScratch};
-    attention.source_view_index = 1;
-    attention.attention_output_slots = {ConcatenatedAttentionOutputs};
+    attention.scratch_slot = TransposeScratch;
+    attention.attention_output_slot = ConcatenatedAttentionOutputs;
     attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};
@@ -167,7 +166,7 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 bool MultiHeadAttention::should_use_sdpa() const
 {
     if (!sdpa_auto) return false;
-    if (!AttentionOp::sdpa_supported(compute_dtype, compute_device)) return false;
+    if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter > sdpa_min_sequence_length;

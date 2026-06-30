@@ -115,9 +115,8 @@ void Layer::set_input_shape(const Shape&)
 {
 }
 
-void Layer::set_output_shape(const Shape& shape)
+void Layer::set_output_shape(const Shape&)
 {
-    set_input_shape(shape);
 }
 
 void Layer::from_JSON(const JsonDocument& document)

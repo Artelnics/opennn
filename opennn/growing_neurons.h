@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   G R O W I N G   N E U R O N S   C L A S S   H E A D E R
@@ -18,7 +18,7 @@ class GrowingNeurons final : public NeuronSelection
 
 public:
 
-    GrowingNeurons(TrainingStrategy* = nullptr);
+    explicit GrowingNeurons(TrainingStrategy* = nullptr);
 
     void set_default();
 
@@ -38,5 +38,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

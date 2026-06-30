@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S
@@ -306,9 +306,7 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
     const Index classes_number = yolo_dataset->get_classes_number();
     const Index batch_size = output.shape[0];
 
-    Loss::EvaluationResult result;
-    result.error = yolo_error_kernel(output, target, boxes_per_cell, classes_number, sigmoid_classes, lam) / float(batch_size);
-    return result;
+    return {.error = yolo_error_kernel(output, target, boxes_per_cell, classes_number, sigmoid_classes, lam) / float(batch_size)};
 }
 
 #ifdef _MSC_VER
@@ -439,7 +437,7 @@ vector<Index> yolo_detection_layer_indices(const NeuralNetwork* nn)
     return result;
 }
 
-Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
+Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
                                             const Dataset* dataset,
                                             const NeuralNetwork* nn,
@@ -466,7 +464,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -483,14 +481,12 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& fp,
         head_offset += head_floats;
     }
 
-    Loss::EvaluationResult result;
-    result.error = total_error / float(batch_size);
-    return result;
+    return {.error = total_error / float(batch_size)};
 }
 
-void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
+void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
-                             BackPropagation& bp,
+                             BackPropagation& back_propagation,
                              const Dataset* dataset,
                              const NeuralNetwork* nn,
                              const vector<Index>& detection_indices,
@@ -516,7 +512,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -529,7 +525,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
         Shape head_target_shape = Shape({batch_size}).append(head_shape);
         TensorView head_target_view(head_target.data(), head_target_shape, Type::FP32);
 
-        TensorView& head_delta = bp.layer_output_deltas[size_t(detection_idx)];
+        TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
         yolo_gradient_kernel(head_output, head_target_view, head_delta, boxes_per_head, classes_number, sigmoid_classes, inv_batch, lam);
 
         head_offset += head_floats;
@@ -538,7 +534,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& fp,
 
 #ifdef OPENNN_HAS_CUDA
 
-Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& fp,
+Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
                                             const Dataset* dataset,
                                             const NeuralNetwork* nn,
@@ -585,7 +581,7 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -616,14 +612,12 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& fp,
     float total_error = 0.0f;
     cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
 
-    Loss::EvaluationResult result;
-    result.error = total_error / float(batch_size);
-    return result;
+    return {.error = total_error / float(batch_size)};
 }
 
-void yolo_gradient_gpu_multi(const ForwardPropagation& fp,
+void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
-                             BackPropagation& bp,
+                             BackPropagation& back_propagation,
                              const Dataset* dataset,
                              const NeuralNetwork* nn,
                              const vector<Index>& detection_indices,
@@ -665,7 +659,7 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& fp,
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = fp.forward_slots[size_t(detection_idx)].back();
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
         const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
         const Index head_floats = head_shape[0] * head_shape[1] * head_shape[2];
 
@@ -680,7 +674,7 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& fp,
         cudaMemcpyAsync(target_device.as<float>(), head_target.data(),
                         size_t(target_bytes), cudaMemcpyHostToDevice, device::get_compute_stream());
 
-        TensorView& head_delta = bp.layer_output_deltas[size_t(detection_idx)];
+        TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
         const Index grid_size = head_shape[0];
         yolo_gradient_cuda(head_output.as<float>(), target_device.as<float>(),
                            head_delta.as<float>(),
@@ -736,7 +730,7 @@ float yolo_loss_gradient_check_cpu()
     // One foreground box at cell (0,0), anchor slot 0
     gc_tgt[0] = 0.5f;   // cx offset in cell
     gc_tgt[1] = 0.5f;   // cy offset
-    gc_tgt[2] = 0.2f;   // width (same scale as DetectionOp output)
+    gc_tgt[2] = 0.2f;   // width (same scale as DetectionOperator output)
     gc_tgt[3] = 0.15f;  // height
     gc_tgt[4] = 1.0f;   // foreground
     gc_tgt[5] = 1.0f;   // class 0 is GT
@@ -877,7 +871,7 @@ float yolo_loss_expected_value_check_cpu()
 
     // --- Test C: gradient direction (foreground obj) -------------------------
     // Foreground conf=0.1: raw-logit gradient must be NEGATIVE (pushes conf up)
-    // delta[4] = (c4-1)/(c4*(1-c4)) → after DetectionOp ×c4*(1-c4): net = c4-1 < 0 ✓
+    // delta[4] = (c4-1)/(c4*(1-c4)) → after DetectionOperator ×c4*(1-c4): net = c4-1 < 0 ✓
     // We verify sign directly from gradient_kernel.
     vector<float> ev_out_C = ev_out_A;
     ev_out_C[4] = 0.1f;  // low confidence, target=1
@@ -906,14 +900,14 @@ float yolo_loss_expected_value_check_cpu()
     const float errD = (ev_raw_logit_grad_bg > 0.0f) ? 0.0f : 1.0f;  // 0=pass, 1=fail
 
     // --- Report ---------------------------------------------------------------
-    printf("  [A] perfect overlap (coord_loss=0):   expected=%.4f  got=%.4f  err=%.2e\n",
-           expA, gotA, double(errA));
-    printf("  [B] non-overlap GIoU (coord≈8.889):   expected=%.4f  got=%.4f  err=%.2e\n",
-           expB, gotB, double(errB));
-    printf("  [C] fg obj grad direction (must be <0): %.4f → %s\n",
-           double(ev_raw_logit_grad_obj), (errC == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
-    printf("  [D] bg obj grad direction (must be >0): %.4f → %s\n",
-           double(ev_raw_logit_grad_bg), (errD == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
+    cerr << format("  [A] perfect overlap (coord_loss=0):   expected={:.4f}  got={:.4f}  err={:.2e}\n",
+                   expA, gotA, double(errA));
+    cerr << format("  [B] non-overlap GIoU (coord~=8.889):  expected={:.4f}  got={:.4f}  err={:.2e}\n",
+                   expB, gotB, double(errB));
+    cerr << format("  [C] fg obj grad direction (must be <0): {:.4f} -> {}\n",
+                   double(ev_raw_logit_grad_obj), (errC == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
+    cerr << format("  [D] bg obj grad direction (must be >0): {:.4f} -> {}\n",
+                   double(ev_raw_logit_grad_bg), (errD == 0.0f) ? "OK" : "FAIL (WRONG SIGN!)");
 
     return max({errA, errB, errC, errD});
 #else
@@ -1478,7 +1472,7 @@ void Loss::regularization_from_JSON(const JsonDocument& document)
     set_regularization(read_json_string(root_element, "Type"));
 
     if (root_element->has("RegularizationWeight"))
-        set_regularization_weight(float(read_json_float(root_element, "RegularizationWeight")));
+        set_regularization_weight(read_json_float(root_element, "RegularizationWeight"));
 }
 
 void Loss::regularization_to_JSON(JsonWriter& file_stream) const

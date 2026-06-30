@@ -10,12 +10,7 @@
 #include "string_utilities.h"
 
 #include <cctype>
-#include <cmath>
 #include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 
 namespace opennn
 {
@@ -45,8 +40,8 @@ const Json& Json::at(const string& key) const
 Json& Json::operator[](const string& key)
 {
     if (!is_object()) { kind = Kind::Object; object_value.clear(); }
-    for (auto& kv : object_value)
-        if (kv.first == key) return kv.second;
+    for (auto& [k, v] : object_value)
+        if (k == key) return v;
     object_value.emplace_back(key, Json{});
     return object_value.back().second;
 }
@@ -76,7 +71,7 @@ string Json::as_string() const
     case Object: return dump(0);
     }
 
-    return "";
+    throw runtime_error("JSON: invalid value kind");
 }
 
 long long Json::as_long() const
@@ -86,13 +81,13 @@ long long Json::as_long() const
     {
     case Number: return (long long)(number_value);
     case Bool:   return bool_value ? 1 : 0;
-    case String: return string_value.empty() ? 0LL : std::stoll(string_value);
+    case String: return string_value.empty() ? 0LL : stoll(string_value);
     case Null:
     case Array:
     case Object: return 0;
     }
 
-    return 0;
+    throw runtime_error("JSON: invalid value kind");
 }
 
 double Json::as_double() const
@@ -102,13 +97,13 @@ double Json::as_double() const
     {
     case Number: return number_value;
     case Bool:   return bool_value ? 1.0 : 0.0;
-    case String: return string_value.empty() ? 0.0 : std::stod(string_value);
+    case String: return string_value.empty() ? 0.0 : stod(string_value);
     case Null:
     case Array:
     case Object: return 0.0;
     }
 
-    return 0.0;
+    throw runtime_error("JSON: invalid value kind");
 }
 
 bool Json::as_bool() const
@@ -124,7 +119,7 @@ bool Json::as_bool() const
     case Object: return false;
     }
 
-    return false;
+    throw runtime_error("JSON: invalid value kind");
 }
 static void escape_string(string& out, const string& s)
 {
@@ -350,7 +345,7 @@ struct Parser
         if (match("true"))  { Json j; j.kind = Json::Kind::Bool; j.bool_value = true;  return j; }
         if (match("false")) { Json j; j.kind = Json::Kind::Bool; j.bool_value = false; return j; }
         if (match("null"))  return Json{};
-        fail(string("unexpected character '") + c + "'");
+        fail(format("unexpected character '{}'", c));
     }
 
     Json parse_object()
@@ -419,6 +414,15 @@ void JsonDocument::save(const filesystem::path& path, int indent) const
     out << root.dump(indent);
 }
 
+void save_json_file(const filesystem::path& file_name, const JsonWriter& writer)
+{
+    ofstream file(file_name);
+
+    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
+
+    file << writer.c_str();
+}
+
 const Json* JsonDocument::first_child(const string& name) const
 {
     return root.find(name);
@@ -457,9 +461,7 @@ void JsonWriter::open_element(const string& name)
 
 void JsonWriter::close_element()
 {
-    if (stack.empty()) return;
-    stack.pop_back();
-    if (!name_stack.empty()) name_stack.pop_back();
+    pop_scope();
 }
 
 void JsonWriter::begin_array(const string& name)
@@ -475,9 +477,7 @@ void JsonWriter::begin_array(const string& name)
 
 void JsonWriter::end_array()
 {
-    if (stack.empty()) return;
-    stack.pop_back();
-    if (!name_stack.empty()) name_stack.pop_back();
+    pop_scope();
 }
 
 void JsonWriter::begin_array_object()
@@ -491,6 +491,11 @@ void JsonWriter::begin_array_object()
 }
 
 void JsonWriter::end_array_object()
+{
+    pop_scope();
+}
+
+void JsonWriter::pop_scope()
 {
     if (stack.empty()) return;
     stack.pop_back();
@@ -520,8 +525,8 @@ void add_json_field(JsonWriter& writer,
 void write_json(JsonWriter& writer,
                 initializer_list<pair<const char*, string>> props)
 {
-    for (const auto& kv : props)
-        writer.add_field(kv.first, kv.second);
+    for (const auto& [key, value] : props)
+        writer.add_field(key, value);
 }
 
 float read_json_float(const Json* root, const string& field)

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C U D N N   F R O N T E N D   U T I L I T I E S   H E A D E R
@@ -8,7 +8,7 @@
 
 #pragma once
 
-#if defined(OPENNN_HAS_CUDA) && defined(HAVE_CUDNN_FRONTEND)
+#ifdef OPENNN_HAS_CUDA
 
 #include <cudnn_frontend.h>
 
@@ -17,15 +17,9 @@
 #include "string_utilities.h"
 #include "memory_debug.h"
 
-// cudnn-frontend graph path for fp32 convolutions and batch normalization:
-// the legacy v7 API has poor NHWC-fp32 kernel coverage (backward-filter ~6x,
-// batch normalization ~10x slower than the engines the graph API selects for
-// the same shapes). Graphs are cached per batch size; any failure disables
-// the path for that operator and falls back to the legacy implementation.
-namespace opennn
+namespace opennn::cudnn_frontend
 {
-namespace cudnn_fe
-{
+using namespace ::cudnn_frontend;
 
 inline const auto check_status = [](auto status, const string& what) {
     throw_if(status.is_bad(),
@@ -47,12 +41,10 @@ inline int device_sm_version()
 
 inline bool frontend_enabled()
 {
-    // Legacy v7 API is forced from code with device::set_conv_legacy(true).
-    if (device::conv_legacy_forced()) return false;
-    // cuDNN-frontend batchnorm/conv graph API requires SM 8.0+ (Ampere).
-    // Silently skip on older hardware to avoid per-layer warning spam.
     return device_sm_version() >= 800;
 }
+
+inline bool autotune_enabled() { return true; }
 
 // With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
 // (per-label totals printed at exit). Incompatible with set_cuda_graph(true).
@@ -82,7 +74,7 @@ inline map<string, pair<double, long>>& graph_times()
 }
 
 template<typename TensorMap>
-inline void execute_graph(cudnn_frontend::graph::Graph& graph, TensorMap& tensors,
+inline void execute_graph(graph::Graph& graph, TensorMap& tensors,
                           void* workspace, const string& what, const string& timing_label)
 {
     if (timing_label.empty())
@@ -133,9 +125,18 @@ bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
     catch (const exception& e)
     {
         cache->disabled = true;
-        cerr << label << ": cudnn-frontend path unavailable (" << e.what()
-             << "); falling back to the legacy cuDNN API.\n";
+        cerr << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
         return false;
+    }
+}
+
+inline DataType_t to_dtype(Type t)
+{
+    switch (t)
+    {
+        case Type::FP32: return DataType_t::FLOAT;
+        case Type::BF16: return DataType_t::BFLOAT16;
+        default:         return DataType_t::FLOAT;
     }
 }
 
@@ -144,37 +145,26 @@ inline vector<int64_t> nhwc_strides(int64_t c, int64_t h, int64_t w)
     return {h * w * c, 1, w * c, c};
 }
 
-// cuDNN-frontend tensor I/O data type for an OpenNN compute type. Activations
-// (and weights) flow at this precision; intermediate accumulation and compute
-// stay FP32 for accuracy (see new_graph). Per-channel stats and master
-// gradients are forced to FP32 separately by their tensor builders.
-inline cudnn_frontend::DataType_t fe_io_dtype(Type type)
+inline shared_ptr<graph::Graph> new_graph()
 {
-    return type == Type::BF16 ? cudnn_frontend::DataType_t::BFLOAT16
-                              : cudnn_frontend::DataType_t::FLOAT;
+    auto g = make_shared<graph::Graph>();
+    g->set_io_data_type(DataType_t::FLOAT)
+      .set_intermediate_data_type(DataType_t::FLOAT)
+      .set_compute_data_type(DataType_t::FLOAT);
+    return g;
 }
 
-inline shared_ptr<cudnn_frontend::graph::Graph> new_graph(
-    cudnn_frontend::DataType_t data_type = cudnn_frontend::DataType_t::FLOAT)
-{
-    auto graph = make_shared<cudnn_frontend::graph::Graph>();
-    graph->set_io_data_type(data_type)
-          .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
-          .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
-    return graph;
-}
-
-inline shared_ptr<cudnn_frontend::graph::Tensor_attributes>
-nhwc_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
+inline shared_ptr<graph::Tensor_attributes>
+nhwc_tensor(graph::Graph& graph, const char* name,
             int64_t n, int64_t c, int64_t h, int64_t w)
 {
-    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+    return graph.tensor(graph::Tensor_attributes()
                         .set_name(name)
                         .set_dim({n, c, h, w})
                         .set_stride(nhwc_strides(c, h, w)));
 }
 
-inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>& tensor,
+inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
                      int64_t n, int64_t c, int64_t h, int64_t w)
 {
     tensor->set_output(true)
@@ -182,8 +172,8 @@ inline void set_nhwc_output(shared_ptr<cudnn_frontend::graph::Tensor_attributes>
            .set_stride(nhwc_strides(c, h, w));
 }
 
-// Builds the heuristic-chosen execution plan and reports its workspace size.
-inline void finalize(cudnn_frontend::graph::Graph& graph, int64_t& workspace_bytes, const string& tag)
+inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
+                     bool request_autotune = false)
 {
     cudnnHandle_t handle = Backend::get_cudnn_handle();
 
@@ -191,24 +181,81 @@ inline void finalize(cudnn_frontend::graph::Graph& graph, int64_t& workspace_byt
 
     check_status(graph.validate(), tag + " validate");
     check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
-    check_status(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A, cudnn_frontend::HeurMode_t::FALLBACK}),
+    check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::FALLBACK}),
                  tag + " create_execution_plans");
 
-    // Bound the per-conv scratch like the cublasLt path does; without this the
-    // heuristic picks workspace proportional to batch (~4 MiB/sample) and OOMs
-    // growing the shared buffer. FALLBACK heuristics guarantee a low/zero-
-    // workspace plan stays available under the cap.
-    graph.deselect_workspace_greater_than(device::conv_workspace_limit_bytes());
+    // Optional workspace cap: drop plans whose scratch exceeds the limit before
+    // either autotune or the heuristic pick. 0 = uncapped (pure autotune). Bounds
+    // the shared scratch the way the cublasLt path does and stops the heuristic
+    // from choosing workspace proportional to batch (~MiB/sample) and OOMing.
+    // The cap and autotune are alternative plan-selection strategies: capping
+    // bounds memory and picks via the heuristic; autotune times all plans for
+    // speed (unbounded). They don't compose (autotuning over a deselected plan
+    // set faults), so a positive cap disables autotune and takes the heuristic.
+    const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
+    if (conv_workspace_cap > 0)
+        graph.deselect_workspace_greater_than(conv_workspace_cap);
 
-    check_status(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+    const bool autotune = request_autotune && conv_workspace_cap == 0
+        && graph.build_plans(handle, BuildPlanPolicy_t::ALL).is_good();
+
+    if (autotune) return true;
+
+    check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+
     check_status(graph.get_workspace_size(workspace_bytes), tag + " get_workspace_size");
+
+    return false;
 }
 
-}  // namespace cudnn_fe
-}  // namespace opennn
+template<typename TensorMap>
+inline void autotune_now(bool& pending, graph::Graph& graph,
+                         TensorMap& tensors, int64_t& workspace_bytes)
+{
+    if (!pending) return;
+    pending = false;
+
+    Buffer tune_workspace{Device::CUDA};
+    try
+    {
+        const int64_t tune_bytes = graph.get_autotune_workspace_size();
+        if (tune_bytes > 0) tune_workspace.resize_bytes(Index(tune_bytes), Device::CUDA);
+        check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
+    }
+    catch (...) {}
+
+    workspace_bytes = graph.get_workspace_size();
+}
+
+template<typename TensorMap>
+inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
+                                  const TensorMap& tensors, int64_t& workspace_bytes)
+{
+    if (!pending) return;
+
+    TensorMap scratch = tensors;
+    vector<Buffer> buffers;
+    buffers.reserve(scratch.size());
+
+    for (auto& [tensor, pointer] : scratch)
+    {
+        if (tensor->get_is_pass_by_value()) continue;
+
+        int64_t elements = 1;
+        for (const int64_t dimension : tensor->get_dim()) elements *= dimension;
+
+        Buffer& buffer = buffers.emplace_back(Device::CUDA);
+        buffer.resize_bytes(Index(elements * sizeof(float)), Device::CUDA);
+        pointer = buffer.data;
+    }
+
+    autotune_now(pending, graph, scratch, workspace_bytes);
+}
+
+}  // namespace opennn::cudnn_frontend
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P O O L I N G   L A Y E R   C L A S S
@@ -90,7 +90,7 @@ void Pooling::update_pool_operator()
              pool_height, pool_width,
              row_stride, column_stride,
              padding_height, padding_width,
-             pooling_method == PoolingMethod::MaxPooling ? PoolOp::Max : PoolOp::Average);
+             pooling_method == PoolingMethod::MaxPooling ? PoolOperator::Max : PoolOperator::Average);
 
     pool.output_slots = {Output, MaximalIndices};
 }

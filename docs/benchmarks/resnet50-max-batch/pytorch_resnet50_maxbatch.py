@@ -84,6 +84,9 @@ def main():
     ap.add_argument("--batch", type=int, required=True)
     ap.add_argument("--path", choices=["compile", "eager"], default="compile")
     ap.add_argument("--memory-fraction", type=float, default=None)
+    # 1 = speed config (cuDNN autotune picks fastest algo, more scratch);
+    # 0 = memory config (heuristic, avoids autotune scratch dominating capacity).
+    ap.add_argument("--cudnn-benchmark", type=int, default=0)
     args = ap.parse_args()
 
     assert torch.cuda.is_available(), "CUDA GPU required"
@@ -91,9 +94,7 @@ def main():
         torch.cuda.set_per_process_memory_fraction(args.memory_fraction, device=0)
 
     torch.manual_seed(42)
-    # Capacity is a steady-state memory boundary. Avoid per-process cuDNN
-    # benchmark/autotune scratch dominating the "does this batch fit?" answer.
-    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.benchmark = bool(args.cudnn_benchmark)
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 

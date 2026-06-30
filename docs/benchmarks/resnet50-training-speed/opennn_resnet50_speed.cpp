@@ -24,12 +24,15 @@
 #include "../../../opennn/adaptive_moment_estimation.h"
 #include "../../../opennn/random_utilities.h"
 #include "../../../opennn/configuration.h"
+#include "../../../opennn/device_backend.h"
 
 using namespace opennn;
 using clock_type = std::chrono::steady_clock;
 
 int main(int argc, char* argv[])
 {
+    std::cout << std::unitbuf;
+    std::cerr << std::unitbuf;
     try
     {
         const std::string data_path = argc > 1 ? argv[1] : "cifar10/train";
@@ -39,10 +42,20 @@ int main(int argc, char* argv[])
         const Index image_size = argc > 5 ? Index(std::stoll(argv[5])) : 0;
         const bool cuda_graph = argc > 6 ? (std::stoi(argv[6]) != 0) : true;
         const std::string cache_dir = argc > 7 ? argv[7] : "";
+        // Conv workspace cap A/B: "off"/"0" = autotune, "auto" = AUTO cap, N = MiB cap.
+        const std::string workspace_arg = argc > 8 ? argv[8] : "off";
 
         set_seed(42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
+
+        if (workspace_arg == "off" || workspace_arg == "0")
+            device::set_conv_workspace_cap(0);
+        else if (workspace_arg == "auto")
+            device::set_conv_workspace_cap(-1);
+        else
+            device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
+        std::cout << "workspace_mode=" << workspace_arg << "\n";
 
         // Optional image-cache directory, set in code before the dataset is built
         // (the cache path is computed at construction). Empty => default .cache.

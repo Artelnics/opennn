@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S T A T I S T I C S   H E A D E R
@@ -147,7 +147,7 @@ inline bool is_binary(const T& tensor)
                   [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
-vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
+vector<Index> build_feasible_rows_mask(const MatrixR&, const VectorR&, const VectorR&);
 
 template <typename T>
 inline bool is_constant(const T& tensor)
@@ -178,6 +178,8 @@ inline vector<Index> get_true_indices(const VectorB& flags)
     return indices;
 }
 
+VectorR local_outlier_factor(const MatrixR&, Index);
+
 VectorI calculate_rank(const VectorR&, bool ascending = true);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
@@ -187,5 +189,5 @@ VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

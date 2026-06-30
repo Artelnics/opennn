@@ -1,4 +1,4 @@
-# ResNet-50 speed work — resume notes (updated 2026-06-13)
+﻿# ResNet-50 speed work — resume notes (updated 2026-06-13)
 
 Goal (MET): beat `torch.compile`. Now 1.6x AHEAD of it.
 
@@ -93,7 +93,7 @@ Since the last entry:
 - **BN graph autotune** via `cudnn_fe::autotune_with_scratch` (times plans on
   throwaway buffers — REQUIRED because BN bwd is in-place and BN fwd updates
   running stats; never autotune those on live data).
-- **Biasless convs**: `ConvolutionOp::use_bias=false` when BN follows (BN
+- **Biasless convs**: `ConvolutionOperator::use_bias=false` when BN follows (BN
   beta absorbs it; matches torchvision bias=False). Kills the per-conv bgrad
   reduction graph (53 graph executions/step) + the fwd bias add. Param count
   drops by exactly the 26,560 biases.
@@ -146,10 +146,10 @@ Implementation:
 - `Convolutional::set_residual(true)` + two sources {main, skip}: the
   block-end conv consumes the skip tensor directly; `Addition` and block-end
   `Activation` layers are GONE from `opennn::ResNet`.
-- `BatchNormOp::fuse_add`: fwd graph = BN → ADD(residual) → RELU (legacy GPU /
-  inference / CPU paths apply add+relu manually). Backward: ActivationOp runs
+- `BatchNormOperator::fuse_add`: fwd graph = BN → ADD(residual) → RELU (legacy GPU /
+  inference / CPU paths apply add+relu manually). Backward: ActivationOperator runs
   its in-place dReLU (backward_fused=false for residual — the skip branch
-  needs the materialized post-activation delta), then BatchNormOp copies that
+  needs the materialized post-activation delta), then BatchNormOperator copies that
   delta to `residual_delta_slot` (=2) BEFORE its in-place transform; framework
   delta routing (consumer_edges / restore / accumulate) handles the rest.
 - `get_backward_specs` for residual conv returns a second output-shaped spec
@@ -217,7 +217,7 @@ vector — dead lead). Post-fusion profile (fp32 b128, profiling run ~14.2 s/ep)
 
 ### Implementation (committed to both trees)
 
-- `batch_norm_operator.{h,cpp}`: `BatchNormOp::fuse_relu`; fwd graph appends
+- `batch_norm_operator.{h,cpp}`: `BatchNormOperator::fuse_relu`; fwd graph appends
   RELU_FWD pointwise (BN output virtual); bwd graph uses the
   **BN_infer→DRelu→DBN pattern** — recomputes the pre-ReLU BN output
   *virtually in-graph* from X/mean/inv_var/gamma/beta, then RELU_BWD(DY, bn_y)
@@ -249,7 +249,7 @@ then a pointwise tail: accumulate_output_deltas 7.7% (34,320 calls),
 adam 7.1% (2.01 ms/step = fp32 roofline, NOT winnable), standalone Activation
 8.5%, Addition 7.2%.
 
-**Skip-probe verdict (2026-06-12 night): disabling AddOp fwd/bwd + standalone
+**Skip-probe verdict (2026-06-12 night): disabling AddOperator fwd/bwd + standalone
 Activation fwd/bwd + accumulate_output_deltas → 5,339 samples/s vs 3,850
 baseline (+39%) — within 8% of torch.compile's 5,772.** Unlike the four
 previous host-scope mirages, this tail is real cost. (Probe = env-guarded
@@ -266,7 +266,7 @@ aliasing can mostly remove. Plan:
    extra input slot; Addition/Activation layers become pass-through (slot
    aliasing), like forward_fused but across layers.
 2. Backward: dReLU at the block end fuses into the same BN bwd prologue
-   (mask from post-ReLU block output); replace AddOp bwd copies and
+   (mask from post-ReLU block output); replace AddOperator bwd copies and
    accumulate's setZero+add chain with delta-view aliasing where the
    consumers permit (watch in-place BN bwd which transforms delta).
 3. Optional after 1-2: autotune BN graphs safely (scratch delta during

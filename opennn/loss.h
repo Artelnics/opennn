@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O S S   C L A S S   H E A D E R
@@ -56,11 +56,11 @@ public:
         return regularization_map().from_string(name);
     }
 
-    Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     virtual ~Loss() = default;
 
-    const NeuralNetwork* get_neural_network() const
+    const NeuralNetwork* get_neural_network() const noexcept
     {
         return neural_network;
     }
@@ -70,7 +70,7 @@ public:
         return neural_network;
     }
 
-    const Dataset* get_dataset() const
+    const Dataset* get_dataset() const noexcept
     {
         return dataset;
     }
@@ -105,7 +105,7 @@ public:
     void set_error(const Error&);
     void set_error(const string&);
 
-    Error get_error() const { return error; }
+    Error get_error() const noexcept { return error; }
 
     void back_propagate(const Batch&,
                         ForwardPropagation&,
@@ -116,19 +116,19 @@ public:
     bool back_propagate_device_metrics(const Batch&,
                                        ForwardPropagation&,
                                        BackPropagation&,
-                                       float* error_sum_device,
-                                       float* accuracy_sum_device) const;
+                                       float*,
+                                       float*) const;
 
     bool calculate_error_device_metrics(const Batch&,
                                         const ForwardPropagation&,
-                                        float* error_sum_device,
-                                        float* accuracy_sum_device) const;
+                                        float*,
+                                        float*) const;
 
     float calculate_regularization(const VectorR&) const;
     float calculate_regularization(const TensorView&) const;
 
     void add_regularization_gradient(BackPropagation&) const;
-    void add_regularization_gradient(const TensorView& gradient) const;
+    void add_regularization_gradient(const TensorView&) const;
 
     void from_JSON(const JsonDocument&);
 
@@ -137,7 +137,7 @@ public:
     void regularization_from_JSON(const JsonDocument&);
     void regularization_to_JSON(JsonWriter&) const;
 
-    const string& get_name() const { return name; }
+    const string& get_name() const noexcept { return name; }
     static float calculate_h(const float);
 
     void print() const {}
@@ -148,11 +148,11 @@ public:
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
 
-    float get_yolo_lambda_giou()      const { return yolo_lambda_giou;      }
-    float get_yolo_lambda_noobj()     const { return yolo_lambda_noobj;      }
-    float get_yolo_lambda_class()     const { return yolo_lambda_class;      }
-    float get_yolo_focal_gamma()      const { return yolo_focal_gamma;       }
-    float get_yolo_obj_focal_gamma()  const { return yolo_obj_focal_gamma;   }
+    float get_yolo_lambda_giou()      const noexcept { return yolo_lambda_giou;      }
+    float get_yolo_lambda_noobj()     const noexcept { return yolo_lambda_noobj;      }
+    float get_yolo_lambda_class()     const noexcept { return yolo_lambda_class;      }
+    float get_yolo_focal_gamma()      const noexcept { return yolo_focal_gamma;       }
+    float get_yolo_obj_focal_gamma()  const noexcept { return yolo_obj_focal_gamma;   }
 
 private:
 
@@ -216,5 +216,5 @@ float yolo_loss_expected_value_check_cpu();
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

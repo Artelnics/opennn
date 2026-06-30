@@ -30,7 +30,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();
-    device_fp32_input_staging.resize_bytes(0, Device::CUDA);
+    passthrough_overrides.clear();
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
 
@@ -83,7 +83,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
-            if (shape.size() == 0) continue;
+            if (shape.empty()) continue;
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(specs[j]);
         }
@@ -95,16 +95,32 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t j = 0; j < sources.size(); ++j)
         {
             const Index source_layer = sources[j];
-            if (source_layer < 0 || forward_specs[source_layer].empty()) continue;
+            if (source_layer < 0) continue;  // external input — set in forward_propagate
 
-            input_views[i][j] = forward_slots[source_layer].back();
+            if (!forward_specs[source_layer].empty())
+            {
+                input_views[i][j] = forward_slots[source_layer].back();
+                continue;
+            }
+
+            // Passthrough layer (empty specs): follow the chain upstream
+            Index resolved = source_layer;
+            while (resolved >= 0 && forward_specs[resolved].empty())
+            {
+                const auto& up = source_layers[resolved];
+                if (up.empty()) { resolved = -1; break; }
+                resolved = up[0];
+            }
+
+            if (resolved >= 0)
+                input_views[i][j] = forward_slots[resolved].back();
+            else
+                passthrough_overrides.emplace_back(i, j, size_t(-resolved - 1));
         }
     }
 
-    // AUTO conv workspace cap = largest single-layer activation. Empirically the
-    // fastest memory/speed point for the cuDNN-frontend conv path across
-    // resolutions, batches and architectures; an explicit override (if set)
-    // takes precedence inside device::conv_workspace_limit_bytes().
+    // AUTO conv-workspace value = largest single-layer activation. Only consulted
+    // when the cap mode is AUTO (set_conv_workspace_cap(<0)); harmless otherwise.
     device::set_conv_workspace_auto_limit_bytes(max_layer_bytes);
 }
 
@@ -142,11 +158,11 @@ TensorView ForwardPropagation::get_outputs() const
 
 void ForwardPropagation::print() const
 {
-    cout << "Neural network forward propagation" << "\n";
+    cout << "Neural network forward propagation\n";
 
     if (!neural_network)
     {
-        cout << "Neural network is not set." << "\n";
+        cout << "Neural network is not set.\n";
         return;
     }
 

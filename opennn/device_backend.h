@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E V I C E   B A C K E N D
@@ -22,41 +22,31 @@ enum class CopyKind
     DeviceToDevice
 };
 
-bool is_cuda_build() noexcept;
+constexpr bool is_cuda_build() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    return true;
+#else
+    return false;
+#endif
+}
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
-// GPU backend toggles, all controlled from code (no environment variables).
-// cuBLASLt scratch (workspace) growth lock, independent of the allocation lock.
-bool cuda_scratch_growth_forbidden() noexcept;
-void set_cuda_scratch_growth_forbidden(bool) noexcept;
+// Per-conv cuDNN-frontend workspace cap (A/B toggle).
+// conv_workspace_limit_bytes(): effective cap in bytes; 0 means uncapped (the
+//   default; the cuDNN-frontend autotunes over all plans).
+// set_conv_workspace_cap(mode): 0 = off (uncapped/autotune), >0 = explicit cap
+//   in bytes, <0 = AUTO (use the per-network auto value below).
+// set_conv_workspace_auto_limit_bytes(): the AUTO value, set per network by
+//   ForwardPropagation to the largest single-layer activation.
+int64_t conv_workspace_limit_bytes() noexcept;
+void    set_conv_workspace_cap(int64_t mode) noexcept;
+void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 
-// GEMM (cuBLASLt) algorithm autotuning. Off by default: keep cuBLASLt's first
-// heuristic. Enable to time several candidates on the first matmul.
-bool gemm_autotune_enabled() noexcept;
-void set_gemm_autotune(bool) noexcept;
-
-// bf16 cuBLAS compute type. Off by default uses the fast tensor-core path
-// (COMPUTE_32F_FAST_16BF); enable "plain" to fall back to COMPUTE_32F.
-bool bf16_compute_plain() noexcept;
-void set_bf16_compute_plain(bool) noexcept;
-
-// cuDNN convolution/batchnorm engine selection (read by the cudnn-frontend path).
-// conv_legacy forces the legacy v7 API.
-bool conv_legacy_forced() noexcept;
-void set_conv_legacy(bool) noexcept;
-// Per-conv cuDNN-frontend workspace cap (bytes); bounds the shared scratch the
-// same way the cublasLt path does. By default the cap is AUTO: ForwardPropagation
-// sets it to the largest single-layer activation of the network (empirically the
-// fastest memory/speed point across resolutions, batches and architectures).
-// set_conv_workspace_limit_bytes(>0) pins an explicit override (e.g. the
-// max-batch probe forcing a small cap); pass 0 to return to AUTO.
-int64_t conv_workspace_limit_bytes() noexcept;            // effective limit (override else auto)
-void    set_conv_workspace_limit_bytes(int64_t) noexcept; // explicit override; 0 = AUTO
-void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept; // AUTO value (set per network)
 
 class CudaAllocationGrowthGuard
 {
@@ -206,7 +196,7 @@ public:
 
     static Backend& instance();
     ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int num_threads);
+    void set_threads_number(int);
 
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
@@ -237,36 +227,36 @@ inline ThreadPoolDevice& get_device()
 
 struct TensorView;
 
-bfloat16* ensure_bf16_gradient_workspace(Index n_elements);
+bfloat16* ensure_bf16_gradient_workspace(Index);
 
-float* ensure_bf16_to_fp32_workspace(Index n_elements);
+float* ensure_bf16_to_fp32_workspace(Index);
 
-void* ensure_cudnn_conv_workspace(size_t min_bytes);
+void* ensure_cudnn_conv_workspace(size_t);
 
-const void* data_for_gemm_dtype(const TensorView& input, Type target_type);
+const void* data_for_gemm_dtype(const TensorView&, Type);
 
-const void* bias_for_gemm_bf16(const TensorView& bias);
+const void* bias_for_gemm_bf16(const TensorView&);
 
 void run_lt_matmul_cached(
-    int m, int n, int k,
+    int, int, int,
     cublasOperation_t transA,
     cublasOperation_t transB,
     cublasLtEpilogue_t epilogue,
-    const void* a_data, const void* b_data, void* c_data,
-    const void* bias_pointer,
+    const void*, const void*, void*,
+    const void*,
     cudaDataType_t io_dtype  = CUDA_R_32F,
     cudaDataType_t out_dtype = CUDA_R_32F);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
-                               int m, int n, int k,
-                               const void* A, cudaDataType_t Atype, int lda, long long stride_a,
-                               const void* B, cudaDataType_t Btype, int ldb, long long stride_b,
-                               void* C, cudaDataType_t Ctype, int ldc, long long stride_c,
-                               int batch_count,
+                               int, int, int,
+                               const void*, cudaDataType_t Atype, int, long long stride_a,
+                               const void*, cudaDataType_t Btype, int, long long stride_b,
+                               void*, cudaDataType_t Ctype, int, long long stride_c,
+                               int,
                                float alpha = 1.0f, float beta = 0.0f);
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

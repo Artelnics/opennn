@@ -418,7 +418,7 @@ __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
         dst[i] = __float2bfloat16(src[i]);
 }
 
-void cast_fp32_to_bf16_cuda(const Index n, const float* src, __nv_bfloat16* dst,
+void cast_fp32_to_bf16(const Index n, const float* src, __nv_bfloat16* dst,
                             cudaStream_t stream)
 {
     if (n == 0) return;
@@ -470,7 +470,7 @@ static void gather_rows_launch(const float* matrix, const int* row_indices, TDst
     const int cols = checked_int(n_cols);
     const int threads = cols < block_size ? ((cols + 31) / 32) * 32 : block_size;
 
-    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads > 0 ? threads : 32, 0, stream>>>(
+    OPENNN_CUDA_LAUNCH(gather_rows_kernel<TDst><<<rows, threads, 0, stream>>>(
         matrix, row_indices, out, rows, cols, checked_int(matrix_cols), checked_int(col_offset)));
 }
 
@@ -500,7 +500,7 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
         dst[i] = __bfloat162float(src[i]);
 }
 
-void cast_bf16_to_fp32_cuda(const Index n, const __nv_bfloat16* src, float* dst)
+void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst)
 {
     if (n == 0) return;
     const int total = checked_int(n);

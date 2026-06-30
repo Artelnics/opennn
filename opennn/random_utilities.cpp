@@ -112,8 +112,8 @@ bool draw_k_hot(const Index count, const Index k,
 
     for (Index i = 0; i < count; ++i)
     {
-        const bool on  = (i < static_cast<Index>(force_on.size())  && force_on[i]  != 0);
-        const bool off = (i < static_cast<Index>(force_off.size()) && force_off[i] != 0);
+        const bool on  = (i < ssize(force_on)  && force_on[i]  != 0);
+        const bool off = (i < ssize(force_off) && force_off[i] != 0);
 
         if (on && off)      { out.assign(count, 0.0f); return false; }   // contradictory pin
         if (on)             { out[i] = 1.0f; ++forced_on; continue; }
@@ -122,7 +122,7 @@ bool draw_k_hot(const Index count, const Index k,
     }
 
     const Index remaining = k - forced_on;
-    if (remaining < 0 || remaining > static_cast<Index>(free_indices.size()))
+    if (remaining < 0 || remaining > ssize(free_indices))
     {
         out.assign(count, 0.0f);
         return false;   // too many forced on, or too few free to reach k

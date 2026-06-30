@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A C T I V A T I O N   O P E R A T O R   S O U R C E
@@ -8,9 +8,7 @@
 
 #include "activation_operator.h"
 #include "json.h"
-#include "random_utilities.h"
 #include "tensor_operations.h"
-#include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "profiler.h"
@@ -18,115 +16,69 @@
 namespace opennn
 {
 
-#ifdef OPENNN_HAS_CUDA
-
-namespace
+void ActivationOperator::set_activation_function(ActivationFunction new_function)
 {
-
-void configure_activation_descriptor(CudnnDescriptor<cudnnActivationDescriptor_t>& descriptor,
-                                      ActivationOp::Function function)
-{
-    if (!descriptor)
-    {
-        CHECK_CUDNN(cudnnCreateActivationDescriptor(&descriptor.handle));
-        descriptor.deleter = &cudnnDestroyActivationDescriptor;
-    }
-
-    CHECK_CUDNN(cudnnSetActivationDescriptor(descriptor,
-                                             ActivationOp::to_cudnn_mode(function),
-                                             CUDNN_PROPAGATE_NAN,
-                                             0.0));
+    activation_function = new_function;
 }
 
-}
-
-#endif
-
-
-cudnnActivationMode_t ActivationOp::to_cudnn_mode(Function function)
+void ActivationOperator::set_activation_function(const string& name)
 {
-    using enum Function;
-    switch (function)
-    {
-    case Sigmoid: return CUDNN_ACTIVATION_SIGMOID;
-    case Tanh:    return CUDNN_ACTIVATION_TANH;
-    case ReLU:    return CUDNN_ACTIVATION_RELU;
-    case Identity:
-    case Softmax:
-    case LeakyReLU: return CUDNN_ACTIVATION_IDENTITY;
-    }
-
-    return CUDNN_ACTIVATION_IDENTITY;
+    set_activation_function(from_string(name));
 }
 
-void ActivationOp::set_function(Function new_function)
-{
-    function = new_function;
-#ifdef OPENNN_HAS_CUDA
-    if (function == Function::Sigmoid || function == Function::Tanh || function == Function::ReLU)
-        configure_activation_descriptor(descriptor, function);
-    else
-        descriptor.reset();
-#endif
-}
-
-void ActivationOp::set_function(const string& name)
-{
-    set_function(from_string(name));
-}
-
-void ActivationOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
     PROFILE_SCOPE("op:activation_fwd");
-    TensorView& output = get_output(fp, layer);
-    if (output.empty()) return;
+    
+    TensorView& output = get_output(forward_propagation, layer);
 
-    if (forward_fused && output.is_cuda()) return;
+    if (output.empty() || (forward_fused && output.is_cuda()))
+        return;
 
-    if (!input_slots.empty() && input_slots[0] != output_slots[0])
-        copy(get_input(fp, layer), output);
+    if (input_slots.empty() || input_slots[0] != output_slots[0])
+        copy(get_input(forward_propagation, layer), output);
 
-    activation_forward(output, function);
+    activation_forward(output, activation_function);
+
+    if (save_slot != SIZE_MAX)
+        copy(output, forward_propagation.forward_slots[layer][save_slot]);
 }
 
-void ActivationOp::apply_delta(const TensorView& outputs, TensorView& delta) const
-{
-    activation_backward(outputs, delta, function);
-}
-
-void ActivationOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
     PROFILE_SCOPE("op:activation_bwd");
-    if (backward_fused && get_output_delta(bp, layer).is_cuda()) return;
 
-    const auto& slots = output_slots_backward.empty() ? output_slots : output_slots_backward;
-    const TensorView& outputs = fp.forward_slots[layer][slots[0]];
+    TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    const bool standalone = !input_slots.empty() && input_slots[0] != output_slots[0];
-    if (standalone)
+    if (backward_fused && output_delta.is_cuda())
+        return;
+
+    const size_t read_slot = (save_slot != SIZE_MAX) ? save_slot : output_slots[0];
+    
+    const TensorView& outputs = forward_propagation.forward_slots[layer][read_slot];
+
+    if (!input_slots.empty() && input_slots[0] != output_slots[0])
     {
-        const TensorView& output_delta = get_output_delta(bp, layer);
-        TensorView& input_delta        = get_input_delta(bp, layer);
+        TensorView& input_delta = get_input_delta(back_propagation, layer);
         if (input_delta.empty()) return;
         copy(output_delta, input_delta);
-        apply_delta(outputs, input_delta);
+        activation_backward(outputs, input_delta, activation_function);
     }
     else
     {
-        TensorView& delta = get_output_delta(bp, layer);
-        apply_delta(outputs, delta);
+        activation_backward(outputs, output_delta, activation_function);
     }
 }
 
-void ActivationOp::to_JSON(JsonWriter& w) const
+void ActivationOperator::to_JSON(JsonWriter& w) const
 {
-    add_json_field(w, "Activation", ActivationOp::to_string(function));
+    add_json_field(w, "Activation", ActivationOperator::to_string(activation_function));
 }
 
-void ActivationOp::from_JSON(const Json* parent)
+void ActivationOperator::from_JSON(const Json* parent)
 {
     if (parent && parent->has("Activation"))
-        set_function(read_json_string(parent, "Activation"));
+        set_activation_function(read_json_string(parent, "Activation"));
 }
 
 }

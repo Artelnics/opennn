@@ -31,7 +31,8 @@ bf16 = os.environ.get("PT_BF16") is not None
 
 assert torch.cuda.is_available(), "CUDA GPU required"
 torch.manual_seed(42)
-torch.backends.cudnn.benchmark = True
+# PT_NOBENCH=1 -> cuDNN heuristic (memory config); default -> autotune (speed config).
+torch.backends.cudnn.benchmark = os.environ.get("PT_NOBENCH") is None
 if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True

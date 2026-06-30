@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   E M B E D D I N G   L O O K U P   O P E R A T O R   S O U R C E
@@ -10,45 +10,43 @@
 #include "json.h"
 #include "random_utilities.h"
 #include "tensor_operations.h"
-#include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#include "profiler.h"
 
 namespace opennn
 {
 
-void EmbeddingLookupOp::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
+void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_length, Index new_embedding_dimension)
 {
     vocabulary_size     = new_vocabulary_size;
     sequence_length     = new_sequence_length;
     embedding_dimension = new_embedding_dimension;
 }
 
-vector<TensorSpec> EmbeddingLookupOp::parameter_specs() const
+vector<TensorSpec> EmbeddingLookupOperator::parameter_specs() const
 {
     return {{{vocabulary_size, embedding_dimension}, Type::FP32}};
 }
 
-vector<TensorSpec> EmbeddingLookupOp::state_specs() const
+vector<TensorSpec> EmbeddingLookupOperator::state_specs() const
 {
     if (!add_positional_encoding) return {};
     return {{{sequence_length, embedding_dimension}, Type::FP32}};
 }
 
-void EmbeddingLookupOp::link_parameters(span<const TensorView> views)
+void EmbeddingLookupOperator::link_parameters(span<const TensorView> views)
 {
     if (views.empty()) return;
     weights = views[0];
 }
 
-void EmbeddingLookupOp::link_gradients(span<const TensorView> views)
+void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 {
     if (views.empty()) return;
     weight_gradient = views[0];
 }
 
-void EmbeddingLookupOp::link_states(span<const TensorView> views)
+void EmbeddingLookupOperator::link_states(span<const TensorView> views)
 {
     if (views.empty()) return;
     const bool needs_init = positional_encoding.data == nullptr;
@@ -56,7 +54,7 @@ void EmbeddingLookupOp::link_states(span<const TensorView> views)
     if (needs_init) init_positional_encoding();
 }
 
-void EmbeddingLookupOp::set_parameters_random()
+void EmbeddingLookupOperator::set_parameters_random()
 {
     if (weights.empty()) return;
     MatrixMap weights_matrix = weights.as_matrix();
@@ -64,7 +62,7 @@ void EmbeddingLookupOp::set_parameters_random()
     weights_matrix.row(0).setZero();
 }
 
-void EmbeddingLookupOp::set_parameters_glorot()
+void EmbeddingLookupOperator::set_parameters_glorot()
 {
     if (weights.empty()) return;
     const float limit = glorot_limit(vocabulary_size, embedding_dimension);
@@ -72,7 +70,7 @@ void EmbeddingLookupOp::set_parameters_glorot()
     weights.as_matrix().row(0).setZero();
 }
 
-void EmbeddingLookupOp::init_positional_encoding()
+void EmbeddingLookupOperator::init_positional_encoding()
 {
     if (!add_positional_encoding) return;
     if (positional_encoding.empty() || !positional_encoding.data) return;
@@ -93,26 +91,26 @@ void EmbeddingLookupOp::init_positional_encoding()
                 : cos(i / divisors(j));
 }
 
-void EmbeddingLookupOp::forward_propagate(ForwardPropagation& fp, size_t layer, bool /*is_training*/)
+void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
-    const TensorView& indices = get_input(fp, layer);
-    TensorView& output        = get_output(fp, layer);
+    const TensorView& indices = get_input(forward_propagation, layer);
+    TensorView& output        = get_output(forward_propagation, layer);
 
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,
                              scale_embedding, add_positional_encoding);
 }
 
-void EmbeddingLookupOp::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
+void EmbeddingLookupOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& indices      = get_input(fp, layer);
-    const TensorView& output_delta = get_output_delta(bp, layer);
+    const TensorView& indices      = get_input(forward_propagation, layer);
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
     embedding_lookup_backward(indices, output_delta, weight_gradient,
                               embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-void EmbeddingLookupOp::load_state_from_JSON(const Json* /*parent*/)
+void EmbeddingLookupOperator::load_state_from_JSON(const Json* /*parent*/)
 {
     // The positional encoding is deterministic and is never written to JSON, so
     // there is nothing to deserialize: recompute it instead. This guarantees the

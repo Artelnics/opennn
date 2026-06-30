@@ -28,7 +28,10 @@ void NetworkDifferential::build(const NeuralNetwork& network)
         LayerSnapshot snapshot;
         const LayerType type = layer->get_type();
 
-        if (type == LayerType::Scaling || type == LayerType::Unscaling)
+        switch (type)
+        {
+        case LayerType::Scaling:
+        case LayerType::Unscaling:
         {
             snapshot.kind = (type == LayerType::Scaling) ? Kind::Scale : Kind::Unscale;
 
@@ -66,8 +69,9 @@ void NetworkDifferential::build(const NeuralNetwork& network)
                 snapshot.mean(j)      = static_cast<float>((*descriptives)[j].mean);
                 snapshot.deviation(j) = static_cast<float>((*descriptives)[j].standard_deviation);
             }
+            break;
         }
-        else if (type == LayerType::Dense)
+        case LayerType::Dense:
         {
             const Dense* dense = static_cast<const Dense*>(layer.get());
 
@@ -84,8 +88,9 @@ void NetworkDifferential::build(const NeuralNetwork& network)
 
             throw_if(snapshot.activation == ActivationFunction::Softmax,
                      "NetworkDifferential: softmax activation is not supported");
+            break;
         }
-        else if (type == LayerType::Activation)
+        case LayerType::Activation:
         {
             const Activation* activation_layer = static_cast<const Activation*>(layer.get());
             snapshot.kind = Kind::Activate;
@@ -93,8 +98,9 @@ void NetworkDifferential::build(const NeuralNetwork& network)
 
             throw_if(snapshot.activation == ActivationFunction::Softmax,
                      "NetworkDifferential: softmax activation is not supported");
+            break;
         }
-        else if (type == LayerType::Bounding)
+        case LayerType::Bounding:
         {
             const Bounding* bounding = static_cast<const Bounding*>(layer.get());
             snapshot.kind = Kind::Bound;
@@ -102,10 +108,11 @@ void NetworkDifferential::build(const NeuralNetwork& network)
             snapshot.maximum = bounding->get_upper_bounds();
             snapshot.bounding_active =
                 (bounding->get_bounding_method() == Bounding::BoundingMethod::Bounding);
+            break;
         }
-        else
-            throw runtime_error("NetworkDifferential: unsupported layer type '"
-                                + layer_type_to_string(type) + "' for analytic Jacobian");
+        default:
+            throw runtime_error(format("Unsupported layer type '{}' for analytic Jacobian", layer_type_to_string(type)));
+        }
 
         layers.push_back(move(snapshot));
     }

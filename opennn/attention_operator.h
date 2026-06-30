@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   H E A D E R
@@ -14,129 +14,114 @@
 namespace opennn
 {
 
-struct AttentionOp : Operator
+struct AttentionOperator : Operator
 {
     Index heads_number = 0;
     Index head_dimension = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
     bool  use_causal_mask = false;
-    Type  compute_dtype = Type::FP32;
-
     bool use_sdpa = false;
 
     MatrixR causal_mask;
 
-    DropoutOp dropout;
+    DropoutOperator dropout;
 
-    void set(Index heads_number, Index head_dimension,
-             Index query_sequence_length, Index source_sequence_length,
-             bool use_causal_mask, Type compute_dtype);
+    void set(Index, Index,
+             Index, Index,
+             bool, Type);
 
-    static bool sdpa_supported(Type dtype, Device device);
+    static bool sdpa_supported(Type, Device);
 
-    void set_dropout_rate(float rate) { dropout.set_rate(rate); }
+    vector<TensorSpec> forward_scratch_specs(Index) const;
 
-    vector<TensorSpec> forward_scratch_specs(Index batch_size) const;
+    TensorSpec backward_scratch_spec(Index) const;
 
-    TensorSpec backward_scratch_spec(Index batch_size) const;
+    size_t scratch_slot = 0;
+    size_t attention_output_slot = 0;
 
-    size_t source_view_index = 1;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    vector<size_t> scratch_slots;
-    vector<size_t> attention_output_slots;
+    AttentionOperator();
+    ~AttentionOperator() override;
+    AttentionOperator(AttentionOperator&&) noexcept;
+    AttentionOperator& operator=(AttentionOperator&&) noexcept;
+    AttentionOperator(const AttentionOperator&) = delete;
+    AttentionOperator& operator=(const AttentionOperator&) = delete;
 
-    void forward_propagate(ForwardPropagation& fp, size_t layer, bool is_training) override;
-    void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
-
-    AttentionOp();
-    ~AttentionOp() override;
-    AttentionOp(AttentionOp&&) noexcept;
-    AttentionOp& operator=(AttentionOp&&) noexcept;
-    AttentionOp(const AttentionOp&) = delete;
-    AttentionOp& operator=(const AttentionOp&) = delete;
-
+#ifdef OPENNN_HAS_CUDA
     struct SDPACache;
+#endif
 
 private:
     float scaling_factor() const;
 
-    void apply_cpu(const TensorView& query,
-                   const TensorView& key,
-                   const TensorView& value,
-                   const TensorView& source_input,
-                   TensorView& attention_weights,
-                   TensorView& attention_weights_dropped,
-                   TensorView& output,
-                   void* scratch,
-                   bool is_training);
+    void apply_unfused(const TensorView&,
+                       const TensorView&,
+                       const TensorView&,
+                       const TensorView&,
+                       TensorView&,
+                       TensorView&,
+                       TensorView&,
+                       void*,
+                       bool);
 
-    void apply_gpu(const TensorView& query,
-                   const TensorView& key,
-                   const TensorView& value,
-                   const TensorView& source_input,
-                   TensorView& attention_weights,
-                   TensorView& attention_weights_dropped,
-                   TensorView& output,
-                   void* scratch,
-                   bool is_training);
+#ifdef OPENNN_HAS_CUDA
+    void apply_sdpa_forward(const TensorView&,
+                            const TensorView&,
+                            const TensorView&,
+                            const TensorView&,
+                            TensorView&,
+                            bool);
+#endif
 
-    void apply_delta_cpu(const TensorView& query,
-                         const TensorView& key,
-                         const TensorView& value,
-                         const TensorView& attention_output,
-                         const TensorView& attention_weights,
-                         const TensorView& attention_weights_dropped,
-                         const TensorView& output_delta,
-                         TensorView& attention_weight_delta,
-                         TensorView& query_delta,
-                         TensorView& key_delta,
-                         TensorView& value_delta) const;
+    void apply_delta_cpu(const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         const TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&,
+                         TensorView&) const;
 
-    void apply_delta_gpu(const TensorView& query,
-                         const TensorView& key,
-                         const TensorView& value,
-                         const TensorView& attention_output,
-                         const TensorView& attention_weights,
-                         const TensorView& attention_weights_dropped,
-                         const TensorView& output_delta,
-                         TensorView& attention_weight_delta,
-                         TensorView& query_delta,
-                         TensorView& key_delta,
-                         TensorView& value_delta) const;
+#ifdef OPENNN_HAS_CUDA
+    void apply_sdpa_backward(const TensorView&,
+                             const TensorView&,
+                             const TensorView&,
+                             const TensorView&,
+                             const TensorView&,
+                             TensorView&,
+                             TensorView&,
+                             TensorView&) const;
+#endif
 
-    void apply_delta_gpu_unfused(const TensorView& query,
-                                 const TensorView& key,
-                                 const TensorView& value,
-                                 const TensorView& attention_weights,
-                                 const TensorView& attention_weights_dropped,
-                                 const TensorView& output_delta,
-                                 TensorView& attention_weight_delta,
-                                 TensorView& query_delta,
-                                 TensorView& key_delta,
-                                 TensorView& value_delta) const;
-
-    static bool get_contiguous_source_lengths(const TensorView& source_input,
-                                              vector<Index>& lengths,
-                                              bool& has_padding);
-    static void softmax_rows_prefix(float* matrix, Index rows, Index cols, Index length);
-    static Index infer_attention_prefix_length(const TensorView& attention_weights,
-                                               Index batch_index);
+    static bool get_contiguous_source_lengths(const TensorView&,
+                                              vector<Index>&,
+                                              bool&);
+    static void softmax_rows_prefix(float*, Index, Index, Index);
+    static Index infer_attention_prefix_length(const TensorView&,
+                                               Index);
 
     template<typename SoftmaxBwd>
-    void apply_delta_unfused(const TensorView& query,
-                              const TensorView& key,
-                              const TensorView& value,
-                              const TensorView& attention_weights,
-                              const TensorView& attention_weights_dropped,
-                              const TensorView& output_delta,
-                              TensorView& attention_weight_delta,
-                              TensorView& query_delta,
-                              TensorView& key_delta,
-                              TensorView& value_delta,
-                              SoftmaxBwd&& softmax_bwd) const;
+    void apply_delta_unfused(const TensorView&,
+                              const TensorView&,
+                              const TensorView&,
+                              const TensorView&,
+                              const TensorView&,
+                              const TensorView&,
+                              TensorView&,
+                              TensorView&,
+                              TensorView&,
+                              TensorView&,
+                              SoftmaxBwd&&) const;
 
+#ifdef OPENNN_HAS_CUDA
     mutable unique_ptr<SDPACache> sdpa_cache;
+#endif
 
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;
@@ -146,5 +131,5 @@ private:
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

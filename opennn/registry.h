@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E G I S T R Y   C L A S S   H E A D E R
@@ -54,8 +54,8 @@ public:
         std::vector<std::string> names;
         names.reserve(creators.size());
 
-        for (const auto& pair : creators)
-            names.push_back(pair.first);
+        for (const auto& [name, creator] : creators)
+            names.push_back(name);
 
         return names;
     }
@@ -79,5 +79,5 @@ void register_classes();
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

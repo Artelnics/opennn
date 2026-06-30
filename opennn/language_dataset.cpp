@@ -11,8 +11,6 @@
 #include "tensor_types.h"
 #include "io_utilities.h"
 
-#include <fstream>
-
 namespace opennn
 {
 
@@ -233,7 +231,7 @@ void LanguageDataset::update_input_vocabulary_map()
     input_vocabulary_map.clear();
     input_vocabulary_map.reserve(input_vocabulary.size());
 
-    for (Index i = 0; i < Index(input_vocabulary.size()); ++i)
+    for (Index i = 0; i < ssize(input_vocabulary); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
@@ -242,7 +240,7 @@ unordered_map<string_view, Index> LanguageDataset::create_vocabulary_map(const v
     unordered_map<string_view, Index> vocabulary_map;
     vocabulary_map.reserve(vocabulary.size());
 
-    for (Index i = 0; i < Index(vocabulary.size()); ++i)
+    for (Index i = 0; i < ssize(vocabulary); ++i)
         vocabulary_map.emplace(string_view(vocabulary[i]), i);
 
     return vocabulary_map;
@@ -253,7 +251,7 @@ void LanguageDataset::update_target_vocabulary_map()
     target_vocabulary_map.clear();
     target_vocabulary_map.reserve(target_vocabulary.size());
 
-    for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
+    for (Index i = 0; i < ssize(target_vocabulary); ++i)
         target_vocabulary_map[target_vocabulary[i]] = i;
 }
 
@@ -372,8 +370,6 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-    if (data_source_element->has("Streaming"))
-        (void)read_json_bool(data_source_element, "Streaming");
 
     set_separator_name(read_json_string(data_source_element, "Separator"));
     set_codification(read_json_string(data_source_element, "Codification"));

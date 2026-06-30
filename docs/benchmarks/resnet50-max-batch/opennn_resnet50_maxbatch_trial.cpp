@@ -127,7 +127,9 @@ int main(int argc, char* argv[])
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
     const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;   // 0 = library default
-    const long ws_mib = argc > 5 ? std::stol(argv[5]) : 0;      // 0 = AUTO (library default); >0 = explicit cap MiB
+    // Conv workspace cap A/B: "off"/"0" = autotune (uncapped, colleague default),
+    // "auto" = AUTO cap (largest layer activation), or a positive integer = MiB cap.
+    const std::string workspace_arg = argc > 5 ? argv[5] : "off";
 
     try
     {
@@ -139,10 +141,13 @@ int main(int argc, char* argv[])
         set_seed(42);
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
-        // Conv workspace cap. Default (ws_mib == 0) leaves the library AUTO policy
-        // (cap = largest layer activation). A positive 5th arg pins an explicit cap.
-        if (ws_mib > 0)
-            device::set_conv_workspace_limit_bytes(int64_t(ws_mib) * 1024 * 1024);
+        if (workspace_arg == "off" || workspace_arg == "0")
+            device::set_conv_workspace_cap(0);
+        else if (workspace_arg == "auto")
+            device::set_conv_workspace_cap(-1);
+        else
+            device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
+        std::cout << "workspace_mode=" << workspace_arg << "\n";
 
         TempImageTree temp_images;
         const std::filesystem::path trial_data_path =

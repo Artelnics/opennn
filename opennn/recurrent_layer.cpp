@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E C U R R E N T   L A Y E R   C L A S S
@@ -112,8 +112,8 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& name)
 {
-    const ActivationOp::Function fn = ActivationOp::from_string(name);
-    throw_if(fn == ActivationOp::Function::Softmax || fn == ActivationOp::Function::LeakyReLU,
+    const ActivationFunction fn = ActivationOperator::from_string(name);
+    throw_if(fn == ActivationFunction::Softmax || fn == ActivationFunction::LeakyReLU,
              "Recurrent: unsupported activation (use Tanh, Sigmoid, ReLU or Identity).");
     recurrent_op.activation = fn;
 }
@@ -141,7 +141,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
     MatrixMap input_w_map       = parameters[1].as_matrix();
     MatrixMap recurrent_w_map   = parameters[2].as_matrix();
 
-    const string& activation_name = ActivationOp::to_string(recurrent_op.activation);
+    const string& activation_name = ActivationOperator::to_string(recurrent_op.activation);
 
     auto step_var = [&](Index t, Index j) -> string {
         const string internal = format("recurrent_hidden_step_{}_neuron_{}", t, j);
