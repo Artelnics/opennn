@@ -6,6 +6,7 @@
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/loss.h"
+#include "../opennn/batch.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -91,6 +92,156 @@ struct TempDir
     TempDir& operator=(const TempDir&) = delete;
 };
 
+}
+
+TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
+{
+    // Isolates whether the gradient bug is grid-size-dependent or multi-head-specific.
+    // Same 8x8 image + 8x8 detection grid as the FPN small head, but single head.
+    // If this passes but the multi-head test fails, bug is in multi-head routing.
+    // If this also fails, bug is somewhere in the 8x8 single-head path.
+
+    TempDir dir;
+    const std::filesystem::path images_dir = dir.path / "images";
+    const std::filesystem::path labels_dir = dir.path / "labels";
+    std::filesystem::create_directories(images_dir);
+    std::filesystem::create_directories(labels_dir);
+    write_classes(labels_dir / "classes.names", {"only"});
+
+    write_bmp_24(images_dir / "a.bmp", 8, 8, 200, 100, 50);
+    write_bmp_24(images_dir / "b.bmp", 8, 8,  50, 200, 100);
+    { std::ofstream empty_a(labels_dir / "a.txt"); }
+    { std::ofstream empty_b(labels_dir / "b.txt"); }
+
+    constexpr Index input_H = 8, input_W = 8, classes_number = 1, boxes_per_cell = 3;
+    constexpr Index head_channels = boxes_per_cell * (5 + classes_number);
+    const std::vector<std::array<float, 2>> anchors{{0.1f, 0.1f}, {0.15f, 0.15f}, {0.2f, 0.2f}};
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
+                /*grid_size=*/8, boxes_per_cell, anchors);
+    {
+        YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+        dataset.set_augmentation(no_aug);
+    }
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Convolutional>(
+        Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
+        "Identity", Shape{1, 1}, "Same", false, "conv1"));
+    neural_network.add_layer(make_unique<Convolutional>(
+        Shape{input_H, input_W, 4}, Shape{1, 1, 4, head_channels},
+        "Identity", Shape{1, 1}, "Same", false, "logits"));
+    neural_network.add_layer(make_unique<Detection>(
+        Shape{input_H, input_W, head_channels}, anchors, "detection"));
+    neural_network.compile();
+    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(0.05f);
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::Yolo);
+    loss.set_regularization(Loss::Regularization::NoRegularization);
+
+    // Manually verify numerical gradient for param[0] to catch formula bugs
+    {
+        const Index sn = dataset.get_samples_number("Training");
+        const vector<Index> ti = dataset.get_sample_indices("Training");
+        const vector<Index> ii = dataset.get_feature_indices("Input");
+        const vector<Index> di = dataset.get_feature_indices("Decoder");
+        const vector<Index> tgti = dataset.get_feature_indices("Target");
+        Batch batch_diag(sn, &dataset, neural_network.get_config());
+        batch_diag.fill(ti, ii, di, tgti);
+        ForwardPropagation fp_diag(sn, &neural_network);
+        neural_network.forward_propagate(batch_diag.get_inputs(), fp_diag, true);
+        BackPropagation bp_diag(sn, &loss);
+        const float L0 = loss.calculate_error(batch_diag, fp_diag).error;
+
+        VectorMap params(neural_network.get_parameters_data(), neural_network.get_parameters_size());
+        VectorR perturbed = params;
+        const float h = Loss::calculate_h(params(0));
+        perturbed(0) += h;
+        neural_network.forward_propagate(batch_diag.get_inputs(), perturbed, fp_diag);
+        const float Lp = loss.calculate_error(batch_diag, fp_diag).error;
+        perturbed(0) -= 2.0f*h;
+        neural_network.forward_propagate(batch_diag.get_inputs(), perturbed, fp_diag);
+        const float Lm = loss.calculate_error(batch_diag, fp_diag).error;
+        // restore
+        neural_network.forward_propagate(batch_diag.get_inputs(), params, fp_diag);
+
+        std::cout << "Manual check param[0]: L0=" << L0 << " L+=" << Lp << " L-=" << Lm
+                  << " h=" << h << "\n"
+                  << "  manual_num=" << (Lp-Lm)/(2.0f*h)
+                  << "  c4 effect: 3boxes*0.05w*sum_cells_c4\n";
+
+        // h-sweep: check if numerical gradient is h-dependent (use VectorR for deep copy).
+        for (float hh : {1e-4f, 1e-3f, 1e-2f}) {
+            VectorR p_ph = VectorR(params); p_ph(0) += hh;
+            VectorR p_mh = VectorR(params); p_mh(0) -= hh;
+            neural_network.forward_propagate(batch_diag.get_inputs(), p_ph, fp_diag);
+            const float Lph = loss.calculate_error(batch_diag, fp_diag).error;
+            neural_network.forward_propagate(batch_diag.get_inputs(), p_mh, fp_diag);
+            const float Lmh = loss.calculate_error(batch_diag, fp_diag).error;
+            std::cout << "  h=" << hh << " num_grad=" << (Lph-Lmh)/(2.0f*hh) << "\n";
+        }
+        // restore original
+        {VectorR r = VectorR(params); neural_network.forward_propagate(batch_diag.get_inputs(), r, fp_diag);}
+    }
+    VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(0.05f);
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    // Print first few values of each layer's gradient for cross-layer diagnosis
+    Index offset = 0;
+    float worst = 0.0f;
+    Index worst_idx = 0;
+    for (Index li = 0; li < neural_network.get_layers_number(); ++li)
+    {
+        const Index np = neural_network.get_layer(li)->get_parameters_number();
+        if (np == 0) { std::cout << "  layer " << li << " (" << neural_network.get_layer(li)->get_label() << "): no params\n"; continue; }
+        float lworst = 0.0f; Index lwi = offset;
+        for (Index k = offset; k < offset + np; ++k)
+        {
+            const float d = std::abs(gradient(k) - numerical_gradient(k));
+            if (d > lworst) { lworst = d; lwi = k; }
+            if (d > worst)  { worst  = d; worst_idx = k; }
+        }
+        std::cout << "  layer " << li << " (" << neural_network.get_layer(li)->get_label()
+                  << "): worst=" << lworst << " at local[" << (lwi-offset) << "]"
+                  << " grad=" << gradient(lwi) << " num=" << numerical_gradient(lwi) << "\n";
+        // Print first 4 param values
+        std::cout << "    first 4 grad: ";
+        for (Index k = offset; k < std::min(offset+4, offset+np); ++k) std::cout << gradient(k) << " ";
+        std::cout << "\n    first 4 num:  ";
+        for (Index k = offset; k < std::min(offset+4, offset+np); ++k) std::cout << numerical_gradient(k) << " ";
+        std::cout << "\n";
+        offset += np;
+    }
+    std::cout << "\n[SingleHead8x8] Overall worst at idx " << worst_idx
+              << ": grad=" << gradient(worst_idx) << " num=" << numerical_gradient(worst_idx)
+              << " ratio=" << gradient(worst_idx)/numerical_gradient(worst_idx) << "\n";
+
+    // Print gradient buffer size vs per-layer sum to detect alignment padding
+    std::cout << "gradient.size()=" << gradient.size()
+              << " sum_per_layer=" << offset
+              << " get_parameters_size()=" << neural_network.get_parameters_size() << "\n";
+    // Find first nonzero in gradient after conv1 params to locate logits true start
+    const Index conv1_np = neural_network.get_layer(0)->get_parameters_number();
+    std::cout << "conv1 params=" << conv1_np << " logits params=" << neural_network.get_layer(1)->get_parameters_number() << "\n";
+    Index logits_true_start = conv1_np;
+    // scan for first nonzero to find actual logits start
+    for (Index k = conv1_np; k < gradient.size(); ++k)
+        if (gradient(k) != 0.0f || numerical_gradient(k) != 0.0f)
+            { logits_true_start = k; break; }
+    std::cout << "logits_true_start=" << logits_true_start << "\n";
+    std::cout << "logits grad[0..17]: ";
+    for (Index k = logits_true_start; k < logits_true_start+18 && k < gradient.size(); ++k)
+        std::cout << gradient(k) << " ";
+    std::cout << "\nlogits num[0..17]: ";
+    for (Index k = logits_true_start; k < logits_true_start+18 && k < numerical_gradient.size(); ++k)
+        std::cout << numerical_gradient(k) << " ";
+    std::cout << "\n";
+
+    EXPECT_LT(worst, 0.05f);
 }
 
 TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
