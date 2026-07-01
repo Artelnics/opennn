@@ -29,6 +29,7 @@ public:
     void set_default();
 
     void set_learning_rate(const float);
+    float get_learning_rate() const { return learning_rate; }
     void set_beta_1(const float);
     void set_beta_2(const float);
 

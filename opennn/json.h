@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #pragma once
+#ifndef OPENNN_JSON_H_
+#define OPENNN_JSON_H_
 
 #include <filesystem>
 #include <initializer_list>
@@ -144,3 +146,5 @@ JsonDocument load_json_file(const filesystem::path&);
 const Json*  get_json_root (const JsonDocument&, const string&);
 
 }
+
+#endif // OPENNN_JSON_H_

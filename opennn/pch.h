@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef OPENNN_PCH_H_
+#define OPENNN_PCH_H_
 
 #if defined(__INTELLISENSE__) && !defined(OPENNN_HAS_CUDA)
 #define OPENNN_HAS_CUDA
@@ -125,10 +127,16 @@ using cudnnRNNDataDescriptor_t     = void*;
 using namespace std;
 using Eigen::Index;
 
+// Global alias: neuraleditor and other callers use bare 'type' for float
+using type = float;
+
 namespace opennn {
 
 using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
+
+// Compatibility alias: opennn internals can also use opennn::type
+using type = float;
 
 inline void throw_if(bool condition, const string& message,
                      const source_location& loc = source_location::current())
@@ -172,12 +180,15 @@ using VectorMap = Eigen::Map<VectorR, Eigen::AlignedMax>;
 using MatrixMap = Eigen::Map<MatrixR, Eigen::AlignedMax>;
 
 using Tensor0 = Eigen::Tensor<float, 0, Layout | Eigen::AlignedMax>;
+using Tensor1 = Eigen::Tensor<float, 1, Layout | Eigen::AlignedMax>;
 using Tensor2 = Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>;
 using Tensor3 = Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>;
 using Tensor4 = Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>;
 
 template <int Rank>
 using TensorR = Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>;
+
+#endif // OPENNN_PCH_H_
 
 using TensorMap2 = Eigen::TensorMap<Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 using TensorMap3 = Eigen::TensorMap<Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;

@@ -97,7 +97,7 @@ public:
 
     enum class ClassActivation { Softmax, Sigmoid };
 
-    enum class HeadStyle { Single, FPN };
+    enum class HeadStyle { Single, FPN, PANet };
 
     // ReLU = the activation used since Phase 1 — preserves saved-weight effect.
     // LeakyReLU = Darknet/YOLO-v3 convention (slope 0.1) — applied uniformly

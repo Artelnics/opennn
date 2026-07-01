@@ -41,7 +41,17 @@ inline int device_sm_version()
 
 inline bool frontend_enabled()
 {
-    return device_sm_version() >= 800;
+    static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
+    if (legacy_forced) return false;
+    // cuDNN-frontend graph API requires SM 7.0+ (Volta/Turing) for fp32 convolutions.
+    // The legacy path has poor NHWC coverage in cuDNN 9 even on older hardware.
+    return device_sm_version() >= 700;
+}
+
+inline bool bn_frontend_enabled()
+{
+    // cuDNN-frontend batch norm requires SM 8.0+ (Ampere); falls back to legacy on older GPUs.
+    return frontend_enabled() && device_sm_version() >= 800;
 }
 
 inline bool autotune_enabled() { return device::conv_autotune_enabled(); }
@@ -221,6 +231,12 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
         check_status(graph.autotune(Backend::get_cudnn_handle(), tensors, tune_workspace.data), "autotune");
     }
     catch (...) {}
+
+    // cuDNN autotune tries GPU kernels that may fail; clear any sticky CUDA
+    // error they left behind so subsequent check_last_error() calls are clean.
+#ifdef OPENNN_HAS_CUDA
+    cudaGetLastError();
+#endif
 
     workspace_bytes = graph.get_workspace_size();
 }

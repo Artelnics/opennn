@@ -23,6 +23,7 @@ public:
                     Index maximum_vocabulary_size = 20000,
                     Index minimum_token_frequency = 1);
 
+    const vector<string>& get_input_vocabulary() const noexcept { return input_vocabulary; }
     const vector<string>& get_target_vocabulary() const noexcept { return target_vocabulary; }
 
     Index get_input_vocabulary_size() const noexcept { return input_vocabulary.size(); }

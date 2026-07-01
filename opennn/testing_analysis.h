@@ -127,9 +127,9 @@ public:
 
     Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
 
-private:
-
     pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
+
+private:
 
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
                                                 bool, bool) const;

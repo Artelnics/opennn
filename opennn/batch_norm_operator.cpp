@@ -473,7 +473,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 
     throw_if(!input.is_fp32(), "BatchNormalizationOperator: GPU training forward requires FP32.");
 
-    const bool ran = cudnn_frontend::frontend_enabled()
+    const bool ran = cudnn_frontend::bn_frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
@@ -511,7 +511,24 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
                                 : string());
     });
 
-    throw_if(!ran, "BatchNormalizationOperator: GPU training forward requires SM 8.0+ (Ampere).");
+    if (!ran)
+    {
+        // Legacy cuDNN path for GPUs older than SM 8.0 (e.g. RTX 2080 = SM 7.5).
+        CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
+            Backend::get_cudnn_handle(),
+            CUDNN_BATCHNORM_SPATIAL,
+            &one, &zero,
+            input.get_descriptor(),  input.data,
+            output.get_descriptor(), output.data,
+            gamma.get_descriptor(),  gamma.data, beta.data,
+            double(momentum),
+            running_mean.data, running_variance.data,
+            EPSILON,
+            mean.data,
+            inverse_variance.data));
+        if (fuse_add)  add(output, residual, output);
+        if (fuse_relu) activation_forward(output, ActivationFunction::ReLU);
+    }
 }
 
 void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
@@ -532,7 +549,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
     throw_if(!input.is_fp32(), "BatchNormalizationOperator: GPU backward requires FP32.");
 
-    const bool ran = cudnn_frontend::frontend_enabled()
+    const bool ran = cudnn_frontend::bn_frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
     {
         auto& entry = cache.entries[input.shape[0]];
@@ -589,7 +606,25 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 : string());
     });
 
-    throw_if(!ran, "BatchNormalizationOperator: GPU backward requires SM 8.0+ (Ampere).");
+    if (!ran)
+    {
+        // Legacy cuDNN backward path for GPUs older than SM 8.0.
+        if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
+        if (fuse_add && !residual_delta.empty()) copy(delta, residual_delta);
+        CHECK_CUDNN(cudnnBatchNormalizationBackward(
+            Backend::get_cudnn_handle(),
+            CUDNN_BATCHNORM_SPATIAL,
+            &one, &zero, &one, &zero,
+            input.get_descriptor(),  input.data,
+            delta.get_descriptor(),  delta.data,
+            delta.get_descriptor(),  delta.data,
+            gamma.get_descriptor(),  gamma.data,
+            gamma_gradient.data,
+            beta_gradient.data,
+            EPSILON,
+            mean.data,
+            inverse_variance.data));
+    }
 }
 
 #else

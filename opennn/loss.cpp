@@ -546,7 +546,11 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
 {
     check_yolo_loss(dataset, nn);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
+    // boxes_per_head is only set by set_multi_scale_heads. For single-head GPU training,
+    // fall back to boxes_per_cell so the CUDA kernel receives the correct value.
+    const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
+        ? yolo_dataset->get_boxes_per_head()
+        : yolo_dataset->get_boxes_per_cell();
     const Index classes_number = yolo_dataset->get_classes_number();
     const Index values_per_box = 5 + classes_number;
 
@@ -627,7 +631,9 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
 {
     check_yolo_loss(dataset, nn);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
+    const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
+        ? yolo_dataset->get_boxes_per_head()
+        : yolo_dataset->get_boxes_per_cell();
     const Index classes_number = yolo_dataset->get_classes_number();
     const Index values_per_box = 5 + classes_number;
 
@@ -1068,8 +1074,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         const bool sigmoid = yolo_uses_sigmoid_classes(neural_network);
         const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 #ifdef OPENNN_HAS_CUDA
-        if (on_gpu && detection_indices.size() > 1)
+        if (on_gpu)
         {
+            // yolo_error_gpu_multi handles both single-head (size==1) and multi-head.
             result = yolo_error_gpu_multi(forward_propagation, target, dataset, neural_network,
                                           detection_indices, sigmoid,
                                           yolo_target_device, errors_device, lam);
@@ -1312,8 +1319,9 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         const bool gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
         const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 #ifdef OPENNN_HAS_CUDA
-        if (gpu && detection_indices.size() > 1)
+        if (gpu)
         {
+            // yolo_gradient_gpu_multi handles both single-head (size==1) and multi-head.
             yolo_gradient_gpu_multi(forward_propagation, target, back_propagation,
                                     dataset, neural_network, detection_indices, sigmoid,
                                     yolo_target_device, lam);

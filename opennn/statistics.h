@@ -85,6 +85,28 @@ struct Histogram
     VectorR centers;
 
     VectorR frequencies;
+
+    Index calculate_minimum_frequency() const { return frequencies.size() ? (Index)frequencies.minCoeff() : 0; }
+    Index calculate_maximum_frequency() const { return frequencies.size() ? (Index)frequencies.maxCoeff() : 0; }
+
+    VectorR calculate_minimal_centers() const
+    {
+        if(frequencies.size() == 0) return {};
+        const Index min_f = calculate_minimum_frequency();
+        vector<float> v;
+        for(Index k = 0; k < frequencies.size(); k++)
+            if((Index)frequencies(k) == min_f) v.push_back(centers.size() > k ? centers(k) : float(k));
+        return Map<VectorR>(v.data(), (Index)v.size());
+    }
+    VectorR calculate_maximal_centers() const
+    {
+        if(frequencies.size() == 0) return {};
+        const Index max_f = calculate_maximum_frequency();
+        vector<float> v;
+        for(Index k = 0; k < frequencies.size(); k++)
+            if((Index)frequencies(k) == max_f) v.push_back(centers.size() > k ? centers(k) : float(k));
+        return Map<VectorR>(v.data(), (Index)v.size());
+    }
 };
 float minimum(const MatrixR&);
 float minimum(const VectorR&);
