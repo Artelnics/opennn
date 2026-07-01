@@ -238,11 +238,10 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
               << ": grad=" << gradient(worst_idx_full)
               << " num=" << numerical_gradient(worst_idx_full) << "\n";
 
-    // Loose bound matches the existing YoloLoss.WithObjectGradientMatchesV1Approximation
-    // tolerance — single-precision float roundoff over many cells × heads
-    // exceeds the 1e-3 tight bound (same pattern as the existing no-object test
-    // which also fails 1e-3 on committed state — pre-existing issue, not from
-    // this change). At this tolerance the test catches sign errors, scale-of-2
-    // bugs, and gross routing mistakes.
-    EXPECT_LT(worst, 1.5f);
+    // No-object branch has no IoU approximation so the gradient should be exact.
+    // Single-head no-object test passes at 1e-3. FPN has 3 heads × 504 cells so
+    // float32 accumulation is larger, but 0.05 still catches sign errors, scale-of-2
+    // bugs, and routing mistakes. If this fails it signals a systematic error in
+    // the FPN gradient path — not float32 noise — and must be investigated.
+    EXPECT_LT(worst, 0.05f);
 }

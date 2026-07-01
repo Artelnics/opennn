@@ -1237,11 +1237,9 @@ int main()
 
         // ===== VOC mAP@0.5 =====
         // Standard 11-point interpolated AP per class, averaged to mAP.
-        // GT boxes are taken from the YOLO .txt label files (normalized to the
-        // original image). Predictions are decoded in the 416x416 letterbox
-        // space and normalized by the network input size. For non-square images
-        // this introduces a small coordinate mismatch near borders — acceptable
-        // for Phase 3 relative comparisons.
+        // GT boxes are taken from the YOLO .txt label files (original-image-normalized).
+        // Predictions are decoded in letterbox space (416×416). Both are transformed to
+        // letterbox-normalized coords before IoU matching so non-square images compare correctly.
         {
             std::cout << "\nComputing VOC mAP@0.5 on "
                       << selection_indices.size() << " validation images...\n";
@@ -1252,7 +1250,55 @@ int main()
             const int N_cls = int(dataset.get_classes_number());
             const int N_val = int(selection_indices.size());
 
-            // Load all GT boxes (all objects, not just first) for every image.
+            // Read image width/height from BMP/JPEG/PNG header without loading pixels.
+            // Returns {0,0} on failure (unknown format or I/O error).
+            auto read_image_dims = [](const std::filesystem::path& p) -> std::pair<int,int> {
+                std::ifstream f(p, std::ios::binary);
+                unsigned char h[30] = {};
+                f.read(reinterpret_cast<char*>(h), 30);
+                if (!f.gcount()) return {0, 0};
+                // BMP
+                if (h[0] == 'B' && h[1] == 'M') {
+                    int w = 0, ht = 0;
+                    std::memcpy(&w,  h + 18, 4);
+                    std::memcpy(&ht, h + 22, 4);
+                    if (ht < 0) ht = -ht;
+                    return {ht, w};
+                }
+                // PNG
+                if (h[0] == 0x89 && h[1] == 'P' && h[2] == 'N' && h[3] == 'G') {
+                    int w  = (h[16]<<24)|(h[17]<<16)|(h[18]<<8)|h[19];
+                    int ht = (h[20]<<24)|(h[21]<<16)|(h[22]<<8)|h[23];
+                    return {ht, w};
+                }
+                // JPEG: scan for SOF0/SOF2 (FF C0 / FF C2)
+                if (h[0] == 0xFF && h[1] == 0xD8) {
+                    f.seekg(2);
+                    for (int iter = 0; iter < 2000; ++iter) {
+                        unsigned char m[2];
+                        f.read(reinterpret_cast<char*>(m), 2);
+                        if (f.gcount() < 2) break;
+                        if (m[0] != 0xFF) { f.seekg(-1, std::ios::cur); continue; }
+                        if (m[1] == 0xC0 || m[1] == 0xC2) {
+                            unsigned char seg[7];
+                            f.read(reinterpret_cast<char*>(seg), 7);
+                            if (f.gcount() < 7) break;
+                            return {(int(seg[3])<<8)|seg[4], (int(seg[5])<<8)|seg[6]};
+                        }
+                        unsigned char len[2];
+                        f.read(reinterpret_cast<char*>(len), 2);
+                        if (f.gcount() < 2) break;
+                        int skip = ((int(len[0])<<8)|len[1]) - 2;
+                        if (skip > 0) f.seekg(skip, std::ios::cur);
+                    }
+                }
+                return {0, 0};
+            };
+
+            // Load all GT boxes transformed into letterbox-normalized space so they
+            // can be directly compared with predictions (which are also in letterbox space).
+            // GT .txt files use original-image-normalized coords; non-square VOC images
+            // have a ~0.832 letterbox scale + padding, causing IoU underestimation otherwise.
             std::vector<std::vector<GtBox>> val_gt(N_val);
             for (int k = 0; k < N_val; ++k)
             {
@@ -1260,10 +1306,29 @@ int main()
                 const std::filesystem::path img_path = dataset.get_image_path(s);
                 std::filesystem::path lbl = labels_dir / img_path.filename();
                 lbl.replace_extension(".txt");
+
+                // Compute letterbox transform for this image.
+                const auto [orig_H, orig_W] = read_image_dims(img_path);
+                float lb_scale = 1.0f, lb_off_x = 0.0f, lb_off_y = 0.0f;
+                if (orig_H > 0 && orig_W > 0) {
+                    lb_scale = std::min(float(input_shape[0]) / float(orig_H),
+                                        float(input_shape[1]) / float(orig_W));
+                    lb_off_x = (float(input_shape[1]) - float(orig_W) * lb_scale) * 0.5f;
+                    lb_off_y = (float(input_shape[0]) - float(orig_H) * lb_scale) * 0.5f;
+                }
+                const float inv_iW = 1.0f / float(input_shape[1]);
+                const float inv_iH = 1.0f / float(input_shape[0]);
+
                 std::ifstream f(lbl);
                 int c; float cx, cy, w, h;
-                while (f >> c >> cx >> cy >> w >> h)
-                    val_gt[k].push_back({c, cx, cy, w, h});
+                while (f >> c >> cx >> cy >> w >> h) {
+                    // Transform from original-image-normalized to letterbox-normalized.
+                    const float lb_cx = (cx * float(orig_W) * lb_scale + lb_off_x) * inv_iW;
+                    const float lb_cy = (cy * float(orig_H) * lb_scale + lb_off_y) * inv_iH;
+                    const float lb_w  = w * float(orig_W) * lb_scale * inv_iW;
+                    const float lb_h  = h * float(orig_H) * lb_scale * inv_iH;
+                    val_gt[k].push_back({c, lb_cx, lb_cy, lb_w, lb_h});
+                }
             }
 
             // Run inference on every validation image; store predictions per class.
