@@ -94,22 +94,32 @@ vector<filesystem::path> list_files(const filesystem::path& directory,
 
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
-    for (const auto& entry : filesystem::directory_iterator(labels_directory))
+    // Search the labels directory, then the parent (dataset root) for a .names file.
+    vector<filesystem::path> search_dirs = { labels_directory };
+    if (labels_directory.has_parent_path())
+        search_dirs.push_back(labels_directory.parent_path());
+
+    for (const auto& dir : search_dirs)
     {
-        if (!entry.is_regular_file() || entry.path().extension() != ".names")
-            continue;
+        if (!filesystem::is_directory(dir)) continue;
+        for (const auto& entry : filesystem::directory_iterator(dir))
+        {
+            if (!entry.is_regular_file() || entry.path().extension() != ".names")
+                continue;
 
-        ifstream file(entry.path());
-        throw_if(!file,
-                 format("Cannot open YOLO classes file: {}", entry.path().string()));
+            ifstream file(entry.path());
+            throw_if(!file,
+                     format("Cannot open YOLO classes file: {}", entry.path().string()));
 
-        vector<string> classes;
-        string line;
-        while (getline(file, line))
-            if (!line.empty())
-                classes.push_back(line);
+            vector<string> classes;
+            string line;
+            while (getline(file, line))
+                if (!line.empty())
+                    classes.push_back(line);
 
-        return classes;
+            if (!classes.empty())
+                return classes;
+        }
     }
 
     return {};
@@ -1297,8 +1307,18 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     for (size_t i = 0; i < image_paths.size(); ++i)
     {
         Tensor3 image = load_image(image_paths[i]);
+        // Convert grayscale → RGB by replicating the single channel.
+        if (image.dimension(2) == 1 && input_shape[2] == 3)
+        {
+            Tensor3 rgb(image.dimension(0), image.dimension(1), 3);
+            rgb.chip(0, 2) = image.chip(0, 2);
+            rgb.chip(1, 2) = image.chip(0, 2);
+            rgb.chip(2, 2) = image.chip(0, 2);
+            image = std::move(rgb);
+        }
         throw_if(image.dimension(2) != input_shape[2],
-                 format("YoloDataset: channel mismatch in {}", image_paths[i].string()));
+                 format("YoloDataset: channel mismatch in {} (got {} channels, expected {})",
+                        image_paths[i].string(), image.dimension(2), input_shape[2]));
 
         float scale = 1.0f;
         Index offset_x = 0;

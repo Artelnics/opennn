@@ -113,6 +113,7 @@ public:
     void set_input_shape(const Shape&);
 
     void clear();
+    void steal_from(NeuralNetwork& src);  // replace this network's layers with src's (leaves src empty)
 
     Index get_layers_number() const noexcept { return ssize(layers); }
     Index get_layers_number(const string&) const;
@@ -120,6 +121,7 @@ public:
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
+    void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
     Index get_inputs_number() const;
     Index get_outputs_number() const;
 

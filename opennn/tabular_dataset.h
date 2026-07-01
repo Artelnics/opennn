@@ -66,6 +66,7 @@ public:
     void set_variable_scalers(const string&);
     void set_variable_scalers(const vector<string>&);
     void set_default_variable_scalers();
+    void apply_default_variable_roles() { set_default_variable_roles(); }
 
     void set_gmt(const Index new_gmt) { gmt = new_gmt; }
 

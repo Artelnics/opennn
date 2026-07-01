@@ -29,6 +29,7 @@ public:
     void set_batch_size(const Index);
 
     void set_initial_learning_rate(const float);
+    float get_initial_learning_rate() const { return initial_learning_rate; }
     void set_initial_decay(const float);
     void set_momentum(const float);
     void set_nesterov(bool);

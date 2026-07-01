@@ -438,6 +438,13 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
                  "YoloNetwork: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
     }
+    if (head_style == HeadStyle::PANet)
+    {
+        throw_if(backbone != Backbone::Darknet53,
+                 "YoloNetwork: HeadStyle::PANet requires Backbone::Darknet53.");
+        throw_if(ssize(anchors) != 9,
+                 "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
+    }
 
     // Single source of truth for every conv-layer activation string in this
     // network. Defaults to "ReLU" so call sites + saved Phase 1/2 weights
@@ -639,9 +646,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             if (i == 4) c5_index = last_index;
         }
 
-        if (head_style == HeadStyle::FPN)
+        if (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)
         {
-            throw_if(ssize(anchors) != 9, "YoloNetwork: Darknet53 FPN requires exactly 9 anchors.");
+            throw_if(ssize(anchors) != 9, "YoloNetwork: Darknet53 FPN/PANet requires exactly 9 anchors.");
 
             vector<array<float,2>> anchors_sorted = anchors;
             ranges::sort(anchors_sorted, {}, [](const array<float,2>& a){ return a[0]*a[1]; });
@@ -662,7 +669,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     ? Detection::ClassActivation::Sigmoid : Detection::ClassActivation::Softmax);
             };
 
-            // 5-conv neck block (YOLOv3 DBL×5): reduces in_ch → ch_small, alternates ch_small/ch_large
+            // 5-conv neck block (YOLOv3 DBL×5)
             auto add_yolo_neck = [&](Index idx, Index in_ch,
                                      Index ch_small, Index ch_large, const string& pfx) -> Index {
                 Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, true, pfx+"_c1");
@@ -673,38 +680,73 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return x;
             };
 
-            // ── Large head (13×13) ──────────────────────────────────────────────
+            // ── Top-down FPN path (shared by FPN and PANet) ──────────────────
             const Index p5n = add_yolo_neck(c5_index, 1024, 512, 1024, "neck_p5");
-            const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "neck_p5_pre");
-            add_det_head(p5d, anchors_large, "large");
 
             const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, "neck_p5_lat");
             add_layer(make_unique<Upsample>(get_layer(p5l)->get_output_shape(), 2, "fpn_p5_up"), {p5l});
             const Index p5u = get_layers_number() - 1;
 
-            // ── Medium head (26×26) ─────────────────────────────────────────────
             add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
                                                  vector<Index>{256, 512}, "fpn_p4_cat"),
                       {p5u, c4_index});
             const Index p4c = get_layers_number() - 1;
-
             const Index p4n = add_yolo_neck(p4c, 768, 256, 512, "neck_p4");
-            const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "neck_p4_pre");
-            add_det_head(p4d, anchors_medium, "medium");
 
             const Index p4l = add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, "neck_p4_lat");
             add_layer(make_unique<Upsample>(get_layer(p4l)->get_output_shape(), 2, "fpn_p4_up"), {p4l});
             const Index p4u = get_layers_number() - 1;
 
-            // ── Small head (52×52) ──────────────────────────────────────────────
             add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
                                                  vector<Index>{128, 256}, "fpn_p3_cat"),
                       {p4u, c3_index});
             const Index p3c = get_layers_number() - 1;
-
             const Index p3n = add_yolo_neck(p3c, 384, 128, 256, "neck_p3");
-            const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
-            add_det_head(p3d, anchors_small, "small");
+
+            if (head_style == HeadStyle::FPN)
+            {
+                // FPN: direct detection at each scale
+                const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "neck_p5_pre");
+                add_det_head(p5d, anchors_large, "large");
+                const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "neck_p4_pre");
+                add_det_head(p4d, anchors_medium, "medium");
+                const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
+                add_det_head(p3d, anchors_small, "small");
+            }
+            else // PANet: small head at P3, then bottom-up path for medium and large
+            {
+                // Small head (52×52) — same as FPN
+                const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
+                add_det_head(p3d, anchors_small, "small");
+
+                // 3-conv PAN block: reduce → expand → reduce
+                auto add_pan_block = [&](Index idx, Index in_ch, Index ch_s, Index ch_l, const string& pfx) -> Index {
+                    Index x = add_conv(idx, Shape{1, 1, in_ch, ch_s}, act, stride, true, pfx+"_c1");
+                    x       = add_conv(x,   Shape{3, 3, ch_s,  ch_l}, act, stride, true, pfx+"_c2");
+                    x       = add_conv(x,   Shape{1, 1, ch_l,  ch_s}, act, stride, true, pfx+"_c3");
+                    return x;
+                };
+
+                // ── Bottom-up: P3 → N4 (medium head, 26×26) ─────────────────
+                const Index n3_down = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, true, "pan_n3_down");
+                add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
+                                                     vector<Index>{256, 256}, "pan_n4_cat"),
+                          {n3_down, p4n});
+                const Index n4c = get_layers_number() - 1;
+                const Index n4n = add_pan_block(n4c, 512, 256, 512, "pan_n4");
+                const Index n4d = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, true, "pan_n4_pre");
+                add_det_head(n4d, anchors_medium, "medium");
+
+                // ── Bottom-up: N4 → N5 (large head, 13×13) ──────────────────
+                const Index n4_down = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, true, "pan_n4_down");
+                add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
+                                                     vector<Index>{512, 512}, "pan_n5_cat"),
+                          {n4_down, p5n});
+                const Index n5c = get_layers_number() - 1;
+                const Index n5n = add_pan_block(n5c, 1024, 512, 1024, "pan_n5");
+                const Index n5d = add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, true, "pan_n5_pre");
+                add_det_head(n5d, anchors_large, "large");
+            }
 
             compile();
             set_parameters_random();

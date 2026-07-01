@@ -319,6 +319,9 @@ tests/data/*.xml
 # Local benchmark scratch (datasets, scripts, generated TSV)
 /temp/
 
+# Fetched dependencies (downloaded at configure time, never vendored)
+/eigen/
+
 # Local build trees and run scripts (machine-specific)
 /build-cmake/
 /build-port/

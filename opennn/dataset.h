@@ -183,6 +183,33 @@ public:
     void set_has_header(bool new_has_header) { has_header = new_has_header; }
     void set_has_ids(bool new_has_ids) { has_sample_ids = new_has_ids; }
 
+    bool get_header_line() const { return has_header; }
+    bool get_has_sample_ids() const { return has_sample_ids; }
+    const vector<string>& get_sample_ids() const { return sample_ids; }
+
+    // Methods with default no-op implementations; subclasses override as needed
+    virtual vector<string> get_feature_scalers(const string&) const { return {}; }
+    virtual MatrixR get_variable_data(Index) const { return {}; }
+    virtual MatrixR get_variable_data(Index, const vector<Index>&) const { return {}; }
+    virtual vector<Histogram> calculate_variable_distributions(Index = 10) const { return {}; }
+    virtual vector<BoxPlot> calculate_variables_box_plots() const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const { return calculate_input_target_variable_pearson_correlations(); }
+    virtual vector<string> unuse_uncorrelated_variables(float = 0.25f) { return {}; }
+    virtual vector<string> unuse_collinear_variables(float = 0.9f) { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_categories(Index) const { return {}; }
+    virtual VectorI filter_data(const VectorR&, const VectorR&) const { return {}; }
+
+    bool has_categorical_variables() const
+    {
+        for(const auto& v : get_variables())
+            if(v.type == VariableType::Categorical) return true;
+        return false;
+    }
+
     void set_separator(const Separator& new_separator) { separator = new_separator; }
     void set_separator_string(const string&);
     void set_separator_name(const string&);

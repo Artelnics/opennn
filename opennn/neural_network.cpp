@@ -258,6 +258,20 @@ void NeuralNetwork::clear()
     last_trainable_cache_  = -1;
 }
 
+void NeuralNetwork::steal_from(NeuralNetwork& src)
+{
+    clear();
+    layers           = std::move(src.layers);
+    source_layers    = std::move(src.source_layers);
+    input_variables  = std::move(src.input_variables);
+    output_variables = std::move(src.output_variables);
+    first_trainable_cache_ = src.first_trainable_cache_;
+    last_trainable_cache_  = src.last_trainable_cache_;
+    src.first_trainable_cache_ = -1;
+    src.last_trainable_cache_  = -1;
+    link_parameters();
+}
+
 static vector<Index> string_to_source_indices(const string& text)
 {
     vector<Index> indices;
@@ -600,8 +614,13 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
 
-    const Index first_layer_index = is_training ? get_first_trainable_layer_index() : 0;
-    const Index last_layer_index  = is_training ? get_last_trainable_layer_index()  : get_layers_number() - 1;
+    // Always run the full forward pass: the partial-forward optimization
+    // (skip frozen-layer prefix) breaks skip connections that cross the
+    // frozen/trainable boundary (e.g. FPN/PANet backbone→neck shortcuts).
+    // The backward pass uses get_first_trainable_layer_index() separately
+    // and is unaffected.
+    const Index first_layer_index = 0;
+    const Index last_layer_index  = get_layers_number() - 1;
 
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())

@@ -92,7 +92,7 @@ void Detection::set_anchors(const vector<array<float, 2>>& new_anchors)
 
 void Detection::configure_operator()
 {
-    if (input_shape.empty()) return;
+    if (input_shape.empty() || detection.anchors.empty()) return;
     detection.set(input_shape, detection.anchors);
 }
 

@@ -509,10 +509,10 @@ private:
 
 };
 
-inline TensorView& slot_or(vector<TensorView>& views, const vector<size_t>& slots, size_t i)
+inline TensorView& slot_or(vector<TensorView>& views, const vector<size_t>& slot_indices, size_t i)
 {
     static TensorView empty;
-    return i < slots.size() ? views[slots[i]] : empty;
+    return i < slot_indices.size() ? views[slot_indices[i]] : empty;
 }
 
 template<typename T, size_t N>

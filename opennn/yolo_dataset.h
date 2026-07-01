@@ -88,6 +88,9 @@ public:
     const vector<array<float, 2>>& get_anchors() const noexcept { return anchors; }
     const vector<string>& get_class_names() const noexcept { return class_names; }
     const filesystem::path& get_image_path(Index i) const { return image_filenames[size_t(i)]; }
+    const filesystem::path& get_images_directory() const { return images_directory; }
+    const filesystem::path& get_labels_directory() const { return labels_directory; }
+    const Shape& get_input_shape() const { return cache_input_shape; }
 
     bool is_multi_scale() const noexcept { return !head_grid_sizes.empty(); }
     Index get_boxes_per_head() const noexcept { return boxes_per_head; }

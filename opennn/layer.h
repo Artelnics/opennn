@@ -172,6 +172,7 @@ public:
     virtual void print() const {}
 
     bool get_is_trainable() const noexcept { return is_trainable; }
+    void set_is_trainable(bool trainable) { is_trainable = trainable; }
 
     Type get_compute_dtype() const noexcept { return compute_dtype; }
     Device get_compute_device() const noexcept { return compute_device; }

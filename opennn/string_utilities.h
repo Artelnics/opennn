@@ -96,6 +96,7 @@ namespace opennn
     bool contains(initializer_list<string_view>, string_view);
     bool starts_with_any(string_view, initializer_list<string_view>);
     bool env_flag_enabled(const char*) noexcept;
+
 }
 
 // OpenNN: Open Neural Networks Library.
