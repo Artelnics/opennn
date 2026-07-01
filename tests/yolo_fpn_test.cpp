@@ -294,6 +294,10 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
     dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
                 /*grid_size=*/2, /*boxes_per_cell=*/3, anchors_large);
     dataset.set_multi_scale_heads(head_grids, {anchors_large, anchors_medium, anchors_small});
+    {
+        YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+        dataset.set_augmentation(no_aug);
+    }
 
     // Build the network manually: input → 3 stride-2 convs (capturing 3
     // intermediate features) → each gets a 1×1 yolo_logits → Detection.
@@ -351,18 +355,8 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    // Diagnostic: print first 10 values of both vectors so we can see the
-    // pattern of mismatch (e.g., one head zero, scaling factor off, etc).
-    std::cout << "\nGradient (first 10): ";
-    for (Index i = 0; i < std::min<Index>(10, gradient.size()); ++i)
-        std::cout << gradient(i) << " ";
-    std::cout << "\nNumerical (first 10): ";
-    for (Index i = 0; i < std::min<Index>(10, numerical_gradient.size()); ++i)
-        std::cout << numerical_gradient(i) << " ";
-    std::cout << "\nGradient size: " << gradient.size()
-              << " | Numerical size: " << numerical_gradient.size() << "\n";
-    // Layer sum is fewer than parameters buffer size: alignment padding floats
-    // are interleaved. Restrict the comparison to layer-owned params only.
+    // Restrict comparison to layer-owned parameters (alignment padding floats
+    // are interleaved in the buffer and not directly comparable).
     Index sum_per_layer = 0;
     for (Index i = 0; i < neural_network.get_layers_number(); ++i)
         sum_per_layer += neural_network.get_layer(i)->get_parameters_number();
@@ -374,25 +368,12 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         const float d = std::abs(gradient(i) - numerical_gradient(i));
         if (d > worst) { worst = d; worst_idx = i; }
     }
-    std::cout << "Worst mismatch (layer-owned span) at idx " << worst_idx
-              << ": grad=" << gradient(worst_idx)
-              << " num=" << numerical_gradient(worst_idx) << "\n";
 
-    Index worst_idx_full = 0;
-    float worst_full = 0.0f;
-    for (Index i = 0; i < gradient.size(); ++i)
-    {
-        const float d = std::abs(gradient(i) - numerical_gradient(i));
-        if (d > worst_full) { worst_full = d; worst_idx_full = i; }
-    }
-    std::cout << "Worst mismatch (full buffer) at idx " << worst_idx_full
-              << ": grad=" << gradient(worst_idx_full)
-              << " num=" << numerical_gradient(worst_idx_full) << "\n";
-
-    // No-object branch has no IoU approximation so the gradient should be exact.
-    // Single-head no-object test passes at 1e-3. FPN has 3 heads × 504 cells so
-    // float32 accumulation is larger, but 0.05 still catches sign errors, scale-of-2
-    // bugs, and routing mistakes. If this fails it signals a systematic error in
-    // the FPN gradient path — not float32 noise — and must be investigated.
-    EXPECT_LT(worst, 0.05f);
+    // No-object BCE gradient is exact (no IoU approximation). The single-head
+    // test passes at 1e-3; 0.01 gives 5× margin for float32 accumulation across
+    // 3 heads × 504 no-object cells while still catching sign errors and routing bugs.
+    EXPECT_LT(worst, 0.01f)
+        << "Worst at idx " << worst_idx
+        << ": grad=" << gradient(worst_idx)
+        << " num=" << numerical_gradient(worst_idx);
 }

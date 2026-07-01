@@ -321,6 +321,7 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
                          .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
                          .reshape(out_slice_shape) + bias_value;
     }
+
 }
 
 #if defined(__GNUC__) && !defined(__clang__)
