@@ -12,6 +12,7 @@
 
 #include "batch_norm_operator.h"
 #include "device_backend.h"
+#include "kernel.cuh"
 #include "json.h"
 #include "tensor_operations.h"
 #include "string_utilities.h"
@@ -316,8 +317,11 @@ using namespace ::cudnn_frontend;
 shared_ptr<graph::Tensor_attributes>
 per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
 {
+    // BN scale/bias/stats stay FP32 in every mode (cuDNN mixed-precision BN
+    // requires FP32 per-channel tensors even with BF16 io).
     return graph.tensor(graph::Tensor_attributes()
                         .set_name(name)
+                        .set_data_type(DataType_t::FLOAT)
                         .set_dim({1, channels, 1, 1})
                         .set_stride({channels, 1, channels, channels}));
 }
@@ -327,6 +331,7 @@ scalar_tensor(graph::Graph& graph, const char* name)
 {
     return graph.tensor(graph::Tensor_attributes()
                         .set_name(name)
+                        .set_data_type(DataType_t::FLOAT)
                         .set_dim({1, 1, 1, 1})
                         .set_stride({1, 1, 1, 1})
                         .set_is_pass_by_value(true));
@@ -335,15 +340,16 @@ scalar_tensor(graph::Graph& graph, const char* name)
 void set_per_channel_output(shared_ptr<graph::Tensor_attributes>& tensor, int64_t channels)
 {
     tensor->set_output(true)
+           .set_data_type(DataType_t::FLOAT)
            .set_dim({1, channels, 1, 1})
            .set_stride({channels, 1, channels, channels});
 }
 
 void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
                       int64_t batch, int64_t channels, int64_t spatial,
-                      bool fuse_relu, bool fuse_add)
+                      bool fuse_relu, bool fuse_add, Type dtype)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(dtype);
 
     entry.fwd_X        = nhwc_tensor(*graph, "X", batch, channels, spatial, 1);
     entry.fwd_Scale    = per_channel_tensor(*graph, "SCALE", channels);
@@ -390,9 +396,9 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
 
 void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
                        int64_t batch, int64_t channels, int64_t spatial,
-                       bool fuse_relu, bool fork_residual = false)
+                       bool fuse_relu, Type dtype, bool fork_residual = false)
 {
-    auto graph = new_graph();
+    auto graph = new_graph(dtype);
 
     entry.bwd_DY     = nhwc_tensor(*graph, "DY", batch, channels, spatial, 1);
     entry.bwd_X      = nhwc_tensor(*graph, "X", batch, channels, spatial, 1);
@@ -471,7 +477,13 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 {
     PROFILE_SCOPE("op:bn_fwd");
 
-    throw_if(!input.is_fp32(), "BatchNormalizationOperator: GPU training forward requires FP32.");
+    // cuDNN's BF16 batchnorm-backward has no engine, so BN runs entirely in FP32
+    // (the PyTorch/TF AMP convention): cast X/residual up, run FP32, cast Y back.
+    const bool bf16 = input.is_bf16();
+    const Type graph_dtype = bf16 ? Type::FP32 : input.type;
+
+    throw_if(!input.is_fp32() && !bf16,
+             "BatchNormalizationOperator: GPU training forward requires FP32 or BF16.");
 
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
@@ -481,22 +493,42 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
         {
             const int64_t batch    = input.shape[0];
             const int64_t spatial  = int64_t(input.size()) / (batch * features);
-            cudnn_frontend::build_bn_forward(entry, batch, features, spatial, fuse_relu, fuse_add);
+            cudnn_frontend::build_bn_forward(entry, batch, features, spatial, fuse_relu, fuse_add, graph_dtype);
         }
 
         float epsilon_value = EPSILON;
         float momentum_value = momentum;
 
+        void* x_ptr        = input.data;
+        void* residual_ptr = fuse_add ? residual.data : nullptr;
+        void* y_ptr        = output.data;
+        float* y_fp32      = nullptr;
+        if (bf16)
+        {
+            const Index n = input.size();
+            float* scratch = ensure_bf16_to_fp32_workspace((fuse_add ? 3 : 2) * n);
+            y_fp32 = scratch + n;
+            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(input.data), scratch);
+            x_ptr = scratch;
+            y_ptr = y_fp32;
+            if (fuse_add)
+            {
+                float* r_fp32 = scratch + 2 * n;
+                cast_bf16_to_fp32(n, static_cast<const bfloat16*>(residual.data), r_fp32);
+                residual_ptr = r_fp32;
+            }
+        }
+
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        if (fuse_add) tensors[entry.fwd_Residual] = residual.data;
-        tensors[entry.fwd_X]        = input.data;
+        if (fuse_add) tensors[entry.fwd_Residual] = residual_ptr;
+        tensors[entry.fwd_X]        = x_ptr;
         tensors[entry.fwd_Scale]    = gamma.data;
         tensors[entry.fwd_Bias]     = beta.data;
         tensors[entry.fwd_PrevMean] = running_mean.data;
         tensors[entry.fwd_PrevVar]  = running_variance.data;
         tensors[entry.fwd_Eps]      = &epsilon_value;
         tensors[entry.fwd_Mom]      = &momentum_value;
-        tensors[entry.fwd_Y]        = output.data;
+        tensors[entry.fwd_Y]        = y_ptr;
         tensors[entry.fwd_Mean]     = mean.data;
         tensors[entry.fwd_InvVar]   = inverse_variance.data;
         tensors[entry.fwd_NextMean] = running_mean.data;
@@ -509,6 +541,10 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
                                 cudnn_frontend::graph_timing_enabled()
                                 ? format("bn_fwd c{} r{}", features, input.size() / features)
                                 : string());
+
+        if (bf16)
+            cast_fp32_to_bf16(output.size(), y_fp32, static_cast<bfloat16*>(output.data),
+                              Backend::get_compute_stream());
     });
 
     throw_if(!ran, "BatchNormalizationOperator: GPU training forward requires SM 8.0+ (Ampere).");
@@ -528,9 +564,15 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
     // result is both a real output for the skip branch and the DBN input);
     // every unforked path undoes the activation and copies the delta to the
     // skip branch by hand before the plain batch-norm backward.
-    const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty();
+    // cuDNN has no BF16 batchnorm-backward engine, so in BF16 the backward runs
+    // FP32: X/DY are cast up at the boundary and DX cast back. Forced-unforked
+    // there to keep the FP32 scratch to a single 2N buffer.
+    const bool bf16 = input.is_bf16();
+    const Type graph_dtype = bf16 ? Type::FP32 : input.type;
+    const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty() && !bf16;
 
-    throw_if(!input.is_fp32(), "BatchNormalizationOperator: GPU backward requires FP32.");
+    throw_if(!input.is_fp32() && !bf16,
+             "BatchNormalizationOperator: GPU backward requires FP32 or BF16.");
 
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(bn_graph_cache, "BatchNormalizationOperator", [&](BatchNormalizationGraphCache& cache)
@@ -544,7 +586,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             if (want_fork)
                 try
                 {
-                    cudnn_frontend::build_bn_backward(entry, batch, features, spatial, true, true);
+                    cudnn_frontend::build_bn_backward(entry, batch, features, spatial, true, graph_dtype, true);
                     entry.bwd_forked = true;
                 }
                 catch (const exception&)
@@ -555,7 +597,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 }
 
             if (!entry.bwd)
-                cudnn_frontend::build_bn_backward(entry, batch, features, spatial, fuse_relu && !fuse_add);
+                cudnn_frontend::build_bn_backward(entry, batch, features, spatial, fuse_relu && !fuse_add, graph_dtype);
         }
 
         if (fuse_add && !entry.bwd_forked)
@@ -564,19 +606,34 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             if (!residual_delta.empty()) copy(delta, residual_delta);
         }
 
+        // BF16: cast X and DY (DX shares the buffer, in place) into FP32 scratch.
+        void* x_ptr    = input.data;
+        void* dy_ptr   = delta.data;
+        float* dx_fp32 = nullptr;
+        if (bf16)
+        {
+            const Index n = delta.size();
+            float* scratch = ensure_bf16_to_fp32_workspace(2 * n);
+            dx_fp32 = scratch + n;
+            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(input.data), scratch);
+            cast_bf16_to_fp32(n, static_cast<const bfloat16*>(delta.data), dx_fp32);
+            x_ptr  = scratch;
+            dy_ptr = dx_fp32;
+        }
+
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-        tensors[entry.bwd_DY]     = delta.data;
+        tensors[entry.bwd_DY]     = dy_ptr;
         if (entry.bwd_Bias)     tensors[entry.bwd_Bias]     = beta.data;
         if (entry.bwd_forked)
         {
             tensors[entry.bwd_Residual] = residual.data;
             tensors[entry.bwd_DPre]     = residual_delta.data;
         }
-        tensors[entry.bwd_X]      = input.data;
+        tensors[entry.bwd_X]      = x_ptr;
         tensors[entry.bwd_Scale]  = gamma.data;
         tensors[entry.bwd_Mean]   = mean.data;
         tensors[entry.bwd_InvVar] = inverse_variance.data;
-        tensors[entry.bwd_DX]     = delta.data;
+        tensors[entry.bwd_DX]     = dy_ptr;
         tensors[entry.bwd_DScale] = gamma_gradient.data;
         tensors[entry.bwd_DBias]  = beta_gradient.data;
 
@@ -587,6 +644,10 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 cudnn_frontend::graph_timing_enabled()
                                 ? format("bn_bwd c{} r{}", features, input.size() / features)
                                 : string());
+
+        if (bf16)
+            cast_fp32_to_bf16(delta.size(), dx_fp32, static_cast<bfloat16*>(delta.data),
+                              Backend::get_compute_stream());
     });
 
     throw_if(!ran, "BatchNormalizationOperator: GPU backward requires SM 8.0+ (Ampere).");

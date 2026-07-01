@@ -25,6 +25,7 @@
 #include "../../../opennn/random_utilities.h"
 #include "../../../opennn/configuration.h"
 #include "../../../opennn/device_backend.h"
+#include "../../../opennn/memory_debug.h"
 
 using namespace opennn;
 using clock_type = std::chrono::steady_clock;
@@ -39,11 +40,18 @@ int main(int argc, char* argv[])
         const Index timed_epochs = argc > 2 ? Index(std::stoll(argv[2])) : 5;
         const Index batch = argc > 3 ? Index(std::stoll(argv[3])) : 128;
         const std::string precision = argc > 4 ? argv[4] : "fp32";
-        const Index image_size = argc > 5 ? Index(std::stoll(argv[5])) : 0;
+        // A negative image_size resizes to |image_size| AND keeps the set device
+        // resident (fits smaller crops in VRAM so BF16/FP32 both take the gather
+        // mega-graph). Positive stays host-staged (large-image ImageNet path).
+        const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
+        const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
+        const bool force_resident = image_size_arg < 0;
         const bool cuda_graph = argc > 6 ? (std::stoi(argv[6]) != 0) : true;
         const std::string cache_dir = argc > 7 ? argv[7] : "";
         // Conv workspace cap A/B: "off"/"0" = autotune, "auto" = AUTO cap, N = MiB cap.
         const std::string workspace_arg = argc > 8 ? argv[8] : "off";
+
+        memory_debug::reset();
 
         set_seed(42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
@@ -76,9 +84,11 @@ int main(int argc, char* argv[])
         // CIFAR (image_size==0) fits in VRAM: keep it GPU-resident so each batch is
         // a device-side gather. The 224px ImageNet path is too large, so it stays
         // host-staged. Enabled in code; there is no environment switch.
-        const bool gpu_resident = (image_size == 0);
+        const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+        else
+            dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
 
         const Index samples = dataset.get_samples_number();
 
@@ -109,6 +119,19 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_cuda_graph(cuda_graph);
 
+        // Probe mode (epochs<=0): only the CUDA warmup runs (peak allocation for
+        // this batch), then report memory + fit. maximum_epochs<0 makes the epoch
+        // loop run zero times, so no full epoch is trained -- fast OOM/fit check.
+        if (timed_epochs <= 0)
+        {
+            adam->set_display(false);
+            adam->set_maximum_epochs(0);
+            training_strategy.train();
+            memory_debug::print(std::cout);
+            std::cout << "RESULT=OK\n";
+            return 0;
+        }
+
         adam->set_maximum_epochs(2);
         training_strategy.train();
 
@@ -123,6 +146,7 @@ int main(int argc, char* argv[])
         std::cerr << "final_training_error " << results.get_training_error() << "\n";
         std::cout << "epoch_s=" << epoch_s << "\n";
         std::cout << "samples_per_sec=" << long(double(samples) / epoch_s) << "\n";
+        memory_debug::print(std::cout);
         std::cout << "RESULT=OK\n";
         return 0;
     }

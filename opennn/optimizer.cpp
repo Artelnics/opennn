@@ -1203,8 +1203,11 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         ::opennn::enabled() = profiler_enabled;
     };
 
-    const bool resident_gather = loss->get_dataset()->is_device_resident()
-                              && !fixed_device_batch->input_is_bf16;
+    // BF16 device-resident batches use the same gather mega-graph as FP32: the
+    // device gather emits BF16 directly (gather_rows_bf16_cuda) and the captured
+    // compute learns identically. The per-slot fallback below is only for the
+    // host-staged BF16 path.
+    const bool resident_gather = loss->get_dataset()->is_device_resident();
 
     constexpr Index M = Index(graph_group_size);
     Batch* host_batch = nullptr;

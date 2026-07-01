@@ -145,10 +145,13 @@ inline vector<int64_t> nhwc_strides(int64_t c, int64_t h, int64_t w)
     return {h * w * c, 1, w * c, c};
 }
 
-inline shared_ptr<graph::Graph> new_graph()
+// Mixed precision: io tensors follow dtype (BF16 activations/weights), while
+// intermediate and compute stay FP32 (tensor-core accumulation). Per-tensor
+// .set_data_type(FLOAT) overrides keep gradients/stats in FP32.
+inline shared_ptr<graph::Graph> new_graph(Type dtype = Type::FP32)
 {
     auto g = make_shared<graph::Graph>();
-    g->set_io_data_type(DataType_t::FLOAT)
+    g->set_io_data_type(to_dtype(dtype))
       .set_intermediate_data_type(DataType_t::FLOAT)
       .set_compute_data_type(DataType_t::FLOAT);
     return g;
