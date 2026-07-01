@@ -44,7 +44,7 @@ inline bool frontend_enabled()
     return device_sm_version() >= 800;
 }
 
-inline bool autotune_enabled() { return true; }
+inline bool autotune_enabled() { return device::conv_autotune_enabled(); }
 
 // With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
 // (per-label totals printed at exit). Incompatible with set_cuda_graph(true).
@@ -184,14 +184,12 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::FALLBACK}),
                  tag + " create_execution_plans");
 
-    // Optional workspace cap: drop plans whose scratch exceeds the limit before
-    // either autotune or the heuristic pick. 0 = uncapped (pure autotune). Bounds
-    // the shared scratch the way the cublasLt path does and stops the heuristic
-    // from choosing workspace proportional to batch (~MiB/sample) and OOMing.
-    // The cap and autotune are alternative plan-selection strategies: capping
-    // bounds memory and picks via the heuristic; autotune times all plans for
-    // speed (unbounded). They don't compose (autotuning over a deselected plan
-    // set faults), so a positive cap disables autotune and takes the heuristic.
+    // Plan selection. A positive cap deselects high-workspace plans and uses the
+    // heuristic (memory config). Otherwise, autotune (when enabled) times all plans
+    // for speed; if autotune is off too, the plain heuristic picks one plan with
+    // no autotune transient. NOTE: deselect + build_plans(ALL) + autotune do NOT
+    // compose in this cuDNN-frontend (they fault on a constrained plan set), so a
+    // cap and autotune are mutually exclusive here.
     const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
     if (conv_workspace_cap > 0)
         graph.deselect_workspace_greater_than(conv_workspace_cap);

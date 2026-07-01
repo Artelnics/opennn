@@ -47,6 +47,11 @@ int64_t conv_workspace_limit_bytes() noexcept;
 void    set_conv_workspace_cap(int64_t mode) noexcept;
 void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 
+// cuDNN-frontend conv autotune toggle. On (default) = time all plans for speed
+// (high memory transient). Off = plain heuristic plan pick (no transient).
+bool conv_autotune_enabled() noexcept;
+void set_conv_autotune(bool) noexcept;
+
 
 class CudaAllocationGrowthGuard
 {

@@ -49,8 +49,12 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
+        // off = autotune (cap off); heur = plain heuristic (autotune off, cap off);
+        // auto = AUTO cap (heuristic); N = explicit MiB cap (heuristic).
         if (workspace_arg == "off" || workspace_arg == "0")
-            device::set_conv_workspace_cap(0);
+            { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
+        else if (workspace_arg == "heur")
+            { device::set_conv_autotune(false); device::set_conv_workspace_cap(0); }
         else if (workspace_arg == "auto")
             device::set_conv_workspace_cap(-1);
         else

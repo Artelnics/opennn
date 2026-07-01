@@ -26,6 +26,7 @@ atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 // -layer activation, set by ForwardPropagation.
 atomic<int64_t> conv_workspace_cap_mode{0};
 atomic<int64_t> conv_workspace_auto_bytes{0};
+atomic_bool conv_autotune_enabled_flag{true};
 
 void throw_if_auto(Device device_type)
 {
@@ -130,6 +131,16 @@ void set_conv_workspace_auto_limit_bytes(int64_t bytes) noexcept
 {
     if (bytes > 0)
         conv_workspace_auto_bytes.store(bytes, memory_order_relaxed);
+}
+
+bool conv_autotune_enabled() noexcept
+{
+    return conv_autotune_enabled_flag.load(memory_order_relaxed);
+}
+
+void set_conv_autotune(bool enabled) noexcept
+{
+    conv_autotune_enabled_flag.store(enabled, memory_order_relaxed);
 }
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
