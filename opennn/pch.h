@@ -65,8 +65,11 @@
 //                                               -> CPU-only build, no CUDA headers needed
 // Define WITH_CUDA manually (or comment this guard) only when forcing a CPU
 // build on a machine that does have CUDA installed.
+// macOS build: CUDA disabled explicitly (no nvcc/toolkit on this machine).
+// WITH_CUDA is never set by cuda.pri here, but we also hard-disable the
+// OPENNN_CUDA define so the CUDA headers below are guaranteed not compiled.
 #ifdef WITH_CUDA
-#define OPENNN_CUDA
+//#define OPENNN_CUDA
 #endif
 
 #ifdef OPENNN_CUDA
