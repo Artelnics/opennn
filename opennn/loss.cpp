@@ -236,7 +236,7 @@ float yolo_error_kernel(const TensorView& output,
 
     float coordinate_loss = 0.0f;
     float object_loss = 0.0f;
-    float noobject_loss = 0.0f;
+    float noobject_loss = 0.0f, noobject_comp = 0.0f;  // Kahan compensated sum
     float class_loss = 0.0f;
 
     for (Index n = 0; n < batch_size; ++n)
@@ -284,7 +284,13 @@ float yolo_error_kernel(const TensorView& output,
                         const float c4 = out[base + 4];
                         const float w_bg = (lam.obj_focal_gamma > 0.0f)
                                            ? pow(c4, lam.obj_focal_gamma) : 1.0f;
-                        noobject_loss -= w_bg * log(1.0f - c4 + EPSILON);  // focal BCE: -p^γ log(1-p)
+                        // Kahan compensated sum prevents float32 cancellation when accumulating
+                        // many background-cell terms into a large total (sum >> per-cell delta).
+                        const float term = w_bg * log(1.0f - c4 + EPSILON);
+                        const float kahan_y = -term - noobject_comp;
+                        const float kahan_t = noobject_loss + kahan_y;
+                        noobject_comp = (kahan_t - noobject_loss) - kahan_y;
+                        noobject_loss = kahan_t;
                     }
                 }
             }

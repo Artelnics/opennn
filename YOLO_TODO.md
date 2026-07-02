@@ -742,3 +742,7 @@ cmake --build build --target yolo -j$(nproc) && ./build/bin/yolo
 First run will build the new cache (only filtered images), print
 `"Filtered to N images containing the requested classes."`, and train from scratch.
 Expected: mAP >20% if the detector core is healthy on a simpler problem.
+
+NeuralDesigner:
+claude --resume 4bc362a6-71f0-4734-9665-184b221a0dee
+Opennn: 
