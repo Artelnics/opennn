@@ -1,5 +1,14 @@
 .claude/
 
+# IDE project files
+**/*.pro
+**/*.vcxproj
+**/*.vcxproj.filters
+**/*.vcxproj.user
+**/*.sln
+**/*.qtvscr
+**/*.user
+
 ### VirtualEnv template
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
