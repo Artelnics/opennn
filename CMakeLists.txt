@@ -63,6 +63,7 @@ else()
     set(OPENNN_WITH_CUDA OFF CACHE BOOL "")
 endif()
 
+option(OpenNN_SHARED_LIBS "Build OpenNN shared libraries" ON)
 add_subdirectory(opennn)
 
 option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)

@@ -5,7 +5,17 @@ project(opennn_library LANGUAGES CXX)
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
-add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
+if(OpenNN_SHARED_LIBS)
+    add_library(opennn
+        ${CPP_SOURCES}
+        ${HEADER_FILES}
+    )
+else()
+    add_library(opennn STATIC 
+        ${CPP_SOURCES} 
+        ${HEADER_FILES}
+    )
+endif()
 
 # Force linker to include all object files so that REGISTER() auto-registration
 # in anonymous namespaces is not stripped from the final binary.
@@ -53,4 +63,24 @@ endif()
 target_compile_options(opennn PRIVATE
     $<$<CONFIG:DEBUG>:-O0 -g>
     $<$<NOT:$<CONFIG:DEBUG>>:-O2>
+)
+
+include(GNUInstallDirs)
+
+install(TARGETS opennn
+    EXPORT OpenNNTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn
+    FILES_MATCHING PATTERN "*.h"
+)
+
+install(EXPORT OpenNNTargets
+    NAMESPACE OpenNN::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN
 )
