@@ -6,7 +6,7 @@ file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 if(OpenNN_SHARED_LIBS)
-    add_library(opennn
+    add_library(opennn SHARED
         ${CPP_SOURCES}
         ${HEADER_FILES}
     )
