@@ -39,11 +39,10 @@ include(GenerateExportHeader)
 generate_export_header(opennn)
 
 target_include_directories(opennn PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
 )
-
 
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
