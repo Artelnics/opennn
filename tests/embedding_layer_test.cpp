@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include <opennn/tensor_utilities.h>
-#include <opennn/embedding_layer.h>
-#include <opennn/random_utilities.h>
+#include "opennn/tensor_utilities.h"
+#include "opennn/embedding_layer.h"
+#include "opennn/random_utilities.h"
 #include <iostream>
 
 

@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include <opennn/dataset.h>
-#include <opennn/neural_network.h>
-#include <opennn/training_strategy.h>
+#include "opennn/dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/training_strategy.h"
 
 using namespace opennn;
 

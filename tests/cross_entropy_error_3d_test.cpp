@@ -1,8 +1,8 @@
 #include "pch.h"
-#include <opennn/tensor_utilities.h>
-#include <opennn/cross_entropy_error_3d.h>
-#include <opennn/dense_layer.h>
-#include <opennn/dataset.h>
+#include "opennn/tensor_utilities.h"
+#include "opennn/cross_entropy_error_3d.h"
+#include "opennn/dense_layer.h"
+#include "opennn/dataset.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;

@@ -11,13 +11,13 @@
 #include <vector>
 #include <exception>
 
-#include <opennn/image_dataset.h>
-#include <opennn/neural_network.h>
-#include <opennn/standard_networks.h>
-#include <opennn/training_strategy.h>
-#include <opennn/testing_analysis.h>
-#include <opennn/optimizer.h>
-#include <opennn/adaptive_moment_estimation.h>
+#include "opennn/image_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
+#include "opennn/testing_analysis.h"
+#include "opennn/optimizer.h"
+#include "opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
 

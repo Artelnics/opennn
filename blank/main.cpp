@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#include <opennn/opennn.h>
+#include "opennn/opennn.h"
 
 using namespace opennn;
 

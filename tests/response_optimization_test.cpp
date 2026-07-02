@@ -8,14 +8,14 @@
 
 #include "pch.h"
 
-#include <opennn/formula_expression.h>
-#include <opennn/neural_network.h>
-#include <opennn/response_optimization.h>
-#include <opennn/scaling_layer.h>
-#include <opennn/standard_networks.h>
-#include <opennn/statistics.h>
-#include <opennn/unscaling_layer.h>
-#include <opennn/variable.h>
+#include "opennn/formula_expression.h"
+#include "opennn/neural_network.h"
+#include "opennn/response_optimization.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/standard_networks.h"
+#include "opennn/statistics.h"
+#include "opennn/unscaling_layer.h"
+#include "opennn/variable.h"
 
 using namespace opennn;
 

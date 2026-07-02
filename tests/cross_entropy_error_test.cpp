@@ -1,11 +1,11 @@
 #include "pch.h"
 
-#include <opennn/cross_entropy_error.h>
-#include <opennn/tensor_utilities.h>
-#include <opennn/mean_squared_error.h>
-#include <opennn/language_dataset.h>
-#include <opennn/dense_layer.h>
-#include <opennn/convolutional_layer.h>
+#include "opennn/cross_entropy_error.h"
+#include "opennn/tensor_utilities.h"
+#include "opennn/mean_squared_error.h"
+#include "opennn/language_dataset.h"
+#include "opennn/dense_layer.h"
+#include "opennn/convolutional_layer.h"
 
 
 using namespace opennn;

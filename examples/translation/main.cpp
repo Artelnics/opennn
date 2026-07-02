@@ -14,10 +14,10 @@
 
 // OpenNN includes
 
-#include <opennn/training_strategy.h>
-#include <opennn/language_dataset.h>
-#include <opennn/standard_networks.h>
-#include <opennn/adaptive_moment_estimation.h>
+#include "opennn/training_strategy.h"
+#include "opennn/language_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/adaptive_moment_estimation.h"
 
 using namespace std;
 using namespace opennn;
