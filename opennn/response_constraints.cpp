@@ -1943,19 +1943,39 @@ void cardinality_swap_row(VectorR& point,
                           const vector<Index>& columns,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
+                          const vector<char>& is_discrete,
                           const Index swaps)
 {
+    // Turn a cardinality member "on" with a type-consistent nonzero value in its box.
+    const auto sample_on = [&](const Index column) -> float
+    {
+        const float inferior = inferior_frontier(column);
+        const float superior = superior_frontier(column);
+
+        if (column < ssize(is_discrete) && is_discrete[column])
+            return (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);   // nonzero integer/binary
+
+        float value = random_uniform(inferior, superior);               // continuous
+        if (abs(value) < EPSILON)
+            value = (superior > EPSILON) ? superior : inferior;
+        return value;
+    };
+
     for (Index s = 0; s < swaps; ++s)
     {
         vector<Index> off_candidates, on_candidates;
 
         for (const Index column : columns)
         {
-            const float value = point(column);
-            if (value > 0.5f && (value - inferior_frontier(column)) >= 1.0f - EPSILON)
-                off_candidates.push_back(column);
-            else if (value < 0.5f && (superior_frontier(column) - value) >= 1.0f - EPSILON)
-                on_candidates.push_back(column);
+            const bool on = abs(point(column)) > EPSILON;
+
+            const bool box_contains_zero = (inferior_frontier(column) <= EPSILON
+                                            && superior_frontier(column) >= -EPSILON);
+            const bool box_has_nonzero   = (superior_frontier(column) >  EPSILON
+                                            || inferior_frontier(column) < -EPSILON);
+
+            if (on && box_contains_zero)       off_candidates.push_back(column);
+            else if (!on && box_has_nonzero)   on_candidates.push_back(column);
         }
 
         if (off_candidates.empty() || on_candidates.empty())
@@ -1964,8 +1984,8 @@ void cardinality_swap_row(VectorR& point,
         const Index off_column = off_candidates[random_integer(0, ssize(off_candidates) - 1)];
         const Index on_column  = on_candidates [random_integer(0, ssize(on_candidates)  - 1)];
 
-        point(off_column) = round(point(off_column) - 1.0f);
-        point(on_column)  = round(point(on_column)  + 1.0f);
+        point(off_column) = 0.0f;
+        point(on_column)  = sample_on(on_column);
     }
 }
 
@@ -2047,7 +2067,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
                 continue;
 
             for (const vector<Index>& columns : cardinality_columns)
-                cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, swaps);
+                cardinality_swap_row(point, columns, inferior_frontier, superior_frontier, fixed_mask, swaps);
 
             unlock_free_integers_row(point, free_lattice, unlock_fraction);
 

@@ -1298,6 +1298,135 @@ TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
 
 
 // -----------------------------------------------------------------------------
+// Generalized cardinality over non-binary variables: choose exactly K, rest = 0
+// -----------------------------------------------------------------------------
+
+TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
+{
+    // Cardinality over CONTINUOUS variables x0..x5 in [0,10]: exactly K active, the
+    // remaining A-K forced to exactly 0. No other constraints, so the k-hot mask in the
+    // sampler is the sole mechanism (the repair path early-returns with no input constraints).
+    const int A = 6;
+    const int K = 2;
+
+    vector<string> input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("x" + to_string(i));
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(10), float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_cardinality_constraint(input_names, K);
+
+    opt.set_iterations(2);
+    opt.set_evaluations_number(800);
+
+    const MatrixR results = opt.perform_response_optimization();
+    ASSERT_GT(results.rows(), 0) << "no feasible point for continuous cardinality";
+
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        int nonzero = 0, zero = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float x = results(r, i);
+            EXPECT_GE(x, float(-1e-4))          << "x" << i << " below box at row " << r;
+            EXPECT_LE(x, float(10) + float(1e-3)) << "x" << i << " above box at row " << r;
+            if (abs(x) > float(1e-6)) ++nonzero; else ++zero;
+        }
+        // Off-columns are forced to exactly 0; an active column may coincide with ~0 (option a),
+        // so the robust invariants are: at most K active and at least A-K exact zeros.
+        EXPECT_LE(nonzero, K)     << "more than K active variables at row " << r;
+        EXPECT_GE(zero, A - K)    << "fewer than A-K zeroed variables at row " << r;
+    }
+}
+
+
+TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
+{
+    // Cardinality over INTEGER variables n0..n4 in [0,5]: exactly K active, rest 0. Active
+    // integers are guaranteed nonzero (nudged off 0) and stay on the integer grid, and may
+    // range over [1,5] rather than being pinned to 1.
+    const int A = 5;
+    const int K = 3;
+
+    vector<string> input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("n" + to_string(i));
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(5), float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (Variable& variable : input_variables) variable.type = VariableType::Integer;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_cardinality_constraint(input_names, K);
+
+    opt.set_iterations(2);
+    opt.set_evaluations_number(1000);
+
+    const MatrixR results = opt.perform_response_optimization();
+    ASSERT_GT(results.rows(), 0) << "no feasible point for integer cardinality";
+
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        int nonzero = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float n = results(r, i);
+            EXPECT_NEAR(n, round(n), float(1e-3)) << "n" << i << " not integer at row " << r;
+            EXPECT_GE(n, float(-1e-3))            << "n" << i << " below box at row " << r;
+            EXPECT_LE(n, float(5) + float(1e-3))  << "n" << i << " above box at row " << r;
+            if (abs(n) > float(0.5)) ++nonzero;
+        }
+        // Integers on -> guaranteed nonzero, so the active count is exactly K.
+        EXPECT_EQ(nonzero, K) << "active integer count != K at row " << r;
+    }
+}
+
+
+TEST(BinaryCardinality, FreeModeIsAtMostK)
+{
+    // force_nonzero = false: choose up to K binary slots that MAY be 1, the rest pinned to 0.
+    // The result is a sparsity budget -> at most K ones (possibly fewer), never more.
+    const int A = 6;
+    const int K = 3;
+
+    vector<string> input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("b" + to_string(i));
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
+
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (Variable& variable : input_variables) variable.type = VariableType::Binary;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_cardinality_constraint(input_names, K, /*force_nonzero=*/false);
+
+    opt.set_iterations(2);
+    opt.set_evaluations_number(800);
+
+    const MatrixR results = opt.perform_response_optimization();
+    ASSERT_GT(results.rows(), 0) << "no feasible point for free-mode binary cardinality";
+
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        int ones = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float b = results(r, i);
+            EXPECT_NEAR(b, round(b), float(1e-3)) << "b" << i << " not binary at row " << r;
+            if (b > float(0.5)) ++ones;
+        }
+        EXPECT_LE(ones, K) << "more than K ones under free/at-most-K mode at row " << r;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
 // Single-variable affine constraint -> domain box promotion (B)
 // -----------------------------------------------------------------------------
 

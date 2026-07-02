@@ -109,6 +109,11 @@ struct CardinalityConstraint
 {
     vector<string> variable_names;
     Index k = 0;
+
+    // true  -> the k selected members are forced nonzero (binary -> 1): exactly k active.
+    // false -> the k selected members are free to take any value including 0, only the
+    //          non-selected members are pinned to 0: at most k active (sparsity budget).
+    bool force_nonzero = true;
 };
 
 

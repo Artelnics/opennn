@@ -53,15 +53,15 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
 }
 
 
-void ResponseOptimization::set_cardinality_constraint(const vector<string>& variable_names, const Index k)
+void ResponseOptimization::set_cardinality_constraint(const vector<string>& variable_names, const Index k, const bool force_nonzero)
 {
     throw_if(variable_names.empty(),
-             "ResponseOptimization: cardinality constraint needs at least one indicator variable");
+             "ResponseOptimization: cardinality constraint needs at least one variable");
 
     throw_if(k < 0 || k > ssize(variable_names),
-             format("ResponseOptimization: cardinality target k={} is out of range for {} indicator(s)", k, variable_names.size()));
+             format("ResponseOptimization: cardinality target k={} is out of range for {} variable(s)", k, variable_names.size()));
 
-    constraint_set.cardinality.push_back({ variable_names, k });
+    constraint_set.cardinality.push_back({ variable_names, k, force_nonzero });
 }
 
 
@@ -745,29 +745,57 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
     const Index effective_evaluations = random_inputs.rows();
     const Index inputs_features_number = random_inputs.cols();
 
+    (void)fixed_mask;
+
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
+    map<string, VariableType> type_of_name;
+    for (const Variable& variable : input_variables)
+        type_of_name[variable.name] = variable.type;
+
+    // Warn at most once per variable across the whole run (loud but not per-iteration spam).
+    static std::set<string> warned_zero_excluded;
+
     vector<vector<Index>> cardinality_columns;
 
     for (const CardinalityConstraint& group : constraint_set.cardinality)
     {
         vector<Index> columns;
+        vector<VariableType> types;
         columns.reserve(group.variable_names.size());
+        types.reserve(group.variable_names.size());
 
         for (const string& name : group.variable_names)
         {
             const auto found = scalar_column_of.find(name);
             throw_if(found == scalar_column_of.end(),
                      "ResponseOptimization: cardinality variable '" + name + "' is not a scalar input");
-            throw_if(!fixed_mask[found->second],
-                     "ResponseOptimization: cardinality variable '" + name + "' must be binary or integer");
             columns.push_back(found->second);
+            types.push_back(type_of_name.at(name));
         }
 
+        // A cardinality member is "off" when its value is exactly 0 and "on" otherwise.
+        // Force a member off if its box is pinned to 0, and force it on if its box excludes 0
+        // (a variable that cannot reach 0 always counts as active -> loud warning, graceful degrade).
         const Index count = ssize(columns);
         vector<char> force_on(count, 0), force_off(count, 0);
         for (Index c = 0; c < count; ++c)
         {
-            if (input_domain.superior_frontier(columns[c]) < 0.5f) force_off[c] = 1;
-            if (input_domain.inferior_frontier(columns[c]) > 0.5f) force_on[c]  = 1;
+            const float inferior = input_domain.inferior_frontier(columns[c]);
+            const float superior = input_domain.superior_frontier(columns[c]);
+
+            const bool box_contains_zero = (inferior <= EPSILON && superior >= -EPSILON);
+            const bool box_has_nonzero   = (superior >  EPSILON || inferior <  -EPSILON);
+
+            if (!box_has_nonzero) force_off[c] = 1;
+
+            if (!box_contains_zero)
+            {
+                force_on[c] = 1;
+                if (warned_zero_excluded.insert(group.variable_names[c]).second)
+                    cout << "!!! [Warning] Cardinality variable '" << group.variable_names[c]
+                         << "' cannot take the value 0 (box [" << inferior << ", " << superior
+                         << "]); it will always count as active.\n";
+            }
         }
 
         const Index exploration_count = llround(discrete_explore * effective_evaluations);
@@ -797,7 +825,34 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
                          format("ResponseOptimization: cardinality constraint (k={}) is infeasible under the current box pins.", group.k));
 
             for (Index c = 0; c < count; ++c)
-                random_inputs(r, columns[c]) = draw[c];
+            {
+                if (draw[c] < 0.5f)                       // not selected: force the value to exactly 0
+                {
+                    random_inputs(r, columns[c]) = 0.0f;
+                    continue;
+                }
+
+                // selected slot
+                if (!group.force_nonzero)
+                    continue;                             // free: keep the sampled value (may be 0) -> at most k
+
+                // forced nonzero: give the slot a type-consistent nonzero value -> exactly k
+                if (types[c] == VariableType::Binary)
+                {
+                    random_inputs(r, columns[c]) = 1.0f;  // 1 is the only nonzero option
+                }
+                else if (types[c] == VariableType::Integer)
+                {
+                    // Integers range over their nonzero values; only nudge if the pre-sample landed on 0.
+                    if (abs(random_inputs(r, columns[c])) < 0.5f)
+                    {
+                        const float superior = input_domain.superior_frontier(columns[c]);
+                        const float inferior = input_domain.inferior_frontier(columns[c]);
+                        random_inputs(r, columns[c]) = (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);
+                    }
+                }
+                // Continuous: keep the already-sampled in-range value (may be ~0, accepted).
+            }
         }
 
         cardinality_columns.push_back(move(columns));

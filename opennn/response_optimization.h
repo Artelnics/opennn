@@ -108,7 +108,7 @@ public:
 
     void set_constraint(const string&, const vector<float>&);
 
-    void set_cardinality_constraint(const vector<string>&, Index);
+    void set_cardinality_constraint(const vector<string>&, Index, bool force_nonzero = true);
     void clear_cardinality_constraints();
 
     void set_objective(const string&, const Sense);
