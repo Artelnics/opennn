@@ -19,13 +19,13 @@
 #include "opennn/optimizer.h"
 #include "opennn/variable.h"
 #include "opennn/response_optimization.h"
-#include "adaptive_moment_estimation.h"
-#include "recurrent_layer.h"
-#include "time_series_dataset.h"
-#include "dense_layer.h"
-#include "growing_neurons.h"
-#include "normalized_squared_error.h"
-#include "registry.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/recurrent_layer.h"
+#include "opennn/time_series_dataset.h"
+#include "opennn/dense_layer.h"
+#include "opennn/growing_neurons.h"
+#include "opennn/normalized_squared_error.h"
+#include "opennn/registry.h"
 
 using namespace opennn;
 
