@@ -9,7 +9,11 @@ FetchContent_Declare(
   GIT_TAG        release-1.12.1
 )
 
-FetchContent_MakeAvailable(googletest)
+find_package(GTest CONFIG QUIET)
+
+if(NOT GTest_FOUND)
+  FetchContent_MakeAvailable(googletest)
+endif()
 
 set(PCH_HEADER pch.h)
 set(PCH_SOURCE pch.cpp)
