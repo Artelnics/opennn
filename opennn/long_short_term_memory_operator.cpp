@@ -50,6 +50,16 @@ void set_random_uniform_linked(initializer_list<const TensorView*> views, float 
     for (const TensorView* view : views) set_random_uniform(view->as_vector(), min, max);
 }
 
+inline float lstm_activate(ActivationFunction function, float x)
+{
+    return activation_forward_value(function, x);
+}
+
+inline float lstm_derivative_from_output(ActivationFunction function, float y)
+{
+    return activation_derivative_from_output_value(function, y);
+}
+
 }
 
 
@@ -224,27 +234,36 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         const VectorMap bg_m = candidate_bias.as_vector();
         const VectorMap bo_m = output_bias.as_vector();
 
+        // Gate fusion: stack [f|i|g|o] so each step is 1+1 GEMM instead of 4+4.
+        MatrixR Wcat(F, 4 * H);
+        Wcat.leftCols(H)          = Wf_m;
+        Wcat.middleCols(H, H)     = Wi_m;
+        Wcat.middleCols(2 * H, H) = Wg_m;
+        Wcat.rightCols(H)         = Wo_m;
+        MatrixR Ucat(H, 4 * H);
+        Ucat.leftCols(H)          = Uf_m;
+        Ucat.middleCols(H, H)     = Ui_m;
+        Ucat.middleCols(2 * H, H) = Ug_m;
+        Ucat.rightCols(H)         = Uo_m;
+        VectorR bcat(4 * H);
+        bcat.segment(0, H)        = bf_m;
+        bcat.segment(H, H)        = bi_m;
+        bcat.segment(2 * H, H)    = bg_m;
+        bcat.segment(3 * H, H)    = bo_m;
+
         MatrixR step_in(batch_size, F);
         MatrixR prev_h(batch_size, H);
-        MatrixR Zf(batch_size, H), Zi(batch_size, H), Zg(batch_size, H), Zo(batch_size, H);
+        MatrixR Z(batch_size, 4 * H);
 
         for (Index t = 0; t < T; ++t)
         {
             for (Index b = 0; b < batch_size; ++b)
                 memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
 
-            Zf.noalias() = step_in * Wf_m;  Zf.rowwise() += bf_m.transpose();
-            Zi.noalias() = step_in * Wi_m;  Zi.rowwise() += bi_m.transpose();
-            Zg.noalias() = step_in * Wg_m;  Zg.rowwise() += bg_m.transpose();
-            Zo.noalias() = step_in * Wo_m;  Zo.rowwise() += bo_m.transpose();
-
+            Z.noalias() = step_in * Wcat;
+            Z.rowwise() += bcat.transpose();
             if (t > 0)
-            {
-                Zf.noalias() += prev_h * Uf_m;
-                Zi.noalias() += prev_h * Ui_m;
-                Zg.noalias() += prev_h * Ug_m;
-                Zo.noalias() += prev_h * Uo_m;
-            }
+                Z.noalias() += prev_h * Ucat;
 
             for (Index b = 0; b < batch_size; ++b)
             {
@@ -253,10 +272,10 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
 
                 for (Index h = 0; h < H; ++h)
                 {
-                    const float f = activation_forward_value(recurrent_activation_function, Zf(b, h));
-                    const float i = activation_forward_value(recurrent_activation_function, Zi(b, h));
-                    const float g = activation_forward_value(activation_function, Zg(b, h));
-                    const float o = activation_forward_value(recurrent_activation_function, Zo(b, h));
+                    const float f = lstm_activate(recurrent_activation_function, Z(b, h));
+                    const float i = lstm_activate(recurrent_activation_function, Z(b, H + h));
+                    const float g = lstm_activate(activation_function, Z(b, 2 * H + h));
+                    const float o = lstm_activate(recurrent_activation_function, Z(b, 3 * H + h));
                     const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
                     const float a = activation_forward_value(activation_function, c);
                     const float h_value = o * a;
@@ -477,8 +496,24 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         VectorMap gbg_v = candidate_bias_gradient.as_vector();
         VectorMap gbo_v = output_bias_gradient.as_vector();
 
+        // Gate fusion: stack [f|i|g|o] so each step is 1+1+1 GEMM instead of 4×4.
+        MatrixR Wcat(F, 4 * H);
+        Wcat.leftCols(H)          = Wf_m;
+        Wcat.middleCols(H, H)     = Wi_m;
+        Wcat.middleCols(2 * H, H) = Wg_m;
+        Wcat.rightCols(H)         = Wo_m;
+        MatrixR Ucat(H, 4 * H);
+        Ucat.leftCols(H)          = Uf_m;
+        Ucat.middleCols(H, H)     = Ui_m;
+        Ucat.middleCols(2 * H, H) = Ug_m;
+        Ucat.rightCols(H)         = Uo_m;
+
+        MatrixR gWcat = MatrixR::Zero(F, 4 * H);
+        MatrixR gUcat = MatrixR::Zero(H, 4 * H);
+        VectorR gbcat = VectorR::Zero(4 * H);
+
         MatrixR step_in(batch_size, F), prev_h(batch_size, H), c_prev_m(batch_size, H);
-        MatrixR DF(batch_size, H), DI(batch_size, H), DG(batch_size, H), DO(batch_size, H);
+        MatrixR Dcat(batch_size, 4 * H);
         MatrixR DX(batch_size, F);
         MatrixR dh_next = MatrixR::Zero(batch_size, H);
         MatrixR dc_next = MatrixR::Zero(batch_size, H);
@@ -519,51 +554,37 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                                    * activation_derivative_from_output_value(activation_function, a)
                                    + dc_next(b, h);
 
-                    DO(b, h) = dh_next(b, h) * a
-                             * activation_derivative_from_output_value(recurrent_activation_function, o);
-                    DF(b, h) = dc * (t > 0 ? c_prev_m(b, h) : 0.0f)
-                             * activation_derivative_from_output_value(recurrent_activation_function, f);
-                    DI(b, h) = dc * g
-                             * activation_derivative_from_output_value(recurrent_activation_function, i);
-                    DG(b, h) = dc * i
-                             * activation_derivative_from_output_value(activation_function, g);
-                    dc_next(b, h) = dc * f;
+                    Dcat(b, 3 * H + h) = dh_next(b, h) * a * lstm_derivative_from_output(recurrent_activation_function, o);
+                    Dcat(b, h)         = dc * (t > 0 ? c_prev_m(b, h) : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
+                    Dcat(b, H + h)     = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
+                    Dcat(b, 2 * H + h) = dc * i * lstm_derivative_from_output(activation_function, g);
+                    dc_next(b, h)      = dc * f;
                 }
             }
 
-            gbf_v += DF.colwise().sum().transpose();
-            gbi_v += DI.colwise().sum().transpose();
-            gbg_v += DG.colwise().sum().transpose();
-            gbo_v += DO.colwise().sum().transpose();
-
-            gWf_m.noalias() += step_in.transpose() * DF;
-            gWi_m.noalias() += step_in.transpose() * DI;
-            gWg_m.noalias() += step_in.transpose() * DG;
-            gWo_m.noalias() += step_in.transpose() * DO;
+            gbcat += Dcat.colwise().sum().transpose();
+            gWcat.noalias() += step_in.transpose() * Dcat;
 
             if (write_input_delta)
             {
-                DX.noalias()  = DF * Wf_m.transpose();
-                DX.noalias() += DI * Wi_m.transpose();
-                DX.noalias() += DG * Wg_m.transpose();
-                DX.noalias() += DO * Wo_m.transpose();
+                DX.noalias() = Dcat * Wcat.transpose();
                 for (Index b = 0; b < batch_size; ++b)
                     memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
             }
 
             if (t > 0)
             {
-                gUf_m.noalias() += prev_h.transpose() * DF;
-                gUi_m.noalias() += prev_h.transpose() * DI;
-                gUg_m.noalias() += prev_h.transpose() * DG;
-                gUo_m.noalias() += prev_h.transpose() * DO;
-
-                dh_next.noalias()  = DF * Uf_m.transpose();
-                dh_next.noalias() += DI * Ui_m.transpose();
-                dh_next.noalias() += DG * Ug_m.transpose();
-                dh_next.noalias() += DO * Uo_m.transpose();
+                gUcat.noalias() += prev_h.transpose() * Dcat;
+                dh_next.noalias() = Dcat * Ucat.transpose();
             }
         }
+
+        gWf_m += gWcat.leftCols(H);          gWi_m += gWcat.middleCols(H, H);
+        gWg_m += gWcat.middleCols(2 * H, H); gWo_m += gWcat.rightCols(H);
+        gUf_m += gUcat.leftCols(H);          gUi_m += gUcat.middleCols(H, H);
+        gUg_m += gUcat.middleCols(2 * H, H); gUo_m += gUcat.rightCols(H);
+        gbf_v += gbcat.segment(0, H);        gbi_v += gbcat.segment(H, H);
+        gbg_v += gbcat.segment(2 * H, H);    gbo_v += gbcat.segment(3 * H, H);
 
         return;
     }
