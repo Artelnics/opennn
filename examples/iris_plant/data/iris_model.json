@@ -1,0 +1,95 @@
+{
+  "NeuralNetwork": {
+    "Inputs": {
+      "InputsNumber": "4",
+      "Input": [
+        {
+          "Index": "1",
+          "Text": "sepal_lenght"
+        },
+        {
+          "Index": "2",
+          "Text": "sepal_width"
+        },
+        {
+          "Index": "3",
+          "Text": "petal_lenght"
+        },
+        {
+          "Index": "4",
+          "Text": "petal_width"
+        }
+      ]
+    },
+    "Layers": {
+      "LayersNumber": "3",
+      "Items": [
+        {
+          "Scaling": {
+            "Label": "scaling_layer",
+            "InputDimensions": "4 ",
+            "OutputDimensions": "4 ",
+            "Means": "5.84333 3.05733 3.758 1.19933 ",
+            "StandardDeviations": "0.828066 0.435866 1.7653 0.762238 ",
+            "Minimums": "4.3 2 1 0.1 ",
+            "Maximums": "7.9 4.4 6.9 2.5 ",
+            "Scalers": "MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation MeanStandardDeviation",
+            "MinRange": "-1.000000",
+            "MaxRange": "1.000000"
+          }
+        },
+        {
+          "Dense": {
+            "Label": "dense2d_layer_1",
+            "InputDimensions": "4 ",
+            "OutputDimensions": "16 ",
+            "BatchNormalization": "0",
+            "Activation": "Tanh"
+          }
+        },
+        {
+          "Dense": {
+            "Label": "classification_layer",
+            "InputDimensions": "16 ",
+            "OutputDimensions": "3 ",
+            "BatchNormalization": "0",
+            "Activation": "Softmax"
+          }
+        }
+      ],
+      "SourceLayers": {
+        "SourceLayer": [
+          {
+            "LayerIndex": "0",
+            "Text": "-1"
+          },
+          {
+            "LayerIndex": "1",
+            "Text": "0"
+          },
+          {
+            "LayerIndex": "2",
+            "Text": "1"
+          }
+        ]
+      }
+    },
+    "Outputs": {
+      "OutputsNumber": "3",
+      "Output": [
+        {
+          "Index": "1",
+          "Text": "iris_setosa"
+        },
+        {
+          "Index": "2",
+          "Text": "iris_versicolor"
+        },
+        {
+          "Index": "3",
+          "Text": "iris_virginica"
+        }
+      ]
+    }
+  }
+}

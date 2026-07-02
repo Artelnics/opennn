@@ -614,13 +614,19 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
 
-    // Always run the full forward pass: the partial-forward optimization
-    // (skip frozen-layer prefix) breaks skip connections that cross the
-    // frozen/trainable boundary (e.g. FPN/PANet backbone→neck shortcuts).
-    // The backward pass uses get_first_trainable_layer_index() separately
-    // and is unaffected.
-    const Index first_layer_index = 0;
-    const Index last_layer_index  = get_layers_number() - 1;
+    // Run the full forward pass -- the old skip-to-first-trainable shortcut
+    // broke skip connections crossing the frozen/trainable boundary (FPN/PANet
+    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers during
+    // training: Optimizer::set_scaling() pre-scales the dataset in place, so
+    // running them there would scale the inputs twice (that double scaling
+    // diverges tabular training and flattens images to ~zero). Frozen compute
+    // layers past the Scaling chain still run.
+    Index first_layer_index = 0;
+    if (is_training)
+        while (first_layer_index < get_layers_number()
+               && layers[first_layer_index]->get_type() == LayerType::Scaling)
+            ++first_layer_index;
+    const Index last_layer_index = get_layers_number() - 1;
 
 #ifdef OPENNN_HAS_CUDA
     if (is_gpu())
