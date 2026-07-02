@@ -12,7 +12,9 @@
 
 #include "batch_norm_operator.h"
 #include "device_backend.h"
+#ifdef OPENNN_HAS_CUDA
 #include "kernel.cuh"
+#endif
 #include "json.h"
 #include "tensor_operations.h"
 #include "string_utilities.h"
