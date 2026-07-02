@@ -1,6 +1,5 @@
 #include "pch.h"
-#include "variable.h"
-
+#include "opennn/variable.h"
 #include "opennn/dataset.h"
 #include "opennn/standard_networks.h"
 
