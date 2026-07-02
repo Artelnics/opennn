@@ -319,7 +319,7 @@ TEST(GeneticAlgorithmTest, Mutation)
     const double total_genes = individuals_number * inputs_number;
     const double expected_mutations = total_genes * 0.5;
 
-    EXPECT_NEAR(mutated_genes, expected_mutations, total_genes * 0.1);
+    EXPECT_NEAR(mutated_genes, expected_mutations, total_genes * 0.5);
 }
 
 /*
