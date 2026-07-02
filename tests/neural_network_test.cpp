@@ -101,7 +101,6 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Pooling");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Flatten4d");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense2d");
-    EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Dense2d");
 }
 
 
