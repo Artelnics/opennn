@@ -108,6 +108,8 @@ public:
 
     Error get_error() const noexcept { return error; }
 
+    bool output_delta_overwrites_outputs() const;
+
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
@@ -196,7 +198,7 @@ protected:
     mutable Buffer metric_results_device{Device::CUDA};
     mutable Buffer yolo_target_device{Device::CUDA};
 
-    Regularization regularization_method = Regularization::L2;
+    Regularization regularization_method = Regularization::NoRegularization;
     float regularization_weight = 0.001f;
 
     NeuralNetwork* neural_network = nullptr;

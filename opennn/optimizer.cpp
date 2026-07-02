@@ -738,26 +738,29 @@ void Optimizer::warmup_device_training(
     const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
     const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
 
-    Buffer parameters_snapshot{Device::CUDA};
-    Buffer states_snapshot{Device::CUDA};
+    // Snapshots live on the host: the warmup steps hit the same VRAM peak as
+    // regular training, so a device-side copy would add parameters_bytes to
+    // the global peak. Two once-per-train() PCIe copies are negligible.
+    Buffer parameters_snapshot{Device::CPU};
+    Buffer states_snapshot{Device::CPU};
 
     if (parameters_bytes > 0)
     {
-        parameters_snapshot.resize_bytes(parameters_bytes, Device::CUDA);
+        parameters_snapshot.resize_bytes(parameters_bytes, Device::CPU);
         device::copy_async(parameters_snapshot.data,
                            neural_network->get_parameters_data(),
                            parameters_bytes,
-                           device::CopyKind::DeviceToDevice,
+                           device::CopyKind::DeviceToHost,
                            stream);
     }
 
     if (states_bytes > 0)
     {
-        states_snapshot.resize_bytes(states_bytes, Device::CUDA);
+        states_snapshot.resize_bytes(states_bytes, Device::CPU);
         device::copy_async(states_snapshot.data,
                            neural_network->get_states_data(),
                            states_bytes,
-                           device::CopyKind::DeviceToDevice,
+                           device::CopyKind::DeviceToHost,
                            stream);
     }
 
@@ -768,7 +771,7 @@ void Optimizer::warmup_device_training(
             device::copy_async(neural_network->get_parameters_data(),
                                parameters_snapshot.data,
                                parameters_bytes,
-                               device::CopyKind::DeviceToDevice,
+                               device::CopyKind::HostToDevice,
                                stream);
             neural_network->cast_parameters_to_bf16();
         }
@@ -778,7 +781,7 @@ void Optimizer::warmup_device_training(
             device::copy_async(neural_network->get_states_data(),
                                states_snapshot.data,
                                states_bytes,
-                               device::CopyKind::DeviceToDevice,
+                               device::CopyKind::HostToDevice,
                                stream);
         }
 

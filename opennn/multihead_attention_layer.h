@@ -42,6 +42,15 @@ public:
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
+    // TransposeScratch is head split/merge staging for the Q/K/V projections
+    // (forward) and the merge operator (backward): always written before read
+    // within one operator call. Spec indices are the Forward enum minus one
+    // (Input is not a spec).
+    bool is_forward_slot_transient(size_t spec) const override
+    {
+        return spec == size_t(TransposeScratch) - 1;
+    }
+
     void set(Index = 0,
              Index = 0,
              Index = 0,

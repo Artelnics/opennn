@@ -931,7 +931,6 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
     neural_network = new_neural_network;
     dataset = new_dataset;
 
-    regularization_method = Regularization::L2;
     set_error(Error::MeanSquaredError);
 
 }
@@ -1241,6 +1240,10 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     {
         const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
         const TensorView target = batch.get_targets();
+
+        if (output_delta_overwrites_outputs())
+            back_propagation.get_output_delta() = input;
+
         TensorView& input_delta = back_propagation.get_output_delta();
 
         cross_entropy_3d_gradient_device_count(input, target, input_delta, metric_results_device.as<float>() + 1);
@@ -1283,10 +1286,28 @@ bool Loss::back_propagate_device_metrics(const Batch&,
 
 #endif
 
+// The softmax+CrossEntropy3d backward is delta = p - y, element-wise over the
+// probabilities, and nothing reads them afterwards (the softmax derivative is
+// already folded into the combined gradient), so the delta can overwrite the
+// forward output buffer instead of holding the largest delta_pool entry.
+bool Loss::output_delta_overwrites_outputs() const
+{
+    if (error != Error::CrossEntropy3d || !neural_network || !neural_network->is_gpu())
+        return false;
+
+    const auto& layers = neural_network->get_layers();
+    return layers[neural_network->get_last_trainable_layer_index()]->get_output_activation()
+        == ActivationFunction::Softmax;
+}
+
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
 {
     const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
     const TensorView target = batch.get_targets();
+
+    if (output_delta_overwrites_outputs())
+        back_propagation.get_output_delta() = input;
+
     const TensorView input_delta = back_propagation.get_output_delta();
 
     using enum Error;

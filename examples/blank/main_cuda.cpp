@@ -45,8 +45,9 @@ int main(int argc, char** argv)
     try
     {
         // ====================================================================
-        // blank_cuda — five GPU training benchmarks, all disabled (`#if 0`).
-        // Enable exactly ONE block by switching its `#if 0` to `#if 1`.
+        // blank_cuda — six GPU training benchmarks. Block 6 (ChatGPT) is the
+        // enabled one; blocks 1-5 are `#if 0`. Enable exactly ONE block at a
+        // time by switching its `#if 0` to `#if 1` (and the others back to 0).
         // ====================================================================
 
         // --------------------------------------------------------------------
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
         //    Network: Scaling -> 5x Dense(300, tanh) -> Dense(1, sigmoid).
         //    Args: argv[1] = batch size, argv[2] = max epochs.
         // --------------------------------------------------------------------
-#if 1
+#if 0
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(100);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(1);
         const string precision = argc > 3 ? argv[3] : "fp32";
@@ -505,7 +506,123 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        cout << "blank_cuda: all five benchmark blocks are disabled (#if 0).\n"
+        // --------------------------------------------------------------------
+        // 6) CHATGPT — conversational assistant, Transformer (LanguageDataset)
+        //    OpenNN's Transformer is ENCODER-DECODER (there is no decoder-only
+        //    GPT), so a chatbot is trained sequence-to-sequence: every line of
+        //    the dataset is a single  prompt <TAB> response  pair.
+        //    Data is already prepared at dataset_path: Stanford Alpaca (52k
+        //    instruction->response) processed to that tab format, 47487 pairs,
+        //    token-capped (prompt<=62, response<=126, OpenNN's tokenizer splits
+        //    each punctuation char) -> in_len 64 / dec_len 128, fits batch 64
+        //    on a 16 GB GPU. Longer caps overflow the paper-base model. Other
+        //    good sources: OpenAssistant OASST1, Cornell Movie-Dialogs.
+        //    Model: paper-base Transformer (512/8/2048/6); shrink d_model/layers
+        //    for faster iteration. Trains with Adam + token cross-entropy, saves
+        //    the weights, then drops into an interactive chat() loop.
+        //    Args: argv[1]=batch (64), argv[2]=max_epochs (10), argv[3]=fp32|bf16.
+        // --------------------------------------------------------------------
+#if 1
+        const Index batch_size     = argc > 1 ? Index(stoll(argv[1])) : Index(64);
+        const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(10);
+        const string precision     = argc > 3 ? argv[3] : "bf16";
+        const bool  use_graph      = argc > 4 ? (stoi(argv[4]) != 0) : true;
+        const Type training_type   = (precision == "bf16") ? Type::BF16 : Type::FP32;
+
+        cout << "OpenNN. ChatGPT-style conversational Transformer (" << precision
+             << ") batch=" << batch_size << " max_epochs=" << maximum_epochs
+             << " cuda_graph=" << use_graph << endl;
+
+        Configuration::instance().set(Device::CUDA, training_type);
+        Backend::instance();
+        set_seed(42);
+
+        // One pair per line:  prompt <TAB> response  (BinaryFile .bin cache).
+        const filesystem::path dataset_path =
+            "/home/artelnics/Documents/datasets/chat/chat_pairs.txt";
+        const Index maximum_vocabulary_size = 30000;
+
+        LanguageDataset language_dataset(dataset_path, maximum_vocabulary_size);
+        language_dataset.set_sample_roles("Training");  // all-train (no early stop here)
+
+        const Index input_vocabulary_size   = language_dataset.get_input_vocabulary_size();
+        const Index output_vocabulary_size  = language_dataset.get_target_vocabulary_size();
+        const Index input_sequence_length   = language_dataset.get_shape("Input")[0];
+        const Index decoder_sequence_length = language_dataset.get_shape("Decoder")[0];
+
+        cout << "[DATASET] train_pairs=" << language_dataset.get_samples_number("Training")
+             << " in_vocab="  << input_vocabulary_size
+             << " out_vocab=" << output_vocabulary_size
+             << " in_len="    << input_sequence_length
+             << " dec_len="   << decoder_sequence_length << endl;
+
+        // Paper-base transformer ("Attention Is All You Need"): 512/8/2048/6.
+        const Index embedding_dimension     = 512;
+        const Index heads_number            = 8;
+        const Index feed_forward_dimension  = 2048;
+        const Index layers_number           = 6;
+
+        Transformer transformer(input_sequence_length,
+                                decoder_sequence_length,
+                                input_vocabulary_size,
+                                output_vocabulary_size,
+                                embedding_dimension,
+                                heads_number,
+                                feed_forward_dimension,
+                                layers_number);
+        transformer.set_dropout_rate(0.1f);
+
+        cout << "Transformer params=" << transformer.get_parameters_number() << endl;
+
+        const filesystem::path parameters_path =
+            "/home/artelnics/Documents/datasets/chat/chat_parameters.bin";
+
+        if (filesystem::exists(parameters_path))
+        {
+            cout << "Found saved parameters at " << parameters_path
+                 << "\n-> skipping training, loading weights for chat." << endl;
+            transformer.load_parameters_binary(parameters_path);
+        }
+        else
+        {
+            cout << "No saved parameters -> training from scratch." << endl;
+
+            TrainingStrategy training_strategy(&transformer, &language_dataset);
+            training_strategy.set_loss("CrossEntropyError3d");
+            training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+            if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+            adam->set_batch_size(batch_size);
+            adam->set_learning_rate(0.0005f);
+            adam->set_maximum_epochs(maximum_epochs);
+            adam->set_maximum_validation_failures(1000000);
+            adam->set_display_period(1);
+            adam->set_cuda_graph(use_graph);
+
+            const auto t0 = steady_clock::now();
+            training_strategy.train();
+            const auto t1 = steady_clock::now();
+            const double train_s = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+            cout << "\nTotal training time: " << train_s << " s" << endl;
+            cout << "epoch_s=" << train_s / double(maximum_epochs) << "\n";
+
+            // Per-Buffer memory breakdown (only prints when OPENNN_MEMORY_DEBUG=1).
+            memory_debug::print(cout);
+
+            transformer.save_parameters_binary(parameters_path);
+            cout << "Saved parameters (binary) to " << parameters_path << endl;
+        }
+
+        // Interactive chat: type a prompt, press Enter; empty line / Ctrl+D exits.
+        TransformerDecoder decoder(transformer, language_dataset);
+        cout << "\n================ CHAT ================" << endl;
+        decoder.chat();
+
+        return 0;
+#endif
+
+        cout << "blank_cuda: all six benchmark blocks are disabled (#if 0).\n"
                 "Enable one by switching its `#if 0` to `#if 1` and rebuilding." << endl;
         return 0;
     }

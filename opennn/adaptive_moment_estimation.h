@@ -54,7 +54,7 @@ private:
 
     float beta_2 = 0.999f;
 
-    float gradient_clip_norm = 1.0f;
+    float gradient_clip_norm = 0.0f;
 
     Index batch_size = 0;
 };

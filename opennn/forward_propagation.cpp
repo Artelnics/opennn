@@ -46,7 +46,32 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
              format("ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
                     source_layers.size(), layers_number));
 
-    const Index total_bytes = get_aligned_bytes(forward_specs);
+    // Transient slots (e.g. attention head split/merge staging) never carry
+    // data across an operator invocation, and forward/backward execute the
+    // operators serially, so every transient slot across all layers can view
+    // ONE shared max-sized block at the arena tail -- the same reasoning as
+    // the shared cuDNN workspace. Outputs can never be transient: consumers
+    // read them through input_views in forward and backward.
+    Index persistent_bytes = 0;
+    Index transient_block_bytes = 0;
+
+    for (size_t i = 0; i < layers_number; ++i)
+        for (size_t j = 0; j < forward_specs[i].size(); ++j)
+        {
+            const auto& spec = forward_specs[i][j];
+            if (spec.shape.empty()) continue;
+
+            if (layers[i]->is_forward_slot_transient(j))
+            {
+                throw_if(j + 1 == forward_specs[i].size(),
+                         "ForwardPropagation::set: a layer output cannot be a transient slot.");
+                transient_block_bytes = max(transient_block_bytes, get_aligned_bytes(spec));
+            }
+            else
+                persistent_bytes += get_aligned_bytes(spec);
+        }
+
+    const Index total_bytes = persistent_bytes + transient_block_bytes;
 
     // Overlay this propagation on an external buffer (e.g. the training
     // ForwardPropagation's, when validation is temporally disjoint) when it
@@ -64,29 +89,46 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                          "ForwardPropagation::data",
                          data.owns ? total_bytes : 0,
                          format("batch={}", batch_size));
+    if (transient_block_bytes > 0)
+        memory_debug::record("forward.transient_pool", "shared_block",
+                             transient_block_bytes,
+                             format("batch={}", batch_size));
 
+    uint8_t* const transient_base = data.as<uint8_t>() + persistent_bytes;
     uint8_t* cursor = data.as<uint8_t>();
     Index max_layer_bytes = 0;
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
+        // Full spec bytes (transients included) -- this feeds the AUTO conv
+        // workspace limit below, which sizes actual per-layer work.
         const Index layer_bytes = get_aligned_bytes(specs);
         max_layer_bytes = std::max(max_layer_bytes, layer_bytes);
 
-        if (layer_bytes > 0)
-            memory_debug::record("forward.layer",
-                                 format("{}:{}", i, layers[i]->get_label()),
-                                 layer_bytes,
-                                 format("batch={}", batch_size));
         forward_slots[i].assign(specs.size() + 1, TensorView{});
 
+        Index layer_persistent_bytes = 0;
         for (size_t j = 0; j < specs.size(); ++j)
         {
             const auto& [shape, dtype] = specs[j];
             if (shape.empty()) continue;
+
+            if (layers[i]->is_forward_slot_transient(j))
+            {
+                forward_slots[i][j + 1] = TensorView(transient_base, shape, dtype, data.device_type);
+                continue;
+            }
+
             forward_slots[i][j + 1] = TensorView(cursor, shape, dtype, data.device_type);
             cursor += get_aligned_bytes(specs[j]);
+            layer_persistent_bytes += get_aligned_bytes(specs[j]);
         }
+
+        if (layer_persistent_bytes > 0)
+            memory_debug::record("forward.layer",
+                                 format("{}:{}", i, layers[i]->get_label()),
+                                 layer_persistent_bytes,
+                                 format("batch={}", batch_size));
 
         // validate_source_indices guarantees source < i, so its slots are already assigned.
         const vector<Index>& sources = source_layers[i];

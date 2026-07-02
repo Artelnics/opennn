@@ -322,15 +322,9 @@ TrainingResult StochasticGradientDescent::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        OptimizerData warmup_optimizer_data;
-        if (momentum > 0.0f)
-            warmup_optimizer_data.set({Shape{parameters_number}}, neural_network->get_device());
-        warmup_optimizer_data.iteration = 1;
-
-        const auto warmup_update = [&](BackPropagation& back_propagation) {
-            update_parameters(back_propagation, warmup_optimizer_data, initial_learning_rate);
-        };
-
+        // The warmup steps the real optimizer_data and re-zeroes it below (a
+        // dedicated warmup OptimizerData would add a parameters-sized buffer
+        // to the peak). current_learning_rate still equals initial_learning_rate here.
         warmup_device_training(training_forward_propagation,
                                training_back_propagation,
                                batch_pools.training_empty_queue,
@@ -338,19 +332,14 @@ TrainingResult StochasticGradientDescent::train()
                                input_feature_indices,
                                decoder_feature_indices,
                                target_feature_indices,
-                               warmup_update,
+                               training_update,
                                validation_fp,
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr,
                                batch_pools.fixed_training_batch.get());
 
-#ifdef OPENNN_HAS_CUDA
-        // The graph epoch path ignores warmup_update and steps the real
-        // optimizer_data (the captured graph references its buffers), so the
-        // warmup leaves the velocity non-zero while the model state is restored.
-        if (graph_update && momentum > 0.0f)
-            optimizer_data.data.setZero();
-#endif
+        if (momentum > 0.0f) optimizer_data.data.setZero();
+        optimizer_data.iteration = 1;
     }
 
     time_t beginning_time;

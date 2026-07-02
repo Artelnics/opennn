@@ -240,14 +240,9 @@ TrainingResult AdaptiveMomentEstimation::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        OptimizerData warmup_optimization_data;
-        warmup_optimization_data.set({Shape{parameters_number}, Shape{parameters_number}}, device);
-        warmup_optimization_data.iteration = 0;
-
-        const auto warmup_update = [&](BackPropagation& back_propagation) {
-            update_parameters(back_propagation, warmup_optimization_data);
-        };
-
+        // The warmup steps the real optimization_data and re-zeroes it below
+        // (a dedicated warmup OptimizerData would add two parameters-sized
+        // buffers to the peak while the warmup runs full training steps).
         warmup_device_training(training_forward_propagation,
                                training_back_propagation,
                                batch_pools.training_empty_queue,
@@ -255,21 +250,16 @@ TrainingResult AdaptiveMomentEstimation::train()
                                input_feature_indices,
                                decoder_feature_indices,
                                target_feature_indices,
-                               warmup_update,
+                               training_update,
                                validation_fp,
                                has_validation ? &batch_pools.validation_queue() : nullptr,
                                has_validation ? &validation_batches : nullptr,
                                batch_pools.fixed_training_batch.get());
 
+        optimization_data.data.setZero();
+        optimization_data.iteration = 0;
 #ifdef OPENNN_HAS_CUDA
-        // The graph epoch path ignores warmup_update and steps the real
-        // optimization_data (the captured graph references its buffers), so the
-        // warmup leaves step/moments non-zero while the model state is restored.
-        if (graph_update)
-        {
-            optimization_data.data.setZero();
-            optimization_data.graph_step.setZero();
-        }
+        if (graph_update) optimization_data.graph_step.setZero();
 #endif
     }
 
