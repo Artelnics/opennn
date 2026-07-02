@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/dense_layer.h"
-#include "../opennn/mean_squared_error.h"
-#include "../opennn/levenberg_marquardt_algorithm.h"
+#include <opennn/dense_layer.h>
+#include <opennn/mean_squared_error.h>
+#include <opennn/levenberg_marquardt_algorithm.h>
 
 using namespace opennn;
 

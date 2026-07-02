@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/standard_networks.h"
+#include <opennn/standard_networks.h>
 
 using namespace opennn;
 

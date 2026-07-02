@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/pooling_layer.h"
-#include "../opennn/pooling_layer_3d.h"
-#include "../opennn/tensor_utilities.h"
+#include <opennn/pooling_layer.h>
+#include <opennn/pooling_layer_3d.h>
+#include <opennn/tensor_utilities.h>
 
 using namespace opennn;
 

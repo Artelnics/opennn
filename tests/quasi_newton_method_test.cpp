@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "../opennn/dataset.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/mean_squared_error.h"
-#include "../opennn/quasi_newton_method.h"
+#include <opennn/dataset.h>
+#include <opennn/standard_networks.h>
+#include <opennn/mean_squared_error.h>
+#include <opennn/quasi_newton_method.h>
 
 using namespace opennn;
 

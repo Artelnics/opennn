@@ -311,3 +311,7 @@ build_and_run.bat
 continue_build.ps1
 run_friday_experiments.bat
 run_n2o.bat
+
+# External libraries fetched at configure time
+eigen
+googletest

@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/statistics.h"
-#include "../opennn/tensor_utilities.h"
-#include "../opennn/unscaling_layer.h"
-#include "../opennn/scaling_layer.h"
+#include <opennn/statistics.h>
+#include <opennn/tensor_utilities.h>
+#include <opennn/unscaling_layer.h>
+#include <opennn/scaling_layer.h>
 
 using namespace opennn;
 

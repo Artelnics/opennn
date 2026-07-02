@@ -6,10 +6,10 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-#include "../../opennn/dataset.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/testing_analysis.h"
+#include <opennn/dataset.h>
+#include <opennn/standard_networks.h>
+#include <opennn/training_strategy.h>
+#include <opennn/testing_analysis.h>
 
 using namespace opennn;
 

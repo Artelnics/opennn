@@ -14,7 +14,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "unsupported/Eigen/CXX11/Tensor"
 #include "gtest/gtest.h"
 
 #endif

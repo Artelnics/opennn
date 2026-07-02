@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/image_dataset.h"
+#include <opennn/image_dataset.h>
 
 using namespace opennn;
 

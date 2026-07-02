@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/statistics.h"
-#include "../opennn/string_utilities.h"
-#include "../opennn/random_utilities.h"
+#include <opennn/statistics.h>
+#include <opennn/string_utilities.h>
+#include <opennn/random_utilities.h>
 
 using namespace opennn;
 

@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/weighted_squared_error.h"
-#include "../opennn/standard_networks.h"
+#include <opennn/dataset.h>
+#include <opennn/weighted_squared_error.h>
+#include <opennn/standard_networks.h>
 
 using namespace opennn;
 

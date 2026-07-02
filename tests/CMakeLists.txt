@@ -3,17 +3,39 @@ project(tests)
 
 include(FetchContent)
 
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.12.1
-)
 
 find_package(GTest CONFIG QUIET)
 
 if(NOT GTest_FOUND)
-  FetchContent_MakeAvailable(googletest)
+
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        release-1.12.1
+    )
+
+    # Prevent installation of the vendored copy
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+
+    FetchContent_MakeAvailable(googletest)
+
 endif()
+
+
+find_package(Eigen3 CONFIG QUIET)
+
+if(NOT Eigen3_FOUND)
+
+    FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG        release-5.0.1
+    )
+
+    FetchContent_MakeAvailable(eigen)
+
+endif()
+
 
 set(PCH_HEADER pch.h)
 set(PCH_SOURCE pch.cpp)
@@ -60,10 +82,18 @@ add_executable(run_tests test.cpp
 		weighted_squared_error_test.cpp
 )
 
-target_link_libraries(run_tests gtest gtest_main opennn)
+if(OpenNN_SHARED_LIBS)
+	target_link_libraries(run_tests PUBLIC opennn)
+else()
+	target_link_libraries(run_tests PRIVATE opennn)
+endif()
+
+target_link_libraries(run_tests PUBLIC Eigen3::Eigen)
+
+target_link_libraries(run_tests PRIVATE GTest::gtest GTest::gtest_main)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(run_tests stdc++fs)
+    target_link_libraries(run_tests PUBLIC stdc++fs)
 endif()
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})

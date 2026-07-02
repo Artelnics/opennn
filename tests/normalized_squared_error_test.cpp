@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/tensor_utilities.h"
-#include "../opennn/dataset.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/normalized_squared_error.h"
+#include <opennn/tensor_utilities.h>
+#include <opennn/dataset.h>
+#include <opennn/standard_networks.h>
+#include <opennn/normalized_squared_error.h>
 
 using namespace opennn;
 

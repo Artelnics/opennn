@@ -35,10 +35,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
 
+include(GenerateExportHeader)
+generate_export_header(opennn)
+
 target_include_directories(opennn PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
 
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
@@ -46,6 +51,24 @@ elseif(OpenMP_FOUND)
     target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
     target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+
+find_package(Eigen3 CONFIG QUIET)
+
+if(NOT Eigen3_FOUND)
+
+    FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG        release-5.0.1
+    )
+
+    FetchContent_MakeAvailable(eigen)
+
+endif()
+
+target_link_libraries(opennn PUBLIC Eigen3::Eigen)
+
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(opennn PRIVATE -Wno-interference-size)

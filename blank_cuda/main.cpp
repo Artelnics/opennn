@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "../opennn/opennn.h"
+#include <opennn/opennn.h>
 #include <filesystem>
 #include <iostream>
 

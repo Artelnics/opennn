@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../opennn/flatten_layer.h"
+#include <opennn/flatten_layer.h>
 
 using namespace opennn;
 

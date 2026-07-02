@@ -1,7 +1,7 @@
 #include "pch.h"
 
-#include "../opennn/tensor_utilities.h"
-#include "../opennn/recurrent_layer.h"
+#include <opennn/tensor_utilities.h>
+#include <opennn/recurrent_layer.h>
 
 using namespace opennn;
 

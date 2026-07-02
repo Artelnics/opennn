@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/tensor_utilities.h"
-#include "../opennn/random_utilities.h"
-#include "../opennn/normalization_layer_3d.h"
-#include "../opennn/neural_network.h"
+#include <opennn/tensor_utilities.h>
+#include <opennn/random_utilities.h>
+#include <opennn/normalization_layer_3d.h>
+#include <opennn/neural_network.h>
 
 using namespace opennn;
 

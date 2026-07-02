@@ -53,9 +53,11 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "../eigen/Eigen/Core"
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
+#include "opennn_export.h"
+
+#include "Eigen/Core"
+#include "unsupported/Eigen/CXX11/Tensor"
+#include "Eigen/src/Core/util/DisableStupidWarnings.h"
 
 // Enable opennn's CUDA paths only when the build is configured against a
 // real CUDA toolkit. cuda.pri sets WITH_CUDA after locating nvcc/cudnn at
@@ -74,7 +76,7 @@
 
 #ifdef OPENNN_CUDA
 
-#include "../opennn/kernel.cuh"
+#include <opennn/kernel.cuh>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>

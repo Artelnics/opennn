@@ -10,7 +10,7 @@
 #include "dataset.h"
 #include "loss.h"
 #include "cross_entropy_error_3d.h"
-#include "../eigen/Eigen/LU"
+#include "Eigen/LU"
 
 namespace opennn
 {
