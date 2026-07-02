@@ -64,6 +64,8 @@ else()
 endif()
 
 option(OpenNN_SHARED_LIBS "Build OpenNN shared libraries" ON)
+option(OpenNN_FORCE_WHOLE_ARCHIVE
+    "Force linking all objects from the static OpenNN archive" OFF)
 add_subdirectory(opennn)
 
 option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
