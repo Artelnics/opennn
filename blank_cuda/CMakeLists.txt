@@ -4,10 +4,6 @@ project(blank_cuda LANGUAGES CXX CUDA)
 
 add_executable(blank_cuda main.cpp)
 
-target_include_directories(blank_cuda PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../opennn
-)
-
 target_link_libraries(blank_cuda PRIVATE
     opennn
     CUDA::cudart
