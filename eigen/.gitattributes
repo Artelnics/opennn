@@ -1,3 +1,0 @@
-*.sh                         eol=lf
-debug/msvc/*.dat             eol=crlf
-debug/msvc/*.natvis          eol=crlf
