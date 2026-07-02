@@ -18,8 +18,9 @@ It answers three questions:
 - What is the training-time cost of that accuracy?
 - How much does the GPU path accelerate recurrent and LSTM workloads versus CPU?
 
-This is **not** a PyTorch/TensorFlow comparison. It is a sequence-model coverage
-benchmark for OpenNN itself.
+Its primary framing is an OpenNN-internal sequence-model coverage benchmark, but
+the same scenarios can also be run against PyTorch and TensorFlow on an identical
+pipeline (see [Cross-framework fidelity](#cross-framework-fidelity)).
 
 ## Method
 
@@ -75,7 +76,7 @@ This is an MLPerf-inspired OpenNN benchmark, not an official MLPerf result.
 | Quality metric | test RMSE and relative test RMSE by scenario/device |
 | Quality target | pending calibration from the first reference Linux run |
 | Performance metric | mean training wall time, CPU/GPU speedup, and winner by test RMSE |
-| Measurement rule | one seed per scenario today; repeat runner artifacts before headline use |
+| Measurement rule | 5 seeds per scenario (0..4); mean ± sample std and best reported; still needs a reference Linux run before headline use |
 | Artifact rule | JSON under `docs/benchmarks/results/` with protocol metadata, command, machine data, parsed metrics, and raw output |
 
 The MLPerf-style upgrade path is to convert each scenario from fixed maximum
@@ -120,12 +121,35 @@ docs/benchmarks/results/recurrent-lstm-forecasting-<run_id>.json
 The JSON artifact stores command line, commit hash, machine metadata,
 machine-readable metrics, speedups, and raw output.
 
+## Cross-framework fidelity
+
+The C++ driver is an OpenNN-internal Recurrent-vs-LSTM comparison, but the same
+scenarios can be run against PyTorch and TensorFlow
+(`python run_forecasting.py --frameworks opennn,pytorch,tensorflow`), which train
+`pt_forecasting.py` / `tf_forecasting.py` on the identical pipeline (data, 60/20/20
+split, z-score, architecture, Adam, epochs, patience, seeds 0..4). A few library
+differences are inherent and expected, not bugs:
+
+- **RMSE convention.** OpenNN's `TestingAnalysis` returns `errs(2) = sqrt(sum_sq / 2N)`
+  (a ½ factor); PyTorch and TensorFlow report the standard `sqrt(mean sq)`. The C++
+  driver multiplies by `sqrt(2)` so every engine's headline `test_rmse` is the same
+  standard RMSE in original pm2_5 units. OpenNN's native value is preserved as
+  `test_rmse_native_halfconv_mean`. Comparing the two conventions directly would make
+  OpenNN look ~29% better for free.
+- **Parameter count.** PyTorch `nn.RNN`/`nn.LSTM` use two bias vectors (`b_ih`+`b_hh`);
+  OpenNN and Keras use one. Same effective capacity, so OpenNN reports fewer params.
+- **Initialization.** OpenNN uses Glorot with its own RNG; PyTorch/Keras use their
+  default inits under a fixed seed. Initial weights differ across engines, so per-seed
+  RMSE differs; the 5-seed mean±std absorbs this.
+
 ## Notes
 
 - GPU Recurrent uses OpenNN's CUDA/cuBLAS recurrent path.
-- GPU LSTM uses cuDNN RNN/LSTM.
-- The benchmark currently uses one seed per scenario in the C++ driver. For a
-  publishable headline, increase the seed count or repeat the runner and report
-  median/stdev across artifacts.
+- GPU LSTM uses cuDNN RNN/LSTM. PyTorch RNN/LSTM also use cuDNN on GPU.
+- The driver now runs **5 seeds (0..4)** per scenario and reports
+  `test_rmse_mean ± test_rmse_std` and `test_rmse_best` per network/device.
+- On small hidden sizes the GPU may not beat CPU: kernel-launch overhead dominates
+  the tiny per-step GEMMs.
 - Use `--raw-path /path/to/PRSA_data_2010.1.1-2014.12.31.csv` or a local UCI
   ZIP when running without network access on the Linux benchmark machine.
+- Add `--python-cpu` to also record a forced-CPU pass of the Python engines.

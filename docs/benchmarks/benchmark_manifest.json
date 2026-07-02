@@ -160,16 +160,18 @@
         "target": null,
         "status": "reported_not_gated_until_reference_linux_calibration"
       },
-      "status": "harness_ready_needs_linux_run",
+      "status": "harness_ready_multiseed_needs_linux_run",
       "publication_readiness": "needs_reference_linux_result",
       "platform": "linux_x86_64_cuda",
-      "comparison": "OpenNN Recurrent vs OpenNN LSTM on UCI Beijing PM2.5 forecasting, CPU and GPU",
-      "metrics": ["test_rmse_mean", "time_s_mean", "cpu_over_gpu", "winner"],
+      "comparison": "OpenNN Recurrent vs OpenNN LSTM on UCI Beijing PM2.5 forecasting, CPU and GPU (optionally vs PyTorch/TensorFlow via --frameworks)",
+      "metrics": ["test_rmse_mean", "test_rmse_std", "test_rmse_best", "time_s_mean", "cpu_over_gpu", "winner"],
+      "seed_count": 5,
+      "rmse_convention": "standard sqrt(mean sq), original units (OpenNN native half-conv kept as test_rmse_native_halfconv_mean)",
       "runner": {
         "status": "writes_result_json",
         "commands": ["cmake --build build-gpu --target no2_forecasting && cd docs/benchmarks/recurrent-lstm-forecasting && OPENNN_FORECASTING_BIN=../../../build-gpu/bin/no2_forecasting python run_forecasting.py --gpu-index 0"]
       },
-      "needs": ["run on reference Linux GPU", "store result JSON", "increase seed count or repeat runs before headline use"]
+      "needs": ["run on reference Linux GPU", "store result JSON"]
     },
     {
       "id": "cpu-inference-speed",

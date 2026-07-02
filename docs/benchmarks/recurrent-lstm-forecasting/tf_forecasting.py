@@ -1,11 +1,15 @@
 """TensorFlow/Keras counterpart of the OpenNN recurrent-vs-LSTM forecasting
-benchmark. Same scenarios, architecture and training protocol as
+benchmark. Same scenarios, architecture, training protocol and SEEDS as
 pt_forecasting.py, so the three engines (OpenNN / PyTorch / TensorFlow) are
-directly comparable on test RMSE and training throughput.
+directly comparable on aggregated test RMSE and training throughput.
+
+RMSE convention: standard sqrt(mean((pred-true)^2)), matching pt_forecasting.py
+and the OpenNN C++ driver (errs(2)*sqrt(2)).
 
   usage: tf_forecasting.py [B1 B2 ...]   (default: all)
 """
 import os
+import statistics
 import sys
 import time
 
@@ -16,6 +20,9 @@ import tensorflow as tf
 from xf_common import SCENARIOS, make_windows
 
 GPU = bool(tf.config.list_physical_devices("GPU"))
+PHASE = "GPU" if GPU else "CPU"
+DEV = "cuda" if GPU else "cpu"
+SEEDS = [0, 1, 2, 3, 4]
 
 
 def build(kind, n_feat, past, hidden, out):
@@ -28,10 +35,10 @@ def build(kind, n_feat, past, hidden, out):
     return tf.keras.Model(inp, y)
 
 
-def run(kind, sc, data):
+def train_eval_once(kind, sc, data, seed):
     sid, past, future, hidden, lr, batch, max_ep, patience, multi = sc
     Xtr, Ytr, Xva, Yva, Xte, Yte, y_mean, y_std = data
-    tf.keras.utils.set_random_seed(42)
+    tf.keras.utils.set_random_seed(seed)
 
     model = build(kind, Xtr.shape[2], past, hidden, Ytr.shape[1])
     model.compile(optimizer=tf.keras.optimizers.Adam(lr), loss="mse")
@@ -49,10 +56,38 @@ def run(kind, sc, data):
     rmse = float(np.sqrt(np.mean((pred_orig - true_orig) ** 2)))
 
     n = Xtr.shape[0]
-    sps = (n * ran) / train_s if train_s > 0 else 0.0
-    print(f"METRIC engine=tensorflow scenario={sid} net={kind} params={model.count_params()} "
-          f"epochs={ran} test_rmse={rmse:.4f} time_s={train_s:.3f} samples_per_sec={sps:.1f} "
-          f"train_windows={n} device={'cuda' if GPU else 'cpu'}")
+    return {
+        "rmse": rmse,
+        "time_s": train_s,
+        "epochs": ran,
+        "params": model.count_params(),
+        "sps": (n * ran) / train_s if train_s > 0 else 0.0,
+        "n": n,
+    }
+
+
+def run(kind, sc, data):
+    sid = sc[0]
+    rmses, times, epochs_l, spss = [], [], [], []
+    params = 0; n = 0
+    for seed in SEEDS:
+        res = train_eval_once(kind, sc, data, seed)
+        rmses.append(res["rmse"]); times.append(res["time_s"])
+        epochs_l.append(res["epochs"]); spss.append(res["sps"])
+        params = res["params"]; n = res["n"]
+        print(f"METRIC engine=tensorflow phase={PHASE} scenario={sid} net={kind} seed={seed} "
+              f"params={params} epochs={res['epochs']} test_rmse={res['rmse']:.6f} "
+              f"time_s={res['time_s']:.3f} samples_per_sec={res['sps']:.1f} "
+              f"train_windows={n} device={DEV}")
+
+    std = statistics.stdev(rmses) if len(rmses) > 1 else 0.0
+    print(f"METRIC engine=tensorflow phase={PHASE} scenario={sid} net={kind} seed=aggregate "
+          f"params={params} epochs_mean={round(statistics.fmean(epochs_l))} "
+          f"successful_runs={len(rmses)} test_rmse_mean={statistics.fmean(rmses):.6f} "
+          f"test_rmse_std={std:.6f} test_rmse_best={min(rmses):.6f} "
+          f"time_s_mean={statistics.fmean(times):.3f} "
+          f"samples_per_sec_mean={statistics.fmean(spss):.1f} "
+          f"train_windows={n} device={DEV}")
     sys.stdout.flush()
 
 

@@ -36,8 +36,12 @@ namespace
 {
 const string DATA_DIR = "../data/";
 
-constexpr int     SEED_COUNT = 1;
-constexpr unsigned SEEDS[SEED_COUNT] = {42};
+constexpr int     SEED_COUNT = 5;
+constexpr unsigned SEEDS[SEED_COUNT] = {0, 1, 2, 3, 4};
+
+// OpenNN's TestingAnalysis RMSE is sqrt(sum_sq / (2N)); the cross-framework
+// headline uses the standard sqrt(sum_sq / N), so multiply by sqrt(2).
+constexpr float RMSE_HALF_TO_STD = 1.41421356237309515f;
 
 string format_seconds(double s)
 {
@@ -211,7 +215,7 @@ RunResult train_one(NeuralNetwork* nn,
         {
             TestingAnalysis ta(nn, ds);
             const VectorR errs = ta.calculate_errors("Testing");
-            if (errs.size() >= 3) r.test_rmse = errs(2);
+            if (errs.size() >= 3) r.test_rmse = errs(2) * RMSE_HALF_TO_STD;
         }
         catch (const std::exception& e) { r.notes = e.what(); }
 
@@ -324,6 +328,7 @@ void print_metric_line(const string& phase,
        << " test_rmse_mean=" << std::setprecision(9) << a.test_rmse_mean
        << " test_rmse_std=" << std::setprecision(9) << a.test_rmse_std
        << " test_rmse_best=" << std::setprecision(9) << a.test_rmse_best
+       << " test_rmse_native_halfconv_mean=" << std::setprecision(9) << (a.test_rmse_mean / RMSE_HALF_TO_STD)
        << " test_rmse_rel_mean=" << std::setprecision(9) << a.test_rmse_rel_mean
        << " time_s_mean=" << std::setprecision(9) << a.time_mean
        << " winner=" << winner;
