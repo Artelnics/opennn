@@ -9,8 +9,13 @@ available.
 RMSE convention: standard sqrt(mean((pred-true)^2)), matching the OpenNN C++
 driver which reports errs(2)*sqrt(2) so all three engines are apples-to-apples.
 
-  usage: pt_forecasting.py [B1 B2 ...]   (default: all)
+  usage: pt_forecasting.py [--allow-cpu] [B1 B2 ...]   (default: all)
+
+Aborts (exit 2) if CUDA is unavailable, so a silent CPU fallback can never be
+recorded as a GPU run. Pass --allow-cpu (or set CUDA_VISIBLE_DEVICES="") to
+run a deliberate CPU pass.
 """
+import os
 import statistics
 import sys
 import time
@@ -20,7 +25,13 @@ import torch.nn as nn
 
 from xf_common import SCENARIOS, make_windows
 
+ALLOW_CPU = "--allow-cpu" in sys.argv[1:] or os.environ.get("CUDA_VISIBLE_DEVICES") == ""
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
+if DEV == "cpu" and not ALLOW_CPU:
+    print("ERROR device_mismatch engine=pytorch expected=cuda actual=cpu "
+          "(pass --allow-cpu or CUDA_VISIBLE_DEVICES=\"\" for a deliberate CPU run)",
+          file=sys.stderr)
+    sys.exit(2)
 PHASE = "GPU" if DEV == "cuda" else "CPU"
 SEEDS = [0, 1, 2, 3, 4]
 
@@ -127,7 +138,7 @@ def run(kind, sc, data):
 
 
 def main():
-    want = sys.argv[1:] or [s[0] for s in SCENARIOS]
+    want = [a for a in sys.argv[1:] if a != "--allow-cpu"] or [s[0] for s in SCENARIOS]
     for sc in SCENARIOS:
         if sc[0] not in want:
             continue

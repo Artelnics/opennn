@@ -6,7 +6,11 @@ directly comparable on aggregated test RMSE and training throughput.
 RMSE convention: standard sqrt(mean((pred-true)^2)), matching pt_forecasting.py
 and the OpenNN C++ driver (errs(2)*sqrt(2)).
 
-  usage: tf_forecasting.py [B1 B2 ...]   (default: all)
+  usage: tf_forecasting.py [--allow-cpu] [B1 B2 ...]   (default: all)
+
+Aborts (exit 2) if no GPU is visible (e.g. missing CUDA libs -> silent CPU
+fallback), so CPU timings can never be recorded as a GPU run. Pass --allow-cpu
+(or set CUDA_VISIBLE_DEVICES="") to run a deliberate CPU pass.
 """
 import os
 import statistics
@@ -19,7 +23,14 @@ import tensorflow as tf
 
 from xf_common import SCENARIOS, make_windows
 
+ALLOW_CPU = "--allow-cpu" in sys.argv[1:] or os.environ.get("CUDA_VISIBLE_DEVICES") == ""
 GPU = bool(tf.config.list_physical_devices("GPU"))
+if not GPU and not ALLOW_CPU:
+    print("ERROR device_mismatch engine=tensorflow expected=cuda actual=cpu "
+          "(install tensorflow[and-cuda], or pass --allow-cpu / CUDA_VISIBLE_DEVICES=\"\" "
+          "for a deliberate CPU run)",
+          file=sys.stderr)
+    sys.exit(2)
 PHASE = "GPU" if GPU else "CPU"
 DEV = "cuda" if GPU else "cpu"
 SEEDS = [0, 1, 2, 3, 4]
@@ -92,7 +103,7 @@ def run(kind, sc, data):
 
 
 def main():
-    want = sys.argv[1:] or [s[0] for s in SCENARIOS]
+    want = [a for a in sys.argv[1:] if a != "--allow-cpu"] or [s[0] for s in SCENARIOS]
     for sc in SCENARIOS:
         if sc[0] not in want:
             continue
