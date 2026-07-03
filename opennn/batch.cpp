@@ -251,11 +251,27 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         const float* matrix = dataset->get_device_data();
         const Index matrix_cols = dataset->get_device_data_columns();
 
-        device::copy_async(gather_indices_device.data, gather_row_indices.data(),
-                           current_batch_size * Index(sizeof(int)),
+        const Index index_bytes = current_batch_size * Index(sizeof(int));
+        gather_indices_host.grow_to(index_bytes);
+        memcpy(gather_indices_host.data, gather_row_indices.data(), size_t(index_bytes));
+        device::copy_async(gather_indices_device.data, gather_indices_host.data,
+                           index_bytes,
                            device::CopyKind::HostToDevice, stream);
 
         const int* idx = gather_indices_device.as<int>();
+
+        if (window_past > 0)
+        {
+            gather_window_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
+                                    current_batch_size, window_past, window_features,
+                                    matrix_cols, window_matrix_rows, input_col_offset, stream);
+            gather_window_targets_cuda(matrix, idx, destination.target.buffer.as<float>(),
+                                       current_batch_size, window_past, window_future,
+                                       window_target_cols, window_multi_target,
+                                       matrix_cols, window_matrix_rows, target_col_offset, stream);
+            record_h2d_done(stream);
+            return;
+        }
 
         if (destination.input_is_bf16)
         {

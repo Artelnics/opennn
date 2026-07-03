@@ -93,6 +93,7 @@ struct LongShortTermMemoryOperator : Operator
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
+    void set_parameters_pytorch() override;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
@@ -127,6 +128,7 @@ private:
 
     void apply_gpu(const TensorView&,
                    TensorView&,
+                   bool,
                    bool) const;
 
     void apply_delta_gpu(const TensorView&,
@@ -135,6 +137,7 @@ private:
                          bool) const;
 
     void ensure_cudnn_setup_(Index) const;
+    void ensure_cudnn_setup_attempt_(Index) const;
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
 
@@ -145,21 +148,28 @@ private:
     mutable Buffer y_buf               {Device::CUDA};   // (B, T, H) rank-3 y from cuDNN
     mutable Buffer dy_buf              {Device::CUDA};   // (B, T, H) rank-3 dy for cuDNN
     mutable Buffer dx_scratch_buf      {Device::CUDA};   // (B, T, F) dx sink when input_delta is unused
-    mutable Buffer seq_lengths_host_buf{Device::CPU};    // int32[batch], all equal to T
-    mutable Buffer seq_lengths_dev_buf {Device::CUDA};
 
     mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
-    mutable CudnnDescriptor<cudnnRNNDataDescriptor_t> x_data_desc;
-    mutable CudnnDescriptor<cudnnRNNDataDescriptor_t> y_data_desc;
-    mutable CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
-    mutable CudnnDescriptor<cudnnTensorDescriptor_t>  c_desc;
     mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
     mutable Buffer dropout_states_buf{Device::CUDA};
 
-    mutable Index cached_batch_size = -1;
-    mutable Index cached_time_steps = -1;
+    mutable CudnnRnnShapeSlot shape_slots_[2];
+    mutable int active_shape_ = -1;
+    mutable int shape_stamp_  = 0;
+    CudnnRnnShapeSlot& active_shape() const { return shape_slots_[active_shape_]; }
+
     mutable Index cached_input_features  = -1;
     mutable Index cached_output_features = -1;
+
+    mutable float* cudnn_w_ptrs_[8]  = {};
+    mutable float* cudnn_b_ptrs_[8]  = {};
+    mutable float* cudnn_gw_ptrs_[8] = {};
+    mutable float* cudnn_gb_ptrs_[8] = {};
+
+    mutable const float* y_used_ = nullptr;
+
+    mutable bool persist_algo_failed_ = false;
+    mutable bool persist_algo_active_ = false;
 
     mutable vector<float> grad_tls_buf_;
 };

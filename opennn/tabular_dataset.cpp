@@ -562,11 +562,15 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives() const
 
 vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string& variable_role) const
 {
-    const vector<Index> used_sample_indices = get_used_sample_indices();
+    return calculate_feature_descriptives(variable_role, get_used_sample_indices());
+}
 
+vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string& variable_role,
+                                                                    const vector<Index>& sample_indices) const
+{
     const vector<Index> input_feature_indices = get_feature_indices(variable_role);
 
-    return descriptives(data, used_sample_indices, input_feature_indices);
+    return descriptives(data, sample_indices, input_feature_indices);
 }
 
 Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlations(
@@ -726,7 +730,13 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 {
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
-    const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
+
+    vector<Index> statistic_sample_indices = get_sample_indices("Training");
+    if (statistic_sample_indices.empty())
+        statistic_sample_indices = get_used_sample_indices();
+
+    const vector<Descriptives> feature_descriptives =
+        calculate_feature_descriptives(variable_role, statistic_sample_indices);
 
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)

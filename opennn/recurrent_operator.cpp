@@ -69,11 +69,16 @@ void RecurrentOperator::set_parameters_glorot()
         set_random_uniform(input_weights.as_vector(), -limit, limit);
     }
     if (!recurrent_weights.empty())
-    {
-        const float limit = glorot_limit(output_features, output_features);
-        set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
-    }
+        set_random_orthogonal(recurrent_weights.as_matrix());
     if (!bias.empty()) bias.setZero();
+}
+
+void RecurrentOperator::set_parameters_pytorch()
+{
+    const float limit = 1.0f / sqrt(float(output_features > 0 ? output_features : 1));
+    if (!input_weights.empty())     set_random_uniform(input_weights.as_vector(), -limit, limit);
+    if (!recurrent_weights.empty()) set_random_uniform(recurrent_weights.as_vector(), -limit, limit);
+    if (!bias.empty())              set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
 void RecurrentOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
@@ -120,6 +125,40 @@ void RecurrentOperator::back_propagate(ForwardPropagation& forward_propagation, 
     apply_delta(input, hidden_states, activation_derivatives, output_delta, input_delta);
 }
 
+namespace
+{
+
+using StridedMap      = Eigen::Map<MatrixR, 0, Eigen::OuterStride<>>;
+using ConstStridedMap = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
+
+void activate_in_place(ActivationFunction activation,
+                       StridedMap& values, StridedMap* derivatives)
+{
+    using enum ActivationFunction;
+    switch (activation)
+    {
+    case Tanh:
+        values.array() = values.array().tanh();
+        if (derivatives) derivatives->array() = 1.0f - values.array().square();
+        break;
+    case Sigmoid:
+        values.array() = (1.0f + (-values.array()).exp()).inverse();
+        if (derivatives) derivatives->array() = values.array() * (1.0f - values.array());
+        break;
+    case ReLU:
+        values.array() = values.array().max(0.0f);
+        if (derivatives) derivatives->array() = (values.array() > 0.0f).cast<float>();
+        break;
+    case Identity:
+        if (derivatives) derivatives->setOnes();
+        break;
+    default:
+        throw runtime_error("RecurrentOperator: unsupported activation.");
+    }
+}
+
+} // namespace
+
 void RecurrentOperator::apply(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
@@ -127,6 +166,7 @@ void RecurrentOperator::apply(const TensorView& input,
                             bool is_training)
 {
     const Index batch_size = input.shape[0];
+    const Index BT = batch_size * time_steps;
 
     const VectorMap bias_map  = bias.as_vector();
     const MatrixMap w_in_map  = input_weights.as_matrix();
@@ -137,57 +177,47 @@ void RecurrentOperator::apply(const TensorView& input,
     float*       derivs_data = (is_training && !activation_derivatives.empty())
                                ? activation_derivatives.as<float>() : nullptr;
 
-    const Index in_stride_t = input_features;
-    const Index in_stride_b = time_steps * input_features;
-    const Index h_stride_t  = output_features;
-    const Index h_stride_b  = time_steps * output_features;
+    const Index h_stride_b = time_steps * output_features;
 
-    MatrixR step_input  (batch_size, input_features);
-    MatrixR step_hidden (batch_size, output_features);
-    MatrixR prev_hidden (batch_size, output_features);
-    MatrixR step_derivs (batch_size, output_features);
+    Eigen::Map<const MatrixR> all_input(input_data, BT, input_features);
+    MatrixMap all_hidden(hidden_data, BT, output_features);
 
-    using enum ActivationFunction;
-    throw_if(activation == Softmax || activation == LeakyReLU,
-             "RecurrentOperator: unsupported activation.");
+    all_hidden.noalias() = all_input * w_in_map;
+    all_hidden.rowwise() += bias_map.transpose();
+
+    MatrixR h_c(batch_size, output_features);
+    MatrixR rec_acc(batch_size, output_features);
 
     for (Index t = 0; t < time_steps; ++t)
     {
-        for (Index i = 0; i < batch_size; ++i)
-            memcpy(step_input.data() + i * input_features,
-                   input_data + i * in_stride_b + t * in_stride_t,
-                   input_features * sizeof(float));
-
-        step_hidden.noalias() = step_input * w_in_map;
-        step_hidden.rowwise() += bias_map.transpose();
+        StridedMap h_t(hidden_data + t * output_features,
+                       batch_size, output_features, Eigen::OuterStride<>(h_stride_b));
 
         if (t > 0)
-            step_hidden.noalias() += prev_hidden * w_rec_map;
-
-        step_hidden = activation_forward_values(activation, step_hidden);
-
-        if (is_training)
-            step_derivs = activation_derivative_from_output_values(activation, step_hidden);
-
-        for (Index i = 0; i < batch_size; ++i)
-            memcpy(hidden_data + i * h_stride_b + t * h_stride_t,
-                   step_hidden.data() + i * output_features,
-                   output_features * sizeof(float));
+        {
+            rec_acc.noalias() = h_c * w_rec_map;
+            h_t += rec_acc;
+        }
 
         if (derivs_data)
-            for (Index i = 0; i < batch_size; ++i)
-                memcpy(derivs_data + i * h_stride_b + t * h_stride_t,
-                       step_derivs.data() + i * output_features,
-                       output_features * sizeof(float));
+        {
+            StridedMap d_t(derivs_data + t * output_features,
+                           batch_size, output_features, Eigen::OuterStride<>(h_stride_b));
+            activate_in_place(activation, h_t, &d_t);
+        }
+        else
+            activate_in_place(activation, h_t, nullptr);
 
-        prev_hidden = step_hidden;
+        h_c = h_t;
     }
 
     if (return_sequences)
         memcpy(output.as<float>(), hidden_data,
-               batch_size * time_steps * output_features * sizeof(float));
+               size_t(BT) * output_features * sizeof(float));
     else
-        output.as_matrix() = prev_hidden;
+        output.as_matrix() = ConstStridedMap(hidden_data + (time_steps - 1) * output_features,
+                                             batch_size, output_features,
+                                             Eigen::OuterStride<>(h_stride_b));
 }
 
 void RecurrentOperator::apply_delta(const TensorView& input,
@@ -216,79 +246,65 @@ void RecurrentOperator::apply_delta(const TensorView& input,
     const bool write_input_delta = !input_delta.empty() && input_delta.data != nullptr;
     float* input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
 
-    const Index in_stride_t = input_features;
-    const Index in_stride_b = time_steps * input_features;
-    const Index h_stride_t  = output_features;
-    const Index h_stride_b  = time_steps * output_features;
+    const Index h_stride_b = time_steps * output_features;
 
     const float* seq_delta_data = return_sequences ? output_delta.as<float>()
                                                    : nullptr;
     const float* final_delta_data = return_sequences ? nullptr
                                                      : output_delta.as<float>();
 
-    MatrixR delta        (batch_size, output_features);
-    MatrixR next_carry   = MatrixR::Zero(batch_size, output_features);
-    MatrixR step_input   (batch_size, input_features);
-    MatrixR step_prev_h  (batch_size, output_features);
-    MatrixR step_derivs  (batch_size, output_features);
-    MatrixR step_in_delta(batch_size, input_features);
-    MatrixR step_out_delta(batch_size, output_features);
+    const Index BT = batch_size * time_steps;
+
+    MatrixR all_delta(BT, output_features);
+    MatrixR d_c(batch_size, output_features);
+    MatrixR h_prev_c(batch_size, output_features);
+    MatrixR next_carry = MatrixR::Zero(batch_size, output_features);
 
     for (Index t = time_steps - 1; t >= 0; --t)
     {
+        const ConstStridedMap derivs_t(derivs_data + t * output_features,
+                                       batch_size, output_features,
+                                       Eigen::OuterStride<>(h_stride_b));
+
         if (return_sequences)
         {
-            for (Index i = 0; i < batch_size; ++i)
-                memcpy(step_out_delta.data() + i * output_features,
-                            seq_delta_data + i * h_stride_b + t * h_stride_t,
-                            output_features * sizeof(float));
-            delta = next_carry + step_out_delta;
+            const ConstStridedMap out_delta_t(seq_delta_data + t * output_features,
+                                              batch_size, output_features,
+                                              Eigen::OuterStride<>(h_stride_b));
+            d_c.array() = (next_carry.array() + out_delta_t.array()) * derivs_t.array();
         }
         else if (t == time_steps - 1)
         {
-            delta = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features);
+            d_c.array() = Eigen::Map<const MatrixR>(final_delta_data, batch_size, output_features)
+                              .array() * derivs_t.array();
         }
         else
         {
-            delta = next_carry;
+            d_c.array() = next_carry.array() * derivs_t.array();
         }
 
-        for (Index i = 0; i < batch_size; ++i)
-            memcpy(step_derivs.data() + i * output_features,
-                        derivs_data + i * h_stride_b + t * h_stride_t,
-                        output_features * sizeof(float));
-
-        delta.array() *= step_derivs.array();
-
-        for (Index i = 0; i < batch_size; ++i)
-            memcpy(step_input.data() + i * input_features,
-                        input_data + i * in_stride_b + t * in_stride_t,
-                        input_features * sizeof(float));
-
-        w_in_grad.noalias() += step_input.transpose() * delta;
-        bias_grad.noalias() += delta.colwise().sum().transpose();
+        StridedMap(all_delta.data() + t * output_features,
+                   batch_size, output_features, Eigen::OuterStride<>(h_stride_b)) = d_c;
 
         if (t > 0)
         {
-            for (Index i = 0; i < batch_size; ++i)
-                memcpy(step_prev_h.data() + i * output_features,
-                            hidden_data + i * h_stride_b + (t - 1) * h_stride_t,
-                            output_features * sizeof(float));
-
-            w_rec_grad.noalias() += step_prev_h.transpose() * delta;
-            next_carry.noalias()  = delta * w_rec_map.transpose();
-        }
-
-        if (write_input_delta)
-        {
-            step_in_delta.noalias() = delta * w_in_map.transpose();
-
-            for (Index i = 0; i < batch_size; ++i)
-                memcpy(input_delta_data + i * in_stride_b + t * in_stride_t,
-                            step_in_delta.data() + i * input_features,
-                            input_features * sizeof(float));
+            h_prev_c = ConstStridedMap(hidden_data + (t - 1) * output_features,
+                                       batch_size, output_features,
+                                       Eigen::OuterStride<>(h_stride_b));
+            w_rec_grad.noalias() += h_prev_c.transpose() * d_c;
+            next_carry.noalias()  = d_c * w_rec_map.transpose();
         }
     }
+
+    const Eigen::Map<const MatrixR> all_input(input_data, BT, input_features);
+    const Eigen::Map<const MatrixR> all_delta_map(all_delta.data(), BT, output_features);
+
+    w_in_grad.noalias() = all_input.transpose() * all_delta_map;
+    bias_grad.noalias() = all_delta_map.colwise().sum().transpose();
+
+    if (write_input_delta)
+        Eigen::Map<MatrixR>(input_delta_data, BT, input_features).noalias()
+            = all_delta_map * w_in_map.transpose();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -307,6 +323,355 @@ static void require_same_recurrent_dtype(const TensorView& reference,
                  format("RecurrentOperator CUDA: {} dtype does not match recurrent compute dtype.", name));
 }
 
+bool RecurrentOperator::cudnn_rnn_eligible_(const TensorView& reference) const
+{
+    return (activation == ActivationFunction::Tanh
+            || activation == ActivationFunction::ReLU)
+        && reference.is_fp32();
+}
+
+static bool rnn_persist_env_enabled()
+{
+    static const bool enabled = []() {
+        const char* env = std::getenv("OPENNN_RNN_PERSIST");
+        return !(env && string(env) == "0");
+    }();
+    return enabled;
+}
+
+void RecurrentOperator::ensure_cudnn_setup_(Index batch_size) const
+{
+    if (!persist_algo_failed_ && rnn_persist_env_enabled())
+    {
+        try
+        {
+            ensure_cudnn_setup_attempt_(batch_size);
+            return;
+        }
+        catch (const std::exception&)
+        {
+            persist_algo_failed_ = true;
+            rnn_desc.reset();
+            cached_input_features = -1;
+        }
+    }
+    ensure_cudnn_setup_attempt_(batch_size);
+}
+
+void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
+{
+    persist_algo_active_ = !persist_algo_failed_ && rnn_persist_env_enabled();
+
+    const Index F = input_features;
+    const Index H = output_features;
+    const Index T = time_steps;
+
+    const bool topology_changed =
+        cached_input_features  != F ||
+        cached_output_features != H ||
+        rnn_desc == nullptr;
+
+    if (topology_changed)
+    {
+        rnn_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDescriptor(&rnn_desc.handle));
+        rnn_desc.deleter = &cudnnDestroyRNNDescriptor;
+
+        if (!dropout_desc)
+        {
+            CHECK_CUDNN(cudnnCreateDropoutDescriptor(&dropout_desc.handle));
+            dropout_desc.deleter = &cudnnDestroyDropoutDescriptor;
+        }
+        size_t dropout_states_bytes = 0;
+        CHECK_CUDNN(cudnnDropoutGetStatesSize(
+            Backend::get_cudnn_handle(), &dropout_states_bytes));
+        dropout_states_buf.grow_to(Index(dropout_states_bytes));
+        CHECK_CUDNN(cudnnSetDropoutDescriptor(
+            dropout_desc, Backend::get_cudnn_handle(),
+            /*dropout=*/0.0f,
+            dropout_states_buf.data,
+            size_t(dropout_states_buf.bytes),
+            /*seed=*/0ULL));
+
+        CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
+            rnn_desc,
+            persist_algo_active_ ? CUDNN_RNN_ALGO_PERSIST_STATIC
+                                 : CUDNN_RNN_ALGO_STANDARD,
+            activation == ActivationFunction::ReLU ? CUDNN_RNN_RELU
+                                                   : CUDNN_RNN_TANH,
+            CUDNN_RNN_SINGLE_INP_BIAS,
+            CUDNN_UNIDIRECTIONAL,
+            CUDNN_LINEAR_INPUT,
+            CUDNN_DATA_FLOAT,
+            CUDNN_DATA_FLOAT,
+            CUDNN_TENSOR_OP_MATH,
+            int(F),
+            int(H),
+            /*projSize=*/ int(H),
+            1,
+            dropout_desc,
+            persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
+                                 : CUDNN_RNN_PADDED_IO_ENABLED));
+
+        size_t weight_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNWeightSpaceSize(
+            Backend::get_cudnn_handle(), rnn_desc, &weight_bytes));
+        weight_space_buf.grow_to(Index(weight_bytes));
+        dweight_space_buf.grow_to(Index(weight_bytes));
+
+        device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
+                               Backend::get_compute_stream());
+
+        CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+        CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+        m_desc.deleter = &cudnnDestroyTensorDescriptor;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+        b_desc.deleter = &cudnnDestroyTensorDescriptor;
+
+        for (int lin = 0; lin < 2; ++lin)
+        {
+            CHECK_CUDNN(cudnnGetRNNWeightParams(
+                Backend::get_cudnn_handle(), rnn_desc, 0,
+                size_t(weight_space_buf.bytes), weight_space_buf.data, lin,
+                m_desc, reinterpret_cast<void**>(&cudnn_w_ptrs_[lin]),
+                b_desc, reinterpret_cast<void**>(&cudnn_b_ptrs_[lin])));
+            CHECK_CUDNN(cudnnGetRNNWeightParams(
+                Backend::get_cudnn_handle(), rnn_desc, 0,
+                size_t(dweight_space_buf.bytes), dweight_space_buf.data, lin,
+                m_desc, reinterpret_cast<void**>(&cudnn_gw_ptrs_[lin]),
+                b_desc, reinterpret_cast<void**>(&cudnn_gb_ptrs_[lin])));
+        }
+    }
+
+    if (topology_changed)
+        for (CudnnRnnShapeSlot& slot : shape_slots_)
+        {
+            slot.batch = -1;
+            slot.time  = -1;
+        }
+
+    int slot_index = -1;
+    for (int s = 0; s < 2; ++s)
+        if (shape_slots_[s].batch == batch_size && shape_slots_[s].time == T)
+            slot_index = s;
+
+    if (slot_index < 0)
+    {
+        slot_index = (shape_slots_[0].batch < 0) ? 0
+                   : (shape_slots_[1].batch < 0) ? 1
+                   : (shape_slots_[0].stamp <= shape_slots_[1].stamp ? 0 : 1);
+        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        slot.batch = batch_size;
+        slot.time  = T;
+
+        slot.x_desc.reset();
+        slot.y_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&slot.x_desc.handle));
+        slot.x_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&slot.y_desc.handle));
+        slot.y_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+
+        slot.seq_host.grow_to(batch_size * Index(sizeof(int32_t)));
+        int32_t* seq_h = slot.seq_host.as<int32_t>();
+        for (Index i = 0; i < batch_size; ++i) seq_h[i] = int32_t(T);
+
+        slot.seq_dev.grow_to(batch_size * Index(sizeof(int32_t)));
+        device::copy_async(slot.seq_dev.data, seq_h,
+                           batch_size * Index(sizeof(int32_t)),
+                           device::CopyKind::HostToDevice,
+                           Backend::get_compute_stream());
+
+        static float zero_pad_fill = 0.0f;
+        CHECK_CUDNN(cudnnSetRNNDataDescriptor(
+            slot.x_desc, CUDNN_DATA_FLOAT,
+            CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
+            int(T), int(batch_size), int(F),
+            seq_h, &zero_pad_fill));
+        CHECK_CUDNN(cudnnSetRNNDataDescriptor(
+            slot.y_desc, CUDNN_DATA_FLOAT,
+            CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
+            int(T), int(batch_size), int(H),
+            seq_h, &zero_pad_fill));
+
+        slot.h_desc.reset();
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&slot.h_desc.handle));
+        slot.h_desc.deleter = &cudnnDestroyTensorDescriptor;
+        const int dimA[3]    = {1, int(batch_size), int(H)};
+        const int strideA[3] = {int(batch_size * H), int(H), 1};
+        CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
+
+        size_t work_bytes = 0;
+        size_t reserve_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+            Backend::get_cudnn_handle(), rnn_desc,
+            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
+            &work_bytes, &reserve_bytes));
+
+        size_t inference_work_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+            Backend::get_cudnn_handle(), rnn_desc,
+            CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
+            &inference_work_bytes, nullptr));
+
+        workspace_buf.grow_to(Index(max(work_bytes, inference_work_bytes)));
+        reserve_space_buf.grow_to(Index(reserve_bytes));
+        dy_buf.grow_to(batch_size * T * H * Index(sizeof(float)));
+
+    }
+
+    shape_slots_[slot_index].stamp = ++shape_stamp_;
+    active_shape_ = slot_index;
+
+    cached_input_features  = F;
+    cached_output_features = H;
+}
+
+void RecurrentOperator::pack_weights_to_cudnn_() const
+{
+    const Index F = input_features;
+    const Index H = output_features;
+
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count = 0;
+    if (cudnn_w_ptrs_[0] && input_weights.data)
+        specs[count++] = {input_weights.as<float>(), cudnn_w_ptrs_[0], int(F), int(H), 1};
+    if (cudnn_w_ptrs_[1] && recurrent_weights.data)
+        specs[count++] = {recurrent_weights.as<float>(), cudnn_w_ptrs_[1], int(H), int(H), 1};
+    if (cudnn_b_ptrs_[0] && bias.data)
+        specs[count++] = {bias.as<float>(), cudnn_b_ptrs_[0], 1, int(H), 0};
+    rnn_copy_regions_cuda(specs, count);
+}
+
+void RecurrentOperator::unpack_gradients_from_cudnn_() const
+{
+    const Index F = input_features;
+    const Index H = output_features;
+
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count = 0;
+    if (cudnn_gw_ptrs_[0] && input_weight_gradient.data)
+        specs[count++] = {cudnn_gw_ptrs_[0],
+                          const_cast<float*>(input_weight_gradient.as<float>()),
+                          int(H), int(F), 1};
+    if (cudnn_gw_ptrs_[1] && recurrent_weight_gradient.data)
+        specs[count++] = {cudnn_gw_ptrs_[1],
+                          const_cast<float*>(recurrent_weight_gradient.as<float>()),
+                          int(H), int(H), 1};
+    if (cudnn_gb_ptrs_[0] && bias_gradient.data)
+        specs[count++] = {cudnn_gb_ptrs_[0],
+                          const_cast<float*>(bias_gradient.as<float>()),
+                          1, int(H), 0};
+    rnn_copy_regions_cuda(specs, count);
+}
+
+void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
+                                         TensorView& hidden_states,
+                                         TensorView& output,
+                                         bool is_training)
+{
+    const Index batch_size = input.shape[0];
+
+    ensure_cudnn_setup_(batch_size);
+    pack_weights_to_cudnn_();
+
+    auto run_forward = [&]() {
+        const CudnnRnnShapeSlot& shape = active_shape();
+        return cudnnRNNForward(
+            Backend::get_cudnn_handle(),
+            rnn_desc,
+            is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
+            shape.seq_dev.as<int32_t>(),
+            shape.x_desc, input.data,
+            shape.y_desc, hidden_states.data,
+            shape.h_desc, nullptr, nullptr,
+            shape.h_desc, nullptr, nullptr,
+            size_t(weight_space_buf.bytes), weight_space_buf.data,
+            size_t(workspace_buf.bytes), workspace_buf.data,
+            is_training ? size_t(reserve_space_buf.bytes) : 0,
+            is_training ? reserve_space_buf.data : nullptr);
+    };
+
+    cudnnStatus_t forward_status = run_forward();
+    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
+    {
+        persist_algo_failed_ = true;
+        rnn_desc.reset();
+        cached_input_features = -1;
+        ensure_cudnn_setup_(batch_size);
+        pack_weights_to_cudnn_();
+        forward_status = run_forward();
+    }
+    CHECK_CUDNN(forward_status);
+
+    if (return_sequences)
+        copy(hidden_states, output);
+    else
+        gather_time_slice_cuda<float>(
+            batch_size, time_steps, output_features, time_steps - 1,
+            hidden_states.as<float>(), output.as<float>());
+}
+
+void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
+                                               const TensorView& hidden_states,
+                                               const TensorView& output_delta,
+                                               TensorView& input_delta) const
+{
+    const Index batch_size = input.shape[0];
+    const Index H = output_features;
+    const Index T = time_steps;
+
+    ensure_cudnn_setup_(batch_size);
+
+    const float* dy_data = output_delta.as<float>();
+    if (!return_sequences)
+    {
+        scatter_time_slice_fill_cuda(
+            batch_size, T, H, T - 1,
+            output_delta.as<float>(),
+            static_cast<float*>(dy_buf.data));
+        dy_data = static_cast<const float*>(dy_buf.data);
+    }
+
+    void* dx_data = input_delta.data;
+    if (!dx_data || input_delta.empty())
+    {
+        dx_scratch_buf.grow_to(batch_size * T * input_features * Index(sizeof(float)));
+        dx_data = dx_scratch_buf.data;
+    }
+
+    const CudnnRnnShapeSlot& shape = active_shape();
+
+    CHECK_CUDNN(cudnnRNNBackwardData_v8(
+        Backend::get_cudnn_handle(),
+        rnn_desc,
+        shape.seq_dev.as<int32_t>(),
+        shape.y_desc, hidden_states.data, dy_data,
+        shape.x_desc, dx_data,
+        shape.h_desc, nullptr, nullptr, nullptr,
+        shape.h_desc, nullptr, nullptr, nullptr,
+        size_t(weight_space_buf.bytes), weight_space_buf.data,
+        size_t(workspace_buf.bytes), workspace_buf.data,
+        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+
+    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
+                           Backend::get_compute_stream());
+
+    CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
+        Backend::get_cudnn_handle(),
+        rnn_desc,
+        CUDNN_WGRAD_MODE_ADD,
+        shape.seq_dev.as<int32_t>(),
+        shape.x_desc, input.data,
+        shape.h_desc, nullptr,
+        shape.y_desc, hidden_states.data,
+        size_t(dweight_space_buf.bytes), dweight_space_buf.data,
+        size_t(workspace_buf.bytes), workspace_buf.data,
+        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+
+    unpack_gradients_from_cudnn_();
+}
+
 void RecurrentOperator::apply_gpu(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
@@ -314,6 +679,12 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
                             bool is_training)
 {
     if (!input.data || output_features == 0 || time_steps == 0) return;
+
+    if (cudnn_rnn_eligible_(output))
+    {
+        apply_gpu_cudnn_(input, hidden_states, output, is_training);
+        return;
+    }
 
     require_same_recurrent_dtype(output, {
         {&input, "input"},
@@ -404,6 +775,12 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 {
     if (!input.data || !output_delta.data || output_features == 0 || time_steps == 0) return;
 
+    if (cudnn_rnn_eligible_(output_delta))
+    {
+        apply_delta_gpu_cudnn_(input, hidden_states, output_delta, input_delta);
+        return;
+    }
+
     require_same_recurrent_dtype(output_delta, {
         {&input, "input"},
         {&hidden_states, "hidden_states"},
@@ -477,7 +854,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
                 activation_derivatives.as<Scalar>(),
                 delta_scratch.as<Scalar>());
 
-            rnn_accumulate_bias_grad_cuda<Scalar>(
+            bias_grad_sum_cuda<Scalar>(
                 batch_size, output_features,
                 delta_scratch.as<Scalar>(),
                 bias_gradient.as<float>());

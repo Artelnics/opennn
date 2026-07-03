@@ -6,6 +6,7 @@
 #include "../opennn/tensor_types.h"
 #include "../opennn/dataset.h"
 #include "../opennn/tabular_dataset.h"
+#include "../opennn/time_series_dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/loss.h"
@@ -13,6 +14,7 @@
 #include "../opennn/back_propagation.h"
 #include "../opennn/batch.h"
 #include "../opennn/device_backend.h"
+#include "../opennn/random_utilities.h"
 
 using namespace opennn;
 
@@ -268,6 +270,193 @@ TEST_F(GpuComparison, ImageClassificationGradient)
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
+}
+
+
+TEST_F(GpuComparison, ForecastingRecurrentForward)
+{
+    const Index samples_number = 7;
+    const Index past = 5;
+    const Index features = 3;
+
+    Tensor3 inputs(samples_number, past, features);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    ForecastingNetwork cpu_network({past, features}, {6, 5}, {1});
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingNetwork gpu_network({past, features}, {6, 5}, {1});
+    gpu_network.set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingLstmForward)
+{
+    const Index samples_number = 7;
+    const Index past = 5;
+    const Index features = 3;
+
+    Tensor3 inputs(samples_number, past, features);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    ForecastingLstmNetwork cpu_network({past, features}, {6, 5}, {1});
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingLstmNetwork gpu_network({past, features}, {6, 5}, {1});
+    gpu_network.set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingRecurrentGradient)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    set_seed(7);
+    TimeSeriesDataset dataset(30, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(5);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+
+    ForecastingNetwork cpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingNetwork gpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingLstmGradient)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    set_seed(7);
+    TimeSeriesDataset dataset(30, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(5);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+
+    ForecastingLstmNetwork cpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingLstmNetwork gpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingLstmFusedGradient)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    set_seed(11);
+    TimeSeriesDataset dataset(40, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(6);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+
+    ForecastingLstmNetwork cpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingLstmNetwork gpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    set_seed(11);
+    TimeSeriesDataset dataset(40, {2}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(6);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+
+    ForecastingNetwork cpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ForecastingNetwork gpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
 
 TEST_F(GpuComparison, TransformerForward)

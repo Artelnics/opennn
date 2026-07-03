@@ -1029,6 +1029,22 @@ void Dataset::fill_batch(Batch& batch,
         batch.needs_device_copy = true;
         return;
     }
+
+    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
+                    target_indices, is_training);
+}
+
+void Dataset::fill_batch_host(Batch& batch,
+                              const vector<Index>& sample_indices,
+                              const vector<Index>& input_indices,
+                              const vector<Index>& decoder_indices,
+                              const vector<Index>& target_indices,
+                              bool is_training) const
+{
+    batch.current_sample_count = sample_indices.size();
+
+    const bool on_gpu = batch.uses_cuda();
+
     batch.device_gather = false;
 
     float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();

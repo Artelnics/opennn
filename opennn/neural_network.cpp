@@ -545,6 +545,21 @@ void NeuralNetwork::set_parameters_glorot()
     if (was_on_device) copy_parameters_device();
 }
 
+void NeuralNetwork::set_parameters_pytorch()
+{
+    const Index layers_number = get_layers_number();
+
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+
+    #pragma omp parallel for
+    for (int i = 0; i < layers_number; ++i)
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_pytorch();
+
+    if (was_on_device) copy_parameters_device();
+}
+
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
     const Index layers_number = get_layers_number();

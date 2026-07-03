@@ -291,9 +291,7 @@ TrainingResult StochasticGradientDescent::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    const bool shuffle = shuffle_samples
-                      && !neural_network->has(LayerType::Recurrent)
-                      && !neural_network->has(LayerType::LongShortTermMemory);
+    const bool shuffle = shuffle_samples;
 
     float current_learning_rate = initial_learning_rate;
     const auto training_update = [&](BackPropagation& back_propagation) {
@@ -380,7 +378,7 @@ TrainingResult StochasticGradientDescent::train()
 
             if (has_validation)
             {
-                dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
+                dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),

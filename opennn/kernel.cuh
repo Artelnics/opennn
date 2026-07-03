@@ -1,6 +1,8 @@
 ﻿#ifndef KERNEL_CUH
 #define KERNEL_CUH
 
+#ifdef OPENNN_HAS_CUDA
+
 #include <cstdint>
 #include <type_traits>
 
@@ -71,6 +73,35 @@ void gather_rows_bf16_cuda(const float* matrix, const int* row_indices, __nv_bfl
                            const Index n_rows, const Index n_cols,
                            const Index matrix_cols, const Index col_offset,
                            cudaStream_t stream = nullptr);
+
+void scatter_time_slice_fill_cuda(const Index batch, const Index time_steps,
+                                  const Index features, const Index t,
+                                  const float* src, float* dst);
+
+inline constexpr int RNN_COPY_MAX_REGIONS = 16;
+
+struct RnnCopySpec
+{
+    const float* src = nullptr;
+    float*       dst = nullptr;
+    int rows = 0;
+    int cols = 0;
+    int transpose = 0;
+};
+
+void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
+                           cudaStream_t stream = nullptr);
+
+void gather_window_rows_cuda(const float* matrix, const int* start_rows, float* out,
+                             const Index batch, const Index past, const Index features,
+                             const Index matrix_cols, const Index matrix_rows,
+                             const Index col_offset, cudaStream_t stream = nullptr);
+
+void gather_window_targets_cuda(const float* matrix, const int* start_rows, float* out,
+                                const Index batch, const Index past, const Index future,
+                                const Index target_cols, const bool multi_target,
+                                const Index matrix_cols, const Index matrix_rows,
+                                const Index col_offset, cudaStream_t stream = nullptr);
 
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);
@@ -312,5 +343,7 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
                         int classes_number, int sigmoid_classes, float inv_batch,
                         float lambda_giou, float lambda_noobj, float lambda_class,
                         float focal_gamma, float obj_focal_gamma);
+
+#endif // OPENNN_HAS_CUDA
 
 #endif // KERNEL_CUH

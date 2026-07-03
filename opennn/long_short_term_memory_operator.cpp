@@ -146,14 +146,29 @@ void LongShortTermMemoryOperator::set_parameters_glorot()
     }
 
     if (forget_recurrent_weights.data)
-    {
-        const float limit = glorot_limit(output_features, output_features);
-        set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
-                                   &candidate_recurrent_weights, &output_recurrent_weights}, -limit, limit);
-    }
+        for (TensorView* recurrent : {&forget_recurrent_weights, &input_recurrent_weights,
+                                      &candidate_recurrent_weights, &output_recurrent_weights})
+            set_random_orthogonal(recurrent->as_matrix());
 }
 
-void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void LongShortTermMemoryOperator::set_parameters_pytorch()
+{
+    const float limit = 1.0f / sqrt(float(output_features > 0 ? output_features : 1));
+
+    if (forget_bias.data)
+        set_random_uniform_linked({&forget_bias, &input_bias,
+                                   &candidate_bias, &output_bias}, -limit, limit);
+
+    if (forget_weights.data)
+        set_random_uniform_linked({&forget_weights, &input_weights,
+                                   &candidate_weights, &output_weights}, -limit, limit);
+
+    if (forget_recurrent_weights.data)
+        set_random_uniform_linked({&forget_recurrent_weights, &input_recurrent_weights,
+                                   &candidate_recurrent_weights, &output_recurrent_weights}, -limit, limit);
+}
+
+void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     auto& forward_slots = forward_propagation.forward_slots[layer];
 
@@ -169,7 +184,7 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
 
     if (input.is_cuda())
     {
-        apply_gpu(input, output, return_sequences);
+        apply_gpu(input, output, return_sequences, is_training);
         return;
     }
 
@@ -251,33 +266,57 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         bcat.segment(2 * H, H)    = bg_m;
         bcat.segment(3 * H, H)    = bo_m;
 
-        MatrixR step_in(batch_size, F);
-        MatrixR prev_h(batch_size, H);
-        MatrixR Z(batch_size, 4 * H);
+        const Index BT = batch_size * T;
+        MatrixR Zin(BT, 4 * H);
+        Zin.noalias() = Eigen::Map<const MatrixR>(x, BT, F) * Wcat;
+        Zin.rowwise() += bcat.transpose();
+
+        using StridedZ = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
+
+        const bool standard_gates =
+            recurrent_activation_function == ActivationFunction::Sigmoid
+            && activation_function == ActivationFunction::Tanh;
+
+        MatrixR Z_c(batch_size, 4 * H);
+        MatrixR h_c(batch_size, H);
 
         for (Index t = 0; t < T; ++t)
         {
-            for (Index b = 0; b < batch_size; ++b)
-                memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
+            Z_c = StridedZ(Zin.data() + t * 4 * H, batch_size, 4 * H,
+                           Eigen::OuterStride<>(T * 4 * H));
 
-            Z.noalias() = step_in * Wcat;
-            Z.rowwise() += bcat.transpose();
             if (t > 0)
-                Z.noalias() += prev_h * Ucat;
+                Z_c.noalias() += h_c * Ucat;
 
+            #pragma omp parallel for
             for (Index b = 0; b < batch_size; ++b)
             {
                 const Index step = (b * T + t) * H;
+                const float* Zrow = Z_c.data() + b * 4 * H;
+                float* h_next = h_c.data() + b * H;
                 const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
 
                 for (Index h = 0; h < H; ++h)
                 {
-                    const float f = lstm_activate(recurrent_activation_function, Z(b, h));
-                    const float i = lstm_activate(recurrent_activation_function, Z(b, H + h));
-                    const float g = lstm_activate(activation_function, Z(b, 2 * H + h));
-                    const float o = lstm_activate(recurrent_activation_function, Z(b, 3 * H + h));
-                    const float c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                    const float a = activation_forward_value(activation_function, c);
+                    float f, i, g, o, a, c;
+                    if (standard_gates)
+                    {
+                        f = 1.0f / (1.0f + std::exp(-Zrow[h]));
+                        i = 1.0f / (1.0f + std::exp(-Zrow[H + h]));
+                        g = std::tanh(Zrow[2 * H + h]);
+                        o = 1.0f / (1.0f + std::exp(-Zrow[3 * H + h]));
+                        c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                        a = std::tanh(c);
+                    }
+                    else
+                    {
+                        f = lstm_activate(recurrent_activation_function, Zrow[h]);
+                        i = lstm_activate(recurrent_activation_function, Zrow[H + h]);
+                        g = lstm_activate(activation_function, Zrow[2 * H + h]);
+                        o = lstm_activate(recurrent_activation_function, Zrow[3 * H + h]);
+                        c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
+                        a = activation_forward_value(activation_function, c);
+                    }
                     const float h_value = o * a;
 
                     f_gate[step + h] = f;
@@ -287,12 +326,10 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                     cells[step + h] = c;
                     cell_act[step + h] = a;
                     hidden[step + h] = h_value;
+                    h_next[h] = h_value;
                     if (return_sequences) y[step + h] = h_value;
                 }
             }
-
-            for (Index b = 0; b < batch_size; ++b)
-                memcpy(prev_h.data() + b * H, hidden + (b * T + t) * H, H * sizeof(float));
         }
 
         if (!return_sequences)
@@ -510,38 +547,28 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
         MatrixR gWcat = MatrixR::Zero(F, 4 * H);
         MatrixR gUcat = MatrixR::Zero(H, 4 * H);
-        VectorR gbcat = VectorR::Zero(4 * H);
 
-        MatrixR step_in(batch_size, F), prev_h(batch_size, H), c_prev_m(batch_size, H);
-        MatrixR Dcat(batch_size, 4 * H);
-        MatrixR DX(batch_size, F);
+        const Index BT = batch_size * T;
+        MatrixR Dcat_all(BT, 4 * H);
+        MatrixR D_c(batch_size, 4 * H);
+        MatrixR h_prev_c(batch_size, H);
         MatrixR dh_next = MatrixR::Zero(batch_size, H);
         MatrixR dc_next = MatrixR::Zero(batch_size, H);
 
+        using StridedD  = Eigen::Map<MatrixR, 0, Eigen::OuterStride<>>;
+        using StridedCH = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
+
         for (Index t = T; t-- > 0;)
         {
-            for (Index b = 0; b < batch_size; ++b)
-                memcpy(step_in.data() + b * F, x + (b * T + t) * F, F * sizeof(float));
-
-            if (t > 0)
-                for (Index b = 0; b < batch_size; ++b)
-                {
-                    memcpy(prev_h.data()   + b * H, hidden + (b * T + t - 1) * H, H * sizeof(float));
-                    memcpy(c_prev_m.data() + b * H, cells  + (b * T + t - 1) * H, H * sizeof(float));
-                }
-
-            if (return_sequences)
-                for (Index b = 0; b < batch_size; ++b)
-                    for (Index h = 0; h < H; ++h)
-                        dh_next(b, h) += out_delta[(b * T + t) * H + h];
-            else if (t == T - 1)
-                for (Index b = 0; b < batch_size; ++b)
-                    for (Index h = 0; h < H; ++h)
-                        dh_next(b, h) += out_delta[b * H + h];
-
+            #pragma omp parallel for
             for (Index b = 0; b < batch_size; ++b)
             {
                 const Index step = (b * T + t) * H;
+                float* Drow = D_c.data() + b * 4 * H;
+                const float* c_prev = t > 0 ? cells + (b * T + t - 1) * H : nullptr;
+                const float* dh_in  = return_sequences ? out_delta + step
+                                    : (t == T - 1 ? out_delta + b * H : nullptr);
+
                 for (Index h = 0; h < H; ++h)
                 {
                     const float f = f_gate[step + h];
@@ -550,34 +577,37 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                     const float o = o_gate[step + h];
                     const float a = cell_act[step + h];
 
-                    const float dc = dh_next(b, h) * o
+                    const float dh = dh_next(b, h) + (dh_in ? dh_in[h] : 0.0f);
+                    const float dc = dh * o
                                    * activation_derivative_from_output_value(activation_function, a)
                                    + dc_next(b, h);
 
-                    Dcat(b, 3 * H + h) = dh_next(b, h) * a * lstm_derivative_from_output(recurrent_activation_function, o);
-                    Dcat(b, h)         = dc * (t > 0 ? c_prev_m(b, h) : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
-                    Dcat(b, H + h)     = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
-                    Dcat(b, 2 * H + h) = dc * i * lstm_derivative_from_output(activation_function, g);
-                    dc_next(b, h)      = dc * f;
+                    Drow[3 * H + h] = dh * a * lstm_derivative_from_output(recurrent_activation_function, o);
+                    Drow[h]         = dc * (c_prev ? c_prev[h] : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
+                    Drow[H + h]     = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
+                    Drow[2 * H + h] = dc * i * lstm_derivative_from_output(activation_function, g);
+                    dc_next(b, h)   = dc * f;
                 }
             }
 
-            gbcat += Dcat.colwise().sum().transpose();
-            gWcat.noalias() += step_in.transpose() * Dcat;
-
-            if (write_input_delta)
-            {
-                DX.noalias() = Dcat * Wcat.transpose();
-                for (Index b = 0; b < batch_size; ++b)
-                    memcpy(in_delta + (b * T + t) * F, DX.data() + b * F, F * sizeof(float));
-            }
+            StridedD(Dcat_all.data() + t * 4 * H, batch_size, 4 * H,
+                     Eigen::OuterStride<>(T * 4 * H)) = D_c;
 
             if (t > 0)
             {
-                gUcat.noalias() += prev_h.transpose() * Dcat;
-                dh_next.noalias() = Dcat * Ucat.transpose();
+                h_prev_c = StridedCH(hidden + (t - 1) * H, batch_size, H,
+                                     Eigen::OuterStride<>(T * H));
+                gUcat.noalias() += h_prev_c.transpose() * D_c;
+                dh_next.noalias() = D_c * Ucat.transpose();
             }
         }
+
+        const Eigen::Map<const MatrixR> all_x(x, BT, F);
+        gWcat.noalias() = all_x.transpose() * Dcat_all;
+        const VectorR gbcat = Dcat_all.colwise().sum().transpose();
+
+        if (write_input_delta)
+            Eigen::Map<MatrixR>(in_delta, BT, F).noalias() = Dcat_all * Wcat.transpose();
 
         gWf_m += gWcat.leftCols(H);          gWi_m += gWcat.middleCols(H, H);
         gWg_m += gWcat.middleCols(2 * H, H); gWo_m += gWcat.rightCols(H);
@@ -767,6 +797,15 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
+static bool lstm_persist_env_enabled()
+{
+    static const bool enabled = []() {
+        const char* env = std::getenv("OPENNN_RNN_PERSIST");
+        return !(env && string(env) == "0");
+    }();
+    return enabled;
+}
+
 void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
 {
     using F_ = ActivationFunction;
@@ -778,6 +817,27 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
             "Tanh cell activation + Sigmoid gate activation. "
             "Reconfigure the layer or fall back to CPU.");
     }
+
+    if (!persist_algo_failed_ && lstm_persist_env_enabled())
+    {
+        try
+        {
+            ensure_cudnn_setup_attempt_(batch_size);
+            return;
+        }
+        catch (const std::exception&)
+        {
+            persist_algo_failed_ = true;
+            rnn_desc.reset();
+            cached_input_features = -1;
+        }
+    }
+    ensure_cudnn_setup_attempt_(batch_size);
+}
+
+void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
+{
+    persist_algo_active_ = !persist_algo_failed_ && lstm_persist_env_enabled();
 
     const Index F = input_features;
     const Index H = output_features;
@@ -812,108 +872,146 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
             rnn_desc,
-            CUDNN_RNN_ALGO_STANDARD,
+            persist_algo_active_ ? CUDNN_RNN_ALGO_PERSIST_STATIC
+                                 : CUDNN_RNN_ALGO_STANDARD,
             CUDNN_LSTM,
             CUDNN_RNN_SINGLE_INP_BIAS,
             CUDNN_UNIDIRECTIONAL,
             CUDNN_LINEAR_INPUT,
             CUDNN_DATA_FLOAT,
             CUDNN_DATA_FLOAT,
-            CUDNN_DEFAULT_MATH,
+            CUDNN_TENSOR_OP_MATH,
             int(F),
             int(H),
             /*projSize=*/ int(H),
             1,
             dropout_desc,
-            CUDNN_RNN_PADDED_IO_ENABLED));
+            persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
+                                 : CUDNN_RNN_PADDED_IO_ENABLED));
 
         size_t weight_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNWeightSpaceSize(
             Backend::get_cudnn_handle(), rnn_desc, &weight_bytes));
         weight_space_buf.grow_to(Index(weight_bytes));
         dweight_space_buf.grow_to(Index(weight_bytes));
+
+        device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
+                               Backend::get_compute_stream());
+
+        CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
+        CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
+        m_desc.deleter = &cudnnDestroyTensorDescriptor;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
+        b_desc.deleter = &cudnnDestroyTensorDescriptor;
+
+        for (int lin = 0; lin < 8; ++lin)
+        {
+            CHECK_CUDNN(cudnnGetRNNWeightParams(
+                Backend::get_cudnn_handle(), rnn_desc, 0,
+                size_t(weight_space_buf.bytes), weight_space_buf.data, lin,
+                m_desc, reinterpret_cast<void**>(&cudnn_w_ptrs_[lin]),
+                b_desc, reinterpret_cast<void**>(&cudnn_b_ptrs_[lin])));
+            CHECK_CUDNN(cudnnGetRNNWeightParams(
+                Backend::get_cudnn_handle(), rnn_desc, 0,
+                size_t(dweight_space_buf.bytes), dweight_space_buf.data, lin,
+                m_desc, reinterpret_cast<void**>(&cudnn_gw_ptrs_[lin]),
+                b_desc, reinterpret_cast<void**>(&cudnn_gb_ptrs_[lin])));
+        }
     }
 
-    const bool data_shape_changed =
-        cached_batch_size != batch_size ||
-        cached_time_steps != T;
+    if (topology_changed)
+        for (CudnnRnnShapeSlot& slot : shape_slots_)
+        {
+            slot.batch = -1;
+            slot.time  = -1;
+        }
 
-    if (data_shape_changed || topology_changed)
+    int slot_index = -1;
+    for (int s = 0; s < 2; ++s)
+        if (shape_slots_[s].batch == batch_size && shape_slots_[s].time == T)
+            slot_index = s;
+
+    if (slot_index < 0)
     {
-        x_data_desc.reset();
-        y_data_desc.reset();
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&x_data_desc.handle));
-        x_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
-        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&y_data_desc.handle));
-        y_data_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+        slot_index = (shape_slots_[0].batch < 0) ? 0
+                   : (shape_slots_[1].batch < 0) ? 1
+                   : (shape_slots_[0].stamp <= shape_slots_[1].stamp ? 0 : 1);
+        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        slot.batch = batch_size;
+        slot.time  = T;
 
-        seq_lengths_host_buf.grow_to(batch_size * Index(sizeof(int32_t)));
-        int32_t* seq_h = seq_lengths_host_buf.as<int32_t>();
+        slot.x_desc.reset();
+        slot.y_desc.reset();
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&slot.x_desc.handle));
+        slot.x_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+        CHECK_CUDNN(cudnnCreateRNNDataDescriptor(&slot.y_desc.handle));
+        slot.y_desc.deleter = &cudnnDestroyRNNDataDescriptor;
+
+        slot.seq_host.grow_to(batch_size * Index(sizeof(int32_t)));
+        int32_t* seq_h = slot.seq_host.as<int32_t>();
         for (Index i = 0; i < batch_size; ++i) seq_h[i] = int32_t(T);
 
-        seq_lengths_dev_buf.grow_to(batch_size * Index(sizeof(int32_t)));
-        device::copy_async(seq_lengths_dev_buf.data, seq_h,
+        slot.seq_dev.grow_to(batch_size * Index(sizeof(int32_t)));
+        device::copy_async(slot.seq_dev.data, seq_h,
                            batch_size * Index(sizeof(int32_t)),
                            device::CopyKind::HostToDevice,
                            Backend::get_compute_stream());
 
         static float zero_pad_fill = 0.0f;
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
-            x_data_desc, CUDNN_DATA_FLOAT,
+            slot.x_desc, CUDNN_DATA_FLOAT,
             CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
             int(T), int(batch_size), int(F),
             seq_h, &zero_pad_fill));
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
-            y_data_desc, CUDNN_DATA_FLOAT,
+            slot.y_desc, CUDNN_DATA_FLOAT,
             CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
             int(T), int(batch_size), int(H),
             seq_h, &zero_pad_fill));
 
-        if (!h_desc)
-        {
-            CHECK_CUDNN(cudnnCreateTensorDescriptor(&h_desc.handle));
-            h_desc.deleter = &cudnnDestroyTensorDescriptor;
-        }
-        if (!c_desc)
-        {
-            CHECK_CUDNN(cudnnCreateTensorDescriptor(&c_desc.handle));
-            c_desc.deleter = &cudnnDestroyTensorDescriptor;
-        }
+        slot.h_desc.reset();
+        slot.c_desc.reset();
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&slot.h_desc.handle));
+        slot.h_desc.deleter = &cudnnDestroyTensorDescriptor;
+        CHECK_CUDNN(cudnnCreateTensorDescriptor(&slot.c_desc.handle));
+        slot.c_desc.deleter = &cudnnDestroyTensorDescriptor;
         const int dimA[3]    = {1, int(batch_size), int(H)};
         const int strideA[3] = {int(batch_size * H), int(H), 1};
-        CHECK_CUDNN(cudnnSetTensorNdDescriptor(h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
-        CHECK_CUDNN(cudnnSetTensorNdDescriptor(c_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
+        CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.h_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
+        CHECK_CUDNN(cudnnSetTensorNdDescriptor(slot.c_desc, CUDNN_DATA_FLOAT, 3, dimA, strideA));
 
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
             Backend::get_cudnn_handle(), rnn_desc,
-            CUDNN_FWD_MODE_TRAINING, x_data_desc,
+            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
             &work_bytes, &reserve_bytes));
-        workspace_buf.grow_to(Index(work_bytes));
+
+        size_t inference_work_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+            Backend::get_cudnn_handle(), rnn_desc,
+            CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
+            &inference_work_bytes, nullptr));
+
+        workspace_buf.grow_to(Index(max(work_bytes, inference_work_bytes)));
         reserve_space_buf.grow_to(Index(reserve_bytes));
 
         const Index yh_bytes = batch_size * T * H * Index(sizeof(float));
         y_buf.grow_to(yh_bytes);
         dy_buf.grow_to(yh_bytes);
 
-        CHECK_CUDNN(cudnnBuildRNNDynamic(
-            Backend::get_cudnn_handle(), rnn_desc, int(batch_size)));
-
     }
 
-    cached_batch_size      = batch_size;
-    cached_time_steps      = T;
+    shape_slots_[slot_index].stamp = ++shape_stamp_;
+    active_shape_ = slot_index;
+
     cached_input_features  = F;
     cached_output_features = H;
 }
 
 void LongShortTermMemoryOperator::pack_weights_to_cudnn_() const
 {
-    if (weight_space_buf.data && weight_space_buf.bytes > 0)
-        device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
-                               Backend::get_compute_stream());
-
     const TensorView* W[8] = {
         &input_weights,
         &forget_weights,
@@ -935,45 +1033,20 @@ void LongShortTermMemoryOperator::pack_weights_to_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
-    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
-    m_desc.deleter = &cudnnDestroyTensorDescriptor;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
-    b_desc.deleter = &cudnnDestroyTensorDescriptor;
-
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count = 0;
     for (int lin = 0; lin < 8; ++lin)
     {
-        float* m_addr = nullptr;
-        float* b_addr = nullptr;
-        CHECK_CUDNN(cudnnGetRNNWeightParams(
-            Backend::get_cudnn_handle(),
-            rnn_desc,
-            0,
-            size_t(weight_space_buf.bytes),
-            weight_space_buf.data,
-            lin,
-            m_desc, reinterpret_cast<void**>(&m_addr),
-            b_desc, reinterpret_cast<void**>(&b_addr)));
-
         const bool is_input_w = (lin < 4);
-        const Index rows_src = is_input_w ? F : H;
-        if (m_addr && W[lin] && W[lin]->data)
-            transpose_2d_cuda<float>(rows_src, H,
-                                     W[lin]->as<float>(), m_addr);
+        if (cudnn_w_ptrs_[lin] && W[lin]->data)
+            specs[count++] = {W[lin]->as<float>(), cudnn_w_ptrs_[lin],
+                              int(is_input_w ? F : H), int(H), 1};
 
-        if (b_addr)
-        {
-            if (B[lin] && B[lin]->data)
-                device::copy_async(b_addr, B[lin]->data,
-                                   H * Index(sizeof(float)),
-                                   device::CopyKind::DeviceToDevice,
-                                   Backend::get_compute_stream());
-            else
-                device::set_zero_async(b_addr, H * Index(sizeof(float)),
-                                       Backend::get_compute_stream());
-        }
+        if (cudnn_b_ptrs_[lin] && B[lin] && B[lin]->data)
+            specs[count++] = {B[lin]->as<float>(), cudnn_b_ptrs_[lin],
+                              1, int(H), 0};
     }
+    rnn_copy_regions_cuda(specs, count);
 }
 
 void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_() const
@@ -999,81 +1072,72 @@ void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_() const
     const Index F = input_features;
     const Index H = output_features;
 
-    CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
-    CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&m_desc.handle));
-    m_desc.deleter = &cudnnDestroyTensorDescriptor;
-    CHECK_CUDNN(cudnnCreateTensorDescriptor(&b_desc.handle));
-    b_desc.deleter = &cudnnDestroyTensorDescriptor;
-
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count = 0;
     for (int lin = 0; lin < 8; ++lin)
     {
-        float* m_addr = nullptr;
-        float* b_addr = nullptr;
-        CHECK_CUDNN(cudnnGetRNNWeightParams(
-            Backend::get_cudnn_handle(),
-            rnn_desc,
-            0,
-            size_t(dweight_space_buf.bytes),
-            dweight_space_buf.data,
-            lin,
-            m_desc, reinterpret_cast<void**>(&m_addr),
-            b_desc, reinterpret_cast<void**>(&b_addr)));
-
         const bool is_input_w = (lin < 4);
-        const Index cols_cudnn = is_input_w ? F : H;
-        if (m_addr && gW[lin] && gW[lin]->data)
-            transpose_2d_cuda<float>(H, cols_cudnn,
-                                     m_addr, const_cast<float*>(gW[lin]->as<float>()));
+        if (cudnn_gw_ptrs_[lin] && gW[lin]->data)
+            specs[count++] = {cudnn_gw_ptrs_[lin],
+                              const_cast<float*>(gW[lin]->as<float>()),
+                              int(H), int(is_input_w ? F : H), 1};
 
-        if (b_addr && gB[lin] && gB[lin]->data)
-            device::copy_async(const_cast<void*>(gB[lin]->data), b_addr,
-                               H * Index(sizeof(float)),
-                               device::CopyKind::DeviceToDevice,
-                               Backend::get_compute_stream());
+        if (cudnn_gb_ptrs_[lin] && gB[lin] && gB[lin]->data)
+            specs[count++] = {cudnn_gb_ptrs_[lin],
+                              const_cast<float*>(gB[lin]->as<float>()),
+                              1, int(H), 0};
     }
+    rnn_copy_regions_cuda(specs, count);
 }
 
 void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
-                                      bool return_seq) const
+                                      bool return_seq,
+                                      bool is_training) const
 {
     const Index batch_size = input.shape[0];
     if (!input.data || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
-    device::synchronize(Backend::get_compute_stream());
-
     ensure_cudnn_setup_(batch_size);
     pack_weights_to_cudnn_();
 
-    CHECK_CUDNN(cudnnRNNForward(
-        Backend::get_cudnn_handle(),
-        rnn_desc,
-        CUDNN_FWD_MODE_TRAINING,
-        seq_lengths_dev_buf.as<int32_t>(),
-        x_data_desc, input.data,
-        y_data_desc, y_buf.data,
-        h_desc, nullptr, nullptr,
-        c_desc, nullptr, nullptr,
-        size_t(weight_space_buf.bytes), weight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+    float* y_target = return_seq ? output.as<float>()
+                                 : static_cast<float*>(y_buf.data);
+    y_used_ = y_target;
 
-    const Index H = output_features;
-    const Index T = time_steps;
+    auto run_forward = [&]() {
+        return cudnnRNNForward(
+            Backend::get_cudnn_handle(),
+            rnn_desc,
+            is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
+            active_shape().seq_dev.as<int32_t>(),
+            active_shape().x_desc, input.data,
+            active_shape().y_desc, y_target,
+            active_shape().h_desc, nullptr, nullptr,
+            active_shape().c_desc, nullptr, nullptr,
+            size_t(weight_space_buf.bytes), weight_space_buf.data,
+            size_t(workspace_buf.bytes), workspace_buf.data,
+            is_training ? size_t(reserve_space_buf.bytes) : 0,
+            is_training ? reserve_space_buf.data : nullptr);
+    };
 
-    if (return_seq)
+    cudnnStatus_t forward_status = run_forward();
+    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
     {
-        device::copy_async(output.data, y_buf.data,
-                           batch_size * T * H * Index(sizeof(float)),
-                           device::CopyKind::DeviceToDevice,
-                           Backend::get_compute_stream());
-        return;
+        persist_algo_failed_ = true;
+        rnn_desc.reset();
+        cached_input_features = -1;
+        ensure_cudnn_setup_(batch_size);
+        pack_weights_to_cudnn_();
+        forward_status = run_forward();
     }
+    CHECK_CUDNN(forward_status);
+
+    if (return_seq) return;
 
     gather_time_slice_cuda<float>(
-        batch_size, T, H, T - 1,
-        static_cast<const float*>(y_buf.data),
+        batch_size, time_steps, output_features, time_steps - 1,
+        y_target,
         output.as<float>());
 }
 
@@ -1088,34 +1152,25 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const Index batch_size = input.shape[0];
     if (batch_size == 0) return;
 
-    zero_linked({&forget_bias_gradient, &input_bias_gradient,
-                 &candidate_bias_gradient, &output_bias_gradient,
-                 &forget_weight_gradient, &input_weight_gradient,
-                 &candidate_weight_gradient, &output_weight_gradient,
-                 &forget_recurrent_weight_gradient, &input_recurrent_weight_gradient,
-                 &candidate_recurrent_weight_gradient, &output_recurrent_weight_gradient});
-
     ensure_cudnn_setup_(batch_size);
 
     const Index H = output_features;
     const Index T = time_steps;
-    const size_t y_bytes = size_t(batch_size * T * H) * sizeof(float);
 
-    if (return_seq)
+    const float* dy_data = output_delta.as<float>();
+    if (!return_seq)
     {
-        device::copy_async(dy_buf.data, output_delta.data, Index(y_bytes),
-                           device::CopyKind::DeviceToDevice,
-                           Backend::get_compute_stream());
-    }
-    else
-    {
-        device::set_zero_async(dy_buf.data, Index(y_bytes),
-                               Backend::get_compute_stream());
-        scatter_time_slice_cuda<float>(
+        scatter_time_slice_fill_cuda(
             batch_size, T, H, T - 1,
             output_delta.as<float>(),
             static_cast<float*>(dy_buf.data));
+        dy_data = static_cast<const float*>(dy_buf.data);
     }
+
+    const float* y_data = y_used_ ? y_used_
+                                  : static_cast<const float*>(y_buf.data);
+
+    const CudnnRnnShapeSlot& shape = active_shape();
 
     // cuDNN always writes dx; when the previous layer needs no gradient
     // (input_delta unlinked) give it a scratch sink sized (B, T, F).
@@ -1129,11 +1184,11 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     CHECK_CUDNN(cudnnRNNBackwardData_v8(
         Backend::get_cudnn_handle(),
         rnn_desc,
-        seq_lengths_dev_buf.as<int32_t>(),
-        y_data_desc, y_buf.data, dy_buf.data,
-        x_data_desc, dx_data,   // dx
-        h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
-        c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
+        shape.seq_dev.as<int32_t>(),
+        shape.y_desc, y_data, dy_data,
+        shape.x_desc, dx_data,   // dx
+        shape.h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
+        shape.c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
@@ -1145,10 +1200,10 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         Backend::get_cudnn_handle(),
         rnn_desc,
         CUDNN_WGRAD_MODE_ADD,
-        seq_lengths_dev_buf.as<int32_t>(),
-        x_data_desc, input.data,
-        h_desc, nullptr,
-        y_data_desc, y_buf.data,
+        shape.seq_dev.as<int32_t>(),
+        shape.x_desc, input.data,
+        shape.h_desc, nullptr,
+        shape.y_desc, y_data,
         size_t(dweight_space_buf.bytes), dweight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
@@ -1158,7 +1213,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool) const
+void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool, bool) const
 {
     throw runtime_error("apply_gpu requires CUDA.");
 }

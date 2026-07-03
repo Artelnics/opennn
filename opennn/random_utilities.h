@@ -24,6 +24,8 @@ namespace opennn
 
     void set_random_normal(MatrixMap, float = 0, float = 1);
 
+    void set_random_orthogonal(MatrixMap);
+
     void set_random_integer(MatrixR&, Index, Index);
 
     void shuffle(VectorB&);
