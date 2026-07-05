@@ -27,9 +27,10 @@ Full HIGGS files belong under `OPENNN_BENCH_DATA` outside the repository. See
 | Shared data prep | Done | Run `higgs/prepare_higgs.py` on the full UCI file. |
 | GPU dense training speed | JSON harness ready with quality metrics and CMake target | Build `opennn_speed`, then rerun OpenNN, PyTorch, and TensorFlow with `training-speed/run_higgs_dense.py`. |
 | GPU dense inference speed | Historical Rosenbrock only | Migrate the CPU/GPU inference runners to load `higgs_test.csv` and use the HIGGS classifier. |
-| GPU max batch | Historical Rosenbrock only | Rebuild the max-batch probes around the HIGGS classifier shape and BCE training step. |
+| GPU max batch | Harness ready: [`higgs-max-batch/`](higgs-max-batch/) (train + infer, fp32/bf16, HIGGS classifier shape + BCE step, synthetic contract-shaped data) | Run on the reference GPU and archive the result JSON. |
 | GPU energy | Historical Rosenbrock only | Point `run_energy.py` at the HIGGS throughput binaries/scripts before remeasuring. |
-| CPU inference | Historical Rosenbrock only | Use `higgs_test.csv`, the same HIGGS classifier, and exported identical weights. |
+| CPU training | Internal 100k/20k HIGGS subset measured with MKL | See `higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`; rerun the full 10.5M/500k split before public headline use. |
+| CPU inference | Internal 20k HIGGS test subset measured with MKL | See `higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`; rerun the full 500k test split before public headline use. |
 | Accuracy / quality gate | Added to dense training-speed runners | Set threshold environment variables for publication runs if a hard pass/fail gate is desired. |
 | Precision workflow | Historical Rosenbrock only | Reframe as optimizer capability on HIGGS only if the metric is classification quality, not MSE. |
 | Data capacity | Historical Rosenbrock only | Decide whether capacity means full HIGGS load or repeated-HIGGS stress data, then document that choice. |

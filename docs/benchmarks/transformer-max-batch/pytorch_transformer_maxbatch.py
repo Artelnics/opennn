@@ -10,9 +10,13 @@
 # and optional torch.compile (PT_COMPILE=1). No CUDA-graph flag is needed; this
 # is the eager/compiled steady-state path.
 #
+# --mode infer measures forward-only capacity/throughput: model.eval() under
+# torch.inference_mode() (no autograd graph, no optimizer state), matching
+# OpenNN's device-resident inference path.
+#
 #   usage: python pytorch_transformer_maxbatch.py --in-vocab V --out-vocab V \
 #              --in-seq S --dec-seq S --d 512 --h 8 --ff 2048 --layers 6 \
-#              --batch B --steps N [--warmup W]
+#              --batch B --steps N [--warmup W] [--mode train|infer]
 #   env:   PT_BF16=1 -> autocast(bf16);  PT_COMPILE=1 -> torch.compile
 
 import argparse, math, os, time
@@ -31,6 +35,7 @@ ap.add_argument("--layers", type=int, default=6)
 ap.add_argument("--batch", type=int, default=32)
 ap.add_argument("--steps", type=int, default=30)
 ap.add_argument("--warmup", type=int, default=5)
+ap.add_argument("--mode", choices=["train", "infer"], default="train")
 args = ap.parse_args()
 
 assert torch.cuda.is_available(), "CUDA GPU required"
@@ -44,7 +49,8 @@ torch.backends.cudnn.benchmark = True
 
 use_bf16 = os.environ.get("PT_BF16") is not None
 use_compile = os.environ.get("PT_COMPILE") is not None
-print(f"precision={'bf16' if use_bf16 else 'fp32'} in_vocab={args.in_vocab} "
+print(f"precision={'bf16' if use_bf16 else 'fp32'} mode={args.mode} "
+      f"in_vocab={args.in_vocab} "
       f"out_vocab={args.out_vocab} in_seq={args.in_seq} dec_seq={args.dec_seq} "
       f"d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers} "
       f"batch={args.batch} steps={args.steps} compile={use_compile}")
@@ -83,14 +89,9 @@ class Seq2SeqTransformer(nn.Module):
         return self.out(self.transformer(s, t))
 
 
-model = Seq2SeqTransformer().to(dev).train()
+model = Seq2SeqTransformer().to(dev)
+model.train(args.mode == "train")
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
-
-try:
-    opt = torch.optim.Adam(model.parameters(), lr=1e-4, fused=True)
-except (RuntimeError, ValueError):
-    opt = torch.optim.Adam(model.parameters(), lr=1e-4)
-loss_fn = nn.CrossEntropyLoss()
 
 step_fn = model
 if use_compile:
@@ -103,32 +104,60 @@ ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
 pool = max(8, args.warmup + args.steps)
 src = torch.randint(0, args.in_vocab, (pool, args.batch, args.in_seq), device=dev)
 dec = torch.randint(0, args.out_vocab, (pool, args.batch, args.dec_seq), device=dev)
-tgt = torch.randint(0, args.out_vocab, (pool, args.batch, args.dec_seq), device=dev)
 
+if args.mode == "train":
+    tgt = torch.randint(0, args.out_vocab, (pool, args.batch, args.dec_seq), device=dev)
 
-def step(i):
-    j = i % pool
-    opt.zero_grad(set_to_none=True)
-    with ctx:
-        logits = step_fn(src[j], dec[j])
-        loss = loss_fn(logits.reshape(-1, args.out_vocab), tgt[j].reshape(-1))
-    loss.backward()
-    opt.step()
-    return loss
+    try:
+        opt = torch.optim.Adam(model.parameters(), lr=1e-4, fused=True)
+    except (RuntimeError, ValueError):
+        opt = torch.optim.Adam(model.parameters(), lr=1e-4)
+    loss_fn = nn.CrossEntropyLoss()
 
-for i in range(args.warmup):
-    step(i)
-torch.cuda.synchronize()
+    def step(i):
+        j = i % pool
+        opt.zero_grad(set_to_none=True)
+        with ctx:
+            logits = step_fn(src[j], dec[j])
+            loss = loss_fn(logits.reshape(-1, args.out_vocab), tgt[j].reshape(-1))
+        loss.backward()
+        opt.step()
+        return loss
 
-t0 = time.perf_counter()
-last = None
-for i in range(args.steps):
-    last = step(args.warmup + i)
-torch.cuda.synchronize()
-wall_s = time.perf_counter() - t0
+    for i in range(args.warmup):
+        step(i)
+    torch.cuda.synchronize()
+
+    t0 = time.perf_counter()
+    last = None
+    for i in range(args.steps):
+        last = step(args.warmup + i)
+    torch.cuda.synchronize()
+    wall_s = time.perf_counter() - t0
+    print(f"final_loss={float(last):.5f}")
+else:
+    # Forward-only: no autograd graph, no optimizer state -- the inference
+    # footprint is parameters + activations, like OpenNN's resident path.
+    def forward(i):
+        j = i % pool
+        with ctx:
+            return step_fn(src[j], dec[j])
+
+    with torch.inference_mode():
+        logits = None
+        for i in range(args.warmup):
+            logits = forward(i)
+        torch.cuda.synchronize()
+
+        t0 = time.perf_counter()
+        for i in range(args.steps):
+            logits = forward(args.warmup + i)
+        torch.cuda.synchronize()
+        wall_s = time.perf_counter() - t0
+
+        assert torch.isfinite(logits.flatten()[:8].float()).all(), "non-finite logits"
 
 samples_per_s = args.steps * args.batch / wall_s
-print(f"final_loss={float(last):.5f}")
 print(f"wall_s={wall_s:.5f}")
 print(f"samples_per_sec={samples_per_s:.2f}")
 print(f"tokens_per_sec={samples_per_s * (args.in_seq + args.dec_seq):.2f}")

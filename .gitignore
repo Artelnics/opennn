@@ -299,6 +299,8 @@ tests/data/*.xml
 
 #Python tests
 \.ipynb_checkpoints
+__pycache__/
+*.py[cod]
 
 # Created by .ignore support plugin (hsz.mobi)
 /opennn/loss_index_forward_propagation.h
@@ -347,6 +349,14 @@ docs/benchmarks/inference-speed/opennn_inference
 docs/benchmarks/inference-speed/opennn_inference_mkl
 docs/benchmarks/inference-speed/opennn_inference_mkl_auto
 docs/benchmarks/inference-speed/rosenbrock_infer.csv
+docs/benchmarks/**/*.onnx
+docs/benchmarks/**/*.onnx.data
+docs/benchmarks/**/*.csv
+docs/benchmarks/**/pred_*.txt
+docs/benchmarks/accuracy/opennn_accuracy
+docs/benchmarks/export/opennn_export
+docs/benchmarks/memory/opennn_memory
+docs/benchmarks/startup/opennn_startup
 docs/benchmarks/memory/opennn_memory_cpu
 docs/benchmarks/memory/sum.csv
 docs/benchmarks/startup/opennn_startup_cpu

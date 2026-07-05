@@ -194,6 +194,8 @@ if(OpenNN_BUILD_TESTS)
 endif()
 
 option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
-if(OpenNN_BUILD_EXAMPLES)
+option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
+
+if(OpenNN_BUILD_EXAMPLES OR OpenNN_BUILD_BENCHMARKS)
     add_subdirectory(examples)
 endif()

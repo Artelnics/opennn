@@ -1,0 +1,4 @@
+interface:
+  display_name: "Artelnics WordPress Admin"
+  short_description: "Manage OpenNN, Neural Designer, Artelnics"
+  default_prompt: "Use $opennn-wordpress-admin to inspect a WordPress blog on OpenNN, Neural Designer, or Artelnics and prepare a safe update plan."

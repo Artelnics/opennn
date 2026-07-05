@@ -89,9 +89,9 @@ The shared training harness requires both train and test files:
 
 ```bash
 cmake -S ../../.. -B ../../../build-benchmarks \
-  -DOpenNN_BUILD_BENCHMARKS=ON \
-  -DOpenNN_BUILD_EXAMPLES=OFF
-cmake --build ../../../build-benchmarks --config Release --target opennn_speed
+  -DOpenNN_BUILD_EXAMPLES=OFF \
+  -DOpenNN_BUILD_BENCHMARKS=ON
+cmake --build ../../../build-benchmarks --config Release --target opennn_speed opennn_higgs_cpu
 
 cd docs/benchmarks/training-speed
 python run_higgs_dense.py \

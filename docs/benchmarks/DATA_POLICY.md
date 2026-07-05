@@ -50,3 +50,7 @@ $OPENNN_BENCH_DATA/
   commit, dirty status, machine metadata, and raw benchmark output.
 - Tiny synthetic fixtures are allowed only when they are intentionally small and
   used for tests or smoke checks.
+- Legacy tracked binaries, ONNX files, and generated CSVs are retained only as
+  historical artifacts. Do not add new ones; regenerate them outside the repo or
+  replace them with documented result JSON. The current historical exceptions
+  are listed in `benchmark_manifest.json` under `legacy_artifacts`.
