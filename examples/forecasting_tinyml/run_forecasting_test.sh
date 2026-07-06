@@ -22,20 +22,10 @@ WORK="${WORK:-$HOME/tinyml-forecasting}"
 N_INPUTS=12   # 6 time steps x 2 features, flattened row-major
 N_OUTPUTS=1
 
-# Toolchain discovery: environment override, then PATH (CI runners install via
-# apt), then the user-space locations documented in the README (WSL, no sudo).
-AVR_GCC="${AVR_GCC:-$(command -v avr-gcc || find "$HOME/.arduino15/packages/arduino/tools/avr-gcc" -name avr-gcc -type f 2>/dev/null | head -1)}"
-AVR_BIN_DIR=$(dirname "$AVR_GCC")
-SIMAVR="${SIMAVR:-$(command -v simavr || echo "$HOME/simavr-local/root/usr/bin/simavr")}"
-export LD_LIBRARY_PATH="$HOME/simavr-local/root/usr/lib/x86_64-linux-gnu:$HOME/simavr-local/root/usr/lib:$LD_LIBRARY_PATH"
-
-# Optional ARM Cortex-M stage
-ARM_GCC="${ARM_GCC:-$(command -v arm-none-eabi-gcc || find "$HOME/arm-tools" -name arm-none-eabi-gcc -type f 2>/dev/null | head -1)}"
-QEMU_ARM="${QEMU_ARM:-$(command -v qemu-system-arm || find "$HOME/arm-tools" -path '*qemu*' -name qemu-system-arm -type f 2>/dev/null | head -1)}"
+# Shared toolchain discovery (tr strips CRLF in case of a Windows checkout).
+. <(tr -d '\r' < "$HARNESS_DIR/tinyml_common.sh")
+discover_tinyml_toolchains
 ARM_HARNESS_DIR="$HARNESS_DIR/arm"
-
-[ -x "$AVR_GCC" ] || { echo "avr-gcc not found (install the arduino:avr core)"; exit 1; }
-[ -x "$SIMAVR" ] || { echo "simavr not found at $SIMAVR"; exit 1; }
 
 mkdir -p "$WORK"
 
@@ -76,10 +66,11 @@ for MODEL in lstm rnn; do
             echo "WARNING: AVR build failed for $MODEL/$VARIANT; checking this variant on PC only."
             tail -3 "$WORK/avr_${MODEL}_${VARIANT}_build.log"
         else
-            "$AVR_BIN_DIR/avr-size" "$WORK/avr_${MODEL}_${VARIANT}.elf"
+            SIZE_OUTPUT=$("$AVR_BIN_DIR/avr-size" "$WORK/avr_${MODEL}_${VARIANT}.elf")
+            echo "$SIZE_OUTPUT"
 
-            FLASH_BYTES=$("$AVR_BIN_DIR/avr-size" "$WORK/avr_${MODEL}_${VARIANT}.elf" | awk 'NR==2 {print $1 + $2}')
-            RAM_BYTES=$("$AVR_BIN_DIR/avr-size" "$WORK/avr_${MODEL}_${VARIANT}.elf" | awk 'NR==2 {print $2 + $3}')
+            FLASH_BYTES=$(echo "$SIZE_OUTPUT" | awk 'NR==2 {print $1 + $2}')
+            RAM_BYTES=$(echo "$SIZE_OUTPUT" | awk 'NR==2 {print $2 + $3}')
 
             if [ "$FLASH_BYTES" -gt 32768 ]; then
                 AVR_OK=0

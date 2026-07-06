@@ -325,20 +325,25 @@ vector<string> ModelExpression::split_expression_lines(const string& expression)
     return lines;
 }
 
+void ModelExpression::check_parameters_are_finite() const
+{
+    if (neural_network->get_parameters_device() != Device::CPU)
+        return;
+
+    const float* parameters_data = neural_network->get_parameters_data();
+    const Index parameters_size = neural_network->get_parameters_size();
+
+    for (Index i = 0; i < parameters_size; ++i)
+        throw_if(!isfinite(parameters_data[i]),
+                 "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
+}
+
 string ModelExpression::build_expression() const
 {
     const size_t layers_number = neural_network->get_layers_number();
     const vector<string> layer_labels = neural_network->get_layer_labels();
 
-    if (neural_network->get_parameters_device() == Device::CPU)
-    {
-        const float* parameters_data = neural_network->get_parameters_data();
-        const Index parameters_size = neural_network->get_parameters_size();
-
-        for (Index i = 0; i < parameters_size; ++i)
-            throw_if(!isfinite(parameters_data[i]),
-                     "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
-    }
+    check_parameters_are_finite();
 
     const Index inputs_number = get_flat_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
@@ -646,15 +651,7 @@ string ModelExpression::get_expression_c_embedded() const
 
     throw_if(layers_number == 0, "ModelExpression: the network is empty.");
 
-    if (neural_network->get_parameters_device() == Device::CPU)
-    {
-        const float* parameters_data = neural_network->get_parameters_data();
-        const Index parameters_size = neural_network->get_parameters_size();
-
-        for (Index i = 0; i < parameters_size; ++i)
-            throw_if(!isfinite(parameters_data[i]),
-                     "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
-    }
+    check_parameters_are_finite();
 
     const vector<string> input_names = get_flat_input_names();
     const Index inputs_number = get_flat_inputs_number();
@@ -693,14 +690,14 @@ string ModelExpression::get_expression_c_embedded() const
         }
     };
 
-    auto emit_float_array = [&](const string& name, const vector<float>& values)
+    auto emit_float_array = [&](const string& name, const float* values, size_t count)
     {
-        tables << "static const float " << name << "[" << values.size() << "] NN_FLASH = {";
-        for (size_t k = 0; k < values.size(); ++k)
+        tables << "static const float " << name << "[" << count << "] NN_FLASH = {";
+        for (size_t k = 0; k < count; ++k)
         {
             if (k % 8 == 0) tables << "\n    ";
             tables << c_float_literal(values[k]);
-            if (k + 1 < values.size()) tables << ", ";
+            if (k + 1 < count) tables << ", ";
         }
         tables << "\n};\n\n";
     };
@@ -839,8 +836,8 @@ string ModelExpression::get_expression_c_embedded() const
                 offsets[size_t(f)] = offset;
             }
 
-            emit_float_array(table_prefix + "_a", slopes);
-            emit_float_array(table_prefix + "_b", offsets);
+            emit_float_array(table_prefix + "_a", slopes.data(), slopes.size());
+            emit_float_array(table_prefix + "_b", offsets.data(), offsets.size());
 
             const string target = take_buffer();
 
@@ -884,31 +881,20 @@ string ModelExpression::get_expression_c_embedded() const
             const float* bias_data = parameter_views[0].as<float>();
             const float* weight_data = parameter_views[1].as<float>();
 
-            emit_float_array(table_prefix + "_weights",
-                             vector<float>(weight_data, weight_data + layer_inputs * layer_outputs));
-            emit_float_array(table_prefix + "_biases",
-                             vector<float>(bias_data, bias_data + layer_outputs));
+            emit_float_array(table_prefix + "_weights", weight_data, size_t(layer_inputs * layer_outputs));
+            emit_float_array(table_prefix + "_biases", bias_data, size_t(layer_outputs));
 
             const ActivationFunction activation = dense->get_activation_function();
+            const bool is_softmax = (activation == ActivationFunction::Softmax);
 
-            string activation_constant;
+            throw_if(is_softmax && !is_last,
+                     "ModelExpression: Softmax in a hidden layer is not supported for export.");
 
-            using enum ActivationFunction;
-            switch (activation)
-            {
-            case Identity:  activation_constant = "NN_IDENTITY";   break;
-            case Sigmoid:   activation_constant = "NN_SIGMOID";    break;
-            case Tanh:      activation_constant = "NN_TANH";       break;
-            case ReLU:      activation_constant = "NN_RELU";       break;
-            case LeakyReLU: activation_constant = "NN_LEAKY_RELU"; break;
-            case Softmax:
-                throw_if(!is_last,
-                         "ModelExpression: Softmax in a hidden layer is not supported for export.");
-                activation_constant = "NN_IDENTITY"; // raw logits, normalized below
-                break;
-            default:
-                throw runtime_error("ModelExpression: activation function not supported in embedded export.");
-            }
+            // Softmax emits raw logits (identity) and is normalized over the
+            // output vector below.
+            const string activation_constant = is_softmax
+                ? "NN_IDENTITY"
+                : activation_constant_for(activation);
 
             uses_dense = true;
 
@@ -920,7 +906,7 @@ string ModelExpression::get_expression_c_embedded() const
 
             current = target;
 
-            if (activation == Softmax)
+            if (is_softmax)
             {
                 uses_softmax = true;
                 body << "\tnn_softmax_inplace(" << current << ", " << layer_outputs << ");\n";
@@ -942,10 +928,8 @@ string ModelExpression::get_expression_c_embedded() const
             throw_if(ssize(lower) < features_number || ssize(upper) < features_number,
                      format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
 
-            emit_float_array(table_prefix + "_lower",
-                             vector<float>(lower.data(), lower.data() + features_number));
-            emit_float_array(table_prefix + "_upper",
-                             vector<float>(upper.data(), upper.data() + features_number));
+            emit_float_array(table_prefix + "_lower", lower.data(), size_t(features_number));
+            emit_float_array(table_prefix + "_upper", upper.data(), size_t(features_number));
 
             uses_clamp = true;
 
@@ -985,9 +969,9 @@ string ModelExpression::get_expression_c_embedded() const
                 for (Index j = 0; j < hidden; ++j)
                     recurrent_recurrent_weights[size_t(p * hidden + j)] = recurrent_w_map(p, j);
 
-            emit_float_array(table_prefix + "_biases", recurrent_biases);
-            emit_float_array(table_prefix + "_input_weights", recurrent_input_weights);
-            emit_float_array(table_prefix + "_recurrent_weights", recurrent_recurrent_weights);
+            emit_float_array(table_prefix + "_biases", recurrent_biases.data(), recurrent_biases.size());
+            emit_float_array(table_prefix + "_input_weights", recurrent_input_weights.data(), recurrent_input_weights.size());
+            emit_float_array(table_prefix + "_recurrent_weights", recurrent_recurrent_weights.data(), recurrent_recurrent_weights.size());
 
             const string activation_constant = activation_constant_for(
                 ActivationOperator::from_string(recurrent->get_activation_function()));
@@ -1044,9 +1028,9 @@ string ModelExpression::get_expression_c_embedded() const
                         lstm_recurrent_weights[size_t(gate * hidden * hidden + p * hidden + j)] = gate_u(p, j);
             }
 
-            emit_float_array(table_prefix + "_biases", lstm_biases);
-            emit_float_array(table_prefix + "_input_weights", lstm_input_weights);
-            emit_float_array(table_prefix + "_recurrent_weights", lstm_recurrent_weights);
+            emit_float_array(table_prefix + "_biases", lstm_biases.data(), lstm_biases.size());
+            emit_float_array(table_prefix + "_input_weights", lstm_input_weights.data(), lstm_input_weights.size());
+            emit_float_array(table_prefix + "_recurrent_weights", lstm_recurrent_weights.data(), lstm_recurrent_weights.size());
 
             const string activation_constant = activation_constant_for(lstm->get_activation_function());
             const string recurrent_activation_constant = activation_constant_for(lstm->get_recurrent_activation_function());

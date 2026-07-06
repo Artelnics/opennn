@@ -269,13 +269,10 @@ TrainingResult StochasticGradientDescent::train()
         validation_forward_propagation = make_unique<ForwardPropagation>();
         validation_forward_propagation->set(validation_batch_size, neural_network,
                                             &training_forward_propagation.data);
-
-        // Validation batches come from the same in-place pre-scaled dataset as
-        // training ones, so the leading Scaling layers must be skipped for them too.
-        validation_forward_propagation->inputs_pre_scaled = true;
     }
 
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
+    mark_validation_propagation(validation_fp);
 
     setup_device_training();
 

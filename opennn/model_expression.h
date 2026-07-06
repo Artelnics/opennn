@@ -51,6 +51,8 @@ private:
     Index get_flat_inputs_number() const;
     vector<string> get_flat_input_names() const;
 
+    void check_parameters_are_finite() const;
+
     void emit_c_prelude(ostringstream&) const;
     void emit_c_activations(ostringstream&, const string&) const;
     void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
