@@ -19,11 +19,16 @@ largest passing batch. OpenNN runs with prefetch-pool depth 1 and CUDA graph
 off (set in the trial binary): this is a capacity benchmark.
 
 --device cpu runs the same matrix CPU-only (fp32; bf16 is skipped): each
-trial process is capped with a hard RLIMIT_AS address-space limit
-(--mem-cap-gib, default 8 -- the same budget as the published data-capacity
-benchmark), which makes the out-of-memory boundary deterministic. CPU mode
-requires Linux (RLIMIT_AS); on Windows use a Job Object wrapper as in
-docs/benchmarks/capacity/.
+trial process is capped with a hard RLIMIT_DATA limit (--mem-cap-gib,
+default 8 -- the same budget as the published data-capacity benchmark),
+which makes the out-of-memory boundary deterministic. RLIMIT_DATA counts
+brk + anonymous mmap (the tensor/data allocations) but NOT file-backed
+library mappings -- PyTorch/TF map several GiB of runtime libraries, so an
+address-space cap (RLIMIT_AS) would charge them for code, not data, and the
+Windows data-capacity benchmark's Job Object cap is committed memory, which
+RLIMIT_DATA approximates far better. CPU mode requires Linux (kernel >= 4.7
+for mmap accounting in RLIMIT_DATA); on Windows use a Job Object wrapper as
+in docs/benchmarks/capacity/.
 
 A JSON artifact is written to docs/benchmarks/results/ by default
 (--result-json to override, --no-result-json to skip).
@@ -77,9 +82,17 @@ def cmd_env(engine, precision, mode, batch):
     on_cpu = args.device == "cpu"
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = "" if on_cpu else "0"
+    if args.higgs_bin:
+        env["OPENNN_HIGGS_BIN"] = args.higgs_bin   # opennn trial
+        env["HIGGS_BIN"] = args.higgs_bin          # pytorch / tensorflow trials
+    else:
+        env.pop("OPENNN_HIGGS_BIN", None)
+        env.pop("HIGGS_BIN", None)
     if engine == "opennn":
         cmd = [args.opennn_bin, mode, str(batch),
                str(args.hidden), str(args.layers), "1", args.device]
+        if args.tile is not None:
+            cmd.append(str(args.tile))
         if precision == "bf16" and not on_cpu: env["OPENNN_BF16"] = "1"
         else: env.pop("OPENNN_BF16", None)
     elif engine == "pytorch":
@@ -103,12 +116,13 @@ def cmd_env(engine, precision, mode, batch):
 
 
 def rlimit_preexec(cap_bytes):
-    # Hard address-space cap for the child: allocation past the cap fails
-    # (bad_alloc / MemoryError) instead of swapping, so the boundary is
-    # deterministic. Linux only.
+    # Hard data cap for the child: brk + anonymous mmap (tensor allocations)
+    # past the cap fail (bad_alloc / MemoryError) instead of swapping, so the
+    # boundary is deterministic. File-backed library mappings are not charged
+    # (see module docstring). Linux only.
     def fn():
         import resource
-        resource.setrlimit(resource.RLIMIT_AS, (cap_bytes, cap_bytes))
+        resource.setrlimit(resource.RLIMIT_DATA, (cap_bytes, cap_bytes))
     return fn
 
 
@@ -135,7 +149,12 @@ def run_trial(engine, precision, mode, batch, cap_mib):
     else:
         reason = "ok" if ok else f"exit_{proc.returncode}"
     m = re.search(r"samples_per_sec=([0-9.]+)", raw)
+    rss = re.search(r"peak_rss_mib=(\d+)", raw)
+    vmp = re.search(r"vm_peak_mib=(\d+)", raw)
+    if on_cpu and rss:
+        peak = int(rss.group(1))   # CPU mode: peak = process RSS high-water mark
     return {"ok": ok, "peak": peak,
+            "vm_peak_mib": int(vmp.group(1)) if vmp else None,
             "sps": float(m.group(1)) if m else None,
             "reason": reason, "raw": raw[-1500:]}
 
@@ -166,11 +185,15 @@ def search_max_batch(engine, precision, mode, cap_mib):
         lo = hi; hi *= 2
     left, right = lo + 1, min(hi - 1, args.max_limit)
     while left <= right:
+        # --min-step trades boundary precision for search time; useful when
+        # single trials take minutes (e.g. tiled CPU runs at 10^7+ samples).
+        if right - left + 1 < args.min_step: break
         mid = (left + right) // 2
         if trial(mid): lo, left = mid, mid + 1
         else: right = mid - 1
     fail = lo + 1 if lo + 1 in cache and not cache[lo + 1]["ok"] else None
-    return lo, cache.get(lo, {}).get("peak"), fail
+    best = cache.get(lo, {})
+    return lo, best.get("peak"), fail, best.get("vm_peak_mib")
 
 
 def main():
@@ -186,9 +209,20 @@ def main():
     ap.add_argument("--layers", type=int, default=2)
     ap.add_argument("--start-batch", type=int, default=65536)
     ap.add_argument("--max-limit", type=int, default=1 << 26)
+    ap.add_argument("--min-step", type=int, default=1,
+                    help="stop the binary search when the bracket is narrower "
+                         "than this (coarser boundary, fewer long trials)")
+    ap.add_argument("--tile", type=int, default=None,
+                    help="opennn infer tile rows (0 = untiled protocol; "
+                         "default: the trial's built-in tile)")
+    ap.add_argument("--higgs-bin", default=None,
+                    help="prepared HIGGS float32 binary (rows x 29, features "
+                         "then label; see README): trials use these real rows, "
+                         "repeated modulo beyond the file, instead of "
+                         "synthetic data")
     ap.add_argument("--reserve-mib", type=int, default=512)
     ap.add_argument("--mem-cap-gib", type=float, default=8.0,
-                    help="CPU mode: hard RLIMIT_AS cap per trial process")
+                    help="CPU mode: hard RLIMIT_DATA cap per trial process")
     ap.add_argument("--timeout-s", type=int, default=600)
     ap.add_argument("--result-json", default=None)
     ap.add_argument("--no-result-json", action="store_true")
@@ -196,11 +230,11 @@ def main():
 
     if args.device == "cpu":
         if os.name != "posix":
-            raise SystemExit("--device cpu needs Linux (RLIMIT_AS); on Windows "
+            raise SystemExit("--device cpu needs Linux (RLIMIT_DATA); on Windows "
                              "use a Job Object wrapper as in docs/benchmarks/capacity/.")
         total_mib = None
         cap_mib = int(args.mem_cap_gib * 1024)
-        print(f"CPU mode, RLIMIT_AS cap={args.mem_cap_gib} GiB per trial, "
+        print(f"CPU mode, RLIMIT_DATA cap={args.mem_cap_gib} GiB per trial, "
               f"model=28->{args.hidden}x{args.layers}->1")
     else:
         total_mib = int(subprocess.run(["nvidia-smi", "--query-gpu=memory.total",
@@ -222,9 +256,10 @@ def main():
         for p in precisions:
             for m in modes:
                 print(f"\n[max-batch] {e} {p} {m}")
-                mb, peak, fail = search_max_batch(e, p, m, cap_mib)
+                mb, peak, fail, vm_peak = search_max_batch(e, p, m, cap_mib)
                 results[(e, p, m)] = {"max_batch": mb, "peak_at_max": peak,
-                                      "next_batch_failed": fail}
+                                      "next_batch_failed": fail,
+                                      "vm_peak_at_max_mib": vm_peak}
 
     print("\n===================== SUMMARY =====================")
     print(f"{'engine':12s} {'prec':5s} {'mode':6s} {'max_batch':>12s} {'peak@max(MiB)':>14s}")
@@ -248,11 +283,14 @@ def main():
                       "optimizer": "adam"},
             "gpu_total_mib": total_mib,
             "memory_cap_mib": cap_mib,
+            "search_min_step": args.min_step,
+            "data": (f"higgs_bin:{args.higgs_bin} (rows repeat modulo beyond the file)"
+                     if args.higgs_bin else "synthetic contract-shaped"),
             "protocol": "fresh process per candidate; exponential + binary "
                         "search; largest batch completing one step under the "
                         "memory cap (GPU: physical VRAM minus reserve; CPU: "
-                        "hard RLIMIT_AS); OpenNN pool=1, CUDA graph off; "
-                        "synthetic contract-shaped data",
+                        "hard RLIMIT_DATA on brk+anonymous mmap); OpenNN "
+                        "pool=1, CUDA graph off; synthetic contract-shaped data",
             "results": [{"engine": e, "precision": p, "mode": m, **results[(e, p, m)]}
                         for e in engines for p in precisions for m in modes],
         }

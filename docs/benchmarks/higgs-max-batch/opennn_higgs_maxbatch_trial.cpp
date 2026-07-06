@@ -27,23 +27,30 @@
 //
 //   usage: opennn_higgs_maxbatch_trial <train|infer> <batch>
 //                                      [hidden] [hidden_layers] [iterations]
-//                                      [cuda|cpu]
+//                                      [cuda|cpu] [tile_rows]
 //   env:   OPENNN_BF16=1  -> bf16 (CUDA only; else fp32)
+//   tile_rows: infer tile size. -1 (default) = auto: 131072 on CPU (the
+//   measured MKL speed-parity point) and 65536 on CUDA (measured faster than
+//   untiled in fp32, parity in bf16; 32768 loses 21% fp32 -- cuBLASLt
+//   algorithm cliff). 0 = whole batch, i.e. the untiled protocol.
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
+#ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
+#include "../../../opennn/device_backend.h"
+#endif
 
 #include "../../../opennn/adaptive_moment_estimation.h"
 #include "../../../opennn/configuration.h"
 #include "../../../opennn/dense_layer.h"
-#include "../../../opennn/device_backend.h"
 #include "../../../opennn/forward_propagation.h"
 #include "../../../opennn/memory_debug.h"
 #include "../../../opennn/neural_network.h"
@@ -51,12 +58,71 @@
 #include "../../../opennn/tabular_dataset.h"
 #include "../../../opennn/training_strategy.h"
 
+#ifndef _WIN32
+#include <sys/resource.h>
+#endif
+
 using namespace opennn;
 
 namespace
 {
 
 constexpr Index inputs_number = 28;   // HIGGS contract: 28 features, 1 target
+
+// Real HIGGS rows from a prepared float32 binary (rows x 29: 28 standardized
+// features then the {0,1} label), selected with OPENNN_HIGGS_BIN. Rows repeat
+// modulo when the requested batch exceeds the file -- the same convention as
+// the ResNet-50 capacity runner. Returns false when the env var is unset, so
+// the trial falls back to synthetic contract-shaped data.
+bool load_higgs_rows(MatrixR& destination)
+{
+    const char* path = std::getenv("OPENNN_HIGGS_BIN");
+    if (!path) return false;
+
+    constexpr Index row_floats = inputs_number + 1;
+
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file) throw std::runtime_error(std::string("cannot open OPENNN_HIGGS_BIN: ") + path);
+
+    const Index rows_available = Index(file.tellg()) / (row_floats * Index(sizeof(float)));
+    if (rows_available <= 0) throw std::runtime_error("OPENNN_HIGGS_BIN is empty");
+
+    std::vector<float> rows(size_t(rows_available) * row_floats);
+    file.seekg(0);
+    file.read(reinterpret_cast<char*>(rows.data()),
+              std::streamsize(rows.size() * sizeof(float)));
+
+    const Index columns = destination.cols();   // 28 (infer) or 29 (train)
+    for (Index r = 0; r < destination.rows(); ++r)
+        memcpy(destination.data() + r * columns,
+               rows.data() + size_t(r % rows_available) * row_floats,
+               size_t(columns) * sizeof(float));
+
+    std::cout << "data=higgs_bin rows=" << rows_available << "\n";
+    return true;
+}
+
+// Peak memory of this process, for the CPU-capped runs: RSS high-water mark
+// (getrusage) and peak virtual address space (VmPeak -- what RLIMIT_AS caps,
+// including mapped libraries). No-op on Windows.
+void print_peak_memory()
+{
+#ifndef _WIN32
+    struct rusage usage {};
+    if (getrusage(RUSAGE_SELF, &usage) == 0)
+        std::cout << "peak_rss_mib=" << usage.ru_maxrss / 1024 << "\n";
+
+    std::ifstream status("/proc/self/status");
+    std::string line;
+    while (std::getline(status, line))
+        if (line.rfind("VmPeak:", 0) == 0)
+        {
+            const long kib = std::stol(line.substr(7));
+            std::cout << "vm_peak_mib=" << kib / 1024 << "\n";
+            break;
+        }
+#endif
+}
 
 std::unique_ptr<NeuralNetwork> make_network(Index hidden, Index hidden_layers)
 {
@@ -99,11 +165,18 @@ int main(int argc, char* argv[])
     const Index layers      = argc > 4 ? Index(std::stoll(argv[4])) : 2;
     const Index iterations  = argc > 5 ? std::max<Index>(Index(1), Index(std::stoll(argv[5]))) : 1;
     const std::string device = argc > 6 ? argv[6] : "cuda";
+    const Index tile_raw     = argc > 7 ? Index(std::stoll(argv[7])) : Index(-1);
+    const Index tile_arg     = tile_raw >= 0 ? tile_raw
+                             : (device == "cpu" ? Index(131072) : Index(65536));
 
     try
     {
         set_seed(0);
         const bool use_cpu = device == "cpu";
+#ifndef OPENNN_HAS_CUDA
+        if (!use_cpu)
+            throw std::runtime_error("built without CUDA; use device \"cpu\"");
+#endif
         const bool use_bf16 = !use_cpu && std::getenv("OPENNN_BF16") != nullptr;
         Configuration::instance().set(use_cpu ? Device::CPU : Device::CUDA,
                                       use_bf16 ? Type::BF16 : Type::FP32);
@@ -121,25 +194,62 @@ int main(int argc, char* argv[])
 
         if (mode == "infer" && use_cpu)
         {
-            const MatrixR inputs_host = MatrixR::Random(batch, inputs_number);
-            const TensorView input_view(const_cast<float*>(inputs_host.data()),
-                                        Shape{batch, inputs_number}, Type::FP32);
-            const std::vector<TensorView> inputs = {input_view};
+            // Row-tiled resident inference: caller-owned tile workspaces
+            // reused across iterations (the CPU analogue of the GPU resident
+            // protocol -- one-shot calculate_outputs would re-fault its
+            // arena every call). Activation memory is O(tile); the memory
+            // ceiling is the input + output data.
+            const Index tile_rows = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+            const Index tail_rows = batch % tile_rows;
+            std::cout << "tile_rows=" << tile_rows << "\n";
 
-            ForwardPropagation forward_propagation(batch, network.get());
+            MatrixR inputs_host(batch, inputs_number);
+            if (!load_higgs_rows(inputs_host))
+            {
+                inputs_host = MatrixR::Random(batch, inputs_number);
+                std::cout << "data=synthetic\n";
+            }
+            MatrixR outputs(batch, 1);
 
-            network->forward_propagate(inputs, forward_propagation, false);   // warmup
+            ForwardPropagation tile_propagation(tile_rows, network.get());
+            std::unique_ptr<ForwardPropagation> tail_propagation;
+            if (tail_rows > 0)
+                tail_propagation = std::make_unique<ForwardPropagation>(tail_rows, network.get());
+
+            auto run_pass = [&]()
+            {
+                for (Index start = 0; start < batch; start += tile_rows)
+                {
+                    const Index rows = std::min<Index>(tile_rows, batch - start);
+                    ForwardPropagation& propagation =
+                        rows == tile_rows ? tile_propagation : *tail_propagation;
+
+                    const TensorView tile_view(
+                        const_cast<float*>(inputs_host.data()) + start * inputs_number,
+                        Shape{rows, inputs_number}, Type::FP32);
+
+                    network->forward_propagate({tile_view}, propagation, false);
+
+                    const TensorView tile_outputs = propagation.get_outputs();
+                    memcpy(outputs.data() + start, tile_outputs.data,
+                           size_t(rows) * sizeof(float));
+                }
+            };
+
+            run_pass();   // warmup: pages workspaces and BLAS scratch in
 
             const auto t0 = std::chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
-                network->forward_propagate(inputs, forward_propagation, false);
+                run_pass();
             const auto t1 = std::chrono::high_resolution_clock::now();
 
-            const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
             if (!std::isfinite(outputs(0, 0)))
                 throw std::runtime_error("non-finite outputs");
 
             const double wall_s = std::chrono::duration<double>(t1 - t0).count();
+
+            memory_debug::print(std::cout);
+            print_peak_memory();
 
             std::cout << "wall_s=" << wall_s << "\n";
             std::cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
@@ -147,39 +257,110 @@ int main(int argc, char* argv[])
             return 0;
         }
 
+#ifdef OPENNN_HAS_CUDA
         if (mode == "infer")
         {
-            const MatrixR inputs_host = MatrixR::Random(batch, inputs_number);
+            // Row-tiled resident inference, the GPU twin of the CPU protocol:
+            // the input and the assembled outputs stay device-resident (the
+            // honest data footprint), tile workspaces are reused across
+            // iterations, and activations are O(tile) instead of O(batch).
+            const Index tile_rows = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+            const Index tail_rows = batch % tile_rows;
+            std::cout << "tile_rows=" << tile_rows << "\n";
+
+            MatrixR inputs_host(batch, inputs_number);
+            if (!load_higgs_rows(inputs_host))
+            {
+                inputs_host = MatrixR::Random(batch, inputs_number);
+                std::cout << "data=synthetic\n";
+            }
+
+            // The output slot is bf16 in bf16 mode: reserving it at its real
+            // width (not an fp32 upper bound) is worth ~2 B/sample of batch.
+            // Single-tile runs need no assembly region at all (the
+            // propagation's own output slot is the result).
+            const Type expected_output_type = use_bf16 ? Type::BF16 : Type::FP32;
+            const Index input_bytes  = get_aligned_bytes(batch * inputs_number, Type::FP32);
+            const Index output_bytes = tile_rows >= batch
+                ? Index(0) : get_aligned_bytes(batch, expected_output_type);
 
             Buffer arena(Device::CUDA);
-            arena.resize_bytes(get_aligned_bytes(batch * inputs_number, Type::FP32), Device::CUDA);
-
-            TensorView input_view(arena.as<char>(), {batch, inputs_number},
-                                  Type::FP32, Device::CUDA);
+            arena.resize_bytes(input_bytes + output_bytes, Device::CUDA);
+            char* const base = arena.as<char>();
+            char* const output_base = base + input_bytes;
 
             cudaStream_t stream = Backend::get_compute_stream();
-            device::copy_async(input_view.data, inputs_host.data(), input_view.byte_size(),
+            device::copy_async(base, inputs_host.data(),
+                               batch * inputs_number * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
 
-            const std::vector<TensorView> inputs = {input_view};
+            ForwardPropagation tile_propagation(tile_rows, network.get());
+            // The tail (batch % tile) propagation OVERLAYS the tile arena
+            // instead of owning a second one: the two never run concurrently
+            // and the tail arena is strictly smaller, so this frees up to a
+            // full tile of activations at the capacity boundary.
+            std::unique_ptr<ForwardPropagation> tail_propagation;
+            if (tail_rows > 0)
+            {
+                tail_propagation = std::make_unique<ForwardPropagation>();
+                tail_propagation->set(tail_rows, network.get(), &tile_propagation.data);
+            }
 
-            ForwardPropagation forward_propagation(batch, network.get());
+            // Single-tile (untiled) runs read the outputs straight from the
+            // propagation slot; assembling them into the arena would hold the
+            // output twice.
+            const bool single_tile = tile_rows >= batch;
 
-            // Warmup allocates the activation workspace and uploads the
-            // parameters; excluded from timing.
-            network->calculate_outputs_resident(inputs, forward_propagation, true);
+            bool parameters_uploaded = false;
+            Type output_type = Type::FP32;
+            const void* probe_source = nullptr;
+
+            auto run_pass = [&]()
+            {
+                for (Index start = 0; start < batch; start += tile_rows)
+                {
+                    const Index rows = std::min<Index>(tile_rows, batch - start);
+                    ForwardPropagation& propagation =
+                        rows == tile_rows ? tile_propagation : *tail_propagation;
+
+                    const TensorView tile_view(base + start * inputs_number * Index(sizeof(float)),
+                                               Shape{rows, inputs_number}, Type::FP32, Device::CUDA);
+
+                    const TensorView tile_outputs = network->calculate_outputs_resident(
+                        {tile_view}, propagation, !parameters_uploaded);
+                    parameters_uploaded = true;
+                    output_type = tile_outputs.type;
+
+                    if (single_tile)
+                    {
+                        probe_source = tile_outputs.data;
+                        continue;
+                    }
+
+                    const Index element_bytes = Index(type_bytes(tile_outputs.type));
+                    if (element_bytes > Index(type_bytes(expected_output_type)))
+                        throw std::runtime_error("output dtype wider than reserved");
+                    device::copy_async(output_base + start * element_bytes,
+                                       tile_outputs.data, rows * element_bytes,
+                                       device::CopyKind::DeviceToDevice, stream);
+                    probe_source = output_base;
+                }
+            };
+
+            // Warmup selects the cuDNN/cuBLAS plans, allocates the tile
+            // workspaces, and uploads the parameters; excluded from timing.
+            run_pass();
             cudaDeviceSynchronize();
 
             const auto t0 = std::chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
-                network->calculate_outputs_resident(inputs, forward_propagation, false);
+                run_pass();
             cudaDeviceSynchronize();
             const auto t1 = std::chrono::high_resolution_clock::now();
 
-            const TensorView output_view = forward_propagation.get_outputs();
             float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-            const Index probe_size = std::min<Index>(Index(4), output_view.size());
-            copy_device_to_host_float(output_view.data, output_view.type, probe_size, probe, stream);
+            const Index probe_size = std::min<Index>(Index(4), batch);
+            copy_device_to_host_float(probe_source, output_type, probe_size, probe, stream);
             cudaStreamSynchronize(stream);
             for (Index i = 0; i < probe_size; ++i)
                 if (!std::isfinite(probe[i]))
@@ -188,19 +369,41 @@ int main(int argc, char* argv[])
             const double wall_s = std::chrono::duration<double>(t1 - t0).count();
 
             memory_debug::print(std::cout);
+            print_peak_memory();
 
             std::cout << "wall_s=" << wall_s << "\n";
             std::cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
             std::cout << "RESULT=OK\n";
             return 0;
         }
+#endif // OPENNN_HAS_CUDA
 
-        // train: one full-batch step per epoch (samples == batch).
-        TabularDataset dataset(batch, Shape{inputs_number}, Shape{1});
+        // train: one optimizer step over the batch. With a tile size (the
+        // default) the step runs as gradient accumulation over equal tiles:
+        // activation memory is O(tile) and the accumulated update equals the
+        // full-batch step (sub-batch gradients are per-batch means, averaged
+        // with weight 1/period). tile 0 = the monolithic untiled protocol.
+        // The virtual batch rounds up to a tile multiple so tiles stay equal;
+        // rows repeat modulo, and passing at the rounded batch implies the
+        // requested one fits.
+        const Index train_tile = tile_arg > 0 ? std::min<Index>(batch, tile_arg) : batch;
+        const Index update_period = (batch + train_tile - 1) / train_tile;
+        const Index samples = update_period * train_tile;
+        std::cout << "tile_rows=" << train_tile
+                  << " update_period=" << update_period
+                  << " effective_batch=" << samples << "\n";
 
-        MatrixR data = MatrixR::Random(batch, inputs_number + 1);
-        data.col(inputs_number) = (data.col(inputs_number).array() > 0.0f).cast<float>();
+        TabularDataset dataset(samples, Shape{inputs_number}, Shape{1});
+
+        MatrixR data(samples, inputs_number + 1);
+        if (!load_higgs_rows(data))
+        {
+            data = MatrixR::Random(samples, inputs_number + 1);
+            data.col(inputs_number) = (data.col(inputs_number).array() > 0.0f).cast<float>();
+            std::cout << "data=synthetic\n";
+        }
         dataset.set_data(data);
+        data.resize(0, 0);   // free the staging copy: the dataset owns the rows now
         dataset.set_sample_roles("Training");
 
         TrainingStrategy training_strategy(network.get(), &dataset);
@@ -212,7 +415,8 @@ int main(int argc, char* argv[])
             training_strategy.get_optimization_algorithm());
         if (!adam) throw std::runtime_error("Adam optimizer not found.");
 
-        adam->set_batch_size(batch);
+        adam->set_batch_size(train_tile);
+        adam->set_update_period(update_period);
         adam->set_maximum_epochs(iterations);
         adam->set_display(false);
         adam->set_gradient_clip_norm(0.0f);
@@ -220,7 +424,9 @@ int main(int argc, char* argv[])
 
         const auto t0 = std::chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
+#ifdef OPENNN_HAS_CUDA
         if (!use_cpu) cudaDeviceSynchronize();
+#endif
         const auto t1 = std::chrono::high_resolution_clock::now();
 
         if (!std::isfinite(result.loss))
@@ -229,10 +435,11 @@ int main(int argc, char* argv[])
         const double wall_s = std::chrono::duration<double>(t1 - t0).count();
 
         memory_debug::print(std::cout);
+        print_peak_memory();
 
         std::cout << "final_loss=" << result.loss << "\n";
         std::cout << "wall_s=" << wall_s << "\n";
-        std::cout << "samples_per_sec=" << double(batch) * double(iterations) / wall_s << "\n";
+        std::cout << "samples_per_sec=" << double(samples) * double(iterations) / wall_s << "\n";
         std::cout << "RESULT=OK\n";
         return 0;
     }

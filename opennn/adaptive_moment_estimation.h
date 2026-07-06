@@ -36,6 +36,18 @@ public:
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
     float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
 
+    // Gradient accumulation: with period K > 1 the parameter update runs once
+    // every K mini-batches on the mean of their gradients -- one optimizer
+    // step over a virtual batch of K * batch_size samples whose activation
+    // memory stays O(batch_size). Exact for equal-sized mini-batches (the
+    // standard convention); Adam's bias correction advances per update.
+    void set_update_period(const Index new_period)
+    {
+        throw_if(new_period < 1, "update period must be >= 1.");
+        update_period = new_period;
+    }
+    Index get_update_period() const noexcept { return update_period; }
+
     TrainingResult train() override;
 
     void update_parameters(BackPropagation&, OptimizerData&) const;
@@ -57,6 +69,8 @@ private:
     float gradient_clip_norm = 5.0f;
 
     Index batch_size = 0;
+
+    Index update_period = 1;
 };
 
 }

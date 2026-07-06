@@ -41,7 +41,7 @@ These tracks are useful for engineering and migration, but not public claims.
 |---|---|---|
 | CPU HIGGS dense training | [`higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS split with repeated samples and committed result JSON. |
 | CPU HIGGS dense inference | [`higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS test split and measure CPU energy outside WSL. |
-| HIGGS dense max batch, GPU + capped CPU (train + infer) | [`higgs-max-batch/README.md`](higgs-max-batch/README.md) | Harness ready; run on the reference GPU (fp32/bf16) and the CPU RLIMIT_AS-capped matrix, archive the result JSONs. |
+| HIGGS dense max batch, GPU + capped CPU (train + infer) | [`higgs-max-batch/README.md`](higgs-max-batch/README.md) | Harness ready; run on the reference GPU (fp32/bf16) and the CPU RLIMIT_DATA-capped matrix, archive the result JSONs. |
 | GPU Transformer max batch (train + infer) | [`transformer-max-batch/README.md`](transformer-max-batch/README.md) | Alpaca train mode measured (RTX 4080); run the new infer mode and the WMT14 corpus, archive result JSON. |
 | Recurrent/LSTM forecasting | [`recurrent-lstm-forecasting-opennn.md`](recurrent-lstm-forecasting-opennn.md) | Run on the reference Linux GPU and archive raw output. |
 

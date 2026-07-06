@@ -64,10 +64,24 @@ model = tf.keras.Model(inp, logits)
 print(f"parameters={model.count_params()}")
 
 rng = np.random.default_rng(0)
-x = tf.constant(rng.standard_normal((args.batch, INPUTS), dtype=np.float32))
+
+# Real HIGGS rows (float32 bin, rows x 29: features then label) when
+# HIGGS_BIN is set; rows repeat modulo beyond the file (np.resize), the same
+# convention as the ResNet-50 capacity runner. Synthetic otherwise.
+higgs_bin = os.environ.get("HIGGS_BIN")
+if higgs_bin:
+    raw = np.fromfile(higgs_bin, dtype=np.float32).reshape(-1, INPUTS + 1)
+    print(f"data=higgs_bin rows={raw.shape[0]}")
+    x = tf.constant(np.resize(np.ascontiguousarray(raw[:, :INPUTS]), (args.batch, INPUTS)))
+    y_host = np.resize(np.ascontiguousarray(raw[:, INPUTS:]), (args.batch, 1))
+else:
+    print("data=synthetic")
+    x = tf.constant(rng.standard_normal((args.batch, INPUTS), dtype=np.float32))
+    y_host = None
 
 if args.mode == "train":
-    y = tf.constant(rng.integers(0, 2, (args.batch, 1)).astype(np.float32))
+    y = tf.constant(y_host) if y_host is not None \
+        else tf.constant(rng.integers(0, 2, (args.batch, 1)).astype(np.float32))
 
     opt = tf.keras.optimizers.Adam(1e-3)
     loss_fn = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -113,6 +127,16 @@ else:
     assert np.isfinite(np.asarray(probe_host, dtype=np.float32)).all(), "non-finite outputs"
 
 samples_per_s = args.steps * args.batch / wall_s
+try:   # peak memory for the CPU-capped runs (POSIX only)
+    import resource
+    print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")
+    with open("/proc/self/status") as f:
+        for line in f:
+            if line.startswith("VmPeak:"):
+                print(f"vm_peak_mib={int(line.split()[1]) // 1024}")
+                break
+except Exception:
+    pass
 print(f"wall_s={wall_s:.5f}")
 print(f"samples_per_sec={samples_per_s:.2f}")
 print("RESULT=OK")

@@ -623,14 +623,86 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     if (layers.empty() || input_views.empty()) return {};
 
     const Index batch_size = input_views[0].shape[0];
-    ForwardPropagation forward_propagation(batch_size, this);
 
     if (is_gpu())
+    {
+        ForwardPropagation forward_propagation(batch_size, this);
         return calculate_outputs_device(input_views, forward_propagation);
+    }
 
-    forward_propagate(input_views, forward_propagation, false);
+    // CPU inference is batch-separable: with is_training == false no layer
+    // mixes samples (batch normalization applies its running statistics), so
+    // large batches run in row tiles and activation memory is O(tile) instead
+    // of O(batch) -- the memory ceiling becomes the caller's input/output
+    // data. The tile is sized to a fixed activation budget rather than a
+    // fixed row count: smaller tiles starve the threaded GEMMs (measured -15%
+    // with MKL at half this budget), while the budget bounds the footprint
+    // for arbitrarily wide networks. Since tiling only engages when the batch
+    // arena would exceed the budget anyway, memory use is always <= the
+    // untiled path. The row count must stay a multiple of 16 so tile views
+    // keep the 64-byte alignment MatrixMap assumes.
+    constexpr Index tile_budget_bytes = Index(1024) * 1024 * 1024;
 
-    return forward_propagation.get_outputs().as_matrix();
+    const Index row_bytes = max(Index(1), get_aligned_bytes(get_forward_specs(1)));
+    const Index tile_rows_max = clamp((tile_budget_bytes / row_bytes) & ~Index(15),
+                                      Index(16), Index(65536));
+
+    const bool tileable = batch_size > tile_rows_max
+        && all_of(input_views.begin(), input_views.end(),
+                  [batch_size](const TensorView& view)
+                  {
+                      return view.shape.rank >= 2
+                          && view.shape[0] == batch_size
+                          && view.is_fp32()
+                          && !view.is_cuda();
+                  });
+
+    if (!tileable)
+    {
+        ForwardPropagation forward_propagation(batch_size, this);
+        forward_propagate(input_views, forward_propagation, false);
+        return forward_propagation.get_outputs().as_matrix();
+    }
+
+    ForwardPropagation tile_propagation(tile_rows_max, this);
+    unique_ptr<ForwardPropagation> tail_propagation;   // last partial tile
+
+    MatrixR outputs;
+
+    for (Index start = 0; start < batch_size; start += tile_rows_max)
+    {
+        const Index rows = min(tile_rows_max, batch_size - start);
+
+        ForwardPropagation* propagation = &tile_propagation;
+        if (rows != tile_rows_max)
+        {
+            tail_propagation = make_unique<ForwardPropagation>(rows, this);
+            propagation = tail_propagation.get();
+        }
+
+        vector<TensorView> tile_views;
+        tile_views.reserve(input_views.size());
+        for (const TensorView& view : input_views)
+        {
+            Shape tile_shape = view.shape;
+            tile_shape[0] = rows;
+            const Index row_elements = view.size() / batch_size;
+            tile_views.emplace_back(view.as<float>() + start * row_elements,
+                                    tile_shape, Type::FP32);
+        }
+
+        forward_propagate(tile_views, *propagation, false);
+
+        const TensorView tile_outputs = propagation->get_outputs();
+        const Index output_columns = tile_outputs.size() / rows;
+        if (outputs.size() == 0)
+            outputs.resize(batch_size, output_columns);
+
+        memcpy(outputs.data() + start * output_columns, tile_outputs.data,
+               size_t(rows) * size_t(output_columns) * sizeof(float));
+    }
+
+    return outputs;
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
