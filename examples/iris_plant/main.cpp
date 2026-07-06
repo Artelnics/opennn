@@ -73,6 +73,7 @@ int main()
         const ModelExpression model_expression(&classification_network);
         model_expression.save("iris_model.c", ModelExpression::ProgrammingLanguage::C);
         model_expression.save("iris_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
+        model_expression.save("iris_model.py", ModelExpression::ProgrammingLanguage::Python);
 
         // Reference vectors (inputs;outputs) to check parity of the exported model
         // on other targets (e.g. microcontrollers)

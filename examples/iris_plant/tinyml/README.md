@@ -25,6 +25,7 @@ Both C export backends of `ModelExpression` are tested:
 | `pc_harness.c` | Same harness compiled natively, same output format |
 | `make_test_vectors.py` | Converts `iris_reference.csv` (written by the iris example) into `test_vectors.h` |
 | `compare_outputs.py` | Parity check: OpenNN reference vs PC vs AVR (tolerates simavr's ANSI-colored stderr echo) |
+| `check_python_export.py` | Parity check for the Python export (runs `iris_model.py` with a numpy shim, no dependencies) |
 
 ## Prerequisites (user-space, no root)
 
@@ -66,4 +67,5 @@ Measured on 2026-07-06 (avr-gcc 7.3.0, simavr 1.6, WSL2 Ubuntu 24.04),
     Variant      Flash (text+data)   RAM (data+bss)   Max abs diff vs OpenNN
     expression   6776 B              186 B            8.948e-08
     tables       3438 B              858 B            8.948e-08
-    Predicted class agreement: 9/9 on both — RESULT: ALL VARIANTS PASSED
+    python       (PC only)           -                8.791e-08
+    Predicted class agreement: 9/9 on all — RESULT: ALL VARIANTS PASSED

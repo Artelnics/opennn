@@ -41,7 +41,8 @@ mkdir -p "$WORK"
 echo "=== 1. Train and export (iris_plant example) ==="
 if [ "$1" != "--skip-training" ] || [ ! -f "$WORK/iris_model.c" ]; then
     (cd "$RUN_DIR" && ./iris_plant)
-    cp "$RUN_DIR/iris_model.c" "$RUN_DIR/iris_model_tables.c" "$RUN_DIR/iris_reference.csv" "$WORK/"
+    cp "$RUN_DIR/iris_model.c" "$RUN_DIR/iris_model_tables.c" "$RUN_DIR/iris_model.py" \
+       "$RUN_DIR/iris_reference.csv" "$WORK/"
 fi
 
 echo "=== 2. Generate test vectors header ==="
@@ -76,6 +77,12 @@ for VARIANT in expression tables; do
     python3 "$TINYML_DIR/compare_outputs.py" "$WORK/iris_reference.csv" \
         "$WORK/pc_output_$VARIANT.txt" "$WORK/avr_output_$VARIANT.txt" || FAILED=1
 done
+
+echo ""
+echo "########## Variant: python (iris_model.py) ##########"
+echo "=== 7. Python export parity check ==="
+python3 "$TINYML_DIR/check_python_export.py" "$WORK/iris_model.py" \
+    "$WORK/iris_reference.csv" $N_INPUTS $N_OUTPUTS || FAILED=1
 
 echo ""
 if [ "$FAILED" -ne 0 ]; then echo "RESULT: FAILED"; exit 1; fi
