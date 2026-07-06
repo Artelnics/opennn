@@ -77,16 +77,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :TabularDataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    const Index target_index = (get_features_number() == 1)
-        ? 0
-        : get_feature_indices("Target")[0];
-
-    set_variable_role(target_index, "InputTarget");
-
-    input_shape = {past_time_steps, get_features_number("Input")};
-    target_shape = { get_features_number("Target") };
-
-    refresh_forecasting_roles();
+    configure_forecasting();
 }
 
 Index TimeSeriesDataset::get_past_time_steps() const
@@ -247,6 +238,11 @@ void TimeSeriesDataset::read_csv()
 {
     TabularDataset::read_csv();
 
+    configure_forecasting();
+}
+
+void TimeSeriesDataset::configure_forecasting()
+{
     set_default_variable_roles_forecasting();
 
     if (get_features_number() == 1)

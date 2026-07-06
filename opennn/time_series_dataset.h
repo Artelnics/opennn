@@ -74,6 +74,8 @@ public:
 
 private:
 
+    void configure_forecasting();
+
     Index past_time_steps = 2;
 
     Index future_time_steps = 1;
