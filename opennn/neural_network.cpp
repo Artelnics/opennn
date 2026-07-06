@@ -729,13 +729,17 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     // Run the full forward pass -- the old skip-to-first-trainable shortcut
     // broke skip connections crossing the frozen/trainable boundary (FPN/PANet
-    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers during
-    // training: Optimizer::set_scaling() pre-scales the dataset in place, so
-    // running them there would scale the inputs twice (that double scaling
-    // diverges tabular training and flattens images to ~zero). Frozen compute
-    // layers past the Scaling chain still run.
+    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers when the
+    // batches come from a dataset that Optimizer::set_scaling() pre-scaled in
+    // place: running them there would scale the inputs twice (that double
+    // scaling diverges tabular training and flattens images to ~zero). This
+    // covers training passes AND the optimizer's in-loop validation passes
+    // (is_training == false but inputs_pre_scaled set on the propagation);
+    // without the latter, validation errors rise while the model improves and
+    // early stopping restores a barely-trained network. Frozen compute layers
+    // past the Scaling chain still run.
     Index first_layer_index = 0;
-    if (is_training)
+    if (is_training || forward_propagation.inputs_pre_scaled)
         while (first_layer_index < get_layers_number()
                && layers[first_layer_index]->get_type() == LayerType::Scaling)
             ++first_layer_index;
@@ -859,7 +863,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             if (source_layer < 0)
                 input_slot[source_index] = pick_input(size_t(-source_layer - 1));
-            else if (is_training && source_layer < first_layer_index)
+            else if ((is_training || forward_propagation.inputs_pre_scaled)
+                     && source_layer < first_layer_index)
                 input_slot[source_index] = pick_input(source_index);
         }
 

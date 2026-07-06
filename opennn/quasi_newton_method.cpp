@@ -210,6 +210,10 @@ TrainingResult QuasiNewtonMethod::train()
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
         : nullptr;
 
+    // Validation batches come from the same in-place pre-scaled dataset as
+    // training ones, so the leading Scaling layers must be skipped for them too.
+    if (validation_fp) validation_fp->inputs_pre_scaled = true;
+
     set_names();
 
     set_scaling();
