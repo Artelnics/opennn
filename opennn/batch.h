@@ -29,7 +29,11 @@ struct BatchSlot
     
     float* host = nullptr;
     Index  host_allocated_size = 0;
+    uint16_t* host_bf16 = nullptr;
+    Index     host_bf16_allocated_size = 0;
 };
+
+bool bf16_host_input_cast_enabled() noexcept;
 
 struct Batch
 {

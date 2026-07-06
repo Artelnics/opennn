@@ -124,9 +124,38 @@ void print_peak_memory()
 #endif
 }
 
-std::unique_ptr<NeuralNetwork> make_network(Index hidden, Index hidden_layers)
+class HiggsBenchmarkNetwork final : public NeuralNetwork
 {
-    auto network = std::make_unique<NeuralNetwork>();
+public:
+#ifdef OPENNN_HAS_CUDA
+    void release_bf16_fp32_parameter_master_for_inference()
+    {
+        if (const char* flag = std::getenv("OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER");
+            flag && std::string(flag) == "0")
+            return;
+
+        if (config.training_type != Type::BF16
+            || parameters.device_type != Device::CUDA
+            || parameters.empty()
+            || parameters_bf16_mirror.empty()
+            || !parameters.owns)
+            return;
+
+        // The layer parameter views already point at parameters_bf16_mirror
+        // after copy_parameters_device(). Keep the fp32-size invariant that
+        // forward_propagate() validates, but stop owning a second CUDA buffer.
+        const Index fp32_master_bytes = parameters.bytes;
+        parameters.resize_bytes(0, Device::CUDA);
+        parameters.set_view(parameters_bf16_mirror.data,
+                            fp32_master_bytes,
+                            Device::CUDA);
+    }
+#endif
+};
+
+std::unique_ptr<HiggsBenchmarkNetwork> make_network(Index hidden, Index hidden_layers)
+{
+    auto network = std::make_unique<HiggsBenchmarkNetwork>();
     Shape current = Shape{inputs_number};
 
     for (Index i = 0; i < hidden_layers; ++i)
@@ -151,6 +180,63 @@ std::unique_ptr<NeuralNetwork> make_network(Index hidden, Index hidden_layers)
     network->set_parameters_glorot();
     return network;
 }
+
+#ifdef OPENNN_HAS_CUDA
+bool bf16_resident_input_enabled()
+{
+    if (const char* flag = std::getenv("OPENNN_HIGGS_BF16_RESIDENT_INPUT");
+        flag && std::string(flag) == "0")
+        return false;
+
+    return true;
+}
+
+uint16_t fp32_to_bf16_bits(float value)
+{
+    const uint32_t bits = bit_cast<uint32_t>(value);
+    const uint32_t lsb = (bits >> 16) & 1u;
+    return uint16_t((bits + 0x7fffu + lsb) >> 16);
+}
+
+TensorView maybe_alias_bf16_input_cast(const TensorView& fp32_input,
+                                       ForwardPropagation& propagation)
+{
+    if (const char* flag = std::getenv("OPENNN_HIGGS_ALIAS_BF16_INPUT");
+        flag && std::string(flag) == "0")
+        return fp32_input;
+
+    if (!fp32_input.is_fp32() || !fp32_input.is_cuda())
+        return fp32_input;
+
+    // In the canonical HIGGS network, layer 0 consumes the external input and
+    // layer 1's output slot is still dead. Reusing that future activation for
+    // the fp32->bf16 input cast removes the persistent thread-local cast
+    // workspace while preserving the same GEMM path and resident fp32 input.
+    if (propagation.forward_slots.size() < 2
+        || propagation.forward_slots[1].empty())
+        return fp32_input;
+
+    TensorView& future_activation = propagation.forward_slots[1].back();
+    if (!future_activation.is_bf16()
+        || future_activation.size() < fp32_input.size())
+        return fp32_input;
+
+    cast_fp32_to_bf16(fp32_input.size(),
+                      fp32_input.as<float>(),
+                      future_activation.as<__nv_bfloat16>(),
+                      Backend::get_compute_stream());
+
+    memory_debug::record("forward.aliased",
+                         "HIGGS bf16 input cast",
+                         0,
+                         "uses future activation slot");
+
+    return TensorView(future_activation.data,
+                      fp32_input.shape,
+                      Type::BF16,
+                      Device::CUDA);
+}
+#endif
 
 }
 
@@ -279,8 +365,12 @@ int main(int argc, char* argv[])
             // width (not an fp32 upper bound) is worth ~2 B/sample of batch.
             // Single-tile runs need no assembly region at all (the
             // propagation's own output slot is the result).
+            const bool bf16_resident_input = use_bf16 && bf16_resident_input_enabled();
+            const Type input_type = bf16_resident_input ? Type::BF16 : Type::FP32;
+            std::cout << "input_type=" << (input_type == Type::BF16 ? "bf16" : "fp32") << "\n";
+
             const Type expected_output_type = use_bf16 ? Type::BF16 : Type::FP32;
-            const Index input_bytes  = get_aligned_bytes(batch * inputs_number, Type::FP32);
+            const Index input_bytes  = get_aligned_bytes(batch * inputs_number, input_type);
             const Index output_bytes = tile_rows >= batch
                 ? Index(0) : get_aligned_bytes(batch, expected_output_type);
 
@@ -290,9 +380,33 @@ int main(int argc, char* argv[])
             char* const output_base = base + input_bytes;
 
             cudaStream_t stream = Backend::get_compute_stream();
-            device::copy_async(base, inputs_host.data(),
-                               batch * inputs_number * Index(sizeof(float)),
-                               device::CopyKind::HostToDevice, stream);
+            if (bf16_resident_input)
+            {
+                vector<uint16_t> inputs_bf16(size_t(batch * inputs_number));
+                const float* src = inputs_host.data();
+                #pragma omp parallel for if(batch * inputs_number > 4096)
+                for (Index i = 0; i < batch * inputs_number; ++i)
+                    inputs_bf16[size_t(i)] = fp32_to_bf16_bits(src[i]);
+
+                device::copy_async(base, inputs_bf16.data(),
+                                   batch * inputs_number * Index(sizeof(uint16_t)),
+                                   device::CopyKind::HostToDevice, stream);
+            }
+            else
+            {
+                device::copy_async(base, inputs_host.data(),
+                                   batch * inputs_number * Index(sizeof(float)),
+                                   device::CopyKind::HostToDevice, stream);
+            }
+
+            bool parameters_uploaded = false;
+            if (use_bf16)
+            {
+                network->copy_parameters_device();
+                network->copy_states_device();
+                network->release_bf16_fp32_parameter_master_for_inference();
+                parameters_uploaded = true;
+            }
 
             ForwardPropagation tile_propagation(tile_rows, network.get());
             // The tail (batch % tile) propagation OVERLAYS the tile arena
@@ -311,7 +425,6 @@ int main(int argc, char* argv[])
             // output twice.
             const bool single_tile = tile_rows >= batch;
 
-            bool parameters_uploaded = false;
             Type output_type = Type::FP32;
             const void* probe_source = nullptr;
 
@@ -323,11 +436,18 @@ int main(int argc, char* argv[])
                     ForwardPropagation& propagation =
                         rows == tile_rows ? tile_propagation : *tail_propagation;
 
-                    const TensorView tile_view(base + start * inputs_number * Index(sizeof(float)),
-                                               Shape{rows, inputs_number}, Type::FP32, Device::CUDA);
+                    const TensorView tile_view(base + start * inputs_number * Index(type_bytes(input_type)),
+                                               Shape{rows, inputs_number}, input_type, Device::CUDA);
+                    const TensorView compute_tile_view = use_bf16 && tile_view.is_fp32()
+                        ? maybe_alias_bf16_input_cast(tile_view, propagation)
+                        : tile_view;
 
+                    const bool upload_parameters = !parameters_uploaded;
                     const TensorView tile_outputs = network->calculate_outputs_resident(
-                        {tile_view}, propagation, !parameters_uploaded);
+                        {compute_tile_view}, propagation, upload_parameters);
+                    if (use_bf16 && upload_parameters)
+                        network->release_bf16_fp32_parameter_master_for_inference();
+
                     parameters_uploaded = true;
                     output_type = tile_outputs.type;
 

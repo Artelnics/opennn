@@ -212,20 +212,26 @@ propagation now overlays the tile arena instead of owning a second one
 (c) the output assembly buffer is bf16-width in bf16 mode and skipped
 entirely in single-tile runs; (d) the legacy cuBLAS handle initializes
 lazily like cuDNN (the inference path is pure cuBLASLt + custom kernels).
-The audit also *formally confirmed the untiled floor* (GEMMs cannot run
-in place; h2 must fully materialize; the fp32 input feeds TF32 GEMMs with
-no staged copy) and recorded two confirmed-but-deferred items in the
-manifest: aliasing the bf16 input-cast staging into the dead h2 slot
-(+1.33 % bf16 untiled) and freeing the fp32 parameter master after the
-bf16 cast (+0.07 %).
+The audit also *formally confirmed the fp32 untiled floor* (GEMMs cannot
+run in place; h2 must fully materialize; the fp32 input feeds TF32 GEMMs
+with no staged copy). Follow-up HIGGS BF16 inference now stores the
+resident input as BF16 by default
+(`OPENNN_HIGGS_BF16_RESIDENT_INPUT=0` restores the fp32-resident input
+protocol, where `OPENNN_HIGGS_ALIAS_BF16_INPUT=0` also disables the
+dead-h2 input-cast alias). The trial also releases the fp32 parameter
+master before allocating the large inference activations
+(`OPENNN_HIGGS_RELEASE_BF16_FP32_MASTER=0` disables that A/B). On this
+6 GiB GPU, the capped bf16 untiled ceiling rose from 1,351,680 to
+1,390,936 rows at a 512-row search step, with no measured speed loss.
 
 Reading it:
 
 - **The untiled row is the apples-to-apples comparison and it is already at
   the theoretical floor.** The measured VRAM slope is fully accounted:
   fp32 8,302 B/sample = activations (8,196) + fp32 input (112); bf16
-  4,261 B/sample = bf16 activations + input + the ~51 B/sample bf16
-  input-cast staging that the fp32-features protocol makes unavoidable.
+  is bf16 activations + bf16 input in the resident-input path. Restoring
+  fp32-resident input adds ~56 B/sample; disabling the dead-h2 alias in
+  that fallback adds another ~56 B/sample.
   There is no waste to remove — the GPU `linear_forward` writes through
   cuBLASLt's fused bias epilogue straight into the output slot. OpenNN
   edges PyTorch (+0.5 %, both at the same floor since PyTorch's GPU
@@ -280,8 +286,12 @@ Reading it:
   itself again). The boundary profile shows the monolithic footprint at
   its floor: forward activations + backward deltas (the delta pool carries
   its own liveness analysis and sits within 4 B/sample of optimal) + the
-  batch data. One deferred item: bf16 training retains ~224 B/sample of
-  `Batch::fp32_staging` on device (~+2.7 % bf16 monolithic if freed).
+  batch data. A follow-up training path now converts bf16 inputs in pinned
+  host memory and uploads bf16 directly by default
+  (`OPENNN_BF16_HOST_INPUT_CAST=0` restores the old device-staging path),
+  and no longer reserves gather-index device buffers for non-gather batches;
+  on this 6 GiB GPU, the capped bf16 monolithic ceiling rose from 679,936
+  to 694,912 rows at a 512-row search step with no measured speed loss.
 - **The accumulated row is the engine capability**: Adam's new
   `set_update_period(K)` runs one optimizer step over a virtual batch of
   K × batch_size by averaging K equal mini-batch gradients into a

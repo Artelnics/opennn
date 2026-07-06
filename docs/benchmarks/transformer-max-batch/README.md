@@ -38,6 +38,12 @@ equivalent; with it, TF previously measured max batch 196 fp32 / 258 bf16 and
 
 ## Fairness — identical model, identical shapes
 
+For OpenNN-only inference speed investigations, the driver can also enable CUDA
+Graph replay with `--opennn-infer-cuda-graph` (or
+`OPENNN_TRANSFORMER_INFER_CUDA_GRAPH=1` for the C++ trial). Keep it off for the
+archived eager comparison tables unless the PyTorch counterpart is also run with
+an equivalent CUDA Graph path.
+
 The vocabulary and sequence lengths are derived **once** from the OpenNN corpus
 (`input_vocab`, `output_vocab` capped at 30 000, `input_seq`, `decoder_seq`) and
 passed to every engine, so all three build the **same 84 843 312-parameter
@@ -135,6 +141,10 @@ python docs/benchmarks/transformer-max-batch/prepare_wmt14.py
 python docs/benchmarks/transformer-max-batch/run_transformer_maxbatch.py \
     --engines opennn,pytorch,tensorflow --precisions fp32,bf16 \
     --modes train,infer --speed-batch 64
+#    OpenNN inference speed mode (not eager like-for-like):
+python docs/benchmarks/transformer-max-batch/run_transformer_maxbatch.py \
+    --engines opennn --precisions fp32,bf16 --modes infer \
+    --speed-batch 64 --opennn-infer-cuda-graph
 #    WMT14 (standard corpus; archive the artifact):
 python docs/benchmarks/transformer-max-batch/run_transformer_maxbatch.py \
     --engines opennn,pytorch,tensorflow --precisions fp32,bf16 \

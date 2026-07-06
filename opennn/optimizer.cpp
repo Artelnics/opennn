@@ -441,6 +441,13 @@ Index Optimizer::get_maximum_batch_size() const
     const Index slot_aligned_size       = get_aligned_size(parameters_number);
     const bool bf16_train = on_gpu && neural_network->get_training_type() == Type::BF16;
     const bool bf16_input = bf16_train && dataset->supports_bf16_inputs();
+    const bool dataset_will_be_device_resident =
+        dataset->is_device_resident()
+        || dataset->get_storage_mode() == Dataset::StorageMode::GPUPersistantData;
+    const bool bf16_input_needs_fp32_staging =
+        bf16_input
+        && !bf16_host_input_cast_enabled()
+        && !dataset_will_be_device_resident;
 
     Index fixed_bytes = 0;
 
@@ -498,7 +505,7 @@ Index Optimizer::get_maximum_batch_size() const
 
         total += pool_bytes_for_batch(b);
 
-        if (bf16_input && !input_shape.empty())
+        if (bf16_input_needs_fp32_staging && !input_shape.empty())
             total += get_aligned_bytes(b * input_shape.size(), Type::FP32);
 
         return total;

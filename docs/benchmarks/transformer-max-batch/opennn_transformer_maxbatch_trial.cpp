@@ -23,6 +23,10 @@
 //                                            [layers] [batch] [train_samples]
 //                                            [epochs] [train|infer]
 //   env:   OPENNN_BF16=1  -> bf16 (else fp32)
+//          OPENNN_TRANSFORMER_RELEASE_BF16_FP32_MASTER=0
+//              keep the fp32 parameter master in BF16 inference (debug A/B)
+//          OPENNN_TRANSFORMER_INFER_CUDA_GRAPH=1
+//              capture/replay the resident inference forward pass
 
 #include <algorithm>
 #include <chrono>
@@ -129,17 +133,60 @@ int main(int argc, char* argv[])
             // Same input order as TransformerDecoder: {decoder ids, encoder ids}.
             const std::vector<TensorView> inputs = {decoder_view, input_view};
 
+            bool parameters_uploaded = false;
+            if (use_bf16)
+            {
+                const char* release_flag = std::getenv("OPENNN_TRANSFORMER_RELEASE_BF16_FP32_MASTER");
+                const bool release_fp32_master = !release_flag || std::string(release_flag) != "0";
+                if (release_fp32_master)
+                {
+                    transformer.copy_parameters_device();
+                    transformer.copy_states_device();
+                    transformer.release_bf16_fp32_parameter_master_for_inference();
+                    parameters_uploaded = true;
+                    std::cout << "bf16_fp32_master_released=1\n";
+                }
+            }
+
             ForwardPropagation forward_propagation(batch, &transformer);
 
             // Warmup selects the cuDNN attention/GEMM plans and allocates the
             // activation workspace; excluded from timing like the PyTorch/TF
             // warmup steps. Output stays on the GPU (no logits D2H).
-            transformer.calculate_outputs_resident(inputs, forward_propagation, true);
+            transformer.calculate_outputs_resident(inputs, forward_propagation, !parameters_uploaded);
             cudaDeviceSynchronize();
+
+            const char* graph_flag = std::getenv("OPENNN_TRANSFORMER_INFER_CUDA_GRAPH");
+            const bool try_cuda_graph =
+                graph_flag != nullptr && std::string(graph_flag) != "0";
+            device::GraphExecHandle infer_graph;
+            if (try_cuda_graph)
+            {
+                try
+                {
+                    device::synchronize(stream);
+                    device::StreamCapture capture(stream);
+                    transformer.calculate_outputs_resident(inputs, forward_propagation, false);
+                    const device::GraphHandle graph = capture.end();
+                    device::instantiate_or_update(infer_graph, graph.get());
+                    cudaDeviceSynchronize();
+                    std::cout << "cuda_graph=1\n";
+                }
+                catch (const std::exception& capture_error)
+                {
+                    std::cout << "cuda_graph=0 reason=\"" << capture_error.what() << "\"\n";
+                    infer_graph.reset();
+                }
+            }
 
             const auto t0 = std::chrono::high_resolution_clock::now();
             for (Index i = 0; i < iterations; ++i)
-                transformer.calculate_outputs_resident(inputs, forward_propagation, false);
+            {
+                if (infer_graph)
+                    device::launch_graph(infer_graph, stream);
+                else
+                    transformer.calculate_outputs_resident(inputs, forward_propagation, false);
+            }
             cudaDeviceSynchronize();
             const auto t1 = std::chrono::high_resolution_clock::now();
 

@@ -84,6 +84,8 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
             # train_samples only bounds the (unused) training split.
             cmd = [args.opennn_bin, CORPUS, str(D), str(H), str(FF), str(LAYERS),
                    str(batch), str(batch), str(steps), "infer"]
+            if args.opennn_infer_cuda_graph:
+                env["OPENNN_TRANSFORMER_INFER_CUDA_GRAPH"] = "1"
         if precision == "bf16": env["OPENNN_BF16"] = "1"
         else: env.pop("OPENNN_BF16", None)
     elif engine == "pytorch":
@@ -214,6 +216,9 @@ def main():
     ap.add_argument("--speed-steps", type=int, default=40)
     ap.add_argument("--speed-batch", type=int, default=32)
     ap.add_argument("--timeout-s", type=int, default=900)
+    ap.add_argument("--opennn-infer-cuda-graph", action="store_true",
+                    help="capture/replay OpenNN resident inference forwards "
+                         "(speed mode; keep off for eager like-for-like runs)")
     ap.add_argument("--result-json", default=None,
                     help="optional path for a JSON result artifact "
                          "(convention: docs/benchmarks/results/)")
