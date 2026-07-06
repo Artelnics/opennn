@@ -11,10 +11,10 @@ Both C export backends of `ModelExpression` are tested:
   Weights are embedded in the code, so flash cost is ~50 B per weight.
 - `ProgrammingLanguage::CEmbedded` — weight tables + generic loops, float-only,
   no heap. Flash cost ~4 B per weight; this is the backend that scales to
-  larger models. Caveat on AVR: `static const` tables live in `.data` (copied
-  to RAM at startup, ~4 B RAM per weight) because AVR is a Harvard
-  architecture; using `PROGMEM` to keep them flash-only is a possible future
-  optimization. On ARM Cortex-M targets const tables stay in flash.
+  larger models. On AVR (Harvard architecture) the tables are emitted with
+  `PROGMEM` and read through `pgm_read_*`, so they stay in flash instead of
+  being copied to RAM at startup; on every other target the `NN_FLASH` /
+  `NN_READ_*` macros compile to plain const reads.
 
 ## Files
 
@@ -69,10 +69,13 @@ When piping the script into bash, set `TINYML_DIR` to this directory first.
   predicted class matches on every test vector.
 
 Measured on 2026-07-06 (avr-gcc 7.3.0, simavr 1.6, WSL2 Ubuntu 24.04),
-4-16-3 classification MLP (131 parameters):
+4-16-3 classification MLP (131 parameters), weight tables in PROGMEM:
 
     Variant      Flash (text+data)   RAM (data+bss)   Max abs diff vs OpenNN
-    expression   6776 B              186 B            8.948e-08
-    tables       3438 B              858 B            8.948e-08
-    python       (PC only)           -                8.791e-08
+    expression   6776 B              186 B            float32 round-off (~1e-07)
+    tables       3450 B              302 B            float32 round-off (~1e-07)
+    python       (PC only)           -                float32 round-off (~1e-07)
     Predicted class agreement: 9/9 on all — RESULT: ALL VARIANTS PASSED
+
+The parity pipelines also run in CI (`.github/workflows/tinyml-parity.yml`)
+on every change to the exporter, the exported layers or these examples.

@@ -695,7 +695,7 @@ string ModelExpression::get_expression_c_embedded() const
 
     auto emit_float_array = [&](const string& name, const vector<float>& values)
     {
-        tables << "static const float " << name << "[" << values.size() << "] = {";
+        tables << "static const float " << name << "[" << values.size() << "] NN_FLASH = {";
         for (size_t k = 0; k < values.size(); ++k)
         {
             if (k % 8 == 0) tables << "\n    ";
@@ -707,7 +707,7 @@ string ModelExpression::get_expression_c_embedded() const
 
     auto emit_byte_array = [&](const string& name, const vector<unsigned char>& values)
     {
-        tables << "static const unsigned char " << name << "[" << values.size() << "] = {";
+        tables << "static const unsigned char " << name << "[" << values.size() << "] NN_FLASH = {";
         for (size_t k = 0; k < values.size(); ++k)
         {
             if (k % 16 == 0) tables << "\n    ";
@@ -1085,6 +1085,18 @@ string ModelExpression::get_expression_c_embedded() const
               "#ifndef OPENNN_EXPORT_NO_MAIN\n"
               "#include <stdio.h>\n"
               "#endif\n\n"
+              "// On AVR (Harvard architecture) the weight tables are placed in flash\n"
+              "// (PROGMEM) and read through pgm_read_*; elsewhere they are plain const data.\n"
+              "#ifdef __AVR__\n"
+              "#include <avr/pgmspace.h>\n"
+              "#define NN_FLASH PROGMEM\n"
+              "#define NN_READ_FLOAT(address) pgm_read_float(address)\n"
+              "#define NN_READ_BYTE(address) pgm_read_byte(address)\n"
+              "#else\n"
+              "#define NN_FLASH\n"
+              "#define NN_READ_FLOAT(address) (*(address))\n"
+              "#define NN_READ_BYTE(address) (*(address))\n"
+              "#endif\n\n"
               "#define NN_INPUTS_NUMBER " << inputs_number << "\n"
               "#define NN_OUTPUTS_NUMBER " << outputs_number << "\n"
               "#define NN_MAX_WIDTH " << max_width << "\n\n";
@@ -1105,9 +1117,9 @@ string ModelExpression::get_expression_c_embedded() const
                   "                             const float* weights, const float* biases,\n"
                   "                             int outputs_number, nn_activation activation, float* outputs)\n{\n"
                   "\tfor (int j = 0; j < outputs_number; ++j)\n\t{\n"
-                  "\t\tfloat sum = biases[j];\n"
+                  "\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
                   "\t\tfor (int i = 0; i < inputs_number; ++i)\n"
-                  "\t\t\tsum += inputs[i] * weights[i * outputs_number + j];\n"
+                  "\t\t\tsum += inputs[i] * NN_READ_FLOAT(&weights[i * outputs_number + j]);\n"
                   "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
                   "\t}\n}\n\n";
 
@@ -1119,7 +1131,7 @@ string ModelExpression::get_expression_c_embedded() const
                   "\tint f = 0;\n"
                   "\tfor (int i = 0; i < total; ++i)\n"
                   "\t{\n"
-                  "\t\toutputs[i] = a[f] * inputs[i] + b[f];\n"
+                  "\t\toutputs[i] = NN_READ_FLOAT(&a[f]) * inputs[i] + NN_READ_FLOAT(&b[f]);\n"
                   "\t\tif (++f == features) f = 0;\n"
                   "\t}\n}\n\n";
 
@@ -1131,9 +1143,9 @@ string ModelExpression::get_expression_c_embedded() const
                   "\tint f = 0;\n"
                   "\tfor (int i = 0; i < total; ++i)\n"
                   "\t{\n"
-                  "\t\tfloat value = log_pre[f] ? logf(inputs[i]) : inputs[i];\n"
-                  "\t\tvalue = a[f] * value + b[f];\n"
-                  "\t\toutputs[i] = exp_post[f] ? expf(value) : value;\n"
+                  "\t\tfloat value = NN_READ_BYTE(&log_pre[f]) ? logf(inputs[i]) : inputs[i];\n"
+                  "\t\tvalue = NN_READ_FLOAT(&a[f]) * value + NN_READ_FLOAT(&b[f]);\n"
+                  "\t\toutputs[i] = NN_READ_BYTE(&exp_post[f]) ? expf(value) : value;\n"
                   "\t\tif (++f == features) f = 0;\n"
                   "\t}\n}\n\n";
 
@@ -1146,12 +1158,12 @@ string ModelExpression::get_expression_c_embedded() const
                   "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
                   "\t\tconst float* x = inputs + t * input_features;\n"
                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
-                  "\t\t\tfloat sum = biases[j];\n"
+                  "\t\t\tfloat sum = NN_READ_FLOAT(&biases[j]);\n"
                   "\t\t\tfor (int i = 0; i < input_features; ++i)\n"
-                  "\t\t\t\tsum += x[i] * input_weights[i * hidden + j];\n"
+                  "\t\t\t\tsum += x[i] * NN_READ_FLOAT(&input_weights[i * hidden + j]);\n"
                   "\t\t\tif (t > 0)\n"
                   "\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
-                  "\t\t\t\t\tsum += state_previous[p] * recurrent_weights[p * hidden + j];\n"
+                  "\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&recurrent_weights[p * hidden + j]);\n"
                   "\t\t\tstate_current[j] = nn_activation_forward(activation, sum);\n"
                   "\t\t}\n"
                   "\t\tif (return_sequences)\n"
@@ -1176,14 +1188,14 @@ string ModelExpression::get_expression_c_embedded() const
                   "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
                   "\t\t\tfloat gates[4];\n"
                   "\t\t\tfor (int gate = 0; gate < 4; ++gate)\n\t\t\t{\n"
-                  "\t\t\t\tfloat sum = biases[gate * hidden + j];\n"
+                  "\t\t\t\tfloat sum = NN_READ_FLOAT(&biases[gate * hidden + j]);\n"
                   "\t\t\t\tconst float* w = input_weights + gate * input_features * hidden;\n"
                   "\t\t\t\tfor (int i = 0; i < input_features; ++i)\n"
-                  "\t\t\t\t\tsum += x[i] * w[i * hidden + j];\n"
+                  "\t\t\t\t\tsum += x[i] * NN_READ_FLOAT(&w[i * hidden + j]);\n"
                   "\t\t\t\tif (t > 0)\n\t\t\t\t{\n"
                   "\t\t\t\t\tconst float* u = recurrent_weights + gate * hidden * hidden;\n"
                   "\t\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
-                  "\t\t\t\t\t\tsum += state_previous[p] * u[p * hidden + j];\n"
+                  "\t\t\t\t\t\tsum += state_previous[p] * NN_READ_FLOAT(&u[p * hidden + j]);\n"
                   "\t\t\t\t}\n"
                   "\t\t\t\tgates[gate] = nn_activation_forward(gate == 2 ? activation : recurrent_activation, sum);\n"
                   "\t\t\t}\n"
@@ -1211,8 +1223,10 @@ string ModelExpression::get_expression_c_embedded() const
         buffer << "static void nn_clamp_inplace(float* values, const float* lower, const float* upper, int n)\n{\n"
                   "\tfor (int i = 0; i < n; ++i)\n"
                   "\t{\n"
-                  "\t\tif (values[i] < lower[i]) values[i] = lower[i];\n"
-                  "\t\tif (values[i] > upper[i]) values[i] = upper[i];\n"
+                  "\t\tconst float low = NN_READ_FLOAT(&lower[i]);\n"
+                  "\t\tconst float high = NN_READ_FLOAT(&upper[i]);\n"
+                  "\t\tif (values[i] < low) values[i] = low;\n"
+                  "\t\tif (values[i] > high) values[i] = high;\n"
                   "\t}\n}\n\n";
 
     buffer << tables.str();

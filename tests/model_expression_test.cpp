@@ -132,6 +132,7 @@ TEST_F(ModelExpressionTest, SaveCEmbeddedExpression)
 
     EXPECT_FALSE(source.empty());
     EXPECT_TRUE(contains_token(source, "static const float"));
+    EXPECT_TRUE(contains_token(source, "NN_FLASH"));
     EXPECT_TRUE(contains_token(source, "nn_dense_forward"));
     EXPECT_TRUE(contains_token(source, "nn_affine_forward"));
     EXPECT_TRUE(contains_token(source, "float* calculate_outputs"));
