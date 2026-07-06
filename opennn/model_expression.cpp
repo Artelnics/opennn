@@ -21,6 +21,10 @@ static constexpr const char* c_header =
     "//\n"
     "// Model exported to C. Edit inputs[] in main() and call calculate_outputs().\n"
     "//\n"
+    "// calculate_outputs() uses no heap and returns a pointer to a static buffer\n"
+    "// (not thread-safe), so it can be embedded in microcontroller firmware.\n"
+    "// Define OPENNN_EXPORT_NO_MAIN to exclude main() when embedding.\n"
+    "//\n"
     "// Input names:";
 
 static constexpr const char* php_header =
@@ -273,6 +277,16 @@ string ModelExpression::build_expression() const
     const size_t layers_number = neural_network->get_layers_number();
     const vector<string> layer_labels = neural_network->get_layer_labels();
 
+    if (neural_network->get_parameters_device() == Device::CPU)
+    {
+        const float* parameters_data = neural_network->get_parameters_data();
+        const Index parameters_size = neural_network->get_parameters_size();
+
+        for (Index i = 0; i < parameters_size; ++i)
+            throw_if(!isfinite(parameters_data[i]),
+                     "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
+    }
+
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -294,6 +308,17 @@ string ModelExpression::build_expression() const
 
     for (size_t i = 0; i < layers_number; ++i)
     {
+        const LayerType layer_type = layers[i]->get_type();
+
+        throw_if(layer_type != LayerType::Scaling
+                 && layer_type != LayerType::Dense
+                 && layer_type != LayerType::Recurrent
+                 && layer_type != LayerType::LongShortTermMemory
+                 && layer_type != LayerType::Unscaling
+                 && layer_type != LayerType::Bounding,
+                 format("ModelExpression: layer '{}' ({}) is not supported for export.",
+                        layer_labels[i], layer_type_map().to_string(layer_type)));
+
         const bool is_last = (i == layers_number - 1);
         vector<string> layer_output_names;
 
@@ -311,7 +336,12 @@ string ModelExpression::build_expression() const
                                             : format("{}_output_{}", layer_labels[i], j);
         }
 
-        buffer << layers[i]->write_expression(new_input_names, layer_output_names) << "\n";
+        const string layer_expression = layers[i]->write_expression(new_input_names, layer_output_names);
+
+        throw_if(!is_last && layer_expression.find("Softmax") != string::npos,
+                 "ModelExpression: Softmax in a hidden layer is not supported for export.");
+
+        buffer << layer_expression << "\n";
 
         if (!is_last)
             new_input_names = move(layer_output_names);
@@ -415,10 +445,10 @@ const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::
             "function Tanh($x) { return tanh($x); }\n"
         }},
         {"Softmax", {
-            "float Softmax(float x) {\n\treturn expf(x);\n}\n\n",
-            "function Softmax(x) {\n\treturn Math.exp(x);\n}\n",
-            "\t@staticmethod\n\tdef Softmax(x):\n\t\treturn np.exp(x)\n\n",
-            "function Softmax($x) { return exp($x); }\n"
+            "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfloat Softmax(float x) {\n\treturn x;\n}\n\n",
+            "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax(x) {\n\treturn x;\n}\n",
+            "\t@staticmethod\n\tdef Softmax(x):\n\t\t# Raw logit: the stable softmax is applied over the whole output vector afterwards\n\t\treturn x\n\n",
+            "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax($x) { return $x; }\n"
         }}
     };
     return table;
@@ -450,9 +480,10 @@ void ModelExpression::emit_c_prelude(ostringstream& buffer) const
     for (size_t i = 0; i < input_names.size(); ++i)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
-    buffer << "\n \n \n#include <stdio.h>\n"
-              "#include <stdlib.h>\n"
-              "#include <math.h>\n\n"
+    buffer << "\n \n \n#include <math.h>\n\n"
+              "#ifndef OPENNN_EXPORT_NO_MAIN\n"
+              "#include <stdio.h>\n"
+              "#endif\n\n"
               "static double max(double a, double b) { return a > b ? a : b; }\n"
               "static double min(double a, double b) { return a < b ? a : b; }\n\n";
 }
@@ -502,19 +533,17 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
             buffer << "\t" << l << "\n";
     }
 
-    buffer << "\n\tfloat* out = (float*)malloc(" << outputs_number << " * sizeof(float));\n"
-              "\tif (out == NULL) {\n"
-              "\t\tprintf(\"Error: Memory allocation failed in calculate_outputs.\\n\");\n"
-              "\t\treturn NULL;\n"
-              "\t}\n\n";
+    buffer << "\n\tstatic float out[" << outputs_number << "];\n\n";
 
     for (Index i = 0; i < outputs_number; ++i)
         buffer << "\tout[" << i << "] = " << fixed_output_names[i] << ";\n";
 
     if (has_softmax)
-        buffer << "\n\t// Softmax Normalization\n"
+        buffer << "\n\t// Softmax (numerically stable)\n"
+                  "\tfloat max_out = out[0];\n"
+                  "\tfor(int i = 1; i < " << outputs_number << "; ++i) if(out[i] > max_out) max_out = out[i];\n"
                   "\tfloat sum = 0.0f;\n"
-                  "\tfor(int i = 0; i < " << outputs_number << "; ++i) sum += out[i];\n"
+                  "\tfor(int i = 0; i < " << outputs_number << "; ++i) { out[i] = expf(out[i] - max_out); sum += out[i]; }\n"
                   "\tfor(int i = 0; i < " << outputs_number << "; ++i) out[i] /= sum;\n";
 
     buffer << "\n\treturn out;\n}\n\n";
@@ -528,30 +557,22 @@ void ModelExpression::emit_c_main(ostringstream& buffer) const
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
 
-    buffer << "int main() { \n\n"
-              "\tfloat* inputs = (float*)malloc(" << inputs_number << " * sizeof(float)); \n"
-              "\tif (inputs == NULL) {\n"
-              "\t\tprintf(\"Error: Memory allocation failed for inputs.\\n\");\n"
-              "\t\treturn 1;\n"
-              "\t}\n\n"
+    buffer << "#ifndef OPENNN_EXPORT_NO_MAIN\n\n"
+              "int main() { \n\n"
+              "\tfloat inputs[" << inputs_number << "];\n\n"
               "\t// Please enter your values here:\n";
 
     for (Index i = 0; i < inputs_number; ++i)
         buffer << "\tinputs[" << i << "] = 0.0f; // " << input_names[i] << "\n";
 
-    buffer << "\n\tfloat* outputs;\n"
-              "\n\toutputs = calculate_outputs(inputs);\n\n"
-              "\tif (outputs != NULL) {\n"
-              "\t\tprintf(\"These are your outputs:\\n\");\n";
+    buffer << "\n\tconst float* outputs = calculate_outputs(inputs);\n\n"
+              "\tprintf(\"These are your outputs:\\n\");\n";
 
     for (Index i = 0; i < outputs_number; ++i)
-        buffer << "\t\tprintf(\""<< output_names[i] << ": %f \\n\", outputs[" << i << "]);\n";
+        buffer << "\tprintf(\""<< output_names[i] << ": %f \\n\", outputs[" << i << "]);\n";
 
-    buffer << "\t}\n\n"
-              "\t// Free the allocated memory\n"
-              "\tfree(inputs);\n"
-              "\tfree(outputs);\n\n"
-              "\treturn 0;\n} \n";
+    buffer << "\n\treturn 0;\n} \n\n"
+              "#endif // OPENNN_EXPORT_NO_MAIN\n";
 }
 
 string ModelExpression::get_expression_php() const
@@ -636,9 +657,13 @@ void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>&
 
     if (has_softmax)
     {
-        buffer << "\n// Softmax Normalization\n$sum = 0;\n";
+        buffer << "\n// Softmax (numerically stable)\n$max_out = max(";
         for (size_t i = 0; i < fixed_output_names.size(); ++i)
-            buffer << "$sum += $" << fixed_output_names[i] << ";\n";
+            buffer << (i ? ", " : "") << "$" << fixed_output_names[i];
+        buffer << ");\n$sum = 0;\n";
+        for (size_t i = 0; i < fixed_output_names.size(); ++i)
+            buffer << "$" << fixed_output_names[i] << " = exp($" << fixed_output_names[i] << " - $max_out);\n"
+                   << "$sum += $" << fixed_output_names[i] << ";\n";
         for (size_t i = 0; i < fixed_output_names.size(); ++i)
             buffer << "$" << fixed_output_names[i] << " /= $sum;\n";
     }
@@ -868,10 +893,6 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         for (const char* kw : math_keywords)
             replace_all_word_appearances(line, kw, string("Math.") + kw);
 
-        replace_all_appearances(line, "nan", "0");
-        replace_all_appearances(line, "NaN", "0");
-        replace_all_appearances(line, "inf", "Infinity");
-
         if (line.size() <= 1) buffer << "\n";
         else                 buffer << "\tvar " << line << "\n";
     }
@@ -885,9 +906,11 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "\tout.push(" << fixes_output_names[i] << ");\n";
 
     if (has_softmax)
-        buffer << "\n\t// Softmax Normalization\n"
+        buffer << "\n\t// Softmax (numerically stable)\n"
+                  "\tvar max_out = out[0];\n"
+                  "\tfor(var i = 1; i < out.length; ++i) if(out[i] > max_out) max_out = out[i];\n"
                   "\tvar sum = 0;\n"
-                  "\tfor(var i = 0; i < out.length; ++i) sum += out[i];\n"
+                  "\tfor(var i = 0; i < out.length; ++i) { out[i] = Math.exp(out[i] - max_out); sum += out[i]; }\n"
                   "\tfor(var i = 0; i < out.length; ++i) out[i] /= sum;\n";
 
     buffer << "\n\treturn out;\n}\n\n"
@@ -1003,6 +1026,9 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     buffer << "\t\toutputs = " << return_list << "\n";
     if (has_softmax)
     {
+        buffer << "\t\t# Softmax (numerically stable)\n";
+        buffer << "\t\tmax_out = np.max(outputs)\n";
+        buffer << "\t\toutputs = [np.exp(x - max_out) for x in outputs]\n";
         buffer << "\t\tsum_val = np.sum(outputs)\n";
         buffer << "\t\toutputs = [x / sum_val for x in outputs]\n";
     }
