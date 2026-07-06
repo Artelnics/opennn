@@ -177,7 +177,9 @@ TEST(ImageDataset, ConstructFromPathTwoClasses)
     ASSERT_EQ(target_shape.rank, 1u);
     EXPECT_EQ(target_shape[0], 1);
 
-    EXPECT_EQ(image_dataset.get_variables_number(), 3 * 4 * 3 + 1);
+    EXPECT_EQ(image_dataset.get_variables_number(), 2);
+    EXPECT_EQ(image_dataset.get_features_number(), 3 * 4 * 3 + 1);
+    EXPECT_EQ(image_dataset.get_features_number("Input"), 3 * 4 * 3);
 }
 
 

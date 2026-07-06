@@ -136,10 +136,31 @@ void LanguageDataset::read_txt()
     input_shape  = { maximum_input_sequence_length };
     target_shape = { maximum_target_sequence_length };
 
-    variables.resize(maximum_input_sequence_length
-                   + (is_single_token_target ? 1 : 2) * maximum_target_sequence_length);
-
     const bool has_decoder = !decoder_shape.empty();
+
+    variables.assign(has_decoder ? 3 : 2, Variable());
+
+    Variable& input_variable = variables[0];
+    input_variable.name = "input_sequence";
+    input_variable.role = VariableRole::Input;
+    input_variable.type = VariableType::Numeric;
+    input_variable.features = maximum_input_sequence_length;
+    input_variable.categories = input_vocabulary;
+
+    if (has_decoder)
+    {
+        Variable& decoder_variable = variables[1];
+        decoder_variable.name = "decoder_sequence";
+        decoder_variable.role = VariableRole::Decoder;
+        decoder_variable.type = VariableType::Numeric;
+        decoder_variable.features = maximum_target_sequence_length;
+    }
+
+    Variable& target_variable = variables[has_decoder ? 2 : 1];
+    target_variable.name = "target_sequence";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = VariableType::Numeric;
+    target_variable.features = maximum_target_sequence_length;
 
     if (storage_mode == StorageMode::Matrix)
     {
@@ -152,7 +173,7 @@ void LanguageDataset::read_txt()
             ? decoder_offset + maximum_target_sequence_length
             : maximum_input_sequence_length;
 
-        data.resize(samples_number, ssize(variables));
+        data.resize(samples_number, get_features_number());
         data.setZero();
 
         for (Index i = 0; i < samples_number; ++i)
@@ -203,25 +224,7 @@ void LanguageDataset::read_txt()
 
     sample_roles.resize(samples_number);
 
-    set_default_variable_names();
     split_samples_random();
-
-    for (Index i = 0; i < ssize(variables); ++i)
-    {
-        Variable& variable = variables[i];
-
-        if (i < maximum_input_sequence_length)
-            variable.role = VariableRole::Input;
-        else if (!decoder_shape.empty() && i < maximum_input_sequence_length + maximum_target_sequence_length)
-            variable.role = VariableRole::Decoder;
-        else
-            variable.role = VariableRole::Target;
-
-        variable.type = VariableType::Numeric;
-    }
-
-    if (!variables.empty())
-        variables[0].categories = input_vocabulary;
 
     cout << "Reading finished" << "\n";
 }

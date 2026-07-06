@@ -375,11 +375,9 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     return session;
 }
 
-int Optimizer::get_batch_workers_number(const NeuralNetwork& neural_network) const
+int Optimizer::get_batch_workers_number(const NeuralNetwork&) const
 {
-    return neural_network.is_gpu() && neural_network.has(LayerType::Recurrent)
-        ? 1
-        : workers_number;
+    return workers_number;
 }
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
@@ -434,7 +432,9 @@ Index Optimizer::get_maximum_batch_size() const
 #endif
     }
 
-    const Index budget = Index(double(available_bytes) * 0.8);
+    const bool recurrent_net = neural_network->has(LayerType::Recurrent)
+                            || neural_network->has(LayerType::LongShortTermMemory);
+    const Index budget = Index(double(available_bytes) * (recurrent_net ? 0.6 : 0.8));
 
     const Index parameters_number       = neural_network->get_parameters_number();
     const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
@@ -795,6 +795,17 @@ void Optimizer::warmup_device_training(
 
     try
     {
+        // Validation first: its (wide) shape grows the shared operator buffers
+        // to their maximum before the training step can capture a CUDA graph,
+        // so captured pointers are never invalidated by a later regrow.
+        if (has_validation_warmup)
+            evaluate_epoch(*validation_forward_propagation,
+                           *validation_empty_queue,
+                           vector<vector<Index>>{validation_batches->front()},
+                           input_feature_indices,
+                           decoder_feature_indices,
+                           target_feature_indices);
+
         train_epoch(training_forward_propagation,
                     training_back_propagation,
                     training_empty_queue,
@@ -804,14 +815,6 @@ void Optimizer::warmup_device_training(
                     target_feature_indices,
                     update,
                     fixed_training_batch);
-
-        if (has_validation_warmup)
-            evaluate_epoch(*validation_forward_propagation,
-                           *validation_empty_queue,
-                           vector<vector<Index>>{validation_batches->front()},
-                           input_feature_indices,
-                           decoder_feature_indices,
-                           target_feature_indices);
 
         restore_model_state();
     }
@@ -868,9 +871,9 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
             if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
             results.stopping_condition = StoppingCondition::MaximumValidationErrorIncreases;
         }
-        else if (epoch == maximum_epochs)
+        else if (epoch + 1 >= maximum_epochs)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << "\n";
+            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
         else if (elapsed_time >= maximum_time)
@@ -902,7 +905,9 @@ void Optimizer::reset_best_parameters()
 void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float validation_error,
                                        Index epoch, Index& validation_failures)
 {
-    if (validation_error >= best_validation_error)
+    constexpr float MIN_DELTA = 1e-7f;
+
+    if (validation_error >= best_validation_error - MIN_DELTA)
     {
         ++validation_failures;
         return;
@@ -939,9 +944,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float vali
 
 void Optimizer::restore_best_parameters(NeuralNetwork* neural_network, TrainingResult& results)
 {
-    if (!results.stopping_condition
-        || *results.stopping_condition != StoppingCondition::MaximumValidationErrorIncreases
-        || best_parameters.empty()
+    if (best_parameters.empty()
         || Index(best_parameters.size()) != neural_network->get_parameters_size())
         return;
 
@@ -998,6 +1001,9 @@ void Optimizer::teardown_device_training()
 
     device::synchronize(Backend::get_compute_stream());
 
+    if (loss->get_dataset()->is_device_resident())
+        loss->get_dataset()->disable_device_residency();
+
     neural_network->copy_parameters_host();
     neural_network->copy_states_host();
 
@@ -1020,8 +1026,25 @@ void Optimizer::prefetch_batch(Batch& batch)
 void Optimizer::sync_device(bool on_gpu)
 {
     static const bool sync_each_batch = env_flag_enabled("OPENNN_CUDA_SYNC_EACH_BATCH");
-    if (on_gpu && (has_recurrent_layers_ || sync_each_batch))
+    if (!on_gpu) return;
+
+    if (sync_each_batch)
+    {
         device::synchronize(Backend::get_compute_stream());
+        return;
+    }
+
+    if (!has_recurrent_layers_) return;
+
+    CudaEvent& slot = batch_throttle_events_[batch_throttle_cursor_];
+    batch_throttle_cursor_ = (batch_throttle_cursor_ + 1) % batch_throttle_events_.size();
+
+    if (slot.handle)
+        device::synchronize_event(slot.handle);
+    else
+        slot.create();
+
+    device::record_event(slot.handle, Backend::get_compute_stream());
 }
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
@@ -1140,9 +1163,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         copy_section(slot.target);
     };
 
-    // Resident gather: copy the worker batch's per-batch row indices and gather
-    // metadata into the slot so the slot gathers from itself; the captured
-    // graph reads the slot's fixed index buffer on replay.
     const auto stage_gather_indices = [](const Batch& source, Batch& slot)
     {
         slot.current_sample_count = source.current_sample_count;
@@ -1150,6 +1170,12 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         slot.input_col_offset     = source.input_col_offset;
         slot.target_col_offset    = source.target_col_offset;
         slot.gather_row_indices   = source.gather_row_indices;
+        slot.window_past          = source.window_past;
+        slot.window_future        = source.window_future;
+        slot.window_features      = source.window_features;
+        slot.window_target_cols   = source.window_target_cols;
+        slot.window_multi_target  = source.window_multi_target;
+        slot.window_matrix_rows   = source.window_matrix_rows;
         slot.needs_device_copy    = false;
     };
 

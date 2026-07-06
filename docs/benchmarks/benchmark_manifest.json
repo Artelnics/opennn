@@ -4,6 +4,64 @@
  "protocol_reference": "results/README.md",
  "protocol_style": "mlperf_inspired_not_official",
  "description": "Current benchmark evidence index. The top-level markdown notes explain methodology; this manifest tracks runner maturity and publication-readiness gaps.",
+ "legacy_artifacts": [
+  {
+   "path": "accuracy/opennn_accuracy",
+   "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
+  },
+  {
+   "path": "accuracy/pred_opennn.txt",
+   "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
+  },
+  {
+   "path": "accuracy/pred_pytorch.txt",
+   "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
+  },
+  {
+   "path": "accuracy/pred_tensorflow.txt",
+   "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
+  },
+  {
+   "path": "accuracy/rosenbrock_test.csv",
+   "reason": "tracked historical generated fixture; keep new generated data outside the repo"
+  },
+  {
+   "path": "accuracy/rosenbrock_train.csv",
+   "reason": "tracked historical generated fixture; keep new generated data outside the repo"
+  },
+  {
+   "path": "capacity/capacity_results.csv",
+   "reason": "tracked historical generated result table; replace future evidence with result JSON"
+  },
+  {
+   "path": "export/opennn_export",
+   "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
+  },
+  {
+   "path": "inference-speed/model_inference.onnx",
+   "reason": "tracked historical generated ONNX model; regenerate outside the repo for future runs"
+  },
+  {
+   "path": "inference-speed/model_inference.onnx.data",
+   "reason": "tracked historical generated ONNX external data; regenerate outside the repo for future runs"
+  },
+  {
+   "path": "memory/opennn_memory",
+   "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
+  },
+  {
+   "path": "startup/model_startup.onnx",
+   "reason": "tracked historical generated ONNX model; regenerate outside the repo for future runs"
+  },
+  {
+   "path": "startup/model_startup.onnx.data",
+   "reason": "tracked historical generated ONNX external data; regenerate outside the repo for future runs"
+  },
+  {
+   "path": "startup/opennn_startup",
+   "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
+  }
+ ],
  "benchmarks": [
   {
    "id": "accuracy-rosenbrock",
@@ -26,7 +84,8 @@
     "store raw output",
     "store framework versions",
     "store git commit"
-   ]
+   ],
+   "lifecycle": "supporting_only"
   },
   {
    "id": "precision-rosenbrock",
@@ -50,7 +109,8 @@
     "state optimizer difference clearly",
     "store raw output",
     "store framework versions"
-   ]
+   ],
+   "lifecycle": "supporting_only"
   },
   {
    "id": "gpu-cnn-training",
@@ -75,7 +135,8 @@
     "add torch.compile run or explicit eager-only framing",
     "add TensorFlow XLA path or explicit Keras-only framing",
     "store result JSON"
-   ]
+   ],
+   "lifecycle": "hold_back"
   },
   {
    "id": "gpu-resnet50-training",
@@ -102,7 +163,8 @@
     "attach repeated-run JSON artifacts",
     "repeat on reference Linux machine",
     "archive raw logs"
-   ]
+   ],
+   "lifecycle": "hold_back"
   },
   {
    "id": "gpu-resnet50-max-batch",
@@ -131,7 +193,8 @@
     "repeat run before public headline use",
     "investigate OpenNN convolution workspace/graph memory boundary",
     "keep card title neutral if OpenNN does not win this benchmark"
-   ]
+   ],
+   "lifecycle": "hold_back"
   },
   {
    "id": "gpu-dense-rosenbrock-speed-and-capacity",
@@ -157,7 +220,8 @@
     "replace hand-link scripts with CMake targets",
     "store result JSON",
     "archive VRAM-cap evidence"
-   ]
+   ],
+   "lifecycle": "historical"
   },
   {
    "id": "gpu-dense-rosenbrock-energy",
@@ -182,7 +246,8 @@
    "needs": [
     "re-measure on native Windows (WSL2 penalizes OpenNN bf16 tensor cores)",
     "add wall-power meter for whole-system claim"
-   ]
+   ],
+   "lifecycle": "historical"
   },
   {
    "id": "gpu-transformer-inference",
@@ -207,7 +272,8 @@
    "needs": [
     "re-measure on native Windows (WSL2 penalizes OpenNN bf16 tensor cores; should widen the lead)",
     "replace build.sh with CMake targets"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "gpu-transformer-training",
@@ -232,7 +298,8 @@
     "replace build.sh with CMake targets",
     "add repeated-run JSON",
     "store loss/quality gate"
-   ]
+   ],
+   "lifecycle": "hold_back"
   },
   {
    "id": "recurrent-lstm-forecasting",
@@ -258,17 +325,19 @@
     "winner"
    ],
    "seed_count": 5,
-   "rmse_convention": "standard sqrt(mean sq), original units (OpenNN native half-conv kept as test_rmse_native_halfconv_mean)",
+   "rmse_convention": "standard per-element sqrt(mean sq) = sqrt(sum_sq/(N*W)), original units (OpenNN native half-conv kept as test_rmse_native_halfconv_mean)",
    "runner": {
     "status": "writes_result_json",
     "commands": [
-     "cmake --build build-gpu --target no2_forecasting && cd docs/benchmarks/recurrent-lstm-forecasting && OPENNN_FORECASTING_BIN=../../../build-gpu/bin/no2_forecasting python run_forecasting.py --gpu-index 0"
+     "cmake --build build-gpu --target recurrent_lstm_forecasting_benchmark && cd docs/benchmarks/recurrent-lstm-forecasting && OPENNN_FORECASTING_BIN=../../../build-gpu/bin/recurrent_lstm_forecasting_benchmark python run_forecasting.py --gpu-index 0 --frameworks opennn,pytorch,tensorflow"
     ]
    },
    "needs": [
     "run on reference Linux GPU",
     "store result JSON"
-   ]
+   ],
+   "artifact_caveats": "Artifacts written before the sqrt(W) fix (<= 20260702T211408Z) report multi-target B3/B4 test_rmse inflated by sqrt(24) ~= 4.9x; divide by sqrt(24) to compare with post-fix artifacts.",
+   "lifecycle": "internal_only"
   },
   {
    "id": "cpu-inference-speed",
@@ -292,7 +361,69 @@
     "re-measure on reference Linux x86_64",
     "store result JSON",
     "use identical data/weights or add checksum gate"
-   ]
+   ],
+   "lifecycle": "hold_back"
+  },
+  {
+   "id": "cpu-higgs-dense-training-subset",
+   "doc": "higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md",
+   "category": "cpu_training",
+   "status": "internal_subset_wsl2_mkl",
+   "publication_readiness": "internal_only_needs_full_split_rerun",
+   "platform": "linux_x86_64_wsl2",
+   "comparison": "OpenNN MKL vs PyTorch vs TensorFlow on prepared HIGGS subset",
+   "metrics": [
+    "samples_per_sec",
+    "median_epoch_s",
+    "test_accuracy",
+    "test_log_loss",
+    "test_roc_auc"
+   ],
+   "runner": {
+    "status": "writes_local_result_json",
+    "commands": [
+     "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_ENABLE_MKL=ON -DOpenNN_MKL_ROOT=/path/to/mkl",
+     "cmake --build build-benchmarks --target opennn_higgs_cpu",
+     "cd docs/benchmarks/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu python run_higgs_cpu.py train --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 1 --batch 1024 --runs 1"
+    ]
+   },
+   "latest_local_result": "results/cpu-dense-higgs-train-20260704T-higgs100k-train-mkl.json",
+   "needs": [
+    "rerun full 10.5M/500k HIGGS split",
+    "run repeated samples, not a single run",
+    "commit or archive result JSON before publication",
+    "measure CPU joules outside WSL before energy claims"
+   ],
+   "lifecycle": "internal_only"
+  },
+  {
+   "id": "cpu-higgs-dense-inference-subset",
+   "doc": "higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+   "category": "cpu_inference",
+   "status": "internal_subset_wsl2_mkl",
+   "publication_readiness": "internal_only_needs_full_split_rerun",
+   "platform": "linux_x86_64_wsl2",
+   "comparison": "OpenNN MKL vs PyTorch vs TensorFlow on prepared HIGGS subset",
+   "metrics": [
+    "samples_per_sec",
+    "median_pass_s"
+   ],
+   "runner": {
+    "status": "writes_local_result_json",
+    "commands": [
+     "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_ENABLE_MKL=ON -DOpenNN_MKL_ROOT=/path/to/mkl",
+     "cmake --build build-benchmarks --target opennn_higgs_cpu",
+     "cd docs/benchmarks/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu MKL_NUM_THREADS=20 OMP_NUM_THREADS=20 MKL_DYNAMIC=FALSE OMP_DYNAMIC=FALSE python run_higgs_cpu.py infer --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --reps 20 --batch 1024 --runs 5 --threads 20"
+    ]
+   },
+   "latest_local_result": "results/cpu-dense-higgs-infer-20260704T-higgs100k-infer-b1024-mkl-threads20.json",
+   "needs": [
+    "rerun full 500k HIGGS test split",
+    "run repeated samples, not a single run",
+    "commit or archive result JSON before publication",
+    "measure CPU joules outside WSL before energy claims"
+   ],
+   "lifecycle": "internal_only"
   },
   {
    "id": "cpu-runtime-size",
@@ -312,7 +443,8 @@
    "needs": [
     "archive measurement commands",
     "store versions"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "gpu-deployment-size",
@@ -332,7 +464,8 @@
    "needs": [
     "archive measurement commands",
     "store CUDA/cuDNN library list"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "startup-latency",
@@ -354,29 +487,35 @@
    "needs": [
     "store result JSON",
     "archive cold-cache protocol"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
-   "id": "peak-memory-training",
+   "id": "baseline-memory-footprint",
    "doc": "peak-memory-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "memory",
-   "status": "current",
-   "publication_readiness": "candidate_needs_raw_artifacts",
-   "platform": "linux_x86_64",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow",
+   "status": "current_wsl2_cuda",
+   "publication_readiness": "candidate_with_result_artifact",
+   "platform": "linux_x86_64_cuda",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow baseline RAM after empty objects and GPU-ready VRAM after a tiny matrix multiply",
    "metrics": [
-    "peak_rss_mb"
+    "baseline_ram_mb",
+    "gpu_ready_vram_mb"
    ],
    "runner": {
-    "status": "existing_scripts_need_result_json",
+    "status": "scripts_emit_line_metrics",
     "commands": [
-     "cd docs/benchmarks/memory && ./opennn_memory && python pytorch_memory.py && python tensorflow_memory.py"
+     "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_DISABLE_CUDA=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86",
+     "cmake --build build-benchmarks --target opennn_memory -j",
+     "cd docs/benchmarks/memory && CUDA_MODULE_LOADING=LAZY ./opennn_memory && CUDA_MODULE_LOADING=LAZY python pytorch_memory.py && CUDA_MODULE_LOADING=LAZY TF_FORCE_GPU_ALLOW_GROWTH=true python tensorflow_memory.py"
     ]
    },
+   "latest_result": "results/baseline-memory-footprint-wsl2-20260705T110753Z.json",
    "needs": [
-    "store result JSON",
-    "archive process measurement method"
-   ]
+    "repeat on reference Linux machine before public website headline use",
+    "archive exact CUDA/cuDNN paths for OpenNN builds using non-system cuDNN"
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "data-capacity",
@@ -399,7 +538,8 @@
     "measure tensorflow_capacity.py (added; needs a Windows TF env to run)",
     "store result JSON",
     "archive memory cap method"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "dependencies-install",
@@ -420,7 +560,8 @@
    "needs": [
     "archive pip/du commands",
     "store exact package versions"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "native-source-loc",
@@ -440,7 +581,31 @@
    "needs": [
     "state LOC caveats",
     "archive counting command"
-   ]
+   ],
+   "lifecycle": "supporting_only"
+  },
+  {
+   "id": "application-loc",
+   "doc": "application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md",
+   "category": "code_ergonomics",
+   "status": "current",
+   "publication_readiness": "supporting_metric_only",
+   "platform": "source_snippets",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow Iris workflow",
+   "metrics": [
+    "logical_source_lines_of_code"
+   ],
+   "runner": {
+    "status": "script_available",
+    "commands": [
+     "cd docs/benchmarks/application-loc && python count_lsloc.py"
+    ]
+   },
+   "needs": [
+    "state LOC style caveats",
+    "keep snippets aligned with the same workflow"
+   ],
+   "lifecycle": "supporting_only"
   },
   {
    "id": "standalone-code-export",
@@ -463,7 +628,8 @@
    "needs": [
     "archive generated source artifact",
     "store compile/run proof"
-   ]
+   ],
+   "lifecycle": "headline_candidate"
   },
   {
    "id": "gpu-on-windows",
@@ -484,32 +650,104 @@
    "needs": [
     "cite current vendor documentation",
     "keep platform matrix dated"
-   ]
+   ],
+   "lifecycle": "supporting_only"
+  },
+  {
+   "id": "gpu-transformer-max-batch",
+   "doc": "transformer-max-batch/README.md",
+   "category": "gpu_training_inference_capacity",
+   "benchmark_class": "capacity_and_throughput",
+   "status": "train_alpaca_measured_rtx4080; infer_mode_and_wmt14_corpus_harness_ready_need_run",
+   "publication_readiness": "needs_wmt14_rerun_infer_run_and_result_json",
+   "platform": "linux_x86_64_cuda",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, encoder-decoder Transformer d512/h8/ff2048/6L, fp32 and bf16, train (fwd+bwd+Adam) and infer (forward-only) max batch + speed",
+   "metrics": [
+    "max_batch",
+    "speed_samples_per_sec",
+    "peak_vram_at_max"
+   ],
+   "corpora": {
+    "alpaca_chat_pairs": "original configuration; keeps continuity with measured train-mode numbers",
+    "wmt14_en_de": "standard corpus of the Attention Is All You Need base model; prepare with prepare_wmt14.py; use for publishable runs"
+   },
+   "runner": {
+    "status": "writes_result_json_via_flag",
+    "commands": [
+     "cmake --build build --target opennn_transformer_maxbatch_trial -j",
+     "python docs/benchmarks/transformer-max-batch/prepare_wmt14.py",
+     "python docs/benchmarks/transformer-max-batch/run_transformer_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer --corpus $OPENNN_BENCH_DATA/wmt14/wmt14_en_de_pairs.txt --result-json docs/benchmarks/results/gpu-transformer-max-batch-wmt14.json"
+    ]
+   },
+   "needs": [
+    "run infer mode (both corpora) on the reference GPU",
+    "run WMT14 corpus end to end and archive result JSON",
+    "keep Alpaca train numbers as regression continuity only"
+   ],
+   "lifecycle": "internal_only"
+  },
+  {
+   "id": "gpu-higgs-max-batch",
+   "doc": "higgs-max-batch/README.md",
+   "category": "gpu_training_inference_capacity",
+   "benchmark_class": "capacity",
+   "status": "harness_ready_needs_run",
+   "publication_readiness": "needs_reference_linux_run",
+   "platform": "linux_x86_64_cuda",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow on the canonical HIGGS dense classifier shape (28->1024->1024->1, BCE, Adam; synthetic contract-shaped data), train and infer max batch, fp32 and bf16; --device cpu runs the same matrix fp32 under a hard RLIMIT_AS cap",
+   "metrics": [
+    "max_batch",
+    "peak_vram_at_max",
+    "next_batch_failed"
+   ],
+   "runner": {
+    "status": "writes_result_json",
+    "commands": [
+     "cmake -S . -B build -DOpenNN_BUILD_BENCHMARKS=ON",
+     "cmake --build build --target opennn_higgs_maxbatch_trial -j",
+     "python docs/benchmarks/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer",
+     "python docs/benchmarks/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --device cpu --modes train,infer --mem-cap-gib 8"
+    ]
+   },
+   "needs": [
+    "run on the reference GPU and archive the result JSON",
+    "run the CPU-capped matrix on the reference Linux machine",
+    "replaces the historical Rosenbrock dense max-batch as the dense capacity probe (DENSE_HIGGS_MIGRATION.md)"
+   ],
+   "lifecycle": "internal_only"
   },
   {
    "id": "gpu-transformer-energy-to-target",
    "doc": "transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "training_time_to_quality",
-   "status": "current",
-   "publication_readiness": "candidate_needs_repeat_on_reference_machine",
+   "status": "current_rtx4080_4seed_result_json",
+   "publication_readiness": "candidate_needs_reference_machine_repeat",
    "platform": "linux_x86_64_cuda",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, GPU energy to a fixed epoch-mean token CE on the chat Transformer",
    "metrics": [
     "energy_wh_to_quality_target",
     "wall_time_to_quality_target",
     "epochs_to_quality_target"
    ],
    "runner": {
-    "status": "existing_script",
+    "status": "writes_result_json",
     "commands": [
      "cmake --build build --target opennn_transformer_energy -j",
-     "python docs/benchmarks/energy/run_transformer_energy.py --target 3.5 --batch 128 --lr 1e-4 --runs 3"
+     "python docs/benchmarks/energy/run_transformer_energy.py --target 3.5 --batch 128 --lr 1e-4 --runs 4"
     ]
    },
    "needs": [
-    "keep raw power traces optional flag",
-    "repeat on the reference machine before public headline use"
-   ]
+    "repeat on the reference machine before public headline use",
+    "root-cause the CUDA-graph convergence collapse and republish OpenNN with graph off"
+   ],
+   "lifecycle": "headline_candidate"
   }
- ]
+ ],
+ "lifecycle_values": {
+  "headline_candidate": "Can appear in the public headline index after raw commands/artifacts are archived.",
+  "supporting_only": "Useful context, but not a primary performance headline.",
+  "internal_only": "Useful for migration, development, or presentation drafts; not a public claim.",
+  "hold_back": "Do not use externally until the listed rerun or methodology fix is complete.",
+  "historical": "Retained as engineering history; superseded for new claims."
+ }
 }

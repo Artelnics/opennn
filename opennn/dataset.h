@@ -264,16 +264,23 @@ public:
 
     virtual bool supports_bf16_inputs() const { return true; }
 
-    void fill_batch(Batch&,
-                    const vector<Index>&,
-                    const vector<Index>&,
-                    const vector<Index>&,
-                    const vector<Index>&,
-                    bool) const;
+    virtual void fill_batch(Batch&,
+                            const vector<Index>&,
+                            const vector<Index>&,
+                            const vector<Index>&,
+                            const vector<Index>&,
+                            bool) const;
 
 protected:
 
     Dataset() = default;
+
+    void fill_batch_host(Batch&,
+                         const vector<Index>&,
+                         const vector<Index>&,
+                         const vector<Index>&,
+                         const vector<Index>&,
+                         bool) const;
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();

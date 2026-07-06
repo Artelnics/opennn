@@ -68,6 +68,22 @@ struct CudnnDescriptor
     explicit operator bool() const { return handle != nullptr; }
 };
 
+inline constexpr int RNN_SHAPE_SLOTS = 3;
+
+struct CudnnRnnShapeSlot
+{
+    Index batch = -1;
+    Index time  = -1;
+    int   stamp = 0;
+    bool  training_ready = false;
+    CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
+    CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t>  c_desc;
+    Buffer seq_host{Device::CPU};
+    Buffer seq_dev {Device::CUDA};
+};
+
 struct Operator
 {
     virtual ~Operator() = default;
@@ -81,6 +97,8 @@ struct Operator
 
     virtual void set_parameters_random() {}
     virtual void set_parameters_glorot() {}
+
+    virtual void set_parameters_pytorch() { set_parameters_glorot(); }
 
     virtual void forward_propagate(ForwardPropagation&, size_t, bool) {}
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}

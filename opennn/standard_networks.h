@@ -154,6 +154,26 @@ public:
     void set_attention_sdpa_min_sequence_length(Index);
 };
 
+class TextGenerationNetwork final : public NeuralNetwork
+{
+public:
+
+    TextGenerationNetwork() = default;
+
+    TextGenerationNetwork(Index,
+                          Index,
+                          Index,
+                          Index,
+                          Index,
+                          Index);
+
+    Index get_sequence_length() const;
+    Index get_embedding_dimension() const;
+    Index get_heads_number() const;
+
+    void set_dropout_rate(const float);
+};
+
 #endif // OPENNN_NO_VISION
 
 }

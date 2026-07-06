@@ -51,15 +51,28 @@ void Variable::to_JSON(JsonWriter& printer) const
         {"Type", get_type_string()}
     });
 
+    if (features > 1)
+        add_json_field(printer, "Features", to_string(features));
+
     if (type == VariableType::Categorical || type == VariableType::Binary)
         add_json_field(printer, "Categories", vector_to_string(categories, ";"));
 }
 
 vector<string> Variable::get_names() const
 {
-    return is_categorical()
-       ? categories
-       : vector<string>{name};
+    if (is_categorical())
+        return categories;
+
+    if (features == 1)
+        return {name};
+
+    vector<string> names;
+    names.reserve(size_t(features));
+
+    for (Index i = 0; i < features; ++i)
+        names.push_back(format("{}_{}", name, i + 1));
+
+    return names;
 }
 
 vector<string> get_variable_feature_names(const vector<Variable>& variables)

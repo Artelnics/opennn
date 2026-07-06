@@ -136,6 +136,11 @@ struct Variable
     VariableType type = VariableType::None;
     vector<string> categories;
     ScalerMethod scaler = ScalerMethod::None;
+
+    // Number of identical features this variable spans (e.g. the pixels of an
+    // image block or the tokens of a sequence). Categorical variables span one
+    // feature per category instead.
+    Index features = 1;
     const string& get_role() const { return variable_role_to_string(role); }
     VariableRole get_role_type() const noexcept { return role; }
     const string& get_scaler() const { return scaler_method_to_string(scaler); }
@@ -157,7 +162,7 @@ struct Variable
     bool is_categorical() const noexcept { return type == VariableType::Categorical; }
     bool is_used() const noexcept { return role != VariableRole::None && role != VariableRole::Time; }
 
-    Index get_feature_count() const { return is_categorical() ? get_categories_number() : 1; }
+    Index get_feature_count() const { return is_categorical() ? get_categories_number() : features; }
 
     vector<string> get_names() const;
 

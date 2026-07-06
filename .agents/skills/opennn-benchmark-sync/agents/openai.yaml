@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenNN Benchmark Sync"
+  short_description: "Sync clean benchmark posts to WordPress."
+  default_prompt: "Use $opennn-benchmark-sync to audit docs/benchmarks against the OpenNN WordPress benchmark blogs, ensuring Platforms category and no duplicate body title."

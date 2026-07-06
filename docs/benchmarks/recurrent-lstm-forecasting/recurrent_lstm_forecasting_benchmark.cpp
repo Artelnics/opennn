@@ -1,23 +1,23 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   F O R E C A S T I N G   B E N C H M A R K :   R E C U R R E N T   v s   L S T M
+//   R E C U R R E N T   V S   L S T M   F O R E C A S T I N G   B E N C H M A R K
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "../../opennn/time_series_dataset.h"
-#include "../../opennn/neural_network.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/loss.h"
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/configuration.h"
-#include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/testing_analysis.h"
-#include "../../opennn/long_short_term_memory_layer.h"
-#include "../../opennn/recurrent_layer.h"
-#include "../../opennn/random_utilities.h"
+#include "../../../opennn/time_series_dataset.h"
+#include "../../../opennn/neural_network.h"
+#include "../../../opennn/standard_networks.h"
+#include "../../../opennn/loss.h"
+#include "../../../opennn/training_strategy.h"
+#include "../../../opennn/configuration.h"
+#include "../../../opennn/adaptive_moment_estimation.h"
+#include "../../../opennn/testing_analysis.h"
+#include "../../../opennn/random_utilities.h"
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -34,14 +34,77 @@ using Clock = std::chrono::steady_clock;
 
 namespace
 {
-const string DATA_DIR = "../data/";
 
-constexpr int     SEED_COUNT = 5;
+const string DATA_FILE = "beijing_pm25_forecasting.csv";
+
+constexpr int      SEED_COUNT = 5;
 constexpr unsigned SEEDS[SEED_COUNT] = {0, 1, 2, 3, 4};
 
-// OpenNN's TestingAnalysis RMSE is sqrt(sum_sq / (2N)); the cross-framework
-// headline uses the standard sqrt(sum_sq / N), so multiply by sqrt(2).
 constexpr float RMSE_HALF_TO_STD = 1.41421356237309515f;
+
+string forecasting_data_dir()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_DATA_DIR");
+    if (env && env[0] != '\0')
+    {
+        string path(env);
+        if (!path.empty() && path.back() != '/' && path.back() != '\\')
+            path += '/';
+        return path;
+    }
+    return "../data/";
+}
+
+string forecasting_phase()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_PHASE");
+    string phase = (env && env[0] != '\0') ? string(env) : string();
+    std::transform(phase.begin(), phase.end(), phase.begin(),
+                   [](unsigned char c) { return char(std::tolower(c)); });
+    return phase;
+}
+
+float forecasting_clip_norm()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_CLIP");
+    return (env && env[0] != '\0') ? float(std::atof(env)) : 0.0f;
+}
+
+bool forecasting_pytorch_init()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_INIT");
+    return !(env && string(env) == "keras");
+}
+
+bool forecasting_cuda_graph()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_GRAPH");
+    return !(env && string(env) == "0");
+}
+
+int forecasting_seed_count()
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_SEEDS");
+    if (!env || env[0] == '\0') return SEED_COUNT;
+    const int n = std::atoi(env);
+    return (n >= 1 && n <= SEED_COUNT) ? n : SEED_COUNT;
+}
+
+bool scenario_selected(const string& id)
+{
+    const char* env = std::getenv("OPENNN_FORECASTING_SCENARIOS");
+    if (!env || env[0] == '\0') return true;
+    const string list(env);
+    size_t pos = 0;
+    while (pos < list.size())
+    {
+        size_t comma = list.find(',', pos);
+        if (comma == string::npos) comma = list.size();
+        if (list.substr(pos, comma - pos) == id) return true;
+        pos = comma + 1;
+    }
+    return false;
+}
 
 string format_seconds(double s)
 {
@@ -87,14 +150,10 @@ struct ScenarioProgress
         const float frac = total ? float(done) / float(total) : 0.0f;
         const int filled = int(frac * W + 0.5f);
         const double elapsed = std::chrono::duration<double>(Clock::now() - started).count();
-        const double eta = (done > 0)
-            ? elapsed * double(total - done) / double(done)
-            : 0.0;
+        const double eta = (done > 0) ? elapsed * (total - done) / done : 0.0;
 
-        std::cout << "\r    [";
-        for (int i = 0; i < W; ++i)
-            std::cout << (i < filled ? '#' : '.');
-        std::cout << "] " << done << "/" << total
+        std::cout << "\r    [" << std::string(filled, '#') << std::string(W - filled, '.')
+                  << "] " << done << "/" << total
                   << "  elapsed=" << format_seconds(elapsed)
                   << "  ETA=" << format_seconds(eta) << "   ";
         std::cout.flush();
@@ -103,42 +162,38 @@ struct ScenarioProgress
 
 ScenarioProgress g_bar;
 
-string forecasting_data_dir()
-{
-    const char* env = std::getenv("OPENNN_FORECASTING_DATA_DIR");
-    if (env && env[0] != '\0')
-    {
-        string path(env);
-        if (!path.empty() && path.back() != '/' && path.back() != '\\')
-            path += '/';
-        return path;
-    }
-
-    return DATA_DIR;
-}
-
-string forecasting_dataset_profile()
-{
-    const char* env = std::getenv("OPENNN_FORECASTING_DATASET");
-    return (env && env[0] != '\0') ? string(env) : string("no2");
-}
-
 struct Scenario
 {
     string  id;
     string  description;
-    string  csv_file;
-    string  separator;
     Index   past;
     Index   future;
     bool    multi_target;
-    vector<Index> extra_targets;
     Shape   hidden;
     float   learning_rate;
     Index   batch_size;
     Index   max_epochs;
     Index   patience;   // per-scenario early-stop patience
 };
+
+const vector<Scenario>& scenarios()
+{
+    static const vector<Scenario> beijing = {
+        {"B1", "Beijing PM2.5, past=24h, future=1h",
+            24, 1, false, Shape{32}, 0.003f, 128, 120, 20},
+
+        {"B2", "Beijing PM2.5, past=48h, future=1h",
+            48, 1, false, Shape{48}, 0.003f, 128, 100, 20},
+
+        {"B3", "Beijing PM2.5, past=72h, future=24h",
+            72, 24, true, Shape{64}, 0.002f, 128, 80, 20},
+
+        {"B4", "Beijing PM2.5, past=168h, future=24h",
+            168, 24, true, Shape{64}, 0.001f, 128, 60, 15},
+    };
+
+    return beijing;
+}
 
 struct RunResult
 {
@@ -147,6 +202,7 @@ struct RunResult
     float   train_err = std::numeric_limits<float>::quiet_NaN();
     float   val_err   = std::numeric_limits<float>::quiet_NaN();
     float   test_rmse = std::numeric_limits<float>::quiet_NaN();
+    float   test_rmse_native = std::numeric_limits<float>::quiet_NaN();
     float   test_rmse_rel = std::numeric_limits<float>::quiet_NaN();
     double  seconds = 0.0;
     bool    restored_best = false;
@@ -159,6 +215,7 @@ struct AggregatedResult
     float  test_rmse_mean = std::numeric_limits<float>::quiet_NaN();
     float  test_rmse_std  = std::numeric_limits<float>::quiet_NaN();
     float  test_rmse_best = std::numeric_limits<float>::quiet_NaN();
+    float  test_rmse_native_mean = std::numeric_limits<float>::quiet_NaN();
     float  val_err_mean   = std::numeric_limits<float>::quiet_NaN();
     float  test_rmse_rel_mean = std::numeric_limits<float>::quiet_NaN();
     double time_mean = 0.0;
@@ -169,16 +226,14 @@ struct AggregatedResult
 
 unique_ptr<TimeSeriesDataset> load_dataset(const Scenario& s)
 {
-    auto ds = make_unique<TimeSeriesDataset>(forecasting_data_dir() + s.csv_file,
-                                             s.separator,
+    auto ds = make_unique<TimeSeriesDataset>(forecasting_data_dir() + DATA_FILE,
+                                             ",",
                                              /*has_header=*/true,
                                              /*has_sample_ids=*/false);
-    for (Index col : s.extra_targets)
-        ds->set_variable_role(col, "InputTarget");
-
     ds->set_past_time_steps(s.past);
     ds->set_future_time_steps(s.future);
     ds->set_multi_target(s.multi_target);
+    ds->set_storage_mode(Dataset::StorageMode::GPUPersistantData);
     return ds;
 }
 
@@ -198,6 +253,8 @@ RunResult train_one(NeuralNetwork* nn,
         adam->set_batch_size(s.batch_size);
         adam->set_maximum_epochs(s.max_epochs);
         adam->set_maximum_validation_failures(s.patience);
+        adam->set_gradient_clip_norm(forecasting_clip_norm());
+        adam->set_cuda_graph(forecasting_cuda_graph());
         adam->set_display(false);
 
         const auto t0 = Clock::now();
@@ -211,11 +268,17 @@ RunResult train_one(NeuralNetwork* nn,
         r.seconds       = std::chrono::duration<double>(t1 - t0).count();
         r.restored_best = results.restored_best_parameters;
 
+        const Index target_width = ds->get_target_shape().size();
+
         try
         {
             TestingAnalysis ta(nn, ds);
             const VectorR errs = ta.calculate_errors("Testing");
-            if (errs.size() >= 3) r.test_rmse = errs(2) * RMSE_HALF_TO_STD;
+            if (errs.size() >= 3 && target_width > 0)
+            {
+                r.test_rmse_native = errs(2);
+                r.test_rmse = errs(2) * RMSE_HALF_TO_STD / std::sqrt(float(target_width));
+            }
         }
         catch (const std::exception& e) { r.notes = e.what(); }
 
@@ -223,7 +286,6 @@ RunResult train_one(NeuralNetwork* nn,
         {
             const vector<Index> testing_idx = ds->get_sample_indices("Testing");
             const vector<Index> target_idx  = ds->get_feature_indices("Target");
-            const Index target_width = ds->get_target_shape().size();
             if (!testing_idx.empty() && target_width > 0)
             {
                 MatrixR targets(testing_idx.size(), target_width);
@@ -249,16 +311,22 @@ AggregatedResult run_multi_seed(const Scenario& s,
     AggregatedResult agg;
     agg.net = net_label;
 
-    vector<float>  rmse_vals, rmse_rel_vals, val_vals;
+    vector<float>  rmse_vals, rmse_native_vals, rmse_rel_vals, val_vals;
     vector<double> time_vals;
     vector<Index>  epoch_vals;
 
-    for (unsigned seed : SEEDS)
+    const int seed_count = forecasting_seed_count();
+    for (int s_i = 0; s_i < seed_count; ++s_i)
     {
+        const unsigned seed = SEEDS[s_i];
         set_seed(seed);
         auto ds = load_dataset(s);
         auto nn = build(*ds);
+        if (forecasting_pytorch_init()) nn->set_parameters_pytorch();
         const RunResult r = train_one(nn.get(), ds.get(), s);
+
+        if (!r.notes.empty())
+            std::cout << "\n    [" << net_label << " seed " << seed << "] " << r.notes << "\n";
 
         g_bar.tick();
 
@@ -268,6 +336,7 @@ AggregatedResult run_multi_seed(const Scenario& s,
             val_vals.push_back(r.val_err);
             time_vals.push_back(r.seconds);
             epoch_vals.push_back(r.epochs);
+            if (std::isfinite(r.test_rmse_native)) rmse_native_vals.push_back(r.test_rmse_native);
             if (std::isfinite(r.test_rmse_rel)) rmse_rel_vals.push_back(r.test_rmse_rel);
             agg.params = r.params;
         }
@@ -289,6 +358,7 @@ AggregatedResult run_multi_seed(const Scenario& s,
     agg.test_rmse_mean     = mean(rmse_vals);
     agg.test_rmse_std      = stddev(rmse_vals, agg.test_rmse_mean);
     agg.test_rmse_best     = *std::min_element(rmse_vals.begin(), rmse_vals.end());
+    if (!rmse_native_vals.empty()) agg.test_rmse_native_mean = mean(rmse_native_vals);
     agg.val_err_mean       = mean(val_vals);
     if (!rmse_rel_vals.empty()) agg.test_rmse_rel_mean = mean(rmse_rel_vals);
     agg.time_mean          = std::accumulate(time_vals.begin(), time_vals.end(), 0.0) / time_vals.size();
@@ -328,7 +398,7 @@ void print_metric_line(const string& phase,
        << " test_rmse_mean=" << std::setprecision(9) << a.test_rmse_mean
        << " test_rmse_std=" << std::setprecision(9) << a.test_rmse_std
        << " test_rmse_best=" << std::setprecision(9) << a.test_rmse_best
-       << " test_rmse_native_halfconv_mean=" << std::setprecision(9) << (a.test_rmse_mean / RMSE_HALF_TO_STD)
+       << " test_rmse_native_halfconv_mean=" << std::setprecision(9) << a.test_rmse_native_mean
        << " test_rmse_rel_mean=" << std::setprecision(9) << a.test_rmse_rel_mean
        << " time_s_mean=" << std::setprecision(9) << a.time_mean
        << " winner=" << winner;
@@ -361,8 +431,6 @@ struct ScenarioVerdict
     string winner = "n/a";   // best test_rmse: "Recurrent" / "LSTM" / "n/a"
 };
 
-namespace
-{
 auto build_recurrent(const Scenario& s)
 {
     return [&s](TimeSeriesDataset& ds) {
@@ -386,21 +454,20 @@ string pick_winner(const AggregatedResult& a, const AggregatedResult& b,
         return "n/a";
     return (a.test_rmse_mean <= b.test_rmse_mean) ? a_name : b_name;
 }
-} // namespace
 
 ScenarioVerdict run_scenario(const Scenario& s)
 {
     std::cout << "\n=== " << s.id << "  " << s.description << " ===\n";
-    std::cout << "    dataset=" << s.csv_file
+    std::cout << "    dataset=" << DATA_FILE
               << "  past="    << s.past
               << "  future="  << s.future
               << "  hidden_layers=" << s.hidden.rank
               << "  epochs<=" << s.max_epochs
               << "  patience=" << s.patience
-              << "  seeds="   << SEED_COUNT
+              << "  seeds="   << forecasting_seed_count()
               << "  lr="      << s.learning_rate << "\n";
 
-    g_bar.start(/*total_runs=*/ 2 * SEED_COUNT);
+    g_bar.start(/*total_runs=*/ 2 * forecasting_seed_count());
 
     auto rec_agg  = run_multi_seed(s, "Recurrent", build_recurrent(s));
     auto lstm_agg = run_multi_seed(s, "LSTM",      build_lstm(s));
@@ -515,14 +582,14 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
         print_speedup_metric(c.id, "LSTM", c.lstm.time_mean, g.lstm.time_mean,
                              speedup(c.lstm.time_mean, g.lstm.time_mean));
     }
-    std::cout << "\nSpeedup = CPU mean time / GPU mean time. Recurrent uses custom CUDA\n"
-                 "kernels + cuBLAS; LSTM uses cudnnRNNForward (cellMode = CUDNN_LSTM).\n";
+    std::cout << "\nSpeedup = CPU mean time / GPU mean time. Both networks use cuDNN RNN\n"
+                 "on GPU (CUDNN_RNN_TANH / CUDNN_LSTM).\n";
 
     // Accuracy side-by-side (CPU rmse vs GPU rmse for each architecture).
     std::cout << "\n";
     std::cout << "===============================================================================================\n";
-    std::cout << "      A C C U R A C Y   ( test_rmse mean over " << SEED_COUNT
-              << " seed" << (SEED_COUNT > 1 ? "s" : "") << " )\n";
+    std::cout << "      A C C U R A C Y   ( test_rmse mean over " << forecasting_seed_count()
+              << " seed" << (forecasting_seed_count() > 1 ? "s" : "") << " )\n";
     std::cout << "===============================================================================================\n";
 
     std::cout << std::left << std::setw(7) << "Scen"
@@ -560,290 +627,50 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
     std::cout << "LSTM wins on GPU: " << lstm_wins_gpu << " / " << total << "\n";
 }
 
-const vector<Scenario>& scenarios()
-{
-    static const vector<Scenario> beijing = {
-        {"B1", "Beijing PM2.5, past=24h, future=1h",
-            "beijing_pm25_forecasting.csv", ",",
-            24, 1, false, {},
-            Shape{32}, 0.003f, 128, 120, 20},
-
-        {"B2", "Beijing PM2.5, past=48h, future=1h",
-            "beijing_pm25_forecasting.csv", ",",
-            48, 1, false, {},
-            Shape{48}, 0.003f, 128, 100, 20},
-
-        {"B3", "Beijing PM2.5, past=72h, future=24h",
-            "beijing_pm25_forecasting.csv", ",",
-            72, 24, true, {},
-            Shape{64}, 0.002f, 128, 80, 20},
-
-        {"B4", "Beijing PM2.5, past=168h, future=24h",
-            "beijing_pm25_forecasting.csv", ",",
-            168, 24, true, {},
-            Shape{64}, 0.001f, 128, 60, 15},
-    };
-
-    static const vector<Scenario> no2 = {
-        // -------- LIGHT --------
-        {"S1", "Madrid NO2, past=5, future=1",
-            "madridNO2forecasting.csv", ",",
-            5, 1, false, {},
-            Shape{8}, 0.01f, 64, /*ep*/300, /*pat*/25},
-
-        {"S2", "Madrid NO2, past=10, future=1",
-            "madridNO2forecasting.csv", ",",
-            10, 1, false, {},
-            Shape{16}, 0.01f, 64, 300, 25},
-
-        {"S3", "Madrid NO2, past=10, future=3",
-            "madridNO2forecasting.csv", ",",
-            10, 3, true, {},
-            Shape{24}, 0.005f, 64, 300, 25},
-
-        {"S4", "Madrid NO2, past=20, future=5 (multi-target)",
-            "madridNO2forecasting.csv", ",",
-            20, 5, true, {},
-            Shape{16}, 0.01f, 64, 300, 25},
-
-        // -------- MEDIUM: longer windows on twopendulum --------
-        // {"S5", "Twopendulum, past=10, future=1, hidden=32",
-        //     "twopendulum.csv", ";",
-        //     10, 1, false, {},
-        //     Shape{32}, 0.005f, 64, 250, 30},
-
-        // {"S6", "Twopendulum, past=20, future=5 (multi), hidden=48",
-        //     "twopendulum.csv", ";",
-        //     20, 5, true, {},
-        //     Shape{48}, 0.003f, 128, 200, 35},
-
-        // -------- HIGH: Pendulum.csv (99k rows) --------
-        // {"S7", "Pendulum, past=15, future=1, hidden=32",
-        //     "Pendulum.csv", ",",
-        //     15, 1, false, {},
-        //     Shape{32}, 0.005f, 128, 150, 30},
-
-        // {"S8", "Pendulum, past=30, future=3 (multi), stacked {48,32}",
-        //     "Pendulum.csv", ",",
-        //     30, 3, true, {7, 8},
-        //     Shape{48, 32}, 0.003f, 128, 120, 30},
-
-        // -------- VERY HIGH: long sequences + deep stacked LSTM --------
-        // {"S9", "Pendulum, past=60, future=5 (multi), stacked {64,64}",
-        //     "Pendulum.csv", ",",
-        //     60, 5, true, {7, 8},
-        //     Shape{64, 64}, 0.002f, 128, 80, 30},
-
-        // {"S10", "Pendulum, past=100, future=10 (multi), deep {128,64,32}",
-        //     "Pendulum.csv", ",",
-        //     100, 10, true, {7, 8},
-        //     Shape{128, 64, 32}, 0.001f, 128, 60, 30},
-
-        // -------- EXTREME: maximum stress for the LSTM ----------
-        // {"S11", "Pendulum, past=150, future=15 (multi), very deep {256,128,96,48}",
-        //     "Pendulum.csv", ",",
-        //     150, 15, true, {7, 8},
-        //     Shape{256, 128, 96, 48}, 0.0005f, 128, 50, 25},
-    };
-
-    return forecasting_dataset_profile() == "beijing_pm25" ? beijing : no2;
-}
-
 } // namespace
-
-#ifdef OPENNN_HAS_CUDA
-static int cudnn_rnn_smoke_test()
-{
-    const int B = 64;
-    const int T = 5;
-    const int F = 2;
-    const int H = 16;
-
-    std::cerr << "[smoke] cudnnGetVersion=" << cudnnGetVersion()
-              << "  cudartVersion=" << cudnnGetCudartVersion() << "\n";
-
-    cudnnHandle_t handle = nullptr;
-    if (cudnnCreate(&handle) != CUDNN_STATUS_SUCCESS) {
-        std::cerr << "[smoke] cudnnCreate FAILED\n";
-        return 1;
-    }
-
-    cudnnRNNDescriptor_t rnn = nullptr;
-    cudnnCreateRNNDescriptor(&rnn);
-
-    cudnnDropoutDescriptor_t drop = nullptr;
-    cudnnCreateDropoutDescriptor(&drop);
-    size_t drop_states_bytes = 0;
-    cudnnDropoutGetStatesSize(handle, &drop_states_bytes);
-    void* drop_states = nullptr;
-    cudaMalloc(&drop_states, drop_states_bytes);
-    cudnnSetDropoutDescriptor(drop, handle, 0.0f, drop_states, drop_states_bytes, 0ULL);
-
-    cudnnStatus_t st = cudnnSetRNNDescriptor_v8(
-        rnn,
-        CUDNN_RNN_ALGO_STANDARD,
-        CUDNN_LSTM,
-        CUDNN_RNN_SINGLE_INP_BIAS,
-        CUDNN_UNIDIRECTIONAL,
-        CUDNN_LINEAR_INPUT,
-        CUDNN_DATA_FLOAT,
-        CUDNN_DATA_FLOAT,
-        CUDNN_DEFAULT_MATH,
-        F, H, H, 1, drop, CUDNN_RNN_PADDED_IO_ENABLED);
-    std::cerr << "[smoke] SetRNNDescriptor_v8: " << cudnnGetErrorString(st) << "\n";
-    if (st != CUDNN_STATUS_SUCCESS) return 2;
-
-    // Data descriptors
-    cudnnRNNDataDescriptor_t xDesc = nullptr, yDesc = nullptr;
-    cudnnCreateRNNDataDescriptor(&xDesc);
-    cudnnCreateRNNDataDescriptor(&yDesc);
-
-    std::vector<int> seqLen(B, T);
-
-    st = cudnnSetRNNDataDescriptor(
-        xDesc, CUDNN_DATA_FLOAT,
-        CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
-        T, B, F, seqLen.data(), nullptr);
-    std::cerr << "[smoke] SetRNNDataDescriptor x: " << cudnnGetErrorString(st) << "\n";
-    if (st != CUDNN_STATUS_SUCCESS) return 3;
-
-    st = cudnnSetRNNDataDescriptor(
-        yDesc, CUDNN_DATA_FLOAT,
-        CUDNN_RNN_DATA_LAYOUT_BATCH_MAJOR_UNPACKED,
-        T, B, H, seqLen.data(), nullptr);
-    std::cerr << "[smoke] SetRNNDataDescriptor y: " << cudnnGetErrorString(st) << "\n";
-    if (st != CUDNN_STATUS_SUCCESS) return 4;
-
-    // h/c descriptors
-    cudnnTensorDescriptor_t hDesc = nullptr, cDesc = nullptr;
-    cudnnCreateTensorDescriptor(&hDesc);
-    cudnnCreateTensorDescriptor(&cDesc);
-    int dimA[3]   = {1, B, H};
-    int strA[3]   = {B*H, H, 1};
-    cudnnSetTensorNdDescriptor(hDesc, CUDNN_DATA_FLOAT, 3, dimA, strA);
-    cudnnSetTensorNdDescriptor(cDesc, CUDNN_DATA_FLOAT, 3, dimA, strA);
-
-    // Buffer sizes
-    size_t weight_bytes = 0, work_bytes = 0, reserve_bytes = 0;
-    cudnnGetRNNWeightSpaceSize(handle, rnn, &weight_bytes);
-    cudnnGetRNNTempSpaceSizes(handle, rnn, CUDNN_FWD_MODE_TRAINING, xDesc,
-                              &work_bytes, &reserve_bytes);
-    std::cerr << "[smoke] weight=" << weight_bytes
-              << " work=" << work_bytes
-              << " reserve=" << reserve_bytes << "\n";
-
-    // Device buffers
-    void *x = nullptr, *y = nullptr, *w = nullptr, *ws = nullptr, *rs = nullptr;
-    int32_t* devSeq = nullptr;
-    cudaMalloc(&x,  size_t(B)*T*F*sizeof(float));
-    cudaMalloc(&y,  size_t(B)*T*H*sizeof(float));
-    cudaMalloc(&w,  weight_bytes);
-    cudaMalloc(&ws, work_bytes);
-    cudaMalloc(&rs, reserve_bytes);
-    cudaMalloc(&devSeq, size_t(B)*sizeof(int32_t));
-
-    // Init: zero everything so weights are valid floats
-    cudaMemset(x, 0, size_t(B)*T*F*sizeof(float));
-    cudaMemset(w, 0, weight_bytes);
-    cudaMemset(ws, 0, work_bytes);
-    cudaMemset(rs, 0, reserve_bytes);
-    std::vector<int32_t> seqLen32(B, T);
-    cudaMemcpy(devSeq, seqLen32.data(), B*sizeof(int32_t), cudaMemcpyHostToDevice);
-
-    // Flush any pending CUDA error from the memsets/memcpys above.
-    cudaDeviceSynchronize();
-    cudaError_t pending = cudaGetLastError();
-    std::cerr << "[smoke] pending CUDA err before forward: "
-              << cudaGetErrorString(pending) << "\n";
-
-    // Pre-build RNN execution plan for this batch size.
-    st = cudnnBuildRNNDynamic(handle, rnn, B);
-    std::cerr << "[smoke] BuildRNNDynamic (B=" << B << "): "
-              << cudnnGetErrorString(st) << "\n";
-
-    std::cerr << "[smoke] >>> cudnnRNNForward (TRAINING)\n";
-    st = cudnnRNNForward(
-        handle, rnn, CUDNN_FWD_MODE_TRAINING,
-        devSeq,
-        xDesc, x,
-        yDesc, y,
-        hDesc, nullptr, nullptr,
-        cDesc, nullptr, nullptr,
-        weight_bytes, w,
-        work_bytes, ws,
-        reserve_bytes, rs);
-    std::cerr << "[smoke] <<< cudnnRNNForward TRAINING: " << cudnnGetErrorString(st)
-              << " (status=" << int(st) << ")\n";
-    if (st != CUDNN_STATUS_SUCCESS) {
-        char last[2048] = {0};
-        cudnnGetLastErrorString(last, sizeof(last));
-        std::cerr << "[smoke] last cuDNN error message: "
-                  << (last[0] ? last : "(empty)") << "\n";
-    }
-
-    // Try INFERENCE explicitly (no reserveSpace).
-    std::cerr << "[smoke] >>> cudnnRNNForward (INFERENCE)\n";
-    st = cudnnRNNForward(
-        handle, rnn, CUDNN_FWD_MODE_INFERENCE,
-        devSeq,
-        xDesc, x,
-        yDesc, y,
-        hDesc, nullptr, nullptr,
-        cDesc, nullptr, nullptr,
-        weight_bytes, w,
-        work_bytes, ws,
-        0, nullptr);
-    std::cerr << "[smoke] <<< cudnnRNNForward INFERENCE: " << cudnnGetErrorString(st)
-              << " (status=" << int(st) << ")\n";
-    if (st != CUDNN_STATUS_SUCCESS) return 10;
-
-    cudaError_t cerr = cudaStreamSynchronize(0);
-    std::cerr << "[smoke] streamSync: " << cudaGetErrorString(cerr) << "\n";
-    if (cerr != cudaSuccess) return 11;
-
-    std::cerr << "[smoke] SUCCESS - cuDNN-RNN works on this system.\n";
-
-    // Cleanup
-    cudaFree(x); cudaFree(y); cudaFree(w); cudaFree(ws); cudaFree(rs);
-    cudaFree(devSeq); cudaFree(drop_states);
-    cudnnDestroyTensorDescriptor(hDesc);
-    cudnnDestroyTensorDescriptor(cDesc);
-    cudnnDestroyRNNDataDescriptor(xDesc);
-    cudnnDestroyRNNDataDescriptor(yDesc);
-    cudnnDestroyDropoutDescriptor(drop);
-    cudnnDestroyRNNDescriptor(rnn);
-    cudnnDestroy(handle);
-    return 0;
-}
-#endif
 
 int main()
 {
     try
     {
+        const string phase = forecasting_phase();
+        const bool run_gpu = phase.empty() || phase == "gpu";
+        const bool run_cpu = phase.empty() || phase == "cpu";
+
         std::cout << "OpenNN - Recurrent vs LSTM forecasting benchmark "
-                  << "(" << SEED_COUNT << " seed" << (SEED_COUNT > 1 ? "s" : "")
-                  << " per scenario)\n";
-        std::cout << "Dataset profile: " << forecasting_dataset_profile()
-                  << "  data_dir=" << forecasting_data_dir() << "\n";
+                  << "(" << forecasting_seed_count() << " seed"
+                  << (forecasting_seed_count() > 1 ? "s" : "") << " per scenario)\n";
+        std::cout << "Dataset: UCI Beijing PM2.5  data_dir=" << forecasting_data_dir() << "\n";
         std::cout << "Flow: phase 1 runs every scenario on GPU; when GPU is done,\n"
                      "      phase 2 reruns the same scenarios on CPU.\n";
+        if (!phase.empty())
+            std::cout << "OPENNN_FORECASTING_PHASE=" << phase
+                      << " -> running only that phase.\n";
 
-        std::cout << "\n#################  PHASE 1 / 2  :  G P U  #################\n";
-        Configuration::instance().set(Device::CUDA, Type::FP32);
         vector<ScenarioVerdict> gpu_verdicts;
-        for (const auto& s : scenarios())
-            gpu_verdicts.push_back(run_scenario(s));
-        print_phase_summary(gpu_verdicts, "GPU");
+        if (run_gpu)
+        {
+            std::cout << "\n#################  PHASE 1 / 2  :  G P U  #################\n";
+            Configuration::instance().set(Device::CUDA, Type::FP32);
+            for (const auto& s : scenarios())
+                if (scenario_selected(s.id))
+                    gpu_verdicts.push_back(run_scenario(s));
+            print_phase_summary(gpu_verdicts, "GPU");
+        }
 
-        std::cout << "\n#################  PHASE 2 / 2  :  C P U  #################\n";
-        Configuration::instance().set(Device::CPU, Type::FP32);
         vector<ScenarioVerdict> cpu_verdicts;
-        for (const auto& s : scenarios())
-            cpu_verdicts.push_back(run_scenario(s));
-        print_phase_summary(cpu_verdicts, "CPU");
+        if (run_cpu)
+        {
+            std::cout << "\n#################  PHASE 2 / 2  :  C P U  #################\n";
+            Configuration::instance().set(Device::CPU, Type::FP32);
+            for (const auto& s : scenarios())
+                if (scenario_selected(s.id))
+                    cpu_verdicts.push_back(run_scenario(s));
+            print_phase_summary(cpu_verdicts, "CPU");
+        }
 
-        print_combined_summary(cpu_verdicts, gpu_verdicts);
+        if (run_gpu && run_cpu)
+            print_combined_summary(cpu_verdicts, gpu_verdicts);
         return 0;
     }
     catch (const std::exception& e)

@@ -135,6 +135,7 @@ public:
     void set_states(const VectorR&);
     void set_parameters_random();
     void set_parameters_glorot();
+    void set_parameters_pytorch();
     void link_parameters();
     void link_states();
     void link_states(Device);

@@ -91,6 +91,7 @@ public:
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
+    vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
 
     vector<Histogram> calculate_variable_distributions(const Index = 10) const override;
     vector<BoxPlot> calculate_variables_box_plots() const override;

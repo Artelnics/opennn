@@ -61,7 +61,16 @@ public:
                             bool,
                             int contiguous = -1) const override;
 
+    void fill_batch(Batch&,
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    const vector<Index>&,
+                    bool) const override;
+
     void resize_input_shape(Index) override;
+
+    void refresh_forecasting_roles();
 
 private:
 

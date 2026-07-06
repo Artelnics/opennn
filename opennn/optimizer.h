@@ -100,9 +100,6 @@ protected:
     void update_best_parameters(NeuralNetwork*, float,
                                 Index, Index&);
 
-    // If training stopped on MaximumValidationErrorIncreases, restore the
-    // snapshot taken by update_best_parameters so the final model is the best
-    // one, not the last (possibly worse) epoch's.
     void restore_best_parameters(NeuralNetwork*, TrainingResult&);
 
     void reset_best_parameters();
@@ -217,7 +214,6 @@ protected:
     bool display = true;
 
     // Shuffle the training samples each epoch. Toggle from code with
-    // set_shuffle(); recurrent/LSTM networks always train in order regardless.
     bool shuffle_samples = true;
 
     // Prefetch-pool depth override (0 = auto). Set from code with
@@ -230,6 +226,9 @@ protected:
     int workers_number = 2;
 
     bool has_recurrent_layers_ = false;
+
+    array<CudaEvent, 4> batch_throttle_events_;
+    size_t batch_throttle_cursor_ = 0;
 
     // Slot ring for the graph epoch. The staged (host FP32) path groups
     // graph_group_size iterations into one mega-graph whose H2D nodes read each

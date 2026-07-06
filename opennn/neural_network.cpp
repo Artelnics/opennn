@@ -188,6 +188,25 @@ Layer* NeuralNetwork::get_first(LayerType type)
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
+    // Block variables hold a single name for many features; when the caller
+    // provides per-feature names, rebuild the list as one scalar variable per name.
+    if (ranges::any_of(variables,
+                       [](const Variable& v) { return !v.is_categorical() && v.features > 1; }))
+    {
+        const VariableRole role = variables.empty() ? VariableRole::None : variables[0].role;
+
+        variables.assign(new_names.size(), Variable());
+
+        for (size_t i = 0; i < new_names.size(); ++i)
+        {
+            variables[i].name = new_names[i];
+            variables[i].role = role;
+            variables[i].type = VariableType::Numeric;
+        }
+
+        return;
+    }
+
     const size_t total = new_names.size();
     size_t name_index = 0;
     for (size_t i = 0; i < variables.size(); ++i)
@@ -228,7 +247,14 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
-    input_variables.resize(new_input_shape.size());
+    if (get_features_number(input_variables) != new_input_shape.size())
+    {
+        input_variables.assign(1, Variable());
+        input_variables[0].name = "input";
+        input_variables[0].role = VariableRole::Input;
+        input_variables[0].type = VariableType::Numeric;
+        input_variables[0].features = new_input_shape.size();
+    }
 
     if (Layer* scaling = get_first(LayerType::Scaling))
         scaling->set_input_shape(new_input_shape);
@@ -541,6 +567,21 @@ void NeuralNetwork::set_parameters_glorot()
     for (int i = 0; i < layers_number; ++i)
         for (Operator* op : layers[i]->get_operators())
             op->set_parameters_glorot();
+
+    if (was_on_device) copy_parameters_device();
+}
+
+void NeuralNetwork::set_parameters_pytorch()
+{
+    const Index layers_number = get_layers_number();
+
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+
+    #pragma omp parallel for
+    for (int i = 0; i < layers_number; ++i)
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_pytorch();
 
     if (was_on_device) copy_parameters_device();
 }
@@ -905,28 +946,39 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
-    vector<string> input_names = get_input_feature_names();
-    while (ssize(input_names) < inputs_number)
-        input_names.push_back(format("input_{}", input_names.size() + 1));
+    // One entry per variable; blocks carry a "Features" count and categoricals
+    // their categories, so feature names are regenerated on load instead of
+    // being written one per feature.
+    const auto write_variables_array = [&printer](const vector<Variable>& variables, const char* tag)
+    {
+        printer.begin_array(tag);
 
-    vector<string> output_names = get_output_feature_names();
-    while (ssize(output_names) < outputs_number)
-        output_names.push_back(format("output_{}", output_names.size() + 1));
+        for (size_t i = 0; i < variables.size(); ++i)
+        {
+            const Variable& variable = variables[i];
+
+            printer.begin_array_object();
+            add_json_field(printer, "Index", to_string(i + 1));
+            add_json_field(printer, "Text", variable.name);
+
+            if (variable.features > 1)
+                add_json_field(printer, "Features", to_string(variable.features));
+
+            if (variable.is_categorical())
+                add_json_field(printer, "Categories", vector_to_string(variable.categories, ";"));
+
+            printer.end_array_object();
+        }
+
+        printer.end_array();
+    };
 
     printer.open_element("NeuralNetwork");
 
 
     printer.open_element("Inputs");
     add_json_field(printer, "InputsNumber", to_string(inputs_number));
-    printer.begin_array("Input");
-    for (Index i = 0; i < inputs_number; ++i)
-    {
-        printer.begin_array_object();
-        add_json_field(printer, "Index", to_string(i + 1));
-        add_json_field(printer, "Text",  input_names[i]);
-        printer.end_array_object();
-    }
-    printer.end_array();
+    write_variables_array(input_variables, "Input");
     printer.close_element();
 
 
@@ -958,17 +1010,11 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
 
     printer.open_element("Outputs");
-    const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();
+    const Index outputs_count = has(LayerType::Embedding)
+                              ? outputs_number
+                              : get_features_number(output_variables);
     add_json_field(printer, "OutputsNumber", to_string(outputs_count));
-    printer.begin_array("Output");
-    for (Index i = 0; i < outputs_count; ++i)
-    {
-        printer.begin_array_object();
-        add_json_field(printer, "Index", to_string(i + 1));
-        add_json_field(printer, "Text",  output_names[i]);
-        printer.end_array_object();
-    }
-    printer.end_array();
+    write_variables_array(output_variables, "Output");
     printer.close_element();
     printer.close_element();
 
@@ -982,16 +1028,36 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    if (const Json* inputs_element = neural_network_element->find("Inputs"); inputs_element)
+    // Entries may be fewer than InputsNumber/OutputsNumber: block variables
+    // carry a "Features" count instead of one entry per feature. Legacy files
+    // with per-feature entries load as single-feature variables.
+    const auto read_variables_array = [](const Json* parent, const char* tag,
+                                         vector<Variable>& variables, const char* role)
     {
-        const Index inputs_number = read_json_index(inputs_element, "InputsNumber");
-        input_variables.resize(inputs_number);
+        const Json* items = parent->find(tag);
+        const Index entries_number = (items && items->is_array())
+                                   ? Index(items->array_value.size())
+                                   : 0;
 
-        for_json_items(inputs_element, "Input", inputs_number, [this](Index i, const Json* element) {
-            input_variables[i].name = read_json_string(element, "Text");
-            input_variables[i].set_role("Input");
+        variables.assign(size_t(entries_number), Variable());
+
+        for_json_items(parent, tag, entries_number, [&](Index i, const Json* element) {
+            Variable& variable = variables[size_t(i)];
+
+            variable.name = read_json_string(element, "Text");
+            variable.set_role(role);
+            variable.features = element->find("Features") ? read_json_index(element, "Features") : 1;
+
+            if (element->find("Categories"))
+            {
+                variable.type = VariableType::Categorical;
+                variable.categories = get_tokens(read_json_string(element, "Categories"), ";");
+            }
         });
-    }
+    };
+
+    if (const Json* inputs_element = neural_network_element->find("Inputs"); inputs_element)
+        read_variables_array(inputs_element, "Input", input_variables, "Input");
 
     const Json* layers_container = neural_network_element->find("Layers");
     throw_if(!layers_container, "layers container is nullptr.");
@@ -1049,15 +1115,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     }
 
     if (const Json* outputs_element = neural_network_element->find("Outputs"); outputs_element)
-    {
-        const Index outputs_number = read_json_index(outputs_element, "OutputsNumber");
-        output_variables.resize(outputs_number);
-
-        for_json_items(outputs_element, "Output", outputs_number, [this](Index i, const Json* element) {
-            output_variables[i].name = read_json_string(element, "Text");
-            output_variables[i].set_role("Target");
-        });
-    }
+        read_variables_array(outputs_element, "Output", output_variables, "Target");
 
     compile();
 

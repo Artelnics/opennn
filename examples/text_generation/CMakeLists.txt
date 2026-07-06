@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(no2_forecasting)
+project(text_generation)
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -12,12 +12,12 @@ if(WIN32)
 	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
-add_executable(no2_forecasting main.cpp)
+add_executable(text_generation main.cpp)
 
-add_custom_command(TARGET no2_forecasting POST_BUILD
+add_custom_command(TARGET text_generation POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/data"
     "${CMAKE_BINARY_DIR}/data"
 )
 
-target_link_libraries(no2_forecasting PUBLIC opennn)
+target_link_libraries(text_generation PUBLIC opennn)

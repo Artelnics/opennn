@@ -33,6 +33,7 @@ struct CombinationOperator : Operator
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
+    void set_parameters_pytorch() override;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

@@ -1452,26 +1452,21 @@ void YoloDataset::setup_metadata(Index new_samples_number)
 
     target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
 
-    variables.clear();
-    variables.resize(size_t(input_shape.size() + target_shape.size()));
+    variables.assign(2, Variable());
 
-    for (Index i = 0; i < input_shape.size(); ++i)
-    {
-        Variable& variable = variables[size_t(i)];
-        variable.name = format("pixel_{}", i + 1);
-        variable.role = VariableRole::Input;
-        variable.type = VariableType::Numeric;
-        variable.scaler = ScalerMethod::None;
-    }
+    Variable& image_variable = variables[0];
+    image_variable.name = "image";
+    image_variable.role = VariableRole::Input;
+    image_variable.type = VariableType::Numeric;
+    image_variable.scaler = ScalerMethod::None;
+    image_variable.features = input_shape.size();
 
-    for (Index i = 0; i < target_shape.size(); ++i)
-    {
-        Variable& variable = variables[size_t(input_shape.size() + i)];
-        variable.name = format("yolo_target_{}", i + 1);
-        variable.role = VariableRole::Target;
-        variable.type = VariableType::Numeric;
-        variable.scaler = ScalerMethod::None;
-    }
+    Variable& target_variable = variables[1];
+    target_variable.name = "yolo_target";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = VariableType::Numeric;
+    target_variable.scaler = ScalerMethod::None;
+    target_variable.features = target_shape.size();
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
     split_samples_random();

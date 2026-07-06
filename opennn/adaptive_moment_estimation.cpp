@@ -138,9 +138,15 @@ TrainingResult AdaptiveMomentEstimation::train()
     const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
         ? training_samples_number
         : effective_batch_size;
-    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
-        ? validation_samples_number
+
+    const bool widen_validation = loss->get_neural_network()->is_gpu()
+                               && batch_size > 0;
+    const Index validation_batch_cap = widen_validation
+        ? max(effective_batch_size, get_maximum_batch_size() / 2)
         : effective_batch_size;
+    const Index validation_batch_size = (validation_batch_cap <= 0 || validation_batch_cap > validation_samples_number)
+        ? validation_samples_number
+        : validation_batch_cap;
     const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;
@@ -208,9 +214,7 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    const bool shuffle = shuffle_samples
-                      && !neural_network->has(LayerType::Recurrent)
-                      && !neural_network->has(LayerType::LongShortTermMemory);
+    const bool shuffle = shuffle_samples;
 
     const auto training_update = [&](BackPropagation& back_propagation) {
         update_parameters(back_propagation, optimization_data);
@@ -293,7 +297,7 @@ TrainingResult AdaptiveMomentEstimation::train()
 
             if (has_validation)
             {
-                dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
+                dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),

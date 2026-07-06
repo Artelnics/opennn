@@ -61,6 +61,15 @@ void CombinationOperator::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
+void CombinationOperator::set_parameters_pytorch()
+{
+    // nn.Linear default: weight and bias ~ U(+-1/sqrt(fan_in)).
+    if (weights.empty()) return;
+    const float limit = 1.0f / sqrt(float(input_features > 0 ? input_features : 1));
+    set_random_uniform(weights.as_vector(), -limit, limit);
+    if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
+}
+
 void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:combination_fwd");

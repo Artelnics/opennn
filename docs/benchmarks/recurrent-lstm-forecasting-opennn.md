@@ -24,11 +24,10 @@ pipeline (see [Cross-framework fidelity](#cross-framework-fidelity)).
 
 ## Method
 
-The driver reuses the existing forecasting example target:
-[`examples/no2_forecasting/main.cpp`](../../examples/no2_forecasting/main.cpp).
-The executable is still named `no2_forecasting` for CMake compatibility, but
-the benchmark runner selects the `beijing_pm25` dataset profile through
-`OPENNN_FORECASTING_DATASET`.
+The driver is the dedicated benchmark target:
+[`examples/recurrent_lstm_forecasting_benchmark/main.cpp`](../../examples/recurrent_lstm_forecasting_benchmark/main.cpp),
+which trains only the UCI Beijing PM2.5 scenarios B1..B4 and accepts the
+`OPENNN_FORECASTING_{DATA_DIR,PHASE,SCENARIOS,SEEDS,CLIP}` environment knobs.
 
 It trains the same scenarios twice:
 
@@ -93,7 +92,7 @@ cmake -S . -B build-gpu -G Ninja \
   -DOpenNN_BUILD_EXAMPLES=ON \
   -DCMAKE_CUDA_ARCHITECTURES=native
 
-cmake --build build-gpu --target no2_forecasting -j"$(nproc)"
+cmake --build build-gpu --target recurrent_lstm_forecasting_benchmark -j"$(nproc)"
 ```
 
 Run:
@@ -101,7 +100,7 @@ Run:
 ```bash
 cd docs/benchmarks/recurrent-lstm-forecasting
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-export OPENNN_FORECASTING_BIN="$REPO_ROOT/build-gpu/bin/no2_forecasting"
+export OPENNN_FORECASTING_BIN="$REPO_ROOT/build-gpu/bin/recurrent_lstm_forecasting_benchmark"
 python run_forecasting.py --gpu-index 0
 ```
 
@@ -127,20 +126,40 @@ The C++ driver is an OpenNN-internal Recurrent-vs-LSTM comparison, but the same
 scenarios can be run against PyTorch and TensorFlow
 (`python run_forecasting.py --frameworks opennn,pytorch,tensorflow`), which train
 `pt_forecasting.py` / `tf_forecasting.py` on the identical pipeline (data, 60/20/20
-split, z-score, architecture, Adam, epochs, patience, seeds 0..4). A few library
-differences are inherent and expected, not bugs:
+split, z-score fitted on training rows only, per-split windows with no
+cross-boundary leakage, architecture, Adam without gradient clipping, epochs,
+patience with best-weights restore, per-epoch shuffling, seeds 0..4). A few
+library differences are inherent and expected, not bugs:
 
 - **RMSE convention.** OpenNN's `TestingAnalysis` returns `errs(2) = sqrt(sum_sq / 2N)`
-  (a ½ factor); PyTorch and TensorFlow report the standard `sqrt(mean sq)`. The C++
-  driver multiplies by `sqrt(2)` so every engine's headline `test_rmse` is the same
-  standard RMSE in original pm2_5 units. OpenNN's native value is preserved as
-  `test_rmse_native_halfconv_mean`. Comparing the two conventions directly would make
-  OpenNN look ~29% better for free.
+  (a ½ factor, summed over all `N x W` output elements but divided by `N` samples
+  only); PyTorch and TensorFlow report the standard per-element `sqrt(mean sq)` =
+  `sqrt(sum_sq / (N*W))`. The C++ driver multiplies by `sqrt(2)` **and divides by
+  `sqrt(W)`** (`W` = target width, 24 in the multi-target scenarios B3/B4, 1 in
+  B1/B2) so every engine's headline `test_rmse` is the same standard per-element
+  RMSE in original pm2_5 units. Omitting the `1/sqrt(W)` term inflates OpenNN's
+  B3/B4 headline by `sqrt(24) ~ 4.9x` (this affected artifacts written before this
+  fix). OpenNN's raw native value is preserved as `test_rmse_native_halfconv_mean`.
 - **Parameter count.** PyTorch `nn.RNN`/`nn.LSTM` use two bias vectors (`b_ih`+`b_hh`);
   OpenNN and Keras use one. Same effective capacity, so OpenNN reports fewer params.
-- **Initialization.** OpenNN uses Glorot with its own RNG; PyTorch/Keras use their
-  default inits under a fixed seed. Initial weights differ across engines, so per-seed
-  RMSE differs; the 5-seed mean±std absorbs this.
+- **Initialization.** OpenNN now matches Keras defaults: Glorot-uniform input
+  weights, **orthogonal recurrent weights**, zero biases, and (LSTM only) unit
+  forget bias. PyTorch instead uses `U(-1/sqrt(H), 1/sqrt(H))` everywhere. Initial
+  weights still differ across engines under a fixed seed (different RNGs), so
+  per-seed RMSE differs; the 5-seed mean±std absorbs this.
+
+GPU environment: the plain `tensorflow` wheel is CUDA-enabled but ships no CUDA
+libraries, so it silently falls back to CPU. Install the full stack once per
+venv with `pip install -r requirements-gpu.txt` (pulls `tensorflow[and-cuda]`,
+i.e. the `nvidia-*` wheels TF dlopens) and verify with
+`python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"`.
+
+Silent-fallback guard: `pt_forecasting.py`/`tf_forecasting.py` abort (exit 2) when
+no GPU is visible unless `--allow-cpu` (or `CUDA_VISIBLE_DEVICES=""`) makes the CPU
+pass deliberate, and `run_forecasting.py` records a per-engine `device_check` in the
+JSON artifact. `OPENNN_FORECASTING_PHASE=gpu|cpu` (or `--opennn-phase`) restricts the
+C++ driver to a single phase, and the OpenNN binary only runs when `opennn` is listed
+in `--frameworks`.
 
 ## Notes
 

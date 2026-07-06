@@ -1,76 +1,149 @@
-# Peak memory: OpenNN vs PyTorch vs TensorFlow
+# Memory footprint: OpenNN vs PyTorch vs TensorFlow
 
-Disk size and startup time are two costs of a heavy runtime; **RAM** is a third. On a constrained
-target — a small edge device, a memory-capped container, a function with a tight memory limit, or
-simply a machine running many model processes at once — what matters is how much resident memory a
-model process actually holds. A framework that loads a large runtime pays for it in RAM the moment
-it starts, before any data is touched.
+Disk size is only one deployment cost. A process also has a minimum resident
+footprint before it loads real data or runs a real model. On a memory-capped
+edge device, service container, or multi-worker server, that baseline matters:
+it is the fixed cost paid by every model process.
+
+This benchmark now measures two footprint states:
+
+- **Baseline RAM**: current resident set size after loading the library and
+  constructing the minimum training object graph, before GPU work.
+- **GPU-ready VRAM**: GPU memory reported for the same process after one tiny
+  `32x32` GPU matrix multiply, before moving model or dataset buffers to the
+  GPU.
 
 ## Contents
 
 - [The numbers](#the-numbers)
-- [What the numbers show](#what-the-numbers-show)
-- [Why OpenNN uses so little](#why-opennn-uses-so-little)
+- [What is constructed](#what-is-constructed)
+- [How VRAM is measured](#how-vram-is-measured)
 - [Why it matters](#why-it-matters)
 - [Caveats](#caveats)
+- [Reproducing](#reproducing)
 - [References](#references)
 
 ## The numbers
 
+Run date: 2026-07-05, WSL2 Ubuntu on an NVIDIA GeForce RTX 3060 Laptop GPU
+(6 GB, driver 555.85). OpenNN was built with CUDA 12.0 and cuDNN 9.24; PyTorch
+was CUDA-enabled (`2.5.1+cu121`) and TensorFlow was `2.21.0`.
+
 |  | OpenNN | PyTorch | TensorFlow |
 | --- | --- | --- | --- |
-| **Baseline RSS** (model built, no training) | **9 MB** | **221 MB** | **485 MB** |
-| **Peak RSS** (during training) | **9 MB** | **295 MB** | **521 MB** |
-| Peak vs OpenNN | 1× | ≈32× | ≈56× |
+| **Baseline RAM** | **195.2 MB** | 516.2 MB | 871.2 MB |
+| **GPU-ready VRAM** | **119.0 MB** | 155.0 MB | 121.0 MB |
 
-All three programs do the same thing on the same data: load `sum.csv` (1,000 rows × 100 numeric
-inputs + 1 target), build a 100 → 64 → 1 MLP, and train for 50 epochs (Adam, batch size 32,
-single-threaded). Each reports its own peak RSS via the OS (`getrusage` / `resource`).
+Raw runner output:
 
-## What the numbers show
+```
+OpenNN
+baseline_ram_mb 195.2
+gpu_ready_vram_mb 119.0
 
-- **OpenNN holds ~9 MB and barely moves.** Baseline and peak are the same to within measurement
-  noise — the dataset and training buffers are tiny next to the already-small working set. The
-  whole process, code and data, fits in single-digit megabytes.
-- **PyTorch starts at ~221 MB** before training — the Python interpreter plus the `libtorch`
-  runtime (and NumPy) resident in memory — and **rises to ~295 MB** during training as autograd
-  and optimizer buffers are allocated.
-- **TensorFlow starts at ~485 MB** and **rises to ~521 MB** — the Keras/TF runtime carries an even
-  larger resident footprint than PyTorch before any training.
+PyTorch
+baseline_ram_mb 516.2
+gpu_ready_vram_mb 155.0
 
-## Why OpenNN uses so little
+TensorFlow
+baseline_ram_mb 871.2
+gpu_ready_vram_mb 121.0
+```
 
-OpenNN is a native binary with the library linked in and Eigen (header-only) for math. The resident
-memory is essentially the model parameters, the data, and a small amount of code — there is no
-interpreter and no large general-purpose tensor runtime mapped into the process. PyTorch keeps the
-Python runtime and the full `libtorch` engine resident for the life of the process, which sets a
-high floor independent of model size.
+The old training-peak RSS table has been retired because it mixed framework
+baseline memory with data, model, optimizer, and training-step allocations.
+
+## What is constructed
+
+Each runner creates the minimum objects expected in a trainable application, but
+does not load a dataset or run a training step.
+
+**OpenNN**
+
+- `TabularDataset(0, {1}, {1})`
+- `ApproximationNetwork({1}, {}, {1})`
+- `TrainingStrategy`, `MeanSquaredError`, `AdaptiveMomentEstimation`
+- one `32x32` CUDA SGEMM through the OpenNN CUDA backend for GPU-ready VRAM.
+
+**PyTorch**
+
+- empty `TensorDataset`
+- `nn.Sequential(nn.Linear(1, 1))`
+- `MSELoss`
+- `Adam`
+- one `32x32` CUDA matrix multiply for GPU-ready VRAM.
+
+**TensorFlow**
+
+- empty `tf.data.Dataset`
+- one-layer Keras `Sequential` model
+- `MeanSquaredError`
+- `Adam`
+- memory growth enabled, then one `32x32` CUDA matrix multiply for GPU-ready
+  VRAM.
+
+## How VRAM is measured
+
+Framework tensor-memory counters are not enough for this benchmark because they
+usually exclude CUDA context, driver, cuBLAS/cuDNN handles, and other backend
+state. The runners therefore query:
+
+```
+nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits
+```
+
+and report the memory assigned to the current process. If no CUDA device,
+CUDA-enabled framework, or `nvidia-smi` process row is available, the runner
+falls back to the before/after total GPU memory delta. If neither reading is
+available, it prints `gpu_ready_vram_mb NA`.
 
 ## Why it matters
 
-- **Memory-capped containers / functions:** a 256 MB function can host the OpenNN process many
-  times over; PyTorch's baseline alone nearly fills it before any work.
-- **Many concurrent model processes:** at ~9 MB each, you can run far more OpenNN workers per
-  machine than ~250–300 MB PyTorch ones.
-- **Small edge devices:** RAM is often scarcer than disk; a single-digit-MB footprint leaves room
-  for the rest of the application.
+- **RAM baseline** is the minimum host memory paid by every deployed worker.
+- **GPU-ready VRAM** is the fixed GPU memory cost once the math backend is ready,
+  before model weights, activations, workspaces, or batches are allocated.
+- Keeping these baselines separate prevents CUDA context overhead from being
+  confused with model memory or training-step memory.
 
 ## Caveats
 
-- This is a **memory** benchmark on a small model, chosen so the numbers reflect framework
-  overhead — the structural difference — rather than a specific large workload. A bigger model or
-  dataset adds parameter/activation memory to *both* sides on top of these baselines.
-- Measured on Linux x86_64, single-threaded (`OMP_NUM_THREADS=1`) for both, to avoid thread-pool
-  arenas inflating RSS differently. OpenNN built with g++ 13.3 (CPU-only); PyTorch 2.12.0+cpu on
-  CPython 3.12 with NumPy installed.
-- RSS is the OS's peak resident size (`ru_maxrss`); absolute values vary with allocator, glibc,
-  and thread settings, but the order-of-magnitude gap is structural.
-- CPU-only on both sides. A CUDA build adds GPU-side memory, which this note does not cover.
+- GPU-ready VRAM is sensitive to driver, CUDA, cuDNN, framework version, and
+  whether a framework preallocates GPU memory. TensorFlow is run with memory
+  growth enabled to avoid full-device reservation.
+- The benchmark intentionally avoids data and training. Larger models add
+  parameter, activation, optimizer, and workspace memory on top of this fixed
+  baseline.
+- Run each framework in a fresh process. CUDA contexts and framework allocators
+  are process-local and should not be compared from a shared process.
+- The current output is line-oriented; archive the raw command output and then
+  convert it to result JSON before publication.
+
+## Reproducing
+
+Build the OpenNN runner:
+
+```
+cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_DISABLE_CUDA=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build-benchmarks --target opennn_memory -j
+```
+
+Run each framework in a fresh shell:
+
+```
+cd docs/benchmarks/memory
+../../../build-benchmarks/examples/memory_benchmark/opennn_memory
+python pytorch_memory.py
+TF_FORCE_GPU_ALLOW_GROWTH=true python tensorflow_memory.py
+```
+
+Archive the runner output, `nvidia-smi`, framework versions, CUDA/cuDNN
+versions, commit hash, and dirty status with the published result. Current
+artifact: `results/baseline-memory-footprint-wsl2-20260705T110753Z.json`.
 
 ## References
 
 - [OpenNN](https://www.opennn.net/).
 - [PyTorch](https://pytorch.org/).
 - [TensorFlow](https://www.tensorflow.org/).
-- [Linux getrusage manual page](https://man7.org/linux/man-pages/man2/getrusage.2.html).
-- [Python resource module documentation](https://docs.python.org/3/library/resource.html).
+- [Linux procfs process status](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html).
+- [NVIDIA System Management Interface](https://developer.nvidia.com/nvidia-system-management-interface).

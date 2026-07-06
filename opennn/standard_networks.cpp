@@ -957,6 +957,31 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     set_parameters_glorot();
 }
 
+static Index add_residual_and_norm(NeuralNetwork& network,
+                                   const Shape& shape,
+                                   const string& norm_label,
+                                   Index left_index, Index right_index)
+{
+    auto norm = make_unique<Normalization3d>(shape, norm_label);
+    norm->set_fuse_add(true);
+    network.add_layer(move(norm), {left_index, right_index});
+    return network.get_layers_number() - 1;
+}
+
+static Index add_feed_forward(NeuralNetwork& network,
+                              const Shape& input_shape, Index ff_dim,
+                              const string& internal_label,
+                              const string& external_label)
+{
+    const Index seq_len = input_shape[0];
+    const Index emb_dim = input_shape[1];
+    network.add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
+                                         "ReLU", false, internal_label));
+    network.add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
+                                         "Identity", false, external_label));
+    return network.get_layers_number() - 1;
+}
+
 Transformer::Transformer(Index input_sequence_length,
                          Index decoder_sequence_length,
                          Index input_vocabulary_size,
@@ -979,28 +1004,6 @@ Transformer::Transformer(Index input_sequence_length,
 
     throw_if(embedding_dimension % heads_number != 0,
              "Transformer: embedding_dimension must be divisible by heads_number.");
-
-    auto add_residual_and_norm = [&](const Shape& shape,
-                                     const string& /*add_label*/,
-                                     const string& norm_label,
-                                     Index left_index, Index right_index) -> Index {
-        auto norm = make_unique<Normalization3d>(shape, norm_label);
-        norm->set_fuse_add(true);
-        add_layer(move(norm), {left_index, right_index});
-        return get_layers_number() - 1;
-    };
-
-    auto add_feed_forward = [&](const Shape& input_shape, Index ff_dim,
-                                const string& internal_label,
-                                const string& external_label) -> Index {
-        const Index seq_len = input_shape[0];
-        const Index emb_dim = input_shape[1];
-        add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
-                                     "ReLU", false, internal_label));
-        add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
-                                     "Identity", false, external_label));
-        return get_layers_number() - 1;
-    };
 
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
@@ -1029,17 +1032,15 @@ Transformer::Transformer(Index input_sequence_length,
                   {current_encoder_index});
         const Index attn_index = get_layers_number() - 1;
 
-        const Index norm1_index = add_residual_and_norm(encoder_shape,
-            "encoder_self_attention_addition" + suffix,
+        const Index norm1_index = add_residual_and_norm(*this, encoder_shape,
             "encoder_self_attention_normalization" + suffix,
             current_encoder_index, attn_index);
 
-        const Index ff_index = add_feed_forward(encoder_shape, feed_forward_dimension,
+        const Index ff_index = add_feed_forward(*this, encoder_shape, feed_forward_dimension,
             "encoder_internal_dense" + suffix,
             "encoder_external_dense" + suffix);
 
-        current_encoder_index = add_residual_and_norm(encoder_shape,
-            "encoder_dense_addition" + suffix,
+        current_encoder_index = add_residual_and_norm(*this, encoder_shape,
             "encoder_dense_normalization" + suffix,
             norm1_index, ff_index);
     }
@@ -1061,8 +1062,7 @@ Transformer::Transformer(Index input_sequence_length,
         add_layer(move(decoder_self_attention), {current_decoder_index});
         const Index self_attn_index = get_layers_number() - 1;
 
-        const Index norm1_index = add_residual_and_norm(decoder_shape,
-            "decoder_self_attention_addition" + suffix,
+        const Index norm1_index = add_residual_and_norm(*this, decoder_shape,
             "decoder_self_attention_normalization" + suffix,
             current_decoder_index, self_attn_index);
 
@@ -1072,17 +1072,15 @@ Transformer::Transformer(Index input_sequence_length,
                   {norm1_index, encoder_final_output_index});
         const Index cross_attn_index = get_layers_number() - 1;
 
-        const Index norm2_index = add_residual_and_norm(decoder_shape,
-            "cross_attention_addition" + suffix,
+        const Index norm2_index = add_residual_and_norm(*this, decoder_shape,
             "cross_attention_normalization" + suffix,
             norm1_index, cross_attn_index);
 
-        const Index ff_index = add_feed_forward(decoder_shape, feed_forward_dimension,
+        const Index ff_index = add_feed_forward(*this, decoder_shape, feed_forward_dimension,
             "decoder_internal_dense" + suffix,
             "decoder_external_dense" + suffix);
 
-        current_decoder_index = add_residual_and_norm(decoder_shape,
-            "decoder_dense_addition" + suffix,
+        current_decoder_index = add_residual_and_norm(*this, decoder_shape,
             "decoder_dense_normalization" + suffix,
             norm2_index, ff_index);
     }
@@ -1165,6 +1163,114 @@ Index Transformer::get_embedding_dimension() const
 }
 
 Index Transformer::get_heads_number() const
+{
+    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
+        return mha->get_heads_number();
+
+    return 0;
+}
+
+TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
+                                             Index vocabulary_size,
+                                             Index embedding_dimension,
+                                             Index heads_number,
+                                             Index feed_forward_dimension,
+                                             Index layers_number)
+    : NeuralNetwork()
+{
+    throw_if(sequence_length == 0 ||
+             vocabulary_size == 0 ||
+             embedding_dimension == 0 ||
+             heads_number == 0 ||
+             feed_forward_dimension == 0 ||
+             layers_number == 0,
+             "TextGenerationNetwork: all dimensions must be > 0.");
+
+    throw_if(embedding_dimension % heads_number != 0,
+             "TextGenerationNetwork: embedding_dimension must be divisible by heads_number.");
+
+    auto embedding = make_unique<Embedding>(
+        Shape{vocabulary_size, sequence_length},
+        embedding_dimension, "embedding");
+    embedding->set_scale_embedding(true);
+    embedding->set_add_positional_encoding(true);
+    add_layer(move(embedding), {-1});
+    Index current_index = get_layers_number() - 1;
+
+    const Shape block_shape{sequence_length, embedding_dimension};
+
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const string suffix = format("_{}", i + 1);
+
+        auto self_attention = make_unique<MultiHeadAttention>(
+            block_shape, heads_number, "self_attention" + suffix);
+        self_attention->set(sequence_length, sequence_length,
+                            embedding_dimension, heads_number,
+                            true,
+                            "self_attention" + suffix);
+        add_layer(move(self_attention), {current_index});
+        const Index attn_index = get_layers_number() - 1;
+
+        const Index norm1_index = add_residual_and_norm(*this, block_shape,
+            "self_attention_normalization" + suffix,
+            current_index, attn_index);
+
+        const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
+            "internal_dense" + suffix,
+            "external_dense" + suffix);
+
+        current_index = add_residual_and_norm(*this, block_shape,
+            "dense_normalization" + suffix,
+            norm1_index, ff_index);
+    }
+
+    add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
+                                 "Softmax", false, "output_projection"));
+
+    compile();
+    set_parameters_glorot();
+}
+
+void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+    {
+        if (!layer) continue;
+
+        const string& label = layer->get_label();
+        const bool is_ffn_dense = starts_with_any(label,
+                                                  {"internal_dense",
+                                                   "external_dense"});
+
+        if (is_ffn_dense)
+        {
+            if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+                dense->set_dropout_rate(new_dropout_rate);
+        }
+        else if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+        {
+            mha->set_dropout_rate(new_dropout_rate);
+        }
+    }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
+}
+
+Index TextGenerationNetwork::get_sequence_length() const
+{
+    return get_layer("embedding")->get_input_shape()[0];
+}
+
+Index TextGenerationNetwork::get_embedding_dimension() const
+{
+    return get_layer(0)->get_output_shape().back();
+}
+
+Index TextGenerationNetwork::get_heads_number() const
 {
     if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
         return mha->get_heads_number();

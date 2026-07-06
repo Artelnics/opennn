@@ -14,6 +14,18 @@ truth for current headline numbers. Results are measured on the platform stated 
 linked note; several newer GPU notes use Linux x86_64 under WSL2, while the CPU inference
 note is a Windows result that is marked for Linux re-measurement before public use.
 
+## Consolidation rules
+
+- `benchmark_manifest.json` is the machine-readable inventory for every
+  top-level benchmark note.
+- `TRACKS.md` is the readable active/support/internal/hold-back/historical
+  track map.
+- `BENCHMARK_RUNBOOK.md` is the operational map for what to run next.
+- `PRESENTATION_CLAIMS.md` gates what can be used in slides.
+- Folder-level `README.md` files explain the local runner entry point.
+- Run `python tools/validate_benchmarks.py` after adding, renaming, or retiring
+  any benchmark note or runner folder.
+
 ## Summary
 
 | Benchmark | OpenNN | ONNX Runtime | PyTorch | TensorFlow |
@@ -32,10 +44,11 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | [CPU runtime size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
 | [GPU (CNN) deployment](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **~1.3 GB** | ~2.0 GB | ~5.0 GB | ~6.2 GB |
 | [Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **36 ms** | 237 ms | 1,005 ms | 1,685 ms |
-| [Peak memory (training)](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **9 MB** | n/a | 295 MB | 521 MB |
+| [Baseline memory footprint](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | **195.2 MB RAM / 119.0 MB GPU-ready VRAM** | n/a | 516.2 MB / 155.0 MB | 871.2 MB / 121.0 MB |
 | [Data capacity (8 GB cap)](data-capacity-opennn-vs-pytorch-vs-tensorflow.md) | **16M samples** | n/a | 6M samples | (same path¹) |
 | [Install size / packages](dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **1 file, 0 pkgs** | 140 MB, 6 pkgs | 946 MB, 12 pkgs | 1.6 GB, 33 pkgs |
 | [Native source LOC](loc-opennn-vs-pytorch-vs-tensorflow.md) | **34,926** | — | 834,319 | 1,792,182 |
+| [Application LOC](application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md) | **14** | n/a | 43 | 23 |
 | [Standalone code export](code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **C/Py/JS/PHP source** | n/a | needs a runtime | needs a runtime |
 
 ## Evidence status
@@ -48,11 +61,24 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | GPU ResNet-50 training | Current WSL2 laptop GPU result; previous 2,912 samples/s is historical | Keep the `torch.compile` result in the official runner output, not only in the compile probe |
 | GPU ResNet-50 max batch | Current RTX 4080 capacity result; TensorFlow and PyTorch fit larger batches than OpenNN | Treat as memory-regression evidence, not as an OpenNN headline claim; repeat before public use |
 | GPU dense speed, max batch, and energy | Current WSL2 laptop GPU result | Replace machine-specific build scripts with CMake targets and attach raw logs/power traces |
+| CPU HIGGS dense training/inference | Internal WSL2 100k/20k subset measured with MKL; OpenNN wins training and the batch-1024 inference rerun | Rerun the full HIGGS split and add measured CPU joules outside WSL before public energy claims |
 | GPU Transformer inference and training | Current WSL2 laptop GPU result | Add repeated-run statistics and exact cross-framework correctness/quality gates before using as a flagship claim |
 | Recurrent/LSTM forecasting | Harness packaged; Linux result pending | Run the JSON harness on the reference Linux GPU and archive raw output |
 | GPU Transformer energy to target | Current RTX 4080 result (JSON artifact in `results/`) | Repeat on the reference machine; investigate the occasional convergence collapse (OpenNN 2/4, TF 3/4 seeds converge at lr 1e-4) before flagship use |
 
-Only the top-level benchmark notes are intended as the public evidence layer. The
+## Internal HIGGS snapshot
+
+These rows are local migration evidence for the dense HIGGS track. They are not
+part of the public headline table until the full HIGGS split is rerun with
+committed result artifacts and measured CPU energy outside WSL.
+
+| Benchmark | OpenNN | PyTorch | TensorFlow | Status |
+|---|---:|---:|---:|---|
+| [CPU HIGGS dense training, samples/s](higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | **59,372** | 25,651 | 49,101 | WSL2 100k/20k subset, MKL-linked OpenNN |
+| [CPU HIGGS dense inference, samples/s](higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | **209,774** | 166,003 | 153,281 | WSL2 20k test subset, batch 1024, MKL-linked OpenNN |
+
+Top-level benchmark notes are the public evidence layer unless they are marked
+internal or historical. The
 `CONTINUE_HERE.md` files and machine-specific build notes in subdirectories are
 internal lab logs until their commands and raw artifacts are folded into the consolidated
 benchmark harness.
@@ -128,8 +154,8 @@ infers in one self-contained binary.
   only the libraries its model loads.
 * **[Startup latency](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — time-to-first-prediction. A
   native binary starts in tens of milliseconds; `import torch` / `import tensorflow` cost ~1–1.7 s.
-* **[Peak memory](peak-memory-opennn-vs-pytorch-vs-tensorflow.md)** — resident memory for the same small
-  training job: ~9 MB vs hundreds of MB of fixed framework overhead.
+* **[Baseline memory footprint](peak-memory-opennn-vs-pytorch-vs-tensorflow.md)** — minimum RAM after
+  empty training objects, plus GPU-ready VRAM after one tiny matrix multiply in a WSL2 CUDA run.
 * **[Data capacity](data-capacity-opennn-vs-pytorch-vs-tensorflow.md)** — how much data fits and trains in a
   fixed RAM budget: for quote-free numeric CSV (this benchmark's data) OpenNN's memory-mapped,
   compact-matrix loader trains ~2.7× more samples than the standard `pandas.read_csv` path before
@@ -141,6 +167,9 @@ infers in one self-contained binary.
   file that runs on a clean machine, vs Python plus a 12–33 package tree.
 * **[Source lines of code](loc-opennn-vs-pytorch-vs-tensorflow.md)** — the size of the native library layer
   behind each project.
+* **[Application lines of code](application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md)** — the amount
+  of user code needed for the same Iris classification workflow. OpenNN uses 14 logical source
+  lines, PyTorch uses 43, and TensorFlow/Keras uses 23 through its high-level `fit` API.
 * **[Model export to standalone code](code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md)** — OpenNN emits a
   trained model as compilable C/Python/JavaScript/PHP; the frameworks export model files that
   still need their runtime.

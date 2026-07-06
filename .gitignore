@@ -31,16 +31,21 @@ pip-selfcheck.json
 .claude/
 packages/
 graphify-out/
+/.backups/
 
 # CMake build dirs
 /build/
 /build-ninja/
 /build-*/
+/cmake-build-*/
 **/_deps/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 CMakeUserPresets.json
+*.sln
+*.vcxproj
+*.vcxproj.filters
 
 # Legacy qmake / MSBuild artifacts (no longer the source of truth, but keep ignored
 # in case a local IDE regenerates them).
@@ -299,6 +304,12 @@ tests/data/*.xml
 
 #Python tests
 \.ipynb_checkpoints
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Created by .ignore support plugin (hsz.mobi)
 /opennn/loss_index_forward_propagation.h
@@ -333,6 +344,7 @@ tests/data/*.xml
 # Large local example data
 yolo_voc_data/
 yolo_data/
+examples/yolo/yolo_data/
 
 # Darknet/YOLO weight files
 *.weights
@@ -347,6 +359,14 @@ docs/benchmarks/inference-speed/opennn_inference
 docs/benchmarks/inference-speed/opennn_inference_mkl
 docs/benchmarks/inference-speed/opennn_inference_mkl_auto
 docs/benchmarks/inference-speed/rosenbrock_infer.csv
+docs/benchmarks/**/*.onnx
+docs/benchmarks/**/*.onnx.data
+docs/benchmarks/**/*.csv
+docs/benchmarks/**/pred_*.txt
+docs/benchmarks/accuracy/opennn_accuracy
+docs/benchmarks/export/opennn_export
+docs/benchmarks/memory/opennn_memory
+docs/benchmarks/startup/opennn_startup
 docs/benchmarks/memory/opennn_memory_cpu
 docs/benchmarks/memory/sum.csv
 docs/benchmarks/startup/opennn_startup_cpu
@@ -354,4 +374,5 @@ docs/benchmarks/training-speed/opennn_speed
 docs/benchmarks/export/model.c
 docs/benchmarks/export/model.py
 docs/benchmarks/export/sum.csv
-docs/benchmarks/results/*.json
+docs/benchmarks/results/*
+!docs/benchmarks/results/README.md

@@ -411,13 +411,13 @@ void ImageDataset::read_images()
     pixel_number = uint64_t(pixels_number);
     classes_number = uint32_t(folders_number);
 
-    variables.resize(pixels_number + 1);
-    for (Index i = 0; i < pixels_number; ++i)
-    {
-        variables[i].type = VariableType::Numeric;
-        variables[i].name = format("variable_{}", i + 1);
-        variables[i].role = VariableRole::Input;
-    }
+    variables.assign(2, Variable());
+
+    Variable& image_variable = variables[0];
+    image_variable.name = "image";
+    image_variable.type = VariableType::Numeric;
+    image_variable.role = VariableRole::Input;
+    image_variable.features = pixels_number;
 
     vector<string> categories(folders_number);
     ranges::transform(directory_path, categories.begin(),
@@ -425,7 +425,7 @@ void ImageDataset::read_images()
 
     const bool binary_target = (targets_number == 1);
 
-    Variable& target_variable = variables[pixels_number];
+    Variable& target_variable = variables[1];
     target_variable.name = binary_target ? categories[0] + "_" + categories[1] : "Class";
     target_variable.role = VariableRole::Target;
     target_variable.type = binary_target ? VariableType::Binary : VariableType::Categorical;

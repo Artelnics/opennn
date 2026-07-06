@@ -1,6 +1,6 @@
 """Shared data preparation for the cross-framework recurrent-vs-LSTM forecasting
 comparison (OpenNN vs PyTorch vs TensorFlow), replicating the OpenNN
-no2_forecasting benchmark setup on UCI Beijing PM2.5:
+recurrent_lstm_forecasting_benchmark setup on UCI Beijing PM2.5:
 
   * input window = past P hours of ALL 15 columns (pm2_5 is InputTarget in
     OpenNN, so its past values are an input too),
@@ -9,7 +9,7 @@ no2_forecasting benchmark setup on UCI Beijing PM2.5:
   * z-score standardisation fit on the training rows only,
   * RMSE reported in the original pm2_5 units (predictions un-standardised).
 
-Same four scenarios B1..B4 as examples/no2_forecasting/main.cpp.
+Same four scenarios B1..B4 as examples/recurrent_lstm_forecasting_benchmark/main.cpp.
 """
 import csv
 import os
