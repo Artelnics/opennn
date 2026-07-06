@@ -1,0 +1,78 @@
+name: TinyML parity
+
+# Verifies that models exported to C by ModelExpression reproduce OpenNN
+# outputs on microcontroller targets: ATmega328P (simavr) and ARM Cortex-M3
+# (QEMU mps2-an385). Runs the iris (classification) and forecasting
+# (RNN/LSTM) parity pipelines end to end.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, dev, dev-refactor]
+    paths:
+      - 'opennn/model_expression.*'
+      - 'opennn/scaling_layer.*'
+      - 'opennn/unscaling_layer.*'
+      - 'opennn/bounding_layer.*'
+      - 'opennn/dense_layer.*'
+      - 'opennn/recurrent_layer.*'
+      - 'opennn/long_short_term_memory_layer.*'
+      - 'examples/iris_plant/**'
+      - 'examples/forecasting_tinyml/**'
+      - '.github/workflows/tinyml-parity.yml'
+  pull_request:
+    branches: [master, dev, dev-refactor]
+    paths:
+      - 'opennn/model_expression.*'
+      - 'opennn/scaling_layer.*'
+      - 'opennn/unscaling_layer.*'
+      - 'opennn/bounding_layer.*'
+      - 'opennn/dense_layer.*'
+      - 'opennn/recurrent_layer.*'
+      - 'opennn/long_short_term_memory_layer.*'
+      - 'examples/iris_plant/**'
+      - 'examples/forecasting_tinyml/**'
+      - '.github/workflows/tinyml-parity.yml'
+
+concurrency:
+  group: tinyml-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    name: Export parity on AVR + Cortex-M emulators
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchains and emulators
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-avr avr-libc simavr \
+              gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: deps-${{ runner.os }}-
+
+      - name: Configure (CPU-only, examples on)
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=ON
+
+      - name: Build library and export generators
+        run: cmake --build build --target opennn iris_plant forecasting_tinyml
+
+      - name: Iris pipeline (train, export, AVR + ARM parity)
+        run: BUILD=$PWD/build bash examples/iris_plant/tinyml/run_tinyml_test.sh
+
+      - name: Forecasting pipeline (RNN + LSTM, AVR + ARM parity)
+        run: BUILD=$PWD/build bash examples/forecasting_tinyml/run_forecasting_test.sh

@@ -28,14 +28,16 @@ WORK="${WORK:-$HOME/tinyml-iris}"
 N_INPUTS=4
 N_OUTPUTS=3
 
-AVR_GCC=$(find "$HOME/.arduino15/packages/arduino/tools/avr-gcc" -name avr-gcc -type f 2>/dev/null | head -1)
+# Toolchain discovery: environment override, then PATH (CI runners install via
+# apt), then the user-space locations documented in the README (WSL, no sudo).
+AVR_GCC="${AVR_GCC:-$(command -v avr-gcc || find "$HOME/.arduino15/packages/arduino/tools/avr-gcc" -name avr-gcc -type f 2>/dev/null | head -1)}"
 AVR_BIN_DIR=$(dirname "$AVR_GCC")
-SIMAVR="$HOME/simavr-local/root/usr/bin/simavr"
+SIMAVR="${SIMAVR:-$(command -v simavr || echo "$HOME/simavr-local/root/usr/bin/simavr")}"
 export LD_LIBRARY_PATH="$HOME/simavr-local/root/usr/lib/x86_64-linux-gnu:$HOME/simavr-local/root/usr/lib:$LD_LIBRARY_PATH"
 
-# Optional ARM Cortex-M stage (xPack toolchain + QEMU under ~/arm-tools)
-ARM_GCC=$(find "$HOME/arm-tools" -name arm-none-eabi-gcc -type f 2>/dev/null | head -1)
-QEMU_ARM=$(find "$HOME/arm-tools" -path '*qemu*' -name qemu-system-arm -type f 2>/dev/null | head -1)
+# Optional ARM Cortex-M stage
+ARM_GCC="${ARM_GCC:-$(command -v arm-none-eabi-gcc || find "$HOME/arm-tools" -name arm-none-eabi-gcc -type f 2>/dev/null | head -1)}"
+QEMU_ARM="${QEMU_ARM:-$(command -v qemu-system-arm || find "$HOME/arm-tools" -path '*qemu*' -name qemu-system-arm -type f 2>/dev/null | head -1)}"
 ARM_HARNESS_DIR="$TINYML_DIR/arm"
 
 [ -x "$AVR_GCC" ] || { echo "avr-gcc not found (install the arduino:avr core)"; exit 1; }
