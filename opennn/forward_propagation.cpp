@@ -195,6 +195,14 @@ TensorView ForwardPropagation::get_outputs() const
         if (!v.empty()) return v;
     }
 
+    // A passthrough final layer (e.g. Scaling/Unscaling with None scalers)
+    // allocates no forward slot: its output is its input view.
+    if (last >= 0 && size_t(last) < input_views.size() && !input_views[last].empty())
+    {
+        const TensorView& input_view = input_views[last].front();
+        if (!input_view.empty()) return input_view;
+    }
+
     return get_last_trainable_layer_outputs();
 }
 
