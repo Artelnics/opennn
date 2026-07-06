@@ -136,8 +136,8 @@ private:
                          TensorView&,
                          bool) const;
 
-    void ensure_cudnn_setup_(Index) const;
-    void ensure_cudnn_setup_attempt_(Index) const;
+    void ensure_cudnn_setup_(Index, bool) const;
+    void ensure_cudnn_setup_attempt_(Index, bool) const;
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
 
@@ -153,7 +153,7 @@ private:
     mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
     mutable Buffer dropout_states_buf{Device::CUDA};
 
-    mutable CudnnRnnShapeSlot shape_slots_[2];
+    mutable CudnnRnnShapeSlot shape_slots_[RNN_SHAPE_SLOTS];
     mutable int active_shape_ = -1;
     mutable int shape_stamp_  = 0;
     CudnnRnnShapeSlot& active_shape() const { return shape_slots_[active_shape_]; }

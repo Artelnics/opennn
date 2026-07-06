@@ -160,7 +160,7 @@ TrainingResult AdaptiveMomentEstimation::train()
     const bool widen_validation = loss->get_neural_network()->is_gpu()
                                && batch_size > 0;
     const Index validation_batch_cap = widen_validation
-        ? get_maximum_batch_size()
+        ? max(effective_batch_size, get_maximum_batch_size() / 2)
         : effective_batch_size;
     const Index validation_batch_size = (validation_batch_cap <= 0 || validation_batch_cap > validation_samples_number)
         ? validation_samples_number

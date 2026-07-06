@@ -432,7 +432,9 @@ Index Optimizer::get_maximum_batch_size() const
 #endif
     }
 
-    const Index budget = Index(double(available_bytes) * 0.8);
+    const bool recurrent_net = neural_network->has(LayerType::Recurrent)
+                            || neural_network->has(LayerType::LongShortTermMemory);
+    const Index budget = Index(double(available_bytes) * (recurrent_net ? 0.6 : 0.8));
 
     const Index parameters_number       = neural_network->get_parameters_number();
     const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
@@ -793,6 +795,17 @@ void Optimizer::warmup_device_training(
 
     try
     {
+        // Validation first: its (wide) shape grows the shared operator buffers
+        // to their maximum before the training step can capture a CUDA graph,
+        // so captured pointers are never invalidated by a later regrow.
+        if (has_validation_warmup)
+            evaluate_epoch(*validation_forward_propagation,
+                           *validation_empty_queue,
+                           vector<vector<Index>>{validation_batches->front()},
+                           input_feature_indices,
+                           decoder_feature_indices,
+                           target_feature_indices);
+
         train_epoch(training_forward_propagation,
                     training_back_propagation,
                     training_empty_queue,
@@ -802,14 +815,6 @@ void Optimizer::warmup_device_training(
                     target_feature_indices,
                     update,
                     fixed_training_batch);
-
-        if (has_validation_warmup)
-            evaluate_epoch(*validation_forward_propagation,
-                           *validation_empty_queue,
-                           vector<vector<Index>>{validation_batches->front()},
-                           input_feature_indices,
-                           decoder_feature_indices,
-                           target_feature_indices);
 
         restore_model_state();
     }

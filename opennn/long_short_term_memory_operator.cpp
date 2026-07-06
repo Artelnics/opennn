@@ -280,15 +280,22 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         MatrixR Z_c(batch_size, 4 * H);
         MatrixR h_c(batch_size, H);
 
+        const int eigen_threads = Eigen::nbThreads();
+        Eigen::setNbThreads(1);
+
+        #pragma omp parallel
         for (Index t = 0; t < T; ++t)
         {
-            Z_c = StridedZ(Zin.data() + t * 4 * H, batch_size, 4 * H,
-                           Eigen::OuterStride<>(T * 4 * H));
+            #pragma omp single
+            {
+                Z_c = StridedZ(Zin.data() + t * 4 * H, batch_size, 4 * H,
+                               Eigen::OuterStride<>(T * 4 * H));
 
-            if (t > 0)
-                Z_c.noalias() += h_c * Ucat;
+                if (t > 0)
+                    Z_c.noalias() += h_c * Ucat;
+            }
 
-            #pragma omp parallel for
+            #pragma omp for
             for (Index b = 0; b < batch_size; ++b)
             {
                 const Index step = (b * T + t) * H;
@@ -331,6 +338,8 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                 }
             }
         }
+
+        Eigen::setNbThreads(eigen_threads);
 
         if (!return_sequences)
             for (Index b = 0; b < batch_size; ++b)
@@ -558,9 +567,13 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         using StridedD  = Eigen::Map<MatrixR, 0, Eigen::OuterStride<>>;
         using StridedCH = Eigen::Map<const MatrixR, 0, Eigen::OuterStride<>>;
 
+        const int eigen_threads = Eigen::nbThreads();
+        Eigen::setNbThreads(1);
+
+        #pragma omp parallel
         for (Index t = T; t-- > 0;)
         {
-            #pragma omp parallel for
+            #pragma omp for
             for (Index b = 0; b < batch_size; ++b)
             {
                 const Index step = (b * T + t) * H;
@@ -590,17 +603,22 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                 }
             }
 
-            StridedD(Dcat_all.data() + t * 4 * H, batch_size, 4 * H,
-                     Eigen::OuterStride<>(T * 4 * H)) = D_c;
-
-            if (t > 0)
+            #pragma omp single
             {
-                h_prev_c = StridedCH(hidden + (t - 1) * H, batch_size, H,
-                                     Eigen::OuterStride<>(T * H));
-                gUcat.noalias() += h_prev_c.transpose() * D_c;
-                dh_next.noalias() = D_c * Ucat.transpose();
+                StridedD(Dcat_all.data() + t * 4 * H, batch_size, 4 * H,
+                         Eigen::OuterStride<>(T * 4 * H)) = D_c;
+
+                if (t > 0)
+                {
+                    h_prev_c = StridedCH(hidden + (t - 1) * H, batch_size, H,
+                                         Eigen::OuterStride<>(T * H));
+                    gUcat.noalias() += h_prev_c.transpose() * D_c;
+                    dh_next.noalias() = D_c * Ucat.transpose();
+                }
             }
         }
+
+        Eigen::setNbThreads(eigen_threads);
 
         const Eigen::Map<const MatrixR> all_x(x, BT, F);
         gWcat.noalias() = all_x.transpose() * Dcat_all;
@@ -806,7 +824,7 @@ static bool lstm_persist_env_enabled()
     return enabled;
 }
 
-void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
+void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for_training) const
 {
     using F_ = ActivationFunction;
     if (activation_function != F_::Tanh
@@ -822,7 +840,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
     {
         try
         {
-            ensure_cudnn_setup_attempt_(batch_size);
+            ensure_cudnn_setup_attempt_(batch_size, for_training);
             return;
         }
         catch (const std::exception&)
@@ -832,10 +850,10 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size) const
             cached_input_features = -1;
         }
     }
-    ensure_cudnn_setup_attempt_(batch_size);
+    ensure_cudnn_setup_attempt_(batch_size, for_training);
 }
 
-void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
+void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_training) const
 {
     persist_algo_active_ = !persist_algo_failed_ && lstm_persist_env_enabled();
 
@@ -928,15 +946,34 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size) 
         }
 
     int slot_index = -1;
-    for (int s = 0; s < 2; ++s)
+    for (int s = 0; s < RNN_SHAPE_SLOTS; ++s)
         if (shape_slots_[s].batch == batch_size && shape_slots_[s].time == T)
             slot_index = s;
 
+    if (slot_index >= 0 && for_training && !shape_slots_[slot_index].training_ready)
+    {
+        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        size_t work_bytes = 0;
+        size_t reserve_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+            Backend::get_cudnn_handle(), rnn_desc,
+            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
+            &work_bytes, &reserve_bytes));
+        workspace_buf.grow_to(Index(work_bytes));
+        reserve_space_buf.grow_to(Index(reserve_bytes));
+        dy_buf.grow_to(batch_size * T * output_features * Index(sizeof(float)));
+        slot.training_ready = true;
+    }
+
     if (slot_index < 0)
     {
-        slot_index = (shape_slots_[0].batch < 0) ? 0
-                   : (shape_slots_[1].batch < 0) ? 1
-                   : (shape_slots_[0].stamp <= shape_slots_[1].stamp ? 0 : 1);
+        slot_index = 0;
+        for (int s = 1; s < RNN_SHAPE_SLOTS; ++s)
+        {
+            if (shape_slots_[slot_index].batch < 0) break;
+            if (shape_slots_[s].batch < 0 || shape_slots_[s].stamp < shape_slots_[slot_index].stamp)
+                slot_index = s;
+        }
         CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
         slot.batch = batch_size;
         slot.time  = T;
@@ -983,10 +1020,11 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size) 
 
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
-        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            Backend::get_cudnn_handle(), rnn_desc,
-            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
-            &work_bytes, &reserve_bytes));
+        if (for_training)
+            CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+                Backend::get_cudnn_handle(), rnn_desc,
+                CUDNN_FWD_MODE_TRAINING, slot.x_desc,
+                &work_bytes, &reserve_bytes));
 
         size_t inference_work_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
@@ -994,12 +1032,17 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size) 
             CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
             &inference_work_bytes, nullptr));
 
+        slot.training_ready = for_training;
+
         workspace_buf.grow_to(Index(max(work_bytes, inference_work_bytes)));
-        reserve_space_buf.grow_to(Index(reserve_bytes));
 
         const Index yh_bytes = batch_size * T * H * Index(sizeof(float));
         y_buf.grow_to(yh_bytes);
-        dy_buf.grow_to(yh_bytes);
+        if (for_training)
+        {
+            reserve_space_buf.grow_to(Index(reserve_bytes));
+            dy_buf.grow_to(yh_bytes);
+        }
 
     }
 
@@ -1098,7 +1141,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
     const Index batch_size = input.shape[0];
     if (!input.data || output_features == 0 || time_steps == 0 || batch_size == 0) return;
 
-    ensure_cudnn_setup_(batch_size);
+    ensure_cudnn_setup_(batch_size, is_training);
     pack_weights_to_cudnn_();
 
     float* y_target = return_seq ? output.as<float>()
@@ -1127,7 +1170,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
         persist_algo_failed_ = true;
         rnn_desc.reset();
         cached_input_features = -1;
-        ensure_cudnn_setup_(batch_size);
+        ensure_cudnn_setup_(batch_size, is_training);
         pack_weights_to_cudnn_();
         forward_status = run_forward();
     }
@@ -1152,7 +1195,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const Index batch_size = input.shape[0];
     if (batch_size == 0) return;
 
-    ensure_cudnn_setup_(batch_size);
+    ensure_cudnn_setup_(batch_size, true);
 
     const Index H = output_features;
     const Index T = time_steps;

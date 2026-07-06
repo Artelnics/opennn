@@ -325,6 +325,9 @@ AggregatedResult run_multi_seed(const Scenario& s,
         if (forecasting_pytorch_init()) nn->set_parameters_pytorch();
         const RunResult r = train_one(nn.get(), ds.get(), s);
 
+        if (!r.notes.empty())
+            std::cout << "\n    [" << net_label << " seed " << seed << "] " << r.notes << "\n";
+
         g_bar.tick();
 
         if (std::isfinite(r.test_rmse) && std::isfinite(r.val_err))

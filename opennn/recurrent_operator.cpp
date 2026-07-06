@@ -188,6 +188,9 @@ void RecurrentOperator::apply(const TensorView& input,
     MatrixR h_c(batch_size, output_features);
     MatrixR rec_acc(batch_size, output_features);
 
+    const int eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1);
+
     for (Index t = 0; t < time_steps; ++t)
     {
         StridedMap h_t(hidden_data + t * output_features,
@@ -210,6 +213,8 @@ void RecurrentOperator::apply(const TensorView& input,
 
         h_c = h_t;
     }
+
+    Eigen::setNbThreads(eigen_threads);
 
     if (return_sequences)
         memcpy(output.as<float>(), hidden_data,
@@ -260,6 +265,9 @@ void RecurrentOperator::apply_delta(const TensorView& input,
     MatrixR h_prev_c(batch_size, output_features);
     MatrixR next_carry = MatrixR::Zero(batch_size, output_features);
 
+    const int eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1);
+
     for (Index t = time_steps - 1; t >= 0; --t)
     {
         const ConstStridedMap derivs_t(derivs_data + t * output_features,
@@ -295,6 +303,8 @@ void RecurrentOperator::apply_delta(const TensorView& input,
             next_carry.noalias()  = d_c * w_rec_map.transpose();
         }
     }
+
+    Eigen::setNbThreads(eigen_threads);
 
     const Eigen::Map<const MatrixR> all_input(input_data, BT, input_features);
     const Eigen::Map<const MatrixR> all_delta_map(all_delta.data(), BT, output_features);
@@ -339,13 +349,13 @@ static bool rnn_persist_env_enabled()
     return enabled;
 }
 
-void RecurrentOperator::ensure_cudnn_setup_(Index batch_size) const
+void RecurrentOperator::ensure_cudnn_setup_(Index batch_size, bool for_training) const
 {
     if (!persist_algo_failed_ && rnn_persist_env_enabled())
     {
         try
         {
-            ensure_cudnn_setup_attempt_(batch_size);
+            ensure_cudnn_setup_attempt_(batch_size, for_training);
             return;
         }
         catch (const std::exception&)
@@ -355,10 +365,10 @@ void RecurrentOperator::ensure_cudnn_setup_(Index batch_size) const
             cached_input_features = -1;
         }
     }
-    ensure_cudnn_setup_attempt_(batch_size);
+    ensure_cudnn_setup_attempt_(batch_size, for_training);
 }
 
-void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
+void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_training) const
 {
     persist_algo_active_ = !persist_algo_failed_ && rnn_persist_env_enabled();
 
@@ -452,15 +462,34 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
         }
 
     int slot_index = -1;
-    for (int s = 0; s < 2; ++s)
+    for (int s = 0; s < RNN_SHAPE_SLOTS; ++s)
         if (shape_slots_[s].batch == batch_size && shape_slots_[s].time == T)
             slot_index = s;
 
+    if (slot_index >= 0 && for_training && !shape_slots_[slot_index].training_ready)
+    {
+        CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
+        size_t work_bytes = 0;
+        size_t reserve_bytes = 0;
+        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+            Backend::get_cudnn_handle(), rnn_desc,
+            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
+            &work_bytes, &reserve_bytes));
+        workspace_buf.grow_to(Index(work_bytes));
+        reserve_space_buf.grow_to(Index(reserve_bytes));
+        dy_buf.grow_to(batch_size * T * output_features * Index(sizeof(float)));
+        slot.training_ready = true;
+    }
+
     if (slot_index < 0)
     {
-        slot_index = (shape_slots_[0].batch < 0) ? 0
-                   : (shape_slots_[1].batch < 0) ? 1
-                   : (shape_slots_[0].stamp <= shape_slots_[1].stamp ? 0 : 1);
+        slot_index = 0;
+        for (int s = 1; s < RNN_SHAPE_SLOTS; ++s)
+        {
+            if (shape_slots_[slot_index].batch < 0) break;
+            if (shape_slots_[s].batch < 0 || shape_slots_[s].stamp < shape_slots_[slot_index].stamp)
+                slot_index = s;
+        }
         CudnnRnnShapeSlot& slot = shape_slots_[slot_index];
         slot.batch = batch_size;
         slot.time  = T;
@@ -503,10 +532,11 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
 
         size_t work_bytes = 0;
         size_t reserve_bytes = 0;
-        CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
-            Backend::get_cudnn_handle(), rnn_desc,
-            CUDNN_FWD_MODE_TRAINING, slot.x_desc,
-            &work_bytes, &reserve_bytes));
+        if (for_training)
+            CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
+                Backend::get_cudnn_handle(), rnn_desc,
+                CUDNN_FWD_MODE_TRAINING, slot.x_desc,
+                &work_bytes, &reserve_bytes));
 
         size_t inference_work_bytes = 0;
         CHECK_CUDNN(cudnnGetRNNTempSpaceSizes(
@@ -514,9 +544,14 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size) const
             CUDNN_FWD_MODE_INFERENCE, slot.x_desc,
             &inference_work_bytes, nullptr));
 
+        slot.training_ready = for_training;
+
         workspace_buf.grow_to(Index(max(work_bytes, inference_work_bytes)));
-        reserve_space_buf.grow_to(Index(reserve_bytes));
-        dy_buf.grow_to(batch_size * T * H * Index(sizeof(float)));
+        if (for_training)
+        {
+            reserve_space_buf.grow_to(Index(reserve_bytes));
+            dy_buf.grow_to(batch_size * T * H * Index(sizeof(float)));
+        }
 
     }
 
@@ -572,7 +607,7 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
 {
     const Index batch_size = input.shape[0];
 
-    ensure_cudnn_setup_(batch_size);
+    ensure_cudnn_setup_(batch_size, is_training);
     pack_weights_to_cudnn_();
 
     auto run_forward = [&]() {
@@ -598,7 +633,7 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
         persist_algo_failed_ = true;
         rnn_desc.reset();
         cached_input_features = -1;
-        ensure_cudnn_setup_(batch_size);
+        ensure_cudnn_setup_(batch_size, is_training);
         pack_weights_to_cudnn_();
         forward_status = run_forward();
     }
@@ -621,7 +656,7 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
     const Index H = output_features;
     const Index T = time_steps;
 
-    ensure_cudnn_setup_(batch_size);
+    ensure_cudnn_setup_(batch_size, true);
 
     const float* dy_data = output_delta.as<float>();
     if (!return_sequences)
