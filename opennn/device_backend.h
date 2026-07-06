@@ -203,16 +203,25 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int);
 
-    static cublasHandle_t get_cublas_handle()                      { return instance().cublas_handle; }
+    // The legacy cuBLAS handle initializes lazily like cuDNN below: creating
+    // it reserves a device workspace, and the inference path runs entirely on
+    // cuBLASLt plus custom kernels.
+    static cublasHandle_t get_cublas_handle()                      { return instance().cublas(); }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
-    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn_handle; }
+    // cuDNN initializes lazily on first use: creating its handle loads kernel
+    // images into VRAM, a fixed cost that dense-only networks (cuBLAS GEMMs
+    // with fused epilogues, custom activation kernels) never need to pay.
+    static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(); }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }
-    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { return instance().operator_sum_descriptor; }
+    static cudnnOpTensorDescriptor_t get_operator_sum_descriptor() { instance().cudnn(); return instance().operator_sum_descriptor; }
 
 private:
     Backend();
     ~Backend();
+
+    cublasHandle_t cublas();
+    cudnnHandle_t cudnn();
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -223,6 +232,8 @@ private:
     cudaStream_t compute_stream = nullptr;
     cudaStream_t transfer_stream = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    once_flag cublas_init_once;
+    once_flag cudnn_init_once;
 };
 
 inline ThreadPoolDevice& get_device()

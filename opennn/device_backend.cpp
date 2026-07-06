@@ -507,19 +507,50 @@ Backend::Backend()
     compute_stream = device::create_stream(cudaStreamDefault);
     transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
-    CHECK_CUBLAS(cublasCreate(&cublas_handle));
-    CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-    CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-    CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
-
-    CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-    CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                                           CUDNN_OP_TENSOR_ADD,
-                                           CUDNN_DATA_FLOAT,
-                                           CUDNN_NOT_PROPAGATE_NAN));
+    // The legacy cuBLAS handle and cuDNN are NOT created here -- see
+    // Backend::cublas() and Backend::cudnn().
 #endif
+}
+
+// Deferred from the constructor (see get_cublas_handle() in the header):
+// creating the legacy handle reserves a device workspace that the
+// cuBLASLt-plus-custom-kernels inference path never uses.
+cublasHandle_t Backend::cublas()
+{
+#ifdef OPENNN_HAS_CUDA
+    call_once(cublas_init_once, [this]
+    {
+        if (!compute_stream) return;   // no CUDA device: stay null, as before
+
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
+        CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+        CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+    });
+#endif
+    return cublas_handle;
+}
+
+// Deferred from the constructor (see get_cudnn_handle() in the header): a
+// cuDNN handle costs fixed VRAM whether or not any cuDNN op ever runs.
+cudnnHandle_t Backend::cudnn()
+{
+#ifdef OPENNN_HAS_CUDA
+    call_once(cudnn_init_once, [this]
+    {
+        if (!compute_stream) return;   // no CUDA device: stay null, as before
+
+        CHECK_CUDNN(cudnnCreate(&cudnn_handle));
+        CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
+
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
+                                               CUDNN_OP_TENSOR_ADD,
+                                               CUDNN_DATA_FLOAT,
+                                               CUDNN_NOT_PROPAGATE_NAN));
+    });
+#endif
+    return cudnn_handle;
 }
 
 Backend::~Backend()

@@ -78,11 +78,26 @@ if use_compile:
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
 
-x = torch.randn(args.batch, INPUTS, device=dev)
+# Real HIGGS rows (float32 bin, rows x 29: features then label) when
+# HIGGS_BIN is set; rows repeat modulo beyond the file (np.resize), the same
+# convention as the ResNet-50 capacity runner. Synthetic otherwise.
+higgs_bin = os.environ.get("HIGGS_BIN")
+if higgs_bin:
+    import numpy as np
+    raw = np.fromfile(higgs_bin, dtype=np.float32).reshape(-1, INPUTS + 1)
+    print(f"data=higgs_bin rows={raw.shape[0]}")
+    x = torch.from_numpy(np.resize(np.ascontiguousarray(raw[:, :INPUTS]),
+                                   (args.batch, INPUTS))).to(dev)
+    y_host = np.resize(np.ascontiguousarray(raw[:, INPUTS:]), (args.batch, 1))
+else:
+    print("data=synthetic")
+    x = torch.randn(args.batch, INPUTS, device=dev)
+    y_host = None
 sync()
 
 if args.mode == "train":
-    y = torch.randint(0, 2, (args.batch, 1), device=dev, dtype=torch.float32)
+    y = torch.from_numpy(y_host).to(dev) if y_host is not None \
+        else torch.randint(0, 2, (args.batch, 1), device=dev, dtype=torch.float32)
 
     try:
         opt = torch.optim.Adam(model.parameters(), lr=1e-3, fused=True)
@@ -129,6 +144,16 @@ else:
         assert torch.isfinite(out.flatten()[:8].float()).all(), "non-finite outputs"
 
 samples_per_s = args.steps * args.batch / wall_s
+try:   # peak memory for the CPU-capped runs (POSIX only)
+    import resource
+    print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")
+    with open("/proc/self/status") as f:
+        for line in f:
+            if line.startswith("VmPeak:"):
+                print(f"vm_peak_mib={int(line.split()[1]) // 1024}")
+                break
+except Exception:
+    pass
 print(f"wall_s={wall_s:.5f}")
 print(f"samples_per_sec={samples_per_s:.2f}")
 print("RESULT=OK")
