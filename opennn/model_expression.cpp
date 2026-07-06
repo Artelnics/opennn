@@ -11,6 +11,8 @@
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "dense_layer.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 #include "string_utilities.h"
 #include "neural_network.h"
 #include "variable.h"
@@ -254,6 +256,54 @@ static constexpr const char* python_subheader =
 
 ModelExpression::ModelExpression(const NeuralNetwork* neural_network) : neural_network(neural_network) {}
 
+Index ModelExpression::get_flat_inputs_number() const
+{
+    const auto& layers = neural_network->get_layers();
+
+    if (!layers.empty())
+    {
+        const Shape first_input_shape = layers[0]->get_input_shape();
+        if (first_input_shape.rank == 2)
+            return first_input_shape.size();
+    }
+
+    return neural_network->get_inputs_number();
+}
+
+vector<string> ModelExpression::get_flat_input_names() const
+{
+    vector<string> names = neural_network->get_input_feature_names();
+    const Index flat_inputs_number = get_flat_inputs_number();
+
+    if (ssize(names) == flat_inputs_number)
+        return names;
+
+    const auto& layers = neural_network->get_layers();
+    const Shape first_input_shape = layers.empty() ? Shape{} : layers[0]->get_input_shape();
+
+    if (first_input_shape.rank == 2)
+    {
+        const Index time_steps = first_input_shape[0];
+        const Index features = first_input_shape[1];
+
+        vector<string> expanded(static_cast<size_t>(flat_inputs_number));
+
+        for (Index t = 0; t < time_steps; ++t)
+            for (Index f = 0; f < features; ++f)
+            {
+                const string base = (f < ssize(names) && !names[size_t(f)].empty())
+                    ? names[size_t(f)]
+                    : format("input_{}", f);
+                expanded[size_t(t * features + f)] = format("{}_t{}", base, t);
+            }
+
+        return expanded;
+    }
+
+    names.resize(size_t(flat_inputs_number));
+    return names;
+}
+
 
 vector<string> ModelExpression::split_expression_lines(const string& expression)
 {
@@ -290,10 +340,10 @@ string ModelExpression::build_expression() const
                      "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
     }
 
-    const Index inputs_number = neural_network->get_inputs_number();
+    const Index inputs_number = get_flat_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    vector<string> new_input_names = neural_network->get_input_feature_names();
+    vector<string> new_input_names = get_flat_input_names();
     new_input_names.resize(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
         if (new_input_names[i].empty())
@@ -476,7 +526,7 @@ string ModelExpression::get_expression_c() const
 
 void ModelExpression::emit_c_prelude(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
 
     buffer << c_header;
 
@@ -503,7 +553,7 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
                                                const vector<string>& lines,
                                                bool has_softmax) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> output_names = neural_network->get_output_feature_names();
     const vector<string> fixed_input_names = fix_names(input_names, "input_");
     const vector<string> fixed_output_names = fix_names(output_names, "output_");
@@ -554,7 +604,7 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
 void ModelExpression::emit_c_main(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> output_names = neural_network->get_output_feature_names();
 
     const Index inputs_number = input_names.size();
@@ -606,8 +656,8 @@ string ModelExpression::get_expression_c_embedded() const
                      "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
     }
 
-    const vector<string> input_names = neural_network->get_input_feature_names();
-    const Index inputs_number = neural_network->get_inputs_number();
+    const vector<string> input_names = get_flat_input_names();
+    const Index inputs_number = get_flat_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
     ostringstream tables;
@@ -618,12 +668,30 @@ string ModelExpression::get_expression_c_embedded() const
     bool uses_affine_flags = false;
     bool uses_softmax = false;
     bool uses_clamp = false;
+    bool uses_recurrent = false;
+    bool uses_lstm = false;
     bool buffer_used[2] = {false, false};
 
     Index max_width = inputs_number;
+    Index max_hidden = 0;
     string current = "inputs";
     const char* buffer_names[2] = {"nn_buffer_a", "nn_buffer_b"};
     int next_buffer = 0;
+
+    auto activation_constant_for = [](ActivationFunction activation) -> string
+    {
+        using enum ActivationFunction;
+        switch (activation)
+        {
+        case Identity:  return "NN_IDENTITY";
+        case Sigmoid:   return "NN_SIGMOID";
+        case Tanh:      return "NN_TANH";
+        case ReLU:      return "NN_RELU";
+        case LeakyReLU: return "NN_LEAKY_RELU";
+        default:
+            throw runtime_error("ModelExpression: activation function not supported in embedded export.");
+        }
+    };
 
     auto emit_float_array = [&](const string& name, const vector<float>& values)
     {
@@ -683,11 +751,14 @@ string ModelExpression::get_expression_c_embedded() const
             const vector<ScalerMethod>& scalers = scaling->get_scalers();
             const float min_range = scaling->get_min_range();
             const float max_range = scaling->get_max_range();
-            const Index features_number = layers[i]->get_outputs_number();
+            // Rank-2 (time series) inputs have one scaler per feature applied
+            // at every time step: total values = time_steps * features.
+            const Index total_number = layers[i]->get_outputs_number();
+            const Index features_number = ssize(scalers);
             const bool is_unscaling = (layer_type == LayerType::Unscaling);
 
             throw_if(features_number == 0
-                     || ssize(scalers) != features_number
+                     || total_number % features_number != 0
                      || ssize(descriptives) != features_number,
                      format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
 
@@ -780,21 +851,24 @@ string ModelExpression::get_expression_c_embedded() const
                 emit_byte_array(table_prefix + "_exp_post", exp_post);
                 body << "\tnn_affine_flags_forward(" << current << ", " << table_prefix << "_log_pre, "
                      << table_prefix << "_a, " << table_prefix << "_b, " << table_prefix << "_exp_post, "
-                     << features_number << ", " << target << ");\n";
+                     << features_number << ", " << total_number << ", " << target << ");\n";
             }
             else
             {
                 uses_affine = true;
                 body << "\tnn_affine_forward(" << current << ", " << table_prefix << "_a, "
-                     << table_prefix << "_b, " << features_number << ", " << target << ");\n";
+                     << table_prefix << "_b, " << features_number << ", " << total_number << ", " << target << ");\n";
             }
 
             current = target;
-            max_width = max(max_width, features_number);
+            max_width = max(max_width, total_number);
         }
         else if (layer_type == LayerType::Dense)
         {
             const Dense* dense = static_cast<const Dense*>(layers[i].get());
+
+            throw_if(dense->get_input_shape().rank != 1,
+                     "ModelExpression: only rank-1 Dense inputs are supported in embedded export.");
 
             throw_if(dense->get_batch_normalization(),
                      "ModelExpression: batch normalization is not supported in the exported model.");
@@ -878,6 +952,119 @@ string ModelExpression::get_expression_c_embedded() const
             body << "\tnn_clamp_inplace(" << in_place_target() << ", " << table_prefix << "_lower, "
                  << table_prefix << "_upper, " << features_number << ");\n";
         }
+        else if (layer_type == LayerType::Recurrent)
+        {
+            const Recurrent* recurrent = static_cast<const Recurrent*>(layers[i].get());
+            const vector<TensorView>& parameter_views = recurrent->get_parameter_views();
+
+            throw_if(parameter_views.size() < 3
+                     || !parameter_views[0].data || !parameter_views[1].data || !parameter_views[2].data,
+                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+
+            const Shape input_shape = recurrent->get_input_shape();
+            const Shape output_shape = recurrent->get_output_shape();
+            const Index time_steps = input_shape[0];
+            const Index features = input_shape[1];
+            const bool return_sequences = (output_shape.rank == 2);
+            const Index hidden = output_shape[output_shape.rank - 1];
+
+            const VectorMap biases_map = parameter_views[0].as_vector();
+            const MatrixMap input_w_map = parameter_views[1].as_matrix();
+            const MatrixMap recurrent_w_map = parameter_views[2].as_matrix();
+
+            vector<float> recurrent_biases(static_cast<size_t>(hidden));
+            vector<float> recurrent_input_weights(static_cast<size_t>(features * hidden));
+            vector<float> recurrent_recurrent_weights(static_cast<size_t>(hidden * hidden));
+
+            for (Index j = 0; j < hidden; ++j)
+                recurrent_biases[size_t(j)] = biases_map(j);
+            for (Index f = 0; f < features; ++f)
+                for (Index j = 0; j < hidden; ++j)
+                    recurrent_input_weights[size_t(f * hidden + j)] = input_w_map(f, j);
+            for (Index p = 0; p < hidden; ++p)
+                for (Index j = 0; j < hidden; ++j)
+                    recurrent_recurrent_weights[size_t(p * hidden + j)] = recurrent_w_map(p, j);
+
+            emit_float_array(table_prefix + "_biases", recurrent_biases);
+            emit_float_array(table_prefix + "_input_weights", recurrent_input_weights);
+            emit_float_array(table_prefix + "_recurrent_weights", recurrent_recurrent_weights);
+
+            const string activation_constant = activation_constant_for(
+                ActivationOperator::from_string(recurrent->get_activation_function()));
+
+            uses_recurrent = true;
+            max_hidden = max(max_hidden, hidden);
+
+            const string target = take_buffer();
+
+            body << "\tnn_recurrent_forward(" << current << ", " << time_steps << ", " << features << ", "
+                 << table_prefix << "_input_weights, " << table_prefix << "_recurrent_weights, "
+                 << table_prefix << "_biases, " << hidden << ", " << activation_constant << ", "
+                 << (return_sequences ? 1 : 0) << ", nn_state_a, nn_state_b, " << target << ");\n";
+
+            current = target;
+            max_width = max(max_width, return_sequences ? time_steps * hidden : hidden);
+        }
+        else if (layer_type == LayerType::LongShortTermMemory)
+        {
+            const LongShortTermMemory* lstm = static_cast<const LongShortTermMemory*>(layers[i].get());
+            const vector<TensorView>& parameter_views = lstm->get_parameter_views();
+
+            bool configured = parameter_views.size() >= 12;
+            for (size_t p = 0; configured && p < 12; ++p)
+                configured = parameter_views[p].data != nullptr;
+
+            throw_if(!configured,
+                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+
+            const Index time_steps = lstm->get_time_steps();
+            const Index features = lstm->get_input_features();
+            const Index hidden = lstm->get_output_features();
+            const bool return_sequences = lstm->get_return_sequences();
+
+            // Packed tables, gate order: forget, input, candidate, output
+            // (matching the parameter views layout: biases 0-3, W 4-7, U 8-11).
+            vector<float> lstm_biases(static_cast<size_t>(4 * hidden));
+            vector<float> lstm_input_weights(static_cast<size_t>(4 * features * hidden));
+            vector<float> lstm_recurrent_weights(static_cast<size_t>(4 * hidden * hidden));
+
+            for (Index gate = 0; gate < 4; ++gate)
+            {
+                const VectorMap gate_biases = parameter_views[size_t(gate)].as_vector();
+                const MatrixMap gate_w = parameter_views[size_t(4 + gate)].as_matrix();
+                const MatrixMap gate_u = parameter_views[size_t(8 + gate)].as_matrix();
+
+                for (Index j = 0; j < hidden; ++j)
+                    lstm_biases[size_t(gate * hidden + j)] = gate_biases(j);
+                for (Index f = 0; f < features; ++f)
+                    for (Index j = 0; j < hidden; ++j)
+                        lstm_input_weights[size_t(gate * features * hidden + f * hidden + j)] = gate_w(f, j);
+                for (Index p = 0; p < hidden; ++p)
+                    for (Index j = 0; j < hidden; ++j)
+                        lstm_recurrent_weights[size_t(gate * hidden * hidden + p * hidden + j)] = gate_u(p, j);
+            }
+
+            emit_float_array(table_prefix + "_biases", lstm_biases);
+            emit_float_array(table_prefix + "_input_weights", lstm_input_weights);
+            emit_float_array(table_prefix + "_recurrent_weights", lstm_recurrent_weights);
+
+            const string activation_constant = activation_constant_for(lstm->get_activation_function());
+            const string recurrent_activation_constant = activation_constant_for(lstm->get_recurrent_activation_function());
+
+            uses_lstm = true;
+            max_hidden = max(max_hidden, hidden);
+
+            const string target = take_buffer();
+
+            body << "\tnn_lstm_forward(" << current << ", " << time_steps << ", " << features << ", "
+                 << table_prefix << "_biases, " << table_prefix << "_input_weights, "
+                 << table_prefix << "_recurrent_weights, " << hidden << ", "
+                 << activation_constant << ", " << recurrent_activation_constant << ", "
+                 << (return_sequences ? 1 : 0) << ", nn_state_a, nn_state_b, nn_cell, " << target << ");\n";
+
+            current = target;
+            max_width = max(max_width, return_sequences ? time_steps * hidden : hidden);
+        }
         else
         {
             throw runtime_error(format("ModelExpression: layer '{}' ({}) is not supported in embedded export.",
@@ -902,7 +1089,7 @@ string ModelExpression::get_expression_c_embedded() const
               "#define NN_OUTPUTS_NUMBER " << outputs_number << "\n"
               "#define NN_MAX_WIDTH " << max_width << "\n\n";
 
-    if (uses_dense)
+    if (uses_dense || uses_recurrent || uses_lstm)
         buffer << "typedef enum { NN_IDENTITY, NN_SIGMOID, NN_TANH, NN_RELU, NN_LEAKY_RELU } nn_activation;\n\n"
                   "static float nn_activation_forward(nn_activation activation, float x)\n{\n"
                   "\tswitch (activation)\n\t{\n"
@@ -911,8 +1098,10 @@ string ModelExpression::get_expression_c_embedded() const
                   "\tcase NN_RELU:       return x > 0.0f ? x : 0.0f;\n"
                   "\tcase NN_LEAKY_RELU: return x >= 0.0f ? x : x * " << c_float_literal(LEAKY_RELU_SLOPE) << ";\n"
                   "\tdefault:            return x;\n"
-                  "\t}\n}\n\n"
-                  "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
+                  "\t}\n}\n\n";
+
+    if (uses_dense)
+        buffer << "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
                   "                             const float* weights, const float* biases,\n"
                   "                             int outputs_number, nn_activation activation, float* outputs)\n{\n"
                   "\tfor (int j = 0; j < outputs_number; ++j)\n\t{\n"
@@ -922,23 +1111,92 @@ string ModelExpression::get_expression_c_embedded() const
                   "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
                   "\t}\n}\n\n";
 
+    // The affine tables hold one entry per feature; for rank-2 (time series)
+    // inputs they are tiled over the time steps (total = time_steps * features).
     if (uses_affine)
         buffer << "static void nn_affine_forward(const float* inputs, const float* a, const float* b,\n"
-                  "                              int n, float* outputs)\n{\n"
-                  "\tfor (int i = 0; i < n; ++i)\n"
-                  "\t\toutputs[i] = a[i] * inputs[i] + b[i];\n"
-                  "}\n\n";
+                  "                              int features, int total, float* outputs)\n{\n"
+                  "\tint f = 0;\n"
+                  "\tfor (int i = 0; i < total; ++i)\n"
+                  "\t{\n"
+                  "\t\toutputs[i] = a[f] * inputs[i] + b[f];\n"
+                  "\t\tif (++f == features) f = 0;\n"
+                  "\t}\n}\n\n";
 
     if (uses_affine_flags)
         buffer << "static void nn_affine_flags_forward(const float* inputs, const unsigned char* log_pre,\n"
                   "                                    const float* a, const float* b,\n"
-                  "                                    const unsigned char* exp_post, int n, float* outputs)\n{\n"
-                  "\tfor (int i = 0; i < n; ++i)\n"
+                  "                                    const unsigned char* exp_post, int features, int total,\n"
+                  "                                    float* outputs)\n{\n"
+                  "\tint f = 0;\n"
+                  "\tfor (int i = 0; i < total; ++i)\n"
                   "\t{\n"
-                  "\t\tfloat value = log_pre[i] ? logf(inputs[i]) : inputs[i];\n"
-                  "\t\tvalue = a[i] * value + b[i];\n"
-                  "\t\toutputs[i] = exp_post[i] ? expf(value) : value;\n"
+                  "\t\tfloat value = log_pre[f] ? logf(inputs[i]) : inputs[i];\n"
+                  "\t\tvalue = a[f] * value + b[f];\n"
+                  "\t\toutputs[i] = exp_post[f] ? expf(value) : value;\n"
+                  "\t\tif (++f == features) f = 0;\n"
                   "\t}\n}\n\n";
+
+    if (uses_recurrent)
+        buffer << "static void nn_recurrent_forward(const float* inputs, int time_steps, int input_features,\n"
+                  "                                 const float* input_weights, const float* recurrent_weights,\n"
+                  "                                 const float* biases, int hidden, nn_activation activation,\n"
+                  "                                 int return_sequences, float* state_previous, float* state_current,\n"
+                  "                                 float* outputs)\n{\n"
+                  "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
+                  "\t\tconst float* x = inputs + t * input_features;\n"
+                  "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
+                  "\t\t\tfloat sum = biases[j];\n"
+                  "\t\t\tfor (int i = 0; i < input_features; ++i)\n"
+                  "\t\t\t\tsum += x[i] * input_weights[i * hidden + j];\n"
+                  "\t\t\tif (t > 0)\n"
+                  "\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
+                  "\t\t\t\t\tsum += state_previous[p] * recurrent_weights[p * hidden + j];\n"
+                  "\t\t\tstate_current[j] = nn_activation_forward(activation, sum);\n"
+                  "\t\t}\n"
+                  "\t\tif (return_sequences)\n"
+                  "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
+                  "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
+                  "\t}\n"
+                  "\tif (!return_sequences)\n"
+                  "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
+                  "}\n\n";
+
+    if (uses_lstm)
+        buffer << "// Packed tables, gate order: forget, input, candidate, output.\n"
+                  "// c_t = f * c_(t-1) + i * g ; h_t = o * activation(c_t) ; h_(-1) = c_(-1) = 0.\n"
+                  "static void nn_lstm_forward(const float* inputs, int time_steps, int input_features,\n"
+                  "                            const float* biases, const float* input_weights,\n"
+                  "                            const float* recurrent_weights, int hidden,\n"
+                  "                            nn_activation activation, nn_activation recurrent_activation,\n"
+                  "                            int return_sequences, float* state_previous, float* state_current,\n"
+                  "                            float* cell_state, float* outputs)\n{\n"
+                  "\tfor (int t = 0; t < time_steps; ++t)\n\t{\n"
+                  "\t\tconst float* x = inputs + t * input_features;\n"
+                  "\t\tfor (int j = 0; j < hidden; ++j)\n\t\t{\n"
+                  "\t\t\tfloat gates[4];\n"
+                  "\t\t\tfor (int gate = 0; gate < 4; ++gate)\n\t\t\t{\n"
+                  "\t\t\t\tfloat sum = biases[gate * hidden + j];\n"
+                  "\t\t\t\tconst float* w = input_weights + gate * input_features * hidden;\n"
+                  "\t\t\t\tfor (int i = 0; i < input_features; ++i)\n"
+                  "\t\t\t\t\tsum += x[i] * w[i * hidden + j];\n"
+                  "\t\t\t\tif (t > 0)\n\t\t\t\t{\n"
+                  "\t\t\t\t\tconst float* u = recurrent_weights + gate * hidden * hidden;\n"
+                  "\t\t\t\t\tfor (int p = 0; p < hidden; ++p)\n"
+                  "\t\t\t\t\t\tsum += state_previous[p] * u[p * hidden + j];\n"
+                  "\t\t\t\t}\n"
+                  "\t\t\t\tgates[gate] = nn_activation_forward(gate == 2 ? activation : recurrent_activation, sum);\n"
+                  "\t\t\t}\n"
+                  "\t\t\tcell_state[j] = (t > 0 ? gates[0] * cell_state[j] : 0.0f) + gates[1] * gates[2];\n"
+                  "\t\t\tstate_current[j] = gates[3] * nn_activation_forward(activation, cell_state[j]);\n"
+                  "\t\t}\n"
+                  "\t\tif (return_sequences)\n"
+                  "\t\t\tfor (int j = 0; j < hidden; ++j) outputs[t * hidden + j] = state_current[j];\n"
+                  "\t\t{ float* swap = state_previous; state_previous = state_current; state_current = swap; }\n"
+                  "\t}\n"
+                  "\tif (!return_sequences)\n"
+                  "\t\tfor (int j = 0; j < hidden; ++j) outputs[j] = state_previous[j];\n"
+                  "}\n\n";
 
     if (uses_softmax)
         buffer << "static void nn_softmax_inplace(float* values, int n)\n{\n"
@@ -966,6 +1224,14 @@ string ModelExpression::get_expression_c_embedded() const
     if (buffer_used[1])
         buffer << "\tstatic float nn_buffer_b[NN_MAX_WIDTH];\n";
 
+    if (uses_recurrent || uses_lstm)
+    {
+        buffer << "\tstatic float nn_state_a[" << max_hidden << "];\n"
+                  "\tstatic float nn_state_b[" << max_hidden << "];\n";
+        if (uses_lstm)
+            buffer << "\tstatic float nn_cell[" << max_hidden << "];\n";
+    }
+
     buffer << "\n" << body.str()
            << "\n\treturn " << current << ";\n}\n\n";
 
@@ -976,7 +1242,7 @@ string ModelExpression::get_expression_c_embedded() const
 
 string ModelExpression::get_expression_php() const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> output_names = neural_network->get_output_feature_names();
     const vector<string> fixed_input_names = fix_names(input_names, "input_");
     const vector<string> fixed_output_names = fix_names(output_names, "output_");
@@ -1018,7 +1284,7 @@ string ModelExpression::get_expression_php() const
 
 void ModelExpression::emit_php_prelude(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
 
     buffer << php_header;
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -1035,7 +1301,7 @@ void ModelExpression::emit_php_activations(ostringstream& buffer, const string& 
 
 void ModelExpression::emit_php_inputs_setup(ostringstream& buffer) const
 {
-    const vector<string> fixed_input_names = fix_names(neural_network->get_input_feature_names(), "input_");
+    const vector<string> fixed_input_names = fix_names(get_flat_input_names(), "input_");
 
     buffer << "\nsession_start();\n"
               "if (isset($_GET['num0'])) { \n"
@@ -1121,7 +1387,7 @@ string ModelExpression::get_expression_javascript() const
 
 void ModelExpression::emit_js_prelude(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
 
     buffer << javascript_header;
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -1131,7 +1397,7 @@ void ModelExpression::emit_js_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_js_inputs_html(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> fixes_feature_names = fix_names(input_names, "input_");
 
     const Scaling* scaling_layer = neural_network->has(LayerType::Scaling)
@@ -1234,7 +1500,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
                                       bool has_softmax,
                                       bool use_category_select) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> output_names = neural_network->get_output_feature_names();
     const vector<string> fixes_feature_names = fix_names(input_names, "input_");
     const vector<string> fixes_output_names = fix_names(output_names, "output_");
@@ -1344,7 +1610,7 @@ string ModelExpression::get_expression_python() const
 
 void ModelExpression::emit_python_prelude(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
 
     buffer << python_header;
     for (size_t i = 0; i < input_names.size(); ++i)
@@ -1354,7 +1620,7 @@ void ModelExpression::emit_python_prelude(ostringstream& buffer) const
 
 void ModelExpression::emit_python_class_header(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
 
     buffer << "import numpy as np\n"
               "import pandas as pd\n\n"
@@ -1384,7 +1650,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
                                                     const vector<string>& lines,
                                                     bool has_softmax) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> output_names = neural_network->get_output_feature_names();
     const vector<string> fixed_output_names = fix_names(output_names, "output_");
 
@@ -1436,7 +1702,7 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
 
 void ModelExpression::emit_python_batch_and_main(ostringstream& buffer) const
 {
-    const vector<string> input_names = neural_network->get_input_feature_names();
+    const vector<string> input_names = get_flat_input_names();
     const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
 
     const Index inputs_number = input_names.size();

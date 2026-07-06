@@ -41,6 +41,7 @@ public:
     const TensorView& get_forget_bias()    const noexcept { return lstm_op.forget_bias; }
 
     const ActivationFunction& get_activation_function() const noexcept { return lstm_op.activation_function; }
+    const ActivationFunction& get_recurrent_activation_function() const noexcept { return lstm_op.recurrent_activation_function; }
     ActivationFunction get_output_activation() const noexcept override { return lstm_op.activation_function; }
 
     vector<TensorSpec> get_forward_specs(Index)  const override;

@@ -44,6 +44,13 @@ private:
 
     static string c_float_literal(float);
 
+    // Time-series networks consume a whole window (time_steps x features);
+    // the exported models take it flattened row-major, so the input count and
+    // names are expanded per time step. For rank-1 inputs these are the plain
+    // network values.
+    Index get_flat_inputs_number() const;
+    vector<string> get_flat_input_names() const;
+
     void emit_c_prelude(ostringstream&) const;
     void emit_c_activations(ostringstream&, const string&) const;
     void emit_c_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool) const;
