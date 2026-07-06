@@ -24,8 +24,15 @@ Both C export backends of `ModelExpression` are tested:
 | `avr_harness.c` | ATmega328P firmware: runs the model over the test vectors, prints outputs as hex float bits over UART0, then sleeps so simavr exits |
 | `pc_harness.c` | Same harness compiled natively, same output format |
 | `make_test_vectors.py` | Converts `iris_reference.csv` (written by the iris example) into `test_vectors.h` |
-| `compare_outputs.py` | Parity check: OpenNN reference vs PC vs AVR (tolerates simavr's ANSI-colored stderr echo) |
+| `compare_outputs.py` | Parity check: OpenNN reference vs PC vs emulator (tolerates simavr's ANSI-colored stderr echo) |
 | `check_python_export.py` | Parity check for the Python export (runs `iris_model.py` with a numpy shim, no dependencies) |
+| `arm/arm_harness.c` | ARM Cortex-M harness (QEMU `mps2-an385`, semihosting console), same output protocol |
+| `arm/vectors.c`, `arm/mps2.ld` | Minimal vector table and linker script for the QEMU MPS2 board |
+
+The harnesses are model-agnostic (`-DNN_MODEL_FILE`, `test_vectors.h`); the
+forecasting pipeline at [`../../forecasting_tinyml/`](../../forecasting_tinyml/)
+reuses them. The ARM stage runs automatically when the xPack toolchain and
+QEMU are present under `~/arm-tools`, and is skipped with a note otherwise.
 
 ## Prerequisites (user-space, no root)
 

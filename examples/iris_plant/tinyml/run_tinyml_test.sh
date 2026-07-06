@@ -33,6 +33,11 @@ AVR_BIN_DIR=$(dirname "$AVR_GCC")
 SIMAVR="$HOME/simavr-local/root/usr/bin/simavr"
 export LD_LIBRARY_PATH="$HOME/simavr-local/root/usr/lib/x86_64-linux-gnu:$HOME/simavr-local/root/usr/lib:$LD_LIBRARY_PATH"
 
+# Optional ARM Cortex-M stage (xPack toolchain + QEMU under ~/arm-tools)
+ARM_GCC=$(find "$HOME/arm-tools" -name arm-none-eabi-gcc -type f 2>/dev/null | head -1)
+QEMU_ARM=$(find "$HOME/arm-tools" -path '*qemu*' -name qemu-system-arm -type f 2>/dev/null | head -1)
+ARM_HARNESS_DIR="$TINYML_DIR/arm"
+
 [ -x "$AVR_GCC" ] || { echo "avr-gcc not found (install the arduino:avr core)"; exit 1; }
 [ -x "$SIMAVR" ] || { echo "simavr not found at $SIMAVR"; exit 1; }
 
@@ -71,11 +76,28 @@ for VARIANT in expression tables; do
     echo "=== 5. Run in simavr emulator ==="
     # simavr echoes the firmware's UART on stderr (colorized), so capture both streams.
     timeout 120 "$SIMAVR" -m atmega328p -f 16000000 "$WORK/iris_avr_$VARIANT.elf" \
-        > "$WORK/avr_output_$VARIANT.txt" 2>&1 || true
+        < /dev/null > "$WORK/avr_output_$VARIANT.txt" 2>&1 || true
 
     echo "=== 6. Parity check ==="
     python3 "$TINYML_DIR/compare_outputs.py" "$WORK/iris_reference.csv" \
         "$WORK/pc_output_$VARIANT.txt" "$WORK/avr_output_$VARIANT.txt" || FAILED=1
+
+    if [ -n "$ARM_GCC" ] && [ -n "$QEMU_ARM" ]; then
+        echo "=== 7. ARM Cortex-M3 (QEMU mps2-an385, semihosting) ==="
+        "$ARM_GCC" -mcpu=cortex-m3 -mthumb -O2 -std=gnu99 --specs=rdimon.specs \
+            -Wl,-T,"$ARM_HARNESS_DIR/mps2.ld" \
+            -DNN_MODEL_FILE="\"$MODEL_FILE\"" -I"$WORK" \
+            "$ARM_HARNESS_DIR/vectors.c" "$ARM_HARNESS_DIR/arm_harness.c" \
+            -o "$WORK/iris_arm_$VARIANT.elf" -lm
+        timeout 120 "$QEMU_ARM" -M mps2-an385 -cpu cortex-m3 \
+            -kernel "$WORK/iris_arm_$VARIANT.elf" \
+            -nographic -semihosting -no-reboot \
+            < /dev/null > "$WORK/arm_output_$VARIANT.txt" 2>&1 || true
+        python3 "$TINYML_DIR/compare_outputs.py" "$WORK/iris_reference.csv" \
+            "$WORK/pc_output_$VARIANT.txt" "$WORK/arm_output_$VARIANT.txt" || FAILED=1
+    else
+        echo "(ARM toolchain/QEMU not found under ~/arm-tools; skipping the Cortex-M stage)"
+    fi
 done
 
 echo ""

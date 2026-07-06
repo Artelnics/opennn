@@ -91,18 +91,18 @@ def main() -> None:
 
     if avr_rows is not None:
         if len(avr_rows) != len(reference):
-            sys.exit(f"FAIL: {len(reference)} reference vectors vs {len(avr_rows)} AVR vectors")
+            sys.exit(f"FAIL: {len(reference)} reference vectors vs {len(avr_rows)} emulator vectors")
         diff_avr = max_abs_diff(reference, avr_rows)
         diff_pc_avr = max_abs_diff(pc_rows, avr_rows)
-        print(f"OpenNN reference vs exported C on AVR: max abs diff = {diff_avr:.3e}")
-        print(f"Exported C: PC vs AVR emulator       : max abs diff = {diff_pc_avr:.3e}")
+        print(f"OpenNN reference vs exported C on MCU: max abs diff = {diff_avr:.3e}")
+        print(f"Exported C: PC vs MCU emulator       : max abs diff = {diff_pc_avr:.3e}")
         if diff_avr > tolerance:
             failures += 1
 
         agree = sum(
             max(range(n_outputs), key=lambda i: ref[i]) == max(range(n_outputs), key=lambda i: avr[i])
             for ref, avr in zip(reference, avr_rows))
-        print(f"Predicted class agreement (AVR vs reference): {agree}/{len(reference)}")
+        print(f"Predicted class agreement (MCU vs reference): {agree}/{len(reference)}")
         if agree != len(reference):
             failures += 1
 
