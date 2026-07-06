@@ -68,11 +68,14 @@ struct CudnnDescriptor
     explicit operator bool() const { return handle != nullptr; }
 };
 
+inline constexpr int RNN_SHAPE_SLOTS = 3;
+
 struct CudnnRnnShapeSlot
 {
     Index batch = -1;
     Index time  = -1;
     int   stamp = 0;
+    bool  training_ready = false;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
     CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
     CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
