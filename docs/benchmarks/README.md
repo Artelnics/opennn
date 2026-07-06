@@ -26,6 +26,7 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | [GPU dense inference (samples/s)](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **3.99 M** | n/a | 2.80 M | — |
 | [GPU dense max train batch](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | **482,344** | n/a | 399,507 | — |
 | [GPU energy / inference sample (µJ)](energy-consumption-gpu-opennn-vs-pytorch.md) | **25.9** | n/a | 43.5 | 29.8 |
+| [GPU Transformer energy to target (Wh)](transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md) | **24.1** | n/a | 33.2 | 39.8 (XLA) |
 | [GPU Transformer inference, bf16, seq 512 (tok/s)](transformer-inference-gpu-opennn-vs-pytorch.md) | **160,128** | n/a | 84,511 | 101,400 |
 | [CPU inference speed (samples/s; Windows tuned)](inference-speed-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **466,837** | 465,138 | 372,780 | 375,409 |
 | [CPU runtime size](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | **3.2 MB** | 22 MB | 442 MB | 752 MB |
@@ -49,6 +50,7 @@ note is a Windows result that is marked for Linux re-measurement before public u
 | GPU dense speed, max batch, and energy | Current WSL2 laptop GPU result | Replace machine-specific build scripts with CMake targets and attach raw logs/power traces |
 | GPU Transformer inference and training | Current WSL2 laptop GPU result | Add repeated-run statistics and exact cross-framework correctness/quality gates before using as a flagship claim |
 | Recurrent/LSTM forecasting | Harness packaged; Linux result pending | Run the JSON harness on the reference Linux GPU and archive raw output |
+| GPU Transformer energy to target | Current RTX 4080 result (JSON artifact in `results/`) | Repeat on the reference machine; investigate the occasional convergence collapse (OpenNN 2/4, TF 3/4 seeds converge at lr 1e-4) before flagship use |
 
 Only the top-level benchmark notes are intended as the public evidence layer. The
 `CONTINUE_HERE.md` files and machine-specific build notes in subdirectories are

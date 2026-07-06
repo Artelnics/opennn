@@ -197,3 +197,8 @@ option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark drivers" ON)
+if(OpenNN_BUILD_BENCHMARKS)
+    add_subdirectory(docs/benchmarks)
+endif()

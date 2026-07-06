@@ -594,7 +594,7 @@ int main(int argc, char** argv)
             auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
             if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
             adam->set_batch_size(batch_size);
-            adam->set_learning_rate(0.0005f);
+            adam->set_learning_rate(0.0001f);
             adam->set_maximum_epochs(maximum_epochs);
             adam->set_maximum_validation_failures(1000000);
             adam->set_display_period(1);

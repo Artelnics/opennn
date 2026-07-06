@@ -298,7 +298,6 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
         }
     }
 
-    mark_data_changed();
 }
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,

@@ -100,7 +100,7 @@ speed is already ahead everywhere.
 ## How to run
 
 ```bash
-# 1. Build the OpenNN trial (registered as an examples target).
+# 1. Build the OpenNN trial (registered in docs/benchmarks/CMakeLists.txt).
 cmake --build build --target opennn_transformer_maxbatch_trial -j
 
 # 2. Prepare the corpus (prompt<TAB>response). The ChatGPT example already

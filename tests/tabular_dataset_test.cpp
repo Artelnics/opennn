@@ -768,31 +768,56 @@ TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)
 }
 
 
-TEST(TabularDataset, BinaryCacheRoundTrip)
+TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
 {
-    TabularDataset dataset(3, { 2 }, { 1 });
+    const filesystem::path csv_path =
+        filesystem::temp_directory_path() / "opennn_test_binary_storage.csv";
+    const filesystem::path cache_path =
+        csv_path.parent_path() / ".cache" / "opennn_test_binary_storage.bin";
 
-    MatrixR data(3, 3);
-    data << type(1), type(2), type(3),
-            type(4), type(5), type(6),
-            type(7), type(8), type(9);
-    dataset.set_data(data);
+    create_temp_csv_file(csv_path.string(),
+                         "a,b,target\n"
+                         "1,10,0\n"
+                         "2,20,1\n"
+                         "3,30,0\n"
+                         "4,40,1\n");
 
-    const filesystem::path binary_path =
-        filesystem::temp_directory_path() / "opennn_test_tabular_cache.bin";
-    dataset.save_data_binary(binary_path);
+    TabularDataset dataset;
 
-    TabularDataset loaded;
-    loaded.set_data_path(binary_path);
-    loaded.load_data_binary();
+    dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
+    dataset.set_data_path(csv_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(false);
+    dataset.set_display(false);
 
-    const MatrixR& restored = loaded.get_data();
-    ASSERT_EQ(restored.rows(), 3);
-    ASSERT_EQ(restored.cols(), 3);
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    for (Index i = 0; i < 3; ++i)
-        for (Index j = 0; j < 3; ++j)
-            EXPECT_NEAR(restored(i, j), data(i, j), 1e-6);
+    EXPECT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_data().size(), 0);
 
-    filesystem::remove(binary_path);
+    ASSERT_TRUE(filesystem::exists(cache_path));
+    EXPECT_EQ(filesystem::file_size(cache_path), 4 * 3 * sizeof(float));
+
+    EXPECT_EQ(dataset.get_variable_type(2), VariableType::Binary);
+
+    vector<float> inputs(4);
+    dataset.fill_inputs({0, 2}, {0, 1}, inputs.data(), false);
+
+    EXPECT_NEAR(inputs[0], 1, EPSILON);
+    EXPECT_NEAR(inputs[1], 10, EPSILON);
+    EXPECT_NEAR(inputs[2], 3, EPSILON);
+    EXPECT_NEAR(inputs[3], 30, EPSILON);
+
+    vector<float> targets(4);
+    dataset.fill_targets({0, 1, 2, 3}, {2}, targets.data(), false);
+
+    EXPECT_NEAR(targets[0], 0, EPSILON);
+    EXPECT_NEAR(targets[1], 1, EPSILON);
+    EXPECT_NEAR(targets[2], 0, EPSILON);
+    EXPECT_NEAR(targets[3], 1, EPSILON);
+
+    filesystem::remove(csv_path);
+    filesystem::remove(cache_path);
 }

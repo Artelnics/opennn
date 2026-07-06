@@ -72,10 +72,6 @@ public:
 
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
-    vector<Index> get_sample_roles_vector() const;
-
-    VectorI get_sample_role_numbers() const;
-
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(const string&) const;
     Index get_used_variables_number() const;
@@ -143,7 +139,6 @@ public:
     Index get_data_columns() const noexcept { return data.cols(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
 
-    void set_default();
     void set_sample_roles(const string&);
 
     void set_sample_role(const Index, const string&);
@@ -170,8 +165,6 @@ public:
 
     void set_variables_number(const Index);
 
-    void set_feature_names(const vector<string>&);
-
     void set_variable_roles(const string&);
 
     void set_shape(const string&, const Shape&);
@@ -194,14 +187,8 @@ public:
     virtual vector<Histogram> calculate_variable_distributions(Index = 10) const { return {}; }
     virtual vector<BoxPlot> calculate_variables_box_plots() const { return {}; }
     virtual Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const { return {}; }
-    virtual Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const { return {}; }
     virtual Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const { return calculate_input_target_variable_pearson_correlations(); }
     virtual vector<string> unuse_uncorrelated_variables(float = 0.25f) { return {}; }
-    virtual vector<string> unuse_collinear_variables(float = 0.9f) { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_categories(Index) const { return {}; }
-    virtual VectorI filter_data(const VectorR&, const VectorR&) const { return {}; }
 
     bool has_categorical_variables() const
     {
@@ -235,8 +222,6 @@ public:
     void split_samples_random(const float training_ratio = 0.6f,
                               float validation_ratio = 0.2f,
                               float testing_ratio = 0.2f);
-
-    vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
 
     virtual vector<Descriptives> scale_features(const string&) { return {}; }
 
@@ -298,8 +283,6 @@ protected:
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
-
-    virtual void mark_data_changed() const {}
 
     StorageMode storage_mode = StorageMode::Matrix;
 
