@@ -117,6 +117,31 @@ TEST_F(ModelExpressionTest, SaveCExpression)
 }
 
 
+TEST_F(ModelExpressionTest, SaveCEmbeddedExpression)
+{
+    const ModelExpression model_expression(neural_network.get());
+
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_model_expression_test_embedded.c";
+
+    model_expression.save(path, ModelExpression::ProgrammingLanguage::CEmbedded);
+
+    ASSERT_TRUE(filesystem::exists(path));
+
+    const string source = read_whole_file(path);
+
+    EXPECT_FALSE(source.empty());
+    EXPECT_TRUE(contains_token(source, "static const float"));
+    EXPECT_TRUE(contains_token(source, "nn_dense_forward"));
+    EXPECT_TRUE(contains_token(source, "nn_affine_forward"));
+    EXPECT_TRUE(contains_token(source, "float* calculate_outputs"));
+    EXPECT_TRUE(contains_token(source, "int main"));
+    EXPECT_TRUE(contains_token(source, "OPENNN_EXPORT_NO_MAIN"));
+
+    filesystem::remove(path);
+}
+
+
 TEST_F(ModelExpressionTest, SavePythonExpression)
 {
     const ModelExpression model_expression(neural_network.get());

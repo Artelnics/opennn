@@ -8,6 +8,9 @@
 
 #include "model_expression.h"
 #include "scaling_layer.h"
+#include "unscaling_layer.h"
+#include "bounding_layer.h"
+#include "dense_layer.h"
 #include "string_utilities.h"
 #include "neural_network.h"
 #include "variable.h"
@@ -573,6 +576,402 @@ void ModelExpression::emit_c_main(ostringstream& buffer) const
 
     buffer << "\n\treturn 0;\n} \n\n"
               "#endif // OPENNN_EXPORT_NO_MAIN\n";
+}
+
+string ModelExpression::c_float_literal(float value)
+{
+    string text = format("{:.9g}", value);
+
+    if (text.find('.') == string::npos && text.find('e') == string::npos)
+        text += ".0";
+
+    return text + "f";
+}
+
+string ModelExpression::get_expression_c_embedded() const
+{
+    const auto& layers = neural_network->get_layers();
+    const size_t layers_number = layers.size();
+    const vector<string> layer_labels = neural_network->get_layer_labels();
+
+    throw_if(layers_number == 0, "ModelExpression: the network is empty.");
+
+    if (neural_network->get_parameters_device() == Device::CPU)
+    {
+        const float* parameters_data = neural_network->get_parameters_data();
+        const Index parameters_size = neural_network->get_parameters_size();
+
+        for (Index i = 0; i < parameters_size; ++i)
+            throw_if(!isfinite(parameters_data[i]),
+                     "ModelExpression: network parameters contain NaN or Inf; cannot export a valid model.");
+    }
+
+    const vector<string> input_names = neural_network->get_input_feature_names();
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    ostringstream tables;
+    ostringstream body;
+
+    bool uses_dense = false;
+    bool uses_affine = false;
+    bool uses_affine_flags = false;
+    bool uses_softmax = false;
+    bool uses_clamp = false;
+    bool buffer_used[2] = {false, false};
+
+    Index max_width = inputs_number;
+    string current = "inputs";
+    const char* buffer_names[2] = {"nn_buffer_a", "nn_buffer_b"};
+    int next_buffer = 0;
+
+    auto emit_float_array = [&](const string& name, const vector<float>& values)
+    {
+        tables << "static const float " << name << "[" << values.size() << "] = {";
+        for (size_t k = 0; k < values.size(); ++k)
+        {
+            if (k % 8 == 0) tables << "\n    ";
+            tables << c_float_literal(values[k]);
+            if (k + 1 < values.size()) tables << ", ";
+        }
+        tables << "\n};\n\n";
+    };
+
+    auto emit_byte_array = [&](const string& name, const vector<unsigned char>& values)
+    {
+        tables << "static const unsigned char " << name << "[" << values.size() << "] = {";
+        for (size_t k = 0; k < values.size(); ++k)
+        {
+            if (k % 16 == 0) tables << "\n    ";
+            tables << int(values[k]);
+            if (k + 1 < values.size()) tables << ", ";
+        }
+        tables << "\n};\n\n";
+    };
+
+    auto take_buffer = [&]() -> string
+    {
+        buffer_used[next_buffer] = true;
+        const string target = buffer_names[next_buffer];
+        next_buffer = 1 - next_buffer;
+        return target;
+    };
+
+    // In-place stages (clamp) must not modify the caller's inputs.
+    auto in_place_target = [&]() -> string
+    {
+        if (current == "inputs")
+        {
+            const string target = take_buffer();
+            body << "\tfor (int i = 0; i < " << inputs_number << "; ++i) "
+                 << target << "[i] = inputs[i];\n";
+            current = target;
+        }
+        return current;
+    };
+
+    for (size_t i = 0; i < layers_number; ++i)
+    {
+        const LayerType layer_type = layers[i]->get_type();
+        const string table_prefix = format("nn_layer_{}", i);
+        const bool is_last = (i == layers_number - 1);
+
+        if (layer_type == LayerType::Scaling || layer_type == LayerType::Unscaling)
+        {
+            const Scaling* scaling = static_cast<const Scaling*>(layers[i].get());
+            const vector<Descriptives>& descriptives = scaling->get_descriptives();
+            const vector<ScalerMethod>& scalers = scaling->get_scalers();
+            const float min_range = scaling->get_min_range();
+            const float max_range = scaling->get_max_range();
+            const Index features_number = layers[i]->get_outputs_number();
+            const bool is_unscaling = (layer_type == LayerType::Unscaling);
+
+            throw_if(features_number == 0
+                     || ssize(scalers) != features_number
+                     || ssize(descriptives) != features_number,
+                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+
+            vector<float> slopes(features_number), offsets(features_number);
+            vector<unsigned char> log_pre(features_number, 0), exp_post(features_number, 0);
+            bool any_flag = false;
+
+            for (Index f = 0; f < features_number; ++f)
+            {
+                const Descriptives& d = descriptives[size_t(f)];
+                float slope = 1.0f;
+                float offset = 0.0f;
+
+                using enum ScalerMethod;
+                switch (scalers[size_t(f)])
+                {
+                case None:
+                    break;
+                case MinimumMaximum:
+                    if (is_unscaling)
+                    {
+                        if (abs(d.maximum - d.minimum) < EPSILON)
+                        {
+                            slope = 0.0f;
+                            offset = d.minimum;
+                        }
+                        else
+                        {
+                            slope = (d.maximum - d.minimum) / (max_range - min_range);
+                            offset = d.minimum - min_range * slope;
+                        }
+                    }
+                    else
+                    {
+                        if (d.maximum - d.minimum < EPSILON)
+                            slope = 0.0f;
+                        else
+                        {
+                            slope = (max_range - min_range) / (d.maximum - d.minimum);
+                            offset = min_range - d.minimum * slope;
+                        }
+                    }
+                    break;
+                case MeanStandardDeviation:
+                    if (is_unscaling)
+                    {
+                        slope = d.standard_deviation;
+                        offset = d.mean;
+                    }
+                    else if (d.standard_deviation > EPSILON)
+                    {
+                        slope = 1.0f / d.standard_deviation;
+                        offset = -d.mean / d.standard_deviation;
+                    }
+                    else
+                        slope = 0.0f;
+                    break;
+                case StandardDeviation:
+                    if (is_unscaling)
+                        slope = d.standard_deviation;
+                    else if (d.standard_deviation > EPSILON)
+                        slope = 1.0f / d.standard_deviation;
+                    else
+                        slope = 0.0f;
+                    break;
+                case Logarithm:
+                    (is_unscaling ? exp_post : log_pre)[size_t(f)] = 1;
+                    any_flag = true;
+                    break;
+                case ImageMinMax:
+                    slope = is_unscaling ? 255.0f : 1.0f / 255.0f;
+                    break;
+                default:
+                    throw runtime_error("ModelExpression: unknown scaling method.");
+                }
+
+                slopes[size_t(f)] = slope;
+                offsets[size_t(f)] = offset;
+            }
+
+            emit_float_array(table_prefix + "_a", slopes);
+            emit_float_array(table_prefix + "_b", offsets);
+
+            const string target = take_buffer();
+
+            if (any_flag)
+            {
+                uses_affine_flags = true;
+                emit_byte_array(table_prefix + "_log_pre", log_pre);
+                emit_byte_array(table_prefix + "_exp_post", exp_post);
+                body << "\tnn_affine_flags_forward(" << current << ", " << table_prefix << "_log_pre, "
+                     << table_prefix << "_a, " << table_prefix << "_b, " << table_prefix << "_exp_post, "
+                     << features_number << ", " << target << ");\n";
+            }
+            else
+            {
+                uses_affine = true;
+                body << "\tnn_affine_forward(" << current << ", " << table_prefix << "_a, "
+                     << table_prefix << "_b, " << features_number << ", " << target << ");\n";
+            }
+
+            current = target;
+            max_width = max(max_width, features_number);
+        }
+        else if (layer_type == LayerType::Dense)
+        {
+            const Dense* dense = static_cast<const Dense*>(layers[i].get());
+
+            throw_if(dense->get_batch_normalization(),
+                     "ModelExpression: batch normalization is not supported in the exported model.");
+
+            const vector<TensorView>& parameter_views = dense->get_parameter_views();
+
+            throw_if(parameter_views.size() < 2 || !parameter_views[0].data || !parameter_views[1].data,
+                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+
+            const Index layer_inputs = dense->get_inputs_number();
+            const Index layer_outputs = dense->get_outputs_number();
+
+            const float* bias_data = parameter_views[0].as<float>();
+            const float* weight_data = parameter_views[1].as<float>();
+
+            emit_float_array(table_prefix + "_weights",
+                             vector<float>(weight_data, weight_data + layer_inputs * layer_outputs));
+            emit_float_array(table_prefix + "_biases",
+                             vector<float>(bias_data, bias_data + layer_outputs));
+
+            const ActivationFunction activation = dense->get_activation_function();
+
+            string activation_constant;
+
+            using enum ActivationFunction;
+            switch (activation)
+            {
+            case Identity:  activation_constant = "NN_IDENTITY";   break;
+            case Sigmoid:   activation_constant = "NN_SIGMOID";    break;
+            case Tanh:      activation_constant = "NN_TANH";       break;
+            case ReLU:      activation_constant = "NN_RELU";       break;
+            case LeakyReLU: activation_constant = "NN_LEAKY_RELU"; break;
+            case Softmax:
+                throw_if(!is_last,
+                         "ModelExpression: Softmax in a hidden layer is not supported for export.");
+                activation_constant = "NN_IDENTITY"; // raw logits, normalized below
+                break;
+            default:
+                throw runtime_error("ModelExpression: activation function not supported in embedded export.");
+            }
+
+            uses_dense = true;
+
+            const string target = take_buffer();
+
+            body << "\tnn_dense_forward(" << current << ", " << layer_inputs << ", "
+                 << table_prefix << "_weights, " << table_prefix << "_biases, "
+                 << layer_outputs << ", " << activation_constant << ", " << target << ");\n";
+
+            current = target;
+
+            if (activation == Softmax)
+            {
+                uses_softmax = true;
+                body << "\tnn_softmax_inplace(" << current << ", " << layer_outputs << ");\n";
+            }
+
+            max_width = max(max_width, layer_outputs);
+        }
+        else if (layer_type == LayerType::Bounding)
+        {
+            const Bounding* bounding = static_cast<const Bounding*>(layers[i].get());
+
+            if (bounding->get_bounding_method() == Bounding::BoundingMethod::NoBounding)
+                continue;
+
+            const Index features_number = layers[i]->get_outputs_number();
+            const VectorR lower = bounding->get_lower_bounds();
+            const VectorR upper = bounding->get_upper_bounds();
+
+            throw_if(ssize(lower) < features_number || ssize(upper) < features_number,
+                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+
+            emit_float_array(table_prefix + "_lower",
+                             vector<float>(lower.data(), lower.data() + features_number));
+            emit_float_array(table_prefix + "_upper",
+                             vector<float>(upper.data(), upper.data() + features_number));
+
+            uses_clamp = true;
+
+            body << "\tnn_clamp_inplace(" << in_place_target() << ", " << table_prefix << "_lower, "
+                 << table_prefix << "_upper, " << features_number << ");\n";
+        }
+        else
+        {
+            throw runtime_error(format("ModelExpression: layer '{}' ({}) is not supported in embedded export.",
+                                       layer_labels[i], layer_type_map().to_string(layer_type)));
+        }
+    }
+
+    throw_if(current == "inputs", "ModelExpression: the network has no layers to export.");
+
+    ostringstream buffer;
+
+    buffer << c_header;
+
+    for (size_t i = 0; i < input_names.size(); ++i)
+        buffer << "\n// \t " << i << ")  " << input_names[i];
+
+    buffer << "\n \n \n#include <math.h>\n\n"
+              "#ifndef OPENNN_EXPORT_NO_MAIN\n"
+              "#include <stdio.h>\n"
+              "#endif\n\n"
+              "#define NN_INPUTS_NUMBER " << inputs_number << "\n"
+              "#define NN_OUTPUTS_NUMBER " << outputs_number << "\n"
+              "#define NN_MAX_WIDTH " << max_width << "\n\n";
+
+    if (uses_dense)
+        buffer << "typedef enum { NN_IDENTITY, NN_SIGMOID, NN_TANH, NN_RELU, NN_LEAKY_RELU } nn_activation;\n\n"
+                  "static float nn_activation_forward(nn_activation activation, float x)\n{\n"
+                  "\tswitch (activation)\n\t{\n"
+                  "\tcase NN_SIGMOID:    return 1.0f / (1.0f + expf(-x));\n"
+                  "\tcase NN_TANH:       return tanhf(x);\n"
+                  "\tcase NN_RELU:       return x > 0.0f ? x : 0.0f;\n"
+                  "\tcase NN_LEAKY_RELU: return x >= 0.0f ? x : x * " << c_float_literal(LEAKY_RELU_SLOPE) << ";\n"
+                  "\tdefault:            return x;\n"
+                  "\t}\n}\n\n"
+                  "static void nn_dense_forward(const float* inputs, int inputs_number,\n"
+                  "                             const float* weights, const float* biases,\n"
+                  "                             int outputs_number, nn_activation activation, float* outputs)\n{\n"
+                  "\tfor (int j = 0; j < outputs_number; ++j)\n\t{\n"
+                  "\t\tfloat sum = biases[j];\n"
+                  "\t\tfor (int i = 0; i < inputs_number; ++i)\n"
+                  "\t\t\tsum += inputs[i] * weights[i * outputs_number + j];\n"
+                  "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
+                  "\t}\n}\n\n";
+
+    if (uses_affine)
+        buffer << "static void nn_affine_forward(const float* inputs, const float* a, const float* b,\n"
+                  "                              int n, float* outputs)\n{\n"
+                  "\tfor (int i = 0; i < n; ++i)\n"
+                  "\t\toutputs[i] = a[i] * inputs[i] + b[i];\n"
+                  "}\n\n";
+
+    if (uses_affine_flags)
+        buffer << "static void nn_affine_flags_forward(const float* inputs, const unsigned char* log_pre,\n"
+                  "                                    const float* a, const float* b,\n"
+                  "                                    const unsigned char* exp_post, int n, float* outputs)\n{\n"
+                  "\tfor (int i = 0; i < n; ++i)\n"
+                  "\t{\n"
+                  "\t\tfloat value = log_pre[i] ? logf(inputs[i]) : inputs[i];\n"
+                  "\t\tvalue = a[i] * value + b[i];\n"
+                  "\t\toutputs[i] = exp_post[i] ? expf(value) : value;\n"
+                  "\t}\n}\n\n";
+
+    if (uses_softmax)
+        buffer << "static void nn_softmax_inplace(float* values, int n)\n{\n"
+                  "\tfloat max_value = values[0];\n"
+                  "\tfor (int i = 1; i < n; ++i) if (values[i] > max_value) max_value = values[i];\n"
+                  "\tfloat sum = 0.0f;\n"
+                  "\tfor (int i = 0; i < n; ++i) { values[i] = expf(values[i] - max_value); sum += values[i]; }\n"
+                  "\tfor (int i = 0; i < n; ++i) values[i] /= sum;\n"
+                  "}\n\n";
+
+    if (uses_clamp)
+        buffer << "static void nn_clamp_inplace(float* values, const float* lower, const float* upper, int n)\n{\n"
+                  "\tfor (int i = 0; i < n; ++i)\n"
+                  "\t{\n"
+                  "\t\tif (values[i] < lower[i]) values[i] = lower[i];\n"
+                  "\t\tif (values[i] > upper[i]) values[i] = upper[i];\n"
+                  "\t}\n}\n\n";
+
+    buffer << tables.str();
+
+    buffer << "float* calculate_outputs(const float* inputs)\n{\n";
+
+    if (buffer_used[0])
+        buffer << "\tstatic float nn_buffer_a[NN_MAX_WIDTH];\n";
+    if (buffer_used[1])
+        buffer << "\tstatic float nn_buffer_b[NN_MAX_WIDTH];\n";
+
+    buffer << "\n" << body.str()
+           << "\n\treturn " << current << ";\n}\n\n";
+
+    emit_c_main(buffer);
+
+    return buffer.str();
 }
 
 string ModelExpression::get_expression_php() const
@@ -1200,6 +1599,7 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     switch (language)
     {
     case C:          file << get_expression_c();          break;
+    case CEmbedded:  file << get_expression_c_embedded(); break;
     case Python:     file << get_expression_python();     break;
     case JavaScript: file << get_expression_javascript(); break;
     case PHP:        file << get_expression_php();        break;

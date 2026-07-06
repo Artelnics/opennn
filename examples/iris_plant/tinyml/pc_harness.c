@@ -11,7 +11,13 @@
 //              -o pc_harness pc_harness.c -lm
 
 #define OPENNN_EXPORT_NO_MAIN
-#include "iris_model.c"
+
+// Model source selectable at compile time:
+//   -DNN_MODEL_FILE='"iris_model_tables.c"' tests the CEmbedded backend.
+#ifndef NN_MODEL_FILE
+#define NN_MODEL_FILE "iris_model.c"
+#endif
+#include NN_MODEL_FILE
 
 #include <stdio.h>
 #include <stdint.h>

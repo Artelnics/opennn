@@ -41,29 +41,42 @@ mkdir -p "$WORK"
 echo "=== 1. Train and export (iris_plant example) ==="
 if [ "$1" != "--skip-training" ] || [ ! -f "$WORK/iris_model.c" ]; then
     (cd "$RUN_DIR" && ./iris_plant)
-    cp "$RUN_DIR/iris_model.c" "$RUN_DIR/iris_reference.csv" "$WORK/"
+    cp "$RUN_DIR/iris_model.c" "$RUN_DIR/iris_model_tables.c" "$RUN_DIR/iris_reference.csv" "$WORK/"
 fi
 
 echo "=== 2. Generate test vectors header ==="
 python3 "$TINYML_DIR/make_test_vectors.py" "$WORK/iris_reference.csv" "$WORK/test_vectors.h" $N_INPUTS $N_OUTPUTS
 
-echo "=== 3. Exported model on PC ==="
-gcc -O2 -std=c99 -I"$WORK" -o "$WORK/pc_harness" "$TINYML_DIR/pc_harness.c" -lm
-"$WORK/pc_harness" > "$WORK/pc_output.txt"
-cat "$WORK/pc_output.txt"
+# Test both C backends: 'expression' (unrolled formulas) and 'tables' (CEmbedded)
+FAILED=0
+for VARIANT in expression tables; do
+    if [ "$VARIANT" = "expression" ]; then MODEL_FILE="iris_model.c"; else MODEL_FILE="iris_model_tables.c"; fi
 
-echo "=== 4. Exported model for ATmega328P (Arduino Uno) ==="
-"$AVR_GCC" -mmcu=atmega328p -DF_CPU=16000000UL -Os -std=gnu99 \
-    -I"$WORK" -o "$WORK/iris_avr.elf" "$TINYML_DIR/avr_harness.c" -lm
-echo "--- Memory footprint (ATmega328P: 32 KB flash, 2 KB RAM) ---"
-"$AVR_BIN_DIR/avr-size" "$WORK/iris_avr.elf"
+    echo ""
+    echo "########## Variant: $VARIANT ($MODEL_FILE) ##########"
 
-echo "=== 5. Run in simavr emulator ==="
-# simavr echoes the firmware's UART on stderr (colorized), so capture both streams.
-timeout 120 "$SIMAVR" -m atmega328p -f 16000000 "$WORK/iris_avr.elf" \
-    > "$WORK/avr_output.txt" 2>&1 || true
-cat "$WORK/avr_output.txt"
+    echo "=== 3. Exported model on PC ==="
+    gcc -O2 -std=c99 -DNN_MODEL_FILE="\"$MODEL_FILE\"" -I"$WORK" \
+        -o "$WORK/pc_harness_$VARIANT" "$TINYML_DIR/pc_harness.c" -lm
+    "$WORK/pc_harness_$VARIANT" > "$WORK/pc_output_$VARIANT.txt"
 
-echo "=== 6. Parity check ==="
-python3 "$TINYML_DIR/compare_outputs.py" "$WORK/iris_reference.csv" \
-    "$WORK/pc_output.txt" "$WORK/avr_output.txt"
+    echo "=== 4. Exported model for ATmega328P (Arduino Uno) ==="
+    "$AVR_GCC" -mmcu=atmega328p -DF_CPU=16000000UL -Os -std=gnu99 \
+        -DNN_MODEL_FILE="\"$MODEL_FILE\"" -I"$WORK" \
+        -o "$WORK/iris_avr_$VARIANT.elf" "$TINYML_DIR/avr_harness.c" -lm
+    echo "--- Memory footprint (ATmega328P: 32 KB flash, 2 KB RAM) ---"
+    "$AVR_BIN_DIR/avr-size" "$WORK/iris_avr_$VARIANT.elf"
+
+    echo "=== 5. Run in simavr emulator ==="
+    # simavr echoes the firmware's UART on stderr (colorized), so capture both streams.
+    timeout 120 "$SIMAVR" -m atmega328p -f 16000000 "$WORK/iris_avr_$VARIANT.elf" \
+        > "$WORK/avr_output_$VARIANT.txt" 2>&1 || true
+
+    echo "=== 6. Parity check ==="
+    python3 "$TINYML_DIR/compare_outputs.py" "$WORK/iris_reference.csv" \
+        "$WORK/pc_output_$VARIANT.txt" "$WORK/avr_output_$VARIANT.txt" || FAILED=1
+done
+
+echo ""
+if [ "$FAILED" -ne 0 ]; then echo "RESULT: FAILED"; exit 1; fi
+echo "RESULT: ALL VARIANTS PASSED"
