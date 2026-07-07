@@ -1,11 +1,11 @@
 #include "pch.h"
 
-#include "../opennn/tensor_types.h"
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/variable.h"
-#include "../opennn/batch.h"
-#include "../opennn/configuration.h"
+#include "opennn/tensor_types.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/variable.h"
+#include "opennn/batch.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 

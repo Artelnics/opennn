@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/loss.h"
-#include "../opennn/standard_networks.h"
+#include "opennn/dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/loss.h"
 
 using namespace opennn;
 

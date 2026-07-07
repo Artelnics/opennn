@@ -8,14 +8,14 @@
 
 #include <iostream>
 
-#include "../../opennn/tabular_dataset.h"
-#include "../../opennn/neural_network.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimizer.h"
-#include "../../opennn/stochastic_gradient_descent.h"
-#include "../../opennn/random_utilities.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
+#include "opennn/testing_analysis.h"
+#include "opennn/optimizer.h"
+#include "opennn/stochastic_gradient_descent.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

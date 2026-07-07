@@ -1,10 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/training_strategy.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/training_strategy.h"
+#include "opennn/standard_networks.h"
 
 using namespace opennn;
 

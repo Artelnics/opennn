@@ -15,12 +15,12 @@
 #include <iostream>
 #include <string>
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/optimizer.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/random_utilities.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
+#include "opennn/optimizer.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/random_utilities.h"
 
 // windows.h must come after the OpenNN/Eigen headers and with NOMINMAX so its
 // min/max macros do not clobber std::min / std::max inside those headers.

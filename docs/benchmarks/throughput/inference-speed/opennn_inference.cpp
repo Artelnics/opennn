@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/neural_network.h"
-#include "../../../opennn/dense_layer.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/cpu_math_backend.h"
-#include "../../../opennn/random_utilities.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/dense_layer.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/configuration.h"
+#include "opennn/cpu_math_backend.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 using clock_type = std::chrono::steady_clock;

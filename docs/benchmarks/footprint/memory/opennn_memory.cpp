@@ -27,12 +27,12 @@ static int current_pid() { return _getpid(); }
 static int current_pid() { return getpid(); }
 #endif
 
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/device_backend.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/configuration.h"
+#include "opennn/device_backend.h"
+#include "opennn/standard_networks.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/training_strategy.h"
 
 using namespace opennn;
 

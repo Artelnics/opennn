@@ -15,15 +15,15 @@
 #include <chrono>
 #include <iostream>
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/unscaling_layer.h"
-#include "../../../opennn/bounding_layer.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/configuration.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/unscaling_layer.h"
+#include "opennn/bounding_layer.h"
+#include "opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/random_utilities.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 

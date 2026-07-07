@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "../opennn/model_expression.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
+#include "opennn/model_expression.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
 
 #include <fstream>
 #include <sstream>

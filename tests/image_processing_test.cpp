@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../opennn/image_processing.h"
+#include "opennn/image_processing.h"
 
 using namespace opennn;
 

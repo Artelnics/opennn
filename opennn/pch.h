@@ -76,7 +76,7 @@
 #include <cuda_bf16.h>
 #include <nvtx3/nvToolsExt.h>
 
-#include "../opennn/kernel.cuh"
+#include "opennn/kernel.cuh"
 
 template <typename T>
 void check_cuda_status(T status, const char* msg,

@@ -12,15 +12,15 @@
 #include <iostream>
 #include <string>
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/unscaling_layer.h"
-#include "../../../opennn/bounding_layer.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/device_backend.h"
-#include "../../../opennn/tensor_types.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/configuration.h"
+#include "opennn/standard_networks.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/unscaling_layer.h"
+#include "opennn/bounding_layer.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/device_backend.h"
+#include "opennn/tensor_types.h"
+#include "opennn/random_utilities.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 

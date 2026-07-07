@@ -1,10 +1,10 @@
 #include "pch.h"
 
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/layer.h"
-#include "../opennn/dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
+#include "opennn/dense_layer.h"
+#include "opennn/layer.h"
+#include "opennn/dataset.h"
 
 using namespace opennn;
 

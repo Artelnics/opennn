@@ -18,11 +18,11 @@
 
 #include <cmath>
 
-#include "../opennn/tensor_types.h"
-#include "../opennn/configuration.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/neural_network.h"
+#include "opennn/tensor_types.h"
+#include "opennn/configuration.h"
+#include "opennn/dense_layer.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/neural_network.h"
 
 #ifdef __linux__
 #include <fstream>

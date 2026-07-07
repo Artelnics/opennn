@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/transformer_decoder.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/language_dataset.h"
+#include "opennn/transformer_decoder.h"
+#include "opennn/standard_networks.h"
+#include "opennn/language_dataset.h"
 
 using namespace opennn;
 

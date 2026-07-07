@@ -38,15 +38,15 @@
 
 #include <cuda_runtime.h>
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/language_dataset.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/device_backend.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/memory_debug.h"
+#include "opennn/standard_networks.h"
+#include "opennn/language_dataset.h"
+#include "opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/configuration.h"
+#include "opennn/device_backend.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/random_utilities.h"
+#include "opennn/memory_debug.h"
 
 using namespace opennn;
 

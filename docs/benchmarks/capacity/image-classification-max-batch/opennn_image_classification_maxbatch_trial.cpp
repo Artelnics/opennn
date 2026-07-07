@@ -11,13 +11,13 @@
 #include <unistd.h>
 #include <vector>
 
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/image_dataset.h"
-#include "../../../opennn/memory_debug.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/configuration.h"
+#include "opennn/image_dataset.h"
+#include "opennn/memory_debug.h"
+#include "opennn/random_utilities.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
 
 using namespace opennn;
 

@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "../opennn/flatten_layer.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/loss.h"
+#include "opennn/flatten_layer.h"
+#include "opennn/dense_layer.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/loss.h"
 
 using namespace opennn;
 

@@ -1,10 +1,10 @@
 ﻿#include "pch.h"
-#include "../opennn/tensor_types.h"
-#include "../opennn/tensor_operations.h"
-#include "../opennn/dropout_operator.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/random_utilities.h"
+#include "opennn/tensor_types.h"
+#include "opennn/tensor_operations.h"
+#include "opennn/dropout_operator.h"
+#include "opennn/dense_layer.h"
+#include "opennn/neural_network.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

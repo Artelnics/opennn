@@ -45,18 +45,18 @@
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
-#include "../../../opennn/device_backend.h"
+#include "opennn/device_backend.h"
 #endif
 
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/dense_layer.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/memory_debug.h"
-#include "../../../opennn/neural_network.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/configuration.h"
+#include "opennn/dense_layer.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/memory_debug.h"
+#include "opennn/neural_network.h"
+#include "opennn/random_utilities.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/training_strategy.h"
 
 #ifndef _WIN32
 #include <sys/resource.h>

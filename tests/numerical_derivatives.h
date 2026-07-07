@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "../opennn/pch.h"
-#include "../opennn/loss.h"
+#include "opennn/pch.h"
+#include "opennn/loss.h"
 
 namespace opennn
 {

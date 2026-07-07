@@ -1,11 +1,11 @@
 #include "pch.h"
 
-#include "../opennn/yolo_dataset.h"
-#include "../opennn/detection_layer.h"
-#include "../opennn/convolutional_layer.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/loss.h"
-#include "../opennn/adaptive_moment_estimation.h"
+#include "opennn/yolo_dataset.h"
+#include "opennn/detection_layer.h"
+#include "opennn/convolutional_layer.h"
+#include "opennn/neural_network.h"
+#include "opennn/loss.h"
+#include "opennn/adaptive_moment_estimation.h"
 
 #include <cstdint>
 #include <filesystem>

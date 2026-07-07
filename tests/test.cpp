@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "../opennn/configuration.h"
+#include "opennn/configuration.h"
 
 using namespace std;
 using namespace opennn;

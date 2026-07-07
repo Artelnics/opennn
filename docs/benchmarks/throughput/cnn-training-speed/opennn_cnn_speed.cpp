@@ -12,17 +12,17 @@
 #include <iostream>
 #include <string>
 
-#include "../../../opennn/image_dataset.h"
-#include "../../../opennn/neural_network.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/convolutional_layer.h"
-#include "../../../opennn/pooling_layer.h"
-#include "../../../opennn/flatten_layer.h"
-#include "../../../opennn/dense_layer.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/configuration.h"
+#include "opennn/image_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/convolutional_layer.h"
+#include "opennn/pooling_layer.h"
+#include "opennn/flatten_layer.h"
+#include "opennn/dense_layer.h"
+#include "opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/random_utilities.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 using clock_type = std::chrono::steady_clock;

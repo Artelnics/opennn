@@ -9,16 +9,16 @@
 #include <iostream>
 #include <string>
 
-#include "../../opennn/tabular_dataset.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/bounding_layer.h"
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/testing_analysis.h"
-#include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimizer.h"
-#include "../../opennn/stochastic_gradient_descent.h"
-#include "../../opennn/random_utilities.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/bounding_layer.h"
+#include "opennn/training_strategy.h"
+#include "opennn/testing_analysis.h"
+#include "opennn/model_selection.h"
+#include "opennn/testing_analysis.h"
+#include "opennn/optimizer.h"
+#include "opennn/stochastic_gradient_descent.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

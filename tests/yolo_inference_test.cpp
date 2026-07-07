@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-#include "../opennn/yolo_dataset.h"
+#include "opennn/yolo_dataset.h"
 
 using namespace opennn;
 

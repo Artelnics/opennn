@@ -183,7 +183,12 @@ set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 # (which links Eigen3::Eigen) resolves via find_dependency(Eigen3). Defaults
 # to OFF when Eigen is not the top-level project.
 set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(eigen)
+
+find_package(Eigen3 CONFIG QUIET)
+
+if(NOT Eigen3_FOUND)
+    FetchContent_MakeAvailable(eigen)
+endif()
 
 add_subdirectory(opennn)
 

@@ -21,12 +21,12 @@
 
 #include <cuda_runtime.h>
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/language_dataset.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/random_utilities.h"
+#include "opennn/standard_networks.h"
+#include "opennn/language_dataset.h"
+#include "opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/configuration.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 
