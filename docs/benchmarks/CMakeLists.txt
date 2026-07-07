@@ -9,46 +9,46 @@ project(benchmarks)
 # opennn_capacity measures the peak working set via psapi (Windows-only).
 if(WIN32)
     add_executable(opennn_capacity
-        capacity/opennn_capacity.cpp)
+        capacity/data-capacity/opennn_capacity.cpp)
     target_link_libraries(opennn_capacity PUBLIC opennn psapi)
 endif()
 
 add_executable(opennn_memory
-    memory/opennn_memory.cpp)
+    footprint/memory/opennn_memory.cpp)
 if(WIN32)
     target_link_libraries(opennn_memory PUBLIC psapi)
 endif()
 
 add_executable(opennn_speed
-    training-speed/opennn_speed.cpp)
+    throughput/training-speed/opennn_speed.cpp)
 
 add_executable(opennn_higgs_cpu
-    higgs/opennn_higgs_cpu.cpp)
+    throughput/higgs/opennn_higgs_cpu.cpp)
 
 add_executable(opennn_higgs_maxbatch_trial
-    higgs-max-batch/opennn_higgs_maxbatch_trial.cpp)
+    capacity/higgs-max-batch/opennn_higgs_maxbatch_trial.cpp)
 
 add_executable(opennn_inference
-    inference-speed/opennn_inference.cpp)
+    throughput/inference-speed/opennn_inference.cpp)
 
 add_executable(opennn_resnet50_speed
-    resnet50-training-speed/opennn_resnet50_speed.cpp)
+    throughput/resnet50-training-speed/opennn_resnet50_speed.cpp)
 
 add_executable(opennn_resnet50_maxbatch_trial
-    resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
+    capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
 
 add_executable(opennn_image_classification_maxbatch_trial
-    image-classification-max-batch/opennn_image_classification_maxbatch_trial.cpp)
+    capacity/image-classification-max-batch/opennn_image_classification_maxbatch_trial.cpp)
 
 add_executable(opennn_transformer_maxbatch_trial
-    transformer-max-batch/opennn_transformer_maxbatch_trial.cpp)
+    capacity/transformer-max-batch/opennn_transformer_maxbatch_trial.cpp)
 
 add_executable(opennn_transformer_energy
-    energy/opennn_transformer_energy.cpp)
+    energy/transformer-energy/opennn_transformer_energy.cpp)
 
 # run_forecasting.py looks for this exact binary name in build/bin.
 add_executable(recurrent_lstm_forecasting_benchmark
-    recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)
+    quality/recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)
 
 foreach(benchmark_target
         opennn_memory

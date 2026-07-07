@@ -1,0 +1,4 @@
+opennn_convergence
+*.csv
+*.log
+__pycache__/

@@ -1,0 +1,11 @@
+# compiled benchmark binaries
+opennn_transformer_resident
+opennn_transformer_infer
+opennn_transformer_train
+opennn_attention_validate
+*.log
+
+# generated corpora + dataset caches (make_synthetic_corpus.py / LanguageDataset)
+*corpus*.txt
+sv_s*.txt
+*.cache/

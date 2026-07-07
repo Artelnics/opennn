@@ -11,14 +11,14 @@ versions, and result artifacts are archived.
 
 | Track | Evidence | Current gap |
 |---|---|---|
-| CPU runtime size | [`size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Archive measurement commands and versions. |
-| GPU deployment size | [`size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Archive CUDA/cuDNN library list. |
-| Startup latency | [`startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Store result JSON and cold-cache protocol. |
-| Peak training memory | [`peak-memory-opennn-vs-pytorch-vs-tensorflow.md`](peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | Store result JSON and process measurement method. |
-| Data capacity | [`data-capacity-opennn-vs-pytorch-vs-tensorflow.md`](data-capacity-opennn-vs-pytorch-vs-tensorflow.md) | Store result JSON and TensorFlow capacity measurement. |
-| Install dependencies | [`dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Archive package commands and exact versions. |
-| Standalone export | [`code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Archive generated source proof. |
-| Transformer inference | [`transformer-inference-gpu-opennn-vs-pytorch.md`](transformer-inference-gpu-opennn-vs-pytorch.md) | Rerun with complete provenance on the reference machine. |
+| CPU runtime size | [`size-cpu-opennn-vs-pytorch-vs-tensorflow.md`](footprint/size-cpu-opennn-vs-pytorch-vs-tensorflow.md) | Archive measurement commands and versions. |
+| GPU deployment size | [`size-gpu-opennn-vs-pytorch-vs-tensorflow.md`](footprint/size-gpu-opennn-vs-pytorch-vs-tensorflow.md) | Archive CUDA/cuDNN library list. |
+| Startup latency | [`startup-latency-opennn-vs-pytorch-vs-tensorflow.md`](footprint/startup/startup-latency-opennn-vs-pytorch-vs-tensorflow.md) | Store result JSON and cold-cache protocol. |
+| Peak training memory | [`peak-memory-opennn-vs-pytorch-vs-tensorflow.md`](footprint/memory/peak-memory-opennn-vs-pytorch-vs-tensorflow.md) | Store result JSON and process measurement method. |
+| Data capacity | [`data-capacity-opennn-vs-pytorch-vs-tensorflow.md`](capacity/data-capacity/data-capacity-opennn-vs-pytorch-vs-tensorflow.md) | Store result JSON and TensorFlow capacity measurement. |
+| Install dependencies | [`dependencies-opennn-vs-pytorch-vs-tensorflow.md`](footprint/dependencies-opennn-vs-pytorch-vs-tensorflow.md) | Archive package commands and exact versions. |
+| Standalone export | [`code-export-opennn-vs-pytorch-vs-tensorflow.md`](footprint/export/code-export-opennn-vs-pytorch-vs-tensorflow.md) | Archive generated source proof. |
+| Transformer inference | [`transformer-inference-gpu-opennn-vs-pytorch.md`](throughput/attention-speed/transformer-inference-gpu-opennn-vs-pytorch.md) | Rerun with complete provenance on the reference machine. |
 
 ## Supporting Evidence
 
@@ -27,11 +27,11 @@ headline.
 
 | Track | Evidence | Notes |
 |---|---|---|
-| Rosenbrock accuracy | [`accuracy-opennn-vs-pytorch-vs-tensorflow.md`](accuracy-opennn-vs-pytorch-vs-tensorflow.md) | Quality sanity check on a small synthetic task. |
-| Rosenbrock precision | [`precision-opennn-vs-pytorch-vs-tensorflow.md`](precision-opennn-vs-pytorch-vs-tensorflow.md) | Optimizer/workflow comparison, not a deep-learning scale claim. |
-| Native source LOC | [`loc-opennn-vs-pytorch-vs-tensorflow.md`](loc-opennn-vs-pytorch-vs-tensorflow.md) | Context metric with counting caveats. |
-| Application LOC | [`application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md`](application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md) | API ergonomics metric; style-sensitive. |
-| Native Windows GPU capability | [`gpu-on-windows-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](gpu-on-windows-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Capability matrix, not throughput. |
+| Rosenbrock accuracy | [`accuracy-opennn-vs-pytorch-vs-tensorflow.md`](quality/accuracy/accuracy-opennn-vs-pytorch-vs-tensorflow.md) | Quality sanity check on a small synthetic task. |
+| Rosenbrock precision | [`precision-opennn-vs-pytorch-vs-tensorflow.md`](quality/precision/precision-opennn-vs-pytorch-vs-tensorflow.md) | Optimizer/workflow comparison, not a deep-learning scale claim. |
+| Native source LOC | [`loc-opennn-vs-pytorch-vs-tensorflow.md`](footprint/loc-opennn-vs-pytorch-vs-tensorflow.md) | Context metric with counting caveats. |
+| Application LOC | [`application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md`](footprint/application-loc/application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md) | API ergonomics metric; style-sensitive. |
+| Native Windows GPU capability | [`gpu-on-windows-opennn-vs-pytorch-vs-tensorflow.md`](footprint/gpu-on-windows-opennn-vs-pytorch-vs-tensorflow.md) | Capability matrix, not throughput. |
 
 ## Internal Tracks
 
@@ -39,11 +39,11 @@ These tracks are useful for engineering and migration, but not public claims.
 
 | Track | Evidence | Next action |
 |---|---|---|
-| CPU HIGGS dense training | [`higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS split with repeated samples and committed result JSON. |
-| CPU HIGGS dense inference | [`higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS test split and measure CPU energy outside WSL. |
-| HIGGS dense max batch, GPU + capped CPU (train + infer) | [`higgs-max-batch/README.md`](higgs-max-batch/README.md) | Harness ready; run on the reference GPU (fp32/bf16) and the CPU RLIMIT_DATA-capped matrix, archive the result JSONs. |
-| GPU Transformer max batch (train + infer) | [`transformer-max-batch/README.md`](transformer-max-batch/README.md) | Alpaca train mode measured (RTX 4080); run the new infer mode and the WMT14 corpus, archive result JSON. |
-| Recurrent/LSTM forecasting | [`recurrent-lstm-forecasting-opennn.md`](recurrent-lstm-forecasting-opennn.md) | Run on the reference Linux GPU and archive raw output. |
+| CPU HIGGS dense training | [`higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`](throughput/higgs/higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS split with repeated samples and committed result JSON. |
+| CPU HIGGS dense inference | [`higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`](throughput/higgs/higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | Rerun full HIGGS test split and measure CPU energy outside WSL. |
+| HIGGS dense max batch, GPU + capped CPU (train + infer) | [`higgs-max-batch/README.md`](capacity/higgs-max-batch/README.md) | Harness ready; run on the reference GPU (fp32/bf16) and the CPU RLIMIT_DATA-capped matrix, archive the result JSONs. |
+| GPU Transformer max batch (train + infer) | [`transformer-max-batch/README.md`](capacity/transformer-max-batch/README.md) | Alpaca train mode measured (RTX 4080); run the new infer mode and the WMT14 corpus, archive result JSON. |
+| Recurrent/LSTM forecasting | [`recurrent-lstm-forecasting-opennn.md`](quality/recurrent-lstm-forecasting/recurrent-lstm-forecasting-opennn.md) | Run on the reference Linux GPU and archive raw output. |
 
 ## Hold Back
 
@@ -52,11 +52,11 @@ resolved.
 
 | Track | Evidence | Blocker |
 |---|---|---|
-| GPU CNN training | [`cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md`](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md) | Competitor paths need optimized or explicitly scoped comparison. |
-| GPU ResNet-50 training | [`resnet50-training-speed-gpu-opennn-vs-pytorch.md`](resnet50-training-speed-gpu-opennn-vs-pytorch.md) | Needs repeated result JSON and reference-machine rerun. |
-| GPU ResNet-50 max batch | [`resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md`](resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md) | Current result is memory-regression evidence, not an OpenNN headline win. |
-| CPU inference speed | [`inference-speed-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md`](inference-speed-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md) | Needs reference Linux rerun and checksum gate. |
-| Transformer training | [`transformer-training-gpu-opennn-vs-pytorch.md`](transformer-training-gpu-opennn-vs-pytorch.md) | Needs repeated-run JSON and quality gate. |
+| GPU CNN training | [`cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md`](throughput/cnn-training-speed/cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md) | Competitor paths need optimized or explicitly scoped comparison. |
+| GPU ResNet-50 training | [`resnet50-training-speed-gpu-opennn-vs-pytorch.md`](throughput/resnet50-training-speed/resnet50-training-speed-gpu-opennn-vs-pytorch.md) | Needs repeated result JSON and reference-machine rerun. |
+| GPU ResNet-50 max batch | [`resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md`](capacity/resnet50-max-batch/resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md) | Current result is memory-regression evidence, not an OpenNN headline win. |
+| CPU inference speed | [`inference-speed-opennn-vs-pytorch-vs-tensorflow.md`](throughput/inference-speed/inference-speed-opennn-vs-pytorch-vs-tensorflow.md) | Needs reference Linux rerun and checksum gate. |
+| Transformer training | [`transformer-training-gpu-opennn-vs-pytorch.md`](throughput/attention-speed/transformer-training-gpu-opennn-vs-pytorch.md) | Needs repeated-run JSON and quality gate. |
 
 ## Historical
 
@@ -65,5 +65,5 @@ HIGGS or newer model-specific benchmarks for new claims.
 
 | Track | Evidence | Replacement path |
 |---|---|---|
-| GPU dense Rosenbrock speed/capacity | [`rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md`](rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | Replace with HIGGS dense CPU/GPU evidence. |
-| GPU dense Rosenbrock energy | [`energy-consumption-gpu-opennn-vs-pytorch.md`](energy-consumption-gpu-opennn-vs-pytorch.md) | Replace with HIGGS/Transformer energy evidence. |
+| GPU dense Rosenbrock speed/capacity | [`rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md`](capacity/rosenbrock-max-batch/rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md) | Replace with HIGGS dense CPU/GPU evidence. |
+| GPU dense Rosenbrock energy | [`energy-consumption-gpu-opennn-vs-pytorch.md`](capacity/rosenbrock-max-batch/energy-consumption-gpu-opennn-vs-pytorch.md) | Replace with HIGGS/Transformer energy evidence. |

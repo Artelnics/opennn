@@ -6,66 +6,50 @@
  "description": "Current benchmark evidence index. The top-level markdown notes explain methodology; this manifest tracks runner maturity and publication-readiness gaps.",
  "legacy_artifacts": [
   {
-   "path": "accuracy/opennn_accuracy",
+   "path": "quality/accuracy/opennn_accuracy",
    "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
   },
   {
-   "path": "accuracy/pred_opennn.txt",
+   "path": "quality/accuracy/pred_opennn.txt",
    "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
   },
   {
-   "path": "accuracy/pred_pytorch.txt",
+   "path": "quality/accuracy/pred_pytorch.txt",
    "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
   },
   {
-   "path": "accuracy/pred_tensorflow.txt",
+   "path": "quality/accuracy/pred_tensorflow.txt",
    "reason": "tracked historical generated prediction output; replace future evidence with result JSON"
   },
   {
-   "path": "accuracy/rosenbrock_test.csv",
+   "path": "quality/accuracy/rosenbrock_test.csv",
    "reason": "tracked historical generated fixture; keep new generated data outside the repo"
   },
   {
-   "path": "accuracy/rosenbrock_train.csv",
+   "path": "quality/accuracy/rosenbrock_train.csv",
    "reason": "tracked historical generated fixture; keep new generated data outside the repo"
   },
   {
-   "path": "capacity/capacity_results.csv",
+   "path": "capacity/data-capacity/capacity_results.csv",
    "reason": "tracked historical generated result table; replace future evidence with result JSON"
   },
   {
-   "path": "export/opennn_export",
+   "path": "footprint/export/opennn_export",
    "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
   },
   {
-   "path": "inference-speed/model_inference.onnx",
-   "reason": "tracked historical generated ONNX model; regenerate outside the repo for future runs"
-  },
-  {
-   "path": "inference-speed/model_inference.onnx.data",
-   "reason": "tracked historical generated ONNX external data; regenerate outside the repo for future runs"
-  },
-  {
-   "path": "memory/opennn_memory",
+   "path": "footprint/memory/opennn_memory",
    "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
   },
   {
-   "path": "startup/model_startup.onnx",
-   "reason": "tracked historical generated ONNX model; regenerate outside the repo for future runs"
-  },
-  {
-   "path": "startup/model_startup.onnx.data",
-   "reason": "tracked historical generated ONNX external data; regenerate outside the repo for future runs"
-  },
-  {
-   "path": "startup/opennn_startup",
+   "path": "footprint/startup/opennn_startup",
    "reason": "tracked historical generated benchmark executable; replace future evidence with reproducible commands and result JSON"
   }
  ],
  "benchmarks": [
   {
    "id": "accuracy-rosenbrock",
-   "doc": "accuracy-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "quality/accuracy/accuracy-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "quality",
    "status": "current",
    "publication_readiness": "candidate_needs_raw_artifacts",
@@ -77,7 +61,7 @@
    "runner": {
     "status": "existing_script",
     "commands": [
-     "cd docs/benchmarks/accuracy && ./run_accuracy.sh"
+     "cd docs/benchmarks/quality/accuracy && ./run_accuracy.sh"
     ]
    },
    "needs": [
@@ -89,7 +73,7 @@
   },
   {
    "id": "precision-rosenbrock",
-   "doc": "precision-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "quality/precision/precision-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "training_quality",
    "status": "current",
    "publication_readiness": "candidate_needs_framing",
@@ -102,7 +86,7 @@
    "runner": {
     "status": "existing_script",
     "commands": [
-     "cd docs/benchmarks/precision && ./run_precision.sh"
+     "cd docs/benchmarks/quality/precision && ./run_precision.sh"
     ]
    },
    "needs": [
@@ -114,7 +98,7 @@
   },
   {
    "id": "gpu-cnn-training",
-   "doc": "cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "throughput/cnn-training-speed/cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "gpu_training",
    "status": "current_wsl2_laptop",
    "publication_readiness": "needs_optimized_competitor_paths",
@@ -128,7 +112,7 @@
    "runner": {
     "status": "existing_script_needs_result_json",
     "commands": [
-     "cd docs/benchmarks/cnn-training-speed && ./run_cnn_speed.sh 40 128"
+     "cd docs/benchmarks/throughput/cnn-training-speed && ./run_cnn_speed.sh 40 128"
     ]
    },
    "needs": [
@@ -140,7 +124,7 @@
   },
   {
    "id": "gpu-resnet50-training",
-   "doc": "resnet50-training-speed-gpu-opennn-vs-pytorch.md",
+   "doc": "throughput/resnet50-training-speed/resnet50-training-speed-gpu-opennn-vs-pytorch.md",
    "category": "gpu_training",
    "status": "current_wsl2_laptop",
    "publication_readiness": "candidate_needs_raw_artifacts",
@@ -154,8 +138,8 @@
    "runner": {
     "status": "writes_result_json",
     "commands": [
-     "cd docs/benchmarks/resnet50-training-speed && python run_resnet50.py --dataset cifar10 --epochs 5 --batch 128 --runs 5",
-     "cd docs/benchmarks/resnet50-training-speed && python run_imagenet_resnet50.py --data /path/to/imagenet --batches 64,32,16 --epochs 1 --runs 1 --precision fp32 --engines opennn,pytorch_fast,pytorch_eager --gpu-index 0 --require-gpu-idle --opennn-cache-dir /local_nvme/opennn-image-cache"
+     "cd docs/benchmarks/throughput/resnet50-training-speed && python run_resnet50.py --dataset cifar10 --epochs 5 --batch 128 --runs 5",
+     "cd docs/benchmarks/throughput/resnet50-training-speed && python run_imagenet_resnet50.py --data /path/to/imagenet --batches 64,32,16 --epochs 1 --runs 1 --precision fp32 --engines opennn,pytorch_fast,pytorch_eager --gpu-index 0 --require-gpu-idle --opennn-cache-dir /local_nvme/opennn-image-cache"
     ]
    },
    "needs": [
@@ -168,7 +152,7 @@
   },
   {
    "id": "gpu-resnet50-max-batch",
-   "doc": "resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "capacity/resnet50-max-batch/resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "gpu_training_capacity",
    "benchmark_class": "training_capacity",
    "status": "current_rtx4080_capacity_result",
@@ -184,7 +168,7 @@
     "status": "writes_result_json",
     "commands": [
      "cmake --build build-gpu --target opennn_resnet50_maxbatch_trial",
-     "cd docs/benchmarks/resnet50-max-batch && python run_resnet50_maxbatch.py --dataset cifar10 --precision fp32 --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128"
+     "cd docs/benchmarks/capacity/resnet50-max-batch && python run_resnet50_maxbatch.py --dataset cifar10 --precision fp32 --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128"
     ]
    },
    "latest_result": "results/gpu-resnet50-max-batch-cifar10-20260622T135753Z.json",
@@ -198,7 +182,7 @@
   },
   {
    "id": "gpu-dense-rosenbrock-speed-and-capacity",
-   "doc": "rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md",
+   "doc": "capacity/rosenbrock-max-batch/rosenbrock-maxbatch-and-speed-gpu-opennn-vs-pytorch.md",
    "category": "gpu_inference_training_capacity",
    "status": "current_wsl2_laptop",
    "publication_readiness": "needs_consolidated_build",
@@ -213,7 +197,7 @@
    "runner": {
     "status": "machine_specific_scripts",
     "commands": [
-     "cd docs/benchmarks/rosenbrock-max-batch && ./run_maxbatch.sh 1000 1000"
+     "cd docs/benchmarks/capacity/rosenbrock-max-batch && ./run_maxbatch.sh 1000 1000"
     ]
    },
    "needs": [
@@ -225,7 +209,7 @@
   },
   {
    "id": "gpu-dense-rosenbrock-energy",
-   "doc": "energy-consumption-gpu-opennn-vs-pytorch.md",
+   "doc": "capacity/rosenbrock-max-batch/energy-consumption-gpu-opennn-vs-pytorch.md",
    "category": "gpu_energy",
    "status": "current_3way_5run_wsl2_laptop",
    "publication_readiness": "candidate_native_windows_remeasure",
@@ -240,7 +224,7 @@
    "runner": {
     "status": "writes_result_json",
     "commands": [
-     "cd docs/benchmarks/rosenbrock-max-batch && python run_energy.py --mode both --batch 8000 --iters 2000 --runs 5"
+     "cd docs/benchmarks/capacity/rosenbrock-max-batch && python run_energy.py --mode both --batch 8000 --iters 2000 --runs 5"
     ]
    },
    "needs": [
@@ -251,7 +235,7 @@
   },
   {
    "id": "gpu-transformer-inference",
-   "doc": "transformer-inference-gpu-opennn-vs-pytorch.md",
+   "doc": "throughput/attention-speed/transformer-inference-gpu-opennn-vs-pytorch.md",
    "category": "gpu_inference",
    "status": "current_3way_5run_wsl2_laptop",
    "publication_readiness": "candidate_native_windows_remeasure",
@@ -266,7 +250,7 @@
    "runner": {
     "status": "writes_result_json",
     "commands": [
-     "cd docs/benchmarks/attention-speed && ./build.sh && python run_transformer.py --seqs 128,256,512 --batch 32 --runs 5 --precision bf16"
+     "cd docs/benchmarks/throughput/attention-speed && ./build.sh && python run_transformer.py --seqs 128,256,512 --batch 32 --runs 5 --precision bf16"
     ]
    },
    "needs": [
@@ -277,7 +261,7 @@
   },
   {
    "id": "gpu-transformer-training",
-   "doc": "transformer-training-gpu-opennn-vs-pytorch.md",
+   "doc": "throughput/attention-speed/transformer-training-gpu-opennn-vs-pytorch.md",
    "category": "gpu_training",
    "status": "current_wsl2_laptop",
    "publication_readiness": "needs_repeated_runs_and_quality_gate",
@@ -291,7 +275,7 @@
    "runner": {
     "status": "machine_specific_scripts",
     "commands": [
-     "cd docs/benchmarks/attention-speed && python make_synthetic_corpus.py corpus.txt 256 256 1024 1234 && ./build.sh opennn_transformer_train"
+     "cd docs/benchmarks/throughput/attention-speed && python make_synthetic_corpus.py corpus.txt 256 256 1024 1234 && ./build.sh opennn_transformer_train"
     ]
    },
    "needs": [
@@ -303,7 +287,7 @@
   },
   {
    "id": "recurrent-lstm-forecasting",
-   "doc": "recurrent-lstm-forecasting-opennn.md",
+   "doc": "quality/recurrent-lstm-forecasting/recurrent-lstm-forecasting-opennn.md",
    "category": "sequence_training",
    "benchmark_class": "training_throughput_with_quality",
    "division": "closed",
@@ -329,7 +313,7 @@
    "runner": {
     "status": "writes_result_json",
     "commands": [
-     "cmake --build build-gpu --target recurrent_lstm_forecasting_benchmark && cd docs/benchmarks/recurrent-lstm-forecasting && OPENNN_FORECASTING_BIN=../../../build-gpu/bin/recurrent_lstm_forecasting_benchmark python run_forecasting.py --gpu-index 0 --frameworks opennn,pytorch,tensorflow"
+     "cmake --build build-gpu --target recurrent_lstm_forecasting_benchmark && cd docs/benchmarks/quality/recurrent-lstm-forecasting && OPENNN_FORECASTING_BIN=../../../build-gpu/bin/recurrent_lstm_forecasting_benchmark python run_forecasting.py --gpu-index 0 --frameworks opennn,pytorch,tensorflow"
     ]
    },
    "needs": [
@@ -341,12 +325,12 @@
   },
   {
    "id": "cpu-inference-speed",
-   "doc": "inference-speed-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "throughput/inference-speed/inference-speed-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "cpu_inference",
    "status": "valid_windows_tuned_needs_linux_rerun",
    "publication_readiness": "needs_reference_linux_rerun",
    "platform": "windows_x86_64",
-   "comparison": "OpenNN MKL vs ONNX Runtime vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN MKL vs PyTorch vs TensorFlow",
    "metrics": [
     "samples_per_sec",
     "ms_per_batch"
@@ -354,7 +338,7 @@
    "runner": {
     "status": "existing_script_needs_result_json",
     "commands": [
-     "docs/benchmarks/inference-speed/run_inference.sh rosenbrock.csv 8000 1000 1000 30"
+     "docs/benchmarks/throughput/inference-speed/run_inference.sh rosenbrock.csv 8000 1000 1000 30"
     ]
    },
    "needs": [
@@ -366,7 +350,7 @@
   },
   {
    "id": "cpu-higgs-dense-training-subset",
-   "doc": "higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "throughput/higgs/higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "cpu_training",
    "status": "internal_subset_wsl2_mkl",
    "publication_readiness": "internal_only_needs_full_split_rerun",
@@ -384,7 +368,7 @@
     "commands": [
      "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_ENABLE_MKL=ON -DOpenNN_MKL_ROOT=/path/to/mkl",
      "cmake --build build-benchmarks --target opennn_higgs_cpu",
-     "cd docs/benchmarks/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu python run_higgs_cpu.py train --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 1 --batch 1024 --runs 1"
+     "cd docs/benchmarks/throughput/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu python run_higgs_cpu.py train --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 1 --batch 1024 --runs 1"
     ]
    },
    "latest_local_result": "results/cpu-dense-higgs-train-20260704T-higgs100k-train-mkl.json",
@@ -398,7 +382,7 @@
   },
   {
    "id": "cpu-higgs-dense-inference-subset",
-   "doc": "higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "throughput/higgs/higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "cpu_inference",
    "status": "internal_subset_wsl2_mkl",
    "publication_readiness": "internal_only_needs_full_split_rerun",
@@ -413,7 +397,7 @@
     "commands": [
      "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_ENABLE_MKL=ON -DOpenNN_MKL_ROOT=/path/to/mkl",
      "cmake --build build-benchmarks --target opennn_higgs_cpu",
-     "cd docs/benchmarks/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu MKL_NUM_THREADS=20 OMP_NUM_THREADS=20 MKL_DYNAMIC=FALSE OMP_DYNAMIC=FALSE python run_higgs_cpu.py infer --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --reps 20 --batch 1024 --runs 5 --threads 20"
+     "cd docs/benchmarks/throughput/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu MKL_NUM_THREADS=20 OMP_NUM_THREADS=20 MKL_DYNAMIC=FALSE OMP_DYNAMIC=FALSE python run_higgs_cpu.py infer --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --reps 20 --batch 1024 --runs 5 --threads 20"
     ]
    },
    "latest_local_result": "results/cpu-dense-higgs-infer-20260704T-higgs100k-infer-b1024-mkl-threads20.json",
@@ -427,12 +411,12 @@
   },
   {
    "id": "cpu-runtime-size",
-   "doc": "size-cpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/size-cpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "deployment_size",
    "status": "current",
    "publication_readiness": "candidate_needs_raw_artifacts",
    "platform": "linux_x86_64",
-   "comparison": "OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow",
    "metrics": [
     "runtime_size_mb"
    ],
@@ -448,12 +432,12 @@
   },
   {
    "id": "gpu-deployment-size",
-   "doc": "size-gpu-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/size-gpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "deployment_size",
    "status": "current",
    "publication_readiness": "candidate_needs_raw_artifacts",
    "platform": "linux_x86_64_cuda",
-   "comparison": "OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow",
    "metrics": [
     "deployment_size_gb"
    ],
@@ -469,19 +453,19 @@
   },
   {
    "id": "startup-latency",
-   "doc": "startup-latency-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/startup/startup-latency-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "startup",
    "status": "current",
    "publication_readiness": "candidate_needs_raw_artifacts",
    "platform": "linux_x86_64",
-   "comparison": "OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow",
    "metrics": [
     "time_to_first_prediction_ms"
    ],
    "runner": {
     "status": "existing_scripts_need_result_json",
     "commands": [
-     "cd docs/benchmarks/startup && ./opennn_startup && python pytorch_startup.py"
+     "cd docs/benchmarks/footprint/startup && ./opennn_startup && python pytorch_startup.py"
     ]
    },
    "needs": [
@@ -492,7 +476,7 @@
   },
   {
    "id": "baseline-memory-footprint",
-   "doc": "peak-memory-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/memory/peak-memory-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "memory",
    "status": "current_wsl2_cuda",
    "publication_readiness": "candidate_with_result_artifact",
@@ -507,7 +491,7 @@
     "commands": [
      "cmake -S . -B build-benchmarks -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON -DOpenNN_DISABLE_CUDA=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86",
      "cmake --build build-benchmarks --target opennn_memory -j",
-     "cd docs/benchmarks/memory && CUDA_MODULE_LOADING=LAZY ./opennn_memory && CUDA_MODULE_LOADING=LAZY python pytorch_memory.py && CUDA_MODULE_LOADING=LAZY TF_FORCE_GPU_ALLOW_GROWTH=true python tensorflow_memory.py"
+     "cd docs/benchmarks/footprint/memory && CUDA_MODULE_LOADING=LAZY ./opennn_memory && CUDA_MODULE_LOADING=LAZY python pytorch_memory.py && CUDA_MODULE_LOADING=LAZY TF_FORCE_GPU_ALLOW_GROWTH=true python tensorflow_memory.py"
     ]
    },
    "latest_result": "results/baseline-memory-footprint-wsl2-20260705T110753Z.json",
@@ -519,7 +503,7 @@
   },
   {
    "id": "data-capacity",
-   "doc": "data-capacity-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "capacity/data-capacity/data-capacity-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "memory_capacity",
    "status": "current_windows_cpu",
    "publication_readiness": "candidate_needs_raw_artifacts",
@@ -531,7 +515,7 @@
    "runner": {
     "status": "existing_scripts_need_result_json",
     "commands": [
-     "cd docs/benchmarks/capacity && ./run_sweep.ps1"
+     "cd docs/benchmarks/capacity/data-capacity && ./run_sweep.ps1"
     ]
    },
    "needs": [
@@ -543,12 +527,12 @@
   },
   {
    "id": "dependencies-install",
-   "doc": "dependencies-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/dependencies-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "packaging",
    "status": "current",
    "publication_readiness": "candidate_needs_raw_artifacts",
    "platform": "linux_x86_64",
-   "comparison": "OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow",
    "metrics": [
     "install_size_mb",
     "package_count"
@@ -565,7 +549,7 @@
   },
   {
    "id": "native-source-loc",
-   "doc": "loc-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/loc-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "codebase_size",
    "status": "current",
    "publication_readiness": "supporting_metric_only",
@@ -586,7 +570,7 @@
   },
   {
    "id": "application-loc",
-   "doc": "application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/application-loc/application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "code_ergonomics",
    "status": "current",
    "publication_readiness": "supporting_metric_only",
@@ -598,7 +582,7 @@
    "runner": {
     "status": "script_available",
     "commands": [
-     "cd docs/benchmarks/application-loc && python count_lsloc.py"
+     "cd docs/benchmarks/footprint/application-loc && python count_lsloc.py"
     ]
    },
    "needs": [
@@ -609,7 +593,7 @@
   },
   {
    "id": "standalone-code-export",
-   "doc": "code-export-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/export/code-export-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "deployment_capability",
    "status": "current",
    "publication_readiness": "candidate_needs_demo_artifact",
@@ -622,7 +606,7 @@
    "runner": {
     "status": "existing_demo_needs_result_json",
     "commands": [
-     "cd docs/benchmarks/export && ./opennn_export"
+     "cd docs/benchmarks/footprint/export && ./opennn_export"
     ]
    },
    "needs": [
@@ -633,12 +617,12 @@
   },
   {
    "id": "gpu-on-windows",
-   "doc": "gpu-on-windows-opennn-vs-onnxruntime-vs-pytorch-vs-tensorflow.md",
+   "doc": "footprint/gpu-on-windows-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "platform_capability",
    "status": "current",
    "publication_readiness": "supporting_claim_only",
    "platform": "windows_x86_64_cuda",
-   "comparison": "OpenNN vs ONNX Runtime vs PyTorch vs TensorFlow GPU support on Windows",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow GPU support on Windows",
    "metrics": [
     "native_gpu_training_support",
     "native_gpu_inference_support"
@@ -655,7 +639,7 @@
   },
   {
    "id": "gpu-transformer-max-batch",
-   "doc": "transformer-max-batch/README.md",
+   "doc": "capacity/transformer-max-batch/README.md",
    "category": "gpu_training_inference_capacity",
    "benchmark_class": "capacity_and_throughput",
    "status": "train_alpaca_measured_rtx4080; infer_mode_and_wmt14_corpus_harness_ready_need_run",
@@ -675,8 +659,8 @@
     "status": "writes_result_json_via_flag",
     "commands": [
      "cmake --build build --target opennn_transformer_maxbatch_trial -j",
-     "python docs/benchmarks/transformer-max-batch/prepare_wmt14.py",
-     "python docs/benchmarks/transformer-max-batch/run_transformer_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer --corpus $OPENNN_BENCH_DATA/wmt14/wmt14_en_de_pairs.txt --result-json docs/benchmarks/results/gpu-transformer-max-batch-wmt14.json"
+     "python docs/benchmarks/capacity/transformer-max-batch/prepare_wmt14.py",
+     "python docs/benchmarks/capacity/transformer-max-batch/run_transformer_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer --corpus $OPENNN_BENCH_DATA/wmt14/wmt14_en_de_pairs.txt --result-json docs/benchmarks/results/gpu-transformer-max-batch-wmt14.json"
     ]
    },
    "needs": [
@@ -688,7 +672,7 @@
   },
   {
    "id": "gpu-higgs-max-batch",
-   "doc": "higgs-max-batch/README.md",
+   "doc": "capacity/higgs-max-batch/README.md",
    "category": "gpu_training_inference_capacity",
    "benchmark_class": "capacity",
    "status": "all_four_quadrants_measured_wsl2; cpu_train_accumulated_search_in_progress",
@@ -715,8 +699,8 @@
     "commands": [
      "cmake -S . -B build -DOpenNN_BUILD_BENCHMARKS=ON",
      "cmake --build build --target opennn_higgs_maxbatch_trial -j",
-     "python docs/benchmarks/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer",
-     "python docs/benchmarks/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --device cpu --modes train,infer --mem-cap-gib 8"
+     "python docs/benchmarks/capacity/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --precisions fp32,bf16 --modes train,infer",
+     "python docs/benchmarks/capacity/higgs-max-batch/run_higgs_maxbatch.py --engines opennn,pytorch,tensorflow --device cpu --modes train,infer --mem-cap-gib 8"
     ]
    },
    "needs": [
@@ -740,7 +724,7 @@
   },
   {
    "id": "gpu-transformer-energy-to-target",
-   "doc": "transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md",
+   "doc": "energy/transformer-energy/transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md",
    "category": "training_time_to_quality",
    "status": "current_rtx4080_4seed_result_json",
    "publication_readiness": "candidate_needs_reference_machine_repeat",
@@ -755,7 +739,7 @@
     "status": "writes_result_json",
     "commands": [
      "cmake --build build --target opennn_transformer_energy -j",
-     "python docs/benchmarks/energy/run_transformer_energy.py --target 3.5 --batch 128 --lr 1e-4 --runs 4"
+     "python docs/benchmarks/energy/transformer-energy/run_transformer_energy.py --target 3.5 --batch 128 --lr 1e-4 --runs 4"
     ]
    },
    "needs": [

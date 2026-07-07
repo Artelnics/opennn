@@ -14,8 +14,8 @@ what to cite, and what to ignore until it is refreshed.
 | [`DATA_POLICY.md`](DATA_POLICY.md) | Where large datasets live and what must stay out of git. |
 | [`results/README.md`](results/README.md) | Required result JSON schema. |
 | [`DENSE_HIGGS_MIGRATION.md`](DENSE_HIGGS_MIGRATION.md) | Dense MLP migration status and remaining work. |
-| [`higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | Internal CPU HIGGS dense training subset result. |
-| [`higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`](higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | Internal CPU HIGGS dense inference subset result. |
+| [`higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md`](throughput/higgs/higgs-cpu-training-opennn-vs-pytorch-vs-tensorflow.md) | Internal CPU HIGGS dense training subset result. |
+| [`higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md`](throughput/higgs/higgs-cpu-inference-opennn-vs-pytorch-vs-tensorflow.md) | Internal CPU HIGGS dense inference subset result. |
 | [`tools/validate_benchmarks.py`](tools/validate_benchmarks.py) | Consistency check for manifest coverage, lifecycle labels, docs, and result references. |
 | Track READMEs | Current operator entrypoints inside active benchmark folders. |
 
@@ -87,7 +87,7 @@ local README.
 
 ```bash
 export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
-python docs/benchmarks/higgs/prepare_higgs.py \
+python docs/benchmarks/throughput/higgs/prepare_higgs.py \
   --raw /path/to/HIGGS.csv.gz
 
 cmake -S . -B build-benchmarks \
@@ -95,7 +95,7 @@ cmake -S . -B build-benchmarks \
   -DOpenNN_BUILD_BENCHMARKS=ON
 cmake --build build-benchmarks --config Release --target opennn_speed opennn_higgs_cpu
 
-cd docs/benchmarks/training-speed
+cd docs/benchmarks/throughput/training-speed
 python run_higgs_dense.py --epochs 5 --batch 7000 --runs 5 --precision bf16
 ```
 

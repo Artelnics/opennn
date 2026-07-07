@@ -1,0 +1,5 @@
+opennn_precision
+*.csv
+pred_*.txt
+*.log
+__pycache__/

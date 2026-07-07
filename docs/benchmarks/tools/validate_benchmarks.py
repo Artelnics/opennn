@@ -136,15 +136,22 @@ def validate_track_readmes(strict: bool) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     runner_patterns = ("run_*.py", "run_*.sh", "*.ps1")
+    skip = {"results", "tools", "__pycache__", "archive"}
 
-    for folder in sorted(path for path in ROOT.iterdir() if path.is_dir()):
-        if folder.name in {"results", "tools", "__pycache__"}:
-            continue
-        runner_count = 0
-        for pattern in runner_patterns:
-            runner_count += sum(1 for _ in folder.rglob(pattern))
-        if runner_count and not (folder / "README.md").exists():
-            message = f"{folder.name}: {runner_count} runner(s), but no README.md"
+    # Benchmarks live one level below the metric buckets (quality/, throughput/,
+    # capacity/, footprint/, energy/), so check the leaf folder that directly
+    # contains a runner script rather than the top-level bucket.
+    runner_folders: set[Path] = set()
+    for pattern in runner_patterns:
+        for runner in ROOT.rglob(pattern):
+            if any(part in skip for part in runner.relative_to(ROOT).parts):
+                continue
+            runner_folders.add(runner.parent)
+
+    for folder in sorted(runner_folders):
+        if not (folder / "README.md").exists():
+            rel = folder.relative_to(ROOT)
+            message = f"{rel}: contains runner(s), but no README.md"
             if strict:
                 add_error(errors, message)
             else:
