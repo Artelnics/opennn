@@ -26,6 +26,7 @@ if(OpenNN_BUILD_EXAMPLES)
 
     add_subdirectory(airfoil_self_noise)
     add_subdirectory(amazon_reviews)
+    add_subdirectory(bert)
     add_subdirectory(breast_cancer)
     add_subdirectory(emotion_analysis)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/beijing_pm25_forecasting/CMakeLists.txt")

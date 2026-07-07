@@ -153,7 +153,23 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 
 filesystem::path TabularDataset::cache_file_path() const
 {
+    // Embedding applications (e.g. Neural Designer) keep the cache next to the
+    // model instead of polluting the data folder; they set an explicit path.
+    if (!cache_path_override.empty())
+        return cache_path_override;
+
     return data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
+}
+
+
+void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_path)
+{
+    cache_path_override = new_cache_path;
+    cache_reader.close();
+    cache_path = cache_file_path();
+
+    if (storage_mode == StorageMode::BinaryFile && filesystem::exists(cache_path))
+        cache_reader.open(cache_path);
 }
 
 // Element-wise equivalents of the column scalers in scaling.cpp, applied to
@@ -793,15 +809,14 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
-    vector<Index> statistic_sample_indices = get_sample_indices("Training");
-    if (statistic_sample_indices.empty())
-        statistic_sample_indices = get_used_sample_indices();
-
-    const vector<Descriptives> feature_descriptives =
-        calculate_feature_descriptives(variable_role, statistic_sample_indices);
-
     if (storage_mode == StorageMode::BinaryFile)
     {
+        // Descriptives from the raw cache (streaming). Must use the
+        // BinaryFile-aware single-arg overload: the (role, sample_indices)
+        // overload reads the data matrix, which is empty in BinaryFile mode
+        // (null deref during training's set_scaling).
+        const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
+
         if (cache_feature_transforms.empty())
             cache_feature_transforms.assign(size_t(cache_columns_number), ScalerMethod::None);
 
@@ -810,6 +825,13 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 
         return feature_descriptives;
     }
+
+    vector<Index> statistic_sample_indices = get_sample_indices("Training");
+    if (statistic_sample_indices.empty())
+        statistic_sample_indices = get_used_sample_indices();
+
+    const vector<Descriptives> feature_descriptives =
+        calculate_feature_descriptives(variable_role, statistic_sample_indices);
 
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)
@@ -864,10 +886,17 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     if (src->has("StorageMode"))
         set_storage_mode(read_json_string(src, "StorageMode"));
 
-    variables_from_JSON(require_json_field(root, "Variables"));
-    samples_from_JSON(require_json_field(root, "Samples"));
-    missing_values_from_JSON(require_json_field(root, "MissingValues"));
-    preview_data_from_JSON(require_json_field(root, "PreviewData"));
+    // A freshly-created model (before the first import) carries only a
+    // DataSource: Variables/Samples/MissingValues/PreviewData are produced by
+    // read_csv. Read them only when present so load() works pre-import.
+    if (const Json* variables_element = root->find("Variables"))
+        variables_from_JSON(variables_element);
+    if (const Json* samples_element = root->find("Samples"))
+        samples_from_JSON(samples_element);
+    if (const Json* missing_values_element = root->find("MissingValues"))
+        missing_values_from_JSON(missing_values_element);
+    if (const Json* preview_data_element = root->find("PreviewData"))
+        preview_data_from_JSON(preview_data_element);
 
     set_display(read_json_bool(root, "Display"));
 
@@ -879,14 +908,20 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         cache_feature_transforms.clear();
 
         cache_path = cache_file_path();
-        cache_reader.open(cache_path);
 
-        const uint64_t expected_bytes =
-            uint64_t(get_samples_number()) * uint64_t(cache_columns_number) * sizeof(float);
+        // Tolerate a missing cache: embedding applications may re-import the
+        // data source (regenerating the cache) after loading the model.
+        if (filesystem::exists(cache_path))
+        {
+            cache_reader.open(cache_path);
 
-        throw_if(cache_reader.file_size() != expected_bytes,
-                 format("Binary data cache size mismatch for {} (got {} bytes, expected {}).",
-                        cache_path.string(), cache_reader.file_size(), expected_bytes));
+            const uint64_t expected_bytes =
+                uint64_t(get_samples_number()) * uint64_t(cache_columns_number) * sizeof(float);
+
+            throw_if(cache_reader.file_size() != expected_bytes,
+                     format("Binary data cache size mismatch for {} (got {} bytes, expected {}).",
+                            cache_path.string(), cache_reader.file_size(), expected_bytes));
+        }
     }
 
     input_shape = { get_features_number("Input") };
@@ -1429,6 +1464,10 @@ void TabularDataset::read_csv()
 
     if (binary_storage)
     {
+        // Re-import: el lector puede tener abierta la cache anterior (se abre
+        // al cargar el modelo); Windows no permite reemplazar un fichero
+        // abierto (MoveFileEx -> ACCESS_DENIED), asi que cerrar antes.
+        cache_reader.close();
         cache_writer.finish_with_rename(cache_path);
         cache_reader.open(cache_path);
     }
