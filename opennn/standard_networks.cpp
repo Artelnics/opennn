@@ -1175,7 +1175,8 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                              Index embedding_dimension,
                                              Index heads_number,
                                              Index feed_forward_dimension,
-                                             Index layers_number)
+                                             Index layers_number,
+                                             bool pre_normalization)
     : NeuralNetwork()
 {
     throw_if(sequence_length == 0 ||
@@ -1203,27 +1204,62 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     {
         const string suffix = format("_{}", i + 1);
 
+        Index attention_input_index = current_index;
+
+        if (pre_normalization)
+        {
+            add_layer(make_unique<Normalization3d>(block_shape,
+                                                   "attention_normalization" + suffix),
+                      {current_index});
+            attention_input_index = get_layers_number() - 1;
+        }
+
         auto self_attention = make_unique<MultiHeadAttention>(
             block_shape, heads_number, "self_attention" + suffix);
         self_attention->set(sequence_length, sequence_length,
                             embedding_dimension, heads_number,
                             true,
                             "self_attention" + suffix);
-        add_layer(move(self_attention), {current_index});
+        add_layer(move(self_attention), {attention_input_index});
         const Index attn_index = get_layers_number() - 1;
 
-        const Index norm1_index = add_residual_and_norm(*this, block_shape,
-            "self_attention_normalization" + suffix,
-            current_index, attn_index);
+        if (pre_normalization)
+        {
+            add_layer(make_unique<Addition>(block_shape, "attention_addition" + suffix),
+                      {current_index, attn_index});
+            const Index residual_index = get_layers_number() - 1;
 
-        const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
-            "internal_dense" + suffix,
-            "external_dense" + suffix);
+            add_layer(make_unique<Normalization3d>(block_shape,
+                                                   "dense_normalization" + suffix),
+                      {residual_index});
 
-        current_index = add_residual_and_norm(*this, block_shape,
-            "dense_normalization" + suffix,
-            norm1_index, ff_index);
+            const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
+                "internal_dense" + suffix,
+                "external_dense" + suffix);
+
+            add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
+                      {residual_index, ff_index});
+            current_index = get_layers_number() - 1;
+        }
+        else
+        {
+            const Index norm1_index = add_residual_and_norm(*this, block_shape,
+                "self_attention_normalization" + suffix,
+                current_index, attn_index);
+
+            const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
+                "internal_dense" + suffix,
+                "external_dense" + suffix);
+
+            current_index = add_residual_and_norm(*this, block_shape,
+                "dense_normalization" + suffix,
+                norm1_index, ff_index);
+        }
     }
+
+    if (pre_normalization)
+        add_layer(make_unique<Normalization3d>(block_shape, "final_normalization"),
+                  {current_index});
 
     add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
                                  "Softmax", false, "output_projection"));
@@ -1256,6 +1292,18 @@ void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)
             mha->set_dropout_rate(new_dropout_rate);
         }
     }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
+}
+
+void TextGenerationNetwork::set_attention_sdpa_auto(bool new_sdpa_auto)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+            mha->set_sdpa_auto(new_sdpa_auto);
 
     recompile_if_specs_changed(*this, forward_before, backward_before);
 }

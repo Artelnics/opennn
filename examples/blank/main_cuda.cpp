@@ -634,17 +634,33 @@ int main(int argc, char** argv)
         //    register): datasets/wmt14_en_de/wmt14_en.txt via argv[5].
         //    GPT-2 small dims: 12 layers / 12 heads / 768 emb / 3072 ff.
         //    Differences vs the real GPT-2: word-level vocabulary (no BPE),
-        //    sinusoidal positions (not learned), post-LN, untied output
-        //    projection. Vocabulary capped at 50257 (GPT-2's vocab size).
-        //    seq 512 + batch 8 bf16 fit a 16 GB GPU; first run tokenizes and
-        //    writes the .cache (one-off, minutes). ~28k iters/epoch -> hours
-        //    per epoch on the full corpus; pass the .subset corpus for a
-        //    quick trial. Weights save/load like block 6 (path derived from
+        //    sinusoidal positions (not learned), untied output projection.
+        //    Vocabulary capped at 50257 (GPT-2's vocab size).
+        //    PRE-LN IS REQUIRED at these widths: post-LN without LR warmup
+        //    freezes at the unigram plateau for embedding_dim >= 512 or
+        //    ff_dim >= 2048 (verified empirically July 2026: post-LN
+        //    768/12/3072 never breaks 6.76 on the WMT subset while pre-LN
+        //    reaches 0.7 on shakespeare in 10 epochs; same reason GPT-2
+        //    itself is pre-LN). Narrow nets (256/4/512) train either way.
+        //    BF16 default (~4x faster than fp32, same convergence). An SDPA
+        //    backward bug used to corrupt dQ/dK in pure-bf16 training (the
+        //    graph read the head-merged O instead of the forward's BHSD O);
+        //    fixed July 2026 in AttentionOperator::apply_sdpa_forward/backward
+        //    (private O copy, mirroring the fp32 cast path). Validated: bf16
+        //    12L subset now matches fp32 epoch-for-epoch (6.55 -> 2.67).
+        //    seq 512 + batch 8 fits a 16 GB GPU; first run tokenizes and
+        //    writes the .cache (one-off, minutes). ~24k iters/epoch on the
+        //    full corpus; pass the .subset corpus for a quick trial. Weights save/load like block 6 (path derived from
         //    the corpus name). After training: sample generations + chat().
         //    CUDA graph stays OFF: the graph-epoch path collapses transformer
         //    train-to-quality convergence (see project notes).
         //    Args: argv[1]=batch (8), argv[2]=max_epochs (1), argv[3]=fp32|bf16,
-        //          argv[4]=sequence_length (512), argv[5]=corpus path override.
+        //          argv[4]=sequence_length (512), argv[5]=corpus path override,
+        //          argv[6]=learning_rate (1e-4), argv[7]=layers_number (12),
+        //          argv[8]=pre_normalization 0|1 (1 = pre-LN, the default),
+        //          argv[9]=sdpa 0|1, argv[10]=dropout rate (0.1),
+        //          argv[11]=embedding_dim (768), argv[12]=heads (12), argv[13]=ff_dim (3072),
+        //          argv[14]=device cuda|cpu (cuda), argv[15]=grad_clip_norm (1.0).
         // --------------------------------------------------------------------
 #if 1
         const Index batch_size      = argc > 1 ? Index(stoll(argv[1])) : Index(8);
@@ -653,14 +669,27 @@ int main(int argc, char** argv)
         const Index sequence_length = argc > 4 ? Index(stoll(argv[4])) : Index(512);
         const filesystem::path corpus_path = argc > 5 ? argv[5]
             : "/home/artelnics/Documents/datasets/wikitext103/wiki.train.txt";
+        const float learning_rate   = argc > 6 ? stof(argv[6]) : 0.0001f;
+        const Index layers_number_arg = argc > 7 ? Index(stoll(argv[7])) : Index(12);
+        const bool pre_normalization = argc > 8 ? (stoi(argv[8]) != 0) : true;
+        const bool use_sdpa          = argc > 9 ? (stoi(argv[9]) != 0) : true;
+        const float dropout_rate     = argc > 10 ? stof(argv[10]) : 0.1f;
+        const Index embedding_dimension_arg    = argc > 11 ? Index(stoll(argv[11])) : Index(768);
+        const Index heads_number_arg           = argc > 12 ? Index(stoll(argv[12])) : Index(12);
+        const Index feed_forward_dimension_arg = argc > 13 ? Index(stoll(argv[13])) : Index(3072);
+        const bool on_cpu           = argc > 14 && string(argv[14]) == "cpu";
+        const float gradient_clip   = argc > 15 ? stof(argv[15]) : 1.0f;
         const Type training_type    = (precision == "bf16") ? Type::BF16 : Type::FP32;
 
         cout << "OpenNN. GPT decoder-only LM, GPT-2-small architecture (" << precision
              << ") batch=" << batch_size << " max_epochs=" << maximum_epochs
-             << " seq=" << sequence_length << "\ncorpus=" << corpus_path << endl;
+             << " seq=" << sequence_length << " lr=" << learning_rate
+             << " layers=" << layers_number_arg << " preln=" << pre_normalization
+             << " sdpa=" << use_sdpa << " dropout=" << dropout_rate
+             << "\ncorpus=" << corpus_path << endl;
 
-        Configuration::instance().set(Device::CUDA, training_type);
-        Backend::instance();
+        Configuration::instance().set(on_cpu ? Device::CPU : Device::CUDA, training_type);
+        if (!on_cpu) Backend::instance();
         set_seed(42);
 
         const Index maximum_vocabulary_size = 50257;
@@ -675,18 +704,20 @@ int main(int argc, char** argv)
              << " seq="    << dataset.get_sequence_length() << endl;
 
         // GPT-2 small: 12 layers / 12 heads / 768 emb / 3072 ff.
-        const Index embedding_dimension    = 768;
-        const Index heads_number           = 12;
-        const Index feed_forward_dimension = 3072;
-        const Index layers_number          = 12;
+        const Index embedding_dimension    = embedding_dimension_arg;
+        const Index heads_number           = heads_number_arg;
+        const Index feed_forward_dimension = feed_forward_dimension_arg;
+        const Index layers_number          = layers_number_arg;
 
         TextGenerationNetwork network(sequence_length,
                                       dataset.get_vocabulary_size(),
                                       embedding_dimension,
                                       heads_number,
                                       feed_forward_dimension,
-                                      layers_number);
-        network.set_dropout_rate(0.1f);
+                                      layers_number,
+                                      pre_normalization);
+        network.set_dropout_rate(dropout_rate);
+        if (!use_sdpa) network.set_attention_sdpa_auto(false);
 
         cout << "GPT params=" << network.get_parameters_number() << endl;
 
@@ -710,7 +741,8 @@ int main(int argc, char** argv)
             auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
             if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
             adam->set_batch_size(batch_size);
-            adam->set_learning_rate(0.0001f);
+            adam->set_learning_rate(learning_rate);
+            adam->set_gradient_clip_norm(gradient_clip);
             adam->set_maximum_epochs(maximum_epochs);
             adam->set_maximum_validation_failures(1000000);
             adam->set_display_period(1);
@@ -727,6 +759,8 @@ int main(int argc, char** argv)
             network.save_parameters_binary(parameters_path);
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
+
+        if (on_cpu) return 0;   // TransformerDecoder generation is GPU-only
 
         TransformerDecoder generator(network, dataset);
 

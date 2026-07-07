@@ -23,6 +23,21 @@ if(OPENNN_HAS_CUDA AND OpenNN_BUILD_BLANK_CUDA)
         target_link_libraries(blank_cuda PRIVATE ${CUDNN_LIBRARY})
         target_include_directories(blank_cuda PRIVATE ${CUDNN_INCLUDE_DIR})
     endif()
+
+    # Temporary bf16 gradient diagnostic (July 2026) — safe to delete.
+    add_executable(diag_grad diag_grad.cpp)
+    target_include_directories(diag_grad PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../opennn
+    )
+    target_link_libraries(diag_grad PRIVATE
+        opennn
+        CUDA::cudart
+        CUDA::cublas
+    )
+    if(HAVE_CUDNN)
+        target_link_libraries(diag_grad PRIVATE ${CUDNN_LIBRARY})
+        target_include_directories(diag_grad PRIVATE ${CUDNN_INCLUDE_DIR})
+    endif()
 endif()
 
 
