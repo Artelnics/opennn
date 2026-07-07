@@ -179,6 +179,10 @@ FetchContent_Declare(
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+# Install Eigen's export set alongside OpenNN so the installed OpenNNTargets
+# (which links Eigen3::Eigen) resolves via find_dependency(Eigen3). Defaults
+# to OFF when Eigen is not the top-level project.
+set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(eigen)
 
 add_subdirectory(opennn)
