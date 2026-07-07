@@ -28,16 +28,4 @@ Prefer `build-ninja` when you need both tests and a single-config build. The
 ## Project-local skills
 
 `.agents/skills/` in this repo holds project-specific skills:
-- `opennn-wordpress-admin` — safely read/edit the OpenNN, Neural Designer, and
-  Artelnics WordPress sites.
-- `opennn-benchmark-sync` — sync `docs/benchmarks/*.md` with WordPress benchmark
-  blog posts.
-- `opennn-blog-writer` — write/style/publish OpenNN blog articles.
 - `run-examples` — run the example matrix across CPU/GPU FP32/GPU BF16.
-
-Claude Code's equivalent skill lives in `.claude/skills/opennn-wordpress-admin`.
-
-## Backups
-
-Skills that back up remote content before writing (WordPress posts, etc.) should
-save timestamped files under `.backups/` at the repo root — it's gitignored.

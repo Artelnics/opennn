@@ -1,4 +1,0 @@
-interface:
-  display_name: "OpenNN Blog Writer"
-  short_description: "Draft and publish OpenNN benchmark posts."
-  default_prompt: "Use $opennn-blog-writer to create an OpenNN-style benchmark article, prepare WordPress-safe HTML without a duplicate body title, and publish it with the Platforms category."

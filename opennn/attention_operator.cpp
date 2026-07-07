@@ -746,6 +746,25 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     void* v_ptr = value.data;
     void* o_ptr = output.data;
     const bool fp32_via_bf16 = query.is_fp32();
+
+    // The backward graph needs the forward's O in BHSD layout, but `output`
+    // here is the shared transient scratch (clobbered by later layers); the
+    // persistent slot only keeps the head-merged copy. Keep a private O in the
+    // cache entry during training so apply_sdpa_backward reads valid data —
+    // the fp32 path already does this implicitly through its cast buffer.
+    const bool keep_private_output = is_training && !fp32_via_bf16;
+    if (keep_private_output)
+    {
+        const Index o_elems = output.size();
+        if (o_elems > entry.o_elems)
+        {
+            device::deallocate(Device::CUDA, entry.output, 0);
+            entry.output  = static_cast<bfloat16*>(device::allocate(Device::CUDA, o_elems * Index(sizeof(bfloat16))));
+            entry.o_elems = o_elems;
+        }
+        o_ptr = entry.output;
+    }
+
     if (fp32_via_bf16)
     {
         cudaStream_t cstream = Backend::get_compute_stream();
@@ -799,6 +818,11 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
              format("SDPA forward execute: {}", status.get_message()));
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), entry.output, output.as<float>());
+    else if (keep_private_output)
+        device::copy_async(output.data, entry.output,
+                           output.size() * Index(sizeof(bfloat16)),
+                           device::CopyKind::DeviceToDevice,
+                           Backend::get_compute_stream());
 }
 
 #endif
@@ -989,7 +1013,13 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bq  = query.data;
     void* bk  = key.data;
     void* bv  = value.data;
-    void* bo  = attention_output.data;
+    // O comes from the private copy kept by apply_sdpa_forward: the slot passed
+    // as attention_output holds the head-MERGED layout (and the BHSD scratch the
+    // graph wrote to is long since clobbered), so reading it would corrupt the
+    // dO*O row-sums that dQ/dK depend on.
+    throw_if(!entry.output,
+             "SDPA backward: no private forward output copy (forward not run with is_training).");
+    void* bo  = entry.output;
     void* bdo = output_delta.data;
     void* bdq = query_delta.data;
     void* bdk = key_delta.data;

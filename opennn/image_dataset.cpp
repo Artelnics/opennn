@@ -17,12 +17,6 @@
 namespace opennn
 {
 
-// Directory for the ImageDataset binary cache. Empty => default <data>/.cache.
-// Set from code with set_image_cache_dir(); there is no environment variable.
-namespace { string& image_cache_dir_storage() { static string dir; return dir; } }
-void set_image_cache_dir(const string& dir) { image_cache_dir_storage() = dir; }
-string get_image_cache_dir() { return image_cache_dir_storage(); }
-
 static bool has_augmentation_transform(const AugmentationSettings& augmentation)
 {
     return augmentation.reflection_axis_x
@@ -48,46 +42,8 @@ static Index sample_augmentation_shift(float minimum, float maximum)
     return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
 }
 
-static uint64_t fnv1a_64(const string& value)
+static filesystem::path image_cache_path(const filesystem::path& data_path)
 {
-    uint64_t hash = 14695981039346656037ull;
-
-    for (const unsigned char c : value)
-    {
-        hash ^= uint64_t(c);
-        hash *= 1099511628211ull;
-    }
-
-    return hash;
-}
-
-static filesystem::path resolved_dataset_key(const filesystem::path& path)
-{
-    try
-    {
-        return filesystem::weakly_canonical(path);
-    }
-    catch (...)
-    {
-        return filesystem::absolute(path);
-    }
-}
-
-static filesystem::path image_cache_path(const filesystem::path& data_path,
-                                  Index samples_number,
-                                  Index height,
-                                  Index width,
-                                  Index channels)
-{
-    const string& cache_root = image_cache_dir_storage();
-
-    if (!cache_root.empty())
-    {
-        const uint64_t hash = fnv1a_64(resolved_dataset_key(data_path).generic_string());
-
-        return filesystem::path(cache_root) / format("images-{:x}-{}x{}x{}-{}.bin", hash, height, width, channels, samples_number);
-    }
-
     return data_path / ".cache" / "images.bin";
 }
 
@@ -454,7 +410,7 @@ void ImageDataset::read_images()
     }
     else
     {
-        cache_path = image_cache_path(data_path, samples_number, height, width, channels);
+        cache_path = image_cache_path(data_path);
 
         const bool cache_valid = filesystem::exists(cache_path)
             && filesystem::file_size(cache_path) == uint64_t(samples_number) * pixel_number;
