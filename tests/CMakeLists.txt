@@ -64,4 +64,16 @@ endif()
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
 
+file(COPY ${CMAKE_SOURCE_DIR}/datasets DESTINATION ${CMAKE_BINARY_DIR})
+
+add_test(NAME run_tests
+         COMMAND run_tests
+         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+add_custom_target(check
+                  COMMAND run_tests
+                  WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                  DEPENDS run_tests
+                  USES_TERMINAL)
+
 

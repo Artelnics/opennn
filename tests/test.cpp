@@ -4,11 +4,15 @@
 #include <iostream>
 #include <cstdlib>
 
+#include "../opennn/random_utilities.h"
+
 using namespace std;
 
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+
+    opennn::set_seed(20260707);
 
     //::testing::GTEST_FLAG(filter) = "*";
 

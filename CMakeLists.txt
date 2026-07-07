@@ -76,6 +76,7 @@ endif()
 
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
