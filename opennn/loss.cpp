@@ -1528,7 +1528,12 @@ float Loss::calculate_h(const float x)
 
 void Loss::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("Loss");
+    // The element must be named after the error method ("MeanSquaredError",
+    // ...): TrainingStrategy::from_JSON looks it up by that name. It used to be
+    // the literal "Loss", which made every TrainingStrategy round-trip throw
+    // (and the callers silently swallowed it, so models always trained with
+    // default hyperparameters).
+    printer.open_element(get_name());
     write_json(printer, {
         {"Method", get_name()},
         {"Regularization", regularization_to_string(regularization_method)},
@@ -1552,7 +1557,11 @@ void Loss::to_JSON(JsonWriter& printer) const
 
 void Loss::from_JSON(const JsonDocument& document)
 {
-    const Json* root = document.first_child("Loss");
+    // TrainingStrategy wraps the element under the error-method name (set_error
+    // runs before this call, so get_name() matches). Fall back to the legacy
+    // "Loss" tag for files written before the to_JSON fix above.
+    const Json* root = document.first_child(get_name());
+    if (!root) root = document.first_child("Loss");
     throw_if(!root, "Loss::from_JSON error: missing Loss element.");
 
     set_error(read_json_string(root, "Method"));

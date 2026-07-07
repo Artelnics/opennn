@@ -17,7 +17,8 @@ namespace opennn
 enum class PoolingMethod
 {
     MaxPooling,
-    AveragePooling
+    AveragePooling,
+    FirstToken
 };
 
 const string& pooling_method_to_string(PoolingMethod);

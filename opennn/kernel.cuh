@@ -173,7 +173,7 @@ template<typename T>
 void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
 template<typename T>
-void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
+void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, float* positional_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
 
 template<typename T>
@@ -187,6 +187,11 @@ void attention_masks_cuda(const int batch_size, const int heads_number, const in
                           const int source_sequence_length, const int embedding_dimension,
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask);
+
+template<typename T>
+void attention_length_mask_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+                                const int source_sequence_length, const int* host_lengths,
+                                T* attention_weights, T* padding_mask, const bool use_causal_mask);
 
 template<typename T>
 void attention_sequence_lengths_cuda(const int batch_size,
@@ -209,6 +214,12 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
 
 template<typename T>
 void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta, T* in_grad, const int S, const int F);
+
+template<typename T>
+void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out);
+
+template<typename T>
+void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient);
 
 
 template<typename T>

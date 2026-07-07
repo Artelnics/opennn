@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   H E A D E R
@@ -15,11 +15,13 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU };
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU };
 
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
 ActivationFunction activation_function_from_string(const string&);
+
+bool activation_needs_input(ActivationFunction function);
 
 inline float activation_forward_value(ActivationFunction function, float x)
 {
@@ -31,6 +33,7 @@ inline float activation_forward_value(ActivationFunction function, float x)
     case Tanh:      return tanh(x);
     case ReLU:      return max(0.0f, x);
     case LeakyReLU: return x >= 0.0f ? x : x * LEAKY_RELU_SLOPE;
+    case GELU:      return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
     case Softmax:   break;
     }
 
@@ -48,9 +51,10 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     case ReLU:      return y > 0.0f ? 1.0f : 0.0f;
     case LeakyReLU: return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE;
     case Softmax:   break;
+    case GELU:      break;
     }
 
-    throw runtime_error("activation_derivative_from_output_value: Softmax must be handled separately.");
+    throw runtime_error("activation_derivative_from_output_value: Softmax/GELU must be handled separately.");
 }
 
 VectorR activation_forward_values(ActivationFunction, const VectorR&);
@@ -113,14 +117,18 @@ void embedding_lookup_forward(const TensorView&, const TensorView&,
                               Index, Index, Index,
                               bool, bool);
 void embedding_lookup_backward(const TensorView&, const TensorView&,
-                               const TensorView&,
-                               Index, Index,
+                               const TensorView&, const TensorView&,
+                               Index, Index, Index,
                                bool);
 
 void max_pooling_3d_forward(const TensorView&, TensorView&, TensorView&, bool);
 void average_pooling_3d_forward(const TensorView&, TensorView&);
 void max_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
 void average_pooling_3d_backward(const TensorView&, const TensorView&, TensorView&);
+void first_token_3d_forward(const TensorView&, TensorView&);
+void first_token_3d_backward(const TensorView&, TensorView&);
+
+void compute_token_valid_lengths(const TensorView&, Index, vector<Index>&);
 
 void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
                         Index, Index, Index,

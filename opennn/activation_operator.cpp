@@ -53,9 +53,12 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
     if (backward_fused && output_delta.is_cuda())
         return;
 
+    const bool needs_input = activation_needs_input(activation_function);
     const size_t read_slot = (save_slot != SIZE_MAX) ? save_slot : output_slots[0];
-    
-    const TensorView& outputs = forward_propagation.forward_slots[layer][read_slot];
+
+    const TensorView& outputs = needs_input
+        ? get_input(forward_propagation, layer)
+        : forward_propagation.forward_slots[layer][read_slot];
 
     if (!input_slots.empty() && input_slots[0] != output_slots[0])
     {

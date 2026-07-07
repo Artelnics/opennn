@@ -10,6 +10,7 @@
 #include "string_utilities.h"
 
 #include <cctype>
+#include <charconv>
 #include <cstdio>
 
 namespace opennn
@@ -97,7 +98,13 @@ double Json::as_double() const
     {
     case Number: return number_value;
     case Bool:   return bool_value ? 1.0 : 0.0;
-    case String: return string_value.empty() ? 0.0 : stod(string_value);
+    case String: {
+        // from_chars instead of stod: locale-independent (see parse_number).
+        if (string_value.empty()) return 0.0;
+        double value = 0.0;
+        from_chars(string_value.data(), string_value.data() + string_value.size(), value);
+        return value;
+    }
     case Null:
     case Array:
     case Object: return 0.0;
@@ -165,12 +172,19 @@ static void dump_value(string& out, const Json& v, int indent, int depth)
     case Null:   out += "null"; return;
     case Bool:   out += (v.bool_value ? "true" : "false"); return;
     case Number: {
+        // to_chars instead of snprintf: snprintf honours LC_NUMERIC, so under a
+        // Spanish locale it writes "1,5" and the file can no longer be parsed
+        // (the same corruption the old XML serialization suffered). to_chars is
+        // locale-independent and round-trips the double exactly.
         char buf[32];
         const long long as_int = static_cast<long long>(v.number_value);
         if (v.number_value == static_cast<double>(as_int) && abs(v.number_value) < 1e15)
             snprintf(buf, sizeof(buf), "%lld", as_int);
         else
-            snprintf(buf, sizeof(buf), "%.10g", v.number_value);
+        {
+            auto [ptr, ec] = to_chars(buf, buf + sizeof(buf) - 1, v.number_value);
+            *ptr = '\0';
+        }
         out += buf;
         return;
     }
@@ -331,7 +345,13 @@ struct Parser
         }
         Json j;
         j.kind = Json::Kind::Number;
-        j.number_value = stod(s.substr(start, position - start));
+        // from_chars instead of stod: stod honours LC_NUMERIC, so under a
+        // Spanish locale "1.5" silently parses as 1.0 (strtod stops at the
+        // dot). from_chars always uses the JSON/C decimal-point grammar.
+        const char* first = s.data() + start;
+        const char* last = s.data() + position;
+        auto [ptr, ec] = from_chars(first, last, j.number_value);
+        if (ec != errc() || ptr != last) fail("bad number");
         return j;
     }
 

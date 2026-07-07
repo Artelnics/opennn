@@ -20,7 +20,8 @@ const EnumMap<PoolingMethod>& pooling_method_map()
 {
     static const vector<EnumMap<PoolingMethod>::Entry> entries = {
         {PoolingMethod::MaxPooling,     "MaxPooling"},
-        {PoolingMethod::AveragePooling, "AveragePooling"}
+        {PoolingMethod::AveragePooling, "AveragePooling"},
+        {PoolingMethod::FirstToken,     "FirstToken"}
     };
     static const EnumMap<PoolingMethod> instance{entries};
     return instance;

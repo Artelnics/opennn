@@ -10,6 +10,7 @@
 
 #include "dataset.h"
 #include "io_utilities.h"
+#include "tokenizer.h"
 
 namespace opennn
 {
@@ -23,13 +24,13 @@ public:
                     Index maximum_vocabulary_size = 20000,
                     Index minimum_token_frequency = 1);
 
-    const vector<string>& get_input_vocabulary() const noexcept { return input_vocabulary; }
-    const vector<string>& get_target_vocabulary() const noexcept { return target_vocabulary; }
+    const vector<string>& get_input_vocabulary() const noexcept { return input_tokenizer->get_vocabulary(); }
+    const vector<string>& get_target_vocabulary() const noexcept { return target_tokenizer->get_vocabulary(); }
 
-    Index get_input_vocabulary_size() const noexcept { return input_vocabulary.size(); }
-    Index get_target_vocabulary_size() const noexcept { return target_vocabulary.size(); }
+    Index get_input_vocabulary_size() const noexcept { return input_tokenizer->get_vocabulary_size(); }
+    Index get_target_vocabulary_size() const noexcept { return target_tokenizer->get_vocabulary_size(); }
 
-    const unordered_map<string, Index>& get_input_vocabulary_map() const noexcept { return input_vocabulary_map; }
+    const unordered_map<string, Index>& get_input_vocabulary_map() const noexcept { return input_tokenizer->get_vocabulary_map(); }
 
     Index get_maximum_input_sequence_length() const noexcept { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const noexcept { return maximum_target_sequence_length; }
@@ -89,30 +90,22 @@ private:
                         Index,
                         const char*) const;
 
-    void create_vocabulary(const vector<vector<string_view>>&, vector<string>&) const;
-
-    void update_input_vocabulary_map();
-    void update_target_vocabulary_map();
-
     unordered_map<string_view, Index> create_vocabulary_map(const vector<string>&) const;
 
     void load_documents(string&,
-                        vector<vector<string_view>>&,
-                        vector<vector<string_view>>&) const;
+                        vector<vector<string>>&,
+                        vector<vector<string>>&) const;
 
-    void encode_streaming(const vector<vector<string_view>>&,
-                          const vector<vector<string_view>>&,
+    void encode_streaming(const vector<vector<string>>&,
+                          const vector<vector<string>>&,
                           vector<vector<Index>>&,
                           vector<vector<Index>>&) const;
 
     void write_binary_cache(const vector<vector<Index>>&,
                             const vector<vector<Index>>&);
 
-    vector<string> input_vocabulary;
-    vector<string> target_vocabulary;
-
-    unordered_map<string, Index> input_vocabulary_map;
-    unordered_map<string, Index> target_vocabulary_map;
+    unique_ptr<Tokenizer> input_tokenizer  = make_unique<WordLevelTokenizer>();
+    unique_ptr<Tokenizer> target_tokenizer = make_unique<WordLevelTokenizer>();
 
     Index maximum_input_sequence_length = 0;
     Index maximum_target_sequence_length = 0;

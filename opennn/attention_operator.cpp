@@ -505,8 +505,11 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     TensorView attention_out = forward_slots[scratch_slot].reshape(
         {forward_propagation.batch_size, query.shape[1], query.shape[2], query.shape[3]});
 
+    const vector<Index>* explicit_lengths =
+        forward_propagation.attention_valid_lengths.empty() ? nullptr : &forward_propagation.attention_valid_lengths;
+
 #ifdef OPENNN_HAS_CUDA
-    if (use_sdpa && query.is_cuda())
+    if (use_sdpa && query.is_cuda() && !explicit_lengths)
     {
         apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                            attention_out, is_training);
@@ -515,7 +518,8 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 #endif
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                   get_output(forward_propagation, layer), get_output(forward_propagation, layer, 1),
-                  attention_out, forward_slots[scratch_slot].as<float>(), is_training);
+                  attention_out, forward_slots[scratch_slot].as<float>(), is_training,
+                  explicit_lengths);
 }
 
 void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -580,7 +584,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                               TensorView& attention_weights_dropped,
                               TensorView& output,
                               [[maybe_unused]] void* scratch,
-                              bool is_training)
+                              bool is_training,
+                              const vector<Index>* explicit_lengths)
 {
     if (!query.is_cuda()
         && !use_causal_mask
@@ -595,8 +600,21 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     {
         vector<Index> valid_lengths;
         bool has_padding = false;
+        bool have_lengths = false;
 
-        if (get_contiguous_source_lengths(source_input, valid_lengths, has_padding) && has_padding)
+        if (explicit_lengths && Index(explicit_lengths->size()) == source_input.shape[0])
+        {
+            valid_lengths = *explicit_lengths;
+            have_lengths = true;
+            for (const Index length : valid_lengths)
+                if (length < source_input.shape[1]) { has_padding = true; break; }
+        }
+        else
+        {
+            have_lengths = get_contiguous_source_lengths(source_input, valid_lengths, has_padding);
+        }
+
+        if (have_lengths && has_padding)
         {
             const Index batch_size = source_input.shape[0];
             const Index query_sequence_length = query.shape[2];
@@ -636,7 +654,23 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     const Index query_sequence_length = attention_weights.shape[2];
 
 #ifdef OPENNN_HAS_CUDA
-    if (attention_weights.is_cuda())
+    if (attention_weights.is_cuda() && explicit_lengths
+        && Index(explicit_lengths->size()) == batch_size)
+    {
+        const vector<int> lengths_int(explicit_lengths->begin(), explicit_lengths->end());
+        attention_weights.dispatch([&](auto tag) {
+            using T = decltype(tag);
+            attention_length_mask_cuda<T>(to_int(batch_size),
+                                          to_int(heads_number),
+                                          to_int(query_sequence_length),
+                                          to_int(source_sequence_length),
+                                          lengths_int.data(),
+                                          attention_weights.as<T>(),
+                                          reinterpret_cast<T*>(scratch),
+                                          use_causal_mask);
+        });
+    }
+    else if (attention_weights.is_cuda())
         attention_weights.dispatch([&](auto tag) {
             using T = decltype(tag);
             attention_masks_cuda<T>(to_int(batch_size),
