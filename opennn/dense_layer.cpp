@@ -41,8 +41,10 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
     const Shape full   = Shape{batch_size}.append(get_output_shape());
     const Shape stats  = Shape{output_features};
 
+    const bool keep_pre_activation = batch_norm.active() || activation_needs_input(activation_operator.activation_function);
+
     return {
-        {batch_norm.active() ? full  : Shape{}, compute_dtype},
+        {keep_pre_activation ? full  : Shape{}, compute_dtype},
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
         {dropout.active()    ? full  : Shape{}, compute_dtype},
@@ -50,14 +52,33 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
     };
 }
 
+vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
+{
+    if (!is_trainable) return {};
+
+    vector<TensorSpec> specs = {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
+
+    if (activation_needs_input(activation_operator.activation_function))
+        specs.push_back({Shape{batch_size}.append(get_output_shape()), compute_dtype});
+
+    return specs;
+}
+
 void Dense::configure_operators()
 {
+    const bool input_deriv = activation_needs_input(activation_operator.activation_function);
+
+    throw_if(input_deriv && batch_norm.active(),
+             "Dense: input-derivative activations (e.g. GELU) cannot be fused with "
+             "batch normalization. Use a standalone Activation layer after the Dense.");
+
     combination.set(get_input_features(), output_features, compute_dtype);
 
     if (batch_norm.active())
         batch_norm.set(output_features, batch_norm.momentum);
 
-    combination.output_slots = batch_norm.active() ? vector<size_t>{CombinationView}
+    const bool keep_pre_activation = batch_norm.active() || input_deriv;
+    combination.output_slots = keep_pre_activation ? vector<size_t>{CombinationView}
                                                    : vector<size_t>{Output};
 
     if (batch_norm.active())
@@ -66,8 +87,25 @@ void Dense::configure_operators()
         batch_norm.output_slots = {Output, BatchNormMean, BatchNormInverseVariance};
     }
 
-    activation_operator.input_slots  = {Output};
-    activation_operator.output_slots = {Output};
+    combination.input_delta_slots  = {1};
+    combination.output_delta_slots = {0};
+    activation_operator.input_delta_slots   = {1};
+    activation_operator.output_delta_slots  = {0};
+
+    if (input_deriv)
+    {
+        activation_operator.input_slots        = {CombinationView};
+        activation_operator.output_slots       = {Output};
+        activation_operator.output_delta_slots = {0};
+        activation_operator.input_delta_slots  = {2};
+        combination.output_delta_slots         = {2};
+        combination.input_delta_slots          = {1};
+    }
+    else
+    {
+        activation_operator.input_slots  = {Output};
+        activation_operator.output_slots = {Output};
+    }
 
     const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
@@ -77,7 +115,7 @@ void Dense::configure_operators()
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
 
-    activation_operator.save_slot = dropout.active() ? ActivationView : SIZE_MAX;
+    activation_operator.save_slot = (!input_deriv && dropout.active()) ? ActivationView : SIZE_MAX;
 }
 
 void Dense::set_batch_normalization(bool enable)
@@ -192,12 +230,16 @@ string Dense::write_expression(const vector<string>& input_names,
 void Dense::read_JSON_body(const Json* dense_layer_element)
 {
     batch_norm.features = read_json_bool(dense_layer_element, "BatchNormalization") ? output_features : 0;
+
+    if (dense_layer_element->has("Activation"))
+        set_activation_function(read_json_string(dense_layer_element, "Activation"));
 }
 
 void Dense::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"BatchNormalization", to_string(batch_norm.active())}
+        {"BatchNormalization", to_string(batch_norm.active())},
+        {"Activation", ActivationOperator::to_string(get_activation_function())}
     });
 }
 

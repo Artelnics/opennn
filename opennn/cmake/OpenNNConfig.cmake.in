@@ -1,0 +1,29 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(Eigen3)
+
+if(@_opennn_needs_tbb@)
+    find_dependency(TBB)
+endif()
+
+if(@_opennn_needs_openmp@)
+    find_dependency(OpenMP)
+endif()
+
+if(@_opennn_needs_zlib@)
+    find_dependency(ZLIB)
+endif()
+
+if(@_opennn_needs_jpeg@)
+    find_dependency(JPEG)
+endif()
+
+if(@OPENNN_HAS_CUDA@)
+    find_dependency(CUDAToolkit)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/OpenNNTargets.cmake")
+
+check_required_components(OpenNN)

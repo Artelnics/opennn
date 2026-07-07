@@ -179,6 +179,41 @@ public:
     void set_attention_sdpa_auto(bool);
 };
 
+class Bert final : public NeuralNetwork
+{
+public:
+
+    Bert() = default;
+
+    Bert(Index sequence_length,
+         Index vocabulary_size,
+         Index hidden_size,
+         Index heads_number,
+         Index intermediate_size,
+         Index layers_number,
+         Index type_vocabulary_size = 2);
+
+    Index get_sequence_length() const;
+    Index get_hidden_size() const;
+    Index get_heads_number() const;
+};
+
+class BertForSequenceClassification final : public NeuralNetwork
+{
+public:
+
+    BertForSequenceClassification() = default;
+
+    BertForSequenceClassification(Index sequence_length,
+                                  Index vocabulary_size,
+                                  Index hidden_size,
+                                  Index heads_number,
+                                  Index intermediate_size,
+                                  Index layers_number,
+                                  Index labels_number,
+                                  Index type_vocabulary_size = 2);
+};
+
 #endif // OPENNN_NO_VISION
 
 }

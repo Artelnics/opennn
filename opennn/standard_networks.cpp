@@ -1268,6 +1268,81 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     set_parameters_glorot();
 }
 
+static Index add_bert_encoder(NeuralNetwork& net,
+                              Index sequence_length, Index vocabulary_size, Index hidden_size,
+                              Index heads_number, Index intermediate_size, Index layers_number,
+                              Index type_vocabulary_size)
+{
+    throw_if(sequence_length == 0 || vocabulary_size == 0 || hidden_size == 0 ||
+             heads_number == 0 || intermediate_size == 0 || layers_number == 0 ||
+             type_vocabulary_size == 0,
+             "BERT: all dimensions must be > 0.");
+
+    throw_if(hidden_size % heads_number != 0,
+             "BERT: hidden_size must be divisible by heads_number.");
+
+    const Shape seq_hidden{sequence_length, hidden_size};
+
+    auto add_residual_norm = [&](const string& label, Index left, Index right) -> Index {
+        auto norm = make_unique<Normalization3d>(seq_hidden, label);
+        norm->set_fuse_add(true);
+        net.add_layer(move(norm), {left, right});
+        return net.get_layers_number() - 1;
+    };
+
+    auto word_embeddings = make_unique<Embedding>(
+        Shape{vocabulary_size, sequence_length}, hidden_size, "word_embeddings");
+    word_embeddings->set_learned_positional(true);
+    word_embeddings->set_export_valid_lengths(true);
+    net.add_layer(move(word_embeddings), {-1});
+    const Index word_index = net.get_layers_number() - 1;
+
+    net.add_layer(make_unique<Embedding>(
+                      Shape{type_vocabulary_size + 1, sequence_length}, hidden_size, "token_type_embeddings"),
+                  {-2});
+    const Index type_index = net.get_layers_number() - 1;
+
+    Index current = add_residual_norm("embeddings_layer_norm", word_index, type_index);
+
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const string sfx = format("_{}", i + 1);
+
+        net.add_layer(make_unique<MultiHeadAttention>(seq_hidden, heads_number, "attention" + sfx),
+                      {current});
+        const Index attention_index = net.get_layers_number() - 1;
+
+        const Index attention_norm_index =
+            add_residual_norm("attention_layer_norm" + sfx, current, attention_index);
+
+        net.add_layer(make_unique<Dense>(seq_hidden, Shape{intermediate_size},
+                                         "GELU", false, "intermediate" + sfx),
+                      {attention_norm_index});
+        net.add_layer(make_unique<Dense>(Shape{sequence_length, intermediate_size}, Shape{hidden_size},
+                                         "Identity", false, "feed_forward_output" + sfx));
+        const Index feed_forward_index = net.get_layers_number() - 1;
+
+        current = add_residual_norm("output_layer_norm" + sfx, attention_norm_index, feed_forward_index);
+    }
+
+    return current;
+}
+
+Bert::Bert(Index sequence_length,
+           Index vocabulary_size,
+           Index hidden_size,
+           Index heads_number,
+           Index intermediate_size,
+           Index layers_number,
+           Index type_vocabulary_size)
+    : NeuralNetwork()
+{
+    add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
+                     intermediate_size, layers_number, type_vocabulary_size);
+    compile();
+    set_parameters_glorot();
+}
+
 void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)
 {
     const auto forward_before = get_forward_specs(1);
@@ -1318,12 +1393,59 @@ Index TextGenerationNetwork::get_embedding_dimension() const
     return get_layer(0)->get_output_shape().back();
 }
 
+Index Bert::get_sequence_length() const
+{
+    return get_layer("word_embeddings")->get_input_shape()[0];
+}
+
+Index Bert::get_hidden_size() const
+{
+    return get_layer(0)->get_output_shape().back();
+}
+
 Index TextGenerationNetwork::get_heads_number() const
 {
     if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
         return mha->get_heads_number();
 
     return 0;
+}
+
+Index Bert::get_heads_number() const
+{
+    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
+        return mha->get_heads_number();
+
+    return 0;
+}
+
+BertForSequenceClassification::BertForSequenceClassification(Index sequence_length,
+                                                             Index vocabulary_size,
+                                                             Index hidden_size,
+                                                             Index heads_number,
+                                                             Index intermediate_size,
+                                                             Index layers_number,
+                                                             Index labels_number,
+                                                             Index type_vocabulary_size)
+    : NeuralNetwork()
+{
+    throw_if(labels_number == 0, "BertForSequenceClassification: labels_number must be > 0.");
+
+    const Index encoder_index = add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size,
+                                                 heads_number, intermediate_size, layers_number,
+                                                 type_vocabulary_size);
+
+    add_layer(make_unique<Pooling3d>(Shape{sequence_length, hidden_size},
+                                     PoolingMethod::FirstToken, "cls_pooling"),
+              {encoder_index});
+
+    add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{hidden_size}, "Tanh", false, "pooler"));
+
+    add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{labels_number},
+                                 labels_number == 1 ? "Sigmoid" : "Softmax", false, "classifier"));
+
+    compile();
+    set_parameters_glorot();
 }
 
 #endif // OPENNN_NO_VISION

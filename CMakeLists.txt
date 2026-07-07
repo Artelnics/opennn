@@ -179,6 +179,10 @@ FetchContent_Declare(
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+# Install Eigen's export set alongside OpenNN so the installed OpenNNTargets
+# (which links Eigen3::Eigen) resolves via find_dependency(Eigen3). Defaults
+# to OFF when Eigen is not the top-level project.
+set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(eigen)
 
 add_subdirectory(opennn)
@@ -187,7 +191,7 @@ if(OPENNN_HAS_CUDA)
     option(OpenNN_BUILD_BLANK_CUDA "Build OpenNN CUDA blank example" ON)
 endif()
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)

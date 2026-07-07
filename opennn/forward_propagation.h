@@ -46,6 +46,7 @@ struct ForwardPropagation
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
+    vector<Index> attention_valid_lengths;
 };
 
 }

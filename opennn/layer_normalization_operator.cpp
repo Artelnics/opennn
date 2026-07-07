@@ -86,8 +86,7 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
         // The residual stream's gradient equals the norm input's gradient (the
         // add forks the same delta to both inputs), written to its own slot.
         TensorView& residual_delta = back_propagation.backward_slots[layer][residual_delta_slot];
-        if (residual_delta.data) device::copy_async(residual_delta.data, input_delta.data,
-            input_delta.byte_size(), device::CopyKind::DeviceToDevice, Backend::get_compute_stream());
+        if (residual_delta.data) copy(input_delta, residual_delta);
     }
 }
 

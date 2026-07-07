@@ -34,6 +34,7 @@ public:
     bool get_batch_normalization() const { return batch_norm.active(); }
 
     vector<TensorSpec> get_forward_specs(Index) const override;
+    vector<TensorSpec> get_backward_specs(Index) const override;
 
     void set(const Shape& = {},
              const Shape& = {},

@@ -22,6 +22,8 @@ void Pool3dOperator::forward_propagate(ForwardPropagation& forward_propagation, 
 
     if (method == Max)
         max_pooling_3d_forward(input, output, indices, is_training);
+    else if (method == First)
+        first_token_3d_forward(input, output);
     else
         average_pooling_3d_forward(input, output);
 }
@@ -34,6 +36,8 @@ void Pool3dOperator::back_propagate(ForwardPropagation& forward_propagation, Bac
 
     if (method == Max)
         max_pooling_3d_backward(get_output(forward_propagation, layer, 1), output_delta, input_delta);
+    else if (method == First)
+        first_token_3d_backward(output_delta, input_delta);
     else
         average_pooling_3d_backward(get_input(forward_propagation, layer), output_delta, input_delta);
 }

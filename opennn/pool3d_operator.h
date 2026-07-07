@@ -15,7 +15,7 @@ namespace opennn
 
 struct Pool3dOperator : Operator
 {
-    enum Method { Max, Average };
+    enum Method { Max, Average, First };
     Method method = Average;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

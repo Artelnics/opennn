@@ -262,7 +262,7 @@ template void embedding_forward_cuda<float>        (const Index, const float*, c
 template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
 
 template<typename T>
-__global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+__global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, float* __restrict__ positional_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
@@ -274,27 +274,32 @@ __global__ void embedding_backward_kernel(const int n, const float* __restrict__
 
         if (token_id <= 0 || token_id >= vocabulary_size) continue;
 
-        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_index], scale * static_cast<float>(output_deltas[i]));
+        const float delta = static_cast<float>(output_deltas[i]);
+        atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_index], scale * delta);
+
+        if (positional_gradients != nullptr)
+        {
+            const int seq_index = token_index % sequence_length;
+            atomicAdd(&positional_gradients[seq_index * embedding_dimension + dim_index], delta);
+        }
     }
 }
 
 template<typename T>
-void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+void embedding_backward_cuda(const Index n, const float* inputs, const T* output_deltas, float* weight_gradients, float* positional_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     if (n == 0) return;
 
     const int total = checked_int(n);
 
     OPENNN_CUDA_LAUNCH(embedding_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
-        total, inputs, output_deltas, weight_gradients,
-        embedding_dimension, vocabulary_size, scale_embedding));
+        total, inputs, output_deltas, weight_gradients, positional_gradients,
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding));
 }
 
-template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, const int, const int, const bool);
-template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, const int, const int, const bool);
+template void embedding_backward_cuda<float>        (const Index, const float*, const float*,         float*, float*, const int, const int, const int, const bool);
+template void embedding_backward_cuda<__nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, float*, float*, const int, const int, const int, const bool);
 
-// Both head reshapes are the same permutation [B, P, Q, D] -> [B, Q, P, D]:
-// split_heads uses (P=S, Q=H) and merge_heads (P=H, Q=S).
 template<typename T>
 __global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D)
 {
@@ -406,6 +411,48 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
 
 template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
 template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
+
+template<typename T>
+__global__ void length_to_padding_mask_kernel(const int n, const int source_sequence_length,
+                                              const int* __restrict__ lengths, T* __restrict__ padding_mask)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int b = i / source_sequence_length;
+        const int s = i % source_sequence_length;
+        padding_mask[i] = static_cast<T>(s >= lengths[b] ? 1.0f : 0.0f);
+    }
+}
+
+template<typename T>
+void attention_length_mask_cuda(const int batch_size, const int heads_number,
+                                const int query_sequence_length, const int source_sequence_length,
+                                const int* host_lengths, T* attention_weights, T* padding_mask,
+                                const bool use_causal_mask)
+{
+    if (batch_size == 0) return;
+
+    cudaStream_t stream = opennn::device::get_compute_stream();
+
+    int* device_lengths = nullptr;
+    cudaMallocAsync(&device_lengths, size_t(batch_size) * sizeof(int), stream);
+    cudaMemcpyAsync(device_lengths, host_lengths, size_t(batch_size) * sizeof(int),
+                    cudaMemcpyHostToDevice, stream);
+
+    const int m = batch_size * source_sequence_length;
+    OPENNN_CUDA_LAUNCH(length_to_padding_mask_kernel<T><<<grid_size_for(m), block_size, 0, stream>>>(
+        m, source_sequence_length, device_lengths, padding_mask));
+
+    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
+    OPENNN_CUDA_LAUNCH(fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, stream>>>(
+        n, attention_weights, padding_mask, heads_number,
+        query_sequence_length, source_sequence_length, use_causal_mask));
+
+    cudaFreeAsync(device_lengths, stream);
+}
+
+template void attention_length_mask_cuda<float>        (int, int, int, int, const int*, float*,         float*,         bool);
+template void attention_length_mask_cuda<__nv_bfloat16>(int, int, int, int, const int*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
 template<typename T>
 __global__ void attention_sequence_lengths_kernel(const int batch_size,
@@ -686,6 +733,50 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
 template void average_pooling_3d_backward_cuda<float>        (const Index, const float*,         const float*,         float*,         const int, const int);
 template void average_pooling_3d_backward_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, const int, const int);
+
+template<typename T>
+__global__ void first_token_3d_forward_kernel(const int n, const int S, const int F, const T* __restrict__ in, T* __restrict__ out)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int b = i / F;
+        const int h = i % F;
+        out[i] = in[b * S * F + h];
+    }
+}
+
+template<typename T>
+void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out)
+{
+    if (B == 0 || F == 0) return;
+    const int total = B * F;
+    OPENNN_CUDA_LAUNCH(first_token_3d_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, S, F, in, out));
+}
+
+template void first_token_3d_forward_cuda<float>        (const int, const int, const int, const float*,         float*);
+template void first_token_3d_forward_cuda<__nv_bfloat16>(const int, const int, const int, const __nv_bfloat16*, __nv_bfloat16*);
+
+template<typename T>
+__global__ void first_token_3d_backward_kernel(const int n, const int S, const int F, const T* __restrict__ delta, T* __restrict__ in_gradient)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int b = i / F;
+        const int h = i % F;
+        in_gradient[b * S * F + h] = delta[i];
+    }
+}
+
+template<typename T>
+void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient)
+{
+    if (B == 0 || F == 0) return;
+    const int total = B * F;
+    OPENNN_CUDA_LAUNCH(first_token_3d_backward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, S, F, delta, in_gradient));
+}
+
+template void first_token_3d_backward_cuda<float>        (const int, const int, const int, const float*,         float*);
+template void first_token_3d_backward_cuda<__nv_bfloat16>(const int, const int, const int, const __nv_bfloat16*, __nv_bfloat16*);
 
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
 {
@@ -1005,13 +1096,13 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
 
-// Function codes mirror ActivationFunction values.
 __device__ __forceinline__ float opennn_activation_value(float x, int function)
 {
     if (function == activation_sigmoid)    return 1.0f / (1.0f + expf(-x));
     if (function == activation_tanh)       return tanhf(x);
     if (function == activation_relu)       return fmaxf(x, 0.0f);
     if (function == activation_leaky_relu) return x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
+    if (function == activation_gelu)       return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
     return x;
 }
 
@@ -1021,6 +1112,12 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
     if (function == activation_tanh)       return d * (1.0f - y * y);
     if (function == activation_relu)       return y > 0.0f ? d : 0.0f;
     if (function == activation_leaky_relu) return y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
+    if (function == activation_gelu)
+    {
+        const float cdf = 0.5f * (1.0f + erff(y * 0.70710678118654752440f));
+        const float pdf = 0.39894228040143267794f * expf(-0.5f * y * y);
+        return d * (cdf + y * pdf);
+    }
     return d;
 }
 
