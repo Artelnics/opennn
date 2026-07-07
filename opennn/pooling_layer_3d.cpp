@@ -53,7 +53,13 @@ void Pooling3d::set(const Shape& new_input_shape,
 void Pooling3d::set_pooling_method(PoolingMethod new_pooling_method)
 {
     pooling_method = new_pooling_method;
-    pool3d.method = (pooling_method == PoolingMethod::MaxPooling) ? Pool3dOperator::Max : Pool3dOperator::Average;
+    switch (pooling_method)
+    {
+    case PoolingMethod::MaxPooling:    pool3d.method = Pool3dOperator::Max;     break;
+    case PoolingMethod::FirstToken:    pool3d.method = Pool3dOperator::First;   break;
+    case PoolingMethod::AveragePooling:
+    default:                           pool3d.method = Pool3dOperator::Average; break;
+    }
 }
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)

@@ -25,12 +25,17 @@ void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_
 
 vector<TensorSpec> EmbeddingLookupOperator::parameter_specs() const
 {
-    return {{{vocabulary_size, embedding_dimension}, Type::FP32}};
+    vector<TensorSpec> specs = {{{vocabulary_size, embedding_dimension}, Type::FP32}};
+    if (positional_trainable)
+        specs.push_back({{sequence_length, embedding_dimension}, Type::FP32});
+    return specs;
 }
 
 vector<TensorSpec> EmbeddingLookupOperator::state_specs() const
 {
-    if (!add_positional_encoding) return {};
+    if (!add_positional_encoding || positional_trainable)
+        return {};
+
     return {{{sequence_length, embedding_dimension}, Type::FP32}};
 }
 
@@ -38,17 +43,21 @@ void EmbeddingLookupOperator::link_parameters(span<const TensorView> views)
 {
     if (views.empty()) return;
     weights = views[0];
+    if (positional_trainable && views.size() > 1)
+        positional_encoding = views[1];
 }
 
 void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 {
     if (views.empty()) return;
     weight_gradient = views[0];
+    if (positional_trainable && views.size() > 1)
+        positional_gradient = views[1];
 }
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)
 {
-    if (views.empty()) return;
+    if (positional_trainable || views.empty()) return;
     const bool needs_init = positional_encoding.data == nullptr;
     positional_encoding = views[0];
     if (needs_init) init_positional_encoding();
@@ -60,6 +69,7 @@ void EmbeddingLookupOperator::set_parameters_random()
     MatrixMap weights_matrix = weights.as_matrix();
     set_random_normal(weights_matrix, 0.0f, 1.0f);
     weights_matrix.row(0).setZero();
+    init_trainable_positional();
 }
 
 void EmbeddingLookupOperator::set_parameters_glorot()
@@ -68,6 +78,14 @@ void EmbeddingLookupOperator::set_parameters_glorot()
     const float limit = glorot_limit(vocabulary_size, embedding_dimension);
     set_random_uniform(weights.as_vector(), -limit, limit);
     weights.as_matrix().row(0).setZero();
+    init_trainable_positional();
+}
+
+void EmbeddingLookupOperator::init_trainable_positional()
+{
+    if (!positional_trainable || positional_encoding.empty() || !positional_encoding.data) return;
+    MatrixMap positional_matrix = positional_encoding.as_matrix();
+    set_random_normal(positional_matrix, 0.0f, 0.02f);
 }
 
 void EmbeddingLookupOperator::init_positional_encoding()
@@ -96,9 +114,17 @@ void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_prop
     const TensorView& indices = get_input(forward_propagation, layer);
     TensorView& output        = get_output(forward_propagation, layer);
 
+    if (export_valid_lengths)
+        compute_valid_lengths(indices, forward_propagation.attention_valid_lengths);
+
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,
                              scale_embedding, add_positional_encoding);
+}
+
+void EmbeddingLookupOperator::compute_valid_lengths(const TensorView& indices, vector<Index>& valid_lengths) const
+{
+    compute_token_valid_lengths(indices, sequence_length, valid_lengths);
 }
 
 void EmbeddingLookupOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -106,8 +132,8 @@ void EmbeddingLookupOperator::back_propagate(ForwardPropagation& forward_propaga
     const TensorView& indices      = get_input(forward_propagation, layer);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    embedding_lookup_backward(indices, output_delta, weight_gradient,
-                              embedding_dimension, vocabulary_size, scale_embedding);
+    embedding_lookup_backward(indices, output_delta, weight_gradient, positional_gradient,
+                              sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
 void EmbeddingLookupOperator::load_state_from_JSON(const Json* /*parent*/)

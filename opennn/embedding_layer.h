@@ -38,6 +38,15 @@ public:
 
     void set_scale_embedding(bool enabled) { embedding_lookup.scale_embedding = enabled; }
     void set_add_positional_encoding(bool enabled) { embedding_lookup.add_positional_encoding = enabled; }
+
+    void set_learned_positional(bool enabled)
+    {
+        embedding_lookup.add_positional_encoding = enabled;
+        embedding_lookup.positional_trainable    = enabled;
+    }
+    bool get_learned_positional() const { return embedding_lookup.positional_trainable; }
+
+    void set_export_valid_lengths(bool enabled) { embedding_lookup.export_valid_lengths = enabled; }
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
 
     void read_JSON_body(const Json*) override;

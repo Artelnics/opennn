@@ -89,6 +89,16 @@ void Normalization3d::read_JSON_body(const Json* element)
     const Shape new_input_shape = string_to_shape(read_json_string(element, "InputDimensions"));
 
     set(new_input_shape.dim_or_zero(0), new_input_shape.dim_or_zero(1), get_label());
+
+    if (element->has("FuseAdd"))
+        set_fuse_add(read_json_bool(element, "FuseAdd"));
+}
+
+void Normalization3d::write_JSON_body(JsonWriter& printer) const
+{
+    write_json(printer, {
+        {"FuseAdd", to_string(layer_normalization.fuse_add)}
+    });
 }
 
 REGISTER(Layer, Normalization3d, "Normalization3d")

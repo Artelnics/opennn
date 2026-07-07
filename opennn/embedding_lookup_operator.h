@@ -21,11 +21,14 @@ struct EmbeddingLookupOperator : Operator
 
     bool scale_embedding         = false;
     bool add_positional_encoding = false;
+    bool  positional_trainable    = false;
+    bool  export_valid_lengths    = false;
 
     TensorView weights;
     TensorView positional_encoding;
 
     TensorView weight_gradient;
+    TensorView positional_gradient;
 
     void set(Index, Index, Index);
 
@@ -39,6 +42,8 @@ struct EmbeddingLookupOperator : Operator
     void set_parameters_glorot() override;
 
     void init_positional_encoding();
+    void init_trainable_positional();
+    void compute_valid_lengths(const TensorView& indices, vector<Index>& valid_lengths) const;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

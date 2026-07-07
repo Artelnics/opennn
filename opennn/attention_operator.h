@@ -65,7 +65,8 @@ private:
                        TensorView&,
                        TensorView&,
                        void*,
-                       bool);
+                       bool,
+                       const vector<Index>* explicit_lengths = nullptr);
 
 #ifdef OPENNN_HAS_CUDA
     void apply_sdpa_forward(const TensorView&,

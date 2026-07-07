@@ -187,7 +187,7 @@ if(OPENNN_HAS_CUDA)
     option(OpenNN_BUILD_BLANK_CUDA "Build OpenNN CUDA blank example" ON)
 endif()
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)

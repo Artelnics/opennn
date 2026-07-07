@@ -150,11 +150,17 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::Tanh,      "Tanh"},
         {ActivationFunction::ReLU,      "ReLU"},
         {ActivationFunction::Softmax,   "Softmax"},
-        {ActivationFunction::LeakyReLU, "LeakyReLU"}
+        {ActivationFunction::LeakyReLU, "LeakyReLU"},
+        {ActivationFunction::GELU,      "GELU"}
     };
     
     static const EnumMap<ActivationFunction> instance{entries};
     return instance;
+}
+
+bool activation_needs_input(ActivationFunction function)
+{
+    return function == ActivationFunction::GELU;
 }
 
 const string& activation_function_to_string(ActivationFunction function)
@@ -209,13 +215,15 @@ MatrixR activation_derivative_from_output_values(ActivationFunction function, co
     X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
     X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
-    X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, Index, Index, bool)) \
+    X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool)) \
     X(max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool)) \
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
     X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
+    X(first_token_3d_forward_gpu, (const TensorView&, TensorView&)) \
+    X(first_token_3d_backward_gpu, (const TensorView&, TensorView&)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
     X(merge_heads_gpu, (const TensorView&, TensorView&))
 
@@ -490,6 +498,13 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
     case LeakyReLU:
         a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
         return;
+    case GELU:
+        a = a.unaryExpr([](float x)
+        {
+            constexpr float inv_sqrt2 = 0.70710678118654752440f;
+            return 0.5f * x * (1.0f + erff(x * inv_sqrt2));
+        });
+        return;
     }
 }
 
@@ -514,9 +529,17 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         d = (y > 0.0f).select(d, 0.0f);
         return;
     case LeakyReLU:
-        // Negative-side output is slope * pre-activation, so sign(y) == sign(x)
-        // for any positive slope â€” we can recover the gate from y alone.
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
+        return;
+    case GELU:
+        d *= y.unaryExpr([](float x)
+        {
+            constexpr float inv_sqrt2  = 0.70710678118654752440f;
+            constexpr float inv_sqrt2pi = 0.39894228040143267794f;
+            const float cdf = 0.5f * (1.0f + erff(x * inv_sqrt2));
+            const float pdf = inv_sqrt2pi * expf(-0.5f * x * x);
+            return cdf + x * pdf;
+        });
         return;
     }
 }
@@ -831,8 +854,8 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
 }
 
 static void embedding_lookup_backward_cpu(const TensorView& indices, const TensorView& output_delta,
-                                   const TensorView& weight_gradient,
-                                   Index embedding_dimension, Index vocabulary_size,
+                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
+                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
                                    bool scale_embedding)
 {
     const Index total_elements = indices.size();
@@ -840,6 +863,8 @@ static void embedding_lookup_backward_cpu(const TensorView& indices, const Tenso
     MatrixMap output_delta_map = output_delta.as_flat_matrix();
     MatrixMap weight_gradients = weight_gradient.as_matrix().setZero();
     const float scale = scale_embedding ? sqrt(to_type(embedding_dimension)) : 1.0f;
+
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
 
     for (Index token_index = 0; token_index < total_elements; ++token_index)
     {
@@ -849,6 +874,19 @@ static void embedding_lookup_backward_cpu(const TensorView& indices, const Tenso
             continue;
 
         weight_gradients.row(vocabulary_index).noalias() += scale * output_delta_map.row(token_index);
+    }
+
+    if (accumulate_positional)
+    {
+        MatrixMap positional_gradients = positional_gradient.as_matrix();
+        positional_gradients.setZero();
+        for (Index token_index = 0; token_index < total_elements; ++token_index)
+        {
+            const Index vocabulary_index = static_cast<Index>(indices.as<float>()[token_index]);
+            if (vocabulary_index <= 0 || vocabulary_index >= vocabulary_size)
+                continue;
+            positional_gradients.row(token_index % sequence_length).noalias() += output_delta_map.row(token_index);
+        }
     }
 }
 
@@ -870,17 +908,18 @@ void embedding_lookup_forward(const TensorView& indices, const TensorView& weigh
 }
 
 void embedding_lookup_backward(const TensorView& indices, const TensorView& output_delta,
-                               const TensorView& weight_gradient,
-                               Index embedding_dimension, Index vocabulary_size,
+                               const TensorView& weight_gradient, const TensorView& positional_gradient,
+                               Index sequence_length, Index embedding_dimension, Index vocabulary_size,
                                bool scale_embedding)
 {
     if (output_delta.is_cuda())
     {
-        embedding_lookup_backward_gpu(indices, output_delta, weight_gradient,
-                                      embedding_dimension, vocabulary_size, scale_embedding);
+        embedding_lookup_backward_gpu(indices, output_delta, weight_gradient, positional_gradient,
+                                      sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
         return;
     }
-    embedding_lookup_backward_cpu(indices, output_delta, weight_gradient,
+    embedding_lookup_backward_cpu(indices, output_delta, weight_gradient, positional_gradient,
+                                  sequence_length,
                                   embedding_dimension, vocabulary_size, scale_embedding);
 }
 
@@ -1190,6 +1229,81 @@ void pooling_2d_backward(const TensorView& input, const TensorView& output,
                             row_stride, column_stride,
                             padding_height, padding_width,
                             max_pooling);
+}
+
+static void first_token_3d_forward_cpu(const TensorView& input, TensorView& output)
+{
+    const TensorMap3 inputs = input.as_tensor<3>();
+    MatrixMap outputs = output.as_matrix();
+
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index features = inputs.dimension(2);
+
+    #pragma omp parallel for
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    {
+        const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
+        outputs.row(batch_index) = seq_matrix.row(0);
+    }
+}
+
+void first_token_3d_forward(const TensorView& input, TensorView& output)
+{
+    if (input.is_cuda()) { first_token_3d_forward_gpu(input, output); return; }
+    first_token_3d_forward_cpu(input, output);
+}
+
+static void first_token_3d_backward_cpu(const TensorView& output_delta, TensorView& input_delta)
+{
+    const MatrixMap output_delta_matrix = output_delta.as_matrix();
+    TensorMap3 input_delta_map = input_delta.as_tensor<3>().setZero();
+
+    const Index batch_size = output_delta_matrix.rows();
+    const Index sequence_length = input_delta_map.dimension(1);
+    const Index features = output_delta_matrix.cols();
+
+    #pragma omp parallel for
+    for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+    {
+        Map<MatrixR> gradient_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
+        gradient_matrix.row(0) = output_delta_matrix.row(batch_index);
+    }
+}
+
+void first_token_3d_backward(const TensorView& output_delta, TensorView& input_delta)
+{
+    if (output_delta.is_cuda()) { first_token_3d_backward_gpu(output_delta, input_delta); return; }
+    first_token_3d_backward_cpu(output_delta, input_delta);
+}
+
+void compute_token_valid_lengths(const TensorView& indices, Index sequence_length, vector<Index>& valid_lengths)
+{
+    const Index total = indices.size();
+    const Index batch_size = sequence_length > 0 ? total / sequence_length : 0;
+
+    valid_lengths.assign(batch_size, sequence_length);
+    if (batch_size == 0) return;
+
+    const float* ids = indices.as<float>();
+    vector<float> host;
+#ifdef OPENNN_HAS_CUDA
+    if (indices.is_cuda())
+    {
+        host.resize(size_t(total));
+        copy_device_to_host_float(indices.data, indices.type, total, host.data(), Backend::get_compute_stream());
+        ids = host.data();
+    }
+#endif
+
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        Index count = 0;
+        const float* row = ids + b * sequence_length;
+        for (Index s = 0; s < sequence_length; ++s)
+            if (static_cast<Index>(row[s]) != 0) ++count;
+        valid_lengths[b] = count;
+    }
 }
 
 static void transpose_middle_axes(const float* src, float* dst,
@@ -1611,11 +1725,14 @@ static void embedding_lookup_forward_gpu(const TensorView& indices, const Tensor
 }
 
 static void embedding_lookup_backward_gpu(const TensorView& indices, const TensorView& output_delta,
-                                   const TensorView& weight_gradient,
-                                   Index embedding_dimension, Index vocabulary_size,
+                                   const TensorView& weight_gradient, const TensorView& positional_gradient,
+                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
                                    bool scale_embedding)
 {
     weight_gradient.set_zero_async();
+
+    const bool accumulate_positional = !positional_gradient.empty() && positional_gradient.data != nullptr;
+    if (accumulate_positional) positional_gradient.set_zero_async();
 
     output_delta.dispatch([&](auto tag) {
         using T = decltype(tag);
@@ -1624,7 +1741,8 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
             indices.as<float>(),
             output_delta.as<T>(),
             weight_gradient.as<float>(),
-            to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
+            accumulate_positional ? positional_gradient.as<float>() : nullptr,
+            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size), scale_embedding);
     });
 }
 
@@ -1723,6 +1841,25 @@ static void pooling_2d_backward_gpu(const TensorView& input,
         input.get_descriptor(),        input.data,
         &zero,
         input_delta.get_descriptor(),  input_delta.data));
+}
+
+static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)
+{
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        first_token_3d_forward_cuda<T>(to_int(input.shape[0]), to_int(input.shape[1]), to_int(input.shape[2]),
+                                       input.as<T>(), output.as<T>());
+    });
+}
+
+static void first_token_3d_backward_gpu(const TensorView& output_delta, TensorView& input_delta)
+{
+    input_delta.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        input_delta.set_zero_async();
+        first_token_3d_backward_cuda<T>(to_int(input_delta.shape[0]), to_int(input_delta.shape[1]), to_int(input_delta.shape[2]),
+                                        output_delta.as<T>(), input_delta.as<T>());
+    });
 }
 
 static void split_heads_gpu(const TensorView& source, TensorView& destination)

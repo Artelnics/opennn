@@ -55,6 +55,10 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
 
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
     set_add_positional_encoding(read_json_bool(embedding_layer_element, "AddPositionalEncoding"));
+    if (embedding_layer_element->has("LearnedPositional"))
+        set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional"));
+    if (embedding_layer_element->has("ExportValidLengths"))
+        set_export_valid_lengths(read_json_bool(embedding_layer_element, "ExportValidLengths"));
 }
 
 void Embedding::write_JSON_body(JsonWriter& printer) const
@@ -63,7 +67,9 @@ void Embedding::write_JSON_body(JsonWriter& printer) const
         {"VocabularySize", to_string(get_vocabulary_size())},
         {"OutputDimensions", shape_to_string(get_output_shape())},
         {"ScaleEmbedding", to_string(embedding_lookup.scale_embedding)},
-        {"AddPositionalEncoding", to_string(embedding_lookup.add_positional_encoding)}
+        {"AddPositionalEncoding", to_string(embedding_lookup.add_positional_encoding)},
+        {"LearnedPositional", to_string(embedding_lookup.positional_trainable)},
+        {"ExportValidLengths", to_string(embedding_lookup.export_valid_lengths)}
     });
 }
 
