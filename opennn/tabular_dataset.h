@@ -61,6 +61,10 @@ public:
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
 
+    // Overrides the default <data_dir>/.cache/<stem>.bin cache location, for
+    // applications that keep the binary next to the model (Neural Designer).
+    void set_binary_cache_path(const filesystem::path&);
+
     vector<string> get_feature_scalers(const string&) const override;
 
     void set_variable_scalers(const string&);
@@ -186,6 +190,7 @@ protected:
     void compute_cache_descriptives() const;
 
     filesystem::path cache_path;
+    filesystem::path cache_path_override;
     mutable FileReader cache_reader;
     Index cache_columns_number = 0;
 
