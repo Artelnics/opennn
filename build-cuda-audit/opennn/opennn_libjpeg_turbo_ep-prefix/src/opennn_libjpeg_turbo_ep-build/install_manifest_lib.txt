@@ -1,6 +1,0 @@
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/jpeg-static.lib
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/pkgconfig/libjpeg.pc
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfig.cmake
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboConfigVersion.cmake
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboTargets.cmake
-C:/tests_delete/opennn/build-cuda-audit/_deps/opennn_libjpeg_turbo-install/lib/cmake/libjpeg-turbo/libjpeg-turboTargets-release.cmake

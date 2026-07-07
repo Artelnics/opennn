@@ -45,7 +45,7 @@ void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_netw
     }
     else
     {
-        neural_network->set_input_names(dataset->get_feature_names("Input"));
+        neural_network->set_input_variables(dataset->get_variables("Input"));
     }
 
     neural_network->compile();

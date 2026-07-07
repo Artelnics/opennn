@@ -197,3 +197,9 @@ option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+# Benchmark drivers live next to their write-ups under docs/benchmarks/.
+option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
+if(OpenNN_BUILD_BENCHMARKS)
+    add_subdirectory(docs/benchmarks)
+endif()

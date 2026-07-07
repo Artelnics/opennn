@@ -14,18 +14,6 @@
 namespace opennn
 {
 
-VectorI Dataset::get_sample_role_numbers() const
-{
-    VectorI count = VectorI::Zero(4);
-
-    const Index samples_number = get_samples_number();
-
-    for (Index i = 0; i < samples_number; ++i)
-        count[static_cast<Index>(sample_roles[i])]++;
-
-    return count;
-}
-
 vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
@@ -53,18 +41,6 @@ vector<Index> Dataset::get_used_sample_indices() const
             used_indices.push_back(i);
 
     return used_indices;
-}
-
-vector<Index> Dataset::get_sample_roles_vector() const
-{
-    const Index samples_number = get_samples_number();
-
-    vector<Index> sample_roles_vector(samples_number);
-
-    ranges::transform(sample_roles, sample_roles_vector.begin(),
-                      [](SampleRole r) { return static_cast<Index>(r); });
-
-    return sample_roles_vector;
 }
 
 void Dataset::get_batches(const vector<Index>& sample_indices,
@@ -188,7 +164,6 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
 void Dataset::set_data_constant(float new_value)
 {
     data.setConstant(new_value);
-    mark_data_changed();
 }
 
 Index Dataset::get_samples_number(const string& sample_role) const
@@ -421,7 +396,6 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
     else
         throw runtime_error(format("Invalid variable role string: {}", variable_role));
 
-    mark_data_changed();
 }
 
 vector<Index> Dataset::get_feature_indices(const string& variable_role) const
@@ -580,7 +554,6 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
     for (size_t i = 0; i < new_variables_roles.size(); ++i)
         variables[i].set_role(new_variables_roles[i]);
 
-    mark_data_changed();
 }
 
 void Dataset::set_variable_indices(const vector<Index>& input_variables,
@@ -614,7 +587,6 @@ void Dataset::set_variable_role(const Index index, const string& new_role)
              format("Dataset::set_variable_role: index {} out of range [0, {}).",
                     index, variables.size()));
     variables[index].set_role(new_role);
-    mark_data_changed();
 }
 
 void Dataset::set_variable_role(const string& name, const string& new_role)
@@ -628,7 +600,6 @@ void Dataset::set_variable_type(const Index index, const VariableType& new_type)
              format("Dataset::set_variable_type: index {} out of range [0, {}).",
                     index, variables.size()));
     variables[index].type = new_type;
-    mark_data_changed();
 }
 
 void Dataset::set_variable_type(const string& name, const VariableType& new_type)
@@ -641,19 +612,6 @@ void Dataset::set_variable_types(const VariableType& new_type)
     for (auto& variable : variables)
         variable.type = new_type;
 
-    mark_data_changed();
-}
-
-void Dataset::set_feature_names(const vector<string>& new_variables_names)
-{
-    Index index = 0;
-
-    for (Variable& variable : variables)
-        if (variable.is_categorical())
-            for (Index j = 0; j < variable.get_categories_number(); ++j)
-                variable.categories[j] = new_variables_names[index++];
-        else
-            variable.name = new_variables_names[index++];
 }
 
 void Dataset::set_variable_names(const vector<string>& new_names)
@@ -672,13 +630,11 @@ void Dataset::set_variable_names(const vector<string>& new_names)
 void Dataset::set_variables(const vector<Variable>& new_variables)
 {
     variables = new_variables;
-    mark_data_changed();
 }
 
 void Dataset::set_variables_number(const Index new_size)
 {
     variables.resize(new_size);
-    mark_data_changed();
 }
 
 void Dataset::set_variable_roles(const string& variable_role)
@@ -689,7 +645,6 @@ void Dataset::set_variable_roles(const string& variable_role)
                 ? "None"
                 : variable_role);
 
-    mark_data_changed();
 }
 
 static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
@@ -785,17 +740,6 @@ vector<Index> Dataset::get_feature_indices(const Index variable_index) const
     return indices;
 }
 
-void Dataset::set_default()
-{
-    has_header = false;
-
-    has_sample_ids = false;
-
-    separator = Separator::Semicolon;
-
-    set_default_variable_names();
-}
-
 void Dataset::set_separator_string(const string& new_separator_string)
 {
     for (const auto& [sep, str, name] : separator_map)
@@ -848,7 +792,11 @@ void Dataset::samples_to_JSON(JsonWriter &printer) const
     if (has_sample_ids)
         add_json_field(printer, "SamplesId", vector_to_string(sample_ids, get_separator_string()));
 
-    add_json_field(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
+    vector<Index> sample_roles_vector(get_samples_number());
+    ranges::transform(sample_roles, sample_roles_vector.begin(),
+                      [](SampleRole r) { return static_cast<Index>(r); });
+
+    add_json_field(printer, "SampleRoles", vector_to_string(sample_roles_vector));
     printer.close_element();
 }
 
@@ -887,6 +835,7 @@ void Dataset::variables_from_JSON(const Json *variables_element)
         variable.set_scaler(read_json_string(el, "Scaler"));
         variable.set_role(read_json_string(el, "Role"));
         variable.set_type(read_json_string(el, "Type"));
+        variable.features = el->find("Features") ? read_json_index(el, "Features") : 1;
 
         if (variable.is_categorical() || variable.is_binary())
         {
@@ -984,13 +933,6 @@ bool Dataset::has_validation() const
     return get_samples_number("Validation") != 0;
 }
 
-vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, Index new_batch_size) const
-{
-    vector<vector<Index>> batches;
-    get_batches(sample_indices, new_batch_size, false, batches);
-    return batches;
-}
-
 void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, bool, int) const
 {
     throw runtime_error("Dataset::fill_inputs must be implemented by a concrete dataset.");
@@ -1029,6 +971,22 @@ void Dataset::fill_batch(Batch& batch,
         batch.needs_device_copy = true;
         return;
     }
+
+    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
+                    target_indices, is_training);
+}
+
+void Dataset::fill_batch_host(Batch& batch,
+                              const vector<Index>& sample_indices,
+                              const vector<Index>& input_indices,
+                              const vector<Index>& decoder_indices,
+                              const vector<Index>& target_indices,
+                              bool is_training) const
+{
+    batch.current_sample_count = sample_indices.size();
+
+    const bool on_gpu = batch.uses_cuda();
+
     batch.device_gather = false;
 
     float* const input_buffer   = on_gpu ? batch.input.host   : batch.input.buffer.as<float>();

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include <mutex>
+#include <Eigen/QR>
 #include "random_utilities.h"
 
 namespace opennn
@@ -86,6 +87,31 @@ void set_random_normal(MatrixMap tensor, float mean, float std_dev)
     normal_distribution<float> distribution(mean, std_dev);
     for (Index i = 0; i < tensor.size(); ++i)
         tensor(i) = distribution(generator);
+}
+
+void set_random_orthogonal(MatrixMap tensor)
+{
+    const Index rows = tensor.rows();
+    const Index cols = tensor.cols();
+    if (rows == 0 || cols == 0) return;
+    throw_if(rows < cols, "set_random_orthogonal requires rows >= cols.");
+
+    MatrixR gaussian(rows, cols);
+    {
+        lock_guard<mutex> lock(rng_mutex);
+        normal_distribution<float> distribution(0.0f, 1.0f);
+        for (Index i = 0; i < gaussian.size(); ++i)
+            gaussian(i) = distribution(generator);
+    }
+
+    const Eigen::HouseholderQR<MatrixR> qr(gaussian);
+    MatrixR q = qr.householderQ() * MatrixR::Identity(rows, cols);
+
+    for (Index j = 0; j < cols; ++j)
+        if (qr.matrixQR()(j, j) < 0.0f)
+            q.col(j) = -q.col(j);
+
+    tensor = q;
 }
 
 template<typename T>

@@ -20,7 +20,11 @@ class ModelExpression
 {
 public:
 
-    enum class ProgrammingLanguage{C, Python, JavaScript, PHP};
+    // C emits the network as readable unrolled formulas (one line per neuron);
+    // CEmbedded emits weight tables plus generic loops: much smaller code for
+    // the same model, float-only arithmetic and no heap, intended for
+    // microcontroller (TinyML) deployment.
+    enum class ProgrammingLanguage{C, CEmbedded, Python, JavaScript, PHP};
 
     ModelExpression(const NeuralNetwork*);
 
@@ -33,9 +37,21 @@ private:
     const NeuralNetwork* neural_network = nullptr;
 
     string get_expression_c() const;
+    string get_expression_c_embedded() const;
     string get_expression_python() const;
     string get_expression_php() const;
     string get_expression_javascript() const;
+
+    static string c_float_literal(float);
+
+    // Time-series networks consume a whole window (time_steps x features);
+    // the exported models take it flattened row-major, so the input count and
+    // names are expanded per time step. For rank-1 inputs these are the plain
+    // network values.
+    Index get_flat_inputs_number() const;
+    vector<string> get_flat_input_names() const;
+
+    void check_parameters_are_finite() const;
 
     void emit_c_prelude(ostringstream&) const;
     void emit_c_activations(ostringstream&, const string&) const;

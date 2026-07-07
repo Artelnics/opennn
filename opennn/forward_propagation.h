@@ -31,6 +31,13 @@ struct ForwardPropagation
 
     Index batch_size = 0;
 
+    // True when the batches fed through this propagation come from a dataset
+    // that Optimizer::set_scaling() already scaled in place (training and
+    // in-loop validation). NeuralNetwork::forward_propagate then skips the
+    // leading Scaling layers even with is_training == false, so validation
+    // inputs are not scaled twice.
+    bool inputs_pre_scaled = false;
+
     NeuralNetwork* neural_network = nullptr;
 
     Buffer data;

@@ -210,6 +210,8 @@ TrainingResult QuasiNewtonMethod::train()
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
         : nullptr;
 
+    mark_validation_propagation(validation_fp);
+
     set_names();
 
     set_scaling();

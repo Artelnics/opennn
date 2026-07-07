@@ -10,9 +10,12 @@
 # no whole-graph compiler fusion/rematerialization (OpenNN and eager PyTorch
 # have no equivalent).
 #
+# --mode infer measures forward-only capacity/throughput: model([...],
+# training=False) inside @tf.function, no GradientTape, no optimizer state.
+#
 #   usage: python tensorflow_transformer_maxbatch.py --in-vocab V --out-vocab V \
 #              --in-seq S --dec-seq S --d 512 --h 8 --ff 2048 --layers 6 \
-#              --batch B --steps N [--warmup W]
+#              --batch B --steps N [--warmup W] [--mode train|infer]
 #   env:   TF_BF16=1 -> mixed_bfloat16
 
 import argparse, math, os, time
@@ -33,6 +36,7 @@ ap.add_argument("--layers", type=int, default=6)
 ap.add_argument("--batch", type=int, default=32)
 ap.add_argument("--steps", type=int, default=30)
 ap.add_argument("--warmup", type=int, default=5)
+ap.add_argument("--mode", choices=["train", "infer"], default="train")
 args = ap.parse_args()
 
 assert tf.config.list_physical_devices("GPU"), "CUDA GPU required"
@@ -41,7 +45,8 @@ tf.random.set_seed(0)
 use_bf16 = os.environ.get("TF_BF16") is not None
 if use_bf16:
     tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-print(f"precision={'bf16' if use_bf16 else 'fp32'} in_vocab={args.in_vocab} "
+print(f"precision={'bf16' if use_bf16 else 'fp32'} mode={args.mode} "
+      f"in_vocab={args.in_vocab} "
       f"out_vocab={args.out_vocab} in_seq={args.in_seq} dec_seq={args.dec_seq} "
       f"d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers} "
       f"batch={args.batch} steps={args.steps} xla=False")
@@ -96,45 +101,67 @@ def build_model():
 model = build_model()
 print(f"parameters={model.count_params()}")
 
-opt = tf.keras.optimizers.Adam(1e-4)
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-
-@tf.function
-def train_step(src, dec, tgt):
-    with tf.GradientTape() as tape:
-        logits = model([src, dec], training=True)
-        loss = loss_fn(tgt, logits)
-    grads = tape.gradient(loss, model.trainable_variables)
-    opt.apply_gradients(zip(grads, model.trainable_variables))
-    return loss
-
-
 pool = max(8, args.warmup + args.steps)
 rng = np.random.default_rng(0)
 src = tf.constant(rng.integers(0, args.in_vocab, (pool, args.batch, args.in_seq), dtype=np.int32))
 dec = tf.constant(rng.integers(0, args.out_vocab, (pool, args.batch, args.dec_seq), dtype=np.int32))
-tgt = tf.constant(rng.integers(0, args.out_vocab, (pool, args.batch, args.dec_seq), dtype=np.int32))
 
+if args.mode == "train":
+    tgt = tf.constant(rng.integers(0, args.out_vocab, (pool, args.batch, args.dec_seq), dtype=np.int32))
 
-def one(i):
-    j = i % pool
-    return train_step(src[j], dec[j], tgt[j])
+    opt = tf.keras.optimizers.Adam(1e-4)
+    loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
+    @tf.function
+    def train_step(src_b, dec_b, tgt_b):
+        with tf.GradientTape() as tape:
+            logits = model([src_b, dec_b], training=True)
+            loss = loss_fn(tgt_b, logits)
+        grads = tape.gradient(loss, model.trainable_variables)
+        opt.apply_gradients(zip(grads, model.trainable_variables))
+        return loss
 
-for i in range(args.warmup):
-    one(i)
-last = one(0)
-_ = last.numpy()   # force sync after warmup
+    def one(i):
+        j = i % pool
+        return train_step(src[j], dec[j], tgt[j])
 
-t0 = time.perf_counter()
-for i in range(args.steps):
-    last = one(args.warmup + i)
-_ = last.numpy()   # force sync
-wall_s = time.perf_counter() - t0
+    for i in range(args.warmup):
+        one(i)
+    last = one(0)
+    _ = last.numpy()   # force sync after warmup
+
+    t0 = time.perf_counter()
+    for i in range(args.steps):
+        last = one(args.warmup + i)
+    _ = last.numpy()   # force sync
+    wall_s = time.perf_counter() - t0
+    print(f"final_loss={float(last):.5f}")
+else:
+    # Forward-only: no GradientTape, no optimizer state. The tiny logits slice
+    # returned per step forces execution and gives the finiteness probe.
+    @tf.function
+    def infer_step(src_b, dec_b):
+        logits = model([src_b, dec_b], training=False)
+        return logits[0, 0, :8]
+
+    def one(i):
+        j = i % pool
+        return infer_step(src[j], dec[j])
+
+    probe = None
+    for i in range(args.warmup):
+        probe = one(i)
+    _ = probe.numpy()   # force sync after warmup
+
+    t0 = time.perf_counter()
+    for i in range(args.steps):
+        probe = one(args.warmup + i)
+    probe_host = probe.numpy()   # force sync
+    wall_s = time.perf_counter() - t0
+
+    assert np.isfinite(np.asarray(probe_host, dtype=np.float32)).all(), "non-finite logits"
 
 samples_per_s = args.steps * args.batch / wall_s
-print(f"final_loss={float(last):.5f}")
 print(f"wall_s={wall_s:.5f}")
 print(f"samples_per_sec={samples_per_s:.2f}")
 print(f"tokens_per_sec={samples_per_s * (args.in_seq + args.dec_seq):.2f}")

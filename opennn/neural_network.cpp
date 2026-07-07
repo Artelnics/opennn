@@ -22,6 +22,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "model_expression.h"
+#include "memory_debug.h"
 
 #include <algorithm>
 
@@ -79,6 +80,7 @@ void NeuralNetwork::compile()
     parameters.setZero();
 
     parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
 
     link_parameters();
 
@@ -188,6 +190,25 @@ Layer* NeuralNetwork::get_first(LayerType type)
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
+    // Block variables hold a single name for many features; when the caller
+    // provides per-feature names, rebuild the list as one scalar variable per name.
+    if (ranges::any_of(variables,
+                       [](const Variable& v) { return !v.is_categorical() && v.features > 1; }))
+    {
+        const VariableRole role = variables.empty() ? VariableRole::None : variables[0].role;
+
+        variables.assign(new_names.size(), Variable());
+
+        for (size_t i = 0; i < new_names.size(); ++i)
+        {
+            variables[i].name = new_names[i];
+            variables[i].role = role;
+            variables[i].type = VariableType::Numeric;
+        }
+
+        return;
+    }
+
     const size_t total = new_names.size();
     size_t name_index = 0;
     for (size_t i = 0; i < variables.size(); ++i)
@@ -228,7 +249,14 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
-    input_variables.resize(new_input_shape.size());
+    if (get_features_number(input_variables) != new_input_shape.size())
+    {
+        input_variables.assign(1, Variable());
+        input_variables[0].name = "input";
+        input_variables[0].role = VariableRole::Input;
+        input_variables[0].type = VariableType::Numeric;
+        input_variables[0].features = new_input_shape.size();
+    }
 
     if (Layer* scaling = get_first(LayerType::Scaling))
         scaling->set_input_shape(new_input_shape);
@@ -458,6 +486,7 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
              format("NeuralNetwork::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size));
 
     const Index byte_count = new_parameters.size() * Index(sizeof(float));
+    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
 
     if (parameters.device_type == Device::CUDA)
     {
@@ -545,6 +574,21 @@ void NeuralNetwork::set_parameters_glorot()
     if (was_on_device) copy_parameters_device();
 }
 
+void NeuralNetwork::set_parameters_pytorch()
+{
+    const Index layers_number = get_layers_number();
+
+    const bool was_on_device = (parameters.device_type == Device::CUDA);
+    if (was_on_device) copy_parameters_host();
+
+    #pragma omp parallel for
+    for (int i = 0; i < layers_number; ++i)
+        for (Operator* op : layers[i]->get_operators())
+            op->set_parameters_pytorch();
+
+    if (was_on_device) copy_parameters_device();
+}
+
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
     const Index layers_number = get_layers_number();
@@ -582,14 +626,86 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     if (layers.empty() || input_views.empty()) return {};
 
     const Index batch_size = input_views[0].shape[0];
-    ForwardPropagation forward_propagation(batch_size, this);
 
     if (is_gpu())
+    {
+        ForwardPropagation forward_propagation(batch_size, this);
         return calculate_outputs_device(input_views, forward_propagation);
+    }
 
-    forward_propagate(input_views, forward_propagation, false);
+    // CPU inference is batch-separable: with is_training == false no layer
+    // mixes samples (batch normalization applies its running statistics), so
+    // large batches run in row tiles and activation memory is O(tile) instead
+    // of O(batch) -- the memory ceiling becomes the caller's input/output
+    // data. The tile is sized to a fixed activation budget rather than a
+    // fixed row count: smaller tiles starve the threaded GEMMs (measured -15%
+    // with MKL at half this budget), while the budget bounds the footprint
+    // for arbitrarily wide networks. Since tiling only engages when the batch
+    // arena would exceed the budget anyway, memory use is always <= the
+    // untiled path. The row count must stay a multiple of 16 so tile views
+    // keep the 64-byte alignment MatrixMap assumes.
+    constexpr Index tile_budget_bytes = Index(1024) * 1024 * 1024;
 
-    return forward_propagation.get_outputs().as_matrix();
+    const Index row_bytes = max(Index(1), get_aligned_bytes(get_forward_specs(1)));
+    const Index tile_rows_max = clamp((tile_budget_bytes / row_bytes) & ~Index(15),
+                                      Index(16), Index(65536));
+
+    const bool tileable = batch_size > tile_rows_max
+        && all_of(input_views.begin(), input_views.end(),
+                  [batch_size](const TensorView& view)
+                  {
+                      return view.shape.rank >= 2
+                          && view.shape[0] == batch_size
+                          && view.is_fp32()
+                          && !view.is_cuda();
+                  });
+
+    if (!tileable)
+    {
+        ForwardPropagation forward_propagation(batch_size, this);
+        forward_propagate(input_views, forward_propagation, false);
+        return forward_propagation.get_outputs().as_matrix();
+    }
+
+    ForwardPropagation tile_propagation(tile_rows_max, this);
+    unique_ptr<ForwardPropagation> tail_propagation;   // last partial tile
+
+    MatrixR outputs;
+
+    for (Index start = 0; start < batch_size; start += tile_rows_max)
+    {
+        const Index rows = min(tile_rows_max, batch_size - start);
+
+        ForwardPropagation* propagation = &tile_propagation;
+        if (rows != tile_rows_max)
+        {
+            tail_propagation = make_unique<ForwardPropagation>(rows, this);
+            propagation = tail_propagation.get();
+        }
+
+        vector<TensorView> tile_views;
+        tile_views.reserve(input_views.size());
+        for (const TensorView& view : input_views)
+        {
+            Shape tile_shape = view.shape;
+            tile_shape[0] = rows;
+            const Index row_elements = view.size() / batch_size;
+            tile_views.emplace_back(view.as<float>() + start * row_elements,
+                                    tile_shape, Type::FP32);
+        }
+
+        forward_propagate(tile_views, *propagation, false);
+
+        const TensorView tile_outputs = propagation->get_outputs();
+        const Index output_columns = tile_outputs.size() / rows;
+        if (outputs.size() == 0)
+            outputs.resize(batch_size, output_columns);
+
+        memcpy(outputs.data() + start * output_columns, tile_outputs.data,
+               size_t(rows) * size_t(output_columns) * sizeof(float));
+    }
+
+    return outputs;
 }
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
@@ -616,13 +732,17 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     // Run the full forward pass -- the old skip-to-first-trainable shortcut
     // broke skip connections crossing the frozen/trainable boundary (FPN/PANet
-    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers during
-    // training: Optimizer::set_scaling() pre-scales the dataset in place, so
-    // running them there would scale the inputs twice (that double scaling
-    // diverges tabular training and flattens images to ~zero). Frozen compute
-    // layers past the Scaling chain still run.
+    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers when the
+    // batches come from a dataset that Optimizer::set_scaling() pre-scaled in
+    // place: running them there would scale the inputs twice (that double
+    // scaling diverges tabular training and flattens images to ~zero). This
+    // covers training passes AND the optimizer's in-loop validation passes
+    // (is_training == false but inputs_pre_scaled set on the propagation);
+    // without the latter, validation errors rise while the model improves and
+    // early stopping restores a barely-trained network. Frozen compute layers
+    // past the Scaling chain still run.
     Index first_layer_index = 0;
-    if (is_training)
+    if (is_training || forward_propagation.inputs_pre_scaled)
         while (first_layer_index < get_layers_number()
                && layers[first_layer_index]->get_type() == LayerType::Scaling)
             ++first_layer_index;
@@ -746,7 +866,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
             if (source_layer < 0)
                 input_slot[source_index] = pick_input(size_t(-source_layer - 1));
-            else if (is_training && source_layer < first_layer_index)
+            else if ((is_training || forward_propagation.inputs_pre_scaled)
+                     && source_layer < first_layer_index)
                 input_slot[source_index] = pick_input(source_index);
         }
 
@@ -905,28 +1026,39 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
-    vector<string> input_names = get_input_feature_names();
-    while (ssize(input_names) < inputs_number)
-        input_names.push_back(format("input_{}", input_names.size() + 1));
+    // One entry per variable; blocks carry a "Features" count and categoricals
+    // their categories, so feature names are regenerated on load instead of
+    // being written one per feature.
+    const auto write_variables_array = [&printer](const vector<Variable>& variables, const char* tag)
+    {
+        printer.begin_array(tag);
 
-    vector<string> output_names = get_output_feature_names();
-    while (ssize(output_names) < outputs_number)
-        output_names.push_back(format("output_{}", output_names.size() + 1));
+        for (size_t i = 0; i < variables.size(); ++i)
+        {
+            const Variable& variable = variables[i];
+
+            printer.begin_array_object();
+            add_json_field(printer, "Index", to_string(i + 1));
+            add_json_field(printer, "Text", variable.name);
+
+            if (variable.features > 1)
+                add_json_field(printer, "Features", to_string(variable.features));
+
+            if (variable.is_categorical())
+                add_json_field(printer, "Categories", vector_to_string(variable.categories, ";"));
+
+            printer.end_array_object();
+        }
+
+        printer.end_array();
+    };
 
     printer.open_element("NeuralNetwork");
 
 
     printer.open_element("Inputs");
     add_json_field(printer, "InputsNumber", to_string(inputs_number));
-    printer.begin_array("Input");
-    for (Index i = 0; i < inputs_number; ++i)
-    {
-        printer.begin_array_object();
-        add_json_field(printer, "Index", to_string(i + 1));
-        add_json_field(printer, "Text",  input_names[i]);
-        printer.end_array_object();
-    }
-    printer.end_array();
+    write_variables_array(input_variables, "Input");
     printer.close_element();
 
 
@@ -958,17 +1090,11 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
 
     printer.open_element("Outputs");
-    const Index outputs_count = has(LayerType::Embedding) ? outputs_number : output_names.size();
+    const Index outputs_count = has(LayerType::Embedding)
+                              ? outputs_number
+                              : get_features_number(output_variables);
     add_json_field(printer, "OutputsNumber", to_string(outputs_count));
-    printer.begin_array("Output");
-    for (Index i = 0; i < outputs_count; ++i)
-    {
-        printer.begin_array_object();
-        add_json_field(printer, "Index", to_string(i + 1));
-        add_json_field(printer, "Text",  output_names[i]);
-        printer.end_array_object();
-    }
-    printer.end_array();
+    write_variables_array(output_variables, "Output");
     printer.close_element();
     printer.close_element();
 
@@ -982,16 +1108,36 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    if (const Json* inputs_element = neural_network_element->find("Inputs"); inputs_element)
+    // Entries may be fewer than InputsNumber/OutputsNumber: block variables
+    // carry a "Features" count instead of one entry per feature. Legacy files
+    // with per-feature entries load as single-feature variables.
+    const auto read_variables_array = [](const Json* parent, const char* tag,
+                                         vector<Variable>& variables, const char* role)
     {
-        const Index inputs_number = read_json_index(inputs_element, "InputsNumber");
-        input_variables.resize(inputs_number);
+        const Json* items = parent->find(tag);
+        const Index entries_number = (items && items->is_array())
+                                   ? Index(items->array_value.size())
+                                   : 0;
 
-        for_json_items(inputs_element, "Input", inputs_number, [this](Index i, const Json* element) {
-            input_variables[i].name = read_json_string(element, "Text");
-            input_variables[i].set_role("Input");
+        variables.assign(size_t(entries_number), Variable());
+
+        for_json_items(parent, tag, entries_number, [&](Index i, const Json* element) {
+            Variable& variable = variables[size_t(i)];
+
+            variable.name = read_json_string(element, "Text");
+            variable.set_role(role);
+            variable.features = element->find("Features") ? read_json_index(element, "Features") : 1;
+
+            if (element->find("Categories"))
+            {
+                variable.type = VariableType::Categorical;
+                variable.categories = get_tokens(read_json_string(element, "Categories"), ";");
+            }
         });
-    }
+    };
+
+    if (const Json* inputs_element = neural_network_element->find("Inputs"); inputs_element)
+        read_variables_array(inputs_element, "Input", input_variables, "Input");
 
     const Json* layers_container = neural_network_element->find("Layers");
     throw_if(!layers_container, "layers container is nullptr.");
@@ -1049,15 +1195,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     }
 
     if (const Json* outputs_element = neural_network_element->find("Outputs"); outputs_element)
-    {
-        const Index outputs_number = read_json_index(outputs_element, "OutputsNumber");
-        output_variables.resize(outputs_number);
-
-        for_json_items(outputs_element, "Output", outputs_number, [this](Index i, const Json* element) {
-            output_variables[i].name = read_json_string(element, "Text");
-            output_variables[i].set_role("Target");
-        });
-    }
+        read_variables_array(outputs_element, "Output", output_variables, "Target");
 
     compile();
 
@@ -1235,12 +1373,19 @@ vector<string> NeuralNetwork::get_layer_labels() const
 void NeuralNetwork::link_parameters()
 {
     float* fp32_base = parameters.as<float>();
+    float* fp32_inference_base =
+        parameters.device_type == Device::CUDA
+        && !parameters.owns
+        && !parameters_fp32_inference_storage.empty()
+        ? parameters_fp32_inference_storage.as<float>()
+        : nullptr;
 
     bfloat16* bf16_mirror_base = (parameters.device_type == Device::CUDA && !parameters_bf16_mirror.empty())
         ? parameters_bf16_mirror.as<bfloat16>()
         : nullptr;
 
     Index offset = 0;
+    Index fp32_inference_offset = 0;
 
     for (auto& layer : layers)
     {
@@ -1257,10 +1402,7 @@ void NeuralNetwork::link_parameters()
             }
 
             const Index aligned = get_aligned_size(shape.size());
-            float* const fp32_slot = fp32_base + offset;
-
-            throw_if(!is_aligned(fp32_slot),
-                     "NeuralNetwork::link_parameters: unaligned parameter memory.");
+            float* const fp32_slot = fp32_base ? fp32_base + offset : nullptr;
 
             void* slot_ptr = fp32_slot;
             Type view_type = Type::FP32;
@@ -1271,6 +1413,22 @@ void NeuralNetwork::link_parameters()
                 slot_ptr = bf16_mirror_base + offset;
                 view_type = Type::BF16;
                 view_device = Device::CUDA;
+            }
+            else if (fp32_inference_base != nullptr)
+            {
+                float* const compact_slot = fp32_inference_base + fp32_inference_offset;
+                throw_if(!is_aligned(compact_slot),
+                         "NeuralNetwork::link_parameters: unaligned compact fp32 parameter memory.");
+
+                slot_ptr = compact_slot;
+                view_type = Type::FP32;
+                view_device = Device::CUDA;
+                fp32_inference_offset += aligned;
+            }
+            else
+            {
+                throw_if(!is_aligned(fp32_slot),
+                         "NeuralNetwork::link_parameters: unaligned parameter memory.");
             }
 
             param_views.emplace_back(slot_ptr, shape, view_type, view_device);
@@ -1305,6 +1463,15 @@ void NeuralNetwork::copy_parameters_device()
     if (parameters.empty())
     {
         parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+        return;
+    }
+
+    if (parameters.device_type == Device::CUDA && !parameters.owns)
+    {
+        throw_if(config.training_type != Type::BF16 || parameters_bf16_mirror.empty(),
+                 "NeuralNetwork::copy_parameters_device: parameters are a non-owning view.");
+        link_parameters();
         return;
     }
 
@@ -1320,6 +1487,7 @@ void NeuralNetwork::copy_parameters_device()
     {
         parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
     }
+    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
 
     link_parameters();
 }
@@ -1328,10 +1496,76 @@ void NeuralNetwork::cast_parameters_to_bf16()
 {
     if (parameters_bf16_mirror.empty()) return;
     if (parameters.empty())      return;
+    if (parameters.device_type == Device::CUDA && !parameters.owns) return;
 
     cast_fp32_to_bf16(parameters.size_in_floats(),
                            parameters.as<float>(),
                            parameters_bf16_mirror.as<bfloat16>());
+}
+
+void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
+{
+    if (config.training_type != Type::BF16
+        || parameters.device_type != Device::CUDA
+        || parameters.empty()
+        || parameters_bf16_mirror.empty()
+        || !parameters.owns)
+        return;
+
+    const auto specs = get_parameter_specs();
+
+    Index fp32_keep_floats = 0;
+    for (const auto& layer_specs : specs)
+        for (const auto& [shape, dtype] : layer_specs)
+            if (!shape.empty() && dtype != Type::BF16)
+                fp32_keep_floats += get_aligned_size(shape.size());
+
+    if (fp32_keep_floats > 0)
+    {
+        parameters_fp32_inference_storage.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
+
+        cudaStream_t stream = Backend::get_compute_stream();
+        float* const source_base = parameters.as<float>();
+        float* const destination_base = parameters_fp32_inference_storage.as<float>();
+
+        Index source_offset = 0;
+        Index destination_offset = 0;
+
+        for (const auto& layer_specs : specs)
+            for (const auto& [shape, dtype] : layer_specs)
+            {
+                if (shape.empty()) continue;
+
+                const Index aligned = get_aligned_size(shape.size());
+                if (dtype != Type::BF16)
+                {
+                    device::copy_async(destination_base + destination_offset,
+                                       source_base + source_offset,
+                                       aligned * Index(sizeof(float)),
+                                       device::CopyKind::DeviceToDevice,
+                                       stream);
+                    destination_offset += aligned;
+                }
+                source_offset += aligned;
+            }
+
+        device::synchronize(stream);
+        memory_debug::record("parameters",
+                             "fp32_compact_inference",
+                             parameters_fp32_inference_storage.bytes,
+                             "bf16_release");
+    }
+    else
+    {
+        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+    }
+
+    const Index fp32_master_bytes = parameters.bytes;
+    parameters.resize_bytes(0, Device::CUDA);
+    parameters.set_view(parameters_bf16_mirror.data,
+                        fp32_master_bytes,
+                        Device::CUDA);
+    link_parameters();
 }
 
 void NeuralNetwork::copy_parameters_host()
@@ -1339,11 +1573,17 @@ void NeuralNetwork::copy_parameters_host()
     if (parameters.empty())
     {
         parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
         return;
     }
 
+    throw_if(parameters.device_type == Device::CUDA && !parameters.owns,
+             "NeuralNetwork::copy_parameters_host: the fp32 CUDA parameter master "
+             "was released for BF16 inference and cannot be copied back.");
+
     parameters.migrate_to(Device::CPU, Backend::get_compute_stream());
     parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
+    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
 
     link_parameters();
 }
@@ -1411,6 +1651,10 @@ void NeuralNetwork::copy_parameters_device()
 void NeuralNetwork::cast_parameters_to_bf16()
 {
     throw runtime_error("NeuralNetwork::cast_parameters_to_bf16 requires CUDA support.");
+}
+
+void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
+{
 }
 
 void NeuralNetwork::copy_parameters_host()

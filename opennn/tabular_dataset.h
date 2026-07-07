@@ -35,8 +35,8 @@ public:
 
     Index get_samples_number() const noexcept override
     {
-        return storage_mode == StorageMode::BinaryFile && binary_rows_number > 0
-             ? binary_rows_number
+        return storage_mode == StorageMode::BinaryFile
+             ? ssize(sample_roles)
              : data.rows();
     }
 
@@ -44,8 +44,8 @@ public:
     MatrixR get_data(const string&, const string&) const;
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    MatrixR get_variable_data(Index) const;
-    MatrixR get_variable_data(Index, const vector<Index>&) const;
+    MatrixR get_variable_data(Index) const override;
+    MatrixR get_variable_data(Index, const vector<Index>&) const override;
     MatrixR get_variable_data(const string&) const;
 
     MatrixR get_feature_data(const string&) const;
@@ -61,20 +61,7 @@ public:
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
 
-    // Points the BinaryFile streaming cache at an explicit file (header +
-    // float32 row-major, the save_data_binary format). Embedding applications
-    // (e.g. Neural Designer) keep the binary next to the model instead of the
-    // default <data_dir>/.cache/<stem>.bin layout.
-    void set_binary_cache_path(const filesystem::path&);
-
-    // On-the-fly input scaling for BinaryFile streaming (mirrors
-    // ImageDataset::set_input_scaling): the cache stores RAW values so reports
-    // and testing read real units; training pre-scaling cannot operate on the
-    // freed matrix, so fill_inputs applies these per batch instead.
-    void set_input_scaling(const vector<Descriptives>&, const vector<ScalerMethod>&);
-    void set_target_scaling(const vector<Descriptives>&, const vector<ScalerMethod>&);
-
-    vector<string> get_feature_scalers(const string&) const;
+    vector<string> get_feature_scalers(const string&) const override;
 
     void set_variable_scalers(const string&);
     void set_variable_scalers(const vector<string>&);
@@ -100,17 +87,18 @@ public:
     virtual void impute_missing_values_unuse();
     virtual void impute_missing_values_interpolate();
 
-    vector<string> unuse_uncorrelated_variables(const float = 0.25f);
+    vector<string> unuse_uncorrelated_variables(const float = 0.25f) override;
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
+    vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
 
-    vector<Histogram> calculate_variable_distributions(const Index = 10) const;
-    vector<BoxPlot> calculate_variables_box_plots() const;
+    vector<Histogram> calculate_variable_distributions(const Index = 10) const override;
+    vector<BoxPlot> calculate_variables_box_plots() const override;
 
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
-    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const override;
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
@@ -136,8 +124,6 @@ public:
     Index count_nan() const;
 
     void save_data() const;
-    void save_data_binary(const filesystem::path&) const;
-    void load_data_binary();
 
     void set_binary_variables();
 
@@ -185,27 +171,28 @@ protected:
     void infer_variable_types_from_data();
     void resize_data_from_JSON(Index) override;
 
-    void read_binary_header() const;
+    filesystem::path cache_file_path() const;
+
+    void fill_features(const vector<Index>&,
+                       const vector<Index>&,
+                       float*,
+                       int contiguous = -1) const;
+
     void fill_from_binary_cache(const vector<Index>&,
                                 const vector<Index>&,
                                 float*,
                                 int contiguous = -1) const;
 
+    void compute_cache_descriptives() const;
+
     filesystem::path cache_path;
     mutable FileReader cache_reader;
-    mutable Index binary_rows_number = 0;
-    mutable Index binary_columns_number = 0;
+    Index cache_columns_number = 0;
 
-    vector<Descriptives> fill_input_descriptives;
-    vector<ScalerMethod> fill_input_scalers;
-    bool fill_input_scaling = false;
-
-    vector<Descriptives> fill_target_descriptives;
-    vector<ScalerMethod> fill_target_scalers;
-    bool fill_target_scaling = false;
-
-    void apply_fill_scaling(float*, Index, Index,
-                            const vector<Descriptives>&, const vector<ScalerMethod>&) const;
+    // The cache file keeps raw values; these drive the scaling applied to
+    // batches as they are read.
+    mutable vector<Descriptives> cache_feature_descriptives;
+    vector<ScalerMethod> cache_feature_transforms;
 
     void infer_column_types(const vector<string_view>&, char);
 

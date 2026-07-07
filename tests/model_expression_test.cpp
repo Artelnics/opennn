@@ -117,6 +117,94 @@ TEST_F(ModelExpressionTest, SaveCExpression)
 }
 
 
+TEST_F(ModelExpressionTest, SaveCEmbeddedExpression)
+{
+    const ModelExpression model_expression(neural_network.get());
+
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_model_expression_test_embedded.c";
+
+    model_expression.save(path, ModelExpression::ProgrammingLanguage::CEmbedded);
+
+    ASSERT_TRUE(filesystem::exists(path));
+
+    const string source = read_whole_file(path);
+
+    EXPECT_FALSE(source.empty());
+    EXPECT_TRUE(contains_token(source, "static const float"));
+    EXPECT_TRUE(contains_token(source, "NN_FLASH"));
+    EXPECT_TRUE(contains_token(source, "nn_dense_forward"));
+    EXPECT_TRUE(contains_token(source, "nn_affine_forward"));
+    EXPECT_TRUE(contains_token(source, "float* calculate_outputs"));
+    EXPECT_TRUE(contains_token(source, "int main"));
+    EXPECT_TRUE(contains_token(source, "OPENNN_EXPORT_NO_MAIN"));
+
+    filesystem::remove(path);
+}
+
+
+TEST(ModelExpressionForecastingTest, SaveCEmbeddedLstm)
+{
+    ForecastingLstmNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
+
+    const ModelExpression model_expression(&network);
+
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_model_expression_test_lstm.c";
+
+    model_expression.save(path, ModelExpression::ProgrammingLanguage::CEmbedded);
+
+    ASSERT_TRUE(filesystem::exists(path));
+
+    const string source = read_whole_file(path);
+
+    EXPECT_TRUE(contains_token(source, "nn_lstm_forward"));
+    EXPECT_TRUE(contains_token(source, "nn_affine_forward"));
+    EXPECT_TRUE(contains_token(source, "static const float"));
+    EXPECT_TRUE(contains_token(source, "#define NN_INPUTS_NUMBER 8")); // 4 steps x 2 features
+    EXPECT_TRUE(contains_token(source, "float* calculate_outputs"));
+
+    filesystem::remove(path);
+}
+
+
+TEST(ModelExpressionForecastingTest, SaveCEmbeddedRecurrent)
+{
+    ForecastingNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
+
+    const ModelExpression model_expression(&network);
+
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_model_expression_test_rnn.c";
+
+    model_expression.save(path, ModelExpression::ProgrammingLanguage::CEmbedded);
+
+    ASSERT_TRUE(filesystem::exists(path));
+
+    const string source = read_whole_file(path);
+
+    EXPECT_TRUE(contains_token(source, "nn_recurrent_forward"));
+    EXPECT_TRUE(contains_token(source, "#define NN_INPUTS_NUMBER 8"));
+
+    filesystem::remove(path);
+}
+
+
+TEST(ModelExpressionForecastingTest, ExpressionCoversAllTimeSteps)
+{
+    ForecastingLstmNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
+
+    const ModelExpression model_expression(&network);
+
+    const string expression = model_expression.build_expression();
+
+    // Every time step of the flattened window must appear in the expression;
+    // truncated input names used to silently drop the t>0 input terms.
+    EXPECT_TRUE(contains_token(expression, "input_0_t0"));
+    EXPECT_TRUE(contains_token(expression, "input_1_t3"));
+}
+
+
 TEST_F(ModelExpressionTest, SavePythonExpression)
 {
     const ModelExpression model_expression(neural_network.get());

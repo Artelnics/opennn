@@ -29,7 +29,11 @@ struct BatchSlot
     
     float* host = nullptr;
     Index  host_allocated_size = 0;
+    uint16_t* host_bf16 = nullptr;
+    Index     host_bf16_allocated_size = 0;
 };
+
+bool bf16_host_input_cast_enabled() noexcept;
 
 struct Batch
 {
@@ -120,9 +124,17 @@ struct Batch
 
     bool        device_gather = false;
     vector<int> gather_row_indices;
+    Buffer      gather_indices_host{Device::CPU};
     Buffer      gather_indices_device{Device::CUDA};
     Index       input_col_offset = 0;
     Index       target_col_offset = 0;
+
+    Index window_past = 0;
+    Index window_future = 0;
+    Index window_features = 0;      // input columns per timestep
+    Index window_target_cols = 0;   // raw target columns
+    Index window_matrix_rows = 0;
+    bool  window_multi_target = false;
 
 };
 

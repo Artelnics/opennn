@@ -48,4 +48,4 @@ jobs:
       # Run the test binary from the repository root so the fixtures the tests
       # load via "../datasets/..." resolve (add_test sets no WORKING_DIRECTORY).
       - name: Run tests
-        run: ./build/bin/run_tests
+        run: ./build/bin/opennn_tests

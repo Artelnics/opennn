@@ -23,6 +23,7 @@
 #include "../opennn/time_series_dataset.h"
 #include "../opennn/image_dataset.h"
 #include "../opennn/language_dataset.h"
+#include "../opennn/text_generation_dataset.h"
 
 #include "../opennn/scaling_layer.h"
 #include "../opennn/dense_layer.h"
@@ -45,8 +46,8 @@ int main(int argc, char** argv)
     try
     {
         // ====================================================================
-        // blank_cuda — six GPU training benchmarks. Block 6 (ChatGPT) is the
-        // enabled one; blocks 1-5 are `#if 0`. Enable exactly ONE block at a
+        // blank_cuda — seven GPU training benchmarks. Block 7 (GPT) is the
+        // enabled one; blocks 1-6 are `#if 0`. Enable exactly ONE block at a
         // time by switching its `#if 0` to `#if 1` (and the others back to 0).
         // ====================================================================
 
@@ -508,8 +509,8 @@ int main(int argc, char** argv)
 
         // --------------------------------------------------------------------
         // 6) CHATGPT — conversational assistant, Transformer (LanguageDataset)
-        //    OpenNN's Transformer is ENCODER-DECODER (there is no decoder-only
-        //    GPT), so a chatbot is trained sequence-to-sequence: every line of
+        //    Seq2seq chatbot on the ENCODER-DECODER Transformer (for the
+        //    decoder-only GPT see block 7): every line of
         //    the dataset is a single  prompt <TAB> response  pair.
         //    Data is already prepared at dataset_path: Stanford Alpaca (52k
         //    instruction->response) processed to that tab format, 47487 pairs,
@@ -522,7 +523,7 @@ int main(int argc, char** argv)
         //    the weights, then drops into an interactive chat() loop.
         //    Args: argv[1]=batch (64), argv[2]=max_epochs (10), argv[3]=fp32|bf16.
         // --------------------------------------------------------------------
-#if 1
+#if 0
         const Index batch_size     = argc > 1 ? Index(stoll(argv[1])) : Index(64);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(10);
         const string precision     = argc > 3 ? argv[3] : "bf16";
@@ -594,7 +595,7 @@ int main(int argc, char** argv)
             auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
             if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
             adam->set_batch_size(batch_size);
-            adam->set_learning_rate(0.0005f);
+            adam->set_learning_rate(0.0001f);
             adam->set_maximum_epochs(maximum_epochs);
             adam->set_maximum_validation_failures(1000000);
             adam->set_display_period(1);
@@ -622,7 +623,142 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        cout << "blank_cuda: all six benchmark blocks are disabled (#if 0).\n"
+        // --------------------------------------------------------------------
+        // 7) GPT — decoder-only language model, GPT-2-small architecture
+        //    (TextGenerationDataset + TextGenerationNetwork).
+        //    Next-token prediction on WikiText-103 raw (~536 MB, ~110M
+        //    word-level tokens of curated Wikipedia articles), prepared with:
+        //      sed -e 's/ @-@ /-/g' -e 's/ @,@ /,/g' -e 's/ @\.@ /./g' \
+        //          wiki.train.raw > wiki.train.txt   (Moses artifacts removed)
+        //    Alternative corpus (English side of WMT14, parliamentary/news
+        //    register): datasets/wmt14_en_de/wmt14_en.txt via argv[5].
+        //    GPT-2 small dims: 12 layers / 12 heads / 768 emb / 3072 ff.
+        //    Differences vs the real GPT-2: word-level vocabulary (no BPE),
+        //    sinusoidal positions (not learned), post-LN, untied output
+        //    projection. Vocabulary capped at 50257 (GPT-2's vocab size).
+        //    seq 512 + batch 8 bf16 fit a 16 GB GPU; first run tokenizes and
+        //    writes the .cache (one-off, minutes). ~28k iters/epoch -> hours
+        //    per epoch on the full corpus; pass the .subset corpus for a
+        //    quick trial. Weights save/load like block 6 (path derived from
+        //    the corpus name). After training: sample generations + chat().
+        //    CUDA graph stays OFF: the graph-epoch path collapses transformer
+        //    train-to-quality convergence (see project notes).
+        //    Args: argv[1]=batch (8), argv[2]=max_epochs (1), argv[3]=fp32|bf16,
+        //          argv[4]=sequence_length (512), argv[5]=corpus path override.
+        // --------------------------------------------------------------------
+#if 1
+        const Index batch_size      = argc > 1 ? Index(stoll(argv[1])) : Index(8);
+        const Index maximum_epochs  = argc > 2 ? Index(stoll(argv[2])) : Index(1);
+        const string precision      = argc > 3 ? argv[3] : "bf16";
+        const Index sequence_length = argc > 4 ? Index(stoll(argv[4])) : Index(512);
+        const filesystem::path corpus_path = argc > 5 ? argv[5]
+            : "/home/artelnics/Documents/datasets/wikitext103/wiki.train.txt";
+        const Type training_type    = (precision == "bf16") ? Type::BF16 : Type::FP32;
+
+        cout << "OpenNN. GPT decoder-only LM, GPT-2-small architecture (" << precision
+             << ") batch=" << batch_size << " max_epochs=" << maximum_epochs
+             << " seq=" << sequence_length << "\ncorpus=" << corpus_path << endl;
+
+        Configuration::instance().set(Device::CUDA, training_type);
+        Backend::instance();
+        set_seed(42);
+
+        const Index maximum_vocabulary_size = 50257;
+
+        TextGenerationDataset dataset(corpus_path, sequence_length, maximum_vocabulary_size);
+        dataset.split_samples_random(0.95f, 0.04f, 0.01f);
+
+        cout << "[DATASET] blocks=" << dataset.get_samples_number()
+             << " train="  << dataset.get_samples_number("Training")
+             << " val="    << dataset.get_samples_number("Validation")
+             << " vocab="  << dataset.get_vocabulary_size()
+             << " seq="    << dataset.get_sequence_length() << endl;
+
+        // GPT-2 small: 12 layers / 12 heads / 768 emb / 3072 ff.
+        const Index embedding_dimension    = 768;
+        const Index heads_number           = 12;
+        const Index feed_forward_dimension = 3072;
+        const Index layers_number          = 12;
+
+        TextGenerationNetwork network(sequence_length,
+                                      dataset.get_vocabulary_size(),
+                                      embedding_dimension,
+                                      heads_number,
+                                      feed_forward_dimension,
+                                      layers_number);
+        network.set_dropout_rate(0.1f);
+
+        cout << "GPT params=" << network.get_parameters_number() << endl;
+
+        const filesystem::path parameters_path =
+            corpus_path.string() + ".gpt_parameters.bin";
+
+        if (filesystem::exists(parameters_path))
+        {
+            cout << "Found saved parameters at " << parameters_path
+                 << "\n-> skipping training, loading weights for generation." << endl;
+            network.load_parameters_binary(parameters_path);
+        }
+        else
+        {
+            cout << "No saved parameters -> training from scratch." << endl;
+
+            TrainingStrategy training_strategy(&network, &dataset);
+            training_strategy.set_loss("CrossEntropyError3d");
+            training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+            auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+            if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
+            adam->set_batch_size(batch_size);
+            adam->set_learning_rate(0.0001f);
+            adam->set_maximum_epochs(maximum_epochs);
+            adam->set_maximum_validation_failures(1000000);
+            adam->set_display_period(1);
+
+            const auto t0 = steady_clock::now();
+            training_strategy.train();
+            const auto t1 = steady_clock::now();
+            const double train_s = duration_cast<milliseconds>(t1 - t0).count() / 1000.0;
+            cout << "\nTotal training time: " << train_s << " s" << endl;
+            cout << "epoch_s=" << train_s / double(maximum_epochs) << "\n";
+
+            memory_debug::print(cout);
+
+            network.save_parameters_binary(parameters_path);
+            cout << "Saved parameters (binary) to " << parameters_path << endl;
+        }
+
+        TransformerDecoder generator(network, dataset);
+
+        TransformerDecoder::SamplingConfig sampling;
+        sampling.temperature = 0.8f;
+        sampling.top_k = 40;
+        sampling.maximum_tokens = 40;
+
+        cout << "\n================ GENERATED TEXT ================" << endl;
+
+        const vector<string> prompts =
+            {
+                "the film received",
+                "the city is located in",
+                "world war ii began"
+            };
+
+        for (const string& prompt : prompts)
+        {
+            cout << "Prompt:    " << prompt << endl;
+            cout << "Generated: " << generator.generate(prompt, sampling) << endl;
+            cout << endl;
+        }
+
+        // Interactive: type a prompt, press Enter; empty line / Ctrl+D exits.
+        cout << "================ GPT CHAT ================" << endl;
+        generator.chat(sampling);
+
+        return 0;
+#endif
+
+        cout << "blank_cuda: all seven benchmark blocks are disabled (#if 0).\n"
                 "Enable one by switching its `#if 0` to `#if 1` and rebuilding." << endl;
         return 0;
     }

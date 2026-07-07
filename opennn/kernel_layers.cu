@@ -1238,6 +1238,91 @@ void scatter_time_slice_cuda(const Index batch,
 template void scatter_time_slice_cuda<float>        (const Index, const Index, const Index, const Index, const float*,         float*);
 template void scatter_time_slice_cuda<__nv_bfloat16>(const Index, const Index, const Index, const Index, const __nv_bfloat16*, __nv_bfloat16*);
 
+__global__ void scatter_time_slice_fill_kernel(const int batch,
+                                               const int time_steps,
+                                               const int features,
+                                               const int t,
+                                               const float* __restrict__ src,
+                                               float* __restrict__ dst)
+{
+    const long long idx = (long long)blockIdx.x * blockDim.x + threadIdx.x;
+    const long long total = (long long)batch * time_steps * features;
+    if (idx >= total) return;
+
+    const int f  = int(idx % features);
+    const long long bt = idx / features;
+    const int ts = int(bt % time_steps);
+    const int b  = int(bt / time_steps);
+
+    dst[idx] = (ts == t) ? src[b * features + f] : 0.0f;
+}
+
+void scatter_time_slice_fill_cuda(const Index batch,
+                                  const Index time_steps,
+                                  const Index features,
+                                  const Index t,
+                                  const float* src,
+                                  float* dst)
+{
+    if (batch == 0 || time_steps == 0 || features == 0) return;
+    const int total = checked_int(batch * time_steps * features);
+    OPENNN_CUDA_LAUNCH(scatter_time_slice_fill_kernel<<<grid_size_for(total), block_size, 0,
+                                   opennn::device::get_compute_stream()>>>(
+        checked_int(batch),
+        checked_int(time_steps),
+        checked_int(features),
+        checked_int(t),
+        src, dst));
+}
+
+struct RnnCopyParams
+{
+    RnnCopySpec specs[RNN_COPY_MAX_REGIONS];
+    int count;
+};
+
+__global__ void rnn_copy_regions_kernel(const RnnCopyParams params)
+{
+    const int region = blockIdx.y;
+    if (region >= params.count) return;
+
+    const RnnCopySpec spec = params.specs[region];
+    const int total = spec.rows * spec.cols;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+         idx < total;
+         idx += gridDim.x * blockDim.x)
+    {
+        if (spec.transpose)
+        {
+            const int r = idx / spec.cols;
+            const int c = idx - r * spec.cols;
+            spec.dst[c * spec.rows + r] = spec.src[idx];
+        }
+        else
+            spec.dst[idx] = spec.src[idx];
+    }
+}
+
+void rnn_copy_regions_cuda(const RnnCopySpec* specs, int count,
+                           cudaStream_t stream)
+{
+    if (count <= 0) return;
+    if (stream == nullptr) stream = opennn::device::get_compute_stream();
+
+    RnnCopyParams params;
+    int max_total = 0;
+    for (int i = 0; i < count && i < RNN_COPY_MAX_REGIONS; ++i)
+    {
+        params.specs[i] = specs[i];
+        max_total = max(max_total, specs[i].rows * specs[i].cols);
+    }
+    params.count = min(count, RNN_COPY_MAX_REGIONS);
+
+    const dim3 grid(grid_size_for(max_total), params.count);
+    OPENNN_CUDA_LAUNCH(rnn_copy_regions_kernel<<<grid, block_size, 0, stream>>>(params));
+}
+
 template<typename T>
 __global__ void transpose_2d_kernel(const int rows,
                                     const int cols,

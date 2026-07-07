@@ -135,6 +135,7 @@ public:
     void set_states(const VectorR&);
     void set_parameters_random();
     void set_parameters_glorot();
+    void set_parameters_pytorch();
     void link_parameters();
     void link_states();
     void link_states(Device);
@@ -191,6 +192,10 @@ public:
 public:
 
     void cast_parameters_to_bf16();
+    // Inference-only BF16 memory trim: after copy_parameters_device(), operators
+    // read parameters_bf16_mirror, so benchmark resident inference can release
+    // the CUDA fp32 master before allocating large activation arenas.
+    void release_bf16_fp32_parameter_master_for_inference();
 
     bfloat16* get_parameters_bf16_mirror_data()
     {
@@ -247,6 +252,7 @@ protected:
 
     Buffer parameters;
     Buffer parameters_bf16_mirror{Device::CUDA};
+    Buffer parameters_fp32_inference_storage{Device::CUDA};
 
     Buffer states;
 

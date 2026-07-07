@@ -4,7 +4,7 @@
 Prepares UCI Beijing PM2.5 data, runs the C++ forecasting driver, parses its
 machine-readable METRIC and SPEEDUP lines, and writes an immutable JSON artifact.
 
-  usage: run_forecasting.py [--bin /path/to/no2_forecasting]
+  usage: run_forecasting.py [--bin /path/to/recurrent_lstm_forecasting_benchmark]
                             [--data-dir ./data] [--gpu-index 0]
                             [--timeout-s 0] [--dry-run]
 """
@@ -57,17 +57,20 @@ def env_gpu_index():
         return None
 
 
+BINARY_NAME = "recurrent_lstm_forecasting_benchmark"
+
+
 def default_binary():
     env_bin = os.environ.get("OPENNN_FORECASTING_BIN") or os.environ.get("OPENNN_NO2_FORECASTING_BIN")
     if env_bin:
         return env_bin
 
     candidates = [
-        REPO_ROOT / "build-gpu" / "bin" / "no2_forecasting",
-        REPO_ROOT / "build-ninja" / "bin" / "no2_forecasting",
-        REPO_ROOT / "build-ninja" / "bin" / "no2_forecasting.exe",
-        REPO_ROOT / "build" / "bin" / "no2_forecasting",
-        REPO_ROOT / "build" / "bin" / "no2_forecasting.exe",
+        REPO_ROOT / "build-gpu" / "bin" / BINARY_NAME,
+        REPO_ROOT / "build-ninja" / "bin" / BINARY_NAME,
+        REPO_ROOT / "build-ninja" / "bin" / f"{BINARY_NAME}.exe",
+        REPO_ROOT / "build" / "bin" / BINARY_NAME,
+        REPO_ROOT / "build" / "bin" / f"{BINARY_NAME}.exe",
     ]
     for candidate in candidates:
         if candidate.exists():
@@ -214,8 +217,9 @@ def python_engine_version(snippet):
 
 def run_python_engine(name, gpu_index, force_cpu, timeout):
     """Run a PyTorch/TensorFlow engine script from HERE (so xf_common finds
-    data/). force_cpu hides the GPU via CUDA_VISIBLE_DEVICES="". Returns the
-    combined stdout+stderr, or None on failure."""
+    data/). force_cpu hides the GPU via CUDA_VISIBLE_DEVICES="" and passes
+    --allow-cpu; without it the scripts abort on a silent CPU fallback.
+    Returns the combined stdout+stderr, or None on failure."""
     script = PYTHON_ENGINES[name]["script"]
     env = dict(os.environ)
     if force_cpu:
@@ -223,6 +227,8 @@ def run_python_engine(name, gpu_index, force_cpu, timeout):
     elif gpu_index is not None:
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
     command = [sys.executable, str(script)]
+    if force_cpu:
+        command.append("--allow-cpu")
     print(f"{name}_command={quote_command(command)}"
           f"{' (forced CPU)' if force_cpu else ''}")
     try:
@@ -234,12 +240,37 @@ def run_python_engine(name, gpu_index, force_cpu, timeout):
     if proc.returncode != 0:
         print(f"{name} returncode={proc.returncode}", file=sys.stderr)
         print((proc.stdout + proc.stderr)[-2000:], file=sys.stderr)
+        if name == "tensorflow" and proc.returncode == 2:
+            print("hint: install the TF CUDA stack in this interpreter's env:\n"
+                  f"  {sys.executable} -m pip install -r "
+                  f"{HERE / 'requirements-gpu.txt'}", file=sys.stderr)
     return proc.stdout + proc.stderr
+
+
+def device_check(metrics):
+    """Per engine/phase device summary parsed from METRIC lines, flagging any
+    GPU phase that actually ran on cpu (device mismatch)."""
+    summary = {}
+    for engine, phases in metrics.items():
+        for phase, scenarios in phases.items():
+            devices = set()
+            for nets in scenarios.values():
+                for net, fields in nets.items():
+                    if isinstance(fields, dict) and "device" in fields:
+                        devices.add(str(fields["device"]))
+            if not devices:
+                continue
+            entry = summary.setdefault(engine, {})
+            entry[phase] = sorted(devices)
+            if phase == "GPU" and "cpu" in devices:
+                entry["mismatch"] = True
+    return summary
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--bin", default=default_binary(), help="Path to no2_forecasting executable")
+    parser.add_argument("--bin", default=default_binary(),
+                        help=f"Path to the {BINARY_NAME} executable")
     parser.add_argument("--data-dir", default=HERE / "data", type=Path,
                         help="Directory containing/preparing beijing_pm25_forecasting.csv")
     parser.add_argument("--raw-path", type=Path,
@@ -250,15 +281,20 @@ def main():
     parser.add_argument("--timeout-s", type=int, default=0, help="0 means no timeout")
     parser.add_argument("--frameworks", default="opennn",
                         help="Comma list of engines to run: opennn,pytorch,tensorflow "
-                             "(pytorch/tensorflow read data/ prepared by this runner)")
+                             "(pytorch/tensorflow read data/ prepared by this runner). "
+                             "The OpenNN binary only runs when 'opennn' is listed.")
     parser.add_argument("--python-cpu", action="store_true",
                         help="Also run a forced-CPU pass of each Python engine "
                              "(CUDA_VISIBLE_DEVICES=\"\") so their CPU phase is recorded")
+    parser.add_argument("--opennn-phase", default="", choices=["", "gpu", "cpu", "both"],
+                        help="Restrict the OpenNN driver to one phase via "
+                             "OPENNN_FORECASTING_PHASE (default: both)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     frameworks = [f.strip() for f in args.frameworks.split(",") if f.strip()]
     python_frameworks = [f for f in frameworks if f in PYTHON_ENGINES]
+    run_opennn = "opennn" in frameworks
     unknown = [f for f in frameworks if f not in ("opennn",) and f not in PYTHON_ENGINES]
     if unknown:
         raise SystemExit(f"Unknown framework(s): {', '.join(unknown)}")
@@ -271,6 +307,8 @@ def main():
     env = dict(os.environ)
     env["OPENNN_FORECASTING_DATASET"] = DATASET_PROFILE
     env["OPENNN_FORECASTING_DATA_DIR"] = str(data_dir)
+    if args.opennn_phase in ("gpu", "cpu"):
+        env["OPENNN_FORECASTING_PHASE"] = args.opennn_phase
     if args.gpu_index is not None:
         env["CUDA_VISIBLE_DEVICES"] = str(args.gpu_index)
 
@@ -293,11 +331,17 @@ def main():
     framework_versions = {}
 
     started = time.perf_counter()
-    proc = subprocess.run(command, cwd=cwd, env=env, capture_output=True,
-                          text=True, timeout=timeout)
-    raw = proc.stdout + proc.stderr
-    parse_metrics(raw, metrics, speedups, default_engine="opennn")
-    raw_outputs["opennn"] = raw
+    opennn_returncode = 0
+    raw = ""
+    if run_opennn:
+        proc = subprocess.run(command, cwd=cwd, env=env, capture_output=True,
+                              text=True, timeout=timeout)
+        raw = proc.stdout + proc.stderr
+        opennn_returncode = proc.returncode
+        parse_metrics(raw, metrics, speedups, default_engine="opennn")
+        raw_outputs["opennn"] = raw
+    else:
+        print("skipping OpenNN binary ('opennn' not in --frameworks)")
 
     for name in python_frameworks:
         framework_versions[name] = python_engine_version(PYTHON_ENGINES[name]["version"])
@@ -340,11 +384,13 @@ def main():
             "seed_count": 5,
             "seeds": [0, 1, 2, 3, 4],
             "dataset_profile_env": DATASET_PROFILE,
+            "opennn_phase": args.opennn_phase or "both",
+            "device_check": device_check(metrics),
         },
         "machine": versions(args.gpu_index),
         "framework_versions": framework_versions,
-        "command": quote_command(command),
-        "returncode": proc.returncode,
+        "command": quote_command(command) if run_opennn else None,
+        "returncode": opennn_returncode,
         "elapsed_wall_s": round(elapsed, 3),
         "results": {
             "metrics": metrics,
@@ -360,9 +406,14 @@ def main():
         handle.write("\n")
 
     print(f"wrote {out_path}")
-    if proc.returncode != 0:
+    checks = device_check(metrics)
+    for engine, entry in checks.items():
+        if entry.get("mismatch"):
+            print(f"WARNING device_mismatch engine={engine}: GPU phase ran on cpu",
+                  file=sys.stderr)
+    if opennn_returncode != 0:
         print(raw[-2000:], file=sys.stderr)
-        raise SystemExit(proc.returncode)
+        raise SystemExit(opennn_returncode)
 
 
 if __name__ == "__main__":

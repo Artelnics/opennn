@@ -589,8 +589,13 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
-    output.as_flat_matrix().noalias() = (input.as_flat_matrix() * weights.as_matrix()).rowwise()
-                                      + bias.as_vector().transpose();
+    // Two statements on purpose: fusing the bias into the product expression
+    // ((input * weights).rowwise() + bias) makes Eigen materialize the whole
+    // product in a heap temporary before the add -- an extra batch x outputs
+    // allocation and copy per call.
+    auto output_matrix = output.as_flat_matrix();
+    output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
+    output_matrix.rowwise() += bias.as_vector().transpose();
 
     if (fuse_relu)
         output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);

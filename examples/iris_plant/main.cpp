@@ -13,6 +13,7 @@
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/random_utilities.h"
 #include "../../opennn/configuration.h"
+#include "../../opennn/model_expression.h"
 
 using namespace opennn;
 
@@ -68,6 +69,41 @@ int main()
         // Export
 
         classification_network.save("iris_model.json");
+
+        const ModelExpression model_expression(&classification_network);
+        model_expression.save("iris_model.c", ModelExpression::ProgrammingLanguage::C);
+        model_expression.save("iris_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
+        model_expression.save("iris_model.py", ModelExpression::ProgrammingLanguage::Python);
+
+        // Reference vectors (inputs;outputs) to check parity of the exported model
+        // on other targets (e.g. microcontrollers)
+
+        MatrixR reference_inputs(9, 4);
+        reference_inputs << 5.1, 3.5, 1.4, 0.2,
+                            4.9, 3.0, 1.4, 0.2,
+                            5.0, 3.4, 1.5, 0.2,
+                            6.4, 3.2, 4.5, 1.5,
+                            5.7, 2.8, 4.1, 1.3,
+                            6.0, 2.9, 4.5, 1.5,
+                            6.3, 3.3, 6.0, 2.5,
+                            5.8, 2.7, 5.1, 1.9,
+                            7.7, 3.8, 6.7, 2.2;
+
+        const MatrixR reference_outputs = classification_network.calculate_outputs(reference_inputs);
+
+        ofstream reference_file("iris_reference.csv");
+        reference_file.precision(9);
+
+        for (Index i = 0; i < reference_inputs.rows(); ++i)
+        {
+            for (Index j = 0; j < reference_inputs.cols(); ++j)
+                reference_file << reference_inputs(i, j) << ";";
+
+            for (Index j = 0; j < reference_outputs.cols(); ++j)
+                reference_file << reference_outputs(i, j) << (j + 1 < reference_outputs.cols() ? ";" : "\n");
+        }
+
+        cout << "Exported iris_model.c and iris_reference.csv" << endl;
 
         return 0;
     }

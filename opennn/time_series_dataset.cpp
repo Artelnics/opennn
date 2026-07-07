@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "time_series_dataset.h"
+#include "batch.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensor_types.h"
@@ -76,16 +77,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :TabularDataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    const Index target_index = (get_features_number() == 1)
-        ? 0
-        : get_feature_indices("Target")[0];
-
-    set_variable_role(target_index, "InputTarget");
-
-    input_shape = {past_time_steps, get_features_number("Input")};
-    target_shape = { get_features_number("Target") };
-
-    split_samples_sequential(0.6f, 0.2f, 0.2f);
+    configure_forecasting();
 }
 
 Index TimeSeriesDataset::get_past_time_steps() const
@@ -131,6 +123,7 @@ void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
     input_shape = { past_time_steps, get_features_number("Input") };
+    refresh_forecasting_roles();
 }
 
 void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
@@ -141,6 +134,29 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
         const Index n_targets = get_features_number("Target");
         target_shape = { future_time_steps * (n_targets > 0 ? n_targets : 1) };
     }
+    refresh_forecasting_roles();
+}
+
+void TimeSeriesDataset::refresh_forecasting_roles()
+{
+    const Index samples_number = get_samples_number();
+    const Index window_span = past_time_steps + future_time_steps;
+
+    if (samples_number == 0 || window_span <= 0) return;
+
+    const Index a = Index(0.6f * float(samples_number));
+    const Index b = a + Index(0.2f * float(samples_number));
+
+    auto mark = [&](Index lo, Index hi, SampleRole role)
+    {
+        const Index last_valid_start = hi - window_span + 1;
+        for (Index i = lo; i < hi; ++i)
+            sample_roles[i] = (i < last_valid_start) ? role : SampleRole::None;
+    };
+
+    mark(0, a, SampleRole::Training);
+    mark(a, b, SampleRole::Validation);
+    mark(b, samples_number, SampleRole::Testing);
 }
 
 void TimeSeriesDataset::set_multi_target(bool new_multi_target)
@@ -222,6 +238,11 @@ void TimeSeriesDataset::read_csv()
 {
     TabularDataset::read_csv();
 
+    configure_forecasting();
+}
+
+void TimeSeriesDataset::configure_forecasting()
+{
     set_default_variable_roles_forecasting();
 
     if (get_features_number() == 1)
@@ -239,15 +260,7 @@ void TimeSeriesDataset::read_csv()
     input_shape = {past_time_steps, get_features_number("Input")};
     target_shape = {get_features_number("Target")};
 
-    const Index samples_number = get_samples_number();
-
-    const Index invalid_samples = past_time_steps + future_time_steps - 1;
-
-    if (samples_number > invalid_samples)
-        for (Index i = samples_number - invalid_samples; i < samples_number; ++i)
-            set_sample_role(i, "None");
-
-    split_samples_sequential(0.6f, 0.2f, 0.2f);
+    refresh_forecasting_roles();
 }
 
 void TimeSeriesDataset::impute_missing_values_unuse()
@@ -298,7 +311,6 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
         }
     }
 
-    mark_data_changed();
 }
 
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -388,6 +400,38 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                     : 0.0f;
         }
     }
+}
+
+void TimeSeriesDataset::fill_batch(Batch& batch,
+                                   const vector<Index>& sample_indices,
+                                   const vector<Index>& input_indices,
+                                   const vector<Index>& decoder_indices,
+                                   const vector<Index>& target_indices,
+                                   bool is_training) const
+{
+    if (batch.uses_cuda() && is_device_resident() && !batch.input_is_bf16
+        && batch.decoder.shape.empty()
+        && is_contiguous(input_indices) && is_contiguous(target_indices))
+    {
+        batch.current_sample_count = sample_indices.size();
+        batch.device_gather = true;
+        batch.gather_row_indices.resize(sample_indices.size());
+        for (size_t i = 0; i < sample_indices.size(); ++i)
+            batch.gather_row_indices[i] = int(sample_indices[i]);
+        batch.input_col_offset    = input_indices.empty()  ? 0 : input_indices.front();
+        batch.target_col_offset   = target_indices.empty() ? 0 : target_indices.front();
+        batch.window_past         = past_time_steps;
+        batch.window_future       = future_time_steps;
+        batch.window_features     = ssize(input_indices);
+        batch.window_target_cols  = ssize(target_indices);
+        batch.window_multi_target = multi_target;
+        batch.window_matrix_rows  = data.rows();
+        batch.needs_device_copy   = true;
+        return;
+    }
+
+    fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
+                    target_indices, is_training);
 }
 
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const

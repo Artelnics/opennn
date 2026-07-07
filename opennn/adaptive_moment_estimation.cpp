@@ -65,6 +65,24 @@ static void update_parameters_cuda(NeuralNetwork*,
 
 #endif
 
+// accumulator += alpha * gradient, on the gradient's device. Used by the
+// set_update_period path; gradients are fp32 masters on both devices.
+static void accumulate_scaled_gradient(Buffer& accumulator, Buffer& gradient, float alpha)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (accumulator.device_type == Device::CUDA)
+    {
+        CHECK_CUBLAS(cublasSaxpy(Backend::get_cublas_handle(),
+                                 int(gradient.size_in_floats()), &alpha,
+                                 gradient.as<float>(), 1,
+                                 accumulator.as<float>(), 1));
+        return;
+    }
+#endif
+    VectorMap(accumulator.as<float>(), accumulator.size_in_floats()).noalias()
+        += alpha * VectorMap(gradient.as<float>(), gradient.size_in_floats());
+}
+
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -138,9 +156,15 @@ TrainingResult AdaptiveMomentEstimation::train()
     const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
         ? training_samples_number
         : effective_batch_size;
-    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
-        ? validation_samples_number
+
+    const bool widen_validation = loss->get_neural_network()->is_gpu()
+                               && batch_size > 0;
+    const Index validation_batch_cap = widen_validation
+        ? max(effective_batch_size, get_maximum_batch_size() / 2)
         : effective_batch_size;
+    const Index validation_batch_size = (validation_batch_cap <= 0 || validation_batch_cap > validation_samples_number)
+        ? validation_samples_number
+        : validation_batch_cap;
     const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;
@@ -186,6 +210,7 @@ TrainingResult AdaptiveMomentEstimation::train()
     }
 
     ForwardPropagation* validation_fp = validation_forward_propagation.get();
+    mark_validation_propagation(validation_fp);
 
     setup_device_training();
 
@@ -208,12 +233,41 @@ TrainingResult AdaptiveMomentEstimation::train()
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
 
-    const bool shuffle = shuffle_samples
-                      && !neural_network->has(LayerType::Recurrent)
-                      && !neural_network->has(LayerType::LongShortTermMemory);
+    const bool shuffle = shuffle_samples;
+
+    // Gradient accumulation (see set_update_period): sub-batch gradients are
+    // per-batch means, so averaging them with weight 1/period reproduces the
+    // full virtual-batch gradient exactly when the mini-batches are equal.
+    const Index period = max(Index(1), update_period);
+    throw_if(period > 1 && use_cuda_graph,
+             "gradient accumulation is not supported with the CUDA graph.");
+    Buffer gradient_accumulator;
+    Index accumulated_batches = 0;
+    if (period > 1)
+    {
+        gradient_accumulator.resize_bytes(parameters_number * Index(sizeof(float)), device);
+        gradient_accumulator.setZero();
+    }
 
     const auto training_update = [&](BackPropagation& back_propagation) {
+        if (period <= 1)
+        {
+            update_parameters(back_propagation, optimization_data);
+            return;
+        }
+
+        accumulate_scaled_gradient(gradient_accumulator, back_propagation.gradient,
+                                   1.0f / float(period));
+
+        if (++accumulated_batches < period) return;
+
+        device::copy_async(back_propagation.gradient.data, gradient_accumulator.data,
+                           gradient_accumulator.bytes,
+                           gradient_accumulator.device_type, gradient_accumulator.device_type,
+                           on_gpu ? Backend::get_compute_stream() : nullptr);
         update_parameters(back_propagation, optimization_data);
+        gradient_accumulator.setZero();
+        accumulated_batches = 0;
     };
 
 #ifdef OPENNN_HAS_CUDA
@@ -258,6 +312,11 @@ TrainingResult AdaptiveMomentEstimation::train()
 
         optimization_data.data.setZero();
         optimization_data.iteration = 0;
+        if (period > 1)
+        {
+            gradient_accumulator.setZero();
+            accumulated_batches = 0;
+        }
 #ifdef OPENNN_HAS_CUDA
         if (graph_update) optimization_data.graph_step.setZero();
 #endif
@@ -293,7 +352,7 @@ TrainingResult AdaptiveMomentEstimation::train()
 
             if (has_validation)
             {
-                dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle, validation_batches);
+                dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
                 const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
                                                                                           batch_pools.validation_queue(),

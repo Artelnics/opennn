@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T R A N S F O R M E R   D E C O D E R   C L A S S
@@ -32,6 +32,19 @@ bool is_printable_token(Index token_id)
 TransformerDecoder::SamplingConfig greedy_config()
 {
     return {.temperature = 0.0f};
+}
+
+TransformerDecoder::TokenCallback stream_token_callback(ostream& out, bool& first_token)
+{
+    return [&out, &first_token](const string& token)
+    {
+        const bool is_punctuation = token.size() == 1
+            && string_view(",.!?;:").find(token[0]) != string_view::npos;
+
+        if (!first_token && !is_punctuation) out << ' ';
+        out << token << flush;
+        first_token = false;
+    };
 }
 
 Index sample_token(VectorR& probabilities,
@@ -127,38 +140,38 @@ Index sample_token(VectorR& probabilities,
 
 TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
                                        const LanguageDataset& new_language_dataset)
-    : transformer(new_transformer),
-      language_dataset(new_language_dataset)
+    : network(new_transformer),
+      language_dataset(&new_language_dataset)
 {
-    throw_if(!transformer.is_gpu() || !device::is_cuda_build(),
+    throw_if(!network.is_gpu() || !device::is_cuda_build(),
              "TransformerDecoder requires GPU configuration.");
 
-    const Index input_sequence_length   = transformer.get_input_sequence_length();
-    const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
+    input_sequence_length = new_transformer.get_input_sequence_length();
+    sequence_length       = new_transformer.get_decoder_sequence_length();
 
-    throw_if(input_sequence_length != language_dataset.get_maximum_input_sequence_length(),
+    throw_if(input_sequence_length != language_dataset->get_maximum_input_sequence_length(),
              format("TransformerDecoder: input sequence length mismatch (transformer={}, dataset={}).",
-                    input_sequence_length, language_dataset.get_maximum_input_sequence_length()));
-    throw_if(decoder_sequence_length != language_dataset.get_maximum_target_sequence_length(),
+                    input_sequence_length, language_dataset->get_maximum_input_sequence_length()));
+    throw_if(sequence_length != language_dataset->get_maximum_target_sequence_length(),
              format("TransformerDecoder: decoder sequence length mismatch (transformer={}, dataset={}).",
-                    decoder_sequence_length, language_dataset.get_maximum_target_sequence_length()));
+                    sequence_length, language_dataset->get_maximum_target_sequence_length()));
 
-    throw_if(language_dataset.get_input_vocabulary_map().empty(),
+    throw_if(language_dataset->get_input_vocabulary_map().empty(),
              "TransformerDecoder: dataset input vocabulary is empty.");
-    throw_if(language_dataset.get_target_vocabulary().empty(),
+    throw_if(language_dataset->get_target_vocabulary().empty(),
              "TransformerDecoder: dataset target vocabulary is empty.");
 
-    transformer.copy_parameters_device();
-    transformer.link_parameters();
-    transformer.copy_states_device();
-    transformer.link_states();
+    network.copy_parameters_device();
+    network.link_parameters();
+    network.copy_states_device();
+    network.link_states();
 
     identify_layer_ranges();
 
     constexpr Index batch_size = 1;
 
     const Index source_bytes = get_aligned_bytes(batch_size * input_sequence_length, Type::FP32);
-    const Index target_bytes = get_aligned_bytes(batch_size * decoder_sequence_length, Type::FP32);
+    const Index target_bytes = get_aligned_bytes(batch_size * sequence_length, Type::FP32);
 
     arena.resize_bytes(source_bytes + target_bytes, Device::CUDA);
 
@@ -168,26 +181,73 @@ TransformerDecoder::TransformerDecoder(Transformer& new_transformer,
                                    Type::FP32,
                                    Device::CUDA);
     target_ids_device = TensorView(base + source_bytes,
-                                   {batch_size, decoder_sequence_length},
+                                   {batch_size, sequence_length},
                                    Type::FP32,
                                    Device::CUDA);
 
-    forward_propagation = make_unique<ForwardPropagation>(batch_size, &transformer);
+    forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
 
     source_ids = Tensor2(batch_size, input_sequence_length);
-    target_ids = Tensor2(batch_size, decoder_sequence_length);
-    history.reserve(decoder_sequence_length);
+    target_ids = Tensor2(batch_size, sequence_length);
+    history.reserve(sequence_length);
 
     inputs = {target_ids_device, source_ids_device};
 
-    const Index vocabulary_size = transformer.get_layers().back()->get_output_shape().back();
+    const Index vocabulary_size = network.get_layers().back()->get_output_shape().back();
+    distribution = VectorR::Zero(vocabulary_size);
+    bf16_staging.assign(static_cast<size_t>(vocabulary_size), 0);
+}
+
+TransformerDecoder::TransformerDecoder(TextGenerationNetwork& new_network,
+                                       const TextGenerationDataset& new_generation_dataset)
+    : network(new_network),
+      generation_dataset(&new_generation_dataset)
+{
+    decoder_only = true;
+
+    throw_if(!network.is_gpu() || !device::is_cuda_build(),
+             "TransformerDecoder requires GPU configuration.");
+
+    sequence_length = new_network.get_sequence_length();
+
+    throw_if(sequence_length != generation_dataset->get_sequence_length(),
+             format("TransformerDecoder: sequence length mismatch (network={}, dataset={}).",
+                    sequence_length, generation_dataset->get_sequence_length()));
+
+    throw_if(generation_dataset->get_vocabulary_map().empty(),
+             "TransformerDecoder: dataset vocabulary is empty.");
+
+    network.copy_parameters_device();
+    network.link_parameters();
+    network.copy_states_device();
+    network.link_states();
+
+    identify_layer_ranges_decoder_only();
+
+    constexpr Index batch_size = 1;
+
+    arena.resize_bytes(get_aligned_bytes(batch_size * sequence_length, Type::FP32), Device::CUDA);
+
+    target_ids_device = TensorView(arena.as<char>(),
+                                   {batch_size, sequence_length},
+                                   Type::FP32,
+                                   Device::CUDA);
+
+    forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
+
+    target_ids = Tensor2(batch_size, sequence_length);
+    history.reserve(sequence_length);
+
+    inputs = {target_ids_device};
+
+    const Index vocabulary_size = network.get_layers().back()->get_output_shape().back();
     distribution = VectorR::Zero(vocabulary_size);
     bf16_staging.assign(static_cast<size_t>(vocabulary_size), 0);
 }
 
 void TransformerDecoder::identify_layer_ranges()
 {
-    const auto& layers = transformer.get_layers();
+    const auto& layers = network.get_layers();
     const Index layers_number = ssize(layers);
 
     throw_if(layers_number < 4,
@@ -214,7 +274,7 @@ void TransformerDecoder::identify_layer_ranges()
     throw_if(first_cross_attention_index < 0,
              "TransformerDecoder: no 'cross_attention_*' layer found.");
 
-    const vector<Index>& cross_sources = transformer.get_source_layers()[first_cross_attention_index];
+    const vector<Index>& cross_sources = network.get_source_layers()[first_cross_attention_index];
     throw_if(cross_sources.size() < 2 || cross_sources[1] < 0,
              "TransformerDecoder: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
 
@@ -226,6 +286,24 @@ void TransformerDecoder::identify_layer_ranges()
     throw_if(layers[decoder_first_index]->get_label() != "decoder_self_attention_1",
              format("TransformerDecoder: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
                     layers[decoder_first_index]->get_label()));
+
+    output_projection_index = layers_number - 1;
+    throw_if(layers[output_projection_index]->get_label() != "output_projection",
+             format("TransformerDecoder: last layer expected to be 'output_projection', found '{}'.",
+                    layers[output_projection_index]->get_label()));
+}
+
+void TransformerDecoder::identify_layer_ranges_decoder_only()
+{
+    const auto& layers = network.get_layers();
+    const Index layers_number = ssize(layers);
+
+    throw_if(layers_number < 2,
+             format("TransformerDecoder: unexpected layer count ({}). Network must have at least embedding + output_projection.",
+                    layers_number));
+
+    throw_if(layers[0]->get_label() != "embedding",
+             format("TransformerDecoder: layer 0 expected to be 'embedding', found '{}'.", layers[0]->get_label()));
 
     output_projection_index = layers_number - 1;
     throw_if(layers[output_projection_index]->get_label() != "output_projection",
@@ -249,9 +327,7 @@ void TransformerDecoder::reset_per_prompt_state()
 
 void TransformerDecoder::encode_source(const string& source)
 {
-    const auto& input_vocabulary_map = language_dataset.get_input_vocabulary_map();
-
-    const Index input_sequence_length = transformer.get_input_sequence_length();
+    const auto& input_vocabulary_map = language_dataset->get_input_vocabulary_map();
 
     source_ids.setConstant(pad_token_id);
     source_ids(0, 0) = start_token_id;
@@ -277,27 +353,18 @@ void TransformerDecoder::encode_source(const string& source)
                        source_ids_device.byte_size(),
                        device::CopyKind::HostToDevice,
                        stream);
-    transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  encoder_embedding_index,
-                                  encoder_last_index);
+    network.forward_propagate(inputs, *forward_propagation, false,
+                              encoder_embedding_index,
+                              encoder_last_index);
 }
 
-Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
-                                       const SamplingConfig& config)
+void TransformerDecoder::read_distribution(Index position)
 {
     cudaStream_t stream = Backend::get_compute_stream();
 
-    transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  decoder_embedding_index,
-                                  decoder_embedding_index);
-
-    transformer.forward_propagate(inputs, *forward_propagation, false,
-                                  decoder_first_index,
-                                  output_projection_index);
-
     const TensorView output_view = forward_propagation->get_outputs();
     const Index vocabulary_size = output_view.shape[2];
-    const Index slice_offset = (step_index - 1) * vocabulary_size;
+    const Index slice_offset = position * vocabulary_size;
     if (output_view.is_bf16())
     {
         device::copy_async(bf16_staging.data(),
@@ -324,17 +391,54 @@ Index TransformerDecoder::decode_step([[maybe_unused]] Index step_index,
     {
         throw runtime_error("TransformerDecoder: unsupported output dtype.");
     }
+}
+
+Index TransformerDecoder::decode_step(Index step_index, const SamplingConfig& config)
+{
+    network.forward_propagate(inputs, *forward_propagation, false,
+                              decoder_embedding_index,
+                              decoder_embedding_index);
+
+    network.forward_propagate(inputs, *forward_propagation, false,
+                              decoder_first_index,
+                              output_projection_index);
+
+    read_distribution(step_index - 1);
+
+    return sample_token(distribution, config, history);
+}
+
+Index TransformerDecoder::generate_step(const vector<Index>& context, const SamplingConfig& config)
+{
+    // Sliding window over the tail of the context: causal masking makes the
+    // trailing PAD positions irrelevant to the predictions at earlier positions.
+    const Index window_length = min(ssize(context), sequence_length);
+    const Index window_start = ssize(context) - window_length;
+
+    target_ids.setConstant(pad_token_id);
+    for (Index j = 0; j < window_length; ++j)
+        target_ids(0, j) = static_cast<float>(context[size_t(window_start + j)]);
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    device::copy_async(target_ids_device.data,
+                       target_ids.data(),
+                       target_ids_device.byte_size(),
+                       device::CopyKind::HostToDevice,
+                       stream);
+
+    network.forward_propagate(inputs, *forward_propagation, false);
+
+    read_distribution(window_length - 1);
 
     return sample_token(distribution, config, history);
 }
 
 string TransformerDecoder::assemble_output_string() const
 {
-    const vector<string>& output_vocabulary = language_dataset.get_target_vocabulary();
-    const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
+    const vector<string>& output_vocabulary = language_dataset->get_target_vocabulary();
 
     string result;
-    for (Index i = 1; i < decoder_sequence_length; ++i)
+    for (Index i = 1; i < sequence_length; ++i)
     {
         const Index token_id = static_cast<Index>(target_ids(0, i));
         if (token_id == end_token_id || token_id == pad_token_id) break;
@@ -366,15 +470,17 @@ string TransformerDecoder::decode(const string& source,
                                    const SamplingConfig& config,
                                    const TokenCallback& on_token)
 {
+    throw_if(decoder_only,
+             "TransformerDecoder::decode requires a seq2seq Transformer; use generate() for decoder-only networks.");
+
     reset_per_prompt_state();
     encode_source(source);
 
-    const Index decoder_sequence_length = transformer.get_decoder_sequence_length();
     const Index generation_limit = (config.maximum_tokens > 0)
-        ? min(config.maximum_tokens + Index(1), decoder_sequence_length)
-        : decoder_sequence_length;
+        ? min(config.maximum_tokens + Index(1), sequence_length)
+        : sequence_length;
 
-    const vector<string>& output_vocabulary = language_dataset.get_target_vocabulary();
+    const vector<string>& output_vocabulary = language_dataset->get_target_vocabulary();
 
     for (Index i = 1; i < generation_limit; ++i)
     {
@@ -412,15 +518,86 @@ string TransformerDecoder::decode_to_stream(const string& source,
 {
     bool first_token = true;
 
-    return decode(source, config, [&](const string& token)
-    {
-        const bool is_punctuation = token.size() == 1
-            && string_view(",.!?;:").find(token[0]) != string_view::npos;
+    return decode(source, config, stream_token_callback(out, first_token));
+}
 
-        if (!first_token && !is_punctuation) out << ' ';
-        out << token << flush;
-        first_token = false;
-    });
+string TransformerDecoder::generate(const string& prompt)
+{
+    return generate(prompt, greedy_config(), TokenCallback{});
+}
+
+string TransformerDecoder::generate(const string& prompt, const SamplingConfig& config)
+{
+    return generate(prompt, config, TokenCallback{});
+}
+
+string TransformerDecoder::generate(const string& prompt, const TokenCallback& on_token)
+{
+    return generate(prompt, greedy_config(), on_token);
+}
+
+string TransformerDecoder::generate(const string& prompt,
+                                    const SamplingConfig& config,
+                                    const TokenCallback& on_token)
+{
+    throw_if(!decoder_only,
+             "TransformerDecoder::generate requires a TextGenerationNetwork; use decode() for seq2seq transformers.");
+
+    const auto& vocabulary_map = generation_dataset->get_vocabulary_map();
+    const vector<string>& vocabulary = generation_dataset->get_vocabulary();
+
+    vector<Index> context;
+    for (const string& token : tokenize(prompt))
+    {
+        const auto it = vocabulary_map.find(token);
+        context.push_back(it != vocabulary_map.end() ? it->second : unknown_token_id);
+    }
+
+    throw_if(context.empty(),
+             "TransformerDecoder: prompt produced no tokens.");
+
+    history = context;
+
+    const Index maximum_new_tokens = (config.maximum_tokens > 0)
+        ? config.maximum_tokens
+        : sequence_length;
+
+    string result;
+
+    for (Index step = 0; step < maximum_new_tokens; ++step)
+    {
+        const Index next_token_id = generate_step(context, config);
+
+        context.push_back(next_token_id);
+        history.push_back(next_token_id);
+
+        if (next_token_id == pad_token_id
+            || next_token_id < 0 || next_token_id >= ssize(vocabulary))
+            continue;
+
+        const string& token = vocabulary[size_t(next_token_id)];
+
+        if (!result.empty()) result += " ";
+        result += token;
+
+        if (on_token) on_token(token);
+    }
+
+    return result;
+}
+
+string TransformerDecoder::generate_to_stream(const string& prompt, ostream& out)
+{
+    return generate_to_stream(prompt, greedy_config(), out);
+}
+
+string TransformerDecoder::generate_to_stream(const string& prompt,
+                                              const SamplingConfig& config,
+                                              ostream& out)
+{
+    bool first_token = true;
+
+    return generate(prompt, config, stream_token_callback(out, first_token));
 }
 
 
@@ -440,7 +617,8 @@ void TransformerDecoder::chat(const SamplingConfig& config)
         cout << "\n> " << flush;
         if (!getline(cin, prompt_line) || prompt_line.empty()) break;
 
-        decode_to_stream(prompt_line, config, cout);
+        decoder_only ? generate_to_stream(prompt_line, config, cout)
+                     : decode_to_stream(prompt_line, config, cout);
         cout << "\n";
     }
     cout << "Bye!\n";

@@ -35,8 +35,6 @@ void TabularDataset::set(const Index new_samples_number,
     set_storage_mode(StorageMode::Matrix);
     variables.resize(new_features_number);
 
-    set_default();
-
     for (Index i = 0; i < new_features_number; ++i)
     {
         Variable& variable = variables[i];
@@ -140,184 +138,48 @@ void TabularDataset::save_data() const
              format("Failed to write matrix data file: {}", data_path.string()));
 }
 
-void TabularDataset::save_data_binary(const filesystem::path& binary_data_file_name) const
-{
-    ofstream file(binary_data_file_name, ios::binary);
-
-    throw_if(!file.is_open(),
-             format("Cannot open data binary file: {}", binary_data_file_name.string()));
-
-    const Index columns_number = data.cols();
-    const Index rows_number = data.rows();
-    const Index total_elements = columns_number * rows_number;
-
-    file.write(reinterpret_cast<const char*>(&columns_number), sizeof(Index));
-    file.write(reinterpret_cast<const char*>(&rows_number), sizeof(Index));
-    file.write(reinterpret_cast<const char*>(data.data()), total_elements * sizeof(float));
-
-    throw_if(!file,
-             format("Failed to write data binary file: {}", binary_data_file_name.string()));
-}
-
-void TabularDataset::load_data_binary()
-{
-    ifstream file(data_path, ios::binary);
-
-    throw_if(!file.is_open(),
-             format("Failed to open file: {}", data_path.string()));
-
-    Index columns_number = 0;
-    Index rows_number = 0;
-
-    file.read(reinterpret_cast<char*>(&columns_number), sizeof(Index));
-    file.read(reinterpret_cast<char*>(&rows_number), sizeof(Index));
-
-    throw_if(!file || columns_number < 0 || rows_number < 0,
-             format("Invalid binary data header: {}", data_path.string()));
-
-    const uintmax_t expected_bytes = uintmax_t(2 * sizeof(Index))
-                                   + uintmax_t(rows_number) * uintmax_t(columns_number) * uintmax_t(sizeof(float));
-    const uintmax_t file_bytes = filesystem::file_size(data_path);
-    throw_if(file_bytes != expected_bytes,
-             format("Binary data file size mismatch for {} (got {} bytes, expected {} bytes).",
-                    data_path.string(),
-                    file_bytes,
-                    expected_bytes));
-
-    data.resize(rows_number, columns_number);
-    file.read(reinterpret_cast<char*>(data.data()), rows_number * columns_number * sizeof(float));
-
-    throw_if(!file,
-             format("Failed to read binary data file: {}", data_path.string()));
-
-    set_storage_mode(StorageMode::Matrix);
-}
-
 void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 {
     Dataset::set_storage_mode(new_storage_mode);
 
     if (new_storage_mode != StorageMode::BinaryFile)
     {
-        binary_rows_number = 0;
-        binary_columns_number = 0;
+        cache_columns_number = 0;
+        cache_feature_descriptives.clear();
+        cache_feature_transforms.clear();
         cache_reader.close();
-        fill_input_scaling = false;
-        fill_target_scaling = false;
     }
 }
 
-
-void TabularDataset::set_input_scaling(const vector<Descriptives>& new_descriptives,
-                                       const vector<ScalerMethod>& new_scalers)
+filesystem::path TabularDataset::cache_file_path() const
 {
-    fill_input_descriptives = new_descriptives;
-    fill_input_scalers = new_scalers;
-
-    fill_input_scaling = !new_descriptives.empty()
-                      && new_descriptives.size() == new_scalers.size();
+    return data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
 }
 
-
-void TabularDataset::set_target_scaling(const vector<Descriptives>& new_descriptives,
-                                        const vector<ScalerMethod>& new_scalers)
+// Element-wise equivalents of the column scalers in scaling.cpp, applied to
+// batches read from the raw cache file.
+static float scale_value(ScalerMethod method, const Descriptives& desc, float value)
 {
-    fill_target_descriptives = new_descriptives;
-    fill_target_scalers = new_scalers;
-
-    fill_target_scaling = !new_descriptives.empty()
-                       && new_descriptives.size() == new_scalers.size();
-}
-
-
-// Escala un buffer de batch [rows x cols, row-major] in situ. Mismas formulas
-// que apply_scaler()/scaling.cpp con el rango por defecto -1..1.
-void TabularDataset::apply_fill_scaling(float* buffer, Index rows, Index cols,
-                                        const vector<Descriptives>& descriptives_vector,
-                                        const vector<ScalerMethod>& scalers) const
-{
-    for (Index j = 0; j < cols; ++j)
+    using enum ScalerMethod;
+    switch (method)
     {
-        const Descriptives& descriptives = descriptives_vector[size_t(j)];
-
-        switch (scalers[size_t(j)])
-        {
-        case ScalerMethod::MeanStandardDeviation:
-            if (descriptives.standard_deviation > EPSILON)
-                for (Index i = 0; i < rows; ++i)
-                {
-                    float& value = buffer[i * cols + j];
-                    value = (value - descriptives.mean) / descriptives.standard_deviation;
-                }
-            else
-                for (Index i = 0; i < rows; ++i)
-                    buffer[i * cols + j] = 0.0f;
-            break;
-
-        case ScalerMethod::MinimumMaximum:
-        {
-            const float range = descriptives.maximum - descriptives.minimum;
-            if (range < EPSILON)
-                for (Index i = 0; i < rows; ++i)
-                    buffer[i * cols + j] = 0.0f;
-            else
-                for (Index i = 0; i < rows; ++i)
-                {
-                    float& value = buffer[i * cols + j];
-                    value = (value - descriptives.minimum) / range * 2.0f - 1.0f;
-                }
-            break;
-        }
-
-        case ScalerMethod::StandardDeviation:
-        {
-            const float slope = (descriptives.standard_deviation > EPSILON)
-                ? 1.0f / descriptives.standard_deviation
-                : 0.0f;
-            for (Index i = 0; i < rows; ++i)
-                buffer[i * cols + j] *= slope;
-            break;
-        }
-
-        case ScalerMethod::Logarithm:
-            for (Index i = 0; i < rows; ++i)
-            {
-                float& value = buffer[i * cols + j];
-                value = log(max(value, EPSILON));
-            }
-            break;
-
-        default:
-            break;
-        }
+    case None:
+    case ImageMinMax:
+        return value;
+    case MinimumMaximum:
+    {
+        const float range = desc.maximum - desc.minimum;
+        return range < EPSILON ? 0.0f : (value - desc.minimum) / range * 2.0f - 1.0f;
     }
-}
+    case MeanStandardDeviation:
+        return desc.standard_deviation > EPSILON ? (value - desc.mean) / desc.standard_deviation : 0.0f;
+    case StandardDeviation:
+        return desc.standard_deviation > EPSILON ? value / desc.standard_deviation : 0.0f;
+    case Logarithm:
+        return log(max(value, EPSILON));
+    }
 
-void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_path)
-{
-    cache_path = new_cache_path;
-    cache_reader.close();
-    binary_rows_number = 0;
-    binary_columns_number = 0;
-
-    if (storage_mode == StorageMode::BinaryFile && filesystem::exists(cache_path))
-        read_binary_header();
-}
-
-
-void TabularDataset::read_binary_header() const
-{
-    if (!cache_reader.is_open())
-        cache_reader.open(cache_path);
-
-    Index header[2] = {0, 0};
-    cache_reader.read_at(header, sizeof(header), 0);
-
-    binary_columns_number = header[0];
-    binary_rows_number = header[1];
-
-    throw_if(binary_columns_number < 0 || binary_rows_number < 0,
-             format("Invalid binary data header: {}", cache_path.string()));
+    return value;
 }
 
 void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
@@ -327,7 +189,8 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
 {
     if (sample_indices.empty() || feature_indices.empty()) return;
 
-    const Index columns_number = binary_columns_number;
+    const Index columns_number = cache_columns_number;
+    const Index rows_number = get_samples_number();
     const Index features_number = ssize(feature_indices);
     const bool contiguous = contiguous_hint >= 0
                           ? static_cast<bool>(contiguous_hint)
@@ -347,10 +210,8 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
     }
 
     for (const Index row : sample_indices)
-        throw_if(row < 0 || row >= binary_rows_number,
+        throw_if(row < 0 || row >= rows_number,
                  "Binary data row index is out of range.");
-
-    constexpr uint64_t header_bytes = 2 * sizeof(Index);
 
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
@@ -359,8 +220,8 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
 
         if (contiguous)
         {
-            const uint64_t offset = header_bytes
-                + (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
+            const uint64_t offset =
+                (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
             cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
         }
         else
@@ -368,57 +229,123 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
             thread_local vector<float> row_buffer;
             row_buffer.resize(size_t(columns_number));
 
-            const uint64_t offset = header_bytes + uint64_t(row) * uint64_t(columns_number) * sizeof(float);
+            const uint64_t offset = uint64_t(row) * uint64_t(columns_number) * sizeof(float);
             cache_reader.read_at(row_buffer.data(), size_t(columns_number) * sizeof(float), offset);
 
             for (Index j = 0; j < features_number; ++j)
                 dst[j] = row_buffer[size_t(feature_indices[size_t(j)])];
         }
     }
+
+    if (cache_feature_transforms.empty()) return;
+
+    const Index batch_size = ssize(sample_indices);
+
+    for (Index j = 0; j < features_number; ++j)
+    {
+        const Index column = feature_indices[size_t(j)];
+        const ScalerMethod method = cache_feature_transforms[size_t(column)];
+
+        if (method == ScalerMethod::None) continue;
+
+        const Descriptives& desc = cache_feature_descriptives[size_t(column)];
+
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            float& value = output[i * features_number + j];
+            value = scale_value(method, desc, value);
+        }
+    }
+}
+
+void TabularDataset::compute_cache_descriptives() const
+{
+    const Index columns_number = cache_columns_number;
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+
+    vector<float> minimums(size_t(columns_number), numeric_limits<float>::infinity());
+    vector<float> maximums(size_t(columns_number), -numeric_limits<float>::infinity());
+    vector<double> sums(size_t(columns_number), 0.0);
+    vector<double> squared_sums(size_t(columns_number), 0.0);
+    vector<Index> counts(size_t(columns_number), 0);
+
+    vector<float> row(static_cast<size_t>(columns_number));
+
+    for (const Index sample_index : used_sample_indices)
+    {
+        cache_reader.read_at(row.data(), size_t(columns_number) * sizeof(float),
+                             uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
+
+        for (Index j = 0; j < columns_number; ++j)
+        {
+            const float value = row[size_t(j)];
+
+            if (isnan(value)) continue;
+
+            if (value < minimums[size_t(j)]) minimums[size_t(j)] = value;
+            if (value > maximums[size_t(j)]) maximums[size_t(j)] = value;
+
+            sums[size_t(j)] += value;
+            squared_sums[size_t(j)] += double(value) * double(value);
+            ++counts[size_t(j)];
+        }
+    }
+
+    cache_feature_descriptives.assign(size_t(columns_number), Descriptives());
+
+    for (Index j = 0; j < columns_number; ++j)
+    {
+        const Index count = counts[size_t(j)];
+
+        if (count == 0)
+        {
+            minimums[size_t(j)] = 0;
+            maximums[size_t(j)] = 0;
+        }
+
+        const double mean = count > 0 ? sums[size_t(j)] / double(count) : 0.0;
+
+        double standard_deviation = 0.0;
+
+        if (count > 1)
+        {
+            const double variance = (squared_sums[size_t(j)] - sums[size_t(j)] * sums[size_t(j)] / double(count))
+                                  / (double(count) - 1.0);
+            standard_deviation = sqrt(max(0.0, variance));
+        }
+
+        cache_feature_descriptives[size_t(j)].set(minimums[size_t(j)],
+                                                  maximums[size_t(j)],
+                                                  float(mean),
+                                                  float(standard_deviation));
+    }
+}
+
+void TabularDataset::fill_features(const vector<Index>& sample_indices, const vector<Index>& feature_indices,
+                                   float* output, int contiguous) const
+{
+    if (storage_mode == StorageMode::BinaryFile)
+        fill_from_binary_cache(sample_indices, feature_indices, output, contiguous);
+    else
+        fill_tensor_data(data, sample_indices, feature_indices, output, contiguous);
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
                                  float* input_data, bool, int contiguous) const
 {
-    if (storage_mode == StorageMode::BinaryFile)
-    {
-        fill_from_binary_cache(sample_indices, input_indices, input_data, contiguous);
-
-        // On-the-fly scaling: the cache stores RAW values; training skips the
-        // Scaling layers (see NeuralNetwork::forward_propagate), so the batch
-        // must leave here pre-scaled.
-        if (fill_input_scaling && ssize(fill_input_scalers) == ssize(input_indices))
-            apply_fill_scaling(input_data, ssize(sample_indices), ssize(input_indices),
-                               fill_input_descriptives, fill_input_scalers);
-    }
-    else
-        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+    fill_features(sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
                                   float* decoder_data, bool, int contiguous) const
 {
-    if (storage_mode == StorageMode::BinaryFile)
-        fill_from_binary_cache(sample_indices, decoder_indices, decoder_data, contiguous);
-    else
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, contiguous);
+    fill_features(sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
                                   float* target_data, bool, int contiguous) const
 {
-    if (storage_mode == StorageMode::BinaryFile)
-    {
-        fill_from_binary_cache(sample_indices, target_indices, target_data, contiguous);
-
-        // El entrenamiento compara en el espacio escalado (set_scaling escala
-        // los targets de la matriz en modo Matrix); en streaming se aplica aqui.
-        if (fill_target_scaling && ssize(fill_target_scalers) == ssize(target_indices))
-            apply_fill_scaling(target_data, ssize(sample_indices), ssize(target_indices),
-                               fill_target_descriptives, fill_target_scalers);
-    }
-    else
-        fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
+    fill_features(sample_indices, target_indices, target_data, contiguous);
 }
 
 void TabularDataset::infer_variable_types_from_data()
@@ -484,8 +411,6 @@ void TabularDataset::set(const filesystem::path& new_data_path,
                               bool new_has_ids,
                               const Codification& new_codification)
 {
-    set_default();
-
     set_data_path(new_data_path);
 
     set_separator_string(new_separator);
@@ -674,16 +599,41 @@ vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
 
 vector<Descriptives> TabularDataset::calculate_feature_descriptives() const
 {
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        if (cache_feature_descriptives.empty()) compute_cache_descriptives();
+
+        return cache_feature_descriptives;
+    }
+
     return descriptives(data);
 }
 
 vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string& variable_role) const
 {
-    const vector<Index> used_sample_indices = get_used_sample_indices();
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        if (cache_feature_descriptives.empty()) compute_cache_descriptives();
 
+        const vector<Index> feature_indices = get_feature_indices(variable_role);
+
+        vector<Descriptives> result(feature_indices.size());
+
+        for (size_t i = 0; i < feature_indices.size(); ++i)
+            result[i] = cache_feature_descriptives[size_t(feature_indices[i])];
+
+        return result;
+    }
+
+    return calculate_feature_descriptives(variable_role, get_used_sample_indices());
+}
+
+vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string& variable_role,
+                                                                    const vector<Index>& sample_indices) const
+{
     const vector<Index> input_feature_indices = get_feature_indices(variable_role);
 
-    return descriptives(data, used_sample_indices, input_feature_indices);
+    return descriptives(data, sample_indices, input_feature_indices);
 }
 
 Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlations(
@@ -823,7 +773,6 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         break;
     }
 
-    mark_data_changed();
 }
 
 vector<Descriptives> TabularDataset::scale_data()
@@ -843,7 +792,24 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 {
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
-    const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
+
+    vector<Index> statistic_sample_indices = get_sample_indices("Training");
+    if (statistic_sample_indices.empty())
+        statistic_sample_indices = get_used_sample_indices();
+
+    const vector<Descriptives> feature_descriptives =
+        calculate_feature_descriptives(variable_role, statistic_sample_indices);
+
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        if (cache_feature_transforms.empty())
+            cache_feature_transforms.assign(size_t(cache_columns_number), ScalerMethod::None);
+
+        for (size_t i = 0; i < feature_indices.size(); ++i)
+            cache_feature_transforms[size_t(feature_indices[i])] = string_to_scaler_method(scalers[i]);
+
+        return feature_descriptives;
+    }
 
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)
@@ -858,6 +824,16 @@ void TabularDataset::unscale_features(const string& variable_role,
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        if (cache_feature_transforms.empty()) return;
+
+        for (const Index feature_index : feature_indices)
+            cache_feature_transforms[size_t(feature_index)] = ScalerMethod::None;
+
+        return;
+    }
+
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
@@ -866,13 +842,11 @@ void TabularDataset::unscale_features(const string& variable_role,
 void TabularDataset::set_data_random()
 {
     set_random_uniform(data);
-    mark_data_changed();
 }
 
 void TabularDataset::set_data_integer(const Index vocabulary_size)
 {
     set_random_integer(data, 0, vocabulary_size - 1);
-    mark_data_changed();
 }
 
 void TabularDataset::from_JSON(const JsonDocument& data_set_document)
@@ -888,33 +862,32 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     set_missing_values_label(read_json_string(src, "MissingValuesLabel"));
     set_codification(read_json_string(src, "Codification"));
     if (src->has("StorageMode"))
-    {
         set_storage_mode(read_json_string(src, "StorageMode"));
-        if (storage_mode == StorageMode::BinaryFile)
-        {
-            // Default opennn layout. If the file is not there (embedding apps
-            // keep the binary elsewhere), leave the mode set and let the caller
-            // supply the real location via set_binary_cache_path().
-            cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
-            if (filesystem::exists(cache_path))
-                read_binary_header();
-        }
-    }
 
-    // A freshly-created model (before the first "Import data" task) has only a
-    // DataSource; Variables/Samples/MissingValues/PreviewData are built by the
-    // import from the CSV. Read them only if present so load() does not fail on a
-    // pre-import dataset -- the import's read_csv() then populates them.
-    if (const Json* variables_element = root->find("Variables"))
-        variables_from_JSON(variables_element);
-    if (const Json* samples_element = root->find("Samples"))
-        samples_from_JSON(samples_element);
-    if (const Json* missing_values_element = root->find("MissingValues"))
-        missing_values_from_JSON(missing_values_element);
-    if (const Json* preview_data_element = root->find("PreviewData"))
-        preview_data_from_JSON(preview_data_element);
+    variables_from_JSON(require_json_field(root, "Variables"));
+    samples_from_JSON(require_json_field(root, "Samples"));
+    missing_values_from_JSON(require_json_field(root, "MissingValues"));
+    preview_data_from_JSON(require_json_field(root, "PreviewData"));
 
     set_display(read_json_bool(root, "Display"));
+
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        const vector<vector<Index>> feature_indices = get_feature_indices();
+        cache_columns_number = feature_indices.empty() ? 0 : feature_indices.back().back() + 1;
+        cache_feature_descriptives.clear();
+        cache_feature_transforms.clear();
+
+        cache_path = cache_file_path();
+        cache_reader.open(cache_path);
+
+        const uint64_t expected_bytes =
+            uint64_t(get_samples_number()) * uint64_t(cache_columns_number) * sizeof(float);
+
+        throw_if(cache_reader.file_size() != expected_bytes,
+                 format("Binary data cache size mismatch for {} (got {} bytes, expected {}).",
+                        cache_path.string(), cache_reader.file_size(), expected_bytes));
+    }
 
     input_shape = { get_features_number("Input") };
     target_shape = { get_features_number("Target") };
@@ -976,7 +949,6 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 
     Index feature_index = 0;
     Index used_feature_index = 0;
-    bool data_changed = false;
 
     for (Index i = 0; i < variables_number; ++i)
     {
@@ -1022,7 +994,6 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
                 if (replace_with_nan)
                 {
                     data(sample_index, feature_index) = QUIET_NAN;
-                    data_changed = true;
                 }
             }
         }
@@ -1033,8 +1004,6 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
         ++used_feature_index;
     }
 
-    if (data_changed)
-        mark_data_changed();
 
     return return_values;
 }
@@ -1086,7 +1055,6 @@ void TabularDataset::set_data_rosenbrock()
         data(i, features_number - 1) = rosenbrock;
     }
 
-    mark_data_changed();
 }
 
 void TabularDataset::set_data_binary_classification()
@@ -1100,7 +1068,6 @@ void TabularDataset::set_data_binary_classification()
     for (Index i = 0; i < samples_number; ++i)
         data(i, features_number - 1) = float(random_bool());
 
-    mark_data_changed();
 }
 
 static float parse_float_or_nan(string_view token)
@@ -1115,58 +1082,58 @@ static bool is_missing_token(string_view token, string_view missing_label)
     return token.empty() || token == missing_label;
 }
 
-static void parse_numeric_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_numeric_token(float* row, Index feature_index,
                          string_view token, string_view missing_label)
 {
-    data(sample_index, feature_index) = is_missing_token(token, missing_label) ? NAN : parse_float_or_nan(token);
+    row[feature_index] = is_missing_token(token, missing_label) ? NAN : parse_float_or_nan(token);
 }
 
-static void parse_datetime_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_datetime_token(float* row, Index feature_index,
                           string_view token, string_view missing_label,
                           Index gmt, const DateFormat& date_format)
 {
     if (is_missing_token(token, missing_label))
     {
-        data(sample_index, feature_index) = NAN;
+        row[feature_index] = NAN;
         return;
     }
 
     const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
     throw_if(timestamp == -1, "Date format is unsupported or date is prior to 1970.");
-    data(sample_index, feature_index) = timestamp;
+    row[feature_index] = timestamp;
 }
 
-static void parse_categorical_token(MatrixR& data, Index sample_index, const vector<Index>& feature_indices,
+static void parse_categorical_token(float* row, const vector<Index>& feature_indices,
                              string_view token, string_view missing_label,
                              const unordered_map<string_view, Index>& category_map)
 {
     if (is_missing_token(token, missing_label))
         for (const Index cat_index : feature_indices)
-            data(sample_index, cat_index) = NAN;
+            row[cat_index] = NAN;
     else
     {
         auto it = category_map.find(token);
         if (it != category_map.end())
-            data(sample_index, feature_indices[it->second]) = 1;
+            row[feature_indices[it->second]] = 1;
     }
 }
 
-static void parse_binary_token(MatrixR& data, Index sample_index, Index feature_index,
+static void parse_binary_token(float* row, Index feature_index,
                         string_view token, string_view missing_label,
                         const vector<string>& categories)
 {
     if (const bool is_positive = contains(positive_words, token); is_positive || contains(negative_words, token))
-        data(sample_index, feature_index) = is_positive ? 1 : 0;
+        row[feature_index] = is_positive ? 1 : 0;
     else
     {
         if (is_missing_token(token, missing_label))
-            data(sample_index, feature_index) = NAN;
+            row[feature_index] = NAN;
         else if (!categories.empty() && token == categories[0])
-            data(sample_index, feature_index) = 0;
+            row[feature_index] = 0;
         else if (categories.size() > 1 && token == categories[1])
-            data(sample_index, feature_index) = 1;
+            row[feature_index] = 1;
         else
-            data(sample_index, feature_index) = parse_float_or_nan(token);
+            row[feature_index] = parse_float_or_nan(token);
     }
 }
 
@@ -1323,9 +1290,26 @@ void TabularDataset::read_csv()
     sample_ids.resize(samples_number);
 
     const vector<vector<Index>> all_feature_indices = get_feature_indices();
-    const Index total_numeric_columns = all_feature_indices.empty() ? 0 : all_feature_indices.back().back() + 1;
+    const Index feature_columns_number = all_feature_indices.empty() ? 0 : all_feature_indices.back().back() + 1;
 
-    data = MatrixR::Zero(samples_number, total_numeric_columns);
+    const bool binary_storage = storage_mode == StorageMode::BinaryFile;
+
+    FileWriter cache_writer;
+    vector<float> row_values;
+
+    if (binary_storage)
+    {
+        cache_path = cache_file_path();
+        filesystem::create_directories(cache_path.parent_path());
+        cache_writer.open(cache_path.string() + ".tmp");
+
+        cache_columns_number = feature_columns_number;
+        cache_feature_descriptives.clear();
+        cache_feature_transforms.clear();
+        row_values.resize(size_t(feature_columns_number));
+    }
+    else
+        data = MatrixR::Zero(samples_number, feature_columns_number);
 
     rows_missing_values_number = 0;
     missing_values_number = 0;
@@ -1342,12 +1326,20 @@ void TabularDataset::read_csv()
             category_maps[variable_index].emplace(string_view(variable.categories[ci]), ci);
     }
 
+    // Numeric type refinement is accumulated while parsing because in BinaryFile
+    // mode there is no data matrix to re-scan afterwards.
+    struct NumericColumnValues { bool has_value = false; float first_value = 0.0f; bool constant = true; bool zero_one = true; };
+    vector<NumericColumnValues> numeric_column_values(variables_number);
+
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         const vector<string_view> tokens = get_token_views(lines[sample_index], file_separator);
 
+        bool row_has_missing = false;
+
         if (has_missing_values(tokens))
         {
+            row_has_missing = true;
             ++rows_missing_values_number;
             for (size_t i = id_offset; i < tokens.size(); ++i)
             {
@@ -1363,6 +1355,16 @@ void TabularDataset::read_csv()
 
         if (has_sample_ids)
             sample_ids[sample_index] = string(tokens[0]);
+
+        float* row;
+
+        if (binary_storage)
+        {
+            ranges::fill(row_values, 0.0f);
+            row = row_values.data();
+        }
+        else
+            row = data.data() + sample_index * feature_columns_number;
 
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
@@ -1381,37 +1383,78 @@ void TabularDataset::read_csv()
                 break;
             case Numeric:
             case Integer:
-                parse_numeric_token(data, sample_index, feature_indices[0], token, missing_values_label);
+                parse_numeric_token(row, feature_indices[0], token, missing_values_label);
                 break;
             case DateTime:
-                parse_datetime_token(data, sample_index, feature_indices[0], token, missing_values_label, gmt, date_format);
+                parse_datetime_token(row, feature_indices[0], token, missing_values_label, gmt, date_format);
                 break;
             case Categorical:
-                parse_categorical_token(data, sample_index, feature_indices, token, missing_values_label, category_maps[variable_index]);
+                parse_categorical_token(row, feature_indices, token, missing_values_label, category_maps[variable_index]);
                 break;
             case Binary:
-                parse_binary_token(data, sample_index, feature_indices[0], token, missing_values_label, variable.categories);
+                parse_binary_token(row, feature_indices[0], token, missing_values_label, variable.categories);
                 break;
             }
         }
+
+        for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
+        {
+            if (variables[variable_index].type != VariableType::Numeric) continue;
+
+            NumericColumnValues& column = numeric_column_values[variable_index];
+            const float value = row[all_feature_indices[variable_index][0]];
+
+            if (isnan(value)) continue;
+
+            if (!column.has_value)
+            {
+                column.has_value = true;
+                column.first_value = value;
+            }
+            else if (abs(value - column.first_value) > numeric_limits<float>::min())
+                column.constant = false;
+
+            if (value != 0.0f && value != 1.0f)
+                column.zero_one = false;
+        }
+
+        if (binary_storage)
+        {
+            if (row_has_missing)
+                sample_roles[sample_index] = SampleRole::None;
+
+            cache_writer.write(row, size_t(feature_columns_number) * sizeof(float));
+        }
     }
 
-    infer_variable_types_from_data();
-    split_samples_random();
-
-    if (storage_mode == StorageMode::BinaryFile)
+    if (binary_storage)
     {
-        cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
-        filesystem::create_directories(cache_path.parent_path());
-
-        binary_columns_number = data.cols();
-        binary_rows_number = data.rows();
-
-        save_data_binary(cache_path);
-
-        data.resize(0, 0);
+        cache_writer.finish_with_rename(cache_path);
         cache_reader.open(cache_path);
     }
+
+    for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
+    {
+        Variable& variable = variables[variable_index];
+
+        if (variable.type == VariableType::Numeric)
+        {
+            const NumericColumnValues& column = numeric_column_values[variable_index];
+
+            if (column.constant)
+                variable.set(variable.name, "None", VariableType::Constant);
+            else if (column.zero_one)
+            {
+                variable.type = VariableType::Binary;
+                variable.categories = { "0", "1" };
+            }
+        }
+        else if ((variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
+              && variable.get_categories_number() == 1)
+            variable.set(variable.name, "None", VariableType::Constant);
+    }
+
+    split_samples_random();
 }
 
 static const vector<pair<TabularDataset::MissingValuesMethod, string>> missing_values_method_map = {
@@ -1512,7 +1555,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
     const Index target_features_number = target_feature_indices.size();
-    bool data_changed = false;
 
     for (Index j = 0; j < features_number; ++j)
     {
@@ -1528,7 +1570,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
             if (isnan(data(current_sample, current_variable)))
             {
                 data(current_sample, current_variable) = replacements(j);
-                data_changed = true;
             }
         }
     }
@@ -1546,8 +1587,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
         }
     }
 
-    if (data_changed)
-        mark_data_changed();
 }
 
 void TabularDataset::impute_missing_values_interpolate()
@@ -1557,7 +1596,6 @@ void TabularDataset::impute_missing_values_interpolate()
     const vector<Index> target_feature_indices = get_feature_indices("Target");
 
     const Index samples_number = used_sample_indices.size();
-    bool data_changed = false;
 
     for (const Index current_variable : input_feature_indices)
     {
@@ -1599,7 +1637,6 @@ void TabularDataset::impute_missing_values_interpolate()
             }
 
             data(current_sample, current_variable) = interpolated_value;
-            data_changed = true;
         }
     }
 
@@ -1614,12 +1651,14 @@ void TabularDataset::impute_missing_values_interpolate()
         }
     }
 
-    if (data_changed)
-        mark_data_changed();
 }
 
 void TabularDataset::scrub_missing_values()
 {
+    // BinaryFile storage already marks incomplete rows as unused while
+    // streaming the cache; there is no data matrix to impute.
+    if (storage_mode == StorageMode::BinaryFile) return;
+
     using enum MissingValuesMethod;
     switch (missing_values_method)
     {

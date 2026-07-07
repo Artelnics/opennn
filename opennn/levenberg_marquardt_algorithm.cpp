@@ -316,6 +316,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
         ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
         : nullptr;
 
+    mark_validation_propagation(validation_fp);
 
     loss->set_normalization_coefficient();
 

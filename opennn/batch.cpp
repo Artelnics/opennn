@@ -14,6 +14,17 @@
 namespace opennn
 {
 
+bool bf16_host_input_cast_enabled() noexcept
+{
+    static const bool enabled = []
+    {
+        const char* flag = std::getenv("OPENNN_BF16_HOST_INPUT_CAST");
+        return !flag || std::string(flag) != "0";
+    }();
+
+    return enabled;
+}
+
 Batch::Batch(const Index new_samples_number,
              const Dataset* new_dataset,
              const Configuration::Resolved& new_config,
@@ -58,6 +69,8 @@ void Batch::set(const Index new_samples_number,
                  && dataset->supports_bf16_inputs();
     const Index input_device_bytes = input_is_bf16 ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 
+    const bool host_bf16_input_cast = input_is_bf16 && bf16_host_input_cast_enabled();
+
     auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
     {
         const Shape& dataset_shape = dataset->get_shape(role);
@@ -85,18 +98,40 @@ void Batch::set(const Index new_samples_number,
 
         if (!on_gpu) return;
 
-        if (const Index size = samples_number * slot.features_number; size > slot.host_allocated_size)
+        const Index host_values = samples_number * slot.features_number;
+        if (host_values > slot.host_allocated_size)
         {
             device::deallocate_pinned_host(slot.host);
             slot.host = nullptr;
             slot.host_allocated_size = 0;
             slot.host = static_cast<float*>(
-                device::allocate_pinned_host(size * Index(sizeof(float))));
-            slot.host_allocated_size = size;
+                device::allocate_pinned_host(host_values * Index(sizeof(float))));
+            slot.host_allocated_size = host_values;
             memory_debug::record("batch.pinned_host",
-                                 format("Batch::{}.host", role),
-                                 size * Index(sizeof(float)),
+                                  format("Batch::{}.host", role),
+                                  host_values * Index(sizeof(float)),
+                                  format("samples={}", samples_number));
+        }
+
+        const bool wants_bf16_host = role == "Input" && host_bf16_input_cast;
+        if (wants_bf16_host && host_values > slot.host_bf16_allocated_size)
+        {
+            device::deallocate_pinned_host(slot.host_bf16);
+            slot.host_bf16 = nullptr;
+            slot.host_bf16_allocated_size = 0;
+            slot.host_bf16 = static_cast<uint16_t*>(
+                device::allocate_pinned_host(host_values * Index(sizeof(uint16_t))));
+            slot.host_bf16_allocated_size = host_values;
+            memory_debug::record("batch.pinned_host",
+                                 format("Batch::{}.host_bf16", role),
+                                 host_values * Index(sizeof(uint16_t)),
                                  format("samples={}", samples_number));
+        }
+        else if (!wants_bf16_host && slot.host_bf16)
+        {
+            device::deallocate_pinned_host(slot.host_bf16);
+            slot.host_bf16 = nullptr;
+            slot.host_bf16_allocated_size = 0;
         }
     };
 
@@ -115,19 +150,31 @@ void Batch::set(const Index new_samples_number,
     if (!target.shape.empty() && target.buffer.data)
         target_view_host_cache = TensorView(target.buffer.as<float>(), target.shape, Type::FP32, Device::CPU);
 
-    const Index fp32_staging_bytes = input_is_bf16
+    const bool needs_fp32_staging = input_is_bf16
+        && !host_bf16_input_cast
+        && !prefetch_only
+        && !(dataset && dataset->is_device_resident());
+    const Index fp32_staging_bytes = needs_fp32_staging
         ? samples_number * input.features_number * Index(sizeof(float))
         : Index(0);
     fp32_staging.resize_bytes(fp32_staging_bytes, Device::CUDA);
     memory_debug::record("batch.device", "Batch::fp32_staging", fp32_staging_bytes,
                          format("samples={}", samples_number));
 
-    if (on_gpu)
+    const bool may_use_device_gather = on_gpu
+        && dataset
+        && (dataset->is_device_resident()
+            || dataset->get_storage_mode() == Dataset::StorageMode::GPUPersistantData);
+    if (may_use_device_gather)
     {
         gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
         memory_debug::record("batch.device", "Batch::gather_indices_device",
-                             samples_number * Index(sizeof(int)),
-                             format("samples={}", samples_number));
+                              samples_number * Index(sizeof(int)),
+                              format("samples={}", samples_number));
+    }
+    else
+    {
+        gather_indices_device.resize_bytes(0, Device::CUDA);
     }
 
     if (on_gpu && !input.shape.empty() && input.buffer.data)
@@ -220,8 +267,11 @@ Batch::~Batch()
 {
     wait_h2d_complete();
     device::deallocate_pinned_host(input.host);
+    device::deallocate_pinned_host(input.host_bf16);
     device::deallocate_pinned_host(decoder.host);
+    device::deallocate_pinned_host(decoder.host_bf16);
     device::deallocate_pinned_host(target.host);
+    device::deallocate_pinned_host(target.host_bf16);
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -251,11 +301,35 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         const float* matrix = dataset->get_device_data();
         const Index matrix_cols = dataset->get_device_data_columns();
 
-        device::copy_async(gather_indices_device.data, gather_row_indices.data(),
-                           current_batch_size * Index(sizeof(int)),
+        const Index index_bytes = current_batch_size * Index(sizeof(int));
+        gather_indices_host.grow_to(index_bytes);
+        memcpy(gather_indices_host.data, gather_row_indices.data(), size_t(index_bytes));
+        if (gather_indices_device.bytes < index_bytes)
+        {
+            const Index before = gather_indices_device.bytes;
+            gather_indices_device.resize_bytes(index_bytes, Device::CUDA);
+            memory_debug::record("batch.device", "Batch::gather_indices_device",
+                                 gather_indices_device.bytes - before,
+                                 format("samples={}", current_batch_size));
+        }
+        device::copy_async(gather_indices_device.data, gather_indices_host.data,
+                           index_bytes,
                            device::CopyKind::HostToDevice, stream);
 
         const int* idx = gather_indices_device.as<int>();
+
+        if (window_past > 0)
+        {
+            gather_window_rows_cuda(matrix, idx, destination.input.buffer.as<float>(),
+                                    current_batch_size, window_past, window_features,
+                                    matrix_cols, window_matrix_rows, input_col_offset, stream);
+            gather_window_targets_cuda(matrix, idx, destination.target.buffer.as<float>(),
+                                       current_batch_size, window_past, window_future,
+                                       window_target_cols, window_multi_target,
+                                       matrix_cols, window_matrix_rows, target_col_offset, stream);
+            record_h2d_done(stream);
+            return;
+        }
 
         if (destination.input_is_bf16)
         {
@@ -281,12 +355,35 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
     if (destination.input_is_bf16)
     {
-        assert(destination.fp32_staging.bytes >= input_values_count * Index(sizeof(float)));
-        copy_to_device_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float));
-        cast_fp32_to_bf16(input_values_count,
-                               destination.fp32_staging.as<float>(),
-                               destination.input.buffer.as<bfloat16>(),
-                               stream);
+        if (input.host_bf16)
+        {
+            const float* src = input.host;
+            uint16_t* dst = input.host_bf16;
+            #pragma omp parallel for if(input_values_count > 4096)
+            for (Index i = 0; i < input_values_count; ++i)
+                dst[i] = static_cast<uint16_t>(bit_cast<uint32_t>(src[i]) >> 16);
+
+            copy_to_device_async(destination.input.buffer.as<bfloat16>(),
+                                 input.host_bf16,
+                                 input_values_count * Index(sizeof(uint16_t)));
+        }
+        else
+        {
+            const Index staging_bytes = input_values_count * Index(sizeof(float));
+            if (destination.fp32_staging.bytes < staging_bytes)
+            {
+                const Index before = destination.fp32_staging.bytes;
+                destination.fp32_staging.resize_bytes(staging_bytes, Device::CUDA);
+                memory_debug::record("batch.device", "Batch::fp32_staging",
+                                     destination.fp32_staging.bytes - before,
+                                     format("samples={}", current_batch_size));
+            }
+            copy_to_device_async(destination.fp32_staging.as<float>(), input.host, input_values_count * sizeof(float));
+            cast_fp32_to_bf16(input_values_count,
+                              destination.fp32_staging.as<float>(),
+                              destination.input.buffer.as<bfloat16>(),
+                              stream);
+        }
     }
     else
     {

@@ -104,8 +104,11 @@ void Unscaling::write_JSON_body(JsonWriter& printer) const
 string Unscaling::write_expression(const vector<string>& input_names,
                                    const vector<string>& output_names) const
 {
+    // Rank-2 (time series) outputs have one scaler per feature, applied to
+    // every time step: outputs_number = time_steps * features.
     const Index outputs_number = get_outputs_number();
-    throw_if(outputs_number == 0 || ssize(scalers) != outputs_number,
+    throw_if(outputs_number == 0 || ssize(scalers) == 0
+             || outputs_number % ssize(scalers) != 0,
              "Unscaling::write_expression: layer not configured.");
 
     ostringstream buffer;
@@ -113,9 +116,10 @@ string Unscaling::write_expression(const vector<string>& input_names,
 
     for (Index i = 0; i < outputs_number; ++i)
     {
-        const Descriptives& descriptive = descriptives[size_t(i)];
+        const size_t feature = size_t(i % ssize(scalers));
+        const Descriptives& descriptive = descriptives[feature];
         using enum ScalerMethod;
-        switch (scalers[size_t(i)])
+        switch (scalers[feature])
         {
         case None:
             buffer << output_names[i] << " = " << input_names[i] << ";\n";

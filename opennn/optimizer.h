@@ -12,6 +12,7 @@
 #include <functional>
 #include "batch.h"
 #include "device_backend.h"
+#include "forward_propagation.h"
 #include "json.h"
 #include "loss.h"
 #include "tensor_types.h"
@@ -25,7 +26,6 @@ inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
 class NeuralNetwork;
 struct Buffer;
-struct ForwardPropagation;
 struct BackPropagation;
 
 class Optimizer
@@ -100,12 +100,19 @@ protected:
     void update_best_parameters(NeuralNetwork*, float,
                                 Index, Index&);
 
-    // If training stopped on MaximumValidationErrorIncreases, restore the
-    // snapshot taken by update_best_parameters so the final model is the best
-    // one, not the last (possibly worse) epoch's.
     void restore_best_parameters(NeuralNetwork*, TrainingResult&);
 
     void reset_best_parameters();
+
+    // Validation batches come from the dataset that set_scaling() pre-scaled in
+    // place, so their forward passes must skip the leading Scaling layers (see
+    // ForwardPropagation::inputs_pre_scaled). Every optimizer calls this on the
+    // propagation it evaluates validation with.
+    static void mark_validation_propagation(ForwardPropagation* validation_propagation)
+    {
+        if (validation_propagation)
+            validation_propagation->inputs_pre_scaled = true;
+    }
 
     void write_common_json(JsonWriter&) const;
     void read_common_json(const Json*);
@@ -217,7 +224,6 @@ protected:
     bool display = true;
 
     // Shuffle the training samples each epoch. Toggle from code with
-    // set_shuffle(); recurrent/LSTM networks always train in order regardless.
     bool shuffle_samples = true;
 
     // Prefetch-pool depth override (0 = auto). Set from code with
@@ -230,6 +236,9 @@ protected:
     int workers_number = 2;
 
     bool has_recurrent_layers_ = false;
+
+    array<CudaEvent, 4> batch_throttle_events_;
+    size_t batch_throttle_cursor_ = 0;
 
     // Slot ring for the graph epoch. The staged (host FP32) path groups
     // graph_group_size iterations into one mega-graph whose H2D nodes read each
