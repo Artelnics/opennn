@@ -8,8 +8,11 @@
 
 #pragma once
 
+#include <memory>
+
 #include "dataset.h"
 #include "io_utilities.h"
+#include "tokenizer.h"
 
 namespace opennn
 {
@@ -30,6 +33,12 @@ public:
     const unordered_map<string, Index>& get_vocabulary_map() const noexcept { return vocabulary_map; }
 
     Index get_sequence_length() const noexcept { return sequence_length; }
+
+    // Optional subword tokenizer (e.g. BytePairTokenizer). When set with a
+    // non-empty vocabulary the corpus is encoded through it and the built-in
+    // whitespace/word-level path is bypassed; null keeps word-level tokenization.
+    void set_tokenizer(unique_ptr<Tokenizer> new_tokenizer) { tokenizer = move(new_tokenizer); }
+    const Tokenizer* get_tokenizer() const noexcept { return tokenizer.get(); }
 
     void set_vocabulary(const vector<string>&);
 
@@ -75,11 +84,13 @@ private:
 
     void update_vocabulary_map();
 
-    void load_corpus(string&, vector<string_view>&) const;
+    void read_file(string&) const;
 
     vector<Index> encode_corpus(const vector<string_view>&) const;
 
     void write_binary_cache(const vector<Index>&, Index);
+
+    unique_ptr<Tokenizer> tokenizer;
 
     vector<string> vocabulary;
 

@@ -633,9 +633,11 @@ int main(int argc, char** argv)
         //    Alternative corpus (English side of WMT14, parliamentary/news
         //    register): datasets/wmt14_en_de/wmt14_en.txt via argv[5].
         //    GPT-2 small dims: 12 layers / 12 heads / 768 emb / 3072 ff.
-        //    Differences vs the real GPT-2: word-level vocabulary (no BPE),
-        //    sinusoidal positions (not learned), untied output projection.
-        //    Vocabulary capped at 50257 (GPT-2's vocab size).
+        //    Tokenizer (argv[16]): "word" = whitespace/word-level vocab capped at
+        //    50257, or "bpe" = GPT-2 byte-level byte-pair encoding loaded from
+        //    vocab.json + merges.txt in argv[17] (no [UNK], vocab 50258). The
+        //    real GPT-2 also uses learned positions and a tied output projection,
+        //    which this model does not.
         //    PRE-LN IS REQUIRED at these widths: post-LN without LR warmup
         //    freezes at the unigram plateau for embedding_dim >= 512 or
         //    ff_dim >= 2048 (verified empirically July 2026: post-LN
@@ -660,7 +662,8 @@ int main(int argc, char** argv)
         //          argv[8]=pre_normalization 0|1 (1 = pre-LN, the default),
         //          argv[9]=sdpa 0|1, argv[10]=dropout rate (0.1),
         //          argv[11]=embedding_dim (768), argv[12]=heads (12), argv[13]=ff_dim (3072),
-        //          argv[14]=device cuda|cpu (cuda), argv[15]=grad_clip_norm (1.0).
+        //          argv[14]=device cuda|cpu (cuda), argv[15]=grad_clip_norm (1.0),
+        //          argv[16]=tokenizer word|bpe (word), argv[17]=bpe assets dir.
         // --------------------------------------------------------------------
 #if 1
         const Index batch_size      = argc > 1 ? Index(stoll(argv[1])) : Index(8);
@@ -679,6 +682,10 @@ int main(int argc, char** argv)
         const Index feed_forward_dimension_arg = argc > 13 ? Index(stoll(argv[13])) : Index(3072);
         const bool on_cpu           = argc > 14 && string(argv[14]) == "cpu";
         const float gradient_clip   = argc > 15 ? stof(argv[15]) : 1.0f;
+        const string tokenizer_kind = argc > 16 ? argv[16] : "word";
+        const filesystem::path bpe_dir = argc > 17 ? argv[17]
+            : "/home/artelnics/Documents/datasets/gpt2_tokenizer";
+        const bool use_bpe          = tokenizer_kind == "bpe";
         const Type training_type    = (precision == "bf16") ? Type::BF16 : Type::FP32;
 
         cout << "OpenNN. GPT decoder-only LM, GPT-2-small architecture (" << precision
@@ -686,6 +693,7 @@ int main(int argc, char** argv)
              << " seq=" << sequence_length << " lr=" << learning_rate
              << " layers=" << layers_number_arg << " preln=" << pre_normalization
              << " sdpa=" << use_sdpa << " dropout=" << dropout_rate
+             << " tokenizer=" << tokenizer_kind
              << "\ncorpus=" << corpus_path << endl;
 
         Configuration::instance().set(on_cpu ? Device::CPU : Device::CUDA, training_type);
@@ -694,7 +702,17 @@ int main(int argc, char** argv)
 
         const Index maximum_vocabulary_size = 50257;
 
-        TextGenerationDataset dataset(corpus_path, sequence_length, maximum_vocabulary_size);
+        // Word-level builds its vocabulary from the corpus; byte-pair loads a
+        // fixed GPT-2 vocab.json + merges.txt and encodes the raw text through it.
+        TextGenerationDataset dataset("", sequence_length, maximum_vocabulary_size);
+        if (use_bpe)
+        {
+            auto tokenizer = make_unique<BytePairTokenizer>();
+            tokenizer->load(bpe_dir / "vocab.json", bpe_dir / "merges.txt");
+            dataset.set_tokenizer(move(tokenizer));
+        }
+        dataset.set_data_path(corpus_path);
+        dataset.read_txt();
         dataset.split_samples_random(0.95f, 0.04f, 0.01f);
 
         cout << "[DATASET] blocks=" << dataset.get_samples_number()
@@ -722,7 +740,7 @@ int main(int argc, char** argv)
         cout << "GPT params=" << network.get_parameters_number() << endl;
 
         const filesystem::path parameters_path =
-            corpus_path.string() + ".gpt_parameters.bin";
+            corpus_path.string() + ".gpt_parameters_" + tokenizer_kind + ".bin";
 
         if (filesystem::exists(parameters_path))
         {

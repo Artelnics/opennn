@@ -1583,6 +1583,15 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         {
             PROFILE_SCOPE("step:sync_device");
             sync_device(on_gpu);
+
+            // Training serializes the batch pool through the backward pass; a
+            // pure-forward pass (validation / testing) does not, so the prefetch
+            // H2D that reuses a pool buffer can overrun the compute stream still
+            // reading its inputs -- the fast bf16 SDPA forward makes the CPU run
+            // far enough ahead for this to corrupt the metrics. Serialize per
+            // batch here; a forward-only epoch is cheap and runs once per epoch.
+            if (on_gpu && !context.is_training)
+                device::synchronize(Backend::get_compute_stream());
         }
 
         context.empty_queue->push(current_batch);

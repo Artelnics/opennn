@@ -34,10 +34,15 @@ TransformerDecoder::SamplingConfig greedy_config()
     return {.temperature = 0.0f};
 }
 
-TransformerDecoder::TokenCallback stream_token_callback(ostream& out, bool& first_token)
+// raw = the callback already receives detokenized text (subword tokenizers emit
+// text deltas with spacing baked in); otherwise a space is inserted between
+// word-level tokens except before punctuation.
+TransformerDecoder::TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw)
 {
-    return [&out, &first_token](const string& token)
+    return [&out, &first_token, raw](const string& token)
     {
+        if (raw) { out << token << flush; return; }
+
         const bool is_punctuation = token.size() == 1
             && string_view(",.!?;:").find(token[0]) != string_view::npos;
 
@@ -518,7 +523,7 @@ string TransformerDecoder::decode_to_stream(const string& source,
 {
     bool first_token = true;
 
-    return decode(source, config, stream_token_callback(out, first_token));
+    return decode(source, config, stream_token_callback(out, first_token, false));
 }
 
 string TransformerDecoder::generate(const string& prompt)
@@ -543,15 +548,21 @@ string TransformerDecoder::generate(const string& prompt,
     throw_if(!decoder_only,
              "TransformerDecoder::generate requires a TextGenerationNetwork; use decode() for seq2seq transformers.");
 
+    const Tokenizer* tokenizer = generation_dataset->get_tokenizer();
     const auto& vocabulary_map = generation_dataset->get_vocabulary_map();
     const vector<string>& vocabulary = generation_dataset->get_vocabulary();
 
+    // A subword tokenizer encodes/decodes text directly; word-level maps tokens
+    // through the dataset vocabulary and joins them with spaces.
     vector<Index> context;
-    for (const string& token : tokenize(prompt))
-    {
-        const auto it = vocabulary_map.find(token);
-        context.push_back(it != vocabulary_map.end() ? it->second : unknown_token_id);
-    }
+    if (tokenizer)
+        context = tokenizer->encode(prompt);
+    else
+        for (const string& token : tokenize(prompt))
+        {
+            const auto it = vocabulary_map.find(token);
+            context.push_back(it != vocabulary_map.end() ? it->second : unknown_token_id);
+        }
 
     throw_if(context.empty(),
              "TransformerDecoder: prompt produced no tokens.");
@@ -561,6 +572,7 @@ string TransformerDecoder::generate(const string& prompt,
     const Index maximum_new_tokens = (config.maximum_tokens > 0)
         ? config.maximum_tokens
         : sequence_length;
+    const Index prompt_size = ssize(context);
 
     string result;
 
@@ -575,12 +587,23 @@ string TransformerDecoder::generate(const string& prompt,
             || next_token_id < 0 || next_token_id >= ssize(vocabulary))
             continue;
 
-        const string& token = vocabulary[size_t(next_token_id)];
-
-        if (!result.empty()) result += " ";
-        result += token;
-
-        if (on_token) on_token(token);
+        if (tokenizer)
+        {
+            // Re-decode the generated tail so subwords join into text correctly,
+            // and stream only the newly produced suffix.
+            const vector<Index> generated(context.begin() + prompt_size, context.end());
+            const string text = tokenizer->decode(generated);
+            if (on_token && text.size() > result.size())
+                on_token(text.substr(result.size()));
+            result = text;
+        }
+        else
+        {
+            const string& token = vocabulary[size_t(next_token_id)];
+            if (!result.empty()) result += " ";
+            result += token;
+            if (on_token) on_token(token);
+        }
     }
 
     return result;
@@ -596,8 +619,9 @@ string TransformerDecoder::generate_to_stream(const string& prompt,
                                               ostream& out)
 {
     bool first_token = true;
+    const bool raw = generation_dataset->get_tokenizer() != nullptr;
 
-    return generate(prompt, config, stream_token_callback(out, first_token));
+    return generate(prompt, config, stream_token_callback(out, first_token, raw));
 }
 
 

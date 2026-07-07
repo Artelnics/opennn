@@ -8,6 +8,7 @@
 
 #include "tokenizer.h"
 #include "string_utilities.h"
+#include "json.h"
 
 namespace opennn
 {
@@ -249,6 +250,19 @@ vector<string> split_codepoints(string_view text)
     return characters;
 }
 
+bool is_ascii_digit(uint32_t cp) { return cp >= '0' && cp <= '9'; }
+
+bool is_letter(uint32_t cp)
+{
+    if ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z')) return true;
+    if (cp < 0x80) return false;
+    if (cp == 0x00D7 || cp == 0x00F7) return false;             // × ÷ are symbols
+    if (cp >= 0x00C0 && cp <= 0x024F) return true;              // Latin supplement/extended
+    if (cp >= 0x0370 && cp <= 0x03FF) return true;              // Greek
+    if (cp >= 0x0400 && cp <= 0x04FF) return true;              // Cyrillic
+    return !is_whitespace(cp) && !is_punctuation(cp);           // treat other non-ASCII as letters
+}
+
 }
 
 WordPieceTokenizer::WordPieceTokenizer()
@@ -377,6 +391,207 @@ vector<string> WordPieceTokenizer::tokenize(string_view text) const
     }
 
     return tokens;
+}
+
+BytePairTokenizer::BytePairTokenizer()
+{
+    reserved_tokens = {string(PAD_TOKEN)};
+    unk_id = 0;
+
+    // bytes_to_unicode: printable bytes map to themselves; the rest map to
+    // codepoints 256.. in order, so every byte becomes one printable codepoint.
+    array<bool, 256> is_direct{};
+    auto mark = [&](int lo, int hi) { for (int b = lo; b <= hi; ++b) is_direct[b] = true; };
+    mark('!', '~'); mark(0xA1, 0xAC); mark(0xAE, 0xFF);
+
+    uint32_t next = 256;
+    for (int b = 0; b < 256; ++b)
+    {
+        const uint32_t codepoint = is_direct[b] ? uint32_t(b) : next++;
+        byte_encoder[size_t(b)] = codepoint;
+        byte_decoder[codepoint] = static_cast<unsigned char>(b);
+    }
+}
+
+void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
+                             const filesystem::path& merges_txt)
+{
+    // vocab.json: flat object { "<byte-unicode token>": id, ... }.
+    ifstream vocabulary_file(vocabulary_json, ios::binary);
+    throw_if(!vocabulary_file.is_open(),
+             "Cannot open vocab.json: " + vocabulary_json.string());
+    const string vocabulary_text((istreambuf_iterator<char>(vocabulary_file)),
+                                 istreambuf_iterator<char>());
+
+    const Json parsed = Json::parse(vocabulary_text);
+    throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
+
+    Index maximum_id = -1;
+    for (const auto& [token, id_value] : parsed.object_value)
+        maximum_id = max(maximum_id, Index(id_value.as_long()));
+
+    // Reserve id 0 for [PAD]; every loaded id shifts +1.
+    vector<string> loaded_vocabulary(size_t(maximum_id + 2));
+    loaded_vocabulary[0] = string(PAD_TOKEN);
+    for (const auto& [token, id_value] : parsed.object_value)
+        loaded_vocabulary[size_t(id_value.as_long()) + 1] = token;
+
+    set_vocabulary(loaded_vocabulary);
+
+    // merges.txt: one "A B" pair per line, in priority order (skips the header).
+    ifstream merges_file(merges_txt, ios::binary);
+    throw_if(!merges_file.is_open(),
+             "Cannot open merges.txt: " + merges_txt.string());
+
+    merge_ranks.clear();
+    bpe_cache.clear();
+    string line;
+    int rank = 0;
+    while (getline(merges_file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+
+        const size_t space = line.find(' ');
+        if (space == string::npos) continue;
+
+        merge_ranks.emplace(line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
+    }
+}
+
+vector<string> BytePairTokenizer::bpe(const string& token) const
+{
+    if (const auto cached = bpe_cache.find(token); cached != bpe_cache.end())
+        return cached->second;
+
+    vector<string> symbols = split_codepoints(token);
+
+    while (symbols.size() > 1)
+    {
+        int best_rank = numeric_limits<int>::max();
+        size_t best_index = 0;
+
+        for (size_t i = 0; i + 1 < symbols.size(); ++i)
+        {
+            const auto it = merge_ranks.find(symbols[i] + ' ' + symbols[i + 1]);
+            if (it != merge_ranks.end() && it->second < best_rank)
+            {
+                best_rank = it->second;
+                best_index = i;
+            }
+        }
+
+        if (best_rank == numeric_limits<int>::max()) break;
+
+        symbols[best_index] += symbols[best_index + 1];
+        symbols.erase(symbols.begin() + Index(best_index) + 1);
+    }
+
+    bpe_cache.emplace(token, symbols);
+    return symbols;
+}
+
+vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
+{
+    // Regex 's|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
+    // implemented over codepoints; a leading space attaches to the following piece.
+    const vector<uint32_t> cps = utf8_to_codepoints(text);
+    const size_t n = cps.size();
+
+    vector<string> pieces;
+    size_t i = 0;
+
+    auto emit = [&](size_t start, size_t end)
+    {
+        string piece;
+        for (size_t k = start; k < end; ++k) piece += codepoint_to_utf8(cps[k]);
+        pieces.push_back(move(piece));
+    };
+
+    while (i < n)
+    {
+        const uint32_t c = cps[i];
+
+        // Contractions (ASCII apostrophe only).
+        if (c == '\'' && i + 1 < n)
+        {
+            const uint32_t d = to_lower_ascii(cps[i + 1]);
+            if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; continue; }
+            if (i + 2 < n)
+            {
+                const uint32_t e = to_lower_ascii(cps[i + 2]);
+                if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
+                { emit(i, i + 3); i += 3; continue; }
+            }
+        }
+
+        // Optional single leading space, then a run of letters / digits / others.
+        const size_t k = (c == ' ') ? i + 1 : i;
+        if (k < n && is_letter(cps[k]))
+        {
+            size_t j = k; while (j < n && is_letter(cps[j])) ++j;
+            emit(i, j); i = j; continue;
+        }
+        if (k < n && is_ascii_digit(cps[k]))
+        {
+            size_t j = k; while (j < n && is_ascii_digit(cps[j])) ++j;
+            emit(i, j); i = j; continue;
+        }
+        if (k < n && !is_whitespace(cps[k]) && !is_letter(cps[k]) && !is_ascii_digit(cps[k]))
+        {
+            size_t j = k; while (j < n && !is_whitespace(cps[j]) && !is_letter(cps[j]) && !is_ascii_digit(cps[j])) ++j;
+            emit(i, j); i = j; continue;
+        }
+
+        // Whitespace run: keep the last space for the next piece's optional lead.
+        if (is_whitespace(c))
+        {
+            size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
+            const size_t end = (j < n && j - i > 1) ? j - 1 : j;
+            emit(i, end); i = end; continue;
+        }
+
+        emit(i, i + 1); ++i;   // defensive fallback
+    }
+
+    return pieces;
+}
+
+vector<string> BytePairTokenizer::tokenize(string_view text) const
+{
+    vector<string> tokens;
+
+    for (const string& piece : pre_tokenize(text))
+    {
+        // Map the piece's raw bytes through byte_encoder, then apply BPE merges.
+        string byte_unicode;
+        for (const char raw : piece)
+            byte_unicode += codepoint_to_utf8(byte_encoder[static_cast<unsigned char>(raw)]);
+
+        const vector<string> subwords = bpe(byte_unicode);
+        tokens.insert(tokens.end(), subwords.begin(), subwords.end());
+    }
+
+    return tokens;
+}
+
+string BytePairTokenizer::decode(const vector<Index>& ids) const
+{
+    string byte_unicode;
+    for (const Index id : ids)
+    {
+        if (id == 0) continue;                 // [PAD]
+        byte_unicode += id_to_token(id);
+    }
+
+    string bytes;
+    for (const uint32_t codepoint : utf8_to_codepoints(byte_unicode))
+    {
+        const auto it = byte_decoder.find(codepoint);
+        if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
+    }
+
+    return bytes;
 }
 
 }

@@ -160,9 +160,9 @@ public:
 
     TextGenerationNetwork() = default;
 
-    // pre_normalization = true builds GPT-2-style pre-LN blocks (norm before
-    // attention/FFN, plain residual adds, final norm before the projection);
-    // false keeps the post-LN layout shared with Transformer.
+    // pre_normalization = true builds pre-LN blocks (norm before attention/FFN,
+    // plain residual adds, final norm before the projection); false keeps the
+    // post-LN layout shared with Transformer.
     TextGenerationNetwork(Index,
                           Index,
                           Index,

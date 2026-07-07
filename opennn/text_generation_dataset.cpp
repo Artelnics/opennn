@@ -70,22 +70,44 @@ void TextGenerationDataset::read_txt()
     cache_reader.close();
 
     string buffer;
-    vector<string_view> corpus_tokens;
+    read_file(buffer);
 
-    load_corpus(buffer, corpus_tokens);
+    // A tokenizer with a fixed loaded vocabulary (subword, e.g. byte-pair)
+    // encodes the raw corpus; otherwise the corpus is lowercased and split into
+    // whitespace/word-level tokens whose vocabulary is built by frequency.
+    const bool subword = tokenizer && tokenizer->get_vocabulary_size() > 0;
 
-    create_vocabulary(corpus_tokens);
+    vector<Index> token_ids;
+    string cache_tag;
+
+    if (subword)
+    {
+        cout << "Tokenizing corpus (subword)..." << "\n";
+        vocabulary = tokenizer->get_vocabulary();
+        token_ids = tokenizer->encode(buffer);
+        cache_tag = format("sub{}", vocabulary.size());
+    }
+    else
+    {
+        for (char& character : buffer)
+            character = static_cast<char>(tolower(static_cast<unsigned char>(character)));
+
+        const vector<string_view> corpus_tokens = tokenize_views(buffer);
+        create_vocabulary(corpus_tokens);
+        token_ids = encode_corpus(corpus_tokens);
+        cache_tag = "word";
+    }
 
     update_vocabulary_map();
 
     // Non-overlapping blocks of (sequence_length + 1) tokens: inputs are tokens
     // [0, T-1] and targets the same block shifted one position, [1, T].
     const Index record_tokens = sequence_length + 1;
-    const Index samples_number = ssize(corpus_tokens) / record_tokens;
+    const Index samples_number = ssize(token_ids) / record_tokens;
 
     throw_if(samples_number == 0,
              format("TextGenerationDataset: corpus has {} tokens; at least {} are needed for one sample.",
-                    corpus_tokens.size(), record_tokens));
+                    token_ids.size(), record_tokens));
 
     input_shape  = { sequence_length };
     target_shape = { sequence_length };
@@ -108,8 +130,6 @@ void TextGenerationDataset::read_txt()
 
     if (storage_mode == StorageMode::Matrix)
     {
-        const vector<Index> token_indices = encode_corpus(corpus_tokens);
-
         data.resize(samples_number, get_features_number());
 
         for (Index i = 0; i < samples_number; ++i)
@@ -118,15 +138,17 @@ void TextGenerationDataset::read_txt()
 
             for (Index j = 0; j < sequence_length; ++j)
             {
-                data(i, j) = float(token_indices[size_t(block_start + j)]);
-                data(i, sequence_length + j) = float(token_indices[size_t(block_start + j + 1)]);
+                data(i, j) = float(token_ids[size_t(block_start + j)]);
+                data(i, sequence_length + j) = float(token_ids[size_t(block_start + j + 1)]);
             }
         }
     }
     else
     {
-        // BinaryFile: fixed-size records of (sequence_length + 1) int32 tokens per sample.
-        cache_path = filesystem::path(data_path.string() + ".cache") / "lm_tokens.bin";
+        // BinaryFile: fixed-size records of (sequence_length + 1) int32 tokens per
+        // sample. The cache name carries a tokenizer tag so switching tokenizers
+        // never silently reuses a stale cache.
+        cache_path = filesystem::path(data_path.string() + ".cache") / format("lm_tokens_{}.bin", cache_tag);
 
         const uintmax_t record_bytes = uintmax_t(record_tokens) * sizeof(int32_t);
 
@@ -137,7 +159,7 @@ void TextGenerationDataset::read_txt()
         if (cache_valid)
             cache_reader.open(cache_path);
         else
-            write_binary_cache(encode_corpus(corpus_tokens), samples_number);
+            write_binary_cache(token_ids, samples_number);
     }
 
     sample_roles.resize(samples_number);
@@ -162,7 +184,7 @@ void TextGenerationDataset::set_vocabulary(const vector<string>& new_vocabulary)
     update_vocabulary_map();
 }
 
-void TextGenerationDataset::load_corpus(string& buffer, vector<string_view>& corpus_tokens) const
+void TextGenerationDataset::read_file(string& buffer) const
 {
     ifstream file(data_path, ios::binary | ios::ate);
 
@@ -181,11 +203,6 @@ void TextGenerationDataset::load_corpus(string& buffer, vector<string_view>& cor
 
     throw_if(!file,
              format("Cannot read file {}", data_path.string()));
-
-    for (char& c : buffer)
-        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-
-    corpus_tokens = tokenize_views(buffer);
 }
 
 vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& corpus_tokens) const

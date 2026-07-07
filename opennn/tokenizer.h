@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <array>
+
 #include "tensor_types.h"
 
 namespace opennn
@@ -34,7 +36,7 @@ public:
     const string& id_to_token(Index id) const;
 
     vector<Index> encode(string_view text) const;
-    string decode(const vector<Index>& ids) const;
+    virtual string decode(const vector<Index>& ids) const;
 
     Index get_unk_id() const noexcept { return unk_id; }
     const vector<string>& get_reserved_tokens() const noexcept { return reserved_tokens; }
@@ -87,6 +89,35 @@ private:
     string continuation_prefix = "##";
     Index  max_input_chars_per_word = 100;
     bool   do_lower_case = true;
+};
+
+
+// Id 0 is reserved for [PAD]
+class BytePairTokenizer : public Tokenizer
+{
+public:
+
+    BytePairTokenizer();
+
+    void load(const filesystem::path& vocabulary_json,
+              const filesystem::path& merges_txt);
+
+    vector<string> tokenize(string_view text) const override;
+    string decode(const vector<Index>& ids) const override;
+
+    void build_vocabulary(const vector<vector<string>>&, Index, Index) override {}
+
+    static constexpr string_view PAD_TOKEN = "[PAD]";
+
+private:
+
+    vector<string> pre_tokenize(string_view text) const;
+    vector<string> bpe(const string& token) const;
+
+    array<uint32_t, 256> byte_encoder{};
+    unordered_map<uint32_t, unsigned char> byte_decoder;
+    unordered_map<string, int> merge_ranks;
+    mutable unordered_map<string, vector<string>> bpe_cache;
 };
 
 }
