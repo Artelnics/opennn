@@ -61,6 +61,19 @@ public:
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
 
+    // Points the BinaryFile streaming cache at an explicit file (header +
+    // float32 row-major, the save_data_binary format). Embedding applications
+    // (e.g. Neural Designer) keep the binary next to the model instead of the
+    // default <data_dir>/.cache/<stem>.bin layout.
+    void set_binary_cache_path(const filesystem::path&);
+
+    // On-the-fly input scaling for BinaryFile streaming (mirrors
+    // ImageDataset::set_input_scaling): the cache stores RAW values so reports
+    // and testing read real units; training pre-scaling cannot operate on the
+    // freed matrix, so fill_inputs applies these per batch instead.
+    void set_input_scaling(const vector<Descriptives>&, const vector<ScalerMethod>&);
+    void set_target_scaling(const vector<Descriptives>&, const vector<ScalerMethod>&);
+
     vector<string> get_feature_scalers(const string&) const;
 
     void set_variable_scalers(const string&);
@@ -182,6 +195,17 @@ protected:
     mutable FileReader cache_reader;
     mutable Index binary_rows_number = 0;
     mutable Index binary_columns_number = 0;
+
+    vector<Descriptives> fill_input_descriptives;
+    vector<ScalerMethod> fill_input_scalers;
+    bool fill_input_scaling = false;
+
+    vector<Descriptives> fill_target_descriptives;
+    vector<ScalerMethod> fill_target_scalers;
+    bool fill_target_scaling = false;
+
+    void apply_fill_scaling(float*, Index, Index,
+                            const vector<Descriptives>&, const vector<ScalerMethod>&) const;
 
     void infer_column_types(const vector<string_view>&, char);
 

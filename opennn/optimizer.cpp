@@ -547,6 +547,27 @@ void Optimizer::set_scaling()
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
+    // Tabular en streaming (BinaryFile): no hay matriz en RAM que pre-escalar
+    // (y el binario guarda valores crudos). Las capas Scaling/Unscaling ya
+    // conservan los descriptives calculados en el import; el dataset los aplica
+    // on-the-fly por batch en fill_inputs/fill_targets (mismo patron que
+    // ImageDataset::set_input_scaling).
+    if (auto* streaming_tabular = dynamic_cast<TabularDataset*>(dataset);
+        streaming_tabular
+        && streaming_tabular->get_storage_mode() == Dataset::StorageMode::BinaryFile)
+    {
+        if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling));
+            scaling_layer && scaling_layer->get_input_shape().rank <= 2)
+            streaming_tabular->set_input_scaling(scaling_layer->get_descriptives(),
+                                                 scaling_layer->get_scalers());
+
+        if (auto* unscaling_layer = dynamic_cast<Unscaling*>(neural_network->get_first(LayerType::Unscaling)))
+            streaming_tabular->set_target_scaling(unscaling_layer->get_descriptives(),
+                                                  unscaling_layer->get_scalers());
+
+        return;
+    }
+
     vector<Descriptives> input_variable_descriptives;
     vector<string> input_variable_scalers;
 

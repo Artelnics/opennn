@@ -202,8 +202,108 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
         binary_rows_number = 0;
         binary_columns_number = 0;
         cache_reader.close();
+        fill_input_scaling = false;
+        fill_target_scaling = false;
     }
 }
+
+
+void TabularDataset::set_input_scaling(const vector<Descriptives>& new_descriptives,
+                                       const vector<ScalerMethod>& new_scalers)
+{
+    fill_input_descriptives = new_descriptives;
+    fill_input_scalers = new_scalers;
+
+    fill_input_scaling = !new_descriptives.empty()
+                      && new_descriptives.size() == new_scalers.size();
+}
+
+
+void TabularDataset::set_target_scaling(const vector<Descriptives>& new_descriptives,
+                                        const vector<ScalerMethod>& new_scalers)
+{
+    fill_target_descriptives = new_descriptives;
+    fill_target_scalers = new_scalers;
+
+    fill_target_scaling = !new_descriptives.empty()
+                       && new_descriptives.size() == new_scalers.size();
+}
+
+
+// Escala un buffer de batch [rows x cols, row-major] in situ. Mismas formulas
+// que apply_scaler()/scaling.cpp con el rango por defecto -1..1.
+void TabularDataset::apply_fill_scaling(float* buffer, Index rows, Index cols,
+                                        const vector<Descriptives>& descriptives_vector,
+                                        const vector<ScalerMethod>& scalers) const
+{
+    for (Index j = 0; j < cols; ++j)
+    {
+        const Descriptives& descriptives = descriptives_vector[size_t(j)];
+
+        switch (scalers[size_t(j)])
+        {
+        case ScalerMethod::MeanStandardDeviation:
+            if (descriptives.standard_deviation > EPSILON)
+                for (Index i = 0; i < rows; ++i)
+                {
+                    float& value = buffer[i * cols + j];
+                    value = (value - descriptives.mean) / descriptives.standard_deviation;
+                }
+            else
+                for (Index i = 0; i < rows; ++i)
+                    buffer[i * cols + j] = 0.0f;
+            break;
+
+        case ScalerMethod::MinimumMaximum:
+        {
+            const float range = descriptives.maximum - descriptives.minimum;
+            if (range < EPSILON)
+                for (Index i = 0; i < rows; ++i)
+                    buffer[i * cols + j] = 0.0f;
+            else
+                for (Index i = 0; i < rows; ++i)
+                {
+                    float& value = buffer[i * cols + j];
+                    value = (value - descriptives.minimum) / range * 2.0f - 1.0f;
+                }
+            break;
+        }
+
+        case ScalerMethod::StandardDeviation:
+        {
+            const float slope = (descriptives.standard_deviation > EPSILON)
+                ? 1.0f / descriptives.standard_deviation
+                : 0.0f;
+            for (Index i = 0; i < rows; ++i)
+                buffer[i * cols + j] *= slope;
+            break;
+        }
+
+        case ScalerMethod::Logarithm:
+            for (Index i = 0; i < rows; ++i)
+            {
+                float& value = buffer[i * cols + j];
+                value = log(max(value, EPSILON));
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_path)
+{
+    cache_path = new_cache_path;
+    cache_reader.close();
+    binary_rows_number = 0;
+    binary_columns_number = 0;
+
+    if (storage_mode == StorageMode::BinaryFile && filesystem::exists(cache_path))
+        read_binary_header();
+}
+
 
 void TabularDataset::read_binary_header() const
 {
@@ -281,7 +381,16 @@ void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vect
                                  float* input_data, bool, int contiguous) const
 {
     if (storage_mode == StorageMode::BinaryFile)
+    {
         fill_from_binary_cache(sample_indices, input_indices, input_data, contiguous);
+
+        // On-the-fly scaling: the cache stores RAW values; training skips the
+        // Scaling layers (see NeuralNetwork::forward_propagate), so the batch
+        // must leave here pre-scaled.
+        if (fill_input_scaling && ssize(fill_input_scalers) == ssize(input_indices))
+            apply_fill_scaling(input_data, ssize(sample_indices), ssize(input_indices),
+                               fill_input_descriptives, fill_input_scalers);
+    }
     else
         fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
 }
@@ -299,7 +408,15 @@ void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vec
                                   float* target_data, bool, int contiguous) const
 {
     if (storage_mode == StorageMode::BinaryFile)
+    {
         fill_from_binary_cache(sample_indices, target_indices, target_data, contiguous);
+
+        // El entrenamiento compara en el espacio escalado (set_scaling escala
+        // los targets de la matriz en modo Matrix); en streaming se aplica aqui.
+        if (fill_target_scaling && ssize(fill_target_scalers) == ssize(target_indices))
+            apply_fill_scaling(target_data, ssize(sample_indices), ssize(target_indices),
+                               fill_target_descriptives, fill_target_scalers);
+    }
     else
         fill_tensor_data(data, sample_indices, target_indices, target_data, contiguous);
 }
@@ -775,15 +892,27 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         set_storage_mode(read_json_string(src, "StorageMode"));
         if (storage_mode == StorageMode::BinaryFile)
         {
+            // Default opennn layout. If the file is not there (embedding apps
+            // keep the binary elsewhere), leave the mode set and let the caller
+            // supply the real location via set_binary_cache_path().
             cache_path = data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
-            read_binary_header();
+            if (filesystem::exists(cache_path))
+                read_binary_header();
         }
     }
 
-    variables_from_JSON(require_json_field(root, "Variables"));
-    samples_from_JSON(require_json_field(root, "Samples"));
-    missing_values_from_JSON(require_json_field(root, "MissingValues"));
-    preview_data_from_JSON(require_json_field(root, "PreviewData"));
+    // A freshly-created model (before the first "Import data" task) has only a
+    // DataSource; Variables/Samples/MissingValues/PreviewData are built by the
+    // import from the CSV. Read them only if present so load() does not fail on a
+    // pre-import dataset -- the import's read_csv() then populates them.
+    if (const Json* variables_element = root->find("Variables"))
+        variables_from_JSON(variables_element);
+    if (const Json* samples_element = root->find("Samples"))
+        samples_from_JSON(samples_element);
+    if (const Json* missing_values_element = root->find("MissingValues"))
+        missing_values_from_JSON(missing_values_element);
+    if (const Json* preview_data_element = root->find("PreviewData"))
+        preview_data_from_JSON(preview_data_element);
 
     set_display(read_json_bool(root, "Display"));
 
