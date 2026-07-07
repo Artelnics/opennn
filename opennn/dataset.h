@@ -187,8 +187,14 @@ public:
     virtual vector<Histogram> calculate_variable_distributions(Index = 10) const { return {}; }
     virtual vector<BoxPlot> calculate_variables_box_plots() const { return {}; }
     virtual Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const { return {}; }
+    virtual Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const { return {}; }
     virtual Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const { return calculate_input_target_variable_pearson_correlations(); }
     virtual vector<string> unuse_uncorrelated_variables(float = 0.25f) { return {}; }
+    virtual vector<string> unuse_collinear_variables(float = 0.9f) { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return {}; }
+    virtual vector<Descriptives> calculate_variable_descriptives_categories(Index) const { return {}; }
+    virtual VectorI filter_data(const VectorR&, const VectorR&) const { return {}; }
 
     bool has_categorical_variables() const
     {
