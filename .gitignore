@@ -33,10 +33,6 @@ packages/
 graphify-out/
 /.backups/
 
-# Local website/admin skills, not part of the OpenNN code repository.
-/.agents/skills/opennn-blog-writer/
-/.agents/skills/opennn-wordpress-admin/
-
 # CMake build dirs
 /build/
 /build-ninja/
