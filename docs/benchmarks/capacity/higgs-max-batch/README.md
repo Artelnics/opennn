@@ -10,9 +10,7 @@ cap, per framework, per precision (fp32, bf16), per mode:
   device-resident path `calculate_outputs_resident`, PyTorch
   `torch.inference_mode()`, TensorFlow `training=False`)
 
-This suite replaces the historical Rosenbrock dense max-batch probe
-([`../rosenbrock-max-batch/`](../rosenbrock-max-batch/)) as the dense capacity
-probe.
+This is the dense capacity probe of the suite.
 
 ## Model and data
 

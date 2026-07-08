@@ -152,27 +152,6 @@
    ]
   },
   {
-   "id": "image-classification-max-batch",
-   "folder": "capacity/image-classification-max-batch",
-   "readme": "capacity/image-classification-max-batch/README.md",
-   "category": "capacity",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow low-level image-classification capacity probes",
-   "metrics": ["max_batch", "peak_vram_mib"],
-   "runner": [
-    "cmake --build build-benchmarks --target opennn_image_classification_maxbatch_trial",
-    "see docs/benchmarks/capacity/image-classification-max-batch/README.md for the probe commands"
-   ]
-  },
-  {
-   "id": "gpu-rosenbrock-max-batch",
-   "folder": "capacity/rosenbrock-max-batch",
-   "readme": "capacity/rosenbrock-max-batch/README.md",
-   "category": "capacity",
-   "comparison": "OpenNN resident dense MLP vs PyTorch, max training/inference batch and speed on the GPU",
-   "metrics": ["inference_samples_per_sec", "training_samples_per_sec", "max_training_batch", "max_inference_batch"],
-   "runner": ["cd docs/benchmarks/capacity/rosenbrock-max-batch && ./run_maxbatch.sh 1000 1000"]
-  },
-  {
    "id": "gpu-transformer-max-batch",
    "folder": "capacity/transformer-max-batch",
    "readme": "capacity/transformer-max-batch/README.md",

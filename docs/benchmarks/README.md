@@ -77,8 +77,6 @@ for the runner and command.
 | [data-capacity](capacity/data-capacity/README.md) | Most tabular samples that fit and train under a fixed RAM cap |
 | [higgs-max-batch](capacity/higgs-max-batch/README.md) | Largest HIGGS dense batch that completes one step (GPU + CPU) |
 | [resnet50-max-batch](capacity/resnet50-max-batch/README.md) | Largest ResNet-50 training batch that fits |
-| [image-classification-max-batch](capacity/image-classification-max-batch/README.md) | Low-level image-classification capacity probes |
-| [rosenbrock-max-batch](capacity/rosenbrock-max-batch/README.md) | Dense MLP max batch and speed on the GPU |
 | [transformer-max-batch](capacity/transformer-max-batch/README.md) | Largest Transformer batch that fits (train + infer) |
 
 ### energy/

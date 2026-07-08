@@ -18,24 +18,27 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 - Easier to embed directly into native C++ applications than Python-first frameworks.
 - Avoids a separate interpreter layer, so deployment and tooling stay closer to the system.
 - Gives developers direct control over compilation, hardware targets, and runtime configuration.
-- I think OpenNN is a good fit for projects where the neural network code must behave like any other C++ component.
+- OpenNN is a good fit for projects where the neural network code must behave like any other C++ component.
 
 ## Features
 
 - Feed-forward neural networks
 - Convolutional and recurrent layers
 - Transformers and attention mechanisms
+- Runtime precision selection with FP32 and BF16 support on compatible CUDA GPUs
 - Loss functions and optimization algorithms
 - Model selection, data preprocessing, and training strategies
+- Model export to standalone C, embedded C, Python, JavaScript, and PHP
+- TinyML-oriented export checks for AVR and ARM Cortex-M targets
+- Optional benchmark suite comparing OpenNN with PyTorch and TensorFlow
 - Example applications for CPU and GPU
 
 ## Repository layout
 
-- `opennn/` — core library sources
-- `examples/` — example applications and demos
-- `tests/` — unit tests and validation code
-- `datasets/` — sample datasets used by examples
-- `scripts/` — helper scripts for profiling and tooling
+- `opennn/` - core library sources, public headers, and CMake package export rules
+- `examples/` - example applications and bundled small example datasets
+- `tests/` - GoogleTest-based unit and validation tests
+- `docs/benchmarks/` - reproducible benchmark suite and benchmark methodology
 
 ## Quick start
 
@@ -50,52 +53,87 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 
 ### Build CPU-only
 
-Create a separate build directory outside the repository folder, then configure from there:
+Create a separate build directory outside the repository folder:
 
 ```bash
-mkdir -p ../opennn-build
-cd ../opennn-build
-cmake -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON ../opennn
-cmake --build . --config Release
+cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON
+cmake --build ../opennn-build --config Release
 ```
 
 ### Build with CUDA
 
 ```bash
-mkdir -p ../opennn-build
-cd ../opennn-build
-cmake -DCMAKE_BUILD_TYPE=Release ../opennn
-cmake --build . --config Release
+cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release
+cmake --build ../opennn-build --config Release
 ```
 
 ### Build examples and tests
 
 ```bash
-cmake -DOpenNN_BUILD_EXAMPLES=ON -DOpenNN_BUILD_TESTS=ON ..
-cmake --build . --config Release
+cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_EXAMPLES=ON -DOpenNN_BUILD_TESTS=ON
+cmake --build ../opennn-build --config Release
 ```
+
+### Run tests
+
+```bash
+../opennn-build/bin/opennn_tests
+```
+
+When using a multi-config generator such as Visual Studio, the test binary may be under `../opennn-build/bin/Release/`.
+
+## CMake options
+
+| Option | Default | Description |
+|---|---:|---|
+| `OpenNN_DISABLE_CUDA` | `OFF` | Force a CPU-only build even when CUDA is available. |
+| `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
+| `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
+| `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `docs/benchmarks/`. |
+| `OpenNN_BUILD_VISION` | `ON` | Build vision, sequence, transformer, and detection components. |
+| `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
+| `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
+| `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
 
 ## Examples
 
 The repository includes example apps for quick validation and experimentation.
 
-- `examples/blank` — minimal CPU example and optional CUDA benchmark
-- `examples/airfoil_self_noise` — approximation (regression) on tabular data
-- `examples/iris_plant` — classification on tabular data
-- `examples/breast_cancer` — classification on tabular data
-- `examples/no2_forecasting` — time-series forecasting
-- `examples/amazon_reviews` — text classification
-- `examples/emotion_analysis` — text classification
-- `examples/translation` — sequence-to-sequence transformer
-- `examples/mnist` — image classification
-- `examples/melanoma_cancer` — image classification
-- `examples/yolo` — object detection
+- `examples/blank` - empty starter example for user experiments
+- `examples/airfoil_self_noise` - approximation (regression) on tabular data
+- `examples/iris_plant` - classification on tabular data and model export
+- `examples/breast_cancer` - classification on tabular data
+- `examples/amazon_reviews` - text classification
+- `examples/emotion_analysis` - text classification
+- `examples/bert` - BERT-style text classification
+- `examples/translation` - sequence-to-sequence transformer
+- `examples/text_generation` - character-level text generation
+- `examples/forecasting_tinyml` - RNN/LSTM forecasting export for TinyML parity checks
+- `examples/mnist` - image classification
+- `examples/melanoma_cancer` - image classification
+- `examples/yolo` - object detection
+
+## Model export
+
+OpenNN can export trained models as standalone source code through `ModelExpression`.
+Supported targets include C, embedded C, Python, JavaScript, and PHP. The `iris_plant`
+and `forecasting_tinyml` examples include parity checks for exported models, including
+microcontroller-oriented AVR and ARM Cortex-M flows.
+
+## Benchmarks
+
+Reproducible benchmark recipes live in `docs/benchmarks/`. They compare OpenNN with
+PyTorch and TensorFlow across quality, throughput, capacity, energy, and footprint
+metrics. Large benchmark datasets and generated result artifacts are kept outside
+the repository; see `docs/benchmarks/DATA_POLICY.md`.
 
 ## Documentation
 
 Full documentation and tutorials are available on the official website:
 
 - http://opennn.net
+
+Repository-local benchmark documentation is available in `docs/benchmarks/`.
 
 ## Contributing
 

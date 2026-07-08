@@ -11,11 +11,14 @@ FFN / projection GEMMs run TF32 (correct, but slower) and attention runs via the
 fp32-via-bf16 cast path; under Type::BF16 everything runs bf16 tensor cores. This
 quantifies that gap so the precision choice is data-driven, not assumed.
 
-Drivers (built separately; see each benchmark's build_*.sh):
-  transformer  -> ../attention-speed/opennn_transformer_resident (infer)
+Drivers:
+  transformer  -> ../attention-speed/opennn_transformer_resident (infer, build.sh)
                   ../attention-speed/opennn_transformer_train    (train, needs corpus)
-  dense        -> ../../capacity/rosenbrock-max-batch/opennn_rosenbrock_resident_infer (infer)
-                  ../../capacity/rosenbrock-max-batch/opennn_rosenbrock_throughput      (train)
+  dense        -> ../../capacity/higgs-max-batch/opennn_higgs_maxbatch_trial
+                  (HIGGS dense 28->hidden->hidden->1, ReLU, BCE; a CMake target;
+                  infer and train modes; synthetic contract-shaped data by
+                  default, so no CSV is needed). Override its path with the
+                  OPENNN_HIGGS_MAXBATCH_BIN env var if it is not in build-benchmarks/bin.
 
 Precision is selected by the OPENNN_BF16 env var (set => bf16, unset => fp32),
 uniformly across every driver.
@@ -39,8 +42,17 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 ATTN = os.path.normpath(os.path.join(HERE, "..", "attention-speed"))
-ROSE = os.path.normpath(os.path.join(HERE, "..", "..", "capacity", "rosenbrock-max-batch"))
 CORPUS = os.path.join(ATTN, "corpus_sweep.txt")
+
+# Dense workload driver: the HIGGS dense trial (a CMake target). It runs the
+# canonical 28 -> hidden -> hidden -> 1 ReLU/BCE net in infer and train modes on
+# synthetic contract-shaped data, so the sweep needs no dataset file. Override
+# the path with OPENNN_HIGGS_MAXBATCH_BIN.
+HIGGS_BIN = os.environ.get(
+    "OPENNN_HIGGS_MAXBATCH_BIN",
+    os.path.normpath(os.path.join(
+        HERE, "..", "..", "..", "..",
+        "build-benchmarks", "bin", "opennn_higgs_maxbatch_trial")))
 
 # Each cell: (cmd builder, metric token). cmd builder takes bf16:bool -> argv list.
 # Workloads use a fixed representative shape; tweak here to match the headline.
@@ -53,13 +65,16 @@ CELLS = {
         lambda bf16: [os.path.join(ATTN, "opennn_transformer_train"),
                       CORPUS, "512", "8", "2048", "6", "32", "12"],
         "samples_per_sec"),
+    # Dense HIGGS trial args: <mode> <batch> <hidden> <hidden_layers> <iters>
+    # <device> <tile>. tile == batch forces the single-tile (untiled) resident
+    # path, so both precisions run the same plain dense GEMMs.
     ("dense", "inference"): (
-        lambda bf16: [os.path.join(ROSE, "opennn_rosenbrock_resident_infer"),
-                      "8000", "1000", "4096", "100"],
+        lambda bf16: [HIGGS_BIN,
+                      "infer", "8000", "4096", "2", "100", "cuda", "8000"],
         "samples_per_sec"),
     ("dense", "training"): (
-        lambda bf16: [os.path.join(ROSE, "opennn_rosenbrock_throughput"),
-                      "train", "200000", "2000", "8", "1000", "4096"],
+        lambda bf16: [HIGGS_BIN,
+                      "train", "2000", "4096", "2", "8", "cuda", "2000"],
         "samples_per_sec"),
 }
 
@@ -68,9 +83,6 @@ def run_once(cmd, metric, bf16):
     env = dict(os.environ)
     if bf16:
         env["OPENNN_BF16"] = "1"
-    # dense inference uses ReLU (the cuBLASLt-epilogue-fusable activation).
-    if "rosenbrock_resident_infer" in cmd[0]:
-        env["OPENNN_ACT"] = "ReLU"
     out = subprocess.run(cmd, env=env, capture_output=True, text=True)
     val = None
     for line in (out.stdout + out.stderr).splitlines():

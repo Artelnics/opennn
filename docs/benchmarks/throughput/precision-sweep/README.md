@@ -18,9 +18,11 @@ compute dominates.
 ## Usage
 
 ```bash
-# build the drivers first (per-benchmark build scripts):
-#   ../attention-speed/build.sh  opennn_transformer_resident opennn_transformer_train
-#   ../rosenbrock-max-batch/build_resident.sh ; build_tput.sh
+# build the drivers first:
+#   transformer: ../attention-speed/build.sh opennn_transformer_resident opennn_transformer_train
+#   dense:       cmake --build build-benchmarks --target opennn_higgs_maxbatch_trial
+#                (if the binary is not in build-benchmarks/bin, point at it with
+#                 OPENNN_HIGGS_MAXBATCH_BIN)
 # transformer training needs a corpus:
 #   ../attention-speed/make_synthetic_corpus.py ../attention-speed/corpus_sweep.txt 10000 256 1024
 

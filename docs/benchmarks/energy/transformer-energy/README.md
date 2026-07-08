@@ -46,7 +46,7 @@ indistinguishable, so bf16 is pure speed, not a quality trade.
 
 ## Energy measurement
 
-Same methodology as the dense energy benchmark (`rosenbrock-max-batch/run_energy.py`):
+Sampled GPU-power methodology:
 
 - `nvidia-smi power.draw` sampled at 20 Hz for the whole process,
 - trapezoidal integration restricted to the **training window** — each engine

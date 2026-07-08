@@ -37,9 +37,6 @@ add_executable(opennn_resnet50_speed
 add_executable(opennn_resnet50_maxbatch_trial
     capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
 
-add_executable(opennn_image_classification_maxbatch_trial
-    capacity/image-classification-max-batch/opennn_image_classification_maxbatch_trial.cpp)
-
 add_executable(opennn_transformer_maxbatch_trial
     capacity/transformer-max-batch/opennn_transformer_maxbatch_trial.cpp)
 
@@ -58,7 +55,6 @@ foreach(benchmark_target
         opennn_inference
         opennn_resnet50_speed
         opennn_resnet50_maxbatch_trial
-        opennn_image_classification_maxbatch_trial
         opennn_transformer_maxbatch_trial
         opennn_transformer_energy
         recurrent_lstm_forecasting_benchmark)
