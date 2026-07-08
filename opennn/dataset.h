@@ -194,7 +194,7 @@ public:
     virtual vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return {}; }
     virtual vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return {}; }
     virtual vector<Descriptives> calculate_variable_descriptives_categories(Index) const { return {}; }
-    virtual VectorI filter_data(const VectorR&, const VectorR&) const { return {}; }
+    virtual VectorI filter_data(const VectorR&, const VectorR&);
 
     bool has_categorical_variables() const
     {

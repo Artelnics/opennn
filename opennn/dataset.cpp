@@ -200,6 +200,60 @@ void Dataset::set_sample_roles(const vector<Index>& indices, const string& sampl
         sample_roles[i] = role_type;
 }
 
+VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
+{
+    // Drop every used sample whose value falls outside [minimums(i), maximums(i)] for any
+    // used feature. The caller (Filter data task) sends one [min, max] pair per USED
+    // feature (Input + Target, categoricals expanded) in variable order — exactly the
+    // order of get_used_feature_indices(). Boundary values are kept; filtered samples are
+    // set to "None" (unused) and their indices returned. Requires the data matrix to be
+    // resident (the task loads it from the binary cache before calling this).
+
+    const vector<Index> used_feature_indices = get_used_feature_indices();
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+
+    // Guard against a size mismatch between the task's bounds and the used features so a
+    // malformed task can never index minimums/maximums out of range.
+    Index bound = Index(used_feature_indices.size());
+    if (Index(minimums.size()) < bound) bound = Index(minimums.size());
+    if (Index(maximums.size()) < bound) bound = Index(maximums.size());
+
+    vector<Index> filtered;
+
+    for (const Index sample_index : used_sample_indices)
+    {
+        bool out_of_range = false;
+
+        for (Index i = 0; i < bound && !out_of_range; i++)
+        {
+            const type value = data(sample_index, used_feature_indices[size_t(i)]);
+
+            if (std::isnan(value)) continue;
+
+            if (std::abs(value - minimums(i)) <= EPSILON
+             || std::abs(value - maximums(i)) <= EPSILON)
+                continue;
+
+            if (minimums(i) == maximums(i))
+                out_of_range = (value != minimums(i));
+            else
+                out_of_range = (value < minimums(i) || value > maximums(i));
+        }
+
+        if (out_of_range)
+            filtered.push_back(sample_index);
+    }
+
+    if (!filtered.empty())
+        set_sample_roles(filtered, "None");
+
+    VectorI filtered_samples_indices(Index(filtered.size()));
+    for (Index i = 0; i < Index(filtered.size()); i++)
+        filtered_samples_indices(i) = filtered[size_t(i)];
+
+    return filtered_samples_indices;
+}
+
 void Dataset::split_samples(const float training_samples_ratio,
                             float validation_samples_ratio,
                             float testing_samples_ratio,
