@@ -47,6 +47,20 @@ static filesystem::path image_cache_path(const filesystem::path& data_path)
     return data_path / ".cache" / "images.bin";
 }
 
+// Identity trailer appended after the pixel blob in images.bin (see read_images):
+// sample count, image shape and the exact class list. Re-derived from the current
+// folders on load and matched against the file's trailer, so a cache built for a
+// different dataset is rebuilt instead of read as foreign pixels.
+static string image_cache_signature(Index samples, Index height, Index width, Index channels,
+                                    const vector<filesystem::path>& class_folders)
+{
+    string signature = to_string(samples) + "|"
+        + to_string(height) + "x" + to_string(width) + "x" + to_string(channels) + "|";
+    for (const filesystem::path& folder : class_folders)
+        signature += folder.filename().string() + ",";
+    return signature;
+}
+
 static pair<float, float> scaling_affine(ScalerMethod scaler,
                                   const Descriptives& descriptives,
                                   float min_range,
@@ -302,37 +316,47 @@ void ImageDataset::read_images()
     data.resize(0, 0);
     cache_reader.close();
 
-    vector<filesystem::path> directory_path;
+    vector<filesystem::path> candidate_folders;
 
     for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(data_path))
         if (current_directory.is_directory()
             && !current_directory.path().filename().string().starts_with('.'))
-            directory_path.emplace_back(current_directory.path());
+            candidate_folders.emplace_back(current_directory.path());
 
-    ranges::sort(directory_path);
+    ranges::sort(candidate_folders);
 
-    const Index folders_number = directory_path.size();
-
-    throw_if(folders_number < 2, 
-        "ImageDataset: image classification requires at least two class folders.");
-
+    // Only directories that actually contain supported images count as classes.
+    // Skipping empty/non-image folders keeps a stray sibling directory (e.g. a
+    // text dataset's *.cache folder that landed in a shared data dir) from
+    // inflating the class count and corrupting the target encoding.
+    vector<filesystem::path> directory_path;
     vector<filesystem::path> paths;
     vector<int32_t> labels;
 
-    for (Index i = 0; i < folders_number; ++i)
+    for (const filesystem::path& folder : candidate_folders)
     {
         vector<filesystem::path> folder_files;
-        for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
+        for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(folder))
             if (current_directory.is_regular_file() && is_supported_image_file(current_directory.path()))
                 folder_files.emplace_back(current_directory.path());
 
+        if (folder_files.empty())
+            continue;
+
         ranges::sort(folder_files);
+        const int32_t class_index = int32_t(directory_path.size());
+        directory_path.push_back(folder);
         for (auto& p : folder_files)
         {
             paths.emplace_back(move(p));
-            labels.push_back(int32_t(i));
+            labels.push_back(class_index);
         }
     }
+
+    const Index folders_number = directory_path.size();
+
+    throw_if(folders_number < 2,
+        "ImageDataset: image classification requires at least two non-empty class folders.");
 
     const Index samples_number = paths.size();
 
@@ -412,13 +436,36 @@ void ImageDataset::read_images()
     {
         cache_path = image_cache_path(data_path);
 
-        const bool cache_valid = filesystem::exists(cache_path)
-            && filesystem::file_size(cache_path) == uint64_t(samples_number) * pixel_number;
+        // images.bin layout: [pixels: samples×pixel_number bytes][identity trailer].
+        // The pixel region stays at offset 0 (sample reads are unaffected); the
+        // trailer is validated against the signature re-derived from the current
+        // folders. A mismatch forces a rebuild instead of reading foreign pixels.
+        const string signature = image_cache_signature(samples_number, height, width, channels, directory_path);
+        const uint64_t pixel_bytes = uint64_t(samples_number) * pixel_number;
+
+        bool cache_valid = false;
+
+        if (filesystem::exists(cache_path))
+        {
+            cache_reader.open(cache_path);
+            const uint64_t total_bytes = cache_reader.file_size();
+
+            if (total_bytes > pixel_bytes && total_bytes - pixel_bytes == signature.size())
+            {
+                string trailer(signature.size(), '\0');
+                cache_reader.read_at(trailer.data(), signature.size(), pixel_bytes);
+                cache_valid = (trailer == signature);
+            }
+
+            if (!cache_valid)
+                cache_reader.close();
+        }
 
         if (!cache_valid)
-            write_image_cache(paths);
-
-        cache_reader.open(cache_path);
+        {
+            write_image_cache(paths, signature);
+            cache_reader.open(cache_path);
+        }
 
         load_kind = cache_valid ? "loaded from cache" : "cache built";
     }
@@ -441,7 +488,7 @@ void ImageDataset::read_images()
     }
 }
 
-void ImageDataset::write_image_cache(const vector<filesystem::path>& paths)
+void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, const string& trailer)
 {
     const Index samples_number = ssize(paths);
     const Index height = input_shape[0];
@@ -471,6 +518,9 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths)
         if (display && (i % 1000 == 0 || i + 1 == samples_number))
             display_progress_bar(i + 1, samples_number);
     }
+
+    // Identity trailer, right after the pixel blob (see read_images cache check).
+    writer.write(trailer.data(), trailer.size());
 
     writer.finish_with_rename(cache_path);
 }

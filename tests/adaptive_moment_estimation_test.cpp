@@ -316,39 +316,36 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
 #endif
 
 
+static void expect_forecasting_training_reduces_error()
+{
+    set_seed(3);
+    TimeSeriesDataset dataset(24, {1}, {1});
+    dataset.set_data_random();
+    dataset.set_past_time_steps(3);
+    dataset.set_future_time_steps(1);
+    dataset.set_sample_roles("Training");
+    ForecastingNetwork network(dataset.get_input_shape(), {4}, dataset.get_target_shape());
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    AdaptiveMomentEstimation adam(&loss);
+    adam.set_display(false);
+
+    adam.set_maximum_epochs(0);
+    const type error_before = adam.train().get_training_error();
+
+    adam.set_maximum_epochs(200);
+    const type error_after = adam.train().get_training_error();
+
+    EXPECT_LT(error_after, error_before);
+}
+
+
 TEST_F(AdaptiveMomentEstimationTest, TrainForecastingCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
-
-    set_seed(3);
-    TimeSeriesDataset dataset_short(24, {1}, {1});
-    dataset_short.set_data_random();
-    dataset_short.set_past_time_steps(3);
-    dataset_short.set_future_time_steps(1);
-    dataset_short.set_sample_roles("Training");
-    ForecastingNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
-    Loss loss_short(&network_short, &dataset_short);
-    loss_short.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_short(&loss_short);
-    adam_short.set_maximum_epochs(2);
-    adam_short.set_display(false);
-    const type error_short = adam_short.train().get_training_error();
-
-    set_seed(3);
-    TimeSeriesDataset dataset_long(24, {1}, {1});
-    dataset_long.set_data_random();
-    dataset_long.set_past_time_steps(3);
-    dataset_long.set_future_time_steps(1);
-    dataset_long.set_sample_roles("Training");
-    ForecastingNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
-    Loss loss_long(&network_long, &dataset_long);
-    loss_long.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_long(&loss_long);
-    adam_long.set_maximum_epochs(200);
-    adam_long.set_display(false);
-    const type error_long = adam_long.train().get_training_error();
-
-    EXPECT_LT(error_long, error_short);
+    expect_forecasting_training_reduces_error();
 }
 
 
@@ -356,36 +353,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainForecastingCPU)
 TEST_F(AdaptiveMomentEstimationTest, TrainForecastingGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
-
-    set_seed(3);
-    TimeSeriesDataset dataset_short(24, {1}, {1});
-    dataset_short.set_data_random();
-    dataset_short.set_past_time_steps(3);
-    dataset_short.set_future_time_steps(1);
-    dataset_short.set_sample_roles("Training");
-    ForecastingNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
-    Loss loss_short(&network_short, &dataset_short);
-    loss_short.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_short(&loss_short);
-    adam_short.set_maximum_epochs(2);
-    adam_short.set_display(false);
-    const type error_short = adam_short.train().get_training_error();
-
-    set_seed(3);
-    TimeSeriesDataset dataset_long(24, {1}, {1});
-    dataset_long.set_data_random();
-    dataset_long.set_past_time_steps(3);
-    dataset_long.set_future_time_steps(1);
-    dataset_long.set_sample_roles("Training");
-    ForecastingNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
-    Loss loss_long(&network_long, &dataset_long);
-    loss_long.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_long(&loss_long);
-    adam_long.set_maximum_epochs(200);
-    adam_long.set_display(false);
-    const type error_long = adam_long.train().get_training_error();
-
-    EXPECT_LT(error_long, error_short);
+    expect_forecasting_training_reduces_error();
 }
 #endif
 

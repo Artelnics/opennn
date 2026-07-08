@@ -21,12 +21,19 @@ namespace
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 
-// Conv workspace cap A/B state. mode: 0 = off (uncapped/autotune), >0 = explicit
+// Conv workspace cap state. mode: 0 = off (uncapped/autotune), >0 = explicit
 // bytes, <0 = AUTO (use the per-network auto value). auto value = largest single
-// -layer activation, set by ForwardPropagation.
-atomic<int64_t> conv_workspace_cap_mode{0};
-atomic<int64_t> conv_workspace_auto_bytes{0};
-atomic_bool conv_autotune_enabled_flag{true};
+// -layer activation, set by ForwardPropagation, clamped to conv_workspace_auto_ceiling.
+//
+// Defaults: AUTO cap + autotune off. Uncapped autotune lets the cuDNN-frontend
+// consider (and, on an allocation failure it silently swallows, select) plans whose
+// workspace scales with batch size into GBs — which OOMs on large batches for no
+// speed gain (autotune probing is a net slowdown on small/medium convs). A bounded
+// AUTO cap forces a small-workspace plan: same result, less memory, faster here.
+constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;  // 256 MiB
+atomic<int64_t> conv_workspace_cap_mode{-1};                          // AUTO
+atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
+atomic_bool conv_autotune_enabled_flag{false};
 
 void throw_if_auto(Device device_type)
 {
@@ -130,7 +137,8 @@ void set_conv_workspace_cap(int64_t mode) noexcept
 void set_conv_workspace_auto_limit_bytes(int64_t bytes) noexcept
 {
     if (bytes > 0)
-        conv_workspace_auto_bytes.store(bytes, memory_order_relaxed);
+        conv_workspace_auto_bytes.store(bytes < conv_workspace_auto_ceiling ? bytes : conv_workspace_auto_ceiling,
+                                        memory_order_relaxed);
 }
 
 bool conv_autotune_enabled() noexcept
@@ -295,6 +303,13 @@ void check_last_error()
 {
 #ifdef OPENNN_HAS_CUDA
     CHECK_CUDA(cudaPeekAtLastError());
+#endif
+}
+
+void reset_last_error() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaGetLastError();
 #endif
 }
 

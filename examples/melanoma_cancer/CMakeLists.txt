@@ -17,7 +17,7 @@ add_executable(melanoma_cancer main.cpp)
 add_custom_command(TARGET melanoma_cancer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/data"
-    "${CMAKE_BINARY_DIR}/data"
+    "${CMAKE_BINARY_DIR}/data/melanoma"
 )
 
 target_link_libraries(melanoma_cancer PUBLIC opennn)

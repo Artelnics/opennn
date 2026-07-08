@@ -5,7 +5,12 @@ description: Run an OpenNN example category across CPU / GPU FP32 / GPU BF16, re
 
 # Run example matrix across CPU / GPU FP32 / GPU BF16
 
-Build dir: `C:\Artelnics\opennn\build-ninja` (single-config Ninja/Release, matches the `cmake --build .` commands below with no `--config` flag; if using the multi-config `build` Visual Studio solution instead, add `--config Release` to every build command). Each example's `main.cpp` lives in `examples/<name>/main.cpp`; the resulting binary lands in `build-ninja/bin/<name>`.
+Build dir: pick whichever exists — commonly `build/` (Unix Makefiles/Release, single-config; the `cmake --build .` commands below take no `--config` flag) or a Ninja `build-ninja/`; if it's a multi-config Visual Studio solution instead, add `--config Release` to every build command. Each example's `main.cpp` lives in `examples/<name>/main.cpp`; the resulting binary lands in `<build>/bin/<name>`.
+
+### Environment prerequisites (check these FIRST — they cost a full failed build to discover otherwise)
+
+- **CUDA arch must be sm_80+.** The packed-bf16 kernels (`activation_*_kernel_bf162`) call `__bfloat1622float2`, which the CUDA headers only declare under `__CUDA_ARCH__ >= 800`. If the CMake cache has `CMAKE_CUDA_ARCHITECTURES=52` (CMake's fallback when the GPU isn't visible at configure time), the CUDA build fails with `identifier "__bfloat1622float2" is undefined` in `kernel_layers.cu`. Fix once: `cmake -DCMAKE_CUDA_ARCHITECTURES=89 .` from the build dir (89 = RTX 4070/Ada; use 80/86/etc. for your GPU), then rebuild. Check with `grep CUDA_ARCHITECTURES <build>/CMakeCache.txt`.
+- **WSL GPU visibility.** On WSL the CUDA driver stub lives in `/usr/lib/wsl/lib`; if it's not on the loader path every GPU run dies. Ensure `export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH` is in `~/.bashrc` (above any interactivity guard) and that runs happen through a login shell (`wsl bash -lc "..."`).
 
 ## Argument
 
@@ -36,9 +41,9 @@ The CSV examples have no BF16 column because they use Type::FP32 by default — 
 
 ## How each run works
 
-Default `Configuration::instance().set(...)` line lives in each example's `main.cpp`. For each (example, mode) pair:
+Default `Configuration::instance().set(...)` line lives in each example's `main.cpp`. The current API is two-arg — `set(Device, Type)` (no separate inference type; there used to be a third `inference_type` arg, now gone). `Device` is `Auto`/`CPU`/`CUDA`, `Type` is `Auto`/`FP32`/`BF16`. `Auto` resolves at runtime (CUDA+BF16 if a GPU is present). For each (example, mode) pair:
 
-1. **Edit** the Configuration line in-place with the right (Device, train_type, inference_type) tuple.
+1. **Edit** the Configuration line in-place with the right `(Device, Type)` pair.
 2. **Build** that target only: `cmake --build . --target <example> -j2` from `build/`.
 3. **Run** from `build/bin/`. Use a generous timeout: 60s for CSV, 300s for text, 600s for image/transformer.
 4. **Capture** the key metric (see "Key metric" table).
@@ -50,22 +55,24 @@ Edit/restore are idempotent text swaps — do them with Edit (not sed) because t
 
 | Example | Default line |
 |---|---|
-| airfoil_self_noise | `Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);` |
-| breast_cancer | `Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);` |
-| iris_plant | `Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);` |
-| amazon_reviews | `Configuration::instance().set(Device::CUDA, Type::BF16, Type::FP32);` |
-| emotion_analysis | `Configuration::instance().set(Device::CUDA, Type::BF16, Type::FP32);` |
-| translation | `Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);` |
-| mnist | `Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);` |
-| melanoma_cancer | `Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);` |
+| airfoil_self_noise | `Configuration::instance().set(Device::CUDA, Type::FP32);` |
+| breast_cancer | `Configuration::instance().set(Device::CPU, Type::FP32);` |
+| iris_plant | `Configuration::instance().set(Device::CPU, Type::FP32);` |
+| amazon_reviews | `Configuration::instance().set(Device::Auto, Type::Auto);` |
+| emotion_analysis | `Configuration::instance().set(Device::Auto, Type::FP32);` |
+| translation | `Configuration::instance().set(Device::Auto, Type::FP32);` |
+| mnist | `Configuration::instance().set(Device::Auto, Type::Auto);` |
+| melanoma_cancer | `Configuration::instance().set(Device::Auto, Type::Auto);` |
+
+The defaults differ per example (some ship as `CPU`, some `CUDA`, some `Auto`) — grep the real line before editing rather than trusting this table; it drifts. Restore to whatever was actually there.
 
 ### Mode lines
 
-For each non-default mode, substitute the FULL line (the args differ per example because of the default inference type):
+For each mode, substitute the FULL line (same for every example now that there's no inference-type arg):
 
-- **CPU**: `Configuration::instance().set(Device::CPU, Type::FP32, Type::FP32);`
-- **GPU FP32**: `Configuration::instance().set(Device::CUDA, Type::FP32, Type::FP32);`
-- **GPU BF16**: `Configuration::instance().set(Device::CUDA, Type::BF16, Type::BF16);`
+- **CPU**: `Configuration::instance().set(Device::CPU, Type::FP32);`
+- **GPU FP32**: `Configuration::instance().set(Device::CUDA, Type::FP32);`
+- **GPU BF16**: `Configuration::instance().set(Device::CUDA, Type::BF16);`
 
 ### Key metric to capture per example
 
@@ -111,6 +118,8 @@ After the table, a "Failures and notes" section listing any cell marked ❌, the
 - **Restore on failure**: if a build or run fails mid-sweep, still restore the example's Configuration line before bailing. Otherwise the user is left with a broken example file.
 - **Counter-checks for refactors**: if every CSV stays identical (deterministic seed), but image/text shift slightly, that's expected — different paths and OMP thread counts give different RNG sequences. The CSV deterministic match is the strongest signal that the dataset/optimizer plumbing didn't regress.
 - **Inference path quirks for image examples**: `TestingAnalysis::calculate_confusion` requires the binary cache to have valid categories (placeholder names ok) — if you ever see a segfault right after training in mnist/melanoma, suspect the cache-hit path of ImageDataset.
+- **Shared `build/data` pollution (bites melanoma after mnist)**: both image examples read `ImageDataset("../data")` = `<build>/data`, and `ImageDataset` treats **every** subdirectory there as a class folder. Two ways this goes wrong: (1) mnist's `zero`..`nine` folders stay behind and get merged with melanoma's `benign`/`malignant`; (2) the text examples' `*.txt.cache` directories (`amazon_cells_labelled.txt.cache`, `emotion_analysis.txt.cache`, `ES-EN-small.txt.cache`) are ALSO scanned as (empty) image classes. Either way melanoma runs as a 4-6-class problem, its `print_binary_classification_tests()` sees a non-2×2 confusion, and every binary metric (accuracy/sensitivity/specificity) prints **0** even though training converged and the real 2-class accuracy is ~0.8. Before each image run: wipe `<build>/data/.cache/images.bin` (the dot-`.cache` dir is itself skipped by the scan, but the stale `images.bin` inside would be loaded verbatim) AND ensure only the intended class folders are present — move the digit folders and the `*.txt.cache` dirs out of `<build>/data` for the melanoma run, then move them back. Symptom to recognize: binary metrics all `0` with a confusion matrix wider than 2×2, populated only at the alphabetical indices of `benign`/`malignant`.
+- **mnist GPU BF16 can fail in the conv path at large batch**: the packed-bf16 convolution requests a cuDNN-frontend workspace sized by batch; at mnist's `batch_size 2020` it fails with `ConvolutionOperator: cudnn-frontend path unavailable (CUDA Error: 2 ...device_backend.cpp:51)` then a sticky error at `:297`, even with GPU memory free. mnist GPU FP32 and melanoma GPU BF16 (batch 10) are unaffected — so this reads as a large-batch BF16 conv workspace bug, not a config or OOM problem. Mark the mnist GPU BF16 cell ❌ and keep going.
 
 ## When to stop the sweep early
 

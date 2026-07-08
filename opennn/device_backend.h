@@ -36,19 +36,20 @@ size_t available_memory();
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
-// Per-conv cuDNN-frontend workspace cap (A/B toggle).
-// conv_workspace_limit_bytes(): effective cap in bytes; 0 means uncapped (the
-//   default; the cuDNN-frontend autotunes over all plans).
+// Per-conv cuDNN-frontend workspace cap.
+// conv_workspace_limit_bytes(): effective cap in bytes; 0 means uncapped.
 // set_conv_workspace_cap(mode): 0 = off (uncapped/autotune), >0 = explicit cap
-//   in bytes, <0 = AUTO (use the per-network auto value below).
+//   in bytes, <0 = AUTO (use the per-network auto value below). DEFAULT = AUTO.
 // set_conv_workspace_auto_limit_bytes(): the AUTO value, set per network by
-//   ForwardPropagation to the largest single-layer activation.
+//   ForwardPropagation to the largest single-layer activation, clamped to a
+//   256 MiB ceiling (a small cap forces a low-workspace plan with no speed loss).
 int64_t conv_workspace_limit_bytes() noexcept;
 void    set_conv_workspace_cap(int64_t mode) noexcept;
 void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 
-// cuDNN-frontend conv autotune toggle. On (default) = time all plans for speed
-// (high memory transient). Off = plain heuristic plan pick (no transient).
+// cuDNN-frontend conv autotune toggle. On = time all plans (high memory transient,
+// a net slowdown on small/medium convs). Off (DEFAULT) = heuristic plan pick under
+// the workspace cap, no transient.
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
 
@@ -77,6 +78,7 @@ void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
 void copy_async(void*, const void*, Index, Device, Device, cudaStream_t = nullptr);
 void synchronize(cudaStream_t = nullptr);
 void check_last_error();
+void reset_last_error() noexcept;
 
 #ifdef OPENNN_HAS_CUDA
 struct CublasPointerModeGuard
