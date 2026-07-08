@@ -8,74 +8,44 @@ MSE, Adam, fp32) comparing **OpenNN** and **PyTorch** on four axes:
 3. **Maximum training batch** that fits in VRAM
 4. **Maximum inference batch** that fits in VRAM
 
-All numbers below are on an **RTX 3060 Laptop (6 GB), WSL2, fp32**. Run each
-engine **alone** with the GPU idle in between (`nvidia-smi` shows 0 MiB) — on a
-6 GB card, overlapping two GPU jobs causes spurious OOMs.
+Run each engine **alone** with the GPU idle in between (`nvidia-smi` shows 0 MiB)
+— on a small card, overlapping two GPU jobs causes spurious OOMs.
 
-## Results summary
+## What each path does
 
-| Axis | OpenNN | PyTorch | Winner |
-|------|--------|---------|--------|
-| Inference speed (b≥2000) | 3.8–4.4 M samples/s | 2.5–2.8 M | **OpenNN 1.43–1.56×** |
-| Training speed (few steps/epoch) | 1.7 M samples/s | 1.3 M | **OpenNN 1.30–1.35×** |
-| Training speed (many steps/epoch) | 0.9 M samples/s | 1.3 M | PyTorch (see note) |
-| Max train batch | 482,344 (pool depth 1, `set_batch_pool_size(1)`) | 399,507 | **OpenNN 1.21×** |
-| Max inference batch (VRAM-bound) | ~524 K | ~535 K | ~tie |
-
-### The inference-speed win
-The default `NeuralNetwork::calculate_outputs(MatrixR)` path re-uploads all
-parameters, allocates a fresh `ForwardPropagation`, copies the input H2D and the
-output D2H — **every call**. The new `NeuralNetwork::calculate_outputs_resident`
-keeps weights, activations, input and output GPU-resident (params uploaded once),
-so a repeated-inference loop pays only the forward kernels. That is **4–6.5×
-faster than the old path** and beats PyTorch 1.43–1.56×. See
-`opennn_rosenbrock_resident_infer.cpp`.
-
-### The max-batch win
-OpenNN's GPU prefetch pool holds ≥3 `Batch` objects, each a full input+target
-copy on the GPU. Prefetch-pool depth 1 (`set_batch_pool_size(1)`) drops this to one copy → **+57% max batch**
-(482 K vs PyTorch's 399 K) at ~6% throughput cost on GPU-resident data. Default
-stays 3 (keeps prefetch overlap, important for disk-streamed data like ResNet).
-
-### The training-speed note (important)
-At **equal batch and equal step**, OpenNN's three GEMMs are actually **faster**
-than PyTorch's (3.69 ms vs 4.98 ms at b=8000). OpenNN **wins training speed
-1.30–1.35×** when there are few batches per epoch. The apparent loss at *many*
-steps/epoch is **not compute** — it is per-step host-side pipeline coordination
-(gather + transfer-stream events) that compounds with batch count. The resident
-mega-graph (GPU-resident data is enabled in code; the CUDA graph is on by
-default and can be toggled with the trailing `cuda_graph` arg) recovers ~+23% of
-it. Ruled out as causes (measured): cuBLASLt algorithm choice, graph group size,
-and the gather kernel. Full closure would require gathering *inside* the captured
-graph (reading the resident dataset directly) — a larger re-architecture.
-
-### Energy
-`run_energy.py` runs the identical workload on all three engines, logs GPU power
-at 20 Hz, and integrates it to joules/sample (trapezoidal; total and
-idle-subtracted), reporting a 5-run median ± stdev. On this card, by total energy
-per sample, OpenNN spends **1.68× less per inference** and **1.37× less per
-training sample than PyTorch**; against TensorFlow's XLA path OpenNN wins
-inference (≈1.15×) but TF edges OpenNN on training energy (≈7% lower) — reported
-honestly in the [energy article](energy-consumption-gpu-opennn-vs-pytorch.md).
-Inference: OpenNN draws more power but finishes sooner → less total energy. These
-are sampled-power estimates (`nvidia-smi`, not a hardware joule counter), so treat
-the ratios — not the absolute watts — as the result. (`energy_measure.sh` is the
-older single-run wrapper; `run_energy.py` is the current 3-way harness.)
+- **Device-resident inference** (`opennn_rosenbrock_resident_infer.cpp`):
+  `NeuralNetwork::calculate_outputs_resident` keeps weights, activations, input
+  and output GPU-resident (params uploaded once), so a repeated-inference loop
+  pays only the forward kernels — versus the default
+  `calculate_outputs(MatrixR)` path, which re-uploads parameters and copies input
+  H2D / output D2H on every call.
+- **Max-batch control**: OpenNN's GPU prefetch pool holds several `Batch` objects,
+  each a full input+target copy on the GPU. `set_batch_pool_size(1)` drops this to
+  one copy to maximize the fitting batch; the default of 3 keeps prefetch overlap
+  (important for disk-streamed data like ResNet).
+- **GPU-resident training data**: `opennn_rosenbrock_throughput.cpp` enables
+  `set_storage_mode(GPUPersistantData)` in code so every batch avoids a host
+  gather + H2D copy; the resident mega-graph (CUDA graph, on by default) reduces
+  per-step host-side coordination.
+- **Energy**: `run_energy.py` runs the identical workload on all three engines,
+  logs GPU power at 20 Hz, and integrates it to joules/sample (trapezoidal; total
+  and idle-subtracted), reporting a median ± stdev over N runs. These are
+  sampled-power estimates (`nvidia-smi`, not a hardware joule counter), so treat
+  the ratios, not the absolute watts, as the result. (`energy_measure.sh` is the
+  older single-run wrapper.)
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `energy_measure.sh` | Wrap a run, integrate GPU power → J/sample + avg W |
-
-| File | Purpose |
-|------|---------|
-| `opennn_rosenbrock_resident_infer.cpp` | Device-resident inference throughput (the win) |
+| `opennn_rosenbrock_resident_infer.cpp` | Device-resident inference throughput |
 | `opennn_rosenbrock_throughput.cpp` | OpenNN train/inference throughput, any batch |
 | `opennn_rosenbrock_trial.cpp` | One max-batch attempt (one process = one batch) |
 | `run_maxbatch.sh` | Max-batch search driver (fresh process per trial) |
+| `run_energy.py` | 3-way GPU energy harness |
 | `pytorch_rosenbrock_throughput.py` | PyTorch train/inference throughput counterpart |
 | `pytorch_rosenbrock_maxbatch.py` | PyTorch max-batch probe (VRAM-capped) |
+| `tensorflow_rosenbrock_throughput.py` | TensorFlow throughput counterpart |
 | `build_*.sh` | Hand-link recipes (paths are machine-specific; edit for your tree) |
 
 ## How to run
@@ -99,9 +69,12 @@ LD_LIBRARY_PATH=/usr/lib/wsl/lib ./opennn_rosenbrock_resident_infer 8000 500 100
 ./build_trial.sh
 ./run_maxbatch.sh 1000 1000          # inputs hidden
 
-# PyTorch counterparts (VRAM-capped to physical 6 GB)
+# PyTorch counterparts (VRAM-capped to physical VRAM)
 python pytorch_rosenbrock_throughput.py train 8000 200 1000 1000
 python pytorch_rosenbrock_maxbatch.py 1000 1000
+
+# Energy (3-way)
+python run_energy.py --mode both --batch 8000 --iters 2000 --runs 5
 ```
 
 ## Methodology gotchas (these cost real time)
@@ -116,7 +89,6 @@ python pytorch_rosenbrock_maxbatch.py 1000 1000
   garbage. The driver runs **one fresh process per batch trial**.
 - **Training data must stay GPU-resident**, or every batch does a host gather +
   H2D copy and starves the GPU; PyTorch keeps data on-device by default, so not
-  doing it makes the comparison unfair to OpenNN. `opennn_rosenbrock_throughput.cpp`
-  enables it in code (`set_storage_mode(GPUPersistantData)`), no env var needed.
+  doing it makes the comparison unfair to OpenNN.
 - **OpenNN block-buffers `std::cout` to a pipe** — add `std::cout << std::unitbuf`
   in benchmarks, and never pipe a watched run through `grep` (it buffers too).

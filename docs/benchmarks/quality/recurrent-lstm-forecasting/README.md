@@ -1,15 +1,16 @@
 # Recurrent/LSTM Forecasting Benchmark
 
-Purpose: compare OpenNN recurrent and LSTM layers on UCI Beijing PM2.5
-forecasting, optionally alongside PyTorch and TensorFlow.
+Purpose: compare OpenNN's recurrent layer against its LSTM layer on UCI Beijing
+PM2.5 forecasting, on CPU and GPU, optionally alongside PyTorch and TensorFlow.
 
-Top-level note:
-[`../recurrent-lstm-forecasting-opennn.md`](recurrent-lstm-forecasting-opennn.md)
-
-Run:
+Build the OpenNN driver and run the harness:
 
 ```bash
-python run_forecasting.py --frameworks opennn,pytorch,tensorflow
+cmake --build build-benchmarks --target recurrent_lstm_forecasting_benchmark
+OPENNN_FORECASTING_BIN=../../../build-benchmarks/bin/recurrent_lstm_forecasting_benchmark \
+  python run_forecasting.py --frameworks opennn,pytorch,tensorflow
 ```
 
-Lifecycle: internal only until a fresh Linux run with result JSON is archived.
+`prepare_beijing_pm25.py` fetches and prepares the dataset. The harness reports
+test RMSE, training time, and CPU/GPU speedups, and writes a result JSON under
+`../../results/`.

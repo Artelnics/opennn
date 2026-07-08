@@ -1,10 +1,7 @@
 # Application LOC Benchmark
 
-Purpose: compare logical source lines of code for the same Iris classification
-workflow across OpenNN, PyTorch, and TensorFlow/Keras.
-
-Top-level note:
-[`../application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md`](application-lines-of-code-opennn-vs-pytorch-vs-tensorflow.md)
+Purpose: compare the logical source lines of code needed for the same Iris
+classification workflow across OpenNN, PyTorch, and TensorFlow/Keras.
 
 Run:
 
@@ -12,5 +9,5 @@ Run:
 python count_lsloc.py
 ```
 
-Lifecycle: supporting only. This is an API ergonomics metric, not a runtime
-performance benchmark.
+Counts the logical lines of `opennn_iris.cpp`, `pytorch_iris.py`, and
+`tensorflow_iris.py` (kept aligned to the same workflow).

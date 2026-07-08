@@ -2,24 +2,24 @@
 
 Purpose: compare baseline RAM after constructing empty training objects and
 GPU-ready VRAM after one tiny `32x32` matrix multiply, before loading data or
-running a real model.
+running a real model — OpenNN vs PyTorch vs TensorFlow.
 
-Top-level note:
-[`../peak-memory-opennn-vs-pytorch-vs-tensorflow.md`](peak-memory-opennn-vs-pytorch-vs-tensorflow.md)
+Runners (each emits `baseline_ram_mb` and `gpu_ready_vram_mb`):
 
-Runners:
+- `opennn_memory.cpp` — build the `opennn_memory` target
+- `pytorch_memory.py`
+- `tensorflow_memory.py`
 
-- `opennn_memory.cpp` emits `baseline_ram_mb` and `gpu_ready_vram_mb`
-- `pytorch_memory.py` emits `baseline_ram_mb` and `gpu_ready_vram_mb`
-- `tensorflow_memory.py` emits `baseline_ram_mb` and `gpu_ready_vram_mb`
+Run:
 
-Current run: 2026-07-05, WSL2 Ubuntu, RTX 3060 Laptop GPU.
+```bash
+cmake --build build-benchmarks --target opennn_memory
+cd docs/benchmarks/footprint/memory
+CUDA_MODULE_LOADING=LAZY ./opennn_memory
+CUDA_MODULE_LOADING=LAZY python pytorch_memory.py
+CUDA_MODULE_LOADING=LAZY TF_FORCE_GPU_ALLOW_GROWTH=true python tensorflow_memory.py
+```
 
-| Framework | Baseline RAM | GPU-ready VRAM |
-|---|---:|---:|
-| OpenNN | 195.2 MB | 119.0 MB |
-| PyTorch | 516.2 MB | 155.0 MB |
-| TensorFlow | 871.2 MB | 121.0 MB |
-
-Lifecycle: archive raw commands, versions, `nvidia-smi`, and result JSON with
-each published run.
+GPU-ready VRAM mostly reflects the CUDA runtime/context and first math-backend
+setup before tensors are resident. Archive the raw output, framework versions,
+and `nvidia-smi` with each run.

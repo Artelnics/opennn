@@ -28,31 +28,12 @@ stop at the **identical** held-out target:
   excluded from the timing median.
 
 Gating on the **held-out** metric (not the training loss) is the crucial design
-choice. An earlier training-loss gate let OpenNN "pass" at 19 epochs with a test
-MSE of 0.10 — twice as bad as the frameworks — i.e. it stopped before
-generalizing. Gating on the test MSE removes that artifact and makes the time
-comparison fair.
-
-## Directional results (WSL2 RTX 3060, CPU regression, 2026-06-15)
-
-Target held-out MSE = 0.06; all three reach the same quality.
-
-| engine | time-to-target | epochs | held-out test MSE | converged |
-|---|---|---|---|---|
-| **OpenNN** | **2.06 s** | 30 | 0.058 | 2/2 |
-| PyTorch | 2.86 s | 38 | 0.056 | 2/2 |
-| TensorFlow | 15.3 s | 40 | 0.060 | 2/2 |
-
-OpenNN reaches the same held-out quality **~1.4× faster than PyTorch and ~7.5×
-faster than TensorFlow** here. All three land within a hair of each other on the
-held-out MSE, so the time is a like-for-like quality-to-solution comparison —
-not a throughput number that ignores whether the model learned. (Directional;
-re-run on the target machine. TF's overhead here is dominated by per-epoch eager
-`fit`/validation bookkeeping on a tiny model.)
+choice: a training-loss gate lets an engine "pass" before it generalizes. Gating
+on the test MSE removes that artifact and makes the time comparison fair.
 
 ## Usage
 
-```
+```bash
 # build the OpenNN driver:
 bash build.sh
 
@@ -69,6 +50,4 @@ versions, commit, and GPU.
 The same gate applies to CNN (MNIST) and ResNet-50 (CIFAR): replace
 "held-out test MSE ≤ target" with **"held-out top-1 accuracy ≥ target"**, using
 `TestingAnalysis::calculate_multiple_classification_precision()` on the test
-split in C++ and the equivalent eval in PyTorch/TF. That is the natural next
-step for those benchmarks (best run at real scale on the target machine, where
-the conv bf16 path is honest).
+split in C++ and the equivalent eval in PyTorch/TF.

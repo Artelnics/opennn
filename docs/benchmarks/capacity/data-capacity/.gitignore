@@ -1,5 +1,5 @@
-# Generated test data and sweep working dirs (large, reproducible)
+# Generated test data, results, and sweep working dirs (large, reproducible)
 _data/
 *.csv
-!capacity_results.csv
 *.exe
+__pycache__/

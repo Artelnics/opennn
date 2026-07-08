@@ -1,0 +1,4 @@
+# compiled benchmark binary and generated exported sources
+opennn_export
+*.log
+__pycache__/

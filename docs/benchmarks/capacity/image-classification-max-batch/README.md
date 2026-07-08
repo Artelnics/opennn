@@ -1,10 +1,13 @@
 # Image Classification Max-Batch Probes
 
-Purpose: low-level image-classification capacity probes for OpenNN, PyTorch,
-and TensorFlow.
+Purpose: low-level image-classification capacity probes for OpenNN, PyTorch, and
+TensorFlow. For the full ResNet-50 capacity benchmark, use
+[`../resnet50-max-batch/`](../resnet50-max-batch/).
 
-Current headline path:
-[`../resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md`](../resnet50-max-batch/resnet50-max-batch-gpu-opennn-vs-pytorch-vs-tensorflow.md)
+Build the OpenNN trial and run the per-framework probe scripts in this folder:
 
-Lifecycle: internal probes. Use the ResNet-50 max-batch folder and manifest
-entry for current capacity evidence.
+```bash
+cmake --build build-benchmarks --target opennn_image_classification_maxbatch_trial
+python pytorch_image_classification_maxbatch.py
+python tensorflow_image_classification_maxbatch.py
+```

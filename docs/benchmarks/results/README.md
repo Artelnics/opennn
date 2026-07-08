@@ -122,6 +122,4 @@ Each result JSON should contain:
   speed artifacts are allowed as engineering evidence, but the note must say
   they are not final MLPerf-style headline results until a quality target is set.
 - If a run is platform-specific, encode that in the result metadata and keep the
-  benchmark note explicit about it.
-- Internal lab notes such as `CONTINUE_HERE.md` are not evidence artifacts until
-  their commands, metadata, and raw output are captured here.
+  benchmark folder README explicit about it.

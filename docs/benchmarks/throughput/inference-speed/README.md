@@ -1,16 +1,14 @@
 # CPU Inference Speed Benchmark
 
-Purpose: CPU batch-inference speed comparison for a tuned dense MLP.
+Purpose: CPU batch-inference speed comparison for a tuned dense MLP — OpenNN
+vs PyTorch vs TensorFlow.
 
-Top-level note:
-[`inference-speed-opennn-vs-pytorch-vs-tensorflow.md`](inference-speed-opennn-vs-pytorch-vs-tensorflow.md)
-
-Run:
+Build the OpenNN driver, then run:
 
 ```bash
+cmake --build build-benchmarks --target opennn_inference
 ./run_inference.sh rosenbrock.csv 8000 1000 1000 30
 ```
 
-Lifecycle: hold back. The current result is a valid Windows tuned run, but it
-needs a reference Linux rerun and archived result JSON before it becomes a
-public headline.
+Reports samples/s and ms per batch. Use identical data/weights (or a checksum
+gate) across frameworks.

@@ -1,0 +1,4 @@
+# compiled benchmark binary
+opennn_startup
+*.log
+__pycache__/

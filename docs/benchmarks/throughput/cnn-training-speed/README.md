@@ -1,16 +1,13 @@
 # CNN Training Speed Benchmark
 
-Purpose: GPU training-speed comparison for a small CNN on MNIST.
+Purpose: GPU training-speed comparison for a small CNN (one convolutional + one
+pooling layer) on MNIST, batch 128, fp32 — OpenNN (GPU-resident data) vs PyTorch
+vs TensorFlow.
 
-Top-level note:
-[`../cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md`](cnn-training-speed-gpu-opennn-vs-pytorch-vs-tensorflow.md)
-
-Run:
+Prepare MNIST with `prepare_mnist.py`, then run:
 
 ```bash
 python run_cnn.py
 ```
 
-Lifecycle: hold back. The OpenNN result is useful, but the comparison needs
-optimized PyTorch and TensorFlow paths or explicit eager/Keras-only framing
-before it is used as a public headline.
+Reports samples/s, epoch time, and final loss per framework.

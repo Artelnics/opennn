@@ -1,15 +1,12 @@
 # Startup Latency Benchmark
 
-Purpose: compare time-to-first-prediction / import-startup overhead.
+Purpose: compare time-to-first-prediction / import-startup overhead — a native
+OpenNN binary versus `import torch` / `import tensorflow`.
 
-Top-level note:
-[`startup-latency-opennn-vs-pytorch-vs-tensorflow.md`](startup-latency-opennn-vs-pytorch-vs-tensorflow.md)
+Runners (each prints its time to first prediction):
 
-Runners:
-
-- `opennn_startup.cpp`
+- `opennn_startup.cpp` — compile against OpenNN, then run
 - `pytorch_startup.py`
 - `tensorflow_startup.py`
 
-Lifecycle: headline candidate after raw commands, versions, and timing method
-are archived.
+Measure cold start; record the warmup protocol and versions with the result.

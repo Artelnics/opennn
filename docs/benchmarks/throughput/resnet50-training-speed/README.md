@@ -1,9 +1,8 @@
 # ResNet-50 Training Speed
 
-This folder contains the ResNet-50 training-speed harnesses and engineering
-notes. Treat this README and `../BENCHMARK_RUNBOOK.md` as the entrypoints.
-Large datasets and generated image folders must live outside the repository;
-see [`../DATA_POLICY.md`](../../DATA_POLICY.md).
+This folder contains the ResNet-50 training-speed harnesses. Treat this README as
+the entrypoint. Large datasets and generated image folders must live outside the
+repository; see [`../DATA_POLICY.md`](../../DATA_POLICY.md).
 
 ## Current Status
 
@@ -54,7 +53,6 @@ Set `OPENNN_RESNET_BIN` if the OpenNN executable is not
 | `run_resnet50.sh` | Older shell harness kept for compatibility. |
 | `prepare_cifar10.py`, `prepare_cifar100.py` | Dataset preparation for CIFAR geometry. |
 | `prepare_imagenet_like.py`, `pytorch_resnet50_lazy.py` | ImageNet-geometry caveat track. |
-| `CONTINUE_HERE.md`, `IMAGENET_GEOMETRY_CONTINUE.md` | Historical lab notes, not evidence artifacts. |
 | `pt_compile_probe.py`, `pt_conv_budget.py` | Diagnostic probes. |
 
 ## Before Citing

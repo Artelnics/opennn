@@ -1,10 +1,9 @@
 # Precision Benchmark
 
-Purpose: historical optimizer/precision comparison on the Rosenbrock
-approximation task.
-
-Top-level note:
-[`../precision-opennn-vs-pytorch-vs-tensorflow.md`](precision-opennn-vs-pytorch-vs-tensorflow.md)
+Purpose: compare the best error floor each framework reaches with the optimizers
+it ships, on the Rosenbrock approximation task — OpenNN's second-order
+quasi-Newton and Levenberg-Marquardt versus first-order Adam (all three) and
+PyTorch's LBFGS.
 
 Run:
 
@@ -12,5 +11,4 @@ Run:
 ./run_precision.sh
 ```
 
-Lifecycle: supporting only. This is useful for optimizer discussion, but not
-the active dense performance benchmark.
+Reports the final MSE and wall-clock time per optimizer.

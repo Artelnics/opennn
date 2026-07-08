@@ -39,11 +39,10 @@ response`, Stanford Alpaca 47,487 pairs, vocab 19,443 in / 30,000 out, sequences
   Adam + SDPA; TensorFlow `mixed_bfloat16` + `@tf.function(jit_compile=True)`
   (XLA).
 
-Calibration notes (RTX 4080, batch 128): lr 5e-4 (the ChatGPT example default at
-batch 64) parks **all three** engines on the unigram plateau (~6.77); lr 1e-4
-descends steadily and every engine follows the same trajectory within ±0.5 CE.
-OpenNN's fp32 and bf16 loss curves are indistinguishable (7.07/6.22/5.67 vs
-7.07/6.20/5.59 over three epochs), so bf16 is pure speed, not a quality trade.
+Calibration note: lr 5e-4 (the ChatGPT example default at batch 64) parks
+**all three** engines on the unigram plateau; lr 1e-4 descends steadily and every
+engine follows the same trajectory. OpenNN's fp32 and bf16 loss curves are
+indistinguishable, so bf16 is pure speed, not a quality trade.
 
 ## Energy measurement
 
@@ -89,6 +88,3 @@ python docs/benchmarks/energy/transformer-energy/run_transformer_energy.py \
 Writes `../../results/gpu-transformer-energy-to-target-<run_id>.json` with per-run
 and aggregate energy (Wh, total and active), training-window wall time, epochs
 to target, per-epoch loss histories, versions, commit and GPU state.
-
-Results write-up:
-[`../transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md`](transformer-energy-to-target-gpu-opennn-vs-pytorch-vs-tensorflow.md).

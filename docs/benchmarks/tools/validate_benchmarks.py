@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""Validate the consolidated benchmark inventory.
+"""Validate the benchmark inventory.
 
-This checks that the top-level benchmark notes, benchmark manifest, and result
-artifact references stay aligned. It intentionally does not run benchmarks.
+This checks that the benchmark manifest, the per-benchmark README guides, and the
+runner folders stay consistent, and that no benchmark results or build artifacts
+are committed to git. It intentionally does not run any benchmark.
+
+The suite ships guides and code to run each benchmark, not results: a clean
+checkout must contain no measured numbers, result JSON, generated data, or
+compiled binaries.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -17,26 +23,20 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "benchmark_manifest.json"
 
+# Admin/guide docs that live at the top level and are not per-benchmark folders.
 ADMIN_DOCS = {
     "README.md",
-    "BENCHMARK_RUNBOOK.md",
-    "PRESENTATION_CLAIMS.md",
-    "TRACKS.md",
     "DATA_POLICY.md",
-    "DENSE_HIGGS_MIGRATION.md",
 }
 
 REQUIRED_FIELDS = {
     "id",
-    "doc",
+    "folder",
+    "readme",
     "category",
-    "status",
-    "lifecycle",
-    "publication_readiness",
     "comparison",
     "metrics",
     "runner",
-    "needs",
 }
 
 
@@ -64,13 +64,7 @@ def validate_manifest(data: dict[str, Any]) -> tuple[list[str], list[str]]:
         add_error(errors, "manifest field 'benchmarks' must be a list")
         return errors, warnings
 
-    lifecycle_values = data.get("lifecycle_values", {})
-    allowed_lifecycles = set(lifecycle_values)
-    if not allowed_lifecycles:
-        add_error(errors, "manifest must define lifecycle_values")
-
     ids: set[str] = set()
-    docs: set[str] = set()
     for index, bench in enumerate(benchmarks):
         if not isinstance(bench, dict):
             add_error(errors, f"benchmark #{index} is not an object")
@@ -88,59 +82,37 @@ def validate_manifest(data: dict[str, Any]) -> tuple[list[str], list[str]]:
         else:
             ids.add(bench_id)
 
-        doc = bench.get("doc")
-        if isinstance(doc, str) and doc:
-            docs.add(doc)
-            if not (ROOT / doc).exists():
-                add_error(errors, f"{bench_id}: doc does not exist: {doc}")
+        folder = bench.get("folder")
+        if isinstance(folder, str) and folder:
+            if not (ROOT / folder).is_dir():
+                add_error(errors, f"{bench_id}: folder does not exist: {folder}")
         else:
-            add_error(errors, f"{bench_id}: doc must be a non-empty string")
+            add_error(errors, f"{bench_id}: folder must be a non-empty string")
 
-        lifecycle = bench.get("lifecycle")
-        if lifecycle not in allowed_lifecycles:
-            add_error(errors, f"{bench_id}: unknown lifecycle '{lifecycle}'")
+        readme = bench.get("readme")
+        if isinstance(readme, str) and readme:
+            if not (ROOT / readme).exists():
+                add_error(errors, f"{bench_id}: readme does not exist: {readme}")
+        else:
+            add_error(errors, f"{bench_id}: readme must be a non-empty string")
 
         metrics = bench.get("metrics")
         if not isinstance(metrics, list) or not metrics:
             add_error(errors, f"{bench_id}: metrics must be a non-empty list")
 
         runner = bench.get("runner")
-        if not isinstance(runner, dict) or "status" not in runner:
-            add_error(errors, f"{bench_id}: runner must contain a status")
-
-        for key in ("latest_result", "comparison_result"):
-            ref = bench.get(key)
-            if isinstance(ref, str) and not (ROOT / ref).exists():
-                add_error(errors, f"{bench_id}: {key} missing: {ref}")
-
-        local_ref = bench.get("latest_local_result")
-        if isinstance(local_ref, str) and not (ROOT / local_ref).exists():
-            add_warning(warnings, f"{bench_id}: local result not present in this checkout: {local_ref}")
-
-    top_level_notes = {
-        path.name for path in ROOT.glob("*.md")
-        if path.name not in ADMIN_DOCS
-    }
-
-    for note in sorted(top_level_notes - docs):
-        add_error(errors, f"top-level benchmark note is not in manifest: {note}")
-
-    for doc in sorted(docs - top_level_notes):
-        if doc not in ADMIN_DOCS and (ROOT / doc).parent == ROOT:
-            add_error(errors, f"manifest doc is not a top-level benchmark note: {doc}")
+        if not isinstance(runner, list) or not runner:
+            add_error(errors, f"{bench_id}: runner must be a non-empty list of commands")
 
     return errors, warnings
 
 
-def validate_track_readmes(strict: bool) -> tuple[list[str], list[str]]:
+def validate_runner_readmes(strict: bool) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     runner_patterns = ("run_*.py", "run_*.sh", "*.ps1")
-    skip = {"results", "tools", "__pycache__", "archive"}
+    skip = {"results", "tools", "__pycache__"}
 
-    # Benchmarks live one level below the metric buckets (quality/, throughput/,
-    # capacity/, footprint/, energy/), so check the leaf folder that directly
-    # contains a runner script rather than the top-level bucket.
     runner_folders: set[Path] = set()
     for pattern in runner_patterns:
         for runner in ROOT.rglob(pattern):
@@ -160,55 +132,43 @@ def validate_track_readmes(strict: bool) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def generated_artifact_reason(path: Path) -> str | None:
-    name = path.name
-    if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
-        return "Python bytecode/cache"
-    if name.endswith(".onnx.data") or path.suffix == ".onnx":
+def committed_artifact_reason(rel: str) -> str | None:
+    """Classify a git-tracked path that should never be committed."""
+    name = rel.rsplit("/", 1)[-1]
+    lower = name.lower()
+    if rel.startswith("results/") and lower.endswith(".json"):
+        return "committed result JSON"
+    if lower.endswith((".csv", ".onnx", ".npy", ".nsys-rep", ".sqlite", ".log")):
+        return "generated data/result artifact"
+    if lower.endswith(".onnx.data"):
         return "generated ONNX artifact"
-    if path.suffix == ".csv":
-        return "generated CSV artifact"
-    if path.suffix == ".txt" and name.startswith("pred_"):
+    if lower.startswith("pred_") and lower.endswith(".txt"):
         return "generated prediction output"
-    if not path.suffix and name.startswith("opennn_"):
+    if "." not in name and name.startswith("opennn_"):
         return "compiled benchmark executable"
     return None
 
 
-def validate_generated_artifacts(data: dict[str, Any]) -> tuple[list[str], list[str]]:
+def validate_no_committed_artifacts() -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    legacy_artifacts = data.get("legacy_artifacts", [])
-    if not isinstance(legacy_artifacts, list):
-        add_error(errors, "manifest field 'legacy_artifacts' must be a list")
-        legacy_artifacts = []
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=ROOT,
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        add_warning(warnings, f"could not list git-tracked files (skipping artifact check): {exc}")
+        return errors, warnings
 
-    allowed: set[str] = set()
-    for index, artifact in enumerate(legacy_artifacts):
-        if not isinstance(artifact, dict):
-            add_error(errors, f"legacy_artifacts #{index} is not an object")
-            continue
-        rel = artifact.get("path")
-        if not isinstance(rel, str) or not rel:
-            add_error(errors, f"legacy_artifacts #{index} has invalid path")
-            continue
-        if "\\" in rel:
-            add_error(errors, f"legacy artifact path must use forward slashes: {rel}")
-        allowed.add(rel)
-        full_path = ROOT / rel
-        if not full_path.exists():
-            add_error(errors, f"legacy artifact missing from checkout: {rel}")
-        elif generated_artifact_reason(full_path) is None:
-            add_error(errors, f"legacy artifact is not recognized as generated: {rel}")
-
-    for path in sorted(ROOT.rglob("*")):
-        if not path.is_file():
-            continue
-        rel = path.relative_to(ROOT).as_posix()
-        reason = generated_artifact_reason(path)
-        if reason and rel not in allowed:
-            add_error(errors, f"unlisted generated artifact ({reason}): {rel}")
+    for rel in filter(None, out.split("\0")):
+        reason = committed_artifact_reason(rel)
+        if reason:
+            add_error(errors, f"{reason} committed (results must stay out of git): {rel}")
 
     return errors, warnings
 
@@ -224,10 +184,10 @@ def main() -> int:
 
     data = load_manifest()
     errors, warnings = validate_manifest(data)
-    readme_errors, readme_warnings = validate_track_readmes(args.strict_readmes)
+    readme_errors, readme_warnings = validate_runner_readmes(args.strict_readmes)
     errors.extend(readme_errors)
     warnings.extend(readme_warnings)
-    artifact_errors, artifact_warnings = validate_generated_artifacts(data)
+    artifact_errors, artifact_warnings = validate_no_committed_artifacts()
     errors.extend(artifact_errors)
     warnings.extend(artifact_warnings)
 

@@ -1,10 +1,7 @@
 # Accuracy Benchmark
 
-Purpose: historical controlled quality diagnostic for the Rosenbrock
-approximation task.
-
-Top-level note:
-[`../accuracy-opennn-vs-pytorch-vs-tensorflow.md`](accuracy-opennn-vs-pytorch-vs-tensorflow.md)
+Purpose: controlled quality diagnostic — does OpenNN reach the same predictive
+accuracy (R²) as PyTorch and TensorFlow on the Rosenbrock regression task?
 
 Run:
 
@@ -12,5 +9,6 @@ Run:
 ./run_accuracy.sh
 ```
 
-Lifecycle: supporting only. Do not use this as the active dense benchmark;
-new dense claims should use the HIGGS contract in `../higgs/`.
+The same shared normalized train/test split feeds all three frameworks; a single
+neutral scorer (`score.py`) computes MSE and R² from each framework's test-set
+predictions so internal loss/reduction differences do not affect the comparison.

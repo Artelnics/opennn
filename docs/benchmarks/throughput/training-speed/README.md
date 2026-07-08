@@ -3,7 +3,7 @@
 This is the active dense MLP benchmark track. It replaces the older Rosenbrock
 dense speed tests for new dense claims.
 
-For the full benchmark map, start with [`../BENCHMARK_RUNBOOK.md`](../../BENCHMARK_RUNBOOK.md).
+For the full benchmark index, start with [the benchmarks README](../../README.md).
 For the dataset contract, use [`../higgs/README.md`](../higgs/README.md).
 Large datasets must live outside the repository; see
 [`../DATA_POLICY.md`](../../DATA_POLICY.md).
@@ -76,6 +76,5 @@ python run_higgs_dense.py \
 
 ## Notes
 
-`CONTINUE_HERE.md` is only a short resume note. The scripts named
-`analyze_*.py`, `gemm_floor.py`, and `pytorch_profile.py` are engineering probes,
-not evidence artifacts.
+The scripts named `analyze_*.py`, `gemm_floor.py`, and `pytorch_profile.py` are
+engineering probes, not part of the published run.
