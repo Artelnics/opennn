@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "../opennn/configuration.h"
+#include "../opennn/device_backend.h"
 
 using namespace std;
 using namespace opennn;
@@ -18,6 +19,8 @@ public:
     void OnTestStart(const ::testing::TestInfo&) override
     {
         Configuration::instance().set(Device::CPU, Type::FP32);
+
+        device::reset_last_error();
     }
 };
 

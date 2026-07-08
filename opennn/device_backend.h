@@ -77,6 +77,7 @@ void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
 void copy_async(void*, const void*, Index, Device, Device, cudaStream_t = nullptr);
 void synchronize(cudaStream_t = nullptr);
 void check_last_error();
+void reset_last_error() noexcept;
 
 #ifdef OPENNN_HAS_CUDA
 struct CublasPointerModeGuard

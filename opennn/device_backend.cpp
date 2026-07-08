@@ -298,6 +298,13 @@ void check_last_error()
 #endif
 }
 
+void reset_last_error() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaGetLastError();
+#endif
+}
+
 cudaStream_t create_stream(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA

@@ -134,6 +134,26 @@ TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
 {
     const Index byte_count = 32;
 
+#ifdef OPENNN_HAS_CUDA
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "no CUDA device available";
+
+    void* device_buffer = device::allocate(Device::CUDA, byte_count);
+    ASSERT_NE(device_buffer, nullptr);
+
+    std::vector<unsigned char> host(static_cast<size_t>(byte_count), 0xFF);
+    device::copy_async(device_buffer, host.data(), byte_count,
+                       device::CopyKind::HostToDevice, nullptr);
+    device::set_zero_async(device_buffer, byte_count, nullptr);
+    device::copy_async(host.data(), device_buffer, byte_count,
+                       device::CopyKind::DeviceToHost, nullptr);
+    device::synchronize(nullptr);
+
+    for (Index i = 0; i < byte_count; i++)
+        EXPECT_EQ(host[static_cast<size_t>(i)], 0);
+
+    device::deallocate(Device::CUDA, device_buffer, byte_count);
+#else
     void* pointer = device::allocate(Device::CPU, byte_count);
     ASSERT_NE(pointer, nullptr);
 
@@ -145,6 +165,7 @@ TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
         EXPECT_EQ(bytes[i], 0);
 
     device::deallocate(Device::CPU, pointer, byte_count);
+#endif
 }
 
 
