@@ -97,6 +97,24 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     return logistic_correlation(x, y);
 }
 
+Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
+{
+    if (is_constant(x) || is_constant(y))
+        return Correlation();
+
+    // Spearman = Pearson sobre los rangos. La version por vectores existe para
+    // columnas simples; para variables multi-columna (categoricas expandidas)
+    // se cae a la correlacion general (misma politica que la de Pearson).
+    if (x.cols() == 1 && y.cols() == 1)
+    {
+        Correlation result = linear_correlation_spearman(x.col(0), y.col(0));
+        result.method = Correlation::Method::Spearman;
+        return result;
+    }
+
+    return correlation(x, y);
+}
+
 VectorR cross_correlations(const VectorR& x,
                            const VectorR& y,
                            Index maximum_past_time_steps)

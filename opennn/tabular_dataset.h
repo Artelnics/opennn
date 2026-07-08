@@ -103,10 +103,12 @@ public:
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
     Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const override;
+    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const override;
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
     Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const override;
+    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const override;
 
     VectorI calculate_correlations_rank() const override;
 

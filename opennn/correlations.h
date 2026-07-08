@@ -55,6 +55,7 @@ Correlation point_biserial_correlation(const VectorR&, const VectorR&);
 Correlation eta_squared_correlation(const VectorR&, const MatrixR&);
 
 Correlation correlation(const MatrixR&, const MatrixR&);
+Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 Correlation linear_correlation_spearman(const VectorR&, const VectorR&);
 
 VectorR calculate_spearman_ranks(const VectorR&);

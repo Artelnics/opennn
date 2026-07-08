@@ -690,6 +690,11 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_pearson_c
     return calculate_input_target_variable_correlations(correlation, "pearson");
 }
 
+Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_spearman_correlations() const
+{
+    return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
+}
+
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     Correlation::Method method,
@@ -733,6 +738,11 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 Tensor<Correlation, 2> TabularDataset::calculate_input_variable_pearson_correlations() const
 {
     return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson");
+}
+
+Tensor<Correlation, 2> TabularDataset::calculate_input_variable_spearman_correlations() const
+{
+    return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
 }
 
 VectorI TabularDataset::calculate_correlations_rank() const
