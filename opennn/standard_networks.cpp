@@ -945,7 +945,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
-    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "hidden_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "dense_layer_1"));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                  output_shape,
