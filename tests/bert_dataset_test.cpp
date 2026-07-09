@@ -3,12 +3,12 @@
 
 #include <cmath>
 
-#include "../opennn/bert_dataset.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/loss.h"
-#include "../opennn/configuration.h"
+#include "opennn/bert_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/neural_network.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/loss.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 

@@ -1,10 +1,10 @@
 #include "pch.h"
 
-#include "../opennn/registry.h"
-#include "../opennn/layer.h"
-#include "../opennn/optimizer.h"
-#include "../opennn/inputs_selection.h"
-#include "../opennn/neuron_selection.h"
+#include "opennn/registry.h"
+#include "opennn/layer.h"
+#include "opennn/optimizer.h"
+#include "opennn/inputs_selection.h"
+#include "opennn/neuron_selection.h"
 
 using namespace opennn;
 

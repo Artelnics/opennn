@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/neural_network.h"
-#include "../opennn/scaling_layer.h"
-#include "../opennn/statistics.h"
+#include "opennn/neural_network.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/statistics.h"
 
 using namespace opennn;
 

@@ -14,13 +14,13 @@
 
 #include <cuda_runtime.h>
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/device_backend.h"
-#include "../../../opennn/tensor_types.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/profiler.h"
+#include "opennn/standard_networks.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/device_backend.h"
+#include "opennn/tensor_types.h"
+#include "opennn/configuration.h"
+#include "opennn/random_utilities.h"
+#include "opennn/profiler.h"
 
 using namespace opennn;
 

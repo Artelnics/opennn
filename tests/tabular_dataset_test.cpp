@@ -1,7 +1,7 @@
 #include "pch.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
 
 using namespace opennn;
 

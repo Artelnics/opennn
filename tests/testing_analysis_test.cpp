@@ -1,11 +1,10 @@
 #include "pch.h"
 #include "gtest/gtest.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/testing_analysis.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/testing_analysis.h"
 
 using namespace opennn;
 

@@ -13,30 +13,30 @@
 #include <vector>
 #include <filesystem>
 
-#include "../opennn/configuration.h"
-#include "../opennn/device_backend.h"
-#include "../opennn/memory_debug.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
+#include "opennn/configuration.h"
+#include "opennn/device_backend.h"
+#include "opennn/memory_debug.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
 
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/time_series_dataset.h"
-#include "../opennn/image_dataset.h"
-#include "../opennn/language_dataset.h"
-#include "../opennn/text_generation_dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/time_series_dataset.h"
+#include "opennn/image_dataset.h"
+#include "opennn/language_dataset.h"
+#include "opennn/text_generation_dataset.h"
 
-#include "../opennn/scaling_layer.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/long_short_term_memory_layer.h"
-#include "../opennn/recurrent_layer.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/dense_layer.h"
+#include "opennn/long_short_term_memory_layer.h"
+#include "opennn/recurrent_layer.h"
 
-#include "../opennn/loss.h"
-#include "../opennn/training_strategy.h"
-#include "../opennn/testing_analysis.h"
-#include "../opennn/stochastic_gradient_descent.h"
-#include "../opennn/adaptive_moment_estimation.h"
-#include "../opennn/transformer_decoder.h"
-#include "../opennn/random_utilities.h"
+#include "opennn/loss.h"
+#include "opennn/training_strategy.h"
+#include "opennn/testing_analysis.h"
+#include "opennn/stochastic_gradient_descent.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/transformer_decoder.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 using namespace std::chrono;

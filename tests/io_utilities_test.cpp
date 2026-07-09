@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include "../opennn/io_utilities.h"
+#include "opennn/io_utilities.h"
 
 using namespace opennn;
 

@@ -1,11 +1,11 @@
 #include "pch.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/training_strategy.h"
-#include "../opennn/genetic_algorithm.h"
-#include "../opennn/random_utilities.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
+#include "opennn/genetic_algorithm.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

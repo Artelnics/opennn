@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/tensor_types.h"
-#include "../opennn/bounding_layer.h"
-#include "../opennn/neural_network.h"
+#include "opennn/tensor_types.h"
+#include "opennn/bounding_layer.h"
+#include "opennn/neural_network.h"
 
 using namespace opennn;
 

@@ -1,11 +1,11 @@
 ﻿#include "pch.h"
-#include "../opennn/tensor_types.h"
-#include "../opennn/concatenation_operator.h"
-#include "../opennn/concatenation_layer.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/loss.h"
+#include "opennn/tensor_types.h"
+#include "opennn/concatenation_operator.h"
+#include "opennn/concatenation_layer.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/back_propagation.h"
+#include "opennn/neural_network.h"
+#include "opennn/loss.h"
 
 using namespace opennn;
 

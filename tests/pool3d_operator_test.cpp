@@ -1,13 +1,13 @@
 ﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "../opennn/tensor_types.h"
-#include "../opennn/pooling_layer.h"
-#include "../opennn/pooling_layer_3d.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/loss.h"
+#include "opennn/tensor_types.h"
+#include "opennn/pooling_layer.h"
+#include "opennn/pooling_layer_3d.h"
+#include "opennn/dense_layer.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/loss.h"
 
 using namespace opennn;
 

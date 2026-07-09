@@ -5,11 +5,11 @@
 
 #include "numerical_derivatives.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
-#include "../opennn/batch.h"
+#include "opennn/dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/back_propagation.h"
+#include "opennn/batch.h"
 
 #include <Eigen/Dense>
 

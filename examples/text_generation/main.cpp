@@ -13,11 +13,11 @@
 
 // OpenNN includes
 
-#include "../../opennn/training_strategy.h"
-#include "../../opennn/text_generation_dataset.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/transformer_decoder.h"
+#include "opennn/training_strategy.h"
+#include "opennn/text_generation_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/transformer_decoder.h"
 
 using namespace std;
 using namespace opennn;

@@ -1,12 +1,12 @@
 ﻿#include "pch.h"
 #include "numerical_derivatives.h"
 
-#include "../opennn/tensor_types.h"
-#include "../opennn/batch_norm_operator.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/loss.h"
+#include "opennn/tensor_types.h"
+#include "opennn/batch_norm_operator.h"
+#include "opennn/dense_layer.h"
+#include "opennn/neural_network.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/loss.h"
 
 using namespace opennn;
 

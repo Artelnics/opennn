@@ -1,13 +1,13 @@
 //   OpenNN standalone-code-export benchmark: train a small MLP on sum.csv, then
 //   export the trained model to dependency-free C and Python source.
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/training_strategy.h"
-#include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/model_expression.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/configuration.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/training_strategy.h"
+#include "opennn/adaptive_moment_estimation.h"
+#include "opennn/model_expression.h"
+#include "opennn/random_utilities.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 

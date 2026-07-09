@@ -11,7 +11,11 @@ FetchContent_Declare(
 )
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+find_package(GTest 1.11 CONFIG QUIET)
+
+if(NOT GTest_FOUND)
+  FetchContent_MakeAvailable(googletest)
+endif()
 
 set(PCH_HEADER pch.h)
 

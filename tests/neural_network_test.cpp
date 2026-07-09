@@ -1,10 +1,10 @@
 #include "pch.h"
 
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/layer.h"
-#include "../opennn/dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
+#include "opennn/dense_layer.h"
+#include "opennn/layer.h"
+#include "opennn/dataset.h"
 
 using namespace opennn;
 
@@ -93,13 +93,12 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 
     ImageClassificationNetwork neural_network({height, width, channels}, { complexity }, { outputs_number });
 
-    EXPECT_EQ(neural_network.get_layers_number(), 6);
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling");
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Convolutional");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Pooling");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Flatten");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense");
-    EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Dense");
 }
 
 

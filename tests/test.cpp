@@ -4,8 +4,8 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "../opennn/configuration.h"
-#include "../opennn/device_backend.h"
+#include "opennn/configuration.h"
+#include "opennn/device_backend.h"
 
 using namespace std;
 using namespace opennn;

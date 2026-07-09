@@ -2,19 +2,19 @@
 
 #ifdef OPENNN_HAS_CUDA
 
-#include "../opennn/configuration.h"
-#include "../opennn/tensor_types.h"
-#include "../opennn/dataset.h"
-#include "../opennn/tabular_dataset.h"
-#include "../opennn/time_series_dataset.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/loss.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
-#include "../opennn/batch.h"
-#include "../opennn/device_backend.h"
-#include "../opennn/random_utilities.h"
+#include "opennn/configuration.h"
+#include "opennn/tensor_types.h"
+#include "opennn/dataset.h"
+#include "opennn/tabular_dataset.h"
+#include "opennn/time_series_dataset.h"
+#include "opennn/neural_network.h"
+#include "opennn/standard_networks.h"
+#include "opennn/loss.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/back_propagation.h"
+#include "opennn/batch.h"
+#include "opennn/device_backend.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

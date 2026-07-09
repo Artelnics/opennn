@@ -12,10 +12,10 @@
 #include <iostream>
 #include <string>
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/random_utilities.h"
+#include "opennn/standard_networks.h"
+#include "opennn/scaling_layer.h"
+#include "opennn/configuration.h"
+#include "opennn/random_utilities.h"
 
 using namespace opennn;
 

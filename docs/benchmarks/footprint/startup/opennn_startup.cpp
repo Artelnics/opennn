@@ -1,9 +1,9 @@
 //   OpenNN startup-latency benchmark: construct a small MLP, run one forward
 //   pass, print the result, exit. Measures time-to-first-prediction.
 
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/neural_network.h"
-#include "../../../opennn/configuration.h"
+#include "opennn/standard_networks.h"
+#include "opennn/neural_network.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 
