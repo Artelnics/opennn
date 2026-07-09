@@ -78,7 +78,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                        Shape{ complexity_dimensions[i] },
                                        hidden_activation,
                                        false,
-                                       format("dense2d_layer_{}", i + 1)));
+                                       format("dense_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -107,7 +107,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                        Shape{complexity_dimensions[i]},
                                        "Tanh",
                                        false,
-                                       format("dense2d_layer_{}", i + 1)));
+                                       format("dense_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
