@@ -28,16 +28,27 @@ Use one subdirectory per dataset:
 
 ```text
 $OPENNN_BENCH_DATA/
-  higgs/
+  higgs/                     # prepare_higgs.py  (throughput/higgs)
     raw/
     higgs_train.csv
     higgs_test.csv
     higgs_metadata.json
-  imagenet/
-  cifar10/
-  cifar100/
-  imagenet_like/
+  cifar10/                   # prepare_cifar10.py  (throughput/resnet50)
+  cifar100/                  # prepare_cifar100.py
+  imagenet_like/             # prepare_imagenet_like.py
+  chat/                      # prepare_chat.py  (energy/transformer-energy)
+    chat_pairs.txt
+    chat_metadata.json
+  beijing_pm25/              # prepare_beijing_pm25.py  (quality/recurrent-lstm-forecasting)
+    beijing_pm25_forecasting.csv
+  wmt14/                     # prepare_wmt14.py  (capacity/transformer-max-batch)
+    wmt14_en_de_pairs.txt
 ```
+
+Every dataset has exactly ONE `prepare_<dataset>.py` that downloads/normalizes it
+into its `$OPENNN_BENCH_DATA/<dataset>/` subdirectory; benchmarks read it from
+there via `$OPENNN_BENCH_DATA`, never from a benchmark folder or a machine-specific
+absolute path.
 
 ## Rules
 

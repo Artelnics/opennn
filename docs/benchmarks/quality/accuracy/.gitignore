@@ -1,6 +1,6 @@
-# compiled benchmark binary, generated data and predictions
+# compiled benchmark binary, local data copies, caches
 opennn_accuracy
+opennn_accuracy.exe
 *.csv
-pred_*.txt
 *.log
 __pycache__/

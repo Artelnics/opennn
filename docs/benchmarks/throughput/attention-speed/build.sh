@@ -1,47 +1,36 @@
 #!/usr/bin/env bash
-# Build the attention-speed benchmark binaries against the WSL CUDA build of OpenNN.
+# Build the attention-speed Transformer binaries via the benchmarks CMake targets,
+# then symlink them here so the run_*.py harnesses find ./opennn_transformer_*.
 #
-#   build.sh                 # build all benchmarks
-#   build.sh NAME [NAME...]  # build only the named ones (basename, no .cpp)
+#   build.sh                 # build all four
+#   build.sh NAME [NAME...]  # build only the named targets
 #
-# Names: opennn_transformer_infer, opennn_transformer_resident,
-#        opennn_transformer_train, opennn_attention_validate
+# Targets: opennn_transformer_resident, opennn_transformer_infer,
+#          opennn_transformer_train, opennn_attention_validate
+#
+# Portable: no machine-specific paths. Point BENCH_BUILD_DIR at your configured
+# benchmark build tree (default <repo>/build-benchmarks).
 set -e
 cd "$(dirname "$0")"
 
-CUDNN=/home/artelnics/benchenv/lib/python3.12/site-packages/nvidia/cudnn
-CUDA=/usr/local/cuda-12.9/targets/x86_64-linux
-OPENNN=/home/artelnics/opennn-precision
-BUILD=$OPENNN/build-gpu129
+REPO_ROOT="$(cd ../../../.. && pwd)"
+BUILD_DIR="${BENCH_BUILD_DIR:-$REPO_ROOT/build-benchmarks}"
 
-build_one() {
-  local name=$1
-  [ -f "$name.cpp" ] || { echo "skip: $name.cpp not found"; return 1; }
-  c++ -O3 -DNDEBUG -std=c++20 -flto=auto -fno-fat-lto-objects -march=native -fopenmp \
-    -DEIGEN_NO_DEBUG -DHAVE_CUDNN_FRONTEND -DOPENNN_HAS_CUDA \
-    -I$OPENNN/opennn \
-    -I$CUDNN/include \
-    -I/home/artelnics/opennn-wsl/build-gpu/_deps/eigen-src \
-    -isystem $BUILD/_deps/opennn_libjpeg_turbo-install/include \
-    -isystem /home/artelnics/opennn-wsl/build-gpu/_deps/cudnn_frontend-src/include \
-    -isystem $CUDA/include \
-    "$name.cpp" -o "$name" \
-    -L$CUDA/lib/stubs -L$CUDA/lib \
-    -Wl,-rpath,$CUDNN/lib:$CUDA/lib \
-    $BUILD/opennn/libopennn.a \
-    $CUDNN/lib/libcudnn.so.9 \
-    $BUILD/_deps/opennn_libjpeg_turbo-install/lib/libjpeg.a \
-    /usr/lib/x86_64-linux-gnu/libtbb.so.12.11 \
-    $CUDA/lib/libcudart.so $CUDA/lib/libcublas.so $CUDA/lib/libcublasLt.so \
-    $CUDA/lib/libnvrtc.so $CUDA/lib/stubs/libcuda.so \
-    -lstdc++fs -lz -lgomp -lpthread -ldl -lrt
-  echo "built $name"
-}
-
+ALL=(opennn_transformer_resident opennn_transformer_infer \
+     opennn_transformer_train opennn_attention_validate)
 targets=("$@")
-if [ ${#targets[@]} -eq 0 ]; then
-  targets=(opennn_transformer_infer opennn_transformer_resident \
-           opennn_transformer_train opennn_attention_validate)
+[ ${#targets[@]} -eq 0 ] && targets=("${ALL[@]}")
+
+if [ ! -f "$BUILD_DIR/CMakeCache.txt" ]; then
+  echo "Configure the benchmark build first, e.g.:"
+  echo "  cmake -S \"$REPO_ROOT\" -B \"$BUILD_DIR\" -DOpenNN_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release"
+  echo "(add your usual CUDA flags). Override the build dir with BENCH_BUILD_DIR."
+  exit 1
 fi
 
-for t in "${targets[@]}"; do build_one "$t"; done
+cmake --build "$BUILD_DIR" --target "${targets[@]}" -j
+
+for t in "${targets[@]}"; do
+  bin="$(find "$BUILD_DIR" -type f -name "$t" -perm -u+x 2>/dev/null | head -1)"
+  if [ -n "$bin" ]; then ln -sf "$bin" "./$t"; echo "linked ./$t -> $bin"; fi
+done

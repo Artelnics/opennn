@@ -16,9 +16,11 @@ Need* — token embeddings + positional encoding + N encoder/decoder layers
 | `pytorch_transformer_infer.py` | PyTorch `nn.Transformer` inference counterpart |
 | `pytorch_transformer_train.py` | PyTorch training counterpart (reads the same corpus) |
 | `tensorflow_transformer_infer.py` | TensorFlow inference counterpart |
+| `tensorflow_transformer_train.py` | TensorFlow training counterpart |
 | `make_synthetic_corpus.py` | Synthetic tab-separated corpus generator for the training benchmark |
-| `run_transformer.py` | Orchestrator for the inference comparison |
-| `build.sh` | Hand-link recipe for all benchmarks (paths machine-specific; edit for your tree) |
+| `run_transformer.py` | 3-way orchestrator for the inference comparison (`gpu-transformer-inference-speed`) |
+| `run_transformer_train.py` | 3-way orchestrator for the training comparison (`gpu-transformer-training-speed`) |
+| `build.sh` | Portable wrapper: builds the four Transformer CMake targets and symlinks them here |
 
 ## How to run
 
@@ -42,7 +44,11 @@ python run_transformer.py --seqs 128,256,512 --batch 32 --runs 5 --precision bf1
 python make_synthetic_corpus.py corpus.txt 256 256 1024 1234
 ./opennn_transformer_train corpus.txt 256 8 1024 2 16 20
 python pytorch_transformer_train.py corpus.txt 256 8 1024 2 16 20
-#   OPENNN_LR overrides the LR on both sides; OPENNN_BF16=1 / PT_BF16=1 -> bf16
+python tensorflow_transformer_train.py corpus.txt 256 8 1024 2 16 20
+#   OPENNN_LR overrides the LR; OPENNN_BF16=1 / PT_BF16=1 / TF_BF16=1 -> bf16
+
+# Or run the full 3-way training comparison harness:
+python run_transformer_train.py --runs 5 --precision both
 ```
 
 ## Notes / gotchas

@@ -40,9 +40,11 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
-VENV_PY = os.environ.get("BENCH_PYTHON", "/home/artelnics/.venvs/ml/bin/python")
-CORPUS = os.environ.get("CHAT_CORPUS",
-                        "/home/artelnics/Documents/datasets/chat/chat_pairs.txt")
+VENV_PY = os.environ.get("BENCH_PYTHON", "python3")
+CORPUS = os.environ.get(
+    "CHAT_CORPUS",
+    os.path.join(os.environ.get("OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data")),
+                 "chat", "chat_pairs.txt"))
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_energy")
 D, H, FF, LAYERS = 512, 8, 2048, 6
 

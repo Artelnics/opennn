@@ -29,8 +29,11 @@ import argparse, json, os, re, subprocess, sys, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
-VENV_PY = os.environ.get("BENCH_PYTHON", "/home/artelnics/.venvs/ml/bin/python")
-DEFAULT_CORPUS = os.environ.get("CHAT_CORPUS", "/home/artelnics/Documents/datasets/chat/chat_pairs.txt")
+VENV_PY = os.environ.get("BENCH_PYTHON", "python3")
+DEFAULT_CORPUS = os.environ.get(
+    "CHAT_CORPUS",
+    os.path.join(os.environ.get("OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data")),
+                 "chat", "chat_pairs.txt"))
 CORPUS = DEFAULT_CORPUS   # overridden by --corpus in main()
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_maxbatch_trial")
 D, H, FF, LAYERS = 512, 8, 2048, 6
@@ -258,8 +261,19 @@ def main():
                       f"{(r['speed_sps'] or 0):>12.1f} {str(r['peak_at_max']):>14s}")
 
     if args.result_json:
+        def _cap(cmd):
+            try:
+                return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout.strip() or None
+            except Exception:
+                return None
         artifact = {
-            "benchmark": "transformer-max-batch",
+            "benchmark_id": "gpu-transformer-max-batch",
+            "provenance": {
+                "generated_utc": time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()),
+                "git_commit": _cap(["git", "rev-parse", "HEAD"]),
+                "git_dirty": bool(_cap(["git", "status", "--porcelain"])),
+                "gpu_name": _cap(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]),
+            },
             "corpus": CORPUS,
             "model": {"d_model": D, "heads": H, "ff": FF, "layers": LAYERS,
                       "input_vocab": shape[0], "output_vocab": shape[1],

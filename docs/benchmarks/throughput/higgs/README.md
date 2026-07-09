@@ -93,7 +93,7 @@ cmake -S ../../.. -B ../../../build-benchmarks \
   -DOpenNN_BUILD_BENCHMARKS=ON
 cmake --build ../../../build-benchmarks --config Release --target opennn_speed opennn_higgs_cpu
 
-cd docs/benchmarks/throughput/training-speed
+cd docs/benchmarks/throughput/higgs-gpu
 python run_higgs_dense.py \
   --train "$OPENNN_BENCH_DATA/higgs/higgs_train.csv" \
   --test "$OPENNN_BENCH_DATA/higgs/higgs_test.csv" \

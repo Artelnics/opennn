@@ -77,10 +77,10 @@ configuration (no weight decay, no gradient clipping).
 # 1. Build the OpenNN trial (registered in docs/benchmarks/CMakeLists.txt).
 cmake --build build --target opennn_transformer_maxbatch_trial -j
 
-# 2a. Alpaca corpus: the ChatGPT example already writes
-#     /home/.../datasets/chat/chat_pairs.txt from Stanford Alpaca.
-# 2b. WMT14 En-De corpus (standard, publishable):
+# 2a. Alpaca corpus -> $OPENNN_BENCH_DATA/chat/chat_pairs.txt:
 export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
+python docs/benchmarks/energy/transformer-energy/prepare_chat.py
+# 2b. WMT14 En-De corpus (standard, publishable):
 python docs/benchmarks/capacity/transformer-max-batch/prepare_wmt14.py
 
 # 3. Run the full comparison (torch + TF live in the ml venv).
@@ -100,7 +100,8 @@ python docs/benchmarks/capacity/transformer-max-batch/run_transformer_maxbatch.p
     --result-json docs/benchmarks/results/gpu-transformer-max-batch-wmt14.json
 ```
 
-Environment: PyTorch and TensorFlow are installed in `~/.venvs/ml`. TensorFlow
-needs the venv's bundled NVIDIA libs on `LD_LIBRARY_PATH` to see the GPU; the
+Environment: point `BENCH_PYTHON` at the Python that has PyTorch and TensorFlow
+installed (default `python3`). TensorFlow needs that interpreter's bundled NVIDIA
+libs on `LD_LIBRARY_PATH` to see the GPU; the
 driver sets this automatically for the TF subprocess only (PyTorch and OpenNN
 use their own CUDA runtimes).

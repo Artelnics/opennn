@@ -1,16 +1,21 @@
-//   OpenNN data-capacity benchmark.
+//   OpenNN data-capacity benchmark (HIGGS rows).
 //
-//   Loads a headerless Rosenbrock CSV into a TabularDataset (the default,
-//   in-RAM float32 matrix), builds the article's network (N -> N -> 1, tanh),
-//   and runs a short Adam training so the batch buffers are actually
-//   allocated. Prints the process peak working set (resident memory).
+//   Loads a headerless HIGGS CSV into a TabularDataset (the default, in-RAM
+//   float32 matrix), builds a small dense net (28 -> hidden -> 1), and runs a
+//   short Adam training so the batch buffers are actually allocated. Prints the
+//   process peak working set (resident memory).
+//
+//   The CSV is the prepared HIGGS training file (28 features + 1 label per row)
+//   tiled up to the sweep's target sample count by tile_higgs.exe, so every
+//   value is a real HIGGS row rather than synthetic data. See
+//   ../../throughput/higgs/README.md for the dataset contract.
 //
 //   A "successful" run loads the file and trains; if the dataset does not fit
 //   in RAM the allocation throws std::bad_alloc (caught -> exit 1) or the OS
-//   terminates the process. The driver script sweeps file sizes to find the
+//   terminates the process. The driver script sweeps sample counts to find the
 //   largest one that still succeeds.
 //
-//   usage:  opennn_capacity <csv_path> <input_variables>
+//   usage:  opennn_capacity <csv_path> [hidden_neurons]
 
 #include <iostream>
 #include <string>
@@ -53,20 +58,21 @@ int main(int argc, char* argv[])
 {
     try
     {
-        if (argc < 3)
+        if (argc < 2)
         {
-            std::cerr << "usage: opennn_capacity <csv_path> <input_variables>\n";
+            std::cerr << "usage: opennn_capacity <csv_path> [hidden_neurons]\n";
             return 2;
         }
 
         const std::string csv_path = argv[1];
-        const Index input_variables = Index(std::stoll(argv[2]));
+        const Index hidden_neurons = (argc > 2) ? Index(std::stoll(argv[2])) : Index(1024);
 
         set_seed(42);
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        // Load the CSV: comma-separated, no header, no id column.
-        // This is where a too-large dataset runs out of memory.
+        // Load the CSV: comma-separated, no header, no id column. HIGGS rows are
+        // 28 features + 1 label; TabularDataset defaults the last column to the
+        // target. This is where a too-large dataset runs out of memory.
         TabularDataset dataset(csv_path, ",", false, false);
 
         const Index samples = dataset.get_samples_number();
@@ -78,9 +84,11 @@ int main(int argc, char* argv[])
 
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);
 
-        // Network: input_variables -> input_variables -> 1, tanh then linear.
+        // Small dense net: 28 -> hidden -> 1, tanh then linear. The geometry
+        // only needs to be big enough to allocate the training batch buffers;
+        // the benchmark measures the data-loading footprint, not model size.
         ApproximationNetwork network(dataset.get_input_shape(),
-                                     {input_variables},
+                                     {hidden_neurons},
                                      dataset.get_target_shape());
 
         TrainingStrategy training_strategy(&network, &dataset);

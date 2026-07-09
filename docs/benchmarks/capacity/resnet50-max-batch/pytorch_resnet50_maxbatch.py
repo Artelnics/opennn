@@ -78,11 +78,18 @@ def make_batch(data_dir, batch):
     return xb, yb, int(labels.max()) + 1
 
 
+def default_data():
+    root = os.environ.get("OPENNN_BENCH_DATA",
+                          os.path.expanduser("~/opennn-benchmark-data"))
+    return os.path.join(root, "cifar10")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default="../../throughput/resnet50-training-speed/cifar10")
+    ap.add_argument("--data", default=default_data())
     ap.add_argument("--batch", type=int, required=True)
     ap.add_argument("--path", choices=["compile", "eager"], default="compile")
+    ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-fraction", type=float, default=None)
     # 1 = speed config (cuDNN autotune picks fastest algo, more scratch);
     # 0 = memory config (heuristic, avoids autotune scratch dominating capacity).
@@ -111,10 +118,15 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+    use_bf16 = args.precision == "bf16"
+    autocast_ctx = (torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16
+                    else torch.autocast("cuda", enabled=False))
+
     def train_step():
         model.train()
         optimizer.zero_grad(set_to_none=True)
-        loss = loss_fn(model(xb), yb)
+        with autocast_ctx:
+            loss = loss_fn(model(xb), yb)
         if not torch.isfinite(loss):
             raise RuntimeError("loss is not finite")
         loss.backward()
@@ -128,7 +140,7 @@ def main():
     print(f"engine=pytorch_{args.path}")
     print(f"path={args.path}")
     print(f"device={torch.cuda.get_device_name(0)}")
-    print(f"samples={args.batch} batch={args.batch} precision=fp32 classes={classes}")
+    print(f"samples={args.batch} batch={args.batch} precision={args.precision} classes={classes}")
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
     print(f"loss_warmup={loss0:.6g}")
     print(f"loss_final={loss1:.6g}")

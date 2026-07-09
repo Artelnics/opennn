@@ -1,16 +1,20 @@
 # TensorFlow data-capacity benchmark (the standard pandas load path).
 #
-# Mirrors pytorch_capacity.py / opennn_capacity.cpp: read a headerless Rosenbrock
+# Mirrors pytorch_capacity.py / opennn_capacity.cpp: read a headerless HIGGS
 # CSV with pandas (float64 by default, the out-of-the-box path), move it into
-# float32 tensors, build the same N -> N -> 1 tanh MLP, and run a short Adam
-# training so the batch buffers are allocated. Prints the process peak working
-# set (resident memory).
+# float32 tensors, build a small 28 -> hidden -> 1 tanh MLP, and run a short
+# Adam training so the batch buffers are allocated. Prints the process peak
+# working set (resident memory).
+#
+# The CSV is the prepared HIGGS training file (28 features + 1 label per row)
+# tiled up to the sweep's target sample count by tile_higgs.exe. See
+# ../../throughput/higgs/README.md for the dataset contract.
 #
 # TensorFlow users load CSVs with pandas exactly as PyTorch users do, so the load
 # footprint -- the thing that runs out of RAM on a large file -- is the same
 # pandas DataFrame allocation.
 #
-#   usage:  python tensorflow_capacity.py <csv_path> <input_variables> [read_dtype]
+#   usage:  python tensorflow_capacity.py <csv_path> [read_dtype]
 
 import ctypes
 import ctypes.wintypes as wt
@@ -57,13 +61,12 @@ def current_working_set_mb():
 
 
 def main():
-    if len(sys.argv) < 3:
-        sys.stderr.write("usage: python tensorflow_capacity.py <csv_path> <input_variables> [read_dtype]\n")
+    if len(sys.argv) < 2:
+        sys.stderr.write("usage: python tensorflow_capacity.py <csv_path> [read_dtype]\n")
         return 2
 
     csv_path = sys.argv[1]
-    input_variables = int(sys.argv[2])
-    read_dtype = sys.argv[3] if len(sys.argv) > 3 else "float64"
+    read_dtype = sys.argv[2] if len(sys.argv) > 2 else "float64"
 
     try:
         import numpy as np
@@ -77,6 +80,9 @@ def main():
         frame = pd.read_csv(csv_path, header=None, dtype=np_read)
         print(f"read_dtype={read_dtype}")
         print(f"loaded_samples={len(frame)}")
+
+        # HIGGS layout: 28 feature columns then the label column last.
+        input_variables = frame.shape[1] - 1
 
         values = tf.convert_to_tensor(frame.to_numpy(dtype=np.float32))
         del frame

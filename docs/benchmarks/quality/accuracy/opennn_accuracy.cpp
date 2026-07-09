@@ -1,75 +1,234 @@
-//   OpenNN accuracy-parity benchmark on the Rosenbrock dataset (10 inputs).
-//   Trains an MLP on the shared normalized train split and writes its test-set
-//   predictions for the neutral scorer. Scaling/unscaling/bounding layers are
-//   neutralized so the pre-normalized data is used as-is, matching PyTorch/TF.
+// OpenNN accuracy-parity benchmark on the HIGGS classification task.
+//
+// Trains the canonical HIGGS dense classifier (28 -> 1024 -> 1024 -> 1, ReLU
+// hidden, sigmoid output, binary cross entropy, Adam, fixed epochs) on the
+// shared prepared split and prints the test-set quality so the parity between
+// OpenNN, PyTorch, and TensorFlow can be checked at a fixed training budget.
+//
+// Usage:
+//   opennn_accuracy <train_csv> <test_csv> [epochs] [batch] [hidden] [hidden_layers]
+//
+// Reads $OPENNN_BENCH_DATA/higgs/{higgs_train.csv,higgs_test.csv} by default.
+// Prints (one key=value per line):
+//   test_accuracy, test_log_loss, test_roc_auc, RESULT=OK
 
-#include <fstream>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/unscaling_layer.h"
-#include "../../../opennn/bounding_layer.h"
-#include "../../../opennn/training_strategy.h"
 #include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/random_utilities.h"
 #include "../../../opennn/configuration.h"
+#include "../../../opennn/dense_layer.h"
+#include "../../../opennn/forward_propagation.h"
+#include "../../../opennn/neural_network.h"
+#include "../../../opennn/random_utilities.h"
+#include "../../../opennn/tabular_dataset.h"
+#include "../../../opennn/training_strategy.h"
 
 using namespace opennn;
 
+namespace
+{
+
+float clamp_probability(float value)
+{
+    if (value < 1.0e-7f) return 1.0e-7f;
+    if (value > 1.0f - 1.0e-7f) return 1.0f - 1.0e-7f;
+    return value;
+}
+
+std::string bench_data_path(const std::string& leaf)
+{
+    const char* root = std::getenv("OPENNN_BENCH_DATA");
+    const std::string base = root && *root
+        ? std::string(root)
+        : std::string(std::getenv("HOME") ? std::getenv("HOME") : ".") + "/opennn-benchmark-data";
+    return base + "/higgs/" + leaf;
+}
+
+std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+                                            const Shape& target_shape,
+                                            Index hidden,
+                                            Index hidden_layers)
+{
+    auto network = std::make_unique<NeuralNetwork>();
+    Shape current = input_shape;
+
+    for (Index i = 0; i < hidden_layers; ++i)
+    {
+        network->add_layer(std::make_unique<opennn::Dense>(
+            current,
+            Shape{hidden},
+            "ReLU",
+            false,
+            "higgs_dense_" + std::to_string(i + 1)));
+        current = network->get_output_shape();
+    }
+
+    network->add_layer(std::make_unique<opennn::Dense>(
+        current,
+        target_shape,
+        "Sigmoid",
+        false,
+        "higgs_output"));
+
+    network->compile();
+    network->set_parameters_glorot();
+    return network;
+}
+
+double calculate_auc(const std::vector<std::pair<float, int>>& scored)
+{
+    const Index n = Index(scored.size());
+    if (n == 0) return 0.0;
+
+    Index positives = 0;
+    for (const auto& item : scored)
+        positives += item.second ? 1 : 0;
+    const Index negatives = n - positives;
+    if (positives == 0 || negatives == 0) return 0.0;
+
+    std::vector<std::pair<float, int>> sorted = scored;
+    std::sort(sorted.begin(), sorted.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    double positive_rank_sum = 0.0;
+    Index i = 0;
+    while (i < n)
+    {
+        Index j = i + 1;
+        while (j < n && sorted[j].first == sorted[i].first) ++j;
+        const double average_rank = (double(i + 1) + double(j)) * 0.5;
+        for (Index k = i; k < j; ++k)
+            if (sorted[k].second) positive_rank_sum += average_rank;
+        i = j;
+    }
+
+    return (positive_rank_sum - double(positives) * double(positives + 1) * 0.5)
+         / (double(positives) * double(negatives));
+}
+
+struct BinaryMetrics
+{
+    double accuracy = 0.0;
+    double log_loss = 0.0;
+    double auc = 0.0;
+    Index samples = 0;
+};
+
+BinaryMetrics evaluate(NeuralNetwork& network,
+                       const std::string& test_path,
+                       Index batch)
+{
+    TabularDataset test_dataset(test_path, ",", false, false);
+    test_dataset.set_sample_roles("Testing");
+    const MatrixR& all = test_dataset.get_data();
+    const Index samples = all.rows();
+    const Index inputs_number = test_dataset.get_input_shape()[0];
+    const Index processed = (samples / batch) * batch;
+    const MatrixR inputs = all.leftCols(inputs_number);
+
+    ForwardPropagation forward_propagation(batch, &network);
+    std::vector<std::pair<float, int>> scored;
+    scored.reserve(size_t(processed));
+
+    double log_loss = 0.0;
+    Index correct = 0;
+    for (Index i = 0; i + batch <= samples; i += batch)
+    {
+        float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
+        TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
+        network.forward_propagate({view}, forward_propagation, false);
+        const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
+
+        for (Index r = 0; r < batch; ++r)
+        {
+            const float probability = clamp_probability(outputs(r, 0));
+            const int label = all(i + r, inputs_number) >= 0.5f ? 1 : 0;
+            const int predicted = probability >= 0.5f ? 1 : 0;
+            correct += predicted == label ? 1 : 0;
+            log_loss += label
+                ? -std::log(double(probability))
+                : -std::log(double(1.0f - probability));
+            scored.emplace_back(probability, label);
+        }
+    }
+
+    BinaryMetrics metrics;
+    metrics.samples = processed;
+    if (processed > 0)
+    {
+        metrics.accuracy = double(correct) / double(processed);
+        metrics.log_loss = log_loss / double(processed);
+        metrics.auc = calculate_auc(scored);
+    }
+    return metrics;
+}
+
+} // namespace
+
 int main(int argc, char* argv[])
 {
-    const unsigned seed = argc > 1 ? unsigned(stoul(argv[1])) : 0;
-    set_seed(seed);
-    Configuration::instance().set(Device::Auto, Type::FP32);
+    try
+    {
+        const std::string train_path = argc > 1 ? argv[1] : bench_data_path("higgs_train.csv");
+        const std::string test_path = argc > 2 ? argv[2] : bench_data_path("higgs_test.csv");
+        const Index epochs = argc > 3 ? Index(std::stoll(argv[3])) : 5;
+        const Index batch = argc > 4 ? Index(std::stoll(argv[4])) : 1024;
+        const Index hidden = argc > 5 ? Index(std::stoll(argv[5])) : 1024;
+        const Index hidden_layers = argc > 6 ? Index(std::stoll(argv[6])) : 2;
 
-    // Shared normalized data: 10 inputs + 1 target, comma-separated, no header.
-    TabularDataset dataset("rosenbrock_train.csv", ",", false, false);
+        set_seed(42);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 
-    // The constructor auto-splits 60/20/20 into Training/Validation/Testing.
-    // PyTorch and TensorFlow train on the whole train file, so put every sample
-    // in the Training role here too (no validation hold-out, no early stopping)
-    // for an apples-to-apples comparison.
-    dataset.set_sample_roles("Training");
+        TabularDataset dataset(train_path, ",", false, false);
+        dataset.set_sample_roles("Training");
+        const Index samples = dataset.get_samples_number();
 
-    ApproximationNetwork network(dataset.get_input_shape(), {50, 50}, dataset.get_target_shape());
+        auto network = make_network(dataset.get_input_shape(),
+                                    dataset.get_target_shape(),
+                                    hidden,
+                                    hidden_layers);
 
-    // Neutralize scaling/unscaling/bounding: data is already normalized.
-    static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
-    static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
-    static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");
+        TrainingStrategy training_strategy(network.get(), &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_loss("MeanSquaredError");
-    // OpenNN defaults to L2 regularization (weight 0.001); PyTorch/TF use none.
-    // Disable it so all three minimize the same pure-MSE objective.
-    training_strategy.get_loss()->set_regularization("NoRegularization");
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
+            training_strategy.get_optimization_algorithm());
+        adam->set_batch_size(batch);
+        adam->set_display_period(1000000);
+        adam->set_gradient_clip_norm(0.0f);
+        adam->set_maximum_epochs(epochs);
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-    adam->set_maximum_epochs(argc > 2 ? Index(stoul(argv[2])) : 200);
-    adam->set_batch_size(64);
-    adam->set_display(false);
+        training_strategy.train();
 
-    // Match PyTorch/TF Adam: no gradient-norm clipping (theirs is off by default).
-    adam->set_gradient_clip_norm(1.0e9f);
-    if (argc > 3) adam->set_learning_rate(stof(argv[3]));
+        BinaryMetrics metrics = evaluate(*network, test_path, batch);
 
-    const auto results = training_strategy.train();
-    cerr << "final_training_error " << results.get_training_error() << "\n";
-
-    // Predict on the shared test split and write one prediction per line.
-    TabularDataset test("rosenbrock_test.csv", ",", false, false);
-    const Index inputs_number = dataset.get_input_shape()[0];
-    const MatrixR inputs = test.get_data().leftCols(inputs_number);
-
-    const MatrixR outputs = network.calculate_outputs(inputs);
-
-    ofstream out("pred_opennn.txt");
-    out.precision(10);
-    for (Index i = 0; i < outputs.rows(); ++i)
-        out << outputs(i, 0) << "\n";
-
-    return 0;
+        std::cout << "engine=opennn\n";
+        std::cout << "device=cpu\n";
+        std::cout << "samples=" << samples << "\n";
+        std::cout << "batch=" << batch << "\n";
+        std::cout << "epochs=" << epochs << "\n";
+        std::cout << "hidden=" << hidden << "\n";
+        std::cout << "hidden_layers=" << hidden_layers << "\n";
+        std::cout << "activation=relu\n";
+        std::cout << "test_samples=" << metrics.samples << "\n";
+        std::cout << "test_accuracy=" << metrics.accuracy << "\n";
+        std::cout << "test_log_loss=" << metrics.log_loss << "\n";
+        std::cout << "test_roc_auc=" << metrics.auc << "\n";
+        std::cout << "RESULT=OK\n";
+        return 0;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cout << "RESULT=ERROR\n";
+        return 1;
+    }
 }

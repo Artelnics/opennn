@@ -8,7 +8,7 @@
 //   code (no environment variables); the prefetch-pool depth is set with the
 //   optional [batch_pool] argument (the pool1 engine passes 1).
 //
-//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32] [batch_pool] [workspace_mib]
+//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32|bf16] [batch_pool] [workspace_mib]
 //          workspace_mib: 0 (default) = AUTO library policy; >0 = explicit conv workspace cap
 
 #include <cmath>
@@ -123,7 +123,14 @@ int main(int argc, char* argv[])
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
 
-    const std::string data_dir = argc > 1 ? argv[1] : "../../throughput/resnet50-training-speed/cifar10";
+    const char* bench_data_env = std::getenv("OPENNN_BENCH_DATA");
+    const char* home_env = std::getenv("HOME");
+    const std::string default_data_dir =
+        (bench_data_env && *bench_data_env
+             ? std::string(bench_data_env)
+             : std::string(home_env ? home_env : ".") + "/opennn-benchmark-data")
+        + "/cifar10";
+    const std::string data_dir = argc > 1 ? argv[1] : default_data_dir;
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
     const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;   // 0 = library default
@@ -136,10 +143,12 @@ int main(int argc, char* argv[])
         memory_debug::reset();
 
         throw_if(batch <= 0, "Batch size must be positive.");
-        throw_if(precision != "fp32", "Only fp32 is supported by this benchmark trial.");
+        throw_if(precision != "fp32" && precision != "bf16",
+                 "Precision must be fp32 or bf16.");
 
         set_seed(42);
-        Configuration::instance().set(Device::CUDA, Type::FP32);
+        const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
+        Configuration::instance().set(Device::CUDA, training_type);
 
         // off = autotune (cap off); heur = plain heuristic (autotune off, cap off);
         // auto = AUTO cap (heuristic); N = explicit MiB cap (heuristic).

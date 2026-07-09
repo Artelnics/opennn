@@ -204,9 +204,9 @@ def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
 
 
 PYTHON_ENGINES = {
-    "pytorch": {"script": HERE / "pt_forecasting.py",
+    "pytorch": {"script": HERE / "pytorch_forecasting.py",
                 "version": "import torch; print(torch.__version__)"},
-    "tensorflow": {"script": HERE / "tf_forecasting.py",
+    "tensorflow": {"script": HERE / "tensorflow_forecasting.py",
                    "version": "import tensorflow as tf; print(tf.__version__)"},
 }
 
@@ -271,8 +271,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--bin", default=default_binary(),
                         help=f"Path to the {BINARY_NAME} executable")
-    parser.add_argument("--data-dir", default=HERE / "data", type=Path,
-                        help="Directory containing/preparing beijing_pm25_forecasting.csv")
+    parser.add_argument("--data-dir",
+                        default=Path(os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data"))) / "beijing_pm25",
+                        type=Path,
+                        help="Directory containing/preparing beijing_pm25_forecasting.csv (default: $OPENNN_BENCH_DATA/beijing_pm25)")
     parser.add_argument("--raw-path", type=Path,
                         help="Optional local UCI raw CSV or ZIP passed to prepare_beijing_pm25.py")
     parser.add_argument("--no-prepare", action="store_true",

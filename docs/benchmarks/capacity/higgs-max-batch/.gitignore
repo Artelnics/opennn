@@ -1,0 +1,5 @@
+# compiled benchmark binaries + generated data / caches
+opennn_*
+*.log
+*.csv
+__pycache__/

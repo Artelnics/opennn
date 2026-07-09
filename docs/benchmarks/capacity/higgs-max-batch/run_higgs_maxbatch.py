@@ -38,7 +38,7 @@ import argparse, json, os, re, subprocess, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
-VENV_PY = os.environ.get("BENCH_PYTHON", "/home/artelnics/.venvs/ml/bin/python")
+VENV_PY = os.environ.get("BENCH_PYTHON", "python3")
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_higgs_maxbatch_trial")
 RESULTS_DIR = os.path.join(REPO, "docs", "benchmarks", "results")
 
@@ -274,8 +274,19 @@ def main():
         stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
         path = args.result_json or os.path.join(
             RESULTS_DIR, f"{'cpu' if args.device == 'cpu' else 'gpu'}-higgs-max-batch-{stamp}.json")
+        def _cap(cmd):
+            try:
+                return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout.strip() or None
+            except Exception:
+                return None
         artifact = {
-            "benchmark": "higgs-max-batch",
+            "benchmark_id": "gpu-higgs-max-batch",
+            "provenance": {
+                "generated_utc": stamp,
+                "git_commit": _cap(["git", "rev-parse", "HEAD"]),
+                "git_dirty": bool(_cap(["git", "status", "--porcelain"])),
+                "gpu_name": _cap(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]),
+            },
             "device": args.device,
             "model": {"inputs": 28, "hidden": args.hidden,
                       "hidden_layers": args.layers, "outputs": 1,

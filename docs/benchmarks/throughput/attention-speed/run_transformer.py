@@ -119,7 +119,7 @@ def main():
 
     result = {
         "schema_version": 1,
-        "benchmark_id": "gpu-transformer-inference",
+        "benchmark_id": "gpu-transformer-inference-speed",
         "run_id": run_id,
         "git_commit": git_commit(),
         "configuration": {

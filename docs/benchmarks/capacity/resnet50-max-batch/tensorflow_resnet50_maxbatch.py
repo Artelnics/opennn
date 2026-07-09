@@ -66,14 +66,23 @@ def make_batch(data_dir, batch):
     return xb, yb, int(labels.max()) + 1
 
 
+def default_data():
+    root = os.environ.get("OPENNN_BENCH_DATA",
+                          os.path.expanduser("~/opennn-benchmark-data"))
+    return os.path.join(root, "cifar10")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default="../../throughput/resnet50-training-speed/cifar10")
+    ap.add_argument("--data", default=default_data())
     ap.add_argument("--batch", type=int, required=True)
+    ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-limit-mb", type=int, default=0)
     args = ap.parse_args()
 
     device_name = configure_gpu(args.memory_limit_mb or None)
+    if args.precision == "bf16":
+        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
     tf.random.set_seed(42)
 
     xb_np, yb_np, classes = make_batch(args.data, args.batch)
@@ -107,7 +116,7 @@ def main():
     print("engine=tensorflow_xla")
     print("path=xla")
     print(f"device={device_name}")
-    print(f"samples={args.batch} batch={args.batch} precision=fp32 classes={classes}")
+    print(f"samples={args.batch} batch={args.batch} precision={args.precision} classes={classes}")
     print(f"parameters={model.count_params()}")
     print(f"loss_warmup={loss0_value:.6g}")
     print(f"loss_final={loss1_value:.6g}")

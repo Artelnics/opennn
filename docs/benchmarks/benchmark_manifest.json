@@ -5,33 +5,39 @@
  "description": "Machine-readable inventory of the OpenNN benchmark suite. Each entry names a benchmark's folder, what it compares, the metric names it reports, and the command(s) to run it. No measured results are stored here or anywhere in this tree; runners write their own result JSON under results/. Follow each benchmark's README for full instructions.",
  "benchmarks": [
   {
-   "id": "accuracy-rosenbrock",
+   "id": "accuracy-higgs",
    "folder": "quality/accuracy",
    "readme": "quality/accuracy/README.md",
    "category": "quality",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow, predictive accuracy on the Rosenbrock regression task",
-   "metrics": ["r2", "mse"],
-   "runner": ["cd docs/benchmarks/quality/accuracy && ./run_accuracy.sh"]
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, predictive quality parity on the HIGGS dense classifier",
+   "metrics": ["test_accuracy", "test_log_loss", "test_roc_auc"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_accuracy",
+    "cd docs/benchmarks/quality/accuracy && python run_accuracy.py --engines opennn,pytorch,tensorflow --epochs 5 --runs 5"
+   ]
   },
   {
    "id": "precision-rosenbrock",
    "folder": "quality/precision",
    "readme": "quality/precision/README.md",
    "category": "quality",
-   "comparison": "OpenNN second-order optimizers vs PyTorch/TensorFlow Adam, best error floor on the Rosenbrock task",
+   "comparison": "OpenNN second-order optimizers (Levenberg-Marquardt, Quasi-Newton) vs PyTorch/TensorFlow first-order optimizers, best error floor on the Rosenbrock regression task (the one documented regression exception to the HIGGS rule)",
    "metrics": ["mse", "wall_time_s"],
-   "runner": ["cd docs/benchmarks/quality/precision && ./run_precision.sh"]
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_precision",
+    "cd docs/benchmarks/quality/precision && python run_precision.py"
+   ]
   },
   {
-   "id": "convergence-gate-rosenbrock",
+   "id": "convergence-higgs",
    "folder": "quality/convergence",
    "readme": "quality/convergence/README.md",
    "category": "quality",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow, wall-clock time to a fixed held-out quality target on the Rosenbrock task",
-   "metrics": ["time_to_target_s", "epochs", "test_mse"],
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, wall-clock time to a fixed held-out quality target on the HIGGS dense classifier",
+   "metrics": ["time_to_target_s", "epochs_to_target", "test_log_loss"],
    "runner": [
-    "cd docs/benchmarks/quality/convergence && bash build.sh",
-    "cd docs/benchmarks/quality/convergence && python run_convergence.py --target 0.06 --max-epochs 3000 --runs 5"
+    "cmake --build build-benchmarks --target opennn_convergence",
+    "cd docs/benchmarks/quality/convergence && python run_convergence.py --target 0.60 --max-epochs 200 --runs 5"
    ]
   },
   {
@@ -47,66 +53,99 @@
    ]
   },
   {
-   "id": "gpu-cnn-training-speed",
-   "folder": "throughput/cnn-training-speed",
-   "readme": "throughput/cnn-training-speed/README.md",
-   "category": "throughput",
-   "comparison": "OpenNN GPU-resident data vs PyTorch vs TensorFlow, small CNN training on MNIST",
-   "metrics": ["samples_per_sec", "epoch_s", "final_loss"],
-   "runner": ["cd docs/benchmarks/throughput/cnn-training-speed && python run_cnn.py"]
-  },
-  {
-   "id": "gpu-resnet50-training-speed",
-   "folder": "throughput/resnet50-training-speed",
-   "readme": "throughput/resnet50-training-speed/README.md",
-   "category": "throughput",
-   "comparison": "OpenNN CUDA graph vs PyTorch (torch.compile and eager) vs TensorFlow, ResNet-50 training on CIFAR / ImageNet geometry",
-   "metrics": ["samples_per_sec", "epoch_s", "speedup"],
-   "runner": ["cd docs/benchmarks/throughput/resnet50-training-speed && python run_resnet50.py --dataset cifar10 --epochs 5 --batch 128 --runs 5 --precision both"]
-  },
-  {
-   "id": "gpu-transformer-speed",
+   "id": "gpu-transformer-inference-speed",
    "folder": "throughput/attention-speed",
    "readme": "throughput/attention-speed/README.md",
    "category": "throughput",
-   "comparison": "OpenNN resident Transformer vs PyTorch nn.Transformer (and TensorFlow for inference), encoder-decoder Transformer inference and training, bf16 and fp32",
-   "metrics": ["tokens_per_sec", "samples_per_sec", "energy_per_sample"],
-   "runner": ["cd docs/benchmarks/throughput/attention-speed && ./build.sh && python run_transformer.py --seqs 128,256,512 --batch 32 --runs 5 --precision bf16"]
-  },
-  {
-   "id": "cpu-inference-speed",
-   "folder": "throughput/inference-speed",
-   "readme": "throughput/inference-speed/README.md",
-   "category": "throughput",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow, dense MLP batch inference on CPU",
-   "metrics": ["samples_per_sec", "ms_per_batch"],
+   "comparison": "OpenNN resident Transformer vs PyTorch nn.Transformer vs TensorFlow, encoder-decoder inference throughput, fp32 and bf16",
+   "metrics": ["tokens_per_sec", "samples_per_sec"],
    "runner": [
-    "cmake --build build-benchmarks --target opennn_inference",
-    "cd docs/benchmarks/throughput/inference-speed && ./run_inference.sh rosenbrock.csv 8000 1000 1000 30"
+    "cmake --build build-benchmarks --target opennn_transformer_resident opennn_transformer_infer",
+    "cd docs/benchmarks/throughput/attention-speed && python run_transformer.py --seqs 128,256,512 --batch 32 --runs 5 --precision both"
    ]
   },
   {
-   "id": "cpu-higgs-dense",
-   "folder": "throughput/higgs",
-   "readme": "throughput/higgs/README.md",
+   "id": "gpu-transformer-training-speed",
+   "folder": "throughput/attention-speed",
+   "readme": "throughput/attention-speed/README.md",
    "category": "throughput",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow on the prepared HIGGS dense classifier, CPU training and inference",
-   "metrics": ["samples_per_sec", "median_epoch_s", "test_accuracy", "test_log_loss", "test_roc_auc"],
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, encoder-decoder Transformer training throughput (fwd+bwd+Adam), fp32 and bf16",
+   "metrics": ["samples_per_sec", "tokens_per_sec"],
    "runner": [
-    "cmake --build build-benchmarks --target opennn_higgs_cpu",
-    "cd docs/benchmarks/throughput/higgs && OPENNN_HIGGS_CPU_BIN=/path/to/opennn_higgs_cpu python run_higgs_cpu.py train --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 1 --batch 1024 --runs 1"
+    "cmake --build build-benchmarks --target opennn_transformer_train",
+    "cd docs/benchmarks/throughput/attention-speed && python run_transformer_train.py --runs 5 --precision both"
+   ]
+  },
+  {
+   "id": "gpu-resnet50-training-speed",
+   "folder": "throughput/resnet50",
+   "readme": "throughput/resnet50/README.md",
+   "category": "throughput",
+   "comparison": "OpenNN CUDA graph vs PyTorch (torch.compile/eager) vs TensorFlow XLA, ResNet-50 training throughput on CIFAR, fp32 and bf16",
+   "metrics": ["samples_per_sec", "epoch_s", "speedup"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_resnet50_speed",
+    "cd docs/benchmarks/throughput/resnet50 && python run_resnet50.py --dataset cifar10 --epochs 5 --batch 128 --runs 5 --precision both"
+   ]
+  },
+  {
+   "id": "gpu-resnet50-inference-speed",
+   "folder": "throughput/resnet50",
+   "readme": "throughput/resnet50/README.md",
+   "category": "throughput",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, ResNet-50 forward-only inference throughput on CIFAR, fp32 and bf16",
+   "metrics": ["samples_per_sec", "ms_per_batch"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_resnet50_infer",
+    "cd docs/benchmarks/throughput/resnet50 && python run_resnet50_infer.py --dataset cifar10 --batch 128 --runs 5 --precision both"
    ]
   },
   {
    "id": "gpu-higgs-dense-training-speed",
-   "folder": "throughput/training-speed",
-   "readme": "throughput/training-speed/README.md",
+   "folder": "throughput/higgs-gpu",
+   "readme": "throughput/higgs-gpu/README.md",
    "category": "throughput",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow, HIGGS dense training speed with a test-set quality gate",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, HIGGS dense training throughput with a test-set quality gate, fp32 and bf16",
    "metrics": ["samples_per_sec", "median_epoch_s", "test_accuracy", "test_log_loss", "test_roc_auc"],
    "runner": [
     "cmake --build build-benchmarks --target opennn_speed",
-    "cd docs/benchmarks/throughput/training-speed && python run_higgs_dense.py --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 5 --batch 7000 --runs 5 --precision bf16"
+    "cd docs/benchmarks/throughput/higgs-gpu && python run_higgs_dense.py --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 5 --batch 7000 --runs 5 --precision both"
+   ]
+  },
+  {
+   "id": "gpu-higgs-dense-inference-speed",
+   "folder": "throughput/higgs-gpu",
+   "readme": "throughput/higgs-gpu/README.md",
+   "category": "throughput",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, HIGGS dense forward-only inference throughput on GPU, fp32 and bf16",
+   "metrics": ["samples_per_sec", "ms_per_batch"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_higgs_infer",
+    "cd docs/benchmarks/throughput/higgs-gpu && python run_higgs_infer.py --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --batch 8192 --runs 5 --precision both"
+   ]
+  },
+  {
+   "id": "cpu-higgs-dense-training-speed",
+   "folder": "throughput/higgs",
+   "readme": "throughput/higgs/README.md",
+   "category": "throughput",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, HIGGS dense training throughput on CPU (fp32), with a test-set quality gate",
+   "metrics": ["samples_per_sec", "median_epoch_s", "test_accuracy", "test_log_loss", "test_roc_auc"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_higgs_cpu",
+    "cd docs/benchmarks/throughput/higgs && python run_higgs_cpu.py train --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 1 --batch 1024 --runs 1"
+   ]
+  },
+  {
+   "id": "cpu-higgs-dense-inference-speed",
+   "folder": "throughput/higgs",
+   "readme": "throughput/higgs/README.md",
+   "category": "throughput",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, HIGGS dense forward-only inference throughput on CPU (fp32)",
+   "metrics": ["samples_per_sec", "ms_per_batch"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_higgs_cpu",
+    "cd docs/benchmarks/throughput/higgs && python run_higgs_cpu.py infer --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --batch 1024 --runs 5"
    ]
   },
   {
@@ -114,7 +153,7 @@
    "folder": "throughput/precision-sweep",
    "readme": "throughput/precision-sweep/README.md",
    "category": "throughput",
-   "comparison": "OpenNN fp32 vs bf16 speedup across GPU workloads, inference and training",
+   "comparison": "OpenNN fp32 vs bf16 speedup across GPU workloads (supporting/internal, not a cross-framework comparison)",
    "metrics": ["samples_per_sec", "tokens_per_sec", "bf16_speedup"],
    "runner": ["cd docs/benchmarks/throughput/precision-sweep && python run_precision_sweep.py --runs 5"]
   },
@@ -123,7 +162,7 @@
    "folder": "capacity/data-capacity",
    "readme": "capacity/data-capacity/README.md",
    "category": "capacity",
-   "comparison": "OpenNN vs PyTorch vs TensorFlow, most tabular samples that fit and train under a fixed RAM cap",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, most HIGGS tabular rows that fit and train under a fixed RAM cap",
    "metrics": ["max_samples"],
    "runner": ["cd docs/benchmarks/capacity/data-capacity && ./run_sweep.ps1"]
   },

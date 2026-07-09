@@ -55,21 +55,21 @@ for the runner and command.
 ### quality/
 | Benchmark | What it runs |
 |---|---|
-| [accuracy](quality/accuracy/README.md) | Predictive accuracy (R²) on the Rosenbrock regression task |
-| [precision](quality/precision/README.md) | Best error floor per optimizer on the Rosenbrock task |
-| [convergence](quality/convergence/README.md) | Convergence diagnostic on the Rosenbrock task |
+| [accuracy](quality/accuracy/README.md) | Predictive quality parity (accuracy / log-loss / ROC-AUC) on the HIGGS dense classifier |
+| [precision](quality/precision/README.md) | Best error floor per optimizer on the Rosenbrock task (the one documented regression exception to the HIGGS rule) |
+| [convergence](quality/convergence/README.md) | Wall-clock time to a fixed held-out quality target on the HIGGS dense classifier |
 | [recurrent-lstm-forecasting](quality/recurrent-lstm-forecasting/README.md) | Recurrent vs LSTM forecasting on UCI Beijing PM2.5 |
 
 ### throughput/
-| Benchmark | What it runs |
+Each folder hosts a training and an inference benchmark for one model. GPU folders measure fp32 and bf16; the CPU folder measures fp32. All compare OpenNN vs PyTorch vs TensorFlow.
+
+| Benchmark folder | What it runs |
 |---|---|
-| [cnn-training-speed](throughput/cnn-training-speed/README.md) | Small CNN training on MNIST (GPU) |
-| [resnet50-training-speed](throughput/resnet50-training-speed/README.md) | ResNet-50 training on CIFAR / ImageNet-geometry (GPU) |
-| [attention-speed](throughput/attention-speed/README.md) | Encoder-decoder Transformer inference and training (GPU) |
-| [inference-speed](throughput/inference-speed/README.md) | Dense MLP batch inference (CPU) |
-| [higgs](throughput/higgs/README.md) | HIGGS dense classifier training and inference (CPU) |
-| [training-speed](throughput/training-speed/README.md) | HIGGS dense training speed with quality gate (GPU) |
-| [precision-sweep](throughput/precision-sweep/README.md) | Precision sweep driver |
+| [attention-speed](throughput/attention-speed/README.md) | Encoder-decoder Transformer training and inference (GPU) |
+| [resnet50](throughput/resnet50/README.md) | ResNet-50 training and inference on CIFAR (GPU) |
+| [higgs-gpu](throughput/higgs-gpu/README.md) | HIGGS dense training and inference (GPU) |
+| [higgs](throughput/higgs/README.md) | HIGGS dense training and inference (CPU) |
+| [precision-sweep](throughput/precision-sweep/README.md) | OpenNN fp32-vs-bf16 sweep (supporting/internal) |
 
 ### capacity/
 | Benchmark | What it runs |

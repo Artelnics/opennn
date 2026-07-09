@@ -2,18 +2,17 @@
 # framework, from the targets (rosenbrock.csv, last column) and a predictions
 # file (one predicted value per line, same order as the dataset rows).
 #
-# Usage: python score.py <label> <predictions_file>
+# Importable: run_precision.py calls mse() so every engine is scored identically.
+#
+# Usage: python score.py <label> <predictions_file> [targets_csv]
 
 import sys
 import csv
 
 
-def main():
-    label = sys.argv[1]
-    pred_path = sys.argv[2]
-
+def mse(targets_csv, pred_path):
     targets = []
-    with open("rosenbrock.csv", newline="") as f:
+    with open(targets_csv, newline="") as f:
         for row in csv.reader(f):
             targets.append(float(row[-1]))
 
@@ -27,8 +26,15 @@ def main():
     assert len(preds) == len(targets), f"{len(preds)} preds vs {len(targets)} targets"
 
     n = len(targets)
-    mse = sum((p - t) ** 2 for p, t in zip(preds, targets)) / n
-    print(f"{label:10s}  MSE={mse:.6f}")
+    return sum((p - t) ** 2 for p, t in zip(preds, targets)) / n
+
+
+def main():
+    label = sys.argv[1]
+    pred_path = sys.argv[2]
+    targets_csv = sys.argv[3] if len(sys.argv) > 3 else "rosenbrock.csv"
+
+    print(f"{label:10s}  MSE={mse(targets_csv, pred_path):.6f}")
 
 
 if __name__ == "__main__":

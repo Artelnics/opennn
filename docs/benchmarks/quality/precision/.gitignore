@@ -1,4 +1,5 @@
 opennn_precision
+opennn_precision.exe
 *.csv
 pred_*.txt
 *.log

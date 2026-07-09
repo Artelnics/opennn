@@ -1,0 +1,8 @@
+# compiled benchmark binaries
+opennn_speed
+opennn_higgs_infer
+*.log
+
+# generated data / caches
+*.csv
+__pycache__/

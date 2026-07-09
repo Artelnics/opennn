@@ -1,103 +1,214 @@
-//   OpenNN convergence-gate benchmark on the Rosenbrock dataset (10 inputs).
+// OpenNN convergence-gate benchmark on the HIGGS classification dataset.
 //
-//   MLPerf-style metric: WALL-CLOCK TIME TO REACH A FIXED QUALITY TARGET, not
-//   throughput at a fixed epoch count. Trains the shared MLP with a training-loss
-//   goal (set_loss_goal); when the goal is hit, OpenNN stops and we report the
-//   wall-clock time, the epochs taken, AND the held-out TEST MSE -- so a low
-//   training loss that did not generalize cannot pass the gate.
+// MLPerf-style metric: WALL-CLOCK TIME TO REACH A FIXED QUALITY TARGET, not
+// throughput at a fixed epoch count. Trains the canonical HIGGS dense classifier
+// (28 -> 1024 -> 1024 -> 1, ReLU, sigmoid, BCE, Adam) and, after each short
+// training chunk, evaluates the HELD-OUT (test) log-loss. When the held-out
+// log-loss reaches the target, the clock stops and we report the wall-clock
+// time, the epochs taken, and the final held-out metric.
 //
-//   This answers the reviewer question "are you fast because you do not actually
-//   learn?": every engine must reach the same held-out MSE, and we time how long
-//   that takes. Same data, arch, optimizer, and target as the PyTorch/TF drivers.
+// This answers the reviewer question "are you fast because you do not actually
+// learn?": every engine must reach the same held-out quality, and we time how
+// long that takes. Same data, arch, optimizer, and target as the PyTorch/TF
+// drivers. Per-chunk evaluation is excluded from the clock.
 //
-//   usage: opennn_convergence [seed] [target_mse] [max_epochs] [lr]
+//   usage: opennn_convergence <train_csv> <test_csv> [target_log_loss]
+//                             [max_epochs] [batch] [hidden] [hidden_layers]
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "../../../opennn/tabular_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/scaling_layer.h"
-#include "../../../opennn/unscaling_layer.h"
-#include "../../../opennn/bounding_layer.h"
-#include "../../../opennn/training_strategy.h"
 #include "../../../opennn/adaptive_moment_estimation.h"
-#include "../../../opennn/random_utilities.h"
 #include "../../../opennn/configuration.h"
+#include "../../../opennn/dense_layer.h"
+#include "../../../opennn/forward_propagation.h"
+#include "../../../opennn/neural_network.h"
+#include "../../../opennn/random_utilities.h"
+#include "../../../opennn/tabular_dataset.h"
+#include "../../../opennn/training_strategy.h"
 
 using namespace opennn;
+using clock_type = std::chrono::steady_clock;
+
+namespace
+{
+
+float clamp_probability(float value)
+{
+    if (value < 1.0e-7f) return 1.0e-7f;
+    if (value > 1.0f - 1.0e-7f) return 1.0f - 1.0e-7f;
+    return value;
+}
+
+std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+                                            const Shape& target_shape,
+                                            Index hidden,
+                                            Index hidden_layers)
+{
+    auto network = std::make_unique<NeuralNetwork>();
+    Shape current = input_shape;
+
+    for (Index i = 0; i < hidden_layers; ++i)
+    {
+        network->add_layer(std::make_unique<opennn::Dense>(
+            current,
+            Shape{hidden},
+            "ReLU",
+            false,
+            "higgs_dense_" + std::to_string(i + 1)));
+        current = network->get_output_shape();
+    }
+
+    network->add_layer(std::make_unique<opennn::Dense>(
+        current,
+        target_shape,
+        "Sigmoid",
+        false,
+        "higgs_output"));
+
+    network->compile();
+    network->set_parameters_glorot();
+    return network;
+}
+
+// Held-out log-loss (binary cross entropy) over the whole test split, evaluated
+// batch by batch. This is the convergence gate: a model that overfits the train
+// split must not pass.
+double evaluate_log_loss(NeuralNetwork& network,
+                         const MatrixR& all,
+                         Index inputs_number,
+                         Index batch)
+{
+    const Index samples = all.rows();
+    const MatrixR inputs = all.leftCols(inputs_number);
+
+    ForwardPropagation forward_propagation(batch, &network);
+
+    double log_loss = 0.0;
+    Index processed = 0;
+    for (Index i = 0; i + batch <= samples; i += batch)
+    {
+        float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
+        TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
+        network.forward_propagate({view}, forward_propagation, false);
+        const MatrixMap outputs = forward_propagation.get_outputs().as_matrix();
+
+        for (Index r = 0; r < batch; ++r)
+        {
+            const float probability = clamp_probability(outputs(r, 0));
+            const int label = all(i + r, inputs_number) >= 0.5f ? 1 : 0;
+            log_loss += label
+                ? -std::log(double(probability))
+                : -std::log(double(1.0f - probability));
+        }
+        processed += batch;
+    }
+
+    return processed > 0 ? log_loss / double(processed) : NAN;
+}
+
+} // namespace
 
 int main(int argc, char* argv[])
 {
-    const unsigned seed       = argc > 1 ? unsigned(stoul(argv[1])) : 0;
-    const float    target_mse = argc > 2 ? stof(argv[2])           : 0.05f;
-    const Index    max_epochs = argc > 3 ? Index(stoul(argv[3]))   : 5000;
-    const float    lr         = argc > 4 ? stof(argv[4])           : 1.0e-3f;
-
-    set_seed(seed);
-    Configuration::instance().set(Device::Auto, Type::FP32);
-
-    // Shared normalized data (generate_rosenbrock.py): 10 inputs + 1 target.
-    TabularDataset dataset("rosenbrock_train.csv", ",", false, false);
-    dataset.set_sample_roles("Training");
-
-    ApproximationNetwork network(dataset.get_input_shape(), {50, 50}, dataset.get_target_shape());
-    static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
-    static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
-    static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");
-
-    TrainingStrategy training_strategy(&network, &dataset);
-    training_strategy.set_loss("MeanSquaredError");
-    training_strategy.get_loss()->set_regularization("NoRegularization");
-    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-    adam->set_batch_size(64);
-    adam->set_display(false);
-    adam->set_gradient_clip_norm(1.0e9f);
-    adam->set_learning_rate(lr);
-    adam->set_loss_goal(0.0f);   // never stop on training loss; we gate on test MSE
-
-    // The convergence gate is the HELD-OUT test MSE, not the training loss -- a
-    // model that overfits the train split must not pass. Train in short chunks,
-    // evaluate the test set after each, and stop the clock when the held-out MSE
-    // reaches the target. The chunk's epochs are added to the running clock so
-    // only training time is counted (evaluation is excluded).
-    TabularDataset test("rosenbrock_test.csv", ",", false, false);
-    const Index inputs_number = dataset.get_input_shape()[0];
-    const MatrixR inputs  = test.get_data().leftCols(inputs_number);
-    const MatrixR targets = test.get_data().rightCols(test.get_data().cols() - inputs_number);
-
-    const Index chunk = 5;
-    adam->set_maximum_epochs(chunk);
-
-    bool reached = false;
-    Index epochs = 0;
-    float final_train_mse = NAN;
-    double test_mse = NAN;
-    double train_s = 0.0;
-
-    while (epochs < max_epochs)
+    try
     {
-        const auto t0 = chrono::steady_clock::now();
-        const TrainingResult results = training_strategy.train();  // resumes from current params
-        train_s += chrono::duration<double>(chrono::steady_clock::now() - t0).count();
-        epochs += chunk;
-        final_train_mse = results.get_training_error();
+        if (argc < 3)
+        {
+            std::cerr << "usage: opennn_convergence <train_csv> <test_csv> "
+                         "[target_log_loss] [max_epochs] [batch] [hidden] [hidden_layers]\n";
+            return 2;
+        }
 
-        const MatrixR outputs = network.calculate_outputs(inputs);
-        test_mse = (outputs - targets).array().square().mean();
-        if (test_mse <= target_mse) { reached = true; break; }
+        const std::string train_path    = argv[1];
+        const std::string test_path     = argv[2];
+        const float target_log_loss     = argc > 3 ? std::stof(argv[3])          : 0.60f;
+        const Index max_epochs          = argc > 4 ? Index(std::stoll(argv[4]))  : 50;
+        const Index batch               = argc > 5 ? Index(std::stoll(argv[5]))  : 1024;
+        const Index hidden              = argc > 6 ? Index(std::stoll(argv[6]))  : 1024;
+        const Index hidden_layers       = argc > 7 ? Index(std::stoll(argv[7]))  : 2;
+
+        set_seed(42);
+        Configuration::instance().set(Device::CPU, Type::FP32);
+
+        TabularDataset dataset(train_path, ",", false, false);
+        dataset.set_sample_roles("Training");
+        const Index samples = dataset.get_samples_number();
+        const Index inputs_number = dataset.get_input_shape()[0];
+
+        // Load the held-out test split once; evaluation reuses this matrix.
+        TabularDataset test_dataset(test_path, ",", false, false);
+        test_dataset.set_sample_roles("Testing");
+        const MatrixR& test_all = test_dataset.get_data();
+
+        auto network = make_network(dataset.get_input_shape(),
+                                    dataset.get_target_shape(),
+                                    hidden,
+                                    hidden_layers);
+
+        TrainingStrategy training_strategy(network.get(), &dataset);
+        training_strategy.set_loss("CrossEntropy");
+        training_strategy.get_loss()->set_regularization("NoRegularization");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
+            training_strategy.get_optimization_algorithm());
+        adam->set_batch_size(batch);
+        adam->set_display(false);
+        adam->set_display_period(1000000);
+        adam->set_gradient_clip_norm(0.0f);
+        adam->set_loss_goal(0.0f);   // never stop on training loss; we gate on test log-loss
+
+        // The convergence gate is the HELD-OUT test log-loss, not the training
+        // loss -- a model that overfits the train split must not pass. Train in
+        // short chunks, evaluate the test set after each, and stop the clock when
+        // the held-out log-loss reaches the target. Only training time is counted
+        // (per-chunk evaluation is excluded).
+        const Index chunk = 1;
+        adam->set_maximum_epochs(chunk);
+
+        bool reached = false;
+        Index epochs = 0;
+        double test_log_loss = NAN;
+        double train_s = 0.0;
+
+        while (epochs < max_epochs)
+        {
+            const auto t0 = clock_type::now();
+            training_strategy.train();   // resumes from current params
+            train_s += std::chrono::duration<double>(clock_type::now() - t0).count();
+            epochs += chunk;
+
+            test_log_loss = evaluate_log_loss(*network, test_all, inputs_number, batch);
+            if (test_log_loss <= target_log_loss) { reached = true; break; }
+        }
+
+        std::cout.precision(10);
+        std::cout << "engine=opennn\n";
+        std::cout << "device=cpu\n";
+        std::cout << "dataset=HIGGS\n";
+        std::cout << "train_samples=" << samples << "\n";
+        std::cout << "batch=" << batch << "\n";
+        std::cout << "hidden=" << hidden << "\n";
+        std::cout << "hidden_layers=" << hidden_layers << "\n";
+        std::cout << "target_log_loss=" << target_log_loss << "\n";
+        std::cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
+        std::cout << "epochs_to_target=" << epochs << "\n";
+        std::cout << "test_log_loss=" << test_log_loss << "\n";
+        std::cout << "time_to_target_s=" << train_s << "\n";
+        std::cout << "RESULT=" << (reached ? "OK" : "DID_NOT_CONVERGE") << "\n";
+
+        return reached ? 0 : 1;
     }
-
-    cout.precision(10);
-    cout << "target_mse=" << target_mse << "\n";
-    cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
-    cout << "epochs_to_target=" << epochs << "\n";
-    cout << "final_train_mse=" << final_train_mse << "\n";
-    cout << "test_mse=" << test_mse << "\n";
-    cout << "time_to_target_s=" << train_s << "\n";
-    cout << "RESULT=" << (reached ? "OK" : "DID_NOT_CONVERGE") << "\n";
-
-    return reached ? 0 : 1;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cout << "RESULT=ERROR\n";
+        return 1;
+    }
 }

@@ -21,7 +21,11 @@ from pathlib import Path
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
-RESNET_SPEED_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "throughput", "resnet50-training-speed"))
+RESNET_SPEED_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "throughput", "resnet50"))
+# Datasets live under $OPENNN_BENCH_DATA (see ../../DATA_POLICY.md), never inside
+# a benchmark folder. The CIFAR-10 tree is prepared under $OPENNN_BENCH_DATA/cifar10.
+BENCH_DATA_ROOT = os.environ.get(
+    "OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 
 
@@ -86,7 +90,7 @@ def default_opennn_bin():
 def prepare_dataset(dataset):
     if dataset != "cifar10":
         raise ValueError("Only cifar10 is supported for this benchmark.")
-    data_dir = os.path.join(RESNET_SPEED_DIR, dataset)
+    data_dir = os.path.join(BENCH_DATA_ROOT, dataset)
     needed = [
         os.path.join(data_dir, "cifar_images.npy"),
         os.path.join(data_dir, "cifar_labels.npy"),
@@ -197,14 +201,15 @@ def expanded_engines(value):
     return engines
 
 
-def command_for(engine, data_dir, batch, opennn_bin, memory_fraction, memory_limit_mb):
+def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction, memory_limit_mb):
     env = {}
     if engine in {"opennn_pool1", "opennn_default"}:
         # CUDA graph, shuffle and conv autotune are all set in the benchmark code.
-        # The prefetch-pool depth is the 4th positional arg: pool1 -> 1 (fewest
+        # The prefetch-pool depth is the 5th positional arg: pool1 -> 1 (fewest
         # device batch copies, largest reachable batch), default -> 0 (library auto).
+        # Precision (fp32|bf16) selects Configuration::set(Device::CUDA, ...).
         batch_pool = "1" if engine == "opennn_pool1" else "0"
-        cmd = [opennn_bin, data_dir, str(batch), "fp32", batch_pool]
+        cmd = [opennn_bin, data_dir, str(batch), precision, batch_pool]
     elif engine in {"pytorch_compile", "pytorch_eager"}:
         path = "compile" if engine == "pytorch_compile" else "eager"
         cmd = [
@@ -213,6 +218,7 @@ def command_for(engine, data_dir, batch, opennn_bin, memory_fraction, memory_lim
             "--data", data_dir,
             "--batch", str(batch),
             "--path", path,
+            "--precision", precision,
         ]
         if memory_fraction:
             cmd += ["--memory-fraction", f"{memory_fraction:.6f}"]
@@ -222,6 +228,7 @@ def command_for(engine, data_dir, batch, opennn_bin, memory_fraction, memory_lim
             os.path.join(HERE, "tensorflow_resnet50_maxbatch.py"),
             "--data", data_dir,
             "--batch", str(batch),
+            "--precision", precision,
         ]
         if memory_limit_mb:
             cmd += ["--memory-limit-mb", str(memory_limit_mb)]
@@ -230,11 +237,12 @@ def command_for(engine, data_dir, batch, opennn_bin, memory_fraction, memory_lim
     return cmd, env
 
 
-def run_trial(engine, batch, data_dir, args, gpu_info):
+def run_trial(engine, precision, batch, data_dir, args, gpu_info):
     cap_mib = max(1, gpu_info["memory_total_mib"] - args.reserve_mib)
     memory_fraction = cap_mib / gpu_info["memory_total_mib"]
     cmd, env_over = command_for(
         engine,
+        precision,
         data_dir,
         batch,
         args.opennn_bin,
@@ -298,13 +306,13 @@ def wait_for_cooldown(gpu_index, threshold_mib, timeout_s=30):
     return False
 
 
-def search_engine(engine, data_dir, args, gpu_info):
+def search_engine(engine, precision, data_dir, args, gpu_info):
     cache = {}
 
     def trial(batch):
         if batch not in cache:
-            cache[batch] = run_trial(engine, batch, data_dir, args, gpu_info)
-            print(f"{engine:16s} batch={batch:<7d} "
+            cache[batch] = run_trial(engine, precision, batch, data_dir, args, gpu_info)
+            print(f"{engine:16s} {precision:4s} batch={batch:<7d} "
                   f"{'OK' if cache[batch]['ok'] else 'FAIL'} "
                   f"peak={cache[batch].get('peak_vram_mib')} "
                   f"reason={cache[batch]['reason']}")
@@ -381,10 +389,16 @@ def summarize(results):
     return metrics, ratios
 
 
+def expanded_precisions(value):
+    if value == "both":
+        return ["fp32", "bf16"]
+    return [value]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="cifar10", choices=["cifar10"])
-    ap.add_argument("--precision", default="fp32", choices=["fp32"])
+    ap.add_argument("--precision", default="both", choices=["fp32", "bf16", "both"])
     ap.add_argument("--engines", default="opennn,pytorch,tensorflow")
     ap.add_argument("--gpu-index", type=int, default=0)
     ap.add_argument("--require-gpu-idle", action="store_true")
@@ -406,17 +420,24 @@ def main():
             f"(threshold {args.idle_threshold_mib} MiB).")
 
     engines = expanded_engines(args.engines)
+    precisions = expanded_precisions(args.precision)
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     print(f"GPU: {gpu_info['name']} ({gpu_info['memory_total_mib']} MiB)")
     print(f"OpenNN binary: {args.opennn_bin}")
     print(f"Engines: {', '.join(engines)}")
+    print(f"Precisions: {', '.join(precisions)}")
 
     results = {}
-    for engine in engines:
-        results[engine] = search_engine(engine, data_dir, args, gpu_info)
+    max_batches = {}
+    ratios = {}
+    for precision in precisions:
+        results[precision] = {}
+        for engine in engines:
+            results[precision][engine] = search_engine(
+                engine, precision, data_dir, args, gpu_info)
+        max_batches[precision], ratios[precision] = summarize(results[precision])
 
-    max_batches, ratios = summarize(results)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     artifact = {
         "schema_version": 1,
@@ -444,7 +465,7 @@ def main():
             "model": "ResNet-50 v1.5 bottleneck, CIFAR-10 geometry",
             "input_shape": [32, 32, 3],
             "classes": 10,
-            "precision": args.precision,
+            "precisions": precisions,
             "optimizer": "Adam lr=0.001",
             "loss": "cross-entropy",
             "vram_reserve_mib": args.reserve_mib,
@@ -461,7 +482,7 @@ def main():
         },
         "commands": {
             "build": "cmake --build build-gpu --target opennn_resnet50_maxbatch_trial",
-            "run": "python run_resnet50_maxbatch.py --dataset cifar10 --precision fp32 --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128",
+            "run": "python run_resnet50_maxbatch.py --dataset cifar10 --precision both --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128",
         },
         "results": results,
     }

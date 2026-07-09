@@ -173,6 +173,72 @@ def validate_no_committed_artifacts() -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+import re
+
+BENCH_BUCKETS = {"quality", "throughput", "capacity", "energy", "footprint"}
+_MACHINE_PATH = re.compile(r"/home/[A-Za-z0-9_.-]+/|/Users/[A-Za-z0-9_.-]+/|[A-Za-z]:\\\\|/Documents/datasets")
+_DATA_SUFFIXES = (".csv", ".npy", ".bmp", ".png", ".jpg", ".jpeg", ".onnx", ".zip", ".gz", ".tar")
+
+
+def validate_benchmark_ids(data: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Every run_*.py's emitted benchmark_id must equal a manifest id."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    ids = {b["id"] for b in data.get("benchmarks", []) if isinstance(b, dict) and "id" in b}
+    for runner in ROOT.rglob("run_*.py"):
+        rel = runner.relative_to(ROOT)
+        if any(part in {"archive", "tools", "__pycache__"} for part in rel.parts):
+            continue
+        text = runner.read_text(encoding="utf-8", errors="ignore")
+        if re.search(r'"benchmark"\s*:\s*"', text):
+            add_error(errors, f'{rel}: result JSON uses key "benchmark" (must be "benchmark_id")')
+        for match in re.finditer(r'"benchmark_id"\s*:\s*f?"([^"]*)"', text):
+            value = match.group(1)
+            if "{" in value:  # f-string with a mode interpolation: check the prefix
+                prefix = value.split("{", 1)[0]
+                if not any(i.startswith(prefix) for i in ids):
+                    add_error(errors, f"{rel}: benchmark_id prefix {prefix!r} matches no manifest id")
+            elif value not in ids:
+                add_error(errors, f"{rel}: benchmark_id {value!r} is not a manifest id")
+    return errors, warnings
+
+
+def validate_no_data_in_benchmark_folders() -> tuple[list[str], list[str]]:
+    """Datasets must live under $OPENNN_BENCH_DATA, never inside a benchmark folder."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    for bucket in sorted(BENCH_BUCKETS):
+        bdir = ROOT / bucket
+        if not bdir.is_dir():
+            continue
+        for path in bdir.rglob("*"):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            name = path.name.lower()
+            if name.endswith(_DATA_SUFFIXES) or name.startswith("cifar_") or name.endswith("_pairs.txt"):
+                add_warning(warnings, f"data file inside a benchmark folder (datasets belong under $OPENNN_BENCH_DATA): {path.relative_to(ROOT)}")
+    return errors, warnings
+
+
+def validate_no_hardcoded_paths() -> tuple[list[str], list[str]]:
+    """No absolute machine-specific paths in runnable sources."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(ROOT)
+        if any(part in {"archive", "tools", "__pycache__"} for part in rel.parts):
+            continue
+        if path.suffix not in {".py", ".sh", ".ps1", ".cpp", ".c", ".h", ".hpp"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        hit = _MACHINE_PATH.search(text)
+        if hit:
+            add_error(errors, f"{rel}: hardcoded machine path {hit.group(0)!r}")
+    return errors, warnings
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -184,12 +250,16 @@ def main() -> int:
 
     data = load_manifest()
     errors, warnings = validate_manifest(data)
-    readme_errors, readme_warnings = validate_runner_readmes(args.strict_readmes)
-    errors.extend(readme_errors)
-    warnings.extend(readme_warnings)
-    artifact_errors, artifact_warnings = validate_no_committed_artifacts()
-    errors.extend(artifact_errors)
-    warnings.extend(artifact_warnings)
+    for check in (
+        lambda: validate_runner_readmes(args.strict_readmes),
+        validate_no_committed_artifacts,
+        lambda: validate_benchmark_ids(data),
+        validate_no_data_in_benchmark_folders,
+        validate_no_hardcoded_paths,
+    ):
+        e, w = check()
+        errors.extend(e)
+        warnings.extend(w)
 
     for warning in warnings:
         print(warning)

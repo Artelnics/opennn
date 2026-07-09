@@ -25,7 +25,7 @@ DEFAULT_BENCH_DATA = Path(
 )
 DEFAULT_HIGGS_DIR = DEFAULT_BENCH_DATA / "higgs"
 KEY_VALUE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
-PY = os.environ.get("BENCH_PYTHON", str(Path.home() / "benchenv" / "bin" / "python"))
+PY = os.environ.get("BENCH_PYTHON", "python3")
 
 
 def run_text(cmd: list[str], cwd: Path | None = None) -> str:
@@ -246,10 +246,10 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[s
             args.activation,
         ], env
 
+    script = "pytorch_higgs_cpu.py" if engine == "pytorch" else "tensorflow_higgs_cpu.py"
     cmd = [
         PY,
-        str(HERE / "higgs_framework_cpu.py"),
-        engine,
+        str(HERE / script),
         args.mode,
         "--test",
         str(args.test),
@@ -388,7 +388,7 @@ def main() -> None:
 
     result: dict[str, Any] = {
         "schema_version": 1,
-        "benchmark_id": f"cpu-dense-higgs-{args.mode}",
+        "benchmark_id": f"cpu-higgs-dense-{'training' if args.mode == 'train' else 'inference'}-speed",
         "run_id": run_id,
         "git_commit": git["commit"],
         "protocol": protocol_metadata(args),

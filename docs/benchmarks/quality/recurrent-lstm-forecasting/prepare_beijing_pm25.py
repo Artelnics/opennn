@@ -48,9 +48,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--output-dir",
-        default=HERE / "data",
+        default=Path(os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data"))) / "beijing_pm25",
         type=Path,
-        help="Directory for raw and prepared files",
+        help="Directory for raw and prepared files (default: $OPENNN_BENCH_DATA/beijing_pm25)",
     )
     parser.add_argument(
         "--raw-path",
