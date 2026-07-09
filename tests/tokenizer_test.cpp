@@ -142,6 +142,15 @@ TEST(WordPieceTokenizer, LowercasesAndSplitsPunctuation)
               (vector<string>{"i", "love", ",", "play", "##ing", "!"}));
 }
 
+TEST(WordPieceTokenizer, StripsAccentsAndLowercasesUnicode)
+{
+    WordPieceTokenizer tokenizer({"[UNK]", "cafe", "nino", "hello"});
+
+    EXPECT_EQ(tokenizer.tokenize("Café"),  (vector<string>{"cafe"}));
+    EXPECT_EQ(tokenizer.tokenize("NIÑO"),  (vector<string>{"nino"}));
+    EXPECT_EQ(tokenizer.tokenize("Héllo"), (vector<string>{"hello"}));
+}
+
 TEST(WordPieceTokenizer, EncodeMapsSubwordsToIds)
 {
     WordPieceTokenizer tokenizer(wordpiece_vocabulary);
