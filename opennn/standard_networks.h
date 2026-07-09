@@ -212,6 +212,8 @@ public:
                                   Index layers_number,
                                   Index labels_number,
                                   Index type_vocabulary_size = 2);
+
+    void set_dropout_rate(const float);
 };
 
 #endif // OPENNN_NO_VISION

@@ -51,7 +51,7 @@ void download_if_missing(const string& path, const string& url)
     if (filesystem::exists(path)) return;
 
     cout << "Downloading " << url << " -> " << path << " ..." << endl;
-    const string command = "curl -L --fail -o \"" + path + "\" " + url;
+    const string command = "curl -L --fail -o \"" + path + "\" \"" + url + "\"";
     if (system(command.c_str()) != 0 || !filesystem::exists(path))
         throw runtime_error("Download failed. Get it manually from:\n  " + url);
 }
@@ -147,6 +147,8 @@ int main(int argc, char* argv[])
 
         BertForSequenceClassification model(sequence_length, VOCABULARY_SIZE, HIDDEN_SIZE,
                                             HEADS_NUMBER, INTERMEDIATE, LAYERS_NUMBER, labels);
+
+        model.set_dropout_rate(0.1f);
 
         if (model.get_parameters_size() != Index(filesystem::file_size(weights_path) / sizeof(float)))
             throw runtime_error("Weights size mismatch: the .bin was exported for a different seq/labels. "

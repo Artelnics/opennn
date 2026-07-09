@@ -282,8 +282,9 @@ void WordPieceTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
     Tokenizer::set_vocabulary(new_vocabulary);
 
     const auto it = vocabulary_map.find(unk_token);
-    if (it != vocabulary_map.end())
-        unk_id = it->second;
+    if (it == vocabulary_map.end())
+        throw runtime_error("WordPieceTokenizer: vocabulary is missing " + unk_token);
+    unk_id = it->second;
 }
 
 void WordPieceTokenizer::load_vocabulary(const filesystem::path& vocabulary_file)

@@ -1448,6 +1448,29 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
     set_parameters_glorot();
 }
 
+void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rate)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+    {
+        if (!layer) continue;
+
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+        {
+            mha->set_dropout_rate(new_dropout_rate);
+            continue;
+        }
+
+        if (starts_with_any(layer->get_label(), {"feed_forward_output", "pooler"}))
+            if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+                dense->set_dropout_rate(new_dropout_rate);
+    }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
+}
+
 #endif // OPENNN_NO_VISION
 
 }
