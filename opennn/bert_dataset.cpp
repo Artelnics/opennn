@@ -46,6 +46,8 @@ void BertDataset::write_tokens_csv(const filesystem::path& text_file,
 
     throw_if(cls == tokenizer.get_unk_id() || sep == tokenizer.get_unk_id(),
              "BertDataset: vocabulary is missing [CLS]/[SEP].");
+    throw_if(tokenizer.token_to_id("[PAD]") != pad,
+             "BertDataset: [PAD] must be token id 0 (attention masking convention).");
 
     ifstream file(text_file);
     throw_if(!file.is_open(), format("BertDataset: cannot open {}", text_file.string()));
@@ -78,10 +80,11 @@ void BertDataset::write_tokens_csv(const filesystem::path& text_file,
             ids.push_back(id);
         }
         ids.push_back(sep);
+        const Index real_length = Index(ids.size());
         while (Index(ids.size()) < sequence_length) ids.push_back(pad);
 
         for (Index i = 0; i < sequence_length; ++i) out << ids[size_t(i)] << ";";
-        for (Index i = 0; i < sequence_length; ++i) out << 1 << ";";
+        for (Index i = 0; i < sequence_length; ++i) out << (i < real_length ? 1 : 0) << ";";
         out << label << "\n";
     }
 }
@@ -99,6 +102,8 @@ void BertDataset::configure_bert_roles()
         set_variable_role(i, "Input");
     for (Index i = 2 * sequence_length; i < variables_number; ++i)
         set_variable_role(i, "Target");
+
+    set_variable_scalers("None");
 
     set_shape("Input",   {sequence_length});
     set_shape("Decoder", {sequence_length});

@@ -78,7 +78,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                        Shape{ complexity_dimensions[i] },
                                        hidden_activation,
                                        false,
-                                       format("dense2d_layer_{}", i + 1)));
+                                       format("dense_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -107,7 +107,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                        Shape{complexity_dimensions[i]},
                                        "Tanh",
                                        false,
-                                       format("dense2d_layer_{}", i + 1)));
+                                       format("dense_layer_{}", i + 1)));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -945,7 +945,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
-    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "hidden_layer"));
+    add_layer(make_unique<Dense>(get_output_shape(), Shape({hidden_neurons}), "ReLU", false, "dense_layer_1"));
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                  output_shape,
@@ -1446,6 +1446,29 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
 
     compile();
     set_parameters_glorot();
+}
+
+void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rate)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+
+    for (auto& layer : get_layers())
+    {
+        if (!layer) continue;
+
+        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
+        {
+            mha->set_dropout_rate(new_dropout_rate);
+            continue;
+        }
+
+        if (starts_with_any(layer->get_label(), {"feed_forward_output", "pooler"}))
+            if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+                dense->set_dropout_rate(new_dropout_rate);
+    }
+
+    recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
 #endif // OPENNN_NO_VISION

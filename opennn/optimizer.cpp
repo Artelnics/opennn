@@ -974,7 +974,8 @@ void Optimizer::write_common_json(JsonWriter& printer) const
         {"LossGoal", to_string(training_loss_goal)},
         {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}
+        {"MaximumTime", to_string(maximum_time)},
+        {"DisplayPeriod", to_string(display_period)}
     });
 }
 
@@ -985,6 +986,11 @@ void Optimizer::read_common_json(const Json* root_element)
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
+
+    // "Display every N epochs" from the editor. Guarded so models saved before this field
+    // existed keep the default period instead of failing to load.
+    if (root_element->has("DisplayPeriod"))
+        set_display_period(read_json_index(root_element, "DisplayPeriod"));
 }
 
 void Optimizer::setup_device_training()
