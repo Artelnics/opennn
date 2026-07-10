@@ -1127,6 +1127,11 @@ __device__ __forceinline__ float opennn_activation_value(float x, int function)
     if (function == activation_relu)       return fmaxf(x, 0.0f);
     if (function == activation_leaky_relu) return x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
     if (function == activation_gelu)       return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
+    if (function == activation_gelu_tanh)
+    {
+        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+        return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
+    }
     return x;
 }
 
@@ -1141,6 +1146,15 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
         const float cdf = 0.5f * (1.0f + erff(y * 0.70710678118654752440f));
         const float pdf = 0.39894228040143267794f * expf(-0.5f * y * y);
         return d * (cdf + y * pdf);
+    }
+    if (function == activation_gelu_tanh)
+    {
+        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+        const float y2 = y * y;
+        const float u = sqrt_2_over_pi * (y + 0.044715f * y * y2);
+        const float t = tanhf(u);
+        const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * y2);
+        return d * (0.5f * (1.0f + t) + 0.5f * y * (1.0f - t * t) * du);
     }
     return d;
 }

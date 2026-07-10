@@ -971,12 +971,13 @@ static Index add_residual_and_norm(NeuralNetwork& network,
 static Index add_feed_forward(NeuralNetwork& network,
                               const Shape& input_shape, Index ff_dim,
                               const string& internal_label,
-                              const string& external_label)
+                              const string& external_label,
+                              const string& internal_activation = "ReLU")
 {
     const Index seq_len = input_shape[0];
     const Index emb_dim = input_shape[1];
     network.add_layer(make_unique<Dense>(input_shape, Shape{ff_dim},
-                                         "ReLU", false, internal_label));
+                                         internal_activation, false, internal_label));
     network.add_layer(make_unique<Dense>(Shape{seq_len, ff_dim}, Shape{emb_dim},
                                          "Identity", false, external_label));
     return network.get_layers_number() - 1;
@@ -1176,7 +1177,10 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                              Index heads_number,
                                              Index feed_forward_dimension,
                                              Index layers_number,
-                                             bool pre_normalization)
+                                             bool pre_normalization,
+                                             bool scale_embedding,
+                                             bool learned_positional,
+                                             const string& feed_forward_activation)
     : NeuralNetwork()
 {
     throw_if(sequence_length == 0 ||
@@ -1193,8 +1197,11 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     auto embedding = make_unique<Embedding>(
         Shape{vocabulary_size, sequence_length},
         embedding_dimension, "embedding");
-    embedding->set_scale_embedding(true);
-    embedding->set_add_positional_encoding(true);
+    embedding->set_scale_embedding(scale_embedding);
+    if (learned_positional)
+        embedding->set_learned_positional(true);
+    else
+        embedding->set_add_positional_encoding(true);
     add_layer(move(embedding), {-1});
     Index current_index = get_layers_number() - 1;
 
@@ -1235,7 +1242,8 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
 
             const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
                 "internal_dense" + suffix,
-                "external_dense" + suffix);
+                "external_dense" + suffix,
+                feed_forward_activation);
 
             add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
                       {residual_index, ff_index});
@@ -1249,7 +1257,8 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
 
             const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
                 "internal_dense" + suffix,
-                "external_dense" + suffix);
+                "external_dense" + suffix,
+                feed_forward_activation);
 
             current_index = add_residual_and_norm(*this, block_shape,
                 "dense_normalization" + suffix,

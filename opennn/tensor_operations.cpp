@@ -152,6 +152,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::Softmax,   "Softmax"},
         {ActivationFunction::LeakyReLU, "LeakyReLU"},
         {ActivationFunction::GELU,      "GELU"},
+        {ActivationFunction::GELUTanh,  "GELUTanh"},
         // Legacy aliases emitted by the Neural Designer editor's activation combobox
         // (old opennn names). from_string() accepts them so a saved model does not
         // crash the engine on load; to_string() still returns the CANONICAL name above
@@ -171,7 +172,8 @@ const EnumMap<ActivationFunction>& activation_function_map()
 
 bool activation_needs_input(ActivationFunction function)
 {
-    return function == ActivationFunction::GELU;
+    return function == ActivationFunction::GELU
+        || function == ActivationFunction::GELUTanh;
 }
 
 const string& activation_function_to_string(ActivationFunction function)
@@ -516,6 +518,13 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
             return 0.5f * x * (1.0f + erff(x * inv_sqrt2));
         });
         return;
+    case GELUTanh:
+        a = a.unaryExpr([](float x)
+        {
+            constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+            return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
+        });
+        return;
     }
 }
 
@@ -550,6 +559,17 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
             const float cdf = 0.5f * (1.0f + erff(x * inv_sqrt2));
             const float pdf = inv_sqrt2pi * expf(-0.5f * x * x);
             return cdf + x * pdf;
+        });
+        return;
+    case GELUTanh:
+        d *= y.unaryExpr([](float x)
+        {
+            constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+            const float x2 = x * x;
+            const float u = sqrt_2_over_pi * (x + 0.044715f * x * x2);
+            const float t = tanhf(u);
+            const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * x2);
+            return 0.5f * (1.0f + t) + 0.5f * x * (1.0f - t * t) * du;
         });
         return;
     }

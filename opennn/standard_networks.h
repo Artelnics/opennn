@@ -169,7 +169,10 @@ public:
                           Index,
                           Index,
                           Index,
-                          bool pre_normalization = false);
+                          bool pre_normalization = false,
+                          bool scale_embedding = true,
+                          bool learned_positional = false,
+                          const string& feed_forward_activation = "ReLU");
 
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
