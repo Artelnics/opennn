@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU };
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh };
 
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
@@ -34,6 +34,11 @@ inline float activation_forward_value(ActivationFunction function, float x)
     case ReLU:      return max(0.0f, x);
     case LeakyReLU: return x >= 0.0f ? x : x * LEAKY_RELU_SLOPE;
     case GELU:      return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
+    case GELUTanh:
+    {
+        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+        return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
+    }
     case Softmax:   break;
     }
 
@@ -51,10 +56,11 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     case ReLU:      return y > 0.0f ? 1.0f : 0.0f;
     case LeakyReLU: return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE;
     case Softmax:   break;
-    case GELU:      break;
+    case GELU:
+    case GELUTanh:  break;
     }
 
-    throw runtime_error("activation_derivative_from_output_value: Softmax/GELU must be handled separately.");
+    throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh must be handled separately.");
 }
 
 VectorR activation_forward_values(ActivationFunction, const VectorR&);

@@ -9,6 +9,7 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/dense_layer.h"
 #include "opennn/activation_layer.h"
+#include "opennn/activation_operator.h"
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
 
@@ -19,6 +20,12 @@ namespace
 double gelu_ref(double x)
 {
     return 0.5 * x * (1.0 + std::erf(x * 0.70710678118654752440));
+}
+
+double gelu_tanh_ref(double x)
+{
+    constexpr double sqrt_2_over_pi = 0.7978845608028654;
+    return 0.5 * x * (1.0 + std::tanh(sqrt_2_over_pi * (x + 0.044715 * x * x * x)));
 }
 }
 
@@ -51,6 +58,42 @@ TEST(GeluTest, BackwardMatchesFiniteDifference)
 
         EXPECT_NEAR(dv, float(numeric), 2e-3f) << "x = " << xi;
     }
+}
+
+TEST(GeluTest, GeluTanhForwardClosedForm)
+{
+    vector<float> x = {-4.f, -2.f, -1.f, -0.5f, -0.1f, 0.f, 0.1f, 0.5f, 1.f, 2.f, 4.f};
+    vector<float> y = x;
+
+    TensorView view(y.data(), {Index(y.size())});
+    activation_forward(view, ActivationFunction::GELUTanh);
+
+    for (size_t i = 0; i < x.size(); ++i)
+        EXPECT_NEAR(y[i], float(gelu_tanh_ref(x[i])), 1e-5f);
+}
+
+TEST(GeluTest, GeluTanhBackwardMatchesFiniteDifference)
+{
+    vector<float> x = {-4.f, -2.f, -1.f, -0.5f, -0.1f, 0.f, 0.1f, 0.5f, 1.f, 2.f, 4.f};
+
+    for (float xi : x)
+    {
+        float xv = xi;
+        float dv = 1.0f;
+        TensorView xview(&xv, {1});
+        TensorView dview(&dv, {1});
+        activation_backward(xview, dview, ActivationFunction::GELUTanh);
+
+        const double h = 1e-3;
+        const double numeric = (gelu_tanh_ref(xi + h) - gelu_tanh_ref(xi - h)) / (2.0 * h);
+
+        EXPECT_NEAR(dv, float(numeric), 2e-3f) << "x = " << xi;
+    }
+}
+
+TEST(GeluTest, GeluTanhFromString)
+{
+    EXPECT_EQ(ActivationFunction::GELUTanh, ActivationOperator::from_string("GELUTanh"));
 }
 
 TEST(GeluTest, ActivationLayerForward)

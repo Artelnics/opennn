@@ -215,7 +215,10 @@ public:
                           Index,
                           Index,
                           Index,
-                          bool pre_normalization = false);
+                          bool pre_normalization = false,
+                          bool scale_embedding = true,
+                          bool learned_positional = false,
+                          const string& feed_forward_activation = "ReLU");
 
     explicit TextGenerationNetwork(const filesystem::path&);
 
