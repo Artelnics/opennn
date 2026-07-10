@@ -87,10 +87,18 @@ void LanguageDataset::read_txt()
     const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
     const Index target_vocabulary_size = get_target_vocabulary_size();
 
-    const bool is_single_token_target = (maximum_target_document_tokens == 1);
+    // Classification mode forces atomic (single-token) targets; a token-per-word
+    // target with one token per sample is also treated as classification.
+    const bool is_single_token_target = classification_target || (maximum_target_document_tokens == 1);
+
+    // For single-token classification the target vocabulary is
+    // [4 reserved tokens] + [one entry per class]. A binary problem (2 classes)
+    // is encoded as a single output (probability of the positive class); an
+    // N-class problem (N >= 3) as N one-hot outputs.
+    const Index target_classes = target_vocabulary_size - Index(reserved_tokens.size());
 
     maximum_target_sequence_length = is_single_token_target
-        ? (target_vocabulary_size == 6 ? 1 : target_vocabulary_size - 4)
+        ? (target_classes == 2 ? 1 : target_classes)
         : maximum_target_document_tokens + 1;
 
     if (is_single_token_target)
@@ -270,7 +278,19 @@ void LanguageDataset::load_documents(string& buffer,
                  "Line must contain two fields: input and target.");
 
         input_documents.push_back(input_tokenizer->tokenize(fields[0]));
-        target_documents.push_back(target_tokenizer->tokenize(fields[1]));
+
+        if (classification_target)
+        {
+            // The target field is a single atomic class label: keep it whole
+            // (only trim surrounding whitespace) so a label like "sci_tech"
+            // stays one token instead of being split into sci/_/tech.
+            string_view label = fields[1];
+            while (!label.empty() && isspace(static_cast<unsigned char>(label.front()))) label.remove_prefix(1);
+            while (!label.empty() && isspace(static_cast<unsigned char>(label.back())))  label.remove_suffix(1);
+            target_documents.push_back({ string(label) });
+        }
+        else
+            target_documents.push_back(target_tokenizer->tokenize(fields[1]));
     }
 }
 

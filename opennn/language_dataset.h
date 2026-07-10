@@ -44,6 +44,15 @@ public:
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
+    // Classification mode: treat the whole target field as a single atomic class
+    // label instead of tokenizing it. Without this a label like "Sci_Tech" is
+    // split by the tokenizer into ["sci","_","tech"], inflating the target
+    // vocabulary beyond the class count (wrong class number, generic output_N
+    // names) and routing read_txt into the seq2seq branch instead of N-way
+    // classification.
+    void set_classification_target(bool new_classification_target) { classification_target = new_classification_target; }
+    bool get_classification_target() const noexcept { return classification_target; }
+
     VectorI calculate_target_distribution() const override;
 
     void read_txt();
@@ -115,6 +124,8 @@ private:
 
     Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
+
+    bool classification_target = false;
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
