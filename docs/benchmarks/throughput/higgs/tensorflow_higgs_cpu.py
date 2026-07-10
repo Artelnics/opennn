@@ -31,7 +31,16 @@ def batches(n: int, batch: int):
 
 
 def run_tensorflow(args: argparse.Namespace) -> None:
+    # Thread pinning must happen before TF initializes; oneDNN also honors
+    # OMP_NUM_THREADS, which the orchestrator sets alongside --threads.
+    if args.threads:
+        os.environ.setdefault("OMP_NUM_THREADS", str(args.threads))
+
     import tensorflow as tf
+
+    if args.threads:
+        tf.config.threading.set_intra_op_parallelism_threads(args.threads)
+        tf.config.threading.set_inter_op_parallelism_threads(1)
 
     tf.random.set_seed(42)
     activation = "relu" if args.activation == "relu" else "tanh"

@@ -12,6 +12,7 @@
 #include "memory_debug.h"
 
 #include <atomic>
+#include <cstdlib>
 
 namespace opennn::device
 {
@@ -505,7 +506,11 @@ namespace opennn
 
 Backend::Backend()
 {
-    set_threads_number(0);
+    // OPENNN_THREADS caps the host thread pool (Eigen + OpenMP GEMM paths);
+    // unset or <= 0 keeps the hardware concurrency default. Benchmarks use it
+    // to run every engine at the same thread count.
+    const char* threads_env = std::getenv("OPENNN_THREADS");
+    set_threads_number(threads_env ? std::atoi(threads_env) : 0);
 
 #ifdef OPENNN_HAS_CUDA
     int device_count = 0;

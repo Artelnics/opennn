@@ -220,6 +220,17 @@ def display_command(cmd: list[str], env_over: dict[str, str]) -> str:
 
 def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
     env = {"CUDA_VISIBLE_DEVICES": "", "TF_CPP_MIN_LOG_LEVEL": "2"}
+    if args.threads:
+        # Same thread COUNT for every engine; affinity is per-engine best:
+        # core binding speeds up OpenNN (+12%) and PyTorch (+2%) but collapses
+        # TF ~5x (its inter-op pool fights OMP_PROC_BIND), so TF runs unbound.
+        env["OMP_NUM_THREADS"] = str(args.threads)
+        if engine in ("opennn", "pytorch"):
+            env["OMP_PLACES"] = "cores"
+            env["OMP_PROC_BIND"] = "close"
+        if engine == "opennn":
+            env["OPENNN_THREADS"] = str(args.threads)
+            env["MKL_NUM_THREADS"] = str(args.threads)
     if engine == "opennn":
         binary, _ = find_opennn_higgs_cpu()
         if args.mode == "train":

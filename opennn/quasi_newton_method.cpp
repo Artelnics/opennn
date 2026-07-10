@@ -127,9 +127,14 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         is_gradient_direction = true;
     }
 
-    optimization_data.initial_learning_rate = (old_learning_rate > 0.0f)
-        ? old_learning_rate
-        : first_learning_rate;
+    // BFGS directions are naturally scaled: always try the full step first
+    // (superlinear convergence needs alpha = 1 near the optimum; seeding with
+    // the previous accepted alpha can only shrink and traps the search at the
+    // small steps of the first epochs). Steepest-descent fallbacks have no
+    // natural scale, so they reuse the previous accepted learning rate.
+    optimization_data.initial_learning_rate = is_gradient_direction
+        ? ((old_learning_rate > 0.0f) ? old_learning_rate : first_learning_rate)
+        : 1.0f;
 
     tie(learning_rate, back_propagation.loss) = calculate_directional_point(
         batch,

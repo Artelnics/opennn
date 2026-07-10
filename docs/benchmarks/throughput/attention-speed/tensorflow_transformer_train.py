@@ -166,11 +166,12 @@ with tf.device("/GPU:0"):
 
     t0 = time.perf_counter()
     last = 0.0
-    for _ in range(epochs + 1):                        # epochs+1 to match OpenNN's epoch 0..max
+    timed_passes = max(1, epochs)                      # OpenNN's train() runs max(1, maximum_epochs) passes
+    for _ in range(timed_passes):
         last = run_epoch()
     wall_s = time.perf_counter() - t0
 
-total_samples = n_batches * batch * (epochs + 1)
+total_samples = n_batches * batch * timed_passes
 samples_per_s = total_samples / wall_s
 tokens_per_s = samples_per_s * (input_seq + decoder_seq)
 

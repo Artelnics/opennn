@@ -77,6 +77,22 @@ Batch, precision, and residency policy remain benchmark-specific, but every
 published dense result should state the HIGGS file, split size, hidden width,
 batch size, precision, and whether the dataset was GPU-resident.
 
+### CPU runs: MKL + thread protocol
+
+PyTorch and TensorFlow ship MKL/oneDNN GEMMs, so CPU comparisons must build
+OpenNN with its MKL backend (`-DOpenNN_ENABLE_MKL=ON`, plus
+`-DOpenNN_MKL_ROOT=<prefix>` when MKL is not in a standard location — the pip
+`mkl mkl-devel mkl-include` wheels inside a venv work as the prefix). Plain
+Eigen GEMMs scale poorly past a few cores and lose ~2x at 8 threads.
+
+`run_higgs_cpu.py --threads N` pins the same thread COUNT on every engine
+(TF honors it since its script applies `--threads` to the intra-op pool) and
+applies core binding (`OMP_PLACES=cores OMP_PROC_BIND=close`) to OpenNN and
+PyTorch only — binding speeds both up but collapses TF ~5x. On hybrid CPUs
+pick N = number of P-cores (e.g. 8 on an i9-12900K); E-cores/HT regress every
+engine on this workload. Select the MKL binary with
+`OPENNN_HIGGS_CPU_BIN=<build-mkl>/bin/opennn_higgs_cpu`.
+
 ## Quality Gate
 
 Dense speed runs must also report:

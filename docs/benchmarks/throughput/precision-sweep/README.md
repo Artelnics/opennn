@@ -33,7 +33,9 @@ python run_precision_sweep.py --workloads transformer --modes inference
 Writes `../../results/gpu-precision-sweep-<run_id>.json` with per-cell median ±
 stdev, the bf16 speedup, versions, commit, and GPU.
 
-**Measurement note:** the dense-inference cells need enough timed iterations
-(use ≥100). A short loop is dominated by warmup and GPU-clock ramp and can give a
-spurious bf16 < fp32 reading at small width; the harness uses a longer default
-for this reason.
+**Measurement note:** the dense cells (inference AND training) need enough
+timed iterations (use ≥100). A short loop is dominated by warmup, fixed setup
+(bf16 parameter mirrors, cuBLASLt heuristics) and GPU-clock ramp and can give a
+spurious bf16 < fp32 reading; the harness uses a longer default for this
+reason. The training trial times train() wholesale, so at 8 steps the bf16
+setup overhead alone inverted the ratio to 0.9x.

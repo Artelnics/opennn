@@ -72,9 +72,12 @@ CELLS = {
         lambda bf16: [HIGGS_BIN,
                       "infer", "8000", "4096", "2", "100", "cuda", "8000"],
         "samples_per_sec"),
+    # >=100 optimizer steps for the same reason as dense inference: the trial
+    # times train() wholesale, and at 8 steps the fixed setup (bf16 mirrors,
+    # cuBLASLt heuristics) dominates and inverts the bf16/fp32 ratio.
     ("dense", "training"): (
         lambda bf16: [HIGGS_BIN,
-                      "train", "2000", "4096", "2", "8", "cuda", "2000"],
+                      "train", "2000", "4096", "2", "100", "cuda", "2000"],
         "samples_per_sec"),
 }
 

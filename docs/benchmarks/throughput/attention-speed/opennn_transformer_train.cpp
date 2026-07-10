@@ -2,10 +2,11 @@
 //   training loop: same architecture, same synthetic corpus (token-for-token),
 //   same optimizer (Adam) and loss (token cross-entropy over the vocabulary).
 //
-//   We time train() over a fixed epoch count and report samples/sec. train()
-//   does one CUDA warmup epoch internally before its timed loop, and uses CUDA
-//   graph capture for the optimizer step, so this measures the steady-state
-//   forward+backward+update throughput of the resident GPU path.
+//   We run one untimed warmup train() pass first (CUDA context, cuBLASLt /
+//   cuDNN plan caches, allocator, graph capture -- the counterpart of the
+//   excluded warmup epoch in the PyTorch/TensorFlow scripts), then time
+//   train() over the requested epoch count and report samples/sec: the
+//   steady-state forward+backward+update throughput of the resident GPU path.
 //
 //   The corpus is built by make_synthetic_corpus.py (tab-separated input<TAB>
 //   target per line); LanguageDataset.read_txt derives vocab + sequence lengths.
@@ -14,7 +15,9 @@
 //   env:   OPENNN_BF16=1   -> train in bf16 (else fp32, via the fp32-via-bf16 SDPA path)
 //          OPENNN_LR=<f>   -> Adam learning rate (default 1e-4)
 //          OPENNN_SDPA_MIN -> lower the fused-attention sequence-length threshold
+//          OPENNN_BENCH_DISPLAY=1 -> per-epoch optimizer display (timing diagnosis)
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -85,9 +88,18 @@ int main(int argc, char* argv[])
         adam->set_batch_size(batch);
         const float lr = std::getenv("OPENNN_LR") ? std::stof(std::getenv("OPENNN_LR")) : 0.0001f;
         adam->set_learning_rate(lr);
-        adam->set_maximum_epochs(epochs);
-        adam->set_display(false);
+        adam->set_display(std::getenv("OPENNN_BENCH_DISPLAY") != nullptr);
+        adam->set_display_period(1);
         std::cout << "learning_rate=" << lr << "\n";
+
+        // Untimed warmup: one full pass (maximum_epochs 0 runs epoch 0 only)
+        // so the timed train() below starts with warm plan caches, like the
+        // PyTorch/TensorFlow counterparts' excluded warmup epoch.
+        adam->set_maximum_epochs(0);
+        training_strategy.train();
+        cudaDeviceSynchronize();
+
+        adam->set_maximum_epochs(epochs);
 
         const auto t0 = std::chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
@@ -95,8 +107,10 @@ int main(int argc, char* argv[])
         const auto t1 = std::chrono::high_resolution_clock::now();
 
         const double wall_s = std::chrono::duration<double>(t1 - t0).count();
-        // epochs+1 timed passes over the data (train() runs epoch 0..maximum_epochs).
-        const double total_samples = double(samples) * double(epochs + 1);
+        // train() runs exactly maximum_epochs passes (epoch 0..max-1: the
+        // stopping condition fires at epoch + 1 == maximum_epochs), min. one.
+        const double timed_passes = double(std::max<Index>(Index(1), epochs));
+        const double total_samples = double(samples) * timed_passes;
         const double samples_per_s = total_samples / wall_s;
         const double tokens_per_s  = samples_per_s * double(input_seq + decoder_seq);
 

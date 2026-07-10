@@ -34,6 +34,23 @@ PY = os.environ.get("BENCH_PYTHON", sys.executable)
 OPENNN_BIN = os.path.join(HERE, "opennn_transformer_train")
 
 
+# TF needs the venv's bundled CUDA libs on LD_LIBRARY_PATH to see the GPU
+# (same mechanism as capacity/transformer-max-batch/run_transformer_maxbatch.py).
+def tf_ld_path():
+    site = os.path.join(os.path.dirname(os.path.dirname(PY)),
+                        "lib", "python3.12", "site-packages", "nvidia")
+    libs = []
+    if os.path.isdir(site):
+        for d in sorted(os.listdir(site)):
+            p = os.path.join(site, d, "lib")
+            if os.path.isdir(p):
+                libs.append(p)
+    return os.pathsep.join(libs)
+
+
+TF_LD = tf_ld_path()
+
+
 def ensure_corpus(path, vocab, seq_len, samples):
     """Generate the synthetic training corpus once if it is missing."""
     if os.path.exists(path):
@@ -58,6 +75,8 @@ def engine_cmd(engine, corpus, cfg, bf16):
         cmd = [PY, os.path.join(HERE, "tensorflow_transformer_train.py")] + args
         if bf16:
             env["TF_BF16"] = "1"
+        if TF_LD:
+            env["LD_LIBRARY_PATH"] = TF_LD + os.pathsep + os.environ.get("LD_LIBRARY_PATH", "")
     else:
         raise ValueError(engine)
     return cmd, env

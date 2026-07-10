@@ -1029,6 +1029,7 @@ __global__ void layernorm_backward_kernel(const int N, const int D, const T* __r
 
 template<typename T, int NUM_WARPS>
 __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, const int D,
+                                                               const int chunk,
                                                                const T* __restrict__ dY,
                                                                const T* __restrict__ X,
                                                                const float* __restrict__ means,
@@ -1036,17 +1037,19 @@ __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, cons
                                                                float* __restrict__ dGamma,
                                                                float* __restrict__ dBeta)
 {
-    const int lane    = threadIdx.x; 
+    const int lane    = threadIdx.x;
     const int warp_id = threadIdx.y;
     const int d       = blockIdx.x * 32 + lane;
     const bool active = (d < D);
+    const int n0      = blockIdx.y * chunk;
+    const int n1      = min(N, n0 + chunk);
 
     float local_gamma = 0.0f;
     float local_beta  = 0.0f;
 
     if (active)
     {
-        for (int n = warp_id; n < N; n += NUM_WARPS)
+        for (int n = n0 + warp_id; n < n1; n += NUM_WARPS)
         {
             const float dy    = static_cast<float>(dY[n * D + d]);
             const float x_hat = (static_cast<float>(X[n * D + d]) - means[n]) * inv_vars[n];
@@ -1072,8 +1075,16 @@ __global__ void layernorm_gamma_beta_gradient_coalesced_kernel(const int N, cons
             g += partial_gamma[w][lane];
             b += partial_beta [w][lane];
         }
-        dGamma[d] = g;
-        dBeta [d] = b;
+        if (gridDim.y == 1)
+        {
+            dGamma[d] = g;
+            dBeta [d] = b;
+        }
+        else
+        {
+            atomicAdd(dGamma + d, g);
+            atomicAdd(dBeta  + d, b);
+        }
     }
 }
 
@@ -1088,8 +1099,21 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
     const int grid_x = (D + 31) / 32;
-    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<grid_x, block, 0,
-        opennn::device::get_compute_stream()>>>(N, D, dY, X, means, inv_vars, dGamma, dBeta);
+    // Narrow D gives few blocks in x (d_model 256 -> 8), so split the row
+    // range across grid.y until the GPU is covered; multi-chunk grids
+    // accumulate with atomics into zeroed buffers.
+    const int desired_chunks = grid_x < 192 ? 192 / grid_x : 1;
+    int chunk = ceil_div(N, desired_chunks);
+    if (chunk < NUM_WARPS * 8) chunk = NUM_WARPS * 8;
+    const int grid_y = ceil_div(N, chunk);
+    if (grid_y > 1)
+    {
+        cudaStream_t stream = opennn::device::get_compute_stream();
+        cudaMemsetAsync(dGamma, 0, size_t(D) * sizeof(float), stream);
+        cudaMemsetAsync(dBeta,  0, size_t(D) * sizeof(float), stream);
+    }
+    layernorm_gamma_beta_gradient_coalesced_kernel<T, NUM_WARPS><<<dim3(grid_x, grid_y), block, 0,
+        opennn::device::get_compute_stream()>>>(N, D, chunk, dY, X, means, inv_vars, dGamma, dBeta);
     opennn::device::check_last_error();
 }
 
@@ -1616,9 +1640,15 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
 {
     if (batch == 0 || features == 0) return;
     const int f = checked_int(features);
-    const int chunk = 2048;
+    // Narrow feature counts give few blocks in x, so the batch chunk must
+    // shrink until the grid covers the whole GPU; a fixed chunk of 2048 left
+    // >90% of the SMs idle at transformer widths (d_model 256 -> 5 blocks).
+    const int f_blocks = ceil_div(f, block_size);
+    const int desired_chunks = f_blocks < 256 ? 256 / f_blocks : 1;
+    int chunk = checked_int((batch + desired_chunks - 1) / desired_chunks);
+    if (chunk < 64) chunk = 64;
     const int n_chunks = int((batch + chunk - 1) / chunk);
-    const dim3 grid((f + block_size - 1) / block_size, n_chunks);
+    const dim3 grid(f_blocks, n_chunks);
     OPENNN_CUDA_LAUNCH(bias_grad_sum_kernel<T><<<grid, block_size, 0,
                                          opennn::device::get_compute_stream()>>>(
         checked_int(batch), f, chunk, delta, bias_grad));
