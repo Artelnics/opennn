@@ -49,7 +49,7 @@ def default_opennn_bin():
     env_bin = os.environ.get("OPENNN_RESNET_BIN")
     if env_bin:
         return env_bin
-    repo_root = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+    repo_root = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
     candidates = [
         os.path.join(HERE, "opennn_resnet50_speed"),
         os.path.join(repo_root, "build-ninja", "bin", "opennn_resnet50_speed"),

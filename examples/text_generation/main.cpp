@@ -17,7 +17,6 @@
 #include "opennn/text_generation_dataset.h"
 #include "opennn/standard_networks.h"
 #include "opennn/adaptive_moment_estimation.h"
-#include "opennn/transformer_decoder.h"
 
 using namespace std;
 using namespace opennn;
@@ -78,10 +77,11 @@ int main()
 
         cout << "\n================ GENERATED TEXT ================\n";
 
-        // Inference requires GPU (TransformerDecoder is GPU-only).
-        TransformerDecoder generator(neural_network, dataset);
+        // The vocabulary travels with the network; inference needs no dataset.
+        neural_network.set_vocabulary(dataset.get_vocabulary());
 
-        TransformerDecoder::SamplingConfig sampling;
+        // Inference requires GPU (generate is GPU-only).
+        SamplingConfig sampling;
         sampling.temperature = 0.8f;
         sampling.top_k = 40;
         sampling.maximum_tokens = 40;
@@ -96,7 +96,7 @@ int main()
         for(const string& prompt : prompts)
         {
             cout << "Prompt:    " << prompt << endl;
-            cout << "Generated: " << generator.generate(prompt, sampling) << endl;
+            cout << "Generated: " << neural_network.generate(prompt, sampling) << endl;
             cout << endl;
         }
 

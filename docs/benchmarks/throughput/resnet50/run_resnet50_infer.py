@@ -48,7 +48,7 @@ def default_opennn_bin():
     env_bin = os.environ.get("OPENNN_RESNET_INFER_BIN")
     if env_bin:
         return env_bin
-    repo_root = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+    repo_root = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
     candidates = [
         os.path.join(HERE, "opennn_resnet50_infer"),
         os.path.join(repo_root, "build-ninja", "bin", "opennn_resnet50_infer"),
@@ -63,6 +63,21 @@ def default_opennn_bin():
 
 
 OPENNN_BIN = default_opennn_bin()
+
+
+def tensorflow_library_dirs(py):
+    """nvidia wheel lib dirs bundled in the venv; TF needs them on
+    LD_LIBRARY_PATH to see the GPU. Injected for the TF engine ONLY, so the
+    wheel cuDNN never shadows PyTorch's own (which would version-mismatch)."""
+    site = os.path.join(os.path.dirname(os.path.dirname(py)),
+                        "lib", "python3.12", "site-packages", "nvidia")
+    libs = []
+    if os.path.isdir(site):
+        for d in sorted(os.listdir(site)):
+            p = os.path.join(site, d, "lib")
+            if os.path.isdir(p):
+                libs.append(p)
+    return libs
 
 
 def engine_cmd(engine, data_dir, batch, runs, bf16):
@@ -85,6 +100,11 @@ def engine_cmd(engine, data_dir, batch, runs, bf16):
                str(batch), str(runs), data_dir]
         if bf16:
             env["TF_BF16"] = "1"
+        libs = tensorflow_library_dirs(PY)
+        if libs:
+            existing = os.environ.get("LD_LIBRARY_PATH", "")
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(
+                libs + ([existing] if existing else []))
     else:
         raise ValueError(engine)
     return cmd, env

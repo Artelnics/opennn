@@ -9,7 +9,7 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 
 # Vision module: YOLO, ResNet, ImageClassification, Transformer, and their
 # layers (convolutional, pooling, flatten, embedding, multihead-attention,
-# normalization_3d, detection, transformer_decoder) plus yolo_dataset.
+# normalization_3d, detection) plus yolo_dataset.
 # image_dataset and image_processing are always compiled so tabular pipelines
 # that feed images can use ImageDataset without a full vision build. Default ON;
 # set OFF (with -DOpenNN_BUILD_VISION=OFF) for tabular-only users who hit MSVC
@@ -20,7 +20,7 @@ set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|transformer_decoder|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|yolo_dataset)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 

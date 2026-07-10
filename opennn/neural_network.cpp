@@ -762,14 +762,15 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         vector<TensorView> input_views_device = input_view;
         forward_propagation.device_input_buffers.resize(input_view.size());
 
-        const auto input_feeds_embedding = [&](size_t input_index)
+        const auto input_feeds_token_ids = [&](size_t input_index)
         {
             const Index external_source = -static_cast<Index>(input_index) - 1;
 
             for (size_t layer_index = 0; layer_index < source_layers.size(); ++layer_index)
                 for (const Index source : source_layers[layer_index])
                     if (source == external_source
-                        && layers[layer_index]->get_type() == LayerType::Embedding)
+                        && (layers[layer_index]->get_type() == LayerType::Embedding
+                            || layers[layer_index]->get_type() == LayerType::Tokenizer))
                         return true;
 
             return false;
@@ -787,10 +788,10 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             throw_if(source.device == Device::Auto,
                      "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
 
-            // Embedding inputs are float-backed token ids; keep them FP32 so ids stay exact.
+            // Embedding/Tokenizer inputs are float-backed token ids; keep them FP32 so ids stay exact.
             const bool cast_input_to_bf16 = config.training_type == Type::BF16
                                          && source.is_fp32()
-                                         && !input_feeds_embedding(i);
+                                         && !input_feeds_token_ids(i);
 
             Buffer& input_buffer = forward_propagation.device_input_buffers[i];
 

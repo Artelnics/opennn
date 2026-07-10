@@ -15,6 +15,7 @@
 #include "recurrent_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "embedding_layer.h"
+#include "tokenizer_layer.h"
 #include "convolutional_layer.h"
 #include "detection_layer.h"
 #include "pooling_layer.h"
@@ -27,6 +28,8 @@
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
 #include "string_utilities.h"
+#include "random_utilities.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -1005,20 +1008,26 @@ Transformer::Transformer(Index input_sequence_length,
     throw_if(embedding_dimension % heads_number != 0,
              "Transformer: embedding_dimension must be divisible by heads_number.");
 
+    add_layer(make_unique<Tokenizer>(Shape{decoder_sequence_length}, "decoder_tokenizer"), {-1});
+    const Index decoder_tokenizer_index = get_layers_number() - 1;
+
     auto decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
         embedding_dimension, "decoder_embedding");
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
-    add_layer(move(decoder_embedding), {-1});
+    add_layer(move(decoder_embedding), {decoder_tokenizer_index});
     Index current_decoder_index = get_layers_number() - 1;
+
+    add_layer(make_unique<Tokenizer>(Shape{input_sequence_length}, "encoder_tokenizer"), {-2});
+    const Index encoder_tokenizer_index = get_layers_number() - 1;
 
     auto encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
         embedding_dimension, "encoder_embedding");
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
-    add_layer(move(encoder_embedding), {-2});
+    add_layer(move(encoder_embedding), {encoder_tokenizer_index});
     Index current_encoder_index = get_layers_number() - 1;
 
     const Shape encoder_shape{input_sequence_length, embedding_dimension};
@@ -1159,7 +1168,7 @@ Index Transformer::get_decoder_sequence_length() const
 
 Index Transformer::get_embedding_dimension() const
 {
-    return get_layer(0)->get_output_shape().back();
+    return get_layer("decoder_embedding")->get_output_shape().back();
 }
 
 Index Transformer::get_heads_number() const
@@ -1190,12 +1199,15 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     throw_if(embedding_dimension % heads_number != 0,
              "TextGenerationNetwork: embedding_dimension must be divisible by heads_number.");
 
+    add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
+    const Index tokenizer_index = get_layers_number() - 1;
+
     auto embedding = make_unique<Embedding>(
         Shape{vocabulary_size, sequence_length},
         embedding_dimension, "embedding");
     embedding->set_scale_embedding(true);
     embedding->set_add_positional_encoding(true);
-    add_layer(move(embedding), {-1});
+    add_layer(move(embedding), {tokenizer_index});
     Index current_index = get_layers_number() - 1;
 
     const Shape block_shape{sequence_length, embedding_dimension};
@@ -1390,7 +1402,768 @@ Index TextGenerationNetwork::get_sequence_length() const
 
 Index TextGenerationNetwork::get_embedding_dimension() const
 {
-    return get_layer(0)->get_output_shape().back();
+    return get_layer("embedding")->get_output_shape().back();
+}
+
+// --- Text inference (decode / generate / chat) ---
+//
+// The tokenizer layers carried by Transformer and TextGenerationNetwork hold
+// the vocabulary, so a model loaded from disk decodes without any dataset.
+// All per-prompt state lives in a GenerationSession created at execution time,
+// like the optimizers and calculate_outputs do.
+
+TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw)
+{
+    return [&out, &first_token, raw](const string& token)
+    {
+        if (raw) { out << token << flush; return; }
+
+        const bool is_punctuation = token.size() == 1
+            && string_view(",.!?;:").find(token[0]) != string_view::npos;
+
+        if (!first_token && !is_punctuation) out << ' ';
+        out << token << flush;
+        first_token = false;
+    };
+}
+
+Index sample_token(VectorR& probabilities,
+                   const SamplingConfig& sampling_config,
+                   const vector<Index>& history)
+{
+    const Index vocabulary_size = probabilities.size();
+
+    SamplingConfig config = sampling_config;
+    config.temperature = max(config.temperature, 0.0f);
+    if (config.repetition_penalty <= 0.0f) config.repetition_penalty = 1.0f;
+    config.top_k = max(config.top_k, Index(0));
+    config.top_p = clamp(config.top_p, 0.0f, 1.0f);
+
+    if (config.temperature == 0.0f)
+    {
+        Index best;
+        probabilities.maxCoeff(&best);
+        return best;
+    }
+
+    const VectorR original = probabilities;
+
+    if (config.repetition_penalty != 1.0f)
+        for (Index token_id : history)
+            if (token_id >= 0 && token_id < vocabulary_size)
+                probabilities(token_id) /= config.repetition_penalty;
+
+    if (config.temperature != 1.0f)
+    {
+        const float inverse_temperature = 1.0f / config.temperature;
+        for (Index i = 0; i < vocabulary_size; ++i)
+            probabilities(i) = pow(max(probabilities(i), 0.0f), inverse_temperature);
+    }
+
+    if (config.top_k > 0 && config.top_k < vocabulary_size)
+    {
+        vector<pair<float, Index>> indexed(vocabulary_size);
+        for (Index i = 0; i < vocabulary_size; ++i) indexed[i] = {probabilities(i), i};
+        nth_element(indexed.begin(),
+                    indexed.begin() + config.top_k,
+                    indexed.end(),
+                    [](const auto& a, const auto& b) { return a.first > b.first; });
+        vector<char> keep(vocabulary_size, 0);
+        for (Index i = 0; i < config.top_k; ++i) keep[indexed[i].second] = 1;
+        for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
+    }
+
+    if (config.top_p < 1.0f && config.top_p > 0.0f)
+    {
+        vector<pair<float, Index>> sorted_probabilities(vocabulary_size);
+        float total = 0.0f;
+        for (Index i = 0; i < vocabulary_size; ++i)
+        {
+            sorted_probabilities[i] = {probabilities(i), i};
+            total += probabilities(i);
+        }
+        if (total > 0.0f)
+        {
+            ranges::sort(sorted_probabilities,
+                         [](const auto& a, const auto& b) { return a.first > b.first; });
+            float cumulative_probability = 0.0f;
+            vector<char> keep(vocabulary_size, 0);
+            for (const auto& [probability, token_id] : sorted_probabilities)
+            {
+                cumulative_probability += probability / total;
+                keep[token_id] = 1;
+                if (cumulative_probability >= config.top_p) break;
+            }
+            for (Index i = 0; i < vocabulary_size; ++i) if (!keep[i]) probabilities(i) = 0.0f;
+        }
+    }
+
+    const float sum = probabilities.sum();
+    if (sum <= 0.0f)
+    {
+        Index best;
+        original.maxCoeff(&best);
+        return best;
+    }
+
+    const float sample_threshold = random_uniform(0.0f, sum);
+    float cumulative_probability = 0.0f;
+    for (Index i = 0; i < vocabulary_size; ++i)
+    {
+        cumulative_probability += probabilities(i);
+        if (cumulative_probability >= sample_threshold) return i;
+    }
+    return vocabulary_size - 1;
+}
+
+namespace
+{
+
+constexpr Index pad_token_id     = 0;
+constexpr Index unknown_token_id = 1;
+constexpr Index start_token_id   = 2;
+constexpr Index end_token_id     = 3;
+
+bool is_printable_token(Index token_id)
+{
+    return token_id != pad_token_id
+        && token_id != start_token_id
+        && token_id != end_token_id;
+}
+
+SamplingConfig greedy_config()
+{
+    return {.temperature = 0.0f};
+}
+
+Tokenizer& get_tokenizer_layer(const NeuralNetwork& network, const string& label, const char* method)
+{
+    Tokenizer* tokenizer_layer = nullptr;
+
+    try
+    {
+        tokenizer_layer = dynamic_cast<Tokenizer*>(network.get_layer(label).get());
+    }
+    catch (const exception&)
+    {
+    }
+
+    throw_if(!tokenizer_layer,
+             format("{}: network has no '{}' layer. Rebuild the network or re-save the model with a tokenizer.",
+                    method, label));
+
+    return *tokenizer_layer;
+}
+
+struct GenerationSession
+{
+    Buffer arena{Device::CUDA};
+    TensorView source_ids_device;
+    TensorView target_ids_device;
+    unique_ptr<ForwardPropagation> forward_propagation;
+    vector<TensorView> inputs;
+
+    Tensor2 source_ids;
+    Tensor2 target_ids;
+    vector<Index> history;
+    VectorR distribution;
+    vector<uint16_t> bf16_staging;
+
+    Index input_sequence_length = 0;
+    Index sequence_length = 0;
+
+    Index decoder_embedding_index = -1;
+    Index encoder_embedding_index = -1;
+    Index encoder_last_index      = -1;
+    Index decoder_first_index     = -1;
+    Index output_projection_index = -1;
+};
+
+void identify_seq2seq_ranges(const NeuralNetwork& network, GenerationSession& session)
+{
+    const auto& layers = network.get_layers();
+    const Index layers_number = ssize(layers);
+
+    session.decoder_embedding_index = network.get_layer_index("decoder_embedding");
+    session.encoder_embedding_index = network.get_layer_index("encoder_embedding");
+
+    Index first_cross_attention_index = -1;
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        if (layers[i]->get_label().starts_with("cross_attention_"))
+        {
+            first_cross_attention_index = i;
+            break;
+        }
+    }
+    throw_if(first_cross_attention_index < 0,
+             "Transformer::decode: no 'cross_attention_*' layer found.");
+
+    const vector<Index>& cross_sources = network.get_source_layers()[first_cross_attention_index];
+    throw_if(cross_sources.size() < 2 || cross_sources[1] < 0,
+             "Transformer::decode: first cross_attention layer must have 2 valid inputs (decoder, encoder).");
+
+    session.encoder_last_index = cross_sources[1];
+
+    session.decoder_first_index = session.encoder_last_index + 1;
+    throw_if(session.decoder_first_index >= layers_number,
+             "Transformer::decode: decoder stack first index out of range.");
+    throw_if(layers[session.decoder_first_index]->get_label() != "decoder_self_attention_1",
+             format("Transformer::decode: layer after encoder expected to be 'decoder_self_attention_1', found '{}'.",
+                    layers[session.decoder_first_index]->get_label()));
+
+    session.output_projection_index = layers_number - 1;
+    throw_if(layers[session.output_projection_index]->get_label() != "output_projection",
+             format("Transformer::decode: last layer expected to be 'output_projection', found '{}'.",
+                    layers[session.output_projection_index]->get_label()));
+}
+
+void prepare_device(NeuralNetwork& network)
+{
+    network.copy_parameters_device();
+    network.link_parameters();
+    network.copy_states_device();
+    network.link_states();
+}
+
+void size_session_distribution(const NeuralNetwork& network, GenerationSession& session)
+{
+    const Index vocabulary_size = network.get_layers().back()->get_output_shape().back();
+    session.distribution = VectorR::Zero(vocabulary_size);
+    session.bf16_staging.assign(static_cast<size_t>(vocabulary_size), 0);
+}
+
+GenerationSession make_seq2seq_session(Transformer& network)
+{
+    throw_if(!network.is_gpu() || !device::is_cuda_build(),
+             "Transformer::decode requires GPU configuration.");
+
+    GenerationSession session;
+
+    session.input_sequence_length = network.get_input_sequence_length();
+    session.sequence_length       = network.get_decoder_sequence_length();
+
+    throw_if(network.get_input_vocabulary().empty(),
+             "Transformer::decode: input vocabulary is empty. Set it with set_input_vocabulary/set_input_tokenizer or load a model saved with one.");
+    throw_if(network.get_target_vocabulary().empty(),
+             "Transformer::decode: target vocabulary is empty. Set it with set_target_vocabulary/set_target_tokenizer or load a model saved with one.");
+
+    prepare_device(network);
+
+    identify_seq2seq_ranges(network, session);
+
+    constexpr Index batch_size = 1;
+
+    const Index source_bytes = get_aligned_bytes(batch_size * session.input_sequence_length, Type::FP32);
+    const Index target_bytes = get_aligned_bytes(batch_size * session.sequence_length, Type::FP32);
+
+    session.arena.resize_bytes(source_bytes + target_bytes, Device::CUDA);
+
+    char* const base = session.arena.as<char>();
+    session.source_ids_device = TensorView(base,
+                                           {batch_size, session.input_sequence_length},
+                                           Type::FP32,
+                                           Device::CUDA);
+    session.target_ids_device = TensorView(base + source_bytes,
+                                           {batch_size, session.sequence_length},
+                                           Type::FP32,
+                                           Device::CUDA);
+
+    session.forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
+
+    session.source_ids = Tensor2(batch_size, session.input_sequence_length);
+    session.target_ids = Tensor2(batch_size, session.sequence_length);
+    session.history.reserve(session.sequence_length);
+
+    session.inputs = {session.target_ids_device, session.source_ids_device};
+
+    size_session_distribution(network, session);
+
+    return session;
+}
+
+GenerationSession make_decoder_only_session(TextGenerationNetwork& network)
+{
+    throw_if(!network.is_gpu() || !device::is_cuda_build(),
+             "TextGenerationNetwork::generate requires GPU configuration.");
+
+    GenerationSession session;
+
+    session.sequence_length = network.get_sequence_length();
+
+    throw_if(network.get_vocabulary().empty(),
+             "TextGenerationNetwork::generate: vocabulary is empty. Set it with set_vocabulary/set_tokenizer or load a model saved with one.");
+
+    prepare_device(network);
+
+    network.get_layer_index("embedding");
+    throw_if(network.get_layers().back()->get_label() != "output_projection",
+             format("TextGenerationNetwork::generate: last layer expected to be 'output_projection', found '{}'.",
+                    network.get_layers().back()->get_label()));
+
+    constexpr Index batch_size = 1;
+
+    session.arena.resize_bytes(get_aligned_bytes(batch_size * session.sequence_length, Type::FP32), Device::CUDA);
+
+    session.target_ids_device = TensorView(session.arena.as<char>(),
+                                           {batch_size, session.sequence_length},
+                                           Type::FP32,
+                                           Device::CUDA);
+
+    session.forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
+
+    session.target_ids = Tensor2(batch_size, session.sequence_length);
+    session.history.reserve(session.sequence_length);
+
+    session.inputs = {session.target_ids_device};
+
+    size_session_distribution(network, session);
+
+    return session;
+}
+
+void reset_per_prompt_state(GenerationSession& session)
+{
+    session.target_ids.setConstant(pad_token_id);
+    session.target_ids(0, 0) = start_token_id;
+    session.history.clear();
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    device::copy_async(session.target_ids_device.data,
+                       session.target_ids.data(),
+                       session.target_ids_device.byte_size(),
+                       device::CopyKind::HostToDevice,
+                       stream);
+}
+
+void encode_source(Transformer& network, GenerationSession& session, const string& source)
+{
+    const TokenizerOperator* input_tokenizer = network.get_input_tokenizer();
+    const auto& input_vocabulary_map = input_tokenizer->get_vocabulary_map();
+
+    session.source_ids.setConstant(pad_token_id);
+    session.source_ids(0, 0) = start_token_id;
+
+    const vector<string> source_tokens = input_tokenizer->tokenize(source);
+    Index write_index = 1;
+    for (const string& token : source_tokens)
+    {
+        if (write_index >= session.input_sequence_length) break;
+
+        const auto it = input_vocabulary_map.find(token);
+        session.source_ids(0, write_index) = (it != input_vocabulary_map.end())
+                                                 ? static_cast<float>(it->second)
+                                                 : unknown_token_id;
+        ++write_index;
+    }
+    if (write_index < session.input_sequence_length)
+        session.source_ids(0, write_index) = end_token_id;
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    device::copy_async(session.source_ids_device.data,
+                       session.source_ids.data(),
+                       session.source_ids_device.byte_size(),
+                       device::CopyKind::HostToDevice,
+                       stream);
+    network.forward_propagate(session.inputs, *session.forward_propagation, false,
+                              session.encoder_embedding_index,
+                              session.encoder_last_index);
+}
+
+void read_distribution(GenerationSession& session, Index position)
+{
+    cudaStream_t stream = Backend::get_compute_stream();
+
+    const TensorView output_view = session.forward_propagation->get_outputs();
+    const Index vocabulary_size = output_view.shape[2];
+    const Index slice_offset = position * vocabulary_size;
+    if (output_view.is_bf16())
+    {
+        device::copy_async(session.bf16_staging.data(),
+                           output_view.as<bfloat16>() + slice_offset,
+                           vocabulary_size * Index(sizeof(uint16_t)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
+        for (Index i = 0; i < vocabulary_size; ++i)
+        {
+            session.distribution(i) = bit_cast<float>(static_cast<uint32_t>(session.bf16_staging[size_t(i)]) << 16);
+        }
+    }
+    else if (output_view.is_fp32())
+    {
+        device::copy_async(session.distribution.data(),
+                           output_view.as<float>() + slice_offset,
+                           vocabulary_size * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           stream);
+        device::synchronize(stream);
+    }
+    else
+    {
+        throw runtime_error("Text generation: unsupported output dtype.");
+    }
+}
+
+Index decode_step(Transformer& network, GenerationSession& session,
+                  Index step_index, const SamplingConfig& config)
+{
+    network.forward_propagate(session.inputs, *session.forward_propagation, false,
+                              session.decoder_embedding_index,
+                              session.decoder_embedding_index);
+
+    network.forward_propagate(session.inputs, *session.forward_propagation, false,
+                              session.decoder_first_index,
+                              session.output_projection_index);
+
+    read_distribution(session, step_index - 1);
+
+    return sample_token(session.distribution, config, session.history);
+}
+
+Index generate_step(TextGenerationNetwork& network, GenerationSession& session,
+                    const vector<Index>& context, const SamplingConfig& config)
+{
+    // Sliding window over the tail of the context: causal masking makes the
+    // trailing PAD positions irrelevant to the predictions at earlier positions.
+    const Index window_length = min(ssize(context), session.sequence_length);
+    const Index window_start = ssize(context) - window_length;
+
+    session.target_ids.setConstant(pad_token_id);
+    for (Index j = 0; j < window_length; ++j)
+        session.target_ids(0, j) = static_cast<float>(context[size_t(window_start + j)]);
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    device::copy_async(session.target_ids_device.data,
+                       session.target_ids.data(),
+                       session.target_ids_device.byte_size(),
+                       device::CopyKind::HostToDevice,
+                       stream);
+
+    network.forward_propagate(session.inputs, *session.forward_propagation, false);
+
+    read_distribution(session, window_length - 1);
+
+    return sample_token(session.distribution, config, session.history);
+}
+
+string assemble_output_string(const GenerationSession& session, const vector<string>& output_vocabulary)
+{
+    string result;
+    for (Index i = 1; i < session.sequence_length; ++i)
+    {
+        const Index token_id = static_cast<Index>(session.target_ids(0, i));
+        if (token_id == end_token_id || token_id == pad_token_id) break;
+
+        if (token_id < 0 || token_id >= ssize(output_vocabulary)) continue;
+
+        if (!result.empty()) result += " ";
+        result += output_vocabulary[size_t(token_id)];
+    }
+    return result;
+}
+
+string decode_with_session(Transformer& network, GenerationSession& session,
+                           const string& source, const SamplingConfig& config,
+                           const TokenCallback& on_token)
+{
+    reset_per_prompt_state(session);
+    encode_source(network, session, source);
+
+    const Index generation_limit = (config.maximum_tokens > 0)
+        ? min(config.maximum_tokens + Index(1), session.sequence_length)
+        : session.sequence_length;
+
+    const vector<string>& output_vocabulary = network.get_target_vocabulary();
+
+    for (Index i = 1; i < generation_limit; ++i)
+    {
+        const Index next_token_id = decode_step(network, session, i, config);
+
+        session.target_ids(0, i) = static_cast<float>(next_token_id);
+        session.history.push_back(next_token_id);
+
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(session.target_ids_device.as<float>() + i,
+                           &session.target_ids(0, i),
+                           Index(sizeof(float)),
+                           device::CopyKind::HostToDevice,
+                           stream);
+
+        if (next_token_id == end_token_id)
+            break;
+
+        if (on_token && is_printable_token(next_token_id)
+            && next_token_id >= 0 && next_token_id < ssize(output_vocabulary))
+            on_token(output_vocabulary[size_t(next_token_id)]);
+    }
+
+    return assemble_output_string(session, output_vocabulary);
+}
+
+string generate_with_session(TextGenerationNetwork& network, GenerationSession& session,
+                             const string& prompt, const SamplingConfig& config,
+                             const TokenCallback& on_token)
+{
+    const TokenizerOperator* tokenizer = network.get_tokenizer();
+    const vector<string>& vocabulary = tokenizer->get_vocabulary();
+
+    // A subword tokenizer decodes text directly; word-level maps ids through
+    // the vocabulary and joins them with spaces.
+    const bool word_level = tokenizer->get_kind() == "WordLevel";
+
+    vector<Index> context = tokenizer->encode(prompt);
+
+    throw_if(context.empty(),
+             "TextGenerationNetwork::generate: prompt produced no tokens.");
+
+    session.history = context;
+
+    const Index maximum_new_tokens = (config.maximum_tokens > 0)
+        ? config.maximum_tokens
+        : session.sequence_length;
+    const Index prompt_size = ssize(context);
+
+    string result;
+
+    for (Index step = 0; step < maximum_new_tokens; ++step)
+    {
+        const Index next_token_id = generate_step(network, session, context, config);
+
+        context.push_back(next_token_id);
+        session.history.push_back(next_token_id);
+
+        if (next_token_id == pad_token_id
+            || next_token_id < 0 || next_token_id >= ssize(vocabulary))
+            continue;
+
+        if (!word_level)
+        {
+            // Re-decode the generated tail so subwords join into text correctly,
+            // and stream only the newly produced suffix.
+            const vector<Index> generated(context.begin() + prompt_size, context.end());
+            const string text = tokenizer->decode(generated);
+            if (on_token && text.size() > result.size())
+                on_token(text.substr(result.size()));
+            result = text;
+        }
+        else
+        {
+            const string& token = vocabulary[size_t(next_token_id)];
+            if (!result.empty()) result += " ";
+            result += token;
+            if (on_token) on_token(token);
+        }
+    }
+
+    return result;
+}
+
+void chat_loop(const function<void(const string&)>& answer_prompt)
+{
+    cout << "Enter prompts. Empty line or Ctrl+D to exit.\n";
+
+    string prompt_line;
+    while (true)
+    {
+        cout << "\n> " << flush;
+        if (!getline(cin, prompt_line) || prompt_line.empty()) break;
+
+        answer_prompt(prompt_line);
+        cout << "\n";
+    }
+    cout << "Bye!\n";
+}
+
+}
+
+Transformer::Transformer(const filesystem::path& path)
+    : NeuralNetwork(path)
+{
+}
+
+void Transformer::set_input_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
+{
+    get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::set_input_tokenizer")
+        .set_tokenizer(move(new_tokenizer));
+}
+
+void Transformer::set_target_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
+{
+    get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::set_target_tokenizer")
+        .set_tokenizer(move(new_tokenizer));
+}
+
+void Transformer::set_input_vocabulary(const vector<string>& new_vocabulary)
+{
+    get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::set_input_vocabulary")
+        .set_vocabulary(new_vocabulary);
+}
+
+void Transformer::set_target_vocabulary(const vector<string>& new_vocabulary)
+{
+    get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::set_target_vocabulary")
+        .set_vocabulary(new_vocabulary);
+}
+
+const TokenizerOperator* Transformer::get_input_tokenizer() const
+{
+    return get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::get_input_tokenizer").get_tokenizer();
+}
+
+const TokenizerOperator* Transformer::get_target_tokenizer() const
+{
+    return get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::get_target_tokenizer").get_tokenizer();
+}
+
+const vector<string>& Transformer::get_input_vocabulary() const
+{
+    return get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::get_input_vocabulary").get_vocabulary();
+}
+
+const vector<string>& Transformer::get_target_vocabulary() const
+{
+    return get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::get_target_vocabulary").get_vocabulary();
+}
+
+string Transformer::decode(const string& source)
+{
+    return decode(source, greedy_config(), TokenCallback{});
+}
+
+string Transformer::decode(const string& source, const SamplingConfig& config)
+{
+    return decode(source, config, TokenCallback{});
+}
+
+string Transformer::decode(const string& source, const TokenCallback& on_token)
+{
+    return decode(source, greedy_config(), on_token);
+}
+
+string Transformer::decode(const string& source,
+                           const SamplingConfig& config,
+                           const TokenCallback& on_token)
+{
+    GenerationSession session = make_seq2seq_session(*this);
+
+    return decode_with_session(*this, session, source, config, on_token);
+}
+
+string Transformer::decode_to_stream(const string& source, ostream& out)
+{
+    return decode_to_stream(source, greedy_config(), out);
+}
+
+string Transformer::decode_to_stream(const string& source,
+                                     const SamplingConfig& config,
+                                     ostream& out)
+{
+    bool first_token = true;
+
+    return decode(source, config, stream_token_callback(out, first_token, false));
+}
+
+void Transformer::chat()
+{
+    chat(greedy_config());
+}
+
+void Transformer::chat(const SamplingConfig& config)
+{
+    GenerationSession session = make_seq2seq_session(*this);
+
+    chat_loop([&](const string& prompt_line)
+    {
+        bool first_token = true;
+        decode_with_session(*this, session, prompt_line, config,
+                            stream_token_callback(cout, first_token, false));
+    });
+}
+
+TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
+    : NeuralNetwork(path)
+{
+}
+
+void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
+{
+    get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::set_tokenizer")
+        .set_tokenizer(move(new_tokenizer));
+}
+
+void TextGenerationNetwork::set_vocabulary(const vector<string>& new_vocabulary)
+{
+    get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::set_vocabulary")
+        .set_vocabulary(new_vocabulary);
+}
+
+const TokenizerOperator* TextGenerationNetwork::get_tokenizer() const
+{
+    return get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::get_tokenizer").get_tokenizer();
+}
+
+const vector<string>& TextGenerationNetwork::get_vocabulary() const
+{
+    return get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::get_vocabulary").get_vocabulary();
+}
+
+string TextGenerationNetwork::generate(const string& prompt)
+{
+    return generate(prompt, greedy_config(), TokenCallback{});
+}
+
+string TextGenerationNetwork::generate(const string& prompt, const SamplingConfig& config)
+{
+    return generate(prompt, config, TokenCallback{});
+}
+
+string TextGenerationNetwork::generate(const string& prompt, const TokenCallback& on_token)
+{
+    return generate(prompt, greedy_config(), on_token);
+}
+
+string TextGenerationNetwork::generate(const string& prompt,
+                                       const SamplingConfig& config,
+                                       const TokenCallback& on_token)
+{
+    GenerationSession session = make_decoder_only_session(*this);
+
+    return generate_with_session(*this, session, prompt, config, on_token);
+}
+
+string TextGenerationNetwork::generate_to_stream(const string& prompt, ostream& out)
+{
+    return generate_to_stream(prompt, greedy_config(), out);
+}
+
+string TextGenerationNetwork::generate_to_stream(const string& prompt,
+                                                 const SamplingConfig& config,
+                                                 ostream& out)
+{
+    bool first_token = true;
+    const bool raw = get_tokenizer() && get_tokenizer()->get_kind() != "WordLevel";
+
+    return generate(prompt, config, stream_token_callback(out, first_token, raw));
+}
+
+void TextGenerationNetwork::chat()
+{
+    chat(greedy_config());
+}
+
+void TextGenerationNetwork::chat(const SamplingConfig& config)
+{
+    GenerationSession session = make_decoder_only_session(*this);
+
+    const bool raw = get_tokenizer() && get_tokenizer()->get_kind() != "WordLevel";
+
+    chat_loop([&](const string& prompt_line)
+    {
+        bool first_token = true;
+        generate_with_session(*this, session, prompt_line, config,
+                              stream_token_callback(cout, first_token, raw));
+    });
 }
 
 Index Bert::get_sequence_length() const

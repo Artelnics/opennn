@@ -10,6 +10,7 @@
 #include "activation_layer.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
+#include "tokenizer_layer.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
@@ -38,6 +39,7 @@ void register_classes()
     const Activation activation;
     const Dense dense;
     const Scaling scaling;
+    const Tokenizer tokenizer;
     const Addition addition;
 #ifndef OPENNN_NO_VISION
     const Flatten flatten;

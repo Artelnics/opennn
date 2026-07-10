@@ -8,11 +8,15 @@
 
 #pragma once
 
+#include <functional>
+
 #include "neural_network.h"
 #include "pooling_layer.h"
 
 namespace opennn
 {
+
+class TokenizerOperator;
 
 class ApproximationNetwork : public NeuralNetwork
 {
@@ -129,6 +133,26 @@ public:
                               PoolingMethod pooling_method = PoolingMethod::AveragePooling);
 };
 
+struct SamplingConfig
+{
+    float temperature = 1.0f;
+    Index top_k = 0;
+    float top_p = 1.0f;
+    float repetition_penalty = 1.0f;
+    Index maximum_tokens = 0;
+};
+
+using TokenCallback = function<void(const string&)>;
+
+Index sample_token(VectorR& probabilities,
+                   const SamplingConfig& sampling_config,
+                   const vector<Index>& history);
+
+// raw = the callback already receives detokenized text (subword tokenizers emit
+// text deltas with spacing baked in); otherwise a space is inserted between
+// word-level tokens except before punctuation.
+TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw);
+
 class Transformer final : public NeuralNetwork
 {
 public:
@@ -144,6 +168,8 @@ public:
                 Index,
                 Index);
 
+    explicit Transformer(const filesystem::path&);
+
     Index get_input_sequence_length() const;
     Index get_decoder_sequence_length() const;
     Index get_embedding_dimension() const;
@@ -152,6 +178,26 @@ public:
     void set_dropout_rate(const float);
     void set_attention_sdpa_auto(bool);
     void set_attention_sdpa_min_sequence_length(Index);
+
+    void set_input_tokenizer(unique_ptr<TokenizerOperator>);
+    void set_target_tokenizer(unique_ptr<TokenizerOperator>);
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
+    const TokenizerOperator* get_input_tokenizer() const;
+    const TokenizerOperator* get_target_tokenizer() const;
+    const vector<string>& get_input_vocabulary() const;
+    const vector<string>& get_target_vocabulary() const;
+
+    string decode(const string&);
+    string decode(const string&, const SamplingConfig&);
+    string decode(const string&, const TokenCallback&);
+    string decode(const string&, const SamplingConfig&, const TokenCallback&);
+
+    string decode_to_stream(const string&, ostream&);
+    string decode_to_stream(const string&, const SamplingConfig&, ostream&);
+
+    void chat();
+    void chat(const SamplingConfig&);
 };
 
 class TextGenerationNetwork final : public NeuralNetwork
@@ -171,12 +217,30 @@ public:
                           Index,
                           bool pre_normalization = false);
 
+    explicit TextGenerationNetwork(const filesystem::path&);
+
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
     Index get_heads_number() const;
 
     void set_dropout_rate(const float);
     void set_attention_sdpa_auto(bool);
+
+    void set_tokenizer(unique_ptr<TokenizerOperator>);
+    void set_vocabulary(const vector<string>&);
+    const TokenizerOperator* get_tokenizer() const;
+    const vector<string>& get_vocabulary() const;
+
+    string generate(const string&);
+    string generate(const string&, const SamplingConfig&);
+    string generate(const string&, const TokenCallback&);
+    string generate(const string&, const SamplingConfig&, const TokenCallback&);
+
+    string generate_to_stream(const string&, ostream&);
+    string generate_to_stream(const string&, const SamplingConfig&, ostream&);
+
+    void chat();
+    void chat(const SamplingConfig&);
 };
 
 class Bert final : public NeuralNetwork

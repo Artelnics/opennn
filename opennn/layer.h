@@ -40,6 +40,7 @@ enum class LayerType
     Pooling3d,
     Recurrent,
     Scaling,
+    Tokenizer,
     Unscaling,
     Upsample
 };
@@ -65,6 +66,7 @@ inline const EnumMap<LayerType>& layer_type_map()
         {LayerType::Pooling3d,          "Pooling3d"},
         {LayerType::Recurrent,          "Recurrent"},
         {LayerType::Scaling,            "Scaling"},
+        {LayerType::Tokenizer,          "Tokenizer"},
         {LayerType::Unscaling,          "Unscaling"},
         {LayerType::Upsample,           "Upsample"}
     };

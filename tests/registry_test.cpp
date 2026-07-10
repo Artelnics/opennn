@@ -45,6 +45,7 @@ TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
         "Pooling3d",
         "Recurrent",
         "Scaling",
+        "Tokenizer",
         "Unscaling",
         "Upsample"
     };

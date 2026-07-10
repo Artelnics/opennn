@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+REPO_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 RESNET_SPEED_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "throughput", "resnet50"))
 # Datasets live under $OPENNN_BENCH_DATA (see ../../DATA_POLICY.md), never inside

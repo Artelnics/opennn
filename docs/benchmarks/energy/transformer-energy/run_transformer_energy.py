@@ -38,7 +38,7 @@ import time
 from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+REPO = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 VENV_PY = os.environ.get("BENCH_PYTHON", "python3")
 CORPUS = os.environ.get(

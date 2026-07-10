@@ -1,19 +1,19 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T O K E N I Z E R   C L A S S
+//   T O K E N I Z E R   O P E R A T O R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tokenizer.h"
+#include "tokenizer_operator.h"
 #include "string_utilities.h"
 #include "json.h"
 
 namespace opennn
 {
 
-void Tokenizer::rebuild_map()
+void TokenizerOperator::rebuild_map()
 {
     vocabulary_map.clear();
     vocabulary_map.reserve(vocabulary.size());
@@ -22,13 +22,13 @@ void Tokenizer::rebuild_map()
         vocabulary_map[vocabulary[size_t(i)]] = i;
 }
 
-void Tokenizer::set_vocabulary(const vector<string>& new_vocabulary)
+void TokenizerOperator::set_vocabulary(const vector<string>& new_vocabulary)
 {
     vocabulary = new_vocabulary;
     rebuild_map();
 }
 
-void Tokenizer::build_vocabulary(const vector<vector<string>>& documents,
+void TokenizerOperator::build_vocabulary(const vector<vector<string>>& documents,
                                  Index maximum_vocabulary_size,
                                  Index minimum_token_frequency)
 {
@@ -62,13 +62,13 @@ void Tokenizer::build_vocabulary(const vector<vector<string>>& documents,
     rebuild_map();
 }
 
-Index Tokenizer::token_to_id(string_view token) const
+Index TokenizerOperator::token_to_id(string_view token) const
 {
     const auto it = vocabulary_map.find(string(token));
     return it != vocabulary_map.end() ? it->second : unk_id;
 }
 
-const string& Tokenizer::id_to_token(Index id) const
+const string& TokenizerOperator::id_to_token(Index id) const
 {
     static const string empty_token;
 
@@ -78,7 +78,7 @@ const string& Tokenizer::id_to_token(Index id) const
     return vocabulary[size_t(id)];
 }
 
-vector<Index> Tokenizer::encode(string_view text) const
+vector<Index> TokenizerOperator::encode(string_view text) const
 {
     const vector<string> tokens = tokenize(text);
 
@@ -91,7 +91,7 @@ vector<Index> Tokenizer::encode(string_view text) const
     return ids;
 }
 
-string Tokenizer::decode(const vector<Index>& ids) const
+string TokenizerOperator::decode(const vector<Index>& ids) const
 {
     string text;
 
@@ -107,6 +107,28 @@ string Tokenizer::decode(const vector<Index>& ids) const
     }
 
     return text;
+}
+
+void TokenizerOperator::to_JSON(JsonWriter& printer) const
+{
+    if (vocabulary.empty()) return;
+
+    write_json(printer, {{"Vocabulary", vector_to_string(vocabulary, "\n")}});
+}
+
+void TokenizerOperator::from_JSON(const Json* element)
+{
+    if (element->has("Vocabulary"))
+        set_vocabulary(get_tokens(read_json_string(element, "Vocabulary"), "\n"));
+}
+
+unique_ptr<TokenizerOperator> make_tokenizer_operator(const string& kind)
+{
+    if (kind == "WordLevel") return make_unique<WordLevelTokenizer>();
+    if (kind == "WordPiece") return make_unique<WordPieceTokenizer>();
+    if (kind == "BytePair")  return make_unique<BytePairTokenizer>();
+
+    throw runtime_error("make_tokenizer_operator: unknown tokenizer kind: " + kind);
 }
 
 WordLevelTokenizer::WordLevelTokenizer()
@@ -329,7 +351,7 @@ WordPieceTokenizer::WordPieceTokenizer(const vector<string>& new_vocabulary)
 
 void WordPieceTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
 {
-    Tokenizer::set_vocabulary(new_vocabulary);
+    TokenizerOperator::set_vocabulary(new_vocabulary);
 
     const auto it = vocabulary_map.find(unk_token);
     if (it == vocabulary_map.end())
@@ -447,6 +469,21 @@ vector<string> WordPieceTokenizer::tokenize(string_view text) const
     return tokens;
 }
 
+void WordPieceTokenizer::to_JSON(JsonWriter& printer) const
+{
+    TokenizerOperator::to_JSON(printer);
+
+    write_json(printer, {{"LowerCase", to_string(do_lower_case)}});
+}
+
+void WordPieceTokenizer::from_JSON(const Json* element)
+{
+    if (element->has("LowerCase"))
+        do_lower_case = read_json_bool(element, "LowerCase");
+
+    TokenizerOperator::from_JSON(element);
+}
+
 BytePairTokenizer::BytePairTokenizer()
 {
     reserved_tokens = {string(PAD_TOKEN)};
@@ -497,20 +534,67 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
     throw_if(!merges_file.is_open(),
              "Cannot open merges.txt: " + merges_txt.string());
 
-    merge_ranks.clear();
-    bpe_cache.clear();
+    vector<string> merge_lines;
     string line;
-    int rank = 0;
     while (getline(merges_file, line))
     {
         if (!line.empty() && line.back() == '\r') line.pop_back();
-        if (line.empty() || line[0] == '#') continue;
-
-        const size_t space = line.find(' ');
-        if (space == string::npos) continue;
-
-        merge_ranks.emplace(line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
+        merge_lines.push_back(move(line));
     }
+
+    set_merges(merge_lines);
+}
+
+vector<string> BytePairTokenizer::get_merges() const
+{
+    vector<pair<int, string>> ranked;
+    ranked.reserve(merge_ranks.size());
+
+    for (const auto& [line, rank] : merge_ranks)
+        ranked.emplace_back(rank, line);
+
+    ranges::sort(ranked);
+
+    vector<string> merges;
+    merges.reserve(ranked.size());
+
+    for (auto& [rank, merge_line] : ranked)
+        merges.push_back(move(merge_line));
+
+    return merges;
+}
+
+void BytePairTokenizer::set_merges(const vector<string>& merges)
+{
+    merge_ranks.clear();
+    bpe_cache.clear();
+
+    int rank = 0;
+    for (const string& merge_line : merges)
+    {
+        if (merge_line.empty() || merge_line[0] == '#') continue;
+
+        if (merge_line.find(' ') == string::npos) continue;
+
+        merge_ranks.emplace(merge_line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
+    }
+}
+
+void BytePairTokenizer::to_JSON(JsonWriter& printer) const
+{
+    TokenizerOperator::to_JSON(printer);
+
+    if (merge_ranks.empty()) return;
+
+    write_json(printer, {{"Merges", vector_to_string(get_merges(), "\n")}});
+}
+
+void BytePairTokenizer::from_JSON(const Json* element)
+{
+    TokenizerOperator::from_JSON(element);
+
+    if (element->has("Merges"))
+        set_merges(get_tokens(read_json_string(element, "Merges"), "\n"));
 }
 
 vector<string> BytePairTokenizer::bpe(const string& token) const

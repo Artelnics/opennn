@@ -19,7 +19,6 @@
 #include "opennn/standard_networks.h"
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/random_utilities.h"
-#include "opennn/transformer_decoder.h"
 
 using namespace std;
 using namespace opennn;
@@ -94,11 +93,14 @@ int main()
                 "yo veo el gato"
             };
 
-        // Inference requires GPU (TransformerDecoder is GPU-only).
-        TransformerDecoder decoder(transformer, language_dataset);
+        // The vocabularies travel with the network; inference needs no dataset.
+        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+
+        // Inference requires GPU (decode is GPU-only).
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {
-            const string prediction = decoder.decode(test_sources[i]);
+            const string prediction = transformer.decode(test_sources[i]);
 
             cout << "Sample " << i << endl;
             cout << "  Source:    " << test_sources[i] << endl;

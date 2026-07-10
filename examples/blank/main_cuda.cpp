@@ -35,7 +35,6 @@
 #include "opennn/testing_analysis.h"
 #include "opennn/stochastic_gradient_descent.h"
 #include "opennn/adaptive_moment_estimation.h"
-#include "opennn/transformer_decoder.h"
 #include "opennn/random_utilities.h"
 
 using namespace opennn;
@@ -350,6 +349,24 @@ int main(int argc, char** argv)
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.cap60.txt";
 
+        // Self-contained model (JSON topology+vocabularies, sibling .bin weights):
+        // when it exists, inference never touches the corpus or the dataset.
+        const filesystem::path model_path =
+            "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de_model.json";
+
+        if (filesystem::exists(model_path))
+        {
+            cout << "Found saved model at " << model_path
+                 << "\n-> loading for inference; the corpus is never read." << endl;
+
+            Transformer transformer(model_path);
+
+            cout << "\n================ EN -> DE CHAT ================" << endl;
+            transformer.chat();
+
+            return 0;
+        }
+
         LanguageDataset language_dataset(dataset_path, 37000);
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
@@ -415,11 +432,17 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        // Inference (TransformerDecoder is GPU-only): interactive EN->DE chat.
+        // Hand the vocabularies to the network's tokenizer layers and save the
+        // self-contained model so future runs skip the corpus entirely.
+        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+        transformer.save(model_path);
+        cout << "Saved self-contained model to " << model_path << endl;
+
+        // Inference (decode is GPU-only): interactive EN->DE chat.
         // Type an English sentence and press Enter; empty line or Ctrl+D exits.
-        TransformerDecoder decoder(transformer, language_dataset);
         cout << "\n================ EN -> DE CHAT ================" << endl;
-        decoder.chat();
+        transformer.chat();
 
         return 0;
 #endif
@@ -543,6 +566,23 @@ int main(int argc, char** argv)
             "/home/artelnics/Documents/datasets/chat/chat_pairs.txt";
         const Index maximum_vocabulary_size = 30000;
 
+        // Self-contained model: when it exists, chat without corpus or dataset.
+        const filesystem::path model_path =
+            "/home/artelnics/Documents/datasets/chat/chat_model.json";
+
+        if (filesystem::exists(model_path))
+        {
+            cout << "Found saved model at " << model_path
+                 << "\n-> loading for chat; the corpus is never read." << endl;
+
+            Transformer transformer(model_path);
+
+            cout << "\n================ CHAT ================" << endl;
+            transformer.chat();
+
+            return 0;
+        }
+
         LanguageDataset language_dataset(dataset_path, maximum_vocabulary_size);
         language_dataset.set_sample_roles("Training");  // all-train (no early stop here)
 
@@ -615,10 +655,14 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
+        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+        transformer.save(model_path);
+        cout << "Saved self-contained model to " << model_path << endl;
+
         // Interactive chat: type a prompt, press Enter; empty line / Ctrl+D exits.
-        TransformerDecoder decoder(transformer, language_dataset);
         cout << "\n================ CHAT ================" << endl;
-        decoder.chat();
+        transformer.chat();
 
         return 0;
 #endif
@@ -702,6 +746,40 @@ int main(int argc, char** argv)
 
         const Index maximum_vocabulary_size = 50257;
 
+        // Self-contained model (JSON topology+vocabulary+tokenizer, sibling .bin
+        // weights): when it exists, generation never touches corpus or dataset.
+        const filesystem::path model_path =
+            corpus_path.string() + ".gpt_model_" + tokenizer_kind + ".json";
+
+        if (!on_cpu && filesystem::exists(model_path))
+        {
+            cout << "Found saved model at " << model_path
+                 << "\n-> loading for generation; the corpus is never read." << endl;
+
+            TextGenerationNetwork network(model_path);
+
+            SamplingConfig sampling;
+            sampling.temperature = 0.8f;
+            sampling.top_k = 40;
+            sampling.maximum_tokens = 40;
+
+            cout << "\n================ GENERATED TEXT ================" << endl;
+
+            for (const string& prompt : {"the film received",
+                                         "the city is located in",
+                                         "world war ii began"})
+            {
+                cout << "Prompt:    " << prompt << endl;
+                cout << "Generated: " << network.generate(prompt, sampling) << endl;
+                cout << endl;
+            }
+
+            cout << "================ GPT CHAT ================" << endl;
+            network.chat(sampling);
+
+            return 0;
+        }
+
         // Word-level builds its vocabulary from the corpus; byte-pair loads a
         // fixed GPT-2 vocab.json + merges.txt and encodes the raw text through it.
         TextGenerationDataset dataset("", sequence_length, maximum_vocabulary_size);
@@ -778,11 +856,17 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        if (on_cpu) return 0;   // TransformerDecoder generation is GPU-only
+        // Hand the tokenizer/vocabulary to the network's tokenizer layer and
+        // save the self-contained model so future runs skip the corpus.
+        if (use_bpe) network.set_tokenizer(dataset.get_tokenizer()->clone());
+        else         network.set_vocabulary(dataset.get_vocabulary());
 
-        TransformerDecoder generator(network, dataset);
+        network.save(model_path);
+        cout << "Saved self-contained model to " << model_path << endl;
 
-        TransformerDecoder::SamplingConfig sampling;
+        if (on_cpu) return 0;   // generation is GPU-only
+
+        SamplingConfig sampling;
         sampling.temperature = 0.8f;
         sampling.top_k = 40;
         sampling.maximum_tokens = 40;
@@ -799,13 +883,13 @@ int main(int argc, char** argv)
         for (const string& prompt : prompts)
         {
             cout << "Prompt:    " << prompt << endl;
-            cout << "Generated: " << generator.generate(prompt, sampling) << endl;
+            cout << "Generated: " << network.generate(prompt, sampling) << endl;
             cout << endl;
         }
 
         // Interactive: type a prompt, press Enter; empty line / Ctrl+D exits.
         cout << "================ GPT CHAT ================" << endl;
-        generator.chat(sampling);
+        network.chat(sampling);
 
         return 0;
 #endif

@@ -10,7 +10,7 @@
 
 #include "dataset.h"
 #include "io_utilities.h"
-#include "tokenizer.h"
+#include "tokenizer_operator.h"
 
 namespace opennn
 {
@@ -31,6 +31,9 @@ public:
     Index get_target_vocabulary_size() const noexcept { return target_tokenizer->get_vocabulary_size(); }
 
     const unordered_map<string, Index>& get_input_vocabulary_map() const noexcept { return input_tokenizer->get_vocabulary_map(); }
+
+    const TokenizerOperator& get_input_tokenizer() const noexcept { return *input_tokenizer; }
+    const TokenizerOperator& get_target_tokenizer() const noexcept { return *target_tokenizer; }
 
     Index get_maximum_input_sequence_length() const noexcept { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const noexcept { return maximum_target_sequence_length; }
@@ -104,8 +107,8 @@ private:
     void write_binary_cache(const vector<vector<Index>>&,
                             const vector<vector<Index>>&);
 
-    unique_ptr<Tokenizer> input_tokenizer  = make_unique<WordLevelTokenizer>();
-    unique_ptr<Tokenizer> target_tokenizer = make_unique<WordLevelTokenizer>();
+    unique_ptr<TokenizerOperator> input_tokenizer  = make_unique<WordLevelTokenizer>();
+    unique_ptr<TokenizerOperator> target_tokenizer = make_unique<WordLevelTokenizer>();
 
     Index maximum_input_sequence_length = 0;
     Index maximum_target_sequence_length = 0;

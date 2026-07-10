@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "bert_dataset.h"
-#include "tokenizer.h"
+#include "tokenizer_operator.h"
 
 namespace opennn
 {

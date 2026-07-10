@@ -30,6 +30,11 @@ TextGenerationDataset::TextGenerationDataset(const filesystem::path& new_data_pa
         read_txt();
 }
 
+// Near-duplicate of TokenizerOperator::build_vocabulary, kept separate on
+// purpose: this version tie-breaks equal-frequency tokens alphabetically while
+// the operator's does not, so unifying them would silently reorder existing
+// vocabularies and invalidate the id <-> embedding-row mapping of saved weight
+// files. Revisit when the word-level models are next retrained.
 void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_tokens)
 {
     unordered_map<string_view, size_t> token_count;

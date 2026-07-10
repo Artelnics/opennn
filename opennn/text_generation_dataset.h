@@ -12,7 +12,7 @@
 
 #include "dataset.h"
 #include "io_utilities.h"
-#include "tokenizer.h"
+#include "tokenizer_operator.h"
 
 namespace opennn
 {
@@ -37,8 +37,8 @@ public:
     // Optional subword tokenizer (e.g. BytePairTokenizer). When set with a
     // non-empty vocabulary the corpus is encoded through it and the built-in
     // whitespace/word-level path is bypassed; null keeps word-level tokenization.
-    void set_tokenizer(unique_ptr<Tokenizer> new_tokenizer) { tokenizer = move(new_tokenizer); }
-    const Tokenizer* get_tokenizer() const noexcept { return tokenizer.get(); }
+    void set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer) { tokenizer = move(new_tokenizer); }
+    const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
 
     void set_vocabulary(const vector<string>&);
 
@@ -90,7 +90,7 @@ private:
 
     void write_binary_cache(const vector<Index>&, Index);
 
-    unique_ptr<Tokenizer> tokenizer;
+    unique_ptr<TokenizerOperator> tokenizer;
 
     vector<string> vocabulary;
 

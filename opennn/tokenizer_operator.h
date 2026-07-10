@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T O K E N I Z E R   C L A S S   H E A D E R
+//   T O K E N I Z E R   O P E R A T O R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -10,16 +10,14 @@
 
 #include <array>
 
-#include "tensor_types.h"
+#include "operator.h"
 
 namespace opennn
 {
 
-class Tokenizer
+class TokenizerOperator : public Operator
 {
 public:
-
-    virtual ~Tokenizer() = default;
 
     virtual vector<string> tokenize(string_view text) const = 0;
 
@@ -41,6 +39,12 @@ public:
     Index get_unk_id() const noexcept { return unk_id; }
     const vector<string>& get_reserved_tokens() const noexcept { return reserved_tokens; }
 
+    virtual unique_ptr<TokenizerOperator> clone() const = 0;
+    virtual string get_kind() const = 0;
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
+
 protected:
 
     vector<string> reserved_tokens;
@@ -52,18 +56,23 @@ protected:
     void rebuild_map();
 };
 
+unique_ptr<TokenizerOperator> make_tokenizer_operator(const string& kind);
+
 // Reserved tokens: [PAD]=0, [UNK]=1, [START]=2, [END]=3.
-class WordLevelTokenizer : public Tokenizer
+class WordLevelTokenizer : public TokenizerOperator
 {
 public:
 
     WordLevelTokenizer();
 
     vector<string> tokenize(string_view text) const override;
+
+    unique_ptr<TokenizerOperator> clone() const override { return make_unique<WordLevelTokenizer>(*this); }
+    string get_kind() const override { return "WordLevel"; }
 };
 
 
-class WordPieceTokenizer : public Tokenizer
+class WordPieceTokenizer : public TokenizerOperator
 {
 public:
 
@@ -79,6 +88,13 @@ public:
     void build_vocabulary(const vector<vector<string>>&, Index, Index) override {}
 
     void set_lower_case(bool value) noexcept { do_lower_case = value; }
+    bool get_lower_case() const noexcept { return do_lower_case; }
+
+    unique_ptr<TokenizerOperator> clone() const override { return make_unique<WordPieceTokenizer>(*this); }
+    string get_kind() const override { return "WordPiece"; }
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
 
 private:
 
@@ -93,7 +109,7 @@ private:
 
 
 // Id 0 is reserved for [PAD]
-class BytePairTokenizer : public Tokenizer
+class BytePairTokenizer : public TokenizerOperator
 {
 public:
 
@@ -106,6 +122,15 @@ public:
     string decode(const vector<Index>& ids) const override;
 
     void build_vocabulary(const vector<vector<string>>&, Index, Index) override {}
+
+    vector<string> get_merges() const;
+    void set_merges(const vector<string>&);
+
+    unique_ptr<TokenizerOperator> clone() const override { return make_unique<BytePairTokenizer>(*this); }
+    string get_kind() const override { return "BytePair"; }
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
 
     static constexpr string_view PAD_TOKEN = "[PAD]";
 
