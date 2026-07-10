@@ -117,6 +117,14 @@ public:
     float calculate_area_under_curve(const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
     float calculate_optimal_threshold(const MatrixR&) const;
+
+    // Lift chart: cumulative-gains analysis over the testing samples sorted by
+    // descending output score. Column 0 is the studied-samples ratio, column 1
+    // the lift (positives found over positives expected at random).
+    MatrixR perform_lift_chart_analysis() const;
+    MatrixR calculate_cumulative_gain(const MatrixR&, const MatrixR&) const;
+    MatrixR calculate_lift_chart(const MatrixR&) const;
+
     BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
 
     vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float) const;

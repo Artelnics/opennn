@@ -656,6 +656,84 @@ float TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) con
     return optimal_threshold;
 }
 
+MatrixR TestingAnalysis::perform_lift_chart_analysis() const
+{
+    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+
+    return calculate_lift_chart(calculate_cumulative_gain(targets, outputs));
+}
+
+MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
+{
+    const Index total_positives = calculate_positives_negatives_rate(targets, outputs)(0);
+
+    throw_if(total_positives == 0,
+             format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
+
+    const Index testing_samples_number = targets.rows();
+
+    // Sort the testing samples by descending output score.
+
+    vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
+    iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
+
+    ranges::stable_sort(sorted_indices,
+                        [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
+
+    VectorR sorted_targets(testing_samples_number);
+
+    for (Index i = 0; i < testing_samples_number; ++i)
+        sorted_targets(i) = targets(sorted_indices[size_t(i)], 0);
+
+    const Index points_number = 21;
+    const float percentage_increment = 0.05f;
+
+    MatrixR cumulative_gain(points_number, 2);
+
+    cumulative_gain(0, 0) = 0.0f;
+    cumulative_gain(0, 1) = 0.0f;
+
+    float percentage = 0.0f;
+
+    for (Index i = 0; i < points_number - 1; ++i)
+    {
+        percentage += percentage_increment;
+
+        const Index maximum_index = Index(percentage * float(testing_samples_number));
+
+        Index positives = 0;
+
+        for (Index j = 0; j < maximum_index; ++j)
+            if (sorted_targets(j) >= 0.5f)
+                ++positives;
+
+        cumulative_gain(i + 1, 0) = percentage;
+        cumulative_gain(i + 1, 1) = float(positives) / float(total_positives);
+    }
+
+    return cumulative_gain;
+}
+
+MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) const
+{
+    const Index rows_number = cumulative_gain.rows();
+
+    MatrixR lift_chart(rows_number, cumulative_gain.cols());
+
+    // At ratio 0 the lift is undefined (0/0); use the random baseline value 1.
+
+    lift_chart(0, 0) = 0.0f;
+    lift_chart(0, 1) = 1.0f;
+
+    for (Index i = 1; i < rows_number; ++i)
+    {
+        lift_chart(i, 0) = cumulative_gain(i, 0);
+        lift_chart(i, 1) = cumulative_gain(i, 1) / cumulative_gain(i, 0);
+    }
+
+    return lift_chart;
+}
+
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const float decision_threshold) const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
