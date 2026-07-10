@@ -31,6 +31,31 @@ PY = os.environ.get("BENCH_PYTHON", sys.executable)
 OPENNN_BIN = os.path.join(HERE, "opennn_transformer_resident")
 
 
+def tensorflow_library_dirs(py):
+    """TF loads its CUDA runtime from the nvidia-*-cu1x pip wheels; their lib/
+    dirs must be on LD_LIBRARY_PATH or TF sees no GPU. Resolve them in the
+    target interpreter (PY may be a venv distinct from this process)."""
+    override = os.environ.get("TF_NV_LIBS")
+    if override:
+        return [part for part in override.split(os.pathsep) if part]
+    code = (
+        "import json, site\n"
+        "from pathlib import Path\n"
+        "roots = []\n"
+        "for base in list(site.getsitepackages()) + [site.getusersitepackages()]:\n"
+        "    nvidia = Path(base) / 'nvidia'\n"
+        "    if nvidia.exists():\n"
+        "        roots.extend(str(p) for p in nvidia.rglob('lib') if p.is_dir())\n"
+        "print(json.dumps(roots))\n"
+    )
+    try:
+        out = subprocess.run([py, "-c", code], capture_output=True, text=True)
+        lines = [line for line in out.stdout.splitlines() if line.strip()]
+        return json.loads(lines[-1]) if lines else []
+    except Exception:
+        return []
+
+
 def engine_cmd(engine, cfg, bf16):
     seq, d, h, ff, L, vocab, batch, iters = cfg
     args = [str(x) for x in (seq, d, h, ff, L, vocab, batch, iters)]
@@ -47,6 +72,11 @@ def engine_cmd(engine, cfg, bf16):
         cmd = [PY, os.path.join(HERE, "tensorflow_transformer_infer.py")] + args
         if bf16:
             env["TF_BF16"] = "1"
+        libs = tensorflow_library_dirs(PY)
+        if libs:
+            existing = os.environ.get("LD_LIBRARY_PATH", "")
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(
+                libs + ([existing] if existing else []))
     else:
         raise ValueError(engine)
     return cmd, env

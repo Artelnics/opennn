@@ -155,7 +155,7 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     {
         float* batch_data = const_cast<float*>(inputs.data()) + i * inputs_number;
         const TensorView view(batch_data, Shape{batch, inputs_number}, Type::FP32);
-        const MatrixR outputs = network.calculate_outputs({view});
+        const MatrixR outputs = network.calculate_outputs(vector<TensorView>{view});
 
         for (Index r = 0; r < batch; ++r)
         {

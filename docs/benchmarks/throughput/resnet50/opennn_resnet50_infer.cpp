@@ -64,10 +64,13 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
-        // Optional image-cache directory, set in code before the dataset is built
-        // (the cache path is computed at construction). Empty => default .cache.
+        // A custom image-cache directory is no longer configurable from OpenNN
+        // (the setter was removed when backend toggles became code-only). The
+        // cache always lands in <data_path>/.cache, which stays outside the repo
+        // because datasets live under $OPENNN_BENCH_DATA.
         if (!cache_dir.empty())
-            set_image_cache_dir(cache_dir);
+            std::cerr << "note: custom cache dir ignored (OpenNN caches in "
+                         "<data_path>/.cache): " << cache_dir << "\n";
 
         std::unique_ptr<ImageDataset> dataset_ptr =
             image_size > 0
@@ -110,7 +113,7 @@ int main(int argc, char* argv[])
         const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
         const vector<Index> target_feature_indices = dataset.get_feature_indices("Target");
 
-        vector<Index> sample_indices(size_t(effective_batch));
+        vector<Index> sample_indices(static_cast<size_t>(effective_batch));
         for (Index i = 0; i < effective_batch; ++i)
             sample_indices[size_t(i)] = i;
 

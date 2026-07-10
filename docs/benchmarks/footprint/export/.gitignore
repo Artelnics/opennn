@@ -1,4 +1,9 @@
 # compiled benchmark binary and generated exported sources
 opennn_export
+sum.csv
+model.c
+model.py
+model.js
+model.php
 *.log
 __pycache__/

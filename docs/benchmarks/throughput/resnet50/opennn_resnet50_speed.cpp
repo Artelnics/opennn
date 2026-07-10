@@ -69,10 +69,13 @@ int main(int argc, char* argv[])
             device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
         std::cout << "workspace_mode=" << workspace_arg << "\n";
 
-        // Optional image-cache directory, set in code before the dataset is built
-        // (the cache path is computed at construction). Empty => default .cache.
+        // A custom image-cache directory is no longer configurable from OpenNN
+        // (the setter was removed when backend toggles became code-only). The
+        // cache always lands in <data_path>/.cache, which stays outside the repo
+        // because datasets live under $OPENNN_BENCH_DATA.
         if (!cache_dir.empty())
-            set_image_cache_dir(cache_dir);
+            std::cerr << "note: custom cache dir ignored (OpenNN caches in "
+                         "<data_path>/.cache): " << cache_dir << "\n";
 
         std::unique_ptr<ImageDataset> dataset_ptr =
             image_size > 0

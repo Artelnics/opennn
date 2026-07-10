@@ -90,6 +90,11 @@ def main():
     x = torch.from_numpy(x_np).to(device).contiguous()
     y = torch.from_numpy(y_np).to(device).contiguous()
 
+    # The model emits a single raw logit; the sigmoid of the canonical
+    # (28 -> hidden -> hidden -> 1, sigmoid output) contract is folded into
+    # BCEWithLogitsLoss for training and applied explicitly to the logits for
+    # the reported probabilities. Keeping the loss on logits is what makes bf16
+    # autocast safe -- BCELoss / sigmoid-probabilities are unsafe to autocast.
     act_layer = torch.nn.ReLU if activation == "relu" else torch.nn.Tanh
     layers = []
     current = features
@@ -98,11 +103,10 @@ def main():
         layers.append(act_layer())
         current = hidden
     layers.append(torch.nn.Linear(current, 1))
-    layers.append(torch.nn.Sigmoid())
     model = torch.nn.Sequential(*layers).to(device)
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
-    loss_fn = torch.nn.BCELoss()
+    loss_fn = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters())
 
     ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
@@ -154,9 +158,14 @@ def main():
     xt = torch.from_numpy(xt_np[:processed]).to(device).contiguous()
     model.eval()
     preds = []
-    with torch.no_grad(), ctx:
+    with torch.no_grad():
         for s in range(0, processed, batch):
-            preds.append(model(xt[s:s + batch]).float().cpu().numpy())
+            with ctx:
+                logits = model(xt[s:s + batch])
+            # Sigmoid outside autocast, on fp32 logits, so the reported
+            # probabilities match the sigmoid-output contract exactly.
+            probs = torch.sigmoid(logits.float())
+            preds.append(probs.cpu().numpy())
     pred_np = np.vstack(preds) if preds else np.empty((0, 1), dtype=np.float32)
     metrics = binary_metrics(yt_np[: pred_np.shape[0]], pred_np)
 

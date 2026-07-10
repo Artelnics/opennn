@@ -199,6 +199,16 @@ TrainingResult QuasiNewtonMethod::train()
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
 
+    set_names();
+
+    set_scaling();
+
+    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
+    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
+
+    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
+    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
+
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
     const unique_ptr<ForwardPropagation> validation_forward_propagation =
@@ -211,16 +221,6 @@ TrainingResult QuasiNewtonMethod::train()
         : nullptr;
 
     mark_validation_propagation(validation_fp);
-
-    set_names();
-
-    set_scaling();
-    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
-    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
-
-    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
-
 
     loss->set_normalization_coefficient();
 
