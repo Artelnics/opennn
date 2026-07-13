@@ -84,6 +84,23 @@ void LanguageDataset::read_txt()
 
     maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
 
+    // Optional user-chosen cap on the input sequence length (0 = unlimited).
+    // The length is otherwise driven by the single longest document, and
+    // multi-head attention is O(sequence_length^2) in memory and compute, so
+    // truncating long documents keeps training tractable. Longer documents are
+    // truncated during encoding (the encode loops stop at
+    // maximum_input_sequence_length); shorter datasets are unaffected.
+    if (input_sequence_length_limit > 0
+     && maximum_input_sequence_length > input_sequence_length_limit)
+    {
+        cout << "[LanguageDataset] Input sequence length capped from "
+             << maximum_input_sequence_length << " to "
+             << input_sequence_length_limit
+             << " tokens (longer documents are truncated)." << "\n";
+
+        maximum_input_sequence_length = input_sequence_length_limit;
+    }
+
     const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
     const Index target_vocabulary_size = get_target_vocabulary_size();
 
@@ -96,6 +113,25 @@ void LanguageDataset::read_txt()
     // is encoded as a single output (probability of the positive class); an
     // N-class problem (N >= 3) as N one-hot outputs.
     const Index target_classes = target_vocabulary_size - Index(reserved_tokens.size());
+
+    // Binary classification: both the 0/1 encoding (encode_streaming) and the
+    // positive-class display name follow the vocabulary order (index 4 =
+    // negative, index 5 = positive). build_vocabulary orders by frequency, so
+    // when the labels have a recognizable polarity (positive_words /
+    // negative_words) reorder them semantically; otherwise the frequency order
+    // stands and stays consistent between encoding and naming.
+    if (is_single_token_target && target_classes == 2)
+    {
+        vector<string> target_vocabulary = target_tokenizer->get_vocabulary();
+        const size_t reserved_count = reserved_tokens.size();
+
+        if (contains(positive_words, target_vocabulary[reserved_count])
+         || contains(negative_words, target_vocabulary[reserved_count + 1]))
+        {
+            swap(target_vocabulary[reserved_count], target_vocabulary[reserved_count + 1]);
+            target_tokenizer->set_vocabulary(target_vocabulary);
+        }
+    }
 
     maximum_target_sequence_length = is_single_token_target
         ? (target_classes == 2 ? 1 : target_classes)
@@ -324,6 +360,8 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
         {"TargetVocabulary", vector_to_string(target_tokenizer->get_vocabulary(), separator_string)},
         {"MaximumInputSequenceLength", to_string(maximum_input_sequence_length)},
         {"MaximumTargetSequenceLength", to_string(maximum_target_sequence_length)},
+        {"InputSequenceLengthLimit", to_string(input_sequence_length_limit)},
+        {"ClassificationTarget", to_string(classification_target)},
         {"Display", to_string(display)}
     });
 
@@ -348,6 +386,22 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
     set_display(read_json_bool(data_set_element, "Display"));
+
+    // Both fields must be restored BEFORE read_txt: they change how the file is
+    // tokenized (atomic class labels) and the resulting sequence length (cap).
+    //
+    // The truncation limit can arrive in two places: the editor writes the
+    // user's import-time choice inside DataSource, while this class's own
+    // to_JSON echoes it at the Dataset level. The editor's (fresher) intent
+    // wins over the echo.
+    if (data_source_element->has("InputSequenceLengthLimit"))
+        set_input_sequence_length_limit(read_json_index(data_source_element, "InputSequenceLengthLimit"));
+    else if (data_set_element->has("InputSequenceLengthLimit"))
+        set_input_sequence_length_limit(read_json_index(data_set_element, "InputSequenceLengthLimit"));
+
+    if (data_set_element->has("ClassificationTarget"))
+        set_classification_target(read_json_bool(data_set_element, "ClassificationTarget"));
+
     read_txt();
 }
 
@@ -408,22 +462,31 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
                 destination.push_back(Index(END_INDEX));
         }
     }
-    else if (maximum_target_sequence_length == 1 && target_vocab_size == 6)
+    else if (maximum_target_sequence_length == 1
+          && target_vocab_size == ssize(reserved_tokens) + 2)
     {
+        // Binary classification: one output = P(positive class). The vocabulary
+        // order defines the encoding (index 4 -> 0, index 5 -> 1); read_txt
+        // places the semantically positive label at index 5 when the labels'
+        // polarity is recognizable, and the display-name resolution assumes the
+        // same order. Works for arbitrary label pairs (e.g. spam/ham), unlike
+        // the previous positive_words/negative_words lookup.
+        const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
+        const size_t reserved_count = reserved_tokens.size();
+
         for (Index sample = 0; sample < samples_number; ++sample)
         {
             const vector<string>& sample_tokens = target_document_tokens[sample];
-            throw_if(sample_tokens.empty(),
-                     "Unknown target value");
+            throw_if(sample_tokens.empty(), "Empty target value");
 
             const string_view token = sample_tokens[0];
 
-            if (contains(positive_words, token))
+            if (token == target_vocabulary[reserved_count + 1])
                 target_indices[sample] = {1};
-            else if (contains(negative_words, token))
+            else if (token == target_vocabulary[reserved_count])
                 target_indices[sample] = {0};
             else
-                throw runtime_error("Unknown target value");
+                throw runtime_error(format("Unknown binary target label: {}", string(token)));
         }
     }
     else
