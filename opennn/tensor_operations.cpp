@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "tensor_operations.h"
-#include "cpu_math_backend.h"
 #include "device_backend.h"
 #include "operator.h"
 #include "random_utilities.h"
@@ -20,13 +19,8 @@
 #include <mkl_vml.h>
 #endif
 
-static atomic<bool> mkl_fast_vml_flag{false};
-
 namespace opennn
 {
-
-void set_mkl_fast_vml(bool e) { mkl_fast_vml_flag.store(e, memory_order_relaxed); }
-static bool mkl_fast_vml_enabled() { return mkl_fast_vml_flag.load(memory_order_relaxed); }
 
 #ifdef EIGEN_USE_MKL_ALL
 
@@ -73,10 +67,7 @@ static bool try_activation_forward(TensorView& output, ActivationFunction functi
     float* values = output.as<float>();
     const int size = to_int(output.size());
 
-    if (mkl_fast_vml_enabled())
-        vmsTanh(size, values, values, VML_EP);
-    else
-        vsTanh(size, values, values);
+    vsTanh(size, values, values);
 
     return true;
 }
