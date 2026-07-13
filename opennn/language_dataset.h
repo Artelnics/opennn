@@ -53,6 +53,14 @@ public:
     void set_classification_target(bool new_classification_target) { classification_target = new_classification_target; }
     bool get_classification_target() const noexcept { return classification_target; }
 
+    // Optional cap on the input sequence length (0 = unlimited). The sequence
+    // length is otherwise driven by the single longest document, and multi-head
+    // attention is O(sequence_length^2) in memory and compute, so the editor
+    // offers the user a truncation cap at import time. Persisted in the JSON so
+    // every later load honours the user's choice.
+    Index get_input_sequence_length_limit() const noexcept { return input_sequence_length_limit; }
+    void set_input_sequence_length_limit(Index new_limit) { input_sequence_length_limit = new_limit; }
+
     VectorI calculate_target_distribution() const override;
 
     void read_txt();
@@ -126,6 +134,8 @@ private:
     Index maximum_vocabulary_size = 20000;
 
     bool classification_target = false;
+
+    Index input_sequence_length_limit = 0;   // 0 = unlimited
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
