@@ -64,6 +64,13 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
+        // Autotuned conv engines with the workspace cap off, matching the
+        // training driver and PyTorch's cudnn.benchmark=True: the cuDNN
+        // heuristic alone picks large-tile kernels that lose ~15% on CIFAR's
+        // small spatial shapes.
+        device::set_conv_autotune(true);
+        device::set_conv_workspace_cap(0);
+
         // A custom image-cache directory is no longer configurable from OpenNN
         // (the setter was removed when backend toggles became code-only). The
         // cache always lands in <data_path>/.cache, which stays outside the repo

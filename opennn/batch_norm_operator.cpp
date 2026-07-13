@@ -456,18 +456,21 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
 void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, TensorView& output,
                                     const TensorView& residual)
 {
-    CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
-        Backend::get_cudnn_handle(),
-        CUDNN_BATCHNORM_SPATIAL_PERSISTENT,
-        &one, &zero,
-        input.get_descriptor(),  input.data,
-        output.get_descriptor(), output.data,
-        gamma.get_descriptor(),  gamma.data, beta.data,
-        running_mean.data, running_variance.data,
-        EPSILON));
-
-    if (fuse_add) add(output, residual, output);
-    if (fuse_relu) activation_forward(output, ActivationFunction::ReLU);
+    // One fused NHWC pass (BN + optional residual + optional ReLU). The legacy
+    // cudnnBatchNormalizationForwardInference call had no NHWC kernel for
+    // several ResNet shapes and silently inserted NCHW layout converts, which
+    // cost ~40% of a ResNet-50 inference forward.
+    input.dispatch([&](auto tag)
+    {
+        using T = decltype(tag);
+        batchnorm_inference_cuda<T>(input.size(), features,
+                                    input.as<T>(),
+                                    fuse_add ? residual.as<T>() : nullptr,
+                                    gamma.as<float>(), beta.as<float>(),
+                                    running_mean.as<float>(), running_variance.as<float>(),
+                                    EPSILON, fuse_relu,
+                                    output.as<T>());
+    });
 }
 
 void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,

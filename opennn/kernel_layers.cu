@@ -938,6 +938,52 @@ static inline int layernorm_threads(int D)
     return 256;
 }
 
+// NHWC batchnorm inference with the residual add and ReLU fused in: one
+// bandwidth-bound pass instead of cuDNN's legacy inference call (which has no
+// NHWC kernel for several ResNet shapes and inserts NCHW converts) plus two
+// separate elementwise kernels.
+template<typename T>
+__global__ void batchnorm_inference_kernel(const Index total, const int channels,
+                                           const T* __restrict__ x,
+                                           const T* __restrict__ residual,
+                                           const float* __restrict__ gamma,
+                                           const float* __restrict__ beta,
+                                           const float* __restrict__ mean,
+                                           const float* __restrict__ variance,
+                                           const float epsilon,
+                                           const int apply_relu,
+                                           T* __restrict__ y)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const int c = int(i % channels);
+        const float scale = gamma[c] * rsqrtf(variance[c] + epsilon);
+        float value = (static_cast<float>(x[i]) - mean[c]) * scale + beta[c];
+        if (residual) value += static_cast<float>(residual[i]);
+        if (apply_relu) value = fmaxf(value, 0.0f);
+        y[i] = static_cast<T>(value);
+    }
+}
+
+template<typename T>
+void batchnorm_inference_cuda(const Index total, const Index channels,
+                              const T* x, const T* residual,
+                              const float* gamma, const float* beta,
+                              const float* mean, const float* variance,
+                              const float epsilon, const bool apply_relu, T* y)
+{
+    if (total == 0 || channels == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(batchnorm_inference_kernel<T><<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, checked_int(channels), x, residual, gamma, beta, mean, variance,
+        epsilon, apply_relu ? 1 : 0, y));
+}
+
+template void batchnorm_inference_cuda<float>        (const Index, const Index, const float*,         const float*,         const float*, const float*, const float*, const float*, const float, const bool, float*);
+template void batchnorm_inference_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float, const bool, __nv_bfloat16*);
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {

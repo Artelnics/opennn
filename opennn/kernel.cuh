@@ -236,6 +236,15 @@ template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function);
 
 
+// Fused NHWC batchnorm inference: y = gamma*(x-mean)/sqrt(var+eps)+beta, plus
+// optional residual add and ReLU in the same pass. residual may be null.
+template<typename T>
+void batchnorm_inference_cuda(const Index total, const Index channels,
+                              const T* x, const T* residual,
+                              const float* gamma, const float* beta,
+                              const float* mean, const float* variance,
+                              const float epsilon, const bool apply_relu, T* y);
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
 
