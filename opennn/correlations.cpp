@@ -56,8 +56,8 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
 
     if (x_columns == 1 && y_columns == 1)
     {
-        const auto x_vector = x.col(0);
-        const auto y_vector = y.col(0);
+        const VectorR x_vector = x.col(0);
+        const VectorR y_vector = y.col(0);
 
         if (!x_binary && !y_binary)
         {
@@ -79,21 +79,22 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
                        });
         }
 
-        if (y_binary && !x_binary)
-            return opennn::point_biserial_correlation(x_vector, y_vector);
+        // Two binary variables: linear (phi) correlation, as in the traditional
+        // dispatcher -- a logistic fit between two binaries is degenerate.
+        if (x_binary && y_binary)
+            return opennn::linear_correlation(x_vector, y_vector);
 
-        if (x_binary && !y_binary)
-            return opennn::point_biserial_correlation(y_vector, x_vector);
+        // One binary + one continuous: logistic regression of the binary response
+        // on the continuous predictor (reported form = logistic), matching Neural
+        // Designer's traditional behaviour.
+        if (y_binary)
+            return opennn::logistic_correlation(x_vector, y_vector);
 
-        return opennn::linear_correlation(x_vector, y_vector);
+        return opennn::logistic_correlation(y_vector, x_vector);
     }
 
-    if (x_columns != 1 && y_columns == 1)
-        return eta_squared_correlation(y.col(0), x);
-
-    if (x_columns == 1 && y_columns != 1)
-        return eta_squared_correlation(x.col(0), y);
-
+    // At least one categorical (one-hot, multi-column) variable: multiple logistic
+    // regression, again reported as a logistic form.
     return logistic_correlation(x, y);
 }
 
@@ -107,7 +108,22 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     // se cae a la correlacion general (misma politica que la de Pearson).
     if (x.cols() == 1 && y.cols() == 1)
     {
-        Correlation result = linear_correlation_spearman(x.col(0), y.col(0));
+        const VectorR x_vector = x.col(0);
+        const VectorR y_vector = y.col(0);
+
+        const bool x_binary = is_binary(x);
+        const bool y_binary = is_binary(y);
+
+        // Mirror the Pearson dispatcher: exactly one binary -> logistic on the ranks
+        // (form = logistic); both continuous or both binary -> Spearman rank-linear.
+        Correlation result;
+
+        if (x_binary != y_binary)
+            result = y_binary ? logistic_correlation_spearman(x_vector, y_vector)
+                              : logistic_correlation_spearman(y_vector, x_vector);
+        else
+            result = linear_correlation_spearman(x_vector, y_vector);
+
         result.method = Correlation::Method::Spearman;
         return result;
     }

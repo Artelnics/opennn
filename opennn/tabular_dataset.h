@@ -88,6 +88,7 @@ public:
     void scrub_missing_values() override;
     void calculate_missing_values_statistics();
     void impute_missing_values_statistic(const MissingValuesMethod&);
+    void reuse_input_incomplete_rows_binary();
     virtual void impute_missing_values_unuse();
     virtual void impute_missing_values_interpolate();
 
@@ -190,6 +191,7 @@ protected:
                                 int contiguous = -1) const;
 
     void compute_cache_descriptives() const;
+    void compute_cache_replacement() const;
 
     filesystem::path cache_path;
     filesystem::path cache_path_override;
@@ -199,6 +201,11 @@ protected:
     // The cache file keeps raw values; these drive the scaling applied to
     // batches as they are read.
     mutable vector<Descriptives> cache_feature_descriptives;
+    // Per-cache-column value used to impute NaN on the fly when filling training/
+    // testing batches (mean for continuous, mode for binary, most-frequent category
+    // for categoricals). The on-disk cache itself stays raw so correlations keep
+    // doing pairwise deletion. Resolved lazily from the variable types.
+    mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 
     void infer_column_types(const vector<string_view>&, char);
