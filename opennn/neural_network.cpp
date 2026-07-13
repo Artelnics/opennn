@@ -237,13 +237,38 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
                     total, name_index));
 }
 
+// A freshly-built network (standard-network constructor + steal_from) has no
+// input/output variables yet: assigning names must DEFINE them, one scalar
+// variable per name, mirroring the pre-refactor resize behaviour. Without this,
+// set_variable_names throws "received N names but variables expected 0" the
+// first time a dataset hands its feature names to a new network.
+static void define_variables_from_names(vector<Variable>& variables,
+                                        const vector<string>& names,
+                                        VariableRole role)
+{
+    variables.assign(names.size(), Variable());
+
+    for (size_t i = 0; i < names.size(); ++i)
+    {
+        variables[i].name = names[i];
+        variables[i].role = role;
+        variables[i].type = VariableType::Numeric;
+    }
+}
+
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
+    if (input_variables.empty() && !new_input_names.empty())
+        return define_variables_from_names(input_variables, new_input_names, VariableRole::Input);
+
     set_variable_names(input_variables, new_input_names);
 }
 
 void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 {
+    if (output_variables.empty() && !new_output_names.empty())
+        return define_variables_from_names(output_variables, new_output_names, VariableRole::Target);
+
     set_variable_names(output_variables, new_output_names);
 }
 
