@@ -147,6 +147,7 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
         cache_columns_number = 0;
         cache_feature_descriptives.clear();
         cache_feature_transforms.clear();
+        cache_feature_replacement.clear();
         cache_reader.close();
     }
 }
@@ -198,6 +199,54 @@ static float scale_value(ScalerMethod method, const Descriptives& desc, float va
     return value;
 }
 
+void TabularDataset::compute_cache_replacement() const
+{
+    // Per-column value used to impute NaN when filling model batches, resolved from
+    // the variable types: mean for continuous variables, majority value (mode) for
+    // binary ones, and the most frequent category for categoricals (its one-hot
+    // column -> 1, the rest -> 0). The cache stays raw; this only feeds batch fill.
+    if (cache_feature_descriptives.empty()) compute_cache_descriptives();
+
+    const Index columns_number = cache_columns_number;
+    cache_feature_replacement.assign(static_cast<size_t>(columns_number), 0.0f);
+
+    const vector<vector<Index>> variable_feature_indices = get_feature_indices();
+
+    for (Index variable_index = 0; variable_index < ssize(variables); ++variable_index)
+    {
+        const vector<Index>& feature_indices = variable_feature_indices[size_t(variable_index)];
+
+        using enum VariableType;
+        const VariableType type = variables[variable_index].type;
+
+        if (type == Categorical)
+        {
+            Index mode_column = -1;
+            float best_mean = -1.0f;
+
+            for (const Index column : feature_indices)
+            {
+                cache_feature_replacement[size_t(column)] = 0.0f;
+                const float column_mean = cache_feature_descriptives[size_t(column)].mean;
+                if (column_mean > best_mean) { best_mean = column_mean; mode_column = column; }
+            }
+
+            if (mode_column >= 0) cache_feature_replacement[size_t(mode_column)] = 1.0f;
+        }
+        else if (type == Binary)
+        {
+            for (const Index column : feature_indices)
+                cache_feature_replacement[size_t(column)] =
+                    cache_feature_descriptives[size_t(column)].mean >= 0.5f ? 1.0f : 0.0f;
+        }
+        else
+        {
+            for (const Index column : feature_indices)
+                cache_feature_replacement[size_t(column)] = cache_feature_descriptives[size_t(column)].mean;
+        }
+    }
+}
+
 void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                                             const vector<Index>& feature_indices,
                                             float* output,
@@ -211,6 +260,10 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
     const bool contiguous = contiguous_hint >= 0
                           ? static_cast<bool>(contiguous_hint)
                           : is_contiguous(feature_indices);
+
+    // The on-disk cache is raw (missing cells are NaN). Impute them on the fly so the
+    // model never sees NaN, while correlations keep reading the raw cache pairwise.
+    if (cache_feature_replacement.empty()) compute_cache_replacement();
 
     const Index first_column = feature_indices.front();
     if (contiguous)
@@ -239,6 +292,9 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
             const uint64_t offset =
                 (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
             cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
+
+            for (Index j = 0; j < features_number; ++j)
+                if (isnan(dst[j])) dst[j] = cache_feature_replacement[size_t(first_column + j)];
         }
         else
         {
@@ -249,7 +305,11 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
             cache_reader.read_at(row_buffer.data(), size_t(columns_number) * sizeof(float), offset);
 
             for (Index j = 0; j < features_number; ++j)
-                dst[j] = row_buffer[size_t(feature_indices[size_t(j)])];
+            {
+                const Index column = feature_indices[size_t(j)];
+                const float value = row_buffer[size_t(column)];
+                dst[j] = isnan(value) ? cache_feature_replacement[size_t(column)] : value;
+            }
         }
     }
 
@@ -443,7 +503,7 @@ void TabularDataset::set(const filesystem::path& new_data_path,
 
     set_default_variable_roles();
 
-    missing_values_method = MissingValuesMethod::Unuse;
+    missing_values_method = MissingValuesMethod::Mean;
 
     input_shape = { get_features_number("Input") };
     target_shape = { get_features_number("Target") };
@@ -916,6 +976,7 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         cache_columns_number = feature_indices.empty() ? 0 : feature_indices.back().back() + 1;
         cache_feature_descriptives.clear();
         cache_feature_transforms.clear();
+        cache_feature_replacement.clear();
 
         cache_path = cache_file_path();
 
@@ -1351,6 +1412,7 @@ void TabularDataset::read_csv()
         cache_columns_number = feature_columns_number;
         cache_feature_descriptives.clear();
         cache_feature_transforms.clear();
+        cache_feature_replacement.clear();
         row_values.resize(size_t(feature_columns_number));
     }
     else
@@ -1571,7 +1633,7 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
     variables_missing_values_number.resize(tokens.size());
     for (size_t i = 0; i < tokens.size(); ++i)
         if (!tokens[i].empty())
-            variables_missing_values_number(i) = parse_int(tokens[i], "VariablesMissingValuesNumber");
+            variables_missing_values_number(i) = parse_long(tokens[i], "VariablesMissingValuesNumber");
 
     rows_missing_values_number = parse_long(read_json_string_fallback(missing_values_element,
         {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}), "SamplesMissingValuesNumber");
@@ -1636,6 +1698,42 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
         }
     }
 
+}
+
+void TabularDataset::reuse_input_incomplete_rows_binary()
+{
+    // BinaryFile strategy: keep the on-disk cache RAW (NaN preserved) and only fix
+    // sample roles. A row is usable as long as its target is present -- rows that are
+    // missing only inputs are re-used (streaming had unused every incomplete row).
+    // Their NaN is dropped pairwise by the correlation code (so correlations use each
+    // column's available values and keep the variable type intact) and -- TODO, step
+    // 4 -- imputed on the fly when filling training/testing batches. Rows whose target
+    // is missing stay unused: a target value cannot be invented.
+    if (storage_mode != StorageMode::BinaryFile) return;
+    if (cache_columns_number == 0 || !cache_reader.is_open()) return;
+
+    const vector<Index> target_feature_indices = get_feature_indices("Target");
+
+    const Index columns_number = cache_columns_number;
+    const Index samples_number = get_samples_number();
+
+    vector<float> row(static_cast<size_t>(columns_number));
+
+    for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
+    {
+        cache_reader.read_at(row.data(),
+                             size_t(columns_number) * sizeof(float),
+                             uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
+
+        bool target_missing = false;
+        for (const Index target_index : target_feature_indices)
+            if (isnan(row[size_t(target_index)])) { target_missing = true; break; }
+
+        if (target_missing)
+            set_sample_role(sample_index, "None");
+        else if (sample_roles[size_t(sample_index)] == SampleRole::None)
+            set_sample_role(sample_index, "Training");
+    }
 }
 
 void TabularDataset::impute_missing_values_interpolate()
@@ -1704,9 +1802,23 @@ void TabularDataset::impute_missing_values_interpolate()
 
 void TabularDataset::scrub_missing_values()
 {
-    // BinaryFile storage already marks incomplete rows as unused while
-    // streaming the cache; there is no data matrix to impute.
-    if (storage_mode == StorageMode::BinaryFile) return;
+    // BinaryFile storage keeps NaN in the on-disk cache and streaming marked every
+    // incomplete row unused. There is no data matrix to impute, so operate on the
+    // cache directly: Mean/Median fill missing inputs and re-use those rows; Unuse
+    // (and Interpolation, unsupported while streaming) keep the streaming default.
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        // Keep the cache raw (NaN preserved) so correlations do pairwise deletion and
+        // variable types stay intact. Unless the method is Unuse, re-use the rows that
+        // are missing only inputs (target present); their NaN is handled per consumer
+        // (pairwise in correlations; imputed on the fly at batch fill -- step 4). Rows
+        // missing the target stay unused.
+        using enum MissingValuesMethod;
+        if (missing_values_method != Unuse)
+            reuse_input_incomplete_rows_binary();
+
+        return;
+    }
 
     using enum MissingValuesMethod;
     switch (missing_values_method)
