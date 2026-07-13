@@ -209,7 +209,12 @@ void LanguageDataset::read_txt()
     else
     {
         // BinaryFile: fixed-size records of (max_in + max_tgt) int32 tokens per sample, PAD = 0.
-        cache_path = filesystem::path(data_path.string() + ".cache") / "tokens.bin";
+        // The cache lives in the host-provided cache directory when set (e.g. the
+        // model's working dir) so the user's data folder is not polluted;
+        // standalone (empty cache_directory) keeps it beside the source file.
+        cache_path = cache_directory.empty()
+            ? filesystem::path(data_path.string() + ".cache") / "tokens.bin"
+            : cache_directory / (data_path.filename().string() + ".cache") / "tokens.bin";
 
         const uintmax_t record_bytes = uintmax_t(maximum_input_sequence_length
                                                + maximum_target_sequence_length) * sizeof(int32_t);

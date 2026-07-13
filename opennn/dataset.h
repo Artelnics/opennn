@@ -111,6 +111,15 @@ public:
     const vector<vector<string>>& get_data_file_preview() const noexcept { return data_file_preview; }
 
     const filesystem::path& get_data_path() const noexcept { return data_path; }
+
+    // Where the dataset may write its derived binary caches (tokens.bin,
+    // images.bin...). Empty (default) = next to the source data, standalone
+    // behaviour. A host application can point it at its own working directory
+    // so user data folders are never polluted with cache artifacts. Runtime
+    // configuration only: not serialized.
+    const filesystem::path& get_cache_directory() const noexcept { return cache_directory; }
+    void set_cache_directory(const filesystem::path& new_cache_directory) { cache_directory = new_cache_directory; }
+
     StorageMode get_storage_mode() const noexcept { return storage_mode; }
     string get_storage_mode_string() const;
 
@@ -316,6 +325,8 @@ protected:
     vector<Variable> variables;
 
     filesystem::path data_path;
+
+    filesystem::path cache_directory;   // empty = beside the source data
 
     Separator separator = Separator::Comma;
     bool has_header = false;

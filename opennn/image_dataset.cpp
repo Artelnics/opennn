@@ -171,7 +171,10 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
 
 void ImageDataset::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("ImageDataset");
+    // "Dataset", not "ImageDataset": every dataset kind serializes under the
+    // same root tag (see TabularDataset/LanguageDataset) — the model JSON's
+    // section name does not vary per type, ModelType drives the dispatch.
+    printer.open_element("Dataset");
 
     printer.open_element("DataSource");
 
@@ -264,7 +267,7 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 
 void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const Json* image_dataset_element = get_json_root(data_set_document, "ImageDataset");
+    const Json* image_dataset_element = get_json_root(data_set_document, "Dataset");
 
     const Json* data_source_element = require_json_field(image_dataset_element, "DataSource");
 
@@ -273,10 +276,25 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    requested_input_shape = { read_json_index(data_source_element, "Height"),
-                              read_json_index(data_source_element, "Width"),
-                              read_json_index(data_source_element, "Channels") };
-    set_shape("Input", requested_input_shape);
+    // A fresh editor-written model carries 0x0x0 here: the editor cannot know
+    // the image geometry before the first import (the engine discovers it by
+    // scanning the folder). And a resize request from the editor's large-image
+    // popup arrives as {224, 224, 0} (channels unknown). So each positive
+    // component is a request and each non-positive one means auto-detect; an
+    // all-zero shape is no request at all.
+    const Index requested_height   = read_json_index(data_source_element, "Height");
+    const Index requested_width    = read_json_index(data_source_element, "Width");
+    const Index requested_channels = read_json_index(data_source_element, "Channels");
+
+    if (requested_height > 0 || requested_width > 0 || requested_channels > 0)
+    {
+        requested_input_shape = { requested_height, requested_width, requested_channels };
+
+        if (requested_height > 0 && requested_width > 0 && requested_channels > 0)
+            set_shape("Input", requested_input_shape);
+    }
+    else
+        requested_input_shape.clear();
 
     set_codification(read_json_string(data_source_element, "Codification"));
     set_storage_mode(data_source_element->has("StorageMode")
@@ -372,14 +390,15 @@ void ImageDataset::read_images()
     {
         throw_if(requested_input_shape.rank != 3,
                  "ImageDataset: requested input shape must be {height, width, channels}.");
-        throw_if(requested_input_shape[0] <= 0
-              || requested_input_shape[1] <= 0
-              || requested_input_shape[2] <= 0,
-                 "ImageDataset: requested input shape dimensions must be positive.");
 
-        height = requested_input_shape[0];
-        width = requested_input_shape[1];
-        channels = requested_input_shape[2];
+        // Positive components are explicit requests (e.g. the editor's resize
+        // to 224x224); non-positive ones fall back to the detected geometry.
+        if (requested_input_shape[0] > 0) height   = requested_input_shape[0];
+        if (requested_input_shape[1] > 0) width    = requested_input_shape[1];
+        if (requested_input_shape[2] > 0) channels = requested_input_shape[2];
+
+        throw_if(height <= 0 || width <= 0 || channels <= 0,
+                 "ImageDataset: image dimensions must be positive.");
     }
 
     const Index pixels_number = height * width * channels;
@@ -434,7 +453,12 @@ void ImageDataset::read_images()
     }
     else
     {
-        cache_path = image_cache_path(data_path);
+        // Host-provided cache directory when set (e.g. the model's working dir)
+        // so the user's image folder is not polluted; standalone keeps the cache
+        // inside the dataset folder as before.
+        cache_path = cache_directory.empty()
+            ? image_cache_path(data_path)
+            : cache_directory / (data_path.filename().string() + ".cache") / "images.bin";
 
         // images.bin layout: [pixels: samples×pixel_number bytes][identity trailer].
         // The pixel region stays at offset 0 (sample reads are unaffected); the
