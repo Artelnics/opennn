@@ -712,6 +712,60 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string
     return descriptives(data, sample_indices, input_feature_indices);
 }
 
+// Used samples whose value in feature `column` is on the requested side of the
+// binary split (1 = positive, 0 = negative). NaN falls on neither side, so both
+// comparisons exclude it. Operates on the in-memory `data` matrix -- callers load
+// it first (loadMatrixFromBinary switches the dataset to Matrix storage).
+vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool positive) const
+{
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+
+    vector<Index> filtered;
+    filtered.reserve(used_sample_indices.size());
+
+    for (const Index sample_index : used_sample_indices)
+    {
+        const float value = data(sample_index, column);
+
+        if (positive ? (value > 0.5f) : (value < 0.5f))
+            filtered.push_back(sample_index);
+    }
+
+    return filtered;
+}
+
+// Descriptives of every input feature over the samples where the (single, binary)
+// target is positive. Size == number of input features, matching the order the
+// engine walks input variables when building the positive/negative statistics table.
+vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
+{
+    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    if (target_feature_indices.empty()) return {};
+
+    return descriptives(data,
+                        filter_used_samples_by_column(target_feature_indices[0], true),
+                        get_feature_indices("Input"));
+}
+
+vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_samples() const
+{
+    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    if (target_feature_indices.empty()) return {};
+
+    return descriptives(data,
+                        filter_used_samples_by_column(target_feature_indices[0], false),
+                        get_feature_indices("Input"));
+}
+
+// Multi-class variant: `class_index` is the one-hot feature index of one target
+// category; describe the input features over the samples belonging to that class.
+vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(Index class_index) const
+{
+    return descriptives(data,
+                        filter_used_samples_by_column(class_index, true),
+                        get_feature_indices("Input"));
+}
+
 Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     const string& method_name) const
@@ -1659,9 +1713,16 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
     if (used_sample_indices.empty() || used_feature_indices.empty())
         return;
 
-    const VectorR replacements = (method == MissingValuesMethod::Mean)
+    VectorR replacements = (method == MissingValuesMethod::Mean)
         ? mean(data, used_sample_indices, used_feature_indices)
         : median(data, used_sample_indices, used_feature_indices);
+
+    // A feature that is entirely missing over the used samples has a NaN mean/median,
+    // so imputing with it would leave NaN behind and poison every downstream forward
+    // pass (this is what made genetic input selection on missing-heavy datasets report
+    // NaN errors). Fall back to 0 -- the column carries no information but stays finite.
+    for (Index j = 0; j < replacements.size(); ++j)
+        if (!isfinite(replacements(j))) replacements(j) = 0.0f;
 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
