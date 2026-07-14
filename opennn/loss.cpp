@@ -987,6 +987,17 @@ void Loss::set_normalization_coefficient()
         const float total = float(positives + negatives);
         positives_weight = total / (2.0f * float(positives));
         negatives_weight = total / (2.0f * float(negatives));
+
+        // Normalize so a model that outputs the target mean (base rate p) yields a
+        // weighted squared error of 1, the same way NormalizedSquaredError does.
+        // K = weighted squared error of the mean model (before get_weighted_coefficient):
+        //   0.5 * [positives * w_pos * (1-p)^2 + negatives * w_neg * p^2].
+        const float p = float(positives) / total;
+        const float mean_model_error =
+            0.5f * (float(positives) * positives_weight * (1.0f - p) * (1.0f - p)
+                  + float(negatives) * negatives_weight * p * p);
+
+        normalization_coefficient = (mean_model_error < EPSILON) ? 1.0f : mean_model_error;
     }
 }
 

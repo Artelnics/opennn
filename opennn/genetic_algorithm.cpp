@@ -95,6 +95,13 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
 
 void GeneticAlgorithm::initialize_population()
 {
+    // from_JSON sizes the population (set_individuals_number) while the input set is
+    // still unknown, so genes_number was 0 and every row came out 0-wide. Now that
+    // perform_input_selection has captured original_input_indices, reshape to the real
+    // gene count -- otherwise the individuals have no active genes and evaluate_population
+    // builds a 0-input network. Preserves the configured population size (rows).
+    population.resize(get_individuals_number(), get_genes_number());
+
     if (initialization_method == "Random")
         initialize_population_random();
     else
@@ -160,6 +167,18 @@ void GeneticAlgorithm::initialize_population_correlations()
     }
 }
 
+vector<Index> GeneticAlgorithm::genes_to_variable_indices(const VectorB& genes) const
+{
+    vector<Index> variable_indices;
+    variable_indices.reserve(genes.count());
+
+    for (Index i = 0; i < genes.size(); ++i)
+        if (genes(i))
+            variable_indices.push_back(original_input_indices[i]);
+
+    return variable_indices;
+}
+
 void GeneticAlgorithm::evaluate_population()
 {
     Loss* loss = training_strategy->get_loss();
@@ -173,7 +192,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         if (display) cout << "\nIndividual " << i + 1 << "\n";
 
-        const vector<Index> individual_variables_indices = get_true_indices(population.row(i));
+        const vector<Index> individual_variables_indices = genes_to_variable_indices(population.row(i));
 
         dataset->set_variable_indices(individual_variables_indices, original_target_indices);
 
@@ -190,6 +209,13 @@ void GeneticAlgorithm::evaluate_population()
 
         training_errors(i) = training_results.get_training_error();
         validation_errors(i) = training_results.get_validation_error();
+
+        // An individual whose input subset yields a non-finite error (e.g. it picked
+        // columns that are entirely missing, so mean imputation leaves NaN) must not
+        // poison the ranking. Treat it as the worst possible so selection discards it
+        // and the search converges towards well-behaved input subsets.
+        if (!isfinite(training_errors(i)))   training_errors(i)   = numeric_limits<float>::max();
+        if (!isfinite(validation_errors(i))) validation_errors(i) = numeric_limits<float>::max();
 
         if (display)
             cout << "Training error: " << training_errors(i) << "\n"
@@ -478,7 +504,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
             input_selection_results.optimal_inputs = population.row(optimal_individual_index);
 
-            const vector<Index> best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
+            const vector<Index> best_input_indices = genes_to_variable_indices(input_selection_results.optimal_inputs);
 
             dataset->set_variable_indices(best_input_indices, original_target_indices);
 
@@ -542,7 +568,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     }
 
 
-    const vector<Index> optimal_variable_indices = get_true_indices(input_selection_results.optimal_inputs);
+    const vector<Index> optimal_variable_indices = genes_to_variable_indices(input_selection_results.optimal_inputs);
 
     dataset->set_variable_indices(optimal_variable_indices, original_target_indices);
 
