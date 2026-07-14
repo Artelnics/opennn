@@ -9,6 +9,7 @@
 #pragma once
 
 #include "tensor_types.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -29,6 +30,14 @@ struct ForwardPropagation
 
     void print() const;
 
+    // CUDA graph replay for the device-resident inference path (opt-in,
+    // default off): NeuralNetwork::calculate_outputs_resident captures the
+    // forward after two eager passes and replays it while the input pointers
+    // and parameters stay unchanged (upload_parameters=true invalidates).
+    void set_cuda_graph(bool);
+    bool get_cuda_graph() const noexcept { return use_cuda_graph; }
+    void reset_cuda_graph() noexcept;
+
     Index batch_size = 0;
 
     // True when the batches fed through this propagation come from a dataset
@@ -42,11 +51,17 @@ struct ForwardPropagation
 
     Buffer data;
     vector<Buffer> device_input_buffers;
-    
+
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
     vector<Index> attention_valid_lengths;
+
+    bool use_cuda_graph = false;
+    bool cuda_graph_failed = false;
+    Index cuda_graph_warmup_calls = 0;
+    device::GraphExecHandle inference_graph_exec;
+    vector<const void*> captured_input_pointers;
 };
 
 }

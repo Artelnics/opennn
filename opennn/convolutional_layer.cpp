@@ -9,6 +9,10 @@
 #include "registry.h"
 #include "convolutional_layer.h"
 
+#ifdef OPENNN_HAS_CUDA
+#include "kernel.cuh"
+#endif
+
 namespace opennn
 {
 
@@ -351,7 +355,99 @@ void Convolutional::load_darknet_weights(FILE* f)
     // Invalidate the BN inference cache so it is recomputed with the new stats.
     if (batch_norm.active())
         batch_norm.invalidate_inference_cache();
+
+#ifdef OPENNN_HAS_CUDA
+    folded_dirty = true;
+#endif
 }
+
+void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (is_training)
+        folded_dirty = true;
+    else if (forward_propagate_folded(forward_propagation, layer))
+        return;
+#endif
+
+    Layer::forward_propagate(forward_propagation, layer, is_training);
+}
+
+#ifdef OPENNN_HAS_CUDA
+
+bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propagation, size_t layer)
+{
+    // Inference-only: the batchnorm affine folds into the convolution, so the
+    // separate BN pass over the activations disappears (~20% of a ResNet-50
+    // inference forward). Pointwise (1x1/stride-1) convolutions only: those
+    // run as cuBLASLt GEMMs whose epilogue absorbs the folded bias and ReLU
+    // for free, while for spatial kernels cuDNN's conv+bias+relu fusion pool
+    // picks engines ~2x slower than the plain autotuned conv, losing more
+    // than the folded BN saves. FP32-only: the cuBLASLt epilogue takes an
+    // fp32 bias; the bf16 path keeps the fused BN kernel.
+    if (!batch_norm.active() || !convolution.is_pointwise())
+        return false;
+
+    const TensorView& input = convolution.get_input(forward_propagation, layer);
+
+    if (!input.is_cuda() || !input.is_fp32() || !convolution.weights.is_fp32())
+        return false;
+
+    if (convolution.weights_relinked)
+    {
+        convolution.weights_relinked = false;
+        folded_dirty = true;
+    }
+
+    const Index weight_count = convolution.weights.size();
+    const Index kernel_size  = kernel_height * kernel_width * kernel_channels;
+
+    if (folded_dirty)
+    {
+        folded_parameters.resize_bytes((weight_count + kernels_number) * Index(sizeof(float)),
+                                       Device::CUDA);
+        conv_bn_fold_cuda(kernels_number, kernel_size,
+                          convolution.weights.as<float>(),
+                          batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
+                          batch_norm.running_mean.as<float>(),
+                          batch_norm.running_variance.as<float>(),
+                          EPSILON, convolution.is_pointwise(),
+                          folded_parameters.as<float>(),
+                          folded_parameters.as<float>() + weight_count);
+        folded_dirty = false;
+    }
+
+    const TensorView folded_weights(folded_parameters.data,
+        convolution.is_pointwise()
+            ? Shape{kernel_channels, kernels_number}
+            : Shape{kernels_number, kernel_height, kernel_width, kernel_channels},
+        Type::FP32, Device::CUDA);
+
+    const TensorView folded_bias(folded_parameters.as<float>() + weight_count,
+                                 Shape{kernels_number}, Type::FP32, Device::CUDA);
+
+    const bool relu = batch_norm.fuse_relu;
+    TensorView& output = batch_norm.get_output(forward_propagation, layer);
+
+    if (batch_norm.fuse_add)
+    {
+        // The residual add cannot ride the GEMM epilogue: bias-only conv
+        // first, then one fused add(+ReLU) pass.
+        convolution.apply_gpu_folded(input, folded_weights, folded_bias, false, output);
+
+        const TensorView& residual_view = forward_propagation.input_views[layer][1];
+        add_relu_cuda(output.size(), output.as<float>(), residual_view.as<float>(),
+                      relu, output.as<float>());
+    }
+    else
+        convolution.apply_gpu_folded(input, folded_weights, folded_bias, relu, output);
+
+    activation_operator.forward_propagate(forward_propagation, layer, false);
+
+    return true;
+}
+
+#endif
 
 REGISTER(Layer, Convolutional, "Convolutional")
 

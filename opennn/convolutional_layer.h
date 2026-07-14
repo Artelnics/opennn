@@ -91,7 +91,20 @@ public:
     void write_JSON_body(JsonWriter&) const override;
     void from_JSON(const JsonDocument&) override;
 
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+
 private:
+
+#ifdef OPENNN_HAS_CUDA
+    // Inference-time copy of the convolution parameters with the batchnorm
+    // affine folded in (weights then bias, fp32, device-resident). Rebuilt
+    // whenever a training step or a parameter relink touches the originals —
+    // the same freshness contract as BatchNorm's inference scale/shift cache.
+    Buffer folded_parameters;
+    bool   folded_dirty = true;
+
+    bool forward_propagate_folded(ForwardPropagation&, size_t);
+#endif
 
     Index input_height = 0;
     Index input_width = 0;

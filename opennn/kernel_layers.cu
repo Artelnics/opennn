@@ -984,6 +984,78 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
 template void batchnorm_inference_cuda<float>        (const Index, const Index, const float*,         const float*,         const float*, const float*, const float*, const float*, const float, const bool, float*);
 template void batchnorm_inference_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float, const bool, __nv_bfloat16*);
 
+// Inference-time batchnorm folding: the BN affine collapses into the
+// convolution as W'[k,...] = W[k,...] * gamma[k]/sqrt(var[k]+eps) and
+// b'[k] = beta[k] - mean[k] * gamma[k]/sqrt(var[k]+eps). transpose flips the
+// folded weights from KRSC to [RSC, kernels], the GEMM layout 1x1 convs need.
+__global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
+                                    const float* __restrict__ weights,
+                                    const float* __restrict__ gamma,
+                                    const float* __restrict__ beta,
+                                    const float* __restrict__ mean,
+                                    const float* __restrict__ variance,
+                                    const float epsilon,
+                                    const int transpose,
+                                    float* __restrict__ folded_weights,
+                                    float* __restrict__ folded_bias)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const int k = int(i / kernel_size);
+        const int r = int(i % kernel_size);
+        const float scale = gamma[k] * rsqrtf(variance[k] + epsilon);
+        const float value = weights[i] * scale;
+        if (transpose)
+            folded_weights[Index(r) * kernels + k] = value;
+        else
+            folded_weights[i] = value;
+        if (r == 0)
+            folded_bias[k] = beta[k] - mean[k] * scale;
+    }
+}
+
+void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
+                       const float* weights,
+                       const float* gamma, const float* beta,
+                       const float* mean, const float* variance,
+                       const float epsilon, const bool transpose,
+                       float* folded_weights, float* folded_bias)
+{
+    const Index total = kernels * kernel_size;
+    if (total == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(conv_bn_fold_kernel<<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, checked_int(kernel_size), checked_int(kernels), weights,
+        gamma, beta, mean, variance, epsilon, transpose ? 1 : 0,
+        folded_weights, folded_bias));
+}
+
+__global__ void add_relu_kernel(const Index total,
+                                const float* __restrict__ a,
+                                const float* __restrict__ b,
+                                const int apply_relu,
+                                float* __restrict__ y)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const float value = a[i] + b[i];
+        y[i] = apply_relu ? fmaxf(value, 0.0f) : value;
+    }
+}
+
+void add_relu_cuda(const Index total, const float* a, const float* b,
+                   const bool apply_relu, float* y)
+{
+    if (total == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(add_relu_kernel<<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, a, b, apply_relu ? 1 : 0, y));
+}
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {

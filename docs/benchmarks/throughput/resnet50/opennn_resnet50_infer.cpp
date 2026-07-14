@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -32,6 +33,7 @@
 #include "../../../opennn/configuration.h"
 #include "../../../opennn/device_backend.h"
 #include "../../../opennn/memory_debug.h"
+#include "../../../opennn/profiler.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
@@ -134,8 +136,11 @@ int main(int argc, char* argv[])
         const vector<TensorView>& inputs = batch_data.get_inputs();
 
         // ForwardPropagation (activation buffers) built ONCE; parameters uploaded
-        // on the first resident call only.
+        // on the first resident call only. The forward is captured into a CUDA
+        // graph during the two warmup calls and replayed by the timed loop.
         ForwardPropagation forward_propagation(effective_batch, &network);
+        forward_propagation.set_cuda_graph(true);
+        std::cout << "cuda_graph=on\n";
 
         network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/true);
 #ifdef OPENNN_HAS_CUDA
@@ -174,6 +179,32 @@ int main(int argc, char* argv[])
             if (!std::isfinite(probe[i]))
                 throw std::runtime_error("non-finite outputs");
 #endif
+
+        // OPENNN_PROFILE=1: after the official timing, rerun the forward with the
+        // library profiler on. Every PROFILE_SCOPE syncs the GPU, so the profiled
+        // pass is slower than the timed one — use it for the % split, not the
+        // absolute throughput.
+        if (const char* profile_env = std::getenv("OPENNN_PROFILE");
+            profile_env && profile_env[0] == '1')
+        {
+            // The per-op scopes need the eager forward (each one syncs the GPU).
+            forward_propagation.set_cuda_graph(false);
+            const Index profile_runs = 20;
+            ::opennn::enabled() = true;
+            ::opennn::global_stats().clear();
+            const auto p0 = clock_type::now();
+            for (Index run = 0; run < profile_runs; ++run)
+                network.calculate_outputs_resident(inputs, forward_propagation, /*upload=*/false);
+#ifdef OPENNN_HAS_CUDA
+            device::synchronize();
+#endif
+            const double profile_ms =
+                std::chrono::duration<double, std::milli>(clock_type::now() - p0).count();
+            ::opennn::enabled() = false;
+            ::opennn::global_stats().print(std::cout, "ResNet-50 inference forward breakdown",
+                                           profile_ms);
+            std::cout << "profile_ms_per_batch=" << profile_ms / double(profile_runs) << "\n";
+        }
 
         std::sort(times.begin(), times.end());
         const double batch_s = times[times.size() / 2];   // median forward pass

@@ -77,14 +77,40 @@ use_bf16 = os.environ.get("PT_BF16") is not None
 print(f"precision={'bf16' if use_bf16 else 'fp32'}")
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 else torch.autocast("cuda", enabled=False)
 
-with torch.no_grad(), ctx:
-    model(src, tgt)  # warmup
+# CUDA graph capture/replay (PT_NOGRAPH=1 disables): same-condition counterpart
+# of OpenNN's captured resident forward.
+use_graph = os.environ.get("PT_NOGRAPH") is None
+
+if use_graph:
+    side_stream = torch.cuda.Stream()
+    side_stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(side_stream), torch.no_grad(), ctx:
+        for _ in range(3):
+            model(src, tgt)
+    torch.cuda.current_stream().wait_stream(side_stream)
+    torch.cuda.synchronize()
+
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph), torch.no_grad(), ctx:
+        model(src, tgt)
+    print("cuda_graph=on")
+
+    graph.replay()  # warmup replay
     torch.cuda.synchronize()
     t0 = time.perf_counter()
     for _ in range(iters):
-        model(src, tgt)
+        graph.replay()
     torch.cuda.synchronize()
     per = (time.perf_counter() - t0) / iters
+else:
+    with torch.no_grad(), ctx:
+        model(src, tgt)  # warmup
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        for _ in range(iters):
+            model(src, tgt)
+        torch.cuda.synchronize()
+        per = (time.perf_counter() - t0) / iters
 
 tokens = batch * seq
 print(f"step_s={per:.6f}")

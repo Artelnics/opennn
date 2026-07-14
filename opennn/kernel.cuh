@@ -245,6 +245,20 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                               const float* mean, const float* variance,
                               const float epsilon, const bool apply_relu, T* y);
 
+// Folds inference-time batchnorm into the convolution parameters:
+// W'[k,...] = W[k,...]*gamma[k]/sqrt(var[k]+eps), b'[k] = beta[k]-mean[k]*scale.
+// kernel_size is R*S*C. transpose writes W' as [RSC, kernels] for the 1x1 GEMM path.
+void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
+                       const float* weights,
+                       const float* gamma, const float* beta,
+                       const float* mean, const float* variance,
+                       const float epsilon, const bool transpose,
+                       float* folded_weights, float* folded_bias);
+
+// y = a + b, optionally clamped at zero (the residual tail of a folded conv+BN block).
+void add_relu_cuda(const Index total, const float* a, const float* b,
+                   const bool apply_relu, float* y);
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);
 

@@ -15,6 +15,7 @@
 #                                         [hidden] [hidden_layers] [activation]
 
 import contextlib
+import os
 import sys
 import time
 
@@ -88,10 +89,36 @@ def main():
     ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
            if use_autocast else contextlib.nullcontext())
 
-    def run_pass():
-        with torch.no_grad(), ctx:
+    # CUDA graph capture/replay (PT_NOGRAPH=1 disables): same-condition
+    # counterpart of OpenNN's captured resident forward. Each batch is staged
+    # into the static capture buffer with a device-to-device copy, matching the
+    # OpenNN driver.
+    use_graph = os.environ.get("PT_NOGRAPH") is None
+
+    if use_graph:
+        static_x = x[:batch].clone()
+        side_stream = torch.cuda.Stream()
+        side_stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(side_stream), torch.no_grad(), ctx:
+            for _ in range(3):
+                model(static_x)
+        torch.cuda.current_stream().wait_stream(side_stream)
+        torch.cuda.synchronize()
+
+        graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(graph), torch.no_grad(), ctx:
+            model(static_x)
+        print("cuda_graph=on")
+
+        def run_pass():
             for s in range(0, processed, batch):
-                model(x[s:s + batch])
+                static_x.copy_(x[s:s + batch], non_blocking=True)
+                graph.replay()
+    else:
+        def run_pass():
+            with torch.no_grad(), ctx:
+                for s in range(0, processed, batch):
+                    model(x[s:s + batch])
 
     # Warmup: cuDNN autotuning, workspace allocation.
     run_pass()

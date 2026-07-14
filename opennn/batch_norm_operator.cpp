@@ -456,6 +456,8 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
 void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, TensorView& output,
                                     const TensorView& residual)
 {
+    PROFILE_SCOPE("op:bn_infer_fwd");
+
     // One fused NHWC pass (BN + optional residual + optional ReLU). The legacy
     // cudnnBatchNormalizationForwardInference call had no NHWC kernel for
     // several ResNet shapes and silently inserted NCHW layout converts, which
