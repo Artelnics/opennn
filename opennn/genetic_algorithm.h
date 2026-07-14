@@ -58,6 +58,13 @@ private:
     void perform_mutation();
     vector<Index> get_selected_indices() const;
 
+    // Map an individual's genes (positions 0..genes_number-1) to the actual dataset
+    // variable indices via original_input_indices. The genes are indices INTO the
+    // input set, not raw variable indices -- when unused/constant variables create
+    // gaps, using the gene positions directly would select the wrong (possibly
+    // target or all-missing) variables.
+    vector<Index> genes_to_variable_indices(const VectorB&) const;
+
     Tensor<VectorR, 1> individual_parameters;
 
     vector<Index> original_input_indices;
