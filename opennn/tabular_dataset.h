@@ -98,6 +98,10 @@ public:
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
     vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
 
+    vector<Descriptives> calculate_variable_descriptives_positive_samples() const override;
+    vector<Descriptives> calculate_variable_descriptives_negative_samples() const override;
+    vector<Descriptives> calculate_variable_descriptives_categories(Index) const override;
+
     vector<Histogram> calculate_variable_distributions(const Index = 10) const override;
     vector<BoxPlot> calculate_variables_box_plots() const override;
 
@@ -189,6 +193,8 @@ protected:
                                 const vector<Index>&,
                                 float*,
                                 int contiguous = -1) const;
+
+    vector<Index> filter_used_samples_by_column(Index, bool) const;
 
     void compute_cache_descriptives() const;
     void compute_cache_replacement() const;
