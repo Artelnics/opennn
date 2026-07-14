@@ -130,6 +130,11 @@ def find_opennn_higgs_cpu() -> tuple[str, bool]:
     if override:
         return override, Path(override).exists()
     dirs = [
+        # The MKL build first: the CPU protocol requires OpenNN's MKL backend
+        # (see higgs/README.md). Falling back to a plain-Eigen binary silently
+        # halves OpenNN's GEMM throughput and inverts the comparison.
+        REPO_ROOT / "build-mkl" / "bin",
+        REPO_ROOT / "build-mkl" / "bin" / "Release",
         REPO_ROOT / "build-benchmarks" / "bin",
         REPO_ROOT / "build-benchmarks" / "bin" / "Release",
         REPO_ROOT / "build" / "bin",
@@ -440,6 +445,11 @@ def main() -> None:
         "commands": {},
         "results": {},
     }
+
+    if not result["runner"]["opennn_binary_info"].get("mkl_linked"):
+        print(f"WARNING: OpenNN binary is NOT MKL-linked ({opennn_bin}); the CPU "
+              "protocol requires the MKL build (-DOpenNN_ENABLE_MKL=ON, see "
+              "higgs/README.md). Plain-Eigen numbers under-report OpenNN ~1.5x.")
 
     for engine in engines:
         cmd, env_over = engine_cmd(engine, args)
