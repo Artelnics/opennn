@@ -300,6 +300,10 @@ Correlation logarithmic_correlation(const VectorR& x,
     return result;
 }
 
+// Above this sample count, Levenberg-Marquardt's per-epoch Jacobian build over all
+// rows becomes too expensive, so the fit falls back to the lighter Quasi-Newton method.
+static constexpr Index maximum_levenberg_marquardt_samples = 10000;
+
 static Correlation fit_logistic_correlation(const VectorR& input, const VectorR& target, const string& scaler)
 {
     Correlation correlation;
@@ -321,18 +325,34 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     const Shape dimensions = { 1 };
     neural_network.add_layer(make_unique<Scaling>(dimensions));
     neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
-    neural_network.compile();
+
+    // Force CPU: QuasiNewton/LevenbergMarquardt reject GPU training, so on a CUDA
+    // process this fit would otherwise throw and report a 0 / NaN correlation.
+    neural_network.compile(Device::CPU);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt(&loss);
-    levenberg_marquardt.set_display(false);
-
     try
     {
-        levenberg_marquardt.train();
+        if (input.size() > maximum_levenberg_marquardt_samples)
+        {
+            QuasiNewtonMethod quasi_newton(&loss);
+            quasi_newton.set_display(false);
+
+            // Without a minimum loss decrease the line search keeps finding microscopic
+            // improvements and burns the full epoch budget on large datasets.
+            quasi_newton.set_minimum_loss_decrease(1.0e-6f);
+
+            quasi_newton.train();
+        }
+        else
+        {
+            LevenbergMarquardtAlgorithm levenberg_marquardt(&loss);
+            levenberg_marquardt.set_display(false);
+            levenberg_marquardt.train();
+        }
     }
     catch (const exception&)
     {
@@ -446,6 +466,12 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
+    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
+    // ClassificationNetwork compiled on the global device in its constructor, so
+    // re-target to CPU and re-seed the parameters compile() just zeroed.
+    neural_network.compile(Device::CPU);
+    neural_network.set_parameters_glorot();
+
     auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
     throw_if(!dense_2d, "Expected Dense layer.");
 
@@ -536,6 +562,12 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
     const Index target_features_number = dataset.get_features_number("Target");
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
+
+    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
+    // ClassificationNetwork compiled on the global device in its constructor, so
+    // re-target to CPU and re-seed the parameters compile() just zeroed.
+    neural_network.compile(Device::CPU);
+    neural_network.set_parameters_glorot();
 
     auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
     throw_if(!dense_2d, "Expected Dense layer.");

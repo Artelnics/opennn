@@ -93,6 +93,7 @@ public:
     virtual void impute_missing_values_interpolate();
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f) override;
+    vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
