@@ -775,6 +775,12 @@ namespace
         set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
         set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
+        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS)
+        {
+            const int64_t aux_ld = m;
+            set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD, aux_ld);
+        }
+
         const int a_rows = (transA == CUBLAS_OP_N) ? m : k;
         const int a_cols = (transA == CUBLAS_OP_N) ? k : m;
         const int b_rows = (transB == CUBLAS_OP_N) ? k : n;
@@ -868,12 +874,17 @@ void run_lt_matmul_cached(
     const void* a_data, const void* b_data, void* c_data,
     const void* bias_pointer,
     cudaDataType_t io_dtype,
-    cudaDataType_t out_dtype)
+    cudaDataType_t out_dtype,
+    const void* aux_pointer)
 {
     LtMatmulPlan& plan = get_lt_matmul_plan(m, n, k, transA, transB, epilogue, io_dtype, out_dtype);
 
     CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
+
+    if (aux_pointer)
+        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
+            CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &aux_pointer, sizeof(aux_pointer)));
 
     CHECK_CUBLAS(cublasLtMatmul(Backend::get_cublas_lt_handle(),
                                 plan.matmul_descriptor,
@@ -949,7 +960,8 @@ void run_lt_matmul_cached(int, int, int,
                           const void*, const void*, void*,
                           const void*,
                           cudaDataType_t,
-                          cudaDataType_t)
+                          cudaDataType_t,
+                          const void*)
 {
     throw runtime_error("run_lt_matmul_cached requires CUDA support.");
 }

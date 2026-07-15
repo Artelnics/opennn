@@ -196,6 +196,9 @@ void Convolutional::set(const Shape& new_input_shape,
     const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
     throw_if(function == ActivationFunction::Softmax,
              "Softmax is not a valid activation for a convolutional layer.");
+    throw_if(activation_needs_input(function),
+             "Convolutional: input-derivative activations (e.g. GELU, SiLU) are not supported; "
+             "use a standalone Activation layer after the convolution.");
     activation_operator.set_activation_function(function);
 
     batch_norm.features = new_batch_normalization ? kernels_number : 0;
@@ -248,6 +251,9 @@ void Convolutional::set_activation_function(const string& new_activation_functio
 
     throw_if(function == ActivationFunction::Softmax,
              "Softmax is not a valid activation for a convolutional layer.");
+    throw_if(activation_needs_input(function),
+             "Convolutional: input-derivative activations (e.g. GELU, SiLU) are not supported; "
+             "use a standalone Activation layer after the convolution.");
 
     activation_operator.set_activation_function(function);
     update_convolution_operator();

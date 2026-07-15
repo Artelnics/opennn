@@ -7,6 +7,7 @@
 #include "opennn/dataset.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/time_series_dataset.h"
+#include "opennn/dense_layer.h"
 #include "opennn/neural_network.h"
 #include "opennn/standard_networks.h"
 #include "opennn/loss.h"
@@ -136,6 +137,80 @@ TEST_F(GpuComparison, ApproximationGradient)
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ApproximationNetwork gpu_network({inputs_number}, {6, 5}, {outputs_number});
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, DenseGeluTanhFusedForward)
+{
+    const Index samples_number = 5;
+    const Index inputs_number = 4;
+    const Index hidden_number = 16;
+    const Index outputs_number = 3;
+
+    MatrixR inputs(samples_number, inputs_number);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    gpu_network.compile();
+    gpu_network.set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
+{
+    const Index samples_number = 6;
+    const Index inputs_number = 4;
+    const Index hidden_number = 16;
+    const Index outputs_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    gpu_network.compile();
     gpu_network.set_parameters(parameters);
 
     Loss gpu_loss(&gpu_network, &dataset);

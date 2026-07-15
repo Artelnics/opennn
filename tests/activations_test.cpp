@@ -9,6 +9,7 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/dense_layer.h"
 #include "opennn/activation_layer.h"
+#include "opennn/convolutional_layer.h"
 #include "opennn/activation_operator.h"
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
@@ -440,6 +441,48 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
 {
     EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), std::exception);
+}
+
+
+TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
+{
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELU"), std::exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELUTanh"), std::exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "SiLU"), std::exception);
+
+    Convolutional convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "ReLU");
+    EXPECT_THROW(convolutional.set_activation_function("SiLU"), std::exception);
+}
+
+
+TEST(ActivationsTest, GeluTanhDenseGradientCheck)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const Index samples_number = 6;
+    const Index inputs_number  = 4;
+    const Index hidden_number  = 8;
+    const Index targets_number = 3;
+
+    TabularDataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{targets_number}, "Identity"));
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
+
+    Configuration::instance().set();
 }
 
 

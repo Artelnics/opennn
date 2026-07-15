@@ -263,7 +263,8 @@ void run_lt_matmul_cached(
     const void*, const void*, void*,
     const void*,
     cudaDataType_t io_dtype  = CUDA_R_32F,
-    cudaDataType_t out_dtype = CUDA_R_32F);
+    cudaDataType_t out_dtype = CUDA_R_32F,
+    const void* aux_pointer  = nullptr);
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
                                int, int, int,

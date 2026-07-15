@@ -102,7 +102,8 @@ void dropout_forward(TensorView&, Buffer&, float);
 void dropout_backward(TensorView&, const Buffer&, float);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
-                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
+                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
+                    TensorView* pre_activation = nullptr);
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false);
