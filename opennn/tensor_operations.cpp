@@ -144,6 +144,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::LeakyReLU, "LeakyReLU"},
         {ActivationFunction::GELU,      "GELU"},
         {ActivationFunction::GELUTanh,  "GELUTanh"},
+        {ActivationFunction::SiLU,      "SiLU"},
         // Legacy aliases emitted by the Neural Designer editor's activation combobox
         // (old opennn names). from_string() accepts them so a saved model does not
         // crash the engine on load; to_string() still returns the CANONICAL name above
@@ -164,7 +165,8 @@ const EnumMap<ActivationFunction>& activation_function_map()
 bool activation_needs_input(ActivationFunction function)
 {
     return function == ActivationFunction::GELU
-        || function == ActivationFunction::GELUTanh;
+        || function == ActivationFunction::GELUTanh
+        || function == ActivationFunction::SiLU;
 }
 
 const string& activation_function_to_string(ActivationFunction function)
@@ -516,6 +518,9 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
             return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
         });
         return;
+    case SiLU:
+        a = a / (1.0f + (-a).exp());
+        return;
     }
 }
 
@@ -561,6 +566,13 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
             const float t = tanhf(u);
             const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * x2);
             return 0.5f * (1.0f + t) + 0.5f * x * (1.0f - t * t) * du;
+        });
+        return;
+    case SiLU:
+        d *= y.unaryExpr([](float x)
+        {
+            const float s = 1.0f / (1.0f + expf(-x));
+            return s * (1.0f + x * (1.0f - s));
         });
         return;
     }

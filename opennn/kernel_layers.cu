@@ -1333,6 +1333,7 @@ __device__ __forceinline__ float opennn_activation_value(float x, int function)
         constexpr float sqrt_2_over_pi = 0.7978845608028654f;
         return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
     }
+    if (function == activation_silu)       return x / (1.0f + expf(-x));
     return x;
 }
 
@@ -1356,6 +1357,11 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
         const float t = tanhf(u);
         const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * y2);
         return d * (0.5f * (1.0f + t) + 0.5f * y * (1.0f - t * t) * du);
+    }
+    if (function == activation_silu)
+    {
+        const float s = 1.0f / (1.0f + expf(-y));
+        return d * s * (1.0f + y * (1.0f - s));
     }
     return d;
 }

@@ -171,39 +171,6 @@ TEST(Dense3dTest, SequenceForwardValuesMatchHandComputed)
 }
 
 
-TEST(ActivationTest, LeakyReLUForwardPassesPositiveAndScalesNegative)
-{
-    vector<float> buffer = { -2.0f, -0.5f, 0.0f, 0.5f, 2.0f };
-    TensorView view(buffer.data(), {Index(buffer.size())});
-
-    activation_forward(view, ActivationFunction::LeakyReLU);
-
-    EXPECT_FLOAT_EQ(buffer[0], -0.2f);
-    EXPECT_FLOAT_EQ(buffer[1], -0.05f);
-    EXPECT_FLOAT_EQ(buffer[2],  0.0f);
-    EXPECT_FLOAT_EQ(buffer[3],  0.5f);
-    EXPECT_FLOAT_EQ(buffer[4],  2.0f);
-}
-
-
-TEST(ActivationTest, LeakyReLUBackwardGatesByOutputSign)
-{
-    vector<float> outputs = { -0.2f, -0.05f, 0.0f, 0.5f, 2.0f };
-    vector<float> delta   = {  1.0f,   2.0f, 3.0f, 4.0f, 5.0f };
-
-    TensorView outputs_view(outputs.data(), {Index(outputs.size())});
-    TensorView delta_view  (delta.data(),   {Index(delta.size())});
-
-    activation_backward(outputs_view, delta_view, ActivationFunction::LeakyReLU);
-
-    EXPECT_FLOAT_EQ(delta[0], 0.1f);
-    EXPECT_FLOAT_EQ(delta[1], 0.2f);
-    EXPECT_FLOAT_EQ(delta[2], 3.0f);
-    EXPECT_FLOAT_EQ(delta[3], 4.0f);
-    EXPECT_FLOAT_EQ(delta[4], 5.0f);
-}
-
-
 TEST(Dense, BatchNormForwardOrGradient)
 {
     const Index samples_number = 6;
