@@ -182,14 +182,16 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
+// Fused padding/causal mask + row softmax over the attention scores: one pass
+// over the score tensor instead of a mask pass plus a separate softmax pass.
 template<typename T>
-void attention_masks_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+void attention_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                           const int source_sequence_length, const int embedding_dimension,
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask);
 
 template<typename T>
-void attention_length_mask_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                                 const int source_sequence_length, const int* host_lengths,
                                 T* attention_weights, T* padding_mask, const bool use_causal_mask);
 

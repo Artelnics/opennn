@@ -85,7 +85,9 @@ def build():
         s = encoder_layer(s, pe)
     for _ in range(layers):
         t = decoder_layer(t, s)
-    out = K.Dense(vocab)(t)
+    # Softmax over the vocabulary: OpenNN's Transformer outputs probabilities,
+    # so the identical-config counterpart must too.
+    out = K.Dense(vocab, activation="softmax")(t)
     return tf.keras.Model([src, tgt], out)
 
 

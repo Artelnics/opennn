@@ -60,7 +60,9 @@ class Seq2SeqTransformer(nn.Module):
     def forward(self, src, tgt):
         s = self.pos(self.src_emb(src) * self.scale)
         t = self.pos(self.tgt_emb(tgt) * self.scale)
-        return self.out(self.transformer(s, t))
+        # Softmax over the vocabulary: OpenNN's Transformer outputs
+        # probabilities, so the identical-config counterpart must too.
+        return torch.softmax(self.out(self.transformer(s, t)), dim=-1)
 
 
 model = Seq2SeqTransformer().to(dev).eval()
