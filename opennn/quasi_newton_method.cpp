@@ -27,7 +27,11 @@ void QuasiNewtonMethod::set_default()
     name = "QuasiNewtonMethod";
 
 
-    minimum_loss_decrease = 0.0f;
+    // A small (non-zero) minimum loss decrease stops training once the loss
+    // has effectively converged. With 0 the method kept iterating up to
+    // maximum_epochs for microscopic gains -- especially costly on large or
+    // weak-signal datasets, where each epoch is a full pass plus line search.
+    minimum_loss_decrease = 1.0e-6f;
     training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
 

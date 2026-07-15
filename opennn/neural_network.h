@@ -64,6 +64,7 @@ public:
     Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
 
     void compile();
+    void compile(Device device);
     bool has(const string&) const;
     bool has(LayerType) const;
 

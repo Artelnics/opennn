@@ -32,6 +32,9 @@ public:
     NeuronsSelectionResult perform_neurons_selection();
 
     InputsSelectionResult perform_input_selection();
+
+    string get_inputs_selection_name() const { return inputs_selection ? inputs_selection->get_name() : string(); }
+
     void from_JSON(const JsonDocument&);
 
     void to_JSON(JsonWriter&) const;

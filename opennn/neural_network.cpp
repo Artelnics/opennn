@@ -66,9 +66,20 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
 void NeuralNetwork::compile()
 {
+    compile(Configuration::instance().resolve().device);
+}
+
+// Compile onto an explicit device, overriding the global Configuration. Used by
+// callers that must stay on a particular device regardless of the process-wide
+// setting -- e.g. the tiny correlation fits, which run optimizers (QuasiNewton,
+// LevenbergMarquardt) that reject GPU training.
+void NeuralNetwork::compile(const Device device)
+{
     if (get_layers_number() == 0) return;
 
     config = Configuration::instance().resolve();
+    config.device = device;
+    if (device != Device::CUDA) config.training_type = Type::FP32;
 
     for (auto& layer : layers)
     {
