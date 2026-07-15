@@ -802,9 +802,9 @@ void Optimizer::warmup_device_training(
 
     try
     {
-        // Validation first: its (wide) shape grows the shared operator buffers
-        // to their maximum before the training step can capture a CUDA graph,
-        // so captured pointers are never invalidated by a later regrow.
+        // Validation first: if its shape grows any shared operator buffer, it
+        // does so before the training step can capture a CUDA graph, so
+        // captured pointers are never invalidated by a later regrow.
         if (has_validation_warmup)
             evaluate_epoch(*validation_forward_propagation,
                            *validation_empty_queue,
@@ -1145,8 +1145,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const auto stage_into_slot = [](const Batch& source, Batch& slot)
     {
-        const Index samples = source.current_sample_count;
-        slot.current_sample_count = samples;
+        const Index samples = source.samples_number;
         slot.needs_device_copy = false;
 
         const auto copy_section = [&](const BatchSlot& from, BatchSlot& to)
@@ -1167,7 +1166,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         {
             if (!section.host || !section.buffer.data || section.features_number <= 0) return;
             device::copy_async(section.buffer.data, section.host,
-                               slot.current_sample_count * section.features_number * Index(sizeof(float)),
+                               slot.samples_number * section.features_number * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };
 
@@ -1178,7 +1177,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const auto stage_gather_indices = [](const Batch& source, Batch& slot)
     {
-        slot.current_sample_count = source.current_sample_count;
         slot.device_gather        = source.device_gather;
         slot.input_col_offset     = source.input_col_offset;
         slot.target_col_offset    = source.target_col_offset;

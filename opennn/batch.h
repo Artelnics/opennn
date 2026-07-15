@@ -83,7 +83,6 @@ struct Batch
     bool is_empty() const;
 
     Index samples_number = 0;
-    Index current_sample_count = 0;
     bool needs_device_copy = true;
     bool input_is_bf16 = false;
     // A prefetch-only batch stages data into a separate fixed compute batch and is
@@ -155,61 +154,17 @@ struct BatchPools
 
 struct BatchPrefetchSession
 {
-    explicit BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, Index batches_number)
-        : empty_queue(queue),
-          ready_batches(size_t(batches_number))
-    {
-        for (atomic<Batch*>& batch : ready_batches)
-            batch.store(nullptr, memory_order_relaxed);
-    }
-
-    ~BatchPrefetchSession()
-    {
-        for (jthread& thread : threads)
-            thread.request_stop();
-
-        empty_queue.close();
-
-        threads.clear();
-
-        empty_queue.reopen();
-    }
+    BatchPrefetchSession(ThreadSafeQueue<Batch*>&, Index batches_number);
+    ~BatchPrefetchSession();
 
     BatchPrefetchSession(const BatchPrefetchSession&) = delete;
     BatchPrefetchSession& operator=(const BatchPrefetchSession&) = delete;
 
-    Batch* wait(Index iteration)
-    {
-        Batch* batch = nullptr;
-        while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))
-        {
-            rethrow_if_error();
-            this_thread::yield();
-        }
+    Batch* wait(Index iteration);
 
-        return batch;
-    }
+    void capture_current_exception();
 
-    void capture_current_exception()
-    {
-        lock_guard<mutex> elock(error_mutex);
-        if (!worker_error)
-            worker_error = current_exception();
-        error_pending.store(true, memory_order_release);
-    }
-
-    void rethrow_if_error()
-    {
-        if (!error_pending.load(memory_order_acquire)) return;
-
-        exception_ptr e;
-        {
-            lock_guard<mutex> elock(error_mutex);
-            swap(e, worker_error);
-            error_pending.store(false, memory_order_release);
-        }
-        if (e) rethrow_exception(e);
-    }
+    void rethrow_if_error();
 
     ThreadSafeQueue<Batch*>& empty_queue;
     vector<atomic<Batch*>> ready_batches;

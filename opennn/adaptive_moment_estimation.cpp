@@ -157,14 +157,9 @@ TrainingResult AdaptiveMomentEstimation::train()
         ? training_samples_number
         : effective_batch_size;
 
-    const bool widen_validation = loss->get_neural_network()->is_gpu()
-                               && batch_size > 0;
-    const Index validation_batch_cap = widen_validation
-        ? max(effective_batch_size, get_maximum_batch_size() / 2)
-        : effective_batch_size;
-    const Index validation_batch_size = (validation_batch_cap <= 0 || validation_batch_cap > validation_samples_number)
+    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
         ? validation_samples_number
-        : validation_batch_cap;
+        : effective_batch_size;
     const Index training_batches_number = (training_batch_size > 0)
         ? training_samples_number / training_batch_size
         : 0;

@@ -106,7 +106,7 @@ public:
 
     Shape get_shape(const string&) const;
 
-    virtual void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
+    void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
     const vector<vector<string>>& get_data_file_preview() const noexcept { return data_file_preview; }
 

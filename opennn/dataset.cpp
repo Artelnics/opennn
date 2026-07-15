@@ -55,7 +55,10 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (batch_size <= 0 || batch_size > samples_number)
         batch_size = samples_number;
 
-    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
+    // Trailing samples that do not fill a complete batch are dropped
+    // (warn_dropped_samples reports them), so every batch has the same
+    // shape: one ForwardPropagation allocation and no graph recapture.
+    const Index batches_number = samples_number / batch_size;
 
     if (ssize(batches) != batches_number)
         batches.resize(batches_number);
@@ -74,9 +77,8 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     for (Index i = 0; i < batches_number; ++i)
     {
         const Index start = i * batch_size;
-        const Index end = min(start + batch_size, samples_number);
 
-        batches[i].assign(indices.begin() + start, indices.begin() + end);
+        batches[i].assign(indices.begin() + start, indices.begin() + start + batch_size);
     }
 }
 
@@ -1009,7 +1011,8 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& target_indices,
                          bool is_training) const
 {
-    batch.current_sample_count = sample_indices.size();
+    throw_if(Index(sample_indices.size()) != batch.samples_number,
+             "fill_batch sample count does not match the batch size.");
 
     const bool on_gpu = batch.uses_cuda();
 
@@ -1037,8 +1040,6 @@ void Dataset::fill_batch_host(Batch& batch,
                               const vector<Index>& target_indices,
                               bool is_training) const
 {
-    batch.current_sample_count = sample_indices.size();
-
     const bool on_gpu = batch.uses_cuda();
 
     batch.device_gather = false;
