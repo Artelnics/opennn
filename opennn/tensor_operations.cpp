@@ -144,18 +144,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::LeakyReLU, "LeakyReLU"},
         {ActivationFunction::GELU,      "GELU"},
         {ActivationFunction::GELUTanh,  "GELUTanh"},
-        {ActivationFunction::SiLU,      "SiLU"},
-        // Legacy aliases emitted by the Neural Designer editor's activation combobox
-        // (old opennn names). from_string() accepts them so a saved model does not
-        // crash the engine on load; to_string() still returns the CANONICAL name above
-        // (it returns the first entry matching the enum value, so these are read-only).
-        // ScaledExponentialLinear (SELU) is not implemented in the refactor: map it to
-        // the nearest supported activation (ReLU) instead of throwing.
-        {ActivationFunction::Identity,  "Linear"},
-        {ActivationFunction::Sigmoid,   "Logistic"},
-        {ActivationFunction::Tanh,      "HyperbolicTangent"},
-        {ActivationFunction::ReLU,      "RectifiedLinear"},
-        {ActivationFunction::ReLU,      "ScaledExponentialLinear"}
+        {ActivationFunction::SiLU,      "SiLU"}
     };
     
     static const EnumMap<ActivationFunction> instance{entries};
