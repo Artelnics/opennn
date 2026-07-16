@@ -297,23 +297,27 @@ int main()
         // labels (YOLOv3-style). Use Sigmoid for all datasets here.
         const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
-        const bool use_voc     = false;
+        const bool use_voc     = true;
         const bool use_raccoon = false;
-        const bool use_coco    = true;   // COCO val2017, 3 classes: person/car/cat
+        const bool use_coco    = false;  // COCO val2017, 3 classes: person/car/cat
 
-        // COCO: Darknet53 + 3-head FPN (YOLOv3-style).
+        // VOC/COCO: Darknet53 + 3-head FPN or PANet (loads pretrained darknet53.conv.74).
         // Raccoon/synthetic: VGG + single head (fast, good for small datasets).
-        const auto backbone = use_coco
-            ? YoloNetwork::Backbone::DarknetTinyV3   // ~5x faster than Darknet53 on RTX 2080
+        // Set use_panet=true to switch from FPN to PANet (Darknet53 only; adds a bottom-up
+        // path from small to large head; weights file gets _panet suffix automatically).
+        const bool use_panet   = false;
+
+        const auto backbone = (use_coco || use_voc)
+            ? YoloNetwork::Backbone::Darknet53
             : YoloNetwork::Backbone::Vgg;
 
-        const auto head_style = use_coco
-            ? YoloNetwork::HeadStyle::FPN
+        const auto head_style = (use_coco || use_voc)
+            ? (use_panet ? YoloNetwork::HeadStyle::PANet : YoloNetwork::HeadStyle::FPN)
             : YoloNetwork::HeadStyle::Single;
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
-        const std::filesystem::path voc_root = "/home/artelnics/VOCdevkit/VOC2007";
+        const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
         const std::string voc_image_set = "trainval";
 
         // Leave empty for all 20 VOC classes.
@@ -376,11 +380,14 @@ int main()
             }
 
             grid_size = 13;
-            boxes_per_cell = 5;
+            boxes_per_cell = 3;          // 3 anchors per head × 2 FPN heads = 6 total
             input_shape = Shape{416, 416, 3};
-            // Standard YOLOv2 k-means anchors on VOC (in image-fraction units).
-            anchors = {{0.057f, 0.075f}, {0.169f, 0.130f}, {0.330f, 0.262f},
-                       {0.279f, 0.640f}, {0.778f, 0.808f}};
+            // Standard YOLOv3-tiny anchors (in image-fraction units).
+            // Matches yolov3-tiny.weights training configuration so pretrained
+            // backbone features align with anchor scale expectations.
+            anchors = {
+                {0.024f, 0.034f}, {0.055f, 0.065f}, {0.089f, 0.139f},   // small head 26×26
+                {0.195f, 0.197f}, {0.325f, 0.406f}, {0.827f, 0.767f}};  // large head 13×13
         }
         else if (use_coco)
         {
@@ -388,11 +395,11 @@ int main()
             // Only images that have at least one label are symlinked to
             // coco_mini_data/labeled_images/ to avoid training on 1978
             // background-only images (which doubles epoch time for no gain).
-            labels_dir = "/home/artelnics/Documents/opennn/coco_mini_data/labels";
+            labels_dir = "/home/alvaromartin/coco_mini_data/train2017_labels";
             images_dir = data_dir / "labeled_images";
             std::filesystem::create_directories(images_dir);
             const std::filesystem::path src_images =
-                "/home/artelnics/Documents/opennn/coco_mini_data/val2017";
+                "/home/alvaromartin/coco_mini_data/train2017";
             for (const auto& entry : std::filesystem::directory_iterator(labels_dir))
             {
                 if (entry.path().extension() != ".txt") continue;
@@ -592,7 +599,8 @@ int main()
                                  head_style,
                                  body_activation);
 
-        std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU") << "\n";
+        std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
+                  << "  " << device::gpu_info_string() << "\n";
         std::cout << "Network: backbone="
                   << (backbone == YoloNetwork::Backbone::Vgg          ? "Vgg"
                     : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "DarknetTinyV3"
@@ -640,10 +648,12 @@ int main()
             training_strategy.get_optimization_algorithm());
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
-        adam->set_batch_size(use_voc || use_raccoon || use_coco ? 8 : 16);
+        // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
+        const int batch_size = (backbone == YoloNetwork::Backbone::Darknet53) ? 4 : 16;
+        adam->set_batch_size(batch_size);
         adam->set_display_period(1);
         adam->set_gradient_clip_norm(0.1f);
-        adam->set_maximum_validation_failures(use_coco ? 20 : use_raccoon ? 25 : 15);
+        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_darknet53) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
 
         // Training control:
         //   resume_training = true  → load weights if they exist, then continue
@@ -752,9 +762,14 @@ int main()
         // LR step-decay schedule (YOLO convention).
         // epochs_done.txt tracks progress so resume always picks the right stage.
         struct TrainingRound { float lr; int epochs; };
+        // Darknet53 runs with batch=4 (VRAM constraint). Scale LR ∝ batch_size
+        // relative to the batch=16 baseline: ×(4/16) = ×0.25.
         const std::vector<TrainingRound> lr_schedule =
-            use_coco    ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}} :
-            use_raccoon ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}} :
+            use_coco    ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                         :
+            (use_voc && is_darknet53)
+                        ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}}     :
+            use_voc     ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}          :
+            use_raccoon ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}               :
                           std::vector<TrainingRound>{{1e-3f, 200}};
 
         // Epochs file is scoped to the weights filename so switching variants
@@ -789,9 +804,9 @@ int main()
                 std::cout << "\nTraining: lr=" << rnd.lr
                           << " for " << to_run << " epochs"
                           << " (target epoch " << round_end << ").\n";
-                training_strategy.train();
-                epochs_done = round_end;
-                cumulative  = round_end;
+                const auto train_result = training_strategy.train();
+                epochs_done += static_cast<int>(train_result.get_epochs_number());
+                cumulative   = round_end;
 
                 yolo_network.save_parameters_binary(weights_path);
                 yolo_network.save_states_binary(states_path);

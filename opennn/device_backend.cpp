@@ -112,6 +112,26 @@ size_t available_memory()
 #endif
 }
 
+std::string gpu_info_string() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaDeviceProp p{};
+    if (cudaGetDeviceProperties(&p, 0) != cudaSuccess) return "GPU info unavailable";
+    size_t free_b = 0, total_b = 0;
+    cudaMemGetInfo(&free_b, &total_b);
+    int ver = 0;
+    cudaRuntimeGetVersion(&ver);
+    return std::format("{:<32s}  {:.0f} MB total / {:.0f} MB free  CC {}.{}  CUDA {:d}.{:d}",
+                       p.name,
+                       total_b / 1048576.0,
+                       free_b  / 1048576.0,
+                       p.major, p.minor,
+                       ver / 1000, (ver % 1000) / 10);
+#else
+    return "CPU only";
+#endif
+}
+
 bool cuda_allocation_growth_forbidden() noexcept
 {
     return cuda_allocation_growth_forbidden_runtime.load(memory_order_relaxed);

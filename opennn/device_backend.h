@@ -33,6 +33,7 @@ constexpr bool is_cuda_build() noexcept
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();
+std::string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
