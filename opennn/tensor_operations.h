@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh };
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
@@ -39,6 +39,7 @@ inline float activation_forward_value(ActivationFunction function, float x)
         constexpr float sqrt_2_over_pi = 0.7978845608028654f;
         return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
     }
+    case SiLU:      return x / (1.0f + exp(-x));
     case Softmax:   break;
     }
 
@@ -57,10 +58,11 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     case LeakyReLU: return y >= 0.0f ? 1.0f : LEAKY_RELU_SLOPE;
     case Softmax:   break;
     case GELU:
-    case GELUTanh:  break;
+    case GELUTanh:
+    case SiLU:      break;
     }
 
-    throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh must be handled separately.");
+    throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh/SiLU must be handled separately.");
 }
 
 VectorR activation_forward_values(ActivationFunction, const VectorR&);
@@ -100,7 +102,8 @@ void dropout_forward(TensorView&, Buffer&, float);
 void dropout_backward(TensorView&, const Buffer&, float);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
-                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS);
+                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
+                    TensorView* pre_activation = nullptr);
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false);

@@ -101,9 +101,18 @@ int main(int argc, char* argv[])
             ::opennn::global_stats().clear();
         }
 
+        // Capture the forward into a CUDA graph (two eager warmup calls, then
+        // capture) so the timed loop below replays it. Enabled after the
+        // profiled block: the per-op scopes need the eager forward.
+        forward_propagation.set_cuda_graph(true);
+        for (Index it = 0; it < 2; ++it)
+            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, /*upload=*/false);
+        device::synchronize();
+        std::cout << "cuda_graph=on\n";
+
         // GPU-only time via CUDA events (no host gaps inside the window) vs
         // wall-clock (host launch/orchestration overhead + GPU). The difference
-        // is the per-step host overhead a CUDA graph would remove.
+        // is the per-step host overhead a CUDA graph replay removes.
         cudaStream_t stream = Backend::get_compute_stream();
         cudaEvent_t ev0, ev1;
         cudaEventCreate(&ev0); cudaEventCreate(&ev1);

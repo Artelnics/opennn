@@ -88,14 +88,20 @@ public:
     void scrub_missing_values() override;
     void calculate_missing_values_statistics();
     void impute_missing_values_statistic(const MissingValuesMethod&);
+    void reuse_input_incomplete_rows_binary();
     virtual void impute_missing_values_unuse();
     virtual void impute_missing_values_interpolate();
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f) override;
+    vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const override;
     vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
+
+    vector<Descriptives> calculate_variable_descriptives_positive_samples() const override;
+    vector<Descriptives> calculate_variable_descriptives_negative_samples() const override;
+    vector<Descriptives> calculate_variable_descriptives_categories(Index) const override;
 
     vector<Histogram> calculate_variable_distributions(const Index = 10) const override;
     vector<BoxPlot> calculate_variables_box_plots() const override;
@@ -189,7 +195,10 @@ protected:
                                 float*,
                                 int contiguous = -1) const;
 
+    vector<Index> filter_used_samples_by_column(Index, bool) const;
+
     void compute_cache_descriptives() const;
+    void compute_cache_replacement() const;
 
     filesystem::path cache_path;
     filesystem::path cache_path_override;
@@ -199,6 +208,11 @@ protected:
     // The cache file keeps raw values; these drive the scaling applied to
     // batches as they are read.
     mutable vector<Descriptives> cache_feature_descriptives;
+    // Per-cache-column value used to impute NaN on the fly when filling training/
+    // testing batches (mean for continuous, mode for binary, most-frequent category
+    // for categoricals). The on-disk cache itself stays raw so correlations keep
+    // doing pairwise deletion. Resolved lazily from the variable types.
+    mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 
     void infer_column_types(const vector<string_view>&, char);

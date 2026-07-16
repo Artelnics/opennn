@@ -376,3 +376,9 @@ docs/benchmarks/export/model.py
 docs/benchmarks/export/sum.csv
 docs/benchmarks/results/*
 !docs/benchmarks/results/README.md
+
+# Session-generated benchmark report notes (loose .md at the docs/benchmarks/
+# root); the per-benchmark READMEs and DATA_POLICY.md stay tracked.
+docs/benchmarks/*.md
+!docs/benchmarks/README.md
+!docs/benchmarks/DATA_POLICY.md

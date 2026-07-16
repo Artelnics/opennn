@@ -7,11 +7,10 @@ repository; see [`../DATA_POLICY.md`](../../DATA_POLICY.md).
 
 ## Current Status
 
-The CIFAR-geometry result is promising, but it is not a headline claim until it
-has a fresh result JSON with repeated runs, quality metadata, and the optimized
-PyTorch/TensorFlow paths in the same harness. The ImageNet-geometry work is a
-caveat track: it tests whether the small-image launch-overhead win survives at
-224x224 inputs.
+The CIFAR-geometry inference result now has a five-run canonical JSON with the
+optimized OpenNN, PyTorch, and TensorFlow paths in the same harness. The
+ImageNet-geometry work remains a caveat track: it tests whether the small-image
+launch-overhead win survives at 224x224 inputs.
 
 ## Canonical Runner
 

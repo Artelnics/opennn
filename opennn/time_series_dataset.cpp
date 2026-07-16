@@ -409,11 +409,13 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
                                    const vector<Index>& target_indices,
                                    bool is_training) const
 {
+    throw_if(Index(sample_indices.size()) != batch.samples_number,
+             "fill_batch sample count does not match the batch size.");
+
     if (batch.uses_cuda() && is_device_resident() && !batch.input_is_bf16
         && batch.decoder.shape.empty()
         && is_contiguous(input_indices) && is_contiguous(target_indices))
     {
-        batch.current_sample_count = sample_indices.size();
         batch.device_gather = true;
         batch.gather_row_indices.resize(sample_indices.size());
         for (size_t i = 0; i < sample_indices.size(); ++i)

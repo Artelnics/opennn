@@ -111,19 +111,48 @@ model = ResNet50(classes).cuda()
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
 if fast:
     model = model.to(memory_format=torch.channels_last)
-    model = torch.compile(model)
+    # reduce-overhead = torch.compile + CUDA graphs, PyTorch's fastest
+    # inference execution path and the same-condition counterpart of OpenNN's
+    # captured resident forward.
+    model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 
 # One GPU-resident batch, held constant so the timed loop is pure forward compute.
-xb = x[:batch]
+xb = x[:batch].clone()
 
+# CUDA graph capture/replay (PT_NOGRAPH=1 disables): the same-condition
+# counterpart of OpenNN's captured resident forward. Warmup on a side stream,
+# capture the eval forward once, replay it in the timed loop.
+use_graph = os.environ.get("PT_NOGRAPH") is None and not fast
 
-@torch.no_grad()
-def run_forward():
-    with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
-        out = model(xb)
+if use_graph:
+    side_stream = torch.cuda.Stream()
+    side_stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(side_stream), torch.no_grad():
+        for _ in range(3):
+            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
+                model(xb)
+    torch.cuda.current_stream().wait_stream(side_stream)
     torch.cuda.synchronize()
-    return out
+
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph), torch.no_grad():
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
+            static_out = model(xb)
+    print("cuda_graph=on")
+
+    def run_forward():
+        graph.replay()
+        torch.cuda.synchronize()
+        return static_out
+
+else:
+    @torch.no_grad()
+    def run_forward():
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=bf16):
+            out = model(xb)
+        torch.cuda.synchronize()
+        return out
 
 
 run_forward()  # warmup (traces + compiles + selects cuDNN plans)

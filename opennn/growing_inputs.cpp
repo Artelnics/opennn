@@ -135,14 +135,16 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
         configure_neural_network_inputs(neural_network, dataset, input_features_number);
 
-        if (display)
-        {
-            cout << "\nEpoch: " << epoch + 1 << "\n"
-                << "Input variables number: " << input_variables_number << "\n"
-                << "Inputs: \n";
+        // Growing inputs is a greedy forward selection: at each step it takes the
+        // next candidate input (by descending correlation) and keeps it ONLY if it
+        // lowers the validation error. Rejected candidates are removed and the next
+        // one is tried, so several candidates can be evaluated at the same input
+        // count. The epoch counter therefore tracks *accepted* inputs, not attempts.
+        const string& candidate_name = variable_names[current_variable_index];
 
-            cout << dataset->get_variable_names("Input");
-        }
+        if (display)
+            cout << "\nTrying to add \"" << candidate_name << "\"  ->  "
+                 << input_variables_number << " inputs\n";
 
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
@@ -174,15 +176,20 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             }
 
             if (display)
-                cout << "Trial number: " << j + 1 << "\n"
-                << "   Training error: " << training_error << "\n"
-                << "   Validation error: " << validation_error << "\n";
+                cout << (trials_number > 1 ? "   Trial " + to_string(j + 1) + ": " : "   ")
+                     << "training error " << training_error
+                     << ", validation error " << validation_error << "\n";
         }
 
         if (previous_validation_error < minimum_validation_error)
         {
-            if (display) cout << "Validation failure\n";
             ++validation_failures;
+
+            if (display)
+                cout << "   Rejected: validation error " << minimum_validation_error
+                     << " did not beat the best so far (" << previous_validation_error
+                     << "). Removing \"" << candidate_name << "\". Validation failures: "
+                     << validation_failures << "/" << maximum_validation_failures << "\n";
 
             dataset->set_variable_role(current_variable_index,
                 dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget ? "Target" : "None");
@@ -195,6 +202,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             input_selection_results.validation_error_history(epoch) = minimum_validation_error;
 
             ++epoch;
+
+            if (display)
+                cout << "   Accepted. Epoch " << epoch << ": " << input_variables_number
+                     << " inputs kept, best validation error " << minimum_validation_error << "\n"
+                     << "   Inputs: " << dataset->get_variable_names("Input");
         }
 
         ++variable_index;

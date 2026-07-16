@@ -159,24 +159,36 @@ int main(int argc, char* argv[])
 
         // One persistent ForwardPropagation, reused across passes: activations
         // are allocated once, parameters uploaded once (upload_parameters=true on
-        // the first call only).
+        // the first call only). The forward is captured into a CUDA graph, which
+        // needs a stable input pointer, so each batch is staged with a device-to-
+        // device copy into one fixed buffer (~us against a launch-bound forward).
         ForwardPropagation forward_propagation(batch, network.get());
+        forward_propagation.set_cuda_graph(true);
+
+        Buffer staging_input;
+        staging_input.resize_bytes(batch * inputs_number * Index(sizeof(float)), Device::CUDA);
+        const TensorView staging_view(staging_input.as<float>(),
+                                      Shape{batch, inputs_number}, Type::FP32, Device::CUDA);
+
         bool parameters_uploaded = false;
         const TensorView* last_outputs = nullptr;
         TensorView probe_view;
 
         auto run_pass = [&]()
         {
+            cudaStream_t compute = Backend::get_compute_stream();
             for (Index b = 0; b < batches; ++b)
             {
                 const Index start = b * batch;
-                const TensorView batch_view(
-                    inputs_device.as<float>() + start * inputs_number,
-                    Shape{batch, inputs_number}, Type::FP32, Device::CUDA);
+                device::copy_async(staging_input.data,
+                                   inputs_device.as<float>() + start * inputs_number,
+                                   batch * inputs_number * Index(sizeof(float)),
+                                   device::CopyKind::DeviceToDevice,
+                                   compute);
 
                 const bool upload_parameters = !parameters_uploaded;
                 probe_view = network->calculate_outputs_resident(
-                    {batch_view}, forward_propagation, upload_parameters);
+                    {staging_view}, forward_propagation, upload_parameters);
                 parameters_uploaded = true;
                 last_outputs = &probe_view;
             }

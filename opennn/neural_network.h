@@ -64,6 +64,7 @@ public:
     Index get_states_size() const     { return get_aligned_size(get_state_specs()); }
 
     void compile();
+    void compile(Device device);
     bool has(const string&) const;
     bool has(LayerType) const;
 
@@ -146,6 +147,12 @@ public:
     // when upload_parameters=true (skip on repeat calls with unchanged weights).
     // Output is left on the GPU; returns its TensorView (no D2H). This is
     // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
+    // With forward_propagation.set_cuda_graph(true) the forward is captured
+    // into a CUDA graph after two eager calls and replayed while the input
+    // pointers stay the same; any weight change must go through an
+    // upload_parameters=true call (the pre-existing contract), which also
+    // invalidates the captured graph. Release any bf16 fp32 master before the
+    // first resident call so the captured pointers are final.
     TensorView calculate_outputs_resident(const vector<TensorView>&,
                                           ForwardPropagation&,
                                           bool upload_parameters = true);

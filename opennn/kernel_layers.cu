@@ -375,24 +375,109 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
     }
 }
 
-template<typename T>
-__global__ void fused_masks_kernel(const int n, T* __restrict__ attention_weights, const T* __restrict__ padding_mask,
-                                         const int heads_number, const int query_sequence_length,
-                                         const int source_sequence_length, const bool use_causal_mask)
-{
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-    {
-        const int sk = i % source_sequence_length;
-        const int sq = (i / source_sequence_length) % query_sequence_length;
-        const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
+static inline int layernorm_threads(int D);
 
-        if ((use_causal_mask && sk > sq) || static_cast<float>(padding_mask[b * source_sequence_length + sk]) > 0.5f)
-            attention_weights[i] = static_cast<T>(-1e9f);
+// One pass instead of two: the mask penalty and the row softmax used to be a
+// full read+write over the attention scores each (fused_masks_kernel +
+// cudnnSoftmaxForward). One warp per row, the row slice cached in registers,
+// shuffle-only reductions: the scores are read once and written once (they are
+// L2-resident right after the QK^T GEMM). Masked positions behave exactly like
+// the old -1e9 penalty, so a fully masked row still softmaxes to uniform.
+template<typename T, int MAX_ELEMS>
+__global__ void masked_softmax_rows_kernel(const int rows, const int source_sequence_length,
+                                           const int heads_number, const int query_sequence_length,
+                                           T* __restrict__ attention_weights,
+                                           const T* __restrict__ padding_mask,
+                                           const int use_causal_mask)
+{
+    const int warps_per_block = blockDim.x >> 5;
+    const int row = blockIdx.x * warps_per_block + (int(threadIdx.x) >> 5);
+    if (row >= rows) return;
+
+    const int lane = threadIdx.x & 31;
+    const int sq = row % query_sequence_length;
+    const int b  = row / (query_sequence_length * heads_number);
+
+    T* row_values = attention_weights + Index(row) * source_sequence_length;
+    const T* pad_row = padding_mask + Index(b) * source_sequence_length;
+
+    float values[MAX_ELEMS];
+    float row_max = -1e30f;
+
+    #pragma unroll
+    for (int e = 0; e < MAX_ELEMS; ++e)
+    {
+        const int sk = lane + e * 32;
+        float value = -INFINITY;
+        if (sk < source_sequence_length)
+        {
+            const bool masked = (use_causal_mask && sk > sq)
+                             || static_cast<float>(pad_row[sk]) > 0.5f;
+            value = masked ? -1e9f : static_cast<float>(row_values[sk]);
+        }
+        values[e] = value;
+        row_max = fmaxf(row_max, value);
+    }
+
+    for (int offset = 16; offset > 0; offset >>= 1)
+        row_max = fmaxf(row_max, __shfl_xor_sync(0xffffffff, row_max, offset));
+
+    float row_sum = 0.0f;
+    #pragma unroll
+    for (int e = 0; e < MAX_ELEMS; ++e)
+    {
+        values[e] = expf(values[e] - row_max);
+        row_sum += values[e];
+    }
+
+    for (int offset = 16; offset > 0; offset >>= 1)
+        row_sum += __shfl_xor_sync(0xffffffff, row_sum, offset);
+
+    const float inv_row_sum = 1.0f / row_sum;
+
+    #pragma unroll
+    for (int e = 0; e < MAX_ELEMS; ++e)
+    {
+        const int sk = lane + e * 32;
+        if (sk < source_sequence_length)
+            row_values[sk] = static_cast<T>(values[e] * inv_row_sum);
     }
 }
 
 template<typename T>
-void attention_masks_cuda(const int batch_size, const int heads_number,
+static void launch_masked_softmax_rows(const int batch_size, const int heads_number,
+                                       const int query_sequence_length, const int source_sequence_length,
+                                       T* attention_weights, const T* padding_mask,
+                                       const bool use_causal_mask, cudaStream_t stream)
+{
+    const int rows = batch_size * heads_number * query_sequence_length;
+    if (rows <= 0 || source_sequence_length <= 0) return;
+
+    constexpr int threads = 128;
+    constexpr int warps_per_block = threads / 32;
+    const int blocks = (rows + warps_per_block - 1) / warps_per_block;
+    const int causal = use_causal_mask ? 1 : 0;
+
+    const auto launch = [&](auto elems_tag)
+    {
+        constexpr int ELEMS = decltype(elems_tag)::value;
+        OPENNN_CUDA_LAUNCH(masked_softmax_rows_kernel<T, ELEMS><<<blocks, threads, 0, stream>>>(
+            rows, source_sequence_length, heads_number, query_sequence_length,
+            attention_weights, padding_mask, causal));
+    };
+
+    const int elems = (source_sequence_length + 31) / 32;
+    if      (elems <= 4)  launch(std::integral_constant<int, 4>{});
+    else if (elems <= 8)  launch(std::integral_constant<int, 8>{});
+    else if (elems <= 16) launch(std::integral_constant<int, 16>{});
+    else if (elems <= 32) launch(std::integral_constant<int, 32>{});
+    else if (elems <= 64) launch(std::integral_constant<int, 64>{});
+    else
+        throw std::runtime_error("masked softmax: source sequence length above 2048 is not supported.");
+}
+
+template<typename T>
+void attention_masked_softmax_cuda(const int batch_size, const int heads_number,
                           const int query_sequence_length, const int source_sequence_length,
                           const int embedding_dimension, const T* source_input,
                           T* attention_weights, T* padding_mask, const bool use_causal_mask)
@@ -402,15 +487,14 @@ void attention_masks_cuda(const int batch_size, const int heads_number,
         OPENNN_CUDA_LAUNCH(padding_mask_kernel<T><<<grid_size_for(num_tokens), block_size, 0, opennn::device::get_compute_stream()>>>(
             num_tokens, source_input, padding_mask, embedding_dimension));
 
-    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
-    if (n > 0)
-        OPENNN_CUDA_LAUNCH(fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, opennn::device::get_compute_stream()>>>(
-            n, attention_weights, padding_mask, heads_number,
-            query_sequence_length, source_sequence_length, use_causal_mask));
+    launch_masked_softmax_rows<T>(batch_size, heads_number,
+                                  query_sequence_length, source_sequence_length,
+                                  attention_weights, padding_mask, use_causal_mask,
+                                  opennn::device::get_compute_stream());
 }
 
-template void attention_masks_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
-template void attention_masks_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
+template void attention_masked_softmax_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
+template void attention_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
 template<typename T>
 __global__ void length_to_padding_mask_kernel(const int n, const int source_sequence_length,
@@ -425,7 +509,7 @@ __global__ void length_to_padding_mask_kernel(const int n, const int source_sequ
 }
 
 template<typename T>
-void attention_length_mask_cuda(const int batch_size, const int heads_number,
+void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number,
                                 const int query_sequence_length, const int source_sequence_length,
                                 const int* host_lengths, T* attention_weights, T* padding_mask,
                                 const bool use_causal_mask)
@@ -443,16 +527,15 @@ void attention_length_mask_cuda(const int batch_size, const int heads_number,
     OPENNN_CUDA_LAUNCH(length_to_padding_mask_kernel<T><<<grid_size_for(m), block_size, 0, stream>>>(
         m, source_sequence_length, device_lengths, padding_mask));
 
-    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
-    OPENNN_CUDA_LAUNCH(fused_masks_kernel<T><<<grid_size_for(n), block_size, 0, stream>>>(
-        n, attention_weights, padding_mask, heads_number,
-        query_sequence_length, source_sequence_length, use_causal_mask));
+    launch_masked_softmax_rows<T>(batch_size, heads_number,
+                                  query_sequence_length, source_sequence_length,
+                                  attention_weights, padding_mask, use_causal_mask, stream);
 
     cudaFreeAsync(device_lengths, stream);
 }
 
-template void attention_length_mask_cuda<float>        (int, int, int, int, const int*, float*,         float*,         bool);
-template void attention_length_mask_cuda<__nv_bfloat16>(int, int, int, int, const int*, __nv_bfloat16*, __nv_bfloat16*, bool);
+template void attention_length_masked_softmax_cuda<float>        (int, int, int, int, const int*, float*,         float*,         bool);
+template void attention_length_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, const int*, __nv_bfloat16*, __nv_bfloat16*, bool);
 
 template<typename T>
 __global__ void attention_sequence_lengths_kernel(const int batch_size,
@@ -938,6 +1021,124 @@ static inline int layernorm_threads(int D)
     return 256;
 }
 
+// NHWC batchnorm inference with the residual add and ReLU fused in: one
+// bandwidth-bound pass instead of cuDNN's legacy inference call (which has no
+// NHWC kernel for several ResNet shapes and inserts NCHW converts) plus two
+// separate elementwise kernels.
+template<typename T>
+__global__ void batchnorm_inference_kernel(const Index total, const int channels,
+                                           const T* __restrict__ x,
+                                           const T* __restrict__ residual,
+                                           const float* __restrict__ gamma,
+                                           const float* __restrict__ beta,
+                                           const float* __restrict__ mean,
+                                           const float* __restrict__ variance,
+                                           const float epsilon,
+                                           const int apply_relu,
+                                           T* __restrict__ y)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const int c = int(i % channels);
+        const float scale = gamma[c] * rsqrtf(variance[c] + epsilon);
+        float value = (static_cast<float>(x[i]) - mean[c]) * scale + beta[c];
+        if (residual) value += static_cast<float>(residual[i]);
+        if (apply_relu) value = fmaxf(value, 0.0f);
+        y[i] = static_cast<T>(value);
+    }
+}
+
+template<typename T>
+void batchnorm_inference_cuda(const Index total, const Index channels,
+                              const T* x, const T* residual,
+                              const float* gamma, const float* beta,
+                              const float* mean, const float* variance,
+                              const float epsilon, const bool apply_relu, T* y)
+{
+    if (total == 0 || channels == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(batchnorm_inference_kernel<T><<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, checked_int(channels), x, residual, gamma, beta, mean, variance,
+        epsilon, apply_relu ? 1 : 0, y));
+}
+
+template void batchnorm_inference_cuda<float>        (const Index, const Index, const float*,         const float*,         const float*, const float*, const float*, const float*, const float, const bool, float*);
+template void batchnorm_inference_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float, const bool, __nv_bfloat16*);
+
+// Inference-time batchnorm folding: the BN affine collapses into the
+// convolution as W'[k,...] = W[k,...] * gamma[k]/sqrt(var[k]+eps) and
+// b'[k] = beta[k] - mean[k] * gamma[k]/sqrt(var[k]+eps). transpose flips the
+// folded weights from KRSC to [RSC, kernels], the GEMM layout 1x1 convs need.
+__global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
+                                    const float* __restrict__ weights,
+                                    const float* __restrict__ gamma,
+                                    const float* __restrict__ beta,
+                                    const float* __restrict__ mean,
+                                    const float* __restrict__ variance,
+                                    const float epsilon,
+                                    const int transpose,
+                                    float* __restrict__ folded_weights,
+                                    float* __restrict__ folded_bias)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const int k = int(i / kernel_size);
+        const int r = int(i % kernel_size);
+        const float scale = gamma[k] * rsqrtf(variance[k] + epsilon);
+        const float value = weights[i] * scale;
+        if (transpose)
+            folded_weights[Index(r) * kernels + k] = value;
+        else
+            folded_weights[i] = value;
+        if (r == 0)
+            folded_bias[k] = beta[k] - mean[k] * scale;
+    }
+}
+
+void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
+                       const float* weights,
+                       const float* gamma, const float* beta,
+                       const float* mean, const float* variance,
+                       const float epsilon, const bool transpose,
+                       float* folded_weights, float* folded_bias)
+{
+    const Index total = kernels * kernel_size;
+    if (total == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(conv_bn_fold_kernel<<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, checked_int(kernel_size), checked_int(kernels), weights,
+        gamma, beta, mean, variance, epsilon, transpose ? 1 : 0,
+        folded_weights, folded_bias));
+}
+
+__global__ void add_relu_kernel(const Index total,
+                                const float* __restrict__ a,
+                                const float* __restrict__ b,
+                                const int apply_relu,
+                                float* __restrict__ y)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < total;
+         i += Index(blockDim.x) * gridDim.x)
+    {
+        const float value = a[i] + b[i];
+        y[i] = apply_relu ? fmaxf(value, 0.0f) : value;
+    }
+}
+
+void add_relu_cuda(const Index total, const float* a, const float* b,
+                   const bool apply_relu, float* y)
+{
+    if (total == 0) return;
+    const int n = checked_int(total);
+    OPENNN_CUDA_LAUNCH(add_relu_kernel<<<grid_size_for(n), block_size, 0,
+                                         opennn::device::get_compute_stream()>>>(
+        total, a, b, apply_relu ? 1 : 0, y));
+}
+
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
@@ -1132,6 +1333,7 @@ __device__ __forceinline__ float opennn_activation_value(float x, int function)
         constexpr float sqrt_2_over_pi = 0.7978845608028654f;
         return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
     }
+    if (function == activation_silu)       return x / (1.0f + expf(-x));
     return x;
 }
 
@@ -1155,6 +1357,11 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
         const float t = tanhf(u);
         const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * y2);
         return d * (0.5f * (1.0f + t) + 0.5f * y * (1.0f - t * t) * du);
+    }
+    if (function == activation_silu)
+    {
+        const float s = 1.0f / (1.0f + expf(-y));
+        return d * s * (1.0f + y * (1.0f - s));
     }
     return d;
 }

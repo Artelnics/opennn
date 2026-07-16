@@ -7,6 +7,7 @@
 #include "opennn/dataset.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/time_series_dataset.h"
+#include "opennn/dense_layer.h"
 #include "opennn/neural_network.h"
 #include "opennn/standard_networks.h"
 #include "opennn/loss.h"
@@ -148,6 +149,80 @@ TEST_F(GpuComparison, ApproximationGradient)
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
 
+TEST_F(GpuComparison, DenseGeluTanhFusedForward)
+{
+    const Index samples_number = 5;
+    const Index inputs_number = 4;
+    const Index hidden_number = 16;
+    const Index outputs_number = 3;
+
+    MatrixR inputs(samples_number, inputs_number);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+    const MatrixR cpu_outputs = cpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    gpu_network.compile();
+    gpu_network.set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
+    ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
+{
+    const Index samples_number = 6;
+    const Index inputs_number = 4;
+    const Index hidden_number = 16;
+    const Index outputs_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "GELUTanh"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    gpu_network.compile();
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
 TEST_F(GpuComparison, ClassificationForward)
 {
     const Index samples_number = 5;
@@ -272,6 +347,154 @@ TEST_F(GpuComparison, ImageClassificationGradient)
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
 }
 
+
+TEST_F(GpuComparison, ResidentInferenceGraphReplay)
+{
+    const Index samples_number = 4;
+    const Index height = 32;
+    const Index width = 32;
+    const Index channels = 3;
+    const Index classes_number = 5;
+
+    Tensor4 inputs(samples_number, height, width, channels);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ResNet network({height, width, channels}, {1, 1, 1, 1}, Shape{8, 16, 32, 64},
+                   Shape{classes_number}, true);
+    network.set_parameters_random();
+
+    const Index input_bytes = inputs.size() * Index(sizeof(float));
+    Buffer input_buffer;
+    input_buffer.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(input_buffer.data, inputs.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+    device::synchronize();
+
+    const TensorView input_view(input_buffer.data,
+                                Shape{samples_number, height, width, channels},
+                                Type::FP32, Device::CUDA);
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+
+    const auto read_outputs = [](const TensorView& outputs)
+    {
+        vector<float> host(size_t(outputs.size()));
+        device::synchronize();
+        copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
+                                  host.data(), Backend::get_compute_stream());
+        device::synchronize();
+        return host;
+    };
+
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    const TensorView eager_view =
+        network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    const vector<float> reference = read_outputs(eager_view);
+
+    forward_propagation.set_cuda_graph(true);
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    for (Index i = 0; i < 3; ++i)
+    {
+        const TensorView replay_view =
+            network.calculate_outputs_resident({input_view}, forward_propagation, false);
+        const vector<float> replayed = read_outputs(replay_view);
+
+        ASSERT_EQ(reference.size(), replayed.size());
+        for (size_t j = 0; j < reference.size(); ++j)
+            ASSERT_NEAR(reference[j], replayed[j], 1.0e-6f);
+    }
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+}
+
+TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
+{
+    const Index samples_number = 4;
+    const Index height = 32;
+    const Index width = 32;
+    const Index channels = 3;
+    const Index classes_number = 5;
+
+    Tensor4 inputs(samples_number, height, width, channels);
+    inputs.setRandom();
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    ResNet network({height, width, channels}, {1, 1, 1, 1}, Shape{8, 16, 32, 64},
+                   Shape{classes_number}, true);
+    network.set_parameters_random();
+    VectorR shifted_parameters = read_host_parameters(network);
+    shifted_parameters.array() += 0.25f;
+
+    const Index input_bytes = inputs.size() * Index(sizeof(float));
+    Buffer input_buffer;
+    input_buffer.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(input_buffer.data, inputs.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+    Buffer second_input_buffer;
+    second_input_buffer.resize_bytes(input_bytes, Device::CUDA);
+    device::copy_async(second_input_buffer.data, inputs.data(), input_bytes,
+                       device::CopyKind::HostToDevice);
+    device::synchronize();
+
+    const TensorView input_view(input_buffer.data,
+                                Shape{samples_number, height, width, channels},
+                                Type::FP32, Device::CUDA);
+    const TensorView second_input_view(second_input_buffer.data,
+                                       Shape{samples_number, height, width, channels},
+                                       Type::FP32, Device::CUDA);
+
+    ForwardPropagation forward_propagation(samples_number, &network);
+
+    const auto read_outputs = [](const TensorView& outputs)
+    {
+        vector<float> host(size_t(outputs.size()));
+        device::synchronize();
+        copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
+                                  host.data(), Backend::get_compute_stream());
+        device::synchronize();
+        return host;
+    };
+
+    forward_propagation.set_cuda_graph(true);
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    const TensorView first_eager_view =
+        network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    const vector<float> first_outputs = read_outputs(first_eager_view);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    const TensorView mismatch_view =
+        network.calculate_outputs_resident({second_input_view}, forward_propagation, false);
+    const vector<float> mismatch_outputs = read_outputs(mismatch_view);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+    for (size_t j = 0; j < first_outputs.size(); ++j)
+        ASSERT_NEAR(first_outputs[j], mismatch_outputs[j], 1.0e-6f);
+
+    network.set_parameters(shifted_parameters);
+    network.calculate_outputs_resident({input_view}, forward_propagation, true);
+    ASSERT_FALSE(static_cast<bool>(forward_propagation.inference_graph_exec));
+    const TensorView second_eager_view =
+        network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    const vector<float> second_reference = read_outputs(second_eager_view);
+    ASSERT_TRUE(static_cast<bool>(forward_propagation.inference_graph_exec));
+
+    const TensorView replay_view =
+        network.calculate_outputs_resident({input_view}, forward_propagation, false);
+    const vector<float> replayed = read_outputs(replay_view);
+
+    float max_change = 0.0f;
+    for (size_t j = 0; j < first_outputs.size(); ++j)
+        max_change = max(max_change, abs(first_outputs[j] - second_reference[j]));
+    EXPECT_GT(max_change, 1.0e-4f);
+
+    for (size_t j = 0; j < second_reference.size(); ++j)
+        ASSERT_NEAR(second_reference[j], replayed[j], 1.0e-6f);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+}
 
 TEST_F(GpuComparison, ForecastingRecurrentForward)
 {

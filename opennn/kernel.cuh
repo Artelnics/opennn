@@ -182,14 +182,16 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
 template<typename T>
 void merge_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D);
 
+// Fused padding/causal mask + row softmax over the attention scores: one pass
+// over the score tensor instead of a mask pass plus a separate softmax pass.
 template<typename T>
-void attention_masks_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+void attention_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                           const int source_sequence_length, const int embedding_dimension,
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask);
 
 template<typename T>
-void attention_length_mask_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
+void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                                 const int source_sequence_length, const int* host_lengths,
                                 T* attention_weights, T* padding_mask, const bool use_causal_mask);
 
@@ -235,6 +237,29 @@ void activation_forward_cuda(const Index n, T* data, const int function);
 template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function);
 
+
+// Fused NHWC batchnorm inference: y = gamma*(x-mean)/sqrt(var+eps)+beta, plus
+// optional residual add and ReLU in the same pass. residual may be null.
+template<typename T>
+void batchnorm_inference_cuda(const Index total, const Index channels,
+                              const T* x, const T* residual,
+                              const float* gamma, const float* beta,
+                              const float* mean, const float* variance,
+                              const float epsilon, const bool apply_relu, T* y);
+
+// Folds inference-time batchnorm into the convolution parameters:
+// W'[k,...] = W[k,...]*gamma[k]/sqrt(var[k]+eps), b'[k] = beta[k]-mean[k]*scale.
+// kernel_size is R*S*C. transpose writes W' as [RSC, kernels] for the 1x1 GEMM path.
+void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
+                       const float* weights,
+                       const float* gamma, const float* beta,
+                       const float* mean, const float* variance,
+                       const float epsilon, const bool transpose,
+                       float* folded_weights, float* folded_bias);
+
+// y = a + b, optionally clamped at zero (the residual tail of a folded conv+BN block).
+void add_relu_cuda(const Index total, const float* a, const float* b,
+                   const bool apply_relu, float* y);
 
 template<typename T>
 void layernorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps);

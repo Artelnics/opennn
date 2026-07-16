@@ -43,7 +43,6 @@ void Batch::set(const Index new_samples_number,
     wait_h2d_complete();
 
     samples_number = new_samples_number;
-    current_sample_count = new_samples_number;
     needs_device_copy = true;
     prefetch_only = new_prefetch_only;
 
@@ -167,6 +166,7 @@ void Batch::set(const Index new_samples_number,
             || dataset->get_storage_mode() == Dataset::StorageMode::GPUPersistantData);
     if (may_use_device_gather)
     {
+        gather_indices_host.resize_bytes(samples_number * Index(sizeof(int)), Device::CPU);
         gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
         memory_debug::record("batch.device", "Batch::gather_indices_device",
                               samples_number * Index(sizeof(int)),
@@ -174,6 +174,7 @@ void Batch::set(const Index new_samples_number,
     }
     else
     {
+        gather_indices_host.resize_bytes(0, Device::CPU);
         gather_indices_device.resize_bytes(0, Device::CUDA);
     }
 
@@ -283,13 +284,12 @@ void Batch::copy_device_async(cudaStream_t stream)
 
 void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
 {
-    const Index current_batch_size = current_sample_count;
+    const Index current_batch_size = samples_number;
     throw_if(!uses_cuda() || !destination.uses_cuda(),
              "Batch::upload_to_device_batch_async requires CUDA batches.");
     throw_if(current_batch_size > destination.samples_number,
              "Batch::upload_to_device_batch_async destination batch is too small.");
 
-    destination.current_sample_count = current_batch_size;
     needs_device_copy = false;
     destination.needs_device_copy = false;
 
@@ -302,16 +302,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         const Index matrix_cols = dataset->get_device_data_columns();
 
         const Index index_bytes = current_batch_size * Index(sizeof(int));
-        gather_indices_host.grow_to(index_bytes);
         memcpy(gather_indices_host.data, gather_row_indices.data(), size_t(index_bytes));
-        if (gather_indices_device.bytes < index_bytes)
-        {
-            const Index before = gather_indices_device.bytes;
-            gather_indices_device.resize_bytes(index_bytes, Device::CUDA);
-            memory_debug::record("batch.device", "Batch::gather_indices_device",
-                                 gather_indices_device.bytes - before,
-                                 format("samples={}", current_batch_size));
-        }
         device::copy_async(gather_indices_device.data, gather_indices_host.data,
                            index_bytes,
                            device::CopyKind::HostToDevice, stream);
@@ -444,6 +435,59 @@ ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
     return validation_uses_training_pool
         ? training_empty_queue
         : validation_empty_queue;
+}
+
+BatchPrefetchSession::BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, const Index batches_number)
+    : empty_queue(queue),
+      ready_batches(size_t(batches_number))
+{
+    for (atomic<Batch*>& batch : ready_batches)
+        batch.store(nullptr, memory_order_relaxed);
+}
+
+BatchPrefetchSession::~BatchPrefetchSession()
+{
+    for (jthread& thread : threads)
+        thread.request_stop();
+
+    empty_queue.close();
+
+    threads.clear();
+
+    empty_queue.reopen();
+}
+
+Batch* BatchPrefetchSession::wait(const Index iteration)
+{
+    Batch* batch = nullptr;
+    while (!(batch = ready_batches[size_t(iteration)].load(memory_order_acquire)))
+    {
+        rethrow_if_error();
+        this_thread::yield();
+    }
+
+    return batch;
+}
+
+void BatchPrefetchSession::capture_current_exception()
+{
+    lock_guard<mutex> elock(error_mutex);
+    if (!worker_error)
+        worker_error = current_exception();
+    error_pending.store(true, memory_order_release);
+}
+
+void BatchPrefetchSession::rethrow_if_error()
+{
+    if (!error_pending.load(memory_order_acquire)) return;
+
+    exception_ptr e;
+    {
+        lock_guard<mutex> elock(error_mutex);
+        swap(e, worker_error);
+        error_pending.store(false, memory_order_release);
+    }
+    if (e) rethrow_exception(e);
 }
 
 }

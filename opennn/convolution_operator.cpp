@@ -235,6 +235,7 @@ void ConvolutionOperator::link_parameters(span<const TensorView> views)
     if (views.empty()) return;
     bias    = use_bias ? views[0] : TensorView{};
     weights = views[use_bias ? 1 : 0];
+    weights_relinked = true;
 }
 
 void ConvolutionOperator::link_gradients(span<const TensorView> views)
@@ -427,6 +428,22 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     });
 
     throw_if(!ran, "ConvolutionOperator: GPU convolution requires SM 8.0+ (Ampere).");
+}
+
+
+void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
+                                           const TensorView& folded_weights,
+                                           const TensorView& folded_bias,
+                                           bool relu, TensorView& output)
+{
+    PROFILE_SCOPE("op:conv_fwd");
+
+    // A stride-1 unpadded 1x1 convolution is a GEMM over the channel
+    // dimension; folded_weights comes transposed to [channels, kernels],
+    // the layout linear_forward expects, and cuBLASLt fuses the folded
+    // bias (and ReLU) into the epilogue.
+    linear_forward(input, folded_weights, folded_bias, output,
+                   relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,

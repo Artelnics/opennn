@@ -73,9 +73,22 @@ void CombinationOperator::set_parameters_pytorch()
 void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:combination_fwd");
-    linear_forward(get_input(forward_propagation, layer), weights, bias,
-                   get_output(forward_propagation, layer),
-                   fuse_relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
+
+    TensorView& output = get_output(forward_propagation, layer);
+
+    if (fused_activation == ActivationFunction::GELUTanh
+        && output_slots.size() > 1
+        && output.is_cuda())
+    {
+        TensorView& activated = forward_propagation.forward_slots[layer][output_slots[1]];
+        linear_forward(get_input(forward_propagation, layer), weights, bias,
+                       activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output);
+        return;
+    }
+
+    linear_forward(get_input(forward_propagation, layer), weights, bias, output,
+                   fused_activation == ActivationFunction::ReLU ? CUBLASLT_EPILOGUE_RELU_BIAS
+                                                                : CUBLASLT_EPILOGUE_BIAS);
 }
 
 

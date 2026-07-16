@@ -66,9 +66,20 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& sour
 
 void NeuralNetwork::compile()
 {
+    compile(Configuration::instance().resolve().device);
+}
+
+// Compile onto an explicit device, overriding the global Configuration. Used by
+// callers that must stay on a particular device regardless of the process-wide
+// setting -- e.g. the tiny correlation fits, which run optimizers (QuasiNewton,
+// LevenbergMarquardt) that reject GPU training.
+void NeuralNetwork::compile(const Device device)
+{
     if (get_layers_number() == 0) return;
 
     config = Configuration::instance().resolve();
+    config.device = device;
+    if (device != Device::CUDA) config.training_type = Type::FP32;
 
     for (auto& layer : layers)
     {
@@ -1648,6 +1659,24 @@ MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>& input_
     return result;
 }
 
+namespace
+{
+
+bool same_input_pointers(const vector<TensorView>& inputs,
+                         const vector<const void*>& captured)
+{
+    if (captured.size() != inputs.size()) return false;
+
+    for (size_t i = 0; i < inputs.size(); ++i)
+        if (inputs[i].data != captured[i]) return false;
+
+    return true;
+}
+
+constexpr Index inference_graph_warmup_calls = 2;
+
+}
+
 TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& gpu_inputs,
                                                      ForwardPropagation& forward_propagation,
                                                      bool upload_parameters)
@@ -1660,9 +1689,79 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     {
         copy_parameters_device();
         copy_states_device();
+
+        // Fresh parameters: any captured graph would replay stale folded/cached
+        // copies, so the next calls run eagerly (refolding) and then recapture.
+        forward_propagation.reset_cuda_graph();
+    }
+
+    if (!forward_propagation.use_cuda_graph || forward_propagation.cuda_graph_failed)
+    {
+        forward_propagate(gpu_inputs, forward_propagation, false);
+        return forward_propagation.get_outputs();
+    }
+
+    const cudaStream_t compute = Backend::get_compute_stream();
+
+    if (forward_propagation.inference_graph_exec)
+    {
+        if (same_input_pointers(gpu_inputs, forward_propagation.captured_input_pointers))
+        {
+            PROFILE_SCOPE_HOST("inference:graph_launch");
+            device::launch_graph(forward_propagation.inference_graph_exec, compute);
+            return forward_propagation.get_outputs();
+        }
+
+        // Different input buffers: serve this call eagerly and keep the exec
+        // for when the captured pointer set comes back.
+        forward_propagate(gpu_inputs, forward_propagation, false);
+        return forward_propagation.get_outputs();
     }
 
     forward_propagate(gpu_inputs, forward_propagation, false);
+
+    if (++forward_propagation.cuda_graph_warmup_calls < inference_graph_warmup_calls)
+        return forward_propagation.get_outputs();
+
+    if (env_flag_enabled("OPENNN_GRAPH_TIMING"))
+    {
+        forward_propagation.cuda_graph_failed = true;
+        cerr << "NeuralNetwork::calculate_outputs_resident: OPENNN_GRAPH_TIMING "
+                "event timing cannot be captured; continuing eager.\n";
+        return forward_propagation.get_outputs();
+    }
+
+    // The eager pass above already produced this call's outputs; the pass below
+    // is recorded into the graph, not executed. PROFILE_SCOPE syncs and lazy
+    // allocations are illegal mid-capture: the profiler is muted and the growth
+    // guard turns any missed first-touch allocation into a clean fallback.
+    const bool profiler_was_enabled = ::opennn::enabled();
+    ::opennn::enabled() = false;
+
+    try
+    {
+        device::synchronize(compute);
+        device::CudaAllocationGrowthGuard growth_guard(true);
+        device::StreamCapture capture(compute);
+
+        forward_propagate(gpu_inputs, forward_propagation, false);
+
+        const device::GraphHandle graph = capture.end();
+        device::instantiate_or_update(forward_propagation.inference_graph_exec, graph.get());
+
+        forward_propagation.captured_input_pointers.resize(gpu_inputs.size());
+        for (size_t i = 0; i < gpu_inputs.size(); ++i)
+            forward_propagation.captured_input_pointers[i] = gpu_inputs[i].data;
+    }
+    catch (const exception& capture_error)
+    {
+        forward_propagation.reset_cuda_graph();
+        forward_propagation.cuda_graph_failed = true;
+        cerr << "NeuralNetwork::calculate_outputs_resident: cuda graph capture "
+                "unavailable (" << capture_error.what() << "); continuing eager.\n";
+    }
+
+    ::opennn::enabled() = profiler_was_enabled;
 
     return forward_propagation.get_outputs();
 }

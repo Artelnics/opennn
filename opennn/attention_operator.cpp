@@ -660,7 +660,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         const vector<int> lengths_int(explicit_lengths->begin(), explicit_lengths->end());
         attention_weights.dispatch([&](auto tag) {
             using T = decltype(tag);
-            attention_length_mask_cuda<T>(to_int(batch_size),
+            attention_length_masked_softmax_cuda<T>(to_int(batch_size),
                                           to_int(heads_number),
                                           to_int(query_sequence_length),
                                           to_int(source_sequence_length),
@@ -673,7 +673,7 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     else if (attention_weights.is_cuda())
         attention_weights.dispatch([&](auto tag) {
             using T = decltype(tag);
-            attention_masks_cuda<T>(to_int(batch_size),
+            attention_masked_softmax_cuda<T>(to_int(batch_size),
                                     to_int(heads_number),
                                     to_int(query_sequence_length),
                                     to_int(source_sequence_length),
@@ -712,7 +712,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         }
     }
 
-    softmax(attention_weights);
+    if (!attention_weights.is_cuda())
+        softmax(attention_weights);
 
     if (is_training && dropout.active())
     {

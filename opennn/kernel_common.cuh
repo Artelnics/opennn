@@ -30,6 +30,7 @@ static constexpr int activation_softmax   = 4;
 static constexpr int activation_leaky_relu = 5;
 static constexpr int activation_gelu      = 6;
 static constexpr int activation_gelu_tanh = 7;
+static constexpr int activation_silu      = 8;
 
 static constexpr int class_activation_softmax = 0;
 static constexpr int class_activation_sigmoid = 1;

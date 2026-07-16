@@ -24,6 +24,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 {
     throw_if(!new_neural_network, "neural network is not set.");
 
+    // Re-allocating the activation arena invalidates every pointer a captured
+    // inference graph baked in.
+    reset_cuda_graph();
+
     batch_size = new_batch_size;
     neural_network = new_neural_network;
 
@@ -204,6 +208,20 @@ TensorView ForwardPropagation::get_outputs() const
     }
 
     return get_last_trainable_layer_outputs();
+}
+
+void ForwardPropagation::set_cuda_graph(bool enabled)
+{
+    use_cuda_graph = enabled;
+    cuda_graph_failed = false;
+    if (!enabled) reset_cuda_graph();
+}
+
+void ForwardPropagation::reset_cuda_graph() noexcept
+{
+    inference_graph_exec.reset();
+    captured_input_pointers.clear();
+    cuda_graph_warmup_calls = 0;
 }
 
 void ForwardPropagation::print() const

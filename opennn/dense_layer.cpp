@@ -109,8 +109,22 @@ void Dense::configure_operators()
 
     const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
-    combination.fuse_relu    = fuse_relu;
-    activation_operator.forward_fused = fuse_relu;
+
+    // The cuBLASLt GELU epilogue implements the tanh approximation, so only
+    // GELUTanh can be folded without changing the math; its AUX buffer
+    // requires a leading dimension divisible by 8.
+    const bool fuse_gelu_tanh = (activation_operator.activation_function == ActivationFunction::GELUTanh)
+                                && !batch_norm.active()
+                                && output_features % 8 == 0;
+
+    combination.fused_activation = fuse_relu      ? ActivationFunction::ReLU
+                                 : fuse_gelu_tanh ? ActivationFunction::GELUTanh
+                                                  : ActivationFunction::Identity;
+
+    if (fuse_gelu_tanh)
+        combination.output_slots = {CombinationView, Output};
+
+    activation_operator.forward_fused = fuse_relu || fuse_gelu_tanh;
 
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};

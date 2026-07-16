@@ -144,17 +144,7 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::LeakyReLU, "LeakyReLU"},
         {ActivationFunction::GELU,      "GELU"},
         {ActivationFunction::GELUTanh,  "GELUTanh"},
-        // Legacy aliases emitted by the Neural Designer editor's activation combobox
-        // (old opennn names). from_string() accepts them so a saved model does not
-        // crash the engine on load; to_string() still returns the CANONICAL name above
-        // (it returns the first entry matching the enum value, so these are read-only).
-        // ScaledExponentialLinear (SELU) is not implemented in the refactor: map it to
-        // the nearest supported activation (ReLU) instead of throwing.
-        {ActivationFunction::Identity,  "Linear"},
-        {ActivationFunction::Sigmoid,   "Logistic"},
-        {ActivationFunction::Tanh,      "HyperbolicTangent"},
-        {ActivationFunction::ReLU,      "RectifiedLinear"},
-        {ActivationFunction::ReLU,      "ScaledExponentialLinear"}
+        {ActivationFunction::SiLU,      "SiLU"}
     };
     
     static const EnumMap<ActivationFunction> instance{entries};
@@ -164,7 +154,8 @@ const EnumMap<ActivationFunction>& activation_function_map()
 bool activation_needs_input(ActivationFunction function)
 {
     return function == ActivationFunction::GELU
-        || function == ActivationFunction::GELUTanh;
+        || function == ActivationFunction::GELUTanh
+        || function == ActivationFunction::SiLU;
 }
 
 const string& activation_function_to_string(ActivationFunction function)
@@ -214,7 +205,7 @@ MatrixR activation_derivative_from_output_values(ActivationFunction function, co
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(dropout_forward_gpu, (TensorView&, Buffer&, float)) \
     X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
-    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t)) \
+    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
     X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
     X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
@@ -510,11 +501,13 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
         });
         return;
     case GELUTanh:
-        a = a.unaryExpr([](float x)
-        {
-            constexpr float sqrt_2_over_pi = 0.7978845608028654f;
-            return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
-        });
+    {
+        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
+        a = 0.5f * a * (1.0f + (sqrt_2_over_pi * (a + 0.044715f * a * a * a)).tanh());
+        return;
+    }
+    case SiLU:
+        a = a / (1.0f + (-a).exp());
         return;
     }
 }
@@ -561,6 +554,13 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
             const float t = tanhf(u);
             const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * x2);
             return 0.5f * (1.0f + t) + 0.5f * x * (1.0f - t * t) * du;
+        });
+        return;
+    case SiLU:
+        d *= y.unaryExpr([](float x)
+        {
+            const float s = 1.0f / (1.0f + expf(-x));
+            return s * (1.0f + x * (1.0f - s));
         });
         return;
     }
@@ -663,9 +663,13 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
 }
 
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                    TensorView& output, cublasLtEpilogue_t epilogue)
+                    TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation)
 {
-    if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue); return; }
+    if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation); return; }
+
+    throw_if(epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS,
+             "linear_forward: the GELU_AUX_BIAS epilogue is CUDA-only.");
+
     linear_forward_cpu(input, weights, bias, output, epilogue);
 }
 
@@ -1557,7 +1561,7 @@ static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float ra
 }
 
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                        TensorView& output, cublasLtEpilogue_t epilogue)
+                        TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation)
 {
     const int input_columns  = to_int(input.shape.back());
     const int output_columns = to_int(weights.shape.back());
@@ -1581,10 +1585,19 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
             CUBLAS_OP_N, CUBLAS_OP_N,
             epilogue,
             weights.data, input_for_gemm, output.data, bias_for_gemm,
-            io_type, io_type);
+            io_type, io_type,
+            pre_activation ? pre_activation->data : nullptr);
     }
     catch (const runtime_error& e)
     {
+        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS && pre_activation)
+        {
+            linear_forward_gpu(input, weights, bias, *pre_activation, CUBLASLT_EPILOGUE_BIAS, nullptr);
+            copy_gpu(*pre_activation, output);
+            activation_forward_gpu(output, ActivationFunction::GELUTanh);
+            return;
+        }
+
         const bool unsupported_bf16_lt = output.is_bf16()
                                       && (epilogue == CUBLASLT_EPILOGUE_BIAS
                                           || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
