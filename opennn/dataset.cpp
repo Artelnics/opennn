@@ -935,7 +935,7 @@ void Dataset::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
-void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator)
+void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator, bool has_quotes)
 {
     if (all_lines.empty())
         return;
@@ -946,15 +946,17 @@ void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char 
 
     const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_lines.size()));
 
+    string scratch;
+
     for (Index i = 0; i < first_rows; ++i)
     {
-        const vector<string_view> tokens = get_token_views(all_lines[i], file_separator);
+        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines[i], file_separator, has_quotes, scratch);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 
     if (all_lines.size() > num_first_rows_to_show)
     {
-        const vector<string_view> tokens = get_token_views(all_lines.back(), file_separator);
+        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines.back(), file_separator, has_quotes, scratch);
         data_file_preview.emplace_back(tokens.begin(), tokens.end());
     }
 }
@@ -963,25 +965,42 @@ void Dataset::check_separators(string_view line) const
 {
     const string separator_string = get_separator_string();
     const string separator_name = get_separator_name();
+    const char sep_char = separator_string.empty() ? ',' : separator_string[0];
 
-    if (line.find(separator_string) == string_view::npos)
+    // Quote-aware: los separadores DENTRO de comillas son datos, no delimitadores,
+    // y se ignoran. Antes esta comprobacion corria sobre el buffer ya "stripeado"
+    // (sin comillas); ahora corre sobre la linea cruda (mmap), asi que hay que
+    // saltar los tramos entrecomillados para no confundir p.ej. la coma de "a,b".
+    bool in_quote = false;
+    bool found_expected = false;
+    char found_other = 0;
+    string_view found_other_name;
+
+    for (const char c : line)
     {
-        const bool has_any_separator = ranges::any_of(separator_map,
-            [&](const auto& entry) { return line.find(get<1>(entry)) != string_view::npos; });
+        if (c == '"') { in_quote = !in_quote; continue; }
+        if (in_quote) continue;
 
-        throw_if(has_any_separator,
+        if (c == sep_char) { found_expected = true; continue; }
+
+        if (found_other == 0)
+            for (const auto& [sep, str, name] : separator_map)
+            {
+                if (sep == separator || sep == Separator::Space) continue;
+                if (!str.empty() && str[0] == c) { found_other = c; found_other_name = name; break; }
+            }
+    }
+
+    if (!found_expected)
+    {
+        throw_if(found_other != 0,
                  format("Separator '{}' not found in line {}.\n", separator_string, line));
-
         return;
     }
 
-    for (const auto& [sep, str, name] : separator_map)
-    {
-        if (sep == separator || sep == Separator::Space) continue;
-        throw_if(line.find(str) != string_view::npos,
-                 format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
-                        name, str, data_path.string(), separator_name, separator_string));
-    }
+    throw_if(found_other != 0,
+             format("Found {} ('{}') in data file {}, but separator is {} ('{}').",
+                    found_other_name, found_other, data_path.string(), separator_name, separator_string));
 }
 
 bool Dataset::has_validation() const

@@ -43,29 +43,6 @@ void atomic_rename(const filesystem::path& source_path, const filesystem::path& 
 #endif
 }
 
-void strip_quotes_and_quoted_separators(string& buffer)
-{
-    if (buffer.find('"') == string::npos) return;
-
-    size_t write = 0;
-    bool in_quote = false;
-
-    for (const char c : buffer)
-    {
-        if (c == '"')
-        {
-            in_quote = !in_quote;
-            continue;
-        }
-
-        if (in_quote && (c == ',' || c == ';')) continue;
-
-        buffer[write++] = c;
-    }
-
-    buffer.resize(write);
-}
-
 bool has_bom(string_view s)
 {
     constexpr string_view bom = "\xEF\xBB\xBF";
@@ -368,21 +345,22 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
 
     Result result;
 
+    // Camino normal: mmap zero-copy. Las comillas ya NO fuerzan copiar el fichero
+    // completo ni una pasada de strip: el tokenizer (get_token_views_maybe_quoted)
+    // maneja las comillas por linea sobre el propio mmap.
     if (result.mapping.map(path))
     {
         string_view mapped(result.mapping.data(), result.mapping.size());
 
-        if (mapped.find('"') == string_view::npos)
-        {
-            if (has_bom(mapped)) mapped.remove_prefix(3);
-            result.content = mapped;
-            parse(result);
-            return result;
-        }
-
-        result.mapping.reset();
+        if (has_bom(mapped)) mapped.remove_prefix(3);
+        result.content = mapped;
+        result.has_quotes = mapped.find('"') != string_view::npos;
+        parse(result);
+        return result;
     }
 
+    // Fallback (el mmap fallo): leer a buffer, SIN strip. El tokenizer se encarga
+    // de las comillas igual que en el camino mmap.
     ifstream input_file(path, ios::binary | ios::ate);
 
     throw_if(!input_file.is_open(),
@@ -409,7 +387,7 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     if (has_bom(result.buffer))
         result.buffer.erase(0, 3);
 
-    strip_quotes_and_quoted_separators(result.buffer);
+    result.has_quotes = result.buffer.find('"') != string::npos;
 
     result.content = result.buffer;
     parse(result);

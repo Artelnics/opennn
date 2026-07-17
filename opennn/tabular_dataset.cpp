@@ -1356,7 +1356,8 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
                                      const vector<string_view>& sample_lines,
                                      char file_separator,
                                      bool has_sample_ids,
-                                     const string& missing_values_label)
+                                     const string& missing_values_label,
+                                     bool has_quotes)
 {
     const bool any_datetime = ranges::any_of(variables,
         [](const Variable& v) { return v.type == VariableType::DateTime; });
@@ -1368,9 +1369,10 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
 
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
+    string scratch;
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> row = get_token_views(line, file_separator);
+        const vector<string_view> row = get_token_views_maybe_quoted(line, file_separator, has_quotes, scratch);
 
         for (size_t col_index = 0; col_index < variables.size(); ++col_index)
         {
@@ -1413,14 +1415,22 @@ void TabularDataset::read_csv()
 
     CsvReader::Result parsed = CsvReader(configuration).read(data_path);
     const char file_separator = parsed.separator;
+    const bool has_quotes = parsed.has_quotes;
     vector<string_view>& lines = parsed.lines;
+
+    // Buffers reutilizables para la limpieza de comillas por linea (solo se usan
+    // en ficheros con comillas; con mmap zero-copy sustituyen a la copia global).
+    // Se usan buffers SEPARADOS por seccion porque las vistas devueltas apuntan al
+    // scratch: header_tokens debe sobrevivir hasta set_variable_names, asi que no
+    // puede compartir buffer con los bucles posteriores.
+    string header_scratch;
 
     throw_if(lines.empty(),
              format("File {} is empty or contains no valid data rows.", data_path.string()));
 
-    read_data_file_preview(lines, file_separator);
+    read_data_file_preview(lines, file_separator, has_quotes);
 
-    const vector<string_view> header_tokens = get_token_views(lines[0], file_separator);
+    const vector<string_view> header_tokens = get_token_views_maybe_quoted(lines[0], file_separator, has_quotes, header_scratch);
     if (has_header)
     {
         throw_if(has_numbers(header_tokens),
@@ -1438,7 +1448,11 @@ void TabularDataset::read_csv()
 
     if (!has_sample_ids && samples_number > 0)
     {
-        unordered_set<string_view> unique_elements;
+        // unordered_set<string> (dueno) y no <string_view>: con comillas los tokens
+        // apuntan a un scratch reutilizado, cuyas vistas no sobreviven a la
+        // iteracion; guardamos el valor limpio de la columna 0 en propiedad.
+        unordered_set<string> unique_elements;
+        string id_scratch;
 
         bool possible_id = true;
         bool is_numeric_column = true;
@@ -1448,13 +1462,9 @@ void TabularDataset::read_csv()
 
         for (const string_view line : lines)
         {
-            const vector<string_view> row = get_token_views(line, file_separator);
-            if (row.empty())
-                continue;
+            const string_view token = first_token_maybe_quoted(line, file_separator, has_quotes, id_scratch);
 
-            const string_view token = row[0];
-
-            if (!unique_elements.insert(token).second)
+            if (!unique_elements.emplace(token).second)
             {
                 possible_id = false;
                 break;
@@ -1493,9 +1503,9 @@ void TabularDataset::read_csv()
     else
         set_default_variable_names();
 
-    infer_column_types(lines, file_separator);
+    infer_column_types(lines, file_separator, has_quotes);
 
-    const DateFormat date_format = infer_dataset_date_format(variables, lines, file_separator, has_sample_ids, missing_values_label);
+    const DateFormat date_format = infer_dataset_date_format(variables, lines, file_separator, has_sample_ids, missing_values_label, has_quotes);
 
     for (Variable& variable : variables)
         if (variable.is_categorical() && variable.get_categories_number() == 2)
@@ -1547,9 +1557,11 @@ void TabularDataset::read_csv()
     struct NumericColumnValues { bool has_value = false; float first_value = 0.0f; bool constant = true; bool zero_one = true; };
     vector<NumericColumnValues> numeric_column_values(variables_number);
 
+    string row_scratch;
+
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        const vector<string_view> tokens = get_token_views(lines[sample_index], file_separator);
+        const vector<string_view> tokens = get_token_views_maybe_quoted(lines[sample_index], file_separator, has_quotes, row_scratch);
 
         bool row_has_missing = false;
 
@@ -1963,7 +1975,7 @@ void TabularDataset::calculate_missing_values_statistics()
     rows_missing_values_number = count_rows_with_nan();
 }
 
-void TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char file_separator)
+void TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char file_separator, bool has_quotes)
 {
     const Index variables_number = variables.size();
     const size_t total_rows = sample_lines.size();
@@ -1979,8 +1991,11 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
     vector<vector<string_view>> sampled_tokens(rows_to_check);
+    // Backing por fila: sampled_tokens[i] se conserva y se usa despues, asi que
+    // con comillas cada fila necesita su propio scratch (no uno reutilizado).
+    vector<string> sampled_scratch(rows_to_check);
     for (size_t i = 0; i < rows_to_check; ++i)
-        sampled_tokens[i] = get_token_views(sample_lines[row_indices[i]], file_separator);
+        sampled_tokens[i] = get_token_views_maybe_quoted(sample_lines[row_indices[i]], file_separator, has_quotes, sampled_scratch[i]);
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
     {
@@ -2025,9 +2040,10 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     if (!any_categorical) return;
 
     vector<std::set<string>> unique_categories(variables_number);
+    string cat_scratch;
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> tokens = get_token_views(line, file_separator);
+        const vector<string_view> tokens = get_token_views_maybe_quoted(line, file_separator, has_quotes, cat_scratch);
         for (Index col_index = 0; col_index < variables_number; ++col_index)
         {
             if (!variables[col_index].is_categorical()) continue;

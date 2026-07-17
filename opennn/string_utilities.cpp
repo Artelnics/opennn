@@ -165,6 +165,76 @@ vector<string_view> get_token_views(string_view text, char separator)
     return tokens;
 }
 
+vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
+                                                 bool file_has_quotes, string& scratch)
+{
+    // Camino rapido: fichero sin comillas o linea concreta sin comillas ->
+    // vistas zero-copy sobre la propia linea (identico a get_token_views).
+    if (!file_has_quotes || line.find('"') == string_view::npos)
+        return get_token_views(line, separator);
+
+    // Camino con comillas: limpiamos en `scratch`. Reservamos line.size() para que
+    // scratch NO reasigne durante los push_back (la limpieza solo quita caracteres),
+    // de modo que las vistas creadas sobre scratch.data() permanezcan validas.
+    scratch.clear();
+    scratch.reserve(line.size());
+    const char* const base = scratch.data();
+
+    vector<string_view> tokens;
+    bool in_quote = false;
+    size_t field_start = 0;
+
+    for (const char c : line)
+    {
+        if (c == '"') { in_quote = !in_quote; continue; }
+
+        if (!in_quote && c == separator)
+        {
+            tokens.emplace_back(base + field_start, scratch.size() - field_start);
+            field_start = scratch.size();
+            continue;
+        }
+
+        // Dentro de comillas se eliminan ',' y ';' (misma semantica que el strip
+        // global previo), sea cual sea el separador activo.
+        if (in_quote && (c == ',' || c == ';')) continue;
+
+        scratch.push_back(c);
+    }
+
+    tokens.emplace_back(base + field_start, scratch.size() - field_start);
+
+    return tokens;
+}
+
+// Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas que
+// get_token_views_maybe_quoted(...)[0], sin trocear el resto de la linea.
+// Sin comillas: vista zero-copy sobre `line` hasta el primer separador.
+// Con comillas: escribe el primer campo limpio en `scratch` y devuelve vista sobre scratch.
+string_view first_token_maybe_quoted(string_view line, char separator, bool file_has_quotes, string& scratch)
+{
+    if (!file_has_quotes || line.find('"') == string_view::npos)
+    {
+        const size_t pos = line.find(separator);
+        return pos == string_view::npos ? line : line.substr(0, pos);
+    }
+
+    scratch.clear();
+    scratch.reserve(line.size());
+
+    bool in_quote = false;
+
+    for (const char c : line)
+    {
+        if (c == '"') { in_quote = !in_quote; continue; }
+        if (!in_quote && c == separator) break;
+        if (in_quote && (c == ',' || c == ';')) continue;
+        scratch.push_back(c);
+    }
+
+    return string_view(scratch.data(), scratch.size());
+}
+
 string_view trim_view(string_view text)
 {
     constexpr string_view whitespace = " \t\n\r\f\v\b";

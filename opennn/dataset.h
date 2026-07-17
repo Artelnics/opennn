@@ -301,7 +301,7 @@ protected:
     void set_default_variable_roles_forecasting();
     void set_default_variable_roles_implementation(bool);
 
-    void read_data_file_preview(const vector<string_view>&, char);
+    void read_data_file_preview(const vector<string_view>&, char, bool has_quotes = false);
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}

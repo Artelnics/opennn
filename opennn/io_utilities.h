@@ -107,6 +107,7 @@ public:
         string_view         content;
         vector<string_view> lines;
         char                separator = ',';
+        bool                has_quotes = false;
     };
 
     explicit CsvReader(Configuration new_configuration)
