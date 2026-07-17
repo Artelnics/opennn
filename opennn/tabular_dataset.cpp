@@ -1558,51 +1558,30 @@ void TabularDataset::read_csv()
     struct NumericColumnValues { bool has_value = false; float first_value = 0.0f; bool constant = true; bool zero_one = true; };
     vector<NumericColumnValues> numeric_column_values(variables_number);
 
-    string row_scratch;
-    vector<string_view> tokens;
+    // ------------------------------------------------------------------
+    // Bucle principal de escritura paralelizado con OpenMP.
+    //
+    // Diseno race-free y byte-identico al secuencial:
+    //  - Se paraleliza SOLO el troceo (get_token_views) y el parseo de celdas,
+    //    que es la parte cara. Cada fila escribe en su propio slot del buffer
+    //    (offset distinto por fila) -> sin escrituras compartidas.
+    //  - Los contadores de faltantes son sumas conmutativas -> reduccion por
+    //    hilo y suma final en orden.
+    //  - El refinamiento numerico (numeric_column_values) depende del ORDEN de
+    //    las filas, asi que se hace SECUENCIAL, en orden global de filas, tras
+    //    el parseo -> resultado identico al secuencial.
+    //  - category_maps / variables / all_feature_indices son solo-lectura ->
+    //    seguros de compartir entre hilos.
+    // ------------------------------------------------------------------
 
-    for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
+    // Parseo de una fila ya troceada en `row_tokens` hacia el buffer `row`.
+    // Solo lee estado compartido (const) -> seguro entre hilos.
+    auto parse_row = [&](float* row, const vector<string_view>& row_tokens)
     {
-        get_token_views_maybe_quoted(lines[sample_index], file_separator, has_quotes, row_scratch, tokens);
-
-        bool row_has_missing = false;
-
-        if (has_missing_values(tokens))
-        {
-            row_has_missing = true;
-            ++rows_missing_values_number;
-            for (size_t i = id_offset; i < tokens.size(); ++i)
-            {
-                if (Index(i - id_offset) >= variables_number) break;
-
-                if (is_missing(tokens[i]))
-                {
-                    ++missing_values_number;
-                    variables_missing_values_number(i - id_offset)++;
-                }
-            }
-        }
-
-        if (has_sample_ids)
-            sample_ids[sample_index] = string(tokens[0]);
-
-        float* row;
-
-        if (binary_storage)
-        {
-            ranges::fill(row_values, 0.0f);
-            row = row_values.data();
-        }
-        else
-            row = data.data() + sample_index * feature_columns_number;
-
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
             const Variable& variable = variables[variable_index];
-            const size_t token_index = variable_index + id_offset;
-            throw_if(token_index >= tokens.size(),
-                     format("Row {} has fewer columns than expected ({}).", sample_index, tokens.size()));
-            const string_view token = tokens[token_index];
+            const string_view token = row_tokens[variable_index + id_offset];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             using enum VariableType;
@@ -1626,7 +1605,12 @@ void TabularDataset::read_csv()
                 break;
             }
         }
+    };
 
+    // Refinamiento numerico secuencial de una fila ya escrita en `row`. DEBE
+    // recorrerse en orden global de filas para ser identico al secuencial.
+    auto refine_numeric = [&](const float* row)
+    {
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
             if (variables[variable_index].type != VariableType::Numeric) continue;
@@ -1647,15 +1631,221 @@ void TabularDataset::read_csv()
             if (value != 0.0f && value != 1.0f)
                 column.zero_one = false;
         }
+    };
 
-        if (binary_storage)
+    // Deteccion de faltantes de una fila -> acumula en contadores POR HILO.
+    // Replica exactamente la logica secuencial: has_missing_values recorre
+    // TODOS los tokens (incluido el id en la columna 0); el conteo por variable
+    // arranca en id_offset. Devuelve si la fila tiene algun faltante.
+    auto count_missing = [&](const vector<string_view>& row_tokens,
+                             Index& th_rows_mv, Index& th_mv, vector<Index>& th_var_mv)
+    {
+        bool row_has_missing = false;
+        for (const string_view t : row_tokens)
+            if (is_missing(t)) { row_has_missing = true; break; }
+
+        if (row_has_missing)
         {
-            if (row_has_missing)
-                sample_roles[sample_index] = SampleRole::None;
+            ++th_rows_mv;
+            for (size_t k = id_offset; k < row_tokens.size(); ++k)
+            {
+                if (Index(k - id_offset) >= variables_number) break;
 
-            cache_writer.write(row, size_t(feature_columns_number) * sizeof(float));
+                if (is_missing(row_tokens[k]))
+                {
+                    ++th_mv;
+                    th_var_mv[k - id_offset]++;
+                }
+            }
+        }
+
+        return row_has_missing;
+    };
+
+    // No se puede lanzar excepciones dentro de una region #pragma omp; se
+    // registra la fila mala de MENOR indice y se lanza tras terminar todo.
+    bool bad_row = false;
+    Index bad_row_index = samples_number;
+    Index bad_row_cols = 0;
+
+    // Errores de parseo (p.ej. parse_datetime_token con una fecha malformada)
+    // pueden lanzar. No se puede propagar una excepcion desde una region
+    // #pragma omp (terminaria el proceso), asi que se captura y se difiere el
+    // de MENOR indice de fila, igual que el error de numero de columnas.
+    bool parse_error = false;
+    Index parse_error_index = samples_number;
+    string parse_error_msg;
+
+    if (binary_storage)
+    {
+        const Index CHUNK = 16384;
+        vector<float> chunk_buffer;
+
+        for (Index base = 0; base < samples_number; base += CHUNK)
+        {
+            const Index end = (base + CHUNK < samples_number) ? base + CHUNK : samples_number;
+            const Index n = end - base;
+
+            chunk_buffer.assign(size_t(n) * feature_columns_number, 0.0f);
+
+            Index chunk_rows_mv = 0, chunk_mv = 0;
+            vector<Index> chunk_var_mv(variables_number, 0);
+
+            #pragma omp parallel
+            {
+                string th_scratch;
+                vector<string_view> th_tokens;
+                vector<Index> th_var_mv(variables_number, 0);
+                Index th_rows_mv = 0, th_mv = 0;
+
+                #pragma omp for schedule(static) nowait
+                for (Index i = base; i < end; ++i)
+                {
+                    get_token_views_maybe_quoted(lines[i], file_separator, has_quotes, th_scratch, th_tokens);
+
+                    float* row = chunk_buffer.data() + size_t(i - base) * feature_columns_number;
+
+                    const bool row_has_missing = count_missing(th_tokens, th_rows_mv, th_mv, th_var_mv);
+
+                    if (has_sample_ids)
+                        sample_ids[i] = string(th_tokens[0]);
+
+                    if (row_has_missing)
+                        sample_roles[i] = SampleRole::None;
+
+                    if (Index(ssize(th_tokens)) < variables_number + id_offset)
+                    {
+                        #pragma omp critical
+                        {
+                            if (i < bad_row_index)
+                            {
+                                bad_row = true;
+                                bad_row_index = i;
+                                bad_row_cols = ssize(th_tokens);
+                            }
+                        }
+                        continue;
+                    }
+
+                    try
+                    {
+                        parse_row(row, th_tokens);
+                    }
+                    catch (const exception& e)
+                    {
+                        #pragma omp critical
+                        {
+                            if (i < parse_error_index)
+                            {
+                                parse_error = true;
+                                parse_error_index = i;
+                                parse_error_msg = e.what();
+                            }
+                        }
+                    }
+                }
+
+                #pragma omp critical
+                {
+                    chunk_rows_mv += th_rows_mv;
+                    chunk_mv += th_mv;
+                    for (Index v = 0; v < variables_number; ++v)
+                        chunk_var_mv[v] += th_var_mv[v];
+                }
+            }
+
+            rows_missing_values_number += chunk_rows_mv;
+            missing_values_number += chunk_mv;
+            for (Index v = 0; v < variables_number; ++v)
+                variables_missing_values_number(v) += chunk_var_mv[v];
+
+            for (Index i = base; i < end; ++i)
+                refine_numeric(chunk_buffer.data() + size_t(i - base) * feature_columns_number);
+
+            cache_writer.write(chunk_buffer.data(), size_t(n) * feature_columns_number * sizeof(float));
         }
     }
+    else
+    {
+        Index total_rows_mv = 0, total_mv = 0;
+        vector<Index> total_var_mv(variables_number, 0);
+
+        #pragma omp parallel
+        {
+            string th_scratch;
+            vector<string_view> th_tokens;
+            vector<Index> th_var_mv(variables_number, 0);
+            Index th_rows_mv = 0, th_mv = 0;
+
+            #pragma omp for schedule(static) nowait
+            for (Index i = 0; i < samples_number; ++i)
+            {
+                get_token_views_maybe_quoted(lines[i], file_separator, has_quotes, th_scratch, th_tokens);
+
+                float* row = data.data() + i * feature_columns_number;
+
+                count_missing(th_tokens, th_rows_mv, th_mv, th_var_mv);
+
+                if (has_sample_ids)
+                    sample_ids[i] = string(th_tokens[0]);
+
+                if (Index(ssize(th_tokens)) < variables_number + id_offset)
+                {
+                    #pragma omp critical
+                    {
+                        if (i < bad_row_index)
+                        {
+                            bad_row = true;
+                            bad_row_index = i;
+                            bad_row_cols = ssize(th_tokens);
+                        }
+                    }
+                    continue;
+                }
+
+                try
+                {
+                    parse_row(row, th_tokens);
+                }
+                catch (const exception& e)
+                {
+                    #pragma omp critical
+                    {
+                        if (i < parse_error_index)
+                        {
+                            parse_error = true;
+                            parse_error_index = i;
+                            parse_error_msg = e.what();
+                        }
+                    }
+                }
+            }
+
+            #pragma omp critical
+            {
+                total_rows_mv += th_rows_mv;
+                total_mv += th_mv;
+                for (Index v = 0; v < variables_number; ++v)
+                    total_var_mv[v] += th_var_mv[v];
+            }
+        }
+
+        rows_missing_values_number += total_rows_mv;
+        missing_values_number += total_mv;
+        for (Index v = 0; v < variables_number; ++v)
+            variables_missing_values_number(v) += total_var_mv[v];
+
+        for (Index i = 0; i < samples_number; ++i)
+            refine_numeric(data.data() + i * feature_columns_number);
+    }
+
+    // Lanzar (ya fuera de la region paralela) el error de MENOR indice de fila,
+    // sea de numero de columnas o de parseo (p.ej. fecha malformada).
+    if (bad_row && (!parse_error || bad_row_index <= parse_error_index))
+        throw runtime_error(format("Row {} has fewer columns than expected ({}).", bad_row_index, bad_row_cols));
+
+    if (parse_error)
+        throw runtime_error(format("Row {}: {}", parse_error_index, parse_error_msg));
 
     if (binary_storage)
     {
@@ -2042,18 +2232,30 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     if (!any_categorical) return;
 
     vector<std::set<string>> unique_categories(variables_number);
-    string cat_scratch;
-    vector<string_view> cat_tokens;
-    for (const string_view line : sample_lines)
+    const Index n_lines = ssize(sample_lines);
+
+    #pragma omp parallel
     {
-        get_token_views_maybe_quoted(line, file_separator, has_quotes, cat_scratch, cat_tokens);
-        for (Index col_index = 0; col_index < variables_number; ++col_index)
+        vector<std::set<string>> local(variables_number);
+        string cat_scratch;
+        vector<string_view> cat_tokens;
+
+        #pragma omp for schedule(static) nowait
+        for (Index r = 0; r < n_lines; ++r)
         {
-            if (!variables[col_index].is_categorical()) continue;
-            const size_t token_index = col_index + id_offset;
-            if (token_index < cat_tokens.size() && !is_missing_token(cat_tokens[token_index], missing_values_label))
-                unique_categories[col_index].emplace(cat_tokens[token_index]);
+            get_token_views_maybe_quoted(sample_lines[r], file_separator, has_quotes, cat_scratch, cat_tokens);
+            for (Index col_index = 0; col_index < variables_number; ++col_index)
+            {
+                if (!variables[col_index].is_categorical()) continue;
+                const size_t token_index = col_index + id_offset;
+                if (token_index < cat_tokens.size() && !is_missing_token(cat_tokens[token_index], missing_values_label))
+                    local[col_index].emplace(cat_tokens[token_index]);
+            }
         }
+
+        #pragma omp critical
+        for (Index col_index = 0; col_index < variables_number; ++col_index)
+            unique_categories[col_index].insert(local[col_index].begin(), local[col_index].end());
     }
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
