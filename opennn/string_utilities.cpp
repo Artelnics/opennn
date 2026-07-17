@@ -165,13 +165,25 @@ vector<string_view> get_token_views(string_view text, char separator)
     return tokens;
 }
 
-vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
-                                                 bool file_has_quotes, string& scratch)
+void get_token_views_maybe_quoted(string_view line, char separator, bool file_has_quotes,
+                                  string& scratch, vector<string_view>& out)
 {
+    out.clear();
+
     // Camino rapido: fichero sin comillas o linea concreta sin comillas ->
     // vistas zero-copy sobre la propia linea (identico a get_token_views).
     if (!file_has_quotes || line.find('"') == string_view::npos)
-        return get_token_views(line, separator);
+    {
+        size_t start = 0;
+        while (true)
+        {
+            const size_t end = line.find(separator, start);
+            if (end == string_view::npos) { out.emplace_back(line.substr(start)); break; }
+            out.emplace_back(line.substr(start, end - start));
+            start = end + 1;
+        }
+        return;
+    }
 
     // Camino con comillas: limpiamos en `scratch`. Reservamos line.size() para que
     // scratch NO reasigne durante los push_back (la limpieza solo quita caracteres),
@@ -180,7 +192,6 @@ vector<string_view> get_token_views_maybe_quoted(string_view line, char separato
     scratch.reserve(line.size());
     const char* const base = scratch.data();
 
-    vector<string_view> tokens;
     bool in_quote = false;
     size_t field_start = 0;
 
@@ -190,7 +201,7 @@ vector<string_view> get_token_views_maybe_quoted(string_view line, char separato
 
         if (!in_quote && c == separator)
         {
-            tokens.emplace_back(base + field_start, scratch.size() - field_start);
+            out.emplace_back(base + field_start, scratch.size() - field_start);
             field_start = scratch.size();
             continue;
         }
@@ -202,9 +213,15 @@ vector<string_view> get_token_views_maybe_quoted(string_view line, char separato
         scratch.push_back(c);
     }
 
-    tokens.emplace_back(base + field_start, scratch.size() - field_start);
+    out.emplace_back(base + field_start, scratch.size() - field_start);
+}
 
-    return tokens;
+vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
+                                                 bool file_has_quotes, string& scratch)
+{
+    vector<string_view> out;
+    get_token_views_maybe_quoted(line, separator, file_has_quotes, scratch, out);
+    return out;
 }
 
 // Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas que

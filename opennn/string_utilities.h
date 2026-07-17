@@ -28,6 +28,12 @@ namespace opennn
     vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
                                                      bool file_has_quotes, string& scratch);
 
+    // Igual que get_token_views_maybe_quoted pero rellenando `out` (out.clear() +
+    // emplace). Permite reutilizar el mismo vector entre filas y evitar reservar
+    // memoria por fila.
+    void get_token_views_maybe_quoted(string_view line, char separator, bool file_has_quotes,
+                                      string& scratch, vector<string_view>& out);
+
     // Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas
     // que get_token_views_maybe_quoted(...)[0], sin trocear el resto de la linea.
     // Sin comillas: vista zero-copy sobre `line`; con comillas: escribe el primer

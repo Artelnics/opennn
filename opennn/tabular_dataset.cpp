@@ -1370,9 +1370,10 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
     string scratch;
+    vector<string_view> row;
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> row = get_token_views_maybe_quoted(line, file_separator, has_quotes, scratch);
+        get_token_views_maybe_quoted(line, file_separator, has_quotes, scratch, row);
 
         for (size_t col_index = 0; col_index < variables.size(); ++col_index)
         {
@@ -1558,10 +1559,11 @@ void TabularDataset::read_csv()
     vector<NumericColumnValues> numeric_column_values(variables_number);
 
     string row_scratch;
+    vector<string_view> tokens;
 
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        const vector<string_view> tokens = get_token_views_maybe_quoted(lines[sample_index], file_separator, has_quotes, row_scratch);
+        get_token_views_maybe_quoted(lines[sample_index], file_separator, has_quotes, row_scratch, tokens);
 
         bool row_has_missing = false;
 
@@ -2041,15 +2043,16 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     vector<std::set<string>> unique_categories(variables_number);
     string cat_scratch;
+    vector<string_view> cat_tokens;
     for (const string_view line : sample_lines)
     {
-        const vector<string_view> tokens = get_token_views_maybe_quoted(line, file_separator, has_quotes, cat_scratch);
+        get_token_views_maybe_quoted(line, file_separator, has_quotes, cat_scratch, cat_tokens);
         for (Index col_index = 0; col_index < variables_number; ++col_index)
         {
             if (!variables[col_index].is_categorical()) continue;
             const size_t token_index = col_index + id_offset;
-            if (token_index < tokens.size() && !is_missing_token(tokens[token_index], missing_values_label))
-                unique_categories[col_index].emplace(tokens[token_index]);
+            if (token_index < cat_tokens.size() && !is_missing_token(cat_tokens[token_index], missing_values_label))
+                unique_categories[col_index].emplace(cat_tokens[token_index]);
         }
     }
 
