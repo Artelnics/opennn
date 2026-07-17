@@ -139,6 +139,7 @@ public:
 
     const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
+    void set_data(MatrixR&&);
     void set_data_constant(float);
 
     virtual void enable_device_residency();

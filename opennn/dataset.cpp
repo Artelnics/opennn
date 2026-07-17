@@ -141,6 +141,20 @@ void Dataset::set_data(const MatrixR& new_data)
     set_storage_mode(StorageMode::Matrix);
 }
 
+// Sobrecarga con move: evita duplicar una matriz grande (p.ej. cargar un
+// _Data.bin de decenas de GB): el llamante cede su buffer en vez de copiarlo,
+// reduciendo el pico de memoria a la mitad (critico para datasets enormes).
+void Dataset::set_data(MatrixR&& new_data)
+{
+    throw_if(new_data.rows() != get_samples_number(),
+             "Rows number is not equal to samples number");
+    throw_if(new_data.cols() != get_features_number(),
+             "Columns number is not equal to variables number");
+
+    data = std::move(new_data);
+    set_storage_mode(StorageMode::Matrix);
+}
+
 void Dataset::enable_device_residency()
 {
     // Residency is gated by StorageMode::GPUPersistantData in the optimizer;
