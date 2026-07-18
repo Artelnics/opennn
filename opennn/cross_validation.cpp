@@ -163,10 +163,16 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
     const Index saved_epochs = optimizer->get_maximum_epochs();
     optimizer->set_maximum_epochs(final_epochs);
 
+    try
     {
         FoldScope scope(*dataset, development, {});   // all development as Training, no Validation
         neural_network->set_parameters_random();
         training_strategy->train();
+    }
+    catch (...)
+    {
+        optimizer->set_maximum_epochs(saved_epochs);   // never leak the CV epoch budget
+        throw;
     }
 
     optimizer->set_maximum_epochs(saved_epochs);

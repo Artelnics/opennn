@@ -9,7 +9,6 @@
 #include "dataset.h"
 #include "time_series_dataset.h"
 #include "neural_network.h"
-#include "training_strategy.h"
 #include "inputs_selection.h"
 
 namespace opennn

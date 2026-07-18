@@ -86,9 +86,6 @@ protected:
 
     Index folds_number = 1;
 
-    // Fixed seed so the fold partition is reproducible across runs.
-    Index folds_seed = 0;
-
     float validation_error_goal = 0;
 
     Index maximum_epochs = 10;

@@ -74,7 +74,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     // k-fold CV partition (folds_number > 1): built ONCE so every neuron count is scored on the same
     // folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number, folds_seed) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
@@ -227,10 +227,16 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         // k-fold CV path: refit the final model on ALL development samples with the selected neuron
         // count, using the epoch budget the CV of that architecture found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development(training_strategy, folds_number, folds_seed);
+        refit_final_model_on_development(training_strategy, folds_number);
     }
-    else if (display)
-        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
+    else
+    {
+        // No snapshot with folds=1 (parameter layout changed): refit on the user's split, consistent
+        // with the input-selection algorithms.
+        if (display) cout << "Refitting the final model on the selected neurons.\n";
+        neural_network->set_parameters_random();
+        training_strategy->train();
+    }
 
     if (display) neuron_selection_results.print();
 

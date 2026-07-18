@@ -113,7 +113,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     // k-fold CV partition (folds_number > 1): built ONCE so every candidate subset is scored on the
     // same folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number, folds_seed) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
     while (!input_selection_results.stopping_condition)
     {
@@ -307,7 +307,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         // k-fold CV path: refit the final model on ALL development samples (Training + Validation),
         // using the epoch budget the CV of the selected subset found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development(training_strategy, folds_number, folds_seed);
+        refit_final_model_on_development(training_strategy, folds_number);
     }
     else
     {

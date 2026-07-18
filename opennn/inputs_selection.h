@@ -89,9 +89,6 @@ protected:
 
     Index folds_number = 1;
 
-    // Fixed seed so build_fold_partition is reproducible across runs and individuals.
-    Index folds_seed = 0;
-
     bool display = true;
 
 
