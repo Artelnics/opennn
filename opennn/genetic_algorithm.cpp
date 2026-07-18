@@ -492,7 +492,9 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     original_target_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
 
-    throw_if(!dataset->has_validation(),
+    // With k-fold CV the folds provide the validation set, so a persistent validation split is only
+    // required for the single-split path (folds_number == 1).
+    throw_if(folds_number <= 1 && !dataset->has_validation(),
              "dataset has no validation samples. "
              "The genetic algorithm uses validation error to rank individuals.");
 

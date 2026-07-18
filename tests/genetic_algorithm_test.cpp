@@ -190,3 +190,38 @@ TEST(GeneticAlgorithmTest, RequiresValidation)
 
     EXPECT_THROW(genetic_algorithm.perform_input_selection(), runtime_error);
 }
+
+
+TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
+{
+    // With folds > 1 the folds provide the validation set, so a persistent validation split is not
+    // required: the search must run even when every development sample is Training.
+    set_seed(0);
+
+    const Index samples_number = 40;
+
+    TabularDataset dataset(samples_number, {3}, {1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");   // no persistent validation
+
+    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training_strategy.get_optimization_algorithm()->set_display(false);
+    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    genetic_algorithm.set_display(false);
+    genetic_algorithm.set_individuals_number(6);
+    genetic_algorithm.set_maximum_epochs(3);
+    genetic_algorithm.set_folds_number(3);
+
+    const vector<SampleRole> roles_before = dataset.get_sample_roles();
+
+    InputsSelectionResult results;
+    EXPECT_NO_THROW(results = genetic_algorithm.perform_input_selection());
+    EXPECT_GE(results.get_epochs_number(), 1);
+
+    // Persistent roles are still untouched.
+    EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
+}
