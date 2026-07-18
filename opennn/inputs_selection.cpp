@@ -16,6 +16,7 @@
 #include "time_series_dataset.h"
 #include "neural_network.h"
 #include "training_strategy.h"
+#include "optimizer.h"
 #include "inputs_selection.h"
 
 namespace opennn
@@ -94,7 +95,7 @@ vector<vector<Index>> InputsSelection::build_fold_partition() const
     return folds;
 }
 
-float InputsSelection::evaluate_folds(const vector<vector<Index>>& fold_partition, float& mean_training_error) const
+InputsSelection::FoldEvaluation InputsSelection::evaluate_folds(const vector<vector<Index>>& fold_partition) const
 {
     Dataset* dataset = training_strategy->get_dataset();
     NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
@@ -106,6 +107,7 @@ float InputsSelection::evaluate_folds(const vector<vector<Index>>& fold_partitio
 
     float validation_error_sum = 0.0f;
     float training_error_sum = 0.0f;
+    Index epochs_sum = 0;
 
     for (Index f = 0; f < k; ++f)
     {
@@ -128,12 +130,51 @@ float InputsSelection::evaluate_folds(const vector<vector<Index>>& fold_partitio
         if (!isfinite(validation_error)) validation_error = numeric_limits<float>::max();
         if (!isfinite(training_error))   training_error   = numeric_limits<float>::max();
 
+        // Best epoch of this fold (validation-based early stopping restored it), else epochs run.
+        // +1 turns the 0-based epoch index into an epoch count.
+        const Index fold_epochs = training_results.restored_best_parameters
+            ? training_results.restored_epoch + 1
+            : training_results.get_epochs_number();
+
         validation_error_sum += validation_error;
         training_error_sum += training_error;
+        epochs_sum += max<Index>(fold_epochs, Index(1));
     }
 
-    mean_training_error = training_error_sum / float(k > 0 ? k : 1);
-    return validation_error_sum / float(k > 0 ? k : 1);
+    const Index divisor = k > 0 ? k : 1;
+
+    FoldEvaluation evaluation;
+    evaluation.validation_error = validation_error_sum / float(divisor);
+    evaluation.training_error = training_error_sum / float(divisor);
+    evaluation.epochs = max<Index>(epochs_sum / divisor, Index(1));
+    return evaluation;
+}
+
+void InputsSelection::refit_final_model_on_development() const
+{
+    Dataset* dataset = training_strategy->get_dataset();
+    NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
+    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+
+    // Epoch budget = mean best epoch from the cross-validation of the (already configured) final
+    // subset. There is no validation set below, so this bounds the fit in place of early stopping.
+    const Index final_epochs = evaluate_folds(build_fold_partition()).epochs;
+
+    // Development pool = Training + Validation; the final model trains on all of it, no validation.
+    vector<Index> development = dataset->get_sample_indices("Training");
+    const vector<Index> validation = dataset->get_sample_indices("Validation");
+    development.insert(development.end(), validation.begin(), validation.end());
+
+    const Index saved_epochs = optimizer->get_maximum_epochs();
+    optimizer->set_maximum_epochs(final_epochs);
+
+    {
+        FoldScope scope(*dataset, development, {});   // all development as Training, no Validation
+        neural_network->set_parameters_random();
+        training_strategy->train();
+    }
+
+    optimizer->set_maximum_epochs(saved_epochs);
 }
 
 void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)

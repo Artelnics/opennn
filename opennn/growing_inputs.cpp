@@ -158,8 +158,10 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         {
             // k-fold CV score: robust, less overfittable than a single validation split. It trains k
             // transient models and keeps none, so the optimal-parameters snapshot is left empty and
-            // the final model is refit on the user's split after selection (see below).
-            minimum_validation_error = evaluate_folds(fold_partition, minimum_training_error);
+            // the final model is refit on all development after selection (see below).
+            const FoldEvaluation evaluation = evaluate_folds(fold_partition);
+            minimum_training_error = evaluation.training_error;
+            minimum_validation_error = evaluation.validation_error;
 
             if (minimum_validation_error < input_selection_results.optimum_validation_error)
             {
@@ -296,11 +298,19 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     }
 
     if (input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+    {
         neural_network->set_parameters(input_selection_results.optimal_parameters);
+    }
+    else if (folds_number > 1)
+    {
+        // k-fold CV path: refit the final model on ALL development samples (Training + Validation),
+        // using the epoch budget the CV of the selected subset found best.
+        if (display) cout << "Refitting the final model on all development samples.\n";
+        refit_final_model_on_development();
+    }
     else
     {
-        // No single-model snapshot (k-fold CV path, or a changed parameter layout): refit the final
-        // model on the user's Training/Validation split with the selected inputs.
+        // No snapshot with folds=1 (changed parameter layout): refit on the user's split.
         if (display) cout << "Refitting the final model on the selected inputs.\n";
         neural_network->set_parameters_random();
         training_strategy->train();

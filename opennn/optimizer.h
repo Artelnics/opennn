@@ -63,6 +63,7 @@ public:
     int  get_batch_pool_size_override() const noexcept { return batch_pool_size_override; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
+    Index get_maximum_epochs() const noexcept { return maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }

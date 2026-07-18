@@ -217,10 +217,10 @@ void GeneticAlgorithm::evaluate_population()
         if (folds_number > 1)
         {
             // Robust k-fold CV fitness. No single trained model results, so the parameters are left
-            // empty; the final model is refit after the search.
-            float mean_training_error = numeric_limits<float>::max();
-            validation_errors(i) = evaluate_folds(fold_partition, mean_training_error);
-            training_errors(i) = mean_training_error;
+            // empty; the final model is refit on all development after the search.
+            const FoldEvaluation evaluation = evaluate_folds(fold_partition);
+            training_errors(i) = evaluation.training_error;
+            validation_errors(i) = evaluation.validation_error;
             individual_parameters(i) = VectorR();
         }
         else
@@ -635,10 +635,16 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     {
         neural_network->set_parameters(input_selection_results.optimal_parameters);
     }
+    else if (folds_number > 1)
+    {
+        // k-fold CV path (keeps no snapshot): refit the final model on ALL development samples
+        // (Training + Validation), using the epoch budget the CV of the selected subset found best.
+        if (display) cout << "Refitting the final model on all development samples.\n";
+        refit_final_model_on_development();
+    }
     else
     {
-        // No usable snapshot: either the k-fold CV path (which keeps none) or a parameter layout that
-        // changed on recompile. Refit the final model on the user's split with the selected inputs.
+        // No snapshot with folds=1 (parameter layout changed on recompile): refit on the user's split.
         if (display) cout << "Refitting the final model on the selected inputs.\n";
         neural_network->set_parameters_random();
         training_strategy->train();
