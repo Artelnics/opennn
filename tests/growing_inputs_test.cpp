@@ -81,3 +81,41 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
 }
+
+
+TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
+{
+    // folds_number > 1 scores subsets by k-fold CV over Training+Validation through a transient
+    // overlay -- it must still select the informative input AND leave the user's roles intact.
+    const Index samples = 60;
+
+    TabularDataset dataset(samples, {2}, {1});
+    MatrixR data(samples, 3);
+    for (Index i = 0; i < samples; i++)
+    {
+        data(i, 0) = type(i) / samples;             // input1: clear signal
+        data(i, 1) = type(rand()) / RAND_MAX;       // input2: pure noise
+        data(i, 2) = data(i, 0);                    // output = input1
+    }
+    dataset.set_data(data);
+    dataset.split_samples_random();
+
+    const vector<SampleRole> roles_before = dataset.get_sample_roles();
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    GrowingInputs growing_inputs(&training_strategy);
+    growing_inputs.set_display(false);
+    growing_inputs.set_maximum_inputs_number(1);
+    growing_inputs.set_folds_number(3);   // stratified 3-fold CV scoring
+
+    InputsSelectionResult results = growing_inputs.perform_input_selection();
+
+    EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
+    EXPECT_EQ(results.optimal_input_variables_indices[0], 0);   // still picks the informative input
+
+    // The overlay must NEVER mutate the user's persistent roles.
+    EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
+}

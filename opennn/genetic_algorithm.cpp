@@ -197,6 +197,11 @@ void GeneticAlgorithm::evaluate_population()
 
     training_strategy->get_optimization_algorithm()->set_display(false);
 
+    // k-fold CV partition (folds_number > 1): deterministic given folds_seed, so the same folds
+    // score every individual this generation. Empty for the legacy single-split path.
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition() : vector<vector<Index>>{};
+
     for (Index i = 0; i < individuals_number; ++i)
     {
         if (display) cout << "\nIndividual " << i + 1 << "\n";
@@ -209,15 +214,26 @@ void GeneticAlgorithm::evaluate_population()
 
         configure_neural_network_inputs(neural_network, dataset, input_features_number);
 
-        neural_network->set_parameters_random();
+        if (folds_number > 1)
+        {
+            // Robust k-fold CV fitness. No single trained model results, so the parameters are left
+            // empty; the final model is refit after the search.
+            float mean_training_error = numeric_limits<float>::max();
+            validation_errors(i) = evaluate_folds(fold_partition, mean_training_error);
+            training_errors(i) = mean_training_error;
+            individual_parameters(i) = VectorR();
+        }
+        else
+        {
+            neural_network->set_parameters_random();
+            const TrainingResult training_results = training_strategy->train();
 
-        const TrainingResult training_results = training_strategy->train();
+            individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
+                                                 neural_network->get_parameters_size());
 
-        individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
-                                              neural_network->get_parameters_size());
-
-        training_errors(i) = training_results.get_training_error();
-        validation_errors(i) = training_results.get_validation_error();
+            training_errors(i) = training_results.get_training_error();
+            validation_errors(i) = training_results.get_validation_error();
+        }
 
         // An individual whose input subset yields a non-finite error (e.g. it picked
         // columns that are entirely missing, so mean imputation leaves NaN) must not
@@ -621,7 +637,9 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     }
     else
     {
-        if (display) cout << "Retraining with optimal features (parameter layout changed after recompile).\n";
+        // No usable snapshot: either the k-fold CV path (which keeps none) or a parameter layout that
+        // changed on recompile. Refit the final model on the user's split with the selected inputs.
+        if (display) cout << "Refitting the final model on the selected inputs.\n";
         neural_network->set_parameters_random();
         training_strategy->train();
     }

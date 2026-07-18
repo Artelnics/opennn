@@ -128,6 +128,52 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
 }
 
 
+TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
+{
+    // folds_number > 1 scores subsets by k-fold CV over Training+Validation through a transient
+    // overlay -- it must complete with valid results AND leave the user's persistent roles intact.
+    set_seed(0);
+
+    const Index inputs_number = 3;
+    const Index samples_number = 40;
+
+    TabularDataset dataset(samples_number, {inputs_number}, {1});
+    MatrixR data(samples_number, inputs_number + 1);
+    for (Index i = 0; i < samples_number; i++)
+    {
+        data(i, 0) = type(i) / type(samples_number);
+        data(i, 1) = type(10.0);
+        data(i, 2) = type(10.0);
+        data(i, 3) = type(i) / type(samples_number) + type(0.01);
+    }
+    dataset.set_data(data);
+    dataset.split_samples_random(type(0.7), type(0.15), type(0.15));
+
+    const vector<SampleRole> roles_before = dataset.get_sample_roles();
+
+    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training_strategy.get_optimization_algorithm()->set_display(false);
+    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    genetic_algorithm.set_display(false);
+    genetic_algorithm.set_individuals_number(6);
+    genetic_algorithm.set_maximum_epochs(3);
+    genetic_algorithm.set_folds_number(3);   // stratified 3-fold CV scoring
+
+    const InputsSelectionResult results = genetic_algorithm.perform_input_selection();
+
+    EXPECT_GE(results.get_epochs_number(), 1);
+    EXPECT_GE(results.optimum_validation_error, type(0));
+    EXPECT_TRUE(results.optimal_inputs(0));
+
+    // The overlay must NEVER mutate the user's persistent roles.
+    EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
+}
+
+
 TEST(GeneticAlgorithmTest, RequiresValidation)
 {
     const Index samples_number = 20;

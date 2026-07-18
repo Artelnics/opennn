@@ -109,6 +109,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index epoch = 0;
 
+    // k-fold CV partition (folds_number > 1): built ONCE so every candidate subset is scored on the
+    // same folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition() : vector<vector<Index>>{};
+
     while (!input_selection_results.stopping_condition)
     {
         if (variable_index >= correlations_rank_descending.size())
@@ -149,6 +154,26 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
 
+        if (folds_number > 1)
+        {
+            // k-fold CV score: robust, less overfittable than a single validation split. It trains k
+            // transient models and keeps none, so the optimal-parameters snapshot is left empty and
+            // the final model is refit on the user's split after selection (see below).
+            minimum_validation_error = evaluate_folds(fold_partition, minimum_training_error);
+
+            if (minimum_validation_error < input_selection_results.optimum_validation_error)
+            {
+                input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
+                input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
+                input_selection_results.optimal_parameters = VectorR();
+                input_selection_results.optimum_training_error = minimum_training_error;
+                input_selection_results.optimum_validation_error = minimum_validation_error;
+            }
+
+            if (display)
+                cout << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
+        }
+        else
         for (Index j = 0; j < trials_number; ++j)
         {
             neural_network->set_parameters_random();
@@ -270,8 +295,14 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     if (input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
         neural_network->set_parameters(input_selection_results.optimal_parameters);
-    else if (display)
-        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
+    else
+    {
+        // No single-model snapshot (k-fold CV path, or a changed parameter layout): refit the final
+        // model on the user's Training/Validation split with the selected inputs.
+        if (display) cout << "Refitting the final model on the selected inputs.\n";
+        neural_network->set_parameters_random();
+        training_strategy->train();
+    }
 
     if (display) input_selection_results.print();
 
