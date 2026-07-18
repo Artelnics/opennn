@@ -119,3 +119,33 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
     // The overlay must NEVER mutate the user's persistent roles.
     EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
 }
+
+
+TEST(GrowingInputsTest, FoldsNumberSurvivesJsonRoundTrip)
+{
+    // The k-fold setting must persist through the project's JSON so a saved model keeps its CV
+    // configuration. Mirrors the Neural Designer flow: a selector attached to a training strategy is
+    // serialized and reloaded (from_JSON reconfigures inputs against the dataset). A default selector
+    // stays at folds = 1 (legacy single-split behaviour).
+    TabularDataset dataset(20, {2}, {1});
+    dataset.set_data_random();
+    dataset.split_samples_random();
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    GrowingInputs saved(&training_strategy);
+    EXPECT_EQ(saved.get_folds_number(), Index(1));   // default = legacy
+    saved.set_folds_number(5);
+
+    const filesystem::path file = filesystem::temp_directory_path() / "opennn_growing_inputs_folds.json";
+    saved.save(file);
+
+    GrowingInputs loaded(&training_strategy);
+    loaded.load(file);
+    EXPECT_EQ(loaded.get_folds_number(), Index(5));
+
+    error_code ignored;
+    filesystem::remove(file, ignored);
+}

@@ -62,6 +62,7 @@ public:
     // samples are never touched and the persistent sample roles are never mutated (see FoldScope).
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
     void set_folds_seed(const Index new_folds_seed) { folds_seed = new_folds_seed; }
+    Index get_folds_number() const noexcept { return folds_number; }
 
     virtual InputsSelectionResult perform_input_selection() = 0;
 

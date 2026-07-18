@@ -320,7 +320,8 @@ void GrowingInputs::to_JSON(JsonWriter& printer) const
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}
+        {"MaximumTime", to_string(maximum_time)},
+        {"FoldsNumber", to_string(folds_number)}
     });
 
     printer.close_element();
@@ -339,6 +340,10 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_json_index(root_element,
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
+
+    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
+    if (root_element->has("FoldsNumber"))
+        set_folds_number(read_json_index(root_element, "FoldsNumber"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

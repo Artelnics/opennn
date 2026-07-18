@@ -665,7 +665,8 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumGenerationsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}});
+        {"MaximumTime", to_string(maximum_time)},
+        {"FoldsNumber", to_string(folds_number)}});
 
     printer.close_element();
 }
@@ -682,6 +683,10 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
     set_maximum_inputs_number(read_json_index(root, "MaximumInputsNumber"));
     set_maximum_epochs(read_json_index(root, "MaximumGenerationsNumber"));
     set_maximum_time(read_json_float(root, "MaximumTime"));
+
+    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
+    if (root->has("FoldsNumber"))
+        set_folds_number(read_json_index(root, "FoldsNumber"));
 }
 
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
