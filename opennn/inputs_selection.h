@@ -55,6 +55,14 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
+    // Inner k-fold cross-validation for scoring feature subsets during selection. folds_number == 1
+    // keeps the legacy single Training/Validation-split behaviour. >1 scores each subset by the mean
+    // validation error over a stratified (or, for time series, sequential) partition of the
+    // Training+Validation pool -- a robust, less overfittable selection criterion. Testing/None
+    // samples are never touched and the persistent sample roles are never mutated (see FoldScope).
+    void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
+    void set_folds_seed(const Index new_folds_seed) { folds_seed = new_folds_seed; }
+
     virtual InputsSelectionResult perform_input_selection() = 0;
 
     string get_name() const { return name; }
@@ -72,9 +80,23 @@ protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
 
+    // Build the k-fold partition of the Training+Validation pool ONCE per selection run. Returns k
+    // index lists (the validation set of each fold). Stratified by target class for classification,
+    // sequential contiguous blocks for time series. Deterministic given folds_seed.
+    vector<vector<Index>> build_fold_partition() const;
+
+    // Score the currently-configured input subset by k-fold CV over the given partition, opening a
+    // FoldScope per fold so the dataset's persistent roles are never mutated. Returns the mean
+    // validation error over folds; writes the mean training error to the out-param.
+    float evaluate_folds(const vector<vector<Index>>& fold_partition, float& mean_training_error) const;
+
     TrainingStrategy* training_strategy = nullptr;
 
     Index trials_number = 1;
+
+    Index folds_number = 1;
+
+    Index folds_seed = 0;
 
     bool display = true;
 
