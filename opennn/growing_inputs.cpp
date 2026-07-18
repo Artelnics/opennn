@@ -174,36 +174,38 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
                 cout << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
         }
         else
-        for (Index j = 0; j < trials_number; ++j)
         {
-            neural_network->set_parameters_random();
-            training_results = training_strategy->train();
-
-            const float training_error = training_results.get_training_error();
-            const float validation_error = training_results.get_validation_error();
-
-            if (validation_error < minimum_validation_error)
+            for (Index j = 0; j < trials_number; ++j)
             {
-                minimum_training_error = training_error;
-                minimum_validation_error = validation_error;
+                neural_network->set_parameters_random();
+                training_results = training_strategy->train();
 
-                if (minimum_validation_error < input_selection_results.optimum_validation_error)
+                const float training_error = training_results.get_training_error();
+                const float validation_error = training_results.get_validation_error();
+
+                if (validation_error < minimum_validation_error)
                 {
-                    input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
-                    input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
-                    neural_network->copy_parameters_host();
-                    input_selection_results.optimal_parameters =
-                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                  neural_network->get_parameters_size());
-                    input_selection_results.optimum_training_error = training_error;
-                    input_selection_results.optimum_validation_error = validation_error;
-                }
-            }
+                    minimum_training_error = training_error;
+                    minimum_validation_error = validation_error;
 
-            if (display)
-                cout << (trials_number > 1 ? "   Trial " + to_string(j + 1) + ": " : "   ")
-                     << "training error " << training_error
-                     << ", validation error " << validation_error << "\n";
+                    if (minimum_validation_error < input_selection_results.optimum_validation_error)
+                    {
+                        input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
+                        input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
+                        neural_network->copy_parameters_host();
+                        input_selection_results.optimal_parameters =
+                            Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                      neural_network->get_parameters_size());
+                        input_selection_results.optimum_training_error = training_error;
+                        input_selection_results.optimum_validation_error = validation_error;
+                    }
+                }
+
+                if (display)
+                    cout << (trials_number > 1 ? "   Trial " + to_string(j + 1) + ": " : "   ")
+                         << "training error " << training_error
+                         << ", validation error " << validation_error << "\n";
+            }
         }
 
         if (previous_validation_error < minimum_validation_error)

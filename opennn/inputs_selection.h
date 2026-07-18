@@ -61,7 +61,6 @@ public:
     // Training+Validation pool -- a robust, less overfittable selection criterion. Testing/None
     // samples are never touched and the persistent sample roles are never mutated (see FoldScope).
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
-    void set_folds_seed(const Index new_folds_seed) { folds_seed = new_folds_seed; }
     Index get_folds_number() const noexcept { return folds_number; }
 
     virtual InputsSelectionResult perform_input_selection() = 0;
@@ -97,6 +96,7 @@ protected:
 
     Index folds_number = 1;
 
+    // Fixed seed so build_fold_partition is reproducible across runs and individuals.
     Index folds_seed = 0;
 
     bool display = true;
