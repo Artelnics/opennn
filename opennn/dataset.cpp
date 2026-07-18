@@ -17,16 +17,25 @@ namespace opennn
 vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    const Index samples_number = get_samples_number();
+    const vector<SampleRole>& roles = active_sample_roles();   // fold overlay if active, else user roles
+    const Index samples_number = ssize(roles);
 
     vector<Index> indices;
     indices.reserve(get_samples_number(sample_role));
 
     for (Index i = 0; i < samples_number; ++i)
-        if (sample_roles[i] == role_type)
+        if (roles[i] == role_type)
             indices.push_back(i);
 
     return indices;
+}
+
+void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
+{
+    fold_split_roles = sample_roles;   // keep Testing/None exactly as the user assigned them
+    for (const Index i : training)   fold_split_roles[size_t(i)] = SampleRole::Training;
+    for (const Index i : validation) fold_split_roles[size_t(i)] = SampleRole::Validation;
+    fold_split_active = true;
 }
 
 vector<Index> Dataset::get_used_sample_indices() const
@@ -185,7 +194,7 @@ void Dataset::set_data_constant(float new_value)
 Index Dataset::get_samples_number(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    return ranges::count(sample_roles, role_type);
+    return ranges::count(active_sample_roles(), role_type);
 }
 
 Index Dataset::get_used_samples_number() const

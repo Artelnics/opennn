@@ -72,6 +72,15 @@ public:
 
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
+    // --- Transient fold split (k-fold CV for input selection) --------------------------------
+    // Overrides which samples count as Training/Validation for the lifetime of a FoldScope,
+    // WITHOUT mutating the user's persistent roles (sample_roles). Every training-time consumer
+    // (optimizers, scaling, loss) reads the split through get_sample_indices / get_samples_number,
+    // so they follow the fold automatically. Testing/None samples are untouched. Never serialized.
+    void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
+    void clear_fold_split() noexcept { fold_split_active = false; }
+    bool has_fold_split() const noexcept { return fold_split_active; }
+
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(const string&) const;
     Index get_used_variables_number() const;
@@ -323,6 +332,14 @@ protected:
     vector<SampleRole> sample_roles;
     vector<string> sample_ids;
 
+    // Transient k-fold CV overlay (see set_fold_split / FoldScope). Never serialized.
+    bool fold_split_active = false;
+    vector<SampleRole> fold_split_roles;
+
+    // The roles seen by sample queries: the fold overlay when active, else the user's roles.
+    const vector<SampleRole>& active_sample_roles() const noexcept
+    { return fold_split_active ? fold_split_roles : sample_roles; }
+
     vector<Variable> variables;
 
     filesystem::path data_path;
@@ -343,6 +360,22 @@ protected:
 
     void variables_from_JSON(const Json*);
     void preview_data_from_JSON(const Json*);
+};
+
+// RAII scope that installs a transient train/validation fold split on a dataset and restores the
+// user's persistent roles on destruction (exception-safe). Used by k-fold CV in input selection:
+// the persistent sample_roles are never mutated, so serialization/UI keep the user's assignment.
+struct FoldScope
+{
+    Dataset& dataset;
+
+    FoldScope(Dataset& dataset, const vector<Index>& training, const vector<Index>& validation)
+        : dataset(dataset) { dataset.set_fold_split(training, validation); }
+
+    ~FoldScope() { dataset.clear_fold_split(); }
+
+    FoldScope(const FoldScope&) = delete;
+    FoldScope& operator=(const FoldScope&) = delete;
 };
 
 }
