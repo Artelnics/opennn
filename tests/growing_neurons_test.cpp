@@ -220,3 +220,40 @@ TEST(GrowingNeuronsTest, NeuronsIncrement)
     EXPECT_EQ(results.optimal_neurons_number % 2, 1); // siempre impar
 }
 
+
+
+TEST(GrowingNeuronsTest, CrossValidationKeepsPersistentRoles)
+{
+    // folds_number > 1 scores each neuron count by k-fold CV over Training+Validation through a
+    // transient overlay -- it must complete with valid results AND leave the persistent roles intact.
+    const Index samples = 40;
+
+    TabularDataset dataset(samples, {1}, {1});
+    MatrixR data(samples, 2);
+    for (Index i = 0; i < samples; i++)
+    {
+        const type x = type(i) / type(samples);
+        data(i, 0) = x;
+        data(i, 1) = x;               // target ~ input (learnable)
+    }
+    dataset.set_data(data);
+    dataset.split_samples_random();
+
+    const vector<SampleRole> roles_before = dataset.get_sample_roles();
+
+    ApproximationNetwork neural_network({1}, {3}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+
+    GrowingNeurons growing_neurons(&training_strategy);
+    growing_neurons.set_display(false);
+    growing_neurons.set_trials_number(1);
+    growing_neurons.set_maximum_neurons(4);
+    growing_neurons.set_folds_number(3);   // stratified 3-fold CV scoring
+
+    NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
+
+    EXPECT_GE(results.optimal_neurons_number, 1);
+
+    // The overlay must NEVER mutate the user's persistent roles.
+    EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
+}

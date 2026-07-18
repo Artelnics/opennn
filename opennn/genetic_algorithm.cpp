@@ -14,6 +14,7 @@
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 #include "random_utilities.h"
+#include "cross_validation.h"
 
 namespace opennn
 {
@@ -200,7 +201,7 @@ void GeneticAlgorithm::evaluate_population()
     // k-fold CV partition (folds_number > 1): deterministic given folds_seed, so the same folds
     // score every individual this generation. Empty for the legacy single-split path.
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition() : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number, folds_seed) : vector<vector<Index>>{};
 
     for (Index i = 0; i < individuals_number; ++i)
     {
@@ -218,7 +219,7 @@ void GeneticAlgorithm::evaluate_population()
         {
             // Robust k-fold CV fitness. No single trained model results, so the parameters are left
             // empty; the final model is refit on all development after the search.
-            const FoldEvaluation evaluation = evaluate_folds(fold_partition);
+            const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
             training_errors(i) = evaluation.training_error;
             validation_errors(i) = evaluation.validation_error;
             individual_parameters(i) = VectorR();
@@ -642,7 +643,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         // k-fold CV path (keeps no snapshot): refit the final model on ALL development samples
         // (Training + Validation), using the epoch budget the CV of the selected subset found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development();
+        refit_final_model_on_development(training_strategy, folds_number, folds_seed);
     }
     else
     {

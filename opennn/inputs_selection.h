@@ -80,29 +80,8 @@ protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
 
-    // Build the k-fold partition of the Training+Validation pool ONCE per selection run. Returns k
-    // index lists (the validation set of each fold). Stratified by target class for classification,
-    // sequential contiguous blocks for time series. Deterministic given folds_seed.
-    vector<vector<Index>> build_fold_partition() const;
-
-    // Result of scoring an input subset by k-fold cross-validation: the errors averaged over folds
-    // plus the mean best epoch (used as the epoch budget when refitting the final model without a
-    // validation set).
-    struct FoldEvaluation
-    {
-        float validation_error = 0.0f;
-        float training_error = 0.0f;
-        Index epochs = 0;
-    };
-
-    // Score the currently-configured input subset by k-fold CV over the given partition, opening a
-    // FoldScope per fold so the dataset's persistent roles are never mutated.
-    FoldEvaluation evaluate_folds(const vector<vector<Index>>& fold_partition) const;
-
-    // After a CV-based selection, retrain the currently-configured final model on ALL development
-    // samples (Training + Validation, no held-out validation), for the epoch budget the CV of the
-    // selected subset found best. The dataset's persistent roles are restored on return.
-    void refit_final_model_on_development() const;
+    // k-fold CV scoring lives in cross_validation.h (build_fold_partition / evaluate_folds /
+    // refit_final_model_on_development), shared with neuron selection.
 
     TrainingStrategy* training_strategy = nullptr;
 

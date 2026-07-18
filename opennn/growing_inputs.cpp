@@ -15,6 +15,7 @@
 #include "scaling_layer.h"
 #include "optimizer.h"
 #include "training_strategy.h"
+#include "cross_validation.h"
 
 namespace opennn
 {
@@ -112,7 +113,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     // k-fold CV partition (folds_number > 1): built ONCE so every candidate subset is scored on the
     // same folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition() : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number, folds_seed) : vector<vector<Index>>{};
 
     while (!input_selection_results.stopping_condition)
     {
@@ -159,7 +160,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             // k-fold CV score: robust, less overfittable than a single validation split. It trains k
             // transient models and keeps none, so the optimal-parameters snapshot is left empty and
             // the final model is refit on all development after selection (see below).
-            const FoldEvaluation evaluation = evaluate_folds(fold_partition);
+            const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
             minimum_training_error = evaluation.training_error;
             minimum_validation_error = evaluation.validation_error;
 
@@ -306,7 +307,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         // k-fold CV path: refit the final model on ALL development samples (Training + Validation),
         // using the epoch budget the CV of the selected subset found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development();
+        refit_final_model_on_development(training_strategy, folds_number, folds_seed);
     }
     else
     {
