@@ -76,6 +76,58 @@ TEST(GeneticAlgorithmTest, InputSelection)
 }
 
 
+TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
+{
+    // Regression for the crossover/mutation "fill to maximum_inputs_number" bug: with many
+    // candidate features but only one informative, the GA must NOT collapse onto the maximum
+    // subset size. Before the fix every individual grew to max_inputs (overfitting); after it,
+    // the selected subset is much smaller than the candidate count.
+    set_seed(0);
+
+    const Index inputs_number = 40;
+    const Index samples_number = 200;
+
+    TabularDataset dataset(samples_number, {inputs_number}, {1});
+
+    MatrixR data(samples_number, inputs_number + 1);
+    for (Index i = 0; i < samples_number; i++)
+    {
+        const type signal = type(i) / type(samples_number);
+        for (Index j = 0; j < inputs_number; j++)
+        {
+            // deterministic hash-based pseudo-noise, uncorrelated with the target
+            const unsigned h = (unsigned(i) * 2654435761u) ^ (unsigned(j + 1) * 40503u);
+            data(i, j) = type(h % 1000u) / type(1000);
+        }
+        data(i, 0) = signal;                 // feature 0 is the only informative input
+        data(i, inputs_number) = signal;     // target ~ feature 0
+    }
+    dataset.set_data(data);
+    dataset.split_samples_random(type(0.7), type(0.15), type(0.15));
+
+    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+    training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training_strategy.get_optimization_algorithm()->set_display(false);
+    training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
+
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    genetic_algorithm.set_display(false);
+    genetic_algorithm.set_individuals_number(20);
+    genetic_algorithm.set_maximum_epochs(5);
+
+    const InputsSelectionResult results = genetic_algorithm.perform_input_selection();
+
+    const Index selected_count = results.optimal_inputs.count();
+
+    // Parsimony: must not fill to (or near) the candidate count -- the fill-to-cap bug did exactly that.
+    EXPECT_LT(selected_count, inputs_number);
+    EXPECT_LT(selected_count, Index(30));
+    // ...and it still keeps the informative feature.
+    EXPECT_TRUE(results.optimal_inputs(0));
+}
+
+
 TEST(GeneticAlgorithmTest, RequiresValidation)
 {
     const Index samples_number = 20;
