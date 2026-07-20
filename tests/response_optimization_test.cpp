@@ -1243,6 +1243,63 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
 }
 
 
+TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
+{
+    // Phase-0 probe at OR-Library port1's real dimensions: 31 assets, choose exactly K=10,
+    // simplex budget + buy-in floor/cap coupling each weight to its indicator. This is the
+    // instance the manuscript records as a boundary; the probe checks whether the current
+    // resolve-cardinality-first + fixed-binary continuous projection returns feasible points
+    // at full scale. Objective is a placeholder (the surrogate is irrelevant to feasibility).
+    const int A = 31;
+    const int K = 10;
+
+    vector<string> indicator_names, input_names;
+    for (int i = 0; i < A; ++i) input_names.push_back("w" + to_string(i));
+    for (int i = 0; i < A; ++i) { indicator_names.push_back("z" + to_string(i)); input_names.push_back("z" + to_string(i)); }
+
+    MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
+    vector<Variable> input_variables = setup.network->get_input_variables();
+    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
+    setup.network->set_input_variables(input_variables);
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+
+    string budget;
+    for (int i = 0; i < A; ++i) budget += (i ? " + " : "") + ("w" + to_string(i));
+    opt.set_formula_constraint(budget, ComparisonOperator::EqualTo, float(1), float(1));
+    for (int i = 0; i < A; ++i)
+    {
+        const string w = "w" + to_string(i), z = "z" + to_string(i);
+        opt.set_formula_constraint(w + " - " + z,        ComparisonOperator::LessEqualTo,    float(0), float(0));
+        opt.set_formula_constraint(w + " - 0.01 * " + z, ComparisonOperator::GreaterEqualTo, float(0), float(0));
+    }
+    opt.set_cardinality_constraint(indicator_names, K);
+
+    opt.set_iterations(3);
+    opt.set_evaluations_number(2000);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0) << "no feasible point for port1-scale buy-in + budget + cardinality";
+
+    for (Index r = 0; r < results.rows(); ++r)
+    {
+        float weight_sum = 0, indicator_sum = 0;
+        for (int i = 0; i < A; ++i)
+        {
+            const float w = results(r, i), z = results(r, A + i);
+            weight_sum += w; indicator_sum += z;
+            EXPECT_NEAR(z, round(z), float(1e-3))       << "indicator z" << i << " not binary at row " << r;
+            EXPECT_LE(w, z + float(1e-2))               << "buy-in upper at row " << r << " asset " << i;
+            EXPECT_GE(w, float(0.01) * z - float(1e-2)) << "buy-in lower at row " << r << " asset " << i;
+        }
+        EXPECT_NEAR(weight_sum, float(1), float(2e-2))    << "budget violated at row " << r;
+        EXPECT_NEAR(indicator_sum, float(K), float(1e-2)) << "cardinality violated at row " << r;
+    }
+}
+
+
 TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
 {
     // A non-default exploration_ratio exercises both the explore (free K-hot) and exploit
