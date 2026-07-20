@@ -15,6 +15,7 @@
 #include "scaling_layer.h"
 #include "optimizer.h"
 #include "training_strategy.h"
+#include "cross_validation.h"
 
 namespace opennn
 {
@@ -109,6 +110,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index epoch = 0;
 
+    // k-fold CV partition (folds_number > 1): built ONCE so every candidate subset is scored on the
+    // same folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+
     while (!input_selection_results.stopping_condition)
     {
         if (variable_index >= correlations_rank_descending.size())
@@ -149,36 +155,60 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         float minimum_training_error = MAX;
         float minimum_validation_error = MAX;
 
-        for (Index j = 0; j < trials_number; ++j)
+        if (folds_number > 1)
         {
-            neural_network->set_parameters_random();
-            training_results = training_strategy->train();
+            // k-fold CV score: robust, less overfittable than a single validation split. It trains k
+            // transient models and keeps none, so the optimal-parameters snapshot is left empty and
+            // the final model is refit on all development after selection (see below).
+            const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
+            minimum_training_error = evaluation.training_error;
+            minimum_validation_error = evaluation.validation_error;
 
-            const float training_error = training_results.get_training_error();
-            const float validation_error = training_results.get_validation_error();
-
-            if (validation_error < minimum_validation_error)
+            if (minimum_validation_error < input_selection_results.optimum_validation_error)
             {
-                minimum_training_error = training_error;
-                minimum_validation_error = validation_error;
-
-                if (minimum_validation_error < input_selection_results.optimum_validation_error)
-                {
-                    input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
-                    input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
-                    neural_network->copy_parameters_host();
-                    input_selection_results.optimal_parameters =
-                        Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                  neural_network->get_parameters_size());
-                    input_selection_results.optimum_training_error = training_error;
-                    input_selection_results.optimum_validation_error = validation_error;
-                }
+                input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
+                input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
+                input_selection_results.optimal_parameters = VectorR();
+                input_selection_results.optimum_training_error = minimum_training_error;
+                input_selection_results.optimum_validation_error = minimum_validation_error;
             }
 
             if (display)
-                cout << (trials_number > 1 ? "   Trial " + to_string(j + 1) + ": " : "   ")
-                     << "training error " << training_error
-                     << ", validation error " << validation_error << "\n";
+                cout << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
+        }
+        else
+        {
+            for (Index j = 0; j < trials_number; ++j)
+            {
+                neural_network->set_parameters_random();
+                training_results = training_strategy->train();
+
+                const float training_error = training_results.get_training_error();
+                const float validation_error = training_results.get_validation_error();
+
+                if (validation_error < minimum_validation_error)
+                {
+                    minimum_training_error = training_error;
+                    minimum_validation_error = validation_error;
+
+                    if (minimum_validation_error < input_selection_results.optimum_validation_error)
+                    {
+                        input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices("Input");
+                        input_selection_results.optimal_input_variable_names = dataset->get_variable_names("Input");
+                        neural_network->copy_parameters_host();
+                        input_selection_results.optimal_parameters =
+                            Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                      neural_network->get_parameters_size());
+                        input_selection_results.optimum_training_error = training_error;
+                        input_selection_results.optimum_validation_error = validation_error;
+                    }
+                }
+
+                if (display)
+                    cout << (trials_number > 1 ? "   Trial " + to_string(j + 1) + ": " : "   ")
+                         << "training error " << training_error
+                         << ", validation error " << validation_error << "\n";
+            }
         }
 
         if (previous_validation_error < minimum_validation_error)
@@ -269,9 +299,23 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     }
 
     if (input_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
+    {
         neural_network->set_parameters(input_selection_results.optimal_parameters);
-    else if (display)
-        cout << "Warning: no optimal parameter snapshot captured; keeping current weights.\n";
+    }
+    else if (folds_number > 1)
+    {
+        // k-fold CV path: refit the final model on ALL development samples (Training + Validation),
+        // using the epoch budget the CV of the selected subset found best.
+        if (display) cout << "Refitting the final model on all development samples.\n";
+        refit_final_model_on_development(training_strategy, folds_number);
+    }
+    else
+    {
+        // No snapshot with folds=1 (changed parameter layout): refit on the user's split.
+        if (display) cout << "Refitting the final model on the selected inputs.\n";
+        neural_network->set_parameters_random();
+        training_strategy->train();
+    }
 
     if (display) input_selection_results.print();
 
@@ -289,7 +333,8 @@ void GrowingInputs::to_JSON(JsonWriter& printer) const
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}
+        {"MaximumTime", to_string(maximum_time)},
+        {"FoldsNumber", to_string(folds_number)}
     });
 
     printer.close_element();
@@ -308,6 +353,10 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     set_maximum_inputs_number(read_json_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_json_index(root_element,
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
+
+    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
+    if (root_element->has("FoldsNumber"))
+        set_folds_number(read_json_index(root_element, "FoldsNumber"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

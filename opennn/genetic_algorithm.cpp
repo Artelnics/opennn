@@ -14,6 +14,7 @@
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 #include "random_utilities.h"
+#include "cross_validation.h"
 
 namespace opennn
 {
@@ -138,12 +139,21 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     VectorB individual_genes(genes_number);
 
-    const VectorR correlations_rank = dataset->calculate_correlations_rank().cast<float>().array() + 1.0f;
+    // calculate_correlations_rank() is an ARGSORT: position p -> the input-variable (gene) index
+    // whose |corr| is the p-th smallest. The roulette weight of gene g must be g's OWN rank
+    // position (higher position = more correlated = higher pick probability), i.e. the INVERSE
+    // permutation. Using the argsort values directly weighted each gene by an unrelated variable
+    // index, scrambling the correlation bias into noise -- a warm start in name only.
+    const VectorI correlations_argsort = dataset->calculate_correlations_rank();
 
-    const float correlations_sum = correlations_rank.sum();
+    VectorR gene_weight(genes_number);
+    for (Index p = 0; p < genes_number; ++p)
+        gene_weight(correlations_argsort(p)) = float(p + 1);
+
+    const float correlations_sum = gene_weight.sum();
 
     VectorR correlations_cumsum(genes_number);
-    partial_sum(correlations_rank.data(), correlations_rank.data() + genes_number, correlations_cumsum.data());
+    partial_sum(gene_weight.data(), gene_weight.data() + genes_number, correlations_cumsum.data());
 
     const float* begin = correlations_cumsum.data();
     const float* end   = begin + genes_number;
@@ -188,6 +198,11 @@ void GeneticAlgorithm::evaluate_population()
 
     training_strategy->get_optimization_algorithm()->set_display(false);
 
+    // k-fold CV partition (folds_number > 1): deterministic given folds_seed, so the same folds
+    // score every individual this generation. Empty for the legacy single-split path.
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+
     for (Index i = 0; i < individuals_number; ++i)
     {
         if (display) cout << "\nIndividual " << i + 1 << "\n";
@@ -200,15 +215,26 @@ void GeneticAlgorithm::evaluate_population()
 
         configure_neural_network_inputs(neural_network, dataset, input_features_number);
 
-        neural_network->set_parameters_random();
+        if (folds_number > 1)
+        {
+            // Robust k-fold CV fitness. No single trained model results, so the parameters are left
+            // empty; the final model is refit on all development after the search.
+            const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
+            training_errors(i) = evaluation.training_error;
+            validation_errors(i) = evaluation.validation_error;
+            individual_parameters(i) = VectorR();
+        }
+        else
+        {
+            neural_network->set_parameters_random();
+            const TrainingResult training_results = training_strategy->train();
 
-        const TrainingResult training_results = training_strategy->train();
+            individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
+                                                 neural_network->get_parameters_size());
 
-        individual_parameters(i) = VectorMap(neural_network->get_parameters_data(),
-                                              neural_network->get_parameters_size());
-
-        training_errors(i) = training_results.get_training_error();
-        validation_errors(i) = training_results.get_validation_error();
+            training_errors(i) = training_results.get_training_error();
+            validation_errors(i) = training_results.get_validation_error();
+        }
 
         // An individual whose input subset yields a non-finite error (e.g. it picked
         // columns that are entirely missing, so mean imputation leaves NaN) must not
@@ -322,7 +348,15 @@ VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& pare
         return descendent;
     }
 
-    const Index target_size = random_integer(max(minimum_inputs_number, current_size), maximum_inputs_number);
+    // Cap the child size at the LARGER parent, not at maximum_inputs_number. Drawing the target
+    // uniformly up to the cap made every child drift toward maximum_inputs_number, so the whole
+    // population collapsed onto max-size subsets (which overfit) and the search could never explore
+    // parsimonious ones -- the cap became an attractor. Bounding growth by the parents lets subset
+    // size evolve up OR down under selection pressure (mutation still explores beyond the parents).
+    const Index parents_max_size = max<Index>(parent_1.count(), parent_2.count());
+    const Index size_lower = max(minimum_inputs_number, current_size);
+    const Index size_upper = min(maximum_inputs_number, max<Index>(size_lower, parents_max_size));
+    const Index target_size = random_integer(size_lower, size_upper);
 
     shuffle_vector(difference);
     const Index genes_to_add = target_size - current_size;
@@ -405,38 +439,43 @@ void GeneticAlgorithm::perform_mutation()
     for (Index i = 0; i < individuals_number; ++i)
     {
         VectorB individual = population.row(i);
-        Index current_inputs_number = individual.count();
 
-        vector<Index> to_true_mutations;
-        vector<Index> to_false_mutations;
-        to_true_mutations.reserve(genes_number);
-        to_false_mutations.reserve(genes_number);
-
+        vector<Index> active, inactive;
+        active.reserve(genes_number);
+        inactive.reserve(genes_number);
         for (Index j = 0; j < genes_number; ++j)
-            if (random_uniform(0.0, 1.0) < mutation_rate)
-                (individual(j) ? to_false_mutations : to_true_mutations).push_back(j);
+            (individual(j) ? active : inactive).push_back(j);
 
-        shuffle_vector(to_true_mutations);
-        shuffle_vector(to_false_mutations);
+        // BALANCED mutation: expected #additions == expected #removals == mutation_rate * subset_size,
+        // so the subset size drifts up OR down by chance but never systematically toward the cap.
+        // The old code scanned all genes at a flat rate, so with genes_number >> subset_size the 0->1
+        // candidates hugely outnumbered the 1->0 ones and every individual was filled to
+        // maximum_inputs_number -- collapsing the population onto max-size (overfitting) subsets.
+        const Index size = Index(active.size());
 
-        const Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
+        vector<Index> to_remove;
+        for (const Index a : active)
+            if (random_uniform(0.0, 1.0) < mutation_rate) to_remove.push_back(a);
 
-        for (Index j = 0; j < swap_count; ++j)
+        Index additions = 0;                                  // ~ Binomial(size, mutation_rate)
+        for (Index t = 0; t < size; ++t)
+            if (random_uniform(0.0, 1.0) < mutation_rate) ++additions;
+
+        shuffle_vector(to_remove);
+        shuffle_vector(inactive);
+
+        Index current = size;
+        for (const Index r : to_remove)
         {
-            individual(to_true_mutations[j]) = true;
-            individual(to_false_mutations[j]) = false;
+            if (current <= minimum_inputs_number) break;
+            individual(r) = false;
+            --current;
         }
-
-        for (size_t j = swap_count; j < to_true_mutations.size() && current_inputs_number < maximum_inputs_number; ++j)
+        for (Index a = 0; a < additions && a < Index(inactive.size()); ++a)
         {
-            individual(to_true_mutations[j]) = true;
-            ++current_inputs_number;
-        }
-
-        for (size_t j = swap_count; j < to_false_mutations.size() && current_inputs_number > minimum_inputs_number; ++j)
-        {
-            individual(to_false_mutations[j]) = false;
-            current_inputs_number--;
+            if (current >= maximum_inputs_number) break;
+            individual(inactive[a]) = true;
+            ++current;
         }
 
         population.row(i) = individual;
@@ -454,7 +493,9 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     original_target_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
 
-    throw_if(!dataset->has_validation(),
+    // With k-fold CV the folds provide the validation set, so a persistent validation split is only
+    // required for the single-split path (folds_number == 1).
+    throw_if(folds_number <= 1 && !dataset->has_validation(),
              "dataset has no validation samples. "
              "The genetic algorithm uses validation error to rank individuals.");
 
@@ -597,9 +638,17 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     {
         neural_network->set_parameters(input_selection_results.optimal_parameters);
     }
+    else if (folds_number > 1)
+    {
+        // k-fold CV path (keeps no snapshot): refit the final model on ALL development samples
+        // (Training + Validation), using the epoch budget the CV of the selected subset found best.
+        if (display) cout << "Refitting the final model on all development samples.\n";
+        refit_final_model_on_development(training_strategy, folds_number);
+    }
     else
     {
-        if (display) cout << "Retraining with optimal features (parameter layout changed after recompile).\n";
+        // No snapshot with folds=1 (parameter layout changed on recompile): refit on the user's split.
+        if (display) cout << "Refitting the final model on the selected inputs.\n";
         neural_network->set_parameters_random();
         training_strategy->train();
     }
@@ -625,7 +674,8 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumGenerationsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}});
+        {"MaximumTime", to_string(maximum_time)},
+        {"FoldsNumber", to_string(folds_number)}});
 
     printer.close_element();
 }
@@ -642,6 +692,10 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
     set_maximum_inputs_number(read_json_index(root, "MaximumInputsNumber"));
     set_maximum_epochs(read_json_index(root, "MaximumGenerationsNumber"));
     set_maximum_time(read_json_float(root, "MaximumTime"));
+
+    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
+    if (root->has("FoldsNumber"))
+        set_folds_number(read_json_index(root, "FoldsNumber"));
 }
 
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
