@@ -70,15 +70,21 @@ void* allocate_cuda(Index byte_count)
 bool has_cuda_device() noexcept
 {
 #ifdef OPENNN_HAS_CUDA
-    int count = 0;
-    const cudaError_t error = cudaGetDeviceCount(&count);
-    if (error != cudaSuccess)
+    // The visible device count cannot change within a process, so probe once.
+    static const bool available = []() noexcept
     {
-        cudaGetLastError();
-        return false;
-    }
+        int count = 0;
+        const cudaError_t error = cudaGetDeviceCount(&count);
+        if (error != cudaSuccess)
+        {
+            cudaGetLastError();
+            return false;
+        }
 
-    return count > 0;
+        return count > 0;
+    }();
+
+    return available;
 #else
     return false;
 #endif

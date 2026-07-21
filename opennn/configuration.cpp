@@ -21,13 +21,26 @@ Configuration& Configuration::instance()
 void Configuration::set(Device new_device,
                         Type new_training_type)
 {
+    const std::lock_guard<std::mutex> lock(configuration_mutex);
+
     device         = new_device;
     training_type  = new_training_type;
+    ++generation;
+}
+
+unsigned Configuration::get_generation() const
+{
+    const std::lock_guard<std::mutex> lock(configuration_mutex);
+
+    return generation;
 }
 
 Configuration::Resolved Configuration::resolve() const
 {
+    const std::lock_guard<std::mutex> lock(configuration_mutex);
+
     Resolved resolved;
+    resolved.generation = generation;
     bool cuda_available = false;
 
     switch (device)

@@ -11,7 +11,7 @@
 //   (a .bin GitHub release asset) and loaded with load_parameters_binary().
 //
 //   usage: bert [sst2.txt] [vocab.txt] [weights.bin] [seq]
-//     sst2.txt    text<TAB>label file (default: bundled ../data/sst2.txt)
+//     sst2.txt    text<TAB>label file (default: bundled ../data/bert/sst2.txt)
 //     vocab.txt   WordPiece vocabulary; downloaded from the GitHub release if missing
 //     weights.bin pretrained weights; downloaded from the GitHub release if missing
 //     seq         sequence length; must match the weights (default 64)
@@ -126,9 +126,9 @@ int main(int argc, char* argv[])
     {
         cout << "OpenNN. BERT SST-2 example." << endl;
 
-        const string text_path       = argc > 1 ? argv[1] : "../data/sst2.txt";
-        const string vocab_path      = argc > 2 ? argv[2] : "../data/bert-base-uncased-vocab.txt";
-        const string weights_path    = argc > 3 ? argv[3] : "../data/bert-base-uncased-seq64.bin";
+        const string text_path       = argc > 1 ? argv[1] : "../data/bert/sst2.txt";
+        const string vocab_path      = argc > 2 ? argv[2] : "../data/bert/bert-base-uncased-vocab.txt";
+        const string weights_path    = argc > 3 ? argv[3] : "../data/bert/bert-base-uncased-seq64.bin";
         const Index  sequence_length = argc > 4 ? Index(stol(argv[4])) : 64;
 
         Configuration::instance().set(Device::Auto, Type::FP32);   // weights .bin is FP32

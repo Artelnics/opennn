@@ -259,6 +259,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 TrainingResult LevenbergMarquardtAlgorithm::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
+    neural_network->warn_if_stale_configuration();
 
     throw_if(neural_network->is_gpu(),
              "LevenbergMarquardtAlgorithm does not support GPU training: "

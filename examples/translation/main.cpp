@@ -33,7 +33,7 @@ int main()
 
         // Dataset
 
-        LanguageDataset language_dataset("../data/ES-EN-small.txt");
+        LanguageDataset language_dataset("../data/translation/ES-EN-small.txt");
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
         const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();

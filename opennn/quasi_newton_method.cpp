@@ -183,6 +183,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 TrainingResult QuasiNewtonMethod::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
+    neural_network->warn_if_stale_configuration();
 
     throw_if(neural_network->is_gpu(),
              "QuasiNewtonMethod does not support GPU training: "

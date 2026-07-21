@@ -33,7 +33,7 @@ int main()
 
         const Index sequence_length = 64;
 
-        TextGenerationDataset dataset("../data/shakespeare.txt", sequence_length);
+        TextGenerationDataset dataset("../data/text_generation/shakespeare.txt", sequence_length);
 
         const Index vocabulary_size = dataset.get_vocabulary_size();
 

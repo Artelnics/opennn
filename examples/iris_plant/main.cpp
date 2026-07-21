@@ -27,7 +27,7 @@ int main()
 
         // Dataset
 
-        TabularDataset dataset("../data/iris_plant_original.csv", ";", true, false);
+        TabularDataset dataset("../data/iris_plant/iris_plant_original.csv", ";", true, false);
 
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");

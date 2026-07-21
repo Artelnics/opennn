@@ -37,6 +37,8 @@ public:
 
     Type get_training_type()  const noexcept { return config.training_type; }
 
+    void warn_if_stale_configuration() const;
+
     vector<vector<TensorSpec>> get_parameter_specs() const
     {
         return collect_layer_specs([](const Layer& layer) { return layer.get_parameter_specs(); });
@@ -264,6 +266,8 @@ protected:
     Buffer states;
 
     Configuration::Resolved config;
+
+    mutable bool stale_configuration_warned = false;
 
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;

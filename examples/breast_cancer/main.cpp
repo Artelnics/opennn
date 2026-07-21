@@ -29,7 +29,7 @@ int main()
 
         // Dataset
 
-        TabularDataset dataset("../data/breast_cancer.csv", ";", true, false);
+        TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
         const Index neurons_number = 3;
 

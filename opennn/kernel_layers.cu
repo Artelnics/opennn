@@ -33,7 +33,7 @@ template void bounding_cuda<float,         __nv_bfloat16>(const Index, const int
 template void bounding_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, float*);
 template void bounding_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*);
 
-template<typename TIn, typename TOut>
+template<typename TIn, typename TOut, bool Inverse>
 __global__ void scale_kernel(const int n, const int features,
                              const TIn* __restrict__ input,
                              const float* __restrict__ minimums,
@@ -54,23 +54,35 @@ __global__ void scale_kernel(const int n, const int features,
         switch (code)
         {
         case 1:
-        {
-            const float range = maximums[f] - minimums[f];
-            y = (range < FLT_EPSILON) ? 0.0f
-              : (x - minimums[f]) / range * (max_range - min_range) + min_range;
+            if constexpr (Inverse)
+                y = (max_range - min_range < FLT_EPSILON)
+                    ? minimums[f]
+                    : (x - min_range) / (max_range - min_range)
+                        * (maximums[f] - minimums[f]) + minimums[f];
+            else
+            {
+                const float range = maximums[f] - minimums[f];
+                y = (range < FLT_EPSILON) ? 0.0f
+                  : (x - minimums[f]) / range * (max_range - min_range) + min_range;
+            }
             break;
-        }
         case 2:
-            y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
+            if constexpr (Inverse)
+                y = means[f] + x * stds[f];
+            else
+                y = (stds[f] > FLT_EPSILON) ? (x - means[f]) / stds[f] : 0.0f;
             break;
         case 3:
-            y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
+            if constexpr (Inverse)
+                y = x * stds[f];
+            else
+                y = (stds[f] > FLT_EPSILON) ? x / stds[f] : 0.0f;
             break;
         case 4:
-            y = logf(fmaxf(x, FLT_EPSILON));
+            y = Inverse ? expf(x) : logf(fmaxf(x, FLT_EPSILON));
             break;
         case 5:
-            y = x / 255.0f;
+            y = Inverse ? x * 255.0f : x / 255.0f;
             break;
         default:
             break;
@@ -93,7 +105,7 @@ void scale_cuda(const Index n, const int features,
 
     const int total = checked_int(n);
 
-    OPENNN_CUDA_LAUNCH(scale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
+    OPENNN_CUDA_LAUNCH(scale_kernel<TIn, TOut, false><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
                                                                    input, minimums, maximums, means, stds, scalers,
                                                                    min_range, max_range, output));
 }
@@ -102,52 +114,6 @@ template void scale_cuda<float,         float>        (const Index, const int, c
 template void scale_cuda<float,         __nv_bfloat16>(const Index, const int, const float*,         const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
 template void scale_cuda<__nv_bfloat16, float>        (const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, float*);
 template void scale_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const int, const __nv_bfloat16*, const float*, const float*, const float*, const float*, const float*, float, float, __nv_bfloat16*);
-
-template<typename TIn, typename TOut>
-__global__ void unscale_kernel(const int n, const int features,
-                               const TIn* __restrict__ input,
-                               const float* __restrict__ minimums,
-                               const float* __restrict__ maximums,
-                               const float* __restrict__ means,
-                               const float* __restrict__ stds,
-                               const float* __restrict__ scalers,
-                               const float min_range, const float max_range,
-                               TOut* __restrict__ output)
-{
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-    {
-        const int f = i % features;
-        const int code = static_cast<int>(scalers[f]);
-        const float x = static_cast<float>(input[i]);
-        float y = x;
-
-        switch (code)
-        {
-        case 1:
-            y = (max_range - min_range < FLT_EPSILON)
-                ? minimums[f]
-                : (x - min_range) / (max_range - min_range)
-                    * (maximums[f] - minimums[f]) + minimums[f];
-            break;
-        case 2:
-            y = means[f] + x * stds[f];
-            break;
-        case 3:
-            y = x * stds[f];
-            break;
-        case 4:
-            y = expf(x);
-            break;
-        case 5:
-            y = x * 255.0f;
-            break;
-        default:
-            break;
-        }
-
-        output[i] = static_cast<TOut>(y);
-    }
-}
 
 template<typename TIn, typename TOut>
 void unscale_cuda(const Index n, const int features,
@@ -162,7 +128,7 @@ void unscale_cuda(const Index n, const int features,
 
     const int total = checked_int(n);
 
-    OPENNN_CUDA_LAUNCH(unscale_kernel<TIn, TOut><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
+    OPENNN_CUDA_LAUNCH(scale_kernel<TIn, TOut, true><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, features,
                                                                     input, minimums, maximums, means, stds, scalers,
                                                                     min_range, max_range, output));
 }

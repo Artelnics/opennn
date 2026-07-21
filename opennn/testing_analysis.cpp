@@ -524,10 +524,14 @@ TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
+    const VectorI positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+
     RocAnalysis roc_analysis;
     roc_analysis.roc_curve = calculate_roc_curve(targets, outputs);
     roc_analysis.area_under_curve = calculate_area_under_curve(roc_analysis.roc_curve);
-    roc_analysis.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
+    roc_analysis.confidence_limit = calculate_area_under_curve_confidence_limit(roc_analysis.area_under_curve,
+                                                                                positives_negatives_rate(0),
+                                                                                positives_negatives_rate(1));
     roc_analysis.optimal_threshold = calculate_optimal_threshold(roc_analysis.roc_curve);
 
     return roc_analysis;
@@ -609,18 +613,22 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR
 {
     const VectorI positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
-    const Index total_positives = positives_negatives_rate[0];
-    const Index total_negatives = positives_negatives_rate[1];
+    const MatrixR roc_curve = calculate_roc_curve(targets, outputs);
 
+    return calculate_area_under_curve_confidence_limit(calculate_area_under_curve(roc_curve),
+                                                       positives_negatives_rate(0),
+                                                       positives_negatives_rate(1));
+}
+
+float TestingAnalysis::calculate_area_under_curve_confidence_limit(float area_under_curve,
+                                                                   Index total_positives,
+                                                                   Index total_negatives) const
+{
     throw_if(total_positives == 0,
              format("Number of positive samples({}) must be greater than zero.\n", total_positives));
 
     throw_if(total_negatives == 0,
              format("Number of negative samples({}) must be greater than zero.\n", total_negatives));
-
-    const MatrixR roc_curve = calculate_roc_curve(targets, outputs);
-
-    const float area_under_curve = calculate_area_under_curve(roc_curve);
 
     const float Q_1 = area_under_curve/(2.0f - area_under_curve);
     const float Q_2 = (2.0f * area_under_curve * area_under_curve) / (1.0f + area_under_curve);

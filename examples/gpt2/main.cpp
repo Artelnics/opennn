@@ -152,13 +152,13 @@ int main(int argc, char* argv[])
         const float  temperature    = argc > 3 ? stof(argv[3]) : 0.8f;
         const Index  top_k          = argc > 4 ? Index(stol(argv[4])) : 40;
 
-        const string weights_path = "../data/gpt2-small-seq256.bin";
-        const string vocab_path   = "../data/vocab.json";
-        const string merges_path  = "../data/merges.txt";
+        const string weights_path = "../data/gpt2/gpt2-small-seq256.bin";
+        const string vocab_path   = "../data/gpt2/vocab.json";
+        const string merges_path  = "../data/gpt2/merges.txt";
 
         Configuration::instance().set(Device::CPU, Type::FP32);   // weights .bin is FP32
 
-        filesystem::create_directories("../data");
+        filesystem::create_directories("../data/gpt2");
         download_if_missing(weights_path, WEIGHTS_URL);
         download_if_missing(vocab_path, VOCAB_URL);
         download_if_missing(merges_path, MERGES_URL);

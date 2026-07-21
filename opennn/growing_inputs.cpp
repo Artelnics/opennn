@@ -74,8 +74,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     if (display) cout << "Calculating correlations...\n";
 
+    const auto* correlations_dataset = dynamic_cast<const TabularDataset*>(dataset);
+    throw_if(!correlations_dataset, "Expected TabularDataset.");
+
     const VectorR total_correlations =
-        get_correlation_values(dataset->calculate_input_target_variable_pearson_correlations()).col(0).array().abs();
+        get_correlation_values(correlations_dataset->calculate_input_target_variable_pearson_correlations()).col(0).array().abs();
 
     vector<Index> correlation_indices(original_input_variables_number);
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
@@ -288,7 +291,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};
-    const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
+    const vector<Descriptives> input_variable_descriptives = tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{};
 
     set_maximum_inputs_number(dataset->get_variables_number("Input"));
 

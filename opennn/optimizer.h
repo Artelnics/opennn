@@ -68,7 +68,18 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
-    virtual TrainingResult train() = 0;
+
+    void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
+    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
+
+    void set_restore_best(bool enabled) { restore_best = enabled; }
+    bool get_restore_best() const noexcept { return restore_best; }
+
+    // Mini-batch training: preamble (indices, batch sizing, pools, propagation
+    // buffers), CUDA warmup, epoch loop and epilogue. SGD and Adam use it as
+    // is, injecting their specifics through the four hooks below; full-batch
+    // optimizers (quasi-Newton, Levenberg-Marquardt) override it entirely.
+    virtual TrainingResult train();
 
     Index get_maximum_batch_size() const;
 
@@ -175,6 +186,12 @@ protected:
     struct EpochLoopContext;
     Loss::EvaluationResult run_epoch_loop(EpochLoopContext&);
 
+    virtual string get_display_name() const { return name; }
+    virtual void setup_optimizer_data(OptimizerData&, Index, Device, bool) {}
+    virtual void update_parameters(BackPropagation&, OptimizerData&)
+    { throw runtime_error("train() requires a mini-batch optimizer (SGD or Adam)."); }
+    virtual void on_epoch_begin(Index, OptimizerData&) {}
+
     void reset_graph_capture();
 
     bool cuda_graph_requested() const;
@@ -211,12 +228,21 @@ protected:
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
+    // Global-norm gradient clipping applied by the mini-batch optimizers;
+    // <= 0 disables it (the default -- clipping is opt-in).
+    float gradient_clip_norm = 0.0f;
+
+    // Whether train() ends by restoring the lowest-validation-error snapshot.
+    bool restore_best = true;
+
     float best_validation_error = numeric_limits<float>::max();
     Index best_epoch = -1;
     vector<float> best_parameters;
     vector<float> best_states;
 
     Index maximum_epochs = 10000;
+
+    Index batch_size = 0;
 
     float maximum_time = 360000.0f;
 

@@ -34,7 +34,7 @@ int main()
 
         // Dataset
 
-        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+        LanguageDataset language_dataset("../data/amazon_reviews/amazon_cells_labelled.txt");
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();

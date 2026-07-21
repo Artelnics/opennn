@@ -34,16 +34,18 @@ public:
     void set_momentum(const float);
     void set_nesterov(bool);
 
-    void update_parameters(BackPropagation&, OptimizerData&, float) const;
+    void update_parameters(BackPropagation&, OptimizerData&) override;
     void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
-
-    TrainingResult train() override;
 
     void from_JSON(const JsonDocument&) override;
 
     void to_JSON(JsonWriter&) const override;
 
 private:
+
+    string get_display_name() const override { return "stochastic gradient descent (SGD)"; }
+    void setup_optimizer_data(OptimizerData&, Index, Device, bool) override;
+    void on_epoch_begin(Index, OptimizerData&) override;
 
     float initial_learning_rate;
 
@@ -53,7 +55,7 @@ private:
 
     bool nesterov = false;
 
-    Index batch_size = 0;
+    float current_learning_rate = 0.0f;
 };
 
 }

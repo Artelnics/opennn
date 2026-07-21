@@ -33,9 +33,6 @@ public:
     void set_beta_1(const float);
     void set_beta_2(const float);
 
-    void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
-    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
-
     // Gradient accumulation: with period K > 1 the parameter update runs once
     // every K mini-batches on the mean of their gradients -- one optimizer
     // step over a virtual batch of K * batch_size samples whose activation
@@ -48,9 +45,7 @@ public:
     }
     Index get_update_period() const noexcept { return update_period; }
 
-    TrainingResult train() override;
-
-    void update_parameters(BackPropagation&, OptimizerData&) const;
+    void update_parameters(BackPropagation&, OptimizerData&) override;
 
     void update_parameters_capturable(BackPropagation&, OptimizerData&) const;
 
@@ -60,17 +55,19 @@ public:
 
 private:
 
+    string get_display_name() const override { return "adaptive moment estimation \"Adam\""; }
+    void setup_optimizer_data(OptimizerData&, Index, Device, bool) override;
+
     float learning_rate = 0.001f;
 
     float beta_1 = 0.9f;
 
     float beta_2 = 0.999f;
 
-    float gradient_clip_norm = 5.0f;
-
-    Index batch_size = 0;
-
     Index update_period = 1;
+
+    Buffer gradient_accumulator;
+    Index accumulated_batches = 0;
 };
 
 }

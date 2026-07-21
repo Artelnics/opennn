@@ -1707,99 +1707,14 @@ void TabularDataset::read_csv()
     Index parse_error_index = samples_number;
     string parse_error_msg;
 
-    if (binary_storage)
+    // Parseo paralelo de las filas [base, end) sobre `destination` (la matriz
+    // completa en modo Matrix, el buffer del chunk en modo BinaryFile — en ese
+    // modo `data` esta vacia y no debe tocarse). Marca filas incompletas como
+    // None solo en BinaryFile: el streaming no puede imputarlas despues.
+    auto parse_rows = [&](Index base, Index end, float* destination)
     {
-        const Index CHUNK = 16384;
-        vector<float> chunk_buffer;
-
-        for (Index base = 0; base < samples_number; base += CHUNK)
-        {
-            const Index end = (base + CHUNK < samples_number) ? base + CHUNK : samples_number;
-            const Index n = end - base;
-
-            chunk_buffer.assign(size_t(n) * feature_columns_number, 0.0f);
-
-            Index chunk_rows_mv = 0, chunk_mv = 0;
-            vector<Index> chunk_var_mv(variables_number, 0);
-
-            #pragma omp parallel
-            {
-                string th_scratch;
-                vector<string_view> th_tokens;
-                vector<Index> th_var_mv(variables_number, 0);
-                Index th_rows_mv = 0, th_mv = 0;
-
-                #pragma omp for schedule(static) nowait
-                for (Index i = base; i < end; ++i)
-                {
-                    get_token_views_maybe_quoted(lines[i], file_separator, has_quotes, th_scratch, th_tokens);
-
-                    float* row = chunk_buffer.data() + size_t(i - base) * feature_columns_number;
-
-                    const bool row_has_missing = count_missing(th_tokens, th_rows_mv, th_mv, th_var_mv);
-
-                    if (has_sample_ids)
-                        sample_ids[i] = string(th_tokens[0]);
-
-                    if (row_has_missing)
-                        sample_roles[i] = SampleRole::None;
-
-                    if (Index(ssize(th_tokens)) < variables_number + id_offset)
-                    {
-                        #pragma omp critical
-                        {
-                            if (i < bad_row_index)
-                            {
-                                bad_row = true;
-                                bad_row_index = i;
-                                bad_row_cols = ssize(th_tokens);
-                            }
-                        }
-                        continue;
-                    }
-
-                    try
-                    {
-                        parse_row(row, th_tokens);
-                    }
-                    catch (const exception& e)
-                    {
-                        #pragma omp critical
-                        {
-                            if (i < parse_error_index)
-                            {
-                                parse_error = true;
-                                parse_error_index = i;
-                                parse_error_msg = e.what();
-                            }
-                        }
-                    }
-                }
-
-                #pragma omp critical
-                {
-                    chunk_rows_mv += th_rows_mv;
-                    chunk_mv += th_mv;
-                    for (Index v = 0; v < variables_number; ++v)
-                        chunk_var_mv[v] += th_var_mv[v];
-                }
-            }
-
-            rows_missing_values_number += chunk_rows_mv;
-            missing_values_number += chunk_mv;
-            for (Index v = 0; v < variables_number; ++v)
-                variables_missing_values_number(v) += chunk_var_mv[v];
-
-            for (Index i = base; i < end; ++i)
-                refine_numeric(chunk_buffer.data() + size_t(i - base) * feature_columns_number);
-
-            cache_writer.write(chunk_buffer.data(), size_t(n) * feature_columns_number * sizeof(float));
-        }
-    }
-    else
-    {
-        Index total_rows_mv = 0, total_mv = 0;
-        vector<Index> total_var_mv(variables_number, 0);
+        Index range_rows_mv = 0, range_mv = 0;
+        vector<Index> range_var_mv(variables_number, 0);
 
         #pragma omp parallel
         {
@@ -1809,16 +1724,19 @@ void TabularDataset::read_csv()
             Index th_rows_mv = 0, th_mv = 0;
 
             #pragma omp for schedule(static) nowait
-            for (Index i = 0; i < samples_number; ++i)
+            for (Index i = base; i < end; ++i)
             {
                 get_token_views_maybe_quoted(lines[i], file_separator, has_quotes, th_scratch, th_tokens);
 
-                float* row = data.data() + i * feature_columns_number;
+                float* row = destination + size_t(i - base) * feature_columns_number;
 
-                count_missing(th_tokens, th_rows_mv, th_mv, th_var_mv);
+                const bool row_has_missing = count_missing(th_tokens, th_rows_mv, th_mv, th_var_mv);
 
                 if (has_sample_ids)
                     sample_ids[i] = string(th_tokens[0]);
+
+                if (binary_storage && row_has_missing)
+                    sample_roles[i] = SampleRole::None;
 
                 if (Index(ssize(th_tokens)) < variables_number + id_offset)
                 {
@@ -1854,21 +1772,41 @@ void TabularDataset::read_csv()
 
             #pragma omp critical
             {
-                total_rows_mv += th_rows_mv;
-                total_mv += th_mv;
+                range_rows_mv += th_rows_mv;
+                range_mv += th_mv;
                 for (Index v = 0; v < variables_number; ++v)
-                    total_var_mv[v] += th_var_mv[v];
+                    range_var_mv[v] += th_var_mv[v];
             }
         }
 
-        rows_missing_values_number += total_rows_mv;
-        missing_values_number += total_mv;
+        rows_missing_values_number += range_rows_mv;
+        missing_values_number += range_mv;
         for (Index v = 0; v < variables_number; ++v)
-            variables_missing_values_number(v) += total_var_mv[v];
+            variables_missing_values_number(v) += range_var_mv[v];
 
-        for (Index i = 0; i < samples_number; ++i)
-            refine_numeric(data.data() + i * feature_columns_number);
+        for (Index i = base; i < end; ++i)
+            refine_numeric(destination + size_t(i - base) * feature_columns_number);
+    };
+
+    if (binary_storage)
+    {
+        const Index CHUNK = 16384;
+        vector<float> chunk_buffer;
+
+        for (Index base = 0; base < samples_number; base += CHUNK)
+        {
+            const Index end = min(base + CHUNK, samples_number);
+            const Index n = end - base;
+
+            chunk_buffer.assign(size_t(n) * feature_columns_number, 0.0f);
+
+            parse_rows(base, end, chunk_buffer.data());
+
+            cache_writer.write(chunk_buffer.data(), size_t(n) * feature_columns_number * sizeof(float));
+        }
     }
+    else
+        parse_rows(0, samples_number, data.data());
 
     // Lanzar (ya fuera de la region paralela) el error de MENOR indice de fila,
     // sea de numero de columnas o de parseo (p.ej. fecha malformada).

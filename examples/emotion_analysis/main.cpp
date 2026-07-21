@@ -33,7 +33,7 @@ int main()
 
         // Data Set
 
-        LanguageDataset language_dataset("../data/emotion_analysis.txt");
+        LanguageDataset language_dataset("../data/emotion_analysis/emotion_analysis.txt");
 
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index maximum_input_sequence_length = language_dataset.get_maximum_input_sequence_length();

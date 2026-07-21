@@ -44,8 +44,8 @@ public:
     MatrixR get_data(const string&, const string&) const;
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    MatrixR get_variable_data(Index) const override;
-    MatrixR get_variable_data(Index, const vector<Index>&) const override;
+    MatrixR get_variable_data(Index) const;
+    MatrixR get_variable_data(Index, const vector<Index>&) const;
     MatrixR get_variable_data(const string&) const;
 
     MatrixR get_feature_data(const string&) const;
@@ -65,7 +65,7 @@ public:
     // applications that keep the binary next to the model (Neural Designer).
     void set_binary_cache_path(const filesystem::path&);
 
-    vector<string> get_feature_scalers(const string&) const override;
+    vector<string> get_feature_scalers(const string&) const;
 
     void set_variable_scalers(const string&);
     void set_variable_scalers(const vector<string>&);
@@ -92,35 +92,36 @@ public:
     virtual void impute_missing_values_unuse();
     virtual void impute_missing_values_interpolate();
 
-    vector<string> unuse_uncorrelated_variables(const float = 0.25f) override;
+    vector<string> unuse_uncorrelated_variables(const float = 0.25f);
+    vector<string> unuse_collinear_variables(const float = 0.9f) { return {}; }
     vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;
-    vector<Descriptives> calculate_feature_descriptives(const string&) const override;
+    vector<Descriptives> calculate_feature_descriptives(const string&) const;
     vector<Descriptives> calculate_feature_descriptives(const string&, const vector<Index>&) const;
 
-    vector<Descriptives> calculate_variable_descriptives_positive_samples() const override;
-    vector<Descriptives> calculate_variable_descriptives_negative_samples() const override;
-    vector<Descriptives> calculate_variable_descriptives_categories(Index) const override;
+    vector<Descriptives> calculate_variable_descriptives_positive_samples() const;
+    vector<Descriptives> calculate_variable_descriptives_negative_samples() const;
+    vector<Descriptives> calculate_variable_descriptives_categories(Index) const;
 
-    vector<Histogram> calculate_variable_distributions(const Index = 10) const override;
-    vector<BoxPlot> calculate_variables_box_plots() const override;
+    vector<Histogram> calculate_variable_distributions(const Index = 10) const;
+    vector<BoxPlot> calculate_variables_box_plots() const;
 
     Tensor<Correlation, 2> calculate_input_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), Correlation::Method, const string&) const;
-    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const override;
-    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const override;
+    Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const;
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
         Correlation (*)(const MatrixR&, const MatrixR&), const string&) const;
-    Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const override;
-    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const override;
+    Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
-    VectorI calculate_correlations_rank() const override;
+    VectorI calculate_correlations_rank() const;
 
     vector<Descriptives> scale_data();
-    vector<Descriptives> scale_features(const string&) override;
-    void unscale_features(const string&, const vector<Descriptives>&) override;
+    vector<Descriptives> scale_features(const string&);
+    void unscale_features(const string&, const vector<Descriptives>&);
 
     VectorI calculate_target_distribution() const override;
     vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);

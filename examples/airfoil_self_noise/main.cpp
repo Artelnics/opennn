@@ -37,7 +37,7 @@ int main()
 
         // DataSet
 
-        TabularDataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
+        TabularDataset dataset("../data/airfoil_self_noise/airfoil_self_noise.csv", ";", true, false);
 
         dataset.split_samples_random(float(0.8), float(0.0), float(0.2));
 

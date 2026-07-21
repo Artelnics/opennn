@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "types.h"
 
 namespace opennn
@@ -21,6 +23,7 @@ public:
     {
         Device device         = Device::CPU;
         Type   training_type  = Type::FP32;
+        unsigned generation   = 0;
     };
 
     static Configuration& instance();
@@ -30,14 +33,22 @@ public:
 
     Resolved resolve() const;
 
+    unsigned get_generation() const;
+
     bool is_gpu() const { return resolve().device == Device::CUDA; }
 
 private:
 
     Configuration() = default;
 
+    mutable std::mutex configuration_mutex;
+
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
+
+    // Bumped by every set(); NeuralNetwork::compile() snapshots it so a later
+    // set() can be detected as stale instead of being ignored silently.
+    unsigned generation   = 0;
 };
 
 inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }

@@ -1,16 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 
-if(UNIX AND NOT APPLE)
-	option(USE_OpenMP "Use OpenMP" ON)
-	if(USE_OpenMP)
-		find_package(OpenMP)
-		if(OPENMP_FOUND)
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		endif()
-	endif()
-endif()
-
 project(examples)
 
 if(NOT DEFINED OpenNN_BUILD_EXAMPLES)

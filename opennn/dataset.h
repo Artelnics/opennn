@@ -199,20 +199,6 @@ public:
     bool get_has_sample_ids() const { return has_sample_ids; }
     const vector<string>& get_sample_ids() const { return sample_ids; }
 
-    // Methods with default no-op implementations; subclasses override as needed
-    virtual vector<string> get_feature_scalers(const string&) const { return {}; }
-    virtual MatrixR get_variable_data(Index) const { return {}; }
-    virtual MatrixR get_variable_data(Index, const vector<Index>&) const { return {}; }
-    virtual vector<Histogram> calculate_variable_distributions(Index = 10) const { return {}; }
-    virtual vector<BoxPlot> calculate_variables_box_plots() const { return {}; }
-    virtual Tensor<Correlation, 2> calculate_input_variable_pearson_correlations() const { return {}; }
-    virtual Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const { return {}; }
-    virtual Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const { return calculate_input_target_variable_pearson_correlations(); }
-    virtual vector<string> unuse_uncorrelated_variables(float = 0.25f) { return {}; }
-    virtual vector<string> unuse_collinear_variables(float = 0.9f) { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_positive_samples() const { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_negative_samples() const { return {}; }
-    virtual vector<Descriptives> calculate_variable_descriptives_categories(Index) const { return {}; }
     virtual VectorI filter_data(const VectorR&, const VectorR&);
 
     bool has_categorical_variables() const
@@ -248,8 +234,6 @@ public:
                               float validation_ratio = 0.2f,
                               float testing_ratio = 0.2f);
 
-    virtual vector<Descriptives> scale_features(const string&) { return {}; }
-
     virtual void from_JSON(const JsonDocument&) = 0;
     virtual void to_JSON(JsonWriter&) const {}
 
@@ -257,14 +241,9 @@ public:
 
     virtual void scrub_missing_values() {}
 
-    virtual vector<Descriptives> calculate_feature_descriptives(const string&) const { return {}; }
-    virtual Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const { return {}; }
     virtual VectorI calculate_target_distribution() const { return {}; }
-    virtual VectorI calculate_correlations_rank() const { return {}; }
 
     pair<Index, Index> count_binary_targets(const string& sample_role) const;
-
-    virtual void unscale_features(const string&, const vector<Descriptives>&) {}
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);

@@ -116,6 +116,7 @@ public:
 
     float calculate_area_under_curve(const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
+    float calculate_area_under_curve_confidence_limit(float, Index, Index) const;
     float calculate_optimal_threshold(const MatrixR&) const;
 
     // Lift chart: cumulative-gains analysis over the testing samples sorted by

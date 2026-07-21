@@ -144,7 +144,10 @@ void GeneticAlgorithm::initialize_population_correlations()
     // position (higher position = more correlated = higher pick probability), i.e. the INVERSE
     // permutation. Using the argsort values directly weighted each gene by an unrelated variable
     // index, scrambling the correlation bias into noise -- a warm start in name only.
-    const VectorI correlations_argsort = dataset->calculate_correlations_rank();
+    const auto* correlations_dataset = dynamic_cast<const TabularDataset*>(dataset);
+    throw_if(!correlations_dataset, "Expected TabularDataset.");
+
+    const VectorI correlations_argsort = correlations_dataset->calculate_correlations_rank();
 
     VectorR gene_weight(genes_number);
     for (Index p = 0; p < genes_number; ++p)
@@ -616,7 +619,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     const vector<string> input_variable_scalers = tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{};
 
-    const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
+    const vector<Descriptives> input_variable_descriptives = tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{};
 
     const Index optimal_variables_number = dataset->get_features_number("Input");
 

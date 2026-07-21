@@ -81,6 +81,8 @@ void NeuralNetwork::compile(const Device device)
     config.device = device;
     if (device != Device::CUDA) config.training_type = Type::FP32;
 
+    stale_configuration_warned = false;
+
     for (auto& layer : layers)
     {
         layer->set_compute_device(get_device());
@@ -106,6 +108,19 @@ void NeuralNetwork::validate_type(LayerType type) const
 {
     throw_if(type == LayerType::Bounding,
              "No layers can be added after a bounding layer.\n");
+}
+
+void NeuralNetwork::warn_if_stale_configuration() const
+{
+    if (stale_configuration_warned
+        || config.generation == Configuration::instance().get_generation())
+        return;
+
+    stale_configuration_warned = true;
+
+    cerr << "Warning: Configuration::set() was called after this network was compiled, "
+            "so it has no effect on it. The network keeps the settings resolved at "
+            "compile() time; call Configuration::set() before constructing the network.\n";
 }
 
 bool NeuralNetwork::has(const string& name) const
@@ -630,6 +645,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     if (layers_number == 0)
         return {};
 
+    warn_if_stale_configuration();
+
     const Index batch_size = inputs_1.dimension(0);
 
     ForwardPropagation forward_propagation(batch_size, this);
@@ -658,6 +675,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 {
     if (layers.empty() || input_views.empty()) return {};
+
+    warn_if_stale_configuration();
 
     const Index batch_size = input_views[0].shape[0];
 

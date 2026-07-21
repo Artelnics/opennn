@@ -665,6 +665,7 @@ void Optimizer::set_scaling()
 void Optimizer::set_unscaling()
 {
     Dataset* dataset = loss->get_dataset();
+    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     auto reconstruct_descriptives = [](const VectorR& minimums, const VectorR& maximums,
@@ -683,7 +684,8 @@ void Optimizer::set_unscaling()
         {
             case 1:
             case 2:
-                dataset->unscale_features("Input",
+                throw_if(!tabular_dataset, "Expected TabularDataset.");
+                tabular_dataset->unscale_features("Input",
                     reconstruct_descriptives(layer->get_minimums(), layer->get_maximums(),
                                               layer->get_means(), layer->get_standard_deviations()));
                 break;
@@ -716,7 +718,10 @@ void Optimizer::set_unscaling()
     }
 
     if (!unscaled_targets_descriptives.empty())
-        dataset->unscale_features("Target", unscaled_targets_descriptives);
+    {
+        throw_if(!tabular_dataset, "Expected TabularDataset.");
+        tabular_dataset->unscale_features("Target", unscaled_targets_descriptives);
+    }
 }
 
 void Optimizer::warmup_device_training(
@@ -858,6 +863,214 @@ void Optimizer::display_epoch_results(const Index epoch,
     cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
 }
 
+TrainingResult Optimizer::train()
+{
+    TrainingResult results(maximum_epochs + 1);
+
+    if (!loss || !loss->get_neural_network() || !loss->get_dataset())
+        return results;
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+    neural_network->warn_if_stale_configuration();
+
+    const bool on_gpu = neural_network->is_gpu();
+
+    if (display) cout << "Training with " << get_display_name()
+                     << (on_gpu ? " CUDA" : "") << "...\n";
+
+    Dataset* dataset = loss->get_dataset();
+
+    const bool has_validation = dataset->has_validation();
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+
+    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
+
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
+
+    const Index effective_batch_size = batch_size <= 0
+        ? get_maximum_batch_size()
+        : batch_size;
+
+    const Index training_batch_size = (effective_batch_size <= 0 || effective_batch_size > training_samples_number)
+        ? training_samples_number
+        : effective_batch_size;
+    const Index validation_batch_size = (effective_batch_size <= 0 || effective_batch_size > validation_samples_number)
+        ? validation_samples_number
+        : effective_batch_size;
+    const Index training_batches_number = (training_batch_size > 0)
+        ? training_samples_number / training_batch_size
+        : 0;
+
+    warn_dropped_samples(training_batch_size, training_samples_number, "training");
+    if (has_validation)
+        warn_dropped_samples(validation_batch_size, validation_samples_number, "validation");
+
+    vector<vector<Index>> training_batches(training_batches_number);
+    vector<vector<Index>> validation_batches;
+
+    set_names();
+    set_scaling();
+
+    BatchPools batch_pools;
+    setup_batch_pools(batch_pools,
+                      *dataset,
+                      *neural_network,
+                      training_batch_size,
+                      validation_batch_size,
+                      has_validation);
+
+    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
+
+    loss->set_normalization_coefficient();
+
+    BackPropagation training_back_propagation(training_batch_size, loss);
+
+    // Validation runs only at epoch boundaries, never concurrently with a
+    // training step, so its activations overlay the (then-idle) training
+    // ForwardPropagation buffer instead of reserving a second full buffer.
+    // set() falls back to its own allocation if the training buffer is smaller.
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+    if (has_validation)
+    {
+        validation_forward_propagation = make_unique<ForwardPropagation>();
+        validation_forward_propagation->set(validation_batch_size, neural_network,
+                                            &training_forward_propagation.data);
+    }
+
+    ForwardPropagation* validation_fp = validation_forward_propagation.get();
+    mark_validation_propagation(validation_fp);
+
+    setup_device_training();
+
+    const Index parameters_number = neural_network->get_parameters_size();
+    const Device device = neural_network->get_device();
+
+    float training_error = 0.0f;
+    float training_accuracy = 0.0f;
+    float validation_error = 0.0f;
+    float validation_accuracy = 0.0f;
+    Index validation_failures = 0;
+    reset_best_parameters();
+
+    const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
+
+    const bool shuffle = shuffle_samples;
+
+    reset_graph_capture();
+
+    OptimizerData optimizer_data;
+    setup_optimizer_data(optimizer_data, parameters_number, device, on_gpu);
+
+    const function<void(BackPropagation&)> training_update =
+        [this, &optimizer_data](BackPropagation& back_propagation) {
+            update_parameters(back_propagation, optimizer_data);
+        };
+
+    const bool needs_cuda_warmup = on_gpu && device::is_cuda_build() && training_batches_number > 0;
+
+    if (needs_cuda_warmup)
+    {
+        dataset->get_batches(training_sample_indices, training_batch_size, false, training_batches);
+        if (has_validation)
+            dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
+
+        // The warmup steps the real optimizer_data (a dedicated warmup copy
+        // would add parameters-sized buffers to the peak while the warmup runs
+        // full training steps); re-running the setup below discards that step.
+        warmup_device_training(training_forward_propagation,
+                               training_back_propagation,
+                               batch_pools.training_empty_queue,
+                               training_batches,
+                               input_feature_indices,
+                               decoder_feature_indices,
+                               target_feature_indices,
+                               training_update,
+                               validation_fp,
+                               has_validation ? &batch_pools.validation_queue() : nullptr,
+                               has_validation ? &validation_batches : nullptr,
+                               batch_pools.fixed_training_batch.get());
+
+        setup_optimizer_data(optimizer_data, parameters_number, device, on_gpu);
+    }
+
+    time_t beginning_time;
+    time(&beginning_time);
+    float elapsed_time = 0.0f;
+
+    {
+        device::CudaAllocationGrowthGuard steady_state_guard(needs_cuda_warmup);
+
+        for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+        {
+            if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+
+            dataset->get_batches(training_sample_indices, training_batch_size, shuffle, training_batches);
+
+            on_epoch_begin(epoch, optimizer_data);
+
+            const Loss::EvaluationResult training_evaluation_result = train_epoch(training_forward_propagation,
+                                                                                 training_back_propagation,
+                                                                                 batch_pools.training_empty_queue,
+                                                                                 training_batches,
+                                                                                 input_feature_indices,
+                                                                                 decoder_feature_indices,
+                                                                                 target_feature_indices,
+                                                                                 training_update,
+                                                                                 batch_pools.fixed_training_batch.get());
+
+            training_error = training_evaluation_result.error;
+            training_accuracy = training_evaluation_result.accuracy;
+            results.training_error_history(epoch) = training_error;
+
+            if (has_validation)
+            {
+                dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
+
+                const Loss::EvaluationResult validation_evaluation_result = evaluate_epoch(*validation_fp,
+                                                                                          batch_pools.validation_queue(),
+                                                                                          validation_batches,
+                                                                                          input_feature_indices,
+                                                                                          decoder_feature_indices,
+                                                                                          target_feature_indices);
+
+                validation_error = validation_evaluation_result.error;
+                validation_accuracy = validation_evaluation_result.accuracy;
+                results.validation_error_history(epoch) = validation_error;
+
+                update_best_parameters(neural_network, validation_error, epoch, validation_failures);
+            }
+
+            elapsed_time = get_elapsed_time(beginning_time);
+
+            display_epoch_results(epoch, training_error, training_accuracy,
+                                  validation_error, validation_accuracy,
+                                  has_validation, is_token_cross_entropy, elapsed_time);
+
+            if (check_stopping_condition(results, epoch, elapsed_time,
+                                         results.training_error_history(epoch),
+                                         validation_failures,
+                                         training_back_propagation.loss,
+                                         has_validation))
+                break;
+        }
+    }
+
+    teardown_device_training();
+
+    restore_best_parameters(neural_network, results);
+
+    set_unscaling();
+
+    if (display) results.print();
+
+    return results;
+}
+
 bool Optimizer::check_stopping_condition(TrainingResult& results,
                                           const Index epoch,
                                           const float elapsed_time,
@@ -951,7 +1164,8 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float vali
 
 void Optimizer::restore_best_parameters(NeuralNetwork* neural_network, TrainingResult& results)
 {
-    if (best_parameters.empty()
+    if (!restore_best
+        || best_parameters.empty()
         || Index(best_parameters.size()) != neural_network->get_parameters_size())
         return;
 
@@ -975,6 +1189,7 @@ void Optimizer::write_common_json(JsonWriter& printer) const
         {"MaximumValidationFailures", to_string(maximum_validation_failures)},
         {"MaximumEpochsNumber", to_string(maximum_epochs)},
         {"MaximumTime", to_string(maximum_time)},
+        {"GradientClipNorm", to_string(gradient_clip_norm)},
         {"DisplayPeriod", to_string(display_period)}
     });
 }
@@ -986,6 +1201,9 @@ void Optimizer::read_common_json(const Json* root_element)
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_epochs(read_json_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
+
+    if (root_element->has("GradientClipNorm"))
+        set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm"));
 
     // "Display every N epochs" from the editor. Guarded so models saved before this field
     // existed keep the default period instead of failing to load.
