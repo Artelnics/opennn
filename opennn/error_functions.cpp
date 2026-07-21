@@ -186,7 +186,7 @@ void weighted_squared_error(const TensorView& input, const TensorView& target, f
     const auto inputs = input.as_vector().array();
     const auto targets = target.as_vector().array();
     const auto squared_error = (inputs - targets).square();
-    error = 0.5f * (targets == 1.0f).select(squared_error * positive_weight, squared_error * negative_weight).sum();
+    error = 0.5f * (targets >= 0.5f).select(squared_error * positive_weight, squared_error * negative_weight).sum();
 }
 
 void weighted_squared_error_gradient(const TensorView& input, const TensorView& target, float positive_weight, float negative_weight, float coefficient, const TensorView& input_delta)
@@ -204,7 +204,7 @@ void weighted_squared_error_gradient(const TensorView& input, const TensorView& 
     const auto targets = target.as_vector().array();
     const auto difference = inputs - targets;
     input_delta.as_vector().array()
-        = (targets == 1.0f).select(positive_weight * difference, negative_weight * difference) * coefficient;
+        = (targets >= 0.5f).select(positive_weight * difference, negative_weight * difference) * coefficient;
 }
 
 void binary_cross_entropy(const TensorView& input, const TensorView& target, float& error,

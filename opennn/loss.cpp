@@ -946,6 +946,7 @@ void Loss::set_normalization_coefficient()
     normalization_coefficient = 1.0f;
     positives_weight = 1.0f;
     negatives_weight = 1.0f;
+    weighted_samples_number = 0;
 
     if (!dataset || dataset->get_samples_number() == 0)
         return;
@@ -975,14 +976,11 @@ void Loss::set_normalization_coefficient()
         const Index targets_number = dataset->get_features_number("Target");
         if (targets_number != 1) return;
 
-        const VectorI distribution = dataset->calculate_target_distribution();
-
-        if (distribution.size() < 2) return;
-
-        const Index negatives = distribution(0);
-        const Index positives = distribution(1);
+        const auto [negatives, positives] = dataset->count_binary_targets("Training");
 
         if (positives == 0 || negatives == 0) return;
+
+        weighted_samples_number = positives + negatives;
 
         const float total = float(positives + negatives);
         positives_weight = total / (2.0f * float(positives));
@@ -1028,7 +1026,9 @@ void Loss::back_propagate(const Batch& batch,
 
 float Loss::get_weighted_coefficient(const Batch& batch) const
 {
-    const Index total = dataset ? dataset->get_samples_number() : batch.get_samples_number();
+    const Index total = weighted_samples_number > 0 ? weighted_samples_number
+                      : dataset                     ? dataset->get_samples_number()
+                                                    : batch.get_samples_number();
     const Index samples = batch.get_samples_number();
     return float(total) / (float(samples) * (normalization_coefficient + EPSILON));
 }

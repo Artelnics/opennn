@@ -186,6 +186,7 @@ protected:
     float normalization_coefficient = 1.0f;
     float positives_weight = 1.0f;
     float negatives_weight = 1.0f;
+    Index weighted_samples_number = 0;
     float minkowski_parameter = 1.5f;
 
     float yolo_lambda_giou     = 5.0f;

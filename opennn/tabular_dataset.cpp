@@ -146,6 +146,7 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
     {
         cache_columns_number = 0;
         cache_feature_descriptives.clear();
+        cache_transform_descriptives.clear();
         cache_feature_transforms.clear();
         cache_feature_replacement.clear();
         cache_reader.close();
@@ -324,7 +325,9 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
 
         if (method == ScalerMethod::None) continue;
 
-        const Descriptives& desc = cache_feature_descriptives[size_t(column)];
+        const Descriptives& desc = cache_transform_descriptives.empty()
+                                 ? cache_feature_descriptives[size_t(column)]
+                                 : cache_transform_descriptives[size_t(column)];
 
         for (Index i = 0; i < batch_size; ++i)
         {
@@ -336,8 +339,12 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
 
 void TabularDataset::compute_cache_descriptives() const
 {
+    cache_feature_descriptives = compute_descriptives_streaming(get_used_sample_indices());
+}
+
+vector<Descriptives> TabularDataset::compute_descriptives_streaming(const vector<Index>& sample_indices) const
+{
     const Index columns_number = cache_columns_number;
-    const vector<Index> used_sample_indices = get_used_sample_indices();
 
     vector<float> minimums(size_t(columns_number), numeric_limits<float>::infinity());
     vector<float> maximums(size_t(columns_number), -numeric_limits<float>::infinity());
@@ -347,7 +354,7 @@ void TabularDataset::compute_cache_descriptives() const
 
     vector<float> row(static_cast<size_t>(columns_number));
 
-    for (const Index sample_index : used_sample_indices)
+    for (const Index sample_index : sample_indices)
     {
         cache_reader.read_at(row.data(), size_t(columns_number) * sizeof(float),
                              uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
@@ -367,7 +374,7 @@ void TabularDataset::compute_cache_descriptives() const
         }
     }
 
-    cache_feature_descriptives.assign(size_t(columns_number), Descriptives());
+    vector<Descriptives> feature_descriptives(static_cast<size_t>(columns_number));
 
     for (Index j = 0; j < columns_number; ++j)
     {
@@ -390,11 +397,13 @@ void TabularDataset::compute_cache_descriptives() const
             standard_deviation = sqrt(max(0.0, variance));
         }
 
-        cache_feature_descriptives[size_t(j)].set(minimums[size_t(j)],
-                                                  maximums[size_t(j)],
-                                                  float(mean),
-                                                  float(standard_deviation));
+        feature_descriptives[size_t(j)].set(minimums[size_t(j)],
+                                            maximums[size_t(j)],
+                                            float(mean),
+                                            float(standard_deviation));
     }
+
+    return feature_descriptives;
 }
 
 void TabularDataset::fill_features(const vector<Index>& sample_indices, const vector<Index>& feature_indices,
@@ -990,17 +999,26 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 
     if (storage_mode == StorageMode::BinaryFile)
     {
-        // Descriptives from the raw cache (streaming). Must use the
-        // BinaryFile-aware single-arg overload: the (role, sample_indices)
-        // overload reads the data matrix, which is empty in BinaryFile mode
-        // (null deref during training's set_scaling).
-        const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
+        // Streamed from the raw cache: the data matrix is empty in BinaryFile
+        // mode. Training samples only, matching the Matrix path below.
+        if (cache_transform_descriptives.empty())
+        {
+            vector<Index> statistic_sample_indices = get_sample_indices("Training");
+            if (statistic_sample_indices.empty())
+                statistic_sample_indices = get_used_sample_indices();
+
+            cache_transform_descriptives = compute_descriptives_streaming(statistic_sample_indices);
+        }
 
         if (cache_feature_transforms.empty())
             cache_feature_transforms.assign(size_t(cache_columns_number), ScalerMethod::None);
 
         for (size_t i = 0; i < feature_indices.size(); ++i)
             cache_feature_transforms[size_t(feature_indices[i])] = string_to_scaler_method(scalers[i]);
+
+        vector<Descriptives> feature_descriptives(feature_indices.size());
+        for (size_t i = 0; i < feature_indices.size(); ++i)
+            feature_descriptives[i] = cache_transform_descriptives[size_t(feature_indices[i])];
 
         return feature_descriptives;
     }
@@ -1031,6 +1049,9 @@ void TabularDataset::unscale_features(const string& variable_role,
 
         for (const Index feature_index : feature_indices)
             cache_feature_transforms[size_t(feature_index)] = ScalerMethod::None;
+
+        // Recomputed on the next scale_features call, whose split may differ.
+        cache_transform_descriptives.clear();
 
         return;
     }
@@ -1084,6 +1105,7 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         const vector<vector<Index>> feature_indices = get_feature_indices();
         cache_columns_number = feature_indices.empty() ? 0 : feature_indices.back().back() + 1;
         cache_feature_descriptives.clear();
+        cache_transform_descriptives.clear();
         cache_feature_transforms.clear();
         cache_feature_replacement.clear();
 
@@ -1118,12 +1140,20 @@ VectorI TabularDataset::calculate_target_distribution() const
 
     if (targets_number == 1)
     {
-        class_distribution.resize(2);
+        class_distribution = VectorI::Zero(2);
 
-        const auto target_column = data.col(target_feature_indices[0]).head(samples_number).array();
+        const Index target_feature = target_feature_indices[0];
 
-        class_distribution(0) = (target_column < 0.5f).count();
-        class_distribution(1) = (target_column >= 0.5f).count();
+        for (Index i = 0; i < samples_number; ++i)
+        {
+            if (sample_roles[i] == SampleRole::None) continue;
+
+            const float value = data(i, target_feature);
+
+            if (isnan(value)) continue;
+
+            ++class_distribution(value >= 0.5f ? 1 : 0);
+        }
     }
     else
     {
@@ -1531,6 +1561,7 @@ void TabularDataset::read_csv()
 
         cache_columns_number = feature_columns_number;
         cache_feature_descriptives.clear();
+        cache_transform_descriptives.clear();
         cache_feature_transforms.clear();
         cache_feature_replacement.clear();
         row_values.resize(size_t(feature_columns_number));

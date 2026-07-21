@@ -47,9 +47,19 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
         {keep_pre_activation ? full  : Shape{}, compute_dtype},
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
         {batch_norm.active() ? stats : Shape{}, Type::FP32   },
-        {dropout.active()    ? full  : Shape{}, compute_dtype},
+        {saves_pre_dropout_activation() ? full : Shape{}, compute_dtype},
         {full,                                  compute_dtype},
     };
+}
+
+bool Dense::saves_pre_dropout_activation() const
+{
+    // ReLU's backward can gate on the post-dropout output: kept units keep their
+    // sign and dropped units already carry a zero delta. The fused GEMM epilogue
+    // never writes ActivationView, so saving there would hand the backward zeros.
+    return dropout.active()
+        && !activation_needs_input(activation_operator.activation_function)
+        && activation_operator.activation_function != ActivationFunction::ReLU;
 }
 
 vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
@@ -129,7 +139,7 @@ void Dense::configure_operators()
     dropout.input_slots  = {Output};
     dropout.output_slots = {Output};
 
-    activation_operator.save_slot = (!input_deriv && dropout.active()) ? ActivationView : SIZE_MAX;
+    activation_operator.save_slot = saves_pre_dropout_activation() ? ActivationView : SIZE_MAX;
 }
 
 void Dense::set_batch_normalization(bool enable)

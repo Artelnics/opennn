@@ -199,15 +199,18 @@ protected:
 
     void compute_cache_descriptives() const;
     void compute_cache_replacement() const;
+    vector<Descriptives> compute_descriptives_streaming(const vector<Index>&) const;
 
     filesystem::path cache_path;
     filesystem::path cache_path_override;
     mutable FileReader cache_reader;
     Index cache_columns_number = 0;
 
-    // The cache file keeps raw values; these drive the scaling applied to
-    // batches as they are read.
+    // Whole-used-dataset statistics backing analytics and NaN replacement.
     mutable vector<Descriptives> cache_feature_descriptives;
+    // Training-sample statistics behind cache_feature_transforms, matching the
+    // Matrix path: scaling must not see validation/testing samples.
+    vector<Descriptives> cache_transform_descriptives;
     // Per-cache-column value used to impute NaN on the fly when filling training/
     // testing batches (mean for continuous, mode for binary, most-frequent category
     // for categoricals). The on-disk cache itself stays raw so correlations keep

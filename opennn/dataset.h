@@ -262,6 +262,8 @@ public:
     virtual VectorI calculate_target_distribution() const { return {}; }
     virtual VectorI calculate_correlations_rank() const { return {}; }
 
+    pair<Index, Index> count_binary_targets(const string& sample_role) const;
+
     virtual void unscale_features(const string&, const vector<Descriptives>&) {}
 
     void save(const filesystem::path&) const;

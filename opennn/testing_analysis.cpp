@@ -418,11 +418,11 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 
     binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
-    const VectorI target_distribution = dataset->calculate_target_distribution();
+    const auto [negatives, positives] = dataset->count_binary_targets("Training");
     const float negative_weight = 1.0f;
-    const float positive_weight = (target_distribution[0] == 0 || target_distribution[1] == 0)
+    const float positive_weight = (negatives == 0 || positives == 0)
                            ? 1.0f
-                           : static_cast<float>(target_distribution[0]) / target_distribution[1];
+                           : static_cast<float>(negatives) / positives;
 
     weighted_squared_error(outputs_view, targets_view, positive_weight, negative_weight, errors(5), nullptr);
 

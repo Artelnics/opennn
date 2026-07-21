@@ -116,7 +116,7 @@ __global__ void weighted_squared_error_kernel(const int n, float* __restrict__ t
     {
         const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;
-        const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+        const float weight = (tgt >= 0.5f) ? positives_weight : negatives_weight;
 
         term_results[i] = diff * diff * weight;
     }
@@ -150,7 +150,7 @@ __global__ void weighted_squared_error_gradient_kernel(
     {
         const float tgt = targets[i];
         const float diff = static_cast<float>(outputs[i]) - tgt;
-        const float weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+        const float weight = (tgt >= 0.5f) ? positives_weight : negatives_weight;
         deltas[i] = static_cast<T>(diff * weight * scaling_factor);
     }
 }

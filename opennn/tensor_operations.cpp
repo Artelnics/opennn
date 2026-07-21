@@ -1598,57 +1598,9 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
             return;
         }
 
-        const bool unsupported_bf16_lt = output.is_bf16()
-                                      && (epilogue == CUBLASLT_EPILOGUE_BIAS
-                                          || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS)
-                                      && string(e.what()).find("CuBLAS Error: 15") != string::npos;
-
-        if (!unsupported_bf16_lt)
-            throw;
-
-        cudaStream_t stream = Backend::get_compute_stream();
-
-        VectorR input_host(input.size());
-        VectorR weights_host(weights.size());
-        VectorR bias_host(bias.size());
-        VectorR output_host(output.size());
-
-        copy_device_to_host_float(input.data, input.type, input.size(), input_host.data(), stream);
-        copy_device_to_host_float(weights.data, weights.type, weights.size(), weights_host.data(), stream);
-        if (bias.data)
-            copy_device_to_host_float(bias.data, bias.type, bias.size(), bias_host.data(), stream);
-
-        TensorView input_cpu(input_host.data(), input.shape, Type::FP32, Device::CPU);
-        TensorView weights_cpu(weights_host.data(), weights.shape, Type::FP32, Device::CPU);
-        TensorView bias_cpu(bias_host.data(), bias.shape, Type::FP32, Device::CPU);
-        TensorView output_cpu(output_host.data(), output.shape, Type::FP32, Device::CPU);
-
-        linear_forward_cpu(input_cpu, weights_cpu, bias_cpu, output_cpu, epilogue);
-
-        if (output.is_fp32())
-        {
-            device::copy_async(output.data,
-                               output_host.data(),
-                               output.byte_size(),
-                               device::CopyKind::HostToDevice,
-                               stream);
-        }
-        else
-        {
-            Buffer output_fp32(Device::CUDA);
-            output_fp32.resize_bytes(output.size() * Index(sizeof(float)), Device::CUDA);
-            device::copy_async(output_fp32.data,
-                               output_host.data(),
-                               output_fp32.bytes,
-                               device::CopyKind::HostToDevice,
-                               stream);
-            cast_fp32_to_bf16(output.size(),
-                                   output_fp32.as<float>(),
-                                   output.as<bfloat16>(),
-                                   stream);
-        }
-
-        device::synchronize(stream);
+        throw runtime_error(format("cuBLASLt GEMM {}x{}x{} ({}) failed: {}",
+                                   output_columns, total_rows, input_columns,
+                                   output.is_bf16() ? "bf16" : "fp32", e.what()));
     }
 }
 

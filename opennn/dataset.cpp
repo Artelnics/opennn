@@ -1046,6 +1046,27 @@ void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, b
     throw runtime_error("Dataset::fill_targets must be implemented by a concrete dataset.");
 }
 
+pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) const
+{
+    vector<Index> sample_indices = get_sample_indices(sample_role);
+    if (sample_indices.empty()) sample_indices = get_used_sample_indices();
+    if (sample_indices.empty()) return {0, 0};
+
+    vector<float> targets(sample_indices.size());
+    fill_targets(sample_indices, get_feature_indices("Target"), targets.data(), false);
+
+    Index negatives = 0;
+    Index positives = 0;
+
+    for (const float value : targets)
+    {
+        if (isnan(value)) continue;
+        ++(value >= 0.5f ? positives : negatives);
+    }
+
+    return {negatives, positives};
+}
+
 void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& sample_indices,
                          const vector<Index>& input_indices,

@@ -76,6 +76,7 @@ private:
     enum Forward {Input, CombinationView, BatchNormMean, BatchNormInverseVariance, ActivationView, Output};
 
     void configure_operators();
+    bool saves_pre_dropout_activation() const;
 };
 
 }
