@@ -340,6 +340,10 @@ void ModelExpression::check_parameters_are_finite() const
 
 string ModelExpression::build_expression() const
 {
+    auto* network = const_cast<NeuralNetwork*>(neural_network);
+    const bool was_on_device = (neural_network->get_parameters_device() == Device::CUDA);
+    if (was_on_device) network->copy_parameters_host();
+
     const size_t layers_number = neural_network->get_layers_number();
     const vector<string> layer_labels = neural_network->get_layer_labels();
 
@@ -404,6 +408,8 @@ string ModelExpression::build_expression() const
         if (!is_last)
             new_input_names = move(layer_output_names);
     }
+
+    if (was_on_device) network->copy_parameters_device();
 
     return buffer.str();
 }
@@ -645,6 +651,10 @@ string ModelExpression::c_float_literal(float value)
 
 string ModelExpression::get_expression_c_embedded() const
 {
+    auto* network = const_cast<NeuralNetwork*>(neural_network);
+    const bool was_on_device = (neural_network->get_parameters_device() == Device::CUDA);
+    if (was_on_device) network->copy_parameters_host();
+
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     const vector<string> layer_labels = neural_network->get_layer_labels();
@@ -1055,6 +1065,8 @@ string ModelExpression::get_expression_c_embedded() const
                                        layer_labels[i], layer_type_map().to_string(layer_type)));
         }
     }
+
+    if (was_on_device) network->copy_parameters_device();
 
     throw_if(current == "inputs", "ModelExpression: the network has no layers to export.");
 
