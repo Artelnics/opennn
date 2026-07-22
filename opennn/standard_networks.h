@@ -97,7 +97,7 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
-    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53 };
+    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53, CSPDarknet53 };
 
     enum class ClassActivation { Softmax, Sigmoid };
 
@@ -119,7 +119,8 @@ public:
                 Backbone backbone = Backbone::Vgg,
                 ClassActivation class_activation = ClassActivation::Softmax,
                 HeadStyle head_style = HeadStyle::Single,
-                BodyActivation body_activation = BodyActivation::ReLU);
+                BodyActivation body_activation = BodyActivation::ReLU,
+                bool use_sppf = false);
 };
 
 class TextClassificationNetwork : public NeuralNetwork
