@@ -814,6 +814,178 @@ TEST(ResponseOptimizationClear, GranularClearsResetOnlyTheirOwnState)
 
 
 // -----------------------------------------------------------------------------
+// ResponseOptimization: Fixed ("equal to") objectives — inverse problem solving
+// -----------------------------------------------------------------------------
+
+namespace
+{
+
+// Median output value the (untrained, random-weight) network actually reaches over its input box,
+// so Fixed-output tests target a value that is provably attainable.
+float reachable_output_median(ResponseOptimization& opt, Index output_column, Index samples = 512)
+{
+    const Index inputs_number = 2;
+    MatrixR inputs(samples, inputs_number);
+    set_random_uniform(inputs, float(0), float(10));
+
+    const MatrixR outputs = opt.calculate_outputs(inputs);
+
+    vector<float> values(outputs.rows());
+    for (Index i = 0; i < outputs.rows(); ++i)
+        values[static_cast<size_t>(i)] = outputs(i, output_column);
+
+    ranges::sort(values);
+    return values[values.size() / 2];
+}
+
+} // namespace
+
+
+TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
+{
+    // A Fixed objective on an INPUT is just a pin: x1 == 3. It must not become a closeness column,
+    // and with a real objective on y present the problem stays single-objective.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    opt.set_objective("x1", ResponseOptimization::Sense::Fixed, float(3));
+
+    // Optimizing objectives = 1 (only y); the Fixed input does not add a column.
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.set_iterations(4);
+    opt.set_evaluations_number(600);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_NEAR(results(i, 0), float(3), float(1e-2))
+            << "row " << i << " x1=" << results(i, 0) << " (should be pinned to 3)";
+}
+
+
+TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
+{
+    // No Minimize/Maximize objective: a pure inverse solve. The single Fixed output becomes a closeness
+    // column and the injected band constraint projects samples onto f(x) = target.
+    MinimalApproximation setup({ "x1", "x2" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    const float target = reachable_output_median(opt, 0);
+
+    opt.set_objective("y", ResponseOptimization::Sense::Fixed, target);
+
+    // Pure-fixed problem: exactly one column (the closeness of y).
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.set_relative_tolerance(float(1e-2));   // band half-width = relative_tolerance * output range
+    opt.set_iterations(6);
+    opt.set_evaluations_number(1200);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    // Column layout of a result row is [inputs..., outputs...]; y is the only output (column 2).
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_NEAR(results(i, 2), target, float(5e-2))
+            << "row " << i << " y=" << results(i, 2) << " target=" << target;
+}
+
+
+TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
+{
+    // Minimize y1 while holding y2 == target. The Fixed output is a constraint only, not a Pareto
+    // axis, so with a single optimizing objective the run stays single-objective.
+    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    const float target = reachable_output_median(opt, 1);   // y2 is output column 1
+
+    opt.set_objective("y1", ResponseOptimization::Sense::Minimize);
+    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target);
+
+    // Only y1 is an objective column; the Fixed y2 contributes none.
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.set_relative_tolerance(float(1e-2));
+    opt.set_iterations(6);
+    opt.set_evaluations_number(1200);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    // Row layout: [x1, x2, y1, y2]; y2 must sit on its target band.
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_NEAR(results(i, 3), target, float(5e-2))
+            << "row " << i << " y2=" << results(i, 3) << " target=" << target;
+}
+
+
+TEST(ResponseOptimizationFixed, MultipleFixedOutputsRemainSingleObjective)
+{
+    // Two Fixed outputs, no optimizing objective: the intersection manifold is one feasible region,
+    // so the run is single-objective with two closeness columns (not a two-objective Pareto search).
+    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    const float target1 = reachable_output_median(opt, 0);
+    const float target2 = reachable_output_median(opt, 1);
+
+    opt.set_objective("y1", ResponseOptimization::Sense::Fixed, target1);
+    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target2);
+
+    EXPECT_EQ(opt.get_objectives_number(), 2);
+
+    opt.set_relative_tolerance(float(2e-2));
+    opt.set_iterations(6);
+    opt.set_evaluations_number(1500);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+    for (Index i = 0; i < results.rows(); ++i)
+    {
+        EXPECT_NEAR(results(i, 2), target1, float(8e-2)) << "row " << i << " y1";
+        EXPECT_NEAR(results(i, 3), target2, float(8e-2)) << "row " << i << " y2";
+    }
+}
+
+
+TEST(ResponseOptimizationFixed, ClearObjectivesResetsFixedValues)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" });
+
+    ResponseOptimization opt(setup.network.get());
+
+    opt.set_objective("y", ResponseOptimization::Sense::Fixed, float(0.25));
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.clear_objectives("y");
+    EXPECT_EQ(opt.get_objectives_number(), 0);
+
+    // Re-adding as an optimizing objective must not be contaminated by the old Fixed target.
+    opt.set_objective("y", ResponseOptimization::Sense::Minimize);
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+    SUCCEED();
+}
+
+
+// -----------------------------------------------------------------------------
 // ResponseOptimization: integer decision variables
 // -----------------------------------------------------------------------------
 

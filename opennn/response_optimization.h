@@ -23,7 +23,7 @@ class ResponseOptimization
 {
 public:
 
-    enum class Sense { Minimize, Maximize };
+    enum class Sense { Minimize, Maximize, Fixed };
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
@@ -82,6 +82,14 @@ public:
 
         MatrixR scale_and_offset;
 
+        // Fixed ("equal to") objectives are scored as a closeness value in [0,1] (1 == exactly on
+        // target) instead of the affine map used by Minimize/Maximize. These per-column arrays are
+        // populated only in the pure-fixed case (no Minimize/Maximize objective present); otherwise
+        // Fixed objectives are enforced purely as injected band constraints and never become columns.
+        vector<char> closeness_mask;
+        VectorR closeness_target;
+        VectorR closeness_scale;
+
         MatrixR extract(const MatrixR&, const MatrixR&) const;
 
         void normalize(MatrixR&) const;
@@ -111,7 +119,7 @@ public:
     void set_cardinality_constraint(const vector<string>&, Index, bool force_nonzero = true);
     void clear_cardinality_constraints();
 
-    void set_objective(const string&, const Sense);
+    void set_objective(const string&, const Sense, const float value = 0.0f);
 
     void set_time_role(const string&, const TimeType);
 
@@ -212,6 +220,11 @@ public:
 
     Index get_objectives_number() const;
 
+    // Objectives whose Sense is Minimize/Maximize (the only ones that decide the SO vs MO split).
+    // Fixed objectives are excluded here; they shape the feasible region as band constraints and,
+    // only when there is no optimizing objective at all, become closeness columns.
+    Index get_optimizing_objectives_number() const;
+
     Index get_evaluations_used() const;
 
     vector<NamedColumn> build_input_columns(const vector<Variable>&) const;
@@ -238,6 +251,13 @@ public:
 
     void promote_single_variable_constraints();
 
+    // Turn Fixed ("equal to") objectives into constraints before solving: a Fixed output injects an
+    // output equality band [t-e, t+e] (e derived from relative_tolerance) so repair_output_constraints
+    // projects samples onto {x : f(x)=t}; a Fixed input is just a box and is converted to an EqualTo
+    // univariate constraint (and dropped from the objectives map). Fixed outputs stay in the map so the
+    // pure-fixed case can score them by closeness. Returns the input-fixed names removed from objectives.
+    void expand_fixed_objectives();
+
     vector<char> discrete_column_mask(const vector<Variable>&) const;
 
 private:
@@ -249,6 +269,9 @@ private:
     ConstraintSet constraint_set;
 
     map<string, Sense> objectives;
+
+    // Target value for each Fixed objective (unused for Minimize/Maximize).
+    map<string, float> fixed_values;
 
     map<string, TimeType> time_roles;
 

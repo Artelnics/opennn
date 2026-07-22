@@ -71,9 +71,14 @@ void ResponseOptimization::clear_cardinality_constraints()
 }
 
 
-void ResponseOptimization::set_objective(const string& name, const Sense sense)
+void ResponseOptimization::set_objective(const string& name, const Sense sense, const float value)
 {
     objectives[name] = sense;
+
+    if (sense == Sense::Fixed)
+        fixed_values[name] = value;
+    else
+        fixed_values.erase(name);
 }
 
 
@@ -255,12 +260,14 @@ void ResponseOptimization::clear_constraints(const string& name)
 void ResponseOptimization::clear_objectives()
 {
     objectives.clear();
+    fixed_values.clear();
 }
 
 
 void ResponseOptimization::clear_objectives(const string& name)
 {
     objectives.erase(name);
+    fixed_values.erase(name);
 }
 
 
@@ -389,11 +396,27 @@ float ResponseOptimization::get_deformation_domain_factor()
     return deformation_domain_factor;
 }
 
+Index ResponseOptimization::get_optimizing_objectives_number() const
+{
+    const auto is_opt = [&](const Variable& v){ return is_objective(v.name) && get_sense(v.name) != Sense::Fixed; };
+    return ranges::count_if(get_variables_and_descriptives("Input").first, is_opt)
+         + ranges::count_if(get_variables_and_descriptives("Target").first, is_opt);
+}
+
+
 Index ResponseOptimization::get_objectives_number() const
 {
-    const auto is_obj = [&](const Variable& v){ return is_objective(v.name); };
-    return ranges::count_if(get_variables_and_descriptives("Input").first, is_obj)
-         + ranges::count_if(get_variables_and_descriptives("Target").first, is_obj);
+    // Number of columns the objective matrix will actually carry: the Minimize/Maximize objectives,
+    // or — only when there are none — the Fixed objectives scored by closeness. Fixed objectives never
+    // add columns while any optimizing objective exists (they are constraint-only). Keeping this equal
+    // to the real column count is what keeps get_advised_point and the Objectives matrices consistent.
+    const Index optimizing = get_optimizing_objectives_number();
+    if (optimizing > 0)
+        return optimizing;
+
+    const auto is_fixed = [&](const Variable& v){ return is_objective(v.name) && get_sense(v.name) == Sense::Fixed; };
+    return ranges::count_if(get_variables_and_descriptives("Input").first, is_fixed)
+         + ranges::count_if(get_variables_and_descriptives("Target").first, is_fixed);
 }
 
 vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
@@ -547,6 +570,15 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     utopian_and_sense.resize(2, objectives_number);
 
+    closeness_mask.assign(static_cast<size_t>(objectives_number), 0);
+    closeness_target = VectorR::Zero(objectives_number);
+    closeness_scale = VectorR::Ones(objectives_number);
+
+    // With no Minimize/Maximize objective, the problem is a pure inverse solve: the Fixed objectives
+    // become the (closeness) columns. Otherwise Fixed objectives contribute no columns at all — they
+    // are enforced only through their injected band constraints (see expand_fixed_objectives).
+    const bool synthetic = (response_optimization.get_optimizing_objectives_number() == 0);
+
     Index current_objective_index = 0;
 
     auto process_role = [&](const string& role)
@@ -565,7 +597,15 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
         {
             const string& variable_name = variables[i].name;
 
-            if (response_optimization.is_objective(variable_name))
+            const bool is_fixed_objective = response_optimization.is_objective(variable_name)
+                                         && response_optimization.get_sense(variable_name) == Sense::Fixed;
+
+            // Skip Fixed objectives unless we are in the pure-fixed (synthetic) case; skip
+            // optimizing objectives when we are building closeness columns.
+            const bool include = response_optimization.is_objective(variable_name)
+                              && (synthetic ? is_fixed_objective : !is_fixed_objective);
+
+            if (include)
             {
                 source_and_column(0, current_objective_index) = is_input ? 1.0f : 0.0f;
 
@@ -576,19 +616,41 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                 const float range = superior_frontier - inferior_frontier;
                 const float safe_range = (range < EPSILON) ? EPSILON : range;
 
-                scale_and_offset(0, current_objective_index) = 1.0 / safe_range;
-
-                scale_and_offset(1, current_objective_index) = -inferior_frontier / safe_range;
-
-                if (response_optimization.get_sense(variable_name) == Sense::Maximize)
+                if (is_fixed_objective)
                 {
-                    utopian_and_sense(0, current_objective_index) = superior_frontier;
-                    utopian_and_sense(1, current_objective_index) = 1.0;
+                    // Closeness column: extract() maps the raw value to 1 - |value - t|/half_span,
+                    // clamped to [0,1] (1 == on target). We set an identity affine transform so
+                    // normalize() and Pareto see it as an ordinary maximize-in-[0,1] objective, and
+                    // pin the utopian to +1 (perfect closeness). The raw target t is stored in row 0
+                    // so the single-objective loop's relative-error check tracks |value - t|.
+                    const float half_span = max(EPSILON, 0.5f * range);
+
+                    closeness_mask[static_cast<size_t>(current_objective_index)] = 1;
+                    closeness_target(current_objective_index) = response_optimization.fixed_values.at(variable_name);
+                    closeness_scale(current_objective_index) = 1.0f / half_span;
+
+                    scale_and_offset(0, current_objective_index) = 1.0f;
+                    scale_and_offset(1, current_objective_index) = 0.0f;
+
+                    utopian_and_sense(0, current_objective_index) = response_optimization.fixed_values.at(variable_name);
+                    utopian_and_sense(1, current_objective_index) = 1.0f;
                 }
                 else
                 {
-                    utopian_and_sense(0, current_objective_index) = inferior_frontier;
-                    utopian_and_sense(1, current_objective_index) = -1.0;
+                    scale_and_offset(0, current_objective_index) = 1.0 / safe_range;
+
+                    scale_and_offset(1, current_objective_index) = -inferior_frontier / safe_range;
+
+                    if (response_optimization.get_sense(variable_name) == Sense::Maximize)
+                    {
+                        utopian_and_sense(0, current_objective_index) = superior_frontier;
+                        utopian_and_sense(1, current_objective_index) = 1.0;
+                    }
+                    else
+                    {
+                        utopian_and_sense(0, current_objective_index) = inferior_frontier;
+                        utopian_and_sense(1, current_objective_index) = -1.0;
+                    }
                 }
 
                 current_objective_index++;
@@ -1381,9 +1443,18 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     MatrixR objective_matrix(inputs.rows(), objectives_number);
 
     for (Index j = 0; j < objectives_number; ++j)
-        objective_matrix.col(j) = (source_and_column(0, j) > 0.5)
+    {
+        const VectorR raw = (source_and_column(0, j) > 0.5)
               ? inputs.col(static_cast<Index>(source_and_column(1, j)))
               : outputs.col(static_cast<Index>(source_and_column(1, j)));
+
+        // Fixed ("equal to") objectives are scored by closeness to the target: 1 on target, falling
+        // linearly to 0 half a domain-span away. Higher is better, so it composes with the affine
+        // Minimize/Maximize columns and the maximization-sense Pareto machinery without special cases.
+        objective_matrix.col(j) = (!closeness_mask.empty() && closeness_mask[static_cast<size_t>(j)])
+              ? (1.0f - (raw.array() - closeness_target(j)).abs() * closeness_scale(j)).cwiseMax(0.0f).matrix()
+              : raw;
+    }
 
     return objective_matrix;
 }
@@ -1413,6 +1484,11 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
 
     for (Index j = 0; j < objectives_number; ++j)
     {
+        // Closeness (Fixed) columns keep their utopian pinned at the target with a fixed scale;
+        // never let the observed points drift it, or "on target == 1" would stop being the reference.
+        if (!closeness_mask.empty() && closeness_mask[static_cast<size_t>(j)])
+            continue;
+
         const float sense = utopian_and_sense(1, j);
         const float current_utopian = utopian_and_sense(0, j);
 
@@ -2345,14 +2421,104 @@ MatrixR ResponseOptimization::solve_once() const
 
     initialize_network_differential();
 
-    return (objectives_number == 1)
-        ? perform_single_objective_optimization()
-        : perform_multiobjective_optimization();
+    // The single- vs multi-objective split is decided only by the Minimize/Maximize objectives. A lone
+    // optimizing objective, or a pure inverse solve (no optimizing objective, one or more Fixed targets
+    // ranked by closeness), takes the single-objective path — one feasible region to home in on. Fixed
+    // objectives never push the problem into the multi-objective branch.
+    return (get_optimizing_objectives_number() >= 2)
+        ? perform_multiobjective_optimization()
+        : perform_single_objective_optimization();
+}
+
+
+void ResponseOptimization::expand_fixed_objectives()
+{
+    if (fixed_values.empty() || !neural_network)
+        return;
+
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+
+    const auto is_input_name = [&](const string& name)
+    {
+        return ranges::any_of(input_variables, [&](const Variable& v){ return v.name == name; });
+    };
+
+    // Output range per Fixed-output target, used only to size the equality band. Built lazily so a
+    // fixed-input-only problem never forces an Unscaling layer to exist.
+    map<string, float> output_range;
+    const bool any_output_fixed = ranges::any_of(fixed_values, [&](const auto& entry)
+    {
+        const string& name = entry.first;
+        return objectives.count(name) && objectives.at(name) == Sense::Fixed && !is_input_name(name);
+    });
+
+    if (any_output_fixed)
+    {
+        const auto& [target_variables, target_descriptives] = get_variables_and_descriptives("Target");
+        for (size_t i = 0; i < target_variables.size(); ++i)
+            output_range[target_variables[i].name] =
+                static_cast<float>(target_descriptives[i].maximum - target_descriptives[i].minimum);
+    }
+
+    vector<string> input_fixed_names;
+
+    for (const auto& [name, target] : fixed_values)
+    {
+        if (objectives.find(name) == objectives.end() || objectives.at(name) != Sense::Fixed)
+            continue;
+
+        if (is_input_name(name))
+        {
+            // Fixing an input to a value is just a box on that variable — no projection needed.
+            constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::EqualTo, target, target);
+            input_fixed_names.push_back(name);
+            continue;
+        }
+
+        // Fixed output: inject an equality band [t-d, t+d] so repair_output_constraints projects
+        // samples onto {x : f(x) = t}. The half-width reuses relative_tolerance (as a fraction of the
+        // output range), with a floor so the band is never numerically empty.
+        const auto found = output_range.find(name);
+        const float range = (found != output_range.end()) ? found->second : abs(target);
+        const float half_width = max(bound_tolerance(target), relative_tolerance * max(EPSILON, range));
+
+        set_formula_constraint(name, ComparisonOperator::Between, target - half_width, target + half_width);
+
+        cout << "> Fixed objective '" << name << "' -> output equality band ["
+             << (target - half_width) << ", " << (target + half_width) << "].\n";
+    }
+
+    // Input-fixed objectives have been reduced to box constraints; drop them from the objective set
+    // so they never become columns.
+    for (const string& name : input_fixed_names)
+    {
+        objectives.erase(name);
+        fixed_values.erase(name);
+    }
 }
 
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
+    // Turn Fixed objectives into constraints up front, before the branch-axis analysis and before the
+    // network Jacobian is built, so projection sees them. Restore the pre-expansion problem definition
+    // on the way out (any exit path) so repeated calls and injected bands don't accumulate.
+    const auto restore_state = [this, saved_objectives = objectives, saved_fixed_values = fixed_values,
+                                saved_univariate = constraint_set.univariate,
+                                saved_multivariate = constraint_set.multivariate,
+                                saved_disjunctive = constraint_set.disjunctive]()
+    {
+        objectives = saved_objectives;
+        fixed_values = saved_fixed_values;
+        constraint_set.univariate = saved_univariate;
+        constraint_set.multivariate = saved_multivariate;
+        constraint_set.disjunctive = saved_disjunctive;
+    };
+
+    struct ScopeGuard { function<void()> run; ~ScopeGuard() { run(); } } guard{ restore_state };
+
+    expand_fixed_objectives();
+
     promote_single_variable_constraints();
 
 
