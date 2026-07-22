@@ -634,12 +634,24 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                 MatrixMap attention_matrix = attention_weights.as_matrix(batch_head);
                 MatrixMap output_matrix = output.as_matrix(batch_head);
 
-                auto attention_valid = attention_matrix.leftCols(valid_length);
-                attention_valid.noalias() = scale * (query_matrix * key_matrix.topRows(valid_length).transpose());
+                const Index query_rows = zero_padded_queries
+                    ? min(valid_length, query_sequence_length)
+                    : query_sequence_length;
+
+                auto attention_computed = attention_matrix.topRows(query_rows);
+                attention_computed.leftCols(valid_length).noalias() =
+                    scale * (query_matrix.topRows(query_rows) * key_matrix.topRows(valid_length).transpose());
                 if (valid_length < source_sequence_length)
-                    attention_matrix.rightCols(source_sequence_length - valid_length).setZero();
-                softmax_rows_prefix(attention_matrix.data(), query_sequence_length, source_sequence_length, valid_length);
-                output_matrix.noalias() = attention_valid * value_matrix.topRows(valid_length);
+                    attention_computed.rightCols(source_sequence_length - valid_length).setZero();
+                softmax_rows_prefix(attention_matrix.data(), query_rows, source_sequence_length, valid_length);
+                output_matrix.topRows(query_rows).noalias() =
+                    attention_computed.leftCols(valid_length) * value_matrix.topRows(valid_length);
+
+                if (query_rows < query_sequence_length)
+                {
+                    attention_matrix.bottomRows(query_sequence_length - query_rows).setZero();
+                    output_matrix.bottomRows(query_sequence_length - query_rows).setZero();
+                }
             }
 
             return;
@@ -667,7 +679,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                                           lengths_int.data(),
                                           attention_weights.as<T>(),
                                           reinterpret_cast<T*>(scratch),
-                                          use_causal_mask);
+                                          use_causal_mask,
+                                          zero_padded_queries);
         });
     }
     else if (attention_weights.is_cuda())
@@ -681,7 +694,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                                     source_input.as<T>(),
                                     attention_weights.as<T>(),
                                     reinterpret_cast<T*>(scratch),
-                                    use_causal_mask);
+                                    use_causal_mask,
+                                    zero_padded_queries);
         });
     else
 #endif
@@ -713,7 +727,32 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     }
 
     if (!attention_weights.is_cuda())
+    {
         softmax(attention_weights);
+
+        if (zero_padded_queries)
+        {
+            const Index att_rows_per_batch = heads_number * query_sequence_length;
+
+            #pragma omp parallel for
+            for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
+            {
+                const float* source_batch = source_input.as<float>() + batch_index * source_sequence_length * embedding_dimension;
+                float*       attention_batch = attention_weights.as<float>() + batch_index * att_rows_per_batch * source_sequence_length;
+
+                for (Index query_index = 0; query_index < min(query_sequence_length, source_sequence_length); ++query_index)
+                {
+                    if (row_nonzero(source_batch + query_index * embedding_dimension, embedding_dimension)) continue;
+
+                    for (Index head_index = 0; head_index < heads_number; ++head_index)
+                    {
+                        float* row = attention_batch + (head_index * query_sequence_length + query_index) * source_sequence_length;
+                        for (Index k = 0; k < source_sequence_length; ++k) row[k] = 0.0f;
+                    }
+                }
+            }
+        }
+    }
 
     if (is_training && dropout.active())
     {

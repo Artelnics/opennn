@@ -1,12 +1,11 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   E M O T I O M   A N A L Y S I S
+//   E M O T I O N   A N A L Y S I S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstring>
 #include <iostream>
 
 #include "opennn/language_dataset.h"
@@ -37,7 +36,7 @@ int main()
 
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index maximum_input_sequence_length = language_dataset.get_maximum_input_sequence_length();
-        const Index targets_number = language_dataset.get_maximum_target_sequence_length();
+        const Index targets_number = language_dataset.get_features_number("Target");
 
         // Neural Network
 
@@ -46,12 +45,13 @@ int main()
             {heads_number},
             {targets_number});
 
+        text_classification_network.set_tokenizer(language_dataset.get_input_tokenizer().clone());
+
         // Training Strategy
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_regularization_weight(float(0.001));
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(200);
@@ -73,7 +73,7 @@ int main()
 
         // Prediction
 
-        const vector<string>& emotions = language_dataset.get_target_vocabulary();
+        const vector<string>& emotions = text_classification_network.get_output_variables()[0].categories;
 
         Tensor<string, 1> documents(1);
         documents[0] = "I feel so sad and lonely today";
@@ -81,20 +81,10 @@ int main()
         MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
         Index predicted_class = 0;
-        float max_value = outputs(0, 0);
-        for(Index i = 1; i < outputs.cols(); i++)
-        {
-            if(outputs(0, i) > max_value)
-            {
-                max_value = outputs(0, i);
-                predicted_class = i;
-            }
-        }
-
-        const Index reserved_offset = 4; // [PAD], [UNK], [START], [END]
+        const float max_value = outputs.row(0).maxCoeff(&predicted_class);
 
         cout << "Prediction for '" << documents[0] << "': "
-             << emotions[predicted_class + reserved_offset] << " (" << max_value << ")" << endl;
+             << emotions[predicted_class] << " (" << max_value << ")" << endl;
 
         cout << "Good bye!" << endl;
 

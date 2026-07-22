@@ -93,9 +93,9 @@ public:
     static constexpr string_view START_TOKEN = "[START]";
     static constexpr string_view END_TOKEN   = "[END]";
 
-    static constexpr float UNK_INDEX = 1.0f;
-    static constexpr float START_INDEX = 2.0f;
-    static constexpr float END_INDEX = 3.0f;
+    static constexpr Index UNK_INDEX = TokenizerOperator::UNK_INDEX;
+    static constexpr Index START_INDEX = TokenizerOperator::START_INDEX;
+    static constexpr Index END_INDEX = TokenizerOperator::END_INDEX;
 
     inline static const vector<string> reserved_tokens = {string(PAD_TOKEN), string(UNK_TOKEN), string(START_TOKEN), string(END_TOKEN)};
 
@@ -110,10 +110,7 @@ private:
                         Index,
                         const char*) const;
 
-    unordered_map<string_view, Index> create_vocabulary_map(const vector<string>&) const;
-
-    void load_documents(string&,
-                        vector<vector<string>>&,
+    void load_documents(vector<vector<string>>&,
                         vector<vector<string>>&) const;
 
     void encode_streaming(const vector<vector<string>>&,

@@ -168,8 +168,18 @@ bool MultiHeadAttention::should_use_sdpa() const
     if (!sdpa_auto) return false;
     if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
+    // The SDPA backend leaves padded-query outputs unspecified, so it cannot
+    // honour zero_padded_queries; correctness wins over the fused kernel.
+    if (attention.zero_padded_queries) return false;
+
     const Index shorter = min(query_sequence_length, source_sequence_length);
     return shorter > sdpa_min_sequence_length;
+}
+
+void MultiHeadAttention::set_zero_padded_queries(bool new_zero_padded_queries)
+{
+    attention.zero_padded_queries = new_zero_padded_queries;
+    attention.use_sdpa = should_use_sdpa();
 }
 
 void MultiHeadAttention::set_sdpa_auto(bool new_sdpa_auto)
@@ -228,6 +238,9 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
         new_source_sequence_length,
         new_input_shape.dim_or_zero(1),
         new_heads_number, new_use_causal_mask, get_label());
+
+    if (root_element->has("ZeroPaddedQueries"))
+        set_zero_padded_queries(read_json_bool(root_element, "ZeroPaddedQueries"));
 }
 
 void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
@@ -235,7 +248,8 @@ void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
     write_json(printer, {
         {"SourceSequenceLength", to_string(source_sequence_length)},
         {"HeadsNumber", to_string(heads_number)},
-        {"CausalMask", to_string(attention.use_causal_mask)}
+        {"CausalMask", to_string(attention.use_causal_mask)},
+        {"ZeroPaddedQueries", to_string(attention.zero_padded_queries)}
     });
 }
 

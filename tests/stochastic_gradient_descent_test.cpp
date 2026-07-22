@@ -700,7 +700,8 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
 
     const TrainingResult training_results = stochastic_gradient_descent.train();
 
-    EXPECT_LE(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
 

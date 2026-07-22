@@ -131,6 +131,9 @@ public:
                               const Shape&,
                               const Shape&,
                               PoolingMethod pooling_method = PoolingMethod::AveragePooling);
+
+    void set_tokenizer(unique_ptr<TokenizerOperator>);
+    const TokenizerOperator* get_tokenizer() const;
 };
 
 struct SamplingConfig

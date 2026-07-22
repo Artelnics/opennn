@@ -188,12 +188,13 @@ template<typename T>
 void attention_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                           const int source_sequence_length, const int embedding_dimension,
                           const T* source_input, T* attention_weights, T* padding_mask,
-                          const bool use_causal_mask);
+                          const bool use_causal_mask, const bool zero_padded_queries);
 
 template<typename T>
 void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
                                 const int source_sequence_length, const int* host_lengths,
-                                T* attention_weights, T* padding_mask, const bool use_causal_mask);
+                                T* attention_weights, T* padding_mask, const bool use_causal_mask,
+                                const bool zero_padded_queries);
 
 template<typename T>
 void attention_sequence_lengths_cuda(const int batch_size,

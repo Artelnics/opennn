@@ -91,6 +91,34 @@ vector<Index> TokenizerOperator::encode(string_view text) const
     return ids;
 }
 
+// The fixed-length framing shared by dataset encoding, stored-model inference
+// and generation: [START] + token ids (unknown id for out-of-vocabulary tokens)
+// truncated to sequence_length, plus [END] when it fits. The caller pads the
+// remainder with [PAD] = 0.
+vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, Index sequence_length) const
+{
+    vector<Index> ids;
+    ids.reserve(min(size_t(sequence_length), tokens.size() + 2));
+    ids.push_back(START_INDEX);
+
+    for (const string& token : tokens)
+    {
+        if (ssize(ids) >= sequence_length) break;
+        const auto it = vocabulary_map.find(token);
+        ids.push_back(it != vocabulary_map.end() ? it->second : unk_id);
+    }
+
+    if (ssize(ids) < sequence_length)
+        ids.push_back(END_INDEX);
+
+    return ids;
+}
+
+vector<Index> TokenizerOperator::encode_sequence(string_view text, Index sequence_length) const
+{
+    return encode_sequence(tokenize(text), sequence_length);
+}
+
 string TokenizerOperator::decode(const vector<Index>& ids) const
 {
     string text;

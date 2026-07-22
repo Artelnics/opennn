@@ -934,6 +934,8 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     const Index heads_number = complexity_dimensions[0];
     const Index hidden_neurons = complexity_dimensions.rank > 1 ? complexity_dimensions[1] : 64;
 
+    add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
+
     auto embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
                                                   embedding_dimension,
                                                   "embedding_layer");
@@ -941,10 +943,14 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     embedding_layer->set_add_positional_encoding(true);
     add_layer(move(embedding_layer));
 
-    add_layer(make_unique<MultiHeadAttention>(
+    auto attention_layer = make_unique<MultiHeadAttention>(
         Shape({sequence_length, embedding_dimension}),
         heads_number,
-        "multihead_attention_layer"));
+        "multihead_attention_layer");
+    // Zero the attention outputs at padded query positions so the average
+    // pooling that follows excludes them from the document representation.
+    attention_layer->set_zero_padded_queries(true);
+    add_layer(move(attention_layer));
 
     add_layer(make_unique<Pooling3d>(get_output_shape(), pooling_method));
 
@@ -1529,7 +1535,6 @@ namespace
 {
 
 constexpr Index pad_token_id     = 0;
-constexpr Index unknown_token_id = 1;
 constexpr Index start_token_id   = 2;
 constexpr Index end_token_id     = 3;
 
@@ -1748,25 +1753,13 @@ void reset_per_prompt_state(GenerationSession& session)
 void encode_source(Transformer& network, GenerationSession& session, const string& source)
 {
     const TokenizerOperator* input_tokenizer = network.get_input_tokenizer();
-    const auto& input_vocabulary_map = input_tokenizer->get_vocabulary_map();
 
     session.source_ids.setConstant(pad_token_id);
-    session.source_ids(0, 0) = start_token_id;
 
-    const vector<string> source_tokens = input_tokenizer->tokenize(source);
-    Index write_index = 1;
-    for (const string& token : source_tokens)
-    {
-        if (write_index >= session.input_sequence_length) break;
+    const vector<Index> ids = input_tokenizer->encode_sequence(source, session.input_sequence_length);
 
-        const auto it = input_vocabulary_map.find(token);
-        session.source_ids(0, write_index) = (it != input_vocabulary_map.end())
-                                                 ? static_cast<float>(it->second)
-                                                 : unknown_token_id;
-        ++write_index;
-    }
-    if (write_index < session.input_sequence_length)
-        session.source_ids(0, write_index) = end_token_id;
+    for (Index j = 0; j < ssize(ids); ++j)
+        session.source_ids(0, j) = float(ids[size_t(j)]);
 
     cudaStream_t stream = Backend::get_compute_stream();
     device::copy_async(session.source_ids_device.data,
@@ -2110,6 +2103,17 @@ void TextGenerationNetwork::set_vocabulary(const vector<string>& new_vocabulary)
 const TokenizerOperator* TextGenerationNetwork::get_tokenizer() const
 {
     return get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::get_tokenizer").get_tokenizer();
+}
+
+void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
+{
+    get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::set_tokenizer")
+        .set_tokenizer(move(new_tokenizer));
+}
+
+const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
+{
+    return get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::get_tokenizer").get_tokenizer();
 }
 
 const vector<string>& TextGenerationNetwork::get_vocabulary() const

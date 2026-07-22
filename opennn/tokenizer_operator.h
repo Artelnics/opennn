@@ -33,7 +33,15 @@ public:
     Index token_to_id(string_view token) const;
     const string& id_to_token(Index id) const;
 
+    // Reserved-token ids of the sequence framing scheme; [PAD] = 0 is implicit
+    // in zero-initialized buffers.
+    static constexpr Index UNK_INDEX   = 1;
+    static constexpr Index START_INDEX = 2;
+    static constexpr Index END_INDEX   = 3;
+
     vector<Index> encode(string_view text) const;
+    vector<Index> encode_sequence(const vector<string>& tokens, Index sequence_length) const;
+    vector<Index> encode_sequence(string_view text, Index sequence_length) const;
     virtual string decode(const vector<Index>& ids) const;
 
     Index get_unk_id() const noexcept { return unk_id; }

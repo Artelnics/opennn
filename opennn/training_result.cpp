@@ -59,7 +59,7 @@ float TrainingResult::get_validation_error() const
 
 Index TrainingResult::get_epochs_number() const
 {
-    return training_error_history.size() - 1;
+    return training_error_history.size();
 }
 
 void TrainingResult::resize_training_error_history(const Index new_size)
@@ -105,7 +105,7 @@ void TrainingResult::print(const string &message) const
 
     cout << message << "\n"
          << "Training results" << "\n"
-         << "Epochs number: " << final_epoch << "\n"
+         << "Epochs number: " << epochs_number << "\n"
          << "Training error: " << training_error_history(reported_epoch) << "\n";
     if (validation_error_history.size() > 0)
         cout << "Validation error: " << validation_error_history(reported_epoch) << "\n";
@@ -141,7 +141,7 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
         return override_results;
     }
 
-    override_results(0, 1) = to_string(size - 1);
+    override_results(0, 1) = to_string(size);
     override_results(1, 1) = elapsed_time;
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));

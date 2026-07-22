@@ -124,7 +124,8 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumEpochs)
 
     const TrainingResult training_results = levenberg_marquardt_algorithm.train();
 
-    EXPECT_LE(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
 

@@ -631,7 +631,8 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
 
     const TrainingResult training_results = adaptive_moment_estimation.train();
 
-    EXPECT_LE(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
 

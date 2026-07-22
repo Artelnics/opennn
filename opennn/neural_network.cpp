@@ -17,6 +17,7 @@
 #include "image_processing.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
+#include "tokenizer_layer.h"
 #include "variable.h"
 #include "string_utilities.h"
 #include "forward_propagation.h"
@@ -1023,47 +1024,27 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-    throw_if(layers[0]->get_type() != LayerType::Embedding,
-             "First layer must be Embedding for text processing.\n");
+    const auto* tokenizer_layer = dynamic_cast<const Tokenizer*>(get_first(LayerType::Tokenizer));
 
-    throw_if(input_variables.empty() || input_variables[0].categories.empty(),
-             "input_variables[0] does not contain the vocabulary.\n");
+    throw_if(!tokenizer_layer,
+             "calculate_text_outputs: network has no Tokenizer layer.\n");
 
+    const TokenizerOperator* tokenizer = tokenizer_layer->get_tokenizer();
+
+    throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,
+             "calculate_text_outputs: the Tokenizer layer has no vocabulary; call set_tokenizer() first.\n");
+
+    const Index sequence_length = tokenizer_layer->get_output_shape()[0];
     const Index batch_size = input_documents.size();
-    const auto* embedding_layer = dynamic_cast<const Embedding*>(get_layer(0).get());
-    throw_if(!embedding_layer, "Expected Embedding layer at index 0.");
-    const Index sequence_length = embedding_layer->get_sequence_length();
-
-    const vector<string>& vocabulary = input_variables[0].categories;
-    unordered_map<string, Index> vocabulary_map;
-    vocabulary_map.reserve(vocabulary.size());
-
-    for (size_t i = 0; i < vocabulary.size(); ++i)
-        vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs = MatrixR::Zero(batch_size, sequence_length);
 
     for (Index i = 0; i < batch_size; ++i)
     {
-        const vector<string> tokens = tokenize(input_documents.data()[i]);
-        const size_t tokens_number = tokens.size();
+        const vector<Index> ids = tokenizer->encode_sequence(input_documents.data()[i], sequence_length);
 
-        if (sequence_length > 0)
-            inputs(i, 0) = 2.0f;
-
-        for (size_t j = 0; j < tokens_number; ++j)
-        {
-            if (1 + j >= static_cast<size_t>(sequence_length)) break;
-
-            const auto it = vocabulary_map.find(tokens[j]);
-
-            inputs(i, 1 + j) = (it != vocabulary_map.end())
-                                   ? static_cast<float>(it->second)
-                                   : 1.0f;
-        }
-
-        if (1 + tokens_number < static_cast<size_t>(sequence_length))
-            inputs(i, 1 + tokens_number) = 3.0f;
+        for (Index j = 0; j < min(ssize(ids), sequence_length); ++j)
+            inputs(i, j) = float(ids[size_t(j)]);
     }
 
     return calculate_outputs(inputs);

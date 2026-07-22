@@ -354,7 +354,8 @@ __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequ
                                            const int heads_number, const int query_sequence_length,
                                            T* __restrict__ attention_weights,
                                            const T* __restrict__ padding_mask,
-                                           const int use_causal_mask)
+                                           const int use_causal_mask,
+                                           const int zero_padded_queries)
 {
     const int warps_per_block = blockDim.x >> 5;
     const int row = blockIdx.x * warps_per_block + (int(threadIdx.x) >> 5);
@@ -366,6 +367,19 @@ __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequ
 
     T* row_values = attention_weights + Index(row) * source_sequence_length;
     const T* pad_row = padding_mask + Index(b) * source_sequence_length;
+
+    if (zero_padded_queries && sq < source_sequence_length
+        && static_cast<float>(pad_row[sq]) > 0.5f)
+    {
+        #pragma unroll
+        for (int e = 0; e < MAX_ELEMS; ++e)
+        {
+            const int sk = lane + e * 32;
+            if (sk < source_sequence_length)
+                row_values[sk] = static_cast<T>(0.0f);
+        }
+        return;
+    }
 
     float values[MAX_ELEMS];
     float row_max = -1e30f;
@@ -414,7 +428,8 @@ template<typename T>
 static void launch_masked_softmax_rows(const int batch_size, const int heads_number,
                                        const int query_sequence_length, const int source_sequence_length,
                                        T* attention_weights, const T* padding_mask,
-                                       const bool use_causal_mask, cudaStream_t stream)
+                                       const bool use_causal_mask, const bool zero_padded_queries,
+                                       cudaStream_t stream)
 {
     const int rows = batch_size * heads_number * query_sequence_length;
     if (rows <= 0 || source_sequence_length <= 0) return;
@@ -423,13 +438,14 @@ static void launch_masked_softmax_rows(const int batch_size, const int heads_num
     constexpr int warps_per_block = threads / 32;
     const int blocks = (rows + warps_per_block - 1) / warps_per_block;
     const int causal = use_causal_mask ? 1 : 0;
+    const int zero_queries = zero_padded_queries ? 1 : 0;
 
     const auto launch = [&](auto elems_tag)
     {
         constexpr int ELEMS = decltype(elems_tag)::value;
         OPENNN_CUDA_LAUNCH(masked_softmax_rows_kernel<T, ELEMS><<<blocks, threads, 0, stream>>>(
             rows, source_sequence_length, heads_number, query_sequence_length,
-            attention_weights, padding_mask, causal));
+            attention_weights, padding_mask, causal, zero_queries));
     };
 
     const int elems = (source_sequence_length + 31) / 32;
@@ -446,7 +462,8 @@ template<typename T>
 void attention_masked_softmax_cuda(const int batch_size, const int heads_number,
                           const int query_sequence_length, const int source_sequence_length,
                           const int embedding_dimension, const T* source_input,
-                          T* attention_weights, T* padding_mask, const bool use_causal_mask)
+                          T* attention_weights, T* padding_mask, const bool use_causal_mask,
+                          const bool zero_padded_queries)
 {
     const int num_tokens = batch_size * source_sequence_length;
     if (num_tokens > 0)
@@ -456,11 +473,12 @@ void attention_masked_softmax_cuda(const int batch_size, const int heads_number,
     launch_masked_softmax_rows<T>(batch_size, heads_number,
                                   query_sequence_length, source_sequence_length,
                                   attention_weights, padding_mask, use_causal_mask,
+                                  zero_padded_queries,
                                   opennn::device::get_compute_stream());
 }
 
-template void attention_masked_softmax_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool);
-template void attention_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool);
+template void attention_masked_softmax_cuda<float>        (int, int, int, int, int, const float*,         float*,         float*,         bool, bool);
+template void attention_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, int, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*, bool, bool);
 
 template<typename T>
 __global__ void length_to_padding_mask_kernel(const int n, const int source_sequence_length,
@@ -478,7 +496,7 @@ template<typename T>
 void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number,
                                 const int query_sequence_length, const int source_sequence_length,
                                 const int* host_lengths, T* attention_weights, T* padding_mask,
-                                const bool use_causal_mask)
+                                const bool use_causal_mask, const bool zero_padded_queries)
 {
     if (batch_size == 0) return;
 
@@ -495,13 +513,14 @@ void attention_length_masked_softmax_cuda(const int batch_size, const int heads_
 
     launch_masked_softmax_rows<T>(batch_size, heads_number,
                                   query_sequence_length, source_sequence_length,
-                                  attention_weights, padding_mask, use_causal_mask, stream);
+                                  attention_weights, padding_mask, use_causal_mask,
+                                  zero_padded_queries, stream);
 
     cudaFreeAsync(device_lengths, stream);
 }
 
-template void attention_length_masked_softmax_cuda<float>        (int, int, int, int, const int*, float*,         float*,         bool);
-template void attention_length_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, const int*, __nv_bfloat16*, __nv_bfloat16*, bool);
+template void attention_length_masked_softmax_cuda<float>        (int, int, int, int, const int*, float*,         float*,         bool, bool);
+template void attention_length_masked_softmax_cuda<__nv_bfloat16>(int, int, int, int, const int*, __nv_bfloat16*, __nv_bfloat16*, bool, bool);
 
 template<typename T>
 __global__ void attention_sequence_lengths_kernel(const int batch_size,

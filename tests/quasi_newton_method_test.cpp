@@ -198,7 +198,8 @@ TEST_F(QuasiNewtonMethodTest, StoppingMaximumEpochs)
 
     const TrainingResult training_results = quasi_newton_method.train();
 
-    EXPECT_LE(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), 5);
+    EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
 
