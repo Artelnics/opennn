@@ -197,14 +197,14 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices,
-                 bool is_training)
+                 FillMode mode)
 {
     dataset->fill_batch(*this,
                         sample_indices,
                         input_indices,
                         decoder_indices,
                         target_indices,
-                        is_training);
+                        mode);
 }
 
 Index Batch::get_samples_number() const

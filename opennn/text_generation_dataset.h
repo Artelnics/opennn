@@ -53,13 +53,13 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool,
+                     FillMode,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool,
+                      FillMode,
                       int = -1) const override;
 
     bool supports_bf16_inputs() const override { return false; }

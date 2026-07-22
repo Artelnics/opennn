@@ -9,7 +9,7 @@
 #pragma once
 
 #include "pch.h"
-#include "types.h"
+#include "configuration.h"
 
 namespace opennn::device
 {

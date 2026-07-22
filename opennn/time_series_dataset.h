@@ -52,13 +52,13 @@ public:
     void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
                            float*,
-                           bool,
+                           FillMode,
                            int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             float*,
-                            bool,
+                            FillMode,
                             int contiguous = -1) const override;
 
     void fill_batch(Batch&,
@@ -66,7 +66,7 @@ public:
                     const vector<Index>&,
                     const vector<Index>&,
                     const vector<Index>&,
-                    bool) const override;
+                    FillMode) const override;
 
     void resize_input_shape(Index) override;
 

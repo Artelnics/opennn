@@ -312,7 +312,7 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
 void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
                                         const vector<Index>& input_indices,
                                         float* input_data,
-                                        bool /*is_training*/,
+                                        FillMode,
                                         int contiguous) const
 {
     fill_blocks(sample_indices, input_indices, input_data, contiguous, 0, "input");
@@ -321,7 +321,7 @@ void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
 void TextGenerationDataset::fill_targets(const vector<Index>& sample_indices,
                                          const vector<Index>& target_indices,
                                          float* target_data,
-                                         bool /*is_training*/,
+                                         FillMode,
                                          int contiguous) const
 {
     fill_blocks(sample_indices, target_indices, target_data, contiguous, 1, "target");

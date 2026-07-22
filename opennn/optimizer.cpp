@@ -303,7 +303,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     const vector<Index>& input_feature_indices,
     const vector<Index>& decoder_feature_indices,
     const vector<Index>& target_feature_indices,
-    bool is_training,
+    FillMode mode,
     WorkerProfileCounters* profile_counters)
 {
     const Index batches_number = Index(batches.size());
@@ -321,7 +321,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                         target_indices,
                         session_ptr,
                         batches_number,
-                        is_training,
+                        mode,
                         profile_counters](stop_token stop)
     {
         try
@@ -350,7 +350,7 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
                             *input_indices,
                             *decoder_indices,
                             *target_indices,
-                            is_training);
+                            mode);
 
                 const auto t_fill1 = chrono::steady_clock::now();
                 session_ptr->ready_batches[size_t(it)].store(batch, memory_order_release);
@@ -1349,7 +1349,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                                         input_feature_indices,
                                         decoder_feature_indices,
                                         target_feature_indices,
-                                        /*is_training=*/true,
+                                        FillMode::Training,
                                         profile_this ? &worker_profile : nullptr);
 
     // Host-loaded FP32 data takes the staged path: the H2D copy is captured
@@ -1725,7 +1725,7 @@ struct Optimizer::EpochLoopContext
     const vector<Index>* decoder_feature_indices = nullptr;
     const vector<Index>* target_feature_indices = nullptr;
 
-    bool is_training = true;
+    FillMode fill_mode = FillMode::Training;
     bool on_gpu = false;
     Batch* fixed_device_batch = nullptr;
 
@@ -1746,7 +1746,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
                                         *context.input_feature_indices,
                                         *context.decoder_feature_indices,
                                         *context.target_feature_indices,
-                                        context.is_training,
+                                        context.fill_mode,
                                         context.worker_profile);
 
     Batch* const fixed_device_batch = context.fixed_device_batch;
@@ -1812,7 +1812,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             // reading its inputs -- the fast bf16 SDPA forward makes the CPU run
             // far enough ahead for this to corrupt the metrics. Serialize per
             // batch here; a forward-only epoch is cheap and runs once per epoch.
-            if (on_gpu && !context.is_training)
+            if (on_gpu && context.fill_mode != FillMode::Training)
                 device::synchronize(Backend::get_compute_stream());
         }
 
@@ -1882,7 +1882,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                             input_feature_indices,
                             decoder_feature_indices,
                             target_feature_indices,
-                            /*is_training=*/true);
+                            FillMode::Training);
             }
 
             {
@@ -1941,7 +1941,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     context.input_feature_indices = &input_feature_indices;
     context.decoder_feature_indices = &decoder_feature_indices;
     context.target_feature_indices = &target_feature_indices;
-    context.is_training = true;
+    context.fill_mode = FillMode::Training;
     context.on_gpu = on_gpu;
     context.fixed_device_batch = fixed_device_batch;
     context.worker_profile = profile_this ? &worker_profile : nullptr;
@@ -2048,7 +2048,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        false);
+                        FillMode::Validation);
 
             neural_network->forward_propagate(batch->get_inputs(), forward_propagation, false);
 
@@ -2069,7 +2069,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     context.input_feature_indices = &input_feature_indices;
     context.decoder_feature_indices = &decoder_feature_indices;
     context.target_feature_indices = &target_feature_indices;
-    context.is_training = false;
+    context.fill_mode = FillMode::Validation;
     context.on_gpu = on_gpu;
     context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
     {

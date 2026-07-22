@@ -286,119 +286,221 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
     else                         apply_delta_cpu(input, output_delta, input_delta);
 }
 
-void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
+namespace
 {
-    const TensorMap4 inputs = input.as_tensor<4>();
-    const VectorMap biases = use_bias ? bias.as_vector() : VectorMap(nullptr, 0);
 
-    const Index batch_size = inputs.dimension(0);
+// One row per output position, one column block per (kernel_row, kernel_column,
+// channel) matching the row-major kernel layout, so the whole convolution is a
+// single GEMM against the (kernels x kernel_height*kernel_width*channels)
+// weight matrix. Out-of-range taps (padding) become zero columns.
+void im2col(const float* image, Index input_height, Index input_width, Index channels,
+            Index kernel_height, Index kernel_width,
+            Index padding_height, Index padding_width,
+            Index row_stride, Index column_stride,
+            Index output_height, Index output_width,
+            float* col)
+{
+    const Index patch_size = kernel_height * kernel_width * channels;
 
-    const array<Index, 3> conv_dims({1, 2, 3});
-    const array<Index, 3> out_slice_shape({batch_size, output.shape[1], output.shape[2]});
+    for (Index output_row = 0; output_row < output_height; ++output_row)
+        for (Index output_column = 0; output_column < output_width; ++output_column)
+        {
+            float* patch = col + (output_row * output_width + output_column) * patch_size;
+            const Index first_input_column = output_column * column_stride - padding_width;
 
-    const array<pair<Index, Index>, 4> input_paddings = {
-        make_pair(Index(0), Index(0)),
-        make_pair(padding_height, padding_height),
-        make_pair(padding_width,  padding_width),
-        make_pair(Index(0), Index(0))
-    };
+            for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
+            {
+                const Index input_row = output_row * row_stride + kernel_row - padding_height;
+                float* patch_row = patch + kernel_row * kernel_width * channels;
 
-    TensorMap4 outputs = output.as_tensor<4>();
+                if (input_row < 0 || input_row >= input_height)
+                {
+                    fill_n(patch_row, kernel_width * channels, 0.0f);
+                    continue;
+                }
 
-    const bool needs_padding = padding_height > 0 || padding_width > 0;
-    const Tensor4 padded_inputs_storage = needs_padding
-        ? Tensor4(inputs.pad(input_paddings))
-        : Tensor4();
-    const TensorMap4 padded_inputs = needs_padding
-        ? TensorMap4(const_cast<float*>(padded_inputs_storage.data()),
-                     padded_inputs_storage.dimensions())
-        : inputs;
+                const float* source = image + (input_row * input_width + first_input_column) * channels;
 
-    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
-    {
-        const TensorMap3 kernel_map = weights.as_tensor<3>(kernel_index);
-        const float bias_value = use_bias ? biases(kernel_index) : 0.0f;
+                if (first_input_column >= 0 && first_input_column + kernel_width <= input_width)
+                {
+                    copy_n(source, kernel_width * channels, patch_row);
+                    continue;
+                }
 
-        outputs.chip(kernel_index, 3).device(get_device()) =
-            padded_inputs.convolve(kernel_map, conv_dims)
-                         .stride(array<Index, 4>({1, row_stride, column_stride, 1}))
-                         .reshape(out_slice_shape) + bias_value;
-    }
+                for (Index kernel_column = 0; kernel_column < kernel_width; ++kernel_column)
+                {
+                    const Index input_column = first_input_column + kernel_column;
+                    if (input_column < 0 || input_column >= input_width)
+                        fill_n(patch_row + kernel_column * channels, channels, 0.0f);
+                    else
+                        copy_n(source + kernel_column * channels, channels,
+                               patch_row + kernel_column * channels);
+                }
+            }
+        }
+}
+
+// Scatter-add inverse of im2col: accumulates each patch column back onto the
+// image position it was read from (padding taps are dropped).
+void col2im(const float* col, Index input_height, Index input_width, Index channels,
+            Index kernel_height, Index kernel_width,
+            Index padding_height, Index padding_width,
+            Index row_stride, Index column_stride,
+            Index output_height, Index output_width,
+            float* image)
+{
+    const Index patch_size = kernel_height * kernel_width * channels;
+
+    for (Index output_row = 0; output_row < output_height; ++output_row)
+        for (Index output_column = 0; output_column < output_width; ++output_column)
+        {
+            const float* patch = col + (output_row * output_width + output_column) * patch_size;
+            const Index first_input_column = output_column * column_stride - padding_width;
+
+            for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
+            {
+                const Index input_row = output_row * row_stride + kernel_row - padding_height;
+                if (input_row < 0 || input_row >= input_height) continue;
+
+                const float* patch_row = patch + kernel_row * kernel_width * channels;
+                float* destination = image + (input_row * input_width + first_input_column) * channels;
+
+                if (first_input_column >= 0 && first_input_column + kernel_width <= input_width)
+                {
+                    Map<VectorR>(destination, kernel_width * channels) +=
+                        Map<const VectorR>(patch_row, kernel_width * channels);
+                    continue;
+                }
+
+                for (Index kernel_column = 0; kernel_column < kernel_width; ++kernel_column)
+                {
+                    const Index input_column = first_input_column + kernel_column;
+                    if (input_column < 0 || input_column >= input_width) continue;
+
+                    Map<VectorR>(destination + kernel_column * channels, channels) +=
+                        Map<const VectorR>(patch_row + kernel_column * channels, channels);
+                }
+            }
+        }
+}
 
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
+void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
+{
+    const Index batch_size = input.shape[0];
+    const Index output_height = output.shape[1];
+    const Index output_width = output.shape[2];
+    const Index output_positions = output_height * output_width;
+    const Index patch_size = kernel_height * kernel_width * kernel_channels;
+    const Index input_size = input_height * input_width * kernel_channels;
+
+    const Map<const MatrixR> weights_matrix(weights.as<float>(), kernels_number, patch_size);
+    const Map<const Matrix<float, 1, Dynamic>> bias_row(use_bias ? bias.as<float>() : nullptr,
+                                                        use_bias ? kernels_number : 0);
+
+    #pragma omp parallel
+    {
+        thread_local vector<float> col_storage;
+        col_storage.resize(size_t(output_positions * patch_size));
+
+        #pragma omp for schedule(static)
+        for (Index image_index = 0; image_index < batch_size; ++image_index)
+        {
+            im2col(input.as<float>() + image_index * input_size,
+                   input_height, input_width, kernel_channels,
+                   kernel_height, kernel_width, padding_height, padding_width,
+                   row_stride, column_stride, output_height, output_width,
+                   col_storage.data());
+
+            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            Map<MatrixR> output_matrix(output.as<float>() + image_index * output_positions * kernels_number,
+                                    output_positions, kernels_number);
+
+            output_matrix.noalias() = col * weights_matrix.transpose();
+
+            if (use_bias)
+                output_matrix.rowwise() += bias_row;
+        }
+    }
+}
+
 void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
                                   const TensorView& output_delta,
                                   TensorView& input_delta) const
 {
-    const TensorMap4 inputs        = input.as_tensor<4>();
-    const TensorMap4 output_deltas = output_delta.as_tensor<4>();
+    const Index batch_size = output_delta.shape[0];
+    const Index output_height = output_delta.shape[1];
+    const Index output_width = output_delta.shape[2];
+    const Index output_positions = output_height * output_width;
+    const Index patch_size = kernel_height * kernel_width * kernel_channels;
+    const Index input_size = input_height * input_width * kernel_channels;
 
-    VectorMap bias_gradients = use_bias ? bias_gradient.as_vector() : VectorMap(nullptr, 0);
-    TensorMap4 weight_gradients = weight_gradient.as_tensor<4>();
-    const TensorMap4 kernels = weights.as_tensor<4>();
-
-    if (use_bias) bias_gradients.setZero();
-    weight_gradients.setZero();
+    const Map<const MatrixR> weights_matrix(weights.as<float>(), kernels_number, patch_size);
 
     const bool write_input_delta = !input_delta.empty();
-    float* const input_delta_data = write_input_delta ? input_delta.as<float>() : nullptr;
-    if (write_input_delta)
-        fill_n(input_delta_data, input_delta.size(), 0.0f);
 
-    const Index batch_size = output_deltas.dimension(0);
-    const Index output_height = output_deltas.dimension(1);
-    const Index output_width = output_deltas.dimension(2);
+    // Per-thread partials summed in thread order afterwards, so the result does
+    // not depend on OpenMP scheduling.
+    const int threads_number = omp_get_max_threads();
+    MatrixR weight_gradient_partials = MatrixR::Zero(threads_number, kernels_number * patch_size);
+    MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? threads_number : 0,
+                                                   use_bias ? kernels_number : 0);
 
-    for (Index image_index = 0; image_index < batch_size; ++image_index)
+    #pragma omp parallel
     {
-        for (Index output_row = 0; output_row < output_height; ++output_row)
+        const int thread = omp_get_thread_num();
+
+        thread_local vector<float> col_storage;
+        thread_local vector<float> delta_col_storage;
+        col_storage.resize(size_t(output_positions * patch_size));
+        if (write_input_delta)
+            delta_col_storage.resize(size_t(output_positions * patch_size));
+
+        Map<MatrixR> weight_gradient_partial(weight_gradient_partials.row(thread).data(),
+                                          kernels_number, patch_size);
+
+        #pragma omp for schedule(static)
+        for (Index image_index = 0; image_index < batch_size; ++image_index)
         {
-            for (Index output_column = 0; output_column < output_width; ++output_column)
+            im2col(input.as<float>() + image_index * input_size,
+                   input_height, input_width, kernel_channels,
+                   kernel_height, kernel_width, padding_height, padding_width,
+                   row_stride, column_stride, output_height, output_width,
+                   col_storage.data());
+
+            const Map<const MatrixR> col(col_storage.data(), output_positions, patch_size);
+            const Map<const MatrixR> output_deltas(
+                output_delta.as<float>() + image_index * output_positions * kernels_number,
+                output_positions, kernels_number);
+
+            weight_gradient_partial.noalias() += output_deltas.transpose() * col;
+
+            if (use_bias)
+                bias_gradient_partials.row(thread) += output_deltas.colwise().sum();
+
+            if (write_input_delta)
             {
-                for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
-                {
-                    const float delta = output_deltas(image_index, output_row, output_column, kernel_index);
-                    if (use_bias) bias_gradients(kernel_index) += delta;
+                Map<MatrixR> delta_col(delta_col_storage.data(), output_positions, patch_size);
+                delta_col.noalias() = output_deltas * weights_matrix;
 
-                    for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
-                    {
-                        const Index input_row = output_row * row_stride + kernel_row - padding_height;
-                        if (input_row < 0 || input_row >= input_height) continue;
-
-                        for (Index kernel_column = 0; kernel_column < kernel_width; ++kernel_column)
-                        {
-                            const Index input_column = output_column * column_stride + kernel_column - padding_width;
-                            if (input_column < 0 || input_column >= input_width) continue;
-
-                            for (Index channel_index = 0; channel_index < kernel_channels; ++channel_index)
-                            {
-                                weight_gradients(kernel_index, kernel_row, kernel_column, channel_index) +=
-                                    inputs(image_index, input_row, input_column, channel_index) * delta;
-
-                                if (write_input_delta)
-                                {
-                                    const Index input_index = ((image_index * input_height + input_row)
-                                                              * input_width + input_column)
-                                                            * kernel_channels + channel_index;
-                                    input_delta_data[input_index] +=
-                                        kernels(kernel_index, kernel_row, kernel_column, channel_index) * delta;
-                                }
-                            }
-                        }
-                    }
-                }
+                float* const image_delta = input_delta.as<float>() + image_index * input_size;
+                fill_n(image_delta, input_size, 0.0f);
+                col2im(delta_col_storage.data(),
+                       input_height, input_width, kernel_channels,
+                       kernel_height, kernel_width, padding_height, padding_width,
+                       row_stride, column_stride, output_height, output_width,
+                       image_delta);
             }
         }
     }
+
+    Map<VectorR>(weight_gradient.as<float>(), kernels_number * patch_size) =
+        weight_gradient_partials.colwise().sum().transpose();
+
+    if (use_bias)
+        bias_gradient.as_vector() = bias_gradient_partials.colwise().sum().transpose();
 }
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
 #ifdef OPENNN_HAS_CUDA
 

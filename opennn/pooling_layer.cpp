@@ -75,7 +75,10 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
-    const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling)
+    // The argmax cache only serves the CPU backward; the cuDNN backward
+    // recomputes the maxima from input+output, so on GPU the slot stays empty.
+    const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling
+                                 && compute_device != Device::CUDA)
         ? Shape{batch_size}.append(out_shape)
         : Shape{};
 

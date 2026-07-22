@@ -57,13 +57,13 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool,
+                     FillMode,
                      int = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool,
+                      FillMode,
                       int = -1) const override;
 
     void augment_inputs(float*, Index) const override;

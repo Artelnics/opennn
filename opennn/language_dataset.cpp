@@ -586,7 +586,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
 void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
                                   const vector<Index>& input_indices,
                                   float* input_data,
-                                  bool /*is_training*/,
+                                  FillMode,
                                   int contiguous) const
 {
     fill_sequences(sample_indices, input_indices, input_data, contiguous,
@@ -596,7 +596,7 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
 void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                                    const vector<Index>& target_indices,
                                    float* target_data,
-                                   bool /*is_training*/,
+                                   FillMode,
                                    int contiguous) const
 {
     fill_sequences(sample_indices, target_indices, target_data, contiguous,
@@ -606,7 +606,7 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
 void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
                                    const vector<Index>& decoder_indices,
                                    float* decoder_data,
-                                   bool /*is_training*/,
+                                   FillMode,
                                    int contiguous) const
 {
     fill_sequences(sample_indices, decoder_indices, decoder_data, contiguous,

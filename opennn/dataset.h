@@ -10,6 +10,7 @@
 
 #include "correlations.h"
 #include "statistics.h"
+#include "batch.h"
 #include "tensor_types.h"
 #include "enum_map.h"
 #include "string_utilities.h"
@@ -251,7 +252,7 @@ public:
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
                              float*,
-                             bool,
+                             FillMode,
                              int contiguous = -1) const;
 
     virtual void augment_inputs(float*, Index) const {}
@@ -259,13 +260,13 @@ public:
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool,
+                              FillMode,
                               int contiguous = -1) const;
 
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               float*,
-                              bool,
+                              FillMode,
                               int contiguous = -1) const;
 
     virtual bool supports_bf16_inputs() const { return true; }
@@ -275,7 +276,7 @@ public:
                             const vector<Index>&,
                             const vector<Index>&,
                             const vector<Index>&,
-                            bool) const;
+                            FillMode) const;
 
 protected:
 
@@ -286,7 +287,7 @@ protected:
                          const vector<Index>&,
                          const vector<Index>&,
                          const vector<Index>&,
-                         bool) const;
+                         FillMode) const;
 
     void set_default_variable_roles();
     void set_default_variable_roles_forecasting();

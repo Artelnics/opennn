@@ -1031,17 +1031,17 @@ bool Dataset::has_validation() const
     return get_samples_number("Validation") != 0;
 }
 
-void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, bool, int) const
+void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {
     throw runtime_error("Dataset::fill_inputs must be implemented by a concrete dataset.");
 }
 
-void Dataset::fill_decoder(const vector<Index>&, const vector<Index>&, float*, bool, int) const
+void Dataset::fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {
     throw runtime_error("Dataset::fill_decoder must be implemented by a concrete dataset.");
 }
 
-void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, bool, int) const
+void Dataset::fill_targets(const vector<Index>&, const vector<Index>&, float*, FillMode, int) const
 {
     throw runtime_error("Dataset::fill_targets must be implemented by a concrete dataset.");
 }
@@ -1053,7 +1053,7 @@ pair<Index, Index> Dataset::count_binary_targets(const string& sample_role) cons
     if (sample_indices.empty()) return {0, 0};
 
     vector<float> targets(sample_indices.size());
-    fill_targets(sample_indices, get_feature_indices("Target"), targets.data(), false);
+    fill_targets(sample_indices, get_feature_indices("Target"), targets.data(), FillMode::Inference);
 
     Index negatives = 0;
     Index positives = 0;
@@ -1072,7 +1072,7 @@ void Dataset::fill_batch(Batch& batch,
                          const vector<Index>& input_indices,
                          const vector<Index>& decoder_indices,
                          const vector<Index>& target_indices,
-                         bool is_training) const
+                         FillMode mode) const
 {
     throw_if(Index(sample_indices.size()) != batch.samples_number,
              "fill_batch sample count does not match the batch size.");
@@ -1093,7 +1093,7 @@ void Dataset::fill_batch(Batch& batch,
     }
 
     fill_batch_host(batch, sample_indices, input_indices, decoder_indices,
-                    target_indices, is_training);
+                    target_indices, mode);
 }
 
 void Dataset::fill_batch_host(Batch& batch,
@@ -1101,7 +1101,7 @@ void Dataset::fill_batch_host(Batch& batch,
                               const vector<Index>& input_indices,
                               const vector<Index>& decoder_indices,
                               const vector<Index>& target_indices,
-                              bool is_training) const
+                              FillMode mode) const
 {
     const bool on_gpu = batch.uses_cuda();
 
@@ -1118,12 +1118,12 @@ void Dataset::fill_batch_host(Batch& batch,
     if (batch.target_contiguous < 0 && !target_indices.empty())
         batch.target_contiguous = is_contiguous(target_indices) ? 1 : 0;
 
-    fill_inputs(sample_indices, input_indices, input_buffer, is_training, batch.input_contiguous);
+    fill_inputs(sample_indices, input_indices, input_buffer, mode, batch.input_contiguous);
 
     if (!batch.decoder.shape.empty())
-        fill_decoder(sample_indices, decoder_indices, decoder_buffer, is_training, batch.decoder_contiguous);
+        fill_decoder(sample_indices, decoder_indices, decoder_buffer, mode, batch.decoder_contiguous);
 
-    fill_targets(sample_indices, target_indices, target_buffer, is_training, batch.target_contiguous);
+    fill_targets(sample_indices, target_indices, target_buffer, mode, batch.target_contiguous);
 
     batch.needs_device_copy = true;
 }

@@ -21,6 +21,8 @@ namespace opennn
 
 class Dataset;
 
+enum class FillMode { Training, Validation, Inference };
+
 struct BatchSlot
 {
     Buffer buffer;
@@ -57,7 +59,7 @@ struct Batch
               const vector<Index>&,
               const vector<Index>&,
               const vector<Index>&,
-              bool is_training = true);
+              FillMode mode = FillMode::Training);
 
     const vector<TensorView>& get_inputs() const
     {

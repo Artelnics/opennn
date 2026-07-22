@@ -42,6 +42,14 @@ struct PoolOperator : Operator
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+    // Lazily built from the pooling geometry and reused across calls (set()
+    // invalidates it), like TensorView::get_descriptor for tensor descriptors.
+    cudnnPoolingDescriptor_t get_pooling_descriptor() const;
+
+private:
+
+    mutable shared_ptr<cudnnPoolingStruct> pooling_descriptor;
 };
 
 }

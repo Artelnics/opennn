@@ -215,8 +215,6 @@ MatrixR activation_derivative_from_output_values(ActivationFunction function, co
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(max_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(average_pooling_3d_backward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
-    X(pooling_2d_forward_gpu, (const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
-    X(pooling_2d_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, Index, Index, Index, Index, Index, Index)) \
     X(first_token_3d_forward_gpu, (const TensorView&, TensorView&)) \
     X(first_token_3d_backward_gpu, (const TensorView&, TensorView&)) \
     X(split_heads_gpu, (const TensorView&, TensorView&)) \
@@ -1173,7 +1171,6 @@ void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView&
                         Index padding_height, Index padding_width,
                         bool max_pooling)
 {
-    if (input.is_cuda()) { pooling_2d_forward_gpu(input, output, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride); return; }
     pooling_2d_forward_cpu(input, output, maximal_indices,
                            input_height, input_width, input_channels,
                            pool_height, pool_width,
@@ -1235,8 +1232,7 @@ static void pooling_2d_backward_cpu(const TensorView& output_delta, const Tensor
         });
 }
 
-void pooling_2d_backward(const TensorView& input, const TensorView& output,
-                         const TensorView& output_delta, const TensorView& maximal_indices,
+void pooling_2d_backward(const TensorView& output_delta, const TensorView& maximal_indices,
                          TensorView& input_delta,
                          Index input_height, Index input_width, Index input_channels,
                          Index pool_height, Index pool_width,
@@ -1244,11 +1240,6 @@ void pooling_2d_backward(const TensorView& input, const TensorView& output,
                          Index padding_height, Index padding_width,
                          bool max_pooling)
 {
-    if (output_delta.is_cuda())
-    {
-        pooling_2d_backward_gpu(input, output, output_delta, input_delta, max_pooling, pool_height, pool_width, padding_height, padding_width, row_stride, column_stride);
-        return;
-    }
     pooling_2d_backward_cpu(output_delta, maximal_indices, input_delta,
                             input_height, input_width, input_channels,
                             pool_height, pool_width,
@@ -1782,52 +1773,6 @@ static void average_pooling_3d_backward_gpu(const TensorView& input,
                                             to_int(input.shape[1]),
                                             to_int(input.shape[2]));
     });
-}
-
-static CudnnDescriptor<cudnnPoolingDescriptor_t> make_pooling_descriptor(
-    bool max_pooling, Index pool_h, Index pool_w, Index pad_h, Index pad_w, Index stride_h, Index stride_w)
-{
-    CudnnDescriptor<cudnnPoolingDescriptor_t> desc;
-    CHECK_CUDNN(cudnnCreatePoolingDescriptor(&desc.handle));
-    desc.deleter = &cudnnDestroyPoolingDescriptor;
-    CHECK_CUDNN(cudnnSetPooling2dDescriptor(desc,
-        max_pooling ? CUDNN_POOLING_MAX : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
-        CUDNN_PROPAGATE_NAN,
-        to_int(pool_h), to_int(pool_w),
-        to_int(pad_h), to_int(pad_w),
-        to_int(stride_h), to_int(stride_w)));
-    return desc;
-}
-
-static void pooling_2d_forward_gpu(const TensorView& input, TensorView& output,
-                                   bool max_pooling, Index pool_h, Index pool_w,
-                                   Index pad_h, Index pad_w, Index stride_h, Index stride_w)
-{
-    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
-    CHECK_CUDNN(cudnnPoolingForward(Backend::get_cudnn_handle(),
-        desc,
-        &one,
-        input.get_descriptor(), input.data,
-        &zero,
-        output.get_descriptor(), output.data));
-}
-
-static void pooling_2d_backward_gpu(const TensorView& input,
-                                    const TensorView& output,
-                                    const TensorView& output_delta,
-                                    TensorView& input_delta,
-                                    bool max_pooling, Index pool_h, Index pool_w,
-                                    Index pad_h, Index pad_w, Index stride_h, Index stride_w)
-{
-    const auto desc = make_pooling_descriptor(max_pooling, pool_h, pool_w, pad_h, pad_w, stride_h, stride_w);
-    CHECK_CUDNN(cudnnPoolingBackward(Backend::get_cudnn_handle(),
-        desc,
-        &one,
-        output.get_descriptor(),       output.data,
-        output_delta.get_descriptor(), output_delta.data,
-        input.get_descriptor(),        input.data,
-        &zero,
-        input_delta.get_descriptor(),  input_delta.data));
 }
 
 static void first_token_3d_forward_gpu(const TensorView& input, TensorView& output)

@@ -92,12 +92,31 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     vector<DeltaEntry> delta_entries;
 
+    // A passthrough layer (e.g. Flatten) owns no slots in either direction: its
+    // consumers alias its input in forward and its producer reads its consumer's
+    // delta in backward. Note that empty backward specs alone do NOT mean
+    // passthrough — Embedding is trainable with no input delta.
+    const auto is_passthrough = [&](Index layer_index)
+    {
+        return backward_specs[size_t(layer_index)].empty()
+            && layers[layer_index]->get_forward_specs(batch_size).empty();
+    };
+
     const Index last_backward_step = last_trainable_layer_index - first_trainable_layer_index;
 
     const Shape output_delta_shape = Shape({batch_size}).append(layers[last_trainable_layer_index]->get_output_shape());
 
+    // If the last trainable layer is a passthrough (e.g. Flatten), the loss
+    // delta is actually consumed by the first real producer upstream, so the
+    // block must live until that layer's backward step.
+    Index loss_delta_consumer = last_trainable_layer_index;
+    while (loss_delta_consumer >= 0 && is_passthrough(loss_delta_consumer)
+           && !source_layers[loss_delta_consumer].empty() && source_layers[loss_delta_consumer][0] >= 0)
+        loss_delta_consumer = source_layers[loss_delta_consumer][0];
+
     if (output_delta_shape.size() != 0 && !loss_pointer->output_delta_overwrites_outputs())
-        delta_entries.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0, 0});
+        delta_entries.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0,
+                                 last_trainable_layer_index - loss_delta_consumer});
 
     for (Index layer_index = first_trainable_layer_index; layer_index <= last_trainable_layer_index; ++layer_index)
     {
@@ -110,7 +129,15 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
             if (shape.empty()) continue;
 
             const Index first_step = last_trainable_layer_index - layer_index;
-            const Index source_layer = (j < sources.size()) ? sources[j] : Index(-1);
+
+            // A passthrough source (e.g. Flatten) hands this delta straight to
+            // ITS source, so the block must stay live until that producer's
+            // backward step reads it.
+            Index source_layer = (j < sources.size()) ? sources[j] : Index(-1);
+            while (source_layer >= 0 && is_passthrough(source_layer)
+                   && !source_layers[source_layer].empty() && source_layers[source_layer][0] >= 0)
+                source_layer = source_layers[source_layer][0];
+
             const bool source_layer_is_trainable = source_layer >= first_trainable_layer_index
                                                 && source_layer <= last_trainable_layer_index;
 
@@ -239,12 +266,36 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         const auto& edges = consumer_edges[i];
         if (edges.size() != 1) continue;
 
-        const auto& [consumer_layer, input_position] = edges.front();
+        // Walk through passthrough consumers (e.g. Flatten): the delta this
+        // layer must read lives in the first real consumer downstream — or, if
+        // the chain ends on a passthrough that owns an output-delta buffer
+        // (loss-facing or multi-consumer), in that buffer.
+        size_t consumer_layer = edges.front().first;
+        size_t input_position = edges.front().second;
+        while (is_passthrough(Index(consumer_layer))
+               && consumer_edges[consumer_layer].size() == 1)
+        {
+            input_position = consumer_edges[consumer_layer].front().second;
+            consumer_layer = consumer_edges[consumer_layer].front().first;
+        }
+
         const size_t slot = input_position + 1;
         const auto& consumer_deltas = backward_slots[consumer_layer];
 
+        TensorView delta_view;
         if (slot < consumer_deltas.size() && !consumer_deltas[slot].empty())
-            layer_output_deltas[i] = consumer_deltas[slot];
+            delta_view = consumer_deltas[slot];
+        else if (is_passthrough(Index(consumer_layer))
+                 && !layer_output_deltas[consumer_layer].empty())
+            delta_view = layer_output_deltas[consumer_layer];
+        else
+            continue;
+
+        // Reshape to this layer's own output geometry: through a Flatten the
+        // aliased block carries the consumer's flat shape, but the producer's
+        // backward (e.g. cuDNN pooling) needs its NHWC view.
+        delta_view.shape = Shape{batch_size}.append(layers[i]->get_output_shape());
+        layer_output_deltas[i] = delta_view;
     }
 }
 

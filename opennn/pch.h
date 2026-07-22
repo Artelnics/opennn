@@ -117,6 +117,8 @@ enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2
 
 struct cudnnTensorStruct {};
 using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
+struct cudnnPoolingStruct {};
+using cudnnPoolingDescriptor_t     = cudnnPoolingStruct*;
 using cudnnDropoutDescriptor_t     = void*;
 using cudnnOpTensorDescriptor_t    = void*;
 using cudnnRNNDescriptor_t         = void*;

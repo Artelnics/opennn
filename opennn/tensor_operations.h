@@ -17,6 +17,11 @@ namespace opennn
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
+// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
+// The CUDA kernels keep their own mirrored copy in kernel_common.cuh, like the
+// activation ids above.
+inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
+
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
 ActivationFunction activation_function_from_string(const string&);
@@ -146,7 +151,6 @@ void pooling_2d_forward(const TensorView&, TensorView&, TensorView&,
                         Index, Index,
                         bool);
 void pooling_2d_backward(const TensorView&, const TensorView&,
-                         const TensorView&, const TensorView&,
                          TensorView&,
                          Index, Index, Index,
                          Index, Index,

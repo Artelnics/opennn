@@ -6,7 +6,7 @@
 #pragma once
 
 #include "pch.h"
-#include "types.h"
+#include "configuration.h"
 
 namespace opennn::memory_debug
 {

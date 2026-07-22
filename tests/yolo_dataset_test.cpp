@@ -150,7 +150,7 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
     const Index target_floats_per_sample = grid_size * grid_size * channels;
 
     std::vector<float> targets(static_cast<size_t>(2 * target_floats_per_sample), 0.0f);
-    dataset.fill_targets({0, 1}, {}, targets.data(), /*is_training=*/false);
+    dataset.fill_targets({0, 1}, {}, targets.data(), FillMode::Inference);
 
     // ---- Sample 0 ----------------------------------------------------------
     {
@@ -233,7 +233,7 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     std::vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
 
     // is_training=true scales to [0,1].
-    dataset.fill_inputs({0}, {}, inputs.data(), /*is_training=*/true);
+    dataset.fill_inputs({0}, {}, inputs.data(), FillMode::Training);
 
     // Every pixel should be the same solid color, divided by 255.
     constexpr float expected_r = 200.0f / 255.0f;
@@ -293,7 +293,7 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
     dataset.set_multi_scale_heads({grid0, grid1}, {anchors_large, anchors_small});
 
     std::vector<float> target(static_cast<size_t>(total_floats), -99.0f);
-    dataset.fill_targets({0}, {}, target.data(), /*is_training=*/false);
+    dataset.fill_targets({0}, {}, target.data(), FillMode::Inference);
 
     // ---- Head 0: large box at col=0,row=0, anchor=0 -------------------------
     // iou(0.6x0.6, 0.6x0.6) = 1.0 → objectness = max(1.0, 0.5) = 1.0

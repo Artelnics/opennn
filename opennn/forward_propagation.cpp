@@ -159,7 +159,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             }
 
             if (resolved >= 0)
-                input_views[i][j] = forward_slots[resolved].back();
+            {
+                // The aliased block keeps the producer's geometry; consumers
+                // must see the passthrough layer's declared output shape (a
+                // Flatten turns the producer's NHWC block into a flat row).
+                TensorView view = forward_slots[resolved].back();
+                if (!view.empty())
+                    view.shape = Shape{view.shape[0]}
+                        .append(layers[source_layer]->get_output_shape());
+                input_views[i][j] = view;
+            }
             else
                 passthrough_overrides.emplace_back(i, j, size_t(-resolved - 1));
         }
@@ -175,14 +184,30 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     if (!neural_network) return {};
 
     const Index layer_index = neural_network->get_last_trainable_layer_index();
-    
+
     if (layer_index < 0
         || size_t(layer_index) >= forward_slots.size()
-        || forward_slots[layer_index].size() <= 1)
+        || forward_slots[layer_index].size() < 1)
         return {};
 
     const TensorView& v = forward_slots[layer_index].back();
-    return v.empty() ? TensorView{} : v;
+    if (!v.empty()) return v;
+
+    // Passthrough last trainable layer (e.g. Flatten): its output is its input
+    // view, reshaped to the layer's declared output geometry so the loss sees
+    // the flat shape it expects.
+    if (size_t(layer_index) < input_views.size() && !input_views[layer_index].empty())
+    {
+        TensorView input_view = input_views[layer_index].front();
+        if (!input_view.empty())
+        {
+            input_view.shape = Shape{input_view.shape[0]}
+                .append(neural_network->get_layers()[layer_index]->get_output_shape());
+            return input_view;
+        }
+    }
+
+    return {};
 }
 
 TensorView ForwardPropagation::get_outputs() const
@@ -199,12 +224,18 @@ TensorView ForwardPropagation::get_outputs() const
         if (!v.empty()) return v;
     }
 
-    // A passthrough final layer (e.g. Scaling/Unscaling with None scalers)
-    // allocates no forward slot: its output is its input view.
+    // A passthrough final layer (e.g. Scaling/Unscaling with None scalers, or
+    // Flatten) allocates no forward slot: its output is its input view,
+    // reshaped to the layer's declared output geometry.
     if (last >= 0 && size_t(last) < input_views.size() && !input_views[last].empty())
     {
-        const TensorView& input_view = input_views[last].front();
-        if (!input_view.empty()) return input_view;
+        TensorView input_view = input_views[last].front();
+        if (!input_view.empty())
+        {
+            input_view.shape = Shape{input_view.shape[0]}
+                .append(neural_network->get_layers()[last]->get_output_shape());
+            return input_view;
+        }
     }
 
     return get_last_trainable_layer_outputs();

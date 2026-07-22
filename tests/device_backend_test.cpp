@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "opennn/types.h"
+#include "opennn/configuration.h"
 #include "opennn/device_backend.h"
 
 using namespace opennn;

@@ -126,28 +126,28 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
         dataset->fill_targets(batch_indices, target_feature_indices,
                               target_data.data() + row_cursor * target_width,
-                              /*is_training=*/false);
+                              FillMode::Inference);
 
         MatrixR batch_outputs;
         if (auto* tsd = dynamic_cast<TimeSeriesDataset*>(dataset))
         {
             Tensor3 batch_inputs(n, input_shape[0], input_shape[1]);
             tsd->fill_inputs(batch_indices, input_feature_indices,
-                             batch_inputs.data(), /*is_training=*/false);
+                             batch_inputs.data(), FillMode::Inference);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 1)
         {
             MatrixR batch_inputs(n, input_shape[0]);
             dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false);
+                                 batch_inputs.data(), FillMode::Inference);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else if (input_shape.rank == 3)
         {
             Tensor4 batch_inputs(n, input_shape[0], input_shape[1], input_shape[2]);
             dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), /*is_training=*/false);
+                                 batch_inputs.data(), FillMode::Inference);
             batch_outputs = neural_network->calculate_outputs(batch_inputs);
         }
         else

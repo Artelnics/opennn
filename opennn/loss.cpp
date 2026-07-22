@@ -962,7 +962,7 @@ void Loss::set_normalization_coefficient()
         dataset->fill_targets(training_indices,
                               dataset->get_feature_indices("Target"),
                               targets.data(),
-                              false);
+                              FillMode::Inference);
 
         const VectorR targets_mean = mean(targets);
         const float coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();

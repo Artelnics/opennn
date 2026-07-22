@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 #include "kernel.cuh"
-#include "types.h"
+#include "configuration.h"
 
 namespace opennn::device
 {
@@ -34,6 +34,10 @@ static constexpr int activation_silu      = 8;
 
 static constexpr int class_activation_softmax = 0;
 static constexpr int class_activation_sigmoid = 1;
+
+// Mirror of opennn::LEAKY_RELU_SLOPE (tensor_operations.h), like the
+// activation ids above mirror ActivationFunction.
+static constexpr float leaky_relu_slope = 0.1f;
 
 static inline int ceil_div(int a, int b)
 {

@@ -10,10 +10,11 @@
 
 #include <mutex>
 
-#include "types.h"
-
 namespace opennn
 {
+
+enum class Device { Auto, CPU, CUDA };
+enum class Type { Auto, FP32, BF16 };
 
 class Configuration
 {

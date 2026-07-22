@@ -116,8 +116,10 @@ protected:
 
     void reset_best_parameters();
 
-    // Validation batches come from the dataset that set_scaling() pre-scaled in
-    // place, so their forward passes must skip the leading Scaling layers (see
+    // Contract with Dataset::fill_*: every batch filled with FillMode::Training
+    // or FillMode::Validation arrives pre-scaled (in-place for tabular, at fill
+    // time for images), so validation forward passes must skip the leading
+    // Scaling layers exactly like training ones do (see
     // ForwardPropagation::inputs_pre_scaled). Every optimizer calls this on the
     // propagation it evaluates validation with.
     static void mark_validation_propagation(ForwardPropagation* validation_propagation)
@@ -177,7 +179,7 @@ protected:
         const vector<Index>&,
         const vector<Index>&,
         const vector<Index>&,
-        bool,
+        FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
     int get_batch_workers_number(const NeuralNetwork&) const;

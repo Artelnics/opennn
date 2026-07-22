@@ -48,14 +48,17 @@ static filesystem::path image_cache_path(const filesystem::path& data_path)
 }
 
 // Identity trailer appended after the pixel blob in images.bin (see read_images):
-// sample count, image shape and the exact class list. Re-derived from the current
-// folders on load and matched against the file's trailer, so a cache built for a
-// different dataset is rebuilt instead of read as foreign pixels.
+// sample count, image shape, the exact class list and the newest source mtime.
+// Re-derived from the current folders on load and matched against the file's
+// trailer, so a cache built for a different dataset — or for images since
+// edited in place — is rebuilt instead of read as stale pixels.
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
-                                    const vector<filesystem::path>& class_folders)
+                                    const vector<filesystem::path>& class_folders,
+                                    const filesystem::file_time_type& newest_write_time)
 {
     string signature = to_string(samples) + "|"
-        + to_string(height) + "x" + to_string(width) + "x" + to_string(channels) + "|";
+        + to_string(height) + "x" + to_string(width) + "x" + to_string(channels) + "|"
+        + to_string(newest_write_time.time_since_epoch().count()) + "|";
     for (const filesystem::path& folder : class_folders)
         signature += folder.filename().string() + ",";
     return signature;
@@ -134,10 +137,10 @@ void ImageDataset::enable_device_residency()
     // (scaled pixels followed by the one-hot targets), so the device gather
     // can replace the per-batch decode entirely.
     MatrixR inputs(samples_number, inputs_number);
-    fill_inputs(all_samples, input_indices, inputs.data(), true, 1);
+    fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training, 1);
 
     MatrixR targets(samples_number, targets_number);
-    fill_targets(all_samples, target_indices, targets.data(), true, 1);
+    fill_targets(all_samples, target_indices, targets.data(), FillMode::Training, 1);
 
     MatrixR staged(samples_number, inputs_number + targets_number);
     staged.leftCols(inputs_number) = inputs;
@@ -350,13 +353,19 @@ void ImageDataset::read_images()
     vector<filesystem::path> directory_path;
     vector<filesystem::path> paths;
     vector<int32_t> labels;
+    // file_clock's epoch can sit in the future (libstdc++ uses 2174), making
+    // real mtimes negative: min() is the only safe identity for the max-fold.
+    filesystem::file_time_type newest_write_time = filesystem::file_time_type::min();
 
     for (const filesystem::path& folder : candidate_folders)
     {
         vector<filesystem::path> folder_files;
         for (const filesystem::directory_entry& current_directory : filesystem::directory_iterator(folder))
             if (current_directory.is_regular_file() && is_supported_image_file(current_directory.path()))
+            {
                 folder_files.emplace_back(current_directory.path());
+                newest_write_time = max(newest_write_time, current_directory.last_write_time());
+            }
 
         if (folder_files.empty())
             continue;
@@ -464,7 +473,8 @@ void ImageDataset::read_images()
         // The pixel region stays at offset 0 (sample reads are unaffected); the
         // trailer is validated against the signature re-derived from the current
         // folders. A mismatch forces a rebuild instead of reading foreign pixels.
-        const string signature = image_cache_signature(samples_number, height, width, channels, directory_path);
+        const string signature = image_cache_signature(samples_number, height, width, channels,
+                                                       directory_path, newest_write_time);
         const uint64_t pixel_bytes = uint64_t(samples_number) * pixel_number;
 
         bool cache_valid = false;
@@ -552,17 +562,41 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
 void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                                const vector<Index>& input_indices,
                                float* input_data,
-                               bool is_training,
+                               FillMode mode,
                                int contiguous) const
 {
     const Index batch_size = ssize(sample_indices);
     const Index channels = input_shape[2];
     const Index pixels_per_image = Index(pixel_number);
-    const bool apply_scaling = is_training;
+    const Index pixels_per_channel = pixels_per_image / channels;
+
+    // Contract with Optimizer::mark_validation_propagation: every Training AND
+    // Validation batch leaves here scaled, because both forward passes skip the
+    // network's Scaling layers. Inference fills stay raw for the Scaling layer.
+    const bool apply_scaling = mode != FillMode::Inference;
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
     const bool use_default_scaling = apply_scaling && !has_scaling;
-    const bool apply_augmentation = is_training && augmentation.enabled;
+    const bool apply_augmentation = mode == FillMode::Training && augmentation.enabled;
+
+    const auto scale_sample = [&](float* sample)
+    {
+        if (apply_scaling && has_scaling)
+        {
+            const Map<const Array<float, 1, Dynamic>> scale_row(input_scale.data(), 1, channels);
+            const Map<const Array<float, 1, Dynamic>> offset_row(input_offset.data(), 1, channels);
+
+            Map<MatrixR> image_pixels(sample, pixels_per_channel, channels);
+            image_pixels.array().rowwise() *= scale_row;
+            image_pixels.array().rowwise() += offset_row;
+        }
+        else if (use_default_scaling)
+            Map<Array<float, Dynamic, 1>>(sample, pixels_per_image) *= 1.0f / 255.0f;
+    };
+
+    // Augmentation interpolates and zero-fills borders, so it must see raw
+    // pixel values: only then does the affine wait for a separate pass.
+    const bool scale_in_fill = !apply_augmentation && storage_mode != StorageMode::Matrix;
 
     if (storage_mode == StorageMode::Matrix)
     {
@@ -590,6 +624,9 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
                 float* dst = input_data + i * pixels_per_image;
                 Map<Array<float, Dynamic, 1>>(dst, pixels_per_image) =
                     Map<const Array<uint8_t, Dynamic, 1>>(buf.data(), pixels_per_image).cast<float>();
+
+                if (scale_in_fill)
+                    scale_sample(dst);
             }
             catch (const exception& e)
             {
@@ -606,32 +643,18 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     if (apply_augmentation)
         augment_inputs(input_data, batch_size);
 
-    if (apply_scaling && has_scaling)
-    {
-        const Index pixels_per_channel = pixels_per_image / channels;
-        const Map<const Array<float, 1, Dynamic>> scale_row(input_scale.data(), 1, channels);
-        const Map<const Array<float, 1, Dynamic>> offset_row(input_offset.data(), 1, channels);
-
-        #pragma omp parallel for schedule(static)
-        for (Index i = 0; i < batch_size; ++i)
-        {
-            Map<MatrixR> image_pixels(input_data + i * pixels_per_image, pixels_per_channel, channels);
-            image_pixels.array().rowwise() *= scale_row;
-            image_pixels.array().rowwise() += offset_row;
-        }
-    }
-    else if (use_default_scaling)
+    if (!scale_in_fill)
     {
         #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
-            Map<Array<float, Dynamic, 1>>(input_data + i * pixels_per_image, pixels_per_image) *= 1.0f / 255.0f;
+            scale_sample(input_data + i * pixels_per_image);
     }
 }
 
 void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
-                                bool /*is_training*/,
+                                FillMode,
                                 int /*contiguous*/) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -653,8 +676,8 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (targets_number == 1)
     {
-        auto label_of = [&](Index s) { return float(sample_labels[size_t(s)]); };
-        transform(execution::par, sample_indices.begin(), sample_indices.begin() + batch_size, target_data, label_of);
+        for (Index i = 0; i < batch_size; ++i)
+            target_data[i] = float(sample_labels[size_t(sample_indices[size_t(i)])]);
     }
     else
     {

@@ -25,7 +25,6 @@
 #include "pool_operator.h"
 #include "pool3d_operator.h"
 #include "embedding_lookup_operator.h"
-#include "flat_operator.h"
 #include "bound_operator.h"
 #include "scale_operator.h"
 #include "detection_operator.h"

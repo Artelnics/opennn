@@ -416,19 +416,19 @@ void TabularDataset::fill_features(const vector<Index>& sample_indices, const ve
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
-                                 float* input_data, bool, int contiguous) const
+                                 float* input_data, FillMode, int contiguous) const
 {
     fill_features(sample_indices, input_indices, input_data, contiguous);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
-                                  float* decoder_data, bool, int contiguous) const
+                                  float* decoder_data, FillMode, int contiguous) const
 {
     fill_features(sample_indices, decoder_indices, decoder_data, contiguous);
 }
 
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
-                                  float* target_data, bool, int contiguous) const
+                                  float* target_data, FillMode, int contiguous) const
 {
     fill_features(sample_indices, target_indices, target_data, contiguous);
 }

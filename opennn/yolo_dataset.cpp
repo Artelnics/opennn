@@ -1632,13 +1632,13 @@ MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
-                              bool is_training,
+                              FillMode mode,
                               int) const
 {
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
 
-    const bool augment = is_training && augmentation.enabled;
+    const bool augment = mode == FillMode::Training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.fetch_add(1, memory_order_relaxed) + 1
@@ -1780,12 +1780,12 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                const vector<Index>&,
                                float* target_data,
-                               bool is_training,
+                               FillMode mode,
                                int) const
 {
     const Index batch_size = ssize(sample_indices);
 
-    const bool augment = is_training && augmentation.enabled;
+    const bool augment = mode == FillMode::Training && augmentation.enabled;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
     const uint64_t epoch_seed = augment
         ? augmentation_counter.load(memory_order_relaxed)

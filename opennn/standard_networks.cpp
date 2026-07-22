@@ -289,7 +289,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                    "classification_layer"));
 
     compile();
-    set_parameters_random();
+    set_parameters_glorot();
 }
 
 ResNet::ResNet(const Shape& input_shape,

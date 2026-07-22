@@ -153,19 +153,19 @@ public:
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
-                     bool,
+                     FillMode,
                      int contiguous = -1) const override;
 
     void fill_decoder(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool,
+                      FillMode,
                       int contiguous = -1) const override;
 
     void fill_targets(const vector<Index>&,
                       const vector<Index>&,
                       float*,
-                      bool,
+                      FillMode,
                       int contiguous = -1) const override;
 
 protected:

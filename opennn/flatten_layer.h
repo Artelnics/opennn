@@ -9,11 +9,13 @@
 #pragma once
 
 #include "layer.h"
-#include "flat_operator.h"
 
 namespace opennn
 {
 
+// Pure passthrough: flattening a row-major tensor is a reinterpretation, so the
+// layer declares no slots and consumers alias its input directly (forward views
+// and backward deltas both resolve through it).
 class Flatten final : public Layer
 {
 public:
@@ -22,13 +24,13 @@ public:
 
     Shape get_output_shape() const override { return { input_shape.size() }; }
 
+    vector<TensorSpec> get_forward_specs(Index) const override { return {}; }
+
+    vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
+
     void set(const Shape&);
 
     void set_input_shape(const Shape& new_input_shape) override { set(new_input_shape); }
-
-private:
-
-    FlatOperator flat;
 };
 
 }

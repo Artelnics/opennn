@@ -1311,7 +1311,7 @@ __device__ __forceinline__ float opennn_activation_value(float x, int function)
     if (function == activation_sigmoid)    return 1.0f / (1.0f + expf(-x));
     if (function == activation_tanh)       return tanhf(x);
     if (function == activation_relu)       return fmaxf(x, 0.0f);
-    if (function == activation_leaky_relu) return x >= 0.0f ? x : opennn::LEAKY_RELU_SLOPE * x;
+    if (function == activation_leaky_relu) return x >= 0.0f ? x : leaky_relu_slope * x;
     if (function == activation_gelu)       return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
     if (function == activation_gelu_tanh)
     {
@@ -1327,7 +1327,7 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
     if (function == activation_sigmoid)    return d * y * (1.0f - y);
     if (function == activation_tanh)       return d * (1.0f - y * y);
     if (function == activation_relu)       return y > 0.0f ? d : 0.0f;
-    if (function == activation_leaky_relu) return y >= 0.0f ? d : opennn::LEAKY_RELU_SLOPE * d;
+    if (function == activation_leaky_relu) return y >= 0.0f ? d : leaky_relu_slope * d;
     if (function == activation_gelu)
     {
         const float cdf = 0.5f * (1.0f + erff(y * 0.70710678118654752440f));

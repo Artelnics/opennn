@@ -301,10 +301,10 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
     set_scaling();
 
     Batch training_batch(training_samples_number, dataset, neural_network->get_config());
-    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
+    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Training);
 
     Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, /*is_training=*/false);
+    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Validation);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 

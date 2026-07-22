@@ -803,7 +803,7 @@ TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
     EXPECT_EQ(dataset.get_variable_type(2), VariableType::Binary);
 
     vector<float> inputs(4);
-    dataset.fill_inputs({0, 2}, {0, 1}, inputs.data(), false);
+    dataset.fill_inputs({0, 2}, {0, 1}, inputs.data(), FillMode::Inference);
 
     EXPECT_NEAR(inputs[0], 1, EPSILON);
     EXPECT_NEAR(inputs[1], 10, EPSILON);
@@ -811,7 +811,7 @@ TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
     EXPECT_NEAR(inputs[3], 30, EPSILON);
 
     vector<float> targets(4);
-    dataset.fill_targets({0, 1, 2, 3}, {2}, targets.data(), false);
+    dataset.fill_targets({0, 1, 2, 3}, {2}, targets.data(), FillMode::Inference);
 
     EXPECT_NEAR(targets[0], 0, EPSILON);
     EXPECT_NEAR(targets[1], 1, EPSILON);
