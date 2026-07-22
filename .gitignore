@@ -92,6 +92,10 @@ Makefile.in
 /missing
 /stamp-h1
 /parameters/
+
+# Downloaded GPT-2 weights and tokenizer assets
+/data/gpt2/
+
 ### C template
 # Object files
 *.o
