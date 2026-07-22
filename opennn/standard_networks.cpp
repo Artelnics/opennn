@@ -426,7 +426,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          Backbone backbone,
                          ClassActivation class_activation,
                          HeadStyle head_style,
-                         BodyActivation body_activation) : NeuralNetwork()
+                         BodyActivation body_activation,
+                         bool use_sppf) : NeuralNetwork()
 {
     throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -436,15 +437,15 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     if (head_style == HeadStyle::FPN)
     {
         throw_if(backbone != Backbone::DarknetTiny && backbone != Backbone::DarknetTinyV3
-                 && backbone != Backbone::Darknet53,
-                 "YoloNetwork: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, or Darknet53.");
+                 && backbone != Backbone::Darknet53 && backbone != Backbone::CSPDarknet53,
+                 "YoloNetwork: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
                  "YoloNetwork: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
     }
     if (head_style == HeadStyle::PANet)
     {
-        throw_if(backbone != Backbone::Darknet53,
-                 "YoloNetwork: HeadStyle::PANet requires Backbone::Darknet53.");
+        throw_if(backbone != Backbone::Darknet53 && backbone != Backbone::CSPDarknet53,
+                 "YoloNetwork: HeadStyle::PANet requires Backbone::Darknet53 or CSPDarknet53.");
         throw_if(ssize(anchors) != 9,
                  "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
     }
@@ -607,13 +608,24 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return;
         }
     }
-    else if (backbone == Backbone::Darknet53)
+    else if (backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53)
     {
-        // Darknet53: 52 conv layers arranged as initial conv + 5 stages.
-        // Each stage: stride-2 downsample conv + N residual blocks [Conv1×1 → Conv3×3 + skip].
-        // Stages: {64,1},{128,2},{256,8},{512,8},{1024,4} → 32× total stride.
-        // FPN taps C3=52×52×256, C4=26×26×512, C5=13×13×1024.
+        // Darknet53: 52 conv layers, initial conv + 5 stages.
+        //   Stage: stride-2 downsample + N residual blocks [Conv1×1 → Conv3×3 + skip].
+        //   Stages: {64,1},{128,2},{256,8},{512,8},{1024,4} → 32× total stride.
+        //
+        // CSPDarknet53 (YOLOv4): same stem + 5 stages, but each stage uses a
+        //   Cross-Stage Partial block: stride-2 down → split → [N residual blocks on
+        //   branch2, direct skip on branch1] → concat → merge conv.
+        //   Halves gradient duplication vs plain Darknet53. Same C3/C4/C5 channel
+        //   counts (256/512/1024) so the FPN/PANet neck is shared unchanged.
+        //   Trains from scratch (no pretrained backbone available for CSPDarknet53).
+        //
+        // FPN taps: C3=52×52×256, C4=26×26×512, C5=13×13×1024.
 
+        const bool use_csp = (backbone == Backbone::CSPDarknet53);
+
+        // ── Darknet53 residual block ────────────────────────────────────────────
         auto add_residual_block = [&](Index input_index, Index channels, const string& prefix) -> Index {
             const Index half = channels / 2;
             Index x = add_conv(input_index, Shape{1, 1, channels, half},      act,        stride, true, prefix+"_c1");
@@ -624,29 +636,101 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return get_layers_number() - 1;
         };
 
+        // ── CSPDarknet53 stage ─────────────────────────────────────────────────
+        // Matches YOLOv4 / yolov4.conv.137 layer order exactly for weight loading.
+        //
+        // Stage 1 (first_stage=true): branch_ch = out_ch; bottleneck res blocks
+        //   (branch_ch → out_ch/2 → branch_ch). Both branches use act.
+        // Stages 2–5 (first_stage=false): branch_ch = out_ch/2; non-bottleneck
+        //   res blocks (branch_ch → branch_ch). Both branches use act.
+        //
+        // Branch2 (processed path) is placed before branch1 (skip) to match
+        // the darknet weight file's sequential position order.
+        //
+        // input(in_ch) → stride-2 Conv(out_ch) [down]
+        //   → branch2: Conv1×1(out_ch→branch_ch) → N×ResBlock → Conv1×1 [trans]
+        //   → branch1: Conv1×1(out_ch→branch_ch)  [skip]
+        //   → Concat(trans, branch1) → Conv1×1(2*branch_ch→out_ch) [merge]
+        auto add_csp_stage = [&](Index input_index, Index in_ch, Index out_ch,
+                                  Index n_blocks, const string& prefix, bool first_stage) -> Index {
+            const Index half      = out_ch / 2;
+            const Index branch_ch = first_stage ? out_ch : half;
+
+            const Index down = add_conv(input_index, Shape{3, 3, in_ch, out_ch}, act, stride_2, true, prefix+"_down");
+
+            // branch2 first (processed path — matches darknet weight position order)
+            Index branch2 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s2");
+            for (Index j = 0; j < n_blocks; ++j)
+            {
+                const Index prev = branch2;
+                Index x;
+                if (first_stage)
+                {
+                    // Bottleneck: branch_ch → half → branch_ch
+                    x = add_conv(prev, Shape{1, 1, branch_ch, half},      act,        stride, true, prefix+format("_b{}_c1", j+1));
+                    x = add_conv(x,   Shape{3, 3, half,      branch_ch}, "Identity", stride, true, prefix+format("_b{}_c2", j+1));
+                }
+                else
+                {
+                    // Non-bottleneck: branch_ch → branch_ch
+                    x = add_conv(prev, Shape{1, 1, branch_ch, branch_ch}, act,        stride, true, prefix+format("_b{}_c1", j+1));
+                    x = add_conv(x,   Shape{3, 3, branch_ch, branch_ch}, "Identity", stride, true, prefix+format("_b{}_c2", j+1));
+                }
+                add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix+format("_b{}_add", j+1)), {x, prev});
+                const Index add_idx = get_layers_number() - 1;
+                add_layer(make_unique<Activation>(get_layer(add_idx)->get_output_shape(), act, prefix+format("_b{}_act", j+1)), {add_idx});
+                branch2 = get_layers_number() - 1;
+            }
+            const Index trans = add_conv(branch2, Shape{1, 1, branch_ch, branch_ch}, act, stride, true, prefix+"_trans");
+
+            // branch1 after branch2 (skip path — matches darknet weight position order)
+            const Index branch1 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s1");
+
+            const Shape hw = get_layer(branch1)->get_output_shape();
+            add_layer(make_unique<Concatenation>(hw, vector<Index>{branch_ch, branch_ch}, prefix+"_cat"),
+                      {trans, branch1});
+            const Index cat = get_layers_number() - 1;
+            return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix+"_merge");
+        };
+
         const vector<pair<Index,Index>> stages = {{64,1},{128,2},{256,8},{512,8},{1024,4}};
 
-        // Initial conv: stride 1 (unlike DarknetTiny which uses stride 2 for the stem)
+        // Initial conv: stride 1 (same for both variants)
         add_layer(make_unique<Convolutional>(input_shape, Shape{3, 3, input_shape[2], 32},
-                                             act, stride, "Same", true, "dn53_stem"));
+                                             act, stride, "Same", true, use_csp ? "csp53_stem" : "dn53_stem"));
         Index last_index = get_layers_number() - 1;
 
         Index c3_index = -1, c4_index = -1, c5_index = -1;
 
-        for (size_t i = 0; i < stages.size(); ++i)
+        if (use_csp)
         {
-            const Index ch     = stages[i].first;
-            const Index nblocks = stages[i].second;
-            const Index in_ch  = get_layer(last_index)->get_output_shape()[2];
-
-            last_index = add_conv(last_index, Shape{3, 3, in_ch, ch}, act, stride_2, true,
-                                  format("dn53_down_{}", i+1));
-            for (Index j = 0; j < nblocks; ++j)
-                last_index = add_residual_block(last_index, ch, format("dn53_s{}_b{}", i+1, j+1));
-
-            if (i == 2) c3_index = last_index;
-            if (i == 3) c4_index = last_index;
-            if (i == 4) c5_index = last_index;
+            Index in_ch = 32;
+            for (size_t i = 0; i < stages.size(); ++i)
+            {
+                const Index ch      = stages[i].first;
+                const Index nblocks = stages[i].second;
+                last_index = add_csp_stage(last_index, in_ch, ch, nblocks, format("csp53_s{}", i+1), i == 0);
+                in_ch = ch;
+                if (i == 2) c3_index = last_index;
+                if (i == 3) c4_index = last_index;
+                if (i == 4) c5_index = last_index;
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < stages.size(); ++i)
+            {
+                const Index ch      = stages[i].first;
+                const Index nblocks = stages[i].second;
+                const Index in_ch   = get_layer(last_index)->get_output_shape()[2];
+                last_index = add_conv(last_index, Shape{3, 3, in_ch, ch}, act, stride_2, true,
+                                      format("dn53_down_{}", i+1));
+                for (Index j = 0; j < nblocks; ++j)
+                    last_index = add_residual_block(last_index, ch, format("dn53_s{}_b{}", i+1, j+1));
+                if (i == 2) c3_index = last_index;
+                if (i == 3) c4_index = last_index;
+                if (i == 4) c5_index = last_index;
+            }
         }
 
         if (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)
@@ -683,8 +767,36 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return x;
             };
 
+            // SPPF: three cascaded 5×5 same-padding max-pools before the neck.
+            // Enlarges the receptive field of the large-stride feature map without
+            // adding stride (stride=1, pad=2 → same spatial size). YOLOv5-style fast SPP.
+            Index fpn_entry = c5_index;
+            if (use_sppf)
+            {
+                const Shape c5_shape = get_layer(c5_index)->get_output_shape();
+                const Index c5_ch   = c5_shape[2];     // 1024
+                const Index half_ch = c5_ch / 2;       // 512
+
+                const Index sppf_in = add_conv(c5_index, Shape{1, 1, c5_ch, half_ch}, act, stride, true, "sppf_in");
+                const Shape s_shape = get_layer(sppf_in)->get_output_shape();
+
+                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p1"), {sppf_in});
+                const Index p1 = get_layers_number() - 1;
+                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p2"), {p1});
+                const Index p2 = get_layers_number() - 1;
+                add_layer(make_unique<Pooling>(s_shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, "MaxPooling", "sppf_p3"), {p2});
+                const Index p3 = get_layers_number() - 1;
+
+                add_layer(make_unique<Concatenation>(s_shape,
+                                                     vector<Index>{half_ch, half_ch, half_ch, half_ch}, "sppf_cat"),
+                          {sppf_in, p1, p2, p3});
+                const Index sppf_cat = get_layers_number() - 1;
+
+                fpn_entry = add_conv(sppf_cat, Shape{1, 1, 2 * c5_ch, c5_ch}, act, stride, true, "sppf_out");
+            }
+
             // ── Top-down FPN path (shared by FPN and PANet) ──────────────────
-            const Index p5n = add_yolo_neck(c5_index, 1024, 512, 1024, "neck_p5");
+            const Index p5n = add_yolo_neck(fpn_entry, 1024, 512, 1024, "neck_p5");
 
             const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, "neck_p5_lat");
             add_layer(make_unique<Upsample>(get_layer(p5l)->get_output_shape(), 2, "fpn_p5_up"), {p5l});

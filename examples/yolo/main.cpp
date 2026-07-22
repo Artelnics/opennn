@@ -301,14 +301,23 @@ int main()
         const bool use_raccoon = false;
         const bool use_coco    = false;  // COCO val2017, 3 classes: person/car/cat
 
-        // VOC/COCO: Darknet53 + 3-head FPN or PANet (loads pretrained darknet53.conv.74).
+        // VOC/COCO: Darknet53 (or CSPDarknet53) + 3-head FPN (loads pretrained darknet53.conv.74
+        // for plain Darknet53; CSPDarknet53 trains from scratch — no compatible pretrained weights).
         // Raccoon/synthetic: VGG + single head (fast, good for small datasets).
-        // Set use_panet=true to switch from FPN to PANet (Darknet53 only; adds a bottom-up
-        // path from small to large head; weights file gets _panet suffix automatically).
+        // Set use_panet=true to switch from FPN to PANet (adds a bottom-up path from small to large
+        // head; weights file gets _panet suffix automatically).
         const bool use_panet   = false;
+        // CSP backbone (§17): Cross-Stage Partial Darknet53. Each stage splits channels into two
+        // branches — one goes through N residual blocks, the other is a linear skip — then concat
+        // + merge. Halves gradient duplication vs plain Darknet53 at similar param count.
+        // Trains from scratch (CSP layer names differ from darknet53.conv.74 weights).
+        const bool use_csp     = true;
+        // SPPF: three cascaded 5×5 max-pools + concat before the FPN neck. Tested on VOC 2007:
+        // 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled; left for reference.
+        const bool use_sppf    = false;
 
         const auto backbone = (use_coco || use_voc)
-            ? YoloNetwork::Backbone::Darknet53
+            ? (use_csp ? YoloNetwork::Backbone::CSPDarknet53 : YoloNetwork::Backbone::Darknet53)
             : YoloNetwork::Backbone::Vgg;
 
         const auto head_style = (use_coco || use_voc)
@@ -453,8 +462,10 @@ int main()
         // FPN anchor setup: DarknetTinyV3 uses 6 anchors (2-head: small 26×26 +
         // large 13×13). DarknetTiny (3-head residual) uses 9 anchors.
         // boxes_per_head ends up = 3 across all heads.
-        const bool is_v3std    = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
+        const bool is_v3std     = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
         const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
+        const bool is_csp53     = (backbone == YoloNetwork::Backbone::CSPDarknet53);
+        const bool is_large_backbone = is_darknet53 || is_csp53;
         if (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
         {
             if (is_v3std)
@@ -597,15 +608,17 @@ int main()
                                  backbone,
                                  class_activation,
                                  head_style,
-                                 body_activation);
+                                 body_activation,
+                                 use_sppf && is_large_backbone);
 
         std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
                   << "  " << device::gpu_info_string() << "\n";
         std::cout << "Network: backbone="
-                  << (backbone == YoloNetwork::Backbone::Vgg          ? "Vgg"
-                    : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "DarknetTinyV3"
-                    : backbone == YoloNetwork::Backbone::Darknet53     ? "Darknet53"
-                    :                                                     "DarknetTiny")
+                  << (backbone == YoloNetwork::Backbone::Vgg           ? "Vgg"
+                    : backbone == YoloNetwork::Backbone::DarknetTinyV3  ? "DarknetTinyV3"
+                    : backbone == YoloNetwork::Backbone::Darknet53      ? "Darknet53"
+                    : backbone == YoloNetwork::Backbone::CSPDarknet53   ? "CSPDarknet53"
+                    :                                                      "DarknetTiny")
                   << ", class_activation="
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
@@ -613,6 +626,8 @@ int main()
                       head_style == YoloNetwork::HeadStyle::PANet  ? "PANet" : "Single")
                   << ", body_activation="
                   << (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
+                  << (use_csp ? ", csp=on" : "")
+                  << (use_sppf && is_large_backbone ? ", sppf=on" : "")
                   << ", layers=" << yolo_network.get_layers_number()
                   << ", parameters=" << yolo_network.get_parameters_number() << "\n";
 
@@ -649,11 +664,11 @@ int main()
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
         // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
-        const int batch_size = (backbone == YoloNetwork::Backbone::Darknet53) ? 4 : 16;
+        const int batch_size = is_large_backbone ? 4 : 16;
         adam->set_batch_size(batch_size);
         adam->set_display_period(1);
         adam->set_gradient_clip_norm(0.1f);
-        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_darknet53) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
+        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
 
         // Training control:
         //   resume_training = true  → load weights if they exist, then continue
@@ -669,10 +684,12 @@ int main()
         const std::string weights_filename = std::string("yolo_weights_") + dataset_tag + "_" +
             (backbone == YoloNetwork::Backbone::Vgg           ? "vgg"
            : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "darknet_v3std"
+           : backbone == YoloNetwork::Backbone::CSPDarknet53  ? "csp53"
            : backbone == YoloNetwork::Backbone::Darknet53     ? "darknet53"
            :                                                     "darknet") +
             (head_style == YoloNetwork::HeadStyle::FPN    ? "_fpn"    :
              head_style == YoloNetwork::HeadStyle::PANet  ? "_panet"  : "") +
+            (use_sppf && is_large_backbone ? "_sppf" : "") +
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
             filter_tag +
@@ -703,17 +720,22 @@ int main()
         // resuming from a fine-tuned checkpoint, which already has better weights).
         const bool needs_darknet_backbone =
             (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
-             backbone == YoloNetwork::Backbone::Darknet53) && !weights_exist;
+             backbone == YoloNetwork::Backbone::Darknet53 ||
+             backbone == YoloNetwork::Backbone::CSPDarknet53) && !weights_exist;
         bool backbone_pretrained_loaded = false;
         if (needs_darknet_backbone)
         {
-            const bool is53 = (backbone == YoloNetwork::Backbone::Darknet53);
-            const std::string darknet_filename = is53 ? "darknet53.conv.74" : "yolov3-tiny.weights";
+            const bool is53  = (backbone == YoloNetwork::Backbone::Darknet53);
+            const bool iscsp = (backbone == YoloNetwork::Backbone::CSPDarknet53);
+            // yolov4.conv.137 = first 137 conv layers of YOLOv4; backbone is first 72.
+            const std::string darknet_filename = is53 ? "darknet53.conv.74"
+                                               : iscsp ? "yolov4.conv.137"
+                                               : "yolov3-tiny.weights";
             // Look in data_dir first, then in yolo_voc_data (where it was originally downloaded).
             std::filesystem::path darknet_weights = data_dir / darknet_filename;
             if (!std::filesystem::exists(darknet_weights))
                 darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
-            const Index n_backbone_convs = is53 ? 52 : 8;
+            const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
             if (std::filesystem::exists(darknet_weights))
             {
                 const Index loaded = YoloDataset::load_darknet_backbone(
@@ -729,6 +751,10 @@ int main()
                     std::cout << "Download darknet53.conv.74 from "
                               << "https://pjreddie.com/media/files/darknet53.conv.74 "
                               << "and place it in " << data_dir << "\n";
+                else if (iscsp)
+                    std::cout << "Download yolov4.conv.137 from "
+                              << "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137 "
+                              << "and place it in " << data_dir << "\n";
                 else
                     std::cout << "Download yolov3-tiny.weights from "
                               << "https://pjreddie.com/media/files/yolov3-tiny.weights "
@@ -742,7 +768,8 @@ int main()
         // Only applies on a fresh run where backbone weights were just loaded.
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
-            const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)   ? "dn53_"  :
+            const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)    ? "dn53_"  :
+                                       (backbone == YoloNetwork::Backbone::CSPDarknet53) ? "csp53_" :
                                        (backbone == YoloNetwork::Backbone::DarknetTinyV3) ? "dntv3_" : "";
             if (prefix.empty()) return;
             for (auto& layer : yolo_network.get_layers())
@@ -762,15 +789,19 @@ int main()
         // LR step-decay schedule (YOLO convention).
         // epochs_done.txt tracks progress so resume always picks the right stage.
         struct TrainingRound { float lr; int epochs; };
-        // Darknet53 runs with batch=4 (VRAM constraint). Scale LR ∝ batch_size
-        // relative to the batch=16 baseline: ×(4/16) = ×0.25.
+        // Large backbones (Darknet53/CSPDarknet53) run batch=4 (VRAM constraint).
+        // Scale LR ∝ batch_size vs the batch=16 baseline: ×(4/16) = ×0.25.
+        // CSPDarknet53 trains from scratch (no pretrained weights) — runs 200 epochs
+        // at the main LR to compensate.
         const std::vector<TrainingRound> lr_schedule =
-            use_coco    ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                         :
+            use_coco         ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
+            (use_voc && is_csp53)
+                             ? std::vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
             (use_voc && is_darknet53)
-                        ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}}     :
-            use_voc     ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}          :
-            use_raccoon ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}               :
-                          std::vector<TrainingRound>{{1e-3f, 200}};
+                             ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
+            use_voc          ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
+            use_raccoon      ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
+                               std::vector<TrainingRound>{{1e-3f, 200}};
 
         // Epochs file is scoped to the weights filename so switching variants
         // (backbone, class activation, head style) always starts from 0.
