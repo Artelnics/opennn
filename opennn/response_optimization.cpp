@@ -2661,11 +2661,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     promote_single_variable_constraints();
 
-    vector<BranchAxisType> axis_types;
-    vector<string> axis_variable_names;
-    vector<Index> axis_indices;
-    vector<vector<float>> axis_values;
-
     const vector<Variable>& input_variables = neural_network->get_input_variables();
     const vector<Variable>& output_variables = neural_network->get_output_variables();
 

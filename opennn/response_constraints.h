@@ -86,9 +86,11 @@ struct MultivariateConstraint
     CompiledFormula compiled;
     ConstraintKind kind = ConstraintKind::Unrepairable;
 
-    bool is_satisfied(const VectorR&, const VectorR&);
-
 };
+
+bool constraint_is_satisfied(const MultivariateConstraint&,
+                             const VectorR&,
+                             const VectorR&);
 
 
 struct UnivariateConstraint

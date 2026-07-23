@@ -23,32 +23,7 @@ class ResponseOptimization
 {
 public:
 
-    struct Objective
-    {
-        enum class Sense { Minimize, Maximize, Fixed };
-
-        string expression;
-
-        Sense sense = Sense::Minimize;
-
-        float value = 0.0f;  
-    };
-
-    struct Constraint
-    {
-        enum class Condition { GreaterThan, LessThan, EqualTo, Integer, GeneralFormula };
-
-        string expression;
-
-        Condition condition = Condition::EqualTo;
-        
-        vector<float> values;
-
-        void check() const;
-        {
-            throw logic_error("Constraint::check() not valid");
-        }
-    };
+    enum class Sense { Minimize, Maximize, Fixed };
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
@@ -285,14 +260,7 @@ public:
 private:
 
     NeuralNetwork* neural_network = nullptr;
-
     // Problem definition
-
-    vector<Objective> objectives;    
-    vector<Constraint> constraints;    
-
-
-/*
 
     ConstraintSet constraint_set;
 
@@ -332,7 +300,6 @@ private:
 	// Do not remove it's useful for benchmarks
 
     mutable Index evaluations_used = 0;
-*/    
 };
 
 }
