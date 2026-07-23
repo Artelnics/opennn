@@ -19,6 +19,8 @@
 namespace opennn
 {
 
+enum class BranchAxisType { Variable, Formula, Disjunction };
+
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
     set(new_neural_network);
@@ -89,45 +91,6 @@ void ResponseOptimization::set_time_role(const string& name, const TimeType role
 }
 
 
-vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
-{
-    vector<NamedColumn> columns;
-    columns.reserve(variables.size());
-
-    Index column = 0;
-
-    for (const Variable& variable : variables)
-    {
-        const Index dimension = variable.get_feature_count();
-
-        if (variable.get_role() == "Input" && !is_history(variable.name) && dimension == 1)
-            columns.push_back({variable.name, column});
-
-        column += dimension;
-    }
-
-    return columns;
-}
-
-
-vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Variable>& variables) const
-{
-    vector<NamedColumn> columns;
-    columns.reserve(variables.size());
-
-    Index column = 0;
-
-    for (const Variable& variable : variables)
-    {
-        if (variable.get_feature_count() == 1)
-            columns.push_back({variable.name, column});
-
-        column += variable.get_feature_count();
-    }
-
-    return columns;
-}
-
 
 void ResponseOptimization::set_formula_constraint(const string& expression,
                                                   const ComparisonOperator comparison,
@@ -137,14 +100,30 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     throw_if(!neural_network,
              "ResponseOptimization: set_formula_constraint requires a neural network to be set first");
 
-    const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
-    const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    vector<pair<string, Index>> input_columns;
+    input_columns.reserve(input_variables.size());
+    Index input_column = 0;
+    for (const Variable& variable : input_variables)
+    {
+        if (variable.get_feature_count() == 1 && variable.get_role() == "Input" && !is_history(variable.name))
+            input_columns.emplace_back(variable.name, input_column);
+        input_column += variable.get_feature_count();
+    }
 
-    // Non-smooth (min/max/abs) constraints expand to a disjunction of smooth branches; a smooth
-    // constraint or a top-level AND case stays a single branch added directly. A degenerate
-    // expansion (e.g. a constant-valued piece) falls back to the original constraint, which is
-    // still enforced by rejection at the feasibility filter.
+    const vector<Variable>& output_variables = neural_network->get_output_variables();
+    vector<pair<string, Index>> output_columns;
+    output_columns.reserve(output_variables.size());
+    Index output_column = 0;
+    for (const Variable& variable : output_variables)
+    {
+        if (variable.get_feature_count() == 1)
+            output_columns.emplace_back(variable.name, output_column);
+        output_column += variable.get_feature_count();
+    }
+
     vector<vector<MultivariateConstraint>> branches;
+
     try
     {
         branches = expand_constraint(expression, comparison, low, up, input_columns, output_columns);
@@ -207,8 +186,27 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     formula_constraint.allowed_values = allowed_values;
     formula_constraint.uses_callback = false;
 
-    const vector<NamedColumn> input_columns = build_input_columns(neural_network->get_input_variables());
-    const vector<NamedColumn> output_columns = build_output_columns(neural_network->get_output_variables());
+    const vector<Variable>& input_variables = neural_network->get_input_variables();
+    vector<pair<string, Index>> input_columns;
+    input_columns.reserve(input_variables.size());
+    Index input_column = 0;
+    for (const Variable& variable : input_variables)
+    {
+        if (variable.get_feature_count() == 1 && variable.get_role() == "Input" && !is_history(variable.name))
+            input_columns.emplace_back(variable.name, input_column);
+        input_column += variable.get_feature_count();
+    }
+
+    const vector<Variable>& output_variables = neural_network->get_output_variables();
+    vector<pair<string, Index>> output_columns;
+    output_columns.reserve(output_variables.size());
+    Index output_column = 0;
+    for (const Variable& variable : output_variables)
+    {
+        if (variable.get_feature_count() == 1)
+            output_columns.emplace_back(variable.name, output_column);
+        output_column += variable.get_feature_count();
+    }
 
     formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
     formula_constraint.kind = classify(formula_constraint);
@@ -819,7 +817,7 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
     vector<vector<Index>> cardinality_columns;
 
-    for (const CardinalityConstraint& group : constraint_set.cardinality)
+    for (const Cardinality& group : constraint_set.cardinality)
     {
         vector<Index> columns;
         vector<VariableType> types;
@@ -1567,11 +1565,19 @@ void ResponseOptimization::promote_single_variable_constraints()
         return;
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
-    const vector<NamedColumn> input_columns = build_input_columns(input_variables);
+    vector<pair<string, Index>> input_columns;
+    input_columns.reserve(input_variables.size());
+    Index input_column = 0;
+    for (const Variable& variable : input_variables)
+    {
+        if (variable.get_feature_count() == 1 && variable.get_role() == "Input" && !is_history(variable.name))
+            input_columns.emplace_back(variable.name, input_column);
+        input_column += variable.get_feature_count();
+    }
 
     map<Index, string> name_of_column;
-    for (const NamedColumn& column : input_columns)
-        name_of_column[column.column_index] = column.name;
+    for (const auto& column : input_columns)
+        name_of_column[column.second] = column.first;
 
     auto interval_of = [](const UnivariateConstraint& constraint, float& lo, float& hi) -> bool
     {
@@ -1717,7 +1723,7 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
             feature += dimensions[i];
         }
 
-        for (const CardinalityConstraint& group : constraint_set.cardinality)
+        for (const Cardinality& group : constraint_set.cardinality)
             for (const string& name : group.variable_names)
             {
                 const auto found = column_of.find(name);
@@ -2637,9 +2643,6 @@ void ResponseOptimization::expand_fixed_objectives()
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
-    // Turn Fixed objectives into constraints up front, before the branch-axis analysis and before the
-    // network Jacobian is built, so projection sees them. Restore the pre-expansion problem definition
-    // on the way out (any exit path) so repeated calls and injected bands don't accumulate.
     const auto restore_state = [this, saved_objectives = objectives, saved_fixed_values = fixed_values,
                                 saved_univariate = constraint_set.univariate,
                                 saved_multivariate = constraint_set.multivariate,
@@ -2652,26 +2655,29 @@ MatrixR ResponseOptimization::perform_response_optimization()
         constraint_set.disjunctive = saved_disjunctive;
     };
 
-    struct ScopeGuard { function<void()> run; ~ScopeGuard() { run(); } } guard{ restore_state };
+    const auto guard = shared_ptr<void>(nullptr, [restore_state](void*) { restore_state(); });
 
     expand_fixed_objectives();
 
     promote_single_variable_constraints();
 
-
-    struct BranchAxis
-    {
-        enum class Type { Variable, Formula, Disjunction };
-        Type type = Type::Variable;
-        string variable_name;
-        Index index = 0;        // constraint_set.multivariate index (Formula) or constraint_set.disjunctive index (Disjunction)
-        vector<float> values;   // membership values (Variable/Formula) or branch indices (Disjunction)
-    };
+    vector<BranchAxisType> axis_types;
+    vector<string> axis_variable_names;
+    vector<Index> axis_indices;
+    vector<vector<float>> axis_values;
 
     const vector<Variable>& input_variables = neural_network->get_input_variables();
     const vector<Variable>& output_variables = neural_network->get_output_variables();
 
-    const vector<NamedColumn> input_columns = build_input_columns(input_variables);
+    vector<pair<string, Index>> input_columns;
+    input_columns.reserve(input_variables.size());
+    Index input_column = 0;
+    for (const Variable& variable : input_variables)
+    {
+        if (variable.get_feature_count() == 1 && variable.get_role() == "Input" && !is_history(variable.name))
+            input_columns.emplace_back(variable.name, input_column);
+        input_column += variable.get_feature_count();
+    }
 
     bool any_callback_formula = false;
     for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
@@ -2680,8 +2686,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     auto input_column_of = [&](const string& name) -> Index
     {
-        for (const NamedColumn& column : input_columns)
-            if (column.name == name) return column.column_index;
+        for (const auto& column : input_columns)
+            if (column.first == name) return column.second;
         return -1;
     };
 
@@ -2705,7 +2711,10 @@ MatrixR ResponseOptimization::perform_response_optimization()
         return ranges::any_of(input_variables, [&](const Variable& v) { return v.name == name; });
     };
 
-    vector<BranchAxis> axes;
+    vector<BranchAxisType> axis_types;
+    vector<string> axis_variable_names;
+    vector<Index> axis_indices;
+    vector<vector<float>> axis_values;
 
     for (const auto& [name, constraint] : constraint_set.univariate)
     {
@@ -2720,44 +2729,55 @@ MatrixR ResponseOptimization::perform_response_optimization()
         if (is_input_name(name) && !input_referenced_by_formula(input_column_of(name)))
             continue;
 
-        axes.push_back({BranchAxis::Type::Variable, name, 0, constraint.allowed_values});
+        axis_types.push_back(BranchAxisType::Variable);
+        axis_variable_names.push_back(name);
+        axis_indices.push_back(0);
+        axis_values.push_back(constraint.allowed_values);
     }
 
     for (Index j = 0; j < ssize(constraint_set.multivariate); ++j)
         if (constraint_set.multivariate[j].comparison_operator == ComparisonOperator::AllowedSet
             && !constraint_set.multivariate[j].allowed_values.empty())
-            axes.push_back({BranchAxis::Type::Formula, string(), j, constraint_set.multivariate[j].allowed_values});
+        {
+            axis_types.push_back(BranchAxisType::Formula);
+            axis_variable_names.emplace_back();
+            axis_indices.push_back(j);
+            axis_values.push_back(constraint_set.multivariate[j].allowed_values);
+        }
 
     for (Index d = 0; d < ssize(constraint_set.disjunctive); ++d)
     {
         vector<float> branch_indices(constraint_set.disjunctive[d].size());
         iota(branch_indices.begin(), branch_indices.end(), 0.0f);
-        axes.push_back({BranchAxis::Type::Disjunction, string(), d, branch_indices});
+        axis_types.push_back(BranchAxisType::Disjunction);
+        axis_variable_names.emplace_back();
+        axis_indices.push_back(d);
+        axis_values.push_back(branch_indices);
     }
 
-    if (axes.empty())
+    if (axis_types.empty())
         return solve_once();
 
     Index branches_number = 1;
-    for (const BranchAxis& axis : axes)
-        branches_number *= ssize(axis.values);
+    for (const auto& values : axis_values)
+        branches_number *= ssize(values);
 
     cout << format("> Branching: {} axis(es) -> {} branch(es) ({}).\n",
-                   axes.size(), branches_number,
+                   axis_types.size(), branches_number,
                    branch_mode == BranchMode::Budgeted
                        ? "budgeted: successive-halving + dominated-drop" : "exhaustive");
 
-    vector<vector<float>> branch_values(branches_number, vector<float>(axes.size()));
+    vector<vector<float>> branch_values(branches_number, vector<float>(axis_types.size()));
     {
-        vector<Index> radix(axes.size(), 0);
+        vector<Index> radix(axis_types.size(), 0);
         for (Index branch = 0; branch < branches_number; ++branch)
         {
-            for (size_t a = 0; a < axes.size(); ++a)
-                branch_values[branch][a] = axes[a].values[radix[a]];
+            for (size_t a = 0; a < axis_types.size(); ++a)
+                branch_values[branch][a] = axis_values[a][radix[a]];
 
-            for (size_t a = 0; a < axes.size(); ++a)
+            for (size_t a = 0; a < axis_types.size(); ++a)
             {
-                if (++radix[a] < ssize(axes[a].values)) break;
+                if (++radix[a] < ssize(axis_values[a])) break;
                 radix[a] = 0;
             }
         }
@@ -2776,23 +2796,23 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     auto solve_branch = [&](const vector<float>& values, const Index cap) -> MatrixR
     {
-        for (size_t a = 0; a < axes.size(); ++a)
+        for (size_t a = 0; a < axis_types.size(); ++a)
         {
-            if (axes[a].type == BranchAxis::Type::Formula)
+            if (axis_types[a] == BranchAxisType::Formula)
             {
-                MultivariateConstraint& formula_constraint = constraint_set.multivariate[axes[a].index];
+                MultivariateConstraint& formula_constraint = constraint_set.multivariate[axis_indices[a]];
                 formula_constraint.comparison_operator = ComparisonOperator::EqualTo;
                 formula_constraint.low_bound = values[a];
                 formula_constraint.up_bound = values[a];
                 formula_constraint.kind = classify(formula_constraint);
             }
-            else if (axes[a].type == BranchAxis::Type::Disjunction)
+            else if (axis_types[a] == BranchAxisType::Disjunction)
             {
-                const vector<MultivariateConstraint>& branch = constraint_set.disjunctive[axes[a].index][static_cast<Index>(values[a])];
+                const vector<MultivariateConstraint>& branch = constraint_set.disjunctive[axis_indices[a]][static_cast<Index>(values[a])];
                 constraint_set.multivariate.insert(constraint_set.multivariate.end(), branch.begin(), branch.end());
             }
             else
-                constraint_set.univariate[axes[a].variable_name] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
+                constraint_set.univariate[axis_variable_names[a]] = UnivariateConstraint(ComparisonOperator::EqualTo, values[a], values[a]);
         }
 
         max_total_evaluations = cap;

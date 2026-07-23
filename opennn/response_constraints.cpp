@@ -56,9 +56,9 @@ struct Lexer
             token.position = position;
 
             if (isdigit(static_cast<unsigned char>(character))
-             || (character == '.'
-                 && position + 1 < source.size()
-                 && isdigit(static_cast<unsigned char>(source[position + 1]))))
+            || (character == '.'
+            && position + 1 < source.size()
+            && isdigit(static_cast<unsigned char>(source[position + 1]))))
             {
                 const size_t token_start = position;
 
@@ -71,6 +71,7 @@ struct Lexer
                     ++position;
                     if (position < source.size() && (source[position] == '+' || source[position] == '-'))
                         ++position;
+                        
                     while (position < source.size() && isdigit(static_cast<unsigned char>(source[position])))
                         ++position;
                 }
@@ -126,7 +127,7 @@ struct Lexer
 };
 
 
-struct Ast;
+struct Ast; // @todo change name
 using AstPtr = unique_ptr<Ast>;
 
 struct Ast
@@ -144,15 +145,15 @@ struct Ast
 struct Parser
 {
     Lexer& lexer;
-    const vector<NamedColumn>& input_columns;
-    const vector<NamedColumn>& output_columns;
+    const vector<pair<string, Index>>& input_columns;
+    const vector<pair<string, Index>>& output_columns;
 
     Parser(Lexer& new_lexer,
-           const vector<NamedColumn>& new_input_columns,
-           const vector<NamedColumn>& new_output_columns)
+                     const vector<pair<string, Index>>& new_input_columns,
+                     const vector<pair<string, Index>>& new_output_columns)
         : lexer(new_lexer),
-          input_columns(new_input_columns),
-          output_columns(new_output_columns)
+                    input_columns(new_input_columns),
+                    output_columns(new_output_columns)
     {
     }
 
@@ -307,21 +308,21 @@ struct Parser
                 return function_node;
             }
 
-            for (const NamedColumn& named_column : input_columns)
-                if (named_column.name == token.text)
+            for (const auto& named_column : input_columns)
+                if (named_column.first == token.text)
                 {
                     auto input_node = make_unique<Ast>();
                     input_node->kind = Ast::Kind::Input;
-                    input_node->index = named_column.column_index;
+                    input_node->index = named_column.second;
                     return input_node;
                 }
 
-            for (const NamedColumn& named_column : output_columns)
-                if (named_column.name == token.text)
+            for (const auto& named_column : output_columns)
+                if (named_column.first == token.text)
                 {
                     auto output_node = make_unique<Ast>();
                     output_node->kind = Ast::Kind::Output;
-                    output_node->index = named_column.column_index;
+                    output_node->index = named_column.second;
                     return output_node;
                 }
 
@@ -880,21 +881,26 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
         case PushOutput: evaluation_stack.push_back(outputs_row(operation.index)); break;
         case Neg: evaluation_stack.back() = -evaluation_stack.back(); break;
 
-        case Add:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() += right_operand; break; }
-        case Sub:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() -= right_operand; break; }
-        case Mul:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() *= right_operand; break; }
-        case Div:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() /= right_operand; break; }
-        case Pow:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() = pow(evaluation_stack.back(), right_operand); break; }
+                case Add:
+                case Sub:
+                case Mul:
+                case Div:
+                case Pow:
+                {
+                        const float right_operand = evaluation_stack.back();
+                        evaluation_stack.pop_back();
+                        float &left_operand = evaluation_stack.back();
+                        switch (operation.kind)
+                        {
+                                case RpnOp::Kind::Add: left_operand += right_operand; break;
+                                case RpnOp::Kind::Sub: left_operand -= right_operand; break;
+                                case RpnOp::Kind::Mul: left_operand *= right_operand; break;
+                                case RpnOp::Kind::Div: left_operand /= right_operand; break;
+                                case RpnOp::Kind::Pow: left_operand = pow(left_operand, right_operand); break;
+                                default: break;
+                        }
+                        break;
+                }
 
         case Sqrt: evaluation_stack.back() = sqrt(evaluation_stack.back()); break;
         case Exp:  evaluation_stack.back() = exp(evaluation_stack.back()); break;
@@ -904,12 +910,16 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
         case Cos:  evaluation_stack.back() = cos(evaluation_stack.back()); break;
         case Tan:  evaluation_stack.back() = tan(evaluation_stack.back()); break;
 
-        case Min:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() = min(evaluation_stack.back(), right_operand); break; }
-        case Max:
-        { const float right_operand = evaluation_stack.back(); evaluation_stack.pop_back();
-          evaluation_stack.back() = max(evaluation_stack.back(), right_operand); break; }
+                case Min:
+                case Max:
+                {
+                        const float right_operand = evaluation_stack.back();
+                        evaluation_stack.pop_back();
+                        float &left_operand = evaluation_stack.back();
+                        if (operation.kind == RpnOp::Kind::Min) left_operand = min(left_operand, right_operand);
+                        else left_operand = max(left_operand, right_operand);
+                        break;
+                }
         }
     }
 
@@ -979,8 +989,6 @@ CompiledFormula compile_ast(const Ast& ast)
 
         if (is_smooth(ast))
         {
-            result.gradient_available = true;
-
             result.input_gradient.reserve(result.input_indices.size());
             for (const Index input_column : result.input_indices)
             {
@@ -1008,8 +1016,8 @@ CompiledFormula compile_ast(const Ast& ast)
 
 
 AstPtr parse_to_ast(const string& expression,
-                    const vector<NamedColumn>& inputs,
-                    const vector<NamedColumn>& outputs)
+                    const vector<pair<string, Index>>& inputs,
+                    const vector<pair<string, Index>>& outputs)
 {
     throw_if(expression.empty(),
              "FormulaParser: empty expression");
@@ -1027,8 +1035,8 @@ AstPtr parse_to_ast(const string& expression,
 
 
 CompiledFormula compile_formula(const string& expression,
-                                const vector<NamedColumn>& inputs,
-                                const vector<NamedColumn>& outputs)
+                                const vector<pair<string, Index>>& inputs,
+                                const vector<pair<string, Index>>& outputs)
 {
     return compile_ast(*parse_to_ast(expression, inputs, outputs));
 }
@@ -1186,8 +1194,8 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
 vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
                                                          const ComparisonOperator comparison,
                                                          const float low, const float up,
-                                                         const vector<NamedColumn>& inputs,
-                                                         const vector<NamedColumn>& outputs)
+                                                         const vector<pair<string, Index>>& inputs,
+                                                         const vector<pair<string, Index>>& outputs)
 {
     AstPtr ast = parse_to_ast(expression, inputs, outputs);
 
@@ -1314,7 +1322,8 @@ ConstraintKind classify(const MultivariateConstraint& constraint)
     const CompiledFormula& formula = constraint.compiled;
 
     const bool affine = (formula.shape == FormulaShape::Affine);
-    const bool nonlinear_ready = (formula.shape == FormulaShape::Nonlinear && formula.gradient_available);
+    const bool nonlinear_ready = (formula.shape == FormulaShape::Nonlinear &&
+                                  (!formula.input_gradient.empty() || !formula.output_gradient.empty()));
 
     if (formula.scope == FormulaScope::InputsOnly)
     {

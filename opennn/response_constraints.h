@@ -16,9 +16,9 @@ namespace opennn
 enum class FormulaShape { Affine, Nonlinear };
 enum class FormulaScope { InputsOnly, OutputsOnly, Mixed };
 
-struct RpnOp
+struct RpnOp // @todo change name
 {
-    enum class Kind : uint8_t
+    enum class Kind 
     {
         PushConst, PushInput, PushOutput,
         Add, Sub, Mul, Div, Pow, Neg,
@@ -30,15 +30,9 @@ struct RpnOp
     float constant = 0.0f;
 };
 
-struct NamedColumn
+struct CompiledFormula // @todo change name formula no good
 {
-    string name;
-    Index column_index = 0;
-};
-
-struct CompiledFormula
-{
-    vector<RpnOp> bytecode;
+    vector<RpnOp> bytecode; // @todo change name to XXX?
 
     FormulaShape shape = FormulaShape::Nonlinear;
     FormulaScope scope = FormulaScope::InputsOnly;
@@ -48,11 +42,11 @@ struct CompiledFormula
 
     vector<pair<Index, float>> affine_input_terms;
     vector<pair<Index, float>> affine_output_terms;
+    
     float affine_constant = 0.0f;
 
     vector<pair<Index, vector<RpnOp>>> input_gradient;
     vector<pair<Index, vector<RpnOp>>> output_gradient;
-    bool gradient_available = false;
 
     float evaluate(const VectorR&, const VectorR&) const;
 };
@@ -62,23 +56,25 @@ float evaluate_rpn(const vector<RpnOp>&,
                    const VectorR&);
 
 CompiledFormula compile_formula(const string&,
-                                              const vector<NamedColumn>&,
-                                              const vector<NamedColumn>&);
+                                const vector<pair<string, Index>>&,
+                            const vector<pair<string, Index>>&);
 
 
-enum class ComparisonOperator : uint8_t
+enum class ComparisonOperator
 {
     None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet
 };
 
 
-enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent };
+enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent }; // @todo change name another enum kind
 
 
 struct MultivariateConstraint
 {
-    string expression;
+    string expression; // @todo change !!!
+    
     function<float(const VectorR&, const VectorR&)> callback;
+
     bool uses_callback = false;
 
     ComparisonOperator comparison_operator = ComparisonOperator::None;
@@ -89,30 +85,32 @@ struct MultivariateConstraint
 
     CompiledFormula compiled;
     ConstraintKind kind = ConstraintKind::Unrepairable;
+
+    bool is_satisfied(const VectorR&, const VectorR&);
+
 };
 
 
 struct UnivariateConstraint
 {
-    ComparisonOperator comparison;
+    ComparisonOperator comparison; // @todo change name
     float low_bound;
     float up_bound;
 
     vector<float> allowed_values;
 
-    UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, float new_low_bound = 0.0f, float new_up_bound = 0.0f)
+    UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, 
+        float new_low_bound = 0.0f, 
+        float new_up_bound = 0.0f)
         : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
 };
 
 
-struct CardinalityConstraint
+struct Cardinality
 {
     vector<string> variable_names;
-    Index k = 0;
+    Index k = 0; 
 
-    // true  -> the k selected members are forced nonzero (binary -> 1): exactly k active.
-    // false -> the k selected members are free to take any value including 0, only the
-    //          non-selected members are pinned to 0: at most k active (sparsity budget).
     bool force_nonzero = true;
 };
 
@@ -129,7 +127,6 @@ inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-
 
 void snap_to_lattice(MatrixR&, Index, float, float);
 
-// Integer/binary columns with their per-column lattice bounds [min, max].
 struct Lattice
 {
     vector<Index> columns;
@@ -137,27 +134,20 @@ struct Lattice
     vector<float> max;
 };
 
-[[nodiscard]] ConstraintKind classify(const MultivariateConstraint&);
+ConstraintKind classify(const MultivariateConstraint&);
 
-// Expand one constraint into disjunctive normal form over the smooth pieces of any min/max/abs
-// it contains: returns a list of branches, each a conjunction of smooth constraints, whose union
-// equals the original feasible set. A smooth constraint (or a top-level AND) yields a single
-// branch; OR / nested non-smooth cases yield several (the caller branches over them).
 vector<vector<MultivariateConstraint>> expand_constraint(const string&,
                                                          ComparisonOperator,
                                                          float, float,
-                                                         const vector<NamedColumn>&,
-                                                         const vector<NamedColumn>&);
+                                                         const vector<pair<string, Index>>&,
+                                                         const vector<pair<string, Index>>&);
 
-[[nodiscard]] bool constraint_is_satisfied(const MultivariateConstraint&,
-                                           const VectorR&,
-                                           const VectorR&);
 
-[[nodiscard]] bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>&);
+bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>&);
 
-[[nodiscard]] LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>&,
-                                                              const Index,
-                                                              const Index);
+LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>&,
+                                                const Index,
+                                                const Index);
 
 void repair_affine_inputs(MatrixR&,
                           const VectorR&,
@@ -217,8 +207,6 @@ void repair_output_constraints(MatrixR&,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
 
-// Finite-difference fallback: builds a central-difference VJP from a batched forward, evaluating
-// all 2*inputs_number perturbations of a row in a single forward call instead of one per dimension.
 void repair_output_constraints(MatrixR&,
                                const VectorR&,
                                const VectorR&,

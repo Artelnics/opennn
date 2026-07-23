@@ -17,7 +17,7 @@ namespace opennn
 
 class NeuralNetwork;
 
-struct NetworkDifferential
+struct NetworkDifferential // @todo this should not exist
 {
     static inline long long benchmark_vjp_count = 0;  // benchmark-only: counts VJP evaluations for the surrogate-access budget, not used by the library
 
@@ -185,21 +185,15 @@ struct NetworkDifferential
                 carried = (carried.array()
                          * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
             else
-            {
                 carried = layer.weights
                         * (carried.array()
                          * activation_derivative_from_output_values(layer.activation, layer_outputs[i]).array()).matrix();
-            }
         }
         return carried;
     }
 };
 
-
-// Built-once analytic Jacobian plus the flag tracking whether it has been built/decided for the
-// current network; the two always change together. A null differential means the finite-difference
-// fallback is in effect.
-struct NetworkJacobian
+struct NetworkJacobian // @todo this should not exist this is a matrix/tensor
 {
     unique_ptr<NetworkDifferential> differential;
     bool ready = false;

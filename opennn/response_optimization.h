@@ -23,7 +23,32 @@ class ResponseOptimization
 {
 public:
 
-    enum class Sense { Minimize, Maximize, Fixed };
+    struct Objective
+    {
+        enum class Sense { Minimize, Maximize, Fixed };
+
+        string expression;
+
+        Sense sense = Sense::Minimize;
+
+        float value = 0.0f;  
+    };
+
+    struct Constraint
+    {
+        enum class Condition { GreaterThan, LessThan, EqualTo, Integer, GeneralFormula };
+
+        string expression;
+
+        Condition condition = Condition::EqualTo;
+        
+        vector<float> values;
+
+        void check() const;
+        {
+            throw logic_error("Constraint::check() not valid");
+        }
+    };
 
     enum class TimeType { PresentContinuous, PresentBatch, PastContinuous, PastBatch };
 
@@ -34,7 +59,7 @@ public:
         map<string, UnivariateConstraint> univariate;
         vector<MultivariateConstraint> multivariate;
         vector<vector<vector<MultivariateConstraint>>> disjunctive;
-        vector<CardinalityConstraint> cardinality;
+        vector<Cardinality> cardinality;
     };
 
     struct SamplingMemory
@@ -82,10 +107,6 @@ public:
 
         MatrixR scale_and_offset;
 
-        // Fixed ("equal to") objectives are scored as a closeness value in [0,1] (1 == exactly on
-        // target) instead of the affine map used by Minimize/Maximize. These per-column arrays are
-        // populated only in the pure-fixed case (no Minimize/Maximize objective present); otherwise
-        // Fixed objectives are enforced purely as injected band constraints and never become columns.
         vector<char> closeness_mask;
         VectorR closeness_target;
         VectorR closeness_scale;
@@ -163,7 +184,7 @@ public:
 
     const map<string, vector<Index>>& get_category_frequencies() const noexcept { return sampling_memory.category_frequencies; }
 
-    const vector<CardinalityConstraint>& get_cardinality_constraints() const noexcept { return constraint_set.cardinality; }
+    const vector<Cardinality>& get_cardinality_constraints() const noexcept { return constraint_set.cardinality; }
 
     pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
@@ -236,9 +257,6 @@ public:
 
     Index get_evaluations_used() const;
 
-    vector<NamedColumn> build_input_columns(const vector<Variable>&) const;
-    vector<NamedColumn> build_output_columns(const vector<Variable>&) const;
-
     UnivariateConstraint get_constraint(const string&) const;
     bool is_objective(const string&) const;
     Sense get_sense(const string&) const;
@@ -260,20 +278,21 @@ public:
 
     void promote_single_variable_constraints();
 
-    // Turn Fixed ("equal to") objectives into constraints before solving: a Fixed output injects an
-    // output equality band [t-e, t+e] (e derived from relative_tolerance) so repair_output_constraints
-    // projects samples onto {x : f(x)=t}; a Fixed input is just a box and is converted to an EqualTo
-    // univariate constraint (and dropped from the objectives map). Fixed outputs stay in the map so the
-    // pure-fixed case can score them by closeness. Returns the input-fixed names removed from objectives.
     void expand_fixed_objectives();
 
     vector<char> discrete_column_mask(const vector<Variable>&) const;
-
+       
 private:
+
+    NeuralNetwork* neural_network = nullptr;
 
     // Problem definition
 
-    NeuralNetwork* neural_network = nullptr;
+    vector<Objective> objectives;    
+    vector<Constraint> constraints;    
+
+
+/*
 
     ConstraintSet constraint_set;
 
@@ -306,13 +325,14 @@ private:
 
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
-    mutable NetworkJacobian network_jacobian;
+    mutable NetworkJacobian network_jacobian; // @todo not a member but an argument somewhere
 
     mutable SamplingMemory sampling_memory;
 	
 	// Do not remove it's useful for benchmarks
 
     mutable Index evaluations_used = 0;
+*/    
 };
 
 }

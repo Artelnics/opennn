@@ -23,12 +23,12 @@ using namespace opennn;
 namespace
 {
 
-vector<NamedColumn> make_named_columns(const vector<string>& names)
+vector<pair<string, Index>> make_named_columns(const vector<string>& names)
 {
-    vector<NamedColumn> out;
+    vector<pair<string, Index>> out;
     out.reserve(names.size());
     for (Index i = 0; i < static_cast<Index>(names.size()); ++i)
-        out.push_back({ names[i], i });
+        out.emplace_back(names[i], i);
     return out;
 }
 
@@ -110,8 +110,8 @@ struct MinimalApproximation
 
 TEST(FormulaExpression, LinearSumIsAffine)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
-    const vector<NamedColumn> outputs = make_named_columns({});
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> outputs = make_named_columns({});
 
     const CompiledFormula f = compile_formula("x1 + 2*x2 - 3", inputs, outputs);
 
@@ -125,7 +125,7 @@ TEST(FormulaExpression, LinearSumIsAffine)
 
 TEST(FormulaExpression, UnaryNegationFlipsCoefficients)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("-x1 + x2", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Affine);
@@ -136,7 +136,7 @@ TEST(FormulaExpression, UnaryNegationFlipsCoefficients)
 
 TEST(FormulaExpression, ConstantScalingDistributesOverSum)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("3*(x1 + x2)", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Affine);
@@ -147,7 +147,7 @@ TEST(FormulaExpression, ConstantScalingDistributesOverSum)
 
 TEST(FormulaExpression, DivisionByConstantIsAffine)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
     const CompiledFormula f = compile_formula("x1 / 4", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Affine);
@@ -157,7 +157,7 @@ TEST(FormulaExpression, DivisionByConstantIsAffine)
 
 TEST(FormulaExpression, ProductOfVariablesIsNonlinear)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("x1 * x2", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
@@ -166,7 +166,7 @@ TEST(FormulaExpression, ProductOfVariablesIsNonlinear)
 
 TEST(FormulaExpression, DivisionByVariableIsNonlinear)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("x1 / x2", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
@@ -175,7 +175,7 @@ TEST(FormulaExpression, DivisionByVariableIsNonlinear)
 
 TEST(FormulaExpression, SqrtFunctionIsNonlinear)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
     const CompiledFormula f = compile_formula("sqrt(x1) + 1", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
@@ -184,7 +184,7 @@ TEST(FormulaExpression, SqrtFunctionIsNonlinear)
 
 TEST(FormulaExpression, PowerWithNonUnitExponentIsNonlinear)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
     const CompiledFormula f = compile_formula("x1 ^ 2", inputs, {});
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
@@ -231,7 +231,7 @@ TEST(FormulaExpression, ScopeMixed)
 
 TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("-x1 + 2*x2 + 1", inputs, {});
 
     VectorR in(2); in << float(3), float(5);
@@ -244,7 +244,7 @@ TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
 
 TEST(FormulaExpression, EvaluateNonlinearExpression)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula f = compile_formula("sqrt(x1) + x2^2", inputs, {});
 
     VectorR in(2); in << float(9), float(3);
@@ -270,7 +270,7 @@ TEST(FormulaExpression, EvaluateUsesOutputsForMixedScope)
 
 TEST(FormulaExpression, ParenthesesOverridePrecedence)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
 
     const CompiledFormula a = compile_formula("2 * x1 + x2", inputs, {});
     const CompiledFormula b = compile_formula("2 * (x1 + x2)", inputs, {});
@@ -285,7 +285,7 @@ TEST(FormulaExpression, ParenthesesOverridePrecedence)
 
 TEST(FormulaExpression, MinMaxFunctions)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const CompiledFormula fmin = compile_formula("min(x1, x2)", inputs, {});
     const CompiledFormula fmax = compile_formula("max(x1, x2)", inputs, {});
 
@@ -304,7 +304,7 @@ TEST(FormulaExpression, MinMaxFunctions)
 
 TEST(FormulaExpression, UnknownIdentifierThrows)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
 
     EXPECT_THROW(compile_formula("x1 + z9", inputs, {}), runtime_error);
 }
@@ -312,7 +312,7 @@ TEST(FormulaExpression, UnknownIdentifierThrows)
 
 TEST(FormulaExpression, UnknownFunctionThrows)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
 
     EXPECT_THROW(compile_formula("bogus(x1)", inputs, {}), runtime_error);
 }
@@ -326,14 +326,14 @@ TEST(FormulaExpression, EmptyExpressionThrows)
 
 TEST(FormulaExpression, ExpressionWithoutVariablesThrows)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
     EXPECT_THROW(compile_formula("1 + 2", inputs, {}), runtime_error);
 }
 
 
 TEST(FormulaExpression, WrongFunctionArityThrows)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
 
     EXPECT_THROW(compile_formula("sqrt(x1, x2)", inputs, {}), runtime_error);
     EXPECT_THROW(compile_formula("min(x1)", inputs, {}), runtime_error);
@@ -342,7 +342,7 @@ TEST(FormulaExpression, WrongFunctionArityThrows)
 
 TEST(FormulaExpression, MismatchedParenthesesThrow)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1" });
 
     EXPECT_THROW(compile_formula("(x1 + 1", inputs, {}), runtime_error);
 }
@@ -449,7 +449,7 @@ TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock
     // so the affine block goes to the exact single-affine projector (equality met tightly)
     // while only the nonlinear block goes to Gauss-Newton -- rather than the whole input
     // vector being dragged through GN because one constraint happens to be nonlinear.
-    const vector<NamedColumn> inputs = make_named_columns({ "x0", "x1", "x2", "x3" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x0", "x1", "x2", "x3" });
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
     {
@@ -548,7 +548,7 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 
 TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("x1 + x2", ComparisonOperator::LessEqualTo, float(0), float(3), inputs, {});
 
     ASSERT_EQ(branches.size(), size_t(1));
@@ -559,7 +559,7 @@ TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
 
 TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {});
 
     ASSERT_EQ(branches.size(), size_t(1));       // AND -> no disjunction
@@ -571,7 +571,7 @@ TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
 
 TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("max(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(2), inputs, {});
 
     ASSERT_EQ(branches.size(), size_t(1));
@@ -581,7 +581,7 @@ TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
 
 TEST(NonSmoothExpand, AbsLessEqualIsInterval)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("abs(x1 - x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
 
     ASSERT_EQ(branches.size(), size_t(1));
@@ -594,7 +594,7 @@ TEST(NonSmoothExpand, AbsLessEqualIsInterval)
 
 TEST(NonSmoothExpand, OrCasesBranch)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
 
     EXPECT_EQ(expand_constraint("min(x1, x2)", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {}).size(), size_t(2));
     EXPECT_EQ(expand_constraint("max(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
@@ -604,7 +604,7 @@ TEST(NonSmoothExpand, OrCasesBranch)
 
 TEST(NonSmoothExpand, NestedYieldsRegionProduct)
 {
-    const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     // two selectors (max + abs) -> 2^2 = 4 regions
     const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
     EXPECT_EQ(branches.size(), size_t(4));
@@ -1222,9 +1222,9 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
     // fixed; the projector must land the continuous weights on the affine manifold
     //   sum w = 1,  w_i <= z_i,  w_i >= 0.01 z_i
     // without ever moving an indicator.
-    const vector<NamedColumn> inputs =
+    const vector<pair<string, Index>> inputs =
         make_named_columns({ "w0", "w1", "w2", "w3", "z0", "z1", "z2", "z3" });
-    const vector<NamedColumn> outputs;   // input-only system, no network
+    const vector<pair<string, Index>> outputs;   // input-only system, no network
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
     {
@@ -1297,7 +1297,7 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 namespace
 {
     MultivariateConstraint make_integer_constraint(const string& expression,
-                                              const vector<NamedColumn>& inputs,
+                                              const vector<pair<string, Index>>& inputs,
                                               ComparisonOperator op, float low, float up)
     {
         MultivariateConstraint constraint;
@@ -1314,7 +1314,7 @@ namespace
 TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 {
     // 3 integer vars n0..n2 in [0,5]; knapsack budget n0 + n1 + n2 <= 4.
-    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "n0", "n1", "n2" });
     const MultivariateConstraint budget =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
 
@@ -1344,7 +1344,7 @@ TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
 {
     // n0 + n1 + n2 == 3, each in [0,5]; unit coefficients => the carry must hit it exactly.
-    const vector<NamedColumn> inputs = make_named_columns({ "n0", "n1", "n2" });
+    const vector<pair<string, Index>> inputs = make_named_columns({ "n0", "n1", "n2" });
     const MultivariateConstraint exact =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
 
