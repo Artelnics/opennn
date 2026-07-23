@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "pch.h"
+#include "opennn_types.h"
 
 namespace opennn
 {

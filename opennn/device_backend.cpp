@@ -747,7 +747,7 @@ namespace
                      "workspace growth forbidden (warmup incomplete).");
             device::synchronize(Backend::get_compute_stream());
         }
-        
+
         return workspace_buffer.ensure<T>(n);
     }
 

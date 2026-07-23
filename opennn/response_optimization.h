@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "pch.h"
+#include "opennn_types.h"
 #include "statistics.h"
 #include "variable.h"
 #include "response_constraints.h"

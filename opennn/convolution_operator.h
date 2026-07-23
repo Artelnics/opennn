@@ -49,10 +49,12 @@ struct ConvolutionOperator : Operator
             && padding_height == 0 && padding_width == 0;
     }
 
-#ifdef OPENNN_HAS_CUDA
     struct ConvGraphCache;
+    // Always present so the class layout is identical in CPU and CUDA builds;
+    // stays null on CPU. The cache type is completed in the .cpp.
     mutable unique_ptr<ConvGraphCache> conv_graph_cache;
 
+#ifdef OPENNN_HAS_CUDA
     // Folded-BN inference forward for pointwise convolutions: the 1x1 conv
     // runs as a cuBLASLt GEMM with the pre-folded bias (and optional ReLU)
     // fused into the epilogue.

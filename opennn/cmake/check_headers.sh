@@ -13,7 +13,7 @@ for d in "${eigen_dirs[@]}"; do
 done
 
 export CHK_CXX=$cxx
-export CHK_FLAGS="-std=c++20 -fsyntax-only -fopenmp ${inc[*]}"
+export CHK_FLAGS="-std=c++20 -fsyntax-only -fopenmp -Wno-interference-size ${inc[*]}"
 
 printf '%s\n' "$root"/opennn/*.h |
 xargs -P "$(nproc)" -I{} bash -c '

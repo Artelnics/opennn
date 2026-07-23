@@ -9,7 +9,8 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "dropout_operator.h"
+#include "embedding_lookup_operator.h"
 
 namespace opennn
 {

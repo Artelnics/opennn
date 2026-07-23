@@ -486,6 +486,12 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_graph = graph;
 }
 
+#else
+
+// The header member unique_ptr<SDPACache> exists in every build; CPU builds
+// only need the type to be complete for the destructor instantiation.
+struct AttentionOperator::SDPACache {};
+
 #endif  // OPENNN_HAS_CUDA
 
 AttentionOperator::AttentionOperator() = default;

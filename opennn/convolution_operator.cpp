@@ -28,6 +28,12 @@ namespace opennn
 ConvolutionOperator::ConvolutionOperator() = default;
 ConvolutionOperator::~ConvolutionOperator() = default;
 
+#ifndef OPENNN_HAS_CUDA
+// The header member unique_ptr<ConvGraphCache> exists in every build; CPU
+// builds only need the type to be complete for the destructor instantiation.
+struct ConvolutionOperator::ConvGraphCache {};
+#endif
+
 #ifdef OPENNN_HAS_CUDA
 
 struct ConvolutionOperator::ConvGraphCache

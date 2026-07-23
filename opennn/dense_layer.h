@@ -9,7 +9,10 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "activation_operator.h"
+#include "batch_norm_operator.h"
+#include "combination_operator.h"
+#include "dropout_operator.h"
 
 namespace opennn
 {

@@ -191,12 +191,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
     target_link_libraries(opennn PUBLIC stdc++fs)
 endif()
 
+# Single public include root: the one supported spelling is
+# #include "opennn/foo.h". Library-internal bare includes ("dataset.h")
+# resolve through the quoted-include same-directory rule, not through
+# these paths, so the opennn/ dir itself is not exposed.
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/opennn>
 )
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
@@ -379,21 +380,23 @@ target_compile_definitions(opennn PUBLIC
     $<$<NOT:$<CONFIG:Debug>>:EIGEN_NO_DEBUG>
 )
 
-# Precompiled header: MSVC uses the CMake PCH binary mechanism (every .cpp
-# force-includes pch.h via /Yu). GCC's cmake PCH binary causes pragma-once
-# failures when headers (e.g. tensor_types.h) also textually include pch.h:
-# the binary PCH and textual pragma-once tables are separate so the guard is
-# not seen and pch.h is redefined. Instead, force-include pch.h textually on
-# GCC; #pragma once then works correctly across all TUs.
-if(MSVC)
-    target_precompile_headers(opennn PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
-    )
-else()
-    target_compile_options(opennn PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-include ${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
-    )
-endif()
+# Eigen ABI/behavior configuration. These must reach every TU that includes
+# Eigen — including consumer TUs that include Eigen BEFORE any OpenNN header,
+# where the #defines inside our headers would arrive too late. The copies in
+# opennn_types.h (#ifndef-guarded) remain for non-CMake consumers.
+target_compile_definitions(opennn PUBLIC
+    EIGEN_MAX_ALIGN_BYTES=64
+    EIGEN_USE_THREADS
+)
+
+# Precompiled header: binary PCH on every compiler. The historical GCC
+# failure — headers textually including pch.h while the binary PCH and the
+# textual include kept separate #pragma once bookkeeping — is gone: no header
+# includes pch.h anymore (they include opennn_types.h), and both files carry
+# classic include guards, so any re-inclusion is macro-guarded.
+target_precompile_headers(opennn PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
+)
 
 # On MSVC, these TUs use SKIP_PRECOMPILE_HEADERS to avoid the half/bfloat16
 # conflict. On GCC (-include pch.h) the CUDA headers pulled in by pch.h define

@@ -55,9 +55,7 @@ struct AttentionOperator : Operator
     AttentionOperator(const AttentionOperator&) = delete;
     AttentionOperator& operator=(const AttentionOperator&) = delete;
 
-#ifdef OPENNN_HAS_CUDA
     struct SDPACache;
-#endif
 
 private:
     float scaling_factor() const;
@@ -125,9 +123,9 @@ private:
                               TensorView&,
                               SoftmaxBwd&&) const;
 
-#ifdef OPENNN_HAS_CUDA
+    // Always present so the class layout is identical in CPU and CUDA builds;
+    // stays null on CPU. The cache type is completed in the .cpp.
     mutable unique_ptr<SDPACache> sdpa_cache;
-#endif
 
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;
     uint64_t sdpa_dropout_offset = 0;

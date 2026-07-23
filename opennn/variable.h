@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "pch.h"
+#include "opennn_types.h"
 #include "enum_map.h"
 
 namespace opennn

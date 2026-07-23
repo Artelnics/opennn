@@ -16,6 +16,8 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
+#include <ranges>
+
 namespace opennn
 {
 

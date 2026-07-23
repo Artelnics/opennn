@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "pch.h"
+#include "opennn_types.h"
 #include "configuration.h"
 #include "device_backend.h"
 

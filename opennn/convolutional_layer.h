@@ -10,7 +10,9 @@
 
 #include <cstdio>
 #include "layer.h"
-#include "operators.h"
+#include "activation_operator.h"
+#include "batch_norm_operator.h"
+#include "convolution_operator.h"
 
 namespace opennn
 {
@@ -95,14 +97,16 @@ public:
 
 private:
 
-#ifdef OPENNN_HAS_CUDA
     // Inference-time copy of the convolution parameters with the batchnorm
     // affine folded in (weights then bias, fp32, device-resident). Rebuilt
     // whenever a training step or a parameter relink touches the originals —
     // the same freshness contract as BatchNorm's inference scale/shift cache.
+    // Always present so the class layout is identical in CPU and CUDA builds;
+    // stays empty on CPU.
     Buffer folded_parameters;
     bool   folded_dirty = true;
 
+#ifdef OPENNN_HAS_CUDA
     bool forward_propagate_folded(ForwardPropagation&, size_t);
 #endif
 

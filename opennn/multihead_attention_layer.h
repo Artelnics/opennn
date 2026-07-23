@@ -9,7 +9,10 @@
 #pragma once
 
 #include "layer.h"
-#include "operators.h"
+#include "attention_operator.h"
+#include "combination_operator.h"
+#include "merge_operator.h"
+#include "multihead_projection_operator.h"
 
 namespace opennn
 {

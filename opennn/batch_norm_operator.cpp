@@ -285,6 +285,13 @@ void BatchNormalizationOperator::apply_delta_cpu(const TensorView& input,
 BatchNormalizationOperator::BatchNormalizationOperator() = default;
 BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
+#ifndef OPENNN_HAS_CUDA
+// The header member unique_ptr<BatchNormalizationGraphCache> exists in every
+// build; CPU builds only need the type to be complete for the destructor
+// instantiation.
+struct BatchNormalizationOperator::BatchNormalizationGraphCache {};
+#endif
+
 #ifdef OPENNN_HAS_CUDA
 
 struct BatchNormalizationOperator::BatchNormalizationGraphCache
