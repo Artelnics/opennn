@@ -16,9 +16,9 @@ namespace opennn
 enum class FormulaShape { Affine, Nonlinear };
 enum class FormulaScope { InputsOnly, OutputsOnly, Mixed };
 
-struct RpnOp // @todo change name
+struct ExpressionOp
 {
-    enum class Kind 
+    enum class Kind
     {
         PushConst, PushInput, PushOutput,
         Add, Sub, Mul, Div, Pow, Neg,
@@ -30,9 +30,9 @@ struct RpnOp // @todo change name
     float constant = 0.0f;
 };
 
-struct CompiledFormula // @todo change name formula no good
+struct CompiledExpression
 {
-    vector<RpnOp> bytecode; // @todo change name to XXX?
+    vector<ExpressionOp> operations;
 
     FormulaShape shape = FormulaShape::Nonlinear;
     FormulaScope scope = FormulaScope::InputsOnly;
@@ -45,66 +45,57 @@ struct CompiledFormula // @todo change name formula no good
     
     float affine_constant = 0.0f;
 
-    vector<pair<Index, vector<RpnOp>>> input_gradient;
-    vector<pair<Index, vector<RpnOp>>> output_gradient;
+    vector<pair<Index, vector<ExpressionOp>>> input_gradient;
+    vector<pair<Index, vector<ExpressionOp>>> output_gradient;
 
     float evaluate(const VectorR&, const VectorR&) const;
 };
 
-float evaluate_rpn(const vector<RpnOp>&,
+float evaluate_operations(const vector<ExpressionOp>&,
                    const VectorR&,
                    const VectorR&);
 
-CompiledFormula compile_formula(const string&,
+CompiledExpression compile_formula(const string&,
                                 const vector<pair<string, Index>>&,
                             const vector<pair<string, Index>>&);
 
 
-enum class ComparisonOperator
+enum class Condition
 {
-    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet
+    None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet, Integer, Cardinality
 };
 
 
-enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent }; // @todo change name another enum kind
+enum class RepairKind { Unrepairable, AffineInput, NonlinearInput, OutputDependent };
 
 
 struct MultivariateConstraint
 {
-    string expression; // @todo change !!!
-    
-    function<float(const VectorR&, const VectorR&)> callback;
+    string expression;
 
-    bool uses_callback = false;
-
-    ComparisonOperator comparison_operator = ComparisonOperator::None;
+    Condition condition = Condition::None;
     float low_bound = 0.0f;
     float up_bound = 0.0f;
 
     vector<float> allowed_values;
 
-    CompiledFormula compiled;
-    ConstraintKind kind = ConstraintKind::Unrepairable;
-
+    CompiledExpression compiled;
+    RepairKind kind = RepairKind::Unrepairable;
 };
-
-bool constraint_is_satisfied(const MultivariateConstraint&,
-                             const VectorR&,
-                             const VectorR&);
 
 
 struct UnivariateConstraint
 {
-    ComparisonOperator comparison; // @todo change name
+    Condition condition;
     float low_bound;
     float up_bound;
 
     vector<float> allowed_values;
 
-    UnivariateConstraint(ComparisonOperator new_comparison = ComparisonOperator::None, 
-        float new_low_bound = 0.0f, 
+    UnivariateConstraint(Condition new_condition = Condition::None,
+        float new_low_bound = 0.0f,
         float new_up_bound = 0.0f)
-        : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
+        : condition(new_condition), low_bound(new_low_bound), up_bound(new_up_bound) {}
 };
 
 
@@ -136,16 +127,20 @@ struct Lattice
     vector<float> max;
 };
 
-ConstraintKind classify(const MultivariateConstraint&);
+RepairKind classify(const MultivariateConstraint&);
 
 vector<vector<MultivariateConstraint>> expand_constraint(const string&,
-                                                         ComparisonOperator,
+                                                         Condition,
                                                          float, float,
                                                          const vector<pair<string, Index>>&,
                                                          const vector<pair<string, Index>>&);
 
 
 bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>&);
+
+bool constraint_is_satisfied(const MultivariateConstraint&,
+                             const VectorR&,
+                             const VectorR&);
 
 LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>&,
                                                 const Index,

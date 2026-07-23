@@ -557,26 +557,26 @@ void validate_function_arities(const Ast& node)
 }
 
 
-void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
+void emit_operations(const Ast& node, vector<ExpressionOp>& operations)
 {
     switch (node.kind)
     {
         using enum Ast::Kind;
     case Const:
-        bytecode.push_back({RpnOp::Kind::PushConst, 0, node.constant});
+        operations.push_back({ExpressionOp::Kind::PushConst, 0, node.constant});
         return;
 
     case Input:
-        bytecode.push_back({RpnOp::Kind::PushInput, node.index, 0.0f});
+        operations.push_back({ExpressionOp::Kind::PushInput, node.index, 0.0f});
         return;
 
     case Output:
-        bytecode.push_back({RpnOp::Kind::PushOutput, node.index, 0.0f});
+        operations.push_back({ExpressionOp::Kind::PushOutput, node.index, 0.0f});
         return;
 
     case UnaryNeg:
-        emit_bytecode(*node.children[0], bytecode);
-        bytecode.push_back({RpnOp::Kind::Neg, 0, 0.0f});
+        emit_operations(*node.children[0], operations);
+        operations.push_back({ExpressionOp::Kind::Neg, 0, 0.0f});
         return;
 
     case Add:
@@ -585,41 +585,41 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
     case Div:
     case Pow:
     {
-        emit_bytecode(*node.children[0], bytecode);
-        emit_bytecode(*node.children[1], bytecode);
+        emit_operations(*node.children[0], operations);
+        emit_operations(*node.children[1], operations);
 
-        const RpnOp::Kind rpn_kind =
-            node.kind == Ast::Kind::Add ? RpnOp::Kind::Add :
-            node.kind == Ast::Kind::Sub ? RpnOp::Kind::Sub :
-            node.kind == Ast::Kind::Mul ? RpnOp::Kind::Mul :
-            node.kind == Ast::Kind::Div ? RpnOp::Kind::Div :
-                                          RpnOp::Kind::Pow;
+        const ExpressionOp::Kind rpn_kind =
+            node.kind == Ast::Kind::Add ? ExpressionOp::Kind::Add :
+            node.kind == Ast::Kind::Sub ? ExpressionOp::Kind::Sub :
+            node.kind == Ast::Kind::Mul ? ExpressionOp::Kind::Mul :
+            node.kind == Ast::Kind::Div ? ExpressionOp::Kind::Div :
+                                          ExpressionOp::Kind::Pow;
 
-        bytecode.push_back({rpn_kind, 0, 0.0f});
+        operations.push_back({rpn_kind, 0, 0.0f});
         return;
     }
 
     case Func:
     {
         for (const AstPtr& child : node.children)
-            emit_bytecode(*child, bytecode);
+            emit_operations(*child, operations);
 
         const string& function_name = node.function_name;
 
-        RpnOp::Kind rpn_kind = RpnOp::Kind::Sqrt;
-        if      (function_name == "sqrt") rpn_kind = RpnOp::Kind::Sqrt;
-        else if (function_name == "exp")  rpn_kind = RpnOp::Kind::Exp;
-        else if (function_name == "log")  rpn_kind = RpnOp::Kind::Log;
-        else if (function_name == "abs")  rpn_kind = RpnOp::Kind::Abs;
-        else if (function_name == "sin")  rpn_kind = RpnOp::Kind::Sin;
-        else if (function_name == "cos")  rpn_kind = RpnOp::Kind::Cos;
-        else if (function_name == "tan")  rpn_kind = RpnOp::Kind::Tan;
-        else if (function_name == "min")  rpn_kind = RpnOp::Kind::Min;
-        else if (function_name == "max")  rpn_kind = RpnOp::Kind::Max;
-        else if (function_name == "pow")  rpn_kind = RpnOp::Kind::Pow;
+        ExpressionOp::Kind rpn_kind = ExpressionOp::Kind::Sqrt;
+        if      (function_name == "sqrt") rpn_kind = ExpressionOp::Kind::Sqrt;
+        else if (function_name == "exp")  rpn_kind = ExpressionOp::Kind::Exp;
+        else if (function_name == "log")  rpn_kind = ExpressionOp::Kind::Log;
+        else if (function_name == "abs")  rpn_kind = ExpressionOp::Kind::Abs;
+        else if (function_name == "sin")  rpn_kind = ExpressionOp::Kind::Sin;
+        else if (function_name == "cos")  rpn_kind = ExpressionOp::Kind::Cos;
+        else if (function_name == "tan")  rpn_kind = ExpressionOp::Kind::Tan;
+        else if (function_name == "min")  rpn_kind = ExpressionOp::Kind::Min;
+        else if (function_name == "max")  rpn_kind = ExpressionOp::Kind::Max;
+        else if (function_name == "pow")  rpn_kind = ExpressionOp::Kind::Pow;
         else throw runtime_error(format("FormulaParser: unknown function '{}'", function_name));
 
-        bytecode.push_back({rpn_kind, 0, 0.0f});
+        operations.push_back({rpn_kind, 0, 0.0f});
         return;
     }
     }
@@ -864,18 +864,18 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 }
 
 
-float evaluate_rpn(const vector<RpnOp>& bytecode,
+float evaluate_operations(const vector<ExpressionOp>& operations,
                    const VectorR& inputs_row,
                    const VectorR& outputs_row)
 {
     vector<float> evaluation_stack;
     evaluation_stack.reserve(16);
 
-    for (const RpnOp& operation : bytecode)
+    for (const ExpressionOp& operation : operations)
     {
         switch (operation.kind)
         {
-            using enum RpnOp::Kind;
+            using enum ExpressionOp::Kind;
         case PushConst:  evaluation_stack.push_back(operation.constant); break;
         case PushInput:  evaluation_stack.push_back(inputs_row(operation.index)); break;
         case PushOutput: evaluation_stack.push_back(outputs_row(operation.index)); break;
@@ -892,11 +892,11 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
                         float &left_operand = evaluation_stack.back();
                         switch (operation.kind)
                         {
-                                case RpnOp::Kind::Add: left_operand += right_operand; break;
-                                case RpnOp::Kind::Sub: left_operand -= right_operand; break;
-                                case RpnOp::Kind::Mul: left_operand *= right_operand; break;
-                                case RpnOp::Kind::Div: left_operand /= right_operand; break;
-                                case RpnOp::Kind::Pow: left_operand = pow(left_operand, right_operand); break;
+                                case ExpressionOp::Kind::Add: left_operand += right_operand; break;
+                                case ExpressionOp::Kind::Sub: left_operand -= right_operand; break;
+                                case ExpressionOp::Kind::Mul: left_operand *= right_operand; break;
+                                case ExpressionOp::Kind::Div: left_operand /= right_operand; break;
+                                case ExpressionOp::Kind::Pow: left_operand = pow(left_operand, right_operand); break;
                                 default: break;
                         }
                         break;
@@ -916,7 +916,7 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
                         const float right_operand = evaluation_stack.back();
                         evaluation_stack.pop_back();
                         float &left_operand = evaluation_stack.back();
-                        if (operation.kind == RpnOp::Kind::Min) left_operand = min(left_operand, right_operand);
+                        if (operation.kind == ExpressionOp::Kind::Min) left_operand = min(left_operand, right_operand);
                         else left_operand = max(left_operand, right_operand);
                         break;
                 }
@@ -927,7 +927,7 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
 }
 
 
-float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
+float CompiledExpression::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
 {
     if (shape == FormulaShape::Affine)
     {
@@ -942,15 +942,15 @@ float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& output
         return result;
     }
 
-    return evaluate_rpn(bytecode, inputs_row, outputs_row);
+    return evaluate_operations(operations, inputs_row, outputs_row);
 }
 
 
-CompiledFormula compile_ast(const Ast& ast)
+CompiledExpression compile_ast(const Ast& ast)
 {
     validate_function_arities(ast);
 
-    CompiledFormula result;
+    CompiledExpression result;
 
     std::set<Index> input_references;
     std::set<Index> output_references;
@@ -993,8 +993,8 @@ CompiledFormula compile_ast(const Ast& ast)
             for (const Index input_column : result.input_indices)
             {
                 const AstPtr partial = differentiate(ast, false, input_column);
-                vector<RpnOp> program;
-                emit_bytecode(*partial, program);
+                vector<ExpressionOp> program;
+                emit_operations(*partial, program);
                 result.input_gradient.emplace_back(input_column, move(program));
             }
 
@@ -1002,14 +1002,14 @@ CompiledFormula compile_ast(const Ast& ast)
             for (const Index output_column : result.output_indices)
             {
                 const AstPtr partial = differentiate(ast, true, output_column);
-                vector<RpnOp> program;
-                emit_bytecode(*partial, program);
+                vector<ExpressionOp> program;
+                emit_operations(*partial, program);
                 result.output_gradient.emplace_back(output_column, move(program));
             }
         }
     }
 
-    emit_bytecode(ast, result.bytecode);
+    emit_operations(ast, result.operations);
 
     return result;
 }
@@ -1034,7 +1034,7 @@ AstPtr parse_to_ast(const string& expression,
 }
 
 
-CompiledFormula compile_formula(const string& expression,
+CompiledExpression compile_formula(const string& expression,
                                 const vector<pair<string, Index>>& inputs,
                                 const vector<pair<string, Index>>& outputs)
 {
@@ -1099,10 +1099,10 @@ AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
 }
 
 
-MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperator comparison, const float low, const float up)
+MultivariateConstraint make_smooth_constraint(AstPtr ast, const Condition comparison, const float low, const float up)
 {
     MultivariateConstraint constraint;
-    constraint.comparison_operator = comparison;
+    constraint.condition = comparison;
     constraint.low_bound = low;
     constraint.up_bound = up;
     constraint.compiled = compile_ast(*ast);
@@ -1116,14 +1116,14 @@ MultivariateConstraint region_constraint(const Ast& selector, const int mode, co
 {
     if (selector.function_name == "abs")
         return make_smooth_constraint(resolve_smooth(*selector.children[0], modes),
-                                      mode == 0 ? ComparisonOperator::GreaterEqualTo : ComparisonOperator::LessEqualTo, 0.0f, 0.0f);
+                                      mode == 0 ? Condition::GreaterEqualTo : Condition::LessEqualTo, 0.0f, 0.0f);
 
     AstPtr difference = make_sub(resolve_smooth(*selector.children[0], modes),
                                  resolve_smooth(*selector.children[1], modes));
 
     const bool less_equal = (selector.function_name == "min") ? (mode == 0) : (mode == 1);
     return make_smooth_constraint(move(difference),
-                                  less_equal ? ComparisonOperator::LessEqualTo : ComparisonOperator::GreaterEqualTo, 0.0f, 0.0f);
+                                  less_equal ? Condition::LessEqualTo : Condition::GreaterEqualTo, 0.0f, 0.0f);
 }
 
 
@@ -1131,7 +1131,7 @@ MultivariateConstraint region_constraint(const Ast& selector, const int mode, co
 // branch is a conjunction (the substituted-smooth constraint plus the region inequalities); the
 // union over branches reproduces the original feasible set.
 vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
-                                                         const ComparisonOperator comparison, const float low, const float up,
+                                                         const Condition comparison, const float low, const float up,
                                                          const vector<const Ast*>& selectors)
 {
     const int count = static_cast<int>(selectors.size());
@@ -1160,7 +1160,7 @@ vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
 // case with smooth arguments stays a single branch (no disjunction); everything else falls back
 // to the general region enumeration.
 vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
-                                                  const ComparisonOperator comparison, const float low, const float up)
+                                                  const Condition comparison, const float low, const float up)
 {
     const vector<const Ast*> selectors = selectors_of(root);
 
@@ -1171,8 +1171,8 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
         && ranges::none_of(root.children, [](const AstPtr& child) { return has_selector(*child); }))
     {
         const string& name = root.function_name;
-        const bool ge = (comparison == ComparisonOperator::GreaterEqualTo || comparison == ComparisonOperator::GreaterThan);
-        const bool le = (comparison == ComparisonOperator::LessEqualTo || comparison == ComparisonOperator::LessThan);
+        const bool ge = (comparison == Condition::GreaterEqualTo || comparison == Condition::GreaterThan);
+        const bool le = (comparison == Condition::LessEqualTo || comparison == Condition::LessThan);
 
         if ((name == "min" && ge) || (name == "max" && le))
         {
@@ -1182,7 +1182,7 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
             return { move(branch) };
         }
         if (name == "abs" && le)
-            return { { make_smooth_constraint(clone(*root.children[0]), ComparisonOperator::Between, -up, up) } };
+            return { { make_smooth_constraint(clone(*root.children[0]), Condition::Between, -up, up) } };
     }
 
     return enumerate_regions(root, comparison, low, up, selectors);
@@ -1192,7 +1192,7 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
 
 
 vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
-                                                         const ComparisonOperator comparison,
+                                                         const Condition comparison,
                                                          const float low, const float up,
                                                          const vector<pair<string, Index>>& inputs,
                                                          const vector<pair<string, Index>>& outputs)
@@ -1213,8 +1213,7 @@ bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& fo
     return !formula_constraints.empty()
         && ranges::all_of(formula_constraints, [](const MultivariateConstraint& formula_constraint)
            {
-               return !formula_constraint.uses_callback
-                   && formula_constraint.compiled.shape == FormulaShape::Affine;
+               return formula_constraint.compiled.shape == FormulaShape::Affine;
            });
 }
 
@@ -1244,9 +1243,9 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
         const float low = formula_constraint.low_bound;
         const float up  = formula_constraint.up_bound;
 
-        switch (formula_constraint.comparison_operator)
+        switch (formula_constraint.condition)
         {
-            using enum ComparisonOperator;
+            using enum Condition;
         case EqualTo:
             linear_set.lower(i) = low - c - bound_tolerance(low);
             linear_set.upper(i) = low - c + bound_tolerance(low);
@@ -1282,16 +1281,14 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
                              const VectorR& input_row,
                              const VectorR& output_row)
 {
-    const float value = constraint.uses_callback
-        ? constraint.callback(input_row, output_row)
-        : constraint.compiled.evaluate(input_row, output_row);
+    const float value = constraint.compiled.evaluate(input_row, output_row);
 
     const float low = constraint.low_bound;
     const float up  = constraint.up_bound;
 
-    switch (constraint.comparison_operator)
+    switch (constraint.condition)
     {
-        using enum ComparisonOperator;
+        using enum Condition;
     case EqualTo:
         return abs(value - low) <= bound_tolerance(low);
     case Between:
@@ -1311,15 +1308,12 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 }
 
 
-ConstraintKind classify(const MultivariateConstraint& constraint)
+RepairKind classify(const MultivariateConstraint& constraint)
 {
-    if (constraint.comparison_operator == ComparisonOperator::None)
-        return ConstraintKind::Unrepairable;
+    if (constraint.condition == Condition::None)
+        return RepairKind::Unrepairable;
 
-    if (constraint.uses_callback)
-        return ConstraintKind::Callback;
-
-    const CompiledFormula& formula = constraint.compiled;
+    const CompiledExpression& formula = constraint.compiled;
 
     const bool affine = (formula.shape == FormulaShape::Affine);
     const bool nonlinear_ready = (formula.shape == FormulaShape::Nonlinear &&
@@ -1328,13 +1322,13 @@ ConstraintKind classify(const MultivariateConstraint& constraint)
     if (formula.scope == FormulaScope::InputsOnly)
     {
         if (affine && !formula.affine_input_terms.empty())
-            return ConstraintKind::AffineInput;
+            return RepairKind::AffineInput;
         if (nonlinear_ready)
-            return ConstraintKind::NonlinearInput;
-        return ConstraintKind::Unrepairable;
+            return RepairKind::NonlinearInput;
+        return RepairKind::Unrepairable;
     }
 
-    return (affine || nonlinear_ready) ? ConstraintKind::OutputDependent : ConstraintKind::Unrepairable;
+    return (affine || nonlinear_ready) ? RepairKind::OutputDependent : RepairKind::Unrepairable;
 }
 
 
@@ -1347,14 +1341,14 @@ void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, c
 namespace
 {
 
-bool constraint_residual(const ComparisonOperator comparison, const float low, const float up,
+bool constraint_residual(const Condition comparison, const float low, const float up,
                          const float value, float& residual)
 {
     residual = 0.0f;
 
     switch (comparison)
     {
-        using enum ComparisonOperator;
+        using enum Condition;
     case EqualTo:
         residual = value - low; return true;
     case Between:
@@ -1415,7 +1409,7 @@ vector<const MultivariateConstraint*> input_repairable_constraints(const vector<
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput || constraint.kind == ConstraintKind::NonlinearInput)
+        if (constraint.kind == RepairKind::AffineInput || constraint.kind == RepairKind::NonlinearInput)
             constraints.push_back(&constraint);
 
     return constraints;
@@ -1438,7 +1432,7 @@ bool collect_violations(const vector<const MultivariateConstraint*>& constraints
     {
         const float value = constraint->compiled.evaluate(point, output);
         float residual;
-        if (constraint_residual(constraint->comparison_operator, constraint->low_bound, constraint->up_bound, value, residual))
+        if (constraint_residual(constraint->condition, constraint->low_bound, constraint->up_bound, value, residual))
         {
             active.push_back(constraint);
             residuals.push_back(residual);
@@ -1458,7 +1452,7 @@ bool collect_violations(const vector<const MultivariateConstraint*>& constraints
 VectorR constraint_gradient(const MultivariateConstraint& constraint,
                             const VectorR& point, const VectorR& output, const SurrogateVjp& vjp)
 {
-    const CompiledFormula& compiled = constraint.compiled;
+    const CompiledExpression& compiled = constraint.compiled;
 
     VectorR gradient = VectorR::Zero(point.size());
 
@@ -1467,7 +1461,7 @@ VectorR constraint_gradient(const MultivariateConstraint& constraint,
             gradient(column) = coefficient;
     else
         for (const auto& [column, program] : compiled.input_gradient)
-            gradient(column) = evaluate_rpn(program, point, output);
+            gradient(column) = evaluate_operations(program, point, output);
 
     if (!vjp)
         return gradient;
@@ -1479,7 +1473,7 @@ VectorR constraint_gradient(const MultivariateConstraint& constraint,
             cotangent(column) = coefficient;
     else
         for (const auto& [column, program] : compiled.output_gradient)
-            cotangent(column) = evaluate_rpn(program, point, output);
+            cotangent(column) = evaluate_operations(program, point, output);
 
     return gradient + vjp(point, cotangent);
 }
@@ -1542,7 +1536,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     vector<const MultivariateConstraint*> affine_constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput)
+        if (constraint.kind == RepairKind::AffineInput)
             affine_constraints.push_back(&constraint);
 
     if (affine_constraints.empty())
@@ -1554,7 +1548,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 
     Index slacks_number = 0;
     for (const MultivariateConstraint* constraint : affine_constraints)
-        if (constraint->comparison_operator != ComparisonOperator::EqualTo)
+        if (constraint->condition != Condition::EqualTo)
             ++slacks_number;
 
     const Index augmented_number = inputs_number + slacks_number;
@@ -1583,9 +1577,9 @@ void repair_affine_inputs(MatrixR& random_inputs,
             expression_maximum += max(coefficient * inferior_frontier(column), coefficient * superior_frontier(column));
         }
 
-        switch (constraint.comparison_operator)
+        switch (constraint.condition)
         {
-            using enum ComparisonOperator;
+            using enum Condition;
         case EqualTo:
             right_hand_side(i) = low - constant;
             break;
@@ -1703,7 +1697,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
             expression += coefficient * random_inputs(r, column);
 
         float residual;
-        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
+        if (!constraint_residual(constraint.condition, low, up, expression, residual))
             continue;
         residual = -residual;
 
@@ -1761,7 +1755,7 @@ void repair_single_affine_integer(MatrixR& random_inputs,
             expression += coefficient * random_inputs(r, column);
 
         float residual;
-        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
+        if (!constraint_residual(constraint.condition, low, up, expression, residual))
             continue;
         residual = -residual;
 
@@ -1800,7 +1794,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const Index max_correction_passes)
 {
     const bool any_nonlinear = ranges::any_of(formula_constraints, [](const MultivariateConstraint& constraint)
-        { return constraint.kind == ConstraintKind::NonlinearInput; });
+        { return constraint.kind == RepairKind::NonlinearInput; });
 
     if (!any_nonlinear)
         return;
@@ -1853,8 +1847,8 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
     vector<const MultivariateConstraint*> repairable;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput
-            || constraint.kind == ConstraintKind::NonlinearInput)
+        if (constraint.kind == RepairKind::AffineInput
+            || constraint.kind == RepairKind::NonlinearInput)
             repairable.push_back(&constraint);
 
     const Index constraint_number = ssize(repairable);
@@ -1915,12 +1909,12 @@ void repair_inputs(MatrixR& random_inputs,
 
         for (const MultivariateConstraint& constraint : block)
         {
-            if (constraint.kind == ConstraintKind::AffineInput)
+            if (constraint.kind == RepairKind::AffineInput)
             {
                 ++affine_number;
                 single_affine = &constraint;
             }
-            else if (constraint.kind == ConstraintKind::NonlinearInput)
+            else if (constraint.kind == RepairKind::NonlinearInput)
                 any_nonlinear = true;
         }
 
@@ -2038,7 +2032,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.kind != ConstraintKind::AffineInput)
+        if (constraint.kind != RepairKind::AffineInput)
             continue;
 
         bool all_free_discrete = true;
@@ -2101,7 +2095,7 @@ void repair_output_constraints(MatrixR& inputs,
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::OutputDependent)
+        if (constraint.kind == RepairKind::OutputDependent)
             constraints.push_back(&constraint);
 
     if (constraints.empty())
