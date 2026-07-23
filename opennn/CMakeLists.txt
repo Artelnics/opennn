@@ -77,7 +77,7 @@ set(_opennn_install_jpeg_fallback OFF)
 
 find_package(ZLIB QUIET)
     if(ZLIB_FOUND)
-        target_include_directories(opennn PUBLIC ${ZLIB_INCLUDE_DIRS})
+        target_include_directories(opennn PRIVATE ${ZLIB_INCLUDE_DIRS})
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             # Avoid imported-target absolute paths that can trip GNU make when
             # sysroot files have epoch-zero mtimes.
@@ -101,9 +101,9 @@ find_package(ZLIB QUIET)
         # zlib) into the prefix and the install interface points at that copy.
         set(_opennn_zlib_installed_name
             ${CMAKE_STATIC_LIBRARY_PREFIX}opennn_zlib${CMAKE_STATIC_LIBRARY_SUFFIX})
-        target_include_directories(opennn SYSTEM PUBLIC
-            $<BUILD_INTERFACE:${opennn_zlib_SOURCE_DIR}>
-            $<BUILD_INTERFACE:${opennn_zlib_BINARY_DIR}>)
+        target_include_directories(opennn SYSTEM PRIVATE
+            ${opennn_zlib_SOURCE_DIR}
+            ${opennn_zlib_BINARY_DIR})
         target_link_libraries(opennn PUBLIC
             $<BUILD_INTERFACE:zlibstatic>
             $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_LIBDIR}/${_opennn_zlib_installed_name}>)
@@ -112,7 +112,7 @@ find_package(ZLIB QUIET)
 
     find_package(JPEG QUIET)
     if(JPEG_FOUND)
-        target_include_directories(opennn PUBLIC ${JPEG_INCLUDE_DIRS})
+        target_include_directories(opennn PRIVATE ${JPEG_INCLUDE_DIRS})
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             target_link_libraries(opennn PUBLIC jpeg)
         elseif(TARGET JPEG::JPEG)
@@ -176,8 +176,8 @@ find_package(ZLIB QUIET)
         # Build-tree only fallback, same install treatment as the ZLIB one.
         set(_opennn_jpeg_installed_name
             ${CMAKE_STATIC_LIBRARY_PREFIX}opennn_jpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
-        target_include_directories(opennn SYSTEM PUBLIC
-            $<BUILD_INTERFACE:${_opennn_jpeg_include_dir}>)
+        target_include_directories(opennn SYSTEM PRIVATE
+            ${_opennn_jpeg_include_dir})
         target_link_libraries(opennn PUBLIC
             $<BUILD_INTERFACE:opennn_jpeg>
             $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_LIBDIR}/${_opennn_jpeg_installed_name}>)
@@ -312,8 +312,16 @@ if(OPENNN_HAS_CUDA)
     target_link_libraries(opennn PUBLIC CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver)
     target_compile_options(opennn PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     if(HAVE_CUDNN)
-        target_link_libraries(opennn PUBLIC ${CUDNN_LIBRARY})
-        target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
+        # Link through an imported target so the exported OpenNNTargets.cmake
+        # references CUDNN::cudnn (resolved on the consumer machine by the
+        # installed FindCUDNN.cmake) instead of a non-relocatable absolute path.
+        if(NOT TARGET CUDNN::cudnn)
+            add_library(CUDNN::cudnn UNKNOWN IMPORTED)
+            set_target_properties(CUDNN::cudnn PROPERTIES
+                IMPORTED_LOCATION "${CUDNN_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${CUDNN_INCLUDE_DIR}")
+        endif()
+        target_link_libraries(opennn PUBLIC CUDNN::cudnn)
     endif()
 
     if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
@@ -323,34 +331,43 @@ if(OPENNN_HAS_CUDA)
             "and set CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
     # SYSTEM include so GCC suppresses third-party warnings (-Wswitch-enum,
-    # -Wunused-parameter, etc.) from inside cudnn-frontend headers. Build-tree
-    # only: the fetched headers are not installed (only .cpp/.cu files include
-    # them), so keep the path out of the install interface.
-    target_include_directories(opennn SYSTEM PUBLIC
-        $<BUILD_INTERFACE:${CUDNN_FRONTEND_INCLUDE_DIR}>)
+    # -Wunused-parameter, etc.) from inside cudnn-frontend headers. PRIVATE:
+    # only .cpp files include cudnn-frontend, no public header exposes it.
+    target_include_directories(opennn SYSTEM PRIVATE ${CUDNN_FRONTEND_INCLUDE_DIR})
     # CUDA operators guard the cuDNN frontend paths with HAVE_CUDNN_FRONTEND.
     # The top-level build fetches these headers; standalone consumers can still
     # pass CUDNN_FRONTEND_INCLUDE_DIR explicitly.
 
-    target_compile_definitions(opennn PUBLIC HAVE_CUDNN_FRONTEND)
+    target_compile_definitions(opennn PRIVATE HAVE_CUDNN_FRONTEND)
 endif()
 
 # Optimization & SIMD. Without host-native ISA flags Eigen falls back to the x86-64
 # baseline (SSE2), costing 2-4x on matmul-heavy workloads. Mirrors opennn.pro.
 # Guarded to CXX so nvcc is unaffected — it forwards its own host flags separately.
+# The ISA flag is PUBLIC behind BUILD_INTERFACE: every in-tree consumer
+# (tests/examples/benchmarks) must instantiate Eigen with the same ISA and
+# alignment as the library, but the installed package must not impose a host
+# ISA on external consumers. Fetched third-party targets (gtest, zlib) no
+# longer inherit it.
 if(MSVC)
-    target_compile_options(opennn PRIVATE
-        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>
+    target_compile_options(opennn PUBLIC
+        $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>
     )
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
-        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3 -mcpu=apple-m1>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
+    )
+    target_compile_options(opennn PUBLIC
+        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mcpu=apple-m1>>
     )
 else()
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
-        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3 -march=native>
+        $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
+    )
+    target_compile_options(opennn PUBLIC
+        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>
     )
 endif()
 
@@ -379,8 +396,9 @@ else()
 endif()
 
 # On MSVC, these TUs use SKIP_PRECOMPILE_HEADERS to avoid the half/bfloat16
-# conflict. On GCC (-include pch.h), the three files disambiguate `half` via
-# `using half = ::__half;` before the cudnn-frontend include.
+# conflict. On GCC (-include pch.h) the CUDA headers pulled in by pch.h define
+# __half/__nv_bfloat16 before the cudnn-frontend include, so no disambiguation
+# is needed — but the include order inside those three files is load-bearing.
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
         ${CMAKE_CURRENT_SOURCE_DIR}/attention_operator.cpp
@@ -444,6 +462,16 @@ if(OpenNN_INSTALL)
     endif()
     set(_opennn_needs_zlib ${_opennn_needs_zlib_dependency})
     set(_opennn_needs_jpeg ${_opennn_needs_jpeg_dependency})
+    set(_opennn_needs_cudnn OFF)
+    if(OPENNN_HAS_CUDA AND HAVE_CUDNN)
+        set(_opennn_needs_cudnn ON)
+    endif()
+    # Only when MKLConfig.cmake provided MKL::MKL; the manual-discovery branch
+    # exports the mkl_rt path directly and needs no find_dependency.
+    set(_opennn_needs_mkl OFF)
+    if(OpenNN_ENABLE_MKL AND MKL_FOUND)
+        set(_opennn_needs_mkl ON)
+    endif()
 
     configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/OpenNNConfig.cmake.in
@@ -458,5 +486,6 @@ if(OpenNN_INSTALL)
     install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfigVersion.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCUDNN.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 endif()

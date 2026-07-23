@@ -23,9 +23,9 @@
 #include <memory>
 #include <string>
 
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/tokenizer_operator.h"
-#include "../../opennn/configuration.h"
+#include "opennn/standard_networks.h"
+#include "opennn/tokenizer_operator.h"
+#include "opennn/configuration.h"
 
 using namespace opennn;
 using namespace std;

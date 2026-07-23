@@ -4,4 +4,4 @@ project(forecasting_tinyml)
 
 add_executable(forecasting_tinyml main.cpp)
 
-target_link_libraries(forecasting_tinyml PUBLIC opennn)
+target_link_libraries(forecasting_tinyml PRIVATE opennn)

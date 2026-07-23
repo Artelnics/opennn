@@ -10,4 +10,4 @@ add_custom_command(TARGET mnist POST_BUILD
     "${CMAKE_BINARY_DIR}/data/mnist"
 )
 
-target_link_libraries(mnist PUBLIC opennn)
+target_link_libraries(mnist PRIVATE opennn)

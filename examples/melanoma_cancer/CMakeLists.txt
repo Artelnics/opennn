@@ -10,4 +10,4 @@ add_custom_command(TARGET melanoma_cancer POST_BUILD
     "${CMAKE_BINARY_DIR}/data/melanoma_cancer"
 )
 
-target_link_libraries(melanoma_cancer PUBLIC opennn)
+target_link_libraries(melanoma_cancer PRIVATE opennn)

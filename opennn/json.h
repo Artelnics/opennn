@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   J S O N   M I N I M A L   S U P P O R T
@@ -11,12 +11,12 @@
 #define OPENNN_JSON_H_
 
 #include <filesystem>
+#include <format>
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
-#include <format>
 
 namespace opennn
 {
@@ -26,12 +26,12 @@ class Json
 public:
     enum class Kind { Null, Bool, Number, String, Array, Object };
 
-    Kind                                 kind = Kind::Null;
-    bool                                 bool_value = false;
-    double                               number_value = 0.0;
-    string                          string_value;
-    vector<Json>                    array_value;
-    vector<pair<string, Json>> object_value;
+    Kind                                    kind = Kind::Null;
+    bool                                    bool_value = false;
+    double                                  number_value = 0.0;
+    std::string                             string_value;
+    std::vector<Json>                       array_value;
+    std::vector<std::pair<std::string, Json>> object_value;
 
     Json() = default;
     Json(bool b)                : kind(Kind::Bool),   bool_value(b)   {}
@@ -44,7 +44,7 @@ public:
     Json(double d)              : kind(Kind::Number), number_value(d) {}
     Json(float d)               : kind(Kind::Number), number_value(double(d)) {}
     Json(const char* s)         : kind(Kind::String), string_value(s) {}
-    Json(const string& s)  : kind(Kind::String), string_value(s) {}
+    Json(const std::string& s)  : kind(Kind::String), string_value(s) {}
 
     static Json make_object();
     static Json make_array();
@@ -55,18 +55,18 @@ public:
     bool is_string() const noexcept { return kind == Kind::String; }
     bool is_array()  const noexcept { return kind == Kind::Array; }
     bool is_object() const noexcept { return kind == Kind::Object; }
-    bool         has(const string&) const;
-    const Json*  find(const string&) const;
-    const Json&  at(const string&) const;
-    Json&        operator[](const string&);
-    Json& set(const string&, Json);
+    bool         has(const std::string&) const;
+    const Json*  find(const std::string&) const;
+    const Json&  at(const std::string&) const;
+    Json&        operator[](const std::string&);
+    Json& set(const std::string&, Json);
     void push_back(Json);
-    string as_string() const;
+    std::string as_string() const;
     long long   as_long()   const;
     double      as_double() const;
     bool        as_bool()   const;
-    static Json  parse(const string&);
-    string  dump(int indent = 2) const;
+    static Json parse(const std::string&);
+    std::string dump(int indent = 2) const;
 };
 
 class JsonDocument
@@ -74,42 +74,42 @@ class JsonDocument
 public:
     Json root;
 
-    void load(const filesystem::path&);
-    void save(const filesystem::path&, int indent = 2) const;
-    const Json* first_child(const string&) const;
+    void load(const std::filesystem::path&);
+    void save(const std::filesystem::path&, int indent = 2) const;
+    const Json* first_child(const std::string&) const;
     const Json* first_child() const noexcept { return &root; }
-    static JsonDocument wrap(const string&, Json);
+    static JsonDocument wrap(const std::string&, Json);
 };
 
 class JsonWriter
 {
 public:
-    void open_element(const string&);
+    void open_element(const std::string&);
     void close_element();
 
-    void begin_array(const string&);
+    void begin_array(const std::string&);
     void end_array();
     void begin_array_object();
     void end_array_object();
-    void add_field(const string&, const string&);
+    void add_field(const std::string&, const std::string&);
 
-    string c_str(int indent = 2) const;
+    std::string c_str(int indent = 2) const;
 
 private:
     void pop_scope();
 
-    Json                root;
-    vector<Json*>  stack;
-    vector<string> name_stack;
+    Json                     root;
+    std::vector<Json*>       stack;
+    std::vector<std::string> name_stack;
 };
 void add_json_field(JsonWriter&,
-                    const string&,
-                    const string&);
+                    const std::string&,
+                    const std::string&);
 
-void save_json_file(const filesystem::path&, const JsonWriter&);
+void save_json_file(const std::filesystem::path&, const JsonWriter&);
 
 template <typename Serializable>
-void save_json_file(const filesystem::path& file_name, const Serializable& serializable)
+void save_json_file(const std::filesystem::path& file_name, const Serializable& serializable)
 {
     JsonWriter writer;
     serializable.to_JSON(writer);
@@ -117,33 +117,33 @@ void save_json_file(const filesystem::path& file_name, const Serializable& seria
 }
 
 void write_json(JsonWriter&,
-                initializer_list<pair<const char*, string>>);
-float       read_json_float   (const Json*, const string&);
-long long   read_json_index  (const Json*, const string&);
-bool        read_json_bool   (const Json*, const string&);
-string read_json_string (const Json*, const string&);
+                std::initializer_list<std::pair<const char*, std::string>>);
+float       read_json_float  (const Json*, const std::string&);
+long long   read_json_index  (const Json*, const std::string&);
+bool        read_json_bool   (const Json*, const std::string&);
+std::string read_json_string (const Json*, const std::string&);
 
-string read_json_string_fallback(const Json*,
-                                      initializer_list<string>);
+std::string read_json_string_fallback(const Json*,
+                                      std::initializer_list<std::string>);
 
-const Json* require_json_field(const Json*, const string&);
+const Json* require_json_field(const Json*, const std::string&);
 
 template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
 {
-    throw_if(!parent || !parent->is_object(),
-             format("Missing JSON parent for: {}", tag));
+    if (!parent || !parent->is_object())
+        throw std::runtime_error(std::format("Missing JSON parent for: {}", tag));
 
     const Json* arr = parent->find(tag);
-    throw_if(!arr || !arr->is_array() || long(arr->array_value.size()) != count,
-             format("Missing or wrong-size JSON array: {}", tag));
+    if (!arr || !arr->is_array() || long(arr->array_value.size()) != count)
+        throw std::runtime_error(std::format("Missing or wrong-size JSON array: {}", tag));
 
     for (long i = 0; i < count; i++)
         func(i, &arr->array_value[size_t(i)]);
 }
 
-JsonDocument load_json_file(const filesystem::path&);
-const Json*  get_json_root (const JsonDocument&, const string&);
+JsonDocument load_json_file(const std::filesystem::path&);
+const Json*  get_json_root (const JsonDocument&, const std::string&);
 
 }
 

@@ -10,4 +10,4 @@ add_custom_command(TARGET translation POST_BUILD
     "${CMAKE_BINARY_DIR}/data/translation"
 )
 
-target_link_libraries(translation PUBLIC opennn)
+target_link_libraries(translation PRIVATE opennn)

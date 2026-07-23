@@ -10,4 +10,4 @@ add_custom_command(TARGET airfoil_self_noise POST_BUILD
     "${CMAKE_BINARY_DIR}/data/airfoil_self_noise"
 )
 
-target_link_libraries(airfoil_self_noise PUBLIC opennn)
+target_link_libraries(airfoil_self_noise PRIVATE opennn)

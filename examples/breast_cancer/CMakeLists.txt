@@ -10,4 +10,4 @@ add_custom_command(TARGET breast_cancer POST_BUILD
     "${CMAKE_BINARY_DIR}/data/breast_cancer"
 )
 
-target_link_libraries(breast_cancer PUBLIC opennn)
+target_link_libraries(breast_cancer PRIVATE opennn)

@@ -10,4 +10,4 @@ add_custom_command(TARGET iris_plant POST_BUILD
     "${CMAKE_BINARY_DIR}/data/iris_plant"
 )
 
-target_link_libraries(iris_plant PUBLIC opennn)
+target_link_libraries(iris_plant PRIVATE opennn)

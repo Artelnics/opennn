@@ -16,6 +16,7 @@
 #include "configuration.h"
 #include "device_backend.h"
 #include "adaptive_moment_estimation.h"
+#include "kernel.cuh"
 
 namespace opennn
 {

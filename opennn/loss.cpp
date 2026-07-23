@@ -21,6 +21,7 @@
 #include "back_propagation.h"
 #include "statistics.h"
 #include <Eigen/LU>
+#include "kernel.cuh"
 
 namespace opennn
 {

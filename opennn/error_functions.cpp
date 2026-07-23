@@ -8,6 +8,7 @@
 
 #include "error_functions.h"
 #include "device_backend.h"
+#include "kernel.cuh"
 
 namespace opennn
 {

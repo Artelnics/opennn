@@ -11,4 +11,4 @@ add_custom_command(TARGET amazon_reviews POST_BUILD
 )
 
 
-target_link_libraries(amazon_reviews PUBLIC opennn)
+target_link_libraries(amazon_reviews PRIVATE opennn)

@@ -290,7 +290,7 @@ RunResult train_one(NeuralNetwork* nn,
             {
                 MatrixR targets(testing_idx.size(), target_width);
                 ds->fill_targets(testing_idx, target_idx, targets.data(),
-                                 /*is_training=*/false, /*parallelize=*/true);
+                                 FillMode::Inference);
                 const float range = targets.maxCoeff() - targets.minCoeff();
                 if (range > 0.0f) r.test_rmse_rel = r.test_rmse / range;
             }

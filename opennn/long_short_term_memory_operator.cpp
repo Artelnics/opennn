@@ -14,6 +14,7 @@
 #include "back_propagation.h"
 
 #include <initializer_list>
+#include "kernel.cuh"
 
 namespace opennn
 {

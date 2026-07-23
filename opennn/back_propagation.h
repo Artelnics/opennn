@@ -10,6 +10,8 @@
 
 #include "tensor_types.h"
 
+#include <utility>
+
 namespace opennn
 {
 

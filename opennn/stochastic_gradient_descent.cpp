@@ -16,6 +16,7 @@
 #include "batch.h"
 #include "device_backend.h"
 #include "stochastic_gradient_descent.h"
+#include "kernel.cuh"
 
 namespace opennn
 {

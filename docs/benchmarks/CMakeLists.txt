@@ -10,13 +10,13 @@ project(benchmarks)
 if(WIN32)
     add_executable(opennn_capacity
         capacity/data-capacity/opennn_capacity.cpp)
-    target_link_libraries(opennn_capacity PUBLIC opennn psapi)
+    target_link_libraries(opennn_capacity PRIVATE opennn psapi)
 endif()
 
 add_executable(opennn_memory
     footprint/memory/opennn_memory.cpp)
 if(WIN32)
-    target_link_libraries(opennn_memory PUBLIC psapi)
+    target_link_libraries(opennn_memory PRIVATE psapi)
 endif()
 
 add_executable(opennn_speed
@@ -38,14 +38,8 @@ add_executable(opennn_resnet50_infer
     throughput/resnet50/opennn_resnet50_infer.cpp)
 
 # Transformer benchmark binaries (inference, training, and the CPU/GPU validator).
-add_executable(opennn_transformer_resident
-    throughput/attention-speed/opennn_transformer_resident.cpp)
-
 add_executable(opennn_transformer_infer
     throughput/attention-speed/opennn_transformer_infer.cpp)
-
-add_executable(opennn_transformer_train
-    throughput/attention-speed/opennn_transformer_train.cpp)
 
 add_executable(opennn_attention_validate
     throughput/attention-speed/opennn_attention_validate.cpp)
@@ -53,11 +47,21 @@ add_executable(opennn_attention_validate
 add_executable(opennn_resnet50_maxbatch_trial
     capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
 
-add_executable(opennn_transformer_maxbatch_trial
-    capacity/transformer-max-batch/opennn_transformer_maxbatch_trial.cpp)
+# These four include <cuda_runtime.h> unconditionally, so they only exist in
+# CUDA builds; the rest of the suite guards its CUDA usage and builds CPU-only.
+if(OPENNN_HAS_CUDA)
+    add_executable(opennn_transformer_resident
+        throughput/attention-speed/opennn_transformer_resident.cpp)
 
-add_executable(opennn_transformer_energy
-    energy/transformer-energy/opennn_transformer_energy.cpp)
+    add_executable(opennn_transformer_train
+        throughput/attention-speed/opennn_transformer_train.cpp)
+
+    add_executable(opennn_transformer_maxbatch_trial
+        capacity/transformer-max-batch/opennn_transformer_maxbatch_trial.cpp)
+
+    add_executable(opennn_transformer_energy
+        energy/transformer-energy/opennn_transformer_energy.cpp)
+endif()
 
 # CPU quality benchmarks (HIGGS classification; precision is the documented regression exception).
 add_executable(opennn_accuracy
@@ -80,7 +84,7 @@ add_executable(opennn_export
 add_executable(recurrent_lstm_forecasting_benchmark
     quality/recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)
 
-foreach(benchmark_target
+set(_benchmark_targets
         opennn_memory
         opennn_speed
         opennn_higgs_infer
@@ -89,17 +93,23 @@ foreach(benchmark_target
         opennn_resnet50_speed
         opennn_resnet50_infer
         opennn_resnet50_maxbatch_trial
-        opennn_transformer_resident
         opennn_transformer_infer
-        opennn_transformer_train
         opennn_attention_validate
-        opennn_transformer_maxbatch_trial
-        opennn_transformer_energy
         opennn_accuracy
         opennn_convergence
         opennn_precision
         opennn_startup
         opennn_export
         recurrent_lstm_forecasting_benchmark)
-    target_link_libraries(${benchmark_target} PUBLIC opennn)
+
+if(OPENNN_HAS_CUDA)
+    list(APPEND _benchmark_targets
+        opennn_transformer_resident
+        opennn_transformer_train
+        opennn_transformer_maxbatch_trial
+        opennn_transformer_energy)
+endif()
+
+foreach(benchmark_target ${_benchmark_targets})
+    target_link_libraries(${benchmark_target} PRIVATE opennn)
 endforeach()

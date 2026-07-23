@@ -26,6 +26,7 @@
 #include "memory_debug.h"
 
 #include <algorithm>
+#include "kernel.cuh"
 
 namespace opennn
 {

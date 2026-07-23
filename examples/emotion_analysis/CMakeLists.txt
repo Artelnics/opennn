@@ -10,4 +10,4 @@ add_custom_command(TARGET emotion_analysis POST_BUILD
     "${CMAKE_BINARY_DIR}/data/emotion_analysis"
 )
 
-target_link_libraries(emotion_analysis PUBLIC opennn)
+target_link_libraries(emotion_analysis PRIVATE opennn)

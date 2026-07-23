@@ -21,6 +21,7 @@
 #include "neural_network.h"
 #include "profiler.h"
 #include "string_utilities.h"
+#include "kernel.cuh"
 #include <atomic>
 #include <chrono>
 #include <mutex>

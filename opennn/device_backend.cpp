@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include "kernel.cuh"
 
 namespace opennn::device
 {

@@ -25,15 +25,15 @@
 #include <string>
 #include <vector>
 
-#include "../../../opennn/image_dataset.h"
-#include "../../../opennn/standard_networks.h"
-#include "../../../opennn/batch.h"
-#include "../../../opennn/forward_propagation.h"
-#include "../../../opennn/random_utilities.h"
-#include "../../../opennn/configuration.h"
-#include "../../../opennn/device_backend.h"
-#include "../../../opennn/memory_debug.h"
-#include "../../../opennn/profiler.h"
+#include "opennn/image_dataset.h"
+#include "opennn/standard_networks.h"
+#include "opennn/batch.h"
+#include "opennn/forward_propagation.h"
+#include "opennn/random_utilities.h"
+#include "opennn/configuration.h"
+#include "opennn/device_backend.h"
+#include "opennn/memory_debug.h"
+#include "opennn/profiler.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
                         input_feature_indices,
                         decoder_feature_indices,
                         target_feature_indices,
-                        /*is_training=*/false);
+                        FillMode::Inference);
 
         const vector<TensorView>& inputs = batch_data.get_inputs();
 

@@ -4,7 +4,7 @@ project(yolo)
 
 add_executable(yolo main.cpp)
 
-target_link_libraries(yolo PUBLIC opennn)
+target_link_libraries(yolo PRIVATE opennn)
 
 # REUSE_FROM requires identical compile flags between targets; that holds on
 # MSVC but breaks CMake generation with Makefiles/GCC (PCH path unresolved),

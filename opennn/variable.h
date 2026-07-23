@@ -9,7 +9,6 @@
 #pragma once
 
 #include "pch.h"
-#include "tensor_types.h"
 #include "enum_map.h"
 
 namespace opennn

@@ -11,6 +11,8 @@
 #include "tensor_types.h"
 #include "device_backend.h"
 
+#include <tuple>
+
 namespace opennn
 {
 

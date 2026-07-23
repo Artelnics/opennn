@@ -43,6 +43,8 @@
 #include <iterator>
 #include <map>
 #include <numeric>
+#include <tuple>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -60,7 +62,6 @@
 #include <omp.h>
 
 #include <Eigen/Core>
-#include <Eigen/Cholesky>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
@@ -69,14 +70,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <cublasXt.h>
 #include <cublasLt.h>
-#include <curand.h>
 #include <cudnn.h>
 #include <cuda_bf16.h>
-#include <nvtx3/nvToolsExt.h>
-
-#include "opennn/kernel.cuh"
 
 template <typename T>
 void check_cuda_status(T status, const char* msg,
@@ -109,11 +105,11 @@ struct __nv_bfloat16 {};
 struct __half {};
 
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_8I = 3, CUDA_R_32I = 10, CUDA_R_16BF = 14 };
-enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 0, CUBLAS_COMPUTE_32F_FAST_16BF = 65, CUBLAS_COMPUTE_32F_FAST_TF32 = 68 };
+enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 68, CUBLAS_COMPUTE_32F_FAST_16BF = 75, CUBLAS_COMPUTE_32F_FAST_TF32 = 77 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
-enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 132, CUBLASLT_EPILOGUE_GELU_AUX_BIAS = 164 };
+enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 6, CUBLASLT_EPILOGUE_GELU_AUX_BIAS = 164 };
 
-enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 14 };
+enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 9 };
 
 struct cudnnTensorStruct {};
 using cudnnTensorDescriptor_t      = cudnnTensorStruct*;
@@ -190,8 +186,6 @@ using Tensor4 = Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>;
 template <int Rank>
 using TensorR = Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>;
 
-#endif // OPENNN_PCH_H_
-
 using TensorMap2 = Eigen::TensorMap<Eigen::Tensor<float, 2, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 using TensorMap3 = Eigen::TensorMap<Eigen::Tensor<float, 3, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 using TensorMap4 = Eigen::TensorMap<Eigen::Tensor<float, 4, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
@@ -207,6 +201,8 @@ using TensorMapR = Eigen::TensorMap<Eigen::Tensor<float, Rank, Layout | Eigen::A
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
+
+#endif // OPENNN_PCH_H_
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

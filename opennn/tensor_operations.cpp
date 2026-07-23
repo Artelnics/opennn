@@ -11,6 +11,7 @@
 #include "operator.h"
 #include "random_utilities.h"
 #include "profiler.h"
+#include "kernel.cuh"
 
 #include <atomic>
 

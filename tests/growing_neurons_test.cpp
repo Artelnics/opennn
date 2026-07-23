@@ -4,7 +4,6 @@
 #include "opennn/dataset.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/standard_networks.h"
-#include "opennn/training_strategy.h"
 #include "opennn/growing_neurons.h"
 
 using namespace opennn;

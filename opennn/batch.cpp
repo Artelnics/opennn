@@ -10,6 +10,7 @@
 #include "dataset.h"
 #include "device_backend.h"
 #include "memory_debug.h"
+#include "kernel.cuh"
 
 namespace opennn
 {

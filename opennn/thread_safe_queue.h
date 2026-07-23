@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T H R E A D   S A F E   Q U E U E
@@ -11,6 +11,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <utility>
 
 namespace opennn
 {
@@ -22,43 +23,43 @@ public:
 
     void push(T item)
     {
-        { lock_guard<mutex> lock(mutex_); queue_.push(move(item)); }
+        { std::lock_guard<std::mutex> lock(mutex_); queue_.push(std::move(item)); }
         cond_.notify_one();
     }
 
     T pop()
     {
-        unique_lock<mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this] { return !queue_.empty() || closed_; });
         if (queue_.empty()) return T{};
-        T item = move(queue_.front());
+        T item = std::move(queue_.front());
         queue_.pop();
         return item;
     }
 
     bool empty() const
     {
-        lock_guard<mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return queue_.empty();
     }
 
     void close()
     {
-        { lock_guard<mutex> lock(mutex_); closed_ = true; }
+        { std::lock_guard<std::mutex> lock(mutex_); closed_ = true; }
         cond_.notify_all();
     }
 
     void reopen()
     {
-        lock_guard<mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         closed_ = false;
     }
 
 private:
 
-    queue<T> queue_;
-    mutable mutex mutex_;
-    condition_variable cond_;
+    std::queue<T> queue_;
+    mutable std::mutex mutex_;
+    std::condition_variable cond_;
     bool closed_ = false;
 };
 

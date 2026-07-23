@@ -14,6 +14,8 @@
 #include <cctype>
 #include <set>
 
+#include <Eigen/Cholesky>
+
 namespace opennn
 {
 

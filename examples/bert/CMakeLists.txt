@@ -10,4 +10,4 @@ add_custom_command(TARGET bert POST_BUILD
     "${CMAKE_BINARY_DIR}/data/bert"
 )
 
-target_link_libraries(bert PUBLIC opennn)
+target_link_libraries(bert PRIVATE opennn)

@@ -276,6 +276,7 @@ CMakeFiles/*
 examples/*/CMakeFiles/*
 examples/*/*.dir/*
 *.cmake
+!opennn/cmake/*.cmake
 *.vcxproj.user
 
 #SonarQube elements

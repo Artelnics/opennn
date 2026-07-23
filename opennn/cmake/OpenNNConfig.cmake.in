@@ -2,7 +2,12 @@
 
 include(CMakeFindDependencyMacro)
 
-find_dependency(Eigen3)
+# FindCUDNN.cmake is installed next to this file.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+
+# The library is built against Eigen 5.x; an older Eigen on the consumer side
+# would silently diverge in configuration and ABI.
+find_dependency(Eigen3 5.0)
 
 if(@_opennn_needs_tbb@)
     find_dependency(TBB)
@@ -22,6 +27,35 @@ endif()
 
 if(@OPENNN_HAS_CUDA@)
     find_dependency(CUDAToolkit)
+endif()
+
+if(@_opennn_needs_cudnn@)
+    # Same floor as the build: SDPA/Flash-Attention need cuDNN >= 9.
+    find_dependency(CUDNN 9.0)
+endif()
+
+if(@_opennn_needs_mkl@)
+    # OpenNN was built with this exact MKL link/interface selection. MKLConfig
+    # defaults differ (dynamic/ilp64), and an LP64/ILP64 mismatch silently
+    # corrupts every LAPACK integer argument, so the consumer's MKL::MKL must
+    # reproduce the build's selection.
+    if(NOT DEFINED MKL_LINK)
+        set(MKL_LINK "@MKL_LINK@")
+    elseif(NOT MKL_LINK STREQUAL "@MKL_LINK@")
+        message(FATAL_ERROR
+            "OpenNN was built with MKL_LINK=@MKL_LINK@ but this project sets "
+            "MKL_LINK=${MKL_LINK}; the resulting MKL::MKL would not match the "
+            "installed library.")
+    endif()
+    if(NOT DEFINED MKL_INTERFACE)
+        set(MKL_INTERFACE "@MKL_INTERFACE@")
+    elseif(NOT MKL_INTERFACE STREQUAL "@MKL_INTERFACE@")
+        message(FATAL_ERROR
+            "OpenNN was built with MKL_INTERFACE=@MKL_INTERFACE@ but this "
+            "project sets MKL_INTERFACE=${MKL_INTERFACE}; an LP64/ILP64 "
+            "mismatch corrupts LAPACK integer arguments.")
+    endif()
+    find_dependency(MKL CONFIG)
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/OpenNNTargets.cmake")

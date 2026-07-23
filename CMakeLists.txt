@@ -15,12 +15,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-march=native>)
-elseif(MSVC)
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>)
-endif()
-
 include(CheckIPOSupported)
 # MSVC 19.5x (VS 2026) crashes (C1001 in the LTCG "Generating code" pass) when
 # optimizing the YOLO gradient loop in loss.cpp under whole-program LTO, so
@@ -214,4 +208,17 @@ endif()
 option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
 if(OpenNN_BUILD_BENCHMARKS)
     add_subdirectory(docs/benchmarks)
+endif()
+
+# Compiles every opennn/*.h in isolation (CPU mode, -fsyntax-only) to catch
+# headers that only build thanks to the force-included pch.h. Opt-in because
+# it adds ~100 compiler invocations to the test run.
+option(OpenNN_CHECK_HEADERS "Add a ctest that compiles each opennn header in isolation" OFF)
+if(OpenNN_CHECK_HEADERS AND NOT MSVC)
+    enable_testing()
+    add_test(NAME opennn_header_isolation
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/opennn/cmake/check_headers.sh
+                ${CMAKE_CXX_COMPILER}
+                ${CMAKE_CURRENT_SOURCE_DIR}
+                "$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>")
 endif()
