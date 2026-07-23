@@ -107,7 +107,7 @@ The repository includes example apps for quick validation and experimentation.
 - `examples/emotion_analysis` - text classification
 - `examples/bert` - BERT-style text classification
 - `examples/translation` - sequence-to-sequence transformer
-- `examples/text_generation` - character-level text generation
+- `examples/gpt2` - character-level text generation
 - `examples/forecasting_tinyml` - RNN/LSTM forecasting export for TinyML parity checks
 - `examples/mnist` - image classification
 - `examples/melanoma_cancer` - image classification
