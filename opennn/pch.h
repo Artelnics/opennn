@@ -6,10 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// Private to the library build: force-included / precompiled into every
-// library TU. Public headers must include opennn_types.h instead; nothing
-// outside the library build may rely on this file.
-
 #pragma once
 #ifndef OPENNN_PCH_H_
 #define OPENNN_PCH_H_

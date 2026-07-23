@@ -9,6 +9,7 @@
 #pragma once
 
 #include <array>
+#include <unordered_set>
 
 #include "operator.h"
 
@@ -142,15 +143,58 @@ public:
 
     static constexpr string_view PAD_TOKEN = "[PAD]";
 
-private:
+protected:
 
-    vector<string> pre_tokenize(string_view text) const;
+    // Split raw text into pieces before byte-level BPE. Virtual so decoder-model
+    // tokenizers (e.g. Qwen3) can supply their own pre-tokenization regex.
+    virtual vector<string> pre_tokenize(string_view text) const;
     vector<string> bpe(const string& token) const;
 
     array<uint32_t, 256> byte_encoder{};
     unordered_map<uint32_t, unsigned char> byte_decoder;
     unordered_map<string, int> merge_ranks;
     mutable unordered_map<string, vector<string>> bpe_cache;
+};
+
+
+// Byte-level BPE tokenizer for Qwen3 / Qwen2 decoder models. Differs from the
+// GPT-2 BytePairTokenizer in two ways: (1) the Qwen pre-tokenization regex
+// (each digit is its own piece; a single non-letter char can lead a word), and
+// (2) ChatML special tokens (<|im_start|>, <|im_end|>, <|endoftext|>, ...) are
+// matched atomically before BPE. Loads vocab.json + merges.txt + a special-token
+// list. Ids are shifted +1 (id 0 = [PAD]) to match OpenNN's Embedding.
+class Qwen3Tokenizer : public BytePairTokenizer
+{
+public:
+
+    Qwen3Tokenizer() = default;
+
+    // special_tokens_tsv: one "id<TAB>token" line per special/added token.
+    void load(const filesystem::path& vocabulary_json,
+              const filesystem::path& merges_txt,
+              const filesystem::path& special_tokens_tsv);
+
+    vector<string> tokenize(string_view text) const override;
+    string decode(const vector<Index>& ids) const override;
+
+    bool is_special(Index id) const { return special_ids.contains(id); }
+
+    // ChatML / generation ids (already +1 shifted). -1 if absent.
+    Index get_im_start_id()   const { return im_start_id; }
+    Index get_im_end_id()     const { return im_end_id; }
+    Index get_endoftext_id()  const { return endoftext_id; }
+
+protected:
+
+    vector<string> pre_tokenize(string_view text) const override;
+
+private:
+
+    vector<string> special_strings;        // sorted by length desc (longest match first)
+    unordered_set<Index> special_ids;
+    Index im_start_id  = -1;
+    Index im_end_id    = -1;
+    Index endoftext_id = -1;
 };
 
 }

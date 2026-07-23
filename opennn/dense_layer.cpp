@@ -41,6 +41,15 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
     const Shape full   = Shape{batch_size}.append(get_output_shape());
     const Shape stats  = Shape{output_features};
 
+    if (gated)
+        return {
+            {full,    compute_dtype},   // CombinationView: gate projection (pre-SiLU)
+            {Shape{}, Type::FP32   },
+            {Shape{}, Type::FP32   },
+            {full,    compute_dtype},   // ActivationView: up projection
+            {full,    compute_dtype},
+        };
+
     const bool keep_pre_activation = batch_norm.active() || activation_needs_input(activation_operator.activation_function);
 
     return {
@@ -68,6 +77,15 @@ vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
 
     vector<TensorSpec> specs = {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
 
+    if (gated)
+    {
+        // Gate and up projection deltas.
+        const Shape full = Shape{batch_size}.append(get_output_shape());
+        specs.push_back({full, compute_dtype});
+        specs.push_back({full, compute_dtype});
+        return specs;
+    }
+
     if (activation_needs_input(activation_operator.activation_function))
         specs.push_back({Shape{batch_size}.append(get_output_shape()), compute_dtype});
 
@@ -76,6 +94,53 @@ vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
 
 void Dense::configure_operators()
 {
+    if (gated)
+    {
+        throw_if(batch_norm.active(),
+                 "Dense: gated (SwiGLU) mode cannot be combined with batch normalization.");
+        throw_if(activation_operator.activation_function != ActivationFunction::Identity,
+                 "Dense: gated (SwiGLU) mode has a fixed SiLU gate; set the activation to Identity.");
+
+        operators = {&combination, &up_combination, &swiglu, &dropout};
+
+        combination.set(get_input_features(), output_features, compute_dtype);
+        up_combination.set(get_input_features(), output_features, compute_dtype);
+        up_combination.use_bias = combination.use_bias;
+
+        combination.fused_activation = ActivationFunction::Identity;
+
+        combination.input_slots     = {Input};
+        combination.output_slots    = {CombinationView};
+        up_combination.input_slots  = {Input};
+        up_combination.output_slots = {ActivationView};
+
+        swiglu.input_slots  = {CombinationView, ActivationView};
+        swiglu.output_slots = {Output};
+
+        // Backward (reverse order: swiglu, up, gate): both projections push
+        // their input delta into the same buffer, the second accumulating.
+        swiglu.output_delta_slots = {0};
+        swiglu.input_delta_slots  = {2, 3};
+
+        up_combination.output_delta_slots     = {3};
+        up_combination.input_delta_slots      = {1};
+        up_combination.accumulate_input_delta = false;
+
+        combination.output_delta_slots     = {2};
+        combination.input_delta_slots      = {1};
+        combination.accumulate_input_delta = true;
+
+        dropout.input_slots  = {Output};
+        dropout.output_slots = {Output};
+
+        activation_operator.forward_fused = false;
+        activation_operator.save_slot = SIZE_MAX;
+        return;
+    }
+
+    operators = {&combination, &batch_norm, &activation_operator, &dropout};
+    combination.accumulate_input_delta = false;
+
     const bool input_deriv = activation_needs_input(activation_operator.activation_function);
 
     throw_if(input_deriv && batch_norm.active(),
@@ -145,6 +210,12 @@ void Dense::configure_operators()
 void Dense::set_batch_normalization(bool enable)
 {
     batch_norm.features = enable ? output_features : 0;
+    configure_operators();
+}
+
+void Dense::set_gated(bool new_gated)
+{
+    gated = new_gated;
     configure_operators();
 }
 
@@ -223,6 +294,9 @@ string Dense::write_expression(const vector<string>& input_names,
     throw_if(batch_norm.active(),
              "Dense::write_expression: batch normalization is not supported in the exported expression.");
 
+    throw_if(gated,
+             "Dense::write_expression: gated (SwiGLU) mode is not supported in the exported expression.");
+
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
@@ -255,15 +329,23 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 {
     batch_norm.features = read_json_bool(dense_layer_element, "BatchNormalization") ? output_features : 0;
 
+    if (dense_layer_element->has("UseBias"))
+        set_use_bias(read_json_bool(dense_layer_element, "UseBias"));
+
     if (dense_layer_element->has("Activation"))
         set_activation_function(read_json_string(dense_layer_element, "Activation"));
+
+    if (dense_layer_element->has("Gated"))
+        set_gated(read_json_bool(dense_layer_element, "Gated"));
 }
 
 void Dense::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
         {"BatchNormalization", to_string(batch_norm.active())},
-        {"Activation", ActivationOperator::to_string(get_activation_function())}
+        {"UseBias", to_string(combination.use_bias)},
+        {"Activation", ActivationOperator::to_string(get_activation_function())},
+        {"Gated", to_string(gated)}
     });
 }
 

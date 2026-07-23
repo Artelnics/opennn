@@ -15,6 +15,19 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-march=native>)
+    if(WIN32)
+        # MinGW/Windows: -march=native enables AVX but GCC emits 32-byte-aligned
+        # YMM stack spills while the Windows x64 ABI only guarantees 16-byte stack
+        # alignment -> intermittent SIGSEGV (-mstackrealign does not fix it). Use
+        # SSE (16-byte packets), which matches the ABI. Kept in sync with nd_flags.
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-mno-avx>)
+    endif()
+elseif(MSVC)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>)
+endif()
+
 include(CheckIPOSupported)
 # MSVC 19.5x (VS 2026) crashes (C1001 in the LTCG "Generating code" pass) when
 # optimizing the YOLO gradient loop in loss.cpp under whole-program LTO, so

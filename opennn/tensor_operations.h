@@ -44,7 +44,7 @@ inline float activation_forward_value(ActivationFunction function, float x)
         constexpr float sqrt_2_over_pi = 0.7978845608028654f;
         return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
     }
-    case SiLU:      return x / (1.0f + exp(-x));
+    case SiLU:      return x / (1.0f + exp(-x));   // x * sigmoid(x) (Swish)
     case Softmax:   break;
     }
 
@@ -64,7 +64,7 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     case Softmax:   break;
     case GELU:
     case GELUTanh:
-    case SiLU:      break;
+    case SiLU:      break;   // derivative needs the pre-activation input, not y
     }
 
     throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh/SiLU must be handled separately.");
@@ -125,6 +125,45 @@ void layer_normalization_backward(const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          const TensorView&, const TensorView&,
                          TensorView&);
+
+void rms_normalization_forward(const TensorView&, const TensorView&,
+                      TensorView&, TensorView&, TensorView&, float);
+void rms_normalization_backward(const TensorView&, const TensorView&,
+                       const TensorView&, const TensorView&, const TensorView&,
+                       const TensorView&, TensorView&);
+
+// Rotary position embedding (RoPE). Fills [positions, rotary_dim] cos/sin tables
+// (HF "rotate_half" convention: emb = cat(freqs, freqs)); rotary_forward rotates
+// each head's first rotary_dim channels of a (batch, sequence, heads*head_dim)
+// tensor by its sequence position. rotary_backward applies the inverse rotation.
+void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
+void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
+                    TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
+void rotary_backward(const TensorView&, const TensorView&, const TensorView&,
+                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
+
+// SwiGLU gated activation: output = silu(gate) * up (element-wise).
+void swiglu_forward(const TensorView&, const TensorView&, TensorView&);
+void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
+                     TensorView&, TensorView&);
+
+// Grouped-query causal attention, laid out [batch, seq, heads*head_dim]; each
+// key/value head is shared by n_query_heads/n_kv_heads query heads and head_dim
+// is decoupled from the model width. query_position_offset is the absolute
+// position of the first query (the KV-cache length when decoding), so query i
+// attends keys 0..(offset+i); query_seq != key_seq is the KV-cache case.
+void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
+                               TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
+                               bool causal, float scale, Index query_position_offset = 0);
+
+// QK-Norm: RMSNorm applied independently to each head's head_dim vector of a
+// (batch, seq, heads*head_dim) tensor, with a per-channel weight of size head_dim.
+void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
+                     Index head_dim, float epsilon);
+
+// Tied language-model head: raw logits = input @ embed_weight^T, straight from
+// the shared token-embedding matrix [vocabulary, hidden]; no softmax.
+void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output);
 
 void embedding_lookup_forward(const TensorView&, const TensorView&,
                               const TensorView&, TensorView&,

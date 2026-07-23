@@ -117,7 +117,7 @@ struct __half { unsigned short __x; };
 enum cudaDataType_t                  { CUDA_R_32F = 0, CUDA_R_16F = 2, CUDA_R_8I = 3, CUDA_R_32I = 10, CUDA_R_16BF = 14 };
 enum cublasComputeType_t             { CUBLAS_COMPUTE_32F = 68, CUBLAS_COMPUTE_32F_FAST_16BF = 75, CUBLAS_COMPUTE_32F_FAST_TF32 = 77 };
 enum cublasOperation_t               { CUBLAS_OP_N = 0, CUBLAS_OP_T = 1 };
-enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 6, CUBLASLT_EPILOGUE_GELU_AUX_BIAS = 164 };
+enum cublasLtEpilogue_t              { CUBLASLT_EPILOGUE_DEFAULT = 1, CUBLASLT_EPILOGUE_RELU = 2, CUBLASLT_EPILOGUE_BIAS = 4, CUBLASLT_EPILOGUE_RELU_BIAS = 6, CUBLASLT_EPILOGUE_GELU_AUX_BIAS = 164 };
 
 enum cudnnDataType_t                 { CUDNN_DATA_FLOAT = 0, CUDNN_DATA_HALF = 2, CUDNN_DATA_INT8 = 3, CUDNN_DATA_INT32 = 4, CUDNN_DATA_BFLOAT16 = 9 };
 

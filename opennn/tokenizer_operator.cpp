@@ -760,6 +760,227 @@ string BytePairTokenizer::decode(const vector<Index>& ids) const
     return bytes;
 }
 
+// =========================== Qwen3Tokenizer ===========================
+
+void Qwen3Tokenizer::load(const filesystem::path& vocabulary_json,
+                          const filesystem::path& merges_txt,
+                          const filesystem::path& special_tokens_tsv)
+{
+    // vocab.json: base byte-level BPE vocab { "<byte-unicode token>": id, ... }.
+    ifstream vocabulary_file(vocabulary_json, ios::binary);
+    throw_if(!vocabulary_file.is_open(), "Cannot open vocab.json: " + vocabulary_json.string());
+    const string vocabulary_text((istreambuf_iterator<char>(vocabulary_file)), istreambuf_iterator<char>());
+
+    const Json parsed = Json::parse(vocabulary_text);
+    throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
+
+    vector<pair<string, Index>> entries;   // (token, HF id)
+    Index maximum_id = -1;
+    for (const auto& [token, id_value] : parsed.object_value)
+    {
+        const Index id = Index(id_value.as_long());
+        entries.emplace_back(token, id);
+        maximum_id = max(maximum_id, id);
+    }
+
+    // Special/added tokens: "id<TAB>literal token" per line (matched atomically,
+    // never byte-encoded nor BPE'd).
+    special_strings.clear();
+    special_ids.clear();
+    im_start_id = im_end_id = endoftext_id = -1;
+
+    vector<pair<string, Index>> specials;
+    ifstream special_file(special_tokens_tsv, ios::binary);
+    throw_if(!special_file.is_open(), "Cannot open special tokens: " + special_tokens_tsv.string());
+    string line;
+    while (getline(special_file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        const size_t tab = line.find('\t');
+        if (tab == string::npos) continue;
+        const Index id = Index(stol(line.substr(0, tab)));
+        const string token = line.substr(tab + 1);
+        if (token.empty()) continue;
+        specials.emplace_back(token, id);
+        entries.emplace_back(token, id);
+        maximum_id = max(maximum_id, id);
+    }
+
+    // Build the vocabulary; id 0 is reserved for [PAD], every id shifts +1.
+    vector<string> loaded_vocabulary(size_t(maximum_id + 2));
+    loaded_vocabulary[0] = string(PAD_TOKEN);
+    for (const auto& [token, id] : entries) loaded_vocabulary[size_t(id) + 1] = token;
+    set_vocabulary(loaded_vocabulary);
+
+    for (const auto& [token, id] : specials)
+    {
+        special_ids.insert(id + 1);
+        special_strings.push_back(token);
+        if (token == "<|im_start|>")  im_start_id  = id + 1;
+        if (token == "<|im_end|>")    im_end_id    = id + 1;
+        if (token == "<|endoftext|>") endoftext_id = id + 1;
+    }
+    // Longest first so overlapping specials match the longest at a position.
+    ranges::sort(special_strings, [](const string& a, const string& b) { return a.size() > b.size(); });
+
+    // merges.txt: one "A B" pair per line in priority order.
+    ifstream merges_file(merges_txt, ios::binary);
+    throw_if(!merges_file.is_open(), "Cannot open merges.txt: " + merges_txt.string());
+    merge_ranks.clear();
+    bpe_cache.clear();
+    int rank = 0;
+    while (getline(merges_file, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+        if (line.find(' ') == string::npos) continue;
+        merge_ranks.emplace(line, rank++);
+    }
+}
+
+// Qwen2/Qwen3 pre-tokenization regex, over codepoints:
+//   (?i:'s|'t|'re|'ve|'m|'ll|'d) | [^\r\n\p{L}\p{N}]?\p{L}+ | \p{N}
+//   |  ?[^\s\p{L}\p{N}]+[\r\n]* | \s*[\r\n]+ | \s+(?!\S) | \s+
+// (\p{N} approximated by ASCII digits; each digit is its own piece.)
+vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
+{
+    const vector<uint32_t> cps = utf8_to_codepoints(text);
+    const size_t n = cps.size();
+
+    vector<string> pieces;
+    size_t i = 0;
+
+    auto emit = [&](size_t start, size_t end)
+    {
+        string piece;
+        for (size_t k = start; k < end; ++k) piece += codepoint_to_utf8(cps[k]);
+        pieces.push_back(move(piece));
+    };
+    auto is_crlf  = [](uint32_t c) { return c == '\r' || c == '\n'; };
+    auto is_other = [&](uint32_t c) { return !is_whitespace(c) && !is_letter(c) && !is_ascii_digit(c); };
+
+    while (i < n)
+    {
+        const uint32_t c = cps[i];
+
+        // 1. Contractions (case-insensitive apostrophe).
+        if (c == '\'' && i + 1 < n)
+        {
+            const uint32_t d = to_lower_ascii(cps[i + 1]);
+            if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; continue; }
+            if (i + 2 < n)
+            {
+                const uint32_t e = to_lower_ascii(cps[i + 2]);
+                if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
+                { emit(i, i + 3); i += 3; continue; }
+            }
+        }
+
+        // 2. [^\r\n\p{L}\p{N}]? \p{L}+  : one optional non-(crlf/letter/digit) lead, then letters.
+        {
+            size_t run_start = string::npos;
+            if (is_letter(c)) run_start = i;
+            else if (!is_crlf(c) && !is_ascii_digit(c) && i + 1 < n && is_letter(cps[i + 1])) run_start = i + 1;
+            if (run_start != string::npos)
+            {
+                size_t j = run_start; while (j < n && is_letter(cps[j])) ++j;
+                emit(i, j); i = j; continue;
+            }
+        }
+
+        // 3. \p{N} : a single digit.
+        if (is_ascii_digit(c)) { emit(i, i + 1); ++i; continue; }
+
+        // 4.  ?[^\s\p{L}\p{N}]+[\r\n]* : optional space, then "others", then trailing newlines.
+        {
+            const size_t other_start = (c == ' ') ? i + 1 : i;
+            if (other_start < n && is_other(cps[other_start]))
+            {
+                size_t j = other_start; while (j < n && is_other(cps[j])) ++j;
+                while (j < n && is_crlf(cps[j])) ++j;
+                emit(i, j); i = j; continue;
+            }
+        }
+
+        // 5-7. Whitespace: group runs ending in newlines; otherwise leave the last
+        // space of a run for the following token's optional lead.
+        if (is_whitespace(c))
+        {
+            size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
+            size_t last_newline = string::npos;
+            for (size_t k = i; k < j; ++k) if (is_crlf(cps[k])) last_newline = k;
+            if (last_newline != string::npos) { emit(i, last_newline + 1); i = last_newline + 1; continue; }
+            const size_t end = (j < n && j - i > 1) ? j - 1 : j;
+            emit(i, end); i = end; continue;
+        }
+
+        emit(i, i + 1); ++i;   // defensive fallback
+    }
+
+    return pieces;
+}
+
+vector<string> Qwen3Tokenizer::tokenize(string_view text) const
+{
+    vector<string> tokens;
+
+    auto bpe_segment = [&](string_view segment)
+    {
+        for (const string& piece : pre_tokenize(segment))
+        {
+            string byte_unicode;
+            for (const char raw : piece)
+                byte_unicode += codepoint_to_utf8(byte_encoder[static_cast<unsigned char>(raw)]);
+            const vector<string> subwords = bpe(byte_unicode);
+            tokens.insert(tokens.end(), subwords.begin(), subwords.end());
+        }
+    };
+
+    size_t pos = 0;
+    const size_t n = text.size();
+    while (pos < n)
+    {
+        // Earliest special-token occurrence (special_strings is longest-first, so
+        // ties at the same position resolve to the longest match).
+        size_t best = string::npos;
+        const string* best_special = nullptr;
+        for (const string& special : special_strings)
+        {
+            const size_t found = text.find(special, pos);
+            if (found != string::npos && found < best) { best = found; best_special = &special; }
+        }
+
+        const size_t segment_end = (best == string::npos) ? n : best;
+        if (segment_end > pos) bpe_segment(text.substr(pos, segment_end - pos));
+        if (best == string::npos) break;
+
+        tokens.push_back(*best_special);
+        pos = best + best_special->size();
+    }
+
+    return tokens;
+}
+
+string Qwen3Tokenizer::decode(const vector<Index>& ids) const
+{
+    string byte_unicode;
+    for (const Index id : ids)
+    {
+        if (id == 0) continue;                  // [PAD]
+        if (special_ids.contains(id)) continue; // ChatML markers -> skip
+        byte_unicode += id_to_token(id);
+    }
+
+    string bytes;
+    for (const uint32_t codepoint : utf8_to_codepoints(byte_unicode))
+    {
+        const auto it = byte_decoder.find(codepoint);
+        if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
+    }
+
+    return bytes;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -26,6 +26,9 @@ void CombinationOperator::set(Index new_input_features, Index new_output_feature
 
 vector<TensorSpec> CombinationOperator::parameter_specs() const
 {
+    if (!use_bias)
+        return {{{input_features, output_features}, compute_dtype}};
+
     return {
         {{output_features},                  compute_dtype},
         {{input_features, output_features},  compute_dtype},
@@ -34,6 +37,11 @@ vector<TensorSpec> CombinationOperator::parameter_specs() const
 
 void CombinationOperator::link_parameters(span<const TensorView> views)
 {
+    if (!use_bias)
+    {
+        if (!views.empty()) weights = views[0];
+        return;
+    }
     if (views.size() < 2) return;
     bias    = views[0];
     weights = views[1];
@@ -41,6 +49,11 @@ void CombinationOperator::link_parameters(span<const TensorView> views)
 
 void CombinationOperator::link_gradients(span<const TensorView> views)
 {
+    if (!use_bias)
+    {
+        if (!views.empty()) weight_gradient = views[0];
+        return;
+    }
     if (views.size() < 2) return;
     bias_gradient   = views[0];
     weight_gradient = views[1];
@@ -73,9 +86,10 @@ void CombinationOperator::set_parameters_pytorch()
 void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:combination_fwd");
-
     TensorView& output = get_output(forward_propagation, layer);
 
+    // GELUTanh with a separate pre-activation slot (e.g. GPT-2 FFN): fold the
+    // tanh-GELU into the epilogue and keep the pre-activation for the backward.
     if (fused_activation == ActivationFunction::GELUTanh
         && output_slots.size() > 1
         && output.is_cuda())
@@ -86,9 +100,11 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         return;
     }
 
-    linear_forward(get_input(forward_propagation, layer), weights, bias, output,
-                   fused_activation == ActivationFunction::ReLU ? CUBLASLT_EPILOGUE_RELU_BIAS
-                                                                : CUBLASLT_EPILOGUE_BIAS);
+    const bool relu = (fused_activation == ActivationFunction::ReLU);
+    const cublasLtEpilogue_t epilogue = use_bias
+        ? (relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS)
+        : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);
+    linear_forward(get_input(forward_propagation, layer), weights, bias, output, epilogue);
 }
 
 
@@ -102,7 +118,7 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 
     TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
-    linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta, false);
+    linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta, accumulate_input_delta);
 }
 
 }

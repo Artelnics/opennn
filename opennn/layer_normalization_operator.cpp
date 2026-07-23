@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L A Y E R   N O R M   O P E R A T O R   S O U R C E
@@ -22,11 +22,19 @@ void LayerNormalizationOperator::set(Index new_sequence_length, Index new_embedd
 
 vector<TensorSpec> LayerNormalizationOperator::parameter_specs() const
 {
-    return vector<TensorSpec>(2, {Shape{embedding_dimension}, Type::FP32});
+    // LayerNorm: gamma + beta; RMS: a single scale, no bias.
+    const size_t count = (method == NormalizationMethod::RMS) ? 1 : 2;
+    return vector<TensorSpec>(count, {Shape{embedding_dimension}, Type::FP32});
 }
 
 void LayerNormalizationOperator::link_parameters(span<const TensorView> views)
 {
+    if (method == NormalizationMethod::RMS)
+    {
+        if (!views.empty()) gamma = views[0];
+        beta = {};
+        return;
+    }
     if (views.size() < 2) return;
     gamma = views[0];
     beta  = views[1];
@@ -34,6 +42,12 @@ void LayerNormalizationOperator::link_parameters(span<const TensorView> views)
 
 void LayerNormalizationOperator::link_gradients(span<const TensorView> views)
 {
+    if (method == NormalizationMethod::RMS)
+    {
+        if (!views.empty()) gamma_gradient = views[0];
+        beta_gradient = {};
+        return;
+    }
     if (views.size() < 2) return;
     gamma_gradient = views[0];
     beta_gradient  = views[1];
@@ -48,6 +62,19 @@ void LayerNormalizationOperator::init_defaults()
 void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
     const TensorView& input = get_input(forward_propagation, layer);
+
+    if (method == NormalizationMethod::RMS)
+    {
+        // Slot map for RMS: the Means slot holds inverse_rms and the
+        // StandardDeviations slot is unused (unsized by the layer's specs).
+        TensorView& inverse_rms = get_output(forward_propagation, layer);
+        TensorView& normalized  = get_output(forward_propagation, layer, 2);
+        TensorView& output      = get_output(forward_propagation, layer, 3);
+
+        rms_normalization_forward(input, gamma, inverse_rms, normalized, output, epsilon);
+        return;
+    }
+
     TensorView& means       = get_output(forward_propagation, layer);
     TensorView& stds        = get_output(forward_propagation, layer, 1);
     TensorView& normalized  = get_output(forward_propagation, layer, 2);
@@ -67,10 +94,21 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
 
 void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
-    const TensorView& stds         = get_output(forward_propagation, layer, 1);
-    const TensorView& normalized   = get_output(forward_propagation, layer, 2);
     const TensorView& output_delta = get_output_delta(back_propagation, layer);
     TensorView& input_delta        = get_input_delta(back_propagation, layer);
+
+    if (method == NormalizationMethod::RMS)
+    {
+        const TensorView& inverse_rms = get_output(forward_propagation, layer);
+        const TensorView& normalized  = get_output(forward_propagation, layer, 2);
+
+        rms_normalization_backward(get_input(forward_propagation, layer), output_delta,
+                                   inverse_rms, normalized, gamma, gamma_gradient, input_delta);
+        return;
+    }
+
+    const TensorView& stds       = get_output(forward_propagation, layer, 1);
+    const TensorView& normalized = get_output(forward_propagation, layer, 2);
 
     // When fused, the norm operated on the post-add sum (stored in `normalized`);
     // use it as the forward input. The add's backward passes the same gradient to

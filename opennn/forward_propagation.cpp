@@ -179,6 +179,22 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     device::set_conv_workspace_auto_limit_bytes(max_layer_bytes);
 }
 
+void ForwardPropagation::set_active_sequence_length(Index length)
+{
+    reset_cuda_graph();   // the changed shapes invalidate any captured graph
+
+    const auto shrink_sequence = [length](TensorView& view)
+    {
+        if (!view.empty() && view.get_rank() >= 2) view.shape[1] = length;
+    };
+
+    for (auto& layer_slots : forward_slots)
+        for (auto& slot : layer_slots) shrink_sequence(slot);
+
+    for (auto& layer_inputs : input_views)
+        for (auto& view : layer_inputs) shrink_sequence(view);
+}
+
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
     if (!neural_network) return {};
