@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C O N F I G U R A T I O N
@@ -24,7 +24,6 @@ public:
     {
         Device device         = Device::CPU;
         Type   training_type  = Type::FP32;
-        unsigned generation   = 0;
     };
 
     static Configuration& instance();
@@ -33,8 +32,6 @@ public:
              Type   new_training_type = Type::Auto);
 
     Resolved resolve() const;
-
-    unsigned get_generation() const;
 
     bool is_gpu() const { return resolve().device == Device::CUDA; }
 
@@ -46,10 +43,6 @@ private:
 
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
-
-    // Bumped by every set(); NeuralNetwork::compile() snapshots it so a later
-    // set() can be detected as stale instead of being ignored silently.
-    unsigned generation   = 0;
 };
 
 inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }

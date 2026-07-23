@@ -76,7 +76,7 @@ void sync_cuda_for_debug(bool on_gpu)
 {
     static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
     if (on_gpu && enabled)
-        device::synchronize(Backend::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
 }
 
 Loss::EvaluationResult average_epoch_metrics(Loss::EvaluationResult sums,
@@ -105,7 +105,7 @@ struct DeviceEpochMetricSums
         Buffer& metric_values = values();
         metric_values.grow_to(2 * Index(sizeof(float)));
         device::set_zero_async(metric_values.data, 2 * Index(sizeof(float)),
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
     }
 
     float* error_sum() { return values().as<float>(); }
@@ -117,7 +117,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return sums;
 
         float host[2] = {0.0f, 0.0f};
-        const cudaStream_t stream = Backend::get_compute_stream();
+        const cudaStream_t stream = device::get_compute_stream();
         device::copy_async(host, values().data, Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -255,10 +255,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         }
     };
 
-    // On GPU the prefetch pool only stages data into the fixed compute batch, so
-    // pool slots need no device buffers (saves pool_size device batch copies). This
-    // is unsafe only if validation reuses the training pool to compute directly on
-    // it (no fixed batch in evaluate_epoch) -- then the pool keeps its buffers.
     const bool validation_reuses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
     const bool training_prefetch_only = neural_network.is_gpu()
@@ -288,13 +284,11 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     pools.validation_uses_training_pool = validation_reuses_training_pool;
 
-    // Validation computes directly on its pool batch (evaluate_epoch sets no fixed
-    // device batch), so validation pool slots must keep their device buffers.
     if (has_validation && !pools.validation_uses_training_pool)
         fill_pool(pools.validation_empty_queue,
                   pools.validation_pool,
                   validation_batch_size,
-                  /*prefetch_only=*/false);
+                                    false);
 }
 
 unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
@@ -382,9 +376,6 @@ int Optimizer::get_batch_workers_number(const NeuralNetwork&) const
 
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
-    // set_batch_pool_size() overrides the prefetch-pool depth. Each pooled Batch
-    // holds a full input+target copy on the GPU, so lowering this trades a little
-    // prefetch overlap for a larger max batch. Default keeps 3.
     if (batch_pool_size_override > 0)
         return max(1, batch_pool_size_override);
     return neural_network.is_gpu()
@@ -480,9 +471,6 @@ Index Optimizer::get_maximum_batch_size() const
             single_batch += b * target_shape.size() * Index(sizeof(float));
         if (!decoder_shape.empty())
             single_batch += b * decoder_shape.size() * Index(sizeof(float));
-        // On GPU the prefetch pool is host-only and compute runs on a single fixed
-        // device batch, so only one device batch copy lives in VRAM; on CPU each of
-        // the batch_pool_size slots holds a device (host) copy.
         const Index device_batch_copies = on_gpu ? Index(1) : Index(batch_pool_size);
         return device_batch_copies * single_batch;
     };
@@ -745,14 +733,11 @@ void Optimizer::warmup_device_training(
         || training_batches.empty())
         return;
 
-    const cudaStream_t stream = Backend::get_compute_stream();
+    const cudaStream_t stream = device::get_compute_stream();
 
     const Index parameters_bytes = neural_network->get_parameters_size() * Index(sizeof(float));
     const Index states_bytes = neural_network->get_states_buffer_size() * Index(sizeof(float));
 
-    // Snapshots live on the host: the warmup steps hit the same VRAM peak as
-    // regular training, so a device-side copy would add parameters_bytes to
-    // the global peak. Two once-per-train() PCIe copies are negligible.
     Buffer parameters_snapshot{Device::CPU};
     Buffer states_snapshot{Device::CPU};
 
@@ -807,9 +792,6 @@ void Optimizer::warmup_device_training(
 
     try
     {
-        // Validation first: if its shape grows any shared operator buffer, it
-        // does so before the training step can capture a CUDA graph, so
-        // captured pointers are never invalidated by a later regrow.
         if (has_validation_warmup)
             evaluate_epoch(*validation_forward_propagation,
                            *validation_empty_queue,
@@ -871,7 +853,6 @@ TrainingResult Optimizer::train()
         return results;
 
     NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
 
     const bool on_gpu = neural_network->is_gpu();
 
@@ -930,10 +911,6 @@ TrainingResult Optimizer::train()
 
     BackPropagation training_back_propagation(training_batch_size, loss);
 
-    // Validation runs only at epoch boundaries, never concurrently with a
-    // training step, so its activations overlay the (then-idle) training
-    // ForwardPropagation buffer instead of reserving a second full buffer.
-    // set() falls back to its own allocation if the training buffer is smaller.
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     if (has_validation)
     {
@@ -979,9 +956,6 @@ TrainingResult Optimizer::train()
         if (has_validation)
             dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
-        // The warmup steps the real optimizer_data (a dedicated warmup copy
-        // would add parameters-sized buffers to the peak while the warmup runs
-        // full training steps); re-running the setup below discards that step.
         warmup_device_training(training_forward_propagation,
                                training_back_propagation,
                                batch_pools.training_empty_queue,
@@ -1152,7 +1126,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float vali
         const size_t bytes = size_t(size) * sizeof(float);
         if (neural_network->is_gpu() && device::is_cuda_build())
         {
-            const cudaStream_t stream = Backend::get_compute_stream();
+            const cudaStream_t stream = device::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
                                device::CopyKind::DeviceToHost, stream);
             device::synchronize(stream);
@@ -1205,8 +1179,6 @@ void Optimizer::read_common_json(const Json* root_element)
     if (root_element->has("GradientClipNorm"))
         set_gradient_clip_norm(read_json_float(root_element, "GradientClipNorm"));
 
-    // "Display every N epochs" from the editor. Guarded so models saved before this field
-    // existed keep the default period instead of failing to load.
     if (root_element->has("DisplayPeriod"))
         set_display_period(read_json_index(root_element, "DisplayPeriod"));
 }
@@ -1219,8 +1191,6 @@ void Optimizer::setup_device_training()
     neural_network->copy_parameters_device();
     neural_network->copy_states_device();
 
-    // Datasets in StorageMode::GPUPersistantData keep their data mirrored on the
-    // device; this is the single switch for GPU-resident training (no env flag).
     if (loss->get_dataset()->get_storage_mode() == Dataset::StorageMode::GPUPersistantData)
         loss->get_dataset()->enable_device_residency();
 }
@@ -1230,7 +1200,7 @@ void Optimizer::teardown_device_training()
     NeuralNetwork* neural_network = loss->get_neural_network();
     if (!neural_network->is_gpu()) return;
 
-    device::synchronize(Backend::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
 
     if (loss->get_dataset()->is_device_resident())
         loss->get_dataset()->disable_device_residency();
@@ -1241,8 +1211,6 @@ void Optimizer::teardown_device_training()
     if (loss->get_dataset()->is_device_resident())
         loss->get_dataset()->disable_device_residency();
 
-    // The captured graphs, the update closure and the slot pointers reference
-    // train()-local resources; they must not outlive them.
     reset_graph_capture();
     graph_slots = {};
 }
@@ -1261,7 +1229,7 @@ void Optimizer::sync_device(bool on_gpu)
 
     if (sync_each_batch)
     {
-        device::synchronize(Backend::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
         return;
     }
 
@@ -1275,7 +1243,7 @@ void Optimizer::sync_device(bool on_gpu)
     else
         slot.create();
 
-    device::record_event(slot.handle, Backend::get_compute_stream());
+    device::record_event(slot.handle, device::get_compute_stream());
 }
 
 void Optimizer::clip_gradient_norm(Buffer& gradient, float max_norm)
@@ -1320,12 +1288,9 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetricSums device_metrics;
     device_metrics.reset();
 
-    const cudaStream_t compute = Backend::get_compute_stream();
+    const cudaStream_t compute = device::get_compute_stream();
     const cudaStream_t transfer = Backend::get_transfer_stream();
 
-    // Slot ring: [0] is the shared fixed device batch; the rest come from the
-    // dedicated graph slot pool. The staged path needs the full ring (two
-    // groups of graph_group_size); the upload path uses at most two slots.
     array<Batch*, graph_slots_count> slots = {};
     slots[0] = fixed_device_batch;
     int usable_slots = 1;
@@ -1352,12 +1317,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                                         FillMode::Training,
                                         profile_this ? &worker_profile : nullptr);
 
-    // Host-loaded FP32 data takes the staged path: the H2D copy is captured
-    // INSIDE each slot's graph, reading the slot's own pinned host buffer at a
-    // fixed address. Per iteration the main thread only does a small host
-    // memcpy + one graph launch, instead of several CUDA API calls whose issue
-    // latency starves the GPU. Device-resident (gather) and BF16 batches keep
-    // the upload-outside-the-graph path.
     const bool staged_h2d = !loss->get_dataset()->is_device_resident()
                          && !fixed_device_batch->input_is_bf16;
 
@@ -1408,8 +1367,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         slot.needs_device_copy    = false;
     };
 
-    // The update closure is copied so the eager fallback keeps working for the
-    // rest of the epoch after a capture failure clears the member.
     const auto run_compute_step = [&, update = graph_update](Batch& slot)
     {
         neural_network->forward_propagate(slot.get_inputs(),
@@ -1422,14 +1379,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         update(back_propagation);
     };
 
-    // Capture-or-run: replay `exec` if it exists; otherwise, when graph_update
-    // is set, run `warmup` once eagerly and then capture `record` into a fresh
-    // graph; otherwise just run `warmup`. The profiler muting (op-level scopes
-    // call device::synchronize, illegal inside a capture window), the
-    // capture/instantiate lifecycle, and the failure recovery live here so the
-    // three call sites below don't each repeat them. `record` defaults to
-    // `warmup`; only the staged mega-graph captures a different body (fork/join
-    // H2D on the transfer stream) than its eager warmup.
     const auto capture_or_run = [&](device::GraphExecHandle& exec,
                                     const auto& warmup, const auto& record)
     {
@@ -1461,10 +1410,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         ::opennn::enabled() = profiler_enabled;
     };
 
-    // BF16 device-resident batches use the same gather mega-graph as FP32: the
-    // device gather emits BF16 directly (gather_rows_bf16_cuda) and the captured
-    // compute learns identically. The per-slot fallback below is only for the
-    // host-staged BF16 path.
     const bool resident_gather = loss->get_dataset()->is_device_resident();
 
     constexpr Index M = Index(graph_group_size);
@@ -1476,11 +1421,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             && batches_number >= Index(graph_group_size)
             && (graph_update || training_graph_execs[0]))
         {
-            // Resident mega-graph: the M device-side gathers run on the transfer
-            // stream OUTSIDE the graph (their index H2D is a pageable copy, which
-            // is illegal to capture), each rejoined onto compute by an event; the
-            // graph then captures only the M compute steps. One launch per group
-            // amortizes the per-step launch the single-step resident path paid.
             const Index groups = batches_number / M;
 
             for (Index group = 0; group < groups; ++group)
@@ -1492,8 +1432,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
                 {
                     PROFILE_SCOPE_HOST("step:group_sync");
-                    // The prior same-parity group's graph read these slots; it
-                    // must finish before the gathers overwrite them.
                     if (event_slot.h2d_done_recorded)
                         device::synchronize_event(event_slot.h2d_done_event);
                 }
@@ -1542,11 +1480,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
             && usable_slots == graph_slots_count
             && batches_number >= Index(graph_group_size))
         {
-            // Mega-graph path: each captured graph covers graph_group_size
-            // iterations (H2D from the slots' pinned staging + compute), and
-            // two groups ping-pong over the ring. Per group the host pays one
-            // event sync, M small memcpys and one launch — cheap enough on
-            // WSL's expensive CUDA API to keep the GPU permanently fed.
             const Index groups = batches_number / M;
 
             for (Index group = 0; group < groups; ++group)
@@ -1558,8 +1491,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
                 {
                     PROFILE_SCOPE_HOST("step:group_sync");
-                    // The previous same-parity group read these slots' staging;
-                    // it must be complete before the host overwrites it.
                     if (event_slot.h2d_done_recorded)
                         device::synchronize_event(event_slot.h2d_done_event);
                 }
@@ -1573,16 +1504,11 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                     {
                         PROFILE_SCOPE_HOST("step:stage_copy");
                         stage_into_slot(*host_batch, *slots[base + size_t(m)]);
-                        // Consumed by the host memcpy: recycle immediately.
                         empty_queue.push(host_batch);
                         host_batch = nullptr;
                     }
                 }
 
-                // Warmup/eager body: H2D + compute per slot on the compute
-                // stream, plus (one-time) creation of the fork/join events the
-                // captured body needs. Event creation is here, not in `record`,
-                // because cudaEventCreate is illegal inside a capture window.
                 const auto warmup_group = [&] {
                     for (Index m = 0; m < M; ++m)
                     {
@@ -1596,8 +1522,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                         if (!graph_copy_done_events[base + size_t(m)])
                             graph_copy_done_events[base + size_t(m)].create();
                 };
-                // Captured body: fork the H2D chain onto the transfer stream
-                // inside the graph so the copy engine overlaps the compute steps.
                 const auto record_group = [&] {
                     device::record_event(graph_fork_events[parity], compute);
                     device::stream_wait_event(transfer, graph_fork_events[parity]);
@@ -1617,7 +1541,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 event_slot.record_h2d_done(compute);
             }
 
-            // Tail (< M iterations): eager on slot 0 behind a full drain.
             for (Index iteration = groups * M; iteration < batches_number; ++iteration)
             {
                 host_batch = session->wait(iteration);
@@ -1632,10 +1555,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         }
         else
         {
-            // Per-iteration path: device-resident gather / BF16 batches keep
-            // their per-slot graphs; tiny staged epochs (e.g. the warmup's
-            // single batch) run eagerly so the mega execs are never mixed with
-            // per-slot ones.
             const int slots_count = (usable_slots >= 2 && slots[1]) ? 2 : 1;
 
             for (Index iteration = 0; iteration < batches_number; ++iteration)
@@ -1653,8 +1572,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 {
                     {
                         PROFILE_SCOPE_HOST("step:stage_copy");
-                        // Whatever last read this slot must finish before the host
-                        // overwrites its staging.
                         if (slot.h2d_done_recorded)
                             device::synchronize_event(slot.h2d_done_event);
                         stage_into_slot(*host_batch, slot);
@@ -1668,9 +1585,6 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 {
                     {
                         PROFILE_SCOPE_HOST("step:h2d_issue");
-                        // The graph that last read this slot must finish before the
-                        // upload overwrites it (the slot's event is recorded on
-                        // compute below).
                         if (slot.h2d_done_recorded)
                             device::stream_wait_event(transfer, slot.h2d_done_event);
                         host_batch->upload_to_device_batch_async(slot, transfer);
@@ -1781,7 +1695,7 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
     {
         if (!use_fixed_device_batch) return;
 
-        device::record_event(fixed_device_batch->h2d_done_event, Backend::get_compute_stream());
+        device::record_event(fixed_device_batch->h2d_done_event, device::get_compute_stream());
         fixed_device_batch_in_use = true;
     };
 
@@ -1806,14 +1720,8 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             PROFILE_SCOPE("step:sync_device");
             sync_device(on_gpu);
 
-            // Training serializes the batch pool through the backward pass; a
-            // pure-forward pass (validation / testing) does not, so the prefetch
-            // H2D that reuses a pool buffer can overrun the compute stream still
-            // reading its inputs -- the fast bf16 SDPA forward makes the CPU run
-            // far enough ahead for this to corrupt the metrics. Serialize per
-            // batch here; a forward-only epoch is cheap and runs once per epoch.
             if (on_gpu && context.fill_mode != FillMode::Training)
-                device::synchronize(Backend::get_compute_stream());
+                device::synchronize(device::get_compute_stream());
         }
 
         context.empty_queue->push(current_batch);

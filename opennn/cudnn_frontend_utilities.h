@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   C U D N N   F R O N T E N D   U T I L I T I E S   H E A D E R
@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #pragma once
+
+#include "cuda_tensor_operations.h"
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -42,22 +44,11 @@ inline int device_sm_version()
 inline bool frontend_enabled()
 {
     static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
-    if (legacy_forced) return false;
-    // cuDNN-frontend graph API requires SM 7.0+ (Volta/Turing) for fp32 convolutions.
-    // The legacy path has poor NHWC coverage in cuDNN 9 even on older hardware.
-    return device_sm_version() >= 700;
-}
-
-inline bool bn_frontend_enabled()
-{
-    // cuDNN-frontend batch norm requires SM 8.0+ (Ampere); falls back to legacy on older GPUs.
-    return frontend_enabled() && device_sm_version() >= 800;
+    return !legacy_forced && device_sm_version() >= 700;
 }
 
 inline bool autotune_enabled() { return device::conv_autotune_enabled(); }
 
-// With OPENNN_GRAPH_TIMING=1 every graph execution is timed with CUDA events
-// (per-label totals printed at exit). Incompatible with set_cuda_graph(true).
 inline bool graph_timing_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_GRAPH_TIMING");
@@ -95,11 +86,11 @@ inline void execute_graph(graph::Graph& graph, TensorMap& tensors,
 
     CudaEvent begin(cudaEventDefault);
     CudaEvent end(cudaEventDefault);
-    device::record_event(begin, Backend::get_compute_stream());
+    device::record_event(begin, device::get_compute_stream());
 
     check_status(graph.execute(Backend::get_cudnn_handle(), tensors, workspace), what);
 
-    device::record_event(end, Backend::get_compute_stream());
+    device::record_event(end, device::get_compute_stream());
     device::synchronize_event(end);
 
     float milliseconds = 0;
@@ -110,17 +101,11 @@ inline void execute_graph(graph::Graph& graph, TensorMap& tensors,
     ++calls;
 }
 
-// All frontend graphs draw their scratch from one shared device buffer (the
-// same one the legacy conv path and cublasLt already use): the ops execute
-// serially on the compute stream, so the live peak is max(individual
-// workspace), not the sum. A 0-byte request passes nullptr, as cuDNN expects.
 inline void* shared_workspace(int64_t bytes)
 {
     return bytes > 0 ? ensure_cudnn_conv_workspace(size_t(bytes)) : nullptr;
 }
 
-// Runs a frontend-path body with the shared cache/disable/fallback protocol;
-// returns false when the caller should take the legacy path instead.
 template<typename GraphCache, typename Body>
 bool run_frontend(unique_ptr<GraphCache>& cache, const char* label, Body&& body)
 {
@@ -155,9 +140,6 @@ inline vector<int64_t> nhwc_strides(int64_t c, int64_t h, int64_t w)
     return {h * w * c, 1, w * c, c};
 }
 
-// Mixed precision: io tensors follow dtype (BF16 activations/weights), while
-// intermediate and compute stay FP32 (tensor-core accumulation). Per-tensor
-// .set_data_type(FLOAT) overrides keep gradients/stats in FP32.
 inline shared_ptr<graph::Graph> new_graph(Type dtype = Type::FP32)
 {
     auto g = make_shared<graph::Graph>();
@@ -197,12 +179,6 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
     check_status(graph.create_execution_plans({HeurMode_t::A, HeurMode_t::FALLBACK}),
                  tag + " create_execution_plans");
 
-    // Plan selection. A positive cap deselects high-workspace plans and uses the
-    // heuristic (memory config). Otherwise, autotune (when enabled) times all plans
-    // for speed; if autotune is off too, the plain heuristic picks one plan with
-    // no autotune transient. NOTE: deselect + build_plans(ALL) + autotune do NOT
-    // compose in this cuDNN-frontend (they fault on a constrained plan set), so a
-    // cap and autotune are mutually exclusive here.
     const int64_t conv_workspace_cap = device::conv_workspace_limit_bytes();
     if (conv_workspace_cap > 0)
         graph.deselect_workspace_greater_than(conv_workspace_cap);
@@ -235,8 +211,6 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     }
     catch (...) {}
 
-    // cuDNN autotune tries GPU kernels that may fail; clear any sticky CUDA
-    // error they left behind so subsequent check_last_error() calls are clean.
 #ifdef OPENNN_HAS_CUDA
     cudaGetLastError();
 #endif
@@ -269,7 +243,7 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     autotune_now(pending, graph, scratch, workspace_bytes);
 }
 
-}  // namespace opennn::cudnn_frontend
+}
 
 #endif
 

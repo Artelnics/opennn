@@ -33,8 +33,6 @@ public:
     Index token_to_id(string_view token) const;
     const string& id_to_token(Index id) const;
 
-    // Reserved-token ids of the sequence framing scheme; [PAD] = 0 is implicit
-    // in zero-initialized buffers.
     static constexpr Index UNK_INDEX   = 1;
     static constexpr Index START_INDEX = 2;
     static constexpr Index END_INDEX   = 3;
@@ -66,7 +64,6 @@ protected:
 
 unique_ptr<TokenizerOperator> make_tokenizer_operator(const string& kind);
 
-// Reserved tokens: [PAD]=0, [UNK]=1, [START]=2, [END]=3.
 class WordLevelTokenizer : public TokenizerOperator
 {
 public:
@@ -116,7 +113,6 @@ private:
 };
 
 
-// Id 0 is reserved for [PAD]
 class BytePairTokenizer : public TokenizerOperator
 {
 public:

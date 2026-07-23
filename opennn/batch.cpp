@@ -18,8 +18,8 @@ bool bf16_host_input_cast_enabled() noexcept
 {
     static const bool enabled = []
     {
-        const char* flag = std::getenv("OPENNN_BF16_HOST_INPUT_CAST");
-        return !flag || std::string(flag) != "0";
+        const char* flag = getenv("OPENNN_BF16_HOST_INPUT_CAST");
+        return !flag || string(flag) != "0";
     }();
 
     return enabled;
@@ -85,9 +85,6 @@ void Batch::set(const Index new_samples_number,
 
         const Index element_bytes = on_gpu ? device_elem_bytes : Index(sizeof(float));
         const Index device_bytes = slot.shape.size() * element_bytes;
-        // A prefetch-only GPU batch stages from its pinned-host buffer into a
-        // separate fixed compute batch, so its own device buffer is never read or
-        // written -- skip it. This is the dominant per-pool-slot device saving.
         const Index allocated_device_bytes = (on_gpu && prefetch_only) ? Index(0) : device_bytes;
         slot.buffer.resize_bytes(allocated_device_bytes, batch_device);
         memory_debug::record("batch.device",
@@ -138,8 +135,6 @@ void Batch::set(const Index new_samples_number,
     setup_buffer("Target",  target,  Index(sizeof(float)));
     setup_buffer("Decoder", decoder, Index(sizeof(float)));
 
-    // A prefetch-only GPU batch has no device input/target buffer (it stages from
-    // pinned host), so these views -- only read in CPU-compute mode -- are skipped.
     if (!decoder.shape.empty() && decoder.buffer.data)
         input_views_host_cache.emplace_back(decoder.buffer.as<float>(), decoder.shape, Type::FP32, Device::CPU);
 
@@ -427,7 +422,7 @@ void Batch::wait_h2d_complete()
 void Batch::wait_h2d_on_compute_stream()
 {
     if (h2d_done_recorded)
-        device::stream_wait_event(Backend::get_compute_stream(), h2d_done_event);
+        device::stream_wait_event(device::get_compute_stream(), h2d_done_event);
 }
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()

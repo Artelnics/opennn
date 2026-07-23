@@ -92,10 +92,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     vector<DeltaEntry> delta_entries;
 
-    // A passthrough layer (e.g. Flatten) owns no slots in either direction: its
-    // consumers alias its input in forward and its producer reads its consumer's
-    // delta in backward. Note that empty backward specs alone do NOT mean
-    // passthrough — Embedding is trainable with no input delta.
     const auto is_passthrough = [&](Index layer_index)
     {
         return backward_specs[size_t(layer_index)].empty()
@@ -106,9 +102,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     const Shape output_delta_shape = Shape({batch_size}).append(layers[last_trainable_layer_index]->get_output_shape());
 
-    // If the last trainable layer is a passthrough (e.g. Flatten), the loss
-    // delta is actually consumed by the first real producer upstream, so the
-    // block must live until that layer's backward step.
     Index loss_delta_consumer = last_trainable_layer_index;
     while (loss_delta_consumer >= 0 && is_passthrough(loss_delta_consumer)
            && !source_layers[loss_delta_consumer].empty() && source_layers[loss_delta_consumer][0] >= 0)
@@ -130,9 +123,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
             const Index first_step = last_trainable_layer_index - layer_index;
 
-            // A passthrough source (e.g. Flatten) hands this delta straight to
-            // ITS source, so the block must stay live until that producer's
-            // backward step reads it.
             Index source_layer = (j < sources.size()) ? sources[j] : Index(-1);
             while (source_layer >= 0 && is_passthrough(source_layer)
                    && !source_layers[source_layer].empty() && source_layers[source_layer][0] >= 0)
@@ -266,10 +256,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         const auto& edges = consumer_edges[i];
         if (edges.size() != 1) continue;
 
-        // Walk through passthrough consumers (e.g. Flatten): the delta this
-        // layer must read lives in the first real consumer downstream — or, if
-        // the chain ends on a passthrough that owns an output-delta buffer
-        // (loss-facing or multi-consumer), in that buffer.
         size_t consumer_layer = edges.front().first;
         size_t input_position = edges.front().second;
         while (is_passthrough(Index(consumer_layer))
@@ -291,9 +277,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         else
             continue;
 
-        // Reshape to this layer's own output geometry: through a Flatten the
-        // aliased block carries the consumer's flat shape, but the producer's
-        // backward (e.g. cuDNN pooling) needs its NHWC view.
         delta_view.shape = Shape{batch_size}.append(layers[i]->get_output_shape());
         layer_output_deltas[i] = delta_view;
     }

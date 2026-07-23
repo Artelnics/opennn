@@ -27,14 +27,13 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
     Dataset* dataset = training_strategy->get_dataset();
     const Index k = max<Index>(folds_number, Index(1));
 
-    // Development pool = Training + Validation (Testing/None excluded).
     vector<Index> development = dataset->get_sample_indices("Training");
     const vector<Index> validation = dataset->get_sample_indices("Validation");
     development.insert(development.end(), validation.begin(), validation.end());
 
     vector<vector<Index>> folds(static_cast<size_t>(k));
 
-    auto deal_blocks = [&folds, k](const vector<Index>& items)      // contiguous, order-preserving
+    auto deal_blocks = [&folds, k](const vector<Index>& items)
     {
         const Index n = ssize(items);
         for (Index f = 0; f < k; ++f)
@@ -42,14 +41,12 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
                 folds[size_t(f)].push_back(items[j]);
     };
 
-    auto deal_round_robin = [&folds, k](const vector<Index>& items)  // spreads a class evenly
+    auto deal_round_robin = [&folds, k](const vector<Index>& items)
     {
         for (size_t i = 0; i < items.size(); ++i)
             folds[i % size_t(k)].push_back(items[i]);
     };
 
-    // Time series: sequential blocks preserving order -- shuffling would leak autocorrelated
-    // neighbours across the train/validation boundary.
     if (dynamic_cast<TimeSeriesDataset*>(dataset))
     {
         sort(development.begin(), development.end());
@@ -57,9 +54,6 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
         return folds;
     }
 
-    // Otherwise stratify by class (threshold = target mean, robust to scaling) using a LOCAL seeded
-    // RNG (independent of the training RNG) so every fold keeps the class balance and the partition
-    // is reproducible. Falls back to a plain shuffled split when the target is not a single column.
     mt19937 rng(static_cast<unsigned>(folds_seed));
     const vector<Index> target_features = dataset->get_feature_indices("Target");
 
@@ -90,7 +84,8 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
     return folds;
 }
 
-FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<vector<Index>>& fold_partition)
+FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy,
+                              const vector<vector<Index>>& fold_partition)
 {
     Dataset* dataset = training_strategy->get_dataset();
     NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
@@ -107,14 +102,13 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
     for (Index f = 0; f < k; ++f)
     {
         const vector<Index>& validation_indices = fold_partition[size_t(f)];
-        const std::set<Index> validation_set(validation_indices.begin(), validation_indices.end());
+        const set<Index> validation_set(validation_indices.begin(), validation_indices.end());
 
         vector<Index> training_indices;
         training_indices.reserve(development.size());
         for (const Index s : development)
             if (!validation_set.count(s)) training_indices.push_back(s);
 
-        // Transient fold split: never mutates the user's persistent roles (restored on scope exit).
         FoldScope scope(*dataset, training_indices, validation_indices);
 
         neural_network->set_parameters_random();
@@ -125,8 +119,6 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
         if (!isfinite(validation_error)) validation_error = numeric_limits<float>::max();
         if (!isfinite(training_error))   training_error   = numeric_limits<float>::max();
 
-        // Best epoch of this fold (validation-based early stopping restored it), else epochs run.
-        // +1 turns the 0-based epoch index into an epoch count.
         const Index fold_epochs = training_results.restored_best_parameters
             ? training_results.restored_epoch + 1
             : training_results.get_epochs_number();
@@ -151,11 +143,8 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
     NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
     Optimizer* optimizer = training_strategy->get_optimization_algorithm();
 
-    // Epoch budget = mean best epoch from the cross-validation of the (already configured) final
-    // model. There is no validation set below, so this bounds the fit in place of early stopping.
     const Index final_epochs = evaluate_folds(training_strategy, build_fold_partition(training_strategy, folds_number, folds_seed)).epochs;
 
-    // Development pool = Training + Validation; the final model trains on all of it, no validation.
     vector<Index> development = dataset->get_sample_indices("Training");
     const vector<Index> validation = dataset->get_sample_indices("Validation");
     development.insert(development.end(), validation.begin(), validation.end());
@@ -165,13 +154,13 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
 
     try
     {
-        FoldScope scope(*dataset, development, {});   // all development as Training, no Validation
+        FoldScope scope(*dataset, development, {});
         neural_network->set_parameters_random();
         training_strategy->train();
     }
     catch (...)
     {
-        optimizer->set_maximum_epochs(saved_epochs);   // never leak the CV epoch budget
+        optimizer->set_maximum_epochs(saved_epochs);
         throw;
     }
 

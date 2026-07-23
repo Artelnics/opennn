@@ -382,7 +382,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
         copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
-                                  host.data(), Backend::get_compute_stream());
+                                  host.data(), device::get_compute_stream());
         device::synchronize();
         return host;
     };
@@ -454,7 +454,7 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
         vector<float> host(size_t(outputs.size()));
         device::synchronize();
         copy_device_to_host_float(outputs.data, outputs.type, outputs.size(),
-                                  host.data(), Backend::get_compute_stream());
+                                  host.data(), device::get_compute_stream());
         device::synchronize();
         return host;
     };

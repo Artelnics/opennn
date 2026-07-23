@@ -147,4 +147,4 @@ const Json*  get_json_root (const JsonDocument&, const string&);
 
 }
 
-#endif // OPENNN_JSON_H_
+#endif

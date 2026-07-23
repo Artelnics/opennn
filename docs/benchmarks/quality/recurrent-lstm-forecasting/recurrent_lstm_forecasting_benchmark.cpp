@@ -30,7 +30,7 @@
 #include <vector>
 
 using namespace opennn;
-using Clock = std::chrono::steady_clock;
+using Clock = chrono::steady_clock;
 
 namespace
 {
@@ -44,7 +44,7 @@ constexpr float RMSE_HALF_TO_STD = 1.41421356237309515f;
 
 string forecasting_data_dir()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_DATA_DIR");
+    const char* env = getenv("OPENNN_FORECASTING_DATA_DIR");
     if (env && env[0] != '\0')
     {
         string path(env);
@@ -57,42 +57,42 @@ string forecasting_data_dir()
 
 string forecasting_phase()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_PHASE");
+    const char* env = getenv("OPENNN_FORECASTING_PHASE");
     string phase = (env && env[0] != '\0') ? string(env) : string();
-    std::transform(phase.begin(), phase.end(), phase.begin(),
-                   [](unsigned char c) { return char(std::tolower(c)); });
+    transform(phase.begin(), phase.end(), phase.begin(),
+                   [](unsigned char c) { return char(tolower(c)); });
     return phase;
 }
 
 float forecasting_clip_norm()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_CLIP");
-    return (env && env[0] != '\0') ? float(std::atof(env)) : 0.0f;
+    const char* env = getenv("OPENNN_FORECASTING_CLIP");
+    return (env && env[0] != '\0') ? float(atof(env)) : 0.0f;
 }
 
 bool forecasting_pytorch_init()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_INIT");
+    const char* env = getenv("OPENNN_FORECASTING_INIT");
     return !(env && string(env) == "keras");
 }
 
 bool forecasting_cuda_graph()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_GRAPH");
+    const char* env = getenv("OPENNN_FORECASTING_GRAPH");
     return !(env && string(env) == "0");
 }
 
 int forecasting_seed_count()
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_SEEDS");
+    const char* env = getenv("OPENNN_FORECASTING_SEEDS");
     if (!env || env[0] == '\0') return SEED_COUNT;
-    const int n = std::atoi(env);
+    const int n = atoi(env);
     return (n >= 1 && n <= SEED_COUNT) ? n : SEED_COUNT;
 }
 
 bool scenario_selected(const string& id)
 {
-    const char* env = std::getenv("OPENNN_FORECASTING_SCENARIOS");
+    const char* env = getenv("OPENNN_FORECASTING_SCENARIOS");
     if (!env || env[0] == '\0') return true;
     const string list(env);
     size_t pos = 0;
@@ -111,7 +111,7 @@ string format_seconds(double s)
     int total = int(s);
     const int h = total / 3600; total %= 3600;
     const int m = total / 60;   const int sec = total % 60;
-    std::ostringstream os;
+    ostringstream os;
     if (h > 0) os << h << "h";
     if (h > 0 || m > 0) os << (h > 0 && m < 10 ? "0" : "") << m << "m";
     os << (sec < 10 && (h > 0 || m > 0) ? "0" : "") << sec << "s";
@@ -140,8 +140,8 @@ struct ScenarioProgress
 
     void finish()
     {
-        std::cout << "\n";
-        std::cout.flush();
+        cout << "\n";
+        cout.flush();
     }
 
     void draw() const
@@ -149,14 +149,14 @@ struct ScenarioProgress
         constexpr int W = 30;
         const float frac = total ? float(done) / float(total) : 0.0f;
         const int filled = int(frac * W + 0.5f);
-        const double elapsed = std::chrono::duration<double>(Clock::now() - started).count();
+        const double elapsed = chrono::duration<double>(Clock::now() - started).count();
         const double eta = (done > 0) ? elapsed * (total - done) / done : 0.0;
 
-        std::cout << "\r    [" << std::string(filled, '#') << std::string(W - filled, '.')
+        cout << "\r    [" << string(filled, '#') << string(W - filled, '.')
                   << "] " << done << "/" << total
                   << "  elapsed=" << format_seconds(elapsed)
                   << "  ETA=" << format_seconds(eta) << "   ";
-        std::cout.flush();
+        cout.flush();
     }
 };
 
@@ -173,7 +173,7 @@ struct Scenario
     float   learning_rate;
     Index   batch_size;
     Index   max_epochs;
-    Index   patience;   // per-scenario early-stop patience
+    Index   patience;
 };
 
 const vector<Scenario>& scenarios()
@@ -199,11 +199,11 @@ struct RunResult
 {
     Index   params = 0;
     Index   epochs = 0;
-    float   train_err = std::numeric_limits<float>::quiet_NaN();
-    float   val_err   = std::numeric_limits<float>::quiet_NaN();
-    float   test_rmse = std::numeric_limits<float>::quiet_NaN();
-    float   test_rmse_native = std::numeric_limits<float>::quiet_NaN();
-    float   test_rmse_rel = std::numeric_limits<float>::quiet_NaN();
+    float   train_err = numeric_limits<float>::quiet_NaN();
+    float   val_err   = numeric_limits<float>::quiet_NaN();
+    float   test_rmse = numeric_limits<float>::quiet_NaN();
+    float   test_rmse_native = numeric_limits<float>::quiet_NaN();
+    float   test_rmse_rel = numeric_limits<float>::quiet_NaN();
     double  seconds = 0.0;
     bool    restored_best = false;
     string  notes;
@@ -212,12 +212,12 @@ struct RunResult
 struct AggregatedResult
 {
     string net;
-    float  test_rmse_mean = std::numeric_limits<float>::quiet_NaN();
-    float  test_rmse_std  = std::numeric_limits<float>::quiet_NaN();
-    float  test_rmse_best = std::numeric_limits<float>::quiet_NaN();
-    float  test_rmse_native_mean = std::numeric_limits<float>::quiet_NaN();
-    float  val_err_mean   = std::numeric_limits<float>::quiet_NaN();
-    float  test_rmse_rel_mean = std::numeric_limits<float>::quiet_NaN();
+    float  test_rmse_mean = numeric_limits<float>::quiet_NaN();
+    float  test_rmse_std  = numeric_limits<float>::quiet_NaN();
+    float  test_rmse_best = numeric_limits<float>::quiet_NaN();
+    float  test_rmse_native_mean = numeric_limits<float>::quiet_NaN();
+    float  val_err_mean   = numeric_limits<float>::quiet_NaN();
+    float  test_rmse_rel_mean = numeric_limits<float>::quiet_NaN();
     double time_mean = 0.0;
     Index  epochs_mean = 0;
     Index  params = 0;
@@ -228,8 +228,8 @@ unique_ptr<TimeSeriesDataset> load_dataset(const Scenario& s)
 {
     auto ds = make_unique<TimeSeriesDataset>(forecasting_data_dir() + DATA_FILE,
                                              ",",
-                                             /*has_header=*/true,
-                                             /*has_sample_ids=*/false);
+                                                            true,
+                                                                false);
     ds->set_past_time_steps(s.past);
     ds->set_future_time_steps(s.future);
     ds->set_multi_target(s.multi_target);
@@ -265,7 +265,7 @@ RunResult train_one(NeuralNetwork* nn,
         r.epochs        = results.get_epochs_number();
         r.train_err     = results.get_training_error();
         r.val_err       = results.get_validation_error();
-        r.seconds       = std::chrono::duration<double>(t1 - t0).count();
+        r.seconds       = chrono::duration<double>(t1 - t0).count();
         r.restored_best = results.restored_best_parameters;
 
         const Index target_width = ds->get_target_shape().size();
@@ -277,12 +277,12 @@ RunResult train_one(NeuralNetwork* nn,
             if (errs.size() >= 3 && target_width > 0)
             {
                 r.test_rmse_native = errs(2);
-                r.test_rmse = errs(2) * RMSE_HALF_TO_STD / std::sqrt(float(target_width));
+                r.test_rmse = errs(2) * RMSE_HALF_TO_STD / sqrt(float(target_width));
             }
         }
-        catch (const std::exception& e) { r.notes = e.what(); }
+        catch (const exception& e) { r.notes = e.what(); }
 
-        if (std::isfinite(r.test_rmse))
+        if (isfinite(r.test_rmse))
         {
             const vector<Index> testing_idx = ds->get_sample_indices("Testing");
             const vector<Index> target_idx  = ds->get_feature_indices("Target");
@@ -290,13 +290,13 @@ RunResult train_one(NeuralNetwork* nn,
             {
                 MatrixR targets(testing_idx.size(), target_width);
                 ds->fill_targets(testing_idx, target_idx, targets.data(),
-                                 /*is_training=*/false, /*parallelize=*/true);
+                                                 false,                 true);
                 const float range = targets.maxCoeff() - targets.minCoeff();
                 if (range > 0.0f) r.test_rmse_rel = r.test_rmse / range;
             }
         }
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
         r.notes = string("EXCEPTION: ") + e.what();
     }
@@ -326,18 +326,18 @@ AggregatedResult run_multi_seed(const Scenario& s,
         const RunResult r = train_one(nn.get(), ds.get(), s);
 
         if (!r.notes.empty())
-            std::cout << "\n    [" << net_label << " seed " << seed << "] " << r.notes << "\n";
+            cout << "\n    [" << net_label << " seed " << seed << "] " << r.notes << "\n";
 
         g_bar.tick();
 
-        if (std::isfinite(r.test_rmse) && std::isfinite(r.val_err))
+        if (isfinite(r.test_rmse) && isfinite(r.val_err))
         {
             rmse_vals.push_back(r.test_rmse);
             val_vals.push_back(r.val_err);
             time_vals.push_back(r.seconds);
             epoch_vals.push_back(r.epochs);
-            if (std::isfinite(r.test_rmse_native)) rmse_native_vals.push_back(r.test_rmse_native);
-            if (std::isfinite(r.test_rmse_rel)) rmse_rel_vals.push_back(r.test_rmse_rel);
+            if (isfinite(r.test_rmse_native)) rmse_native_vals.push_back(r.test_rmse_native);
+            if (isfinite(r.test_rmse_rel)) rmse_rel_vals.push_back(r.test_rmse_rel);
             agg.params = r.params;
         }
     }
@@ -345,40 +345,40 @@ AggregatedResult run_multi_seed(const Scenario& s,
     if (rmse_vals.empty()) return agg;
 
     auto mean = [](const auto& v) -> float {
-        return float(std::accumulate(v.begin(), v.end(), 0.0) / v.size());
+        return float(accumulate(v.begin(), v.end(), 0.0) / v.size());
     };
     auto stddev = [&](const vector<float>& v, float m) -> float {
         if (v.size() < 2) return 0.0f;
         double acc = 0.0;
         for (float x : v) acc += double(x - m) * double(x - m);
-        return float(std::sqrt(acc / (v.size() - 1)));
+        return float(sqrt(acc / (v.size() - 1)));
     };
 
     agg.successful_runs    = int(rmse_vals.size());
     agg.test_rmse_mean     = mean(rmse_vals);
     agg.test_rmse_std      = stddev(rmse_vals, agg.test_rmse_mean);
-    agg.test_rmse_best     = *std::min_element(rmse_vals.begin(), rmse_vals.end());
+    agg.test_rmse_best     = *min_element(rmse_vals.begin(), rmse_vals.end());
     if (!rmse_native_vals.empty()) agg.test_rmse_native_mean = mean(rmse_native_vals);
     agg.val_err_mean       = mean(val_vals);
     if (!rmse_rel_vals.empty()) agg.test_rmse_rel_mean = mean(rmse_rel_vals);
-    agg.time_mean          = std::accumulate(time_vals.begin(), time_vals.end(), 0.0) / time_vals.size();
-    agg.epochs_mean        = Index(std::accumulate(epoch_vals.begin(), epoch_vals.end(), Index(0)) / Index(epoch_vals.size()));
+    agg.time_mean          = accumulate(time_vals.begin(), time_vals.end(), 0.0) / time_vals.size();
+    agg.epochs_mean        = Index(accumulate(epoch_vals.begin(), epoch_vals.end(), Index(0)) / Index(epoch_vals.size()));
     return agg;
 }
 
 void print_agg(const AggregatedResult& a)
 {
-    std::cout << "    " << std::left << std::setw(10) << a.net
-              << "  params=" << std::right << std::setw(6) << a.params
-              << "  ep_mean=" << std::setw(4) << a.epochs_mean
-              << "  val_mean=" << std::scientific << std::setprecision(3) << a.val_err_mean
+    cout << "    " << left << setw(10) << a.net
+              << "  params=" << right << setw(6) << a.params
+              << "  ep_mean=" << setw(4) << a.epochs_mean
+              << "  val_mean=" << scientific << setprecision(3) << a.val_err_mean
               << "  test_rmse=" << a.test_rmse_mean
               << " +/- " << a.test_rmse_std
               << "  best=" << a.test_rmse_best;
-    if (std::isfinite(a.test_rmse_rel_mean))
-        std::cout << "  rmse%=" << std::fixed << std::setprecision(2)
+    if (isfinite(a.test_rmse_rel_mean))
+        cout << "  rmse%=" << fixed << setprecision(2)
                   << (100.0f * a.test_rmse_rel_mean);
-    std::cout << "  time=" << std::fixed << std::setprecision(2) << a.time_mean << "s\n";
+    cout << "  time=" << fixed << setprecision(2) << a.time_mean << "s\n";
 }
 
 void print_metric_line(const string& phase,
@@ -386,7 +386,7 @@ void print_metric_line(const string& phase,
                        const AggregatedResult& a,
                        const string& winner)
 {
-    std::ostringstream os;
+    ostringstream os;
     os << "METRIC"
        << " phase=" << phase
        << " scenario=" << scenario_id
@@ -394,16 +394,16 @@ void print_metric_line(const string& phase,
        << " params=" << a.params
        << " epochs_mean=" << a.epochs_mean
        << " successful_runs=" << a.successful_runs
-       << " val_err_mean=" << std::setprecision(9) << a.val_err_mean
-       << " test_rmse_mean=" << std::setprecision(9) << a.test_rmse_mean
-       << " test_rmse_std=" << std::setprecision(9) << a.test_rmse_std
-       << " test_rmse_best=" << std::setprecision(9) << a.test_rmse_best
-       << " test_rmse_native_halfconv_mean=" << std::setprecision(9) << a.test_rmse_native_mean
-       << " test_rmse_rel_mean=" << std::setprecision(9) << a.test_rmse_rel_mean
-       << " time_s_mean=" << std::setprecision(9) << a.time_mean
+       << " val_err_mean=" << setprecision(9) << a.val_err_mean
+       << " test_rmse_mean=" << setprecision(9) << a.test_rmse_mean
+       << " test_rmse_std=" << setprecision(9) << a.test_rmse_std
+       << " test_rmse_best=" << setprecision(9) << a.test_rmse_best
+       << " test_rmse_native_halfconv_mean=" << setprecision(9) << a.test_rmse_native_mean
+       << " test_rmse_rel_mean=" << setprecision(9) << a.test_rmse_rel_mean
+       << " time_s_mean=" << setprecision(9) << a.time_mean
        << " winner=" << winner;
 
-    std::cout << os.str() << "\n";
+    cout << os.str() << "\n";
 }
 
 void print_speedup_metric(const string& scenario_id,
@@ -412,15 +412,15 @@ void print_speedup_metric(const string& scenario_id,
                           double gpu_s,
                           float speedup)
 {
-    std::ostringstream os;
+    ostringstream os;
     os << "SPEEDUP"
        << " scenario=" << scenario_id
        << " net=" << net
-       << " cpu_time_s=" << std::setprecision(9) << cpu_s
-       << " gpu_time_s=" << std::setprecision(9) << gpu_s
-       << " cpu_over_gpu=" << std::setprecision(9) << speedup;
+       << " cpu_time_s=" << setprecision(9) << cpu_s
+       << " gpu_time_s=" << setprecision(9) << gpu_s
+       << " cpu_over_gpu=" << setprecision(9) << speedup;
 
-    std::cout << os.str() << "\n";
+    cout << os.str() << "\n";
 }
 
 struct ScenarioVerdict
@@ -428,13 +428,13 @@ struct ScenarioVerdict
     string id;
     AggregatedResult rec;
     AggregatedResult lstm;
-    string winner = "n/a";   // best test_rmse: "Recurrent" / "LSTM" / "n/a"
+    string winner = "n/a";
 };
 
 auto build_recurrent(const Scenario& s)
 {
     return [&s](TimeSeriesDataset& ds) {
-        return std::make_unique<ForecastingNetwork>(
+        return make_unique<ForecastingNetwork>(
             ds.get_input_shape(), s.hidden, ds.get_target_shape());
     };
 }
@@ -442,7 +442,7 @@ auto build_recurrent(const Scenario& s)
 auto build_lstm(const Scenario& s)
 {
     return [&s](TimeSeriesDataset& ds) {
-        return std::make_unique<ForecastingLstmNetwork>(
+        return make_unique<ForecastingLstmNetwork>(
             ds.get_input_shape(), s.hidden, ds.get_target_shape());
     };
 }
@@ -450,15 +450,15 @@ auto build_lstm(const Scenario& s)
 string pick_winner(const AggregatedResult& a, const AggregatedResult& b,
                    const string& a_name, const string& b_name)
 {
-    if (!std::isfinite(a.test_rmse_mean) || !std::isfinite(b.test_rmse_mean))
+    if (!isfinite(a.test_rmse_mean) || !isfinite(b.test_rmse_mean))
         return "n/a";
     return (a.test_rmse_mean <= b.test_rmse_mean) ? a_name : b_name;
 }
 
 ScenarioVerdict run_scenario(const Scenario& s)
 {
-    std::cout << "\n=== " << s.id << "  " << s.description << " ===\n";
-    std::cout << "    dataset=" << DATA_FILE
+    cout << "\n=== " << s.id << "  " << s.description << " ===\n";
+    cout << "    dataset=" << DATA_FILE
               << "  past="    << s.past
               << "  future="  << s.future
               << "  hidden_layers=" << s.hidden.rank
@@ -467,7 +467,7 @@ ScenarioVerdict run_scenario(const Scenario& s)
               << "  seeds="   << forecasting_seed_count()
               << "  lr="      << s.learning_rate << "\n";
 
-    g_bar.start(/*total_runs=*/ 2 * forecasting_seed_count());
+    g_bar.start(                2 * forecasting_seed_count());
 
     auto rec_agg  = run_multi_seed(s, "Recurrent", build_recurrent(s));
     auto lstm_agg = run_multi_seed(s, "LSTM",      build_lstm(s));
@@ -483,53 +483,52 @@ ScenarioVerdict run_scenario(const Scenario& s)
     v.lstm   = lstm_agg;
     v.winner = pick_winner(rec_agg, lstm_agg, "Recurrent", "LSTM");
 
-    std::cout << "    winner: " << v.winner;
-    if (std::isfinite(rec_agg.test_rmse_mean) && std::isfinite(lstm_agg.test_rmse_mean)
+    cout << "    winner: " << v.winner;
+    if (isfinite(rec_agg.test_rmse_mean) && isfinite(lstm_agg.test_rmse_mean)
         && rec_agg.test_rmse_mean > 0.0f)
     {
         const float delta_pct = 100.0f *
             (rec_agg.test_rmse_mean - lstm_agg.test_rmse_mean) / rec_agg.test_rmse_mean;
-        std::cout << "  (LSTM test_rmse vs Recurrent: "
-                  << std::fixed << std::setprecision(1) << delta_pct << "%)";
+        cout << "  (LSTM test_rmse vs Recurrent: "
+                  << fixed << setprecision(1) << delta_pct << "%)";
     }
-    std::cout << "\n";
+    cout << "\n";
     return v;
 }
 
-// Per-phase recap (one device at a time).
 void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
 {
-    std::cout << "\n\n";
-    std::cout << "===============================================================\n";
-    std::cout << "      P H A S E   S U M M A R Y   :   " << phase << "\n";
-    std::cout << "===============================================================\n";
+    cout << "\n\n";
+    cout << "===============================================================\n";
+    cout << "      P H A S E   S U M M A R Y   :   " << phase << "\n";
+    cout << "===============================================================\n";
 
-    std::cout << std::left << std::setw(8) << "Scen"
-              << std::right
-              << std::setw(14) << "Rec rmse"
-              << std::setw(14) << "LSTM rmse"
-              << std::setw(11) << "Rec(s)"
-              << std::setw(11) << "LSTM(s)"
-              << std::setw(13) << "Winner"
+    cout << left << setw(8) << "Scen"
+              << right
+              << setw(14) << "Rec rmse"
+              << setw(14) << "LSTM rmse"
+              << setw(11) << "Rec(s)"
+              << setw(11) << "LSTM(s)"
+              << setw(13) << "Winner"
               << "\n";
-    std::cout << std::string(71, '-') << "\n";
+    cout << string(71, '-') << "\n";
 
     int lstm_wins = 0, total = 0;
     for (const auto& v : vs)
     {
-        std::cout << std::left << std::setw(8) << v.id
-                  << std::right << std::scientific << std::setprecision(3)
-                  << std::setw(14) << v.rec.test_rmse_mean
-                  << std::setw(14) << v.lstm.test_rmse_mean
-                  << std::fixed << std::setprecision(2)
-                  << std::setw(11) << v.rec.time_mean
-                  << std::setw(11) << v.lstm.time_mean
-                  << std::setw(13) << v.winner
+        cout << left << setw(8) << v.id
+                  << right << scientific << setprecision(3)
+                  << setw(14) << v.rec.test_rmse_mean
+                  << setw(14) << v.lstm.test_rmse_mean
+                  << fixed << setprecision(2)
+                  << setw(11) << v.rec.time_mean
+                  << setw(11) << v.lstm.time_mean
+                  << setw(13) << v.winner
                   << "\n";
         if (v.winner == "LSTM") ++lstm_wins;
         if (v.winner != "n/a")  ++total;
     }
-    std::cout << "\nLSTM wins (" << phase << "): " << lstm_wins << " / " << total << "\n";
+    cout << "\nLSTM wins (" << phase << "): " << lstm_wins << " / " << total << "\n";
 
     for (const auto& v : vs)
     {
@@ -538,96 +537,94 @@ void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
     }
 }
 
-// CPU vs GPU comparison across the two phases.
 void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
                             const vector<ScenarioVerdict>& gpu_vs)
 {
     auto speedup = [](double cpu_s, double gpu_s) -> float {
-        if (cpu_s <= 0.0 || gpu_s <= 0.0) return std::numeric_limits<float>::quiet_NaN();
+        if (cpu_s <= 0.0 || gpu_s <= 0.0) return numeric_limits<float>::quiet_NaN();
         return float(cpu_s / gpu_s);
     };
 
-    std::cout << "\n\n";
-    std::cout << "===============================================================================================\n";
-    std::cout << "      C P U   v s   G P U   :  test_rmse + speedup\n";
-    std::cout << "===============================================================================================\n";
+    cout << "\n\n";
+    cout << "===============================================================================================\n";
+    cout << "      C P U   v s   G P U   :  test_rmse + speedup\n";
+    cout << "===============================================================================================\n";
 
-    std::cout << std::left << std::setw(7) << "Scen"
-              << std::right
-              << std::setw(13) << "Rec CPU s"
-              << std::setw(13) << "Rec GPU s"
-              << std::setw(9)  << "Rec x"
-              << std::setw(13) << "LSTM CPU s"
-              << std::setw(13) << "LSTM GPU s"
-              << std::setw(9)  << "LSTM x"
+    cout << left << setw(7) << "Scen"
+              << right
+              << setw(13) << "Rec CPU s"
+              << setw(13) << "Rec GPU s"
+              << setw(9)  << "Rec x"
+              << setw(13) << "LSTM CPU s"
+              << setw(13) << "LSTM GPU s"
+              << setw(9)  << "LSTM x"
               << "\n";
-    std::cout << std::string(77, '-') << "\n";
+    cout << string(77, '-') << "\n";
 
-    const size_t n = std::min(cpu_vs.size(), gpu_vs.size());
+    const size_t n = min(cpu_vs.size(), gpu_vs.size());
     for (size_t i = 0; i < n; ++i)
     {
         const auto& c = cpu_vs[i];
         const auto& g = gpu_vs[i];
-        std::cout << std::left << std::setw(7) << c.id
-                  << std::right << std::fixed << std::setprecision(2)
-                  << std::setw(13) << c.rec.time_mean
-                  << std::setw(13) << g.rec.time_mean
-                  << std::setw(8)  << speedup(c.rec.time_mean,  g.rec.time_mean) << "x"
-                  << std::setw(13) << c.lstm.time_mean
-                  << std::setw(13) << g.lstm.time_mean
-                  << std::setw(8)  << speedup(c.lstm.time_mean, g.lstm.time_mean) << "x"
+        cout << left << setw(7) << c.id
+                  << right << fixed << setprecision(2)
+                  << setw(13) << c.rec.time_mean
+                  << setw(13) << g.rec.time_mean
+                  << setw(8)  << speedup(c.rec.time_mean,  g.rec.time_mean) << "x"
+                  << setw(13) << c.lstm.time_mean
+                  << setw(13) << g.lstm.time_mean
+                  << setw(8)  << speedup(c.lstm.time_mean, g.lstm.time_mean) << "x"
                   << "\n";
         print_speedup_metric(c.id, "Recurrent", c.rec.time_mean, g.rec.time_mean,
                              speedup(c.rec.time_mean, g.rec.time_mean));
         print_speedup_metric(c.id, "LSTM", c.lstm.time_mean, g.lstm.time_mean,
                              speedup(c.lstm.time_mean, g.lstm.time_mean));
     }
-    std::cout << "\nSpeedup = CPU mean time / GPU mean time. Both networks use cuDNN RNN\n"
+    cout << "\nSpeedup = CPU mean time / GPU mean time. Both networks use cuDNN RNN\n"
                  "on GPU (CUDNN_RNN_TANH / CUDNN_LSTM).\n";
 
-    // Accuracy side-by-side (CPU rmse vs GPU rmse for each architecture).
-    std::cout << "\n";
-    std::cout << "===============================================================================================\n";
-    std::cout << "      A C C U R A C Y   ( test_rmse mean over " << forecasting_seed_count()
+    cout << "\n";
+    cout << "===============================================================================================\n";
+    cout << "      A C C U R A C Y   ( test_rmse mean over " << forecasting_seed_count()
               << " seed" << (forecasting_seed_count() > 1 ? "s" : "") << " )\n";
-    std::cout << "===============================================================================================\n";
+    cout << "===============================================================================================\n";
 
-    std::cout << std::left << std::setw(7) << "Scen"
-              << std::right
-              << std::setw(14) << "Rec CPU"
-              << std::setw(14) << "LSTM CPU"
-              << std::setw(14) << "Rec GPU"
-              << std::setw(14) << "LSTM GPU"
-              << std::setw(13) << "CPU winner"
-              << std::setw(13) << "GPU winner"
+    cout << left << setw(7) << "Scen"
+              << right
+              << setw(14) << "Rec CPU"
+              << setw(14) << "LSTM CPU"
+              << setw(14) << "Rec GPU"
+              << setw(14) << "LSTM GPU"
+              << setw(13) << "CPU winner"
+              << setw(13) << "GPU winner"
               << "\n";
-    std::cout << std::string(89, '-') << "\n";
+    cout << string(89, '-') << "\n";
 
     int lstm_wins_cpu = 0, lstm_wins_gpu = 0, total = 0;
     for (size_t i = 0; i < n; ++i)
     {
         const auto& c = cpu_vs[i];
         const auto& g = gpu_vs[i];
-        std::cout << std::left << std::setw(7) << c.id
-                  << std::right << std::scientific << std::setprecision(3)
-                  << std::setw(14) << c.rec.test_rmse_mean
-                  << std::setw(14) << c.lstm.test_rmse_mean
-                  << std::setw(14) << g.rec.test_rmse_mean
-                  << std::setw(14) << g.lstm.test_rmse_mean
-                  << std::setw(13) << c.winner
-                  << std::setw(13) << g.winner
+        cout << left << setw(7) << c.id
+                  << right << scientific << setprecision(3)
+                  << setw(14) << c.rec.test_rmse_mean
+                  << setw(14) << c.lstm.test_rmse_mean
+                  << setw(14) << g.rec.test_rmse_mean
+                  << setw(14) << g.lstm.test_rmse_mean
+                  << setw(13) << c.winner
+                  << setw(13) << g.winner
                   << "\n";
         if (c.winner == "LSTM") ++lstm_wins_cpu;
         if (g.winner == "LSTM") ++lstm_wins_gpu;
         if (c.winner != "n/a")  ++total;
     }
 
-    std::cout << "\n";
-    std::cout << "LSTM wins on CPU: " << lstm_wins_cpu << " / " << total << "\n";
-    std::cout << "LSTM wins on GPU: " << lstm_wins_gpu << " / " << total << "\n";
+    cout << "\n";
+    cout << "LSTM wins on CPU: " << lstm_wins_cpu << " / " << total << "\n";
+    cout << "LSTM wins on GPU: " << lstm_wins_gpu << " / " << total << "\n";
 }
 
-} // namespace
+}
 
 int main()
 {
@@ -637,20 +634,20 @@ int main()
         const bool run_gpu = phase.empty() || phase == "gpu";
         const bool run_cpu = phase.empty() || phase == "cpu";
 
-        std::cout << "OpenNN - Recurrent vs LSTM forecasting benchmark "
+        cout << "OpenNN - Recurrent vs LSTM forecasting benchmark "
                   << "(" << forecasting_seed_count() << " seed"
                   << (forecasting_seed_count() > 1 ? "s" : "") << " per scenario)\n";
-        std::cout << "Dataset: UCI Beijing PM2.5  data_dir=" << forecasting_data_dir() << "\n";
-        std::cout << "Flow: phase 1 runs every scenario on GPU; when GPU is done,\n"
+        cout << "Dataset: UCI Beijing PM2.5  data_dir=" << forecasting_data_dir() << "\n";
+        cout << "Flow: phase 1 runs every scenario on GPU; when GPU is done,\n"
                      "      phase 2 reruns the same scenarios on CPU.\n";
         if (!phase.empty())
-            std::cout << "OPENNN_FORECASTING_PHASE=" << phase
+            cout << "OPENNN_FORECASTING_PHASE=" << phase
                       << " -> running only that phase.\n";
 
         vector<ScenarioVerdict> gpu_verdicts;
         if (run_gpu)
         {
-            std::cout << "\n#################  PHASE 1 / 2  :  G P U  #################\n";
+            cout << "\n#################  PHASE 1 / 2  :  G P U  #################\n";
             Configuration::instance().set(Device::CUDA, Type::FP32);
             for (const auto& s : scenarios())
                 if (scenario_selected(s.id))
@@ -661,7 +658,7 @@ int main()
         vector<ScenarioVerdict> cpu_verdicts;
         if (run_cpu)
         {
-            std::cout << "\n#################  PHASE 2 / 2  :  C P U  #################\n";
+            cout << "\n#################  PHASE 2 / 2  :  C P U  #################\n";
             Configuration::instance().set(Device::CPU, Type::FP32);
             for (const auto& s : scenarios())
                 if (scenario_selected(s.id))
@@ -673,9 +670,9 @@ int main()
             print_combined_summary(cpu_verdicts, gpu_verdicts);
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << "FATAL: " << e.what() << "\n";
+        cerr << "FATAL: " << e.what() << "\n";
         return 1;
     }
 }

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   O P E R A T I O N S   S O U R C E
@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_operations.h"
+#include "cuda_tensor_operations.h"
 #include "device_backend.h"
 #include "operator.h"
 #include "random_utilities.h"
@@ -632,10 +633,6 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
-    // Two statements on purpose: fusing the bias into the product expression
-    // ((input * weights).rowwise() + bias) makes Eigen materialize the whole
-    // product in a heap temporary before the add -- an extra batch x outputs
-    // allocation and copy per call.
     auto output_matrix = output.as_flat_matrix();
     output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
     output_matrix.rowwise() += bias.as_vector().transpose();
@@ -713,9 +710,6 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
         const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
-        // Variance via E[x^2] - E[x]^2 can go slightly negative from catastrophic
-        // cancellation when activations are large (high embedding dimension); clamp
-        // to >= 0 before the sqrt so the layer norm cannot produce NaN.
         const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
         const float std_val = sqrt(variance + EPSILON);
         const float inv_std = 1.0f / std_val;
@@ -771,8 +765,6 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        // gamma * delta is reused three times; compute it once into the output buffer (no extra
-        // allocation) and reuse it for both reductions and the final update.
         input_delta_map = gamma_map * output_delta_map;
 
         const float sum_scaled_gradient      = input_delta_map.sum() * inv_D;
@@ -791,8 +783,6 @@ void layer_normalization_forward(const TensorView& input, const TensorView& gamm
     layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
-// Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
-// (the residual-stream value the backward needs) and LayerNorm(sum) to output.
 void layer_normalization_add_forward(const TensorView& input, const TensorView& residual,
                             const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
@@ -814,7 +804,6 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
         return;
     }
 #endif
-    // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
     layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
 }
@@ -1308,7 +1297,7 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
     if (indices.is_cuda())
     {
         host.resize(size_t(total));
-        copy_device_to_host_float(indices.data, indices.type, total, host.data(), Backend::get_compute_stream());
+        copy_device_to_host_float(indices.data, indices.type, total, host.data(), device::get_compute_stream());
         ids = host.data();
     }
 #endif
@@ -1441,7 +1430,7 @@ static void copy_gpu(const TensorView& source, TensorView& destination)
 {
     device::copy_async(destination.data, source.data, source.byte_size(),
                        device::CopyKind::DeviceToDevice,
-                       Backend::get_compute_stream());
+                       device::get_compute_stream());
 }
 
 static void add_gpu(const TensorView& input_1,
@@ -1561,10 +1550,6 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    // cuBLASLt's fused BIAS epilogue requires the bias data type to match the
-    // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
-    // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
-    // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
     const void* bias_for_gemm = (bias.data && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
         : bias.data;
@@ -1607,11 +1592,6 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     if (output_delta.type == Type::BF16)
     {
-        // The fused bias-gradient epilogue (BGRADA) has no bf16 tensor-core
-        // algorithm in cuBLASLt, so it falls back to a slow magma_sgemmEx kernel
-        // (~10x slower, ~80% of the bf16 step). Compute the weight gradient with a
-        // plain bf16 tensor-core GEMM (cast into the fp32 master gradient) and the
-        // bias gradient with a separate fp32 reduction.
         bfloat16* dw_bf16 = ensure_bf16_gradient_workspace(weight_gradient.size());
         run_lt_matmul_cached(
             output_columns, input_columns, total_rows,
@@ -1625,7 +1605,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         if (bias_gradient.size() > 0)
         {
             device::set_zero_async(bias_gradient.data, bias_gradient.size() * Index(sizeof(float)),
-                                   Backend::get_compute_stream());
+                                   device::get_compute_stream());
             bias_grad_sum_cuda<bfloat16>(total_rows, output_columns,
                                          output_delta.as<bfloat16>(), bias_gradient.as<float>());
         }
@@ -1724,7 +1704,7 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
     });
 }
 
-static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool /* is_training */)
+static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool)
 {
     output.dispatch([&](auto tag) {
         using T = decltype(tag);
@@ -1830,7 +1810,7 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 #undef OPENNN_STUB_GPU_OP
 
-#endif // OPENNN_HAS_CUDA
+#endif
 
 
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)

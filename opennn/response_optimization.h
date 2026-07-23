@@ -164,13 +164,6 @@ public:
     pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
 
-    // Select one point from a returned front by balancing two input-space qualities with 'balance'
-    // in [0,1]: domain centrality (worst-case margin to the nearest box wall over the continuous
-    // inputs) and Jacobian robustness (low span-weighted |df/dx|, i.e. output insensitive to input
-    // error). Both are min-max normalized across the front and combined by geometric mean
-    // C^(1-balance) * R^balance, so balance=0 is pure centrality and balance=1 is pure robustness.
-    // Reuses the solver's analytic NetworkDifferential when available, else builds one, else falls
-    // back to finite differences. Returns (row index, row), like get_advised_point.
     pair<Index, VectorR> get_robust_point(const MatrixR&, float balance = 0.5f) const;
 
     Domain get_original_domain(string_view role) const;
@@ -225,9 +218,6 @@ public:
 
     Index get_objectives_number() const;
 
-    // Objectives whose Sense is Minimize/Maximize (the only ones that decide the SO vs MO split).
-    // Fixed objectives are excluded here; they shape the feasible region as band constraints and,
-    // only when there is no optimizing objective at all, become closeness columns.
     Index get_optimizing_objectives_number() const;
 
     Index get_evaluations_used() const;
@@ -260,20 +250,17 @@ public:
 private:
 
     NeuralNetwork* neural_network = nullptr;
-    // Problem definition
 
     ConstraintSet constraint_set;
 
     map<string, Sense> objectives;
 
-    // Target value for each Fixed objective (unused for Minimize/Maximize).
     map<string, float> fixed_values;
 
     map<string, TimeType> time_roles;
 
     Tensor3 fixed_history;
 
-    // Algorithm hyperparameters
 
     Index evaluations_number = 2000;
     Index max_iterations = 20;
@@ -289,7 +276,6 @@ private:
     float deformation_domain_factor = 1.0f;
     BranchMode branch_mode = BranchMode::Budgeted;
 
-    // Transient solve state(I try to remove them)
 
     mutable map<string, pair<vector<Variable>, vector<Descriptives>>> variables_descriptives;
 
@@ -297,7 +283,6 @@ private:
 
     mutable SamplingMemory sampling_memory;
 	
-	// Do not remove it's useful for benchmarks
 
     mutable Index evaluations_used = 0;
 };

@@ -53,8 +53,6 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
         new_output_shape.dim_or_zero(1),
         get_label());
 
-    // set_learned_positional(false) also clears add_positional_encoding, so it
-    // must run before AddPositionalEncoding is applied.
     if (embedding_layer_element->has("LearnedPositional"))
         set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional"));
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));

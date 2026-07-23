@@ -102,7 +102,7 @@ TEST(CrossEntropyError2d, CalculateError)
 
     const type error = loss.calculate_error(batch, forward_propagation).error;
 
-    EXPECT_FALSE(std::isnan(error));
+    EXPECT_FALSE(isnan(error));
     EXPECT_GE(error, type(0));
 }
 

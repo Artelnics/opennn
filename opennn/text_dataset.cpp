@@ -52,11 +52,6 @@ TextDataset::TextDataset(const filesystem::path& new_data_path,
         read_txt();
 }
 
-// Near-duplicate of TokenizerOperator::build_vocabulary, kept separate on
-// purpose: this version tie-breaks equal-frequency tokens alphabetically while
-// the operator's does not, so unifying them would silently reorder existing
-// vocabularies and invalidate the id <-> embedding-row mapping of saved weight
-// files. Revisit when the word-level models are next retrained.
 void TextDataset::create_vocabulary(const vector<string_view>& corpus_tokens)
 {
     unordered_map<string_view, size_t> token_count;
@@ -98,9 +93,6 @@ void TextDataset::read_txt()
 
     string buffer = read_text_file(data_path);
 
-    // A tokenizer with a fixed loaded vocabulary (subword, e.g. byte-pair)
-    // encodes the raw corpus; otherwise the corpus is lowercased and split into
-    // whitespace/word-level tokens whose vocabulary is built by frequency.
     const bool subword = tokenizer && tokenizer->get_vocabulary_size() > 0;
 
     vector<Index> token_ids;
@@ -126,8 +118,6 @@ void TextDataset::read_txt()
 
     update_vocabulary_map();
 
-    // Non-overlapping blocks of (sequence_length + 1) tokens: inputs are tokens
-    // [0, T-1] and targets the same block shifted one position, [1, T].
     const Index record_tokens = sequence_length + 1;
     const Index samples_number = ssize(token_ids) / record_tokens;
 
@@ -171,9 +161,6 @@ void TextDataset::read_txt()
     }
     else
     {
-        // BinaryFile: fixed-size records of (sequence_length + 1) int32 tokens per
-        // sample. The cache name carries a tokenizer tag so switching tokenizers
-        // never silently reuses a stale cache.
         cache_path = filesystem::path(data_path.string() + ".cache") / format("lm_tokens_{}.bin", cache_tag);
 
         const uintmax_t record_bytes = uintmax_t(record_tokens) * sizeof(int32_t);

@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   T E N S O R   T Y P E S   H E A D E R
@@ -257,7 +257,7 @@ struct Buffer
     void* data = nullptr;
     Index bytes = 0;
     Device device_type = Device::CPU;
-    bool owns = true;   // false => non-owning view; the memory is freed by its owner.
+    bool owns = true;
 
     template<typename T> T*       as()       { return static_cast<T*>(data); }
     template<typename T> const T* as() const { return static_cast<const T*>(data); }
@@ -286,9 +286,6 @@ struct Buffer
         bytes = byte_count;
     }
 
-    // Point at memory owned by another Buffer (non-owning view): the viewed
-    // memory must outlive this Buffer and is never freed or resized through it.
-    // Used to overlay a smaller, temporally-disjoint buffer onto a larger one.
     void set_view(void* external_data, Index byte_count, Device view_device) noexcept
     {
         free_buffer();
@@ -540,7 +537,7 @@ size_t hash_combine(const Vs&... values)
 inline void TensorView::set_zero_async() const
 {
     if (!data || byte_size() == 0) return;
-    device::set_zero_async(data, byte_size(), Backend::get_compute_stream());
+    device::set_zero_async(data, byte_size(), device::get_compute_stream());
 }
 
 inline const float one = 1.0f;

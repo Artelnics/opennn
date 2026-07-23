@@ -404,10 +404,6 @@ Index ResponseOptimization::get_optimizing_objectives_number() const
 
 Index ResponseOptimization::get_objectives_number() const
 {
-    // Number of columns the objective matrix will actually carry: the Minimize/Maximize objectives,
-    // or — only when there are none — the Fixed objectives scored by closeness. Fixed objectives never
-    // add columns while any optimizing objective exists (they are constraint-only). Keeping this equal
-    // to the real column count is what keeps get_advised_point and the Objectives matrices consistent.
     const Index optimizing = get_optimizing_objectives_number();
     if (optimizing > 0)
         return optimizing;
@@ -433,9 +429,6 @@ vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) 
 
 const pair<vector<Variable>, vector<Descriptives>>& ResponseOptimization::get_variables_and_descriptives(const string& role) const
 {
-    // The filtered variables/descriptives depend only on the network and the time roles, both
-    // stable during a solve; memoize to avoid re-reading the Scaling/Unscaling layers and
-    // re-filtering on every sampling call. Invalidated by set()/set_time_role()/clear_time_roles().
     const auto cache_iterator = variables_descriptives.find(role);
     if (cache_iterator != variables_descriptives.end())
         return cache_iterator->second;
@@ -572,9 +565,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     closeness_target = VectorR::Zero(objectives_number);
     closeness_scale = VectorR::Ones(objectives_number);
 
-    // With no Minimize/Maximize objective, the problem is a pure inverse solve: the Fixed objectives
-    // become the (closeness) columns. Otherwise Fixed objectives contribute no columns at all — they
-    // are enforced only through their injected band constraints (see expand_fixed_objectives).
     const bool synthetic = (response_optimization.get_optimizing_objectives_number() == 0);
 
     Index current_objective_index = 0;
@@ -598,8 +588,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
             const bool is_fixed_objective = response_optimization.is_objective(variable_name)
                                          && response_optimization.get_sense(variable_name) == Sense::Fixed;
 
-            // Skip Fixed objectives unless we are in the pure-fixed (synthetic) case; skip
-            // optimizing objectives when we are building closeness columns.
             const bool include = response_optimization.is_objective(variable_name)
                               && (synthetic ? is_fixed_objective : !is_fixed_objective);
 
@@ -616,11 +604,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
                 if (is_fixed_objective)
                 {
-                    // Closeness column: extract() maps the raw value to 1 - |value - t|/half_span,
-                    // clamped to [0,1] (1 == on target). We set an identity affine transform so
-                    // normalize() and Pareto see it as an ordinary maximize-in-[0,1] objective, and
-                    // pin the utopian to +1 (perfect closeness). The raw target t is stored in row 0
-                    // so the single-objective loop's relative-error check tracks |value - t|.
                     const float half_span = max(EPSILON, 0.5f * range);
 
                     closeness_mask[static_cast<size_t>(current_objective_index)] = 1;
@@ -812,7 +795,6 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
     for (const Variable& variable : input_variables)
         type_of_name[variable.name] = variable.type;
 
-    // Warn at most once per variable across the whole run (loud but not per-iteration spam).
     static std::set<string> warned_zero_excluded;
 
     vector<vector<Index>> cardinality_columns;
@@ -833,9 +815,6 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
             types.push_back(type_of_name.at(name));
         }
 
-        // A cardinality member is "off" when its value is exactly 0 and "on" otherwise.
-        // Force a member off if its box is pinned to 0, and force it on if its box excludes 0
-        // (a variable that cannot reach 0 always counts as active -> loud warning, graceful degrade).
         const Index count = ssize(columns);
         vector<char> force_on(count, 0), force_off(count, 0);
         for (Index c = 0; c < count; ++c)
@@ -886,24 +865,21 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
             for (Index c = 0; c < count; ++c)
             {
-                if (draw[c] < 0.5f)                       // not selected: force the value to exactly 0
+                if (draw[c] < 0.5f)
                 {
                     random_inputs(r, columns[c]) = 0.0f;
                     continue;
                 }
 
-                // selected slot
                 if (!group.force_nonzero)
-                    continue;                             // free: keep the sampled value (may be 0) -> at most k
+                    continue;
 
-                // forced nonzero: give the slot a type-consistent nonzero value -> exactly k
                 if (types[c] == VariableType::Binary)
                 {
-                    random_inputs(r, columns[c]) = 1.0f;  // 1 is the only nonzero option
+                    random_inputs(r, columns[c]) = 1.0f;
                 }
                 else if (types[c] == VariableType::Integer)
                 {
-                    // Integers range over their nonzero values; only nudge if the pre-sample landed on 0.
                     if (abs(random_inputs(r, columns[c])) < 0.5f)
                     {
                         const float superior = input_domain.superior_frontier(columns[c]);
@@ -911,7 +887,6 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
                         random_inputs(r, columns[c]) = (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);
                     }
                 }
-                // Continuous: keep the already-sampled in-range value (may be ~0, accepted).
             }
         }
 
@@ -980,7 +955,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             candidates.push_back(nearest);
         }
 
-        // One locked bulk draw of every pick instead of locking the RNG once per row.
         MatrixR picks(effective_evaluations, 1);
         set_random_integer(picks, 0, ssize(candidates) - 1);
 
@@ -1019,8 +993,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
             return best;
         };
 
-        // The exploit rows (i >= explore_count) draw uniformly over the same category range, so a
-        // single bulk draw replaces one locked RNG call per exploit row. The explore rows are RNG-free.
         const Index exploit_count = max(Index(0), effective_evaluations - explore_count);
         MatrixR picks;
         if (exploit_count > 0)
@@ -1446,9 +1418,6 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
               ? inputs.col(static_cast<Index>(source_and_column(1, j)))
               : outputs.col(static_cast<Index>(source_and_column(1, j)));
 
-        // Fixed ("equal to") objectives are scored by closeness to the target: 1 on target, falling
-        // linearly to 0 half a domain-span away. Higher is better, so it composes with the affine
-        // Minimize/Maximize columns and the maximization-sense Pareto machinery without special cases.
         objective_matrix.col(j) = (!closeness_mask.empty() && closeness_mask[static_cast<size_t>(j)])
               ? (1.0f - (raw.array() - closeness_target(j)).abs() * closeness_scale(j)).cwiseMax(0.0f).matrix()
               : raw;
@@ -1482,8 +1451,6 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
 
     for (Index j = 0; j < objectives_number; ++j)
     {
-        // Closeness (Fixed) columns keep their utopian pinned at the target with a fixed scale;
-        // never let the observed points drift it, or "on target == 1" would stop being the reference.
         if (!closeness_mask.empty() && closeness_mask[static_cast<size_t>(j)])
             continue;
 
@@ -1827,8 +1794,6 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 }
 
 
-// Vertically stack row-blocks in a single allocation. Replaces repeated append_rows, which copies
-// the whole growing matrix every call (quadratic). Empty blocks contribute no rows.
 static MatrixR stack_rows(const vector<MatrixR>& blocks)
 {
     if (blocks.empty())
@@ -1853,8 +1818,6 @@ static MatrixR stack_rows(const vector<MatrixR>& blocks)
 }
 
 
-// True if row `a` Pareto-dominates row `b` (maximization): no worse in every objective and
-// strictly better in at least one. Short-circuits on the first objective where `a` falls behind.
 static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, const Index b)
 {
     bool strictly_better = false;
@@ -1870,10 +1833,6 @@ static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, con
 }
 
 
-// Row indices of the Pareto-optimal (non-dominated) points of an objective matrix, maximization
-// sense. Rows with non-finite entries are skipped (they neither belong to the front nor enter it
-// as dominators). Incremental cull: each point is tested only against the running front and, when
-// kept, evicts the front members it dominates — far cheaper than all-pairs once the front is small.
 static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
 {
     const Index rows_number = objective_matrix.rows();
@@ -2095,7 +2054,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
             candidate_output_blocks.push_back(move(local_pareto_output));
         }
 
-        // Single allocation instead of append_rows copying the growing matrix every iteration.
         const MatrixR candidate_inputs = stack_rows(candidate_input_blocks);
         const MatrixR candidate_outputs = stack_rows(candidate_output_blocks);
 
@@ -2104,7 +2062,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         if (candidate_inputs.rows() == 0)
             break;
 
-        // Normalized objectives of the candidate set, shared by optimal-point selection and Pareto.
         MatrixR objective_matrix = objective_set.extract(candidate_inputs, candidate_outputs);
         objective_set.normalize(objective_matrix);
 
@@ -2294,9 +2251,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
     for (Index c = 0; c < inputs_number; ++c)
         span(c) = domain.superior_frontier(c) - domain.inferior_frontier(c);
 
-    // Centrality: worst-case normalized margin to the nearest wall over the continuous inputs
-    // (1 at the box centre, 0 on a wall). Discrete/one-hot columns are skipped — their "distance to
-    // a wall" is meaningless. A point with every continuous input dead-centre scores 1.
     VectorR margin(rows);
     for (Index r = 0; r < rows; ++r)
     {
@@ -2314,9 +2268,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
         margin(r) = any_continuous ? worst : 1.0f;
     }
 
-    // Robustness: span-weighted Frobenius norm of the network Jacobian at the point. Reuse the
-    // solver's analytic differential if it was built and validated; otherwise build one; if that is
-    // unavailable (or forecasting), fall back to central finite differences through the network.
     const NetworkDifferential* differential = network_jacobian.differential.get();
     unique_ptr<NetworkDifferential> local_differential;
     if (!differential && neural_network && !is_forecasting())
@@ -2361,7 +2312,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
                 }
             }
         }
-        // Forecasting with no analytic differential: robustness is left neutral (0 for every point).
 
         return float(sqrt(sum_sq));
     };
@@ -2370,7 +2320,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
     for (Index r = 0; r < rows; ++r)
         sensitivity(r) = sensitivity_of(inputs.row(r).transpose());
 
-    // Min-max each quality to [0,1] with higher = better; a flat quality (no spread) is neutral (1).
     const auto minmax_to_score = [](const VectorR& v, const bool invert) -> VectorR
     {
         const float lo = v.minCoeff();
@@ -2388,8 +2337,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
     const VectorR centrality_score = minmax_to_score(margin, false);
     const VectorR robustness_score = minmax_to_score(sensitivity, true);
 
-    // Geometric-mean blend: both qualities floored so the single worst point on one axis is not
-    // annihilated outright, yet a point that is poor on either is still strongly penalized.
     constexpr float floor_value = 1e-3f;
     Index best = 0;
     float best_score = -1.0f;
@@ -2407,9 +2354,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
 
 void ResponseOptimization::initialize_network_differential() const
 {
-    // The analytic Jacobian models the network, not the constraints, so it is built and validated
-    // once and reused across every branch; rebuilding it per solve_once would repeat the same work.
-    // Invalidated when the network or the formula constraints change.
     if (network_jacobian.ready)
         return;
 
@@ -2419,8 +2363,6 @@ void ResponseOptimization::initialize_network_differential() const
     if (!neural_network || is_forecasting())
         return;
 
-    // Only build if some part of the problem (base set or any disjunctive branch) carries a
-    // non-callback output constraint that the analytic Jacobian could repair.
     const auto has_output_constraint = [](const vector<MultivariateConstraint>& list)
     {
         return ranges::any_of(list, [](const MultivariateConstraint& c){
@@ -2564,10 +2506,6 @@ MatrixR ResponseOptimization::solve_once() const
 
     initialize_network_differential();
 
-    // The single- vs multi-objective split is decided only by the Minimize/Maximize objectives. A lone
-    // optimizing objective, or a pure inverse solve (no optimizing objective, one or more Fixed targets
-    // ranked by closeness), takes the single-objective path — one feasible region to home in on. Fixed
-    // objectives never push the problem into the multi-objective branch.
     return (get_optimizing_objectives_number() >= 2)
         ? perform_multiobjective_optimization()
         : perform_single_objective_optimization();
@@ -2586,8 +2524,6 @@ void ResponseOptimization::expand_fixed_objectives()
         return ranges::any_of(input_variables, [&](const Variable& v){ return v.name == name; });
     };
 
-    // Output range per Fixed-output target, used only to size the equality band. Built lazily so a
-    // fixed-input-only problem never forces an Unscaling layer to exist.
     map<string, float> output_range;
     const bool any_output_fixed = ranges::any_of(fixed_values, [&](const auto& entry)
     {
@@ -2612,15 +2548,11 @@ void ResponseOptimization::expand_fixed_objectives()
 
         if (is_input_name(name))
         {
-            // Fixing an input to a value is just a box on that variable — no projection needed.
             constraint_set.univariate[name] = UnivariateConstraint(ComparisonOperator::EqualTo, target, target);
             input_fixed_names.push_back(name);
             continue;
         }
 
-        // Fixed output: inject an equality band [t-d, t+d] so repair_output_constraints projects
-        // samples onto {x : f(x) = t}. The half-width reuses relative_tolerance (as a fraction of the
-        // output range), with a floor so the band is never numerically empty.
         const auto found = output_range.find(name);
         const float range = (found != output_range.end()) ? found->second : abs(target);
         const float half_width = max(bound_tolerance(target), relative_tolerance * max(EPSILON, range));
@@ -2631,8 +2563,6 @@ void ResponseOptimization::expand_fixed_objectives()
              << (target - half_width) << ", " << (target + half_width) << "].\n";
     }
 
-    // Input-fixed objectives have been reduced to box constraints; drop them from the objective set
-    // so they never become columns.
     for (const string& name : input_fixed_names)
     {
         objectives.erase(name);

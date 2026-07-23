@@ -60,9 +60,9 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     MatrixR data(samples, 3);
     for(Index i = 0; i < samples; i++)
     {
-        data(i, 0) = type(i) / samples;           // input1: señal clara
-        data(i, 1) = type(rand()) / RAND_MAX;      // input2: ruido puro
-        data(i, 2) = data(i, 0);                   // output = input1
+        data(i, 0) = type(i) / samples;
+        data(i, 1) = type(rand()) / RAND_MAX;
+        data(i, 2) = data(i, 0);
     }
     dataset.set_data(data);
     dataset.split_samples_random();
@@ -85,17 +85,15 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
 
 TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 {
-    // folds_number > 1 scores subsets by k-fold CV over Training+Validation through a transient
-    // overlay -- it must still select the informative input AND leave the user's roles intact.
     const Index samples = 60;
 
     TabularDataset dataset(samples, {2}, {1});
     MatrixR data(samples, 3);
     for (Index i = 0; i < samples; i++)
     {
-        data(i, 0) = type(i) / samples;             // input1: clear signal
-        data(i, 1) = type(rand()) / RAND_MAX;       // input2: pure noise
-        data(i, 2) = data(i, 0);                    // output = input1
+        data(i, 0) = type(i) / samples;
+        data(i, 1) = type(rand()) / RAND_MAX;
+        data(i, 2) = data(i, 0);
     }
     dataset.set_data(data);
     dataset.split_samples_random();
@@ -109,24 +107,19 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
     GrowingInputs growing_inputs(&training_strategy);
     growing_inputs.set_display(false);
     growing_inputs.set_maximum_inputs_number(1);
-    growing_inputs.set_folds_number(3);   // stratified 3-fold CV scoring
+    growing_inputs.set_folds_number(3);
 
     InputsSelectionResult results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
-    EXPECT_EQ(results.optimal_input_variables_indices[0], 0);   // still picks the informative input
+    EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
 
-    // The overlay must NEVER mutate the user's persistent roles.
     EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
 }
 
 
 TEST(GrowingInputsTest, FoldsNumberSurvivesJsonRoundTrip)
 {
-    // The k-fold setting must persist through the project's JSON so a saved model keeps its CV
-    // configuration. Mirrors the Neural Designer flow: a selector attached to a training strategy is
-    // serialized and reloaded (from_JSON reconfigures inputs against the dataset). A default selector
-    // stays at folds = 1 (legacy single-split behaviour).
     TabularDataset dataset(20, {2}, {1});
     dataset.set_data_random();
     dataset.split_samples_random();
@@ -136,7 +129,7 @@ TEST(GrowingInputsTest, FoldsNumberSurvivesJsonRoundTrip)
     TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GrowingInputs saved(&training_strategy);
-    EXPECT_EQ(saved.get_folds_number(), Index(1));   // default = legacy
+    EXPECT_EQ(saved.get_folds_number(), Index(1));
     saved.set_folds_number(5);
 
     const filesystem::path file = filesystem::temp_directory_path() / "opennn_growing_inputs_folds.json";

@@ -18,10 +18,6 @@ struct CombinationOperator : Operator
     Index input_features  = 0;
     Index output_features = 0;
 
-    // Activation folded into the GEMM epilogue on CUDA (Identity = none).
-    // ReLU: RELU_BIAS, in place on the output slot. GELUTanh: GELU_AUX_BIAS,
-    // activated result goes to output_slots[1] while output_slots[0] keeps
-    // the pre-activation the backward pass needs.
     ActivationFunction fused_activation = ActivationFunction::Identity;
 
     TensorView weights;

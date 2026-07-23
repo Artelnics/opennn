@@ -44,14 +44,14 @@ static double current_rss_mb()
         return double(counters.WorkingSetSize) / (1024.0 * 1024.0);
     return 0.0;
 #else
-    std::ifstream status("/proc/self/status");
-    std::string line;
+    ifstream status("/proc/self/status");
+    string line;
 
-    while (std::getline(status, line))
+    while (getline(status, line))
     {
         if (line.rfind("VmRSS:", 0) == 0)
         {
-            std::istringstream stream(line.substr(6));
+            istringstream stream(line.substr(6));
             double kb = 0.0;
             stream >> kb;
             return kb / 1024.0;
@@ -64,7 +64,7 @@ static double current_rss_mb()
 #endif
 }
 
-static std::optional<double> current_process_vram_mb()
+static optional<double> current_process_vram_mb()
 {
     const int pid = current_pid();
 #ifdef _WIN32
@@ -74,17 +74,17 @@ static std::optional<double> current_process_vram_mb()
 #endif
 
     FILE* pipe = popen(command, "r");
-    if (!pipe) return std::nullopt;
+    if (!pipe) return nullopt;
 
-    std::optional<double> total;
+    optional<double> total;
     char buffer[256];
 
     while (fgets(buffer, sizeof(buffer), pipe))
     {
-        std::string line(buffer);
-        std::replace(line.begin(), line.end(), ',', ' ');
+        string line(buffer);
+        replace(line.begin(), line.end(), ',', ' ');
 
-        std::istringstream stream(line);
+        istringstream stream(line);
         int row_pid = 0;
         double used_mb = 0.0;
 
@@ -96,7 +96,7 @@ static std::optional<double> current_process_vram_mb()
     return total;
 }
 
-static std::optional<double> gpu_used_memory_mb()
+static optional<double> gpu_used_memory_mb()
 {
 #ifdef _WIN32
     const char* command = "nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>NUL";
@@ -105,14 +105,14 @@ static std::optional<double> gpu_used_memory_mb()
 #endif
 
     FILE* pipe = popen(command, "r");
-    if (!pipe) return std::nullopt;
+    if (!pipe) return nullopt;
 
     char buffer[256];
-    std::optional<double> used;
+    optional<double> used;
 
     while (fgets(buffer, sizeof(buffer), pipe))
     {
-        std::istringstream stream(buffer);
+        istringstream stream(buffer);
         double value = 0.0;
         if (stream >> value)
         {
@@ -140,7 +140,7 @@ static bool run_tiny_gpu_matmul()
     auto* b = static_cast<float*>(device::allocate(Device::CUDA, bytes));
     auto* c = static_cast<float*>(device::allocate(Device::CUDA, bytes));
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     device::set_zero_async(a, bytes, stream);
     device::set_zero_async(b, bytes, stream);
 
@@ -187,7 +187,7 @@ int main()
     {
         const auto vram_after_mb = gpu_used_memory_mb();
         if (vram_before_mb && vram_after_mb)
-            vram_mb = std::max(0.0, *vram_after_mb - *vram_before_mb);
+            vram_mb = max(0.0, *vram_after_mb - *vram_before_mb);
     }
 
     if (vram_mb)

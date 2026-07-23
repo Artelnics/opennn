@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   D E V I C E   B A C K E N D
@@ -17,26 +17,49 @@
 namespace opennn::device
 {
 
-namespace
+class ConvWorkspacePolicy
 {
+public:
+    int64_t limit_bytes() const noexcept
+    {
+        const int64_t current_mode = mode.load(memory_order_relaxed);
+        if (current_mode == 0) return 0;
+        if (current_mode > 0) return current_mode;
+        return auto_bytes.load(memory_order_relaxed);
+    }
 
-atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+    void set_cap(int64_t new_mode) noexcept
+    {
+        mode.store(new_mode, memory_order_relaxed);
+    }
 
-// Conv workspace cap state. mode: 0 = off (uncapped/autotune), >0 = explicit
-// bytes, <0 = AUTO (use the per-network auto value). auto value = largest single
-// -layer activation, set by ForwardPropagation, clamped to conv_workspace_auto_ceiling.
-//
-// Defaults: AUTO cap + autotune off. Uncapped autotune lets the cuDNN-frontend
-// consider (and, on an allocation failure it silently swallows, select) plans whose
-// workspace scales with batch size into GBs — which OOMs on large batches for no
-// speed gain (autotune probing is a net slowdown on small/medium convs). A bounded
-// AUTO cap forces a small-workspace plan: same result, less memory, faster here.
-constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;  // 256 MiB
-atomic<int64_t> conv_workspace_cap_mode{-1};                          // AUTO
-atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
-atomic_bool conv_autotune_enabled_flag{false};
+    void set_auto_limit(int64_t bytes) noexcept
+    {
+        if (bytes > 0)
+            auto_bytes.store(min(bytes, auto_ceiling), memory_order_relaxed);
+    }
 
-void throw_if_auto(Device device_type)
+    bool autotune_enabled() const noexcept
+    {
+        return autotune.load(memory_order_relaxed);
+    }
+
+    void set_autotune(bool enabled) noexcept
+    {
+        autotune.store(enabled, memory_order_relaxed);
+    }
+
+private:
+    static constexpr int64_t auto_ceiling = int64_t(256) * 1024 * 1024;
+    atomic<int64_t> mode{-1};
+    atomic<int64_t> auto_bytes{auto_ceiling};
+    atomic_bool autotune{false};
+};
+
+static atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+static ConvWorkspacePolicy conv_workspace_policy;
+
+static void throw_if_auto(Device device_type)
 {
     throw_if(device_type == Device::Auto,
              "device backend expects a resolved device.");
@@ -44,13 +67,13 @@ void throw_if_auto(Device device_type)
 
 
 #ifndef OPENNN_HAS_CUDA
-[[noreturn]] void throw_cuda_unavailable()
+[[noreturn]] static void throw_cuda_unavailable()
 {
     throw runtime_error("CUDA support is not compiled in.");
 }
 #endif
 
-void* allocate_cuda(Index byte_count)
+static void* allocate_cuda(Index byte_count)
 {
 #ifdef OPENNN_HAS_CUDA
     throw_if(cuda_allocation_growth_forbidden(),
@@ -64,13 +87,9 @@ void* allocate_cuda(Index byte_count)
 #endif
 }
 
-}
-
-
 bool has_cuda_device() noexcept
 {
 #ifdef OPENNN_HAS_CUDA
-    // The visible device count cannot change within a process, so probe once.
     static const bool available = []() noexcept
     {
         int count = 0;
@@ -118,7 +137,7 @@ size_t available_memory()
 #endif
 }
 
-std::string gpu_info_string() noexcept
+string gpu_info_string() noexcept
 {
 #ifdef OPENNN_HAS_CUDA
     cudaDeviceProp p{};
@@ -127,7 +146,7 @@ std::string gpu_info_string() noexcept
     cudaMemGetInfo(&free_b, &total_b);
     int ver = 0;
     cudaRuntimeGetVersion(&ver);
-    return std::format("{:<32s}  {:.0f} MB total / {:.0f} MB free  CC {}.{}  CUDA {:d}.{:d}",
+    return format("{:<32s}  {:.0f} MB total / {:.0f} MB free  CC {}.{}  CUDA {:d}.{:d}",
                        p.name,
                        total_b / 1048576.0,
                        free_b  / 1048576.0,
@@ -143,39 +162,34 @@ bool cuda_allocation_growth_forbidden() noexcept
     return cuda_allocation_growth_forbidden_runtime.load(memory_order_relaxed);
 }
 
-void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
+static void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 {
     cuda_allocation_growth_forbidden_runtime.store(forbidden, memory_order_relaxed);
 }
 
 int64_t conv_workspace_limit_bytes() noexcept
 {
-    const int64_t mode = conv_workspace_cap_mode.load(memory_order_relaxed);
-    if (mode == 0) return 0;                                       // off (autotune)
-    if (mode > 0)  return mode;                                    // explicit bytes
-    return conv_workspace_auto_bytes.load(memory_order_relaxed);   // AUTO
+    return conv_workspace_policy.limit_bytes();
 }
 
 void set_conv_workspace_cap(int64_t mode) noexcept
 {
-    conv_workspace_cap_mode.store(mode, memory_order_relaxed);
+    conv_workspace_policy.set_cap(mode);
 }
 
 void set_conv_workspace_auto_limit_bytes(int64_t bytes) noexcept
 {
-    if (bytes > 0)
-        conv_workspace_auto_bytes.store(bytes < conv_workspace_auto_ceiling ? bytes : conv_workspace_auto_ceiling,
-                                        memory_order_relaxed);
+    conv_workspace_policy.set_auto_limit(bytes);
 }
 
 bool conv_autotune_enabled() noexcept
 {
-    return conv_autotune_enabled_flag.load(memory_order_relaxed);
+    return conv_workspace_policy.autotune_enabled();
 }
 
 void set_conv_autotune(bool enabled) noexcept
 {
-    conv_autotune_enabled_flag.store(enabled, memory_order_relaxed);
+    conv_workspace_policy.set_autotune(enabled);
 }
 
 CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
@@ -340,7 +354,7 @@ void reset_last_error() noexcept
 #endif
 }
 
-cudaStream_t create_stream(unsigned flags)
+static cudaStream_t create_stream(unsigned flags)
 {
 #ifdef OPENNN_HAS_CUDA
     cudaStream_t stream = nullptr;
@@ -352,7 +366,7 @@ cudaStream_t create_stream(unsigned flags)
 #endif
 }
 
-void destroy_stream(cudaStream_t stream)
+static void destroy_stream(cudaStream_t stream)
 {
     if (!stream) return;
 
@@ -522,7 +536,7 @@ void destroy_graph_exec(cudaGraphExec_t) noexcept {}
 
 cudaStream_t get_compute_stream()
 {
-    return Backend::get_compute_stream();
+    return Backend::instance().cuda.compute_stream;
 }
 
 }
@@ -532,11 +546,8 @@ namespace opennn
 
 Backend::Backend()
 {
-    // OPENNN_THREADS caps the host thread pool (Eigen + OpenMP GEMM paths);
-    // unset or <= 0 keeps the hardware concurrency default. Benchmarks use it
-    // to run every engine at the same thread count.
-    const char* threads_env = std::getenv("OPENNN_THREADS");
-    set_threads_number(threads_env ? std::atoi(threads_env) : 0);
+    const char* threads_env = getenv("OPENNN_THREADS");
+    set_threads_number(threads_env ? atoi(threads_env) : 0);
 
 #ifdef OPENNN_HAS_CUDA
     int device_count = 0;
@@ -549,65 +560,57 @@ Backend::Backend()
         return;
     }
 
-    // Default (blocking) stream: must serialize with legacy stream 0, else recurrent/LSTM training races and diverges.
-    compute_stream = device::create_stream(cudaStreamDefault);
-    transfer_stream = device::create_stream(cudaStreamNonBlocking);
+    cuda.compute_stream = device::create_stream(cudaStreamDefault);
+    cuda.transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
-    CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    // The legacy cuBLAS handle and cuDNN are NOT created here -- see
-    // Backend::cublas() and Backend::cudnn().
+    CHECK_CUBLAS(cublasLtCreate(&cuda.cublas_lt_handle));
 #endif
 }
 
-// Deferred from the constructor (see get_cublas_handle() in the header):
-// creating the legacy handle reserves a device workspace that the
-// cuBLASLt-plus-custom-kernels inference path never uses.
 cublasHandle_t Backend::cublas()
 {
 #ifdef OPENNN_HAS_CUDA
-    call_once(cublas_init_once, [this]
+    call_once(cuda.cublas_init_once, [this]
     {
-        if (!compute_stream) return;   // no CUDA device: stay null, as before
+        if (!cuda.compute_stream) return;
 
-        CHECK_CUBLAS(cublasCreate(&cublas_handle));
-        CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
-        CHECK_CUBLAS(cublasSetStream(cublas_handle, compute_stream));
+        CHECK_CUBLAS(cublasCreate(&cuda.cublas_handle));
+        CHECK_CUBLAS(cublasSetMathMode(cuda.cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
+        CHECK_CUBLAS(cublasSetStream(cuda.cublas_handle, cuda.compute_stream));
     });
 #endif
-    return cublas_handle;
+    return cuda.cublas_handle;
 }
 
-// Deferred from the constructor (see get_cudnn_handle() in the header): a
-// cuDNN handle costs fixed VRAM whether or not any cuDNN op ever runs.
 cudnnHandle_t Backend::cudnn()
 {
 #ifdef OPENNN_HAS_CUDA
-    call_once(cudnn_init_once, [this]
+    call_once(cuda.cudnn_init_once, [this]
     {
-        if (!compute_stream) return;   // no CUDA device: stay null, as before
+        if (!cuda.compute_stream) return;
 
-        CHECK_CUDNN(cudnnCreate(&cudnn_handle));
-        CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
+        CHECK_CUDNN(cudnnCreate(&cuda.cudnn_handle));
+        CHECK_CUDNN(cudnnSetStream(cuda.cudnn_handle, cuda.compute_stream));
 
-        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&operator_sum_descriptor));
-        CHECK_CUDNN(cudnnSetOpTensorDescriptor(operator_sum_descriptor,
+        CHECK_CUDNN(cudnnCreateOpTensorDescriptor(&cuda.operator_sum_descriptor));
+        CHECK_CUDNN(cudnnSetOpTensorDescriptor(cuda.operator_sum_descriptor,
                                                CUDNN_OP_TENSOR_ADD,
                                                CUDNN_DATA_FLOAT,
                                                CUDNN_NOT_PROPAGATE_NAN));
     });
 #endif
-    return cudnn_handle;
+    return cuda.cudnn_handle;
 }
 
 Backend::~Backend()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (operator_sum_descriptor) { cudnnDestroyOpTensorDescriptor(operator_sum_descriptor); operator_sum_descriptor = nullptr; }
-    if (cublas_lt_handle)        { cublasLtDestroy(cublas_lt_handle);                       cublas_lt_handle = nullptr; }
-    if (cublas_handle)           { cublasDestroy(cublas_handle);                             cublas_handle = nullptr; }
-    if (cudnn_handle)            { cudnnDestroy(cudnn_handle);                               cudnn_handle = nullptr; }
-    device::destroy_stream(compute_stream);  compute_stream = nullptr;
-    device::destroy_stream(transfer_stream); transfer_stream = nullptr;
+    if (cuda.operator_sum_descriptor) { cudnnDestroyOpTensorDescriptor(cuda.operator_sum_descriptor); cuda.operator_sum_descriptor = nullptr; }
+    if (cuda.cublas_lt_handle)        { cublasLtDestroy(cuda.cublas_lt_handle);                       cuda.cublas_lt_handle = nullptr; }
+    if (cuda.cublas_handle)           { cublasDestroy(cuda.cublas_handle);                             cuda.cublas_handle = nullptr; }
+    if (cuda.cudnn_handle)            { cudnnDestroy(cuda.cudnn_handle);                               cuda.cudnn_handle = nullptr; }
+    device::destroy_stream(cuda.compute_stream);  cuda.compute_stream = nullptr;
+    device::destroy_stream(cuda.transfer_stream); cuda.transfer_stream = nullptr;
 #endif
 }
 
@@ -694,9 +697,9 @@ namespace
         int k;
         int transA;
         int transB;
-        int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS, BGRADA)
-        int io_dtype;   // cudaDataType_t for A and B (inputs)
-        int out_dtype;  // cudaDataType_t for C and D (outputs)
+        int epilogue;
+        int io_dtype;
+        int out_dtype;
 
         bool operator==(const LtMatmulPlanKey&) const noexcept = default;
     };
@@ -744,16 +747,12 @@ namespace
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
                      "workspace growth forbidden (warmup incomplete).");
-            device::synchronize(Backend::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
         }
-        
+
         return workspace_buffer.ensure<T>(n);
     }
 
-    // cublasLt and the cuDNN-frontend graphs all draw scratch from this one
-    // buffer (ops run serially on the compute stream, so the live peak is the
-    // max single workspace, not the sum). Record each growth delta so
-    // memory_debug telescopes to the final buffer size, the achieved floor.
     void* ensure_shared_scratch(size_t min_bytes)
     {
         Buffer& buffer = thread_state().workspace;
@@ -882,9 +881,6 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
-// Cast an fp32 bias to bf16 for a fused bf16 cuBLASLt BIAS epilogue (which
-// rejects an fp32 bias). Uses the gradient workspace, which is unused during
-// forward propagation, so it does not clobber the input cast.
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
@@ -922,7 +918,7 @@ void run_lt_matmul_cached(
                                 c_data, plan.output_matrix_layout,
                                 plan.has_algorithm ? &plan.algorithm : nullptr,
                                 ensure_shared_scratch(plan.workspace_bytes), plan.workspace_bytes,
-                                Backend::get_compute_stream()));
+                                device::get_compute_stream()));
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,

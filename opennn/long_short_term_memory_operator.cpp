@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   L O N G   S H O R T   T E R M   M E M O R Y   O P E R A T O R   S O U R C E
@@ -249,7 +249,6 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         const VectorMap bg_m = candidate_bias.as_vector();
         const VectorMap bo_m = output_bias.as_vector();
 
-        // Gate fusion: stack [f|i|g|o] so each step is 1+1 GEMM instead of 4+4.
         MatrixR Wcat(F, 4 * H);
         Wcat.leftCols(H)          = Wf_m;
         Wcat.middleCols(H, H)     = Wi_m;
@@ -308,12 +307,12 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                     float f, i, g, o, a, c;
                     if (standard_gates)
                     {
-                        f = 1.0f / (1.0f + std::exp(-Zrow[h]));
-                        i = 1.0f / (1.0f + std::exp(-Zrow[H + h]));
-                        g = std::tanh(Zrow[2 * H + h]);
-                        o = 1.0f / (1.0f + std::exp(-Zrow[3 * H + h]));
+                        f = 1.0f / (1.0f + exp(-Zrow[h]));
+                        i = 1.0f / (1.0f + exp(-Zrow[H + h]));
+                        g = tanh(Zrow[2 * H + h]);
+                        o = 1.0f / (1.0f + exp(-Zrow[3 * H + h]));
                         c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                        a = std::tanh(c);
+                        a = tanh(c);
                     }
                     else
                     {
@@ -542,7 +541,6 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         VectorMap gbg_v = candidate_bias_gradient.as_vector();
         VectorMap gbo_v = output_bias_gradient.as_vector();
 
-        // Gate fusion: stack [f|i|g|o] so each step is 1+1+1 GEMM instead of 4×4.
         MatrixR Wcat(F, 4 * H);
         Wcat.leftCols(H)          = Wf_m;
         Wcat.middleCols(H, H)     = Wi_m;
@@ -818,7 +816,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 static bool lstm_persist_env_enabled()
 {
     static const bool enabled = []() {
-        const char* env = std::getenv("OPENNN_RNN_PERSIST");
+        const char* env = getenv("OPENNN_RNN_PERSIST");
         return !(env && string(env) == "0");
     }();
     return enabled;
@@ -843,7 +841,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_(Index batch_size, bool for
             ensure_cudnn_setup_attempt_(batch_size, for_training);
             return;
         }
-        catch (const std::exception&)
+        catch (const exception&)
         {
             persist_algo_failed_ = true;
             rnn_desc.reset();
@@ -883,10 +881,10 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size, 
         dropout_states_buf.grow_to(Index(dropout_states_bytes));
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             dropout_desc, Backend::get_cudnn_handle(),
-            /*dropout=*/0.0f,
+                        0.0f,
             dropout_states_buf.data,
             size_t(dropout_states_buf.bytes),
-            /*seed=*/0ULL));
+                     0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
             rnn_desc,
@@ -901,7 +899,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size, 
             CUDNN_TENSOR_OP_MATH,
             int(F),
             int(H),
-            /*projSize=*/ int(H),
+                          int(H),
             1,
             dropout_desc,
             persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
@@ -914,7 +912,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size, 
         dweight_space_buf.grow_to(Index(weight_bytes));
 
         device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 
         CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
         CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
@@ -993,7 +991,7 @@ void LongShortTermMemoryOperator::ensure_cudnn_setup_attempt_(Index batch_size, 
         device::copy_async(slot.seq_dev.data, seq_h,
                            batch_size * Index(sizeof(int32_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
         static float zero_pad_fill = 0.0f;
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
@@ -1215,8 +1213,6 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
     const CudnnRnnShapeSlot& shape = active_shape();
 
-    // cuDNN always writes dx; when the previous layer needs no gradient
-    // (input_delta unlinked) give it a scratch sink sized (B, T, F).
     void* dx_data = input_delta.data;
     if (!dx_data || input_delta.empty())
     {
@@ -1229,15 +1225,15 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         rnn_desc,
         shape.seq_dev.as<int32_t>(),
         shape.y_desc, y_data, dy_data,
-        shape.x_desc, dx_data,   // dx
-        shape.h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
-        shape.c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
+        shape.x_desc, dx_data,
+        shape.h_desc, nullptr, nullptr, nullptr,
+        shape.c_desc, nullptr, nullptr, nullptr,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
 
     device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
         Backend::get_cudnn_handle(),
@@ -1266,7 +1262,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const Tenso
     throw runtime_error("apply_delta_gpu requires CUDA.");
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 }
 

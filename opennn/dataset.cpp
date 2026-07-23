@@ -17,7 +17,7 @@ namespace opennn
 vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
     const SampleRole role_type = string_to_sample_role(sample_role);
-    const vector<SampleRole>& roles = active_sample_roles();   // fold overlay if active, else user roles
+    const vector<SampleRole>& roles = active_sample_roles();
     const Index samples_number = ssize(roles);
 
     vector<Index> indices;
@@ -32,7 +32,7 @@ vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
 {
-    fold_split_roles = sample_roles;   // keep Testing/None exactly as the user assigned them
+    fold_split_roles = sample_roles;
     for (const Index i : training)   fold_split_roles[size_t(i)] = SampleRole::Training;
     for (const Index i : validation) fold_split_roles[size_t(i)] = SampleRole::Validation;
     fold_split_active = true;
@@ -64,9 +64,6 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     if (batch_size <= 0 || batch_size > samples_number)
         batch_size = samples_number;
 
-    // Trailing samples that do not fill a complete batch are dropped
-    // (warn_dropped_samples reports them), so every batch has the same
-    // shape: one ForwardPropagation allocation and no graph recapture.
     const Index batches_number = samples_number / batch_size;
 
     if (ssize(batches) != batches_number)
@@ -150,9 +147,6 @@ void Dataset::set_data(const MatrixR& new_data)
     set_storage_mode(StorageMode::Matrix);
 }
 
-// Sobrecarga con move: evita duplicar una matriz grande (p.ej. cargar un
-// _Data.bin de decenas de GB): el llamante cede su buffer en vez de copiarlo,
-// reduciendo el pico de memoria a la mitad (critico para datasets enormes).
 void Dataset::set_data(MatrixR&& new_data)
 {
     throw_if(new_data.rows() != get_samples_number(),
@@ -160,14 +154,12 @@ void Dataset::set_data(MatrixR&& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
-    data = std::move(new_data);
+    data = move(new_data);
     set_storage_mode(StorageMode::Matrix);
 }
 
 void Dataset::enable_device_residency()
 {
-    // Residency is gated by StorageMode::GPUPersistantData in the optimizer;
-    // here we only upload the host matrix that backs this dataset.
     if (!device::is_cuda_build()) return;
     if (data.size() == 0) return;
     if (is_device_resident()) return;
@@ -182,8 +174,8 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
     const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
     device::copy_async(data_device.data, matrix.data(), bytes,
-                       device::CopyKind::HostToDevice, Backend::get_compute_stream());
-    device::synchronize(Backend::get_compute_stream());
+                       device::CopyKind::HostToDevice, device::get_compute_stream());
+    device::synchronize(device::get_compute_stream());
 }
 
 void Dataset::set_data_constant(float new_value)
@@ -227,18 +219,10 @@ void Dataset::set_sample_roles(const vector<Index>& indices, const string& sampl
 
 VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
 {
-    // Drop every used sample whose value falls outside [minimums(i), maximums(i)] for any
-    // used feature. The caller (Filter data task) sends one [min, max] pair per USED
-    // feature (Input + Target, categoricals expanded) in variable order — exactly the
-    // order of get_used_feature_indices(). Boundary values are kept; filtered samples are
-    // set to "None" (unused) and their indices returned. Requires the data matrix to be
-    // resident (the task loads it from the binary cache before calling this).
 
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
-    // Guard against a size mismatch between the task's bounds and the used features so a
-    // malformed task can never index minimums/maximums out of range.
     Index bound = Index(used_feature_indices.size());
     if (Index(minimums.size()) < bound) bound = Index(minimums.size());
     if (Index(maximums.size()) < bound) bound = Index(maximums.size());
@@ -253,10 +237,10 @@ VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
         {
             const type value = data(sample_index, used_feature_indices[size_t(i)]);
 
-            if (std::isnan(value)) continue;
+            if (isnan(value)) continue;
 
-            if (std::abs(value - minimums(i)) <= EPSILON
-             || std::abs(value - maximums(i)) <= EPSILON)
+            if (abs(value - minimums(i)) <= EPSILON
+             || abs(value - maximums(i)) <= EPSILON)
                 continue;
 
             if (minimums(i) == maximums(i))
@@ -990,10 +974,6 @@ void Dataset::check_separators(string_view line) const
     const string separator_name = get_separator_name();
     const char sep_char = separator_string.empty() ? ',' : separator_string[0];
 
-    // Quote-aware: los separadores DENTRO de comillas son datos, no delimitadores,
-    // y se ignoran. Antes esta comprobacion corria sobre el buffer ya "stripeado"
-    // (sin comillas); ahora corre sobre la linea cruda (mmap), asi que hay que
-    // saltar los tramos entrecomillados para no confundir p.ej. la coma de "a,b".
     bool in_quote = false;
     bool found_expected = false;
     char found_other = 0;

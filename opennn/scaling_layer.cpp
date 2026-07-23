@@ -219,10 +219,8 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
 }
 
 string Scaling::write_expression(const vector<string>& input_names,
-                                 const vector<string>& /*output_names*/) const
+                                 const vector<string>&) const
 {
-    // Rank-2 (time series) inputs have one scaler per feature, applied to
-    // every time step: outputs_number = time_steps * features.
     const Index outputs_number = get_outputs_number();
     throw_if(outputs_number == 0 || ssize(scalers) == 0
              || outputs_number % ssize(scalers) != 0,

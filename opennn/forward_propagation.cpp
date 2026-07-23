@@ -24,8 +24,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 {
     throw_if(!new_neural_network, "neural network is not set.");
 
-    // Re-allocating the activation arena invalidates every pointer a captured
-    // inference graph baked in.
     reset_cuda_graph();
 
     batch_size = new_batch_size;
@@ -50,12 +48,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
              format("ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
                     source_layers.size(), layers_number));
 
-    // Transient slots (e.g. attention head split/merge staging) never carry
-    // data across an operator invocation, and forward/backward execute the
-    // operators serially, so every transient slot across all layers can view
-    // ONE shared max-sized block at the arena tail -- the same reasoning as
-    // the shared cuDNN workspace. Outputs can never be transient: consumers
-    // read them through input_views in forward and backward.
     Index persistent_bytes = 0;
     Index transient_block_bytes = 0;
 
@@ -77,9 +69,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const Index total_bytes = persistent_bytes + transient_block_bytes;
 
-    // Overlay this propagation on an external buffer (e.g. the training
-    // ForwardPropagation's, when validation is temporally disjoint) when it
-    // fits and lives on the same device; otherwise own the allocation.
     if (external_storage
         && external_storage->device_type == neural_network->get_device()
         && external_storage->bytes >= total_bytes)
@@ -87,8 +76,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     else
         data.resize_bytes(total_bytes, neural_network->get_device());
     data.setZero();
-    // Only owned storage counts as new VRAM; an aliased view reuses an existing
-    // buffer, so report it separately (zero new bytes) to keep the profiler honest.
     memory_debug::record(data.owns ? "forward" : "forward.aliased",
                          "ForwardPropagation::data",
                          data.owns ? total_bytes : 0,
@@ -104,10 +91,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     for (size_t i = 0; i < layers_number; ++i)
     {
         const auto& specs = forward_specs[i];
-        // Full spec bytes (transients included) -- this feeds the AUTO conv
-        // workspace limit below, which sizes actual per-layer work.
         const Index layer_bytes = get_aligned_bytes(specs);
-        max_layer_bytes = std::max(max_layer_bytes, layer_bytes);
+        max_layer_bytes = max(max_layer_bytes, layer_bytes);
 
         forward_slots[i].assign(specs.size() + 1, TensorView{});
 
@@ -134,14 +119,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                                  layer_persistent_bytes,
                                  format("batch={}", batch_size));
 
-        // validate_source_indices guarantees source < i, so its slots are already assigned.
         const vector<Index>& sources = source_layers[i];
         input_views[i].resize(sources.size());
 
         for (size_t j = 0; j < sources.size(); ++j)
         {
             const Index source_layer = sources[j];
-            if (source_layer < 0) continue;  // external input — set in forward_propagate
+            if (source_layer < 0) continue;
 
             if (!forward_specs[source_layer].empty())
             {
@@ -149,7 +133,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 continue;
             }
 
-            // Passthrough layer (empty specs): follow the chain upstream
             Index resolved = source_layer;
             while (resolved >= 0 && forward_specs[resolved].empty())
             {
@@ -160,9 +143,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
             if (resolved >= 0)
             {
-                // The aliased block keeps the producer's geometry; consumers
-                // must see the passthrough layer's declared output shape (a
-                // Flatten turns the producer's NHWC block into a flat row).
                 TensorView view = forward_slots[resolved].back();
                 if (!view.empty())
                     view.shape = Shape{view.shape[0]}
@@ -174,8 +154,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         }
     }
 
-    // AUTO conv-workspace value = largest single-layer activation. Only consulted
-    // when the cap mode is AUTO (set_conv_workspace_cap(<0)); harmless otherwise.
     device::set_conv_workspace_auto_limit_bytes(max_layer_bytes);
 }
 
@@ -193,9 +171,6 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
     const TensorView& v = forward_slots[layer_index].back();
     if (!v.empty()) return v;
 
-    // Passthrough last trainable layer (e.g. Flatten): its output is its input
-    // view, reshaped to the layer's declared output geometry so the loss sees
-    // the flat shape it expects.
     if (size_t(layer_index) < input_views.size() && !input_views[layer_index].empty())
     {
         TensorView input_view = input_views[layer_index].front();
@@ -224,9 +199,6 @@ TensorView ForwardPropagation::get_outputs() const
         if (!v.empty()) return v;
     }
 
-    // A passthrough final layer (e.g. Scaling/Unscaling with None scalers, or
-    // Flatten) allocates no forward slot: its output is its input view,
-    // reshaped to the layer's declared output geometry.
     if (last >= 0 && size_t(last) < input_views.size() && !input_views[last].empty())
     {
         TensorView input_view = input_views[last].front();

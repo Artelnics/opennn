@@ -66,12 +66,11 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
 
-    if (is_training) return; // loss reads Detection output directly; NMS output not used during training
+    if (is_training) return;
 
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        // CPU fallback for inference: copy to host, run NMS, copy back
         const size_t bytes = size_t(input.size()) * sizeof(float);
         cpu_input_staging.resize(size_t(input.size()));
         cudaMemcpy(cpu_input_staging.data(), input.as<float>(), bytes, cudaMemcpyDeviceToHost);

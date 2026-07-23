@@ -508,8 +508,8 @@ AffineForm analyze_affine(const Ast& node)
 
 
 void collect_variable_references(const Ast& node,
-                                 std::set<Index>& input_references,
-                                 std::set<Index>& output_references)
+                                 set<Index>& input_references,
+                                 set<Index>& output_references)
 {
     if (node.kind == Ast::Kind::Input)  { input_references.insert(node.index);  return; }
     if (node.kind == Ast::Kind::Output) { output_references.insert(node.index); return; }
@@ -952,8 +952,8 @@ CompiledFormula compile_ast(const Ast& ast)
 
     CompiledFormula result;
 
-    std::set<Index> input_references;
-    std::set<Index> output_references;
+    set<Index> input_references;
+    set<Index> output_references;
     collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
@@ -1072,8 +1072,6 @@ vector<const Ast*> selectors_of(const Ast& node)
 bool has_selector(const Ast& node) { return !selectors_of(node).empty(); }
 
 
-// Rebuild the AST with every min/max/abs replaced by the argument the mode selects, so the
-// result is smooth in the region defined by those mode choices.
 AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
 {
     if (is_selector(node))
@@ -1111,7 +1109,6 @@ MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperat
 }
 
 
-// Inequality that pins one min/max/abs node to the argument chosen by `mode`.
 MultivariateConstraint region_constraint(const Ast& selector, const int mode, const map<const Ast*, int>& modes)
 {
     if (selector.function_name == "abs")
@@ -1127,9 +1124,6 @@ MultivariateConstraint region_constraint(const Ast& selector, const int mode, co
 }
 
 
-// Full 2^k region enumeration: exact for any operator and any nesting of min/max/abs. Each
-// branch is a conjunction (the substituted-smooth constraint plus the region inequalities); the
-// union over branches reproduces the original feasible set.
 vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
                                                          const ComparisonOperator comparison, const float low, const float up,
                                                          const vector<const Ast*>& selectors)
@@ -1156,9 +1150,6 @@ vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
 }
 
 
-// Disjunctive-normal-form expansion of one (possibly non-smooth) constraint. A top-level AND
-// case with smooth arguments stays a single branch (no disjunction); everything else falls back
-// to the general region enumeration.
 vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
                                                   const ComparisonOperator comparison, const float low, const float up)
 {
@@ -1422,9 +1413,6 @@ vector<const MultivariateConstraint*> input_repairable_constraints(const vector<
 }
 
 
-// Collects the constraints violated at `point` (with surrogate outputs `output`, empty for
-// input-only constraints) together with their signed residuals. Returns false when none are
-// violated or the worst residual is already within tolerance: nothing left to repair.
 bool collect_violations(const vector<const MultivariateConstraint*>& constraints,
                         const VectorR& point, const VectorR& output,
                         vector<const MultivariateConstraint*>& active, vector<float>& residuals)
@@ -1452,9 +1440,6 @@ bool collect_violations(const vector<const MultivariateConstraint*>& constraints
 }
 
 
-// Gradient of one constraint with respect to the inputs. For output-dependent constraints `vjp`
-// back-propagates the output sensitivity through the surrogate; for input-only constraints it is
-// null and only the direct input gradient is returned.
 VectorR constraint_gradient(const MultivariateConstraint& constraint,
                             const VectorR& point, const VectorR& output, const SurrogateVjp& vjp)
 {
@@ -1485,10 +1470,6 @@ VectorR constraint_gradient(const MultivariateConstraint& constraint,
 }
 
 
-// Iterated Gauss-Newton projection of a single row onto the feasible set of `constraints`.
-// `forward` maps the row to its surrogate outputs (null for input-only constraints); `vjp`
-// back-propagates an output cotangent (null for input-only). Columns flagged in `fixed_columns`
-// are held constant.
 void gauss_newton_repair_row(VectorR& point,
                              const vector<const MultivariateConstraint*>& constraints,
                              const SurrogateForward& forward, const SurrogateVjp& vjp,
@@ -1840,13 +1821,6 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
 namespace
 {
 
-// Partition the input-repairable constraints (AffineInput / NonlinearInput) into blocks whose
-// variable sets are pairwise disjoint -- the connected components of the variable-constraint
-// bipartite graph. Two constraints fall in the same block iff they share at least one input column
-// (directly or transitively). Each block can then be repaired independently with the projector
-// matched to its OWN kind, so a single nonlinear constraint no longer drags unrelated affine blocks
-// through Gauss-Newton. This is the standard independent-components decomposition (cf. SCIP
-// cons_components; Pierra's product-space projection), here applied to surrogate input repair.
 vector<vector<MultivariateConstraint>>
 partition_input_constraints_by_variable(const vector<MultivariateConstraint>& formula_constraints)
 {
@@ -1868,7 +1842,6 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
         return x;
     };
 
-    // Union any two constraints that reference a common input column.
     unordered_map<Index, Index> column_owner;
 
     for (Index i = 0; i < constraint_number; ++i)
@@ -1901,11 +1874,6 @@ void repair_inputs(MatrixR& random_inputs,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
 {
-    // Each block holds constraints over a variable set disjoint from every other block, so repairing
-    // them one block at a time on the shared matrix is exact: an inner repairer only writes the
-    // columns its constraints reference, leaving the other blocks' columns untouched. The win is
-    // routing purity -- the affine blocks get Dykstra and only the genuinely nonlinear block gets
-    // Gauss-Newton, instead of the whole input vector being forced through GN by one nonlinear term.
     for (const vector<MultivariateConstraint>& block :
          partition_input_constraints_by_variable(formula_constraints))
     {
@@ -1955,16 +1923,15 @@ void cardinality_swap_row(VectorR& point,
                           const vector<char>& is_discrete,
                           const Index swaps)
 {
-    // Turn a cardinality member "on" with a type-consistent nonzero value in its box.
     const auto sample_on = [&](const Index column) -> float
     {
         const float inferior = inferior_frontier(column);
         const float superior = superior_frontier(column);
 
         if (column < ssize(is_discrete) && is_discrete[column])
-            return (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);   // nonzero integer/binary
+            return (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);
 
-        float value = random_uniform(inferior, superior);               // continuous
+        float value = random_uniform(inferior, superior);
         if (abs(value) < EPSILON)
             value = (superior > EPSILON) ? superior : inferior;
         return value;
@@ -2032,7 +1999,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     for (size_t c = 0; c < lattice.columns.size(); ++c)
         snap_to_lattice(inputs, lattice.columns[c], lattice.min[c], lattice.max[c]);
 
-    std::set<Index> cardinality_set;
+    set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
         cardinality_set.insert(group.begin(), group.end());
 
@@ -2136,7 +2103,6 @@ void repair_output_constraints(MatrixR& inputs,
     for (Index j = 0; j < inputs_number; ++j)
         step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));
 
-    // Single-row forward for the constraint evaluation inside the Gauss-Newton loop.
     const SurrogateForward forward = [&batch_forward](const VectorR& x) -> VectorR
     {
         MatrixR single(1, x.size());
@@ -2144,8 +2110,6 @@ void repair_output_constraints(MatrixR& inputs,
         return batch_forward(single).row(0).transpose();
     };
 
-    // Central-difference VJP: stack all 2*inputs_number perturbations of the row and evaluate them
-    // in one batched forward call (rows are independent), instead of two forwards per dimension.
     const SurrogateVjp finite_difference_vjp =
         [&batch_forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
     {

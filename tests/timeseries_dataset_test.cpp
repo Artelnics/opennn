@@ -23,8 +23,6 @@ TEST(TimeSeriesDataset, GeneralConstructor)
 
     EXPECT_EQ(time_series_data_set_3.get_variables_number(), 2);
     EXPECT_EQ(time_series_data_set_3.get_samples_number(), 1);
-    //EXPECT_EQ(time_series_data_set_3.get_target_variables_number(), 1);
-    //EXPECT_EQ(time_series_data_set_3.get_input_variables_number(), 1);
 }
 
 
@@ -67,7 +65,6 @@ TEST(TimeSeriesDataset, CrossCorrelations)
 
     MatrixR data;
 
-    // Test
 
     lags_number = 6;
 
@@ -113,7 +110,7 @@ TEST(TimeSeriesDataset, test_transform_time_series)
 
     dataset.set_data(data);
 
-    std::vector<string> variable_names = { "x", "y" };
+    vector<string> variable_names = { "x", "y" };
 
     dataset.set_variable_names(variable_names);
 
@@ -129,8 +126,8 @@ TEST(TimeSeriesDataset, test_transform_time_series)
     EXPECT_EQ(dataset.get_variables_number("Target"), 1);
     EXPECT_EQ(dataset.get_variables_number("None"), 0);
 
-    std::vector<string> input_variable_names = dataset.get_variable_names("Input");
-    std::vector<string> target_variable_names = dataset.get_variable_names("Target");
+    vector<string> input_variable_names = dataset.get_variable_names("Input");
+    vector<string> target_variable_names = dataset.get_variable_names("Target");
 
     EXPECT_EQ(input_variable_names[0], "x");
     EXPECT_EQ(target_variable_names[0], "y");
@@ -172,7 +169,6 @@ TEST(TimeSeriesDataset, test_set_lags_number)
     TimeSeriesDataset dataset(4, input_shape, target_shape);
 
     MatrixR data;
-    // Test
 
     data.resize(4, 2);
     data << type(0),type(0),

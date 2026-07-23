@@ -155,8 +155,6 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 
 filesystem::path TabularDataset::cache_file_path() const
 {
-    // Embedding applications (e.g. Neural Designer) keep the cache next to the
-    // model instead of polluting the data folder; they set an explicit path.
     if (!cache_path_override.empty())
         return cache_path_override;
 
@@ -174,8 +172,6 @@ void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_pat
         cache_reader.open(cache_path);
 }
 
-// Element-wise equivalents of the column scalers in scaling.cpp, applied to
-// batches read from the raw cache file.
 static float scale_value(ScalerMethod method, const Descriptives& desc, float value)
 {
     using enum ScalerMethod;
@@ -202,10 +198,6 @@ static float scale_value(ScalerMethod method, const Descriptives& desc, float va
 
 void TabularDataset::compute_cache_replacement() const
 {
-    // Per-column value used to impute NaN when filling model batches, resolved from
-    // the variable types: mean for continuous variables, majority value (mode) for
-    // binary ones, and the most frequent category for categoricals (its one-hot
-    // column -> 1, the rest -> 0). The cache stays raw; this only feeds batch fill.
     if (cache_feature_descriptives.empty()) compute_cache_descriptives();
 
     const Index columns_number = cache_columns_number;
@@ -262,8 +254,6 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                           ? static_cast<bool>(contiguous_hint)
                           : is_contiguous(feature_indices);
 
-    // The on-disk cache is raw (missing cells are NaN). Impute them on the fly so the
-    // model never sees NaN, while correlations keep reading the raw cache pairwise.
     if (cache_feature_replacement.empty()) compute_cache_replacement();
 
     const Index first_column = feature_indices.front();
@@ -581,8 +571,6 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
 
     const vector<Index> input_variable_indices = get_variable_indices("Input");
 
-    // Rank each input by its strongest absolute correlation with any target;
-    // inputs whose correlations are all NaN rank last.
 
     vector<pair<float, Index>> ranking(input_variables_number);
 
@@ -776,10 +764,6 @@ vector<Descriptives> TabularDataset::calculate_feature_descriptives(const string
     return descriptives(data, sample_indices, input_feature_indices);
 }
 
-// Used samples whose value in feature `column` is on the requested side of the
-// binary split (1 = positive, 0 = negative). NaN falls on neither side, so both
-// comparisons exclude it. Operates on the in-memory `data` matrix -- callers load
-// it first (loadMatrixFromBinary switches the dataset to Matrix storage).
 vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool positive) const
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -798,9 +782,6 @@ vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool p
     return filtered;
 }
 
-// Descriptives of every input feature over the samples where the (single, binary)
-// target is positive. Size == number of input features, matching the order the
-// engine walks input variables when building the positive/negative statistics table.
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
 {
     const vector<Index> target_feature_indices = get_feature_indices("Target");
@@ -821,8 +802,6 @@ vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_sa
                         get_feature_indices("Input"));
 }
 
-// Multi-class variant: `class_index` is the one-hot feature index of one target
-// category; describe the input features over the samples belonging to that class.
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(Index class_index) const
 {
     return descriptives(data,
@@ -999,8 +978,6 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 
     if (storage_mode == StorageMode::BinaryFile)
     {
-        // Streamed from the raw cache: the data matrix is empty in BinaryFile
-        // mode. Training samples only, matching the Matrix path below.
         if (cache_transform_descriptives.empty())
         {
             vector<Index> statistic_sample_indices = get_sample_indices("Training");
@@ -1050,7 +1027,6 @@ void TabularDataset::unscale_features(const string& variable_role,
         for (const Index feature_index : feature_indices)
             cache_feature_transforms[size_t(feature_index)] = ScalerMethod::None;
 
-        // Recomputed on the next scale_features call, whose split may differ.
         cache_transform_descriptives.clear();
 
         return;
@@ -1086,9 +1062,6 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     if (src->has("StorageMode"))
         set_storage_mode(read_json_string(src, "StorageMode"));
 
-    // A freshly-created model (before the first import) carries only a
-    // DataSource: Variables/Samples/MissingValues/PreviewData are produced by
-    // read_csv. Read them only when present so load() works pre-import.
     if (const Json* variables_element = root->find("Variables"))
         variables_from_JSON(variables_element);
     if (const Json* samples_element = root->find("Samples"))
@@ -1111,8 +1084,6 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
 
         cache_path = cache_file_path();
 
-        // Tolerate a missing cache: embedding applications may re-import the
-        // data source (regenerating the cache) after loading the model.
         if (filesystem::exists(cache_path))
         {
             cache_reader.open(cache_path);
@@ -1444,11 +1415,6 @@ void TabularDataset::read_csv()
     const bool has_quotes = parsed.has_quotes;
     vector<string_view>& lines = parsed.lines;
 
-    // Buffers reutilizables para la limpieza de comillas por linea (solo se usan
-    // en ficheros con comillas; con mmap zero-copy sustituyen a la copia global).
-    // Se usan buffers SEPARADOS por seccion porque las vistas devueltas apuntan al
-    // scratch: header_tokens debe sobrevivir hasta set_variable_names, asi que no
-    // puede compartir buffer con los bucles posteriores.
     string header_scratch;
 
     throw_if(lines.empty(),
@@ -1474,9 +1440,6 @@ void TabularDataset::read_csv()
 
     if (!has_sample_ids && samples_number > 0)
     {
-        // unordered_set<string> (dueno) y no <string_view>: con comillas los tokens
-        // apuntan a un scratch reutilizado, cuyas vistas no sobreviven a la
-        // iteracion; guardamos el valor limpio de la columna 0 en propiedad.
         unordered_set<string> unique_elements;
         string id_scratch;
 
@@ -1579,29 +1542,10 @@ void TabularDataset::read_csv()
             category_maps[variable_index].emplace(string_view(variable.categories[ci]), ci);
     }
 
-    // Numeric type refinement is accumulated while parsing because in BinaryFile
-    // mode there is no data matrix to re-scan afterwards.
     struct NumericColumnValues { bool has_value = false; float first_value = 0.0f; bool constant = true; bool zero_one = true; };
     vector<NumericColumnValues> numeric_column_values(variables_number);
 
-    // ------------------------------------------------------------------
-    // Bucle principal de escritura paralelizado con OpenMP.
-    //
-    // Diseno race-free y byte-identico al secuencial:
-    //  - Se paraleliza SOLO el troceo (get_token_views) y el parseo de celdas,
-    //    que es la parte cara. Cada fila escribe en su propio slot del buffer
-    //    (offset distinto por fila) -> sin escrituras compartidas.
-    //  - Los contadores de faltantes son sumas conmutativas -> reduccion por
-    //    hilo y suma final en orden.
-    //  - El refinamiento numerico (numeric_column_values) depende del ORDEN de
-    //    las filas, asi que se hace SECUENCIAL, en orden global de filas, tras
-    //    el parseo -> resultado identico al secuencial.
-    //  - category_maps / variables / all_feature_indices son solo-lectura ->
-    //    seguros de compartir entre hilos.
-    // ------------------------------------------------------------------
 
-    // Parseo de una fila ya troceada en `row_tokens` hacia el buffer `row`.
-    // Solo lee estado compartido (const) -> seguro entre hilos.
     auto parse_row = [&](float* row, const vector<string_view>& row_tokens)
     {
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
@@ -1633,8 +1577,6 @@ void TabularDataset::read_csv()
         }
     };
 
-    // Refinamiento numerico secuencial de una fila ya escrita en `row`. DEBE
-    // recorrerse en orden global de filas para ser identico al secuencial.
     auto refine_numeric = [&](const float* row)
     {
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
@@ -1659,10 +1601,7 @@ void TabularDataset::read_csv()
         }
     };
 
-    // Deteccion de faltantes de una fila -> acumula en contadores POR HILO.
-    // Replica exactamente la logica secuencial: has_missing_values recorre
     // TODOS los tokens (incluido el id en la columna 0); el conteo por variable
-    // arranca en id_offset. Devuelve si la fila tiene algun faltante.
     auto count_missing = [&](const vector<string_view>& row_tokens,
                              Index& th_rows_mv, Index& th_mv, vector<Index>& th_var_mv)
     {
@@ -1688,24 +1627,15 @@ void TabularDataset::read_csv()
         return row_has_missing;
     };
 
-    // No se puede lanzar excepciones dentro de una region #pragma omp; se
     // registra la fila mala de MENOR indice y se lanza tras terminar todo.
     bool bad_row = false;
     Index bad_row_index = samples_number;
     Index bad_row_cols = 0;
 
-    // Errores de parseo (p.ej. parse_datetime_token con una fecha malformada)
-    // pueden lanzar. No se puede propagar una excepcion desde una region
-    // #pragma omp (terminaria el proceso), asi que se captura y se difiere el
-    // de MENOR indice de fila, igual que el error de numero de columnas.
     bool parse_error = false;
     Index parse_error_index = samples_number;
     string parse_error_msg;
 
-    // Parseo paralelo de las filas [base, end) sobre `destination` (la matriz
-    // completa en modo Matrix, el buffer del chunk en modo BinaryFile — en ese
-    // modo `data` esta vacia y no debe tocarse). Marca filas incompletas como
-    // None solo en BinaryFile: el streaming no puede imputarlas despues.
     auto parse_rows = [&](Index base, Index end, float* destination)
     {
         Index range_rows_mv = 0, range_mv = 0;
@@ -1803,8 +1733,6 @@ void TabularDataset::read_csv()
     else
         parse_rows(0, samples_number, data.data());
 
-    // Lanzar (ya fuera de la region paralela) el error de MENOR indice de fila,
-    // sea de numero de columnas o de parseo (p.ej. fecha malformada).
     if (bad_row && (!parse_error || bad_row_index <= parse_error_index))
         throw runtime_error(format("Row {} has fewer columns than expected ({}).", bad_row_index, bad_row_cols));
 
@@ -1813,9 +1741,6 @@ void TabularDataset::read_csv()
 
     if (binary_storage)
     {
-        // Re-import: el lector puede tener abierta la cache anterior (se abre
-        // al cargar el modelo); Windows no permite reemplazar un fichero
-        // abierto (MoveFileEx -> ACCESS_DENIED), asi que cerrar antes.
         cache_reader.close();
         cache_writer.finish_with_rename(cache_path);
         cache_reader.open(cache_path);
@@ -1940,10 +1865,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
         ? mean(data, used_sample_indices, used_feature_indices)
         : median(data, used_sample_indices, used_feature_indices);
 
-    // A feature that is entirely missing over the used samples has a NaN mean/median,
-    // so imputing with it would leave NaN behind and poison every downstream forward
-    // pass (this is what made genetic input selection on missing-heavy datasets report
-    // NaN errors). Fall back to 0 -- the column carries no information but stays finite.
     for (Index j = 0; j < replacements.size(); ++j)
         if (!isfinite(replacements(j))) replacements(j) = 0.0f;
 
@@ -1986,13 +1907,7 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 
 void TabularDataset::reuse_input_incomplete_rows_binary()
 {
-    // BinaryFile strategy: keep the on-disk cache RAW (NaN preserved) and only fix
-    // sample roles. A row is usable as long as its target is present -- rows that are
-    // missing only inputs are re-used (streaming had unused every incomplete row).
-    // Their NaN is dropped pairwise by the correlation code (so correlations use each
     // column's available values and keep the variable type intact) and -- TODO, step
-    // 4 -- imputed on the fly when filling training/testing batches. Rows whose target
-    // is missing stay unused: a target value cannot be invented.
     if (storage_mode != StorageMode::BinaryFile) return;
     if (cache_columns_number == 0 || !cache_reader.is_open()) return;
 
@@ -2086,17 +2001,8 @@ void TabularDataset::impute_missing_values_interpolate()
 
 void TabularDataset::scrub_missing_values()
 {
-    // BinaryFile storage keeps NaN in the on-disk cache and streaming marked every
-    // incomplete row unused. There is no data matrix to impute, so operate on the
-    // cache directly: Mean/Median fill missing inputs and re-use those rows; Unuse
-    // (and Interpolation, unsupported while streaming) keep the streaming default.
     if (storage_mode == StorageMode::BinaryFile)
     {
-        // Keep the cache raw (NaN preserved) so correlations do pairwise deletion and
-        // variable types stay intact. Unless the method is Unuse, re-use the rows that
-        // are missing only inputs (target present); their NaN is handled per consumer
-        // (pairwise in correlations; imputed on the fly at batch fill -- step 4). Rows
-        // missing the target stay unused.
         using enum MissingValuesMethod;
         if (missing_values_method != Unuse)
             reuse_input_incomplete_rows_binary();
@@ -2147,8 +2053,6 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
     vector<vector<string_view>> sampled_tokens(rows_to_check);
-    // Backing por fila: sampled_tokens[i] se conserva y se usa despues, asi que
-    // con comillas cada fila necesita su propio scratch (no uno reutilizado).
     vector<string> sampled_scratch(rows_to_check);
     for (size_t i = 0; i < rows_to_check; ++i)
         sampled_tokens[i] = get_token_views_maybe_quoted(sample_lines[row_indices[i]], file_separator, has_quotes, sampled_scratch[i]);

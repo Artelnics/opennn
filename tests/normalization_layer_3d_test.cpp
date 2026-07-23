@@ -66,7 +66,7 @@ TEST(Normalization3dTest, ForwardMatchesHandComputedLayerNorm)
     const TensorView output_view = forward_propagation.get_outputs();
     const float* output_data = output_view.as<type>();
 
-    const type inv_std = type(1) / std::sqrt(type(1.25));
+    const type inv_std = type(1) / sqrt(type(1.25));
 
     EXPECT_NEAR(output_data[0], type(-1.5) * inv_std, 1.0e-4f);
     EXPECT_NEAR(output_data[1], type(-0.5) * inv_std, 1.0e-4f);

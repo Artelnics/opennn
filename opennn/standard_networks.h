@@ -103,13 +103,6 @@ public:
 
     enum class HeadStyle { Single, FPN, PANet };
 
-    // ReLU = the activation used since Phase 1 — preserves saved-weight effect.
-    // LeakyReLU = Darknet/YOLO-v3 convention (slope 0.1) — applied uniformly
-    // to every conv in the backbone (Vgg or DarknetTiny, residual
-    // blocks, FPN lateral convs). The Detection layer's class activation and
-    // the final logits stay as-is. Switching this changes forward outputs even
-    // with identical parameters, so saved Phase 1/2 weights should not be
-    // loaded across this flag.
     enum class BodyActivation { ReLU, LeakyReLU };
 
     YoloNetwork(const Shape&,
@@ -152,9 +145,6 @@ Index sample_token(VectorR& probabilities,
                    const SamplingConfig& sampling_config,
                    const vector<Index>& history);
 
-// raw = the callback already receives detokenized text (subword tokenizers emit
-// text deltas with spacing baked in); otherwise a space is inserted between
-// word-level tokens except before punctuation.
 TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw);
 
 class Transformer final : public NeuralNetwork
@@ -210,9 +200,6 @@ public:
 
     TextGenerationNetwork() = default;
 
-    // pre_normalization = true builds pre-LN blocks (norm before attention/FFN,
-    // plain residual adds, final norm before the projection); false keeps the
-    // post-LN layout shared with Transformer.
     TextGenerationNetwork(Index,
                           Index,
                           Index,
@@ -287,7 +274,7 @@ public:
     void set_dropout_rate(const float);
 };
 
-#endif // OPENNN_NO_VISION
+#endif
 
 }
 

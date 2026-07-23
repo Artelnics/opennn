@@ -20,18 +20,18 @@ namespace
 {
 double gelu_ref(double x)
 {
-    return 0.5 * x * (1.0 + std::erf(x * 0.70710678118654752440));
+    return 0.5 * x * (1.0 + erf(x * 0.70710678118654752440));
 }
 
 double gelu_tanh_ref(double x)
 {
     constexpr double sqrt_2_over_pi = 0.7978845608028654;
-    return 0.5 * x * (1.0 + std::tanh(sqrt_2_over_pi * (x + 0.044715 * x * x * x)));
+    return 0.5 * x * (1.0 + tanh(sqrt_2_over_pi * (x + 0.044715 * x * x * x)));
 }
 
 double silu_ref(double x)
 {
-    return x / (1.0 + std::exp(-x));
+    return x / (1.0 + exp(-x));
 }
 }
 
@@ -117,7 +117,7 @@ TEST(ActivationsTest, ForwardPropagateTanh)
 
     const type* output_data = output_view.as<type>();
     for (Index i = 0; i < output_view.size(); ++i)
-        EXPECT_NEAR(output_data[i], std::tanh(input_data.data()[i]), 1e-6f);
+        EXPECT_NEAR(output_data[i], tanh(input_data.data()[i]), 1e-6f);
 }
 
 
@@ -145,7 +145,7 @@ TEST(ActivationsTest, ForwardPropagateSigmoid)
     const type* output_data = output_view.as<type>();
     for (Index i = 0; i < output_view.size(); ++i)
     {
-        const float expected = 1.0f / (1.0f + std::exp(-input_data.data()[i]));
+        const float expected = 1.0f / (1.0f + exp(-input_data.data()[i]));
         EXPECT_NEAR(output_data[i], expected, 1e-6f);
     }
 }
@@ -177,9 +177,9 @@ TEST(ActivationsTest, ForwardPropagateSoftmax)
 
     const type* output_data = output_view.as<type>();
 
-    const float e1 = std::exp(1.0f);
-    const float e2 = std::exp(2.0f);
-    const float e3 = std::exp(3.0f);
+    const float e1 = exp(1.0f);
+    const float e2 = exp(2.0f);
+    const float e3 = exp(3.0f);
     const float denom = e1 + e2 + e3;
 
     EXPECT_NEAR(output_data[0], e1 / denom, 1e-6f);
@@ -440,18 +440,18 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
 {
-    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), std::exception);
+    EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), exception);
 }
 
 
 TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
 {
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELU"), std::exception);
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELUTanh"), std::exception);
-    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "SiLU"), std::exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELU"), exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "GELUTanh"), exception);
+    EXPECT_THROW(Convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "SiLU"), exception);
 
     Convolutional convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "ReLU");
-    EXPECT_THROW(convolutional.set_activation_function("SiLU"), std::exception);
+    EXPECT_THROW(convolutional.set_activation_function("SiLU"), exception);
 }
 
 

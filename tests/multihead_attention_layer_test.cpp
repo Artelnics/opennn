@@ -99,8 +99,8 @@ TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
     EXPECT_EQ(output_view.shape[1], sequence_length);
     EXPECT_EQ(output_view.shape[2], embedding_dimension);
 
-    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
-    const float exp_score = std::exp(scale);
+    const float scale = type(1.0) / sqrt(type(embedding_dimension));
+    const float exp_score = exp(scale);
     const float high = exp_score / (exp_score + type(1.0));
     const float low = type(1.0) / (exp_score + type(1.0));
 
@@ -124,7 +124,7 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     mha->set(sequence_length, sequence_length, embedding_dimension, heads_number, true);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(std::move(mha));
+    neural_network.add_layer(move(mha));
     neural_network.compile();
 
     set_identity_projections(neural_network.get_layer(0).get(), embedding_dimension);
@@ -143,8 +143,8 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     EXPECT_NEAR(output_data[0], type(1.0), 1.0e-5f);
     EXPECT_NEAR(output_data[1], type(0.0), 1.0e-5f);
 
-    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
-    const float exp_score = std::exp(scale);
+    const float scale = type(1.0) / sqrt(type(embedding_dimension));
+    const float exp_score = exp(scale);
     const float high = exp_score / (exp_score + type(1.0));
     const float low = type(1.0) / (exp_score + type(1.0));
 
@@ -192,8 +192,8 @@ TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
     EXPECT_EQ(output_view.shape[1], query_sequence_length);
     EXPECT_EQ(output_view.shape[2], embedding_dimension);
 
-    const float scale = type(1.0) / std::sqrt(type(embedding_dimension));
-    const float exp_score = std::exp(scale);
+    const float scale = type(1.0) / sqrt(type(embedding_dimension));
+    const float exp_score = exp(scale);
     const float high = exp_score / (exp_score + type(1.0));
     const float low = type(1.0) / (exp_score + type(1.0));
 

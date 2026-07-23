@@ -68,7 +68,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function(act);
         layer->set_recurrent_activation_function("Sigmoid");
-        neural_network.add_layer(std::move(layer));
+        neural_network.add_layer(move(layer));
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
@@ -109,7 +109,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
-        neural_network.add_layer(std::move(layer));
+        neural_network.add_layer(move(layer));
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
@@ -141,7 +141,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
         layer->set_return_sequences(true);
-        neural_network.add_layer(std::move(layer));
+        neural_network.add_layer(move(layer));
         neural_network.compile();
 
         VectorMap(neural_network.get_parameters_data(),
@@ -223,7 +223,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     NeuralNetwork neural_network;
     auto layer = make_unique<LongShortTermMemory>(input_shape, Shape{neurons_number});
     layer->set_return_sequences(true);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     VectorMap(neural_network.get_parameters_data(),
@@ -246,8 +246,8 @@ TEST(LongShortTermMemoryLayerTest, UnsupportedActivationThrows)
 {
     LongShortTermMemory lstm_layer(Shape{3, 4}, Shape{5});
 
-    EXPECT_THROW(lstm_layer.set_activation_function("Softmax"), std::runtime_error);
-    EXPECT_THROW(lstm_layer.set_recurrent_activation_function("Softmax"), std::runtime_error);
+    EXPECT_THROW(lstm_layer.set_activation_function("Softmax"), runtime_error);
+    EXPECT_THROW(lstm_layer.set_recurrent_activation_function("Softmax"), runtime_error);
 }
 
 

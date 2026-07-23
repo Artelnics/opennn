@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R E C U R R E N T   O P E R A T O R   S O U R C E
@@ -157,7 +157,7 @@ void activate_in_place(ActivationFunction activation,
     }
 }
 
-} // namespace
+}
 
 void RecurrentOperator::apply(const TensorView& input,
                             TensorView& hidden_states,
@@ -322,7 +322,7 @@ void RecurrentOperator::apply_delta(const TensorView& input,
 static void zero_device_view(const TensorView& view)
 {
     if (!view.data || view.empty()) return;
-    device::set_zero_async(view.data, view.byte_size(), Backend::get_compute_stream());
+    device::set_zero_async(view.data, view.byte_size(), device::get_compute_stream());
 }
 
 static void require_same_recurrent_dtype(const TensorView& reference,
@@ -343,7 +343,7 @@ bool RecurrentOperator::cudnn_rnn_eligible_(const TensorView& reference) const
 static bool rnn_persist_env_enabled()
 {
     static const bool enabled = []() {
-        const char* env = std::getenv("OPENNN_RNN_PERSIST");
+        const char* env = getenv("OPENNN_RNN_PERSIST");
         return !(env && string(env) == "0");
     }();
     return enabled;
@@ -358,7 +358,7 @@ void RecurrentOperator::ensure_cudnn_setup_(Index batch_size, bool for_training)
             ensure_cudnn_setup_attempt_(batch_size, for_training);
             return;
         }
-        catch (const std::exception&)
+        catch (const exception&)
         {
             persist_algo_failed_ = true;
             rnn_desc.reset();
@@ -398,10 +398,10 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_t
         dropout_states_buf.grow_to(Index(dropout_states_bytes));
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             dropout_desc, Backend::get_cudnn_handle(),
-            /*dropout=*/0.0f,
+                        0.0f,
             dropout_states_buf.data,
             size_t(dropout_states_buf.bytes),
-            /*seed=*/0ULL));
+                     0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
             rnn_desc,
@@ -417,7 +417,7 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_t
             CUDNN_TENSOR_OP_MATH,
             int(F),
             int(H),
-            /*projSize=*/ int(H),
+                          int(H),
             1,
             dropout_desc,
             persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
@@ -430,7 +430,7 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_t
         dweight_space_buf.grow_to(Index(weight_bytes));
 
         device::set_zero_async(weight_space_buf.data, weight_space_buf.bytes,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 
         CudnnDescriptor<cudnnTensorDescriptor_t> m_desc;
         CudnnDescriptor<cudnnTensorDescriptor_t> b_desc;
@@ -509,7 +509,7 @@ void RecurrentOperator::ensure_cudnn_setup_attempt_(Index batch_size, bool for_t
         device::copy_async(slot.seq_dev.data, seq_h,
                            batch_size * Index(sizeof(int32_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
         static float zero_pad_fill = 0.0f;
         CHECK_CUDNN(cudnnSetRNNDataDescriptor(
@@ -690,7 +690,7 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
 
     device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 
     CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
         Backend::get_cudnn_handle(),

@@ -66,7 +66,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
         parameters.embedding_dimension);
     layer->set_scale_embedding(parameters.scale_embedding);
     layer->set_add_positional_encoding(parameters.add_positional_encoding);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
     neural_network.set_parameters_random();
 
@@ -102,7 +102,7 @@ TEST(Embedding, ForwardValuesMatchExpected)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(false);
     layer->set_add_positional_encoding(false);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f,
@@ -149,7 +149,7 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(true);
     layer->set_add_positional_encoding(false);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f, 0.0f,
@@ -173,7 +173,7 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
     ASSERT_EQ(output_view.size(), batch_size * sequence_length * embedding_dimension);
 
     const float* output = output_view.as<type>();
-    const float scale = std::sqrt(static_cast<float>(embedding_dimension));
+    const float scale = sqrt(static_cast<float>(embedding_dimension));
 
     EXPECT_NEAR(output[0], 1.0f * scale, 1.0e-4f);
     EXPECT_NEAR(output[1], 2.0f * scale, 1.0e-4f);
@@ -198,7 +198,7 @@ TEST(Embedding, PositionalEncodingForwardValues)
         Shape{vocabulary_size, sequence_length}, embedding_dimension);
     layer->set_scale_embedding(false);
     layer->set_add_positional_encoding(true);
-    neural_network.add_layer(std::move(layer));
+    neural_network.add_layer(move(layer));
     neural_network.compile();
 
     const float weights[] = { 0.0f, 0.0f, 0.0f, 0.0f,
@@ -228,12 +228,12 @@ TEST(Embedding, PositionalEncodingForwardValues)
 
     auto positional = [&](Index position, Index dimension) -> float
     {
-        const float divisor = std::pow(10000.0f,
+        const float divisor = pow(10000.0f,
             (dimension < half ? static_cast<float>(dimension)
                               : static_cast<float>(dimension - half)) / half_f);
         return (dimension < half)
-            ? std::sin(static_cast<float>(position) / divisor)
-            : std::cos(static_cast<float>(position) / divisor);
+            ? sin(static_cast<float>(position) / divisor)
+            : cos(static_cast<float>(position) / divisor);
     };
 
     const float row1[embedding_dimension] = { 1.0f, 2.0f, 3.0f, 4.0f };

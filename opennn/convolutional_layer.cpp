@@ -82,10 +82,10 @@ vector<TensorSpec> Convolutional::get_forward_specs(Index batch_size) const
     const Shape bn_stat_shape          = batch_norm.active() ? Shape{kernels_number} : Shape{};
 
     return {
-        /*ConvolutionView*/          {convolution_view_shape, act},
-        /*BatchNormMean*/            {bn_stat_shape,          Type::FP32},
-        /*BatchNormInverseVariance*/ {bn_stat_shape,          Type::FP32},
-        /*Output*/                   {output_shape,           act},
+                                     {convolution_view_shape, act},
+                                     {bn_stat_shape,          Type::FP32},
+                                     {bn_stat_shape,          Type::FP32},
+                                     {output_shape,           act},
     };
 }
 
@@ -159,8 +159,6 @@ void Convolutional::set(const Shape& new_input_shape,
     throw_if(!contains({"Valid", "Same"}, new_convolution_type),
              "Convolution type must be 'Valid' or 'Same'.");
 
-    // With "Same" padding the padded input always covers the kernel, so the
-    // size restriction only applies to unpadded ("Valid") convolutions.
     throw_if(new_convolution_type == "Valid"
              && (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1]),
              "kernel shape cannot be bigger than input shape");
@@ -320,7 +318,6 @@ void Convolutional::load_darknet_weights(FILE* f)
 
     if (batch_norm.active())
     {
-        // Darknet BN order: beta, gamma, running_mean, running_var
         const size_t n = static_cast<size_t>(batch_norm.features);
         const auto read_bn = [&](TensorView& tv)
         {
@@ -334,7 +331,6 @@ void Convolutional::load_darknet_weights(FILE* f)
     }
     else
     {
-        // No BN: read bias
         const size_t n_out = static_cast<size_t>(O);
         const auto read_bias = [&](TensorView& tv)
         {
@@ -344,7 +340,6 @@ void Convolutional::load_darknet_weights(FILE* f)
         read_bias(convolution.bias);
     }
 
-    // Read conv weights: Darknet layout [O, I, kH, kW], OpenNN layout [O, kH, kW, I]
     const size_t n_weights = static_cast<size_t>(total_weights);
     vector<float> tmp(n_weights, 0.0f);
     throw_if(fread(tmp.data(), sizeof(float), n_weights, f) != n_weights,
@@ -358,7 +353,6 @@ void Convolutional::load_darknet_weights(FILE* f)
                     dst[o*kH*kW*I + h*kW*I + w*I + ic] =
                         tmp[static_cast<size_t>(o*I*kH*kW + ic*kH*kW + h*kW + w)];
 
-    // Invalidate the BN inference cache so it is recomputed with the new stats.
     if (batch_norm.active())
         batch_norm.invalidate_inference_cache();
 
@@ -383,14 +377,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
 bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propagation, size_t layer)
 {
-    // Inference-only: the batchnorm affine folds into the convolution, so the
-    // separate BN pass over the activations disappears (~20% of a ResNet-50
-    // inference forward). Pointwise (1x1/stride-1) convolutions only: those
-    // run as cuBLASLt GEMMs whose epilogue absorbs the folded bias and ReLU
-    // for free, while for spatial kernels cuDNN's conv+bias+relu fusion pool
-    // picks engines ~2x slower than the plain autotuned conv, losing more
-    // than the folded BN saves. FP32-only: the cuBLASLt epilogue takes an
-    // fp32 bias; the bf16 path keeps the fused BN kernel.
     if (!batch_norm.active() || !convolution.is_pointwise())
         return false;
 
@@ -437,8 +423,6 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
 
     if (batch_norm.fuse_add)
     {
-        // The residual add cannot ride the GEMM epilogue: bias-only conv
-        // first, then one fused add(+ReLU) pass.
         convolution.apply_gpu_folded(input, folded_weights, folded_bias, false, output);
 
         const TensorView& residual_view = forward_propagation.input_views[layer][1];

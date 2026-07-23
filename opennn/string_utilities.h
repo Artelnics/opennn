@@ -19,25 +19,12 @@ namespace opennn
 
     vector<string_view> get_token_views(string_view, char);
 
-    // Quote-aware tokenizer: replica la semantica de
-    // strip_quotes_and_quoted_separators por linea (borra comillas, elimina ','
-    // y ';' dentro de comillas) sin copiar el fichero completo. Para lineas sin
-    // '"' devuelve vistas zero-copy sobre `line`; para lineas con '"' escribe los
-    // bytes limpios en `scratch` (reutilizable) y devuelve vistas sobre `scratch`.
-    // Si file_has_quotes es false, va directo a get_token_views (sin coste extra).
     vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
                                                      bool file_has_quotes, string& scratch);
 
-    // Igual que get_token_views_maybe_quoted pero rellenando `out` (out.clear() +
-    // emplace). Permite reutilizar el mismo vector entre filas y evitar reservar
-    // memoria por fila.
     void get_token_views_maybe_quoted(string_view line, char separator, bool file_has_quotes,
                                       string& scratch, vector<string_view>& out);
 
-    // Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas
-    // que get_token_views_maybe_quoted(...)[0], sin trocear el resto de la linea.
-    // Sin comillas: vista zero-copy sobre `line`; con comillas: escribe el primer
-    // campo limpio en `scratch` y devuelve una vista sobre `scratch`.
     string_view first_token_maybe_quoted(string_view line, char separator,
                                          bool file_has_quotes, string& scratch);
 

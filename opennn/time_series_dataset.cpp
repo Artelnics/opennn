@@ -223,9 +223,6 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_codification(read_json_string(data_source_element, "Codification"));
 
 
-    // A freshly-created model (before the first import) carries only a
-    // DataSource: Variables/Samples/MissingValues/PreviewData are produced by
-    // read_csv. Read them only when present so load() works pre-import.
     if (const Json* variables_element = data_set_element->find("Variables"))
         variables_from_JSON(variables_element);
     if (const Json* samples_element = data_set_element->find("Samples"))

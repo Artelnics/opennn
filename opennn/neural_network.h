@@ -37,8 +37,6 @@ public:
 
     Type get_training_type()  const noexcept { return config.training_type; }
 
-    void warn_if_stale_configuration() const;
-
     vector<vector<TensorSpec>> get_parameter_specs() const
     {
         return collect_layer_specs([](const Layer& layer) { return layer.get_parameter_specs(); });
@@ -116,7 +114,7 @@ public:
     void set_input_shape(const Shape&);
 
     void clear();
-    void steal_from(NeuralNetwork& src);  // replace this network's layers with src's (leaves src empty)
+    void steal_from(NeuralNetwork& src);
 
     Index get_layers_number() const noexcept { return ssize(layers); }
     Index get_layers_number(const string&) const;
@@ -144,17 +142,6 @@ public:
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
 
-    // Device-resident inference: input already on GPU, caller-owned persistent
-    // ForwardPropagation (activations allocated once), parameters uploaded only
-    // when upload_parameters=true (skip on repeat calls with unchanged weights).
-    // Output is left on the GPU; returns its TensorView (no D2H). This is
-    // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
-    // With forward_propagation.set_cuda_graph(true) the forward is captured
-    // into a CUDA graph after two eager calls and replayed while the input
-    // pointers stay the same; any weight change must go through an
-    // upload_parameters=true call (the pre-existing contract), which also
-    // invalidates the captured graph. Release any bf16 fp32 master before the
-    // first resident call so the captured pointers are final.
     TensorView calculate_outputs_resident(const vector<TensorView>&,
                                           ForwardPropagation&,
                                           bool upload_parameters = true);
@@ -201,9 +188,6 @@ public:
 public:
 
     void cast_parameters_to_bf16();
-    // Inference-only BF16 memory trim: after copy_parameters_device(), operators
-    // read parameters_bf16_mirror, so benchmark resident inference can release
-    // the CUDA fp32 master before allocating large activation arenas.
     void release_bf16_fp32_parameter_master_for_inference();
 
     bfloat16* get_parameters_bf16_mirror_data()
@@ -266,8 +250,6 @@ protected:
     Buffer states;
 
     Configuration::Resolved config;
-
-    mutable bool stale_configuration_warned = false;
 
     mutable Index first_trainable_cache_ = -1;
     mutable Index last_trainable_cache_  = -1;

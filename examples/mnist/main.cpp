@@ -33,11 +33,9 @@ int main()
         set_seed(42);
         Configuration::instance().set(Device::Auto, Type::Auto);
 
-        // Dataset
 
         ImageDataset image_dataset("../data/mnist");
 
-        // Neural network
 
         ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
             {4},
@@ -46,7 +44,6 @@ int main()
         opennn::Dense* hidden_dense = dynamic_cast<opennn::Dense*>(image_classification_network.get_first("Dense"));
         if (hidden_dense) hidden_dense->set_dropout_rate(float(0.0));
 
-        // Training strategy
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
@@ -60,7 +57,6 @@ int main()
 
         training_strategy.train();
 
-        // Testing analysis
 
         const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
 

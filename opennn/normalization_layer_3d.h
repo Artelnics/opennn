@@ -32,8 +32,6 @@ public:
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
-    // Fuse a residual-add into the layer norm: the layer then takes two source
-    // layers (main, residual) and skips a separate Addition layer.
     void set_fuse_add(bool);
 
     void set_input_shape(const Shape&) override;

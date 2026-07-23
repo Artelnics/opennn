@@ -47,11 +47,6 @@ static filesystem::path image_cache_path(const filesystem::path& data_path)
     return data_path / ".cache" / "images.bin";
 }
 
-// Identity trailer appended after the pixel blob in images.bin (see read_images):
-// sample count, image shape, the exact class list and the newest source mtime.
-// Re-derived from the current folders on load and matched against the file's
-// trailer, so a cache built for a different dataset — or for images since
-// edited in place — is rebuilt instead of read as stale pixels.
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
                                     const vector<filesystem::path>& class_folders,
                                     const filesystem::file_time_type& newest_write_time)
@@ -133,9 +128,6 @@ void ImageDataset::enable_device_residency()
     vector<Index> all_samples(samples_number);
     iota(all_samples.begin(), all_samples.end(), 0);
 
-    // Stage the rows the host fill_* path would produce for training batches
-    // (scaled pixels followed by the one-hot targets), so the device gather
-    // can replace the per-batch decode entirely.
     MatrixR inputs(samples_number, inputs_number);
     fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training, 1);
 
@@ -174,9 +166,6 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
 
 void ImageDataset::to_JSON(JsonWriter& printer) const
 {
-    // "Dataset", not "ImageDataset": every dataset kind serializes under the
-    // same root tag (see TabularDataset/TextDataset) — the model JSON's
-    // section name does not vary per type, ModelType drives the dispatch.
     printer.open_element("Dataset");
 
     printer.open_element("DataSource");
@@ -279,12 +268,6 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    // A fresh editor-written model carries 0x0x0 here: the editor cannot know
-    // the image geometry before the first import (the engine discovers it by
-    // scanning the folder). And a resize request from the editor's large-image
-    // popup arrives as {224, 224, 0} (channels unknown). So each positive
-    // component is a request and each non-positive one means auto-detect; an
-    // all-zero shape is no request at all.
     const Index requested_height   = read_json_index(data_source_element, "Height");
     const Index requested_width    = read_json_index(data_source_element, "Width");
     const Index requested_channels = read_json_index(data_source_element, "Channels");
@@ -346,15 +329,9 @@ void ImageDataset::read_images()
 
     ranges::sort(candidate_folders);
 
-    // Only directories that actually contain supported images count as classes.
-    // Skipping empty/non-image folders keeps a stray sibling directory (e.g. a
-    // text dataset's *.cache folder that landed in a shared data dir) from
-    // inflating the class count and corrupting the target encoding.
     vector<filesystem::path> directory_path;
     vector<filesystem::path> paths;
     vector<int32_t> labels;
-    // file_clock's epoch can sit in the future (libstdc++ uses 2174), making
-    // real mtimes negative: min() is the only safe identity for the max-fold.
     filesystem::file_time_type newest_write_time = filesystem::file_time_type::min();
 
     for (const filesystem::path& folder : candidate_folders)
@@ -400,8 +377,6 @@ void ImageDataset::read_images()
         throw_if(requested_input_shape.rank != 3,
                  "ImageDataset: requested input shape must be {height, width, channels}.");
 
-        // Positive components are explicit requests (e.g. the editor's resize
-        // to 224x224); non-positive ones fall back to the detected geometry.
         if (requested_input_shape[0] > 0) height   = requested_input_shape[0];
         if (requested_input_shape[1] > 0) width    = requested_input_shape[1];
         if (requested_input_shape[2] > 0) channels = requested_input_shape[2];
@@ -462,17 +437,10 @@ void ImageDataset::read_images()
     }
     else
     {
-        // Host-provided cache directory when set (e.g. the model's working dir)
-        // so the user's image folder is not polluted; standalone keeps the cache
-        // inside the dataset folder as before.
         cache_path = cache_directory.empty()
             ? image_cache_path(data_path)
             : cache_directory / (data_path.filename().string() + ".cache") / "images.bin";
 
-        // images.bin layout: [pixels: samples×pixel_number bytes][identity trailer].
-        // The pixel region stays at offset 0 (sample reads are unaffected); the
-        // trailer is validated against the signature re-derived from the current
-        // folders. A mismatch forces a rebuild instead of reading foreign pixels.
         const string signature = image_cache_signature(samples_number, height, width, channels,
                                                        directory_path, newest_write_time);
         const uint64_t pixel_bytes = uint64_t(samples_number) * pixel_number;
@@ -553,7 +521,6 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
             display_progress_bar(i + 1, samples_number);
     }
 
-    // Identity trailer, right after the pixel blob (see read_images cache check).
     writer.write(trailer.data(), trailer.size());
 
     writer.finish_with_rename(cache_path);
@@ -570,9 +537,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index pixels_per_image = Index(pixel_number);
     const Index pixels_per_channel = pixels_per_image / channels;
 
-    // Contract with Optimizer::mark_validation_propagation: every Training AND
-    // Validation batch leaves here scaled, because both forward passes skip the
-    // network's Scaling layers. Inference fills stay raw for the Scaling layer.
     const bool apply_scaling = mode != FillMode::Inference;
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
@@ -594,8 +558,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             Map<Array<float, Dynamic, 1>>(sample, pixels_per_image) *= 1.0f / 255.0f;
     };
 
-    // Augmentation interpolates and zero-fills borders, so it must see raw
-    // pixel values: only then does the affine wait for a separate pass.
     const bool scale_in_fill = !apply_augmentation && storage_mode != StorageMode::Matrix;
 
     if (storage_mode == StorageMode::Matrix)
@@ -655,7 +617,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
                                 FillMode,
-                                int /*contiguous*/) const
+                                int) const
 {
     const Index batch_size = ssize(sample_indices);
     const Index targets_number = ssize(target_indices);

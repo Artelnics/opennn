@@ -170,8 +170,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 {
     out.clear();
 
-    // Camino rapido: fichero sin comillas o linea concreta sin comillas ->
-    // vistas zero-copy sobre la propia linea (identico a get_token_views).
     if (!file_has_quotes || line.find('"') == string_view::npos)
     {
         size_t start = 0;
@@ -185,9 +183,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
         return;
     }
 
-    // Camino con comillas: limpiamos en `scratch`. Reservamos line.size() para que
-    // scratch NO reasigne durante los push_back (la limpieza solo quita caracteres),
-    // de modo que las vistas creadas sobre scratch.data() permanezcan validas.
     scratch.clear();
     scratch.reserve(line.size());
     const char* const base = scratch.data();
@@ -206,8 +201,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
             continue;
         }
 
-        // Dentro de comillas se eliminan ',' y ';' (misma semantica que el strip
-        // global previo), sea cual sea el separador activo.
         if (in_quote && (c == ',' || c == ';')) continue;
 
         scratch.push_back(c);
@@ -224,10 +217,6 @@ vector<string_view> get_token_views_maybe_quoted(string_view line, char separato
     return out;
 }
 
-// Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas que
-// get_token_views_maybe_quoted(...)[0], sin trocear el resto de la linea.
-// Sin comillas: vista zero-copy sobre `line` hasta el primer separador.
-// Con comillas: escribe el primer campo limpio en `scratch` y devuelve vista sobre scratch.
 string_view first_token_maybe_quoted(string_view line, char separator, bool file_has_quotes, string& scratch)
 {
     if (!file_has_quotes || line.find('"') == string_view::npos)

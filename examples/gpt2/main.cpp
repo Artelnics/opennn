@@ -39,7 +39,7 @@ const string WEIGHTS_URL = BASE_URL + "gpt2-small-seq256.bin";
 const string VOCAB_URL   = BASE_URL + "vocab.json";
 const string MERGES_URL  = BASE_URL + "merges.txt";
 
-constexpr Index VOCABULARY_SIZE = 50258;      // 50257 + 1 ([PAD] = 0)
+constexpr Index VOCABULARY_SIZE = 50258;
 constexpr Index HIDDEN_SIZE     = 768;
 constexpr Index HEADS_NUMBER    = 12;
 constexpr Index INTERMEDIATE    = 3072;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     {
         cout << "OpenNN. GPT-2 text generation example." << endl;
 
-        const string prompt         = argc > 1 ? argv[1] : "";   // no prompt => interactive REPL
+        const string prompt         = argc > 1 ? argv[1] : "";
         const Index  max_new_tokens = argc > 2 ? Index(stol(argv[2])) : 40;
         const float  temperature    = argc > 3 ? stof(argv[3]) : 0.8f;
         const Index  top_k          = argc > 4 ? Index(stol(argv[4])) : 40;
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
         const string vocab_path   = "../data/gpt2/vocab.json";
         const string merges_path  = "../data/gpt2/merges.txt";
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);   // weights .bin is FP32
+        Configuration::instance().set(Device::CUDA, Type::FP32);
 
         filesystem::create_directories("../data/gpt2");
         download_if_missing(weights_path, WEIGHTS_URL);
@@ -84,12 +84,11 @@ int main(int argc, char* argv[])
         auto tokenizer = make_unique<BytePairTokenizer>();
         tokenizer->load(vocab_path, merges_path);
 
-        // Neural network: the GPT-2 small architecture
 
         TextGenerationNetwork model(SEQUENCE_LENGTH, VOCABULARY_SIZE, HIDDEN_SIZE,
                                     HEADS_NUMBER, INTERMEDIATE, LAYERS_NUMBER,
-                                    /*pre_normalization*/ true, /*scale_embedding*/ false,
-                                    /*learned_positional*/ true, /*feed_forward_activation*/ "GELUTanh");
+                                                          true,                     false,
+                                                           true,                             "GELUTanh");
         model.set_tokenizer(move(tokenizer));
 
         if (model.get_parameters_size() != Index(filesystem::file_size(weights_path) / sizeof(float)))
@@ -104,7 +103,6 @@ int main(int argc, char* argv[])
         sampling.temperature = temperature;
         sampling.top_k = top_k;
 
-        // Interactive by default; a prompt argument switches to one-shot generation.
         const bool interactive = prompt.empty() || prompt == "--interactive" || prompt == "-i";
 
         if (interactive)

@@ -101,12 +101,9 @@ struct MinimalApproximation
     }
 };
 
-} // namespace
+}
 
 
-// -----------------------------------------------------------------------------
-// Formula parser: shape classification
-// -----------------------------------------------------------------------------
 
 TEST(FormulaExpression, LinearSumIsAffine)
 {
@@ -225,9 +222,6 @@ TEST(FormulaExpression, ScopeMixed)
 }
 
 
-// -----------------------------------------------------------------------------
-// Formula parser: evaluation
-// -----------------------------------------------------------------------------
 
 TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
 {
@@ -237,7 +231,6 @@ TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
     VectorR in(2); in << float(3), float(5);
     VectorR out(0);
 
-    // Expected: -3 + 10 + 1 = 8
     EXPECT_NEAR(f.evaluate(in, out), float(8), float(1e-5));
 }
 
@@ -250,7 +243,6 @@ TEST(FormulaExpression, EvaluateNonlinearExpression)
     VectorR in(2); in << float(9), float(3);
     VectorR out(0);
 
-    // Expected: 3 + 9 = 12
     EXPECT_NEAR(f.evaluate(in, out), float(12), float(1e-5));
 }
 
@@ -298,9 +290,6 @@ TEST(FormulaExpression, MinMaxFunctions)
 }
 
 
-// -----------------------------------------------------------------------------
-// Formula parser: error handling
-// -----------------------------------------------------------------------------
 
 TEST(FormulaExpression, UnknownIdentifierThrows)
 {
@@ -348,9 +337,6 @@ TEST(FormulaExpression, MismatchedParenthesesThrow)
 }
 
 
-// -----------------------------------------------------------------------------
-// ResponseOptimization: formula constraint integration
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
 {
@@ -361,7 +347,6 @@ TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // Require x1 + x2 <= 1.0 over a domain with each variable in [0, 10]
     opt.set_formula_constraint("x1 + x2",
                                ComparisonOperator::LessEqualTo,
                                float(0), float(1));
@@ -390,7 +375,6 @@ TEST(ResponseOptimizationFormula, AffineEqualityLandsOnHyperplane)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // Force x1 + x2 = 5
     opt.set_formula_constraint("x1 + x2",
                                ComparisonOperator::EqualTo,
                                float(5));
@@ -419,7 +403,6 @@ TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // Require x1^2 + x2^2 <= 4 (points inside circle of radius 2).
     opt.set_formula_constraint("x1^2 + x2^2",
                                ComparisonOperator::LessEqualTo,
                                float(0), float(4));
@@ -438,17 +421,9 @@ TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
 }
 
 
-// -----------------------------------------------------------------------------
-// Variable-wise block decomposition of the input-repair router
-// -----------------------------------------------------------------------------
 
 TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock)
 {
-    // Two constraint subsystems with no shared variable: an affine EQUALITY on {x0, x1}
-    // and a nonlinear disk on {x2, x3}. The router partitions them by connected component,
-    // so the affine block goes to the exact single-affine projector (equality met tightly)
-    // while only the nonlinear block goes to Gauss-Newton -- rather than the whole input
-    // vector being dragged through GN because one constraint happens to be nonlinear.
     const vector<pair<string, Index>> inputs = make_named_columns({ "x0", "x1", "x2", "x3" });
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
@@ -489,8 +464,6 @@ TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock
 
 TEST(ResponseOptimizationFormula, DisjointAffineAndNonlinearBlocksCoexist)
 {
-    // End-to-end: x0 + x1 == 5 (affine block) AND x2^2 + x3^2 <= 1 (nonlinear block), no
-    // shared variable. Every surviving result must satisfy both subsystems.
     MinimalApproximation setup({ "x0", "x1", "x2", "x3" }, { "y" },
                                 float(-5), float(5),
                                 float(-1), float(1));
@@ -525,9 +498,8 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // Callback: |x1 - x2| <= 1
     opt.set_formula_constraint(
-        [](const VectorR& in, const VectorR& /*out*/) { return abs(in(0) - in(1)); },
+        [](const VectorR& in, const VectorR&) { return abs(in(0) - in(1)); },
         ComparisonOperator::LessEqualTo,
         float(0), float(1));
 
@@ -542,9 +514,6 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 }
 
 
-// -----------------------------------------------------------------------------
-// Non-smooth (min/max/abs) constraint expansion
-// -----------------------------------------------------------------------------
 
 TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
 {
@@ -562,8 +531,8 @@ TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
     const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("min(x1, x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {});
 
-    ASSERT_EQ(branches.size(), size_t(1));       // AND -> no disjunction
-    EXPECT_EQ(branches[0].size(), size_t(2));    // x1 >= 1 AND x2 >= 1
+    ASSERT_EQ(branches.size(), size_t(1));
+    EXPECT_EQ(branches[0].size(), size_t(2));
     for (const auto& c : branches[0])
         EXPECT_EQ(c.comparison_operator, ComparisonOperator::GreaterEqualTo);
 }
@@ -605,7 +574,6 @@ TEST(NonSmoothExpand, OrCasesBranch)
 TEST(NonSmoothExpand, NestedYieldsRegionProduct)
 {
     const vector<pair<string, Index>> inputs = make_named_columns({ "x1", "x2" });
-    // two selectors (max + abs) -> 2^2 = 4 regions
     const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
     EXPECT_EQ(branches.size(), size_t(4));
 }
@@ -674,7 +642,6 @@ TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
 
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    // max(x1, |x2|) <= 1  <=>  x1 <= 1 AND |x2| <= 1
     opt.set_formula_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1));
     opt.set_iterations(3);
     opt.set_evaluations_number(1000);
@@ -699,7 +666,6 @@ TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // Unreachable: inputs live in [0,1] but we demand x1 + x2 ∈ [90, 100]
     opt.set_formula_constraint("x1 + x2",
                                ComparisonOperator::Between,
                                float(90), float(100));
@@ -727,7 +693,6 @@ TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
     const MatrixR results = opt.perform_response_optimization();
     ASSERT_GT(results.rows(), 0);
 
-    // Each sampled input must live inside the declared domain.
     for (Index i = 0; i < results.rows(); ++i)
     {
         EXPECT_GE(results(i, 0), float(0) - float(1e-3));
@@ -740,9 +705,6 @@ TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
 
 TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
 {
-    // "Allow both": x1 is simultaneously a Minimize objective and box-constrained
-    // to [2, 4]. The objective is honored within the constrained sub-box, so every
-    // sampled x1 stays in [2, 4] and the optimum drives x1 toward the lower bound.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -773,8 +735,6 @@ TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
 
 TEST(ResponseOptimizationFormula, TimeRoleScaffoldIsAvailable)
 {
-    // The forecasting time-role API is scaffolded now; the runtime forecasting path
-    // is left untouched, so this only exercises the set/clear surface and the enum.
     MinimalApproximation setup({ "x1", "x2" }, { "y" });
 
     ResponseOptimization opt(setup.network.get());
@@ -800,7 +760,6 @@ TEST(ResponseOptimizationClear, GranularClearsResetOnlyTheirOwnState)
 
     EXPECT_EQ(opt.get_objectives_number(), 2);
 
-    // Clearing one collection (by name or wholesale) must leave the others intact.
     opt.clear_objectives("x1");
     EXPECT_EQ(opt.get_objectives_number(), 1);
 
@@ -813,15 +772,10 @@ TEST(ResponseOptimizationClear, GranularClearsResetOnlyTheirOwnState)
 }
 
 
-// -----------------------------------------------------------------------------
-// ResponseOptimization: Fixed ("equal to") objectives — inverse problem solving
-// -----------------------------------------------------------------------------
 
 namespace
 {
 
-// Median output value the (untrained, random-weight) network actually reaches over its input box,
-// so Fixed-output tests target a value that is provably attainable.
 float reachable_output_median(ResponseOptimization& opt, Index output_column, Index samples = 512)
 {
     const MatrixR inputs = opt.calculate_random_inputs(opt.get_original_domain("Input"), samples);
@@ -836,13 +790,11 @@ float reachable_output_median(ResponseOptimization& opt, Index output_column, In
     return values[values.size() / 2];
 }
 
-} // namespace
+}
 
 
 TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
 {
-    // A Fixed objective on an INPUT is just a pin: x1 == 3. It must not become a closeness column,
-    // and with a real objective on y present the problem stays single-objective.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -851,7 +803,6 @@ TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     opt.set_objective("x1", ResponseOptimization::Sense::Fixed, float(3));
 
-    // Optimizing objectives = 1 (only y); the Fixed input does not add a column.
     EXPECT_EQ(opt.get_objectives_number(), 1);
 
     opt.set_iterations(4);
@@ -868,8 +819,6 @@ TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
 
 TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
 {
-    // No Minimize/Maximize objective: a pure inverse solve. The single Fixed output becomes a closeness
-    // column and the injected band constraint projects samples onto f(x) = target.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -880,40 +829,6 @@ TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
 
     opt.set_objective("y", ResponseOptimization::Sense::Fixed, target);
 
-    // Pure-fixed problem: exactly one column (the closeness of y).
-    EXPECT_EQ(opt.get_objectives_number(), 1);
-
-    opt.set_relative_tolerance(float(1e-2));   // band half-width = relative_tolerance * output range
-    opt.set_iterations(6);
-    opt.set_evaluations_number(1200);
-
-    const MatrixR results = opt.perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-
-    // Column layout of a result row is [inputs..., outputs...]; y is the only output (column 2).
-    for (Index i = 0; i < results.rows(); ++i)
-        EXPECT_NEAR(results(i, 2), target, float(5e-2))
-            << "row " << i << " y=" << results(i, 2) << " target=" << target;
-}
-
-
-TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
-{
-    // Minimize y1 while holding y2 == target. The Fixed output is a constraint only, not a Pareto
-    // axis, so with a single optimizing objective the run stays single-objective.
-    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
-                                float(0), float(10),
-                                float(-1), float(1));
-
-    ResponseOptimization opt(setup.network.get());
-
-    const float target = reachable_output_median(opt, 1);   // y2 is output column 1
-
-    opt.set_objective("y1", ResponseOptimization::Sense::Minimize);
-    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target);
-
-    // Only y1 is an objective column; the Fixed y2 contributes none.
     EXPECT_EQ(opt.get_objectives_number(), 1);
 
     opt.set_relative_tolerance(float(1e-2));
@@ -924,7 +839,35 @@ TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
 
     ASSERT_GT(results.rows(), 0);
 
-    // Row layout: [x1, x2, y1, y2]; y2 must sit on its target band.
+    for (Index i = 0; i < results.rows(); ++i)
+        EXPECT_NEAR(results(i, 2), target, float(5e-2))
+            << "row " << i << " y=" << results(i, 2) << " target=" << target;
+}
+
+
+TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    const float target = reachable_output_median(opt, 1);
+
+    opt.set_objective("y1", ResponseOptimization::Sense::Minimize);
+    opt.set_objective("y2", ResponseOptimization::Sense::Fixed, target);
+
+    EXPECT_EQ(opt.get_objectives_number(), 1);
+
+    opt.set_relative_tolerance(float(1e-2));
+    opt.set_iterations(6);
+    opt.set_evaluations_number(1200);
+
+    const MatrixR results = opt.perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
     for (Index i = 0; i < results.rows(); ++i)
         EXPECT_NEAR(results(i, 3), target, float(5e-2))
             << "row " << i << " y2=" << results(i, 3) << " target=" << target;
@@ -933,8 +876,6 @@ TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
 
 TEST(ResponseOptimizationFixed, MultipleFixedOutputsRemainSingleObjective)
 {
-    // Two Fixed outputs, no optimizing objective: the intersection manifold is one feasible region,
-    // so the run is single-objective with two closeness columns (not a two-objective Pareto search).
     MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -976,16 +917,12 @@ TEST(ResponseOptimizationFixed, ClearObjectivesResetsFixedValues)
     opt.clear_objectives("y");
     EXPECT_EQ(opt.get_objectives_number(), 0);
 
-    // Re-adding as an optimizing objective must not be contaminated by the old Fixed target.
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     EXPECT_EQ(opt.get_objectives_number(), 1);
     SUCCEED();
 }
 
 
-// -----------------------------------------------------------------------------
-// ResponseOptimization: get_robust_point — balance domain-centrality vs Jacobian robustness
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationRobust, EmptyFrontReturnsMinusOne)
 {
@@ -1000,8 +937,6 @@ TEST(ResponseOptimizationRobust, EmptyFrontReturnsMinusOne)
 
 TEST(ResponseOptimizationRobust, BalanceSelectsCentralOrRobustEndpoints)
 {
-    // Build a solution manifold with a pure inverse solve, then check the balance dial: alpha=0
-    // should pick the most domain-central point, alpha=1 the most robust (least sensitive) one.
     MinimalApproximation setup({ "x1", "x2", "x3" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1030,13 +965,11 @@ TEST(ResponseOptimizationRobust, BalanceSelectsCentralOrRobustEndpoints)
     }
     EXPECT_TRUE(row_robust.isApprox(front.row(i_robust).transpose()));
 
-    // Domain box and span, shared by the two reference metrics below.
     const auto domain = opt.get_original_domain("Input");
     VectorR span(inputs_number);
     for (Index c = 0; c < inputs_number; ++c)
         span(c) = domain.superior_frontier(c) - domain.inferior_frontier(c);
 
-    // Finite-difference sensitivity (same span weighting as the implementation).
     const auto sensitivity = [&](const VectorR& x) -> float
     {
         MatrixR probe(2 * inputs_number, inputs_number);
@@ -1057,7 +990,6 @@ TEST(ResponseOptimizationRobust, BalanceSelectsCentralOrRobustEndpoints)
         return float(sqrt(s));
     };
 
-    // Worst-case margin to the nearest wall (centrality metric).
     const auto min_margin = [&](const VectorR& x) -> float
     {
         float worst = 1.0f;
@@ -1076,17 +1008,12 @@ TEST(ResponseOptimizationRobust, BalanceSelectsCentralOrRobustEndpoints)
 
     const float span_max = max(sensitivity(x_central), sensitivity(x_robust));
 
-    // Pure-robustness pick is at least as insensitive as the pure-centrality pick.
     EXPECT_LE(sensitivity(x_robust), sensitivity(x_central) + 0.05f * span_max + 1e-3f);
 
-    // Pure-centrality pick is at least as central as the pure-robustness pick.
     EXPECT_GE(min_margin(x_central), min_margin(x_robust) - 1e-3f);
 }
 
 
-// -----------------------------------------------------------------------------
-// ResponseOptimization: integer decision variables
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationInteger, IntegerVariableYieldsIntegralResults)
 {
@@ -1159,8 +1086,6 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // The affine repair projects points onto x1 + x2 <= 5; the post-repair
-    // re-round must keep the integer variable x1 on the lattice.
     opt.set_formula_constraint("x1 + x2",
                                ComparisonOperator::LessEqualTo,
                                float(0), float(5));
@@ -1193,8 +1118,6 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
 
-    // The mixed constraint routes through repair_output_constraints, which moves
-    // points continuously; the post-repair re-snap must keep x1 on the lattice.
     opt.set_formula_constraint("y + 0.1*x2",
                                ComparisonOperator::LessEqualTo,
                                float(0), float(1));
@@ -1211,20 +1134,12 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
 }
 
 
-// -----------------------------------------------------------------------------
-// Mixed-integer repair: masked affine projector (step 1)
-// -----------------------------------------------------------------------------
 
 TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 {
-    // Portfolio-style budget + buy-in over 4 weights w0..w3 and 4 indicators z0..z3.
-    // The indicators are pinned to a cardinality-2 pattern {z0=z1=1, z2=z3=0} and held
-    // fixed; the projector must land the continuous weights on the affine manifold
-    //   sum w = 1,  w_i <= z_i,  w_i >= 0.01 z_i
-    // without ever moving an indicator.
     const vector<pair<string, Index>> inputs =
         make_named_columns({ "w0", "w1", "w2", "w3", "z0", "z1", "z2", "z3" });
-    const vector<pair<string, Index>> outputs;   // input-only system, no network
+    const vector<pair<string, Index>> outputs;
 
     auto make_fc = [&](const string& expression, ComparisonOperator op, float low, float up)
     {
@@ -1254,21 +1169,20 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 
     const Index rows = 200;
     MatrixR points(rows, n);
-    set_random_uniform(points, float(0), float(1));   // weights start anywhere in [0,1]
+    set_random_uniform(points, float(0), float(1));
     for (Index r = 0; r < rows; ++r)
     {
-        points(r, 4) = float(1); points(r, 5) = float(1);   // z0 = z1 = 1
-        points(r, 6) = float(0); points(r, 7) = float(0);   // z2 = z3 = 0
+        points(r, 4) = float(1); points(r, 5) = float(1);
+        points(r, 6) = float(0); points(r, 7) = float(0);
     }
 
     vector<char> fixed(n, 0);
-    fixed[4] = fixed[5] = fixed[6] = fixed[7] = 1;          // hold all indicators fixed
+    fixed[4] = fixed[5] = fixed[6] = fixed[7] = 1;
 
     repair_affine_inputs_with_fixed(points, inferior, superior, constraints, fixed);
 
     for (Index r = 0; r < rows; ++r)
     {
-        // Indicators are untouched (exactly, not just to tolerance).
         EXPECT_EQ(points(r, 4), float(1)); EXPECT_EQ(points(r, 5), float(1));
         EXPECT_EQ(points(r, 6), float(0)); EXPECT_EQ(points(r, 7), float(0));
 
@@ -1283,16 +1197,12 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
                 << "buy-in lower violated at row " << r << " col " << i;
         }
 
-        // Unselected weights must collapse to ~0.
         EXPECT_NEAR(points(r, 2), float(0), float(1e-3)) << "w2 not zeroed at row " << r;
         EXPECT_NEAR(points(r, 3), float(0), float(1e-3)) << "w3 not zeroed at row " << r;
     }
 }
 
 
-// -----------------------------------------------------------------------------
-// Mixed-integer repair: lattice clamp-and-carry (step 2)
-// -----------------------------------------------------------------------------
 
 namespace
 {
@@ -1305,7 +1215,7 @@ namespace
         constraint.comparison_operator = op;
         constraint.low_bound = low;
         constraint.up_bound = up;
-        constraint.compiled = compile_formula(expression, inputs, /*outputs*/ {});
+        constraint.compiled = compile_formula(expression, inputs,             {});
         constraint.kind = classify(constraint);
         return constraint;
     }
@@ -1313,7 +1223,6 @@ namespace
 
 TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 {
-    // 3 integer vars n0..n2 in [0,5]; knapsack budget n0 + n1 + n2 <= 4.
     const vector<pair<string, Index>> inputs = make_named_columns({ "n0", "n1", "n2" });
     const MultivariateConstraint budget =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::LessEqualTo, float(0), float(4));
@@ -1324,7 +1233,7 @@ TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 
     const Index rows = 300;
     MatrixR points(rows, n);
-    set_random_uniform(points, float(0), float(5));   // continuous; the carry lattices it
+    set_random_uniform(points, float(0), float(5));
 
     repair_single_affine_integer(points, inferior, superior, budget);
 
@@ -1343,7 +1252,6 @@ TEST(MixedIntegerCarry, SingleBudgetStaysOnLatticeAndFeasible)
 
 TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
 {
-    // n0 + n1 + n2 == 3, each in [0,5]; unit coefficients => the carry must hit it exactly.
     const vector<pair<string, Index>> inputs = make_named_columns({ "n0", "n1", "n2" });
     const MultivariateConstraint exact =
         make_integer_constraint("n0 + n1 + n2", inputs, ComparisonOperator::EqualTo, float(3), float(3));
@@ -1369,8 +1277,6 @@ TEST(MixedIntegerCarry, SingleEqualityLandsExactlyOnLattice)
 
 TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
 {
-    // End-to-end: a pure-integer knapsack n0+n1+n2 <= 4 over three integer variables routes
-    // through the mixed-integer pump, where the lattice clamp-and-carry fast path solves it.
     MinimalApproximation setup({ "n0", "n1", "n2" }, { "y" }, float(0), float(5), float(-1), float(1));
     vector<Variable> input_variables = setup.network->get_input_variables();
     for (int i = 0; i < 3; ++i) input_variables[i].type = VariableType::Integer;
@@ -1395,16 +1301,13 @@ TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
 }
 
 
-// -----------------------------------------------------------------------------
-// Mixed-integer repair: box-aware K-hot draw (step 3, Hole A)
-// -----------------------------------------------------------------------------
 
 TEST(MixedIntegerKHot, DrawsExactlyKHonoringPins)
 {
     const Index count = 8, k = 3;
     vector<char> force_on(count, 0), force_off(count, 0);
-    force_on[1] = 1;                       // index 1 must be selected
-    force_off[5] = 1; force_off[6] = 1;    // indices 5,6 excluded
+    force_on[1] = 1;
+    force_off[5] = 1; force_off[6] = 1;
 
     for (int trial = 0; trial < 200; ++trial)
     {
@@ -1415,8 +1318,8 @@ TEST(MixedIntegerKHot, DrawsExactlyKHonoringPins)
         float sum = 0;
         for (const float v : out) { EXPECT_TRUE(v == float(0) || v == float(1)); sum += v; }
         EXPECT_EQ(sum, float(k));
-        EXPECT_EQ(out[1], float(1));        // forced on
-        EXPECT_EQ(out[5], float(0));        // forced off
+        EXPECT_EQ(out[1], float(1));
+        EXPECT_EQ(out[5], float(0));
         EXPECT_EQ(out[6], float(0));
     }
 }
@@ -1426,19 +1329,16 @@ TEST(MixedIntegerKHot, ReportsInfeasiblePins)
     const Index count = 4;
     vector<float> out;
 
-    // Too many forced on (3 > k=2).
     {
         vector<char> force_on(count, 0), force_off(count, 0);
         force_on[0] = force_on[1] = force_on[2] = 1;
         EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
     }
-    // Too few free to reach k (only index 3 free, need 2).
     {
         vector<char> force_on(count, 0), force_off(count, 0);
         force_off[0] = force_off[1] = force_off[2] = 1;
         EXPECT_FALSE(draw_k_hot(count, 2, force_on, force_off, out));
     }
-    // Contradictory pin (forced on and off).
     {
         vector<char> force_on(count, 0), force_off(count, 0);
         force_on[0] = 1; force_off[0] = 1;
@@ -1447,15 +1347,9 @@ TEST(MixedIntegerKHot, ReportsInfeasiblePins)
 }
 
 
-// -----------------------------------------------------------------------------
-// Mixed-integer end-to-end: portfolio buy-in + budget + cardinality (steps 3-4)
-// -----------------------------------------------------------------------------
 
 TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
 {
-    // OR-Library port1 MIQP shape, scaled down: A assets, choose exactly K, weights on a
-    // simplex with a buy-in floor coupling each continuous weight to its binary indicator.
-    //   sum_i w_i = 1,  0.01 z_i <= w_i <= z_i,  sum_i z_i = K,  w_i in [0,1], z_i in {0,1}.
     const int A = 8;
     const int K = 3;
 
@@ -1467,7 +1361,7 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
     MinimalApproximation setup(input_names, { "y" }, float(0), float(1), float(-1), float(1));
 
     vector<Variable> input_variables = setup.network->get_input_variables();
-    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;   // indicators
+    for (int i = 0; i < A; ++i) input_variables[A + i].type = VariableType::Binary;
     setup.network->set_input_variables(input_variables);
 
     ResponseOptimization opt(setup.network.get());
@@ -1516,11 +1410,6 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
 
 TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
 {
-    // Phase-0 probe at OR-Library port1's real dimensions: 31 assets, choose exactly K=10,
-    // simplex budget + buy-in floor/cap coupling each weight to its indicator. This is the
-    // instance the manuscript records as a boundary; the probe checks whether the current
-    // resolve-cardinality-first + fixed-binary continuous projection returns feasible points
-    // at full scale. Objective is a placeholder (the surrogate is irrelevant to feasibility).
     const int A = 31;
     const int K = 10;
 
@@ -1573,9 +1462,6 @@ TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
 
 TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
 {
-    // A non-default exploration_ratio exercises both the explore (free K-hot) and exploit
-    // (incumbent-preferred K-hot) branches across iterations; feasibility + cardinality must
-    // still hold regardless of the split.
     const int A = 6;
     const int K = 2;
 
@@ -1602,7 +1488,7 @@ TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
     }
     opt.set_cardinality_constraint(indicator_names, K);
 
-    opt.set_exploration_ratio(float(0.5));   // half explore, half exploit
+    opt.set_exploration_ratio(float(0.5));
     opt.set_iterations(4);
     opt.set_evaluations_number(1200);
 
@@ -1625,15 +1511,9 @@ TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
 }
 
 
-// -----------------------------------------------------------------------------
-// Generalized cardinality over non-binary variables: choose exactly K, rest = 0
-// -----------------------------------------------------------------------------
 
 TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
 {
-    // Cardinality over CONTINUOUS variables x0..x5 in [0,10]: exactly K active, the
-    // remaining A-K forced to exactly 0. No other constraints, so the k-hot mask in the
-    // sampler is the sole mechanism (the repair path early-returns with no input constraints).
     const int A = 6;
     const int K = 2;
 
@@ -1662,8 +1542,6 @@ TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
             EXPECT_LE(x, float(10) + float(1e-3)) << "x" << i << " above box at row " << r;
             if (abs(x) > float(1e-6)) ++nonzero; else ++zero;
         }
-        // Off-columns are forced to exactly 0; an active column may coincide with ~0 (option a),
-        // so the robust invariants are: at most K active and at least A-K exact zeros.
         EXPECT_LE(nonzero, K)     << "more than K active variables at row " << r;
         EXPECT_GE(zero, A - K)    << "fewer than A-K zeroed variables at row " << r;
     }
@@ -1672,9 +1550,6 @@ TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
 
 TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
 {
-    // Cardinality over INTEGER variables n0..n4 in [0,5]: exactly K active, rest 0. Active
-    // integers are guaranteed nonzero (nudged off 0) and stay on the integer grid, and may
-    // range over [1,5] rather than being pinned to 1.
     const int A = 5;
     const int K = 3;
 
@@ -1708,7 +1583,6 @@ TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
             EXPECT_LE(n, float(5) + float(1e-3))  << "n" << i << " above box at row " << r;
             if (abs(n) > float(0.5)) ++nonzero;
         }
-        // Integers on -> guaranteed nonzero, so the active count is exactly K.
         EXPECT_EQ(nonzero, K) << "active integer count != K at row " << r;
     }
 }
@@ -1716,8 +1590,6 @@ TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
 
 TEST(BinaryCardinality, FreeModeIsAtMostK)
 {
-    // force_nonzero = false: choose up to K binary slots that MAY be 1, the rest pinned to 0.
-    // The result is a sparsity budget -> at most K ones (possibly fewer), never more.
     const int A = 6;
     const int K = 3;
 
@@ -1732,7 +1604,7 @@ TEST(BinaryCardinality, FreeModeIsAtMostK)
 
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
-    opt.set_cardinality_constraint(input_names, K, /*force_nonzero=*/false);
+    opt.set_cardinality_constraint(input_names, K,                   false);
 
     opt.set_iterations(2);
     opt.set_evaluations_number(800);
@@ -1754,13 +1626,9 @@ TEST(BinaryCardinality, FreeModeIsAtMostK)
 }
 
 
-// -----------------------------------------------------------------------------
-// Single-variable affine constraint -> domain box promotion (B)
-// -----------------------------------------------------------------------------
 
 TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
 {
-    // "2*x1 - 6 <= 0"  ->  x1 <= 3, folded into the box; every result must respect it.
     MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
@@ -1778,7 +1646,6 @@ TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
 
 TEST(SingleVariablePromotion, EmptyIntersectionThrows)
 {
-    // Existing box [5,10] intersected with the implied x1 <= 3 is empty -> must throw.
     MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
     ResponseOptimization opt(setup.network.get());
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
@@ -1793,7 +1660,6 @@ TEST(SingleVariablePromotion, EmptyIntersectionThrows)
 
 TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
 {
-    // A promoted box on an integer variable must still yield integral, in-box results.
     MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(0), float(10), float(-1), float(1));
     vector<Variable> input_variables = setup.network->get_input_variables();
     input_variables[0].type = VariableType::Integer;
@@ -1817,15 +1683,9 @@ TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
 }
 
 
-// -----------------------------------------------------------------------------
-// AllowedSet: membership constraints (x in {values})
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
 {
-    // x1 may only take {1, 5, 9}; it is referenced by no formula, so it is sampled
-    // directly from the set within a single solve (no branching). Every returned x1
-    // must be one of the allowed values.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1851,8 +1711,6 @@ TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
 
 TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
 {
-    // x1 + x2 must equal one of {3, 7}. This expression membership branches into two
-    // EqualTo equality subproblems; the aggregated result must satisfy one of them.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1878,10 +1736,6 @@ TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
 
 TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleValue)
 {
-    // x1 in {2, 8} AND x1 + x2 <= 5, with x2 in [0,10]. x1 is referenced by the
-    // formula, so it branches: the x1=2 branch is feasible (x2 <= 3) while the x1=8
-    // branch is infeasible (needs x2 <= -3) and is skipped. Every result must come
-    // from the surviving branch.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1909,10 +1763,6 @@ TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleVal
 
 TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBudget)
 {
-    // Four-way membership x1+x2 in {2,4,6,8} under a capped budget with pruning on
-    // (default): successive halving probes all four cheaply, races them down, and
-    // finishes the winner. The result must still satisfy membership, and the total
-    // evaluations must stay near the cap (a per-branch sampling overshoot aside).
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1945,8 +1795,6 @@ TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBud
 
 TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
 {
-    // The same four-way membership with pruning switched OFF: every branch is solved to
-    // completion and the global front aggregated. Membership must still hold.
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
                                 float(0), float(10),
                                 float(-1), float(1));
@@ -1972,16 +1820,9 @@ TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
 }
 
 
-// -----------------------------------------------------------------------------
-// ResponseOptimization: categorical sample-frequency tracking + under-used exploration
-// -----------------------------------------------------------------------------
 
 TEST(ResponseOptimizationCategory, ExplorationSamplesEveryCategoryAndTracksFrequency)
 {
-    // One categorical input "color" with 4 categories. calculate_random_inputs runs
-    // no network forward pass, so the input shape is set to the variable count (1) to
-    // satisfy get_variables_and_descriptives; the categorical still expands to 4
-    // one-hot sampling columns internally.
     auto network = make_unique<ApproximationNetwork>(Shape{ 1 }, Shape{ 3 }, Shape{ 1 });
 
     Variable color;
@@ -2021,11 +1862,6 @@ TEST(ResponseOptimizationCategory, ExplorationSamplesEveryCategoryAndTracksFrequ
 
 TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
 {
-    // 1 numeric input "x" + 1 categorical "cat" (3 levels) => 4 one-hot features fed to a
-    // real network forward pass. The Scaling layer holds one descriptive PER FEATURE (4)
-    // while the optimizer works per logical variable (2); this is the production layout
-    // that get_variables_and_descriptives collapses (before that, a 4-vs-2 size mismatch
-    // threw). An AllowedSet over category indices excludes the middle level "B".
     ApproximationNetwork network(Shape{ 4 }, Shape{ 4 }, Shape{ 1 });
 
     Variable x; x.name = "x"; x.set_role("Input"); x.type = VariableType::Numeric;
@@ -2037,9 +1873,9 @@ TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
     network.set_output_variables({ y });
 
     vector<Descriptives> in_desc(4);
-    in_desc[0] = Descriptives(float(0), float(10), float(5), float(2.5));        // x
+    in_desc[0] = Descriptives(float(0), float(10), float(5), float(2.5));
     for (Index j = 1; j < 4; ++j)
-        in_desc[j] = Descriptives(float(0), float(1), float(0.5), float(0.5));   // one-hot column
+        in_desc[j] = Descriptives(float(0), float(1), float(0.5), float(0.5));
     static_cast<Scaling*>(network.get_first("Scaling"))->set_descriptives(in_desc);
 
     static_cast<Unscaling*>(network.get_first("Unscaling"))
@@ -2047,7 +1883,7 @@ TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
 
     ResponseOptimization opt(&network);
     opt.set_objective("y", ResponseOptimization::Sense::Maximize);
-    opt.set_constraint("cat", vector<float>{ float(0), float(2) });   // allow A and C, exclude B
+    opt.set_constraint("cat", vector<float>{ float(0), float(2) });
 
     opt.set_iterations(3);
     opt.set_evaluations_number(600);
@@ -2055,7 +1891,7 @@ TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
     const MatrixR results = opt.perform_response_optimization();
 
     ASSERT_GT(results.rows(), 0);
-    ASSERT_EQ(results.cols(), 5);                                     // x, A, B, C, y
+    ASSERT_EQ(results.cols(), 5);
     for (Index i = 0; i < results.rows(); ++i)
     {
         const float a = results(i, 1), b = results(i, 2), c = results(i, 3);

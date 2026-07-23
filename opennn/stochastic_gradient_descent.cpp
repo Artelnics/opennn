@@ -186,7 +186,7 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
         momentum,
         nesterov,
         neural_network->get_parameters_bf16_mirror_data(),
-        Backend::get_compute_stream());
+        device::get_compute_stream());
 }
 #else
 void StochasticGradientDescent::update_parameters_capturable(BackPropagation&, OptimizerData&) const
@@ -205,8 +205,6 @@ void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_da
 
     optimizer_data.iteration = 1;
 
-    // The warmup runs before any on_epoch_begin, so it must see the epoch-0
-    // learning rate.
     current_learning_rate = initial_learning_rate;
 
 #ifdef OPENNN_HAS_CUDA
@@ -230,7 +228,7 @@ void StochasticGradientDescent::on_epoch_begin(Index epoch, [[maybe_unused]] Opt
     if (graph_update)
         set_scalar_device_cuda(optimizer_data.graph_effective_lr.as<float>(),
                                current_learning_rate,
-                               Backend::get_compute_stream());
+                               device::get_compute_stream());
 #endif
 }
 

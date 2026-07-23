@@ -11,18 +11,15 @@ TEST(StatisticsTest, Minimum)
 {
     VectorR vector;
 
-    // Test
 
     EXPECT_EQ(isnan(type(minimum(vector))),true);
 
-    // Test
 
     vector.resize(3);
     vector << type(0), type(1), type(9);
 
     EXPECT_NEAR(minimum(vector), type(0), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector << type(1),type(2),type(3);
@@ -40,18 +37,15 @@ TEST(StatisticsTest, Maximum)
 {
     VectorR vector;
 
-    // Test
 
     EXPECT_EQ(isnan(maximum(vector)), true);
 
-    // Test
 
     vector.resize(3);
     vector <<  type(0), type(1), type(9);
 
     EXPECT_NEAR(maximum(vector), type(9), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector << type(1),type(2),type(3);
@@ -85,28 +79,24 @@ TEST(StatisticsTest, Mean)
 
     EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
-    // Test
 
     vector.resize(2);
     vector <<  type(-1), type(1) ;
 
     EXPECT_NEAR(mean(vector), type(0), EPSILON);
 
-    // Test missing values
 
     vector.resize(5);
     vector <<  type(1), type(NAN), type(2.0), type(3.0), type(4.0);
 
     EXPECT_NEAR(mean(vector), type(2.5), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(1), type(1), type(NAN), type(1) ;
 
     EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
-    // Test empty matrix
 
     matrix.resize(0, 0);
 
@@ -121,32 +111,27 @@ TEST(StatisticsTest, StandardDeviation)
 
     type standard_deviation;
 
-    // Test
 
     EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(2),type(4),type(8),type(10);
 
     EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector.setConstant(type(-11));
 
     EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector.setZero();
 
     EXPECT_NEAR(opennn::standard_deviation(vector), 0, EPSILON);
 
-    // Test
 
     vector.resize(2);
     vector <<  type(1), type(1);
@@ -155,7 +140,6 @@ TEST(StatisticsTest, StandardDeviation)
 
     EXPECT_NEAR(standard_deviation, 0, EPSILON);
 
-    // Test
 
     vector.resize(2);
     vector <<  type(-1.0), type(1) ;
@@ -164,7 +148,6 @@ TEST(StatisticsTest, StandardDeviation)
 
     EXPECT_NEAR(standard_deviation, sqrt(type(2)), EPSILON);
 
-    // Test
 
     vector.resize(1);
     vector[0] = type(NAN);
@@ -183,7 +166,6 @@ TEST(StatisticsTest, Median)
     
     type median;
     
-    // Test
 
     vector.resize(2);
 
@@ -191,7 +173,6 @@ TEST(StatisticsTest, Median)
     
     EXPECT_NEAR(median, type(0), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector << type(2),type(4),type(8),type(10);
@@ -200,7 +181,6 @@ TEST(StatisticsTest, Median)
 
     EXPECT_NEAR(median, type(6), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector << type(-11),type(-11),type(-11),type(-11);
@@ -209,7 +189,6 @@ TEST(StatisticsTest, Median)
 
     EXPECT_NEAR(median, type(-11), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(1),type(2),type(3),type(4);
@@ -218,7 +197,6 @@ TEST(StatisticsTest, Median)
 
     EXPECT_NEAR(median, type(2.5), EPSILON);
 
-    // Test
 
     vector.resize(5);
     vector <<  type(1),type(2),type(3),type(4),type(5);
@@ -227,7 +205,6 @@ TEST(StatisticsTest, Median)
 
     EXPECT_NEAR(abs(median), type(3), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector << type(3),type(NAN),type(1),type(NAN);
@@ -236,7 +213,6 @@ TEST(StatisticsTest, Median)
 
     EXPECT_NEAR(abs(median), type(2), EPSILON);
     
-    // Test
     MatrixR matrix(3,2);
 
     matrix << type(1),type(1),
@@ -246,7 +222,6 @@ TEST(StatisticsTest, Median)
     EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), EPSILON);
     EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3), EPSILON);
     
-    // Test
 
     matrix.resize(3,2);
     matrix << type(1),type(NAN),
@@ -263,42 +238,36 @@ TEST(StatisticsTest, Variance)
 {
     VectorR vector;
 
-    // Test
 
     vector.resize(3);
     vector.setZero();
 
     EXPECT_EQ(Index(variance(vector)), 0);
 
-    // Test , 2
 
     vector.resize(4);
     vector <<  type(2),type(4),type(8),type(10);
 
     EXPECT_NEAR(variance(vector), type(40)/type(3), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(-11),type(-11),type(-11),type(-11);
 
     EXPECT_NEAR(variance(vector), type(0), EPSILON);
 
-    // Test
 
     vector.resize(1);
     vector.setConstant(type(1));
 
     EXPECT_NEAR(abs(variance(vector)), type(0), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector << type(2),type(1),type(2);
 
     EXPECT_NEAR(abs(variance(vector)), type(1)/type(3), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector << type(1),type(NAN),type(2);
@@ -313,7 +282,6 @@ TEST(StatisticsTest, Quartiles)
     VectorR quartiles;
     
     
-    // Test
     
     vector.resize(1);
     vector.setZero();
@@ -324,7 +292,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(Index(quartiles(1)), type(0), EPSILON);
     EXPECT_NEAR(Index(quartiles(2)), type(0), EPSILON);
         
-    // Test
 
     vector.resize(2);
     vector << type(0), type(1);
@@ -335,7 +302,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(0)) , type(0.25), EPSILON);
     EXPECT_NEAR(abs(quartiles(1)), type(0.5), EPSILON);
 
-    // Test
 
     vector.resize(3);
     vector <<  type(0),type(1),type(2);
@@ -346,7 +312,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(1), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(1.5), EPSILON);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(0),type(1),type(2),type(3);
@@ -357,7 +322,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(1.5), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(2.5), EPSILON);    
     
-    // Test
 
     vector.resize(5);
     vector <<  type(0),type(1),type(2),type(3),type(4);
@@ -368,7 +332,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(2), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
 
-    // Test
 
     vector.resize(6);
     vector <<  type(0),type(1),type(2),type(3),type(4),type(5);
@@ -380,7 +343,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(2)), type(4), EPSILON);
 
     
-    // Test
 
     vector.resize(7);
     vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6);
@@ -391,7 +353,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(3.0), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(5.0), EPSILON);
 
-    // Test
 
     vector.resize(8);
     vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7);
@@ -402,7 +363,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(3.5), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(5.5), EPSILON);
 
-    // Test
 
     vector.resize(9);
     vector <<  type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8);
@@ -413,7 +373,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
-   // Test
 
     vector.resize(9);
     vector <<  type(1),type(4),type(6),type(2),type(0),type(3),type(4),type(7),type(10);
@@ -424,7 +383,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
-    // Test
 
     vector.resize(20);
     vector << type(12),type(14),type(50),type(76),type(12),type(34),type(56),type(74),type(89),type(60),type(96),type(24),type(53),type(25),type(67),type(84),type(92),type(45),type(62),type(86);
@@ -436,9 +394,7 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(2)), type(80.0), EPSILON);
     
     
-    // Test missing values:
 
-    // Test
 
     vector.resize(5);
     vector << type(1), type(2), type(3), type(NAN), type(4);
@@ -449,7 +405,6 @@ TEST(StatisticsTest, Quartiles)
     EXPECT_NEAR(abs(quartiles(1)), type(2.5), EPSILON);
     EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
     
-    // Test
 
     vector.resize(6);
     vector << type(1), type(2), type(3), type(NAN), type(4), type(5);
@@ -470,7 +425,6 @@ TEST(StatisticsTest, Histogram)
     VectorR centers;
     VectorR frequencies;
     
-    // Test
 
     vector.resize(11);
     vector << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10);
@@ -506,7 +460,6 @@ TEST(StatisticsTest, Histogram)
 
     EXPECT_EQ(sum_frec_1, 11);
 
-    // Test
 
     vector.resize(20);
     vector.setRandom();
@@ -548,11 +501,9 @@ TEST(StatisticsTest, MinimalIndex)
 {
     VectorR vector;
 
-    // Test
 
     EXPECT_EQ(minimal_index(vector), 0);
 
-    // Test
 
     vector.resize(3);
     vector <<  type(1),type(0),type(-1);
@@ -563,13 +514,11 @@ TEST(StatisticsTest, MinimalIndex)
 
 TEST(StatisticsTest, MaximalIndex)
 {
-    // Test
 
     VectorR vector(0);
 
     EXPECT_EQ(maximal_index(vector), 0);
 
-    // Test
 
     vector.resize(3);
     vector <<  type(1),type(0),type(-1);
@@ -583,11 +532,9 @@ TEST(StatisticsTest, MinimalIndices)
     
     VectorR vector;
 
-    // Test
    
     EXPECT_EQ(minimal_indices(vector, 0).rows(), 0);
 
-    // Test
     
     vector.resize(3);
     vector <<  type(-1),type(0),type(1);
@@ -598,7 +545,6 @@ TEST(StatisticsTest, MinimalIndices)
     EXPECT_EQ(minimal_indices(vector, 3)(1), 1);
     EXPECT_EQ(minimal_indices(vector, 3)(2), 2);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(0),type(0),type(0),type(1);
@@ -607,7 +553,6 @@ TEST(StatisticsTest, MinimalIndices)
     EXPECT_EQ(minimal_indices(vector, 4)(1), 1);
     EXPECT_EQ(minimal_indices(vector, 4)(3), 3);
 
-    // Test
   
     vector.resize(5);
     vector << type(0),type(1),type(0),type(2),type(0);
@@ -619,7 +564,6 @@ TEST(StatisticsTest, MinimalIndices)
     EXPECT_EQ(minimal_indices(vector, 5)(4), 3);
     
 
-    // Test
 
     vector.resize(4);
     vector << type(-1),type(2),type(-3),type(4);
@@ -635,18 +579,15 @@ TEST(StatisticsTest, MaximalIndices)
     
     VectorR vector;
 
-    // Test
 
     EXPECT_EQ(maximal_indices(vector,0).rows(), 0);
 
-    // Test
 
     vector.resize(3);
     vector <<  type(-1),type(0),type(1) ;
 
     EXPECT_EQ(maximal_indices(vector, 1)[0], 2);
 
-    // Test
 
     vector.resize(4);
     vector <<  type(1),type(1),type(1),type(1) ;
@@ -655,7 +596,6 @@ TEST(StatisticsTest, MaximalIndices)
     EXPECT_EQ(maximal_indices(vector, 4)[1], 1);
     EXPECT_EQ(maximal_indices(vector, 4)[3], 3);
 
-    // Test
 
     vector.resize(5);
     vector <<  type(1),type(5),type(6),type(7),type(2) ;
@@ -677,7 +617,6 @@ TEST(StatisticsTest, BoxPlot)
     BoxPlot box_plot;
     BoxPlot solution;
     
-    // Test
 
     vector.resize(4);
     vector.setZero();
@@ -690,7 +629,6 @@ TEST(StatisticsTest, BoxPlot)
     EXPECT_NEAR(box_plot.third_quartile, type(0), EPSILON);
     EXPECT_NEAR(box_plot.maximum, type(0), EPSILON);
     
-    // Test
 
     vector.resize(8);
     vector <<  type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(8.0), type(9.0) ;
@@ -706,7 +644,6 @@ TEST(StatisticsTest, BoxPlot)
     EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
     EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
 
-    // Test missing values
 
     vector.resize(9);
     vector <<  type(2.0), type(2.0), type(3.0), type(5.0), type(6.0), type(7.0), type(NAN), type(8.0), type(9.0);

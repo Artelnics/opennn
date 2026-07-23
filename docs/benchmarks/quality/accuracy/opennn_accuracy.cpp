@@ -42,35 +42,35 @@ float clamp_probability(float value)
     return value;
 }
 
-std::string bench_data_path(const std::string& leaf)
+string bench_data_path(const string& leaf)
 {
-    const char* root = std::getenv("OPENNN_BENCH_DATA");
-    const std::string base = root && *root
-        ? std::string(root)
-        : std::string(std::getenv("HOME") ? std::getenv("HOME") : ".") + "/opennn-benchmark-data";
+    const char* root = getenv("OPENNN_BENCH_DATA");
+    const string base = root && *root
+        ? string(root)
+        : string(getenv("HOME") ? getenv("HOME") : ".") + "/opennn-benchmark-data";
     return base + "/higgs/" + leaf;
 }
 
-std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
                                             const Shape& target_shape,
                                             Index hidden,
                                             Index hidden_layers)
 {
-    auto network = std::make_unique<NeuralNetwork>();
+    auto network = make_unique<NeuralNetwork>();
     Shape current = input_shape;
 
     for (Index i = 0; i < hidden_layers; ++i)
     {
-        network->add_layer(std::make_unique<opennn::Dense>(
+        network->add_layer(make_unique<opennn::Dense>(
             current,
             Shape{hidden},
             "ReLU",
             false,
-            "higgs_dense_" + std::to_string(i + 1)));
+            "higgs_dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(std::make_unique<opennn::Dense>(
+    network->add_layer(make_unique<opennn::Dense>(
         current,
         target_shape,
         "Sigmoid",
@@ -82,7 +82,7 @@ std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
     return network;
 }
 
-double calculate_auc(const std::vector<std::pair<float, int>>& scored)
+double calculate_auc(const vector<pair<float, int>>& scored)
 {
     const Index n = Index(scored.size());
     if (n == 0) return 0.0;
@@ -93,8 +93,8 @@ double calculate_auc(const std::vector<std::pair<float, int>>& scored)
     const Index negatives = n - positives;
     if (positives == 0 || negatives == 0) return 0.0;
 
-    std::vector<std::pair<float, int>> sorted = scored;
-    std::sort(sorted.begin(), sorted.end(),
+    vector<pair<float, int>> sorted = scored;
+    sort(sorted.begin(), sorted.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
 
     double positive_rank_sum = 0.0;
@@ -122,7 +122,7 @@ struct BinaryMetrics
 };
 
 BinaryMetrics evaluate(NeuralNetwork& network,
-                       const std::string& test_path,
+                       const string& test_path,
                        Index batch)
 {
     TabularDataset test_dataset(test_path, ",", false, false);
@@ -134,7 +134,7 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     const MatrixR inputs = all.leftCols(inputs_number);
 
     ForwardPropagation forward_propagation(batch, &network);
-    std::vector<std::pair<float, int>> scored;
+    vector<pair<float, int>> scored;
     scored.reserve(size_t(processed));
 
     double log_loss = 0.0;
@@ -153,8 +153,8 @@ BinaryMetrics evaluate(NeuralNetwork& network,
             const int predicted = probability >= 0.5f ? 1 : 0;
             correct += predicted == label ? 1 : 0;
             log_loss += label
-                ? -std::log(double(probability))
-                : -std::log(double(1.0f - probability));
+                ? -log(double(probability))
+                : -log(double(1.0f - probability));
             scored.emplace_back(probability, label);
         }
     }
@@ -170,18 +170,18 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     return metrics;
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {
     try
     {
-        const std::string train_path = argc > 1 ? argv[1] : bench_data_path("higgs_train.csv");
-        const std::string test_path = argc > 2 ? argv[2] : bench_data_path("higgs_test.csv");
-        const Index epochs = argc > 3 ? Index(std::stoll(argv[3])) : 5;
-        const Index batch = argc > 4 ? Index(std::stoll(argv[4])) : 1024;
-        const Index hidden = argc > 5 ? Index(std::stoll(argv[5])) : 1024;
-        const Index hidden_layers = argc > 6 ? Index(std::stoll(argv[6])) : 2;
+        const string train_path = argc > 1 ? argv[1] : bench_data_path("higgs_train.csv");
+        const string test_path = argc > 2 ? argv[2] : bench_data_path("higgs_test.csv");
+        const Index epochs = argc > 3 ? Index(stoll(argv[3])) : 5;
+        const Index batch = argc > 4 ? Index(stoll(argv[4])) : 1024;
+        const Index hidden = argc > 5 ? Index(stoll(argv[5])) : 1024;
+        const Index hidden_layers = argc > 6 ? Index(stoll(argv[6])) : 2;
 
         set_seed(42);
         Configuration::instance().set(Device::CPU, Type::FP32);
@@ -210,25 +210,25 @@ int main(int argc, char* argv[])
 
         BinaryMetrics metrics = evaluate(*network, test_path, batch);
 
-        std::cout << "engine=opennn\n";
-        std::cout << "device=cpu\n";
-        std::cout << "samples=" << samples << "\n";
-        std::cout << "batch=" << batch << "\n";
-        std::cout << "epochs=" << epochs << "\n";
-        std::cout << "hidden=" << hidden << "\n";
-        std::cout << "hidden_layers=" << hidden_layers << "\n";
-        std::cout << "activation=relu\n";
-        std::cout << "test_samples=" << metrics.samples << "\n";
-        std::cout << "test_accuracy=" << metrics.accuracy << "\n";
-        std::cout << "test_log_loss=" << metrics.log_loss << "\n";
-        std::cout << "test_roc_auc=" << metrics.auc << "\n";
-        std::cout << "RESULT=OK\n";
+        cout << "engine=opennn\n";
+        cout << "device=cpu\n";
+        cout << "samples=" << samples << "\n";
+        cout << "batch=" << batch << "\n";
+        cout << "epochs=" << epochs << "\n";
+        cout << "hidden=" << hidden << "\n";
+        cout << "hidden_layers=" << hidden_layers << "\n";
+        cout << "activation=relu\n";
+        cout << "test_samples=" << metrics.samples << "\n";
+        cout << "test_accuracy=" << metrics.accuracy << "\n";
+        cout << "test_log_loss=" << metrics.log_loss << "\n";
+        cout << "test_roc_auc=" << metrics.auc << "\n";
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

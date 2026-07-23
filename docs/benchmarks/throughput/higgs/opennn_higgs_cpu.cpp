@@ -23,7 +23,7 @@
 #include "opennn/training_strategy.h"
 
 using namespace opennn;
-using clock_type = std::chrono::steady_clock;
+using clock_type = chrono::steady_clock;
 
 namespace
 {
@@ -35,30 +35,30 @@ float clamp_probability(float value)
     return value;
 }
 
-std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
+unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
                                             const Shape& target_shape,
                                             Index hidden,
                                             Index hidden_layers,
-                                            const std::string& activation)
+                                            const string& activation)
 {
-    auto network = std::make_unique<NeuralNetwork>();
+    auto network = make_unique<NeuralNetwork>();
     Shape current = input_shape;
-    const std::string hidden_activation = (activation == "relu" || activation == "ReLU")
+    const string hidden_activation = (activation == "relu" || activation == "ReLU")
         ? "ReLU"
         : "Tanh";
 
     for (Index i = 0; i < hidden_layers; ++i)
     {
-        network->add_layer(std::make_unique<opennn::Dense>(
+        network->add_layer(make_unique<opennn::Dense>(
             current,
             Shape{hidden},
             hidden_activation,
             false,
-            "higgs_dense_" + std::to_string(i + 1)));
+            "higgs_dense_" + to_string(i + 1)));
         current = network->get_output_shape();
     }
 
-    network->add_layer(std::make_unique<opennn::Dense>(
+    network->add_layer(make_unique<opennn::Dense>(
         current,
         target_shape,
         "Sigmoid",
@@ -78,7 +78,7 @@ struct BinaryMetrics
     Index samples = 0;
 };
 
-double calculate_auc(const std::vector<std::pair<float, int>>& scored)
+double calculate_auc(const vector<pair<float, int>>& scored)
 {
     const Index n = Index(scored.size());
     if (n == 0) return 0.0;
@@ -89,8 +89,8 @@ double calculate_auc(const std::vector<std::pair<float, int>>& scored)
     const Index negatives = n - positives;
     if (positives == 0 || negatives == 0) return 0.0;
 
-    std::vector<std::pair<float, int>> sorted = scored;
-    std::sort(sorted.begin(), sorted.end(),
+    vector<pair<float, int>> sorted = scored;
+    sort(sorted.begin(), sorted.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
 
     double positive_rank_sum = 0.0;
@@ -110,7 +110,7 @@ double calculate_auc(const std::vector<std::pair<float, int>>& scored)
 }
 
 BinaryMetrics evaluate(NeuralNetwork& network,
-                       const std::string& test_path,
+                       const string& test_path,
                        Index batch)
 {
     TabularDataset test_dataset(test_path, ",", false, false);
@@ -122,7 +122,7 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     const MatrixR inputs = all.leftCols(inputs_number);
 
     ForwardPropagation forward_propagation(batch, &network);
-    std::vector<std::pair<float, int>> scored;
+    vector<pair<float, int>> scored;
     scored.reserve(size_t(processed));
 
     double log_loss = 0.0;
@@ -141,8 +141,8 @@ BinaryMetrics evaluate(NeuralNetwork& network,
             const int predicted = probability >= 0.5f ? 1 : 0;
             correct += predicted == label ? 1 : 0;
             log_loss += label
-                ? -std::log(double(probability))
-                : -std::log(double(1.0f - probability));
+                ? -log(double(probability))
+                : -log(double(1.0f - probability));
             scored.emplace_back(probability, label);
         }
     }
@@ -162,18 +162,18 @@ int train_mode(int argc, char* argv[])
 {
     if (argc < 4)
     {
-        std::cerr << "usage: opennn_higgs_cpu train <train_csv> <test_csv> [epochs] [batch] [hidden] [hidden_layers] [activation] [warmup_epochs]\n";
+        cerr << "usage: opennn_higgs_cpu train <train_csv> <test_csv> [epochs] [batch] [hidden] [hidden_layers] [activation] [warmup_epochs]\n";
         return 2;
     }
 
-    const std::string train_path = argv[2];
-    const std::string test_path = argv[3];
-    const Index epochs = argc > 4 ? Index(std::stoll(argv[4])) : 1;
-    const Index batch = argc > 5 ? Index(std::stoll(argv[5])) : 1024;
-    const Index hidden = argc > 6 ? Index(std::stoll(argv[6])) : 1024;
-    const Index hidden_layers = argc > 7 ? Index(std::stoll(argv[7])) : 2;
-    const std::string activation = argc > 8 ? argv[8] : "relu";
-    const Index warmup_epochs = argc > 9 ? Index(std::stoll(argv[9])) : 0;
+    const string train_path = argv[2];
+    const string test_path = argv[3];
+    const Index epochs = argc > 4 ? Index(stoll(argv[4])) : 1;
+    const Index batch = argc > 5 ? Index(stoll(argv[5])) : 1024;
+    const Index hidden = argc > 6 ? Index(stoll(argv[6])) : 1024;
+    const Index hidden_layers = argc > 7 ? Index(stoll(argv[7])) : 2;
+    const string activation = argc > 8 ? argv[8] : "relu";
+    const Index warmup_epochs = argc > 9 ? Index(stoll(argv[9])) : 0;
 
     set_seed(42);
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -182,15 +182,15 @@ int train_mode(int argc, char* argv[])
     dataset.set_sample_roles("Training");
     const Index samples = dataset.get_samples_number();
 
-    std::cout << "engine=opennn\n";
-    std::cout << "mode=train\n";
-    std::cout << "device=cpu\n";
-    std::cout << "samples=" << samples << "\n";
-    std::cout << "batch=" << batch << "\n";
-    std::cout << "epochs=" << epochs << "\n";
-    std::cout << "hidden=" << hidden << "\n";
-    std::cout << "hidden_layers=" << hidden_layers << "\n";
-    std::cout << "activation=" << activation << "\n";
+    cout << "engine=opennn\n";
+    cout << "mode=train\n";
+    cout << "device=cpu\n";
+    cout << "samples=" << samples << "\n";
+    cout << "batch=" << batch << "\n";
+    cout << "epochs=" << epochs << "\n";
+    cout << "hidden=" << hidden << "\n";
+    cout << "hidden_layers=" << hidden_layers << "\n";
+    cout << "activation=" << activation << "\n";
 
     auto network = make_network(dataset.get_input_shape(),
                                 dataset.get_target_shape(),
@@ -219,19 +219,19 @@ int train_mode(int argc, char* argv[])
     training_strategy.train();
     const auto t1 = clock_type::now();
 
-    const double total_s = std::chrono::duration<double>(t1 - t0).count();
+    const double total_s = chrono::duration<double>(t1 - t0).count();
     const double median_epoch_s = total_s / double(epochs);
     const double samples_per_sec = double(samples) / median_epoch_s;
 
     BinaryMetrics metrics = evaluate(*network, test_path, batch);
 
-    std::cout << "median_epoch_s=" << median_epoch_s << "\n";
-    std::cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
-    std::cout << "test_samples=" << metrics.samples << "\n";
-    std::cout << "test_accuracy=" << metrics.accuracy << "\n";
-    std::cout << "test_log_loss=" << metrics.log_loss << "\n";
-    std::cout << "test_roc_auc=" << metrics.auc << "\n";
-    std::cout << "RESULT=OK\n";
+    cout << "median_epoch_s=" << median_epoch_s << "\n";
+    cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+    cout << "test_samples=" << metrics.samples << "\n";
+    cout << "test_accuracy=" << metrics.accuracy << "\n";
+    cout << "test_log_loss=" << metrics.log_loss << "\n";
+    cout << "test_roc_auc=" << metrics.auc << "\n";
+    cout << "RESULT=OK\n";
     return 0;
 }
 
@@ -239,16 +239,16 @@ int infer_mode(int argc, char* argv[])
 {
     if (argc < 3)
     {
-        std::cerr << "usage: opennn_higgs_cpu infer <test_csv> [reps] [batch] [hidden] [hidden_layers] [activation]\n";
+        cerr << "usage: opennn_higgs_cpu infer <test_csv> [reps] [batch] [hidden] [hidden_layers] [activation]\n";
         return 2;
     }
 
-    const std::string test_path = argv[2];
-    const Index reps = argc > 3 ? Index(std::stoll(argv[3])) : 10;
-    const Index batch = argc > 4 ? Index(std::stoll(argv[4])) : 1024;
-    const Index hidden = argc > 5 ? Index(std::stoll(argv[5])) : 1024;
-    const Index hidden_layers = argc > 6 ? Index(std::stoll(argv[6])) : 2;
-    const std::string activation = argc > 7 ? argv[7] : "relu";
+    const string test_path = argv[2];
+    const Index reps = argc > 3 ? Index(stoll(argv[3])) : 10;
+    const Index batch = argc > 4 ? Index(stoll(argv[4])) : 1024;
+    const Index hidden = argc > 5 ? Index(stoll(argv[5])) : 1024;
+    const Index hidden_layers = argc > 6 ? Index(stoll(argv[6])) : 2;
+    const string activation = argc > 7 ? argv[7] : "relu";
 
     set_seed(42);
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -285,37 +285,37 @@ int infer_mode(int argc, char* argv[])
     volatile double sink = run_pass();
     sink += run_pass();
 
-    std::vector<double> times;
+    vector<double> times;
     times.reserve(size_t(reps));
     for (Index r = 0; r < reps; ++r)
     {
         const auto t0 = clock_type::now();
         sink += run_pass();
         const auto t1 = clock_type::now();
-        times.push_back(std::chrono::duration<double>(t1 - t0).count());
+        times.push_back(chrono::duration<double>(t1 - t0).count());
     }
     (void)sink;
 
-    std::sort(times.begin(), times.end());
+    sort(times.begin(), times.end());
     const double median_pass_s = times[times.size() / 2];
     const double samples_per_sec = double(processed) / median_pass_s;
 
-    std::cout << "engine=opennn\n";
-    std::cout << "mode=infer\n";
-    std::cout << "device=cpu\n";
-    std::cout << "samples=" << processed << "\n";
-    std::cout << "batch=" << batch << "\n";
-    std::cout << "reps=" << reps << "\n";
-    std::cout << "hidden=" << hidden << "\n";
-    std::cout << "hidden_layers=" << hidden_layers << "\n";
-    std::cout << "activation=" << activation << "\n";
-    std::cout << "median_pass_s=" << median_pass_s << "\n";
-    std::cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
-    std::cout << "RESULT=OK\n";
+    cout << "engine=opennn\n";
+    cout << "mode=infer\n";
+    cout << "device=cpu\n";
+    cout << "samples=" << processed << "\n";
+    cout << "batch=" << batch << "\n";
+    cout << "reps=" << reps << "\n";
+    cout << "hidden=" << hidden << "\n";
+    cout << "hidden_layers=" << hidden_layers << "\n";
+    cout << "activation=" << activation << "\n";
+    cout << "median_pass_s=" << median_pass_s << "\n";
+    cout << "samples_per_sec=" << long(samples_per_sec) << "\n";
+    cout << "RESULT=OK\n";
     return 0;
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {
@@ -323,21 +323,21 @@ int main(int argc, char* argv[])
     {
         if (argc < 2)
         {
-            std::cerr << "usage: opennn_higgs_cpu <train|infer> ...\n";
+            cerr << "usage: opennn_higgs_cpu <train|infer> ...\n";
             return 2;
         }
 
-        const std::string mode = argv[1];
+        const string mode = argv[1];
         if (mode == "train") return train_mode(argc, argv);
         if (mode == "infer") return infer_mode(argc, argv);
 
-        std::cerr << "unknown mode: " << mode << "\n";
+        cerr << "unknown mode: " << mode << "\n";
         return 2;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

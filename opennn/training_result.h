@@ -53,7 +53,6 @@ struct TrainingResult
 
     float get_validation_error() const;
 
-    // Number of completed epochs, i.e. the number of recorded history entries.
     Index get_epochs_number() const;
 
     void save(const filesystem::path&) const;

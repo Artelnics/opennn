@@ -131,12 +131,11 @@ int main(int argc, char* argv[])
         const string weights_path    = argc > 3 ? argv[3] : "../data/bert/bert-base-uncased-seq64.bin";
         const Index  sequence_length = argc > 4 ? Index(stol(argv[4])) : 64;
 
-        Configuration::instance().set(Device::Auto, Type::FP32);   // weights .bin is FP32
+        Configuration::instance().set(Device::Auto, Type::FP32);
 
         download_if_missing(vocab_path, VOCABULARY_URL);
         download_if_missing(weights_path, WEIGHTS_URL);
 
-        // Dataset: WordPiece-tokenizes text<TAB>label into BERT input views (cached CSV).
 
         unique_ptr<TextDataset> dataset =
             TextDataset::from_bert_classification(text_path, vocab_path, sequence_length);
@@ -144,7 +143,6 @@ int main(int argc, char* argv[])
         cout << "Samples: " << dataset->get_samples_number()
              << "  seq: " << sequence_length << "  labels: " << labels << endl;
 
-        // Neural network: the bert-base-uncased architecture, weights from the .bin.
 
         BertForSequenceClassification model(sequence_length, VOCABULARY_SIZE, HIDDEN_SIZE,
                                             HEADS_NUMBER, INTERMEDIATE, LAYERS_NUMBER, labels);
@@ -158,7 +156,6 @@ int main(int argc, char* argv[])
         cout << "Loading pretrained weights..." << endl;
         model.load_parameters_binary(weights_path);
 
-        // Fine-tuning with Adam.
 
         TrainingStrategy training_strategy(&model, dataset.get());
         training_strategy.set_loss("CrossEntropy");
@@ -172,7 +169,6 @@ int main(int argc, char* argv[])
         cout << "Fine-tuning (Adam, lr=2e-5, batch=32, 3 epochs)..." << endl;
         training_strategy.train();
 
-        // Testing Analysis
 
         evaluate(model, *dataset, sequence_length);
 

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "opennn/non_max_suppression_layer.h"
 #include "opennn/neural_network.h"
@@ -10,12 +10,9 @@ namespace {
 
 constexpr float tol = 1e-5f;
 
-// Encodes a "decoded" YOLO cell box into the layer's expected layout.
-// (Inputs are post-DetectionOperator: x,y already in [0,1] cell-relative; w,h absolute;
-//  objectness in [0,1]; classes are a softmax-distribution.)
 void write_box(float* cell, Index box, Index values_per_box,
                float x_cell_rel, float y_cell_rel, float w_abs, float h_abs,
-               float obj, std::initializer_list<float> class_probs)
+               float obj, initializer_list<float> class_probs)
 {
     float* base = cell + box * values_per_box;
     base[0] = x_cell_rel;
@@ -84,7 +81,7 @@ TEST(NonMaxSuppression, DecodesBoxCoordinatesToImageRelative)
     constexpr Index row = 1;
 
     write_box(cell_ptr(row, col), 0, values_per_box,
-              x_cell_rel, y_cell_rel, w_abs, h_abs, /*obj*/0.9f, {1.0f});
+              x_cell_rel, y_cell_rel, w_abs, h_abs,        0.9f, {1.0f});
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
@@ -132,19 +129,13 @@ TEST(NonMaxSuppression, SuppressesSameClassOverlapKeepsDifferentClassOverlap)
         return input.data() + ((0 * grid + row) * grid + col) * channels;
     };
 
-    // Cell (0,0):
-    //   box 0 — class 0, high score, large bbox at image center (0.05, 0.05, 0.4, 0.4) absolute
-    //   box 1 — class 0, slightly lower score, overlapping bbox → SHOULD be suppressed
     write_box(cell_ptr(0, 0), 0, values_per_box,
-              0.1f, 0.1f, 0.4f, 0.4f, /*obj*/0.9f, {0.8f, 0.2f});
+              0.1f, 0.1f, 0.4f, 0.4f,        0.9f, {0.8f, 0.2f});
     write_box(cell_ptr(0, 0), 1, values_per_box,
-              0.1f, 0.1f, 0.4f, 0.4f, /*obj*/0.85f, {0.75f, 0.25f});
+              0.1f, 0.1f, 0.4f, 0.4f,        0.85f, {0.75f, 0.25f});
 
-    // Cell (1,1):
-    //   box 0 — class 1 (different from cell 0,0), high score, far from cell (0,0)
-    //     → KEPT regardless of IoU
     write_box(cell_ptr(1, 1), 0, values_per_box,
-              0.5f, 0.5f, 0.4f, 0.4f, /*obj*/0.95f, {0.1f, 0.9f});
+              0.5f, 0.5f, 0.4f, 0.4f,        0.95f, {0.1f, 0.9f});
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };
@@ -153,16 +144,12 @@ TEST(NonMaxSuppression, SuppressesSameClassOverlapKeepsDifferentClassOverlap)
     TensorView output_view = forward_propagation.get_outputs();
     const float* out = output_view.as<float>();
 
-    // First two slots should be the two kept detections (sorted by score: 0.855 > 0.72).
-    // Slot 0: cell(1,1) box 0 — class 1, score 0.95*0.9 = 0.855
-    EXPECT_NEAR(out[0 * 6 + 4], 0.95f * 0.9f, tol);  // score
-    EXPECT_EQ(Index(out[0 * 6 + 5]), 1);             // class id
+    EXPECT_NEAR(out[0 * 6 + 4], 0.95f * 0.9f, tol);
+    EXPECT_EQ(Index(out[0 * 6 + 5]), 1);
 
-    // Slot 1: cell(0,0) box 0 — class 0, score 0.9*0.8 = 0.72
     EXPECT_NEAR(out[1 * 6 + 4], 0.9f * 0.8f, tol);
     EXPECT_EQ(Index(out[1 * 6 + 5]), 0);
 
-    // Remaining slots zeroed out (suppressed candidate + truly-empty cells).
     for (Index k = 2; k < max_boxes; ++k)
         for (Index v = 0; v < 6; ++v)
             EXPECT_FLOAT_EQ(out[k * 6 + v], 0.0f);
@@ -196,13 +183,11 @@ TEST(NonMaxSuppression, DropsBoxesBelowConfidenceThreshold)
         return input.data() + ((0 * grid + row) * grid + col) * channels;
     };
 
-    // Cell (0,0): obj 0.4 * class 0.9 = 0.36 < 0.5 → DROPPED
     write_box(cell_ptr(0, 0), 0, values_per_box,
-              0.5f, 0.5f, 0.3f, 0.3f, /*obj*/0.4f, {0.9f});
+              0.5f, 0.5f, 0.3f, 0.3f,        0.4f, {0.9f});
 
-    // Cell (1,1): obj 0.6 * class 1.0 = 0.6 > 0.5 → KEPT
     write_box(cell_ptr(1, 1), 0, values_per_box,
-              0.5f, 0.5f, 0.3f, 0.3f, /*obj*/0.6f, {1.0f});
+              0.5f, 0.5f, 0.3f, 0.3f,        0.6f, {1.0f});
 
     ForwardPropagation forward_propagation(batch_size, &neural_network);
     vector<TensorView> inputs = { TensorView(input.data(), {batch_size, grid, grid, channels}) };

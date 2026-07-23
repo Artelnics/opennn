@@ -27,10 +27,6 @@ void QuasiNewtonMethod::set_default()
     name = "QuasiNewtonMethod";
 
 
-    // A small (non-zero) minimum loss decrease stops training once the loss
-    // has effectively converged. With 0 the method kept iterating up to
-    // maximum_epochs for microscopic gains -- especially costly on large or
-    // weak-signal datasets, where each epoch is a full pass plus line search.
     minimum_loss_decrease = 1.0e-6f;
     training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
@@ -131,11 +127,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         is_gradient_direction = true;
     }
 
-    // BFGS directions are naturally scaled: always try the full step first
-    // (superlinear convergence needs alpha = 1 near the optimum; seeding with
-    // the previous accepted alpha can only shrink and traps the search at the
-    // small steps of the first epochs). Steepest-descent fallbacks have no
-    // natural scale, so they reuse the previous accepted learning rate.
     optimization_data.initial_learning_rate = is_gradient_direction
         ? ((old_learning_rate > 0.0f) ? old_learning_rate : first_learning_rate)
         : 1.0f;
@@ -183,7 +174,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 TrainingResult QuasiNewtonMethod::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
 
     throw_if(neural_network->is_gpu(),
              "QuasiNewtonMethod does not support GPU training: "
@@ -234,9 +224,6 @@ TrainingResult QuasiNewtonMethod::train()
 
     loss->set_normalization_coefficient();
 
-    // Each BackPropagation construction re-links the layers' gradient outputs to
-    // its own buffer; the training one must be constructed last so it is the one
-    // that receives the gradients.
     BackPropagation validation_back_propagation(validation_samples_number, loss);
 
     BackPropagation training_back_propagation(training_samples_number, loss);
@@ -245,8 +232,6 @@ TrainingResult QuasiNewtonMethod::train()
     Index validation_failures = 0;
     reset_best_parameters();
 
-    // Reset line-search state so a second train() on the same object does not
-    // start from the previous run's learning rate / slope.
     old_learning_rate = 0.0f;
     learning_rate = 0.0f;
     training_slope = 0.0f;

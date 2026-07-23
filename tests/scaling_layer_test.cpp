@@ -32,7 +32,6 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     const type TOLERANCE = type(1.0e-4);
 
-    // Test None: scaling layer just copies input to output
     {
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Scaling>(Shape{inputs_number}));
@@ -52,8 +51,6 @@ TEST(ScalingLayerTest, ForwardPropagate)
         EXPECT_NEAR(output_view.as<type>()[0], 10.0, TOLERANCE);
     }
 
-    // Test: scaling layer copies input regardless of scaler setting
-    // (actual scaling is done by Optimizer::set_scaling() before training)
     {
         inputs_number = 1;
         samples_number = 3;
@@ -73,7 +70,6 @@ TEST(ScalingLayerTest, ForwardPropagate)
         neural_network.forward_propagate(input_views, forward_propagation, false);
 
         TensorView output_view = forward_propagation.get_outputs();
-        // Scaling layer just copies, so output == input
         EXPECT_NEAR(output_view.as<type>()[0], type(2), TOLERANCE);
         EXPECT_NEAR(output_view.as<type>()[2], type(6), TOLERANCE);
     }

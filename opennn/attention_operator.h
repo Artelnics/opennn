@@ -23,9 +23,6 @@ struct AttentionOperator : Operator
     bool  use_causal_mask = false;
     bool use_sdpa = false;
 
-    // Self-attention only: also zero the attention rows and output rows of
-    // padded query positions (detected as all-zero source rows), so downstream
-    // consumers that treat zero rows as padding (average pooling) exclude them.
     bool zero_padded_queries = false;
 
     MatrixR causal_mask;

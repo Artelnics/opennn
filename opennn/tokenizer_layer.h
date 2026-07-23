@@ -14,10 +14,6 @@
 namespace opennn
 {
 
-// Non-trainable passthrough layer that carries the tokenizer and its
-// vocabulary inside the network, so text inference never needs a dataset.
-// Token ids flow through unchanged; encode/decode of strings happens in the
-// network-level text entry points, never in the tensor forward pass.
 class Tokenizer final : public Layer
 {
 public:

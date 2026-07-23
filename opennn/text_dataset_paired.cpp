@@ -207,22 +207,10 @@ void PairedTextDataset::read_txt()
     const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
     const Index target_vocabulary_size = get_target_vocabulary_size();
 
-    // Classification mode forces atomic (single-token) targets; a token-per-word
-    // target with one token per sample is also treated as classification.
     const bool is_single_token_target = classification_target || (maximum_target_document_tokens == 1);
 
-    // For single-token classification the target vocabulary is
-    // [4 reserved tokens] + [one entry per class]. A binary problem (2 classes)
-    // is encoded as a single output (probability of the positive class); an
-    // N-class problem (N >= 3) as N one-hot outputs.
     const Index target_classes = target_vocabulary_size - Index(reserved_tokens.size());
 
-    // Binary classification: both the 0/1 encoding (encode_streaming) and the
-    // positive-class display name follow the vocabulary order (index 4 =
-    // negative, index 5 = positive). build_vocabulary orders by frequency, so
-    // when the labels have a recognizable polarity (positive_words /
-    // negative_words) reorder them semantically; otherwise the frequency order
-    // stands and stays consistent between encoding and naming.
     if (is_single_token_target && target_classes == 2)
     {
         vector<string> target_vocabulary = target_tokenizer->get_vocabulary();
@@ -274,8 +262,6 @@ void PairedTextDataset::read_txt()
     target_variable.type = VariableType::Numeric;
     target_variable.features = maximum_target_sequence_length;
 
-    // Classification: expose the class names (vocabulary minus the reserved
-    // tokens) so they travel with the model as the target categories.
     if (is_single_token_target)
     {
         const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
@@ -320,7 +306,6 @@ void PairedTextDataset::read_txt()
     }
     else
     {
-        // BinaryFile: fixed-size records of (max_in + max_tgt) int32 tokens per sample, PAD = 0.
         cache_path = cache_directory.empty()
             ? filesystem::path(data_path.string() + ".cache") / "tokens.bin"
             : cache_directory / (data_path.filename().string() + ".cache") / "tokens.bin";
@@ -397,10 +382,6 @@ void PairedTextDataset::load_documents(vector<vector<string>>& input_documents,
 
         if (classification_target)
         {
-            // The target field is a single atomic class label: keep it whole
-            // (only trim surrounding whitespace) so a label like "sci_tech"
-            // stays one token instead of being split into sci/_/tech. Lowered
-            // here because it skips the tokenizer, which lowers everything else.
             string_view label = fields[1];
             while (!label.empty() && isspace(static_cast<unsigned char>(label.front()))) label.remove_prefix(1);
             while (!label.empty() && isspace(static_cast<unsigned char>(label.back())))  label.remove_suffix(1);
@@ -473,13 +454,6 @@ void PairedTextDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_display(read_json_bool(data_set_element, "Display"));
 
-    // Both fields must be restored BEFORE read_txt: they change how the file is
-    // tokenized (atomic class labels) and the resulting sequence length (cap).
-    //
-    // The truncation limit can arrive in two places: the editor writes the
-    // user's import-time choice inside DataSource, while this class's own
-    // to_JSON echoes it at the Dataset level. The editor's (fresher) intent
-    // wins over the echo.
     if (data_source_element->has("InputSequenceLengthLimit"))
         set_input_sequence_length_limit(read_json_index(data_source_element, "InputSequenceLengthLimit"));
     else if (data_set_element->has("InputSequenceLengthLimit"))
@@ -535,12 +509,6 @@ void PairedTextDataset::encode_streaming(const vector<vector<string>>& input_doc
     else if (maximum_target_sequence_length == 1
           && target_vocab_size == ssize(reserved_tokens) + 2)
     {
-        // Binary classification: one output = P(positive class). The vocabulary
-        // order defines the encoding (index 4 -> 0, index 5 -> 1); read_txt
-        // places the semantically positive label at index 5 when the labels'
-        // polarity is recognizable, and the display-name resolution assumes the
-        // same order. Works for arbitrary label pairs (e.g. spam/ham), unlike
-        // the previous positive_words/negative_words lookup.
         const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
         const size_t reserved_count = reserved_tokens.size();
 
@@ -561,7 +529,6 @@ void PairedTextDataset::encode_streaming(const vector<vector<string>>& input_doc
     }
     else
     {
-        // One-hot single-token targets: one column per non-reserved vocabulary entry.
         const Index reserved_count = ssize(reserved_tokens);
 
         throw_if(maximum_target_sequence_length != target_vocab_size - reserved_count,

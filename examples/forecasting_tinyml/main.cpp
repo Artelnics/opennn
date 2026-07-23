@@ -54,7 +54,6 @@ static void export_model(NeuralNetwork& network, const string& stem)
     model_expression.save(stem + "_model.c", ModelExpression::ProgrammingLanguage::C);
     model_expression.save(stem + "_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
 
-    // Deterministic synthetic windows in the scale of the configured descriptives
 
     Tensor3 inputs(REFERENCE_ROWS, TIME_STEPS, FEATURES);
 

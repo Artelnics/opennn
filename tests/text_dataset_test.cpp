@@ -50,13 +50,12 @@ TEST(TextDataset, CausalCorpusBuildsShiftedBlocks)
     ASSERT_EQ(data.rows(), 2);
     ASSERT_EQ(data.cols(), 6);
 
-    // Equal-frequency tokens are assigned alphabetically after [PAD]/[UNK].
-    EXPECT_FLOAT_EQ(data(0, 0), 2.0f); // alpha
-    EXPECT_FLOAT_EQ(data(0, 1), 3.0f); // beta
-    EXPECT_FLOAT_EQ(data(0, 2), 7.0f); // gamma
-    EXPECT_FLOAT_EQ(data(0, 3), 3.0f); // shifted beta
-    EXPECT_FLOAT_EQ(data(0, 4), 7.0f); // shifted gamma
-    EXPECT_FLOAT_EQ(data(0, 5), 4.0f); // shifted delta
+    EXPECT_FLOAT_EQ(data(0, 0), 2.0f);
+    EXPECT_FLOAT_EQ(data(0, 1), 3.0f);
+    EXPECT_FLOAT_EQ(data(0, 2), 7.0f);
+    EXPECT_FLOAT_EQ(data(0, 3), 3.0f);
+    EXPECT_FLOAT_EQ(data(0, 4), 7.0f);
+    EXPECT_FLOAT_EQ(data(0, 5), 4.0f);
 
     remove_text_corpus(path);
 }

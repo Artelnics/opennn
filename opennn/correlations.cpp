@@ -79,22 +79,15 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
                        });
         }
 
-        // Two binary variables: linear (phi) correlation, as in the traditional
-        // dispatcher -- a logistic fit between two binaries is degenerate.
         if (x_binary && y_binary)
             return opennn::linear_correlation(x_vector, y_vector);
 
-        // One binary + one continuous: logistic regression of the binary response
-        // on the continuous predictor (reported form = logistic), matching Neural
-        // Designer's traditional behaviour.
         if (y_binary)
             return opennn::logistic_correlation(x_vector, y_vector);
 
         return opennn::logistic_correlation(y_vector, x_vector);
     }
 
-    // At least one categorical (one-hot, multi-column) variable: multiple logistic
-    // regression, again reported as a logistic form.
     return logistic_correlation(x, y);
 }
 
@@ -103,9 +96,6 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     if (is_constant(x) || is_constant(y))
         return Correlation();
 
-    // Spearman = Pearson sobre los rangos. La version por vectores existe para
-    // columnas simples; para variables multi-columna (categoricas expandidas)
-    // se cae a la correlacion general (misma politica que la de Pearson).
     if (x.cols() == 1 && y.cols() == 1)
     {
         const VectorR x_vector = x.col(0);
@@ -114,8 +104,6 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
         const bool x_binary = is_binary(x);
         const bool y_binary = is_binary(y);
 
-        // Mirror the Pearson dispatcher: exactly one binary -> logistic on the ranks
-        // (form = logistic); both continuous or both binary -> Spearman rank-linear.
         Correlation result;
 
         if (x_binary != y_binary)
@@ -300,8 +288,6 @@ Correlation logarithmic_correlation(const VectorR& x,
     return result;
 }
 
-// Above this sample count, Levenberg-Marquardt's per-epoch Jacobian build over all
-// rows becomes too expensive, so the fit falls back to the lighter Quasi-Newton method.
 static constexpr Index maximum_levenberg_marquardt_samples = 10000;
 
 static Correlation fit_logistic_correlation(const VectorR& input, const VectorR& target, const string& scaler)
@@ -326,8 +312,6 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     neural_network.add_layer(make_unique<Scaling>(dimensions));
     neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
 
-    // Force CPU: QuasiNewton/LevenbergMarquardt reject GPU training, so on a CUDA
-    // process this fit would otherwise throw and report a 0 / NaN correlation.
     neural_network.compile(Device::CPU);
 
     Loss loss(&neural_network, &dataset);
@@ -341,8 +325,6 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
             QuasiNewtonMethod quasi_newton(&loss);
             quasi_newton.set_display(false);
 
-            // Without a minimum loss decrease the line search keeps finding microscopic
-            // improvements and burns the full epoch budget on large datasets.
             quasi_newton.set_minimum_loss_decrease(1.0e-6f);
 
             quasi_newton.train();
@@ -466,9 +448,6 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
-    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
-    // ClassificationNetwork compiled on the global device in its constructor, so
-    // re-target to CPU and re-seed the parameters compile() just zeroed.
     neural_network.compile(Device::CPU);
     neural_network.set_parameters_glorot();
 
@@ -563,9 +542,6 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
-    // ClassificationNetwork compiled on the global device in its constructor, so
-    // re-target to CPU and re-seed the parameters compile() just zeroed.
     neural_network.compile(Device::CPU);
     neural_network.set_parameters_glorot();
 

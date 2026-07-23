@@ -177,7 +177,6 @@ VectorR calculate_numerical_input_deltas(Loss& loss)
 
 MatrixR calculate_numerical_hessian(Loss& loss)
 {
-    // Stub matching the original Loss method — to be filled in when needed.
     const VectorR gradient = calculate_numerical_gradient(loss);
     const Index parameters_number = gradient.size();
     return MatrixR::Zero(parameters_number, parameters_number);

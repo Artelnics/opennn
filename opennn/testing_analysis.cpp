@@ -679,7 +679,6 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
 
     const Index testing_samples_number = targets.rows();
 
-    // Sort the testing samples by descending output score.
 
     vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
     iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
@@ -727,7 +726,6 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
     MatrixR lift_chart(rows_number, cumulative_gain.cols());
 
-    // At ratio 0 the lift is undefined (0/0); use the random baseline value 1.
 
     lift_chart(0, 0) = 0.0f;
     lift_chart(0, 1) = 1.0f;

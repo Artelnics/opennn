@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);

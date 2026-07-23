@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A T T E N T I O N   O P E R A T O R   S O U R C E
@@ -194,10 +194,6 @@ struct AttentionOperator::SDPACache
 
         int32_t* query_lengths  = nullptr;
         int32_t* source_lengths = nullptr;
-        // The per-sample valid sequence lengths depend only on the source
-        // content (which positions are padding). On a repeated-inference loop the
-        // source buffer is reused, so cache the pointer and skip the scan when it
-        // is unchanged. A weight update / new source resets it via the pointer.
         const void* seq_len_source_ptr = nullptr;
         bfloat16* query = nullptr;
         bfloat16* key = nullptr;
@@ -320,8 +316,6 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-    // Skip the padding scan when the source buffer is the same one we last
-    // scanned for this entry: the lengths in seq_len_*_buf are already correct.
     if (source_input.data == entry.seq_len_source_ptr)
         return;
 
@@ -338,7 +332,7 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     entry.seq_len_source_ptr = source_input.data;
 }
 
-}  // namespace
+}
 
 static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k,
@@ -486,7 +480,7 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_graph = graph;
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 AttentionOperator::AttentionOperator() = default;
 AttentionOperator::~AttentionOperator() = default;
@@ -808,10 +802,10 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
         device::copy_async(entry.dropout_seed, &seed_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         device::copy_async(entry.dropout_offset, &offset_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         ++sdpa_dropout_offset;
     }
 
@@ -821,11 +815,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     void* o_ptr = output.data;
     const bool fp32_via_bf16 = query.is_fp32();
 
-    // The backward graph needs the forward's O in BHSD layout, but `output`
-    // here is the shared transient scratch (clobbered by later layers); the
-    // persistent slot only keeps the head-merged copy. Keep a private O in the
-    // cache entry during training so apply_sdpa_backward reads valid data —
-    // the fp32 path already does this implicitly through its cast buffer.
     const bool keep_private_output = is_training && !fp32_via_bf16;
     if (keep_private_output)
     {
@@ -841,7 +830,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = Backend::get_compute_stream();
+        cudaStream_t cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
         const Index o_elems  = output.size();
@@ -896,7 +885,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         device::copy_async(output.data, entry.output,
                            output.size() * Index(sizeof(bfloat16)),
                            device::CopyKind::DeviceToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
 }
 
 #endif
@@ -935,7 +924,7 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
 void AttentionOperator::apply_delta_cpu(const TensorView& query,
                                 const TensorView& key,
                                 const TensorView& value,
-                                const TensorView& /*attention_output*/,
+                                const TensorView&,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
                                 const TensorView& output_delta,
@@ -1078,19 +1067,15 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         const int64_t offset_value = static_cast<int64_t>(sdpa_last_used_offset);
         device::copy_async(entry.dropout_seed, &seed_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
         device::copy_async(entry.dropout_offset, &offset_value, Index(sizeof(int64_t)),
                            device::CopyKind::HostToDevice,
-                           Backend::get_compute_stream());
+                           device::get_compute_stream());
     }
 
     void* bq  = query.data;
     void* bk  = key.data;
     void* bv  = value.data;
-    // O comes from the private copy kept by apply_sdpa_forward: the slot passed
-    // as attention_output holds the head-MERGED layout (and the BHSD scratch the
-    // graph wrote to is long since clobbered), so reading it would corrupt the
-    // dO*O row-sums that dQ/dK depend on.
     throw_if(!entry.output,
              "SDPA backward: no private forward output copy (forward not run with is_training).");
     void* bo  = entry.output;
@@ -1101,11 +1086,10 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     const bool fp32_via_bf16 = query.is_fp32();
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = Backend::get_compute_stream();
+        cudaStream_t cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
         const Index do_elems = output_delta.size();
-        // reuse the forward's cast Q/K/V/O (same iteration's forward populated them)
         bq  = entry.query;
         bk  = entry.key;
         bv  = entry.value;

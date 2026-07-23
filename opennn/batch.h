@@ -87,10 +87,6 @@ struct Batch
     Index samples_number = 0;
     bool needs_device_copy = true;
     bool input_is_bf16 = false;
-    // A prefetch-only batch stages data into a separate fixed compute batch and is
-    // never computed on itself, so on GPU it omits its own device input/target
-    // buffers (it keeps only the pinned-host buffers and gather indices used to
-    // stage). Saves one device batch copy per pool slot.
     bool prefetch_only = false;
 
     const Dataset* dataset = nullptr;
@@ -132,8 +128,8 @@ struct Batch
 
     Index window_past = 0;
     Index window_future = 0;
-    Index window_features = 0;      // input columns per timestep
-    Index window_target_cols = 0;   // raw target columns
+    Index window_features = 0;
+    Index window_target_cols = 0;
     Index window_matrix_rows = 0;
     bool  window_multi_target = false;
 

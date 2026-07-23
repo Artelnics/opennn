@@ -112,7 +112,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     const Index outputs_number = 1;
     const Index neurons_number = 1;
 
-    // Test approximation network forward propagation
 
     ApproximationNetwork neural_network_aproximation({inputs_number}, {neurons_number}, {outputs_number});
     neural_network_aproximation.set_parameters_random();
@@ -129,7 +128,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     EXPECT_EQ(result.rows(), samples_number);
     EXPECT_EQ(result.cols(), outputs_number);
 
-    // Test classification network forward propagation
 
     ClassificationNetwork neural_network_classification({inputs_number}, {neurons_number}, {outputs_number});
 
@@ -158,7 +156,6 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
     VectorR point;
     MatrixR directional_inputs;
 
-    // Test
 
     ApproximationNetwork neural_network({ 3 }, { 4 }, { 2 });
     neural_network.set_parameters_random();
@@ -174,7 +171,6 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
 
     EXPECT_EQ(directional_inputs.rows(), 0);
 
-    // Test
 
     point << type(1), type(2), type(3);
 
@@ -186,7 +182,6 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
     EXPECT_NEAR(directional_inputs(1,2), type(0), EPSILON);
     EXPECT_NEAR(directional_inputs(2,2), type(1), EPSILON);
 
-    // Test
 
     point << type(1), type(2), type(3);
 

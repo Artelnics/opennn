@@ -61,8 +61,6 @@ public:
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
 
-    // Overrides the default <data_dir>/.cache/<stem>.bin cache location, for
-    // applications that keep the binary next to the model (Neural Designer).
     void set_binary_cache_path(const filesystem::path&);
 
     vector<string> get_feature_scalers(const string&) const;
@@ -207,15 +205,8 @@ protected:
     mutable FileReader cache_reader;
     Index cache_columns_number = 0;
 
-    // Whole-used-dataset statistics backing analytics and NaN replacement.
     mutable vector<Descriptives> cache_feature_descriptives;
-    // Training-sample statistics behind cache_feature_transforms, matching the
-    // Matrix path: scaling must not see validation/testing samples.
     vector<Descriptives> cache_transform_descriptives;
-    // Per-cache-column value used to impute NaN on the fly when filling training/
-    // testing batches (mean for continuous, mode for binary, most-frequent category
-    // for categoricals). The on-disk cache itself stays raw so correlations keep
-    // doing pairwise deletion. Resolved lazily from the variable types.
     mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 

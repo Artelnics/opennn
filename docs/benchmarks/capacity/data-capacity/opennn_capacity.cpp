@@ -11,7 +11,7 @@
 //   ../../throughput/higgs/README.md for the dataset contract.
 //
 //   A "successful" run loads the file and trains; if the dataset does not fit
-//   in RAM the allocation throws std::bad_alloc (caught -> exit 1) or the OS
+//   in RAM the allocation throws bad_alloc (caught -> exit 1) or the OS
 //   terminates the process. The driver script sweeps sample counts to find the
 //   largest one that still succeeds.
 //
@@ -27,8 +27,6 @@
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/random_utilities.h"
 
-// windows.h must come after the OpenNN/Eigen headers and with NOMINMAX so its
-// min/max macros do not clobber std::min / std::max inside those headers.
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
@@ -44,8 +42,6 @@ static double peak_working_set_mb()
     return -1.0;
 }
 
-// Live resident set (not the monotonic peak): lets us separate the transient
-// load-time spike from the sustained footprint once the parser buffers free.
 static double current_working_set_mb()
 {
     PROCESS_MEMORY_COUNTERS pmc;
@@ -60,33 +56,25 @@ int main(int argc, char* argv[])
     {
         if (argc < 2)
         {
-            std::cerr << "usage: opennn_capacity <csv_path> [hidden_neurons]\n";
+            cerr << "usage: opennn_capacity <csv_path> [hidden_neurons]\n";
             return 2;
         }
 
-        const std::string csv_path = argv[1];
-        const Index hidden_neurons = (argc > 2) ? Index(std::stoll(argv[2])) : Index(1024);
+        const string csv_path = argv[1];
+        const Index hidden_neurons = (argc > 2) ? Index(stoll(argv[2])) : Index(1024);
 
         set_seed(42);
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        // Load the CSV: comma-separated, no header, no id column. HIGGS rows are
-        // 28 features + 1 label; TabularDataset defaults the last column to the
-        // target. This is where a too-large dataset runs out of memory.
         TabularDataset dataset(csv_path, ",", false, false);
 
         const Index samples = dataset.get_samples_number();
-        std::cout << "loaded_samples=" << samples << "\n";
-        // Live resident set right after load (parser buffers already freed when
-        // read_csv returned) vs the peak reached during parsing.
-        std::cout << "sustained_after_load_mb=" << current_working_set_mb() << "\n";
-        std::cout << "after_load_peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "loaded_samples=" << samples << "\n";
+        cout << "sustained_after_load_mb=" << current_working_set_mb() << "\n";
+        cout << "after_load_peak_mb=" << peak_working_set_mb() << "\n";
 
         dataset.split_samples_random(1.0f, 0.0f, 0.0f);
 
-        // Small dense net: 28 -> hidden -> 1, tanh then linear. The geometry
-        // only needs to be big enough to allocate the training batch buffers;
-        // the benchmark measures the data-loading footprint, not model size.
         ApproximationNetwork network(dataset.get_input_shape(),
                                      {hidden_neurons},
                                      dataset.get_target_shape());
@@ -98,27 +86,27 @@ int main(int argc, char* argv[])
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         adam->set_batch_size(1000);
-        adam->set_maximum_epochs(1);          // one pass is enough to allocate batch buffers
+        adam->set_maximum_epochs(1);
         adam->set_display_period(1);
 
         training_strategy.train();
 
-        std::cout << "trained=1\n";
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=OK\n";
+        cout << "trained=1\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=OK\n";
         return 0;
     }
-    catch (const std::bad_alloc&)
+    catch (const bad_alloc&)
     {
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=OOM\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=OOM\n";
         return 1;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cerr << e.what() << "\n";
-        std::cout << "peak_mb=" << peak_working_set_mb() << "\n";
-        std::cout << "RESULT=ERROR\n";
+        cerr << e.what() << "\n";
+        cout << "peak_mb=" << peak_working_set_mb() << "\n";
+        cout << "RESULT=ERROR\n";
         return 1;
     }
 }

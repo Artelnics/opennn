@@ -35,24 +35,24 @@ using namespace opennn;
 
 int main(int argc, char* argv[])
 {
-    std::cout << std::unitbuf;
+    cout << unitbuf;
 
-    const std::string corpus = argc > 1 ? argv[1] : "synthetic_corpus.txt";
-    const Index d_model = argc > 2 ? Index(std::stoll(argv[2])) : 256;
-    const Index heads   = argc > 3 ? Index(std::stoll(argv[3])) : 8;
-    const Index ff      = argc > 4 ? Index(std::stoll(argv[4])) : 1024;
-    const Index layers  = argc > 5 ? Index(std::stoll(argv[5])) : 2;
-    const Index batch   = argc > 6 ? Index(std::stoll(argv[6])) : 32;
-    const Index epochs  = argc > 7 ? Index(std::stoll(argv[7])) : 30;
+    const string corpus = argc > 1 ? argv[1] : "synthetic_corpus.txt";
+    const Index d_model = argc > 2 ? Index(stoll(argv[2])) : 256;
+    const Index heads   = argc > 3 ? Index(stoll(argv[3])) : 8;
+    const Index ff      = argc > 4 ? Index(stoll(argv[4])) : 1024;
+    const Index layers  = argc > 5 ? Index(stoll(argv[5])) : 2;
+    const Index batch   = argc > 6 ? Index(stoll(argv[6])) : 32;
+    const Index epochs  = argc > 7 ? Index(stoll(argv[7])) : 30;
 
     try
     {
         set_seed(0);
-        const bool use_bf16 = std::getenv("OPENNN_BF16") != nullptr;
+        const bool use_bf16 = getenv("OPENNN_BF16") != nullptr;
         Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         unique_ptr<TextDataset> dataset = TextDataset::from_sequence_to_sequence(corpus, 30000);
-        dataset->split_samples(1.0f, 0.0f, 0.0f);   // all samples Training
+        dataset->split_samples(1.0f, 0.0f, 0.0f);
 
         const Index samples = dataset->get_samples_number("Training");
         const Index input_vocab  = dataset->get_vocabulary_size();
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
         const Index input_seq    = dataset->get_shape("Input")[0];
         const Index decoder_seq  = dataset->get_shape("Decoder")[0];
 
-        std::cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
+        cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
                   << " samples=" << samples
                   << " input_seq=" << input_seq << " decoder_seq=" << decoder_seq
                   << " input_vocab=" << input_vocab << " output_vocab=" << output_vocab
@@ -72,10 +72,10 @@ int main(int argc, char* argv[])
                                 input_vocab, output_vocab,
                                 d_model, heads, ff, layers);
 
-        if (const char* e = std::getenv("OPENNN_SDPA_MIN"))
-            transformer.set_attention_sdpa_min_sequence_length(Index(std::stoll(e)));
+        if (const char* e = getenv("OPENNN_SDPA_MIN"))
+            transformer.set_attention_sdpa_min_sequence_length(Index(stoll(e)));
 
-        std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
+        cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         TrainingStrategy training_strategy(&transformer, dataset.get());
         training_strategy.set_loss("CrossEntropyError3d");
@@ -83,47 +83,42 @@ int main(int argc, char* argv[])
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
-        if (!adam) throw std::runtime_error("Adam optimizer not found.");
+        if (!adam) throw runtime_error("Adam optimizer not found.");
 
         adam->set_batch_size(batch);
-        const float lr = std::getenv("OPENNN_LR") ? std::stof(std::getenv("OPENNN_LR")) : 0.0001f;
+        const float lr = getenv("OPENNN_LR") ? stof(getenv("OPENNN_LR")) : 0.0001f;
         adam->set_learning_rate(lr);
-        adam->set_display(std::getenv("OPENNN_BENCH_DISPLAY") != nullptr);
+        adam->set_display(getenv("OPENNN_BENCH_DISPLAY") != nullptr);
         adam->set_display_period(1);
-        std::cout << "learning_rate=" << lr << "\n";
+        cout << "learning_rate=" << lr << "\n";
 
-        // Untimed warmup: one full pass (maximum_epochs 0 runs epoch 0 only)
-        // so the timed train() below starts with warm plan caches, like the
-        // PyTorch/TensorFlow counterparts' excluded warmup epoch.
         adam->set_maximum_epochs(0);
         training_strategy.train();
         cudaDeviceSynchronize();
 
         adam->set_maximum_epochs(epochs);
 
-        const auto t0 = std::chrono::high_resolution_clock::now();
+        const auto t0 = chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
         cudaDeviceSynchronize();
-        const auto t1 = std::chrono::high_resolution_clock::now();
+        const auto t1 = chrono::high_resolution_clock::now();
 
-        const double wall_s = std::chrono::duration<double>(t1 - t0).count();
-        // train() runs exactly maximum_epochs passes (epoch 0..max-1: the
-        // stopping condition fires at epoch + 1 == maximum_epochs), min. one.
-        const double timed_passes = double(std::max<Index>(Index(1), epochs));
+        const double wall_s = chrono::duration<double>(t1 - t0).count();
+        const double timed_passes = double(max<Index>(Index(1), epochs));
         const double total_samples = double(samples) * timed_passes;
         const double samples_per_s = total_samples / wall_s;
         const double tokens_per_s  = samples_per_s * double(input_seq + decoder_seq);
 
-        std::cout << "final_loss=" << result.loss << "\n";
-        std::cout << "wall_s=" << wall_s << "\n";
-        std::cout << "samples_per_sec=" << samples_per_s << "\n";
-        std::cout << "tokens_per_sec=" << tokens_per_s << "\n";
+        cout << "final_loss=" << result.loss << "\n";
+        cout << "wall_s=" << wall_s << "\n";
+        cout << "samples_per_sec=" << samples_per_s << "\n";
+        cout << "tokens_per_sec=" << tokens_per_s << "\n";
 
         return 0;
     }
-    catch (const std::exception& e)
+    catch (const exception& e)
     {
-        std::cout << "FAIL: " << e.what() << "\n";
+        cout << "FAIL: " << e.what() << "\n";
         return 1;
     }
 }

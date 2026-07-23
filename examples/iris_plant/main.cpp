@@ -25,25 +25,20 @@ int main()
 
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-        // Dataset
 
         TabularDataset dataset("../data/iris_plant/iris_plant_original.csv", ";", true, false);
 
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");
 
-        // Neural network
 
         const Index neurons_number = 16;
 
         ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
 
-        // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        // QuasiNewton (TrainingStrategy default for classification) has no GPU
-        // backend; switch to Adam to exercise the CUDA path.
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
@@ -51,13 +46,11 @@ int main()
 
         training_strategy.train();
 
-        // Testing Analysis
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 
-        // Deployment
 
         MatrixR input_vector(1, 4);
         input_vector << 5.1, 3.5, 1.4, 0.2;
@@ -66,7 +59,6 @@ int main()
 
         cout << "Class probabilities: " << output_tensor << endl;
 
-        // Export
 
         classification_network.save("iris_model.json");
 
@@ -75,8 +67,6 @@ int main()
         model_expression.save("iris_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
         model_expression.save("iris_model.py", ModelExpression::ProgrammingLanguage::Python);
 
-        // Reference vectors (inputs;outputs) to check parity of the exported model
-        // on other targets (e.g. microcontrollers)
 
         MatrixR reference_inputs(9, 4);
         reference_inputs << 5.1, 3.5, 1.4, 0.2,

@@ -54,9 +54,6 @@ vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
 
 bool Dense::saves_pre_dropout_activation() const
 {
-    // ReLU's backward can gate on the post-dropout output: kept units keep their
-    // sign and dropped units already carry a zero delta. The fused GEMM epilogue
-    // never writes ActivationView, so saving there would hand the backward zeros.
     return dropout.active()
         && !activation_needs_input(activation_operator.activation_function)
         && activation_operator.activation_function != ActivationFunction::ReLU;
@@ -120,9 +117,6 @@ void Dense::configure_operators()
     const bool fuse_relu = (activation_operator.activation_function == ActivationFunction::ReLU)
                            && !batch_norm.active();
 
-    // The cuBLASLt GELU epilogue implements the tanh approximation, so only
-    // GELUTanh can be folded without changing the math; its AUX buffer
-    // requires a leading dimension divisible by 8.
     const bool fuse_gelu_tanh = (activation_operator.activation_function == ActivationFunction::GELUTanh)
                                 && !batch_norm.active()
                                 && output_features % 8 == 0;

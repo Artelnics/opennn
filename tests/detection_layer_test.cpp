@@ -16,7 +16,7 @@ namespace {
 
 constexpr float tol = 1e-5f;
 
-float sigmoid(float x) { return 1.0f / (1.0f + std::exp(-x)); }
+float sigmoid(float x) { return 1.0f / (1.0f + exp(-x)); }
 
 }
 
@@ -27,7 +27,7 @@ TEST(Detection, ConstructorInfersClassesNumber)
     const Index C = 3;
     const Index channels = B * (5 + C);
 
-    const vector<std::array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
+    const vector<array<float, 2>> anchors{{0.2f, 0.2f}, {0.5f, 0.5f}};
 
     Detection layer(Shape{grid, grid, channels}, anchors, "detection");
 
@@ -60,7 +60,7 @@ TEST(Detection, ForwardPropagateMatchesHandComputedValuesForKnownLogits)
     const Index values_per_box = 5 + C;
     const Index channels = B * values_per_box;
 
-    const vector<std::array<float, 2>> anchors{{0.5f, 1.0f}};
+    const vector<array<float, 2>> anchors{{0.5f, 1.0f}};
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Detection>(Shape{grid, grid, channels}, anchors, "detection"));
@@ -79,13 +79,13 @@ TEST(Detection, ForwardPropagateMatchesHandComputedValuesForKnownLogits)
 
     EXPECT_NEAR(out[0], sigmoid(1.0f), tol);
     EXPECT_NEAR(out[1], sigmoid(-1.0f), tol);
-    EXPECT_NEAR(out[2], std::exp(0.5f) * anchors[0][0], tol);
-    EXPECT_NEAR(out[3], std::exp(-0.5f) * anchors[0][1], tol);
+    EXPECT_NEAR(out[2], exp(0.5f) * anchors[0][0], tol);
+    EXPECT_NEAR(out[3], exp(-0.5f) * anchors[0][1], tol);
     EXPECT_NEAR(out[4], sigmoid(2.0f), tol);
 
-    const float e0 = std::exp(0.0f - 2.0f);
-    const float e1 = std::exp(1.0f - 2.0f);
-    const float e2 = std::exp(2.0f - 2.0f);
+    const float e0 = exp(0.0f - 2.0f);
+    const float e1 = exp(1.0f - 2.0f);
+    const float e2 = exp(2.0f - 2.0f);
     const float s = e0 + e1 + e2;
     EXPECT_NEAR(out[5], e0 / s, tol);
     EXPECT_NEAR(out[6], e1 / s, tol);
@@ -104,13 +104,13 @@ TEST(Detection, ForwardPropagateSigmoidClassActivation)
     const Index values_per_box = 5 + C;
     const Index channels = B * values_per_box;
 
-    const vector<std::array<float, 2>> anchors{{0.5f, 1.0f}};
+    const vector<array<float, 2>> anchors{{0.5f, 1.0f}};
 
     auto detection = make_unique<Detection>(Shape{grid, grid, channels}, anchors, "detection");
     detection->set_class_activation(Detection::ClassActivation::Sigmoid);
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(std::move(detection));
+    neural_network.add_layer(move(detection));
     neural_network.compile();
 
     Tensor4 input(batch_size, grid, grid, channels);
@@ -126,8 +126,8 @@ TEST(Detection, ForwardPropagateSigmoidClassActivation)
 
     EXPECT_NEAR(out[0], sigmoid(1.0f), tol);
     EXPECT_NEAR(out[1], sigmoid(-1.0f), tol);
-    EXPECT_NEAR(out[2], std::exp(0.5f) * anchors[0][0], tol);
-    EXPECT_NEAR(out[3], std::exp(-0.5f) * anchors[0][1], tol);
+    EXPECT_NEAR(out[2], exp(0.5f) * anchors[0][0], tol);
+    EXPECT_NEAR(out[3], exp(-0.5f) * anchors[0][1], tol);
     EXPECT_NEAR(out[4], sigmoid(2.0f), tol);
 
     EXPECT_NEAR(out[5], sigmoid(0.0f), tol);
@@ -153,7 +153,7 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
+    const vector<array<float, 2>> anchors{{0.5f, 0.5f}};
 
     NeuralNetwork neural_network;
 
@@ -169,7 +169,7 @@ TEST(Detection, SigmoidClassBackwardGradientMatchesNumerical)
 
     auto detection = make_unique<Detection>(neural_network.get_layer(conv_index)->get_output_shape(), anchors, "detection");
     detection->set_class_activation(Detection::ClassActivation::Sigmoid);
-    neural_network.add_layer(std::move(detection), {conv_index});
+    neural_network.add_layer(move(detection), {conv_index});
     const Index detection_index = neural_network.get_layers_number() - 1;
 
     neural_network.add_layer(make_unique<Flatten>(neural_network.get_layer(detection_index)->get_output_shape()),

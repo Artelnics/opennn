@@ -44,34 +44,17 @@ TEST(DeviceBackendTest, AvailableMemoryMatchesBuild)
 }
 
 
-TEST(DeviceBackendTest, AllocationGrowthFlagRoundTrips)
-{
-    const bool previous = device::cuda_allocation_growth_forbidden();
-
-    device::set_cuda_allocation_growth_forbidden(true);
-    EXPECT_TRUE(device::cuda_allocation_growth_forbidden());
-
-    device::set_cuda_allocation_growth_forbidden(false);
-    EXPECT_FALSE(device::cuda_allocation_growth_forbidden());
-
-    device::set_cuda_allocation_growth_forbidden(previous);
-}
-
-
 TEST(DeviceBackendTest, GrowthGuardMatchesBuild)
 {
     const bool previous = device::cuda_allocation_growth_forbidden();
 
-    device::set_cuda_allocation_growth_forbidden(false);
-
     {
         device::CudaAllocationGrowthGuard guard(true);
-        EXPECT_EQ(device::cuda_allocation_growth_forbidden(), device::is_cuda_build());
+        EXPECT_EQ(device::cuda_allocation_growth_forbidden(),
+                  previous || device::is_cuda_build());
     }
 
-    EXPECT_FALSE(device::cuda_allocation_growth_forbidden());
-
-    device::set_cuda_allocation_growth_forbidden(previous);
+    EXPECT_EQ(device::cuda_allocation_growth_forbidden(), previous);
 }
 
 
@@ -141,7 +124,7 @@ TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
     void* device_buffer = device::allocate(Device::CUDA, byte_count);
     ASSERT_NE(device_buffer, nullptr);
 
-    std::vector<unsigned char> host(static_cast<size_t>(byte_count), 0xFF);
+    vector<unsigned char> host(static_cast<size_t>(byte_count), 0xFF);
     device::copy_async(device_buffer, host.data(), byte_count,
                        device::CopyKind::HostToDevice, nullptr);
     device::set_zero_async(device_buffer, byte_count, nullptr);
@@ -174,8 +157,8 @@ TEST(DeviceBackendTest, CopyHostToHostCopiesBytes)
     const Index count = 5;
     const Index byte_count = count * static_cast<Index>(sizeof(float));
 
-    std::vector<float> source = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::vector<float> destination(static_cast<size_t>(count), 0.0f);
+    vector<float> source = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    vector<float> destination(static_cast<size_t>(count), 0.0f);
 
     device::copy_async(destination.data(), source.data(), byte_count,
                        device::CopyKind::HostToHost, nullptr);
@@ -190,8 +173,8 @@ TEST(DeviceBackendTest, CopyCpuToCpuCopiesBytes)
     const Index count = 4;
     const Index byte_count = count * static_cast<Index>(sizeof(int));
 
-    std::vector<int> source = { 10, 20, 30, 40 };
-    std::vector<int> destination(static_cast<size_t>(count), 0);
+    vector<int> source = { 10, 20, 30, 40 };
+    vector<int> destination(static_cast<size_t>(count), 0);
 
     device::copy_async(destination.data(), source.data(), byte_count,
                        Device::CPU, Device::CPU, nullptr);
@@ -220,8 +203,8 @@ TEST(DeviceBackendTest, CopyDeviceKindMatchesBuild)
     const Index count = 6;
     const Index byte_count = count * static_cast<Index>(sizeof(float));
 
-    const std::vector<float> source = { 1.5f, -2.0f, 3.25f, 0.0f, 42.0f, -7.5f };
-    std::vector<float> destination(static_cast<size_t>(count), 0.0f);
+    const vector<float> source = { 1.5f, -2.0f, 3.25f, 0.0f, 42.0f, -7.5f };
+    vector<float> destination(static_cast<size_t>(count), 0.0f);
 
     void* device_buffer = device::allocate(Device::CUDA, byte_count);
     ASSERT_NE(device_buffer, nullptr);
@@ -260,19 +243,6 @@ TEST(DeviceBackendTest, SynchronizeAndCheckLastErrorAreNoOps)
 {
     EXPECT_NO_THROW(device::synchronize(nullptr));
     EXPECT_NO_THROW(device::check_last_error());
-}
-
-
-TEST(DeviceBackendTest, CreateStreamMatchesBuild)
-{
-    cudaStream_t stream = device::create_stream(0);
-
-    if (device::has_cuda_device())
-        EXPECT_NE(stream, nullptr);
-    else
-        EXPECT_EQ(stream, nullptr);
-
-    EXPECT_NO_THROW(device::destroy_stream(stream));
 }
 
 
@@ -323,12 +293,10 @@ TEST(DeviceBackendTest, PinnedHostNegativeBytesThrows)
 
 TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
 {
-    EXPECT_EQ(device::get_compute_stream(), Backend::get_compute_stream());
-
     if (device::has_cuda_device())
-        EXPECT_NE(Backend::get_compute_stream(), nullptr);
+        EXPECT_NE(device::get_compute_stream(), nullptr);
     else
-        EXPECT_EQ(Backend::get_compute_stream(), nullptr);
+        EXPECT_EQ(device::get_compute_stream(), nullptr);
 }
 
 

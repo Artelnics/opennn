@@ -60,7 +60,7 @@ TEST(CrossEntropyError3DTest, ForwardIgnoresPaddingAndCountsTokens)
     EXPECT_EQ(correct_tokens, 1);
 
     const float expected_error =
-        (-std::log(0.6f + EPSILON) - std::log(0.1f + EPSILON)) / 2.0f;
+        (-log(0.6f + EPSILON) - log(0.1f + EPSILON)) / 2.0f;
     EXPECT_NEAR(error, expected_error, 1.0e-5f);
 
     const float accuracy = float(correct_tokens) / float(active_tokens);

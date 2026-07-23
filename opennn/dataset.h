@@ -73,11 +73,6 @@ public:
 
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
-    // --- Transient fold split (k-fold CV for input selection) --------------------------------
-    // Overrides which samples count as Training/Validation for the lifetime of a FoldScope,
-    // WITHOUT mutating the user's persistent roles (sample_roles). Every training-time consumer
-    // (optimizers, scaling, loss) reads the split through get_sample_indices / get_samples_number,
-    // so they follow the fold automatically. Testing/None samples are untouched. Never serialized.
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
     void clear_fold_split() noexcept { fold_split_active = false; }
     bool has_fold_split() const noexcept { return fold_split_active; }
@@ -122,11 +117,6 @@ public:
 
     const filesystem::path& get_data_path() const noexcept { return data_path; }
 
-    // Where the dataset may write its derived binary caches (tokens.bin,
-    // images.bin...). Empty (default) = next to the source data, standalone
-    // behaviour. A host application can point it at its own working directory
-    // so user data folders are never polluted with cache artifacts. Runtime
-    // configuration only: not serialized.
     const filesystem::path& get_cache_directory() const noexcept { return cache_directory; }
     void set_cache_directory(const filesystem::path& new_cache_directory) { cache_directory = new_cache_directory; }
 
@@ -314,11 +304,9 @@ protected:
     vector<SampleRole> sample_roles;
     vector<string> sample_ids;
 
-    // Transient k-fold CV overlay (see set_fold_split / FoldScope). Never serialized.
     bool fold_split_active = false;
     vector<SampleRole> fold_split_roles;
 
-    // The roles seen by sample queries: the fold overlay when active, else the user's roles.
     const vector<SampleRole>& active_sample_roles() const noexcept
     { return fold_split_active ? fold_split_roles : sample_roles; }
 
@@ -326,7 +314,7 @@ protected:
 
     filesystem::path data_path;
 
-    filesystem::path cache_directory;   // empty = beside the source data
+    filesystem::path cache_directory;
 
     Separator separator = Separator::Comma;
     bool has_header = false;
@@ -344,9 +332,6 @@ protected:
     void preview_data_from_JSON(const Json*);
 };
 
-// RAII scope that installs a transient train/validation fold split on a dataset and restores the
-// user's persistent roles on destruction (exception-safe). Used by k-fold CV in input selection:
-// the persistent sample_roles are never mutated, so serialization/UI keep the user's assignment.
 struct FoldScope
 {
     Dataset& dataset;

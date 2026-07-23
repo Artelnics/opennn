@@ -71,8 +71,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     time(&beginning_time);
 
-    // k-fold CV partition (folds_number > 1): built ONCE so every neuron count is scored on the same
-    // folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
@@ -98,9 +96,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
         if (folds_number > 1)
         {
-            // k-fold CV score for this neuron count. It trains k transient models and keeps none, so
-            // the optimal-parameters snapshot is left empty and the final model is refit on all
-            // development after selection (see below).
             const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
             minimum_training_error = evaluation.training_error;
             minimum_validation_error = evaluation.validation_error;
@@ -224,15 +219,11 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     }
     else if (folds_number > 1)
     {
-        // k-fold CV path: refit the final model on ALL development samples with the selected neuron
-        // count, using the epoch budget the CV of that architecture found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
         refit_final_model_on_development(training_strategy, folds_number);
     }
     else
     {
-        // No snapshot with folds=1 (parameter layout changed): refit on the user's split, consistent
-        // with the input-selection algorithms.
         if (display) cout << "Refitting the final model on the selected neurons.\n";
         neural_network->set_parameters_random();
         training_strategy->train();
@@ -275,7 +266,6 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 
-    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));
 }

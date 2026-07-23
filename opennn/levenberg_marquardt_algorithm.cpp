@@ -148,7 +148,7 @@ static MatrixR lm_activation_derivative(ActivationFunction activation_function, 
     return activation_derivative_from_output_values(activation_function, outputs);
 }
 
-void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
+void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
@@ -197,8 +197,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     const Index outputs_number = static_cast<const Dense*>(layers[last_layer].get())->get_outputs_number();
     const Index rows = batch_size * outputs_number;
 
-    // delta(sample * outputs_number + j, k) = d output_j(sample) / d combination_k(sample)
-    // of the layer being processed; rows match the errors vector layout.
     MatrixR delta = MatrixR::Zero(rows, outputs_number);
     {
         const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
@@ -259,7 +257,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 TrainingResult LevenbergMarquardtAlgorithm::train()
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
 
     throw_if(neural_network->is_gpu(),
              "LevenbergMarquardtAlgorithm does not support GPU training: "

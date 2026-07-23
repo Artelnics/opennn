@@ -109,7 +109,7 @@ void EmbeddingLookupOperator::init_positional_encoding()
                 : cos(i / divisors(j));
 }
 
-void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& indices = get_input(forward_propagation, layer);
     TensorView& output        = get_output(forward_propagation, layer);
@@ -136,15 +136,8 @@ void EmbeddingLookupOperator::back_propagate(ForwardPropagation& forward_propaga
                               sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
-void EmbeddingLookupOperator::load_state_from_JSON(const Json* /*parent*/)
+void EmbeddingLookupOperator::load_state_from_JSON(const Json*)
 {
-    // The positional encoding is deterministic and is never written to JSON, so
-    // there is nothing to deserialize: recompute it instead. This guarantees the
-    // state is valid after a load even when the operator was linked before this
-    // point with a buffer that init_positional_encoding() did not refill (the
-    // link_states() init only runs on the first link). The device-resident copy
-    // is populated by migrating the host state, not by this CPU-side fill, so we
-    // only recompute while the state lives on the host.
     if (positional_encoding.is_cuda()) return;
     init_positional_encoding();
 }

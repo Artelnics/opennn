@@ -168,8 +168,6 @@ bool MultiHeadAttention::should_use_sdpa() const
     if (!sdpa_auto) return false;
     if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
-    // The SDPA backend leaves padded-query outputs unspecified, so it cannot
-    // honour zero_padded_queries; correctness wins over the fused kernel.
     if (attention.zero_padded_queries) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);

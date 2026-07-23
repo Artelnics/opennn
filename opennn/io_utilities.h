@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -117,7 +117,7 @@ public:
     };
 
     explicit CsvReader(Configuration new_configuration)
-        : configuration(std::move(new_configuration))
+        : configuration(move(new_configuration))
     {
     }
 

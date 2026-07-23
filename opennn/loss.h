@@ -192,8 +192,8 @@ protected:
     float yolo_lambda_giou     = 5.0f;
     float yolo_lambda_noobj    = 0.5f;
     float yolo_lambda_class    = 1.0f;
-    float yolo_focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
-    float yolo_obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+    float yolo_focal_gamma     = 0.0f;
+    float yolo_obj_focal_gamma = 0.0f;
 
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
@@ -208,13 +208,8 @@ protected:
     string name = "Loss";
 };
 
-// CPU numerical gradient check: returns max relative error between analytical
-// and finite-difference gradients. Below 1e-4 means the loss is self-consistent.
 float yolo_loss_gradient_check_cpu();
 
-// CPU expected-value check: compares forward loss against hand-computed expected
-// values, and verifies gradient directions are correct (not just self-consistent).
-// Returns max absolute error; prints per-test results. Below 1e-4 means correct.
 float yolo_loss_expected_value_check_cpu();
 
 }

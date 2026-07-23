@@ -30,21 +30,12 @@ struct ForwardPropagation
 
     void print() const;
 
-    // CUDA graph replay for the device-resident inference path (opt-in,
-    // default off): NeuralNetwork::calculate_outputs_resident captures the
-    // forward after two eager passes and replays it while the input pointers
-    // and parameters stay unchanged (upload_parameters=true invalidates).
     void set_cuda_graph(bool);
     bool get_cuda_graph() const noexcept { return use_cuda_graph; }
     void reset_cuda_graph() noexcept;
 
     Index batch_size = 0;
 
-    // True when the batches fed through this propagation come from a dataset
-    // that Optimizer::set_scaling() already scaled in place (training and
-    // in-loop validation). NeuralNetwork::forward_propagate then skips the
-    // leading Scaling layers even with is_training == false, so validation
-    // inputs are not scaled twice.
     bool inputs_pre_scaled = false;
 
     NeuralNetwork* neural_network = nullptr;

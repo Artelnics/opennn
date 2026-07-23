@@ -732,7 +732,6 @@ string ModelExpression::get_expression_c_embedded() const
         return target;
     };
 
-    // In-place stages (clamp) must not modify the caller's inputs.
     auto in_place_target = [&]() -> string
     {
         if (current == "inputs")
@@ -758,8 +757,6 @@ string ModelExpression::get_expression_c_embedded() const
             const vector<ScalerMethod>& scalers = scaling->get_scalers();
             const float min_range = scaling->get_min_range();
             const float max_range = scaling->get_max_range();
-            // Rank-2 (time series) inputs have one scaler per feature applied
-            // at every time step: total values = time_steps * features.
             const Index total_number = layers[i]->get_outputs_number();
             const Index features_number = ssize(scalers);
             const bool is_unscaling = (layer_type == LayerType::Unscaling);
@@ -900,8 +897,6 @@ string ModelExpression::get_expression_c_embedded() const
             throw_if(is_softmax && !is_last,
                      "ModelExpression: Softmax in a hidden layer is not supported for export.");
 
-            // Softmax emits raw logits (identity) and is normalized over the
-            // output vector below.
             const string activation_constant = is_softmax
                 ? "NN_IDENTITY"
                 : activation_constant_for(activation);
@@ -1016,8 +1011,6 @@ string ModelExpression::get_expression_c_embedded() const
             const Index hidden = lstm->get_output_features();
             const bool return_sequences = lstm->get_return_sequences();
 
-            // Packed tables, gate order: forget, input, candidate, output
-            // (matching the parameter views layout: biases 0-3, W 4-7, U 8-11).
             vector<float> lstm_biases(static_cast<size_t>(4 * hidden));
             vector<float> lstm_input_weights(static_cast<size_t>(4 * features * hidden));
             vector<float> lstm_recurrent_weights(static_cast<size_t>(4 * hidden * hidden));
@@ -1119,8 +1112,6 @@ string ModelExpression::get_expression_c_embedded() const
                   "\t\toutputs[j] = nn_activation_forward(activation, sum);\n"
                   "\t}\n}\n\n";
 
-    // The affine tables hold one entry per feature; for rank-2 (time series)
-    // inputs they are tiled over the time steps (total = time_steps * features).
     if (uses_affine)
         buffer << "static void nn_affine_forward(const float* inputs, const float* a, const float* b,\n"
                   "                              int features, int total, float* outputs)\n{\n"

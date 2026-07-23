@@ -113,8 +113,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index epoch = 0;
 
-    // k-fold CV partition (folds_number > 1): built ONCE so every candidate subset is scored on the
-    // same folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
@@ -144,11 +142,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
         configure_neural_network_inputs(neural_network, dataset, input_features_number);
 
-        // Growing inputs is a greedy forward selection: at each step it takes the
-        // next candidate input (by descending correlation) and keeps it ONLY if it
-        // lowers the validation error. Rejected candidates are removed and the next
-        // one is tried, so several candidates can be evaluated at the same input
-        // count. The epoch counter therefore tracks *accepted* inputs, not attempts.
         const string& candidate_name = variable_names[current_variable_index];
 
         if (display)
@@ -160,9 +153,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
         if (folds_number > 1)
         {
-            // k-fold CV score: robust, less overfittable than a single validation split. It trains k
-            // transient models and keeps none, so the optimal-parameters snapshot is left empty and
-            // the final model is refit on all development after selection (see below).
             const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
             minimum_training_error = evaluation.training_error;
             minimum_validation_error = evaluation.validation_error;
@@ -307,14 +297,11 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     }
     else if (folds_number > 1)
     {
-        // k-fold CV path: refit the final model on ALL development samples (Training + Validation),
-        // using the epoch budget the CV of the selected subset found best.
         if (display) cout << "Refitting the final model on all development samples.\n";
         refit_final_model_on_development(training_strategy, folds_number);
     }
     else
     {
-        // No snapshot with folds=1 (changed parameter layout): refit on the user's split.
         if (display) cout << "Refitting the final model on the selected inputs.\n";
         neural_network->set_parameters_random();
         training_strategy->train();
@@ -357,7 +344,6 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
     set_maximum_validation_failures(read_json_index(root_element,
         root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
 
-    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));
 }

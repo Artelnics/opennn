@@ -16,7 +16,6 @@ int main()
     set_seed(42);
     Configuration::instance().set(Device::Auto, Type::FP32);
 
-    // sum.csv: 100 inputs + 1 target, ';'-separated, no header.
     TabularDataset dataset("sum.csv", ";", false, false);
 
     ApproximationNetwork network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
@@ -32,7 +31,6 @@ int main()
 
     training_strategy.train();
 
-    // Export the trained model to standalone source code.
     ModelExpression expression(&network);
     expression.save("model.c", ModelExpression::ProgrammingLanguage::C);
     expression.save("model.py", ModelExpression::ProgrammingLanguage::Python);

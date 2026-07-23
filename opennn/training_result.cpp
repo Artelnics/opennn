@@ -175,7 +175,7 @@ void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
     if (total_bytes > 0)
     {
         if (device == Device::CUDA)
-            opennn::device::set_zero_async(data.data, total_bytes, Backend::get_compute_stream());
+            opennn::device::set_zero_async(data.data, total_bytes, device::get_compute_stream());
         else
             data.setZero();
     }

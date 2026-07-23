@@ -255,9 +255,9 @@ TEST(ScalingTest, ScaleLogarithmicClampsNonPositiveValues)
     MatrixMap map(matrix.data(), 3, 1);
     scale_logarithmic(map, 0);
 
-    EXPECT_NEAR(matrix(0, 0), std::log(EPSILON), 1e-5f);
-    EXPECT_NEAR(matrix(1, 0), std::log(EPSILON), 1e-5f);
-    EXPECT_NEAR(matrix(2, 0), std::log(3.0f), 1e-5f);
+    EXPECT_NEAR(matrix(0, 0), log(EPSILON), 1e-5f);
+    EXPECT_NEAR(matrix(1, 0), log(EPSILON), 1e-5f);
+    EXPECT_NEAR(matrix(2, 0), log(3.0f), 1e-5f);
 
     EXPECT_TRUE(matrix.array().isFinite().all());
 }

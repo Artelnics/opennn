@@ -394,8 +394,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
         return normalized;
     };
 
-    // Keep the common unquoted case zero-copy. Quoted input is normalized into
-    // owned storage so Result::lines can still be string_views with stable lifetime.
     if (result.mapping.map(path))
     {
         string_view mapped(result.mapping.data(), result.mapping.size());

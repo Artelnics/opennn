@@ -136,11 +136,6 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    // Spec index as in get_forward_specs. A transient slot's content never
-    // survives its own operator invocation (forward or backward staging only),
-    // so every transient slot across all layers views one shared max-sized
-    // block of the arena. The output (last spec) can never be transient:
-    // consumers read it through input_views in forward and backward.
     virtual bool is_forward_slot_transient(size_t) const { return false; }
 
     virtual Shape get_input_shape() const noexcept { return input_shape; }
@@ -175,8 +170,8 @@ public:
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
-    virtual string write_expression(const vector<string>& /*input_names*/,
-                                    const vector<string>& /*output_names*/) const { return {}; }
+    virtual string write_expression(const vector<string>&,
+                                    const vector<string>&) const { return {}; }
 
     virtual void print() const {}
 

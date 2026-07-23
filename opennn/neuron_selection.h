@@ -55,9 +55,6 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    // Inner k-fold cross-validation for scoring each neuron count. folds_number == 1 keeps the legacy
-    // single Training/Validation-split behaviour; > 1 scores by the mean validation error over the
-    // folds (see cross_validation.h). The persistent sample roles are never mutated.
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
     Index get_folds_number() const noexcept { return folds_number; }
 

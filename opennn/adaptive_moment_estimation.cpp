@@ -65,8 +65,6 @@ static void update_parameters_cuda(NeuralNetwork*,
 
 #endif
 
-// accumulator += alpha * gradient, on the gradient's device. Used by the
-// set_update_period path; gradients are fp32 masters on both devices.
 static void accumulate_scaled_gradient(Buffer& accumulator, Buffer& gradient, float alpha)
 {
 #ifdef OPENNN_HAS_CUDA
@@ -131,9 +129,6 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 
     optimization_data.iteration = 0;
 
-    // Gradient accumulation (see set_update_period): sub-batch gradients are
-    // per-batch means, so averaging them with weight 1/period reproduces the
-    // full virtual-batch gradient exactly when the mini-batches are equal.
     throw_if(update_period > 1 && use_cuda_graph,
              "gradient accumulation is not supported with the CUDA graph.");
 
@@ -174,7 +169,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         device::copy_async(back_propagation.gradient.data, gradient_accumulator.data,
                            gradient_accumulator.bytes,
                            gradient_accumulator.device_type, gradient_accumulator.device_type,
-                           gradient_accumulator.device_type == Device::CUDA ? Backend::get_compute_stream() : nullptr);
+                           gradient_accumulator.device_type == Device::CUDA ? device::get_compute_stream() : nullptr);
         gradient_accumulator.setZero();
         accumulated_batches = 0;
     }
@@ -252,7 +247,7 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
         optimization_data.graph_effective_lr.as<float>(),
         optimization_data.graph_effective_eps.as<float>(),
         neural_network->get_parameters_bf16_mirror_data(),
-        Backend::get_compute_stream());
+        device::get_compute_stream());
 }
 #else
 void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation&, OptimizerData&) const

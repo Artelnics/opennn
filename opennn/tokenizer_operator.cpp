@@ -91,10 +91,6 @@ vector<Index> TokenizerOperator::encode(string_view text) const
     return ids;
 }
 
-// The fixed-length framing shared by dataset encoding, stored-model inference
-// and generation: [START] + token ids (unknown id for out-of-vocabulary tokens)
-// truncated to sequence_length, plus [END] when it fits. The caller pads the
-// remainder with [PAD] = 0.
 vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, Index sequence_length) const
 {
     vector<Index> ids;
@@ -517,8 +513,6 @@ BytePairTokenizer::BytePairTokenizer()
     reserved_tokens = {string(PAD_TOKEN)};
     unk_id = 0;
 
-    // bytes_to_unicode: printable bytes map to themselves; the rest map to
-    // codepoints 256.. in order, so every byte becomes one printable codepoint.
     array<bool, 256> is_direct{};
     auto mark = [&](int lo, int hi) { for (int b = lo; b <= hi; ++b) is_direct[b] = true; };
     mark('!', '~'); mark(0xA1, 0xAC); mark(0xAE, 0xFF);
@@ -535,7 +529,6 @@ BytePairTokenizer::BytePairTokenizer()
 void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
                              const filesystem::path& merges_txt)
 {
-    // vocab.json: flat object { "<byte-unicode token>": id, ... }.
     ifstream vocabulary_file(vocabulary_json, ios::binary);
     throw_if(!vocabulary_file.is_open(),
              "Cannot open vocab.json: " + vocabulary_json.string());
@@ -549,7 +542,6 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
     for (const auto& [token, id_value] : parsed.object_value)
         maximum_id = max(maximum_id, Index(id_value.as_long()));
 
-    // Reserve id 0 for [PAD]; every loaded id shifts +1.
     vector<string> loaded_vocabulary(size_t(maximum_id + 2));
     loaded_vocabulary[0] = string(PAD_TOKEN);
     for (const auto& [token, id_value] : parsed.object_value)
@@ -557,7 +549,6 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
 
     set_vocabulary(loaded_vocabulary);
 
-    // merges.txt: one "A B" pair per line, in priority order (skips the header).
     ifstream merges_file(merges_txt, ios::binary);
     throw_if(!merges_file.is_open(),
              "Cannot open merges.txt: " + merges_txt.string());
@@ -604,7 +595,7 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
 
         if (merge_line.find(' ') == string::npos) continue;
 
-        merge_ranks.emplace(merge_line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
+        merge_ranks.emplace(merge_line, rank++);
     }
 }
 
@@ -659,8 +650,6 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
 
 vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
 {
-    // Regex 's|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
-    // implemented over codepoints; a leading space attaches to the following piece.
     const vector<uint32_t> cps = utf8_to_codepoints(text);
     const size_t n = cps.size();
 
@@ -678,7 +667,6 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
     {
         const uint32_t c = cps[i];
 
-        // Contractions (ASCII apostrophe only).
         if (c == '\'' && i + 1 < n)
         {
             const uint32_t d = to_lower_ascii(cps[i + 1]);
@@ -691,7 +679,6 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
             }
         }
 
-        // Optional single leading space, then a run of letters / digits / others.
         const size_t k = (c == ' ') ? i + 1 : i;
         if (k < n && is_letter(cps[k]))
         {
@@ -709,7 +696,6 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
             emit(i, j); i = j; continue;
         }
 
-        // Whitespace run: keep the last space for the next piece's optional lead.
         if (is_whitespace(c))
         {
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
@@ -717,7 +703,7 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
             emit(i, end); i = end; continue;
         }
 
-        emit(i, i + 1); ++i;   // defensive fallback
+        emit(i, i + 1); ++i;
     }
 
     return pieces;
@@ -729,7 +715,6 @@ vector<string> BytePairTokenizer::tokenize(string_view text) const
 
     for (const string& piece : pre_tokenize(text))
     {
-        // Map the piece's raw bytes through byte_encoder, then apply BPE merges.
         string byte_unicode;
         for (const char raw : piece)
             byte_unicode += codepoint_to_utf8(byte_encoder[static_cast<unsigned char>(raw)]);
@@ -746,7 +731,7 @@ string BytePairTokenizer::decode(const vector<Index>& ids) const
     string byte_unicode;
     for (const Index id : ids)
     {
-        if (id == 0) continue;                 // [PAD]
+        if (id == 0) continue;
         byte_unicode += id_to_token(id);
     }
 

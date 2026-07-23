@@ -311,7 +311,7 @@ ResNet::ResNet(const Shape& input_shape,
         add_layer(make_unique<Convolutional>(
                       get_layer(input_index)->get_output_shape(),
                       kernel_shape, activation, stride, "Same",
-                      /*batch_normalization=*/true, name),
+                                              true, name),
                   {input_index});
         return get_layers_number() - 1;
     };
@@ -325,14 +325,12 @@ ResNet::ResNet(const Shape& input_shape,
                         Shape{stride, stride}, prefix + "_skip");
     };
 
-    // The block-end convolution takes the skip branch as a second input; its
-    // batch norm fuses the residual add and the final ReLU.
     auto add_residual_conv = [&](Index input_index, Index skip_index,
                                  const Shape& kernel_shape, const string& name) -> Index {
         auto conv = make_unique<Convolutional>(
             get_layer(input_index)->get_output_shape(),
             kernel_shape, "ReLU", Shape{1, 1}, "Same",
-            /*batch_normalization=*/true, name);
+                                    true, name);
         conv->set_residual(true);
         add_layer(move(conv), {input_index, skip_index});
         return get_layers_number() - 1;
@@ -450,9 +448,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                  "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
     }
 
-    // Single source of truth for every conv-layer activation string in this
-    // network. Defaults to "ReLU" so call sites + saved Phase 1/2 weights
-    // behave unchanged.
     const char* act = (body_activation == BodyActivation::LeakyReLU) ? "LeakyReLU" : "ReLU";
 
     const Shape stride{1, 1};
@@ -497,15 +492,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     }
     else if (backbone == Backbone::DarknetTinyV3)
     {
-        // Standard YOLOv3-tiny backbone: 8 conv layers (all BN + act),
-        // 5 conv+pool pairs + 3 additional convs.  No residuals.
-        // Matches yolov3-tiny.weights exactly (8 backbone conv layers).
 
         const vector<Index> channels_seq = {16, 32, 64, 128, 256, 512, 1024, 256};
         const vector<bool>  has_pool     = {true, true, true, true, true, false, false, false};
         const vector<bool>  use_1x1      = {false, false, false, false, false, false, false, true};
 
-        Index c3_index = -1;  // output of conv[4] (256ch, 26x26 feature map)
+        Index c3_index = -1;
         Index last_index = -1;
 
         for (size_t i = 0; i < channels_seq.size(); ++i)
@@ -530,19 +522,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 last_index = get_layers_number() - 1;
             }
 
-            // conv[4] (i==4, 256ch) is the branch point for the small (26×26) head
             if (i == 4) c3_index = get_layers_number() - 1 - (has_pool[i] ? 1 : 0);
-            // After the pool at i==4, c3_index points to the conv output before pool
         }
 
-        // At this point:
-        //   c3_index  → conv[4] output (256ch, 26x26, before maxpool)
-        //   last_index → conv[7] output = p5_top (256ch, 13x13)
 
         if (head_style == HeadStyle::FPN)
         {
-            // 2-head YOLOv3-tiny FPN: sort anchors by area, split into
-            // small (3 anchors, 26×26) and large (3 anchors, 13×13).
             vector<array<float, 2>> anchors_sorted = anchors;
             ranges::sort(anchors_sorted, {},
                          [](const array<float, 2>& a) { return a[0] * a[1]; });
@@ -571,21 +556,18 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return get_layers_number() - 1;
             };
 
-            // Large head (13×13): p5_top → Conv1×1 512ch → logits + detection
             const Index p5_conv = add_conv(last_index,
                 Shape{3, 3, get_layer(last_index)->get_output_shape()[2], 512},
                 act, stride, true, "fpn_p5_conv");
             add_detection_head(p5_conv, anchors_large, "large");
 
-            // Small head (26×26): p5_top → Conv1×1 128ch → Upsample(2×)
-            //   → Concat(p5_up 128ch + c3 256ch = 384ch) → Conv3×3 256ch → logits
             const Index p5_lateral = add_conv(last_index,
                 Shape{1, 1, get_layer(last_index)->get_output_shape()[2], 128},
                 act, stride, true, "fpn_p5_lateral");
 
             add_layer(make_unique<Upsample>(
                           get_layer(p5_lateral)->get_output_shape(),
-                          /*scale_factor=*/2, "fpn_p5_upsample"),
+                                           2, "fpn_p5_upsample"),
                       {p5_lateral});
             const Index p5_up = get_layers_number() - 1;
 
@@ -610,22 +592,9 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     }
     else if (backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53)
     {
-        // Darknet53: 52 conv layers, initial conv + 5 stages.
-        //   Stage: stride-2 downsample + N residual blocks [Conv1×1 → Conv3×3 + skip].
-        //   Stages: {64,1},{128,2},{256,8},{512,8},{1024,4} → 32× total stride.
-        //
-        // CSPDarknet53 (YOLOv4): same stem + 5 stages, but each stage uses a
-        //   Cross-Stage Partial block: stride-2 down → split → [N residual blocks on
-        //   branch2, direct skip on branch1] → concat → merge conv.
-        //   Halves gradient duplication vs plain Darknet53. Same C3/C4/C5 channel
-        //   counts (256/512/1024) so the FPN/PANet neck is shared unchanged.
-        //   Trains from scratch (no pretrained backbone available for CSPDarknet53).
-        //
-        // FPN taps: C3=52×52×256, C4=26×26×512, C5=13×13×1024.
 
         const bool use_csp = (backbone == Backbone::CSPDarknet53);
 
-        // ── Darknet53 residual block ────────────────────────────────────────────
         auto add_residual_block = [&](Index input_index, Index channels, const string& prefix) -> Index {
             const Index half = channels / 2;
             Index x = add_conv(input_index, Shape{1, 1, channels, half},      act,        stride, true, prefix+"_c1");
@@ -636,21 +605,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return get_layers_number() - 1;
         };
 
-        // ── CSPDarknet53 stage ─────────────────────────────────────────────────
-        // Matches YOLOv4 / yolov4.conv.137 layer order exactly for weight loading.
-        //
-        // Stage 1 (first_stage=true): branch_ch = out_ch; bottleneck res blocks
-        //   (branch_ch → out_ch/2 → branch_ch). Both branches use act.
-        // Stages 2–5 (first_stage=false): branch_ch = out_ch/2; non-bottleneck
-        //   res blocks (branch_ch → branch_ch). Both branches use act.
-        //
-        // Branch2 (processed path) is placed before branch1 (skip) to match
-        // the darknet weight file's sequential position order.
-        //
-        // input(in_ch) → stride-2 Conv(out_ch) [down]
-        //   → branch2: Conv1×1(out_ch→branch_ch) → N×ResBlock → Conv1×1 [trans]
-        //   → branch1: Conv1×1(out_ch→branch_ch)  [skip]
-        //   → Concat(trans, branch1) → Conv1×1(2*branch_ch→out_ch) [merge]
         auto add_csp_stage = [&](Index input_index, Index in_ch, Index out_ch,
                                   Index n_blocks, const string& prefix, bool first_stage) -> Index {
             const Index half      = out_ch / 2;
@@ -658,7 +612,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             const Index down = add_conv(input_index, Shape{3, 3, in_ch, out_ch}, act, stride_2, true, prefix+"_down");
 
-            // branch2 first (processed path — matches darknet weight position order)
             Index branch2 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s2");
             for (Index j = 0; j < n_blocks; ++j)
             {
@@ -666,13 +619,11 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 Index x;
                 if (first_stage)
                 {
-                    // Bottleneck: branch_ch → half → branch_ch
                     x = add_conv(prev, Shape{1, 1, branch_ch, half},      act,        stride, true, prefix+format("_b{}_c1", j+1));
                     x = add_conv(x,   Shape{3, 3, half,      branch_ch}, "Identity", stride, true, prefix+format("_b{}_c2", j+1));
                 }
                 else
                 {
-                    // Non-bottleneck: branch_ch → branch_ch
                     x = add_conv(prev, Shape{1, 1, branch_ch, branch_ch}, act,        stride, true, prefix+format("_b{}_c1", j+1));
                     x = add_conv(x,   Shape{3, 3, branch_ch, branch_ch}, "Identity", stride, true, prefix+format("_b{}_c2", j+1));
                 }
@@ -683,7 +634,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             }
             const Index trans = add_conv(branch2, Shape{1, 1, branch_ch, branch_ch}, act, stride, true, prefix+"_trans");
 
-            // branch1 after branch2 (skip path — matches darknet weight position order)
             const Index branch1 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix+"_s1");
 
             const Shape hw = get_layer(branch1)->get_output_shape();
@@ -695,7 +645,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         const vector<pair<Index,Index>> stages = {{64,1},{128,2},{256,8},{512,8},{1024,4}};
 
-        // Initial conv: stride 1 (same for both variants)
         add_layer(make_unique<Convolutional>(input_shape, Shape{3, 3, input_shape[2], 32},
                                              act, stride, "Same", true, use_csp ? "csp53_stem" : "dn53_stem"));
         Index last_index = get_layers_number() - 1;
@@ -756,7 +705,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     ? Detection::ClassActivation::Sigmoid : Detection::ClassActivation::Softmax);
             };
 
-            // 5-conv neck block (YOLOv3 DBL×5)
             auto add_yolo_neck = [&](Index idx, Index in_ch,
                                      Index ch_small, Index ch_large, const string& pfx) -> Index {
                 Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, true, pfx+"_c1");
@@ -767,15 +715,12 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return x;
             };
 
-            // SPPF: three cascaded 5×5 same-padding max-pools before the neck.
-            // Enlarges the receptive field of the large-stride feature map without
-            // adding stride (stride=1, pad=2 → same spatial size). YOLOv5-style fast SPP.
             Index fpn_entry = c5_index;
             if (use_sppf)
             {
                 const Shape c5_shape = get_layer(c5_index)->get_output_shape();
-                const Index c5_ch   = c5_shape[2];     // 1024
-                const Index half_ch = c5_ch / 2;       // 512
+                const Index c5_ch   = c5_shape[2];
+                const Index half_ch = c5_ch / 2;
 
                 const Index sppf_in = add_conv(c5_index, Shape{1, 1, c5_ch, half_ch}, act, stride, true, "sppf_in");
                 const Shape s_shape = get_layer(sppf_in)->get_output_shape();
@@ -795,7 +740,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 fpn_entry = add_conv(sppf_cat, Shape{1, 1, 2 * c5_ch, c5_ch}, act, stride, true, "sppf_out");
             }
 
-            // ── Top-down FPN path (shared by FPN and PANet) ──────────────────
             const Index p5n = add_yolo_neck(fpn_entry, 1024, 512, 1024, "neck_p5");
 
             const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, "neck_p5_lat");
@@ -820,7 +764,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             if (head_style == HeadStyle::FPN)
             {
-                // FPN: direct detection at each scale
                 const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "neck_p5_pre");
                 add_det_head(p5d, anchors_large, "large");
                 const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "neck_p4_pre");
@@ -828,13 +771,11 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
                 add_det_head(p3d, anchors_small, "small");
             }
-            else // PANet: small head at P3, then bottom-up path for medium and large
+            else
             {
-                // Small head (52×52) — same as FPN
                 const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "neck_p3_pre");
                 add_det_head(p3d, anchors_small, "small");
 
-                // 3-conv PAN block: reduce → expand → reduce
                 auto add_pan_block = [&](Index idx, Index in_ch, Index ch_s, Index ch_l, const string& pfx) -> Index {
                     Index x = add_conv(idx, Shape{1, 1, in_ch, ch_s}, act, stride, true, pfx+"_c1");
                     x       = add_conv(x,   Shape{3, 3, ch_s,  ch_l}, act, stride, true, pfx+"_c2");
@@ -842,7 +783,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     return x;
                 };
 
-                // ── Bottom-up: P3 → N4 (medium head, 26×26) ─────────────────
                 const Index n3_down = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, true, "pan_n3_down");
                 add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
                                                      vector<Index>{256, 256}, "pan_n4_cat"),
@@ -852,7 +792,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 const Index n4d = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, true, "pan_n4_pre");
                 add_det_head(n4d, anchors_medium, "medium");
 
-                // ── Bottom-up: N4 → N5 (large head, 13×13) ──────────────────
                 const Index n4_down = add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, true, "pan_n4_down");
                 add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
                                                      vector<Index>{512, 512}, "pan_n5_cat"),
@@ -968,7 +907,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             add_layer(make_unique<Upsample>(
                           get_layer(p5_lateral)->get_output_shape(),
-                          /*scale_factor=*/2, "fpn_p5_upsample"),
+                                           2, "fpn_p5_upsample"),
                       {p5_lateral});
             const Index p5_up = get_layers_number() - 1;
 
@@ -988,7 +927,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             add_layer(make_unique<Upsample>(
                           get_layer(p4_lateral)->get_output_shape(),
-                          /*scale_factor=*/2, "fpn_p4_upsample"),
+                                           2, "fpn_p4_upsample"),
                       {p4_lateral});
             const Index p4_up = get_layers_number() - 1;
 
@@ -1059,8 +998,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         Shape({sequence_length, embedding_dimension}),
         heads_number,
         "multihead_attention_layer");
-    // Zero the attention outputs at padded query positions so the average
-    // pooling that follows excludes them from the document representation.
     attention_layer->set_zero_padded_queries(true);
     add_layer(move(attention_layer));
 
@@ -1532,12 +1469,6 @@ Index TextGenerationNetwork::get_embedding_dimension() const
     return get_layer("embedding")->get_output_shape().back();
 }
 
-// --- Text inference (decode / generate / chat) ---
-//
-// The tokenizer layers carried by Transformer and TextGenerationNetwork hold
-// the vocabulary, so a model loaded from disk decodes without any dataset.
-// All per-prompt state lives in a GenerationSession created at execution time,
-// like the optimizers and calculate_outputs do.
 
 TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw)
 {
@@ -1854,7 +1785,7 @@ void reset_per_prompt_state(GenerationSession& session)
     session.target_ids(0, 0) = start_token_id;
     session.history.clear();
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     device::copy_async(session.target_ids_device.data,
                        session.target_ids.data(),
                        session.target_ids_device.byte_size(),
@@ -1873,7 +1804,7 @@ void encode_source(Transformer& network, GenerationSession& session, const strin
     for (Index j = 0; j < ssize(ids); ++j)
         session.source_ids(0, j) = float(ids[size_t(j)]);
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     device::copy_async(session.source_ids_device.data,
                        session.source_ids.data(),
                        session.source_ids_device.byte_size(),
@@ -1886,7 +1817,7 @@ void encode_source(Transformer& network, GenerationSession& session, const strin
 
 void read_distribution(GenerationSession& session, Index position)
 {
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
 
     const TensorView output_view = session.forward_propagation->get_outputs();
     const Index vocabulary_size = output_view.shape[2];
@@ -1938,8 +1869,6 @@ Index decode_step(Transformer& network, GenerationSession& session,
 Index generate_step(TextGenerationNetwork& network, GenerationSession& session,
                     const vector<Index>& context, const SamplingConfig& config)
 {
-    // Sliding window over the tail of the context: causal masking makes the
-    // trailing PAD positions irrelevant to the predictions at earlier positions.
     const Index window_length = min(ssize(context), session.sequence_length);
     const Index window_start = ssize(context) - window_length;
 
@@ -1947,7 +1876,7 @@ Index generate_step(TextGenerationNetwork& network, GenerationSession& session,
     for (Index j = 0; j < window_length; ++j)
         session.target_ids(0, j) = static_cast<float>(context[size_t(window_start + j)]);
 
-    cudaStream_t stream = Backend::get_compute_stream();
+    cudaStream_t stream = device::get_compute_stream();
     device::copy_async(session.target_ids_device.data,
                        session.target_ids.data(),
                        session.target_ids_device.byte_size(),
@@ -1997,7 +1926,7 @@ string decode_with_session(Transformer& network, GenerationSession& session,
         session.target_ids(0, i) = static_cast<float>(next_token_id);
         session.history.push_back(next_token_id);
 
-        cudaStream_t stream = Backend::get_compute_stream();
+        cudaStream_t stream = device::get_compute_stream();
         device::copy_async(session.target_ids_device.as<float>() + i,
                            &session.target_ids(0, i),
                            Index(sizeof(float)),
@@ -2022,8 +1951,6 @@ string generate_with_session(TextGenerationNetwork& network, GenerationSession& 
     const TokenizerOperator* tokenizer = network.get_tokenizer();
     const vector<string>& vocabulary = tokenizer->get_vocabulary();
 
-    // A subword tokenizer decodes text directly; word-level maps ids through
-    // the vocabulary and joins them with spaces.
     const bool word_level = tokenizer->get_kind() == "WordLevel";
 
     vector<Index> context = tokenizer->encode(prompt);
@@ -2053,8 +1980,6 @@ string generate_with_session(TextGenerationNetwork& network, GenerationSession& 
 
         if (!word_level)
         {
-            // Re-decode the generated tail so subwords join into text correctly,
-            // and stream only the newly produced suffix.
             const vector<Index> generated(context.begin() + prompt_size, context.end());
             const string text = tokenizer->decode(generated);
             if (on_token && text.size() > result.size())
@@ -2369,7 +2294,7 @@ void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rat
     recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
-#endif // OPENNN_NO_VISION
+#endif
 
 }
 

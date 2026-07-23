@@ -137,9 +137,6 @@ struct Variable
     vector<string> categories;
     ScalerMethod scaler = ScalerMethod::None;
 
-    // Number of identical features this variable spans (e.g. the pixels of an
-    // image block or the tokens of a sequence). Categorical variables span one
-    // feature per category instead.
     Index features = 1;
     const string& get_role() const { return variable_role_to_string(role); }
     VariableRole get_role_type() const noexcept { return role; }
@@ -170,7 +167,6 @@ struct Variable
 
 vector<string> get_variable_feature_names(const vector<Variable>&);
 
-// Per-variable feature counts and their sum, for a list of variables.
 inline vector<Index> get_feature_dimensions(const vector<Variable>& variables)
 {
     vector<Index> dimensions;

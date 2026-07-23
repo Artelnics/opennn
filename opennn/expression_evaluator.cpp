@@ -165,7 +165,7 @@ float ExpressionEvaluator::parse_factor(size_t& cursor, const map<string, float>
     if (tokens[cursor].kind == Token::Kind::Operator && tokens[cursor].text == "^")
     {
         ++cursor;
-        const float right_value = parse_factor(cursor, variables); // right-associative
+        const float right_value = parse_factor(cursor, variables);
 
         return pow(left_value, right_value);
     }

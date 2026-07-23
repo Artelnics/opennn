@@ -38,29 +38,18 @@
 #include "opennn/random_utilities.h"
 
 using namespace opennn;
-using namespace std::chrono;
+using namespace chrono;
 
 int main(int argc, char** argv)
 {
     try
     {
-        // ====================================================================
-        // blank_cuda — seven GPU training benchmarks. Block 7 (GPT) is the
-        // enabled one; blocks 1-6 are `#if 0`. Enable exactly ONE block at a
-        // time by switching its `#if 0` to `#if 1` (and the others back to 0).
-        // ====================================================================
 
-        // --------------------------------------------------------------------
-        // 1) HIGGS — dense DNN, binary classification (TabularDataset)
-        //    Dataset already exists at /tmp/HIGGS.csv (28 features, col 0 = label).
-        //    Network: Scaling -> 5x Dense(300, tanh) -> Dense(1, sigmoid).
-        //    Args: argv[1] = batch size, argv[2] = max epochs.
-        // --------------------------------------------------------------------
 #if 0
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(100);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(1);
         const string precision = argc > 3 ? argv[3] : "fp32";
-        const string mode = argc > 4 ? argv[4] : "probe";   // "speed"/"speedval" = throughput
+        const string mode = argc > 4 ? argv[4] : "probe";
         const bool speed_mode = (mode == "speed" || mode == "speedval");
         const bool speed_with_val = (mode == "speedval");
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
@@ -81,8 +70,6 @@ int main(int argc, char** argv)
         dataset.set_variable_type(0, VariableType::Binary);
         if (speed_mode)
         {
-            // Throughput mode, GPU-resident data. "speed" = all-train (no validation);
-            // "speedval" = keep the validation split so per-epoch validation runs.
             if (speed_with_val)
                 dataset.split_samples_sequential(10.0f / 11.0f, 0.5f / 11.0f, 0.5f / 11.0f);
             else
@@ -139,7 +126,7 @@ int main(int argc, char** argv)
             const bool use_graph = argc > 5 ? (stoi(argv[5]) != 0) : true;
             sgd->set_cuda_graph(use_graph);
             const Index timed_epochs = maximum_epochs;
-            sgd->set_maximum_epochs(2);             // warmup: absorb autotune / graph capture
+            sgd->set_maximum_epochs(2);
             training_strategy.train();
             sgd->set_maximum_epochs(timed_epochs);
             const auto s0 = steady_clock::now();
@@ -160,8 +147,6 @@ int main(int argc, char** argv)
         cout << "\nTotal training time: "
              << duration_cast<milliseconds>(t1 - t0).count() / 1000.0 << " s" << endl;
 
-        // Skip the ROC/confusion testing analysis in probe mode (epochs<=1):
-        // the max-batch sweep only needs the training step to fit in memory.
         if (maximum_epochs > 1)
         {
             TestingAnalysis testing_analysis(&network, &dataset);
@@ -179,14 +164,6 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 2) WEATHER — LSTM forecasting (TimeSeriesDataset)
-        //    Jena Climate (Max Planck): 10-minute weather records, 14 numeric
-        //    variables. The CSV was preprocessed (datasets/weather_jena/) to drop
-        //    the "Date Time" column and move "T (degC)" to the last column, which
-        //    TimeSeriesDataset forecasts by default (the other 13 vars are inputs).
-        //    Network: ForecastingLstmNetwork (Scaling -> LSTM stack -> Dense).
-        // --------------------------------------------------------------------
 #if 0
         cout << "OpenNN. Weather (Jena) LSTM forecasting GPU FP32 benchmark." << endl;
 
@@ -197,19 +174,17 @@ int main(int argc, char** argv)
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/weather_jena/jena_weather.csv";
 
-        TimeSeriesDataset dataset(dataset_path, ",", /*has_header=*/true, /*has_sample_ids=*/false);
-        // Target = last column ("T (degC)"); the other 13 variables are inputs.
+        TimeSeriesDataset dataset(dataset_path, ",",                true,                    false);
 
-        const Index past_time_steps   = 72;   // 12 h of history (10-min cadence)
-        const Index future_time_steps = 1;    // forecast horizon
+        const Index past_time_steps   = 72;
+        const Index future_time_steps = 1;
         dataset.set_past_time_steps(past_time_steps);
         dataset.set_future_time_steps(future_time_steps);
         dataset.set_multi_target(future_time_steps > 1);
 
-        // Time series: keep temporal order, do not shuffle.
         dataset.split_samples_sequential(0.70f, 0.15f, 0.15f);
 
-        const Shape hidden_units{64};   // LSTM hidden size(s); add more for a stacked LSTM
+        const Shape hidden_units{64};
 
         ForecastingLstmNetwork network(dataset.get_input_shape(),
                                        hidden_units,
@@ -246,26 +221,13 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 3) IMAGENET — ResNet-50 (ImageDataset)
-        //    Full ImageNet-1k needs image-net.org credentials, so this uses
-        //    Imagenette (fast.ai's public 10-class ImageNet subset) as a drop-in
-        //    proxy. ImageDataset takes the root as ONE subfolder per class (no
-        //    train/val split — split_samples_random does that), so train+val were
-        //    merged into datasets/imagenette/ (10 class folders directly) and every image was
-        //    preprocessed to a uniform 160x160 (ImageDataset adopts the first
-        //    image's size for the whole set). ResNet-50 = bottleneck blocks
-        //    {3,4,6,3}, filters {64,128,256,512}.
-        // --------------------------------------------------------------------
 #if 0
         cout << "OpenNN. ImageNet (Imagenette) ResNet-50 GPU FP32 benchmark." << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);  // switch to Type::BF16 for the fast tensor-core path
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
         set_seed(42);
 
-        // Class-per-subfolder root (10 classes). Swap for the real ImageNet-1k
-        // train root once credentials / a mirror are available.
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/imagenette";
 
@@ -281,13 +243,11 @@ int main(int argc, char** argv)
              << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
              << " classes="        << target_shape[0] << endl;
 
-        // ResNet-50 geometry (use_bottleneck = true). For a lighter run use
-        // ResNet-18: blocks {2,2,2,2}, use_bottleneck = false.
         ResNet network(input_shape,
                        {3, 4, 6, 3},
                        Shape{64, 128, 256, 512},
                        target_shape,
-                       /*use_bottleneck=*/true);
+                                          true);
 
         auto* scaling = dynamic_cast<Scaling*>(network.get_first(LayerType::Scaling));
         if (!scaling) throw runtime_error("ResNet scaling layer not found.");
@@ -307,7 +267,7 @@ int main(int argc, char** argv)
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         if (!adam) throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
-        adam->set_batch_size(32);   // ResNet-50 @160x160; raise if VRAM allows
+        adam->set_batch_size(32);
         adam->set_learning_rate(1.0e-3f);
         adam->set_workers_number(8);
         adam->set_maximum_epochs(90);
@@ -328,17 +288,6 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 4) EN -> DE TRANSLATION — Transformer (TextDataset)
-        //    The "Attention Is All You Need" WMT14 English->German task. The raw
-        //    WMT14 parallel corpora (Europarl + Common Crawl + News Commentary)
-        //    were combined into tab-separated "english <TAB> german" files in
-        //    datasets/wmt14_en_de/:
-        //      - wmt14_en_de.txt         full ~4.5M pairs (authentic WMT14)
-        //      - wmt14_en_de.subset.txt  100k clean News-Commentary pairs (used here)
-        //    The model below is smaller than the paper so the subset trains in
-        //    reasonable time; paper base is d_model=512, h=8, d_ff=2048, N=6.
-        // --------------------------------------------------------------------
 #if 0
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
@@ -349,8 +298,6 @@ int main(int argc, char** argv)
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.cap60.txt";
 
-        // Self-contained model (JSON topology+vocabularies, sibling .bin weights):
-        // when it exists, inference never touches the corpus or the dataset.
         const filesystem::path model_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de_model.json";
 
@@ -378,7 +325,6 @@ int main(int argc, char** argv)
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Paper-base transformer ("Attention Is All You Need"): 512/8/2048/6.
         const Index embedding_dimension    = 512;
         const Index heads_number           = 8;
         const Index feed_forward_dimension  = 2048;
@@ -432,36 +378,17 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        // Hand the vocabularies to the network's tokenizer layers and save the
-        // self-contained model so future runs skip the corpus entirely.
         transformer.set_input_vocabulary(language_dataset->get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset->get_target_vocabulary());
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
-        // Inference (decode is GPU-only): interactive EN->DE chat.
-        // Type an English sentence and press Enter; empty line or Ctrl+D exits.
         cout << "\n================ EN -> DE CHAT ================" << endl;
         transformer.chat();
 
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 5) TOM & JERRY — CNN, binary image classification (ImageDataset)
-        //    Dataset: datasets/tom_and_jerry_bmp/ with two class folders
-        //    (jerry/, tom/). The dataset is NOT preprocessed here: OpenNN fixes
-        //    the input size from the FIRST image of the set and resizes every
-        //    other image to match it (resize_image() runs inside ImageDataset on
-        //    load). ImageDataset uses StorageMode::BinaryFile by default — a
-        //    disk-backed pixel cache at <root>/.cache/images.bin, built once then
-        //    read on demand (no full in-RAM matrix).
-        //    Network: ImageClassificationNetwork (a conv/pool CNN). NOTE: ResNet
-        //    is not used here because its classifier is hardcoded to "Softmax",
-        //    which is degenerate for a 1-output binary target; ImageClassification
-        //    Network correctly uses Sigmoid when the output size is 1.
-        //    Args: argv[1] = batch size (default 32), argv[2] = max epochs (50).
-        // --------------------------------------------------------------------
 #if 0
         const Index batch_size = argc > 1 ? Index(stoll(argv[1])) : Index(32);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(50);
@@ -469,15 +396,13 @@ int main(int argc, char** argv)
         cout << "OpenNN. Tom & Jerry CNN GPU FP32 benchmark."
              << " batch=" << batch_size << " max_epochs=" << maximum_epochs << endl;
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);  // Type::BF16 for the tensor-core path
+        Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
         set_seed(42);
 
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/tom_and_jerry_bmp";
 
-        // StorageMode::BinaryFile (ImageDataset default). OpenNN reads the first
-        // image to fix the input size, then resizes every other image to match.
         ImageDataset dataset(dataset_path);
         dataset.split_samples_random(0.80f, 0.10f, 0.10f);
 
@@ -490,8 +415,6 @@ int main(int argc, char** argv)
              << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
              << " classes="        << target_shape[0] << endl;
 
-        // Conv(3x3,ReLU,Same)+MaxPool(2x2) per filter count -> Dense(<=128,ReLU)
-        // -> Dense(output, Sigmoid for binary / Softmax for multi-class).
         ImageClassificationNetwork network(input_shape,
                                            Shape{16, 32, 64, 128},
                                            target_shape);
@@ -530,22 +453,6 @@ int main(int argc, char** argv)
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 6) CHATGPT — conversational assistant, Transformer (TextDataset)
-        //    Seq2seq chatbot on the ENCODER-DECODER Transformer (for the
-        //    decoder-only GPT see block 7): every line of
-        //    the dataset is a single  prompt <TAB> response  pair.
-        //    Data is already prepared at dataset_path: Stanford Alpaca (52k
-        //    instruction->response) processed to that tab format, 47487 pairs,
-        //    token-capped (prompt<=62, response<=126, OpenNN's tokenizer splits
-        //    each punctuation char) -> in_len 64 / dec_len 128, fits batch 64
-        //    on a 16 GB GPU. Longer caps overflow the paper-base model. Other
-        //    good sources: OpenAssistant OASST1, Cornell Movie-Dialogs.
-        //    Model: paper-base Transformer (512/8/2048/6); shrink d_model/layers
-        //    for faster iteration. Trains with Adam + token cross-entropy, saves
-        //    the weights, then drops into an interactive chat() loop.
-        //    Args: argv[1]=batch (64), argv[2]=max_epochs (10), argv[3]=fp32|bf16.
-        // --------------------------------------------------------------------
 #if 0
         const Index batch_size     = argc > 1 ? Index(stoll(argv[1])) : Index(64);
         const Index maximum_epochs = argc > 2 ? Index(stoll(argv[2])) : Index(10);
@@ -561,12 +468,10 @@ int main(int argc, char** argv)
         Backend::instance();
         set_seed(42);
 
-        // One pair per line:  prompt <TAB> response  (BinaryFile .bin cache).
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/chat/chat_pairs.txt";
         const Index maximum_vocabulary_size = 30000;
 
-        // Self-contained model: when it exists, chat without corpus or dataset.
         const filesystem::path model_path =
             "/home/artelnics/Documents/datasets/chat/chat_model.json";
 
@@ -584,7 +489,7 @@ int main(int argc, char** argv)
         }
 
         unique_ptr<TextDataset> language_dataset = TextDataset::from_sequence_to_sequence(dataset_path, maximum_vocabulary_size);
-        language_dataset->set_sample_roles("Training");  // all-train (no early stop here)
+        language_dataset->set_sample_roles("Training");
 
         const Index input_vocabulary_size   = language_dataset->get_vocabulary_size();
         const Index output_vocabulary_size  = language_dataset->get_target_vocabulary().size();
@@ -597,7 +502,6 @@ int main(int argc, char** argv)
              << " in_len="    << input_sequence_length
              << " dec_len="   << decoder_sequence_length << endl;
 
-        // Paper-base transformer ("Attention Is All You Need"): 512/8/2048/6.
         const Index embedding_dimension     = 512;
         const Index heads_number            = 8;
         const Index feed_forward_dimension  = 2048;
@@ -648,7 +552,6 @@ int main(int argc, char** argv)
             cout << "\nTotal training time: " << train_s << " s" << endl;
             cout << "epoch_s=" << train_s / double(maximum_epochs) << "\n";
 
-            // Per-Buffer memory breakdown (only prints when OPENNN_MEMORY_DEBUG=1).
             memory_debug::print(cout);
 
             transformer.save_parameters_binary(parameters_path);
@@ -660,55 +563,12 @@ int main(int argc, char** argv)
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
-        // Interactive chat: type a prompt, press Enter; empty line / Ctrl+D exits.
         cout << "\n================ CHAT ================" << endl;
         transformer.chat();
 
         return 0;
 #endif
 
-        // --------------------------------------------------------------------
-        // 7) GPT — decoder-only language model, GPT-2-small architecture
-        //    (TextDataset + TextGenerationNetwork).
-        //    Next-token prediction on WikiText-103 raw (~536 MB, ~110M
-        //    word-level tokens of curated Wikipedia articles), prepared with:
-        //      sed -e 's/ @-@ /-/g' -e 's/ @,@ /,/g' -e 's/ @\.@ /./g' \
-        //          wiki.train.raw > wiki.train.txt   (Moses artifacts removed)
-        //    Alternative corpus (English side of WMT14, parliamentary/news
-        //    register): datasets/wmt14_en_de/wmt14_en.txt via argv[5].
-        //    GPT-2 small dims: 12 layers / 12 heads / 768 emb / 3072 ff.
-        //    Tokenizer (argv[16]): "word" = whitespace/word-level vocab capped at
-        //    50257, or "bpe" = GPT-2 byte-level byte-pair encoding loaded from
-        //    vocab.json + merges.txt in argv[17] (no [UNK], vocab 50258). The
-        //    real GPT-2 also uses learned positions and a tied output projection,
-        //    which this model does not.
-        //    PRE-LN IS REQUIRED at these widths: post-LN without LR warmup
-        //    freezes at the unigram plateau for embedding_dim >= 512 or
-        //    ff_dim >= 2048 (verified empirically July 2026: post-LN
-        //    768/12/3072 never breaks 6.76 on the WMT subset while pre-LN
-        //    reaches 0.7 on shakespeare in 10 epochs; same reason GPT-2
-        //    itself is pre-LN). Narrow nets (256/4/512) train either way.
-        //    BF16 default (~4x faster than fp32, same convergence). An SDPA
-        //    backward bug used to corrupt dQ/dK in pure-bf16 training (the
-        //    graph read the head-merged O instead of the forward's BHSD O);
-        //    fixed July 2026 in AttentionOperator::apply_sdpa_forward/backward
-        //    (private O copy, mirroring the fp32 cast path). Validated: bf16
-        //    12L subset now matches fp32 epoch-for-epoch (6.55 -> 2.67).
-        //    seq 512 + batch 8 fits a 16 GB GPU; first run tokenizes and
-        //    writes the .cache (one-off, minutes). ~24k iters/epoch on the
-        //    full corpus; pass the .subset corpus for a quick trial. Weights save/load like block 6 (path derived from
-        //    the corpus name). After training: sample generations + chat().
-        //    CUDA graph stays OFF: the graph-epoch path collapses transformer
-        //    train-to-quality convergence (see project notes).
-        //    Args: argv[1]=batch (8), argv[2]=max_epochs (1), argv[3]=fp32|bf16,
-        //          argv[4]=sequence_length (512), argv[5]=corpus path override,
-        //          argv[6]=learning_rate (1e-4), argv[7]=layers_number (12),
-        //          argv[8]=pre_normalization 0|1 (1 = pre-LN, the default),
-        //          argv[9]=sdpa 0|1, argv[10]=dropout rate (0.1),
-        //          argv[11]=embedding_dim (768), argv[12]=heads (12), argv[13]=ff_dim (3072),
-        //          argv[14]=device cuda|cpu (cuda), argv[15]=grad_clip_norm (1.0),
-        //          argv[16]=tokenizer word|bpe (word), argv[17]=bpe assets dir.
-        // --------------------------------------------------------------------
 #if 1
         const Index batch_size      = argc > 1 ? Index(stoll(argv[1])) : Index(8);
         const Index maximum_epochs  = argc > 2 ? Index(stoll(argv[2])) : Index(1);
@@ -746,8 +606,6 @@ int main(int argc, char** argv)
 
         const Index maximum_vocabulary_size = 50257;
 
-        // Self-contained model (JSON topology+vocabulary+tokenizer, sibling .bin
-        // weights): when it exists, generation never touches corpus or dataset.
         const filesystem::path model_path =
             corpus_path.string() + ".gpt_model_" + tokenizer_kind + ".json";
 
@@ -780,8 +638,6 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        // Word-level builds its vocabulary from the corpus; byte-pair loads a
-        // fixed GPT-2 vocab.json + merges.txt and encodes the raw text through it.
         TextDataset dataset("", sequence_length, maximum_vocabulary_size);
         if (use_bpe)
         {
@@ -799,7 +655,6 @@ int main(int argc, char** argv)
              << " vocab="  << dataset.get_vocabulary_size()
              << " seq="    << dataset.get_sequence_length() << endl;
 
-        // GPT-2 small: 12 layers / 12 heads / 768 emb / 3072 ff.
         const Index embedding_dimension    = embedding_dimension_arg;
         const Index heads_number           = heads_number_arg;
         const Index feed_forward_dimension = feed_forward_dimension_arg;
@@ -856,15 +711,13 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        // Hand the tokenizer/vocabulary to the network's tokenizer layer and
-        // save the self-contained model so future runs skip the corpus.
         if (use_bpe) network.set_tokenizer(dataset.get_tokenizer()->clone());
         else         network.set_vocabulary(dataset.get_vocabulary());
 
         network.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
-        if (on_cpu) return 0;   // generation is GPU-only
+        if (on_cpu) return 0;
 
         SamplingConfig sampling;
         sampling.temperature = 0.8f;
@@ -887,7 +740,6 @@ int main(int argc, char** argv)
             cout << endl;
         }
 
-        // Interactive: type a prompt, press Enter; empty line / Ctrl+D exits.
         cout << "================ GPT CHAT ================" << endl;
         network.chat(sampling);
 

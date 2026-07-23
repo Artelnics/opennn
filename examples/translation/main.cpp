@@ -12,7 +12,6 @@
 #include <string>
 #include <cstring>
 
-// OpenNN includes
 
 #include "opennn/training_strategy.h"
 #include "opennn/text_dataset.h"
@@ -31,7 +30,6 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        // Dataset
 
         unique_ptr<TextDataset> language_dataset =
             TextDataset::from_sequence_to_sequence("../data/translation/ES-EN-small.txt");
@@ -46,7 +44,6 @@ int main(int argc, char* argv[])
         if(decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
 
-        // Transformer
 
         const Index embedding_dimension = 256;
         const Index heads_number = 8;
@@ -62,7 +59,6 @@ int main(int argc, char* argv[])
                                 feed_forward_dimension,
                                 layers_number);
 
-        // Training strategy
 
         TrainingStrategy training_strategy(&transformer, language_dataset.get());
 
@@ -85,7 +81,6 @@ int main(int argc, char* argv[])
              << "..." << endl;
         training_strategy.train();
 
-        // Predictions
 
         cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
 
@@ -97,7 +92,6 @@ int main(int argc, char* argv[])
                 "yo veo el gato"
             };
 
-        // The vocabularies travel with the network; inference needs no dataset.
         transformer.set_input_vocabulary(language_dataset->get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset->get_target_vocabulary());
 
