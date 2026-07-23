@@ -168,6 +168,15 @@ public:
     pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
 
+    // Select one point from a returned front by balancing two input-space qualities with 'balance'
+    // in [0,1]: domain centrality (worst-case margin to the nearest box wall over the continuous
+    // inputs) and Jacobian robustness (low span-weighted |df/dx|, i.e. output insensitive to input
+    // error). Both are min-max normalized across the front and combined by geometric mean
+    // C^(1-balance) * R^balance, so balance=0 is pure centrality and balance=1 is pure robustness.
+    // Reuses the solver's analytic NetworkDifferential when available, else builds one, else falls
+    // back to finite differences. Returns (row index, row), like get_advised_point.
+    pair<Index, VectorR> get_robust_point(const MatrixR&, float balance = 0.5f) const;
+
     Domain get_original_domain(string_view role) const;
 
     MatrixR calculate_random_inputs(const Domain&, Index evaluations_count = -1) const;

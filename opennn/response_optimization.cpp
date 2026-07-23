@@ -2262,6 +2262,143 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
 }
 
 
+pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front, const float balance) const
+{
+    if (front.rows() == 0)
+        return {-1, VectorR()};
+    if (front.rows() == 1)
+        return {0, front.row(0).transpose()};
+
+    const float alpha = clamp(balance, 0.0f, 1.0f);
+
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    throw_if(front.cols() < inputs_number,
+             "get_robust_point: front has fewer columns than the number of input features.\n");
+
+    const Index rows = front.rows();
+    const MatrixR inputs = front.leftCols(inputs_number);
+
+    const Domain domain = get_original_domain("Input");
+    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
+    const vector<char> discrete = discrete_column_mask(input_variables);
+
+    VectorR span(inputs_number);
+    for (Index c = 0; c < inputs_number; ++c)
+        span(c) = domain.superior_frontier(c) - domain.inferior_frontier(c);
+
+    // Centrality: worst-case normalized margin to the nearest wall over the continuous inputs
+    // (1 at the box centre, 0 on a wall). Discrete/one-hot columns are skipped — their "distance to
+    // a wall" is meaningless. A point with every continuous input dead-centre scores 1.
+    VectorR margin(rows);
+    for (Index r = 0; r < rows; ++r)
+    {
+        float worst = 1.0f;
+        bool any_continuous = false;
+        for (Index c = 0; c < inputs_number; ++c)
+        {
+            if (discrete[static_cast<size_t>(c)] || span(c) < EPSILON) continue;
+            any_continuous = true;
+            const float half = 0.5f * span(c);
+            const float m = min(inputs(r, c) - domain.inferior_frontier(c),
+                                domain.superior_frontier(c) - inputs(r, c)) / half;
+            worst = min(worst, clamp(m, 0.0f, 1.0f));
+        }
+        margin(r) = any_continuous ? worst : 1.0f;
+    }
+
+    // Robustness: span-weighted Frobenius norm of the network Jacobian at the point. Reuse the
+    // solver's analytic differential if it was built and validated; otherwise build one; if that is
+    // unavailable (or forecasting), fall back to central finite differences through the network.
+    const NetworkDifferential* differential = network_jacobian.differential.get();
+    unique_ptr<NetworkDifferential> local_differential;
+    if (!differential && neural_network && !is_forecasting())
+    {
+        local_differential = make_unique<NetworkDifferential>();
+        try { local_differential->build(*neural_network); differential = local_differential.get(); }
+        catch (const exception&) { differential = nullptr; }
+    }
+
+    const auto sensitivity_of = [&](const VectorR& x) -> float
+    {
+        double sum_sq = 0.0;
+
+        if (differential)
+        {
+            for (Index o = 0; o < outputs_number; ++o)
+            {
+                VectorR cotangent = VectorR::Zero(outputs_number);
+                cotangent(o) = 1.0f;
+                const VectorR gradient = differential->vjp(x, cotangent);
+                for (Index c = 0; c < inputs_number; ++c)
+                    sum_sq += double(gradient(c) * span(c)) * double(gradient(c) * span(c));
+            }
+        }
+        else if (!is_forecasting())
+        {
+            MatrixR probe(2 * inputs_number, inputs_number);
+            for (Index c = 0; c < inputs_number; ++c)
+            {
+                const float h = max(1e-4f, 1e-3f * span(c));
+                probe.row(2 * c)     = x.transpose(); probe(2 * c, c)     += h;
+                probe.row(2 * c + 1) = x.transpose(); probe(2 * c + 1, c) -= h;
+            }
+            const MatrixR out = calculate_outputs(probe);
+            for (Index c = 0; c < inputs_number; ++c)
+            {
+                const float h = max(1e-4f, 1e-3f * span(c));
+                for (Index o = 0; o < outputs_number; ++o)
+                {
+                    const float derivative = (out(2 * c, o) - out(2 * c + 1, o)) / (2.0f * h);
+                    sum_sq += double(derivative * span(c)) * double(derivative * span(c));
+                }
+            }
+        }
+        // Forecasting with no analytic differential: robustness is left neutral (0 for every point).
+
+        return float(sqrt(sum_sq));
+    };
+
+    VectorR sensitivity(rows);
+    for (Index r = 0; r < rows; ++r)
+        sensitivity(r) = sensitivity_of(inputs.row(r).transpose());
+
+    // Min-max each quality to [0,1] with higher = better; a flat quality (no spread) is neutral (1).
+    const auto minmax_to_score = [](const VectorR& v, const bool invert) -> VectorR
+    {
+        const float lo = v.minCoeff();
+        const float range = v.maxCoeff() - lo;
+        VectorR s(v.size());
+        if (range < EPSILON) { s.setConstant(1.0f); return s; }
+        for (Index i = 0; i < v.size(); ++i)
+        {
+            const float t = (v(i) - lo) / range;
+            s(i) = invert ? (1.0f - t) : t;
+        }
+        return s;
+    };
+
+    const VectorR centrality_score = minmax_to_score(margin, false);
+    const VectorR robustness_score = minmax_to_score(sensitivity, true);
+
+    // Geometric-mean blend: both qualities floored so the single worst point on one axis is not
+    // annihilated outright, yet a point that is poor on either is still strongly penalized.
+    constexpr float floor_value = 1e-3f;
+    Index best = 0;
+    float best_score = -1.0f;
+    for (Index r = 0; r < rows; ++r)
+    {
+        const float centrality = max(floor_value, centrality_score(r));
+        const float robustness = max(floor_value, robustness_score(r));
+        const float score = pow(centrality, 1.0f - alpha) * pow(robustness, alpha);
+        if (score > best_score) { best_score = score; best = r; }
+    }
+
+    return {best, front.row(best).transpose()};
+}
+
+
 void ResponseOptimization::initialize_network_differential() const
 {
     // The analytic Jacobian models the network, not the constraints, so it is built and validated

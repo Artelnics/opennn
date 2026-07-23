@@ -824,9 +824,7 @@ namespace
 // so Fixed-output tests target a value that is provably attainable.
 float reachable_output_median(ResponseOptimization& opt, Index output_column, Index samples = 512)
 {
-    const Index inputs_number = 2;
-    MatrixR inputs(samples, inputs_number);
-    set_random_uniform(inputs, float(0), float(10));
+    const MatrixR inputs = opt.calculate_random_inputs(opt.get_original_domain("Input"), samples);
 
     const MatrixR outputs = opt.calculate_outputs(inputs);
 
@@ -982,6 +980,107 @@ TEST(ResponseOptimizationFixed, ClearObjectivesResetsFixedValues)
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     EXPECT_EQ(opt.get_objectives_number(), 1);
     SUCCEED();
+}
+
+
+// -----------------------------------------------------------------------------
+// ResponseOptimization: get_robust_point — balance domain-centrality vs Jacobian robustness
+// -----------------------------------------------------------------------------
+
+TEST(ResponseOptimizationRobust, EmptyFrontReturnsMinusOne)
+{
+    MinimalApproximation setup({ "x1", "x2" }, { "y" });
+    ResponseOptimization opt(setup.network.get());
+
+    const auto [index, row] = opt.get_robust_point(MatrixR(), 0.5f);
+    EXPECT_EQ(index, -1);
+    EXPECT_EQ(row.size(), 0);
+}
+
+
+TEST(ResponseOptimizationRobust, BalanceSelectsCentralOrRobustEndpoints)
+{
+    // Build a solution manifold with a pure inverse solve, then check the balance dial: alpha=0
+    // should pick the most domain-central point, alpha=1 the most robust (least sensitive) one.
+    MinimalApproximation setup({ "x1", "x2", "x3" }, { "y" },
+                                float(0), float(10),
+                                float(-1), float(1));
+
+    ResponseOptimization opt(setup.network.get());
+
+    const float target = reachable_output_median(opt, 0);
+    opt.set_objective("y", ResponseOptimization::Sense::Fixed, target);
+    opt.set_relative_tolerance(float(2e-2));
+    opt.set_iterations(6);
+    opt.set_evaluations_number(1500);
+
+    const MatrixR front = opt.perform_response_optimization();
+    ASSERT_GT(front.rows(), 2);
+
+    const Index inputs_number = setup.network->get_inputs_number();
+
+    const auto [i_central, row_central] = opt.get_robust_point(front, float(0));
+    const auto [i_mid,     row_mid]     = opt.get_robust_point(front, float(0.5));
+    const auto [i_robust,  row_robust]  = opt.get_robust_point(front, float(1));
+
+    for (const Index idx : { i_central, i_mid, i_robust })
+    {
+        ASSERT_GE(idx, Index(0));
+        ASSERT_LT(idx, front.rows());
+    }
+    EXPECT_TRUE(row_robust.isApprox(front.row(i_robust).transpose()));
+
+    // Domain box and span, shared by the two reference metrics below.
+    const auto domain = opt.get_original_domain("Input");
+    VectorR span(inputs_number);
+    for (Index c = 0; c < inputs_number; ++c)
+        span(c) = domain.superior_frontier(c) - domain.inferior_frontier(c);
+
+    // Finite-difference sensitivity (same span weighting as the implementation).
+    const auto sensitivity = [&](const VectorR& x) -> float
+    {
+        MatrixR probe(2 * inputs_number, inputs_number);
+        for (Index c = 0; c < inputs_number; ++c)
+        {
+            const float h = max(1e-4f, 1e-3f * span(c));
+            probe.row(2 * c)     = x.transpose(); probe(2 * c, c)     += h;
+            probe.row(2 * c + 1) = x.transpose(); probe(2 * c + 1, c) -= h;
+        }
+        const MatrixR out = opt.calculate_outputs(probe);
+        double s = 0.0;
+        for (Index c = 0; c < inputs_number; ++c)
+        {
+            const float h = max(1e-4f, 1e-3f * span(c));
+            const float d = (out(2 * c, 0) - out(2 * c + 1, 0)) / (2.0f * h);
+            s += double(d * span(c)) * double(d * span(c));
+        }
+        return float(sqrt(s));
+    };
+
+    // Worst-case margin to the nearest wall (centrality metric).
+    const auto min_margin = [&](const VectorR& x) -> float
+    {
+        float worst = 1.0f;
+        for (Index c = 0; c < inputs_number; ++c)
+        {
+            const float half = 0.5f * span(c);
+            if (half < 1e-6f) continue;
+            worst = min(worst, min(x(c) - domain.inferior_frontier(c),
+                                   domain.superior_frontier(c) - x(c)) / half);
+        }
+        return worst;
+    };
+
+    const VectorR x_central = row_central.head(inputs_number);
+    const VectorR x_robust  = row_robust.head(inputs_number);
+
+    const float span_max = max(sensitivity(x_central), sensitivity(x_robust));
+
+    // Pure-robustness pick is at least as insensitive as the pure-centrality pick.
+    EXPECT_LE(sensitivity(x_robust), sensitivity(x_central) + 0.05f * span_max + 1e-3f);
+
+    // Pure-centrality pick is at least as central as the pure-robustness pick.
+    EXPECT_GE(min_margin(x_central), min_margin(x_robust) - 1e-3f);
 }
 
 
