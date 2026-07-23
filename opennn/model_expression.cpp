@@ -1810,7 +1810,16 @@ vector<string> ModelExpression::fix_output_names(const string& str,
             tokens.push_back(token);
     }
 
-    if (tokens.size() < num_outputs)
+    vector<string> final_vars;
+    for (const string& t : tokens)
+    {
+        const string lhs = get_first_word(t);
+        if (const auto it = ranges::find(final_vars, lhs); it != final_vars.end())
+            final_vars.erase(it);
+        final_vars.push_back(lhs);
+    }
+
+    if (final_vars.size() < num_outputs)
         return {};
 
     const vector<string> fixed_outputs = fix_names(outputs, "output_");
@@ -1840,9 +1849,10 @@ vector<string> ModelExpression::fix_output_names(const string& str,
         break;
     }
 
+    const size_t base = final_vars.size() - num_outputs;
     for (size_t i = 0; i < num_outputs; ++i)
     {
-        const string intermediate_var_name = get_first_word(tokens[tokens.size() - num_outputs + i]);
+        const string& intermediate_var_name = final_vars[base + i];
         const string& final_output_name = fixed_outputs[i];
 
         if (final_output_name != intermediate_var_name)
