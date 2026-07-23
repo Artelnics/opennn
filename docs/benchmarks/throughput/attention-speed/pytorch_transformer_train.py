@@ -34,7 +34,7 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 
 # --- read the SAME corpus OpenNN trains on, to match shapes exactly -------------
-# OpenNN's LanguageDataset: input_seq = max(#input tokens) + 2 (START/END),
+# OpenNN's TextDataset: input_seq = max(#input tokens) + 2 (START/END),
 # decoder_seq = max(#target tokens) + 1, vocab = distinct tokens + 4 reserved.
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()

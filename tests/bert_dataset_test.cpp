@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "opennn/bert_dataset.h"
+#include "opennn/text_dataset.h"
 #include "opennn/standard_networks.h"
 #include "opennn/neural_network.h"
 #include "opennn/forward_propagation.h"
@@ -60,16 +60,16 @@ TEST(BertDatasetTest, TokenizesAndWiresRoles)
     const string text_path  = write_lines("opennn_bertds_text.txt",  labelled_text);
 
     const Index seq = 8;
-    BertDataset dataset(text_path, vocab_path, seq);
+    unique_ptr<TextDataset> dataset = TextDataset::from_bert_classification(text_path, vocab_path, seq);
 
-    EXPECT_EQ(dataset.get_sequence_length(), seq);
-    EXPECT_EQ(dataset.get_samples_number(), Index(labelled_text.size()));
+    EXPECT_EQ(dataset->get_sequence_length(), seq);
+    EXPECT_EQ(dataset->get_samples_number(), Index(labelled_text.size()));
 
-    EXPECT_EQ(dataset.get_features_number("Decoder"), seq);   // input_ids  -> word_embeddings
-    EXPECT_EQ(dataset.get_features_number("Input"), seq);     // token_type -> token_type_embeddings
-    EXPECT_GE(dataset.get_features_number("Target"), 1);
+    EXPECT_EQ(dataset->get_features_number("Decoder"), seq);   // input_ids  -> word_embeddings
+    EXPECT_EQ(dataset->get_features_number("Input"), seq);     // token_type -> token_type_embeddings
+    EXPECT_GE(dataset->get_features_number("Target"), 1);
 
-    const MatrixR& data = dataset.get_data();
+    const MatrixR& data = dataset->get_data();
     EXPECT_FLOAT_EQ(data(0, 0), 2.0f);           // [CLS]
     EXPECT_FLOAT_EQ(data(0, 1), 4.0f);           // "good"
     EXPECT_FLOAT_EQ(data(0, 2), 5.0f);           // "movie"
@@ -90,11 +90,11 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     const string text_path  = write_lines("opennn_bertds_text2.txt",  labelled_text);
 
     const Index seq = 8;
-    BertDataset dataset(text_path, vocab_path, seq);
+    unique_ptr<TextDataset> dataset = TextDataset::from_bert_classification(text_path, vocab_path, seq);
 
-    const Index batch  = dataset.get_samples_number();
-    const Index labels = dataset.get_features_number("Target");
-    const MatrixR& data = dataset.get_data();
+    const Index batch  = dataset->get_samples_number();
+    const Index labels = dataset->get_features_number("Target");
+    const MatrixR& data = dataset->get_data();
 
     std::vector<float> input_ids(size_t(batch * seq));
     std::vector<float> token_type(size_t(batch * seq));
@@ -139,16 +139,16 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     const string text_path  = write_lines("opennn_bertds_text3.txt",  labelled_text);
 
     const Index seq = 8;
-    BertDataset dataset(text_path, vocab_path, seq);
+    unique_ptr<TextDataset> dataset = TextDataset::from_bert_classification(text_path, vocab_path, seq);
 
-    const Index labels = dataset.get_features_number("Target");
+    const Index labels = dataset->get_features_number("Target");
 
     BertForSequenceClassification model(seq, Index(bert_vocabulary.size()),
                                         /*hidden*/ 8, /*heads*/ 2, /*intermediate*/ 16,
                                         /*layers*/ 1, labels);
     model.set_parameters_random();
 
-    Loss loss(&model, &dataset);
+    Loss loss(&model, dataset.get());
     loss.set_error(Loss::Error::CrossEntropy);
 
     const VectorR gradient = calculate_gradient(loss);

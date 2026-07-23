@@ -1,0 +1,60 @@
+good movie	positive
+bad movie	negative
+great acting	positive
+terrible acting	negative
+excellent story	positive
+awful story	negative
+funny and warm	positive
+boring and slow	negative
+i loved this film	positive
+i hated this film	negative
+an enjoyable experience	positive
+a disappointing experience	negative
+strong performances	positive
+weak performances	negative
+smart and entertaining	positive
+dull and predictable	negative
+worth watching	positive
+not worth watching	negative
+surprisingly good	positive
+surprisingly bad	negative
+beautifully made	positive
+poorly made	negative
+engaging from start to finish	positive
+tedious from start to finish	negative
+the cast is wonderful	positive
+the cast is lifeless	negative
+the direction is confident	positive
+the direction is confused	negative
+the dialogue sparkles	positive
+the dialogue falls flat	negative
+moving and sincere	positive
+empty and cynical	negative
+full of charm	positive
+without any charm	negative
+an impressive debut	positive
+an unimpressive sequel	negative
+the ending works	positive
+the ending fails	negative
+fresh and original	positive
+stale and derivative	negative
+the pacing is excellent	positive
+the pacing is painful	negative
+memorable characters	positive
+forgettable characters	negative
+emotionally rewarding	positive
+emotionally exhausting	negative
+a delightful surprise	positive
+a complete disappointment	negative
+cleverly written	positive
+carelessly written	negative
+the humor lands	positive
+the humor misses	negative
+rich visual style	positive
+ugly visual style	negative
+thoughtful and humane	positive
+shallow and mean	negative
+the score is beautiful	positive
+the score is irritating	negative
+an exciting adventure	positive
+a tiresome adventure	negative

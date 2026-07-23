@@ -9,7 +9,7 @@
 //   steady-state forward+backward+update throughput of the resident GPU path.
 //
 //   The corpus is built by make_synthetic_corpus.py (tab-separated input<TAB>
-//   target per line); LanguageDataset.read_txt derives vocab + sequence lengths.
+//   target per line); TextDataset.read_txt derives vocab + sequence lengths.
 //
 //   usage: opennn_transformer_train CORPUS.txt [d_model] [heads] [ff] [layers] [batch] [epochs]
 //   env:   OPENNN_BF16=1   -> train in bf16 (else fp32, via the fp32-via-bf16 SDPA path)
@@ -25,7 +25,7 @@
 #include <cuda_runtime.h>
 
 #include "opennn/standard_networks.h"
-#include "opennn/language_dataset.h"
+#include "opennn/text_dataset.h"
 #include "opennn/training_strategy.h"
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/configuration.h"
@@ -51,14 +51,14 @@ int main(int argc, char* argv[])
         const bool use_bf16 = std::getenv("OPENNN_BF16") != nullptr;
         Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
-        LanguageDataset dataset(corpus);
-        dataset.split_samples(1.0f, 0.0f, 0.0f);   // all samples Training
+        unique_ptr<TextDataset> dataset = TextDataset::from_sequence_to_sequence(corpus, 30000);
+        dataset->split_samples(1.0f, 0.0f, 0.0f);   // all samples Training
 
-        const Index samples = dataset.get_samples_number("Training");
-        const Index input_vocab  = dataset.get_input_vocabulary_size();
-        const Index output_vocab = dataset.get_target_vocabulary_size();
-        const Index input_seq    = dataset.get_shape("Input")[0];
-        const Index decoder_seq  = dataset.get_shape("Decoder")[0];
+        const Index samples = dataset->get_samples_number("Training");
+        const Index input_vocab  = dataset->get_vocabulary_size();
+        const Index output_vocab = dataset->get_target_vocabulary().size();
+        const Index input_seq    = dataset->get_shape("Input")[0];
+        const Index decoder_seq  = dataset->get_shape("Decoder")[0];
 
         std::cout << "precision=" << (use_bf16 ? "bf16" : "fp32")
                   << " samples=" << samples
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
-        TrainingStrategy training_strategy(&transformer, &dataset);
+        TrainingStrategy training_strategy(&transformer, dataset.get());
         training_strategy.set_loss("CrossEntropyError3d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 

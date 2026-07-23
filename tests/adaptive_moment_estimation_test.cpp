@@ -3,7 +3,7 @@
 #include "opennn/random_utilities.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/time_series_dataset.h"
-#include "opennn/language_dataset.h"
+#include "opennn/text_dataset.h"
 #include "opennn/image_dataset.h"
 #include "opennn/standard_networks.h"
 #include "opennn/loss.h"
@@ -439,18 +439,13 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
     const string file_path = write_text_classification_file();
 
     set_seed(5);
-    LanguageDataset dataset_short;
-    dataset_short.set_storage_mode(Dataset::StorageMode::Matrix);
-    dataset_short.set_separator(Dataset::Separator::Tab);
-    dataset_short.set_has_header(false);
-    dataset_short.set_display(false);
-    dataset_short.set_data_path(file_path);
-    dataset_short.read_txt();
+    auto dataset_short_owner = TextDataset::from_classification(file_path);
+    TextDataset& dataset_short = *dataset_short_owner;
     dataset_short.set_sample_roles("Training");
     TextClassificationNetwork network_short(
-        {dataset_short.get_input_vocabulary_size(), dataset_short.get_maximum_input_sequence_length(), 16},
+        {dataset_short.get_vocabulary_size(), dataset_short.get_sequence_length(), 16},
         {2},
-        {dataset_short.get_maximum_target_sequence_length()});
+        {dataset_short.get_shape("Target")[0]});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
     AdaptiveMomentEstimation adam_short(&loss_short);
@@ -459,18 +454,13 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
     const type error_short = adam_short.train().get_training_error();
 
     set_seed(5);
-    LanguageDataset dataset_long;
-    dataset_long.set_storage_mode(Dataset::StorageMode::Matrix);
-    dataset_long.set_separator(Dataset::Separator::Tab);
-    dataset_long.set_has_header(false);
-    dataset_long.set_display(false);
-    dataset_long.set_data_path(file_path);
-    dataset_long.read_txt();
+    auto dataset_long_owner = TextDataset::from_classification(file_path);
+    TextDataset& dataset_long = *dataset_long_owner;
     dataset_long.set_sample_roles("Training");
     TextClassificationNetwork network_long(
-        {dataset_long.get_input_vocabulary_size(), dataset_long.get_maximum_input_sequence_length(), 16},
+        {dataset_long.get_vocabulary_size(), dataset_long.get_sequence_length(), 16},
         {2},
-        {dataset_long.get_maximum_target_sequence_length()});
+        {dataset_long.get_shape("Target")[0]});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
     AdaptiveMomentEstimation adam_long(&loss_long);
@@ -492,18 +482,13 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
     const string file_path = write_text_classification_file();
 
     set_seed(5);
-    LanguageDataset dataset_short;
-    dataset_short.set_storage_mode(Dataset::StorageMode::Matrix);
-    dataset_short.set_separator(Dataset::Separator::Tab);
-    dataset_short.set_has_header(false);
-    dataset_short.set_display(false);
-    dataset_short.set_data_path(file_path);
-    dataset_short.read_txt();
+    auto dataset_short_owner = TextDataset::from_classification(file_path);
+    TextDataset& dataset_short = *dataset_short_owner;
     dataset_short.set_sample_roles("Training");
     TextClassificationNetwork network_short(
-        {dataset_short.get_input_vocabulary_size(), dataset_short.get_maximum_input_sequence_length(), 16},
+        {dataset_short.get_vocabulary_size(), dataset_short.get_sequence_length(), 16},
         {2},
-        {dataset_short.get_maximum_target_sequence_length()});
+        {dataset_short.get_shape("Target")[0]});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
     AdaptiveMomentEstimation adam_short(&loss_short);
@@ -512,18 +497,13 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
     const type error_short = adam_short.train().get_training_error();
 
     set_seed(5);
-    LanguageDataset dataset_long;
-    dataset_long.set_storage_mode(Dataset::StorageMode::Matrix);
-    dataset_long.set_separator(Dataset::Separator::Tab);
-    dataset_long.set_has_header(false);
-    dataset_long.set_display(false);
-    dataset_long.set_data_path(file_path);
-    dataset_long.read_txt();
+    auto dataset_long_owner = TextDataset::from_classification(file_path);
+    TextDataset& dataset_long = *dataset_long_owner;
     dataset_long.set_sample_roles("Training");
     TextClassificationNetwork network_long(
-        {dataset_long.get_input_vocabulary_size(), dataset_long.get_maximum_input_sequence_length(), 16},
+        {dataset_long.get_vocabulary_size(), dataset_long.get_sequence_length(), 16},
         {2},
-        {dataset_long.get_maximum_target_sequence_length()});
+        {dataset_long.get_shape("Target")[0]});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
     AdaptiveMomentEstimation adam_long(&loss_long);

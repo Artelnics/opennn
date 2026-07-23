@@ -175,7 +175,7 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
 void ImageDataset::to_JSON(JsonWriter& printer) const
 {
     // "Dataset", not "ImageDataset": every dataset kind serializes under the
-    // same root tag (see TabularDataset/LanguageDataset) — the model JSON's
+    // same root tag (see TabularDataset/TextDataset) — the model JSON's
     // section name does not vary per type, ModelType drives the dispatch.
     printer.open_element("Dataset");
 

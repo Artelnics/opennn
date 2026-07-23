@@ -12,6 +12,12 @@
 namespace opennn
 {
 
+string read_text_file(const filesystem::path&);
+
+bool binary_cache_is_valid(const filesystem::path& cache_path,
+                           const filesystem::path& data_path,
+                           uintmax_t expected_size);
+
 class FileReader
 {
 public:

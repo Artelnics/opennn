@@ -1146,8 +1146,6 @@ VectorI TabularDataset::calculate_target_distribution() const
 
         for (Index i = 0; i < samples_number; ++i)
         {
-            if (sample_roles[i] == SampleRole::None) continue;
-
             const float value = data(i, target_feature);
 
             if (isnan(value)) continue;
@@ -1161,9 +1159,6 @@ VectorI TabularDataset::calculate_target_distribution() const
 
         for (Index i = 0; i < samples_number; ++i)
         {
-            if (sample_roles[i] == SampleRole::None)
-                continue;
-
             for (Index j = 0; j < targets_number; ++j)
             {
                 const float value = data(i, target_feature_indices[j]);

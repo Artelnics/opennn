@@ -3,7 +3,7 @@
 
 Each line is:  <input tokens, space-separated> \t <target tokens, space-separated>
 
-OpenNN's LanguageDataset.read_txt sets
+OpenNN's TextDataset factory sets
     maximum_input_sequence_length  = max(#input tokens)  + 2   (START/END)
     maximum_target_sequence_length = max(#target tokens) + 1
 so to hit a desired model input length L we emit (L-2) input tokens per line, and

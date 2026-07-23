@@ -25,6 +25,32 @@
 namespace opennn
 {
 
+string read_text_file(const filesystem::path& path)
+{
+    ifstream file(path, ios::binary | ios::ate);
+    throw_if(!file.is_open(), format("Cannot open file {}", path.string()));
+
+    const auto file_size = file.tellg();
+    throw_if(file_size < 0, format("Cannot determine file size for {}", path.string()));
+
+    file.seekg(0);
+    string buffer(static_cast<size_t>(file_size), '\0');
+    if (file_size > 0)
+        file.read(buffer.data(), file_size);
+
+    throw_if(!file, format("Cannot read file {}", path.string()));
+    return buffer;
+}
+
+bool binary_cache_is_valid(const filesystem::path& cache_path,
+                           const filesystem::path& data_path,
+                           uintmax_t expected_size)
+{
+    return filesystem::exists(cache_path)
+        && filesystem::file_size(cache_path) == expected_size
+        && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
+}
+
 namespace
 {
 
@@ -179,7 +205,7 @@ void FileReader::open(const filesystem::path& path)
 
     handle_ = ::CreateFileW(path.wstring().c_str(),
                             GENERIC_READ,
-                            FILE_SHARE_READ,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                             nullptr,
                             OPEN_EXISTING,
                             FILE_ATTRIBUTE_NORMAL,
@@ -345,22 +371,49 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
 
     Result result;
 
-    // Camino normal: mmap zero-copy. Las comillas ya NO fuerzan copiar el fichero
-    // completo ni una pasada de strip: el tokenizer (get_token_views_maybe_quoted)
-    // maneja las comillas por linea sobre el propio mmap.
+    auto normalize_quotes = [this](string_view source)
+    {
+        string normalized;
+        normalized.reserve(source.size());
+
+        bool quoted = false;
+        for (const char character : source)
+        {
+            if (character == '"')
+            {
+                quoted = !quoted;
+                continue;
+            }
+
+            if (quoted && (character == ',' || character == ';' || character == '\t'))
+                continue;
+
+            normalized.push_back(character);
+        }
+
+        return normalized;
+    };
+
+    // Keep the common unquoted case zero-copy. Quoted input is normalized into
+    // owned storage so Result::lines can still be string_views with stable lifetime.
     if (result.mapping.map(path))
     {
         string_view mapped(result.mapping.data(), result.mapping.size());
 
         if (has_bom(mapped)) mapped.remove_prefix(3);
-        result.content = mapped;
         result.has_quotes = mapped.find('"') != string_view::npos;
+        if (result.has_quotes)
+        {
+            result.buffer = normalize_quotes(mapped);
+            result.mapping.reset();
+            result.content = result.buffer;
+        }
+        else
+            result.content = mapped;
         parse(result);
         return result;
     }
 
-    // Fallback (el mmap fallo): leer a buffer, SIN strip. El tokenizer se encarga
-    // de las comillas igual que en el camino mmap.
     ifstream input_file(path, ios::binary | ios::ate);
 
     throw_if(!input_file.is_open(),
@@ -388,6 +441,8 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
         result.buffer.erase(0, 3);
 
     result.has_quotes = result.buffer.find('"') != string::npos;
+    if (result.has_quotes)
+        result.buffer = normalize_quotes(result.buffer);
 
     result.content = result.buffer;
     parse(result);

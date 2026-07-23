@@ -2,7 +2,7 @@
 
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_layer.h"
-#include "opennn/language_dataset.h"
+#include "opennn/text_dataset.h"
 
 using namespace opennn;
 
@@ -16,7 +16,6 @@ TEST(SamplingConfig, Defaults)
     EXPECT_FLOAT_EQ(config.repetition_penalty, 1.0f);
     EXPECT_EQ(config.maximum_tokens, Index(0));
 }
-
 
 TEST(SamplingConfig, Assignment)
 {
@@ -266,27 +265,3 @@ TEST(TransformerInference, GenerateRequiresGpu)
 }
 
 
-TEST(TransformerInference, LanguageDatasetVocabularySetters)
-{
-    LanguageDataset language_dataset;
-
-    EXPECT_TRUE(language_dataset.get_input_vocabulary_map().empty());
-    EXPECT_TRUE(language_dataset.get_target_vocabulary().empty());
-
-    const vector<string> input_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "alpha"};
-    const vector<string> target_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "beta", "gamma"};
-
-    language_dataset.set_input_vocabulary(input_vocabulary);
-    language_dataset.set_target_vocabulary(target_vocabulary);
-
-    EXPECT_EQ(language_dataset.get_input_vocabulary_size(), Index(input_vocabulary.size()));
-    EXPECT_EQ(language_dataset.get_target_vocabulary_size(), Index(target_vocabulary.size()));
-
-    EXPECT_FALSE(language_dataset.get_input_vocabulary_map().empty());
-    EXPECT_EQ(language_dataset.get_target_vocabulary(), target_vocabulary);
-
-    const auto& input_map = language_dataset.get_input_vocabulary_map();
-    const auto start_iterator = input_map.find("[START]");
-    ASSERT_NE(start_iterator, input_map.end());
-    EXPECT_EQ(start_iterator->second, Index(2));
-}

@@ -6,7 +6,7 @@ model (d512/h8/ff2048/6L) was trained and reported on, which makes it the
 standard, citable corpus for this benchmark. This script downloads the
 Stanford NMT preprocessed WMT14 En-De training text (~4.5M sentence pairs,
 plain UTF-8, one sentence per line) and writes the `source <TAB> target` pair
-file that `LanguageDataset` / run_transformer_maxbatch.py consume -- the same
+file that `TextDataset` / run_transformer_maxbatch.py consume -- the same
 format as the Alpaca chat_pairs.txt corpus.
 
 Capacity depends on the corpus only through the derived vocabulary (capped at

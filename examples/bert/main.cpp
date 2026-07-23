@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "../../opennn/bert_dataset.h"
+#include "../../opennn/text_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/adaptive_moment_estimation.h"
@@ -59,7 +59,7 @@ void download_if_missing(const string& path, const string& url)
 void evaluate(NeuralNetwork& model, Dataset& dataset, Index sequence_length)
 {
     const vector<Index> samples = dataset.get_sample_indices("Testing");
-    const vector<Index> target_columns = dataset.get_variable_indices("Target");
+    const vector<Index> target_columns = dataset.get_feature_indices("Target");
     const MatrixR& data = dataset.get_data();
 
     const Index samples_number = ssize(samples);
@@ -138,9 +138,10 @@ int main(int argc, char* argv[])
 
         // Dataset: WordPiece-tokenizes text<TAB>label into BERT input views (cached CSV).
 
-        BertDataset dataset(text_path, vocab_path, sequence_length);
-        const Index labels = dataset.get_features_number("Target");
-        cout << "Samples: " << dataset.get_samples_number()
+        unique_ptr<TextDataset> dataset =
+            TextDataset::from_bert_classification(text_path, vocab_path, sequence_length);
+        const Index labels = dataset->get_features_number("Target");
+        cout << "Samples: " << dataset->get_samples_number()
              << "  seq: " << sequence_length << "  labels: " << labels << endl;
 
         // Neural network: the bert-base-uncased architecture, weights from the .bin.
@@ -159,7 +160,7 @@ int main(int argc, char* argv[])
 
         // Fine-tuning with Adam.
 
-        TrainingStrategy training_strategy(&model, &dataset);
+        TrainingStrategy training_strategy(&model, dataset.get());
         training_strategy.set_loss("CrossEntropy");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
@@ -173,7 +174,7 @@ int main(int argc, char* argv[])
 
         // Testing Analysis
 
-        evaluate(model, dataset, sequence_length);
+        evaluate(model, *dataset, sequence_length);
 
         cout << "Good bye!" << endl;
         return 0;

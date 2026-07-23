@@ -929,7 +929,7 @@ int main()
             const Index s = vis_indices[size_t(k)];
 
             dataset.fill_inputs({s}, {}, input_buffer.data(),
-                                /*is_training=*/false, /*parallelize=*/false);
+                                FillMode::Inference, /*contiguous=*/-1);
             std::copy(input_buffer.begin(), input_buffer.end(), input.data());
 
             std::vector<YoloDetection> detections;
@@ -1382,7 +1382,7 @@ int main()
             for (int k = 0; k < N_val; ++k)
             {
                 const Index s = selection_indices[size_t(k)];
-                dataset.fill_inputs({s}, {}, input_buffer.data(), false, false);
+                dataset.fill_inputs({s}, {}, input_buffer.data(), FillMode::Inference, -1);
                 std::copy(input_buffer.begin(), input_buffer.end(), input.data());
 
                 std::vector<YoloDetection> dets;

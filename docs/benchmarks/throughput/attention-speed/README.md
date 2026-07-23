@@ -60,7 +60,7 @@ python run_transformer_train.py --runs 5 --precision both
 - cuDNN flash-attention is bf16-only; the fp32 path casts Q/K/V to bf16, runs the
   fused graph, and casts back (forward and backward), so fp32 also uses fused
   attention.
-- Training uses `LanguageDataset` + `TrainingStrategy` (Adam + token cross-entropy),
+- Training uses `TextDataset` + `TrainingStrategy` (Adam + token cross-entropy),
   the same path as `examples/translation`.
 - Always run GPU benchmarks with `timeout N + CUDA_LAUNCH_BLOCKING=1` (a CUDA error
   in OpenNN can otherwise spin the host for hours).

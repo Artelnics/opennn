@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "opennn/language_dataset.h"
+#include "opennn/text_dataset.h"
 #include "opennn/standard_networks.h"
 #include "opennn/training_strategy.h"
 #include "opennn/testing_analysis.h"
@@ -17,7 +17,7 @@
 
 using namespace opennn;
 
-int main()
+int main(int argc, char* argv[])
 {
     try
     {
@@ -32,11 +32,12 @@ int main()
 
         // Data Set
 
-        LanguageDataset language_dataset("../data/emotion_analysis/emotion_analysis.txt");
+        unique_ptr<TextDataset> language_dataset =
+            TextDataset::from_classification("../data/emotion_analysis/emotion_analysis.txt");
 
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index maximum_input_sequence_length = language_dataset.get_maximum_input_sequence_length();
-        const Index targets_number = language_dataset.get_features_number("Target");
+        const Index input_vocabulary_size = language_dataset->get_vocabulary_size();
+        const Index maximum_input_sequence_length = language_dataset->get_sequence_length();
+        const Index targets_number = language_dataset->get_features_number("Target");
 
         // Neural Network
 
@@ -45,16 +46,17 @@ int main()
             {heads_number},
             {targets_number});
 
-        text_classification_network.set_tokenizer(language_dataset.get_input_tokenizer().clone());
+        text_classification_network.set_tokenizer(language_dataset->clone_input_tokenizer());
 
         // Training Strategy
 
-        TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+        TrainingStrategy training_strategy(&text_classification_network, language_dataset.get());
         training_strategy.set_loss("CrossEntropy");
         training_strategy.get_loss()->set_regularization("L2");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(200);
+        const Index maximum_epochs = argc > 1 ? Index(stol(argv[1])) : 200;
+        adam->set_maximum_epochs(maximum_epochs);
         adam->set_batch_size(1000);
         adam->set_learning_rate(float(0.0001));
         adam->set_display_period(20);
@@ -66,7 +68,7 @@ int main()
 
         // Testing Analysis
 
-        const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
+        const TestingAnalysis testing_analysis(&text_classification_network, language_dataset.get());
 
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E X T   G E N E R A T I O N   D A T A S E T   C L A S S   H E A D E R
+//   T E X T   D A T A S E T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -17,31 +17,58 @@
 namespace opennn
 {
 
-class TextGenerationDataset final : public Dataset
+class TextDataset : public Dataset
 {
-
 public:
 
-    TextGenerationDataset(const filesystem::path& = "",
-                          Index sequence_length = 256,
-                          Index maximum_vocabulary_size = 20000,
-                          Index minimum_token_frequency = 1);
+    enum class Task
+    {
+        Classification,
+        SequenceToSequence,
+        CausalLanguageModel,
+        BertClassification
+    };
 
-    const vector<string>& get_vocabulary() const noexcept { return vocabulary; }
-    Index get_vocabulary_size() const noexcept { return vocabulary.size(); }
+    TextDataset(const filesystem::path& = "",
+                Index sequence_length = 256,
+                Index maximum_vocabulary_size = 20000,
+                Index minimum_token_frequency = 1);
 
+    static unique_ptr<TextDataset> from_causal_corpus(
+        const filesystem::path& data_path,
+        Index sequence_length = 256,
+        Index maximum_vocabulary_size = 20000,
+        Index minimum_token_frequency = 1);
+
+    static unique_ptr<TextDataset> from_classification(
+        const filesystem::path& data_path,
+        Index maximum_vocabulary_size = 20000,
+        Index minimum_token_frequency = 1);
+
+    static unique_ptr<TextDataset> from_sequence_to_sequence(
+        const filesystem::path& data_path,
+        Index maximum_vocabulary_size = 20000,
+        Index minimum_token_frequency = 1);
+
+    static unique_ptr<TextDataset> from_bert_classification(
+        const filesystem::path& text_file,
+        const filesystem::path& vocabulary_file,
+        Index sequence_length);
+
+    virtual Task get_task() const noexcept { return task; }
+
+    virtual const vector<string>& get_input_vocabulary() const noexcept { return vocabulary; }
+    virtual const vector<string>& get_target_vocabulary() const noexcept { return vocabulary; }
+    virtual unique_ptr<TokenizerOperator> clone_input_tokenizer() const;
+    const vector<string>& get_vocabulary() const noexcept { return get_input_vocabulary(); }
+    Index get_vocabulary_size() const noexcept { return ssize(get_input_vocabulary()); }
     const unordered_map<string, Index>& get_vocabulary_map() const noexcept { return vocabulary_map; }
+    virtual Index get_sequence_length() const noexcept { return sequence_length; }
 
-    Index get_sequence_length() const noexcept { return sequence_length; }
-
-    // Optional subword tokenizer (e.g. BytePairTokenizer). When set with a
-    // non-empty vocabulary the corpus is encoded through it and the built-in
-    // whitespace/word-level path is bypassed; null keeps word-level tokenization.
     void set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer) { tokenizer = move(new_tokenizer); }
     const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
 
     void set_vocabulary(const vector<string>&);
-
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
@@ -66,10 +93,12 @@ public:
 
     static constexpr string_view PAD_TOKEN = "[PAD]";
     static constexpr string_view UNK_TOKEN = "[UNK]";
-
     static constexpr float UNK_INDEX = 1.0f;
-
     inline static const vector<string> reserved_tokens = {string(PAD_TOKEN), string(UNK_TOKEN)};
+
+protected:
+
+    explicit TextDataset(Task new_task) : task(new_task) {}
 
 private:
 
@@ -81,28 +110,21 @@ private:
                      const char*) const;
 
     void create_vocabulary(const vector<string_view>&);
-
     void update_vocabulary_map();
-
-    void read_file(string&) const;
-
     vector<Index> encode_corpus(const vector<string_view>&) const;
-
     void write_binary_cache(const vector<Index>&, Index);
 
     unique_ptr<TokenizerOperator> tokenizer;
-
     vector<string> vocabulary;
-
     unordered_map<string, Index> vocabulary_map;
 
     Index sequence_length = 256;
-
     Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;
+    Task task = Task::CausalLanguageModel;
 };
 
 }

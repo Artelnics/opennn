@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E X T   G E N E R A T I O N   D A T A S E T   C L A S S
+//   T E X T   D A T A S E T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "text_generation_dataset.h"
+#include "text_dataset.h"
 #include "string_utilities.h"
 #include "tensor_types.h"
 #include "io_utilities.h"
@@ -14,10 +14,32 @@
 namespace opennn
 {
 
-TextGenerationDataset::TextGenerationDataset(const filesystem::path& new_data_path,
-                                             Index new_sequence_length,
-                                             Index new_maximum_vocabulary_size,
-                                             Index new_minimum_token_frequency) : Dataset()
+unique_ptr<TokenizerOperator> TextDataset::clone_input_tokenizer() const
+{
+    if (tokenizer)
+        return tokenizer->clone();
+
+    auto word_level = make_unique<WordLevelTokenizer>();
+    word_level->set_vocabulary(get_input_vocabulary());
+    return word_level;
+}
+
+unique_ptr<TextDataset> TextDataset::from_causal_corpus(
+    const filesystem::path& data_path,
+    Index sequence_length,
+    Index maximum_vocabulary_size,
+    Index minimum_token_frequency)
+{
+    return make_unique<TextDataset>(data_path,
+                                    sequence_length,
+                                    maximum_vocabulary_size,
+                                    minimum_token_frequency);
+}
+
+TextDataset::TextDataset(const filesystem::path& new_data_path,
+                         Index new_sequence_length,
+                         Index new_maximum_vocabulary_size,
+                         Index new_minimum_token_frequency) : Dataset()
 {
     data_path = new_data_path;
     separator = Dataset::Separator::Space;
@@ -35,7 +57,7 @@ TextGenerationDataset::TextGenerationDataset(const filesystem::path& new_data_pa
 // the operator's does not, so unifying them would silently reorder existing
 // vocabularies and invalidate the id <-> embedding-row mapping of saved weight
 // files. Revisit when the word-level models are next retrained.
-void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_tokens)
+void TextDataset::create_vocabulary(const vector<string_view>& corpus_tokens)
 {
     unordered_map<string_view, size_t> token_count;
 
@@ -65,17 +87,16 @@ void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_
     }
 }
 
-void TextGenerationDataset::read_txt()
+void TextDataset::read_txt()
 {
     cout << "Reading .txt file..." << "\n";
 
     throw_if(sequence_length <= 0,
-             "TextGenerationDataset: sequence_length must be > 0.");
+             "TextDataset: sequence_length must be > 0.");
 
     cache_reader.close();
 
-    string buffer;
-    read_file(buffer);
+    string buffer = read_text_file(data_path);
 
     // A tokenizer with a fixed loaded vocabulary (subword, e.g. byte-pair)
     // encodes the raw corpus; otherwise the corpus is lowercased and split into
@@ -111,7 +132,7 @@ void TextGenerationDataset::read_txt()
     const Index samples_number = ssize(token_ids) / record_tokens;
 
     throw_if(samples_number == 0,
-             format("TextGenerationDataset: corpus has {} tokens; at least {} are needed for one sample.",
+             format("TextDataset: corpus has {} tokens; at least {} are needed for one sample.",
                     token_ids.size(), record_tokens));
 
     input_shape  = { sequence_length };
@@ -157,9 +178,7 @@ void TextGenerationDataset::read_txt()
 
         const uintmax_t record_bytes = uintmax_t(record_tokens) * sizeof(int32_t);
 
-        const bool cache_valid = filesystem::exists(cache_path)
-            && filesystem::file_size(cache_path) == uintmax_t(samples_number) * record_bytes
-            && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
+        const bool cache_valid = binary_cache_is_valid(cache_path, data_path, uintmax_t(samples_number) * record_bytes);
 
         if (cache_valid)
             cache_reader.open(cache_path);
@@ -174,7 +193,7 @@ void TextGenerationDataset::read_txt()
     cout << "Reading finished" << "\n";
 }
 
-void TextGenerationDataset::update_vocabulary_map()
+void TextDataset::update_vocabulary_map()
 {
     vocabulary_map.clear();
     vocabulary_map.reserve(vocabulary.size());
@@ -183,34 +202,14 @@ void TextGenerationDataset::update_vocabulary_map()
         vocabulary_map[vocabulary[i]] = i;
 }
 
-void TextGenerationDataset::set_vocabulary(const vector<string>& new_vocabulary)
+void TextDataset::set_vocabulary(const vector<string>& new_vocabulary)
 {
     vocabulary = new_vocabulary;
     update_vocabulary_map();
 }
 
-void TextGenerationDataset::read_file(string& buffer) const
-{
-    ifstream file(data_path, ios::binary | ios::ate);
 
-    throw_if(!file.is_open(),
-             format("Cannot open file {}", data_path.string()));
-
-    const auto file_size = file.tellg();
-    throw_if(file_size < 0,
-             format("Cannot determine file size for {}", data_path.string()));
-
-    file.seekg(0);
-
-    buffer.assign(static_cast<size_t>(file_size), '\0');
-    if (file_size > 0)
-        file.read(buffer.data(), file_size);
-
-    throw_if(!file,
-             format("Cannot read file {}", data_path.string()));
-}
-
-vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& corpus_tokens) const
+vector<Index> TextDataset::encode_corpus(const vector<string_view>& corpus_tokens) const
 {
     const unordered_map<string_view, Index> corpus_vocabulary_map = [this]
     {
@@ -235,7 +234,7 @@ vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& co
     return token_indices;
 }
 
-void TextGenerationDataset::write_binary_cache(const vector<Index>& token_indices, Index samples_number)
+void TextDataset::write_binary_cache(const vector<Index>& token_indices, Index samples_number)
 {
     const Index record_tokens = sequence_length + 1;
 
@@ -262,7 +261,7 @@ void TextGenerationDataset::write_binary_cache(const vector<Index>& token_indice
     cache_reader.open(cache_path);
 }
 
-void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
+void TextDataset::fill_blocks(const vector<Index>& sample_indices,
                                         const vector<Index>& variable_indices,
                                         float* output_data,
                                         int contiguous,
@@ -288,7 +287,7 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
         {
             const Index sample_index = sample_indices[size_t(i)];
             throw_if(sample_index < 0 || sample_index >= samples_number,
-                     format("TextGenerationDataset {} sample index is out of range.", context));
+                     format("TextDataset {} sample index is out of range.", context));
 
             thread_local vector<int32_t> buf;
             buf.resize(size_t(sequence_length));
@@ -309,7 +308,7 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
              omp_error);
 }
 
-void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
+void TextDataset::fill_inputs(const vector<Index>& sample_indices,
                                         const vector<Index>& input_indices,
                                         float* input_data,
                                         FillMode,
@@ -318,7 +317,7 @@ void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
     fill_blocks(sample_indices, input_indices, input_data, contiguous, 0, "input");
 }
 
-void TextGenerationDataset::fill_targets(const vector<Index>& sample_indices,
+void TextDataset::fill_targets(const vector<Index>& sample_indices,
                                          const vector<Index>& target_indices,
                                          float* target_data,
                                          FillMode,
@@ -327,7 +326,7 @@ void TextGenerationDataset::fill_targets(const vector<Index>& sample_indices,
     fill_blocks(sample_indices, target_indices, target_data, contiguous, 1, "target");
 }
 
-void TextGenerationDataset::to_JSON(JsonWriter& printer) const
+void TextDataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Dataset");
 
@@ -357,7 +356,7 @@ void TextGenerationDataset::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-void TextGenerationDataset::from_JSON(const JsonDocument& data_set_document)
+void TextDataset::from_JSON(const JsonDocument& data_set_document)
 {
     const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 

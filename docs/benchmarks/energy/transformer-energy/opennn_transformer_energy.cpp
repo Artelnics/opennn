@@ -20,7 +20,7 @@
 #include <cuda_runtime.h>
 
 #include "opennn/standard_networks.h"
-#include "opennn/language_dataset.h"
+#include "opennn/text_dataset.h"
 #include "opennn/training_strategy.h"
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/configuration.h"
@@ -61,14 +61,14 @@ int main(int argc, char* argv[])
             Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         // Vocab capped at 30000 to match the ChatGPT example (blank_cuda block 6).
-        LanguageDataset dataset(corpus, 30000);
-        dataset.set_sample_roles("Training");   // all-train, gate is the training CE
+        unique_ptr<TextDataset> dataset = TextDataset::from_sequence_to_sequence(corpus, 30000);
+        dataset->set_sample_roles("Training");   // all-train, gate is the training CE
 
-        const Index samples      = dataset.get_samples_number("Training");
-        const Index input_vocab  = dataset.get_input_vocabulary_size();
-        const Index output_vocab = dataset.get_target_vocabulary_size();
-        const Index input_seq    = dataset.get_shape("Input")[0];
-        const Index decoder_seq  = dataset.get_shape("Decoder")[0];
+        const Index samples      = dataset->get_samples_number("Training");
+        const Index input_vocab  = dataset->get_vocabulary_size();
+        const Index output_vocab = dataset->get_target_vocabulary().size();
+        const Index input_seq    = dataset->get_shape("Input")[0];
+        const Index decoder_seq  = dataset->get_shape("Decoder")[0];
 
         std::cout << "samples=" << samples
                   << " input_vocab=" << input_vocab
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
-        TrainingStrategy training_strategy(&transformer, &dataset);
+        TrainingStrategy training_strategy(&transformer, dataset.get());
         training_strategy.set_loss("CrossEntropyError3d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 

@@ -6,17 +6,126 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "language_dataset.h"
+#include "text_dataset.h"
 #include "string_utilities.h"
 #include "tensor_types.h"
 #include "io_utilities.h"
 
+namespace opennn::detail
+{
+
+class PairedTextDataset final : public TextDataset
+{
+public:
+
+    PairedTextDataset(const filesystem::path& = "",
+                      Index maximum_vocabulary_size = 20000,
+                      Index minimum_token_frequency = 1);
+
+    const vector<string>& get_input_vocabulary() const noexcept override { return input_tokenizer->get_vocabulary(); }
+    const vector<string>& get_target_vocabulary() const noexcept override { return target_tokenizer->get_vocabulary(); }
+    Index get_sequence_length() const noexcept override { return maximum_input_sequence_length; }
+    Index get_target_vocabulary_size() const noexcept { return target_tokenizer->get_vocabulary_size(); }
+    unique_ptr<TokenizerOperator> clone_input_tokenizer() const override { return input_tokenizer->clone(); }
+
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
+    void set_maximum_vocabulary_size(Index value) { maximum_vocabulary_size = value; }
+    void set_minimum_token_frequency(Index value) { minimum_token_frequency = value; }
+    void set_classification_target(bool value) { classification_target = value; }
+    Task get_task() const noexcept override
+    {
+        return classification_target ? Task::Classification : Task::SequenceToSequence;
+    }
+
+    Index get_input_sequence_length_limit() const noexcept { return input_sequence_length_limit; }
+    void set_input_sequence_length_limit(Index value) { input_sequence_length_limit = value; }
+
+    VectorI calculate_target_distribution() const override;
+    void read_txt();
+    void from_JSON(const JsonDocument&) override;
+    void to_JSON(JsonWriter&) const override;
+
+    void fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, int = -1) const override;
+    void fill_targets(const vector<Index>&, const vector<Index>&, float*, FillMode, int = -1) const override;
+    void fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode, int = -1) const override;
+    bool supports_bf16_inputs() const override { return false; }
+
+    static constexpr Index UNK_INDEX = TokenizerOperator::UNK_INDEX;
+    static constexpr Index START_INDEX = TokenizerOperator::START_INDEX;
+    static constexpr Index END_INDEX = TokenizerOperator::END_INDEX;
+    inline static const vector<string> reserved_tokens = {"[PAD]", "[UNK]", "[START]", "[END]"};
+
+private:
+
+    void fill_sequences(const vector<Index>&,
+                        const vector<Index>&,
+                        float*,
+                        int,
+                        Index,
+                        Index,
+                        Index,
+                        const char*) const;
+
+    void load_documents(vector<vector<string>>&, vector<vector<string>>&) const;
+    void encode_streaming(const vector<vector<string>>&,
+                          const vector<vector<string>>&,
+                          vector<vector<Index>>&,
+                          vector<vector<Index>>&) const;
+    void write_binary_cache(const vector<vector<Index>>&, const vector<vector<Index>>&);
+
+    unique_ptr<TokenizerOperator> input_tokenizer = make_unique<WordLevelTokenizer>();
+    unique_ptr<TokenizerOperator> target_tokenizer = make_unique<WordLevelTokenizer>();
+    Index maximum_input_sequence_length = 0;
+    Index maximum_target_sequence_length = 0;
+    Index minimum_token_frequency = 1;
+    Index maximum_vocabulary_size = 20000;
+    bool classification_target = false;
+    Index input_sequence_length_limit = 0;
+    filesystem::path cache_path;
+    mutable FileReader cache_reader;
+};
+
+}
+
 namespace opennn
 {
 
-LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
-                                 Index new_maximum_vocabulary_size,
-                                 Index new_minimum_token_frequency) : Dataset()
+unique_ptr<TextDataset> TextDataset::from_classification(
+    const filesystem::path& data_path,
+    Index maximum_vocabulary_size,
+    Index minimum_token_frequency)
+{
+    auto dataset = make_unique<detail::PairedTextDataset>();
+    dataset->set_maximum_vocabulary_size(maximum_vocabulary_size);
+    dataset->set_minimum_token_frequency(minimum_token_frequency);
+    dataset->set_classification_target(true);
+    dataset->set_data_path(data_path);
+    dataset->read_txt();
+    return dataset;
+}
+
+unique_ptr<TextDataset> TextDataset::from_sequence_to_sequence(
+    const filesystem::path& data_path,
+    Index maximum_vocabulary_size,
+    Index minimum_token_frequency)
+{
+    auto dataset = make_unique<detail::PairedTextDataset>();
+    dataset->set_maximum_vocabulary_size(maximum_vocabulary_size);
+    dataset->set_minimum_token_frequency(minimum_token_frequency);
+    dataset->set_data_path(data_path);
+    dataset->read_txt();
+    return dataset;
+}
+
+}
+
+namespace opennn::detail
+{
+
+PairedTextDataset::PairedTextDataset(const filesystem::path& new_data_path,
+                                     Index new_maximum_vocabulary_size,
+                                     Index new_minimum_token_frequency) : TextDataset(Task::SequenceToSequence)
 {
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
@@ -28,7 +137,7 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
         read_txt();
 }
 
-VectorI LanguageDataset::calculate_target_distribution() const
+VectorI PairedTextDataset::calculate_target_distribution() const
 {
     if (!decoder_shape.empty()) return {};
 
@@ -60,7 +169,7 @@ VectorI LanguageDataset::calculate_target_distribution() const
     return distribution;
 }
 
-void LanguageDataset::read_txt()
+void PairedTextDataset::read_txt()
 {
     cout << "Reading .txt file..." << "\n";
 
@@ -87,7 +196,7 @@ void LanguageDataset::read_txt()
     if (input_sequence_length_limit > 0
      && maximum_input_sequence_length > input_sequence_length_limit)
     {
-        cout << "[LanguageDataset] Input sequence length capped from "
+        cout << "[TextDataset] Input sequence length capped from "
              << maximum_input_sequence_length << " to "
              << input_sequence_length_limit
              << " tokens (longer documents are truncated)." << "\n";
@@ -219,9 +328,7 @@ void LanguageDataset::read_txt()
         const uintmax_t record_bytes = uintmax_t(maximum_input_sequence_length
                                                + maximum_target_sequence_length) * sizeof(int32_t);
 
-        const bool cache_valid = filesystem::exists(cache_path)
-            && filesystem::file_size(cache_path) == uintmax_t(samples_number) * record_bytes
-            && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
+        const bool cache_valid = binary_cache_is_valid(cache_path, data_path, uintmax_t(samples_number) * record_bytes);
 
         if (cache_valid)
         {
@@ -243,37 +350,20 @@ void LanguageDataset::read_txt()
     cout << "Reading finished" << "\n";
 }
 
-void LanguageDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
+void PairedTextDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
 {
     input_tokenizer->set_vocabulary(new_vocabulary);
 }
 
-void LanguageDataset::set_target_vocabulary(const vector<string>& new_vocabulary)
+void PairedTextDataset::set_target_vocabulary(const vector<string>& new_vocabulary)
 {
     target_tokenizer->set_vocabulary(new_vocabulary);
 }
 
-void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
+void PairedTextDataset::load_documents(vector<vector<string>>& input_documents,
                                      vector<vector<string>>& target_documents) const
 {
-    ifstream file(data_path, ios::binary | ios::ate);
-
-    throw_if(!file.is_open(),
-             format("Cannot open file {}", data_path.string()));
-
-    const auto file_size = file.tellg();
-    throw_if(file_size < 0,
-             format("Cannot determine file size for {}", data_path.string()));
-
-    file.seekg(0);
-
-    string buffer(static_cast<size_t>(file_size), '\0');
-    if (file_size > 0)
-        file.read(buffer.data(), file_size);
-
-    throw_if(!file,
-             format("Cannot read file {}", data_path.string()));
-
+    const string buffer = read_text_file(data_path);
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
@@ -326,7 +416,7 @@ void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
     }
 }
 
-void LanguageDataset::to_JSON(JsonWriter& printer) const
+void PairedTextDataset::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Dataset");
 
@@ -364,7 +454,7 @@ void LanguageDataset::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
+void PairedTextDataset::from_JSON(const JsonDocument& data_set_document)
 {
     const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 
@@ -401,7 +491,7 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     read_txt();
 }
 
-void LanguageDataset::encode_streaming(const vector<vector<string>>& input_document_tokens,
+void PairedTextDataset::encode_streaming(const vector<vector<string>>& input_document_tokens,
                                        const vector<vector<string>>& target_document_tokens,
                                        vector<vector<Index>>& input_indices,
                                        vector<vector<Index>>& target_indices) const
@@ -495,7 +585,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
     }
 }
 
-void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indices,
+void PairedTextDataset::write_binary_cache(const vector<vector<Index>>& input_indices,
                                          const vector<vector<Index>>& target_indices)
 {
     const Index samples_number = ssize(input_indices);
@@ -531,11 +621,11 @@ void LanguageDataset::write_binary_cache(const vector<vector<Index>>& input_indi
     cache_reader.open(cache_path);
 }
 
-void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
+void PairedTextDataset::fill_sequences(const vector<Index>& sample_indices,
                                      const vector<Index>& variable_indices,
                                      float* output_data,
                                      int contiguous,
-                                     Index sequence_length,
+                                     Index stream_length,
                                      Index record_offset,
                                      Index shift,
                                      const char* context) const
@@ -549,7 +639,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const Index samples_number = get_samples_number();
     const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
-    const Index n = sequence_length - shift;
+    const Index n = stream_length - shift;
 
     string omp_error;
 
@@ -558,11 +648,11 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
     {
         try
         {
-            if (shift > 0) output_data[i * sequence_length] = float(START_INDEX);
+            if (shift > 0) output_data[i * stream_length] = float(START_INDEX);
 
             const Index sample_index = sample_indices[size_t(i)];
             throw_if(sample_index < 0 || sample_index >= samples_number,
-                     format("LanguageDataset {} sample index is out of range.", context));
+                     format("TextDataset {} sample index is out of range.", context));
 
             thread_local vector<int32_t> buf;
             buf.resize(size_t(n));
@@ -570,7 +660,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
                                  (uint64_t(sample_index) * record_tokens + uint64_t(record_offset)) * sizeof(int32_t));
 
             for (Index j = 0; j < n; ++j)
-                output_data[i * sequence_length + shift + j] = float(buf[size_t(j)]);
+                output_data[i * stream_length + shift + j] = float(buf[size_t(j)]);
         }
         catch (const exception& e)
         {
@@ -583,7 +673,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
              omp_error);
 }
 
-void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
+void PairedTextDataset::fill_inputs(const vector<Index>& sample_indices,
                                   const vector<Index>& input_indices,
                                   float* input_data,
                                   FillMode,
@@ -593,7 +683,7 @@ void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,
                    maximum_input_sequence_length, 0, 0, "input");
 }
 
-void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
+void PairedTextDataset::fill_targets(const vector<Index>& sample_indices,
                                    const vector<Index>& target_indices,
                                    float* target_data,
                                    FillMode,
@@ -603,7 +693,7 @@ void LanguageDataset::fill_targets(const vector<Index>& sample_indices,
                    maximum_target_sequence_length, maximum_input_sequence_length, 0, "target");
 }
 
-void LanguageDataset::fill_decoder(const vector<Index>& sample_indices,
+void PairedTextDataset::fill_decoder(const vector<Index>& sample_indices,
                                    const vector<Index>& decoder_indices,
                                    float* decoder_data,
                                    FillMode,

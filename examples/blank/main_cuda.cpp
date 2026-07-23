@@ -22,8 +22,8 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/time_series_dataset.h"
 #include "opennn/image_dataset.h"
-#include "opennn/language_dataset.h"
-#include "opennn/text_generation_dataset.h"
+#include "opennn/text_dataset.h"
+
 
 #include "opennn/scaling_layer.h"
 #include "opennn/dense_layer.h"
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
 #endif
 
         // --------------------------------------------------------------------
-        // 4) EN -> DE TRANSLATION — Transformer (LanguageDataset)
+        // 4) EN -> DE TRANSLATION — Transformer (TextDataset)
         //    The "Attention Is All You Need" WMT14 English->German task. The raw
         //    WMT14 parallel corpora (Europarl + Common Crawl + News Commentary)
         //    were combined into tab-separated "english <TAB> german" files in
@@ -367,13 +367,13 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        LanguageDataset language_dataset(dataset_path, 37000);
+        unique_ptr<TextDataset> language_dataset = TextDataset::from_sequence_to_sequence(dataset_path, 37000);
 
-        const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
-        const Index output_vocabulary_size = language_dataset.get_target_vocabulary_size();
-        const Index input_sequence_length   = language_dataset.get_shape("Input")[0];
-        const Index decoder_sequence_length = language_dataset.get_shape("Decoder")[0];
-        const Index target_sequence_length  = language_dataset.get_shape("Target")[0];
+        const Index input_vocabulary_size  = language_dataset->get_vocabulary_size();
+        const Index output_vocabulary_size = language_dataset->get_target_vocabulary().size();
+        const Index input_sequence_length   = language_dataset->get_shape("Input")[0];
+        const Index decoder_sequence_length = language_dataset->get_shape("Decoder")[0];
+        const Index target_sequence_length  = language_dataset->get_shape("Target")[0];
 
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
@@ -409,7 +409,7 @@ int main(int argc, char** argv)
             cout << "No saved parameters at " << parameters_path
                  << "\n-> training from scratch." << endl;
 
-            TrainingStrategy training_strategy(&transformer, &language_dataset);
+            TrainingStrategy training_strategy(&transformer, language_dataset.get());
             training_strategy.set_loss("CrossEntropyError3d");
             training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
@@ -434,8 +434,8 @@ int main(int argc, char** argv)
 
         // Hand the vocabularies to the network's tokenizer layers and save the
         // self-contained model so future runs skip the corpus entirely.
-        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+        transformer.set_input_vocabulary(language_dataset->get_input_vocabulary());
+        transformer.set_target_vocabulary(language_dataset->get_target_vocabulary());
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
@@ -531,7 +531,7 @@ int main(int argc, char** argv)
 #endif
 
         // --------------------------------------------------------------------
-        // 6) CHATGPT — conversational assistant, Transformer (LanguageDataset)
+        // 6) CHATGPT — conversational assistant, Transformer (TextDataset)
         //    Seq2seq chatbot on the ENCODER-DECODER Transformer (for the
         //    decoder-only GPT see block 7): every line of
         //    the dataset is a single  prompt <TAB> response  pair.
@@ -583,15 +583,15 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        LanguageDataset language_dataset(dataset_path, maximum_vocabulary_size);
-        language_dataset.set_sample_roles("Training");  // all-train (no early stop here)
+        unique_ptr<TextDataset> language_dataset = TextDataset::from_sequence_to_sequence(dataset_path, maximum_vocabulary_size);
+        language_dataset->set_sample_roles("Training");  // all-train (no early stop here)
 
-        const Index input_vocabulary_size   = language_dataset.get_input_vocabulary_size();
-        const Index output_vocabulary_size  = language_dataset.get_target_vocabulary_size();
-        const Index input_sequence_length   = language_dataset.get_shape("Input")[0];
-        const Index decoder_sequence_length = language_dataset.get_shape("Decoder")[0];
+        const Index input_vocabulary_size   = language_dataset->get_vocabulary_size();
+        const Index output_vocabulary_size  = language_dataset->get_target_vocabulary().size();
+        const Index input_sequence_length   = language_dataset->get_shape("Input")[0];
+        const Index decoder_sequence_length = language_dataset->get_shape("Decoder")[0];
 
-        cout << "[DATASET] train_pairs=" << language_dataset.get_samples_number("Training")
+        cout << "[DATASET] train_pairs=" << language_dataset->get_samples_number("Training")
              << " in_vocab="  << input_vocabulary_size
              << " out_vocab=" << output_vocabulary_size
              << " in_len="    << input_sequence_length
@@ -628,7 +628,7 @@ int main(int argc, char** argv)
         {
             cout << "No saved parameters -> training from scratch." << endl;
 
-            TrainingStrategy training_strategy(&transformer, &language_dataset);
+            TrainingStrategy training_strategy(&transformer, language_dataset.get());
             training_strategy.set_loss("CrossEntropyError3d");
             training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
@@ -655,8 +655,8 @@ int main(int argc, char** argv)
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+        transformer.set_input_vocabulary(language_dataset->get_input_vocabulary());
+        transformer.set_target_vocabulary(language_dataset->get_target_vocabulary());
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
@@ -669,7 +669,7 @@ int main(int argc, char** argv)
 
         // --------------------------------------------------------------------
         // 7) GPT — decoder-only language model, GPT-2-small architecture
-        //    (TextGenerationDataset + TextGenerationNetwork).
+        //    (TextDataset + TextGenerationNetwork).
         //    Next-token prediction on WikiText-103 raw (~536 MB, ~110M
         //    word-level tokens of curated Wikipedia articles), prepared with:
         //      sed -e 's/ @-@ /-/g' -e 's/ @,@ /,/g' -e 's/ @\.@ /./g' \
@@ -782,7 +782,7 @@ int main(int argc, char** argv)
 
         // Word-level builds its vocabulary from the corpus; byte-pair loads a
         // fixed GPT-2 vocab.json + merges.txt and encodes the raw text through it.
-        TextGenerationDataset dataset("", sequence_length, maximum_vocabulary_size);
+        TextDataset dataset("", sequence_length, maximum_vocabulary_size);
         if (use_bpe)
         {
             auto tokenizer = make_unique<BytePairTokenizer>();
