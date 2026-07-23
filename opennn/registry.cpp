@@ -22,6 +22,7 @@
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "multihead_attention_layer.h"
+#include "grouped_query_attention_layer.h"
 #include "recurrent_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "non_max_suppression_layer.h"
@@ -45,6 +46,7 @@ void register_classes()
     const Flatten flatten;
     const Embedding embedding;
     const MultiHeadAttention multi_head_attention;
+    const GroupedQueryAttention grouped_query_attention;
     const Normalization3d normalization_3d;
     const Convolutional convolutional;
     const Detection detection;

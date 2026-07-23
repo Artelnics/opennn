@@ -15,6 +15,7 @@
 #include "dropout_operator.h"
 #include "activation_operator.h"
 #include "combination_operator.h"
+#include "swiglu_operator.h"
 #include "recurrent_operator.h"
 #include "batch_norm_operator.h"
 #include "convolution_operator.h"

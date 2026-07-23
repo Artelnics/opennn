@@ -343,12 +343,9 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
 
 static inline int layernorm_threads(int D);
 
-// One pass instead of two: the mask penalty and the row softmax used to be a
-// full read+write over the attention scores each (fused_masks_kernel +
-// cudnnSoftmaxForward). One warp per row, the row slice cached in registers,
-// shuffle-only reductions: the scores are read once and written once (they are
-// L2-resident right after the QK^T GEMM). Masked positions behave exactly like
-// the old -1e9 penalty, so a fully masked row still softmaxes to uniform.
+// One warp per row, the row slice cached in registers, shuffle-only reductions.
+// Masked positions behave like a -1e9 penalty, so a fully masked row still
+// softmaxes to uniform.
 template<typename T, int MAX_ELEMS>
 __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequence_length,
                                            const int heads_number, const int query_sequence_length,
@@ -902,9 +899,8 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
         {
             const float inv_D = 1.0f / static_cast<float>(D);
             const float mean = s * inv_D;
-            // Clamp variance to >= 0: E[x^2] - E[x]^2 can go slightly negative from
-            // catastrophic cancellation at large activations, which would make
-            // rsqrtf return inf/nan (matches the CPU layer-norm fix).
+            // Clamp variance to >= 0: E[x^2] - E[x]^2 can go slightly negative
+            // from catastrophic cancellation, making rsqrtf return inf/nan.
             const float variance = fmaxf(s_sq * inv_D - mean * mean, 0.0f);
             const float inv_var = rsqrtf(variance + eps);
             s_mean    = mean;
@@ -927,8 +923,6 @@ __global__ void layernorm_forward_kernel(const int N, const int D, const T* __re
 
 // Fused residual-add + layernorm: computes S = X + R once, writes S to `sum`
 // (the residual-stream tensor the backward needs), and writes LayerNorm(S) to Y.
-// Saves a separate add kernel launch and one full read of S versus running an
-// Addition layer followed by a LayerNorm layer. Mirrors the BatchNorm fuse_add.
 template<typename T>
 __global__ void layernorm_add_forward_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R, T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
@@ -1006,10 +1000,8 @@ static inline int layernorm_threads(int D)
     return 256;
 }
 
-// NHWC batchnorm inference with the residual add and ReLU fused in: one
-// bandwidth-bound pass instead of cuDNN's legacy inference call (which has no
-// NHWC kernel for several ResNet shapes and inserts NCHW converts) plus two
-// separate elementwise kernels.
+// NHWC batchnorm inference with the residual add and ReLU fused in (cuDNN's
+// legacy inference call has no NHWC kernel for several ResNet shapes).
 template<typename T>
 __global__ void batchnorm_inference_kernel(const Index total, const int channels,
                                            const T* __restrict__ x,
@@ -1306,6 +1298,388 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
 template void layernorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, const float*, float*,         float*, float*);
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
 
+// RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps), no mean subtraction, no
+// bias. `inv_rms` stores the per-row 1/rms for the backward pass.
+template<typename T>
+__global__ void rmsnorm_forward_kernel(const int N, const int D, const T* __restrict__ X, T* __restrict__ Y, float* __restrict__ inv_rms, const float* __restrict__ weight, const float eps)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const T* x_row = X + idx * D;
+    T* y_row = Y + idx * D;
+
+    float local_sum_sq = 0.0f;
+    float ignore = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float x = static_cast<float>(x_row[i]);
+        local_sum_sq += x * x;
+    }
+
+    warp_reduce_sum2(local_sum_sq, ignore);
+
+    __shared__ float warp_sum_sq[32];
+    __shared__ float s_inv_rms;
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+        warp_sum_sq[warp_id] = local_sum_sq;
+    __syncthreads();
+
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
+    {
+        float s_sq = (threadIdx.x < num_warps) ? warp_sum_sq[threadIdx.x] : 0.0f;
+        float d = 0.0f;
+        warp_reduce_sum2(s_sq, d);
+
+        if (threadIdx.x == 0)
+        {
+            const float inv_D = 1.0f / static_cast<float>(D);
+            const float inverse = rsqrtf(s_sq * inv_D + eps);
+            s_inv_rms    = inverse;
+            inv_rms[idx] = inverse;
+        }
+    }
+    __syncthreads();
+
+    const float inverse = s_inv_rms;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float x_hat = static_cast<float>(x_row[i]) * inverse;
+        y_row[i] = static_cast<T>(weight[i] * x_hat);
+    }
+}
+
+template<typename T>
+void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps)
+{
+    if (N == 0 || D == 0) return;
+
+    OPENNN_CUDA_LAUNCH(rmsnorm_forward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, Y, inv_rms, weight, eps));
+}
+
+template void rmsnorm_forward_cuda<float>        (const int, const int, const float*,         float*,         float*, const float*, const float);
+template void rmsnorm_forward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, __nv_bfloat16*, float*, const float*, const float);
+
+// dX_i = (d_i - x_hat_i * mean(d . x_hat)) * inv_rms,  d = dY * weight,
+// x_hat = X * inv_rms. Same shape as layer norm's dX but without the -mean(d)
+// centring term.
+template<typename T>
+__global__ void rmsnorm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ inv_rms, const float* __restrict__ weight, T* __restrict__ dX)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const T* dy_row = dY + idx * D;
+    const T* x_row = X + idx * D;
+    T* dx_row = dX + idx * D;
+
+    const float inverse = inv_rms[idx];
+
+    float local_sum_d_xhat = 0.0f;
+    float ignore = 0.0f;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float d     = static_cast<float>(dy_row[i]) * weight[i];
+        const float x_hat = static_cast<float>(x_row[i]) * inverse;
+        local_sum_d_xhat += d * x_hat;
+    }
+
+    warp_reduce_sum2(local_sum_d_xhat, ignore);
+
+    __shared__ float warp_sum[32];
+    __shared__ float s_mean_d_xhat;
+
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+
+    if (lane == 0)
+        warp_sum[warp_id] = local_sum_d_xhat;
+    __syncthreads();
+
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
+    {
+        float s = (threadIdx.x < num_warps) ? warp_sum[threadIdx.x] : 0.0f;
+        float d = 0.0f;
+        warp_reduce_sum2(s, d);
+        if (threadIdx.x == 0)
+        {
+            const float inv_D = 1.0f / static_cast<float>(D);
+            s_mean_d_xhat = s * inv_D;
+        }
+    }
+    __syncthreads();
+
+    const float mean_d_xhat = s_mean_d_xhat;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x)
+    {
+        const float d     = static_cast<float>(dy_row[i]) * weight[i];
+        const float x_hat = static_cast<float>(x_row[i]) * inverse;
+        dx_row[i] = static_cast<T>((d - x_hat * mean_d_xhat) * inverse);
+    }
+}
+
+template<typename T, int NUM_WARPS>
+__global__ void rmsnorm_weight_gradient_coalesced_kernel(const int N, const int D,
+                                                         const int chunk,
+                                                         const T* __restrict__ dY,
+                                                         const T* __restrict__ X,
+                                                         const float* __restrict__ inv_rms,
+                                                         float* __restrict__ dWeight)
+{
+    const int lane    = threadIdx.x;
+    const int warp_id = threadIdx.y;
+    const int d       = blockIdx.x * 32 + lane;
+    const bool active = (d < D);
+    const int n0      = blockIdx.y * chunk;
+    const int n1      = min(N, n0 + chunk);
+
+    float local_weight = 0.0f;
+
+    if (active)
+    {
+        for (int n = n0 + warp_id; n < n1; n += NUM_WARPS)
+        {
+            const float dy    = static_cast<float>(dY[n * D + d]);
+            const float x_hat = static_cast<float>(X[n * D + d]) * inv_rms[n];
+            local_weight += dy * x_hat;
+        }
+    }
+
+    __shared__ float partial_weight[NUM_WARPS][32];
+    partial_weight[warp_id][lane] = local_weight;
+    __syncthreads();
+
+    if (warp_id == 0 && active)
+    {
+        float g = 0.0f;
+        #pragma unroll
+        for (int w = 0; w < NUM_WARPS; ++w)
+            g += partial_weight[w][lane];
+        if (gridDim.y == 1)
+            dWeight[d] = g;
+        else
+            atomicAdd(dWeight + d, g);
+    }
+}
+
+template<typename T>
+void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* inv_rms, const float* weight, T* dX, float* dWeight)
+{
+    if (N == 0 || D == 0) return;
+
+    if (dX)
+        OPENNN_CUDA_LAUNCH(rmsnorm_backward_kernel<T><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, dY, X, inv_rms, weight, dX));
+
+    constexpr int NUM_WARPS = 8;
+    const dim3 block(32, NUM_WARPS);
+    const int grid_x = (D + 31) / 32;
+    const int desired_chunks = grid_x < 192 ? 192 / grid_x : 1;
+    int chunk = ceil_div(N, desired_chunks);
+    if (chunk < NUM_WARPS * 8) chunk = NUM_WARPS * 8;
+    const int grid_y = ceil_div(N, chunk);
+    if (grid_y > 1)
+    {
+        cudaStream_t stream = opennn::device::get_compute_stream();
+        cudaMemsetAsync(dWeight, 0, size_t(D) * sizeof(float), stream);
+    }
+    rmsnorm_weight_gradient_coalesced_kernel<T, NUM_WARPS><<<dim3(grid_x, grid_y), block, 0,
+        opennn::device::get_compute_stream()>>>(N, D, chunk, dY, X, inv_rms, dWeight);
+    opennn::device::check_last_error();
+}
+
+template void rmsnorm_backward_cuda<float>        (const int, const int, const float*,         const float*,         const float*, const float*, float*,         float*);
+template void rmsnorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, __nv_bfloat16*, float*);
+
+// RoPE (rotate_half): one block per row, threads stride over the model_dim
+// channels. For channel d of head h, pair (d, d+half) within the head is rotated
+// by the row's sequence position. Channels >= rotary_dim pass through. Forward
+// uses +sin; backward (SIGN = -1) applies the transpose (inverse) rotation.
+template<typename T, int SIGN>
+__global__ void rope_apply_kernel(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* __restrict__ in, T* __restrict__ out, const float* __restrict__ cos, const float* __restrict__ sin)
+{
+    const int row = blockIdx.x;
+    if (row >= rows) return;
+
+    const int pos  = (row % seq) + offset;
+    const int half = rotary_dim >> 1;
+    const float* cr = cos + pos * rotary_dim;
+    const float* sr = sin + pos * rotary_dim;
+
+    const int row_base = row * model_dim;
+
+    for (int e = threadIdx.x; e < model_dim; e += blockDim.x)
+    {
+        const int d = e % head_dim;              // channel within the head
+        const int base_e = row_base + e;
+
+        if (d < rotary_dim)
+        {
+            const int head_start = base_e - d;   // row_base + h*head_dim
+            const float partner = (d < half)
+                ? -static_cast<float>(in[head_start + d + half])
+                :  static_cast<float>(in[head_start + d - half]);
+            out[base_e] = static_cast<T>(static_cast<float>(in[base_e]) * cr[d] + SIGN * partner * sr[d]);
+        }
+        else
+        {
+            out[base_e] = in[base_e];
+        }
+    }
+}
+
+static inline int rope_threads(int model_dim)
+{
+    if (model_dim <= 64)  return 64;
+    if (model_dim <= 128) return 128;
+    return 256;
+}
+
+template<typename T>
+void rope_forward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin)
+{
+    if (rows == 0 || model_dim == 0) return;
+
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, 1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(rows, seq, model_dim, head_dim, rotary_dim, offset, in, out, cos, sin)));
+}
+
+template<typename T>
+void rope_backward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* dout, T* din, const float* cos, const float* sin)
+{
+    if (rows == 0 || model_dim == 0) return;
+
+    OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, -1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(rows, seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin)));
+}
+
+template void rope_forward_cuda<float>        (const int, const int, const int, const int, const int, const int, const float*,         float*,         const float*, const float*);
+template void rope_forward_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const __nv_bfloat16*, __nv_bfloat16*, const float*, const float*);
+template void rope_backward_cuda<float>        (const int, const int, const int, const int, const int, const int, const float*,         float*,         const float*, const float*);
+template void rope_backward_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const __nv_bfloat16*, __nv_bfloat16*, const float*, const float*);
+
+// SwiGLU: out = silu(gate) * up (element-wise). silu(g) = g * sigmoid(g).
+template<typename T>
+__global__ void swiglu_forward_kernel(const int n, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ out)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    const float g = static_cast<float>(gate[i]);
+    const float silu = g / (1.0f + expf(-g));
+    out[i] = static_cast<T>(silu * static_cast<float>(up[i]));
+}
+
+template<typename T>
+__global__ void swiglu_backward_kernel(const int n, const T* __restrict__ dout, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ dgate, T* __restrict__ dup)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    const float d   = static_cast<float>(dout[i]);
+    const float g   = static_cast<float>(gate[i]);
+    const float sig = 1.0f / (1.0f + expf(-g));
+    const float silu = g * sig;
+
+    if (dup)   dup[i]   = static_cast<T>(d * silu);
+    if (dgate) dgate[i] = static_cast<T>(d * static_cast<float>(up[i]) * sig * (1.0f + g * (1.0f - sig)));
+}
+
+template<typename T>
+void swiglu_forward_cuda(const int n, const T* gate, const T* up, T* out)
+{
+    if (n == 0) return;
+    const int block = 256;
+    const int grid = (n + block - 1) / block;
+    OPENNN_CUDA_LAUNCH(swiglu_forward_kernel<T><<<grid, block, 0, opennn::device::get_compute_stream()>>>(n, gate, up, out));
+}
+
+template<typename T>
+void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup)
+{
+    if (n == 0) return;
+    const int block = 256;
+    const int grid = (n + block - 1) / block;
+    OPENNN_CUDA_LAUNCH(swiglu_backward_kernel<T><<<grid, block, 0, opennn::device::get_compute_stream()>>>(n, dout, gate, up, dgate, dup));
+}
+
+template void swiglu_forward_cuda<float>        (const int, const float*,         const float*,         float*);
+template void swiglu_forward_cuda<__nv_bfloat16>(const int, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
+template void swiglu_backward_cuda<float>        (const int, const float*,         const float*,         const float*,         float*,         float*);
+template void swiglu_backward_cuda<__nv_bfloat16>(const int, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*);
+
+// Grouped-query causal attention. One thread per query (b, hq, i); flash-style
+// online softmax so scores are not materialized. Q head hq uses KV head
+// hq/(n_query_heads/n_kv_heads). Causal: query i (abs pos offset+i) attends keys
+// 0..(offset+i). head_dim capped at 256 (Qwen3=128, Qwen3.5=256).
+template<typename T>
+__global__ void grouped_attention_kernel(const int total_queries, const int query_seq, const int key_seq,
+                                          const int n_query_heads, const int n_kv_heads, const int head_dim,
+                                          const int group, const float scale, const int qoffset, const int causal,
+                                          const T* __restrict__ Q, const T* __restrict__ K,
+                                          const T* __restrict__ V, T* __restrict__ O)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= total_queries) return;
+
+    const int i   = idx % query_seq;
+    const int hq  = (idx / query_seq) % n_query_heads;
+    const int b   = idx / (query_seq * n_query_heads);
+    const int hkv = hq / group;
+    const int valid = causal ? min(qoffset + i + 1, key_seq) : key_seq;
+
+    const T* q_vec = Q + ((size_t(b) * query_seq + i) * n_query_heads + hq) * head_dim;
+    T*       o_vec = O + ((size_t(b) * query_seq + i) * n_query_heads + hq) * head_dim;
+
+    float acc[256];
+    for (int d = 0; d < head_dim; ++d) acc[d] = 0.0f;
+    float m = -1e30f, l = 0.0f;
+
+    for (int j = 0; j < valid; ++j) {
+        const T* k_vec = K + ((size_t(b) * key_seq + j) * n_kv_heads + hkv) * head_dim;
+        float s = 0.0f;
+        for (int d = 0; d < head_dim; ++d) s += static_cast<float>(q_vec[d]) * static_cast<float>(k_vec[d]);
+        s *= scale;
+
+        const float m_new = fmaxf(m, s);
+        const float corr  = __expf(m - m_new);
+        const float p     = __expf(s - m_new);
+        l = l * corr + p;
+
+        const T* v_vec = V + ((size_t(b) * key_seq + j) * n_kv_heads + hkv) * head_dim;
+        for (int d = 0; d < head_dim; ++d) acc[d] = acc[d] * corr + p * static_cast<float>(v_vec[d]);
+        m = m_new;
+    }
+
+    const float inv_l = 1.0f / l;
+    for (int d = 0; d < head_dim; ++d) o_vec[d] = static_cast<T>(acc[d] * inv_l);
+}
+
+template<typename T>
+void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
+                            const int n_query_heads, const int n_kv_heads, const int head_dim,
+                            const float scale, const int query_position_offset, const bool causal,
+                            const T* Q, const T* K, const T* V, T* O)
+{
+    const int total = batch * n_query_heads * query_seq;
+    if (total == 0) return;
+    const int group = n_query_heads / n_kv_heads;
+    const int block = 128;
+    const int grid = (total + block - 1) / block;
+    OPENNN_CUDA_LAUNCH((grouped_attention_kernel<T><<<grid, block, 0, opennn::device::get_compute_stream()>>>(
+        total, query_seq, key_seq, n_query_heads, n_kv_heads, head_dim, group, scale,
+        query_position_offset, causal ? 1 : 0, Q, K, V, O)));
+}
+
+template void grouped_attention_cuda<float>        (const int, const int, const int, const int, const int, const int, const float, const int, const bool, const float*,         const float*,         const float*,         float*);
+template void grouped_attention_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const float, const int, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
+
 __device__ __forceinline__ float opennn_activation_value(float x, int function)
 {
     if (function == activation_sigmoid)    return 1.0f / (1.0f + expf(-x));
@@ -1345,6 +1719,7 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
     }
     if (function == activation_silu)
     {
+        // `y` is the pre-activation input for needs_input activations.
         const float s = 1.0f / (1.0f + expf(-y));
         return d * s * (1.0f + y * (1.0f - s));
     }
@@ -1358,8 +1733,6 @@ __global__ void activation_forward_kernel(const int n, T* __restrict__ data, con
         data[idx] = static_cast<T>(opennn_activation_value(static_cast<float>(data[idx]), function));
 }
 
-// bf16 x2: 2 elements/thread => 4-byte (sector-optimal) coalesced transactions,
-// roughly halving the memory passes of this bandwidth-bound elementwise kernel.
 __global__ void activation_forward_kernel_bf162(const int n2, __nv_bfloat162* __restrict__ data, const int function)
 {
     for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < n2; idx += blockDim.x * gridDim.x)
@@ -1823,10 +2196,8 @@ void rnn_accumulate_bias_grad_cuda(const Index batch,
 template void rnn_accumulate_bias_grad_cuda<float>        (const Index, const Index, const float*,         float*);
 template void rnn_accumulate_bias_grad_cuda<__nv_bfloat16>(const Index, const Index, const __nv_bfloat16*, float*);
 
-// Column-sum of a (batch x features) delta into an fp32 bias gradient,
-// parallelised over both features (coalesced) and batch chunks (grid.y) so it
-// scales to very large batches — unlike rnn_accumulate_bias_grad which serialises
-// over the batch. The caller must zero bias_grad first (this atomicAdds).
+// Column-sum of a (batch x features) delta into an fp32 bias gradient.
+// The caller must zero bias_grad first (this atomicAdds).
 template<typename T>
 __global__ void bias_grad_sum_kernel(const int batch, const int features, const int chunk,
                                      const T* __restrict__ delta, float* __restrict__ bias_grad)
@@ -1846,9 +2217,8 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
 {
     if (batch == 0 || features == 0) return;
     const int f = checked_int(features);
-    // Narrow feature counts give few blocks in x, so the batch chunk must
-    // shrink until the grid covers the whole GPU; a fixed chunk of 2048 left
-    // >90% of the SMs idle at transformer widths (d_model 256 -> 5 blocks).
+    // Shrink the batch chunk until the grid covers the whole GPU (narrow
+    // feature counts give few blocks in x).
     const int f_blocks = ceil_div(f, block_size);
     const int desired_chunks = f_blocks < 256 ? 256 / f_blocks : 1;
     int chunk = checked_int((batch + desired_chunks - 1) / desired_chunks);
@@ -2180,7 +2550,6 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
 // ── Channel concatenation (NHWC) ─────────────────────────────────────────────
 // One call per input slice; each thread handles one element of that slice.
 
-// Forward: copies src[b][h][w][c_local] → dst[b][h][w][ch_offset + c_local]
 __global__ void concat_forward_slice_kernel(
     const int n,                        // batch * H * W * slice_ch
     const float* __restrict__ src,
@@ -2198,7 +2567,6 @@ __global__ void concat_forward_slice_kernel(
     }
 }
 
-// Backward: copies out_delta[b][h][w][ch_offset + c_local] → in_delta[b][h][w][c_local]
 __global__ void concat_backward_slice_kernel(
     const int n,
     const float* __restrict__ out_delta,

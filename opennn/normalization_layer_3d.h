@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   N O R M A L I Z A T I O N   L A Y E R   3 D   C L A S S   H E A D E R
@@ -14,6 +14,9 @@
 namespace opennn
 {
 
+// Normalization over the last (embedding) axis of a (batch, sequence, embedding)
+// tensor, with two methods (see NormalizationMethod). The method is encoded in
+// the serialized tag ("Normalization3d" / "RMSNormalization3d"), not in the body.
 class Normalization3d final : public Layer
 {
 public:
@@ -27,6 +30,15 @@ public:
     Index get_sequence_length() const { return sequence_length; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
+    NormalizationMethod get_method() const { return layer_normalization.method; }
+
+    // Changes the parameter layout (RMS has no beta), so call before compile().
+    void set_method(NormalizationMethod);
+
+    // RMS only; LayerNorm uses the global EPSILON.
+    float get_epsilon() const { return layer_normalization.epsilon; }
+    void set_epsilon(float new_epsilon) { layer_normalization.epsilon = new_epsilon; }
+
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
 
@@ -34,6 +46,7 @@ public:
 
     // Fuse a residual-add into the layer norm: the layer then takes two source
     // layers (main, residual) and skips a separate Addition layer.
+    // LayerNorm method only.
     void set_fuse_add(bool);
 
     void set_input_shape(const Shape&) override;

@@ -250,6 +250,30 @@ public:
     void chat(const SamplingConfig&);
 };
 
+// Qwen3 / LLaMA-style decoder-only language model: token embedding (position from
+// RoPE inside attention), decoder blocks of pre-RMSNorm -> grouped-query attention
+// -> add -> pre-RMSNorm -> gated (SwiGLU) Dense -> down -> add, then a final RMSNorm
+// and a bias-free output projection tied to the embedding (copied; the framework
+// does not alias parameters). Token ids use OpenNN's +1 / [PAD]=0 convention, so
+// the effective vocabulary is vocabulary_size + 1.
+class Qwen3 final : public NeuralNetwork
+{
+public:
+
+    Qwen3() = default;
+
+    Qwen3(Index sequence_length,
+          Index vocabulary_size,
+          Index hidden_size,
+          Index layers_number,
+          Index query_heads,
+          Index key_value_heads,
+          Index head_dimension,
+          Index intermediate_size,
+          float rope_theta = 1000000.0f,
+          float rms_epsilon = 1.0e-6f);
+};
+
 class Bert final : public NeuralNetwork
 {
 public:

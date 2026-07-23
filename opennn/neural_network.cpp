@@ -1604,6 +1604,90 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
     link_parameters();
 }
 
+#ifdef OPENNN_HAS_CUDA
+// Host fp32 -> bf16 (high 16 bits, round half to even).
+static inline uint16_t float_to_bfloat16_host(float value)
+{
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof(bits));
+    bits += 0x7FFFu + ((bits >> 16) & 1u);
+    return static_cast<uint16_t>(bits >> 16);
+}
+#endif
+
+void NeuralNetwork::upload_parameters_bf16_inference()
+{
+#ifdef OPENNN_HAS_CUDA
+    if (config.device != Device::CUDA
+        || config.training_type != Type::BF16
+        || parameters.empty()
+        || parameters.device_type != Device::CPU
+        || !parameters.owns)
+    {
+        copy_parameters_device();
+        return;
+    }
+
+    cudaStream_t stream = Backend::get_compute_stream();
+    const Index total_floats = parameters.size_in_floats();
+    const float* const host_fp32 = parameters.as<float>();
+
+    // Device bf16 mirror (same aligned layout as the fp32 master, half the bytes).
+    parameters_bf16_mirror.resize_bytes(total_floats * Index(sizeof(bfloat16)), Device::CUDA);
+    uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
+
+    const auto specs = get_parameter_specs();
+
+    // Compact fp32 storage for the non-bf16 parameters (norms, embedding).
+    Index fp32_keep = 0;
+    for (const auto& layer_specs : specs)
+        for (const auto& [shape, dtype] : layer_specs)
+            if (!shape.empty() && dtype != Type::BF16)
+                fp32_keep += get_aligned_size(shape.size());
+
+    parameters_fp32_inference_storage.resize_bytes(fp32_keep * Index(sizeof(float)), Device::CUDA);
+    float* const fp32_compact = fp32_keep > 0 ? parameters_fp32_inference_storage.as<float>() : nullptr;
+
+    // Upload tensor by tensor: each copy is a single parameter (< 2^31 elements),
+    // so neither the 32-bit CUDA wrappers nor the device memory ever see the whole
+    // 4B-parameter buffer.
+    vector<uint16_t> host_bf16;
+    Index offset = 0;         // element offset into the master / mirror
+    Index fp32_offset = 0;    // element offset into the compact fp32 storage
+
+    for (const auto& layer_specs : specs)
+        for (const auto& [shape, dtype] : layer_specs)
+        {
+            if (shape.empty()) continue;
+
+            const Index size = shape.size();
+            const Index aligned = get_aligned_size(size);
+
+            host_bf16.resize(static_cast<size_t>(size));
+            for (Index i = 0; i < size; ++i)
+                host_bf16[static_cast<size_t>(i)] = float_to_bfloat16_host(host_fp32[offset + i]);
+            device::copy_async(mirror + offset, host_bf16.data(),
+                               size * Index(sizeof(uint16_t)), Device::CPU, Device::CUDA, stream);
+
+            if (dtype != Type::BF16 && fp32_compact)
+            {
+                device::copy_async(fp32_compact + fp32_offset, host_fp32 + offset,
+                                   size * Index(sizeof(float)), Device::CPU, Device::CUDA, stream);
+                fp32_offset += aligned;
+            }
+
+            device::synchronize(stream);   // host_bf16 is reused next iteration
+            offset += aligned;
+        }
+
+    const Index master_bytes = parameters.bytes;
+    parameters.resize_bytes(0, Device::CPU);
+    parameters.set_view(parameters_bf16_mirror.data, master_bytes, Device::CUDA);
+
+    link_parameters();
+#endif
+}
+
 void NeuralNetwork::copy_parameters_host()
 {
     if (parameters.empty())
@@ -1778,6 +1862,10 @@ void NeuralNetwork::cast_parameters_to_bf16()
 }
 
 void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
+{
+}
+
+void NeuralNetwork::upload_parameters_bf16_inference()
 {
 }
 

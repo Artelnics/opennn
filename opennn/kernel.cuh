@@ -272,6 +272,36 @@ void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta);
 
+// RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps). `inv_rms` receives 1/rms per row.
+template<typename T>
+void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps);
+
+template<typename T>
+void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* inv_rms, const float* weight, T* dX, float* dWeight);
+
+// RoPE: rotate the first rotary_dim channels of each head (head_dim block) of a
+// (rows, model_dim) tensor by its sequence position (row % seq + offset).
+template<typename T>
+void rope_forward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* in, T* out, const float* cos, const float* sin);
+
+template<typename T>
+void rope_backward_cuda(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* dout, T* din, const float* cos, const float* sin);
+
+// SwiGLU: out = silu(gate) * up (element-wise). Backward writes gate/up grads.
+template<typename T>
+void swiglu_forward_cuda(const int n, const T* gate, const T* up, T* out);
+
+template<typename T>
+void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup);
+
+// Grouped-query causal attention (Qwen3). One thread per query, online softmax.
+// Q/K/V/O laid out [batch, seq, heads*head_dim]; keys/values have n_kv_heads.
+template<typename T>
+void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
+                            const int n_query_heads, const int n_kv_heads, const int head_dim,
+                            const float scale, const int query_position_offset, const bool causal,
+                            const T* Q, const T* K, const T* V, T* O);
+
 template<typename T>
 void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const Index features, const Index t,

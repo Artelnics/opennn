@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "numerical_derivatives.h"
 
+#include <fstream>
+#include <sstream>
+
 #include "opennn/concatenation_layer.h"
 #include "opennn/convolutional_layer.h"
 #include "opennn/dense_layer.h"
@@ -163,6 +166,73 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateThreeInputs)
             EXPECT_NEAR(output_data[out_base + 2], 20.0f, 1e-6f);
             EXPECT_NEAR(output_data[out_base + 3], 30.0f, 1e-6f);
         }
+}
+
+
+TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
+{
+    const Index batch_size = 2;
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Concatenation>(input_shape, per_input_channels, "concat"),
+                             vector<Index>{ -1, -2 });
+    neural_network.compile();
+
+    Tensor4 inputs_a(batch_size, height, width, channels_a);
+    Tensor4 inputs_b(batch_size, height, width, channels_b);
+    for (Index i = 0; i < inputs_a.size(); ++i)
+        inputs_a.data()[i] = float(i);
+    for (Index i = 0; i < inputs_b.size(); ++i)
+        inputs_b.data()[i] = float(1000 + i);
+
+    auto make_inputs = [&]() {
+        return vector<TensorView>{
+            TensorView(inputs_a.data(), { batch_size, height, width, channels_a }),
+            TensorView(inputs_b.data(), { batch_size, height, width, channels_b })
+        };
+    };
+
+    ForwardPropagation forward_before(batch_size, &neural_network);
+    vector<TensorView> inputs_before = make_inputs();
+    neural_network.forward_propagate(inputs_before, forward_before, false);
+    const TensorView out_before = forward_before.get_outputs();
+    const vector<float> expected(out_before.as<float>(), out_before.as<float>() + out_before.size());
+
+    const string path = (filesystem::temp_directory_path() / "opennn_concat_legacy_tag.json").string();
+    neural_network.save(path);
+
+    {
+        std::ifstream in(path);
+        std::stringstream buffer;
+        buffer << in.rdbuf();
+        string text = buffer.str();
+        const size_t at = text.find("\"Concatenation\"");
+        ASSERT_NE(at, string::npos);
+        text.replace(at, string("\"Concatenation\"").size(), "\"Concatenate\"");
+        std::ofstream out(path);
+        out << text;
+    }
+
+    NeuralNetwork loaded;
+    loaded.load(path);
+
+    const auto* concatenation = dynamic_cast<const Concatenation*>(loaded.get_layer(Index(0)).get());
+    ASSERT_NE(concatenation, nullptr);
+    EXPECT_EQ(concatenation->get_name(), "Concatenation");
+    EXPECT_EQ(concatenation->get_inputs_number(), 2);
+
+    ForwardPropagation forward_after(batch_size, &loaded);
+    vector<TensorView> inputs_after = make_inputs();
+    loaded.forward_propagate(inputs_after, forward_after, false);
+    const TensorView out_after = forward_after.get_outputs();
+
+    ASSERT_EQ(out_after.size(), Index(expected.size()));
+    for (Index i = 0; i < out_after.size(); ++i)
+        EXPECT_NEAR(out_after.as<float>()[i], expected[size_t(i)], 1.0e-6f);
+
+    error_code file_error;
+    filesystem::remove(path, file_error);
+    filesystem::remove(filesystem::path(path).replace_extension(".bin"), file_error);
 }
 
 

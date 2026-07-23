@@ -26,6 +26,10 @@ struct ForwardPropagation
 
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr);
 
+    // Run the next pass over a seq=length prefix of the arena (batch-1,
+    // [batch, seq, feature] layout), for KV-cache prefill/decode. See past_length.
+    void set_active_sequence_length(Index length);
+
     TensorView get_last_trainable_layer_outputs() const;
 
     TensorView get_outputs() const;
@@ -41,6 +45,11 @@ struct ForwardPropagation
     void reset_cuda_graph() noexcept;
 
     Index batch_size = 0;
+
+    // KV-cache length before this pass: stateful operators (GroupedQueryAttention) place
+    // the new tokens at this absolute position. 0 = fresh sequence (the default,
+    // so non-incremental callers are unaffected).
+    Index past_length = 0;
 
     // True when the batches fed through this propagation come from a dataset
     // that Optimizer::set_scaling() already scaled in place (training and

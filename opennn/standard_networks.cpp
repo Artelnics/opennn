@@ -26,6 +26,7 @@
 #include "upsample_layer.h"
 #include "concatenation_layer.h"
 #include "normalization_layer_3d.h"
+#include "grouped_query_attention_layer.h"
 #include "multihead_attention_layer.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
@@ -1480,6 +1481,81 @@ Bert::Bert(Index sequence_length,
                      intermediate_size, layers_number, type_vocabulary_size);
     compile();
     set_parameters_glorot();
+}
+
+Qwen3::Qwen3(Index sequence_length,
+             Index vocabulary_size,
+             Index hidden_size,
+             Index layers_number,
+             Index query_heads,
+             Index key_value_heads,
+             Index head_dimension,
+             Index intermediate_size,
+             float rope_theta,
+             float rms_epsilon)
+    : NeuralNetwork()
+{
+    throw_if(sequence_length == 0 || vocabulary_size == 0 || hidden_size == 0 ||
+             layers_number == 0 || query_heads == 0 || key_value_heads == 0 ||
+             head_dimension == 0 || intermediate_size == 0,
+             "Qwen3: all dimensions must be > 0.");
+    throw_if(query_heads % key_value_heads != 0,
+             "Qwen3: query_heads must be divisible by key_value_heads.");
+
+    // Token embedding: id 0 is reserved for [PAD], so the table has vocabulary_size + 1
+    // rows. No positional encoding (RoPE is applied inside the attention layer).
+    auto embedding = make_unique<Embedding>(Shape{vocabulary_size + 1, sequence_length}, hidden_size, "embed_tokens");
+    embedding->set_scale_embedding(false);
+    add_layer(move(embedding), {-1});
+    Index current = get_layers_number() - 1;
+
+    const Shape block{sequence_length, hidden_size};
+
+    auto add_norm = [&](const string& name, Index source) {
+        auto norm = make_unique<Normalization3d>(block, name);
+        norm->set_method(NormalizationMethod::RMS);
+        norm->set_epsilon(rms_epsilon);
+        add_layer(move(norm), {source});
+        return get_layers_number() - 1;
+    };
+    auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source) {
+        auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", false, name);
+        dense->set_use_bias(false);   // Qwen3 projections are bias-free
+        add_layer(move(dense), {source});
+        return get_layers_number() - 1;
+    };
+
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const string suffix = "_" + to_string(i);
+
+        const Index input_norm = add_norm("input_norm" + suffix, current);
+        add_layer(make_unique<GroupedQueryAttention>(block, query_heads, key_value_heads, head_dimension,
+                                                     rope_theta, rms_epsilon, /*use_qk_norm*/ true,
+                                                     "attn" + suffix), {input_norm});
+        const Index attention = get_layers_number() - 1;
+        add_layer(make_unique<Addition>(block, "attn_add" + suffix), {current, attention});
+        const Index residual = get_layers_number() - 1;
+
+        const Index post_norm = add_norm("post_norm" + suffix, residual);
+        // Gated (SwiGLU) Dense: silu(x·Wg) * (x·Wu) in one layer; the parameter
+        // layout (gate weight then up weight) matches the former gate/up pair.
+        auto gate_up = make_unique<Dense>(block, Shape{intermediate_size}, "Identity", false, "gate_up" + suffix);
+        gate_up->set_use_bias(false);
+        gate_up->set_gated(true);
+        add_layer(move(gate_up), {post_norm});
+        const Index ffn = get_layers_number() - 1;
+        const Index down = add_linear(Shape{sequence_length, intermediate_size}, hidden_size, "down" + suffix, ffn);
+        add_layer(make_unique<Addition>(block, "ffn_add" + suffix), {residual, down});
+        current = get_layers_number() - 1;
+    }
+
+    add_norm("final_norm", current);
+    current = get_layers_number() - 1;
+    add_linear(block, vocabulary_size + 1, "lm_head", current);   // raw logits, tied (copied) to the embedding
+
+    compile();
+    set_parameters_random();   // QK-Norm scales -> 1; everything is overwritten by load_parameters_binary
 }
 
 void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)

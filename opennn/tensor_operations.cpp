@@ -145,7 +145,19 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::LeakyReLU, "LeakyReLU"},
         {ActivationFunction::GELU,      "GELU"},
         {ActivationFunction::GELUTanh,  "GELUTanh"},
-        {ActivationFunction::SiLU,      "SiLU"}
+        {ActivationFunction::SiLU,      "SiLU"},
+        {ActivationFunction::SiLU,      "Swish"},
+        // Legacy aliases emitted by the Neural Designer editor's activation combobox
+        // (old opennn names). from_string() accepts them so a saved model does not
+        // crash the engine on load; to_string() still returns the CANONICAL name above
+        // (it returns the first entry matching the enum value, so these are read-only).
+        // ScaledExponentialLinear (SELU) is not implemented in the refactor: map it to
+        // the nearest supported activation (ReLU) instead of throwing.
+        {ActivationFunction::Identity,  "Linear"},
+        {ActivationFunction::Sigmoid,   "Logistic"},
+        {ActivationFunction::Tanh,      "HyperbolicTangent"},
+        {ActivationFunction::ReLU,      "RectifiedLinear"},
+        {ActivationFunction::ReLU,      "ScaledExponentialLinear"}
     };
     
     static const EnumMap<ActivationFunction> instance{entries};
@@ -210,6 +222,14 @@ MatrixR activation_derivative_from_output_values(ActivationFunction function, co
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
     X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
     X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
+    X(rms_normalization_forward_gpu, (const TensorView&, const TensorView&, TensorView&, TensorView&, float)) \
+    X(rms_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
+    X(rope_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index)) \
+    X(rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index)) \
+    X(swiglu_forward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
+    X(swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&)) \
+    X(grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index)) \
+    X(qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float)) \
     X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
     X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool)) \
     X(max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool)) \
@@ -556,6 +576,8 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
         });
         return;
     case SiLU:
+        // `y` holds the pre-activation input (SiLU needs_input). d(silu)/dx =
+        // sigmoid(x) * (1 + x*(1 - sigmoid(x))).
         d *= y.unaryExpr([](float x)
         {
             const float s = 1.0f / (1.0f + expf(-x));
@@ -639,7 +661,8 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
     // allocation and copy per call.
     auto output_matrix = output.as_flat_matrix();
     output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
-    output_matrix.rowwise() += bias.as_vector().transpose();
+    if (!bias.empty())
+        output_matrix.rowwise() += bias.as_vector().transpose();
 
     if (fuse_relu)
         output.as_vector().array() = output.as_vector().array().cwiseMax(0.0f);
@@ -650,7 +673,8 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
                          TensorView& input_delta, bool accumulate)
 {
     weight_gradient.as_matrix().noalias() = input.as_flat_matrix().transpose() * output_delta.as_flat_matrix();
-    bias_gradient.as_vector().noalias()   = output_delta.as_flat_matrix().colwise().sum();
+    if (!bias_gradient.empty())
+        bias_gradient.as_vector().noalias() = output_delta.as_flat_matrix().colwise().sum();
 
     if (!input_delta.data || input_delta.empty()) return;
 
@@ -772,8 +796,8 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        // gamma * delta is reused three times; compute it once into the output buffer (no extra
-        // allocation) and reuse it for both reductions and the final update.
+        // gamma * delta computed once into the output buffer, reused by both
+        // reductions and the final update (no extra allocation).
         input_delta_map = gamma_map * output_delta_map;
 
         const float sum_scaled_gradient      = input_delta_map.sum() * inv_D;
@@ -815,7 +839,6 @@ void layer_normalization_add_forward(const TensorView& input, const TensorView& 
         return;
     }
 #endif
-    // CPU: add then normalize (the add result goes into `sum`).
     add(input, residual, sum);
     layer_normalization_forward_cpu(sum, gamma, beta, means, standard_deviations, normalized, output);
 }
@@ -834,6 +857,384 @@ void layer_normalization_backward(const TensorView& input, const TensorView& out
     }
     layer_normalization_backward_cpu(output_delta, standard_deviations, normalized, gamma,
                             gamma_gradient, beta_gradient, input_delta);
+}
+
+static void rms_normalization_forward_cpu(const TensorView& input, const TensorView& weight,
+                            TensorView& inverse_rms, TensorView& normalized, TensorView& output,
+                            float epsilon)
+{
+    const Index embedding_dimension = input.shape.back();
+    const Index total_rows = input.size() / embedding_dimension;
+    const float inv_D = 1.0f / to_type(embedding_dimension);
+
+    const float* input_data      = input.as<float>();
+    float* inverse_rms_data      = inverse_rms.as<float>();
+    float* normalized_data       = normalized.as<float>();
+    float* output_data           = output.as<float>();
+    const float* weight_data     = weight.as<float>();
+
+    #pragma omp parallel for
+    for (Index row = 0; row < total_rows; ++row)
+    {
+        const float* input_row = input_data + row * embedding_dimension;
+        float* norm_row        = normalized_data + row * embedding_dimension;
+        float* out_row         = output_data + row * embedding_dimension;
+
+        const Map<const Array<float, Dynamic, 1>> input_map(input_row, embedding_dimension);
+        // RMSNorm normalizes by the root mean square only; no mean subtraction.
+        const float mean_square = input_map.square().sum() * inv_D;
+        const float inverse     = 1.0f / sqrt(mean_square + epsilon);
+
+        inverse_rms_data[row] = inverse;
+
+        for (Index dim = 0; dim < embedding_dimension; ++dim)
+        {
+            const float x_hat = input_row[dim] * inverse;
+            norm_row[dim] = x_hat;
+            out_row[dim]  = weight_data[dim] * x_hat;
+        }
+    }
+}
+
+static void rms_normalization_backward_cpu(const TensorView& output_delta,
+                             const TensorView& inverse_rms,
+                             const TensorView& normalized,
+                             const TensorView& weight,
+                             const TensorView& weight_gradient,
+                             TensorView& input_delta)
+{
+    const Index embedding_dimension = output_delta.shape.back();
+    const Index total_rows = output_delta.size() / embedding_dimension;
+    const float inv_D = 1.0f / to_type(embedding_dimension);
+
+    const MatrixMap output_delta_flat = output_delta.as_flat_matrix();
+    const MatrixMap norm_flat         = normalized.as_flat_matrix();
+
+    // dWeight = sum over rows of (output_delta * x_hat). RMSNorm has no bias.
+    weight_gradient.as_vector().noalias() = (output_delta_flat.array() * norm_flat.array()).matrix().colwise().sum();
+
+    if (input_delta.empty()) return;
+
+    const float* output_delta_data = output_delta.as<float>();
+    const float* norm_data         = normalized.as<float>();
+    const float* inverse_rms_data  = inverse_rms.as<float>();
+    const float* weight_data       = weight.as<float>();
+    float* input_delta_data        = input_delta.as<float>();
+
+    #pragma omp parallel for
+    for (Index row = 0; row < total_rows; ++row)
+    {
+        const float* output_delta_row = output_delta_data + row * embedding_dimension;
+        const float* norm_row         = norm_data + row * embedding_dimension;
+        float* input_delta_row        = input_delta_data + row * embedding_dimension;
+        const float inverse = inverse_rms_data[row];
+
+        const Map<const Array<float, Dynamic, 1>> weight_map(weight_data, embedding_dimension);
+        const Map<const Array<float, Dynamic, 1>> output_delta_map(output_delta_row, embedding_dimension);
+        const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
+        Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
+
+        // d = weight * output_delta, reused for both the reduction and the update.
+        // Unlike layer norm there is no -mean(d) term (no mean subtraction).
+        input_delta_map = weight_map * output_delta_map;
+
+        const float mean_d_norm = (input_delta_map * norm_map).sum() * inv_D;
+
+        input_delta_map = (input_delta_map - norm_map * mean_d_norm) * inverse;
+    }
+}
+
+void rms_normalization_forward(const TensorView& input, const TensorView& weight,
+                      TensorView& inverse_rms, TensorView& normalized, TensorView& output,
+                      float epsilon)
+{
+    if (input.is_cuda()) { rms_normalization_forward_gpu(input, weight, inverse_rms, output, epsilon); return; }
+    rms_normalization_forward_cpu(input, weight, inverse_rms, normalized, output, epsilon);
+}
+
+void rms_normalization_backward(const TensorView& input, const TensorView& output_delta,
+                       const TensorView& inverse_rms, const TensorView& normalized,
+                       const TensorView& weight, const TensorView& weight_gradient,
+                       TensorView& input_delta)
+{
+    if (input.is_cuda())
+    {
+        rms_normalization_backward_gpu(input, output_delta, inverse_rms, weight,
+                              weight_gradient, input_delta);
+        return;
+    }
+    rms_normalization_backward_cpu(output_delta, inverse_rms, normalized, weight,
+                          weight_gradient, input_delta);
+}
+
+void rotary_build_tables(TensorView& cos_table, TensorView& sin_table,
+                         Index sequence_length, Index rotary_dim, float base)
+{
+    float* cos_data = cos_table.as<float>();
+    float* sin_data = sin_table.as<float>();
+    const Index half = rotary_dim / 2;
+
+    // HF convention: inv_freq[i] = base^(-2i/rotary_dim), emb = cat(freqs, freqs),
+    // so cos/sin of a position are duplicated across the two halves. float32 math
+    // to match transformers' Qwen3RotaryEmbedding.
+    #pragma omp parallel for
+    for (Index pos = 0; pos < sequence_length; ++pos)
+        for (Index i = 0; i < half; ++i)
+        {
+            const float inv_freq = 1.0f / powf(base, (2.0f * float(i)) / float(rotary_dim));
+            const float angle    = float(pos) * inv_freq;
+            const float c = cosf(angle);
+            const float s = sinf(angle);
+            cos_data[pos * rotary_dim + i]        = c;
+            cos_data[pos * rotary_dim + i + half] = c;
+            sin_data[pos * rotary_dim + i]        = s;
+            sin_data[pos * rotary_dim + i + half] = s;
+        }
+}
+
+static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
+                        TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    const Index seq       = input.shape[1];
+    const Index model_dim = input.shape.back();
+    const Index num_heads = model_dim / head_dim;
+    const Index rows      = input.size() / model_dim;
+    const Index half      = rotary_dim / 2;
+
+    const float* in       = input.as<float>();
+    float* out            = output.as<float>();
+    const float* cos_data = cos_table.as<float>();
+    const float* sin_data = sin_table.as<float>();
+
+    #pragma omp parallel for
+    for (Index row = 0; row < rows; ++row)
+    {
+        const Index pos = (row % seq) + position_offset;
+        const float* cr = cos_data + pos * rotary_dim;
+        const float* sr = sin_data + pos * rotary_dim;
+
+        for (Index h = 0; h < num_heads; ++h)
+        {
+            const Index base = row * model_dim + h * head_dim;
+            // y = x*cos + rotate_half(x)*sin, rotate_half pairs (j, j+half).
+            for (Index j = 0; j < rotary_dim; ++j)
+            {
+                const float rotated = (j < half) ? -in[base + j + half] : in[base + j - half];
+                out[base + j] = in[base + j] * cr[j] + rotated * sr[j];
+            }
+            for (Index j = rotary_dim; j < head_dim; ++j)
+                out[base + j] = in[base + j];
+        }
+    }
+}
+
+static void rotary_backward_cpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
+                         TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    const Index seq       = output_delta.shape[1];
+    const Index model_dim = output_delta.shape.back();
+    const Index num_heads = model_dim / head_dim;
+    const Index rows      = output_delta.size() / model_dim;
+    const Index half      = rotary_dim / 2;
+
+    const float* dout     = output_delta.as<float>();
+    float* din            = input_delta.as<float>();
+    const float* cos_data = cos_table.as<float>();
+    const float* sin_data = sin_table.as<float>();
+
+    #pragma omp parallel for
+    for (Index row = 0; row < rows; ++row)
+    {
+        const Index pos = (row % seq) + position_offset;
+        const float* cr = cos_data + pos * rotary_dim;
+        const float* sr = sin_data + pos * rotary_dim;
+
+        for (Index h = 0; h < num_heads; ++h)
+        {
+            const Index base = row * model_dim + h * head_dim;
+            // Inverse rotation: transpose of the forward map (sin negated).
+            for (Index j = 0; j < rotary_dim; ++j)
+            {
+                const float rotated = (j < half) ? -dout[base + j + half] : dout[base + j - half];
+                din[base + j] = dout[base + j] * cr[j] - rotated * sr[j];
+            }
+            for (Index j = rotary_dim; j < head_dim; ++j)
+                din[base + j] = dout[base + j];
+        }
+    }
+}
+
+void rotary_forward(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
+                    TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    if (input.is_cuda()) { rope_forward_gpu(input, cos_table, sin_table, output, head_dim, rotary_dim, position_offset); return; }
+    rotary_forward_cpu(input, cos_table, sin_table, output, head_dim, rotary_dim, position_offset);
+}
+
+void rotary_backward(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
+                     TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    if (output_delta.is_cuda()) { rope_backward_gpu(output_delta, cos_table, sin_table, input_delta, head_dim, rotary_dim, position_offset); return; }
+    rotary_backward_cpu(output_delta, cos_table, sin_table, input_delta, head_dim, rotary_dim, position_offset);
+}
+
+static void swiglu_forward_cpu(const TensorView& gate, const TensorView& up, TensorView& output)
+{
+    const Index n = gate.size();
+    const float* g = gate.as<float>();
+    const float* u = up.as<float>();
+    float* o       = output.as<float>();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        const float gi = g[i];
+        const float silu = gi / (1.0f + expf(-gi));   // gi * sigmoid(gi)
+        o[i] = silu * u[i];
+    }
+}
+
+static void swiglu_backward_cpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
+                         TensorView& gate_delta, TensorView& up_delta)
+{
+    const Index n = output_delta.size();
+    const float* d = output_delta.as<float>();
+    const float* g = gate.as<float>();
+    const float* u = up.as<float>();
+    float* dg = gate_delta.empty() ? nullptr : gate_delta.as<float>();
+    float* du = up_delta.empty()   ? nullptr : up_delta.as<float>();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        const float gi  = g[i];
+        const float sig = 1.0f / (1.0f + expf(-gi));
+        const float silu = gi * sig;
+        if (du) du[i] = d[i] * silu;
+        // d(silu)/dgate = sigmoid + gate*sigmoid*(1 - sigmoid).
+        if (dg) dg[i] = d[i] * u[i] * sig * (1.0f + gi * (1.0f - sig));
+    }
+}
+
+void swiglu_forward(const TensorView& gate, const TensorView& up, TensorView& output)
+{
+    if (gate.is_cuda()) { swiglu_forward_gpu(gate, up, output); return; }
+    swiglu_forward_cpu(gate, up, output);
+}
+
+void swiglu_backward(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
+                     TensorView& gate_delta, TensorView& up_delta)
+{
+    if (output_delta.is_cuda()) { swiglu_backward_gpu(output_delta, gate, up, gate_delta, up_delta); return; }
+    swiglu_backward_cpu(output_delta, gate, up, gate_delta, up_delta);
+}
+
+void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
+                               TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
+                               bool causal, float scale, Index query_position_offset)
+{
+    if (query.is_cuda()) {
+        grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
+                              causal, scale, query_position_offset);
+        return;
+    }
+
+    const Index batch     = query.shape[0];
+    const Index query_seq = query.shape[1];
+    const Index key_seq   = key.shape[1];
+    const Index group     = n_query_heads / n_kv_heads;   // query heads per kv head
+
+    const float* Q = query.as<float>();
+    const float* K = key.as<float>();
+    const float* V = value.as<float>();
+    float* O       = output.as<float>();
+
+    // Flat offset of head h's vector for token t (heads contiguous within a token).
+    auto q_off = [&](Index b, Index t, Index h) { return ((b * query_seq + t) * n_query_heads + h) * head_dim; };
+    auto kv_off = [&](Index b, Index t, Index h) { return ((b * key_seq + t) * n_kv_heads + h) * head_dim; };
+
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch; ++b)
+        for (Index hq = 0; hq < n_query_heads; ++hq)
+        {
+            const Index hkv = hq / group;
+            vector<float> scores(size_t(key_seq), 0.0f);
+
+            for (Index i = 0; i < query_seq; ++i)
+            {
+                // Causal mask: query i (absolute position query_position_offset+i)
+                // attends key positions 0..(query_position_offset+i).
+                const Index valid = causal ? min(query_position_offset + i + 1, key_seq) : key_seq;
+                const float* q_vec = Q + q_off(b, i, hq);
+
+                float max_score = -numeric_limits<float>::infinity();
+                for (Index j = 0; j < valid; ++j)
+                {
+                    const float* k_vec = K + kv_off(b, j, hkv);
+                    float dot = 0.0f;
+                    for (Index d = 0; d < head_dim; ++d) dot += q_vec[d] * k_vec[d];
+                    dot *= scale;
+                    scores[size_t(j)] = dot;
+                    max_score = max(max_score, dot);
+                }
+
+                float sum = 0.0f;
+                for (Index j = 0; j < valid; ++j)
+                {
+                    const float e = expf(scores[size_t(j)] - max_score);
+                    scores[size_t(j)] = e;
+                    sum += e;
+                }
+                const float inv_sum = 1.0f / sum;
+
+                float* o_vec = O + q_off(b, i, hq);
+                for (Index d = 0; d < head_dim; ++d) o_vec[d] = 0.0f;
+                for (Index j = 0; j < valid; ++j)
+                {
+                    const float p = scores[size_t(j)] * inv_sum;
+                    const float* v_vec = V + kv_off(b, j, hkv);
+                    for (Index d = 0; d < head_dim; ++d) o_vec[d] += p * v_vec[d];
+                }
+            }
+        }
+}
+
+void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
+                     Index head_dim, float epsilon)
+{
+    if (input.is_cuda()) { qk_norm_gpu(input, weight, output, head_dim, epsilon); return; }
+
+    const Index rows  = input.size() / head_dim;   // batch * seq * heads
+    const float inv_D = 1.0f / to_type(head_dim);
+
+    const float* x = input.as<float>();
+    float* o       = output.as<float>();
+    const float* w = weight.as<float>();
+
+    #pragma omp parallel for
+    for (Index r = 0; r < rows; ++r)
+    {
+        const float* x_row = x + r * head_dim;
+        float* o_row       = o + r * head_dim;
+
+        const Map<const Array<float, Dynamic, 1>> x_map(x_row, head_dim);
+        const float mean_square = x_map.square().sum() * inv_D;
+        const float inverse     = 1.0f / sqrt(mean_square + epsilon);
+
+        for (Index d = 0; d < head_dim; ++d)
+            o_row[d] = w[d] * x_row[d] * inverse;
+    }
+}
+
+void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output)
+{
+    // logits = input @ embed_weight^T. embed_weight is the token-embedding matrix
+    // [vocabulary, hidden]; sharing it avoids a duplicated lm_head weight. Raw
+    // logits (no softmax): parity with HF's tied lm_head (F.linear(x, embed)).
+    // Also used as the generic bias-free linear (y = x @ W^T) in the Qwen3 forward.
+    if (input.is_cuda()) { multiply(input, false, embed_weight, true, output, 1.0f, 0.0f); return; }
+    output.as_flat_matrix().noalias() =
+        input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
 
 static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
@@ -1633,11 +2034,13 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     }
     else
     {
+        const bool has_bias = bias_gradient.size() > 0;
         run_lt_matmul_cached(
             output_columns, input_columns, total_rows,
             CUBLAS_OP_N, CUBLAS_OP_T,
-            CUBLASLT_EPILOGUE_BGRADA,
-            output_delta.data, input_for_gemm, weight_gradient.data, bias_gradient.as<float>(),
+            has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT,
+            output_delta.data, input_for_gemm, weight_gradient.data,
+            has_bias ? bias_gradient.as<float>() : nullptr,
             output_delta.cuda_dtype(),
             CUDA_R_32F);
     }
@@ -1682,6 +2085,120 @@ static void layer_normalization_backward_gpu(const TensorView& input, const Tens
                                    gamma.as<float>(),
                                    input_delta_data,
                                    gamma_gradient.as<float>(), beta_gradient.as<float>());
+    });
+}
+
+static void rms_normalization_forward_gpu(const TensorView& input, const TensorView& weight,
+                            TensorView& inverse_rms, TensorView& output, float epsilon)
+{
+    const int rows = to_int(input.size() / input.shape.back());
+    const int cols = to_int(input.shape.back());
+
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        rmsnorm_forward_cuda<T>(rows, cols,
+                                input.as<T>(), output.as<T>(),
+                                inverse_rms.as<float>(),
+                                weight.as<float>(), epsilon);
+    });
+}
+
+static void rms_normalization_backward_gpu(const TensorView& input, const TensorView& output_delta,
+                             const TensorView& inverse_rms, const TensorView& weight,
+                             const TensorView& weight_gradient, TensorView& input_delta)
+{
+    const int rows = to_int(input.size() / input.shape.back());
+    const int cols = to_int(input.shape.back());
+
+    input.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        T* input_delta_data = input_delta.empty() ? nullptr : input_delta.as<T>();
+
+        rmsnorm_backward_cuda<T>(rows, cols,
+                                 output_delta.as<T>(), input.as<T>(),
+                                 inverse_rms.as<float>(), weight.as<float>(),
+                                 input_delta_data, weight_gradient.as<float>());
+    });
+}
+
+static void rope_forward_gpu(const TensorView& input, const TensorView& cos_table, const TensorView& sin_table,
+                             TensorView& output, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    const int seq       = to_int(input.shape[1]);
+    const int model_dim = to_int(input.shape.back());
+    const int rows      = to_int(input.size() / input.shape.back());
+
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        rope_forward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
+                             input.as<T>(), output.as<T>(),
+                             cos_table.as<float>(), sin_table.as<float>());
+    });
+}
+
+static void rope_backward_gpu(const TensorView& output_delta, const TensorView& cos_table, const TensorView& sin_table,
+                              TensorView& input_delta, Index head_dim, Index rotary_dim, Index position_offset)
+{
+    const int seq       = to_int(output_delta.shape[1]);
+    const int model_dim = to_int(output_delta.shape.back());
+    const int rows      = to_int(output_delta.size() / output_delta.shape.back());
+
+    input_delta.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        rope_backward_cuda<T>(rows, seq, model_dim, to_int(head_dim), to_int(rotary_dim), to_int(position_offset),
+                              output_delta.as<T>(), input_delta.as<T>(),
+                              cos_table.as<float>(), sin_table.as<float>());
+    });
+}
+
+static void swiglu_forward_gpu(const TensorView& gate, const TensorView& up, TensorView& output)
+{
+    const int n = to_int(gate.size());
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        swiglu_forward_cuda<T>(n, gate.as<T>(), up.as<T>(), output.as<T>());
+    });
+}
+
+static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView& gate, const TensorView& up,
+                                TensorView& gate_delta, TensorView& up_delta)
+{
+    const int n = to_int(output_delta.size());
+    output_delta.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        T* gate_delta_data = gate_delta.empty() ? nullptr : gate_delta.as<T>();
+        T* up_delta_data   = up_delta.empty()   ? nullptr : up_delta.as<T>();
+        swiglu_backward_cuda<T>(n, output_delta.as<T>(), gate.as<T>(), up.as<T>(),
+                                gate_delta_data, up_delta_data);
+    });
+}
+
+static void grouped_attention_gpu(const TensorView& query, const TensorView& key, const TensorView& value,
+                                  TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
+                                  bool causal, float scale, Index query_position_offset)
+{
+    const int batch     = to_int(query.shape[0]);
+    const int query_seq = to_int(query.shape[1]);
+    const int key_seq   = to_int(key.shape[1]);
+
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        grouped_attention_cuda<T>(batch, query_seq, key_seq, to_int(n_query_heads), to_int(n_kv_heads),
+                                  to_int(head_dim), scale, to_int(query_position_offset), causal,
+                                  query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>());
+    });
+}
+
+static void qk_norm_gpu(const TensorView& input, const TensorView& weight, TensorView& output,
+                        Index head_dim, float epsilon)
+{
+    const int rows = to_int(input.size() / head_dim);
+    Buffer inv_rms(Device::CUDA);
+    inv_rms.resize_bytes(Index(rows) * Index(sizeof(float)), Device::CUDA);
+    output.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        rmsnorm_forward_cuda<T>(rows, to_int(head_dim), input.as<T>(), output.as<T>(),
+                                inv_rms.as<float>(), weight.as<float>(), epsilon);
     });
 }
 

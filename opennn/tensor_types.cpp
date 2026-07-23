@@ -17,7 +17,10 @@ namespace opennn
 
 cudnnTensorDescriptor_t TensorView::get_descriptor() const
 {
-    if (!descriptor_handle && !shape.empty())
+    // (Re)set on every call: arena views live across passes and
+    // set_active_sequence_length mutates their shape in place; a descriptor
+    // cached at first use would keep the old length. Cheap host-side setter.
+    if (!shape.empty())
         set_descriptor(shape);
     return descriptor_handle.get();
 }

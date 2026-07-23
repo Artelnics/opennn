@@ -206,6 +206,15 @@ public:
     // the CUDA fp32 master before allocating large activation arenas.
     void release_bf16_fp32_parameter_master_for_inference();
 
+    // BF16 inference upload for LARGE models (billions of parameters): builds the
+    // device bf16 mirror + the compact fp32 storage tensor by tensor from the
+    // HOST fp32 master, then releases it. Unlike copy_parameters_device() it never
+    // materialises the full fp32 master on the device (no 24 GB peak for a 4B
+    // model) and never operates on the whole >2^31-element buffer at once (no
+    // 32-bit CUDA-wrapper overflow). Precondition: host-resident fp32 parameters
+    // and a CUDA/BF16 configuration; otherwise it falls back to copy_parameters_device().
+    void upload_parameters_bf16_inference();
+
     bfloat16* get_parameters_bf16_mirror_data()
     {
         return parameters.device_type == Device::CUDA

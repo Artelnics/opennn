@@ -60,6 +60,36 @@ void Concatenation::set_input_shape(const Shape& new_input_shape)
 }
 
 
+// Legacy "Concatenate" tag: re-wrap the body under the current name so the base
+// loaders find it (get_json_root throws on a tag mismatch).
+const Json* Concatenation::legacy_body(const JsonDocument& document) const
+{
+    if (document.first_child(get_name())) return nullptr;
+    return document.first_child("Concatenate");
+}
+
+void Concatenation::from_JSON(const JsonDocument& document)
+{
+    if (const Json* legacy = legacy_body(document))
+    {
+        Layer::from_JSON(JsonDocument::wrap(get_name(), *legacy));
+        return;
+    }
+
+    Layer::from_JSON(document);
+}
+
+void Concatenation::load_state_from_JSON(const JsonDocument& document)
+{
+    if (const Json* legacy = legacy_body(document))
+    {
+        Layer::load_state_from_JSON(JsonDocument::wrap(get_name(), *legacy));
+        return;
+    }
+
+    Layer::load_state_from_JSON(document);
+}
+
 void Concatenation::read_JSON_body(const Json* root)
 {
     istringstream stream(read_json_string(root, "InputChannels"));
