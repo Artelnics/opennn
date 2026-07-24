@@ -54,9 +54,9 @@ void DetectionV8::read_JSON_body(const Json* root)
 
 void DetectionV8::write_JSON_body(JsonWriter& writer) const
 {
-    add_json_field(writer, "ClassesNumber", to_string(detection.classes_number));
-    add_json_field(writer, "GridSize",      to_string(detection.grid_size));
-    add_json_field(writer, "GridWidth",     to_string(detection.grid_width));
+    add_json_field(writer, "ClassesNumber", detection.classes_number);
+    add_json_field(writer, "GridSize",      detection.grid_size);
+    add_json_field(writer, "GridWidth",     detection.grid_width);
 }
 
 REGISTER(Layer, DetectionV8, "DetectionV8")

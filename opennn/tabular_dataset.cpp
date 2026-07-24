@@ -82,7 +82,6 @@ MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Ind
     return variable_data;
 }
 
-MatrixR TabularDataset::get_variable_data(const string& column_name) const { return get_variable_data(get_variable_index(column_name)); }
 
 bool TabularDataset::has_nan() const
 {
@@ -108,7 +107,7 @@ void TabularDataset::save_data() const
     ofstream file(data_path);
 
     throw_if(!file.is_open(),
-             format("Cannot open matrix data file: {}\n", data_path.string()));
+             "Cannot open matrix data file: {}\n", data_path.string());
 
     file.precision(20);
 
@@ -135,7 +134,7 @@ void TabularDataset::save_data() const
     }
 
     throw_if(!file,
-             format("Failed to write matrix data file: {}", data_path.string()));
+             "Failed to write matrix data file: {}", data_path.string());
 }
 
 void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
@@ -514,8 +513,8 @@ void TabularDataset::set(const filesystem::path& new_data_path,
 
     missing_values_method = MissingValuesMethod::Mean;
 
-    input_shape = { get_features_number("Input") };
-    target_shape = { get_features_number("Target") };
+    input_shape = { get_features_number(VariableRole::Input) };
+    target_shape = { get_features_number(VariableRole::Target) };
 }
 
 void TabularDataset::set(const filesystem::path& file_name)
@@ -529,10 +528,10 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
 
-    const Index input_variables_number = get_variables_number("Input");
-    const Index target_variables_number = get_variables_number("Target");
+    const Index input_variables_number = get_variables_number(VariableRole::Input);
+    const Index target_variables_number = get_variables_number(VariableRole::Target);
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
 
     for (Index i = 0; i < input_variables_number; ++i)
     {
@@ -560,8 +559,8 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
         }
     }
 
-    resize_input_shape(get_features_number("Input"));
-    set_shape("Target", { get_features_number("Target") });
+    resize_input_shape(get_features_number(VariableRole::Input));
+    set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
 
     return unused_variables;
 }
@@ -570,16 +569,16 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
 {
     vector<string> unused_variables;
 
-    const Index input_variables_number = get_variables_number("Input");
+    const Index input_variables_number = get_variables_number(VariableRole::Input);
 
     if (inputs_to_keep <= 0 || input_variables_number <= inputs_to_keep)
         return unused_variables;
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
 
-    const Index target_variables_number = get_variables_number("Target");
+    const Index target_variables_number = get_variables_number(VariableRole::Target);
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
 
     // Rank each input by its strongest absolute correlation with any target;
     // inputs whose correlations are all NaN rank last.
@@ -615,8 +614,8 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
         unused_variables.push_back(variable.name);
     }
 
-    resize_input_shape(get_features_number("Input"));
-    set_shape("Target", { get_features_number("Target") });
+    resize_input_shape(get_features_number(VariableRole::Input));
+    set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
 
     return unused_variables;
 }
@@ -803,22 +802,22 @@ vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool p
 // engine walks input variables when building the positive/negative statistics table.
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
 {
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
     if (target_feature_indices.empty()) return {};
 
     return descriptives(data,
                         filter_used_samples_by_column(target_feature_indices[0], true),
-                        get_feature_indices("Input"));
+                        get_feature_indices(VariableRole::Input));
 }
 
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_samples() const
 {
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
     if (target_feature_indices.empty()) return {};
 
     return descriptives(data,
                         filter_used_samples_by_column(target_feature_indices[0], false),
-                        get_feature_indices("Input"));
+                        get_feature_indices(VariableRole::Input));
 }
 
 // Multi-class variant: `class_index` is the one-hot feature index of one target
@@ -827,7 +826,7 @@ vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(
 {
     return descriptives(data,
                         filter_used_samples_by_column(class_index, true),
-                        get_feature_indices("Input"));
+                        get_feature_indices(VariableRole::Input));
 }
 
 Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlations(
@@ -836,11 +835,11 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlati
 {
     if (display) cout << "Calculating " << method_name << " correlations..." << "\n";
 
-    const Index input_variables_number = get_variables_number("Input");
-    const Index target_variables_number = get_variables_number("Target");
+    const Index input_variables_number = get_variables_number(VariableRole::Input);
+    const Index target_variables_number = get_variables_number(VariableRole::Target);
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const vector<Index> target_variable_indices = get_variable_indices("Target");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
+    const vector<Index> target_variable_indices = get_variable_indices(VariableRole::Target);
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
@@ -880,7 +879,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 {
     if (display) cout << "Calculating " << method_name << " inputs correlations..." << "\n";
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
 
     const Index input_variables_number = input_variable_indices.size();
 
@@ -1003,7 +1002,7 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
         // mode. Training samples only, matching the Matrix path below.
         if (cache_transform_descriptives.empty())
         {
-            vector<Index> statistic_sample_indices = get_sample_indices("Training");
+            vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
             if (statistic_sample_indices.empty())
                 statistic_sample_indices = get_used_sample_indices();
 
@@ -1023,7 +1022,7 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
         return feature_descriptives;
     }
 
-    vector<Index> statistic_sample_indices = get_sample_indices("Training");
+    vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
     if (statistic_sample_indices.empty())
         statistic_sample_indices = get_used_sample_indices();
 
@@ -1089,14 +1088,7 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     // A freshly-created model (before the first import) carries only a
     // DataSource: Variables/Samples/MissingValues/PreviewData are produced by
     // read_csv. Read them only when present so load() works pre-import.
-    if (const Json* variables_element = root->find("Variables"))
-        variables_from_JSON(variables_element);
-    if (const Json* samples_element = root->find("Samples"))
-        samples_from_JSON(samples_element);
-    if (const Json* missing_values_element = root->find("MissingValues"))
-        missing_values_from_JSON(missing_values_element);
-    if (const Json* preview_data_element = root->find("PreviewData"))
-        preview_data_from_JSON(preview_data_element);
+    read_json_blocks(root);
 
     set_display(read_json_bool(root, "Display"));
 
@@ -1121,20 +1113,20 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
                 uint64_t(get_samples_number()) * uint64_t(cache_columns_number) * sizeof(float);
 
             throw_if(cache_reader.file_size() != expected_bytes,
-                     format("Binary data cache size mismatch for {} (got {} bytes, expected {}).",
-                            cache_path.string(), cache_reader.file_size(), expected_bytes));
+                     "Binary data cache size mismatch for {} (got {} bytes, expected {}).",
+                            cache_path.string(), cache_reader.file_size(), expected_bytes);
         }
     }
 
-    input_shape = { get_features_number("Input") };
-    target_shape = { get_features_number("Target") };
+    input_shape = { get_features_number(VariableRole::Input) };
+    target_shape = { get_features_number(VariableRole::Target) };
 }
 
 VectorI TabularDataset::calculate_target_distribution() const
 {
     const Index samples_number = get_samples_number();
-    const Index targets_number = get_features_number("Target");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const Index targets_number = get_features_number(VariableRole::Target);
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
 
     VectorI class_distribution;
 
@@ -1146,8 +1138,6 @@ VectorI TabularDataset::calculate_target_distribution() const
 
         for (Index i = 0; i < samples_number; ++i)
         {
-            if (sample_roles[i] == SampleRole::None) continue;
-
             const float value = data(i, target_feature);
 
             if (isnan(value)) continue;
@@ -1161,9 +1151,6 @@ VectorI TabularDataset::calculate_target_distribution() const
 
         for (Index i = 0; i < samples_number; ++i)
         {
-            if (sample_roles[i] == SampleRole::None)
-                continue;
-
             for (Index j = 0; j < targets_number; ++j)
             {
                 const float value = data(i, target_feature_indices[j]);
@@ -1279,33 +1266,6 @@ void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
     set_sample_roles(outliers_samples, "None");
 }
 
-void TabularDataset::set_data_rosenbrock()
-{
-    const Index samples_number = get_samples_number();
-    const Index features_number = get_features_number();
-
-    set_data_random();
-
-#pragma omp parallel for
-
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        float rosenbrock(0);
-
-        for (Index j = 0; j < features_number - 1; ++j)
-        {
-            const float value = data(i, j);
-            const float first_term = 1.0f - value;
-            const float second_term = data(i, j + 1) - value * value;
-
-            rosenbrock += first_term * first_term + 100.0f * second_term * second_term;
-        }
-
-        data(i, features_number - 1) = rosenbrock;
-    }
-
-}
-
 void TabularDataset::set_data_binary_classification()
 {
     const Index samples_number = get_samples_number();
@@ -1347,7 +1307,7 @@ static void parse_datetime_token(float* row, Index feature_index,
         return;
     }
 
-    const time_t timestamp = date_to_timestamp(string(token), gmt, date_format);
+    const time_t timestamp = date_to_timestamp(token, gmt, date_format);
     throw_if(timestamp == -1, "Date format is unsupported or date is prior to 1970.");
     row[feature_index] = timestamp;
 }
@@ -1399,8 +1359,6 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
     if (!any_datetime)
         return Auto;
 
-    static const regex date_re(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)");
-
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
     string scratch;
@@ -1423,17 +1381,8 @@ static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
             if (is_missing_token(token, missing_values_label))
                 continue;
 
-            cmatch date_parts;
-            if (regex_match(token.data(), token.data() + token.size(), date_parts, date_re))
-            {
-                const int part1 = stoi(date_parts[1].str());
-                const int part2 = stoi(date_parts[2].str());
-
-                if (part1 > 12)
-                    return Dmy;
-                if (part2 > 12)
-                    return Mdy;
-            }
+            const DateFormat detected = detect_date_format(token);
+            if (detected != Auto) return detected;
         }
     }
 
@@ -1461,7 +1410,7 @@ void TabularDataset::read_csv()
     string header_scratch;
 
     throw_if(lines.empty(),
-             format("File {} is empty or contains no valid data rows.", data_path.string()));
+             "File {} is empty or contains no valid data rows.", data_path.string());
 
     read_data_file_preview(lines, file_separator, has_quotes);
 
@@ -1877,25 +1826,19 @@ void TabularDataset::set_missing_values_method(const string& new_missing_values_
     throw runtime_error("Unknown method type.\n");
 }
 
-bool TabularDataset::has_missing_values(const vector<string_view>& row) const
-{
-    return ranges::any_of(row,
-                          [&](string_view t) { return is_missing_token(t, missing_values_label); });
-}
-
 void TabularDataset::missing_values_to_JSON(JsonWriter &printer) const
 {
     printer.open_element("MissingValues");
 
     if (missing_values_number > 0)
         write_json(printer, {
-            {"MissingValuesNumber", to_string(missing_values_number)},
+            {"MissingValuesNumber", missing_values_number},
             {"MissingValuesMethod", get_missing_values_method_string()},
             {"VariablesMissingValuesNumber", vector_to_string(variables_missing_values_number)},
-            {"SamplesMissingValuesNumber", to_string(rows_missing_values_number)}
+            {"SamplesMissingValuesNumber", rows_missing_values_number}
         });
     else
-        add_json_field(printer, "MissingValuesNumber", to_string(missing_values_number));
+        add_json_field(printer, "MissingValuesNumber", missing_values_number);
 
     printer.close_element();
 }
@@ -1940,7 +1883,7 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
 
     if (used_sample_indices.empty() || used_feature_indices.empty())
         return;
@@ -2005,7 +1948,7 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
     if (storage_mode != StorageMode::BinaryFile) return;
     if (cache_columns_number == 0 || !cache_reader.is_open()) return;
 
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
 
     const Index columns_number = cache_columns_number;
     const Index samples_number = get_samples_number();
@@ -2032,8 +1975,8 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
 void TabularDataset::impute_missing_values_interpolate()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
+    const vector<Index> input_feature_indices = get_feature_indices(VariableRole::Input);
+    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
 
     const Index samples_number = used_sample_indices.size();
 
@@ -2147,11 +2090,6 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     if (total_rows == 0) return;
 
-    vector<size_t> row_indices(total_rows);
-    iota(row_indices.begin(), row_indices.end(), 0);
-
-    shuffle_vector(row_indices);
-
     const size_t rows_to_check = min(size_t(100), total_rows);
     const size_t id_offset = has_sample_ids ? 1 : 0;
 
@@ -2160,7 +2098,11 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
     // con comillas cada fila necesita su propio scratch (no uno reutilizado).
     vector<string> sampled_scratch(rows_to_check);
     for (size_t i = 0; i < rows_to_check; ++i)
-        sampled_tokens[i] = get_token_views_maybe_quoted(sample_lines[row_indices[i]], file_separator, has_quotes, sampled_scratch[i]);
+    {
+        const size_t row = i * total_rows / rows_to_check;
+        sampled_tokens[i] = get_token_views_maybe_quoted(
+            sample_lines[row], file_separator, has_quotes, sampled_scratch[i]);
+    }
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
     {
@@ -2204,12 +2146,12 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     if (!any_categorical) return;
 
-    vector<std::set<string>> unique_categories(variables_number);
+    vector<unordered_set<string>> unique_categories(variables_number);
     const Index n_lines = ssize(sample_lines);
 
     #pragma omp parallel
     {
-        vector<std::set<string>> local(variables_number);
+        vector<unordered_set<string>> local(variables_number);
         string cat_scratch;
         vector<string_view> cat_tokens;
 
@@ -2233,8 +2175,12 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
         if (variables[col_index].is_categorical())
-            variables[col_index].categories.assign(
-                unique_categories[col_index].begin(), unique_categories[col_index].end());
+        {
+            auto& categories = variables[col_index].categories;
+            categories.assign(unique_categories[col_index].begin(),
+                              unique_categories[col_index].end());
+            ranges::sort(categories);
+        }
 }
 
 vector<string> TabularDataset::get_feature_scalers(const string& variable_role) const
@@ -2262,8 +2208,8 @@ void TabularDataset::set_variable_scalers(const vector<string>& new_scalers)
     const size_t variables_number = get_variables_number();
 
     throw_if(new_scalers.size() != variables_number,
-             format("Size of variable scalers({}) has to be the same as variables numbers({}).\n",
-                    new_scalers.size(), variables_number));
+             "Size of variable scalers({}) has to be the same as variables numbers({}).\n",
+                    new_scalers.size(), variables_number);
 
     for (size_t i = 0; i < variables_number; ++i)
         variables[i].set_scaler(new_scalers[i]);
@@ -2279,29 +2225,21 @@ void TabularDataset::set_default_variable_scalers()
 
 void TabularDataset::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("Dataset");
-
-    printer.open_element("DataSource");
-    write_json(printer, {
+    write_json_header(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
-        {"HasHeader", to_string(has_header)},
-        {"HasSamplesId", to_string(has_sample_ids)},
+        {"HasHeader", has_header},
+        {"HasSamplesId", has_sample_ids},
         {"MissingValuesLabel", missing_values_label},
         {"Codification", get_codification_string()},
         {"StorageMode", get_storage_mode_string()}
     });
-    printer.close_element();
 
-    variables_to_JSON(printer);
-    samples_to_JSON(printer);
     missing_values_to_JSON(printer);
     preview_data_to_JSON(printer);
 
-    add_json_field(printer, "Display", to_string(display));
-
-    printer.close_element();
+    write_json_footer(printer);
 }
 
 }

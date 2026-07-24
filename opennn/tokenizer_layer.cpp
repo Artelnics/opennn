@@ -52,9 +52,9 @@ const vector<string>& Tokenizer::get_vocabulary() const
     return tokenizer ? tokenizer->get_vocabulary() : empty_vocabulary;
 }
 
-const unordered_map<string, Index>& Tokenizer::get_vocabulary_map() const
+const TokenizerOperator::VocabularyMap& Tokenizer::get_vocabulary_map() const
 {
-    static const unordered_map<string, Index> empty_vocabulary_map;
+    static const TokenizerOperator::VocabularyMap empty_vocabulary_map;
 
     return tokenizer ? tokenizer->get_vocabulary_map() : empty_vocabulary_map;
 }

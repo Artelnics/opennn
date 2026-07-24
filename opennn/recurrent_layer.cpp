@@ -128,7 +128,7 @@ void Recurrent::read_JSON_body(const Json* recurrent_layer_element)
 void Recurrent::write_JSON_body(JsonWriter& printer) const
 {
     add_json_field(printer, "Activation", get_activation_function());
-    add_json_field(printer, "ReturnSequences", to_string(return_sequences));
+    add_json_field(printer, "ReturnSequences", return_sequences);
 }
 
 string Recurrent::write_expression(const vector<string>& feature_names,

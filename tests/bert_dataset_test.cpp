@@ -9,6 +9,7 @@
 #include "opennn/forward_propagation.h"
 #include "opennn/loss.h"
 #include "opennn/configuration.h"
+#include "opennn/testing_analysis.h"
 
 using namespace opennn;
 
@@ -47,7 +48,8 @@ namespace
         error_code error;
         filesystem::remove(vocab_path, error);
         filesystem::remove(text_path, error);
-        filesystem::remove(text_path + ".bert" + to_string(seq) + ".csv", error);
+        filesystem::remove(text_path + ".bert_v2_" + to_string(seq) + ".csv", error);
+        filesystem::remove(text_path + ".bert_v3_" + to_string(seq) + ".bin", error);
     }
 }
 
@@ -65,17 +67,20 @@ TEST(BertDatasetTest, TokenizesAndWiresRoles)
     EXPECT_EQ(dataset.get_sequence_length(), seq);
     EXPECT_EQ(dataset.get_samples_number(), Index(labelled_text.size()));
 
-    EXPECT_EQ(dataset.get_features_number("Decoder"), seq);   // input_ids  -> word_embeddings
-    EXPECT_EQ(dataset.get_features_number("Input"), seq);     // token_type -> token_type_embeddings
+    EXPECT_EQ(dataset.get_features_number("Decoder"), seq);
+    EXPECT_EQ(dataset.get_features_number("Input"), seq);
     EXPECT_GE(dataset.get_features_number("Target"), 1);
 
     const MatrixR& data = dataset.get_data();
-    EXPECT_FLOAT_EQ(data(0, 0), 2.0f);           // [CLS]
-    EXPECT_FLOAT_EQ(data(0, 1), 4.0f);           // "good"
-    EXPECT_FLOAT_EQ(data(0, 2), 5.0f);           // "movie"
-    EXPECT_FLOAT_EQ(data(0, 3), 3.0f);           // [SEP]
-    EXPECT_FLOAT_EQ(data(0, 4), 0.0f);           // [PAD]
-    EXPECT_FLOAT_EQ(data(0, seq), 1.0f);         // tt_0 = segment 0 (+1)
+    EXPECT_FLOAT_EQ(data(0, 0), 2.0f);
+    EXPECT_FLOAT_EQ(data(0, 1), 4.0f);
+    EXPECT_FLOAT_EQ(data(0, 2), 5.0f);
+    EXPECT_FLOAT_EQ(data(0, 3), 3.0f);
+    EXPECT_FLOAT_EQ(data(0, 4), 0.0f);
+    EXPECT_FLOAT_EQ(data(0, seq), 1.0f);
+
+    BertDataset cached_dataset(text_path, vocab_path, seq);
+    EXPECT_TRUE(cached_dataset.get_data().isApprox(data));
 
     clean_up(vocab_path, text_path, seq);
     Configuration::instance().set();
@@ -101,13 +106,13 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
-            input_ids[size_t(b * seq + s)]  = data(b, s);          // cols 0..seq-1
-            token_type[size_t(b * seq + s)] = data(b, seq + s);    // cols seq..2seq-1
+            input_ids[size_t(b * seq + s)]  = data(b, s);
+            token_type[size_t(b * seq + s)] = data(b, seq + s);
         }
 
     BertForSequenceClassification model(seq, Index(bert_vocabulary.size()),
-                                        /*hidden*/ 8, /*heads*/ 2, /*intermediate*/ 16,
-                                        /*layers*/ 1, labels);
+                                                   8,           2,                  16,
+                                                   1, labels);
     model.set_parameters_random();
 
     ForwardPropagation forward_propagation(batch, &model);
@@ -144,8 +149,8 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     const Index labels = dataset.get_features_number("Target");
 
     BertForSequenceClassification model(seq, Index(bert_vocabulary.size()),
-                                        /*hidden*/ 8, /*heads*/ 2, /*intermediate*/ 16,
-                                        /*layers*/ 1, labels);
+                                                   8,           2,                  16,
+                                                   1, labels);
     model.set_parameters_random();
 
     Loss loss(&model, &dataset);
@@ -154,6 +159,36 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     const VectorR gradient = calculate_gradient(loss);
     ASSERT_GT(gradient.size(), 0);
     EXPECT_TRUE(gradient.allFinite());
+
+    clean_up(vocab_path, text_path, seq);
+    Configuration::instance().set();
+}
+
+
+TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    const string vocab_path = write_lines("opennn_bertds_vocab4.txt", bert_vocabulary);
+    const string text_path  = write_lines("opennn_bertds_text4.txt", labelled_text);
+
+    const Index seq = 8;
+    BertDataset dataset(text_path, vocab_path, seq);
+    dataset.set_sample_roles("Testing");
+
+    const Index labels = dataset.get_features_number("Target");
+    BertForSequenceClassification model(
+        seq, Index(bert_vocabulary.size()), 8, 2, 16, 1, labels);
+    model.set_parameters_random();
+
+    TestingAnalysis testing_analysis(&model, &dataset);
+    testing_analysis.set_batch_size(3);
+
+    const MatrixI confusion = testing_analysis.calculate_confusion();
+
+    EXPECT_EQ(confusion.rows(), 3);
+    EXPECT_EQ(confusion.cols(), 3);
+    EXPECT_EQ(confusion.bottomRightCorner(1, 1)(0, 0), dataset.get_samples_number());
 
     clean_up(vocab_path, text_path, seq);
     Configuration::instance().set();

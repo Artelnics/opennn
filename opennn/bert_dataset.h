@@ -27,11 +27,10 @@ private:
 
     Index sequence_length = 0;
 
-    void write_tokens_csv(const filesystem::path& text_file,
-                          const filesystem::path& vocabulary_file,
-                          const filesystem::path& csv_path) const;
-
-    void configure_bert_roles();
+    bool load_cache(const filesystem::path&);
+    void build(const filesystem::path&, const filesystem::path&);
+    void save_cache(const filesystem::path&, const vector<string>&) const;
+    void configure(const vector<string>&, Index);
 };
 
 }

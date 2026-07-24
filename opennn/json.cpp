@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "json.h"
+#include "io_utilities.h"
 #include "string_utilities.h"
 
 #include <cctype>
@@ -19,35 +20,36 @@ namespace opennn
 Json Json::make_object() { Json j; j.kind = Kind::Object; return j; }
 Json Json::make_array () { Json j; j.kind = Kind::Array;  return j; }
 
-bool Json::has(const string& key) const
+bool Json::has(string_view key) const
 {
     return find(key) != nullptr;
 }
 
-const Json* Json::find(const string& key) const
+const Json* Json::find(string_view key) const
 {
     if (!is_object()) return nullptr;
-    auto it = ranges::find(object_value, key, &pair<string, Json>::first);
+    auto it = ranges::find_if(object_value,
+                              [key](const auto& item) { return item.first == key; });
     return it != object_value.end() ? &it->second : nullptr;
 }
 
-const Json& Json::at(const string& key) const
+const Json& Json::at(string_view key) const
 {
     const Json* v = find(key);
-    throw_if(!v, format("JSON: missing key '{}'", key));
+    throw_if(!v, "JSON: missing key '{}'", key);
     return *v;
 }
 
-Json& Json::operator[](const string& key)
+Json& Json::operator[](string_view key)
 {
     if (!is_object()) { kind = Kind::Object; object_value.clear(); }
     for (auto& [k, v] : object_value)
         if (k == key) return v;
-    object_value.emplace_back(key, Json{});
+    object_value.emplace_back(string(key), Json{});
     return object_value.back().second;
 }
 
-Json& Json::set(const string& key, Json value)
+Json& Json::set(string_view key, Json value)
 {
     (*this)[key] = move(value);
     return *this;
@@ -82,7 +84,9 @@ long long Json::as_long() const
     {
     case Number: return (long long)(number_value);
     case Bool:   return bool_value ? 1 : 0;
-    case String: return string_value.empty() ? 0LL : stoll(string_value);
+    case String:
+        if (string_value.empty()) return 0LL;
+        return parse_number<long long>(string_value, "JSON", "integer");
     case Null:
     case Array:
     case Object: return 0;
@@ -99,10 +103,13 @@ double Json::as_double() const
     case Number: return number_value;
     case Bool:   return bool_value ? 1.0 : 0.0;
     case String: {
-        // from_chars instead of stod: locale-independent (see parse_number).
         if (string_value.empty()) return 0.0;
         double value = 0.0;
-        from_chars(string_value.data(), string_value.data() + string_value.size(), value);
+        const char* first = string_value.data();
+        const char* last = first + string_value.size();
+        const auto [end, error] = from_chars(first, last, value);
+        throw_if(error != errc{} || end != last,
+                 "JSON: invalid numeric value '{}'", string_value);
         return value;
     }
     case Null:
@@ -172,10 +179,6 @@ static void dump_value(string& out, const Json& v, int indent, int depth)
     case Null:   out += "null"; return;
     case Bool:   out += (v.bool_value ? "true" : "false"); return;
     case Number: {
-        // to_chars instead of snprintf: snprintf honours LC_NUMERIC, so under a
-        // Spanish locale it writes "1,5" and the file can no longer be parsed
-        // (the same corruption the old XML serialization suffered). to_chars is
-        // locale-independent and round-trips the double exactly.
         char buf[32];
         const long long as_int = static_cast<long long>(v.number_value);
         if (v.number_value == static_cast<double>(as_int) && abs(v.number_value) < 1e15)
@@ -230,10 +233,10 @@ namespace {
 
 struct Parser
 {
-    const string& s;
+    string_view s;
     size_t position = 0;
 
-    explicit Parser(const string& text) : s(text) {}
+    explicit Parser(string_view text) : s(text) {}
 
     void skip_ws()
     {
@@ -345,9 +348,6 @@ struct Parser
         }
         Json j;
         j.kind = Json::Kind::Number;
-        // from_chars instead of stod: stod honours LC_NUMERIC, so under a
-        // Spanish locale "1.5" silently parses as 1.0 (strtod stops at the
-        // dot). from_chars always uses the JSON/C decimal-point grammar.
         const char* first = s.data() + start;
         const char* last = s.data() + position;
         auto [ptr, ec] = from_chars(first, last, j.number_value);
@@ -407,7 +407,7 @@ struct Parser
 
 }
 
-Json Json::parse(const string& text)
+Json Json::parse(string_view text)
 {
     Parser p(text);
     Json v = p.parse_value();
@@ -418,19 +418,14 @@ Json Json::parse(const string& text)
 }
 void JsonDocument::load(const filesystem::path& path)
 {
-    ifstream in(path);
-    throw_if(!in.is_open(),
-             format("Cannot open JSON file: {}", path.string()));
-    stringstream ss;
-    ss << in.rdbuf();
-    root = Json::parse(ss.str());
+    root = Json::parse(read_text_file(path));
 }
 
 void JsonDocument::save(const filesystem::path& path, int indent) const
 {
     ofstream out(path);
     throw_if(!out.is_open(),
-             format("Cannot open JSON file: {}", path.string()));
+             "Cannot open JSON file: {}", path.string());
     out << root.dump(indent);
 }
 
@@ -438,24 +433,24 @@ void save_json_file(const filesystem::path& file_name, const JsonWriter& writer)
 {
     ofstream file(file_name);
 
-    throw_if(!file.is_open(), format("Cannot open file: {}", file_name.string()));
+    throw_if(!file.is_open(), "Cannot open file: {}", file_name.string());
 
     file << writer.c_str();
 }
 
-const Json* JsonDocument::first_child(const string& name) const
+const Json* JsonDocument::first_child(string_view name) const
 {
     return root.find(name);
 }
 
-JsonDocument JsonDocument::wrap(const string& tag, Json value)
+JsonDocument JsonDocument::wrap(string_view tag, Json value)
 {
     JsonDocument doc;
     doc.root = Json::make_object();
     doc.root.set(tag, move(value));
     return doc;
 }
-void JsonWriter::open_element(const string& name)
+void JsonWriter::open_element(string_view name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
     if (parent == &root && root.kind == Json::Kind::Null) root = Json::make_object();
@@ -464,7 +459,7 @@ void JsonWriter::open_element(const string& name)
 
     if (parent->is_object())
     {
-        parent->object_value.emplace_back(name, move(child));
+        parent->object_value.emplace_back(string(name), move(child));
         stack.push_back(&parent->object_value.back().second);
     }
     else if (parent->is_array())
@@ -476,7 +471,6 @@ void JsonWriter::open_element(const string& name)
     {
         throw runtime_error("JsonWriter: cannot open_element on non-container");
     }
-    name_stack.push_back(name);
 }
 
 void JsonWriter::close_element()
@@ -484,15 +478,14 @@ void JsonWriter::close_element()
     pop_scope();
 }
 
-void JsonWriter::begin_array(const string& name)
+void JsonWriter::begin_array(string_view name)
 {
     Json* parent = stack.empty() ? &root : stack.back();
     if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
     throw_if(!parent->is_object(),
              "JsonWriter::begin_array: parent is not an object");
-    parent->object_value.emplace_back(name, Json::make_array());
+    parent->object_value.emplace_back(string(name), Json::make_array());
     stack.push_back(&parent->object_value.back().second);
-    name_stack.push_back(name);
 }
 
 void JsonWriter::end_array()
@@ -507,7 +500,6 @@ void JsonWriter::begin_array_object()
     Json* parent = stack.back();
     parent->array_value.push_back(Json::make_object());
     stack.push_back(&parent->array_value.back());
-    name_stack.push_back("");
 }
 
 void JsonWriter::end_array_object()
@@ -519,16 +511,15 @@ void JsonWriter::pop_scope()
 {
     if (stack.empty()) return;
     stack.pop_back();
-    if (!name_stack.empty()) name_stack.pop_back();
 }
 
-void JsonWriter::add_field(const string& name, const string& value)
+void JsonWriter::add_field(string_view name, Json value)
 {
     Json* parent = stack.empty() ? &root : stack.back();
     if (parent->kind == Json::Kind::Null) *parent = Json::make_object();
     throw_if(!parent->is_object(),
              "JsonWriter::add_field on non-object");
-    parent->set(name, Json(value));
+    parent->set(name, move(value));
 }
 
 string JsonWriter::c_str(int indent) const
@@ -536,49 +527,62 @@ string JsonWriter::c_str(int indent) const
     return root.dump(indent);
 }
 void add_json_field(JsonWriter& writer,
-                    const string& name,
-                    const string& value)
+                    string_view name,
+                    Json value)
 {
-    writer.add_field(name, value);
+    writer.add_field(name, move(value));
 }
 
 void write_json(JsonWriter& writer,
-                initializer_list<pair<const char*, string>> props)
+                initializer_list<pair<const char*, Json>> props)
 {
     for (const auto& [key, value] : props)
         writer.add_field(key, value);
 }
 
-float read_json_float(const Json* root, const string& field)
+float read_json_float(const Json* root, string_view field)
 {
     if (!root) return 0.0f;
     const Json* v = root->find(field);
     return v ? float(v->as_double()) : 0.0f;
 }
 
-long long read_json_index(const Json* root, const string& field)
+long long read_json_index(const Json* root, string_view field)
 {
     if (!root) return 0;
     const Json* v = root->find(field);
     return v ? v->as_long() : 0;
 }
 
-bool read_json_bool(const Json* root, const string& field)
+bool read_json_bool(const Json* root, string_view field)
 {
     if (!root) return false;
     const Json* v = root->find(field);
     return v && v->as_bool();
 }
 
-string read_json_string(const Json* root, const string& field)
+string read_json_string(const Json* root, string_view field)
 {
     if (!root) return "";
     const Json* v = root->find(field);
     return v ? v->as_string() : string();
 }
 
+vector<string> read_json_strings(const Json* root, string_view field)
+{
+    const Json* value = root ? root->find(field) : nullptr;
+    if (!value) return {};
+    if (!value->is_array()) return get_tokens(value->as_string(), "\n");
+
+    vector<string> values;
+    values.reserve(value->array_value.size());
+    for (const Json& item : value->array_value)
+        values.push_back(item.as_string());
+    return values;
+}
+
 string read_json_string_fallback(const Json* root,
-                                      initializer_list<string> names)
+                                      initializer_list<string_view> names)
 {
     if (!root) return "";
     for (const auto& name : names)
@@ -589,11 +593,11 @@ string read_json_string_fallback(const Json* root,
     return "";
 }
 
-const Json* require_json_field(const Json* root, const string& field)
+const Json* require_json_field(const Json* root, string_view field)
 {
-    throw_if(!root, format("JSON: missing root for field '{}'", field));
+    throw_if(!root, "JSON: missing root for field '{}'", field);
     const Json* v = root->find(field);
-    throw_if(!v, format("JSON: missing required field '{}'", field));
+    throw_if(!v, "JSON: missing required field '{}'", field);
     return v;
 }
 
@@ -604,10 +608,10 @@ JsonDocument load_json_file(const filesystem::path& file_name)
     return doc;
 }
 
-const Json* get_json_root(const JsonDocument& document, const string& tag)
+const Json* get_json_root(const JsonDocument& document, string_view tag)
 {
     const Json* v = document.first_child(tag);
-    throw_if(!v, format("JSON: missing root tag '{}'", tag));
+    throw_if(!v, "JSON: missing root tag '{}'", tag);
     return v;
 }
 

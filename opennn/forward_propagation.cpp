@@ -70,14 +70,14 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto forward_specs = neural_network->get_forward_specs(batch_size);
 
     throw_if(forward_specs.size() != layers_number,
-             format("ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
-                    forward_specs.size(), layers_number));
+             "ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
+                    forward_specs.size(), layers_number);
 
     const auto& source_layers = neural_network->get_source_layers();
 
     throw_if(source_layers.size() != layers_number,
-             format("ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
-                    source_layers.size(), layers_number));
+             "ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
+                    source_layers.size(), layers_number);
 
     // Transient slots (e.g. attention head split/merge staging) never carry
     // data across an operator invocation, so every layer shares one max-sized
@@ -297,8 +297,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             }
 
             throw_if(slot_offsets[i][j] < 0,
-                     format("ForwardPropagation::set: missing memory-pool offset for layer {} slot {}.",
-                            i, j));
+                     "ForwardPropagation::set: missing memory-pool offset for layer {} slot {}.",
+                            i, j);
             forward_slots[i][j + 1] =
                 TensorView(pool_base + slot_offsets[i][j], shape, dtype, data.device_type);
             layer_logical_bytes += get_aligned_bytes(specs[j]);

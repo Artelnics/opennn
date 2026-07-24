@@ -17,6 +17,9 @@
 #include "normalization_layer_3d.h"
 #include "convolutional_layer.h"
 #include "detection_layer.h"
+#include "detection_v8_layer.h"
+#include "concatenation_layer.h"
+#include "upsample_layer.h"
 #include "pooling_layer.h"
 #include "pooling_layer_3d.h"
 #include "unscaling_layer.h"
@@ -50,10 +53,13 @@ void register_classes()
     const Normalization3d normalization_3d;
     const Convolutional convolutional;
     const Detection detection;
+    const DetectionV8 detection_v8;
     const Pooling pooling;
     const Pooling3d pooling_3d;
 #endif
     const Bounding bounding;
+    const Concatenation concatenation;
+    const Upsample upsample;
     const Unscaling unscaling;
     const Recurrent recurrent;
     const LongShortTermMemory long_short_term_memory;

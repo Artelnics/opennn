@@ -60,6 +60,7 @@
 #include <random>
 #include <set>
 #include <source_location>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -152,12 +153,20 @@ class Json;
 class JsonDocument;
 class JsonWriter;
 
-inline void throw_if(bool condition, const string& message,
+inline void throw_if(bool condition, string_view message,
                      const source_location& loc = source_location::current())
 {
     if (condition)
-        throw runtime_error(std::format("{} [at {}:{}]",
+        throw runtime_error(format("{} [at {}:{}]",
                                         message, loc.file_name(), loc.line()));
+}
+
+// Format diagnostics only on the exceptional path.
+template <typename... Args>
+inline void throw_if(bool condition, format_string<Args...> message, Args&&... args)
+{
+    if (condition)
+        throw runtime_error(format(message, forward<Args>(args)...));
 }
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();

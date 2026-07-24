@@ -7,15 +7,15 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
+#include "dataset.h"
 #include "correlations.h"
-#include "language_dataset.h"
-#include "time_series_dataset.h"
 #include "standard_networks.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
 #include "error_functions.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "batch.h"
 
 namespace opennn
 {
@@ -37,7 +37,7 @@ void TestingAnalysis::check() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
 {
-    const Index outputs_number = dataset->get_features_number("Target");
+    const Index outputs_number = dataset->get_features_number(VariableRole::Target);
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
@@ -52,7 +52,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     check();
 
 
-    const Index testing_samples_number = dataset->get_samples_number("Testing");
+    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
 
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
@@ -94,8 +94,9 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
              "Number of samples is zero.\n");
 
     const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
-    const vector<Index> input_feature_indices  = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+    const vector<Index> input_feature_indices  = dataset->get_feature_indices(VariableRole::Input);
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices(VariableRole::Decoder);
+    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
 
     const Index target_width = dataset->get_target_shape().size();
 
@@ -113,10 +114,12 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
                                      sample_indices.begin() + end);
     }
 
-    const Shape input_shape = dataset->get_shape("Input");
-
     MatrixR target_data(samples_number, target_width);
     MatrixR output_data;
+
+    Configuration::Resolved host_config;
+    host_config.device = Device::CPU;
+    host_config.training_type = Type::FP32;
 
     Index row_cursor = 0;
     for (const vector<Index>& batch_indices : testing_batches)
@@ -128,32 +131,14 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
                               target_data.data() + row_cursor * target_width,
                               FillMode::Inference);
 
-        MatrixR batch_outputs;
-        if (auto* tsd = dynamic_cast<TimeSeriesDataset*>(dataset))
-        {
-            Tensor3 batch_inputs(n, input_shape[0], input_shape[1]);
-            tsd->fill_inputs(batch_indices, input_feature_indices,
-                             batch_inputs.data(), FillMode::Inference);
-            batch_outputs = neural_network->calculate_outputs(batch_inputs);
-        }
-        else if (input_shape.rank == 1)
-        {
-            MatrixR batch_inputs(n, input_shape[0]);
-            dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), FillMode::Inference);
-            batch_outputs = neural_network->calculate_outputs(batch_inputs);
-        }
-        else if (input_shape.rank == 3)
-        {
-            Tensor4 batch_inputs(n, input_shape[0], input_shape[1], input_shape[2]);
-            dataset->fill_inputs(batch_indices, input_feature_indices,
-                                 batch_inputs.data(), FillMode::Inference);
-            batch_outputs = neural_network->calculate_outputs(batch_inputs);
-        }
-        else
-        {
-            throw runtime_error(format("Unsupported input rank {}", input_shape.rank));
-        }
+        Batch batch(n, dataset, host_config);
+        batch.fill(batch_indices,
+                   input_feature_indices,
+                   decoder_feature_indices,
+                   target_feature_indices,
+                   FillMode::Inference);
+
+        const MatrixR batch_outputs = neural_network->calculate_outputs(batch.get_inputs());
 
         if (output_data.size() == 0)
             output_data.resize(samples_number, batch_outputs.cols());
@@ -176,7 +161,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 {
     check();
 
-    const Index testing_samples_number = dataset->get_samples_number("Testing");
+    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
 
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
@@ -220,7 +205,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     check();
 
 
-    const Index testing_samples_number = dataset->get_samples_number("Testing");
+    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
 
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
@@ -284,7 +269,7 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index testing_samples_number = dataset->get_samples_number("Testing");
+    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
     vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor3 error_data = calculate_error_data();
@@ -334,37 +319,31 @@ Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples
     return maximal_errors;
 }
 
-MatrixR TestingAnalysis::calculate_errors() const
+MatrixR TestingAnalysis::calculate_errors_by_role(const Index rows_number,
+                                                  VectorR (TestingAnalysis::*calculate_role_errors)(const string&) const) const
 {
-    MatrixR errors(5, 3);
+    MatrixR errors(rows_number, 3);
 
-    errors.col(0) = calculate_errors("Training");
-    errors.col(1) = calculate_errors("Validation");
-    errors.col(2) = calculate_errors("Testing");
+    errors.col(0) = (this->*calculate_role_errors)("Training");
+    errors.col(1) = (this->*calculate_role_errors)("Validation");
+    errors.col(2) = (this->*calculate_role_errors)("Testing");
 
     return errors;
+}
+
+MatrixR TestingAnalysis::calculate_errors() const
+{
+    return calculate_errors_by_role(5, &TestingAnalysis::calculate_errors);
 }
 
 MatrixR TestingAnalysis::calculate_binary_classification_errors() const
 {
-    MatrixR errors(6, 3);
-
-    errors.col(0) = calculate_binary_classification_errors("Training");
-    errors.col(1) = calculate_binary_classification_errors("Validation");
-    errors.col(2) = calculate_binary_classification_errors("Testing");
-
-    return errors;
+    return calculate_errors_by_role(6, &TestingAnalysis::calculate_binary_classification_errors);
 }
 
 MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    MatrixR errors(5, 3);
-
-    errors.col(0) = calculate_multiple_classification_errors("Training");
-    errors.col(1) = calculate_multiple_classification_errors("Validation");
-    errors.col(2) = calculate_multiple_classification_errors("Testing");
-
-    return errors;
+    return calculate_errors_by_role(5, &TestingAnalysis::calculate_multiple_classification_errors);
 }
 
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
@@ -404,46 +383,44 @@ VectorR TestingAnalysis::calculate_errors(const string& sample_role) const
     return calculate_errors(targets, outputs);
 }
 
-VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
+VectorR TestingAnalysis::calculate_classification_errors(const string& sample_role, const bool binary) const
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
     const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
     const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
 
-    VectorR errors(6);
+    VectorR errors(binary ? 6 : 5);
 
     const VectorR std_errors = calculate_errors(targets, outputs);
     errors.head(4) = std_errors.head(4);
 
-    binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
+    if (binary)
+    {
+        binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
-    const auto [negatives, positives] = dataset->count_binary_targets("Training");
-    const float negative_weight = 1.0f;
-    const float positive_weight = (negatives == 0 || positives == 0)
-                           ? 1.0f
-                           : static_cast<float>(negatives) / positives;
+        const auto [negatives, positives] = dataset->count_binary_targets("Training");
+        const float negative_weight = 1.0f;
+        const float positive_weight = (negatives == 0 || positives == 0)
+                               ? 1.0f
+                               : static_cast<float>(negatives) / positives;
 
-    weighted_squared_error(outputs_view, targets_view, positive_weight, negative_weight, errors(5), nullptr);
+        weighted_squared_error(outputs_view, targets_view, positive_weight, negative_weight, errors(5), nullptr);
+    }
+    else
+        categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
     return errors;
 }
 
+VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
+{
+    return calculate_classification_errors(sample_role, true);
+}
+
 VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& sample_role) const
 {
-    const auto [targets, outputs] = get_targets_and_outputs(sample_role);
-
-    const TensorView outputs_view(const_cast<float*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    const TensorView targets_view(const_cast<float*>(targets.data()), {targets.rows(), targets.cols()});
-
-    VectorR errors(5);
-
-    const VectorR std_errors = calculate_errors(targets, outputs);
-    errors.head(4) = std_errors.head(4);
-
-    categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
-
-    return errors;
+    return calculate_classification_errors(sample_role, false);
 }
 
 float TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
@@ -545,18 +522,18 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     const Index total_negatives = positives_negatives_rate(1);
 
     throw_if(total_positives == 0,
-             format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
+             "Number of positive samples ({}) must be greater than zero.\n", total_positives);
 
     throw_if(total_negatives == 0,
-             format("Number of negative samples ({}) must be greater than zero.\n", total_negatives));
+             "Number of negative samples ({}) must be greater than zero.\n", total_negatives);
 
     const Index points_number = 100;
 
     throw_if(targets.cols() != 1,
-             format("Number of of target variables ({}) must be one.\n", targets.cols()));
+             "Number of of target variables ({}) must be one.\n", targets.cols());
 
     throw_if(outputs.cols() != 1,
-             format("Number of of output variables ({}) must be one.\n", outputs.cols()));
+             "Number of of output variables ({}) must be one.\n", outputs.cols());
 
     MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
 
@@ -625,10 +602,10 @@ float TestingAnalysis::calculate_area_under_curve_confidence_limit(float area_un
                                                                    Index total_negatives) const
 {
     throw_if(total_positives == 0,
-             format("Number of positive samples({}) must be greater than zero.\n", total_positives));
+             "Number of positive samples({}) must be greater than zero.\n", total_positives);
 
     throw_if(total_negatives == 0,
-             format("Number of negative samples({}) must be greater than zero.\n", total_negatives));
+             "Number of negative samples({}) must be greater than zero.\n", total_negatives);
 
     const float Q_1 = area_under_curve/(2.0f - area_under_curve);
     const float Q_2 = (2.0f * area_under_curve * area_under_curve) / (1.0f + area_under_curve);
@@ -676,11 +653,10 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
     const Index total_positives = calculate_positives_negatives_rate(targets, outputs)(0);
 
     throw_if(total_positives == 0,
-             format("Number of positive samples ({}) must be greater than zero.\n", total_positives));
+             "Number of positive samples ({}) must be greater than zero.\n", total_positives);
 
     const Index testing_samples_number = targets.rows();
 
-    // Sort the testing samples by descending output score.
 
     vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
     iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
@@ -728,7 +704,6 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
 
     MatrixR lift_chart(rows_number, cumulative_gain.cols());
 
-    // At ratio 0 the lift is undefined (0/0); use the random baseline value 1.
 
     lift_chart(0, 0) = 0.0f;
     lift_chart(0, 1) = 1.0f;
@@ -746,7 +721,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
+    const vector<Index> testing_indices = dataset->get_sample_indices(SampleRole::Testing);
 
     BinaryClassificationRates binary_classification_rates;
 
@@ -810,7 +785,7 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates() co
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
+    const vector<Index> testing_indices = dataset->get_sample_indices(SampleRole::Testing);
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 }

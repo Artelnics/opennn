@@ -33,87 +33,21 @@
 
 using namespace opennn;
 
-namespace
-{
-const string WEIGHTS_URL =
-    "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/bert-base-uncased-seq64.bin";
-const string VOCABULARY_URL =
-    "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/bert-base-uncased-vocab.txt";
-
-constexpr Index VOCABULARY_SIZE = 30522;
-constexpr Index HIDDEN_SIZE     = 768;
-constexpr Index HEADS_NUMBER    = 12;
-constexpr Index INTERMEDIATE    = 3072;
-constexpr Index LAYERS_NUMBER   = 12;
-
-void evaluate(NeuralNetwork& model, Dataset& dataset, Index sequence_length)
-{
-    const vector<Index> samples = dataset.get_sample_indices("Testing");
-    const vector<Index> target_columns = dataset.get_variable_indices("Target");
-    const MatrixR& data = dataset.get_data();
-
-    const Index samples_number = ssize(samples);
-    if (samples_number == 0) { cout << "No testing samples." << endl; return; }
-
-    const Index labels = ssize(target_columns);
-
-    MatrixR outputs(samples_number, labels);
-    MatrixR targets(samples_number, labels);
-
-    const Index chunk = 256;
-
-    for (Index start = 0; start < samples_number; start += chunk)
-    {
-        const Index batch = min(chunk, samples_number - start);
-
-        vector<float> input_ids(size_t(batch * sequence_length));
-        vector<float> token_type(size_t(batch * sequence_length));
-
-        for (Index r = 0; r < batch; ++r)
-        {
-            const Index sample = samples[size_t(start + r)];
-            for (Index c = 0; c < sequence_length; ++c)
-            {
-                input_ids[size_t(r * sequence_length + c)]  = data(sample, c);
-                token_type[size_t(r * sequence_length + c)] = data(sample, sequence_length + c);
-            }
-        }
-
-        vector<TensorView> inputs = {
-            TensorView(input_ids.data(),  {batch, sequence_length}),
-            TensorView(token_type.data(), {batch, sequence_length})
-        };
-        const MatrixR batch_outputs = model.calculate_outputs(inputs);
-
-        for (Index r = 0; r < batch; ++r)
-        {
-            const Index sample = samples[size_t(start + r)];
-            for (Index c = 0; c < labels; ++c)
-            {
-                outputs(start + r, c) = batch_outputs(r, c);
-                targets(start + r, c) = data(sample, target_columns[size_t(c)]);
-            }
-        }
-    }
-
-    TestingAnalysis testing_analysis(&model, &dataset);
-    const MatrixI confusion = testing_analysis.calculate_confusion(targets, outputs);
-
-    const Index classes = confusion.rows() - 1;
-    Index correct = 0;
-    for (Index c = 0; c < classes; ++c) correct += confusion(c, c);
-
-    cout << "Confusion matrix (rows = target, cols = predicted, last row/col = totals):\n"
-         << confusion << endl;
-    cout << "Test accuracy: " << 100.0 * double(correct) / double(samples_number) << " %" << endl;
-}
-}
-
-
 int main(int argc, char* argv[])
 {
     try
     {
+        const string weights_url =
+            "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/bert-base-uncased-seq64.bin";
+        const string vocabulary_url =
+            "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/bert-base-uncased-vocab.txt";
+
+        constexpr Index vocabulary_size = 30522;
+        constexpr Index hidden_size = 768;
+        constexpr Index heads_number = 12;
+        constexpr Index intermediate = 3072;
+        constexpr Index layers_number = 12;
+
         cout << "OpenNN. BERT SST-2 example." << endl;
 
         const string text_path       = argc > 1 ? argv[1] : "../data/bert/sst2.txt";
@@ -123,8 +57,8 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(Device::Auto, Type::FP32);   // weights .bin is FP32
 
-        download_if_missing(vocab_path, VOCABULARY_URL);
-        download_if_missing(weights_path, WEIGHTS_URL);
+        download_if_missing(vocab_path, vocabulary_url);
+        download_if_missing(weights_path, weights_url);
 
         // Dataset: WordPiece-tokenizes text<TAB>label into BERT input views (cached CSV).
 
@@ -135,14 +69,10 @@ int main(int argc, char* argv[])
 
         // Neural network: the bert-base-uncased architecture, weights from the .bin.
 
-        BertForSequenceClassification model(sequence_length, VOCABULARY_SIZE, HIDDEN_SIZE,
-                                            HEADS_NUMBER, INTERMEDIATE, LAYERS_NUMBER, labels);
+        BertForSequenceClassification model(sequence_length, vocabulary_size, hidden_size,
+                                            heads_number, intermediate, layers_number, labels);
 
         model.set_dropout_rate(0.1f);
-
-        if (model.get_parameters_size() != Index(filesystem::file_size(weights_path) / sizeof(float)))
-            throw runtime_error("Weights size mismatch: the .bin was exported for a different seq/labels. "
-                                "Use seq=64 and a binary-label dataset, or re-export the weights.");
 
         cout << "Loading pretrained weights..." << endl;
         model.load_parameters_binary(weights_path);
@@ -161,9 +91,18 @@ int main(int argc, char* argv[])
         cout << "Fine-tuning (Adam, lr=2e-5, batch=32, 3 epochs)..." << endl;
         training_strategy.train();
 
-        // Testing Analysis
+        TestingAnalysis testing_analysis(&model, &dataset);
+        testing_analysis.set_batch_size(256);
+        const MatrixI confusion = testing_analysis.calculate_confusion();
 
-        evaluate(model, dataset, sequence_length);
+        Index correct = 0;
+        for (Index i = 0; i < confusion.rows() - 1; ++i) correct += confusion(i, i);
+
+        cout << "Confusion matrix (rows = target, cols = predicted, last row/col = totals):\n"
+             << confusion << endl;
+        cout << "Test accuracy: "
+             << 100.0 * double(correct) / double(dataset.get_sample_indices("Testing").size())
+             << " %" << endl;
 
         cout << "Good bye!" << endl;
         return 0;

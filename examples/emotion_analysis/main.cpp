@@ -25,12 +25,10 @@ int main()
 
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        // Settings
 
         const Index embedding_dimension = 64;
         const Index heads_number = 4;
 
-        // Data Set
 
         LanguageDataset language_dataset("../data/emotion_analysis/emotion_analysis.txt");
 
@@ -38,7 +36,6 @@ int main()
         const Index maximum_input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_features_number("Target");
 
-        // Neural Network
 
         TextClassificationNetwork text_classification_network(
             {input_vocabulary_size, maximum_input_sequence_length, embedding_dimension},
@@ -47,7 +44,6 @@ int main()
 
         text_classification_network.set_tokenizer(language_dataset.get_input_tokenizer().clone());
 
-        // Training Strategy
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
         training_strategy.set_loss("CrossEntropy");
@@ -64,14 +60,12 @@ int main()
              << ", it might take some time: " << endl;
         training_strategy.train();
 
-        // Testing Analysis
 
         const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
 
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;
 
-        // Prediction
 
         const vector<string>& emotions = text_classification_network.get_output_variables()[0].categories;
 

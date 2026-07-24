@@ -23,8 +23,6 @@ TEST(TimeSeriesDataset, GeneralConstructor)
 
     EXPECT_EQ(time_series_data_set_3.get_variables_number(), 2);
     EXPECT_EQ(time_series_data_set_3.get_samples_number(), 1);
-    //EXPECT_EQ(time_series_data_set_3.get_target_variables_number(), 1);
-    //EXPECT_EQ(time_series_data_set_3.get_input_variables_number(), 1);
 }
 
 
@@ -67,7 +65,6 @@ TEST(TimeSeriesDataset, CrossCorrelations)
 
     MatrixR data;
 
-    // Test
 
     lags_number = 6;
 
@@ -172,7 +169,6 @@ TEST(TimeSeriesDataset, test_set_lags_number)
     TimeSeriesDataset dataset(4, input_shape, target_shape);
 
     MatrixR data;
-    // Test
 
     data.resize(4, 2);
     data << type(0),type(0),

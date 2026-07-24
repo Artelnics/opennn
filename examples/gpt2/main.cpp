@@ -31,29 +31,23 @@
 using namespace opennn;
 using namespace std;
 
-namespace
-{
-
-const string BASE_URL =
-    "https://github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/";
-const string WEIGHTS_URL = BASE_URL + "gpt2-small-seq256.bin";
-const string VOCAB_URL   = BASE_URL + "vocab.json";
-const string MERGES_URL  = BASE_URL + "merges.txt";
-
-constexpr Index VOCABULARY_SIZE = 50258;      // 50257 + 1 ([PAD] = 0)
-constexpr Index HIDDEN_SIZE     = 768;
-constexpr Index HEADS_NUMBER    = 12;
-constexpr Index INTERMEDIATE    = 3072;
-constexpr Index LAYERS_NUMBER   = 12;
-constexpr Index SEQUENCE_LENGTH = 256;
-
-}
-
-
 int main(int argc, char* argv[])
 {
     try
     {
+        constexpr string_view base_url =
+            "https://github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/";
+        const vector<string_view> data_files = {
+            "gpt2-small-seq256.bin", "vocab.json", "merges.txt"
+        };
+
+        constexpr Index vocabulary_size = 50258; // 50257 + 1 ([PAD] = 0)
+        constexpr Index hidden_size = 768;
+        constexpr Index heads_number = 12;
+        constexpr Index intermediate = 3072;
+        constexpr Index layers_number = 12;
+        constexpr Index sequence_length = 256;
+
         cout << "OpenNN. GPT-2 text generation example." << endl;
 
         const string prompt         = argc > 1 ? argv[1] : "";   // no prompt => interactive REPL
@@ -61,30 +55,23 @@ int main(int argc, char* argv[])
         const float  temperature    = argc > 3 ? stof(argv[3]) : 0.8f;
         const Index  top_k          = argc > 4 ? Index(stol(argv[4])) : 40;
 
-        const string weights_path = "../data/gpt2/gpt2-small-seq256.bin";
-        const string vocab_path   = "../data/gpt2/vocab.json";
-        const string merges_path  = "../data/gpt2/merges.txt";
+        const filesystem::path data_directory = "../data/gpt2";
+        const filesystem::path weights_path = data_directory / "gpt2-small-seq256.bin";
 
         Configuration::instance().set(Device::CUDA, Type::FP32);   // weights .bin is FP32
 
-        download_if_missing(weights_path, WEIGHTS_URL);
-        download_if_missing(vocab_path, VOCAB_URL);
-        download_if_missing(merges_path, MERGES_URL);
+        download_files_if_missing(data_directory, base_url, data_files);
 
-        auto tokenizer = make_unique<BytePairTokenizer>();
-        tokenizer->load(vocab_path, merges_path);
+        auto tokenizer = make_unique<BytePairTokenizer>(
+            data_directory / "vocab.json", data_directory / "merges.txt");
 
         // Neural network: the GPT-2 small architecture
 
-        TextGenerationNetwork model(SEQUENCE_LENGTH, VOCABULARY_SIZE, HIDDEN_SIZE,
-                                    HEADS_NUMBER, INTERMEDIATE, LAYERS_NUMBER,
+        TextGenerationNetwork model(sequence_length, vocabulary_size, hidden_size,
+                                    heads_number, intermediate, layers_number,
                                     /*pre_normalization*/ true, /*scale_embedding*/ false,
                                     /*learned_positional*/ true, /*feed_forward_activation*/ "GELUTanh");
         model.set_tokenizer(move(tokenizer));
-
-        if (model.get_parameters_size() != Index(filesystem::file_size(weights_path) / sizeof(float)))
-            throw runtime_error("Weights size mismatch: the .bin was exported for a different seq. "
-                                "Use the seq=256 weights or adjust SEQUENCE_LENGTH.");
 
         cout << "Loading pretrained weights..." << endl;
         model.load_parameters_binary(weights_path);

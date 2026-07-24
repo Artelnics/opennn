@@ -189,7 +189,7 @@ void Optimizer::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Optimizer");
 
-    add_json_field(printer, "Display", to_string(display));
+    add_json_field(printer, "Display", display);
 
     printer.close_element();
 }
@@ -403,9 +403,9 @@ Index Optimizer::get_maximum_batch_size() const
     throw_if(!dataset, "Optimizer::get_maximum_batch_size: dataset is not set.");
     throw_if(!neural_network, "Optimizer::get_maximum_batch_size: neural network is not set.");
 
-    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index training_samples_number = dataset->get_samples_number(SampleRole::Training);
     if (training_samples_number <= 0) return 0;
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
+    const Index validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
     const bool on_gpu = neural_network->is_gpu();
 
@@ -459,15 +459,15 @@ Index Optimizer::get_maximum_batch_size() const
     fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
     throw_if(fixed_bytes >= budget,
-             format("Fixed memory ({} MiB) exceeds 80% GPU budget ({} MiB).",
-                    fixed_bytes / (1ull << 20), budget / (1ull << 20)));
+             "Fixed memory ({} MiB) exceeds 80% GPU budget ({} MiB).",
+                    fixed_bytes / (1ull << 20), budget / (1ull << 20));
 
     const Index dynamic_budget = budget - fixed_bytes;
 
     const int batch_pool_size = get_batch_pool_size(*neural_network);
-    const Shape input_shape   = dataset->get_shape("Input");
-    const Shape target_shape  = dataset->get_shape("Target");
-    const Shape decoder_shape = dataset->get_shape("Decoder");
+    const Shape input_shape   = dataset->get_shape(VariableRole::Input);
+    const Shape target_shape  = dataset->get_shape(VariableRole::Target);
+    const Shape decoder_shape = dataset->get_shape(VariableRole::Decoder);
 
     const Shape output_shape = neural_network->get_output_shape();
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
@@ -522,8 +522,8 @@ Index Optimizer::get_maximum_batch_size() const
     };
 
     throw_if(bytes_for_batch(1) > dynamic_budget,
-             format("Not enough GPU memory for batch_size=1: need {} MiB, have {} MiB.",
-                    bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20)));
+             "Not enough GPU memory for batch_size=1: need {} MiB, have {} MiB.",
+                    bytes_for_batch(1) / (1ull << 20), dynamic_budget / (1ull << 20));
 
     Index lo = 1;
     Index hi = training_samples_number;
@@ -541,8 +541,8 @@ void Optimizer::set_names()
 {
     const Dataset* dataset = loss->get_dataset();
 
-    const vector<Variable> input_variables = dataset->get_variables("Input");
-    const vector<Variable> target_variables = dataset->get_variables("Target");
+    const vector<Variable> input_variables = dataset->get_variables(VariableRole::Input);
+    const vector<Variable> target_variables = dataset->get_variables(VariableRole::Target);
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -595,8 +595,8 @@ void Optimizer::set_scaling()
     if (!neural_network->has(LayerType::Unscaling))
         return;
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
+    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
 
     const bool has_pure_targets = ranges::any_of(target_feature_indices,
         [&](Index target_index) { return ranges::find(input_feature_indices, target_index) == input_feature_indices.end(); });
@@ -705,8 +705,8 @@ void Optimizer::set_unscaling()
         unscaling_layer->get_means(),
         unscaling_layer->get_standard_deviations());
 
-    const vector<Index> input_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_indices = dataset->get_feature_indices("Target");
+    const vector<Index> input_indices = dataset->get_feature_indices(VariableRole::Input);
+    const vector<Index> target_indices = dataset->get_feature_indices(VariableRole::Target);
 
     vector<Descriptives> unscaled_targets_descriptives;
 
@@ -883,15 +883,15 @@ TrainingResult Optimizer::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
+    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices(VariableRole::Decoder);
 
-    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
+    const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
+    const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
 
-    const Index training_samples_number = dataset->get_samples_number("Training");
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
+    const Index training_samples_number = dataset->get_samples_number(SampleRole::Training);
+    const Index validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
     const Index effective_batch_size = batch_size <= 0
         ? get_maximum_batch_size()
@@ -1073,6 +1073,143 @@ TrainingResult Optimizer::train()
     return results;
 }
 
+void Optimizer::prepare_full_batch_training(FullBatchContext& context, const char* banner)
+{
+    if (display) cout << banner << "\n";
+
+    Dataset* dataset = loss->get_dataset();
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    context.neural_network = neural_network;
+    context.has_validation = dataset->has_validation();
+    context.training_samples_number = dataset->get_samples_number(SampleRole::Training);
+    context.validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
+
+    const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
+    const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices(VariableRole::Input);
+    const vector<Index> target_feature_indices = dataset->get_feature_indices(VariableRole::Target);
+
+    set_names();
+    set_scaling();
+
+    context.training_batch = make_unique<Batch>(context.training_samples_number,
+                                                dataset,
+                                                neural_network->get_config());
+    context.training_batch->fill(training_sample_indices, input_feature_indices, {},
+                                 target_feature_indices, FillMode::Training);
+
+    context.validation_batch = make_unique<Batch>(context.validation_samples_number,
+                                                  dataset,
+                                                  neural_network->get_config());
+    context.validation_batch->fill(validation_sample_indices, input_feature_indices, {},
+                                   target_feature_indices, FillMode::Validation);
+
+    context.training_forward_propagation =
+        make_unique<ForwardPropagation>(context.training_samples_number, neural_network);
+
+    if (context.has_validation
+        && context.validation_samples_number != context.training_samples_number)
+        context.validation_forward_propagation =
+            make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
+                                            ForwardPropagationMode::Inference);
+
+    context.validation_fp = context.has_validation
+        ? (context.validation_forward_propagation ? context.validation_forward_propagation.get()
+                                                  : context.training_forward_propagation.get())
+        : nullptr;
+
+    mark_validation_propagation(context.validation_fp);
+
+    loss->set_normalization_coefficient();
+}
+
+TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const FullBatchHooks& hooks)
+{
+    TrainingResult results(maximum_epochs + 1);
+
+    NeuralNetwork* neural_network = context.neural_network;
+    const bool has_validation = context.has_validation;
+
+    Index validation_failures = 0;
+    reset_best_parameters();
+
+    float old_loss = 0.0f;
+    float loss_decrease = MAX;
+
+    time_t beginning_time;
+    time(&beginning_time);
+    float elapsed_time = 0.0f;
+
+    if (hooks.setup_state) hooks.setup_state();
+
+    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    {
+        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+
+        neural_network->forward_propagate(context.training_batch->get_inputs(),
+                                          *context.training_forward_propagation,
+                                          true);
+
+        const FullBatchStep step = hooks.train_step();
+
+        results.training_error_history(epoch) = step.training_error;
+
+        float validation_error = 0.0f;
+
+        if (has_validation)
+        {
+            neural_network->forward_propagate(context.validation_batch->get_inputs(),
+                                              *context.validation_fp,
+                                              false);
+
+            validation_error = hooks.validation_error();
+
+            results.validation_error_history(epoch) = validation_error;
+
+            update_best_parameters(neural_network, validation_error, epoch, validation_failures);
+        }
+
+        elapsed_time = get_elapsed_time(beginning_time);
+
+        if (should_display(epoch))
+        {
+            cout << "Training error: " << step.displayed_error << "\n";
+            if (has_validation) cout << "Validation error: " << validation_error << "\n";
+            if (hooks.display_extra) hooks.display_extra();
+            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
+        }
+
+        if (epoch != 0) loss_decrease = old_loss - step.loss;
+
+        old_loss = step.loss;
+
+        if (loss_decrease < hooks.minimum_loss_decrease)
+        {
+            if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
+            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
+        }
+
+        if (check_stopping_condition(results, epoch, elapsed_time,
+                                     results.training_error_history(epoch),
+                                     validation_failures,
+                                     step.loss,
+                                     has_validation))
+            break;
+
+        if (hooks.post_step) hooks.post_step();
+    }
+
+    restore_best_parameters(neural_network, results);
+
+    set_unscaling();
+
+    if (display) results.print();
+
+    return results;
+}
+
 bool Optimizer::check_stopping_condition(TrainingResult& results,
                                           const Index epoch,
                                           const float elapsed_time,
@@ -1108,7 +1245,6 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
     }
 
     results.loss = training_loss;
-    results.validation_failures = validation_failures;
     results.resize_training_error_history(epoch + 1);
     results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
     results.elapsed_time = get_time(elapsed_time);
@@ -1187,12 +1323,12 @@ void Optimizer::restore_best_parameters(NeuralNetwork* neural_network, TrainingR
 void Optimizer::write_common_json(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"LossGoal", to_string(training_loss_goal)},
-        {"MaximumValidationFailures", to_string(maximum_validation_failures)},
-        {"MaximumEpochsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)},
-        {"GradientClipNorm", to_string(gradient_clip_norm)},
-        {"DisplayPeriod", to_string(display_period)}
+        {"LossGoal", training_loss_goal},
+        {"MaximumValidationFailures", maximum_validation_failures},
+        {"MaximumEpochsNumber", maximum_epochs},
+        {"MaximumTime", maximum_time},
+        {"GradientClipNorm", gradient_clip_norm},
+        {"DisplayPeriod", display_period}
     });
 }
 

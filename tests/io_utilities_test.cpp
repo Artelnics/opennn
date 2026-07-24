@@ -179,6 +179,30 @@ TEST(IoUtilitiesTest, FileReaderReadAtOffset)
     remove_quietly(path);
 }
 
+TEST(IoUtilitiesTest, ReadTextFileAndValidateCurrentCache)
+{
+    const filesystem::path source = make_temp_path("source.txt");
+    const filesystem::path cache = make_temp_path("cache.bin");
+    remove_quietly(source);
+    remove_quietly(cache);
+
+    write_text_file(source, "source");
+    write_text_file(cache, "cache");
+
+    const auto cache_time = filesystem::last_write_time(cache);
+    filesystem::last_write_time(source, cache_time - chrono::seconds(1));
+
+    EXPECT_EQ(read_text_file(source), "source");
+    EXPECT_TRUE(is_file_current(cache, {source}, 5));
+    EXPECT_FALSE(is_file_current(cache, {source}, 6));
+
+    filesystem::last_write_time(source, cache_time + chrono::seconds(1));
+    EXPECT_FALSE(is_file_current(cache, {source}, 5));
+
+    remove_quietly(source);
+    remove_quietly(cache);
+}
+
 TEST(IoUtilitiesTest, FileWriterDiscardsTmpWhenNotFinalized)
 {
     const filesystem::path tmp = make_temp_path("discard.tmp");
@@ -268,7 +292,7 @@ TEST(IoUtilitiesTest, CsvReaderSkipsBlankLinesAndCarriageReturns)
     remove_quietly(path);
 }
 
-TEST(IoUtilitiesTest, CsvReaderQuotedFieldsStripped)
+TEST(IoUtilitiesTest, CsvReaderPreservesQuotedFieldsForTokenizer)
 {
     const filesystem::path path = make_temp_path("quoted.csv");
     remove_quietly(path);
@@ -283,8 +307,8 @@ TEST(IoUtilitiesTest, CsvReaderQuotedFieldsStripped)
 
     ASSERT_EQ(result.lines.size(), size_t(3));
     EXPECT_EQ(string(result.lines[0]), "name,note");
-    EXPECT_EQ(string(result.lines[1]), "hello world,ok");
-    EXPECT_EQ(string(result.lines[2]), "ab,plain");
+    EXPECT_EQ(string(result.lines[1]), "\"hello, world\",ok");
+    EXPECT_EQ(string(result.lines[2]), "\"a;b\",plain");
 
     remove_quietly(path);
 }

@@ -90,7 +90,7 @@ public:
         return make_unique<TemplateTokenizer>(*this);
     }
 
-    string get_kind() const override { return "TemplateTest"; }
+    string_view get_kind() const override { return "TemplateTest"; }
 
     Index id(string_view token) const
     {

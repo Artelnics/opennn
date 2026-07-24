@@ -14,6 +14,9 @@
 namespace opennn
 {
 
+static constexpr array<char, 8> LANGUAGE_CACHE_MAGIC{'O', 'N', 'N', 'L', 'A', 'N', 'G', '3'};
+static constexpr uint32_t LANGUAGE_CACHE_VERSION = 1;
+
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path,
                                  Index new_maximum_vocabulary_size,
                                  Index new_minimum_token_frequency) : Dataset()
@@ -65,6 +68,31 @@ void LanguageDataset::read_txt()
     cout << "Reading .txt file..." << "\n";
 
     cache_reader.close();
+
+    const filesystem::path cache_parent = cache_directory.empty()
+        ? filesystem::path(data_path.string() + ".cache")
+        : cache_directory / (data_path.filename().string() + ".cache");
+
+    cache_path = cache_parent / format(
+        "tokens_v3_{}_{}_{}_{}_{}_{}_{}.bin",
+        maximum_vocabulary_size,
+        minimum_token_frequency,
+        input_sequence_length_limit,
+        classification_target,
+        get_separator_name(),
+        has_header,
+        has_sample_ids);
+    const filesystem::path metadata_path = cache_path.string() + ".meta";
+
+    if (storage_mode == StorageMode::BinaryFile
+        && is_file_current(cache_path, {data_path})
+        && is_file_current(metadata_path, {data_path})
+        && load_cache_metadata(metadata_path))
+    {
+        split_samples_random();
+        cout << "Reading finished (cached)" << "\n";
+        return;
+    }
 
     vector<vector<string>> input_document_tokens;
     vector<vector<string>> target_document_tokens;
@@ -131,48 +159,8 @@ void LanguageDataset::read_txt()
         ? (target_classes == 2 ? 1 : target_classes)
         : maximum_target_document_tokens + 1;
 
-    if (is_single_token_target)
-        decoder_shape.clear();
-    else
-        decoder_shape = { maximum_target_sequence_length };
-
-    input_shape  = { maximum_input_sequence_length };
-    target_shape = { maximum_target_sequence_length };
-
-    const bool has_decoder = !decoder_shape.empty();
-
-    variables.assign(has_decoder ? 3 : 2, Variable());
-
-    Variable& input_variable = variables[0];
-    input_variable.name = "input_sequence";
-    input_variable.role = VariableRole::Input;
-    input_variable.type = VariableType::Numeric;
-    input_variable.features = maximum_input_sequence_length;
-    input_variable.categories = input_tokenizer->get_vocabulary();
-
-    if (has_decoder)
-    {
-        Variable& decoder_variable = variables[1];
-        decoder_variable.name = "decoder_sequence";
-        decoder_variable.role = VariableRole::Decoder;
-        decoder_variable.type = VariableType::Numeric;
-        decoder_variable.features = maximum_target_sequence_length;
-    }
-
-    Variable& target_variable = variables[has_decoder ? 2 : 1];
-    target_variable.name = "target_sequence";
-    target_variable.role = VariableRole::Target;
-    target_variable.type = VariableType::Numeric;
-    target_variable.features = maximum_target_sequence_length;
-
-    // Classification: expose the class names (vocabulary minus the reserved
-    // tokens) so they travel with the model as the target categories.
-    if (is_single_token_target)
-    {
-        const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
-        target_variable.categories.assign(target_vocabulary.begin() + ssize(reserved_tokens),
-                                          target_vocabulary.end());
-    }
+    const bool has_decoder = !is_single_token_target;
+    configure(samples_number, has_decoder);
 
     if (storage_mode == StorageMode::Matrix)
     {
@@ -211,32 +199,12 @@ void LanguageDataset::read_txt()
     }
     else
     {
-        // BinaryFile: fixed-size records of (max_in + max_tgt) int32 tokens per sample, PAD = 0.
-        cache_path = cache_directory.empty()
-            ? filesystem::path(data_path.string() + ".cache") / "tokens.bin"
-            : cache_directory / (data_path.filename().string() + ".cache") / "tokens.bin";
-
-        const uintmax_t record_bytes = uintmax_t(maximum_input_sequence_length
-                                               + maximum_target_sequence_length) * sizeof(int32_t);
-
-        const bool cache_valid = filesystem::exists(cache_path)
-            && filesystem::file_size(cache_path) == uintmax_t(samples_number) * record_bytes
-            && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
-
-        if (cache_valid)
-        {
-            cache_reader.open(cache_path);
-        }
-        else
-        {
-            vector<vector<Index>> input_indices;
-            vector<vector<Index>> target_indices;
-            encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
-            write_binary_cache(input_indices, target_indices);
-        }
+        vector<vector<Index>> input_indices;
+        vector<vector<Index>> target_indices;
+        encode_streaming(input_document_tokens, target_document_tokens, input_indices, target_indices);
+        write_binary_cache(input_indices, target_indices);
+        save_cache_metadata(metadata_path, samples_number, has_decoder);
     }
-
-    sample_roles.resize(samples_number);
 
     split_samples_random();
 
@@ -253,115 +221,214 @@ void LanguageDataset::set_target_vocabulary(const vector<string>& new_vocabulary
     target_tokenizer->set_vocabulary(new_vocabulary);
 }
 
+void LanguageDataset::configure(Index samples_number, bool has_decoder)
+{
+    input_shape = {maximum_input_sequence_length};
+    target_shape = {maximum_target_sequence_length};
+    decoder_shape = has_decoder ? Shape{maximum_target_sequence_length} : Shape{};
+
+    variables.assign(has_decoder ? 3 : 2, Variable());
+
+    Variable& input_variable = variables[0];
+    input_variable.name = "input_sequence";
+    input_variable.role = VariableRole::Input;
+    input_variable.type = VariableType::Numeric;
+    input_variable.features = maximum_input_sequence_length;
+    input_variable.categories = input_tokenizer->get_vocabulary();
+
+    if (has_decoder)
+    {
+        Variable& decoder_variable = variables[1];
+        decoder_variable.name = "decoder_sequence";
+        decoder_variable.role = VariableRole::Decoder;
+        decoder_variable.type = VariableType::Numeric;
+        decoder_variable.features = maximum_target_sequence_length;
+    }
+
+    Variable& target_variable = variables[has_decoder ? 2 : 1];
+    target_variable.name = "target_sequence";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = VariableType::Numeric;
+    target_variable.features = maximum_target_sequence_length;
+
+    if (!has_decoder)
+    {
+        const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
+        throw_if(target_vocabulary.size() < reserved_tokens.size(),
+                 "LanguageDataset: cached target vocabulary is incomplete.");
+        target_variable.categories.assign(
+            target_vocabulary.begin() + ssize(reserved_tokens),
+            target_vocabulary.end());
+    }
+
+    sample_roles.resize(size_t(samples_number));
+}
+
+bool LanguageDataset::load_cache_metadata(const filesystem::path& metadata_path)
+{
+    ifstream file(metadata_path, ios::binary);
+    if (!file) return false;
+
+    array<char, 8> magic{};
+    uint32_t version = 0;
+    int64_t input_length = 0;
+    int64_t target_length = 0;
+    int64_t samples_number = 0;
+    uint8_t has_decoder = 0;
+    uint64_t input_vocabulary_size = 0;
+    uint64_t target_vocabulary_size = 0;
+
+    if (!file.read(magic.data(), magic.size())
+        || !read_binary_value(file, version)
+        || !read_binary_value(file, input_length)
+        || !read_binary_value(file, target_length)
+        || !read_binary_value(file, samples_number)
+        || !read_binary_value(file, has_decoder)
+        || !read_binary_value(file, input_vocabulary_size)
+        || !read_binary_value(file, target_vocabulary_size)
+        || magic != LANGUAGE_CACHE_MAGIC
+        || version != LANGUAGE_CACHE_VERSION
+        || input_length <= 0
+        || target_length <= 0
+        || samples_number <= 0
+        || input_vocabulary_size > uint64_t(numeric_limits<Index>::max())
+        || target_vocabulary_size > uint64_t(numeric_limits<Index>::max()))
+        return false;
+
+    vector<string> input_vocabulary(static_cast<size_t>(input_vocabulary_size));
+    vector<string> target_vocabulary(static_cast<size_t>(target_vocabulary_size));
+
+    for (string& token : input_vocabulary)
+        if (!read_binary_string(file, token)) return false;
+    for (string& token : target_vocabulary)
+        if (!read_binary_string(file, token)) return false;
+
+    maximum_input_sequence_length = Index(input_length);
+    maximum_target_sequence_length = Index(target_length);
+    input_tokenizer->set_vocabulary(input_vocabulary);
+    target_tokenizer->set_vocabulary(target_vocabulary);
+
+    const uintmax_t expected_bytes =
+        uintmax_t(samples_number)
+        * uintmax_t(input_length + target_length)
+        * sizeof(int32_t);
+    error_code error;
+    if (filesystem::file_size(cache_path, error) != expected_bytes || error)
+        return false;
+
+    configure(Index(samples_number), has_decoder != 0);
+    cache_reader.open(cache_path);
+    return true;
+}
+
+void LanguageDataset::save_cache_metadata(const filesystem::path& metadata_path,
+                                          Index samples_number,
+                                          bool has_decoder) const
+{
+    FileWriter writer;
+    writer.open(metadata_path.string() + ".tmp");
+
+    writer.write(LANGUAGE_CACHE_MAGIC.data(), LANGUAGE_CACHE_MAGIC.size());
+    write_binary_value(writer, LANGUAGE_CACHE_VERSION);
+    write_binary_value(writer, int64_t(maximum_input_sequence_length));
+    write_binary_value(writer, int64_t(maximum_target_sequence_length));
+    write_binary_value(writer, int64_t(samples_number));
+    write_binary_value(writer, uint8_t(has_decoder));
+
+    const vector<string>& input_vocabulary = input_tokenizer->get_vocabulary();
+    const vector<string>& target_vocabulary = target_tokenizer->get_vocabulary();
+    write_binary_value(writer, uint64_t(input_vocabulary.size()));
+    write_binary_value(writer, uint64_t(target_vocabulary.size()));
+
+    for (const string& token : input_vocabulary)
+        write_binary_string(writer, token);
+    for (const string& token : target_vocabulary)
+        write_binary_string(writer, token);
+
+    writer.finish_with_rename(metadata_path);
+}
+
 void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
                                      vector<vector<string>>& target_documents) const
 {
-    ifstream file(data_path, ios::binary | ios::ate);
-
-    throw_if(!file.is_open(),
-             format("Cannot open file {}", data_path.string()));
-
-    const auto file_size = file.tellg();
-    throw_if(file_size < 0,
-             format("Cannot determine file size for {}", data_path.string()));
-
-    file.seekg(0);
-
-    string buffer(static_cast<size_t>(file_size), '\0');
-    if (file_size > 0)
-        file.read(buffer.data(), file_size);
-
-    throw_if(!file,
-             format("Cannot read file {}", data_path.string()));
-
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
-    const size_t line_count_estimate = ranges::count(buffer, '\n') + 1;
-    input_documents.reserve(line_count_estimate);
-    target_documents.reserve(line_count_estimate);
+    CsvReader reader({field_separator, {}});
+    CsvReader::Result result = reader.read(data_path);
 
-    const string_view buffer_view(buffer);
-    size_t line_start = 0;
-    bool header_pending = has_header;
+    const size_t first_line = has_header ? 1 : 0;
+    const size_t documents_number = result.lines.size() - min(first_line, result.lines.size());
 
-    while (line_start < buffer_view.size())
+    input_documents.resize(documents_number);
+    target_documents.resize(documents_number);
+    vector<unsigned char> valid(documents_number, 1);
+
+    #pragma omp parallel if(documents_number >= 256)
     {
-        size_t line_end = buffer_view.find('\n', line_start);
-        if (line_end == string_view::npos) line_end = buffer_view.size();
+        string scratch;
+        vector<string_view> fields;
 
-        string_view line = buffer_view.substr(line_start, line_end - line_start);
-        line_start = line_end + 1;
-
-        if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
-        if (line.empty()) continue;
-
-        if (header_pending) { header_pending = false; continue; }
-
-        const vector<string_view> fields = get_token_views(line, field_separator);
-
-        throw_if(fields.size() != 2,
-                 "Line must contain two fields: input and target.");
-
-        input_documents.push_back(input_tokenizer->tokenize(fields[0]));
-
-        if (classification_target)
+        #pragma omp for schedule(static)
+        for (Index document = 0; document < Index(documents_number); ++document)
         {
-            // The target field is a single atomic class label: keep it whole
-            // (only trim surrounding whitespace) so a label like "sci_tech"
-            // stays one token instead of being split into sci/_/tech. Lowered
-            // here because it skips the tokenizer, which lowers everything else.
-            string_view label = fields[1];
-            while (!label.empty() && isspace(static_cast<unsigned char>(label.front()))) label.remove_prefix(1);
-            while (!label.empty() && isspace(static_cast<unsigned char>(label.back())))  label.remove_suffix(1);
+            get_token_views_maybe_quoted(result.lines[first_line + size_t(document)],
+                                         field_separator,
+                                         result.has_quotes,
+                                         scratch,
+                                         fields);
 
-            string label_string(label);
-            for (char& character : label_string)
-                character = static_cast<char>(tolower(static_cast<unsigned char>(character)));
+            if (fields.size() != 2)
+            {
+                valid[size_t(document)] = 0;
+                continue;
+            }
 
-            target_documents.push_back({ move(label_string) });
+            input_documents[size_t(document)] = input_tokenizer->tokenize(fields[0]);
+
+            if (classification_target)
+            {
+                target_documents[size_t(document)] = {
+                    ascii_lowercase(trim_view(fields[1]))
+                };
+            }
+            else
+            {
+                target_documents[size_t(document)] = target_tokenizer->tokenize(fields[1]);
+            }
         }
-        else
-            target_documents.push_back(target_tokenizer->tokenize(fields[1]));
     }
+
+    const auto invalid = ranges::find(valid, 0);
+    throw_if(invalid != valid.end(),
+             "Line {} must contain exactly two fields: input and target.",
+             first_line + size_t(distance(valid.begin(), invalid)) + 1);
 }
 
 void LanguageDataset::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("Dataset");
-
-    printer.open_element("DataSource");
-
-    write_json(printer, {
+    write_json_header(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
-        {"HasHeader", to_string(has_header)},
-        {"HasSamplesId", to_string(has_sample_ids)},
+        {"HasHeader", has_header},
+        {"HasSamplesId", has_sample_ids},
         {"Codification", get_codification_string()},
         {"StorageMode", get_storage_mode_string()}
     });
-    printer.close_element();
-
-    variables_to_JSON(printer);
-
-    samples_to_JSON(printer);
 
     preview_data_to_JSON(printer);
 
-    const string separator_string = get_separator_string();
-
     write_json(printer, {
-        {"InputVocabulary", vector_to_string(input_tokenizer->get_vocabulary(), separator_string)},
-        {"TargetVocabulary", vector_to_string(target_tokenizer->get_vocabulary(), separator_string)},
-        {"MaximumInputSequenceLength", to_string(maximum_input_sequence_length)},
-        {"MaximumTargetSequenceLength", to_string(maximum_target_sequence_length)},
-        {"InputSequenceLengthLimit", to_string(input_sequence_length_limit)},
-        {"ClassificationTarget", to_string(classification_target)},
-        {"Display", to_string(display)}
+        {"InputVocabulary", json_array(input_tokenizer->get_vocabulary())},
+        {"TargetVocabulary", json_array(target_tokenizer->get_vocabulary())},
+        {"MaximumInputSequenceLength", maximum_input_sequence_length},
+        {"MaximumTargetSequenceLength", maximum_target_sequence_length},
+        {"InputSequenceLengthLimit", input_sequence_length_limit},
+        {"ClassificationTarget", classification_target}
     });
 
-    printer.close_element();
+    write_json_footer(printer);
 }
 
 void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
@@ -411,7 +478,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
     input_indices.assign(samples_number, {});
     target_indices.assign(samples_number, {});
 
-    const unordered_map<string, Index>& target_vocabulary_map = target_tokenizer->get_vocabulary_map();
+    const auto& target_vocabulary_map = target_tokenizer->get_vocabulary_map();
 
     #pragma omp parallel for
     for (Index sample = 0; sample < samples_number; ++sample)
@@ -488,7 +555,7 @@ void LanguageDataset::encode_streaming(const vector<vector<string>>& input_docum
             const auto it = target_vocabulary_map.find(token);
 
             throw_if(it == target_vocabulary_map.end() || it->second < reserved_count,
-                     format("Unknown target label: {}", token));
+                     "Unknown target label: {}", token);
 
             target_indices[sample][it->second - reserved_count] = 1;
         }
@@ -546,41 +613,23 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
         return;
     }
 
-    const Index batch_size = ssize(sample_indices);
-    const Index samples_number = get_samples_number();
     const uint64_t record_tokens = uint64_t(maximum_input_sequence_length + maximum_target_sequence_length);
     const Index n = sequence_length - shift;
 
-    string omp_error;
+    if (shift > 0)
+        for (Index i = 0; i < ssize(sample_indices); ++i)
+            output_data[i * sequence_length] = float(START_INDEX);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        try
-        {
-            if (shift > 0) output_data[i * sequence_length] = float(START_INDEX);
-
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= samples_number,
-                     format("LanguageDataset {} sample index is out of range.", context));
-
-            thread_local vector<int32_t> buf;
-            buf.resize(size_t(n));
-            cache_reader.read_at(buf.data(), size_t(n) * sizeof(int32_t),
-                                 (uint64_t(sample_index) * record_tokens + uint64_t(record_offset)) * sizeof(int32_t));
-
-            for (Index j = 0; j < n; ++j)
-                output_data[i * sequence_length + shift + j] = float(buf[size_t(j)]);
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
-        }
-    }
-
-    throw_if(!omp_error.empty(),
-             omp_error);
+    read_int32_batch(cache_reader,
+                     sample_indices,
+                     get_samples_number(),
+                     record_tokens,
+                     record_offset,
+                     n,
+                     output_data,
+                     sequence_length,
+                     shift,
+                     format("LanguageDataset {}", context));
 }
 
 void LanguageDataset::fill_inputs(const vector<Index>& sample_indices,

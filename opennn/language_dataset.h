@@ -30,7 +30,7 @@ public:
     Index get_input_vocabulary_size() const noexcept { return input_tokenizer->get_vocabulary_size(); }
     Index get_target_vocabulary_size() const noexcept { return target_tokenizer->get_vocabulary_size(); }
 
-    const unordered_map<string, Index>& get_input_vocabulary_map() const noexcept { return input_tokenizer->get_vocabulary_map(); }
+    const TokenizerOperator::VocabularyMap& get_input_vocabulary_map() const noexcept { return input_tokenizer->get_vocabulary_map(); }
 
     const TokenizerOperator& get_input_tokenizer() const noexcept { return *input_tokenizer; }
     const TokenizerOperator& get_target_tokenizer() const noexcept { return *target_tokenizer; }
@@ -44,20 +44,9 @@ public:
     void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
     void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
-    // Classification mode: treat the whole target field as a single atomic class
-    // label instead of tokenizing it. Without this a label like "Sci_Tech" is
-    // split by the tokenizer into ["sci","_","tech"], inflating the target
-    // vocabulary beyond the class count (wrong class number, generic output_N
-    // names) and routing read_txt into the seq2seq branch instead of N-way
-    // classification.
     void set_classification_target(bool new_classification_target) { classification_target = new_classification_target; }
     bool get_classification_target() const noexcept { return classification_target; }
 
-    // Optional cap on the input sequence length (0 = unlimited). The sequence
-    // length is otherwise driven by the single longest document, and multi-head
-    // attention is O(sequence_length^2) in memory and compute, so the editor
-    // offers the user a truncation cap at import time. Persisted in the JSON so
-    // every later load honours the user's choice.
     Index get_input_sequence_length_limit() const noexcept { return input_sequence_length_limit; }
     void set_input_sequence_length_limit(Index new_limit) { input_sequence_length_limit = new_limit; }
 
@@ -101,6 +90,10 @@ public:
 
 private:
 
+    void configure(Index, bool);
+    bool load_cache_metadata(const filesystem::path&);
+    void save_cache_metadata(const filesystem::path&, Index, bool) const;
+
     void fill_sequences(const vector<Index>&,
                         const vector<Index>&,
                         float*,
@@ -132,7 +125,7 @@ private:
 
     bool classification_target = false;
 
-    Index input_sequence_length_limit = 0;   // 0 = unlimited
+    Index input_sequence_length_limit = 0;
 
     filesystem::path cache_path;
     mutable FileReader cache_reader;

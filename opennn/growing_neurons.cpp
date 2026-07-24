@@ -13,6 +13,7 @@
 #include "growing_neurons.h"
 #include "string_utilities.h"
 #include "cross_validation.h"
+#include "selection_utilities.h"
 
 namespace opennn
 {
@@ -67,12 +68,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     float elapsed_time = 0.0f;
 
-    TrainingResult training_results;
-
     time(&beginning_time);
 
-    // k-fold CV partition (folds_number > 1): built ONCE so every neuron count is scored on the same
-    // folds. Empty when folds_number == 1 (legacy single Training/Validation-split scoring).
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
@@ -93,18 +90,38 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
 
-        float minimum_training_error = MAX;
-        float minimum_validation_error = MAX;
+        const CandidateEvaluation candidate_evaluation = evaluate_candidate(
+            training_strategy, neural_network, folds_number, fold_partition, trials_number, true,
+            [&](Index trial, float training_error, float validation_error, bool improved)
+            {
+                if (display)
+                    cout << "Trial: " << trial+1 << "\n"
+                         << "Training error: " << training_error << "\n"
+                         << "Validation error: " << validation_error << "\n";
+
+                if (improved)
+                {
+                    neuron_selection_results.training_error_history(epoch) = training_error;
+                    neuron_selection_results.validation_error_history(epoch) = validation_error;
+
+                    if (validation_error < neuron_selection_results.optimum_validation_error)
+                    {
+                        neuron_selection_results.optimal_neurons_number = neurons_number;
+                        neural_network->copy_parameters_host();
+                        neuron_selection_results.optimal_parameters =
+                            Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
+                                                      neural_network->get_parameters_size());
+                        neuron_selection_results.optimum_training_error = training_error;
+                        neuron_selection_results.optimum_validation_error = validation_error;
+                    }
+                }
+            });
+
+        const float minimum_training_error = candidate_evaluation.training_error;
+        const float minimum_validation_error = candidate_evaluation.validation_error;
 
         if (folds_number > 1)
         {
-            // k-fold CV score for this neuron count. It trains k transient models and keeps none, so
-            // the optimal-parameters snapshot is left empty and the final model is refit on all
-            // development after selection (see below).
-            const FoldEvaluation evaluation = evaluate_folds(training_strategy, fold_partition);
-            minimum_training_error = evaluation.training_error;
-            minimum_validation_error = evaluation.validation_error;
-
             neuron_selection_results.training_error_history(epoch) = minimum_training_error;
             neuron_selection_results.validation_error_history(epoch) = minimum_validation_error;
 
@@ -119,46 +136,6 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             if (display)
                 cout << "Neurons: " << neurons_number << ", " << folds_number
                      << "-fold CV validation error " << minimum_validation_error << "\n";
-        }
-        else
-        {
-            for (Index trial = 0; trial < trials_number; ++trial)
-            {
-                neural_network->set_parameters_random();
-
-                training_results = training_strategy->train();
-
-                const float training_error = training_results.get_training_error();
-
-                const float validation_error = training_results.validation_error_history.size() > 0
-                    ? training_results.validation_error_history.minCoeff()
-                    : training_results.get_validation_error();
-
-                if (display)
-                    cout << "Trial: " << trial+1 << "\n"
-                         << "Training error: " << training_error << "\n"
-                         << "Validation error: " << validation_error << "\n";
-
-                if (validation_error < minimum_validation_error)
-                {
-                    minimum_training_error = training_error;
-                    minimum_validation_error = validation_error;
-
-                    neuron_selection_results.training_error_history(epoch) = minimum_training_error;
-                    neuron_selection_results.validation_error_history(epoch) = minimum_validation_error;
-
-                    if (minimum_validation_error < neuron_selection_results.optimum_validation_error)
-                    {
-                        neuron_selection_results.optimal_neurons_number = neurons_number;
-                        neural_network->copy_parameters_host();
-                        neuron_selection_results.optimal_parameters =
-                            Eigen::Map<const VectorR>(neural_network->get_parameters_data(),
-                                                      neural_network->get_parameters_size());
-                        neuron_selection_results.optimum_training_error = minimum_training_error;
-                        neuron_selection_results.optimum_validation_error = minimum_validation_error;
-                    }
-                }
-            }
         }
 
         if (display)
@@ -177,26 +154,17 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         elapsed_time = float(difftime(current_time,beginning_time));
 
 
-        if (elapsed_time >= maximum_time)
+        neuron_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << get_time(elapsed_time) << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumTime;
-        }
-        else if (minimum_validation_error <= validation_error_goal)
-        {
-            if (display) cout << "Epoch " << epoch << "\nValidation error goal reached: " << minimum_validation_error << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::ValidationErrorGoal;
-        }
-        else if (validation_failures >= maximum_validation_failures)
-        {
-            if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumValidationFailures;
-        }
-        else if (neurons_number >= maximum_neurons)
-        {
-            if (display) cout << "Epoch " << epoch << "\nMaximum number of neurons reached: " << neurons_number << "\n";
-            neuron_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumNeurons;
-        }
+            {elapsed_time >= maximum_time, StoppingCondition::MaximumTime,
+             compose_message("Epoch ", epoch, "\nMaximum time reached: ", get_time(elapsed_time), "\n")},
+            {minimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
+             compose_message("Epoch ", epoch, "\nValidation error goal reached: ", minimum_validation_error, "\n")},
+            {validation_failures >= maximum_validation_failures, StoppingCondition::MaximumValidationFailures,
+             compose_message("Epoch ", epoch, "\nMaximum validation failures reached: ", validation_failures, "\n")},
+            {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
+             compose_message("Epoch ", epoch, "\nMaximum number of neurons reached: ", neurons_number, "\n")}
+        });
 
         if (neuron_selection_results.stopping_condition)
         {
@@ -218,25 +186,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     neural_network->compile();
 
-    if (neuron_selection_results.optimal_parameters.size() == neural_network->get_parameters_size())
-    {
-        neural_network->set_parameters(neuron_selection_results.optimal_parameters);
-    }
-    else if (folds_number > 1)
-    {
-        // k-fold CV path: refit the final model on ALL development samples with the selected neuron
-        // count, using the epoch budget the CV of that architecture found best.
-        if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development(training_strategy, folds_number);
-    }
-    else
-    {
-        // No snapshot with folds=1 (parameter layout changed): refit on the user's split, consistent
-        // with the input-selection algorithms.
-        if (display) cout << "Refitting the final model on the selected neurons.\n";
-        neural_network->set_parameters_random();
-        training_strategy->train();
-    }
+    finalize_selected_model(training_strategy, neural_network,
+                            neuron_selection_results.optimal_parameters, folds_number, display, "neurons");
 
     if (display) neuron_selection_results.print();
 
@@ -248,14 +199,14 @@ void GrowingNeurons::to_JSON(JsonWriter& printer) const
     printer.open_element("GrowingNeurons");
 
     write_json(printer, {
-        {"MinimumNeurons", to_string(minimum_neurons)},
-        {"MaximumNeurons", to_string(maximum_neurons)},
-        {"NeuronsIncrement", to_string(neurons_increment)},
-        {"TrialsNumber", to_string(trials_number)},
-        {"ValidationErrorGoal", to_string(validation_error_goal)},
-        {"MaximumValidationFailures", to_string(maximum_validation_failures)},
-        {"MaximumTime", to_string(maximum_time)},
-        {"FoldsNumber", to_string(folds_number)}
+        {"MinimumNeurons", minimum_neurons},
+        {"MaximumNeurons", maximum_neurons},
+        {"NeuronsIncrement", neurons_increment},
+        {"TrialsNumber", trials_number},
+        {"ValidationErrorGoal", validation_error_goal},
+        {"MaximumValidationFailures", maximum_validation_failures},
+        {"MaximumTime", maximum_time},
+        {"FoldsNumber", folds_number}
     });
 
     printer.close_element();
@@ -269,13 +220,10 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
     set_maximum_neurons(read_json_index(root_element, "MaximumNeurons"));
     set_neurons_increment(read_json_index(root_element, "NeuronsIncrement"));
     set_trials_number(read_json_index(root_element, "TrialsNumber"));
-    set_validation_error_goal(read_json_float(root_element,
-        root_element->has("ValidationErrorGoal") ? "ValidationErrorGoal" : "SelectionErrorGoal"));
-    set_maximum_validation_failures(read_json_index(root_element,
-        root_element->has("MaximumValidationFailures") ? "MaximumValidationFailures" : "MaximumSelectionFailures"));
+    set_validation_error_goal(read_json_float_alias(root_element, "ValidationErrorGoal", "SelectionErrorGoal"));
+    set_maximum_validation_failures(read_json_index_alias(root_element, "MaximumValidationFailures", "MaximumSelectionFailures"));
     set_maximum_time(read_json_float(root_element, "MaximumTime"));
 
-    // Backward compatible: projects saved before k-fold CV have no FoldsNumber -> keep legacy folds=1.
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));
 }

@@ -19,6 +19,7 @@ class Dataset;
 
 struct TrainingResult;
 struct InputsSelectionResult;
+struct Descriptives;
 
 class InputsSelection
 {
@@ -79,6 +80,17 @@ public:
 protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
+
+    // Scalers/descriptives of the selected input features, captured from the dataset and
+    // re-applied to the network's scaling layer after the final architecture is configured.
+    struct InputScaling
+    {
+        vector<string> scalers;
+        vector<Descriptives> descriptives;
+    };
+
+    static InputScaling capture_input_scaling(Dataset*);
+    static void apply_input_scaling(NeuralNetwork*, const InputScaling&);
 
     // k-fold CV scoring lives in cross_validation.h (build_fold_partition / evaluate_folds /
     // refit_final_model_on_development), shared with neuron selection.

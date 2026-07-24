@@ -75,9 +75,9 @@ void NonMaxSuppression::read_JSON_body(const Json* root)
 
 void NonMaxSuppression::write_JSON_body(JsonWriter& writer) const
 {
-    add_json_field(writer, "BoxesPerCell", to_string(nms.boxes_per_cell));
-    add_json_field(writer, "ConfidenceThreshold", to_string(nms.confidence_threshold));
-    add_json_field(writer, "IouThreshold", to_string(nms.iou_threshold));
+    add_json_field(writer, "BoxesPerCell", nms.boxes_per_cell);
+    add_json_field(writer, "ConfidenceThreshold", nms.confidence_threshold);
+    add_json_field(writer, "IouThreshold", nms.iou_threshold);
 }
 
 REGISTER(Layer, NonMaxSuppression, "NonMaxSuppression")

@@ -27,17 +27,19 @@ public:
                           Index maximum_vocabulary_size = 20000,
                           Index minimum_token_frequency = 1);
 
-    const vector<string>& get_vocabulary() const noexcept { return vocabulary; }
-    Index get_vocabulary_size() const noexcept { return vocabulary.size(); }
+    const vector<string>& get_vocabulary() const noexcept { return tokenizer->get_vocabulary(); }
+    Index get_vocabulary_size() const noexcept { return tokenizer->get_vocabulary_size(); }
 
-    const unordered_map<string, Index>& get_vocabulary_map() const noexcept { return vocabulary_map; }
+    const TokenizerOperator::VocabularyMap& get_vocabulary_map() const noexcept
+    {
+        return tokenizer->get_vocabulary_map();
+    }
 
     Index get_sequence_length() const noexcept { return sequence_length; }
 
-    // Optional subword tokenizer (e.g. BytePairTokenizer). When set with a
-    // non-empty vocabulary the corpus is encoded through it and the built-in
-    // whitespace/word-level path is bypassed; null keeps word-level tokenization.
-    void set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer) { tokenizer = move(new_tokenizer); }
+    // A tokenizer with a loaded vocabulary uses that fixed vocabulary. The
+    // default word-level tokenizer builds one from the corpus.
+    void set_tokenizer(unique_ptr<TokenizerOperator>);
     const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
 
     void set_vocabulary(const vector<string>&);
@@ -73,6 +75,10 @@ public:
 
 private:
 
+    void configure(Index);
+    bool load_cache_metadata(const filesystem::path&, uint64_t);
+    void save_cache_metadata(const filesystem::path&, uint64_t, Index) const;
+
     void fill_blocks(const vector<Index>&,
                      const vector<Index>&,
                      float*,
@@ -82,19 +88,13 @@ private:
 
     void create_vocabulary(const vector<string_view>&);
 
-    void update_vocabulary_map();
-
-    void read_file(string&) const;
-
     vector<Index> encode_corpus(const vector<string_view>&) const;
 
     void write_binary_cache(const vector<Index>&, Index);
 
-    unique_ptr<TokenizerOperator> tokenizer;
-
-    vector<string> vocabulary;
-
-    unordered_map<string, Index> vocabulary_map;
+    unique_ptr<TokenizerOperator> tokenizer =
+        make_unique<WordLevelTokenizer>(reserved_tokens);
+    bool fixed_vocabulary = false;
 
     Index sequence_length = 256;
 

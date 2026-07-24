@@ -22,7 +22,7 @@ void MergeOperator::set(Index new_heads_number, Index new_query_sequence_length,
     compute_dtype         = new_compute_dtype;
 }
 
-void MergeOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void MergeOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const Index batch_size = forward_propagation.batch_size;
 

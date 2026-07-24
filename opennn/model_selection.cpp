@@ -85,7 +85,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     const Json* neurons_selection_method_element = neurons_selection_element->find(selection_method.c_str());
 
     throw_if(!neurons_selection_method_element,
-             format("{} element is nullptr.\n", selection_method));
+             "{} element is nullptr.\n", selection_method);
 
     set_neurons_selection(selection_method);
     neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
@@ -98,7 +98,7 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     const Json* inputs_selection_method_element = inputs_selection_element->find(inputs_method.c_str());
 
     throw_if(!inputs_selection_method_element,
-             format("{} element is nullptr.\n", inputs_method));
+             "{} element is nullptr.\n", inputs_method);
 
     set_inputs_selection(inputs_method);
     inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));

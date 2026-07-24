@@ -16,7 +16,7 @@ namespace opennn
 Upsample::Upsample(const Shape& new_input_shape,
                    Index new_scale_factor,
                    const string& new_label)
-    : Layer(LayerType::Upsample, /*trainable=*/false)
+    : Layer(LayerType::Upsample,               false)
 {
     operators = {&upsample};
     set(new_input_shape, new_scale_factor, new_label);
@@ -70,7 +70,7 @@ void Upsample::read_JSON_body(const Json* root)
 
 void Upsample::write_JSON_body(JsonWriter& writer) const
 {
-    add_json_field(writer, "ScaleFactor", to_string(upsample.scale_factor));
+    add_json_field(writer, "ScaleFactor", upsample.scale_factor);
 }
 
 REGISTER(Layer, Upsample, "Upsample")

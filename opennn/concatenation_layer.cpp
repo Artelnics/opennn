@@ -92,12 +92,9 @@ void Concatenation::load_state_from_JSON(const JsonDocument& document)
 
 void Concatenation::read_JSON_body(const Json* root)
 {
-    istringstream stream(read_json_string(root, "InputChannels"));
-    vector<Index> channels;
-    for (Index value; stream >> value; )
-        channels.push_back(value);
-
-    set(input_shape, channels, label);
+    set(input_shape,
+        parse_number_list<Index>(read_json_string(root, "InputChannels"), "InputChannels"),
+        label);
 }
 
 void Concatenation::write_JSON_body(JsonWriter& writer) const

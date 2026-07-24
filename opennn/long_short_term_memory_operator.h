@@ -10,12 +10,13 @@
 
 #include "operator.h"
 #include "activation_operator.h"
+#include "cudnn_rnn.h"
 
 namespace opennn
 {
 
 
-struct LongShortTermMemoryOperator : Operator
+struct LongShortTermMemoryOperator : Operator, CudnnRnnState
 {
     enum ForwardSlot
     {
@@ -137,39 +138,10 @@ private:
                          bool) const;
 
     void ensure_cudnn_setup_(Index, bool) const;
-    void ensure_cudnn_setup_attempt_(Index, bool) const;
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
 
-    mutable Buffer weight_space_buf    {Device::CUDA};
-    mutable Buffer dweight_space_buf   {Device::CUDA};
-    mutable Buffer workspace_buf       {Device::CUDA};
-    mutable Buffer reserve_space_buf   {Device::CUDA};
-    mutable Buffer y_buf               {Device::CUDA};   // (B, T, H) rank-3 y from cuDNN
-    mutable Buffer dy_buf              {Device::CUDA};   // (B, T, H) rank-3 dy for cuDNN
-    mutable Buffer dx_scratch_buf      {Device::CUDA};   // (B, T, F) dx sink when input_delta is unused
-
-    mutable CudnnDescriptor<cudnnRNNDescriptor_t>     rnn_desc;
-    mutable CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
-    mutable Buffer dropout_states_buf{Device::CUDA};
-
-    mutable CudnnRnnShapeSlot shape_slots_[RNN_SHAPE_SLOTS];
-    mutable int active_shape_ = -1;
-    mutable int shape_stamp_  = 0;
-    CudnnRnnShapeSlot& active_shape() const { return shape_slots_[active_shape_]; }
-
-    mutable Index cached_input_features  = -1;
-    mutable Index cached_output_features = -1;
-
-    mutable float* cudnn_w_ptrs_[8]  = {};
-    mutable float* cudnn_b_ptrs_[8]  = {};
-    mutable float* cudnn_gw_ptrs_[8] = {};
-    mutable float* cudnn_gb_ptrs_[8] = {};
-
     mutable const float* y_used_ = nullptr;
-
-    mutable bool persist_algo_failed_ = false;
-    mutable bool persist_algo_active_ = false;
 
     mutable vector<float> grad_tls_buf_;
 };

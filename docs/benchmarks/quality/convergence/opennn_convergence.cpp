@@ -76,9 +76,6 @@ std::unique_ptr<NeuralNetwork> make_network(const Shape& input_shape,
     return network;
 }
 
-// Held-out log-loss (binary cross entropy) over the whole test split, evaluated
-// batch by batch. This is the convergence gate: a model that overfits the train
-// split must not pass.
 double evaluate_log_loss(NeuralNetwork& network,
                          const MatrixR& all,
                          Index inputs_number,
@@ -112,7 +109,7 @@ double evaluate_log_loss(NeuralNetwork& network,
     return processed > 0 ? log_loss / double(processed) : NAN;
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {
@@ -141,7 +138,6 @@ int main(int argc, char* argv[])
         const Index samples = dataset.get_samples_number();
         const Index inputs_number = dataset.get_input_shape()[0];
 
-        // Load the held-out test split once; evaluation reuses this matrix.
         TabularDataset test_dataset(test_path, ",", false, false);
         test_dataset.set_sample_roles("Testing");
         const MatrixR& test_all = test_dataset.get_data();
@@ -162,13 +158,8 @@ int main(int argc, char* argv[])
         adam->set_display(false);
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
-        adam->set_loss_goal(0.0f);   // never stop on training loss; we gate on test log-loss
+        adam->set_loss_goal(0.0f);
 
-        // The convergence gate is the HELD-OUT test log-loss, not the training
-        // loss -- a model that overfits the train split must not pass. Train in
-        // short chunks, evaluate the test set after each, and stop the clock when
-        // the held-out log-loss reaches the target. Only training time is counted
-        // (per-chunk evaluation is excluded).
         const Index chunk = 1;
         adam->set_maximum_epochs(chunk);
 
@@ -180,7 +171,7 @@ int main(int argc, char* argv[])
         while (epochs < max_epochs)
         {
             const auto t0 = clock_type::now();
-            training_strategy.train();   // resumes from current params
+            training_strategy.train();
             train_s += std::chrono::duration<double>(clock_type::now() - t0).count();
             epochs += chunk;
 

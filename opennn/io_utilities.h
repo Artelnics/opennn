@@ -13,6 +13,14 @@ namespace opennn
 {
 
 void download_if_missing(const filesystem::path&, const string&);
+void download_files_if_missing(const filesystem::path& directory,
+                               string_view base_url,
+                               const vector<string_view>& filenames);
+
+string read_text_file(const filesystem::path&);
+bool is_file_current(const filesystem::path& file,
+                     const vector<filesystem::path>& sources,
+                     uintmax_t expected_size = 0);
 
 class FileReader
 {
@@ -41,6 +49,17 @@ private:
 #endif
 };
 
+void read_int32_batch(const FileReader&,
+                      const vector<Index>& sample_indices,
+                      Index samples_number,
+                      uint64_t record_values,
+                      Index source_offset,
+                      Index values_number,
+                      float* output,
+                      Index output_stride,
+                      Index output_offset,
+                      string_view context);
+
 class FileWriter
 {
 public:
@@ -63,6 +82,35 @@ private:
     ofstream stream_;
     bool finalized_ = false;
 };
+
+template <typename T>
+bool read_binary_value(istream& stream, T& value)
+{
+    return bool(stream.read(reinterpret_cast<char*>(&value), sizeof(value)));
+}
+
+template <typename T>
+void write_binary_value(FileWriter& writer, const T& value)
+{
+    writer.write(&value, sizeof(value));
+}
+
+inline bool read_binary_string(istream& stream, string& value)
+{
+    uint64_t size = 0;
+    if (!read_binary_value(stream, size)
+        || size > uint64_t(numeric_limits<streamsize>::max()))
+        return false;
+
+    value.resize(size_t(size));
+    return size == 0 || bool(stream.read(value.data(), streamsize(size)));
+}
+
+inline void write_binary_string(FileWriter& writer, const string& value)
+{
+    write_binary_value(writer, uint64_t(value.size()));
+    writer.write(value.data(), value.size());
+}
 
 class FileMapping
 {
@@ -137,7 +185,8 @@ extern const vector<string> negative_words;
 
 enum DateFormat {Auto, Dmy, Mdy, Ymd};
 
-time_t date_to_timestamp(const string&, Index = 0, const DateFormat& format = Auto);
+DateFormat detect_date_format(string_view);
+time_t date_to_timestamp(string_view, Index = 0, DateFormat format = Auto);
 
 }
 

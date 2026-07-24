@@ -40,7 +40,7 @@ void DropoutOperator::back_propagate(ForwardPropagation&, BackPropagation& back_
 void DropoutOperator::to_JSON(JsonWriter& w) const
 {
     if (rate > 0.0f)
-        add_json_field(w, "DropoutRate", to_string(rate));
+        add_json_field(w, "DropoutRate", rate);
 }
 
 void DropoutOperator::from_JSON(const Json* parent)

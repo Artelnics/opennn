@@ -36,7 +36,7 @@ inline const string& variable_type_to_string(VariableType type)
     return variable_type_map().to_string(type);
 }
 
-inline VariableType string_to_variable_type(const string& name)
+inline VariableType string_to_variable_type(string_view name)
 {
     return variable_type_map().from_string(name);
 }
@@ -70,7 +70,7 @@ inline const string& scaler_method_to_string(ScalerMethod method)
     return scaler_method_map().to_string(method);
 }
 
-inline ScalerMethod string_to_scaler_method(const string& name)
+inline ScalerMethod string_to_scaler_method(string_view name)
 {
     return scaler_method_map().from_string(name);
 }
@@ -104,7 +104,7 @@ inline const string& variable_role_to_string(VariableRole role)
     return variable_role_map().to_string(role);
 }
 
-inline VariableRole string_to_variable_role(const string& name)
+inline VariableRole string_to_variable_role(string_view name)
 {
     if (name == "Id") return VariableRole::None;
     return variable_role_map().from_string(name);

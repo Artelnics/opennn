@@ -351,10 +351,10 @@ void Dense::read_JSON_body(const Json* dense_layer_element)
 void Dense::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"BatchNormalization", to_string(batch_norm.active())},
-        {"UseBias", to_string(combination.use_bias)},
+        {"BatchNormalization", batch_norm.active()},
+        {"UseBias", combination.use_bias},
         {"Activation", ActivationOperator::to_string(get_activation_function())},
-        {"Gated", to_string(gated)}
+        {"Gated", gated}
     });
 }
 

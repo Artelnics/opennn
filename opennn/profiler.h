@@ -96,7 +96,7 @@ public:
     }
 };
 
-}  // namespace opennn
+}
 
 #define OPENNN_PROFILE_CAT_INNER(a, b) a##b
 #define OPENNN_PROFILE_CAT(a, b)       OPENNN_PROFILE_CAT_INNER(a, b)

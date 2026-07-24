@@ -181,31 +181,6 @@ ActivationFunction activation_function_from_string(const string& name)
     return activation_function_map().from_string(name);
 }
 
-VectorR activation_forward_values(ActivationFunction function, const VectorR& values)
-{
-    return values.unaryExpr([function](float value) { return activation_forward_value(function, value); });
-}
-
-MatrixR activation_forward_values(ActivationFunction function, const MatrixR& values)
-{
-    return values.unaryExpr([function](float value) { return activation_forward_value(function, value); });
-}
-
-VectorR activation_derivative_from_output_values(ActivationFunction function, const VectorR& values)
-{
-    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
-}
-
-MatrixR activation_derivative_from_output_values(ActivationFunction function, const MatrixR& values)
-{
-    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
-}
-
-MatrixR activation_derivative_from_output_values(ActivationFunction function, const MatrixMap& values)
-{
-    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
-}
-
 #define OPENNN_GPU_OPS(X) \
     X(bound_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(scale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&)) \
@@ -513,19 +488,14 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
         a = (a >= 0.0f).select(a, a * LEAKY_RELU_SLOPE);
         return;
     case GELU:
-        a = a.unaryExpr([](float x)
-        {
-            constexpr float inv_sqrt2 = 0.70710678118654752440f;
-            return 0.5f * x * (1.0f + erff(x * inv_sqrt2));
-        });
+        a = a.unaryExpr([](float x) { return gelu_value(x); });
         return;
     case GELUTanh:
-    {
-        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
-        a = 0.5f * a * (1.0f + (sqrt_2_over_pi * (a + 0.044715f * a * a * a)).tanh());
+        // Vectorized form of gelu_tanh_value (Eigen array tanh).
+        a = 0.5f * a * (1.0f + (SQRT_2_OVER_PI * (a + GELU_TANH_CUBIC * a * a * a)).tanh());
         return;
-    }
     case SiLU:
+        // Vectorized form of silu_value (Eigen array exp).
         a = a / (1.0f + (-a).exp());
         return;
     }
@@ -554,35 +524,15 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
     case LeakyReLU:
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
+    // For GELU/GELUTanh/SiLU `y` holds the pre-activation input (needs_input).
     case GELU:
-        d *= y.unaryExpr([](float x)
-        {
-            constexpr float inv_sqrt2  = 0.70710678118654752440f;
-            constexpr float inv_sqrt2pi = 0.39894228040143267794f;
-            const float cdf = 0.5f * (1.0f + erff(x * inv_sqrt2));
-            const float pdf = inv_sqrt2pi * expf(-0.5f * x * x);
-            return cdf + x * pdf;
-        });
+        d *= y.unaryExpr([](float x) { return gelu_derivative(x); });
         return;
     case GELUTanh:
-        d *= y.unaryExpr([](float x)
-        {
-            constexpr float sqrt_2_over_pi = 0.7978845608028654f;
-            const float x2 = x * x;
-            const float u = sqrt_2_over_pi * (x + 0.044715f * x * x2);
-            const float t = tanhf(u);
-            const float du = sqrt_2_over_pi * (1.0f + 3.0f * 0.044715f * x2);
-            return 0.5f * (1.0f + t) + 0.5f * x * (1.0f - t * t) * du;
-        });
+        d *= y.unaryExpr([](float x) { return gelu_tanh_derivative(x); });
         return;
     case SiLU:
-        // `y` holds the pre-activation input (SiLU needs_input). d(silu)/dx =
-        // sigmoid(x) * (1 + x*(1 - sigmoid(x))).
-        d *= y.unaryExpr([](float x)
-        {
-            const float s = 1.0f / (1.0f + expf(-x));
-            return s * (1.0f + x * (1.0f - s));
-        });
+        d *= y.unaryExpr([](float x) { return silu_derivative(x); });
         return;
     }
 }
@@ -2431,8 +2381,8 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
         return starting_matrix;
 
     throw_if(starting_matrix.cols() != block.cols(),
-             format("append_rows: Column mismatch ({} vs {})",
-                    starting_matrix.cols(), block.cols()));
+             "append_rows: Column mismatch ({} vs {})",
+                    starting_matrix.cols(), block.cols());
 
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 

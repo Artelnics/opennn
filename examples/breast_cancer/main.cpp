@@ -27,17 +27,14 @@ int main()
 
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-        // Dataset
 
         TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
         const Index neurons_number = 3;
 
-        // Neural Network
 
         ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
 
-        // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
@@ -51,7 +48,6 @@ int main()
 
         training_strategy.train();
 
-        // Testing Analysis
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
 

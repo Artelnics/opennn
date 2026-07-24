@@ -32,7 +32,6 @@ TEST(UnscalingTest, ForwardPropagate)
     Index samples_number;
     const type TOLERANCE = type(1e-4);
 
-    // Test Unscaling Scaler::None
     {
         inputs_number = 3;
         samples_number = 1;
@@ -58,7 +57,6 @@ TEST(UnscalingTest, ForwardPropagate)
         EXPECT_NEAR(output_view.as<type>()[2], type(10), TOLERANCE);
     }
 
-    // Test Unscaling with MinimumMaximum
     {
         inputs_number = 1;
         samples_number = 3;
@@ -76,8 +74,6 @@ TEST(UnscalingTest, ForwardPropagate)
         vector<Descriptives> actual_descriptives = descriptives(original_data);
         layer->set_descriptives(actual_descriptives);
 
-        // Feed scaled values: for MinMax with range [-1,1] and min=2,max=6:
-        //   scaled = -1 + 2*(x-2)/(6-2) => x=2 -> -1, x=4 -> 0, x=6 -> 1
         MatrixR scaled_data(samples_number, inputs_number);
         scaled_data << type(-1), type(0), type(1);
 

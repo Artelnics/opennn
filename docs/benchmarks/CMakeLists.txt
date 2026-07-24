@@ -44,6 +44,9 @@ add_executable(opennn_transformer_infer
 add_executable(opennn_attention_validate
     throughput/attention-speed/opennn_attention_validate.cpp)
 
+add_executable(opennn_string_processing
+    throughput/string-processing/opennn_string_processing.cpp)
+
 add_executable(opennn_resnet50_maxbatch_trial
     capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
 
@@ -95,6 +98,7 @@ set(_benchmark_targets
         opennn_resnet50_maxbatch_trial
         opennn_transformer_infer
         opennn_attention_validate
+        opennn_string_processing
         opennn_accuracy
         opennn_convergence
         opennn_precision

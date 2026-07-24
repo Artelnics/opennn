@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_types.h"
+#include "string_utilities.h"
 
 #include <algorithm>
 
@@ -132,22 +133,11 @@ Shape string_to_shape(const string& text, const string& separator)
 
     throw_if(text.empty(),
              "Input string must not be empty.\n");
+    throw_if(separator.empty(),
+             "Shape separator must not be empty.\n");
 
-    stringstream stream(text);
-    string token;
-
-    while (getline(stream, token, separator[0]))
-    {
-        try
-        {
-            if (!token.empty())
-                result.push_back(stoi(token));
-        }
-        catch (const invalid_argument&)
-        {
-            throw runtime_error("Input string contains non-numeric elements.\n");
-        }
-    }
+    for (const Index value : parse_number_list<Index>(text, "Shape", separator[0]))
+        result.push_back(value);
 
     return result;
 }

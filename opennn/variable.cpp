@@ -52,7 +52,7 @@ void Variable::to_JSON(JsonWriter& printer) const
     });
 
     if (features > 1)
-        add_json_field(printer, "Features", to_string(features));
+        add_json_field(printer, "Features", features);
 
     if (type == VariableType::Categorical || type == VariableType::Binary)
         add_json_field(printer, "Categories", vector_to_string(categories, ";"));

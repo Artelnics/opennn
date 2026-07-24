@@ -72,6 +72,32 @@ enum class ComparisonOperator : uint8_t
 };
 
 
+// [low, up] interval implied by a comparison on the constrained value (strict and
+// non-strict operators map identically; missing sides are +/-infinity). Returns
+// false for AllowedSet, which is not an interval.
+inline bool interval_from_comparison(ComparisonOperator comparison,
+                                     float low_bound, float up_bound,
+                                     float& low, float& up)
+{
+    low = -numeric_limits<float>::infinity();
+    up  =  numeric_limits<float>::infinity();
+
+    switch (comparison)
+    {
+        using enum ComparisonOperator;
+    case None:            return true;
+    case EqualTo:         low = up = low_bound; return true;
+    case Between:         low = low_bound; up = up_bound; return true;
+    case GreaterEqualTo:
+    case GreaterThan:     low = low_bound; return true;
+    case LessEqualTo:
+    case LessThan:        up = up_bound; return true;
+    case AllowedSet:
+    default:              return false;
+    }
+}
+
+
 enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent };
 
 

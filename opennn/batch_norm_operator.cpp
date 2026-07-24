@@ -81,7 +81,7 @@ void BatchNormalizationOperator::to_JSON(JsonWriter& w) const
 {
     if (!active()) return;
 
-    add_json_field(w, "Momentum", to_string(momentum));
+    add_json_field(w, "Momentum", momentum);
 
     if (running_mean.data)
         add_json_field(w, "RunningMeans", vector_to_string(running_mean.as_vector()));

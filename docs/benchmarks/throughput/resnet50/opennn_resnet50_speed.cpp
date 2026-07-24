@@ -40,15 +40,11 @@ int main(int argc, char* argv[])
         const Index timed_epochs = argc > 2 ? Index(std::stoll(argv[2])) : 5;
         const Index batch = argc > 3 ? Index(std::stoll(argv[3])) : 128;
         const std::string precision = argc > 4 ? argv[4] : "fp32";
-        // A negative image_size resizes to |image_size| AND keeps the set device
-        // resident (fits smaller crops in VRAM so BF16/FP32 both take the gather
-        // mega-graph). Positive stays host-staged (large-image ImageNet path).
         const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
         const bool force_resident = image_size_arg < 0;
         const bool cuda_graph = argc > 6 ? (std::stoi(argv[6]) != 0) : true;
         const std::string cache_dir = argc > 7 ? argv[7] : "";
-        // Conv workspace cap A/B: "off"/"0" = autotune, "auto" = AUTO cap, N = MiB cap.
         const std::string workspace_arg = argc > 8 ? argv[8] : "off";
 
         memory_debug::reset();
@@ -57,8 +53,6 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
-        // off = autotune (cap off); heur = plain heuristic (autotune off, cap off);
-        // auto = AUTO cap (heuristic); N = explicit MiB cap (heuristic).
         if (workspace_arg == "off" || workspace_arg == "0")
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
         else if (workspace_arg == "heur")
@@ -69,10 +63,6 @@ int main(int argc, char* argv[])
             device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
         std::cout << "workspace_mode=" << workspace_arg << "\n";
 
-        // A custom image-cache directory is no longer configurable from OpenNN
-        // (the setter was removed when backend toggles became code-only). The
-        // cache always lands in <data_path>/.cache, which stays outside the repo
-        // because datasets live under $OPENNN_BENCH_DATA.
         if (!cache_dir.empty())
             std::cerr << "note: custom cache dir ignored (OpenNN caches in "
                          "<data_path>/.cache): " << cache_dir << "\n";
@@ -84,9 +74,6 @@ int main(int argc, char* argv[])
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
 
-        // CIFAR (image_size==0) fits in VRAM: keep it GPU-resident so each batch is
-        // a device-side gather. The 224px ImageNet path is too large, so it stays
-        // host-staged. Enabled in code; there is no environment switch.
         const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
@@ -105,7 +92,7 @@ int main(int argc, char* argv[])
                        {3, 4, 6, 3},
                        Shape{64, 128, 256, 512},
                        dataset.get_shape("Target"),
-                       /*use_bottleneck=*/true);
+                                          true);
 
         std::cout << "layers=" << network.get_layers_number()
                   << " parameters=" << network.get_parameters_size() << "\n";
@@ -122,9 +109,6 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_cuda_graph(cuda_graph);
 
-        // Probe mode (epochs<=0): only the CUDA warmup runs (peak allocation for
-        // this batch), then report memory + fit. maximum_epochs<0 makes the epoch
-        // loop run zero times, so no full epoch is trained -- fast OOM/fit check.
         if (timed_epochs <= 0)
         {
             adam->set_display(false);

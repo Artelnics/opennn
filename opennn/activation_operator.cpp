@@ -26,7 +26,7 @@ void ActivationOperator::set_activation_function(const string& name)
     set_activation_function(from_string(name));
 }
 
-void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:activation_fwd");
     

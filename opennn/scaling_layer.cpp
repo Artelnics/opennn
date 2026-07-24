@@ -56,8 +56,8 @@ void Scaling::set_input_shape(const Shape& new_input_shape)
 void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     throw_if(ssize(new_descriptives) != ssize(descriptives),
-             format("{}::set_descriptives: size mismatch (expected {}, got {}).",
-                    get_name(), descriptives.size(), new_descriptives.size()));
+             "{}::set_descriptives: size mismatch (expected {}, got {}).",
+                    get_name(), descriptives.size(), new_descriptives.size());
     descriptives = new_descriptives;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -66,8 +66,8 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 void Scaling::set_scalers(const vector<string>& scalers_str)
 {
     throw_if(ssize(scalers_str) != ssize(scalers),
-             format("{}::set_scalers: size mismatch (expected {}, got {}).",
-                    get_name(), scalers.size(), scalers_str.size()));
+             "{}::set_scalers: size mismatch (expected {}, got {}).",
+                    get_name(), scalers.size(), scalers_str.size());
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -172,8 +172,8 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         VectorR values;
         string_to_vector(read_json_string(scaling_layer_element, field), values);
         throw_if(values.size() != ssize(descriptives),
-                 format("Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
-                        field, values.size(), descriptives.size()));
+                 "Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                        field, values.size(), descriptives.size());
         for (Index i = 0; i < values.size(); ++i)
             descriptives[size_t(i)].*member = values(i);
     };
@@ -188,8 +188,8 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         const vector<string> tokens = get_tokens(
             read_json_string(scaling_layer_element, "Scalers"), " ");
         throw_if(ssize(tokens) != ssize(scalers),
-                 format("Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
-                        tokens.size(), scalers.size()));
+                 "Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
+                        tokens.size(), scalers.size());
         ranges::transform(tokens, scalers.begin(), string_to_scaler_method);
     }
 
@@ -213,16 +213,14 @@ void Scaling::write_JSON_body(JsonWriter& printer) const
         {"Minimums",           vector_to_string(get_minimums())},
         {"Maximums",           vector_to_string(get_maximums())},
         {"Scalers",            vector_to_string(scaler_names)},
-        {"MinRange",           to_string(min_range)},
-        {"MaxRange",           to_string(max_range)}
+        {"MinRange",           min_range},
+        {"MaxRange",           max_range}
     });
 }
 
 string Scaling::write_expression(const vector<string>& input_names,
-                                 const vector<string>& /*output_names*/) const
+                                 const vector<string>&) const
 {
-    // Rank-2 (time series) inputs have one scaler per feature, applied to
-    // every time step: outputs_number = time_steps * features.
     const Index outputs_number = get_outputs_number();
     throw_if(outputs_number == 0 || ssize(scalers) == 0
              || outputs_number % ssize(scalers) != 0,

@@ -73,12 +73,12 @@ void GroupedQueryAttention::read_JSON_body(const Json* element)
 void GroupedQueryAttention::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"QueryHeads",    to_string(q_heads)},
-        {"KeyValueHeads", to_string(kv_heads)},
-        {"HeadDim",       to_string(head_dim)},
-        {"RopeTheta",     to_string(rope_theta)},
-        {"RmsEpsilon",    to_string(rms_epsilon)},
-        {"QKNorm",        to_string(use_qk_norm)}
+        {"QueryHeads",    q_heads},
+        {"KeyValueHeads", kv_heads},
+        {"HeadDim",       head_dim},
+        {"RopeTheta",     rope_theta},
+        {"RmsEpsilon",    rms_epsilon},
+        {"QKNorm",        use_qk_norm}
     });
 }
 

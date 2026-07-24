@@ -15,6 +15,7 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -45,6 +46,7 @@ public:
     Json(float d)               : kind(Kind::Number), number_value(double(d)) {}
     Json(const char* s)         : kind(Kind::String), string_value(s) {}
     Json(const std::string& s)  : kind(Kind::String), string_value(s) {}
+    Json(std::string_view s)    : kind(Kind::String), string_value(s) {}
 
     static Json make_object();
     static Json make_array();
@@ -55,17 +57,17 @@ public:
     bool is_string() const noexcept { return kind == Kind::String; }
     bool is_array()  const noexcept { return kind == Kind::Array; }
     bool is_object() const noexcept { return kind == Kind::Object; }
-    bool         has(const std::string&) const;
-    const Json*  find(const std::string&) const;
-    const Json&  at(const std::string&) const;
-    Json&        operator[](const std::string&);
-    Json& set(const std::string&, Json);
+    bool         has(std::string_view) const;
+    const Json*  find(std::string_view) const;
+    const Json&  at(std::string_view) const;
+    Json&        operator[](std::string_view);
+    Json& set(std::string_view, Json);
     void push_back(Json);
     std::string as_string() const;
     long long   as_long()   const;
     double      as_double() const;
     bool        as_bool()   const;
-    static Json parse(const std::string&);
+    static Json parse(std::string_view);
     std::string dump(int indent = 2) const;
 };
 
@@ -76,22 +78,28 @@ public:
 
     void load(const std::filesystem::path&);
     void save(const std::filesystem::path&, int indent = 2) const;
-    const Json* first_child(const std::string&) const;
+    const Json* first_child(std::string_view) const;
     const Json* first_child() const noexcept { return &root; }
-    static JsonDocument wrap(const std::string&, Json);
+    static JsonDocument wrap(std::string_view, Json);
 };
 
 class JsonWriter
 {
 public:
-    void open_element(const std::string&);
+    void open_element(std::string_view);
     void close_element();
 
-    void begin_array(const std::string&);
+    void begin_array(std::string_view);
     void end_array();
     void begin_array_object();
     void end_array_object();
-    void add_field(const std::string&, const std::string&);
+    void add_field(std::string_view, Json);
+
+    template <typename Value>
+    void add_field(std::string_view name, Value&& value)
+    {
+        add_field(name, Json(std::forward<Value>(value)));
+    }
 
     std::string c_str(int indent = 2) const;
 
@@ -100,11 +108,16 @@ private:
 
     Json                     root;
     std::vector<Json*>       stack;
-    std::vector<std::string> name_stack;
 };
 void add_json_field(JsonWriter&,
-                    const std::string&,
-                    const std::string&);
+                    std::string_view,
+                    Json);
+
+template <typename Value>
+void add_json_field(JsonWriter& writer, std::string_view name, Value&& value)
+{
+    writer.add_field(name, std::forward<Value>(value));
+}
 
 void save_json_file(const std::filesystem::path&, const JsonWriter&);
 
@@ -117,16 +130,28 @@ void save_json_file(const std::filesystem::path& file_name, const Serializable& 
 }
 
 void write_json(JsonWriter&,
-                std::initializer_list<std::pair<const char*, std::string>>);
-float       read_json_float  (const Json*, const std::string&);
-long long   read_json_index  (const Json*, const std::string&);
-bool        read_json_bool   (const Json*, const std::string&);
-std::string read_json_string (const Json*, const std::string&);
+                std::initializer_list<std::pair<const char*, Json>>);
+float       read_json_float  (const Json*, std::string_view);
+long long   read_json_index  (const Json*, std::string_view);
+bool        read_json_bool   (const Json*, std::string_view);
+std::string read_json_string (const Json*, std::string_view);
+std::vector<std::string> read_json_strings(const Json*, std::string_view);
 
 std::string read_json_string_fallback(const Json*,
-                                      std::initializer_list<std::string>);
+                                      std::initializer_list<std::string_view>);
 
-const Json* require_json_field(const Json*, const std::string&);
+const Json* require_json_field(const Json*, std::string_view);
+
+template <typename Range>
+Json json_array(const Range& values)
+{
+    Json array = Json::make_array();
+    if constexpr (requires { std::size(values); })
+        array.array_value.reserve(std::size(values));
+    for (const auto& value : values)
+        array.push_back(Json(value));
+    return array;
+}
 
 template<typename Func>
 void for_json_items(const Json* parent, const char* tag, long count, Func func)
@@ -143,7 +168,7 @@ void for_json_items(const Json* parent, const char* tag, long count, Func func)
 }
 
 JsonDocument load_json_file(const std::filesystem::path&);
-const Json*  get_json_root (const JsonDocument&, const std::string&);
+const Json*  get_json_root (const JsonDocument&, std::string_view);
 
 }
 

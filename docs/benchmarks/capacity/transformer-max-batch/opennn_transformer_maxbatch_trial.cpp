@@ -70,7 +70,6 @@ int main(int argc, char* argv[])
         const bool use_bf16 = std::getenv("OPENNN_BF16") != nullptr;
         Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
-        // Vocab capped at 30000 to match the ChatGPT example (blank_cuda block 6).
         LanguageDataset dataset(corpus, 30000);
 
         const Index total = dataset.get_samples_number();
@@ -102,7 +101,6 @@ int main(int argc, char* argv[])
         {
             const Index iterations = std::max<Index>(Index(1), epochs);
 
-            // Random token ids: capacity depends on the shapes, not the values.
             std::mt19937 generator(0);
             std::uniform_int_distribution<int> input_token(0, int(input_vocab) - 1);
             std::uniform_int_distribution<int> output_token(0, int(output_vocab) - 1);
@@ -130,7 +128,6 @@ int main(int argc, char* argv[])
             device::copy_async(input_view.data, input_ids.data(), input_view.byte_size(),
                                device::CopyKind::HostToDevice, stream);
 
-            // Same input order as TransformerDecoder: {decoder ids, encoder ids}.
             const std::vector<TensorView> inputs = {decoder_view, input_view};
 
             bool parameters_uploaded = false;
@@ -150,9 +147,6 @@ int main(int argc, char* argv[])
 
             ForwardPropagation forward_propagation(batch, &transformer);
 
-            // Warmup selects the cuDNN attention/GEMM plans and allocates the
-            // activation workspace; excluded from timing like the PyTorch/TF
-            // warmup steps. Output stays on the GPU (no logits D2H).
             transformer.calculate_outputs_resident(inputs, forward_propagation, !parameters_uploaded);
             cudaDeviceSynchronize();
 
@@ -223,11 +217,8 @@ int main(int argc, char* argv[])
         adam->set_learning_rate(0.0001f);
         adam->set_maximum_validation_failures(1 << 30);
         adam->set_display(false);
-        adam->set_cuda_graph(false);   // no CUDA graph (does not help the transformer)
+        adam->set_cuda_graph(false);
 
-        // Warmup train() selects the cuDNN attention/GEMM plans and allocates the
-        // workspace (both cached in the operators), so the timed train() below is
-        // steady-state -- fair vs PyTorch/TF, which exclude their warmup steps.
         adam->set_maximum_epochs(0);
         training_strategy.train();
         cudaDeviceSynchronize();
@@ -242,7 +233,7 @@ int main(int argc, char* argv[])
         const double total_samples = double(samples) * double(epochs + 1);
         const double samples_per_s = total_samples / wall_s;
 
-        memory_debug::print(std::cout);   // per-buffer table; no-op unless OPENNN_MEMORY_DEBUG=1
+        memory_debug::print(std::cout);
 
         std::cout << "final_loss=" << result.loss << "\n";
         std::cout << "wall_s=" << wall_s << "\n";

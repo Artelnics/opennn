@@ -78,7 +78,7 @@ void TrainingResult::save(const filesystem::path& file_name) const
 
     ofstream file(file_name);
 
-    throw_if(!file, format("TrainingResult::save: cannot open {}", file_name.string()));
+    throw_if(!file, "TrainingResult::save: cannot open {}", file_name.string());
 
     for (Index i = 0; i < override_results.dimension(0); ++i)
         file << override_results(i,0) << "; " << override_results(i,1) << "\n";

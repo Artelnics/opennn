@@ -71,14 +71,14 @@ namespace
 TEST(BertTest, EmbeddingPlainSaveLoad)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
-    EXPECT_EQ(embedding_roundtrip_mismatches(/*learned_positional*/ false, /*add_positional*/ false), 0);
+    EXPECT_EQ(embedding_roundtrip_mismatches(                       false,                    false), 0);
     Configuration::instance().set();
 }
 
 TEST(BertTest, EmbeddingLearnedPositionalSaveLoad)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
-    EXPECT_EQ(embedding_roundtrip_mismatches(/*learned_positional*/ true, /*add_positional*/ true), 0);
+    EXPECT_EQ(embedding_roundtrip_mismatches(                       true,                    true), 0);
     Configuration::instance().set();
 }
 
@@ -93,7 +93,7 @@ TEST(BertTest, SaveLoadRoundTripSegmentZero)
     bert.set_parameters_random();
 
     std::vector<float> input_ids(size_t(batch * seq));
-    std::vector<float> token_type_ids(size_t(batch * seq), 0.0f);   // segment 0 everywhere
+    std::vector<float> token_type_ids(size_t(batch * seq), 0.0f);
     for (Index i = 0; i < batch * seq; ++i)
         input_ids[size_t(i)] = float(1 + i % (vocab - 1));
 
@@ -200,14 +200,13 @@ TEST(BertTest, ForwardShapeAndFinite)
     EXPECT_EQ(bert.get_hidden_size(), hidden);
     EXPECT_EQ(bert.get_heads_number(), heads);
 
-    // Row-major [batch, seq] integer id streams.
     std::vector<float> input_ids(size_t(batch * seq));
     std::vector<float> token_type_ids(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)
         for (Index s = 0; s < seq; ++s)
         {
-            input_ids[size_t(b * seq + s)]      = float(1 + (b * seq + s) % (vocab - 1)); // 1..vocab-1
-            token_type_ids[size_t(b * seq + s)] = float(s >= seq / 2 ? 1 : 0);            // segments 0/1
+            input_ids[size_t(b * seq + s)]      = float(1 + (b * seq + s) % (vocab - 1));
+            token_type_ids[size_t(b * seq + s)] = float(s >= seq / 2 ? 1 : 0);
         }
 
     ForwardPropagation forward_propagation(batch, &bert);
@@ -245,7 +244,7 @@ TEST(BertTest, ForSequenceClassificationForward)
         for (Index s = 0; s < seq; ++s)
         {
             input_ids[size_t(b * seq + s)]      = float(1 + (b * seq + s) % (vocab - 1));
-            token_type_ids[size_t(b * seq + s)] = 1.0f;   // segment A (1-based: row 1)
+            token_type_ids[size_t(b * seq + s)] = 1.0f;
         }
 
     ForwardPropagation forward_propagation(batch, &model);
@@ -272,7 +271,7 @@ TEST(BertTest, ForSequenceClassificationForward)
             EXPECT_LE(v, 1.0f + 1e-6f);
             row_sum += v;
         }
-        EXPECT_NEAR(row_sum, 1.0f, 1e-4f);   // softmax distribution
+        EXPECT_NEAR(row_sum, 1.0f, 1e-4f);
     }
 
     Configuration::instance().set();

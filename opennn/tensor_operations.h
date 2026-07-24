@@ -22,6 +22,55 @@ enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReL
 // activation ids above.
 inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
+// Shared GELU / GELUTanh / SiLU scalar formulas, used by the scalar switch below
+// and by the CPU closures in tensor_operations.cpp. The vectorized Eigen forward
+// expressions for GELUTanh/SiLU stay as array expressions there (Eigen's
+// vectorized tanh/exp differ from libm in the last ulps) and share only the
+// constants.
+inline constexpr float INV_SQRT_2      = 0.70710678118654752440f;
+inline constexpr float INV_SQRT_2_PI   = 0.39894228040143267794f;
+inline constexpr float SQRT_2_OVER_PI  = 0.7978845608028654f;
+inline constexpr float GELU_TANH_CUBIC = 0.044715f;
+
+inline float gelu_value(float x)
+{
+    return 0.5f * x * (1.0f + erff(x * INV_SQRT_2));
+}
+
+inline float gelu_tanh_value(float x)
+{
+    return 0.5f * x * (1.0f + tanhf(SQRT_2_OVER_PI * (x + GELU_TANH_CUBIC * x * x * x)));
+}
+
+inline float silu_value(float x)
+{
+    return x / (1.0f + exp(-x));   // x * sigmoid(x) (Swish)
+}
+
+// Derivatives with respect to the pre-activation input x (these activations
+// need the input, not the output, to differentiate).
+inline float gelu_derivative(float x)
+{
+    const float cdf = 0.5f * (1.0f + erff(x * INV_SQRT_2));
+    const float pdf = INV_SQRT_2_PI * expf(-0.5f * x * x);
+    return cdf + x * pdf;
+}
+
+inline float gelu_tanh_derivative(float x)
+{
+    const float x2 = x * x;
+    const float u = SQRT_2_OVER_PI * (x + GELU_TANH_CUBIC * x * x2);
+    const float t = tanhf(u);
+    const float du = SQRT_2_OVER_PI * (1.0f + 3.0f * GELU_TANH_CUBIC * x2);
+    return 0.5f * (1.0f + t) + 0.5f * x * (1.0f - t * t) * du;
+}
+
+inline float silu_derivative(float x)
+{
+    const float s = 1.0f / (1.0f + expf(-x));
+    return s * (1.0f + x * (1.0f - s));
+}
+
 const EnumMap<ActivationFunction>& activation_function_map();
 const string& activation_function_to_string(ActivationFunction);
 ActivationFunction activation_function_from_string(const string&);
@@ -38,13 +87,9 @@ inline float activation_forward_value(ActivationFunction function, float x)
     case Tanh:      return tanh(x);
     case ReLU:      return max(0.0f, x);
     case LeakyReLU: return x >= 0.0f ? x : x * LEAKY_RELU_SLOPE;
-    case GELU:      return 0.5f * x * (1.0f + erff(x * 0.70710678118654752440f));
-    case GELUTanh:
-    {
-        constexpr float sqrt_2_over_pi = 0.7978845608028654f;
-        return 0.5f * x * (1.0f + tanhf(sqrt_2_over_pi * (x + 0.044715f * x * x * x)));
-    }
-    case SiLU:      return x / (1.0f + exp(-x));   // x * sigmoid(x) (Swish)
+    case GELU:      return gelu_value(x);
+    case GELUTanh:  return gelu_tanh_value(x);
+    case SiLU:      return silu_value(x);
     case Softmax:   break;
     }
 
@@ -70,11 +115,17 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh/SiLU must be handled separately.");
 }
 
-VectorR activation_forward_values(ActivationFunction, const VectorR&);
-MatrixR activation_forward_values(ActivationFunction, const MatrixR&);
-VectorR activation_derivative_from_output_values(ActivationFunction, const VectorR&);
-MatrixR activation_derivative_from_output_values(ActivationFunction, const MatrixR&);
-MatrixR activation_derivative_from_output_values(ActivationFunction, const MatrixMap&);
+template<typename TensorType>
+typename TensorType::PlainObject activation_forward_values(ActivationFunction function, const TensorType& values)
+{
+    return values.unaryExpr([function](float value) { return activation_forward_value(function, value); });
+}
+
+template<typename TensorType>
+typename TensorType::PlainObject activation_derivative_from_output_values(ActivationFunction function, const TensorType& values)
+{
+    return values.unaryExpr([function](float value) { return activation_derivative_from_output_value(function, value); });
+}
 
 void bound(const TensorView&, const TensorView&, const TensorView&, TensorView&);
 

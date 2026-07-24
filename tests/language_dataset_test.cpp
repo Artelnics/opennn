@@ -82,7 +82,7 @@ TEST(LanguageDataset, SetVocabularyRoundTrip)
 
     EXPECT_EQ(dataset.get_target_vocabulary(), target_vocabulary);
 
-    const unordered_map<string, Index>& input_map = dataset.get_input_vocabulary_map();
+    const auto& input_map = dataset.get_input_vocabulary_map();
 
     ASSERT_EQ(input_map.size(), 6);
     EXPECT_EQ(input_map.at("[PAD]"), 0);
@@ -130,7 +130,7 @@ TEST(LanguageDataset, ReadTxtInputVocabularyMapContainsReservedTokens)
 
     ASSERT_NO_THROW(dataset.read_txt());
 
-    const unordered_map<string, Index>& input_map = dataset.get_input_vocabulary_map();
+    const auto& input_map = dataset.get_input_vocabulary_map();
 
     ASSERT_TRUE(input_map.contains("[PAD]"));
     ASSERT_TRUE(input_map.contains("[UNK]"));
@@ -216,6 +216,32 @@ TEST(LanguageDataset, ConstructorWithPathReadsFile)
     EXPECT_EQ(dataset.get_samples_number(), 4);
     EXPECT_GT(dataset.get_input_vocabulary_size(), Index(LanguageDataset::reserved_tokens.size()));
     EXPECT_EQ(dataset.get_target_vocabulary_size(), 6);
+
+    LanguageDataset cached_dataset(file_path);
+    EXPECT_EQ(cached_dataset.get_input_vocabulary(), dataset.get_input_vocabulary());
+    EXPECT_EQ(cached_dataset.get_target_vocabulary(), dataset.get_target_vocabulary());
+    EXPECT_EQ(cached_dataset.get_samples_number(), dataset.get_samples_number());
+
+    remove_language_file(file_path);
+}
+
+TEST(LanguageDataset, CsvReaderPreservesQuotedSeparators)
+{
+    const string file_path = temp_language_file(
+        "opennn_language_quoted.txt",
+        "\"hello\tworld\"\tGood\n"
+        "\"goodbye\tworld\"\tBad\n");
+
+    LanguageDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_separator(Dataset::Separator::Tab);
+    dataset.set_display(false);
+    dataset.set_data_path(file_path);
+
+    ASSERT_NO_THROW(dataset.read_txt());
+    EXPECT_EQ(dataset.get_samples_number(), 2);
+    EXPECT_TRUE(dataset.get_input_vocabulary_map().contains("hello"));
+    EXPECT_TRUE(dataset.get_input_vocabulary_map().contains("world"));
 
     remove_language_file(file_path);
 }

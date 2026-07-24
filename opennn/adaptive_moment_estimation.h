@@ -29,21 +29,14 @@ public:
     void set_default();
 
     void set_learning_rate(const float);
-    float get_learning_rate() const { return learning_rate; }
     void set_beta_1(const float);
     void set_beta_2(const float);
 
-    // Gradient accumulation: with period K > 1 the parameter update runs once
-    // every K mini-batches on the mean of their gradients -- one optimizer
-    // step over a virtual batch of K * batch_size samples whose activation
-    // memory stays O(batch_size). Exact for equal-sized mini-batches (the
-    // standard convention); Adam's bias correction advances per update.
     void set_update_period(const Index new_period)
     {
         throw_if(new_period < 1, "update period must be >= 1.");
         update_period = new_period;
     }
-    Index get_update_period() const noexcept { return update_period; }
 
     void update_parameters(BackPropagation&, OptimizerData&) override;
 

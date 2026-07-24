@@ -78,8 +78,8 @@ void Bounding::set_bounding_method(const string& new_method_string)
 void Bounding::set_lower_bound(Index index, float new_lower_bound)
 {
     throw_if(index < 0 || size_t(index) >= lower_bounds.size(),
-             format("Bounding::set_lower_bound: index {} out of range [0, {}).",
-                    index, lower_bounds.size()));
+             "Bounding::set_lower_bound: index {} out of range [0, {}).",
+                    index, lower_bounds.size());
     lower_bounds[size_t(index)] = new_lower_bound;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -88,8 +88,8 @@ void Bounding::set_lower_bound(Index index, float new_lower_bound)
 void Bounding::set_upper_bound(Index index, float new_upper_bound)
 {
     throw_if(index < 0 || size_t(index) >= upper_bounds.size(),
-             format("Bounding::set_upper_bound: index {} out of range [0, {}).",
-                    index, upper_bounds.size()));
+             "Bounding::set_upper_bound: index {} out of range [0, {}).",
+                    index, upper_bounds.size());
     upper_bounds[size_t(index)] = new_upper_bound;
     op_storage_dirty = true;
     refresh_op_storage(op_storage_device);
@@ -159,8 +159,8 @@ void Bounding::read_JSON_body(const Json* root_element)
         VectorR values;
         string_to_vector(read_json_string(root_element, field), values);
         throw_if(values.size() != ssize(dest),
-                 format("Bounding::read_JSON_body: field \"{}\" has size {}, expected {}.",
-                        field, values.size(), dest.size()));
+                 "Bounding::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                        field, values.size(), dest.size());
         for (Index i = 0; i < values.size(); ++i)
             dest[size_t(i)] = values(i);
     };

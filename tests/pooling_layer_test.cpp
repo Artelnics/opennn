@@ -12,7 +12,6 @@
 
 using namespace opennn;
 
-// POOLING 4D (IMAGES)
 
 Tensor4 generate_input_tensor_pooling(const MatrixR& data,
                                       const vector<Index>& row_indices,
@@ -194,7 +193,6 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
         EXPECT_NEAR(average_data[i], expected_average[i], 1.0e-4f);
 }
 
-// POOLING 3D (TRANSFORMERS)
 
 struct Pooling3dConfig {
     Shape input_shape;

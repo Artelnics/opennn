@@ -13,9 +13,6 @@
 namespace opennn
 {
 
-// Pure passthrough: flattening a row-major tensor is a reinterpretation, so the
-// layer declares no slots and consumers alias its input directly (forward views
-// and backward deltas both resolve through it).
 class Flatten final : public Layer
 {
 public:

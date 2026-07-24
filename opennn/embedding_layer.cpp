@@ -53,8 +53,6 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
         new_output_shape.dim_or_zero(1),
         get_label());
 
-    // set_learned_positional(false) also clears add_positional_encoding, so it
-    // must run before AddPositionalEncoding is applied.
     if (embedding_layer_element->has("LearnedPositional"))
         set_learned_positional(read_json_bool(embedding_layer_element, "LearnedPositional"));
     set_scale_embedding(read_json_bool(embedding_layer_element, "ScaleEmbedding"));
@@ -66,12 +64,12 @@ void Embedding::read_JSON_body(const Json* embedding_layer_element)
 void Embedding::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"VocabularySize", to_string(get_vocabulary_size())},
+        {"VocabularySize", get_vocabulary_size()},
         {"OutputDimensions", shape_to_string(get_output_shape())},
-        {"ScaleEmbedding", to_string(embedding_lookup.scale_embedding)},
-        {"AddPositionalEncoding", to_string(embedding_lookup.add_positional_encoding)},
-        {"LearnedPositional", to_string(embedding_lookup.positional_trainable)},
-        {"ExportValidLengths", to_string(embedding_lookup.export_valid_lengths)}
+        {"ScaleEmbedding", embedding_lookup.scale_embedding},
+        {"AddPositionalEncoding", embedding_lookup.add_positional_encoding},
+        {"LearnedPositional", embedding_lookup.positional_trainable},
+        {"ExportValidLengths", embedding_lookup.export_valid_lengths}
     });
 }
 

@@ -146,7 +146,7 @@ void TrainingStrategy::to_JSON(JsonWriter& printer) const
 
     printer.close_element();
 
-    add_json_field(printer, "Display", to_string(optimizer->get_display()));
+    add_json_field(printer, "Display", optimizer->get_display());
 
     printer.close_element();
 }
@@ -163,7 +163,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* loss_method_element = loss_element->find(loss_method.c_str());
 
-    throw_if(!loss_method_element, format("{} element is nullptr.\n", loss_method));
+    throw_if(!loss_method_element, "{} element is nullptr.\n", loss_method);
 
     set_loss(loss_method);
     loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
@@ -176,7 +176,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 
     const Json* optimization_method_element = optimization_algorithm_element->find(optimization_method.c_str());
 
-    throw_if(!optimization_method_element, format("{} element is nullptr.\n", optimization_method));
+    throw_if(!optimization_method_element, "{} element is nullptr.\n", optimization_method);
 
     set_optimization_algorithm(optimization_method);
     optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));

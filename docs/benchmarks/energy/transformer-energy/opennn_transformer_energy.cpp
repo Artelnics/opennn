@@ -60,9 +60,8 @@ int main(int argc, char* argv[])
         if (!probe_only)
             Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
-        // Vocab capped at 30000 to match the ChatGPT example (blank_cuda block 6).
         LanguageDataset dataset(corpus, 30000);
-        dataset.set_sample_roles("Training");   // all-train, gate is the training CE
+        dataset.set_sample_roles("Training");
 
         const Index samples      = dataset.get_samples_number("Training");
         const Index input_vocab  = dataset.get_input_vocabulary_size();
@@ -124,10 +123,6 @@ int main(int argc, char* argv[])
         adam->set_display_period(1);
         adam->set_cuda_graph(use_graph);
 
-        // The energy window starts here: it includes OpenNN's in-train() warmup
-        // (cuDNN plan selection, allocations, graph capture) -- real electricity
-        // any user pays to train this model -- and excludes only the one-time
-        // corpus tokenization (cached in tokens.bin, shared by every engine).
         std::cout << "TRAIN_START_UNIX=" << std::fixed << unix_seconds() << "\n";
         const auto t0 = std::chrono::high_resolution_clock::now();
 

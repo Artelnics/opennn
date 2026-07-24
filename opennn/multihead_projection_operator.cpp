@@ -23,7 +23,7 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
     combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
 }
 
-void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     auto& forward_slots = forward_propagation.forward_slots[layer];
     const auto& input_views = get_inputs(forward_propagation, layer);

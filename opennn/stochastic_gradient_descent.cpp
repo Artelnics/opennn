@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "error_functions.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -50,15 +51,9 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 
 #else
 
-static void update_parameters_cuda(NeuralNetwork*,
-                                   BackPropagation&,
-                                   OptimizerData&,
-                                   float,
-                                   float,
-                                   bool)
-{
-    throw runtime_error("update_parameters_cuda requires CUDA support.");
-}
+OPENNN_CUDA_STUB(void, update_parameters_cuda,
+                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                  float, float, bool))
 
 #endif
 
@@ -191,9 +186,7 @@ void StochasticGradientDescent::update_parameters_capturable(BackPropagation& ba
 }
 #else
 void StochasticGradientDescent::update_parameters_capturable(BackPropagation&, OptimizerData&) const
-{
-    throw runtime_error("update_parameters_capturable requires CUDA support.");
-}
+OPENNN_CUDA_STUB_BODY(update_parameters_capturable)
 #endif
 
 void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_data,
@@ -240,12 +233,12 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
     printer.open_element("StochasticGradientDescent");
 
     write_json(printer, {
-        {"BatchSize", to_string(batch_size)},
-        {"InitialLearningRate", to_string(initial_learning_rate)},
-        {"InitialDecay", to_string(initial_decay)},
-        {"Momentum", to_string(momentum)},
-        {"Nesterov", to_string(nesterov)},
-        {"ApplyMomentum", to_string(momentum > 0.0f)}
+        {"BatchSize", batch_size},
+        {"InitialLearningRate", initial_learning_rate},
+        {"InitialDecay", initial_decay},
+        {"Momentum", momentum},
+        {"Nesterov", nesterov},
+        {"ApplyMomentum", momentum > 0.0f}
     });
     write_common_json(printer);
 

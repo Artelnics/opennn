@@ -388,11 +388,7 @@ void clip_gradient_norm_cuda(const Index n,
                              const float max_norm,
                              const float eps)
 {
-    if (n == 0) return;
-    const int total = checked_int(n);
-    const int grid = grid_size_for(total);
-    OPENNN_CUDA_LAUNCH(clip_apply_kernel<<<grid, block_size, 0, opennn::device::get_compute_stream()>>>(
-        total, squared_norm, max_norm, eps, gradient));
+    launch_elementwise(n, clip_apply_kernel, squared_norm, max_norm, eps, gradient);
 }
 
 __global__ void cast_fp32_to_bf16_kernel(const int n_vec,
@@ -607,8 +603,5 @@ __global__ void cast_bf16_to_fp32_kernel(const int n,
 
 void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst)
 {
-    if (n == 0) return;
-    const int total = checked_int(n);
-    const int grid_size = grid_size_for(total);
-    OPENNN_CUDA_LAUNCH(cast_bf16_to_fp32_kernel<<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(total, src, dst));
+    launch_elementwise(n, cast_bf16_to_fp32_kernel, src, dst);
 }

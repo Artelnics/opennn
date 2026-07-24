@@ -67,50 +67,84 @@ static void recompile_if_specs_changed(NeuralNetwork& network,
         network.set_parameters(parameters_snapshot);
 }
 
+static void finalize_build(NeuralNetwork& network)
+{
+    network.compile();
+    network.set_parameters_glorot();
+}
+
+static void add_dense_stack(NeuralNetwork& network,
+                            const Shape& complexity_dimensions,
+                            const string& hidden_activation)
+{
+    for (Index i = 0; i < complexity_dimensions.rank; ++i)
+        network.add_layer(make_unique<Dense>(network.get_output_shape(),
+                                             Shape{ complexity_dimensions[i] },
+                                             hidden_activation,
+                                             false,
+                                             format("dense_layer_{}", i + 1)));
+}
+
+// make_layer(input_shape, output_shape, label) -> unique_ptr to a Recurrent-like
+// layer; non-last layers get set_return_sequences(true).
+template<typename MakeLayer>
+static void add_recurrent_stack(NeuralNetwork& network,
+                                const Shape& complexity_dimensions,
+                                const string& base_label,
+                                MakeLayer make_layer)
+{
+    const Index layer_count = complexity_dimensions.rank;
+
+    for (Index i = 0; i < layer_count; ++i)
+    {
+        const bool last = (i == layer_count - 1);
+        auto layer = make_layer(network.get_output_shape(),
+                                Shape{complexity_dimensions[i]},
+                                last ? base_label : format("{}_{}", base_label, i + 1));
+        if (!last) layer->set_return_sequences(true);
+        network.add_layer(move(layer));
+    }
+}
+
+static void add_regression_output(NeuralNetwork& network,
+                                  const Shape& output_shape,
+                                  const string& output_label,
+                                  const char* bounding_method)
+{
+    network.add_layer(make_unique<Dense>(network.get_output_shape(),
+                                         output_shape,
+                                         "Identity",
+                                         false,
+                                         output_label));
+
+    network.add_layer(make_unique<Unscaling>(output_shape));
+
+    auto bounding = make_unique<Bounding>(output_shape);
+    if (bounding_method) bounding->set_bounding_method(bounding_method);
+    network.add_layer(move(bounding));
+}
+
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape,
                                            const string& hidden_activation) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.rank;
-
     add_layer(make_unique<Scaling>(input_shape));
 
-    for (Index i = 0; i < complexity_size; ++i)
-        add_layer(make_unique<Dense>(get_output_shape(),
-                                       Shape{ complexity_dimensions[i] },
-                                       hidden_activation,
-                                       false,
-                                       format("dense_layer_{}", i + 1)));
+    add_dense_stack(*this, complexity_dimensions, hidden_activation);
 
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                   output_shape,
-                                   "Identity",
-                                   false,
-                                   "approximation_layer"));
+    add_regression_output(*this, output_shape, "approximation_layer", nullptr);
 
-    add_layer(make_unique<Unscaling>(output_shape));
-
-    add_layer(make_unique<Bounding>(output_shape));
-
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
                                              const Shape& output_shape) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.rank;
-
     add_layer(make_unique<Scaling>(input_shape));
 
-    for (Index i = 0; i < complexity_size; ++i)
-        add_layer(make_unique<Dense>(get_output_shape(),
-                                       Shape{complexity_dimensions[i]},
-                                       "Tanh",
-                                       false,
-                                       format("dense_layer_{}", i + 1)));
+    add_dense_stack(*this, complexity_dimensions, "Tanh");
 
     add_layer(make_unique<Dense>(get_output_shape(),
                                    output_shape,
@@ -118,8 +152,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                    false,
                                    "classification_layer"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
@@ -128,33 +161,13 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    const Index recurrent_count = complexity_dimensions.rank;
-    for (Index i = 0; i < recurrent_count; ++i)
-    {
-        const bool last = (i == recurrent_count - 1);
-        auto recurrent = make_unique<Recurrent>(get_output_shape(),
-                                                Shape{complexity_dimensions[i]},
-                                                "Tanh",
-                                                last ? "recurrent_layer"
-                                                     : format("recurrent_layer_{}", i + 1));
-        if (!last) recurrent->set_return_sequences(true);
-        add_layer(move(recurrent));
-    }
+    add_recurrent_stack(*this, complexity_dimensions, "recurrent_layer",
+                        [](const Shape& in, const Shape& out, const string& label)
+                        { return make_unique<Recurrent>(in, out, "Tanh", label); });
 
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                 output_shape,
-                                 "Identity",
-                                 false,
-                                 "forecasting_layer"));
+    add_regression_output(*this, output_shape, "forecasting_layer", "NoBounding");
 
-    add_layer(make_unique<Unscaling>(output_shape));
-
-    auto bounding = make_unique<Bounding>(output_shape);
-    bounding->set_bounding_method("NoBounding");
-    add_layer(move(bounding));
-
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
@@ -163,34 +176,13 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    const Index lstm_count = complexity_dimensions.rank;
-    for (Index i = 0; i < lstm_count; ++i)
-    {
-        const bool last = (i == lstm_count - 1);
-        auto lstm = make_unique<LongShortTermMemory>(get_output_shape(),
-                                                     Shape{complexity_dimensions[i]},
-                                                     "Tanh",
-                                                     "Sigmoid",
-                                                     last ? "long_short_term_memory_layer"
-                                                          : format("long_short_term_memory_layer_{}", i + 1));
-        if (!last) lstm->set_return_sequences(true);
-        add_layer(move(lstm));
-    }
+    add_recurrent_stack(*this, complexity_dimensions, "long_short_term_memory_layer",
+                        [](const Shape& in, const Shape& out, const string& label)
+                        { return make_unique<LongShortTermMemory>(in, out, "Tanh", "Sigmoid", label); });
 
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                 output_shape,
-                                 "Identity",
-                                 false,
-                                 "forecasting_layer"));
+    add_regression_output(*this, output_shape, "forecasting_layer", "NoBounding");
 
-    add_layer(make_unique<Unscaling>(output_shape));
-
-    auto bounding = make_unique<Bounding>(output_shape);
-    bounding->set_bounding_method("NoBounding");
-    add_layer(move(bounding));
-
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
@@ -228,8 +220,7 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Unscaling>(output_shape));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 #ifndef OPENNN_NO_VISION
@@ -288,8 +279,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                    false,
                                    "classification_layer"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 ResNet::ResNet(const Shape& input_shape,
@@ -1149,8 +1139,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                  false,
                                  "classification_layer"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 static Index add_residual_and_norm(NeuralNetwork& network,
@@ -1292,8 +1281,7 @@ Transformer::Transformer(Index input_sequence_length,
     add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
                                  "Softmax", false, "output_projection"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)
@@ -1478,8 +1466,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     add_layer(make_unique<Dense>(block_shape, Shape{vocabulary_size},
                                  "Softmax", false, "output_projection"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 static Index add_bert_encoder(NeuralNetwork& net,
@@ -1553,8 +1540,7 @@ Bert::Bert(Index sequence_length,
 {
     add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
                      intermediate_size, layers_number, type_vocabulary_size);
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 Qwen3::Qwen3(Index sequence_length,
@@ -1854,8 +1840,7 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
     add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{labels_number},
                                  labels_number == 1 ? "Sigmoid" : "Softmax", false, "classifier"));
 
-    compile();
-    set_parameters_glorot();
+    finalize_build(*this);
 }
 
 void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rate)

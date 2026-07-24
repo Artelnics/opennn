@@ -30,6 +30,102 @@ void set_confidence_interval(Correlation& correlation, Index sample_count)
     correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 }
 
+float output_target_correlation(NeuralNetwork& neural_network, TabularDataset& dataset, Index& sample_count)
+{
+    const MatrixR inputs = dataset.get_feature_data("Input");
+    const MatrixR targets = dataset.get_feature_data("Target");
+    const MatrixR outputs = neural_network.calculate_outputs(inputs);
+
+    sample_count = inputs.rows();
+
+    return linear_correlation(outputs.reshaped(), targets.reshaped()).coefficient;
+}
+
+struct SoftmaxFitOptions
+{
+    Shape hidden_shape;
+    bool set_binary_and_default_scalers = false;
+    bool set_feature_shapes = false;
+    const char* error_type = "MeanSquaredError";
+    Index maximum_epochs = -1;
+    Index display_period = -1;
+    Index confidence_sample_count = -1;
+};
+
+Correlation fit_softmax_correlation(const MatrixR& x_filter,
+                                    const MatrixR& y_filter,
+                                    Correlation correlation,
+                                    const SoftmaxFitOptions& options)
+{
+    MatrixR data(x_filter.rows(), x_filter.cols() + y_filter.cols());
+    data << x_filter, y_filter;
+
+    vector<Index> input_columns_indices(x_filter.cols());
+    iota(input_columns_indices.begin(), input_columns_indices.end(), 0);
+
+    vector<Index> target_columns_indices(y_filter.cols());
+    iota(target_columns_indices.begin(), target_columns_indices.end(), x_filter.cols());
+
+    TabularDataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
+
+    dataset.set_data(data);
+    dataset.set_variable_indices(input_columns_indices, target_columns_indices);
+
+    if (options.set_binary_and_default_scalers)
+    {
+        dataset.set_binary_variables();
+        dataset.set_default_variable_scalers();
+    }
+
+    dataset.set_sample_roles(SampleRole::Training);
+
+    const Index input_features_number = dataset.get_features_number(VariableRole::Input);
+    const Index target_features_number = dataset.get_features_number(VariableRole::Target);
+
+    if (options.set_feature_shapes)
+    {
+        dataset.set_shape(VariableRole::Input, { input_features_number });
+        dataset.set_shape(VariableRole::Target, { target_features_number });
+    }
+
+    ClassificationNetwork neural_network({ input_features_number }, options.hidden_shape, { target_features_number });
+
+    neural_network.compile(Device::CPU);
+    neural_network.set_parameters_glorot();
+
+    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
+    throw_if(!dense_2d, "Expected Dense layer.");
+
+    dense_2d->set_activation_function("Softmax");
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(options.error_type);
+    loss.set_regularization("None");
+
+    QuasiNewtonMethod quasi_newton_method(&loss);
+    if (options.maximum_epochs >= 0) quasi_newton_method.set_maximum_epochs(options.maximum_epochs);
+    quasi_newton_method.set_display(false);
+    if (options.display_period >= 0) quasi_newton_method.set_display_period(options.display_period);
+
+    try
+    {
+        quasi_newton_method.train();
+    }
+    catch (const exception&)
+    {
+        correlation.coefficient = 0.0f;
+        return correlation;
+    }
+
+    Index sample_count = 0;
+    correlation.coefficient = output_target_correlation(neural_network, dataset, sample_count);
+
+    set_confidence_interval(correlation,
+                            options.confidence_sample_count >= 0 ? options.confidence_sample_count : sample_count);
+
+    return correlation;
+}
+
 }
 
 VectorR autocorrelations(const VectorR& x, Index past_time_steps)
@@ -79,22 +175,15 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
                        });
         }
 
-        // Two binary variables: linear (phi) correlation, as in the traditional
-        // dispatcher -- a logistic fit between two binaries is degenerate.
         if (x_binary && y_binary)
             return opennn::linear_correlation(x_vector, y_vector);
 
-        // One binary + one continuous: logistic regression of the binary response
-        // on the continuous predictor (reported form = logistic), matching Neural
-        // Designer's traditional behaviour.
         if (y_binary)
             return opennn::logistic_correlation(x_vector, y_vector);
 
         return opennn::logistic_correlation(y_vector, x_vector);
     }
 
-    // At least one categorical (one-hot, multi-column) variable: multiple logistic
-    // regression, again reported as a logistic form.
     return logistic_correlation(x, y);
 }
 
@@ -103,9 +192,6 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     if (is_constant(x) || is_constant(y))
         return Correlation();
 
-    // Spearman = Pearson sobre los rangos. La version por vectores existe para
-    // columnas simples; para variables multi-columna (categoricas expandidas)
-    // se cae a la correlacion general (misma politica que la de Pearson).
     if (x.cols() == 1 && y.cols() == 1)
     {
         const VectorR x_vector = x.col(0);
@@ -114,8 +200,6 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
         const bool x_binary = is_binary(x);
         const bool y_binary = is_binary(y);
 
-        // Mirror the Pearson dispatcher: exactly one binary -> logistic on the ranks
-        // (form = logistic); both continuous or both binary -> Spearman rank-linear.
         Correlation result;
 
         if (x_binary != y_binary)
@@ -300,8 +384,6 @@ Correlation logarithmic_correlation(const VectorR& x,
     return result;
 }
 
-// Above this sample count, Levenberg-Marquardt's per-epoch Jacobian build over all
-// rows becomes too expensive, so the fit falls back to the lighter Quasi-Newton method.
 static constexpr Index maximum_levenberg_marquardt_samples = 10000;
 
 static Correlation fit_logistic_correlation(const VectorR& input, const VectorR& target, const string& scaler)
@@ -315,10 +397,10 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     TabularDataset dataset(input.size(), {1}, {1});
     dataset.set_data(data);
-    dataset.set_sample_roles("Training");
+    dataset.set_sample_roles(SampleRole::Training);
     dataset.set_variable_scalers(scaler);
-    dataset.set_shape("Input", {1});
-    dataset.set_shape("Target", {1});
+    dataset.set_shape(VariableRole::Input, {1});
+    dataset.set_shape(VariableRole::Target, {1});
     dataset.set_display(false);
 
     NeuralNetwork neural_network;
@@ -326,8 +408,6 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     neural_network.add_layer(make_unique<Scaling>(dimensions));
     neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
 
-    // Force CPU: QuasiNewton/LevenbergMarquardt reject GPU training, so on a CUDA
-    // process this fit would otherwise throw and report a 0 / NaN correlation.
     neural_network.compile(Device::CPU);
 
     Loss loss(&neural_network, &dataset);
@@ -341,8 +421,6 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
             QuasiNewtonMethod quasi_newton(&loss);
             quasi_newton.set_display(false);
 
-            // Without a minimum loss decrease the line search keeps finding microscopic
-            // improvements and burns the full epoch budget on large datasets.
             quasi_newton.set_minimum_loss_decrease(1.0e-6f);
 
             quasi_newton.train();
@@ -360,11 +438,8 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
         return correlation;
     }
 
-    const MatrixR inputs = dataset.get_feature_data("Input");
-    const MatrixR targets = dataset.get_feature_data("Target");
-    const MatrixR outputs = neural_network.calculate_outputs(inputs);
-
-    correlation.coefficient = linear_correlation(outputs.reshaped(), targets.reshaped()).coefficient;
+    Index sample_count = 0;
+    correlation.coefficient = output_target_correlation(neural_network, dataset, sample_count);
 
     if (!isfinite(correlation.coefficient))
     {
@@ -372,7 +447,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
         return correlation;
     }
 
-    set_confidence_interval(correlation, inputs.rows());
+    set_confidence_interval(correlation, sample_count);
 
     const VectorR coefficients = Map<const VectorR, AlignedMax>(
         neural_network.get_parameters_data(), neural_network.get_parameters_size());
@@ -441,69 +516,13 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
         return correlation;
     }
 
-    MatrixR data(x_filter.rows(), 1 + y_filter.cols());
-    data << x_filter, y_filter;
-
-    vector<Index> input_columns_indices = {0};
-
-    vector<Index> target_columns_indices(y_filter.cols());
-    iota(target_columns_indices.begin(), target_columns_indices.end(), 1);
-
-    TabularDataset dataset(x_filter.size(), {1}, {y_filter.cols()});
-
-    dataset.set_data(data);
-    dataset.set_variable_indices(input_columns_indices, target_columns_indices);
-    dataset.set_binary_variables();
-    dataset.set_default_variable_scalers();
-
-    dataset.set_sample_roles("Training");
-
-    const Index input_features_number = dataset.get_features_number("Input");
-    const Index target_features_number = dataset.get_features_number("Target");
-
-    dataset.set_shape("Input", { input_features_number });
-    dataset.set_shape("Target", { target_features_number });
-
-    ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
-
-    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
-    // ClassificationNetwork compiled on the global device in its constructor, so
-    // re-target to CPU and re-seed the parameters compile() just zeroed.
-    neural_network.compile(Device::CPU);
-    neural_network.set_parameters_glorot();
-
-    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
-    throw_if(!dense_2d, "Expected Dense layer.");
-
-    dense_2d->set_activation_function("Softmax");
-
-    Loss loss(&neural_network, &dataset);
-    loss.set_error("CrossEntropy");
-    loss.set_regularization("None");
-
-    QuasiNewtonMethod quasi_newton_method(&loss);
-    quasi_newton_method.set_display(false);
-    quasi_newton_method.set_display_period(1000);
-
-    try
-    {
-        quasi_newton_method.train();
-    }
-    catch (const exception&)
-    {
-        correlation.coefficient = 0.0f;
-        return correlation;
-    }
-
-    const MatrixR inputs = dataset.get_feature_data("Input");
-    const MatrixR targets = dataset.get_feature_data("Target");
-    const MatrixR outputs = neural_network.calculate_outputs(inputs);
-
-    correlation.coefficient = linear_correlation(outputs.reshaped(), targets.reshaped()).coefficient;
-
-    set_confidence_interval(correlation, x_filter.size());
-
-    return correlation;
+    return fit_softmax_correlation(MatrixR(x_filter), y_filter, correlation,
+                                   {.hidden_shape = {1},
+                                    .set_binary_and_default_scalers = true,
+                                    .set_feature_shapes = true,
+                                    .error_type = "CrossEntropy",
+                                    .display_period = 1000,
+                                    .confidence_sample_count = x_filter.size()});
 }
 
 Correlation logistic_correlation(const MatrixR& y, const VectorR& x)
@@ -540,69 +559,9 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
         return correlation;
     }
 
-    MatrixR data(x_filter.rows(), x_filter.cols() + y_filter.cols());
-    data << x_filter, y_filter;
-
-    vector<Index> input_columns_indices(x_filter.cols());
-
-    iota(input_columns_indices.begin(), input_columns_indices.end(), 0);
-
-    vector<Index> target_columns_indices(y_filter.cols());
-    iota(target_columns_indices.begin(), target_columns_indices.end(), x_filter.cols());
-
-    TabularDataset dataset(x_filter.rows(), { x_filter.cols() }, { y_filter.cols() });
-
-    dataset.set_data(data);
-
-    dataset.set_variable_indices(input_columns_indices, target_columns_indices);
-
-    dataset.set_sample_roles("Training");
-
-    const Index input_features_number = dataset.get_features_number("Input");
-    const Index target_features_number = dataset.get_features_number("Target");
-
-    ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
-
-    // Force CPU: QuasiNewton rejects GPU training (see fit_logistic_correlation).
-    // ClassificationNetwork compiled on the global device in its constructor, so
-    // re-target to CPU and re-seed the parameters compile() just zeroed.
-    neural_network.compile(Device::CPU);
-    neural_network.set_parameters_glorot();
-
-    auto* dense_2d = dynamic_cast<Dense*>(neural_network.get_first(LayerType::Dense));
-    throw_if(!dense_2d, "Expected Dense layer.");
-
-    dense_2d->set_activation_function("Softmax");
-
-    Loss loss(&neural_network, &dataset);
-    loss.set_error("MeanSquaredError");
-    loss.set_regularization("None");
-
-    QuasiNewtonMethod quasi_newton_method(&loss);
-    quasi_newton_method.set_maximum_epochs(500);
-    quasi_newton_method.set_display(false);
-
-    try
-    {
-        quasi_newton_method.train();
-    }
-    catch (const exception&)
-    {
-        correlation.coefficient = 0.0f;
-        return correlation;
-    }
-
-    const MatrixR inputs = dataset.get_feature_data("Input");
-
-    const MatrixR targets = dataset.get_feature_data("Target");
-
-    const MatrixR outputs = neural_network.calculate_outputs(inputs);
-
-    correlation.coefficient = linear_correlation(outputs.reshaped(), targets.reshaped()).coefficient;
-
-    set_confidence_interval(correlation, inputs.rows());
-
-    return correlation;
+    return fit_softmax_correlation(x_filter, y_filter, correlation,
+                                   {.error_type = "MeanSquaredError",
+                                    .maximum_epochs = 500});
 }
 
 Correlation point_biserial_correlation(const VectorR& continuous,

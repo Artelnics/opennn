@@ -1,4 +1,4 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //
@@ -119,7 +119,7 @@ void LevenbergMarquardtAlgorithm::calculate_errors(const Batch& batch,
     const VectorMap target = batch.get_targets().as_vector();
 
     throw_if(output.size() != target.size() || output.size() != back_propagation_lm.errors.size(),
-             format("LevenbergMarquardtAlgorithm: outputs ({}), targets ({}) and errors ({}) sizes do not match. The dataset target count does not match the network outputs.", output.size(), target.size(), back_propagation_lm.errors.size()));
+             "LevenbergMarquardtAlgorithm: outputs ({}), targets ({}) and errors ({}) sizes do not match. The dataset target count does not match the network outputs.", output.size(), target.size(), back_propagation_lm.errors.size());
 
     back_propagation_lm.errors.noalias() = output - target;
 }
@@ -276,145 +276,58 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     damping_parameter = initial_damping_parameter;
 
+    FullBatchContext context;
+    prepare_full_batch_training(context, "Training with Levenberg-Marquardt algorithm...");
 
-    if (display) cout << "Training with Levenberg-Marquardt algorithm...\n";
-
-    TrainingResult results(maximum_epochs+1);
-
-
-    Dataset* dataset = loss->get_dataset();
-
-    const bool has_validation = dataset->has_validation();
-
-    const Index training_samples_number = dataset->get_samples_number("Training");
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-
-    set_names();
-
-    set_scaling();
-
-    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
-    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Training);
-
-    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Validation);
-
-    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
-
-    const unique_ptr<ForwardPropagation> validation_forward_propagation =
-        (has_validation && validation_samples_number != training_samples_number)
-            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network,
-                                              ForwardPropagationMode::Inference)
-            : nullptr;
-
-    ForwardPropagation* validation_fp = has_validation
-        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
-        : nullptr;
-
-    mark_validation_propagation(validation_fp);
-
-    loss->set_normalization_coefficient();
-
-    float old_loss = 0.0f;
-    float loss_decrease = MAX;
-
-    Index validation_failures = 0;
-    reset_best_parameters();
-
-    BackPropagationLM training_back_propagation_lm(training_samples_number, loss);
-    BackPropagationLM validation_back_propagation_lm(validation_samples_number, loss);
-
-    time_t beginning_time;
-    time(&beginning_time);
-    float elapsed_time = 0.0f;
+    BackPropagationLM training_back_propagation_lm(context.training_samples_number, loss);
+    BackPropagationLM validation_back_propagation_lm(context.validation_samples_number, loss);
 
     const Index parameters_number = neural_network->get_parameters_size();
 
     OptimizerData optimization_data;
-    optimization_data.set({Shape{parameters_number}});
-    optimization_data.potential_parameters.resize(parameters_number);
 
+    FullBatchHooks hooks;
+    hooks.minimum_loss_decrease = minimum_loss_decrease;
 
-    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    hooks.setup_state = [&]
     {
-        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        optimization_data.set({Shape{parameters_number}});
+        optimization_data.potential_parameters.resize(parameters_number);
+    };
 
-        neural_network->forward_propagate(training_batch.get_inputs(),
-                                          training_forward_propagation,
-                                          true);
-
-        back_propagate(training_batch,
-                       training_forward_propagation,
+    hooks.train_step = [&]() -> FullBatchStep
+    {
+        back_propagate(*context.training_batch,
+                       *context.training_forward_propagation,
                        training_back_propagation_lm);
 
-        results.training_error_history(epoch) = training_back_propagation_lm.error;
+        return {training_back_propagation_lm.error,
+                training_back_propagation_lm.error,
+                training_back_propagation_lm.loss};
+    };
 
-        if (has_validation)
-        {
-            neural_network->forward_propagate(validation_batch.get_inputs(),
-                                              *validation_fp,
-                                              false);
+    hooks.validation_error = [&]
+    {
+        calculate_errors(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
+        calculate_squared_errors(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
+        calculate_error(*context.validation_batch, *context.validation_fp, validation_back_propagation_lm);
 
-            calculate_errors(validation_batch, *validation_fp, validation_back_propagation_lm);
-            calculate_squared_errors(validation_batch, *validation_fp, validation_back_propagation_lm);
-            calculate_error(validation_batch, *validation_fp, validation_back_propagation_lm);
+        return validation_back_propagation_lm.error;
+    };
 
-            results.validation_error_history(epoch) = validation_back_propagation_lm.error;
+    hooks.display_extra = [&]{ cout << "Damping parameter: " << damping_parameter << "\n"; };
 
-            update_best_parameters(neural_network, validation_back_propagation_lm.error,
-                                   epoch, validation_failures);
-        }
-
-        elapsed_time = get_elapsed_time(beginning_time);
-
-        if (epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
-
-        old_loss = training_back_propagation_lm.loss;
-
-        if (should_display(epoch))
-        {
-            cout << "Training error: " << results.training_error_history(epoch) << "\n";
-            if (has_validation) cout << "Validation error: " << results.validation_error_history(epoch) << "\n";
-            cout << "Damping parameter: " << damping_parameter << "\n";
-            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-        }
-
-        if (loss_decrease < minimum_loss_decrease)
-        {
-            if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
-            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-        }
-
-        if (check_stopping_condition(results, epoch, elapsed_time,
-                                     results.training_error_history(epoch),
-                                     validation_failures,
-                                     training_back_propagation_lm.loss,
-                                     has_validation))
-        {
-            results.loss_decrease = loss_decrease;
-            break;
-        }
-
-        update_parameters(training_batch,
-                          training_forward_propagation,
+    // Unlike quasi-Newton, the LM update runs after the stopping check so the
+    // stopping epoch's parameters are the ones its recorded errors refer to.
+    hooks.post_step = [&]
+    {
+        update_parameters(*context.training_batch,
+                          *context.training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
-    }
+    };
 
-    restore_best_parameters(neural_network, results);
-
-    set_unscaling();
-
-    if (display) results.print();
-
-    return results;
+    return train_full_batch(context, hooks);
 }
 
 void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
@@ -509,8 +422,8 @@ void LevenbergMarquardtAlgorithm::to_JSON(JsonWriter& printer) const
     printer.open_element("LevenbergMarquardt");
 
     write_json(printer, {
-        {"DampingParameterFactor", to_string(damping_parameter_factor)},
-        {"MinimumLossDecrease", to_string(minimum_loss_decrease)}
+        {"DampingParameterFactor", damping_parameter_factor},
+        {"MinimumLossDecrease", minimum_loss_decrease}
     });
     write_common_json(printer);
 

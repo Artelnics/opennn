@@ -61,7 +61,6 @@ TEST_F(CorrelationsTest, LinearCorrelation)
 
     EXPECT_NEAR(linear_correlation(x, y).coefficient, type(- 1), EPSILON);
     
-    // Test
 
     x.setRandom();
     y.setRandom();
@@ -83,12 +82,10 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     Correlation correlation = logistic_correlation(x, y);
 
     correlation.print();
-    //correlation.print(); system("pause");
 
     EXPECT_LE(abs(correlation.coefficient), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
-    // Test
 
     Index size = 10;
 
@@ -100,7 +97,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    //correlation.print();
 
     EXPECT_GE(correlation.coefficient, type(0.9));
     EXPECT_LE(correlation.coefficient, type(1));
@@ -108,7 +104,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
 
-    // Test
 
     size = 100;
 
@@ -128,14 +123,12 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    //correlation.print();
 
     EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
 
-    // Test
 
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
@@ -143,11 +136,9 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    //correlation.print();
 
     EXPECT_LE(abs(correlation.coefficient), type(1));
 
-    // Test
 
     y.setConstant(type(0));
 
@@ -161,10 +152,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-    //EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
-    //EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
-    // Test
 
     size = 100;
 
@@ -188,13 +176,9 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
 
-    //const unsigned int threads_number = thread::hardware_concurrency();
 
-    //ThreadPool* thread_pool = new ThreadPool(threads_number);
 
-    //ThreadPoolDevice* device = new ThreadPoolDevice(thread_pool, threads_number);
 
-    // Test
 
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
@@ -204,7 +188,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     EXPECT_GE(abs(correlation.coefficient), type(-0.95));
 
-    // Test
 
     y.setConstant(type(0));
 
@@ -222,7 +205,6 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
     Correlation correlation;
     type solution;
 
-    //Perfect case
 
     size = 10;
 
@@ -251,7 +233,6 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     Index size;
     Correlation correlation;
 
-    //Test
 
     size = 10;
 
@@ -270,7 +251,6 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     EXPECT_NEAR(correlation.intercept, type(1), EPSILON);
     EXPECT_NEAR(correlation.slope, type(0.5), EPSILON);
 
-    // Test missing values
 
     size = 5;
 
@@ -299,7 +279,6 @@ TEST_F(CorrelationsTest, PowerCorrelation)
     Index size;
     Correlation correlation;
 
-    // Test
 
     size = 10;
 
@@ -314,7 +293,6 @@ TEST_F(CorrelationsTest, PowerCorrelation)
 
     correlation = power_correlation(x, y);
 
-    // Test
 
     EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
     EXPECT_NEAR(correlation.intercept, type(1), EPSILON);

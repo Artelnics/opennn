@@ -15,19 +15,6 @@ namespace opennn
 namespace
 {
 
-template <typename T, typename Parser>
-T parse_value(const string& text,
-              const string& context,
-              string_view value_kind,
-              Parser parser)
-{
-    try { return parser(text); }
-    catch (const exception&)
-    {
-        throw runtime_error(format("{}: invalid {} value \"{}\".", context, value_kind, text));
-    }
-}
-
 bool equal_ignoring_case(string_view left, string_view right) noexcept
 {
     return left.size() == right.size()
@@ -40,19 +27,19 @@ bool equal_ignoring_case(string_view left, string_view right) noexcept
 
 }
 
-float parse_float(const string& text, const string& context)
+float parse_float(string_view text, string_view context)
 {
-    return parse_value<float>(text, context, "numeric", [](const string& value) { return stof(value); });
+    return parse_number<float>(text, context);
 }
 
-int parse_int(const string& text, const string& context)
+int parse_int(string_view text, string_view context)
 {
-    return parse_value<int>(text, context, "integer", [](const string& value) { return stoi(value); });
+    return parse_number<int>(text, context, "integer");
 }
 
-long parse_long(const string& text, const string& context)
+long parse_long(string_view text, string_view context)
 {
-    return parse_value<long>(text, context, "integer", [](const string& value) { return stol(value); });
+    return parse_number<long>(text, context, "integer");
 }
 
 vector<string> tokenize(const string& document)
@@ -117,9 +104,9 @@ vector<string_view> tokenize_views(string_view document)
     return tokens;
 }
 
-vector<string> get_tokens(const string& text, const string& separator)
+vector<string> get_tokens(string_view text, string_view separator)
 {
-    if (separator.empty()) return {text};
+    if (separator.empty()) return {string(text)};
 
     vector<string> tokens;
 
@@ -146,7 +133,13 @@ vector<string> get_tokens(const string& text, const string& separator)
 vector<string_view> get_token_views(string_view text, char separator)
 {
     vector<string_view> tokens;
+    split_views(text, separator, tokens);
+    return tokens;
+}
 
+void split_views(string_view text, char separator, vector<string_view>& tokens)
+{
+    tokens.clear();
     size_t start = 0;
     while (true)
     {
@@ -161,8 +154,6 @@ vector<string_view> get_token_views(string_view text, char separator)
         tokens.emplace_back(text.substr(start, end - start));
         start = end + 1;
     }
-
-    return tokens;
 }
 
 void get_token_views_maybe_quoted(string_view line, char separator, bool file_has_quotes,
@@ -170,8 +161,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 {
     out.clear();
 
-    // Camino rapido: fichero sin comillas o linea concreta sin comillas ->
-    // vistas zero-copy sobre la propia linea (identico a get_token_views).
     if (!file_has_quotes || line.find('"') == string_view::npos)
     {
         size_t start = 0;
@@ -185,9 +174,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
         return;
     }
 
-    // Camino con comillas: limpiamos en `scratch`. Reservamos line.size() para que
-    // scratch NO reasigne durante los push_back (la limpieza solo quita caracteres),
-    // de modo que las vistas creadas sobre scratch.data() permanezcan validas.
     scratch.clear();
     scratch.reserve(line.size());
     const char* const base = scratch.data();
@@ -206,8 +192,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
             continue;
         }
 
-        // Dentro de comillas se eliminan ',' y ';' (misma semantica que el strip
-        // global previo), sea cual sea el separador activo.
         if (in_quote && (c == ',' || c == ';')) continue;
 
         scratch.push_back(c);
@@ -224,10 +208,6 @@ vector<string_view> get_token_views_maybe_quoted(string_view line, char separato
     return out;
 }
 
-// Devuelve SOLO el primer campo de `line`, con la misma semantica de comillas que
-// get_token_views_maybe_quoted(...)[0], sin trocear el resto de la linea.
-// Sin comillas: vista zero-copy sobre `line` hasta el primer separador.
-// Con comillas: escribe el primer campo limpio en `scratch` y devuelve vista sobre scratch.
 string_view first_token_maybe_quoted(string_view line, char separator, bool file_has_quotes, string& scratch)
 {
     if (!file_has_quotes || line.find('"') == string_view::npos)
@@ -263,6 +243,46 @@ string_view trim_view(string_view text)
     return text.substr(start, end - start + 1);
 }
 
+void ascii_lowercase_in_place(string& text) noexcept
+{
+    for (char& character : text)
+        if (character >= 'A' && character <= 'Z')
+            character = static_cast<char>(character + ('a' - 'A'));
+}
+
+string ascii_lowercase(string_view text)
+{
+    string result(text);
+    ascii_lowercase_in_place(result);
+    return result;
+}
+
+void append_utf8(string& output, uint32_t codepoint)
+{
+    if (codepoint <= 0x7F)
+    {
+        output.push_back(static_cast<char>(codepoint));
+    }
+    else if (codepoint <= 0x7FF)
+    {
+        output.push_back(static_cast<char>(0xC0 | (codepoint >> 6)));
+        output.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    }
+    else if (codepoint <= 0xFFFF)
+    {
+        output.push_back(static_cast<char>(0xE0 | (codepoint >> 12)));
+        output.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+        output.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    }
+    else
+    {
+        output.push_back(static_cast<char>(0xF0 | (codepoint >> 18)));
+        output.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
+        output.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+        output.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    }
+}
+
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
@@ -290,10 +310,12 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 
     while ((start_pos = text.find(to_replace, start_pos)) != string::npos)
     {
-        const bool is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
+        const bool is_prefix_valid = (start_pos == 0)
+            || (!isalnum(static_cast<unsigned char>(text[start_pos - 1])) && text[start_pos - 1] != '_');
 
         const size_t end_pos = start_pos + to_replace.length();
-        const bool is_suffix_valid = (end_pos == text.length()) || (!isalnum(text[end_pos]) && text[end_pos] != '_');
+        const bool is_suffix_valid = (end_pos == text.length())
+            || (!isalnum(static_cast<unsigned char>(text[end_pos])) && text[end_pos] != '_');
 
         if (is_prefix_valid && is_suffix_valid)
         {
@@ -337,12 +359,26 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
 
 string get_trimmed(const string& text)
 {
-    const auto is_space = [](char character) { return isspace(static_cast<unsigned char>(character)); };
+    return string(trim_view(text));
+}
 
-    const auto start = ranges::find_if_not(text, is_space);
-    const auto end = find_if_not(text.rbegin(), text.rend(), is_space).base();
+string join_strings(span<const string> values, string_view separator)
+{
+    if (values.empty()) return {};
 
-    return (start < end) ? string(start, end) : string();
+    size_t size = separator.size() * (values.size() - 1);
+    for (const string& value : values) size += value.size();
+
+    string result;
+    result.reserve(size);
+
+    for (size_t i = 0; i < values.size(); ++i)
+    {
+        if (i != 0) result.append(separator);
+        result.append(values[i]);
+    }
+
+    return result;
 }
 
 void replace(string& source, const string& find_what, const string& replace_with)
@@ -391,15 +427,9 @@ void display_progress_bar(int completed, int total)
 
 void string_to_vector(const string& input, VectorR& values)
 {
-    istringstream stream(input);
-    float value;
-    vector<float> buffer;
-
-    while (stream >> value)
-        buffer.push_back(value);
-
-    values.resize(static_cast<Index>(buffer.size()));
-    ranges::copy(buffer, values.data());
+    const vector<float> parsed = parse_number_list<float>(input, "Vector");
+    values.resize(static_cast<Index>(parsed.size()));
+    ranges::copy(parsed, values.data());
 }
 
 bool contains(const vector<string>& data, string_view value)

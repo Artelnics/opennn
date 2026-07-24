@@ -44,7 +44,6 @@ int main(int argc, char* argv[])
                   << " batch=" << batch << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
-        // Token-id inputs (batch, seq, 1), deterministic.
         Tensor3 inputs(batch, seq, 1);
         Tensor3 context(batch, seq, 1);
         for (Index b = 0; b < batch; ++b)
@@ -54,7 +53,7 @@ int main(int argc, char* argv[])
                 context(b, s, 0) = float((b * seq + s + 1) % vocab);
             }
 
-        transformer.calculate_outputs(inputs, context);   // warmup
+        transformer.calculate_outputs(inputs, context);
 
         const auto t0 = std::chrono::steady_clock::now();
         for (Index it = 0; it < iters; ++it)

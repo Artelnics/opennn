@@ -46,7 +46,6 @@ public:
 
     MatrixR get_variable_data(Index) const;
     MatrixR get_variable_data(Index, const vector<Index>&) const;
-    MatrixR get_variable_data(const string&) const;
 
     MatrixR get_feature_data(const string&) const;
 
@@ -61,8 +60,6 @@ public:
     using Dataset::set_storage_mode;
     void set_storage_mode(StorageMode) override;
 
-    // Overrides the default <data_dir>/.cache/<stem>.bin cache location, for
-    // applications that keep the binary next to the model (Neural Designer).
     void set_binary_cache_path(const filesystem::path&);
 
     vector<string> get_feature_scalers(const string&) const;
@@ -83,8 +80,6 @@ public:
     void set_missing_values_method(const MissingValuesMethod& method) { missing_values_method = method; }
     void set_missing_values_method(const string&);
 
-    bool has_missing_values(const vector<string_view>&) const;
-
     void scrub_missing_values() override;
     void calculate_missing_values_statistics();
     void impute_missing_values_statistic(const MissingValuesMethod&);
@@ -93,7 +88,6 @@ public:
     virtual void impute_missing_values_interpolate();
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f);
-    vector<string> unuse_collinear_variables(const float = 0.9f) { return {}; }
     vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;
@@ -142,7 +136,6 @@ public:
 
     void set_data_random();
     void set_data_integer(const Index);
-    void set_data_rosenbrock();
     void set_data_binary_classification();
 
     void from_JSON(const JsonDocument&) override;
@@ -179,7 +172,7 @@ protected:
     Index gmt = 0;
 
     void missing_values_to_JSON(JsonWriter&) const;
-    void missing_values_from_JSON(const Json*);
+    void missing_values_from_JSON(const Json*) override;
 
     void infer_variable_types_from_data();
     void resize_data_from_JSON(Index) override;
@@ -207,15 +200,8 @@ protected:
     mutable FileReader cache_reader;
     Index cache_columns_number = 0;
 
-    // Whole-used-dataset statistics backing analytics and NaN replacement.
     mutable vector<Descriptives> cache_feature_descriptives;
-    // Training-sample statistics behind cache_feature_transforms, matching the
-    // Matrix path: scaling must not see validation/testing samples.
     vector<Descriptives> cache_transform_descriptives;
-    // Per-cache-column value used to impute NaN on the fly when filling training/
-    // testing batches (mean for continuous, mode for binary, most-frequent category
-    // for categoricals). The on-disk cache itself stays raw so correlations keep
-    // doing pairwise deletion. Resolved lazily from the variable types.
     mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 

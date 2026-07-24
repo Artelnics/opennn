@@ -11,7 +11,6 @@ int main()
 {
     Configuration::instance().set(Device::Auto, Type::FP32);
 
-    // Small MLP: 10 inputs -> 64 hidden -> 1 output
     ApproximationNetwork network({10}, {64}, {1});
 
     MatrixR input(1, 10);

@@ -6,6 +6,8 @@ include(GNUInstallDirs)
 
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
+list(FILTER CPP_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
+list(FILTER HEADER_FILES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.h$")
 
 # Vision module: YOLO, ResNet, ImageClassification, Transformer, and their
 # layers (convolutional, pooling, flatten, embedding, multihead-attention,

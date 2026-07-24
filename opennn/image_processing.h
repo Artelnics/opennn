@@ -25,6 +25,15 @@ void load_image(const filesystem::path&,
 
 Tensor3 resize_image(const Tensor3&, Index, Index);
 
+// Shared 2x2 bilinear blend; coordinate mapping, clamping and rounding stay in the callers.
+template <typename Pixel>
+inline float bilinear_blend(Pixel v00, Pixel v01, Pixel v10, Pixel v11, float dx, float dy)
+{
+    const float top    = float(v00) * (1.0f - dx) + float(v01) * dx;
+    const float bottom = float(v10) * (1.0f - dx) + float(v11) * dx;
+    return top * (1.0f - dy) + bottom * dy;
+}
+
 void reflect_image_horizontal(TensorMap3&);
 void reflect_image_vertical(TensorMap3&);
 void rotate_image(const TensorMap3&, TensorMap3&, float);

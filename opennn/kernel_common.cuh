@@ -68,6 +68,27 @@ static inline void checked_host_condition(bool condition, const char* message)
         opennn::device::check_last_error(); \
     } while (false)
 
+// Guard + checked_int + launch for grid-stride/elementwise kernels whose first
+// parameter is the element count (block_size threads, no shared memory, compute
+// stream).
+template<typename K, typename... Args>
+static inline void launch_elementwise(Index n, K kernel, Args... args)
+{
+    if (n == 0) return;
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
+}
+
+#define OPENNN_INSTANTIATE_FLOAT_BF16(X) \
+    X(float)                             \
+    X(__nv_bfloat16)
+
+#define OPENNN_INSTANTIATE_FLOAT_BF16_2(X) \
+    X(float, float)                        \
+    X(float, __nv_bfloat16)                \
+    X(__nv_bfloat16, float)                \
+    X(__nv_bfloat16, __nv_bfloat16)
+
 static inline int vector_work_size(int total, int n_vec, int vec_width)
 {
     const int n_tail = total - n_vec * vec_width;

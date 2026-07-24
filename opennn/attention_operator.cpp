@@ -268,7 +268,7 @@ float attention_scale(Index head_dim) { return 1.0f / sqrt(float(head_dim)); }
 
 auto sdpa_check = [](auto s, const string& what) {
     throw_if(s.is_bad(),
-             format("SDPA {}: {}", what, s.get_message()));
+             "SDPA {}: {}", what, s.get_message());
 };
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
@@ -895,7 +895,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     auto status = entry.fwd_graph->execute(Backend::get_cudnn_handle(), tensor_map, entry.fwd_workspace_buf);
     throw_if(status.is_bad(),
-             format("SDPA forward execute: {}", status.get_message()));
+             "SDPA forward execute: {}", status.get_message());
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), entry.output, output.as<float>());
     else if (keep_private_output)
@@ -1162,7 +1162,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
 
     auto status = entry.bwd_graph->execute(Backend::get_cudnn_handle(), tensor_map, entry.bwd_workspace_buf);
     throw_if(status.is_bad(),
-             format("SDPA backward execute: {}", status.get_message()));
+             "SDPA backward execute: {}", status.get_message());
     if (fp32_via_bf16)
     {
         cast_bf16_to_fp32(query.size(), entry.query_gradient, query_delta.as<float>());

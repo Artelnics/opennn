@@ -76,13 +76,9 @@ struct TrainingResult
 
     float loss = NAN;
 
-    Index validation_failures = 0;
-
     bool restored_best_parameters = false;
 
     Index restored_epoch = -1;
-
-    float loss_decrease = 0.0f;
 };
 
 }

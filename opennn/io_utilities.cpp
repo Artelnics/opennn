@@ -41,8 +41,8 @@ void atomic_rename(const filesystem::path& source_path, const filesystem::path& 
                                    source_path.string(), destination_path.string(), ::GetLastError()));
 #else
     throw_if(::rename(source_path.c_str(), destination_path.c_str()) != 0,
-             format("atomic_rename: rename failed for {} -> {} (errno={}).",
-                    source_path.string(), destination_path.string(), errno));
+             "atomic_rename: rename failed for {} -> {} (errno={}).",
+                    source_path.string(), destination_path.string(), errno);
 #endif
 }
 
@@ -74,6 +74,59 @@ void download_if_missing(const filesystem::path& path, const string& url)
 
     if (system(command.c_str()) != 0 || !filesystem::exists(path))
         throw runtime_error("Download failed. Get it manually from:\n  " + url);
+}
+
+void download_files_if_missing(const filesystem::path& directory,
+                               const string_view base_url,
+                               const vector<string_view>& filenames)
+{
+    for (const string_view filename : filenames)
+        download_if_missing(directory / filename, string(base_url) + string(filename));
+}
+
+string read_text_file(const filesystem::path& path)
+{
+    ifstream file(path, ios::binary | ios::ate);
+
+    throw_if(!file.is_open(), "Cannot open file {}", path.string());
+
+    const streamoff byte_count = file.tellg();
+    throw_if(byte_count < 0, "Cannot determine size for file {}", path.string());
+    throw_if(byte_count > streamoff(numeric_limits<streamsize>::max()),
+             "File {} is too large to read into memory", path.string());
+
+    file.seekg(0);
+
+    string contents(size_t(byte_count), '\0');
+    if (byte_count > 0)
+        file.read(contents.data(), streamsize(byte_count));
+
+    throw_if(!file, "Cannot read file {}", path.string());
+    return contents;
+}
+
+bool is_file_current(const filesystem::path& file,
+                     const vector<filesystem::path>& sources,
+                     const uintmax_t expected_size)
+{
+    error_code error;
+
+    if (!filesystem::exists(file, error) || error) return false;
+
+    if (expected_size > 0
+     && (filesystem::file_size(file, error) != expected_size || error))
+        return false;
+
+    const auto file_time = filesystem::last_write_time(file, error);
+    if (error) return false;
+
+    for (const filesystem::path& source : sources)
+    {
+        const auto source_time = filesystem::last_write_time(source, error);
+        if (error || file_time < source_time) return false;
+    }
+
+    return true;
 }
 
 FileMapping::~FileMapping() { reset(); }
@@ -235,8 +288,8 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
         DWORD read_bytes = 0;
         const BOOL ok = ::ReadFile(handle_, dst + total, bytes_to_read, &read_bytes, &overlapped);
         throw_if(!ok || read_bytes == 0,
-                 format("FileReader::read_at: ReadFile failed (offset={}, n={}).",
-                        current_offset, bytes_to_read));
+                 "FileReader::read_at: ReadFile failed (offset={}, n={}).",
+                        current_offset, bytes_to_read);
         total += read_bytes;
     }
 }
@@ -249,8 +302,8 @@ void FileReader::open(const filesystem::path& path)
 
     fd_ = ::open(path.c_str(), O_RDONLY);
     throw_if(fd_ < 0,
-             format("FileReader: cannot open {} (errno={}).",
-                    path.string(), errno));
+             "FileReader: cannot open {} (errno={}).",
+                    path.string(), errno);
 }
 
 void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
@@ -269,8 +322,8 @@ void FileReader::read_at(void* buffer, size_t bytes, uint64_t offset) const
                                        errno, offset + total));
         }
         throw_if(n == 0,
-                 format("FileReader::read_at: unexpected EOF at offset {}.",
-                        offset + total));
+                 "FileReader::read_at: unexpected EOF at offset {}.",
+                        offset + total);
         total += size_t(n);
     }
 }
@@ -293,6 +346,64 @@ uint64_t FileReader::file_size() const
 #endif
 }
 
+void read_int32_batch(const FileReader& reader,
+                      const vector<Index>& sample_indices,
+                      const Index samples_number,
+                      const uint64_t record_values,
+                      const Index source_offset,
+                      const Index values_number,
+                      float* output,
+                      const Index output_stride,
+                      const Index output_offset,
+                      const string_view context)
+{
+    throw_if(record_values == 0,
+             "{} record width must be greater than zero.", context);
+    throw_if(source_offset < 0 || values_number < 0
+          || (source_offset >= 0 && values_number >= 0
+           && uint64_t(source_offset) + uint64_t(values_number) > record_values),
+             "{} record range is invalid.", context);
+    throw_if(output_offset < 0 || output_stride < 0
+          || (output_offset >= 0 && values_number >= 0
+           && uint64_t(output_stride) < uint64_t(output_offset) + uint64_t(values_number)),
+             "{} output range is invalid.", context);
+    throw_if(!sample_indices.empty() && !output,
+             "{} output pointer is null.", context);
+
+    string omp_error;
+
+    #pragma omp parallel for
+    for (Index i = 0; i < ssize(sample_indices); ++i)
+    {
+        try
+        {
+            const Index sample_index = sample_indices[size_t(i)];
+            throw_if(sample_index < 0 || sample_index >= samples_number,
+                     "{} sample index is out of range.", context);
+
+            thread_local vector<int32_t> buffer;
+            buffer.resize(size_t(values_number));
+
+            reader.read_at(buffer.data(),
+                           size_t(values_number) * sizeof(int32_t),
+                           (uint64_t(sample_index) * record_values
+                            + uint64_t(source_offset)) * sizeof(int32_t));
+
+            for (Index j = 0; j < values_number; ++j)
+                output[i * output_stride + output_offset + j] = float(buffer[size_t(j)]);
+        }
+        catch (const exception& exception)
+        {
+            #pragma omp critical
+            {
+                if (omp_error.empty()) omp_error = exception.what();
+            }
+        }
+    }
+
+    throw_if(!omp_error.empty(), omp_error);
+}
+
 
 FileWriter::~FileWriter()
 {
@@ -313,7 +424,7 @@ void FileWriter::open(const filesystem::path& tmp_path)
 
     stream_.open(tmp_path, ios::binary | ios::trunc);
     throw_if(!stream_.is_open(),
-             format("FileWriter: cannot open {}", tmp_path.string()));
+             "FileWriter: cannot open {}", tmp_path.string());
 }
 
 void FileWriter::write(const void* buffer, size_t bytes)
@@ -389,24 +500,24 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     ifstream input_file(path, ios::binary | ios::ate);
 
     throw_if(!input_file.is_open(),
-             format("Cannot open file {}\n", path.string()));
+             "Cannot open file {}\n", path.string());
 
     const streamoff file_byte_count = input_file.tellg();
     throw_if(file_byte_count < 0,
-             format("Cannot determine size for file {}\n", path.string()));
+             "Cannot determine size for file {}\n", path.string());
     throw_if(file_byte_count > streamoff(numeric_limits<streamsize>::max()),
-             format("File {} is too large to read into memory\n", path.string()));
+             "File {} is too large to read into memory\n", path.string());
 
     input_file.seekg(0);
     throw_if(!input_file.good(),
-             format("Cannot seek file {}\n", path.string()));
+             "Cannot seek file {}\n", path.string());
 
     result.buffer.resize(static_cast<size_t>(file_byte_count), '\0');
     if (file_byte_count > 0)
     {
         input_file.read(result.buffer.data(), static_cast<streamsize>(file_byte_count));
         throw_if(!input_file,
-                 format("Cannot read file {}\n", path.string()));
+                 "Cannot read file {}\n", path.string());
     }
 
     if (has_bom(result.buffer))
@@ -439,30 +550,97 @@ bool is_numeric_string(string_view text)
         || (text.find('%') != string_view::npos && consumed + 1 == text.size());
 }
 
-static const regex re_ymd_hms_ms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))");
-static const regex re_ymd_hms(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))");
-static const regex re_ymd_hm(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))");
-static const regex re_ymd(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))");
-static const regex re_ym(R"((\d{4})[-/.](\d{1,2}))");
-static const regex re_dmy_hms(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)");
-static const regex re_dmy_hm(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))");
-static const regex re_dmy(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))");
-static const regex re_hms(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))");
+struct ParsedDateTime
+{
+    std::array<int, 4> date{};
+    std::array<int, 4> time{};
+    size_t date_count = 0;
+    size_t time_count = 0;
+    size_t first_date_digits = 0;
+    size_t last_date_digits = 0;
+    bool pm = false;
+    bool am = false;
+};
+
+static bool parse_fields(string_view text,
+                         string_view separators,
+                         std::array<int, 4>& values,
+                         size_t& count,
+                         size_t* first_digits = nullptr,
+                         size_t* last_digits = nullptr)
+{
+    count = 0;
+    size_t position = 0;
+
+    while (position < text.size())
+    {
+        if (count == values.size()) return false;
+
+        const size_t start = position;
+        while (position < text.size()
+            && isdigit(static_cast<unsigned char>(text[position])))
+            ++position;
+
+        if (position == start) return false;
+
+        if (count == 0 && first_digits) *first_digits = position - start;
+        if (last_digits) *last_digits = position - start;
+
+        const auto [end, error] =
+            from_chars(text.data() + start, text.data() + position, values[count]);
+        if (error != errc{} || end != text.data() + position) return false;
+
+        ++count;
+        if (position == text.size()) return true;
+        if (separators.find(text[position]) == string_view::npos) return false;
+        ++position;
+    }
+
+    return count > 0;
+}
+
+static bool parse_date_time(string_view text, ParsedDateTime& parsed)
+{
+    text = trim_view(text);
+    if (text.empty()) return false;
+
+    if (text.size() >= 3 && text[text.size() - 3] == ' ')
+    {
+        const string_view suffix = text.substr(text.size() - 2);
+        parsed.am = suffix == "AM";
+        parsed.pm = suffix == "PM";
+        if (parsed.am || parsed.pm)
+            text.remove_suffix(3);
+    }
+
+    const size_t space = text.find(' ');
+    const bool time_only = space == string_view::npos
+                        && text.find(':') != string_view::npos;
+
+    if (time_only)
+        return parse_fields(text, ":", parsed.time, parsed.time_count)
+            && parsed.time_count == 3;
+
+    const string_view date_text =
+        space == string_view::npos ? text : text.substr(0, space);
+
+    if (!parse_fields(date_text, "-/.", parsed.date, parsed.date_count,
+                      &parsed.first_date_digits, &parsed.last_date_digits)
+        || parsed.date_count < 2 || parsed.date_count > 3)
+        return false;
+
+    if (space == string_view::npos) return true;
+
+    const string_view time_text = text.substr(space + 1);
+    return parse_fields(time_text, ":.", parsed.time, parsed.time_count)
+        && parsed.time_count >= 2 && parsed.time_count <= 4;
+}
 
 bool is_date_time_string(string_view text)
 {
-    if (is_numeric_string(text))
-        return false;
-
-    const auto matches = [&](const regex& date_regex)
-    {
-        return regex_match(text.begin(), text.end(), date_regex);
-    };
-
-    return matches(re_ymd_hms_ms) || matches(re_ymd_hms) || matches(re_ymd_hm)
-        || matches(re_ymd) || matches(re_ym)
-        || matches(re_dmy_hms) || matches(re_dmy_hm) || matches(re_dmy)
-        || matches(re_hms);
+    if (is_numeric_string(text)) return false;
+    ParsedDateTime parsed;
+    return parse_date_time(text, parsed);
 }
 
 bool has_numbers(const vector<string>& string_list)
@@ -475,95 +653,60 @@ bool has_numbers(const vector<string_view>& string_list)
     return ranges::any_of(string_list, is_numeric_string);
 }
 
-time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
+DateFormat detect_date_format(string_view text)
 {
-    struct tm time_components = {};
-    smatch match;
+    ParsedDateTime parsed;
+    if (!parse_date_time(text, parsed) || parsed.date_count != 3) return Auto;
+    if (parsed.first_date_digits == 4) return Ymd;
+    if (parsed.date[0] > 12) return Dmy;
+    if (parsed.date[1] > 12) return Mdy;
+    return Auto;
+}
 
-    const bool try_ymd = (format == Ymd || format == Auto);
-    const bool try_dmy = (format == Dmy || format == Mdy || format == Auto);
+time_t date_to_timestamp(string_view text, Index gmt, DateFormat format)
+{
+    ParsedDateTime parsed;
+    if (!parse_date_time(text, parsed)) return -1;
 
-    auto fill_dmy = [&](int part1, int part2)
-    {
-        const bool mdy = (format == Mdy) || (format == Auto && part1 <= 12 && part2 > 12);
-        if (mdy) { time_components.tm_mon = part1 - 1; time_components.tm_mday = part2; }
-        else    { time_components.tm_mday = part1;    time_components.tm_mon = part2 - 1; }
-    };
+    tm time_components{};
 
-    if (try_ymd && (regex_match(date, match, re_ymd_hms_ms) || regex_match(date, match, re_ymd_hms)))
+    if (parsed.date_count == 0)
     {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
+        if (format != Auto || parsed.time_count != 3) return -1;
     }
-    if (try_ymd && regex_match(date, match, re_ymd_hm))
+    else if (parsed.first_date_digits == 4)
     {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        return mktime(&time_components);
+        if (format != Auto && format != Ymd) return -1;
+        time_components.tm_year = parsed.date[0] - 1900;
+        time_components.tm_mon = parsed.date[1] - 1;
+        time_components.tm_mday = parsed.date_count == 3 ? parsed.date[2] : 1;
     }
-    if (try_ymd && regex_match(date, match, re_ymd))
+    else
     {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = stoi(match[3]);
-        return mktime(&time_components);
-    }
-    if (try_ymd && regex_match(date, match, re_ym))
-    {
-        time_components.tm_year = stoi(match[1]) - 1900;
-        time_components.tm_mon  = stoi(match[2]) - 1;
-        time_components.tm_mday = 1;
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy_hms))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
+        if (parsed.date_count != 3 || format == Ymd || parsed.last_date_digits != 4)
+            return -1;
 
-        int hour = stoi(match[4]);
-        if (match[8].matched)
-        {
-            const string ampm = match[8].str();
-            if (ampm == "PM" && hour < 12) hour += 12;
-            if (ampm == "AM" && hour == 12) hour = 0;
-        }
-
-        time_components.tm_hour = hour - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        time_components.tm_sec  = stoi(match[6]);
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy_hm))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
-        time_components.tm_hour = stoi(match[4]) - gmt;
-        time_components.tm_min  = stoi(match[5]);
-        return mktime(&time_components);
-    }
-    if (try_dmy && regex_match(date, match, re_dmy))
-    {
-        fill_dmy(stoi(match[1]), stoi(match[2]));
-        time_components.tm_year = stoi(match[3]) - 1900;
-        return mktime(&time_components);
-    }
-    if (format == Auto && regex_match(date, match, re_hms))
-    {
-        time_components.tm_hour = stoi(match[1]) - gmt;
-        time_components.tm_min  = stoi(match[2]);
-        time_components.tm_sec  = stoi(match[3]);
-        return mktime(&time_components);
+        const bool month_first = format == Mdy
+            || (format == Auto && parsed.date[0] <= 12 && parsed.date[1] > 12);
+        time_components.tm_mday = month_first ? parsed.date[1] : parsed.date[0];
+        time_components.tm_mon = (month_first ? parsed.date[0] : parsed.date[1]) - 1;
+        time_components.tm_year = parsed.date[2] - 1900;
     }
 
-    return -1;
+    if (parsed.time_count > 0)
+    {
+        if (parsed.time_count < 2) return -1;
+
+        int hour = parsed.time[0];
+        if (parsed.pm && hour < 12) hour += 12;
+        if (parsed.am && hour == 12) hour = 0;
+
+        time_components.tm_hour = hour - int(gmt);
+        time_components.tm_min = parsed.time[1];
+        time_components.tm_sec = parsed.time_count >= 3 ? parsed.time[2] : 0;
+    }
+
+    return mktime(&time_components);
 }
 
 }

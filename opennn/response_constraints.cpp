@@ -276,8 +276,8 @@ struct Parser
             const Token closing_token = lexer.consume();
 
             throw_if(closing_token.kind != Token::Kind::RightParen,
-                     format("FormulaParser: expected ')' at position {}",
-                            closing_token.position));
+                     "FormulaParser: expected ')' at position {}",
+                            closing_token.position);
 
             return inner_node;
         }
@@ -304,7 +304,7 @@ struct Parser
 
                 const Token closing_token = lexer.consume();
                 throw_if(closing_token.kind != Token::Kind::RightParen,
-                         format("FormulaParser: expected ')' in call to '{}'", token.text));
+                         "FormulaParser: expected ')' in call to '{}'", token.text);
 
                 return function_node;
             }
@@ -538,14 +538,14 @@ void validate_function_arities(const Ast& node)
         if (unary_iterator != unary_functions.end())
         {
             throw_if(arguments_count != unary_iterator->second,
-                     format("FormulaParser: function '{}' expects {} argument, got {}",
-                            function_name, unary_iterator->second, arguments_count));
+                     "FormulaParser: function '{}' expects {} argument, got {}",
+                            function_name, unary_iterator->second, arguments_count);
         }
         else if (binary_iterator != binary_functions.end())
         {
             throw_if(arguments_count != binary_iterator->second,
-                     format("FormulaParser: function '{}' expects {} arguments, got {}",
-                            function_name, binary_iterator->second, arguments_count));
+                     "FormulaParser: function '{}' expects {} arguments, got {}",
+                            function_name, binary_iterator->second, arguments_count);
         }
         else
         {
@@ -1022,7 +1022,7 @@ AstPtr parse_to_ast(const string& expression,
     AstPtr ast = parser.parse_expression();
 
     throw_if(lexer.peek().kind != Token::Kind::End,
-             format("FormulaParser: trailing tokens after valid expression in '{}'", expression));
+             "FormulaParser: trailing tokens after valid expression in '{}'", expression);
 
     return ast;
 }
@@ -1280,28 +1280,15 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
         ? constraint.callback(input_row, output_row)
         : constraint.compiled.evaluate(input_row, output_row);
 
-    const float low = constraint.low_bound;
-    const float up  = constraint.up_bound;
+    if (constraint.comparison_operator == ComparisonOperator::None)
+        return true;
 
-    switch (constraint.comparison_operator)
-    {
-        using enum ComparisonOperator;
-    case EqualTo:
-        return abs(value - low) <= bound_tolerance(low);
-    case Between:
-        return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
-    case GreaterEqualTo:
-    case GreaterThan:
-        return value >= low - bound_tolerance(low);
-    case LessEqualTo:
-    case LessThan:
-        return value <= up + bound_tolerance(up);
-    case None:
-    case AllowedSet:
-        return true;
-    default:
-        return true;
-    }
+    float low, up;
+    if (!interval_from_comparison(constraint.comparison_operator, constraint.low_bound, constraint.up_bound, low, up))
+        return true;   // AllowedSet: no interval to check
+
+    // bound_tolerance(+/-inf) is +inf, so a missing side never rejects.
+    return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
 }
 
 
@@ -1345,28 +1332,16 @@ bool constraint_residual(const ComparisonOperator comparison, const float low, c
 {
     residual = 0.0f;
 
-    switch (comparison)
-    {
-        using enum ComparisonOperator;
-    case EqualTo:
-        residual = value - low; return true;
-    case Between:
-        if (value < low) { residual = value - low; return true; }
-        if (value > up)  { residual = value - up;  return true; }
+    // EqualTo is always active: callers use the signed offset even when it is zero.
+    if (comparison == ComparisonOperator::EqualTo) { residual = value - low; return true; }
+
+    float interval_low, interval_up;
+    if (!interval_from_comparison(comparison, low, up, interval_low, interval_up))
         return false;
-    case GreaterEqualTo:
-    case GreaterThan:
-        if (value < low) { residual = value - low; return true; }
-        return false;
-    case LessEqualTo:
-    case LessThan:
-        if (value > up) { residual = value - up; return true; }
-        return false;
-    case None:
-    case AllowedSet:
-    default:
-        return false;
-    }
+
+    if (value < interval_low) { residual = value - interval_low; return true; }
+    if (value > interval_up)  { residual = value - interval_up;  return true; }
+    return false;
 }
 
 bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,

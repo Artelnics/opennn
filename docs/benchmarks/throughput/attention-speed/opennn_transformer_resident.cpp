@@ -46,8 +46,6 @@ int main(int argc, char* argv[])
 
         Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
-        // OPENNN_SDPA_MIN lowers the fused-attention (cuDNN SDPA) threshold so it
-        // engages below the default 192 (e.g. =1 forces it always on).
         if (const char* e = std::getenv("OPENNN_SDPA_MIN"))
             transformer.set_attention_sdpa_min_sequence_length(Index(std::stoll(e)));
 
@@ -56,7 +54,6 @@ int main(int argc, char* argv[])
                   << " batch=" << batch << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
-        // Both token-id inputs on the GPU, ONCE.
         Tensor3 host_in(batch, seq, 1), host_ctx(batch, seq, 1);
         for (Index b = 0; b < batch; ++b)
             for (Index s = 0; s < seq; ++s)
@@ -77,14 +74,11 @@ int main(int argc, char* argv[])
             TensorView(in_gpu.as<float>(),  {batch, seq, 1}, Type::FP32, Device::CUDA),
             TensorView(ctx_gpu.as<float>(), {batch, seq, 1}, Type::FP32, Device::CUDA)};
 
-        // ForwardPropagation (activation buffers) built ONCE.
         ForwardPropagation forward_propagation(batch, &transformer);
 
-        transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, /*upload=*/true);
+        transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            true);
         device::synchronize();
 
-        // Per-op GPU breakdown (each PROFILE_SCOPE syncs, so wall == GPU time
-        // here since the step is GPU-bound). OPENNN_PROFILE=1 to enable.
         if (std::getenv("OPENNN_PROFILE"))
         {
             ::opennn::enabled() = true;
@@ -92,7 +86,7 @@ int main(int argc, char* argv[])
             const auto p0 = std::chrono::steady_clock::now();
             const Index prof_iters = 10;
             for (Index it = 0; it < prof_iters; ++it)
-                transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, /*upload=*/false);
+                transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
             device::synchronize();
             const double prof_ms =
                 std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - p0).count();
@@ -101,18 +95,12 @@ int main(int argc, char* argv[])
             ::opennn::global_stats().clear();
         }
 
-        // Capture the forward into a CUDA graph (two eager warmup calls, then
-        // capture) so the timed loop below replays it. Enabled after the
-        // profiled block: the per-op scopes need the eager forward.
         forward_propagation.set_cuda_graph(true);
         for (Index it = 0; it < 2; ++it)
-            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, /*upload=*/false);
+            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
         device::synchronize();
         std::cout << "cuda_graph=on\n";
 
-        // GPU-only time via CUDA events (no host gaps inside the window) vs
-        // wall-clock (host launch/orchestration overhead + GPU). The difference
-        // is the per-step host overhead a CUDA graph replay removes.
         cudaStream_t stream = Backend::get_compute_stream();
         cudaEvent_t ev0, ev1;
         cudaEventCreate(&ev0); cudaEventCreate(&ev1);
@@ -120,7 +108,7 @@ int main(int argc, char* argv[])
         const auto t0 = std::chrono::steady_clock::now();
         cudaEventRecord(ev0, stream);
         for (Index it = 0; it < iters; ++it)
-            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation, /*upload=*/false);
+            transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            false);
         cudaEventRecord(ev1, stream);
         device::synchronize();
         const auto t1 = std::chrono::steady_clock::now();

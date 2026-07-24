@@ -83,7 +83,7 @@ float* Layer::link_views_to_operators(vector<TensorView>& views, float* pointer,
             if (shape.empty()) { views.emplace_back(); continue; }
 
             throw_if(!is_aligned(pointer),
-                     format("Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name()));
+                     "Layer::link_views_to_operators: unaligned memory in layer \"{}\"", get_name());
 
             views.emplace_back(pointer, shape, Type::FP32, device);
             pointer += get_aligned_size(shape.size());
@@ -133,6 +133,8 @@ void Layer::from_JSON(const JsonDocument& document)
     read_JSON_body(root);
     for (Operator* op : get_operators())
         op->from_JSON(root);
+
+    on_loaded();
 }
 
 void Layer::load_state_from_JSON(const JsonDocument& document)

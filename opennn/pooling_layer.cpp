@@ -75,8 +75,6 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
     const Shape out_shape = get_output_shape();
 
-    // The argmax cache only serves the CPU backward; the cuDNN backward
-    // recomputes the maxima from input+output, so on GPU the slot stays empty.
     const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling
                                  && compute_device != Device::CUDA)
         ? Shape{batch_size}.append(out_shape)
@@ -225,13 +223,13 @@ void Pooling::read_JSON_body(const Json* pooling_layer_element)
 void Pooling::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"PoolHeight", to_string(get_pool_height())},
-        {"PoolWidth", to_string(get_pool_width())},
+        {"PoolHeight", get_pool_height()},
+        {"PoolWidth", get_pool_width()},
         {"PoolingMethod", pooling_method_to_string(pooling_method)},
-        {"ColumnStride", to_string(get_column_stride())},
-        {"RowStride", to_string(get_row_stride())},
-        {"PaddingHeight", to_string(get_padding_height())},
-        {"PaddingWidth", to_string(get_padding_width())}
+        {"ColumnStride", get_column_stride()},
+        {"RowStride", get_row_stride()},
+        {"PaddingHeight", get_padding_height()},
+        {"PaddingWidth", get_padding_width()}
     });
 }
 

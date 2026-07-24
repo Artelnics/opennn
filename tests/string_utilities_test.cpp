@@ -86,6 +86,30 @@ TEST(StringUtilitiesTest, GetTokenViews)
     EXPECT_EQ(empty[0], "");
 }
 
+TEST(StringUtilitiesTest, SplitViewsReusesOutput)
+{
+    vector<string_view> tokens = {"stale"};
+    split_views("a,b,c", ',', tokens);
+
+    ASSERT_EQ(tokens.size(), size_t(3));
+    EXPECT_EQ(tokens[0], "a");
+    EXPECT_EQ(tokens[2], "c");
+
+    split_views("one", ',', tokens);
+    ASSERT_EQ(tokens.size(), size_t(1));
+    EXPECT_EQ(tokens[0], "one");
+}
+
+TEST(StringUtilitiesTest, LowercaseAndJoin)
+{
+    string text = "OpenNN 123 Á";
+    ascii_lowercase_in_place(text);
+    EXPECT_EQ(text, "opennn 123 Á");
+
+    EXPECT_EQ(ascii_lowercase("ABC_xyz"), "abc_xyz");
+    EXPECT_EQ(join_strings(vector<string>{"a", "bb", "c"}, "::"), "a::bb::c");
+}
+
 TEST(StringUtilitiesTest, Tokenize)
 {
     const vector<string> tokens = tokenize("Hello, World!");

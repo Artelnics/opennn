@@ -1,18 +1,3 @@
-//   Regression test for hidden Eigen temporaries in the CPU dense forward.
-//
-//   Every ForwardPropagation buffer is pre-allocated, so a steady-state
-//   forward pass must not allocate any large block. The 2026-07 bug --
-//   linear_forward_cpu written as "output = (input * weights).rowwise() +
-//   bias", which makes Eigen materialize the whole product in a heap
-//   temporary -- cost an extra batch x outputs allocation per dense layer per
-//   pass and nearly halved the CPU inference max batch
-//   (docs/benchmarks/higgs-max-batch/).
-//
-//   The test warms the pass up (twice, so glibc's arena and Eigen's GEMM
-//   scratch reach steady state), clamps RLIMIT_DATA to the process's current
-//   data usage plus a small slack, and runs the pass again: a reintroduced
-//   batch-sized temporary (128 MiB here, twice the slack) blows the cap and
-//   throws bad_alloc. Linux-only; skipped elsewhere.
 
 #include "pch.h"
 
@@ -57,8 +42,6 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
 #else
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-    // 32768 x (28 -> 1024 -> 1024 -> 1): a reintroduced product temporary is
-    // batch x 1024 floats = 128 MiB, twice the slack below.
     const Index batch = 32768;
 
     NeuralNetwork network;
@@ -75,10 +58,6 @@ TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
                                 Shape{batch, 28}, Type::FP32);
     const std::vector<TensorView> inputs = {input_view};
 
-    // Two warmup passes: the first faults the pre-allocated buffers in and
-    // creates Eigen/OpenMP scratch (mmap'd, then released, bumping glibc's
-    // mmap threshold); the second re-allocates that scratch from the arena,
-    // which caches it -- after this the pass is allocation-steady.
     network.forward_propagate(inputs, forward_propagation, false);
     network.forward_propagate(inputs, forward_propagation, false);
 

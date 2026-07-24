@@ -122,7 +122,7 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
-    input_shape = { past_time_steps, get_features_number("Input") };
+    input_shape = { past_time_steps, get_features_number(VariableRole::Input) };
     refresh_forecasting_roles();
 }
 
@@ -131,7 +131,7 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
     future_time_steps = new_future_time_steps;
     if (multi_target)
     {
-        const Index n_targets = get_features_number("Target");
+        const Index n_targets = get_features_number(VariableRole::Target);
         target_shape = { future_time_steps * (n_targets > 0 ? n_targets : 1) };
     }
     refresh_forecasting_roles();
@@ -163,45 +163,35 @@ void TimeSeriesDataset::set_multi_target(bool new_multi_target)
 {
     multi_target = new_multi_target;
 
-    const Index n_targets = get_features_number("Target");
+    const Index n_targets = get_features_number(VariableRole::Target);
     target_shape = multi_target ? Shape{ future_time_steps * (n_targets > 0 ? n_targets : 1) }
                                 : Shape{ n_targets > 0 ? n_targets : 1 };
 }
 
 void TimeSeriesDataset::resize_input_shape(Index input_features_count)
 {
-    set_shape("Input", {past_time_steps, input_features_count});
+    set_shape(VariableRole::Input, {past_time_steps, input_features_count});
 }
 
 void TimeSeriesDataset::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("Dataset");
-
-    printer.open_element("DataSource");
-    write_json(printer, {
+    write_json_header(printer, {
         {"FileType", "csv"},
         {"Path", data_path.string()},
         {"Separator", get_separator_name()},
-        {"HasHeader", to_string(has_header)},
-        {"HasSamplesId", to_string(has_sample_ids)},
+        {"HasHeader", has_header},
+        {"HasSamplesId", has_sample_ids},
         {"MissingValuesLabel", missing_values_label},
-        {"LagsNumber", to_string(get_past_time_steps())},
-        {"StepsAhead", to_string(get_future_time_steps())},
+        {"LagsNumber", get_past_time_steps()},
+        {"StepsAhead", get_future_time_steps()},
         {"Codification", get_codification_string()}
     });
-    printer.close_element();
-
-    variables_to_JSON(printer);
-
-    samples_to_JSON(printer);
 
     missing_values_to_JSON(printer);
 
     preview_data_to_JSON(printer);
 
-    add_json_field(printer, "Display", to_string(display));
-
-    printer.close_element();
+    write_json_footer(printer);
 }
 
 void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
@@ -223,22 +213,12 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_codification(read_json_string(data_source_element, "Codification"));
 
 
-    // A freshly-created model (before the first import) carries only a
-    // DataSource: Variables/Samples/MissingValues/PreviewData are produced by
-    // read_csv. Read them only when present so load() works pre-import.
-    if (const Json* variables_element = data_set_element->find("Variables"))
-        variables_from_JSON(variables_element);
-    if (const Json* samples_element = data_set_element->find("Samples"))
-        samples_from_JSON(samples_element);
-    if (const Json* missing_values_element = data_set_element->find("MissingValues"))
-        missing_values_from_JSON(missing_values_element);
-    if (const Json* preview_data_element = data_set_element->find("PreviewData"))
-        preview_data_from_JSON(preview_data_element);
+    read_json_blocks(data_set_element);
 
     set_display(read_json_bool(data_set_element, "Display"));
 
-    input_shape = { past_time_steps, get_features_number("Input") };
-    target_shape = { get_features_number("Target") };
+    input_shape = { past_time_steps, get_features_number(VariableRole::Input) };
+    target_shape = { get_features_number(VariableRole::Target) };
 }
 
 void TimeSeriesDataset::read_csv()
@@ -258,14 +238,14 @@ void TimeSeriesDataset::configure_forecasting()
     }
     else
     {
-        const vector<Index> target_indices = get_feature_indices("Target");
+        const vector<Index> target_indices = get_feature_indices(VariableRole::Target);
 
         if (!target_indices.empty())
             set_variable_role(get_variable_index(target_indices[0]), "InputTarget");
     }
 
-    input_shape = {past_time_steps, get_features_number("Input")};
-    target_shape = {get_features_number("Target")};
+    input_shape = {past_time_steps, get_features_number(VariableRole::Input)};
+    target_shape = {get_features_number(VariableRole::Target)};
 
     refresh_forecasting_roles();
 }
@@ -448,13 +428,13 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
     const Index samples_number = get_samples_number();
 
     throw_if(past_time_steps > samples_number,
-             format("Past time steps ({}) is greater than samples number ({}) \n",
-                    past_time_steps, samples_number));
+             "Past time steps ({}) is greater than samples number ({}) \n",
+                    past_time_steps, samples_number);
 
     const Index variables_number = get_variables_number();
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const vector<Index> target_variable_indices = get_variable_indices("Target");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
+    const vector<Index> target_variable_indices = get_variable_indices(VariableRole::Target);
 
     const Index extra_targets = ranges::count_if(target_variable_indices,
         [&](Index index) { return variables[index].role != VariableRole::InputTarget; });
@@ -497,13 +477,13 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
     const Index samples_number = get_samples_number();
 
     throw_if(past_time_steps > samples_number,
-             format("Past time steps ({}) is greater than samples number ({}) \n",
-                    past_time_steps, samples_number));
+             "Past time steps ({}) is greater than samples number ({}) \n",
+                    past_time_steps, samples_number);
 
     const Index variables_number = get_variables_number();
 
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const vector<Index> target_variable_indices = get_variable_indices("Target");
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
+    const vector<Index> target_variable_indices = get_variable_indices(VariableRole::Target);
 
     const Index input_target_numeric_variables_number =
         ranges::count_if(input_variable_indices,

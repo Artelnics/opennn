@@ -51,16 +51,12 @@ public:
     void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
     void set_workers_number(int new_workers_number) { workers_number = max(1, new_workers_number); }
-    int  get_workers_number() const noexcept { return workers_number; }
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
-    bool get_cuda_graph() const noexcept { return use_cuda_graph; }
 
     void set_shuffle(bool enabled) { shuffle_samples = enabled; }
-    bool get_shuffle() const noexcept { return shuffle_samples; }
 
     void set_batch_pool_size(int size) { batch_pool_size_override = size; }
-    int  get_batch_pool_size_override() const noexcept { return batch_pool_size_override; }
 
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     Index get_maximum_epochs() const noexcept { return maximum_epochs; }
@@ -73,12 +69,7 @@ public:
     float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
 
     void set_restore_best(bool enabled) { restore_best = enabled; }
-    bool get_restore_best() const noexcept { return restore_best; }
 
-    // Mini-batch training: preamble (indices, batch sizing, pools, propagation
-    // buffers), CUDA warmup, epoch loop and epilogue. SGD and Adam use it as
-    // is, injecting their specifics through the four hooks below; full-batch
-    // optimizers (quasi-Newton, Levenberg-Marquardt) override it entirely.
     virtual TrainingResult train();
 
     Index get_maximum_batch_size() const;
@@ -106,9 +97,6 @@ protected:
                                    float, Index,
                                    float, bool) const;
 
-    // Track the lowest-validation-error parameters/states seen so far. On a new
-    // best, snapshot them and reset validation_failures; otherwise count one
-    // failure (epochs-since-best). Used by every optimizer's epoch loop.
     void update_best_parameters(NeuralNetwork*, float,
                                 Index, Index&);
 
@@ -116,12 +104,6 @@ protected:
 
     void reset_best_parameters();
 
-    // Contract with Dataset::fill_*: every batch filled with FillMode::Training
-    // or FillMode::Validation arrives pre-scaled (in-place for tabular, at fill
-    // time for images), so validation forward passes must skip the leading
-    // Scaling layers exactly like training ones do (see
-    // ForwardPropagation::inputs_pre_scaled). Every optimizer calls this on the
-    // propagation it evaluates validation with.
     static void mark_validation_propagation(ForwardPropagation* validation_propagation)
     {
         if (validation_propagation)
@@ -188,6 +170,45 @@ protected:
     struct EpochLoopContext;
     Loss::EvaluationResult run_epoch_loop(EpochLoopContext&);
 
+    // Full-batch scaffold shared by the quasi-Newton and Levenberg-Marquardt
+    // trainers. The scaffold owns the training/validation forward passes;
+    // train_step runs backprop (plus any update that must precede validation)
+    // and reports the history error, the displayed error and the loss driving
+    // MinimumLossDecrease; post_step is for updates that must not run on the
+    // stopping epoch.
+    struct FullBatchContext
+    {
+        NeuralNetwork* neural_network = nullptr;
+        bool has_validation = false;
+        Index training_samples_number = 0;
+        Index validation_samples_number = 0;
+        unique_ptr<Batch> training_batch;
+        unique_ptr<Batch> validation_batch;
+        unique_ptr<ForwardPropagation> training_forward_propagation;
+        unique_ptr<ForwardPropagation> validation_forward_propagation;
+        ForwardPropagation* validation_fp = nullptr;
+    };
+
+    struct FullBatchStep
+    {
+        float training_error = 0.0f;
+        float displayed_error = 0.0f;
+        float loss = 0.0f;
+    };
+
+    struct FullBatchHooks
+    {
+        function<void()> setup_state;
+        function<FullBatchStep()> train_step;
+        function<float()> validation_error;
+        function<void()> display_extra;
+        function<void()> post_step;
+        float minimum_loss_decrease = -numeric_limits<float>::max();
+    };
+
+    void prepare_full_batch_training(FullBatchContext&, const char* banner);
+    TrainingResult train_full_batch(FullBatchContext&, const FullBatchHooks&);
+
     virtual string get_display_name() const { return name; }
     virtual void setup_optimizer_data(OptimizerData&, Index, Device, bool) {}
     virtual void update_parameters(BackPropagation&, OptimizerData&)
@@ -230,11 +251,8 @@ protected:
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
-    // Global-norm gradient clipping applied by the mini-batch optimizers;
-    // <= 0 disables it (the default -- clipping is opt-in).
     float gradient_clip_norm = 0.0f;
 
-    // Whether train() ends by restoring the lowest-validation-error snapshot.
     bool restore_best = true;
 
     float best_validation_error = numeric_limits<float>::max();
@@ -252,12 +270,8 @@ protected:
 
     bool display = true;
 
-    // Shuffle the training samples each epoch. Toggle from code with
     bool shuffle_samples = true;
 
-    // Prefetch-pool depth override (0 = auto). Set from code with
-    // set_batch_pool_size(); each pooled Batch holds a full input+target copy
-    // on the GPU, so lowering it trades prefetch overlap for a larger max batch.
     int batch_pool_size_override = 0;
 
     string name;
@@ -269,23 +283,13 @@ protected:
     array<CudaEvent, 4> batch_throttle_events_;
     size_t batch_throttle_cursor_ = 0;
 
-    // Slot ring for the graph epoch. The staged (host FP32) path groups
-    // graph_group_size iterations into one mega-graph whose H2D nodes read each
-    // slot's pinned host buffer, and ping-pongs two groups over the ring; the
-    // upload path (device-resident / BF16) uses slots [0..1] with one graph per
-    // slot. Two execs either way (per group parity or per slot).
     static constexpr int graph_group_size = 8;
     static constexpr int graph_slots_count = 2 * graph_group_size;
     array<device::GraphExecHandle, 2> training_graph_execs;
     array<Batch*, graph_slots_count> graph_slots{};
-    // Capture-internal fork/join events so the mega-graph's H2D nodes run on a
-    // forked stream and overlap compute. Replays re-record them; they must not
-    // be used for anything else.
     array<CudaEvent, 2> graph_fork_events;
     array<CudaEvent, graph_slots_count> graph_copy_done_events;
     function<void(BackPropagation&)> graph_update;
-    // CUDA graph capture/replay is opt-in. Toggle from code with set_cuda_graph();
-    // there is no environment-variable fallback.
     bool use_cuda_graph = false;
 };
 

@@ -23,8 +23,8 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries)
         throw_if(entry.bytes < 0,
                  "plan_memory_pool: entry size cannot be negative.");
         throw_if(entry.first_step < 0 || entry.last_step < entry.first_step,
-                 format("plan_memory_pool: invalid lifetime [{}, {}].",
-                        entry.first_step, entry.last_step));
+                 "plan_memory_pool: invalid lifetime [{}, {}].",
+                        entry.first_step, entry.last_step);
         last_execution_step = max(last_execution_step, entry.last_step);
     }
 

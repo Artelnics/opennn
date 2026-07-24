@@ -104,7 +104,7 @@ static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(float);
 inline int to_int(Index value)
 {
     throw_if(value > Index(numeric_limits<int>::max()) || value < Index(numeric_limits<int>::min()),
-             format("to_int: value {} exceeds int range.", value));
+             "to_int: value {} exceeds int range.", value);
     return static_cast<int>(value);
 }
 inline float to_type(Index value) { return static_cast<float>(value); }
@@ -138,16 +138,16 @@ struct Shape
     Shape(size_t new_rank, Index value) : rank(new_rank)
     {
         throw_if(new_rank > MaxRank,
-                 format("Shape: rank {} exceeds MaxRank={}.",
-                        new_rank, MaxRank));
+                 "Shape: rank {} exceeds MaxRank={}.",
+                        new_rank, MaxRank);
         fill_n(dims, rank, value);
     }
 
     Shape(initializer_list<Index> list) : rank(list.size())
     {
         throw_if(list.size() > MaxRank,
-                 format("Shape: initializer rank {} exceeds MaxRank={}.",
-                        list.size(), MaxRank));
+                 "Shape: initializer rank {} exceeds MaxRank={}.",
+                        list.size(), MaxRank);
         copy_n(list.begin(), rank, dims);
     }
 
@@ -155,8 +155,8 @@ struct Shape
     Shape(It first, It last) : rank(size_t(distance(first, last)))
     {
         throw_if(rank > MaxRank,
-                 format("Shape: iterator-pair rank {} exceeds MaxRank={}.",
-                        rank, MaxRank));
+                 "Shape: iterator-pair rank {} exceeds MaxRank={}.",
+                        rank, MaxRank);
         copy_n(first, rank, dims);
     }
 
@@ -273,10 +273,10 @@ struct Buffer
             (device_type == Device::CUDA && data)
             || (allocation_device == Device::CUDA && byte_count > 0);
         throw_if(changes_cuda_allocation && device::cuda_allocation_growth_forbidden(),
-                 format("CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
+                 "CUDA buffer resize from {} to {} bytes while CUDA allocation growth is forbidden "
                         "(warmup incomplete before CUDA graph capture).",
                         bytes,
-                        byte_count));
+                        byte_count);
 
         free_buffer();
         device_type = allocation_device;
@@ -443,8 +443,8 @@ struct TensorView
         const Index matrix_count = matrix_element_count == 0 ? 0 : shape.size() / matrix_element_count;
 
         throw_if(matrix_index < 0 || matrix_index >= matrix_count,
-                 format("TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
-                        matrix_index, matrix_count));
+                 "TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
+                        matrix_index, matrix_count);
 
         return MatrixMap(reinterpret_cast<float*>(data) + matrix_index * matrix_element_count,
                          row_count,
@@ -471,7 +471,7 @@ struct TensorView
     TensorMapR<Rank> as_tensor() const
     {
         throw_if(shape.rank != Rank,
-                 format("TensorView::as_tensor requires rank {}, got {}.", Rank, shape.rank));
+                 "TensorView::as_tensor requires rank {}, got {}.", Rank, shape.rank);
         throw_if(shape.size() > 0 && !data, "TensorView::as_tensor requires non-null data.");
 
         Eigen::array<Index, Rank> dims;
@@ -483,11 +483,11 @@ struct TensorView
     TensorMapR<Rank> as_tensor(Index batch_index) const
     {
         throw_if(shape.rank != Rank + 1,
-                 format("TensorView::as_tensor(batch_index) requires rank {}, got {}.",
-                        Rank + 1, shape.rank));
+                 "TensorView::as_tensor(batch_index) requires rank {}, got {}.",
+                        Rank + 1, shape.rank);
         throw_if(batch_index < 0 || batch_index >= shape[0],
-                 format("TensorView::as_tensor(batch_index): batch index {} out of range [0, {}).",
-                        batch_index, shape[0]));
+                 "TensorView::as_tensor(batch_index): batch index {} out of range [0, {}).",
+                        batch_index, shape[0]);
         throw_if(shape.size() > 0 && !data, "TensorView::as_tensor(batch_index) requires non-null data.");
 
         Eigen::array<Index, Rank> dims;

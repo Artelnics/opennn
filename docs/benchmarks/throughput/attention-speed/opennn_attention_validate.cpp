@@ -30,12 +30,10 @@ static Tensor3 run_on(Device device,
 
     Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
-    // Identical, deterministic weights on both devices.
     VectorR params(transformer.get_parameters_size());
     params.setConstant(0.02f);
     transformer.set_parameters(params);
 
-    // Token-id inputs as Tensor3 (batch, seq, 1), deterministic.
     Tensor3 inputs(batch, seq, 1);
     Tensor3 context(batch, seq, 1);
     for (Index b = 0; b < batch; ++b)
@@ -101,8 +99,6 @@ int main(int argc, char* argv[])
         std::cout << "cpu_nan=" << (cpu_nan ? "YES" : "no")
                   << " gpu_nan=" << (gpu_nan ? "YES" : "no") << "\n";
 
-        // bf16 has ~3 significant digits; compare CPU-fp32 vs GPU-bf16 with a
-        // relative tolerance instead of the tight fp32-vs-fp32 absolute one.
         const double tol = gpu_bf16 ? 0.05 * max_abs_val + 1e-3 : 1e-3;
         const bool ok = !any_nan && max_abs_diff < tol;
         std::cout << "tolerance=" << tol << "\n";

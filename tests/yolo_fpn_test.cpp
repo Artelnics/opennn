@@ -96,10 +96,6 @@ struct TempDir
 
 TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
 {
-    // Isolates whether the gradient bug is grid-size-dependent or multi-head-specific.
-    // Same 8x8 image + 8x8 detection grid as the FPN small head, but single head.
-    // If this passes but the multi-head test fails, bug is in multi-head routing.
-    // If this also fails, bug is somewhere in the 8x8 single-head path.
 
     TempDir dir;
     const std::filesystem::path images_dir = dir.path / "images";
@@ -120,7 +116,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     YoloDataset dataset;
     dataset.set_display(false);
     dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
-                /*grid_size=*/8, boxes_per_cell, anchors);
+                              8, boxes_per_cell, anchors);
     {
         YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
         dataset.set_augmentation(no_aug);
@@ -142,7 +138,6 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
-    // Manually verify numerical gradient for param[0] to catch formula bugs
     {
         const Index sn = dataset.get_samples_number("Training");
         const vector<Index> ti = dataset.get_sample_indices("Training");
@@ -165,7 +160,6 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
         perturbed(0) -= 2.0f*h;
         neural_network.forward_propagate(batch_diag.get_inputs(), perturbed, fp_diag);
         const float Lm = loss.calculate_error(batch_diag, fp_diag).error;
-        // restore
         neural_network.forward_propagate(batch_diag.get_inputs(), params, fp_diag);
 
         std::cout << "Manual check param[0]: L0=" << L0 << " L+=" << Lp << " L-=" << Lm
@@ -173,7 +167,6 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
                   << "  manual_num=" << (Lp-Lm)/(2.0f*h)
                   << "  c4 effect: 3boxes*0.05w*sum_cells_c4\n";
 
-        // h-sweep: check if numerical gradient is h-dependent (use VectorR for deep copy).
         for (float hh : {1e-4f, 1e-3f, 1e-2f}) {
             VectorR p_ph = VectorR(params); p_ph(0) += hh;
             VectorR p_mh = VectorR(params); p_mh(0) -= hh;
@@ -183,14 +176,12 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
             const float Lmh = loss.calculate_error(batch_diag, fp_diag).error;
             std::cout << "  h=" << hh << " num_grad=" << (Lph-Lmh)/(2.0f*hh) << "\n";
         }
-        // restore original
         {VectorR r = VectorR(params); neural_network.forward_propagate(batch_diag.get_inputs(), r, fp_diag);}
     }
     VectorMap(neural_network.get_parameters_data(), neural_network.get_parameters_size()).setConstant(0.05f);
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    // Print first few values of each layer's gradient for cross-layer diagnosis
     Index offset = 0;
     float worst = 0.0f;
     Index worst_idx = 0;
@@ -208,7 +199,6 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
         std::cout << "  layer " << li << " (" << neural_network.get_layer(li)->get_label()
                   << "): worst=" << lworst << " at local[" << (lwi-offset) << "]"
                   << " grad=" << gradient(lwi) << " num=" << numerical_gradient(lwi) << "\n";
-        // Print first 4 param values
         std::cout << "    first 4 grad: ";
         for (Index k = offset; k < std::min(offset+4, offset+np); ++k) std::cout << gradient(k) << " ";
         std::cout << "\n    first 4 num:  ";
@@ -220,15 +210,12 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
               << ": grad=" << gradient(worst_idx) << " num=" << numerical_gradient(worst_idx)
               << " ratio=" << gradient(worst_idx)/numerical_gradient(worst_idx) << "\n";
 
-    // Print gradient buffer size vs per-layer sum to detect alignment padding
     std::cout << "gradient.size()=" << gradient.size()
               << " sum_per_layer=" << offset
               << " get_parameters_size()=" << neural_network.get_parameters_size() << "\n";
-    // Find first nonzero in gradient after conv1 params to locate logits true start
     const Index conv1_np = neural_network.get_layer(0)->get_parameters_number();
     std::cout << "conv1 params=" << conv1_np << " logits params=" << neural_network.get_layer(1)->get_parameters_number() << "\n";
     Index logits_true_start = conv1_np;
-    // scan for first nonzero to find actual logits start
     for (Index k = conv1_np; k < gradient.size(); ++k)
         if (gradient(k) != 0.0f || numerical_gradient(k) != 0.0f)
             { logits_true_start = k; break; }
@@ -246,19 +233,6 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
 
 TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
 {
-    // Tiny hand-built FPN-shaped network: 3 detection heads at strides 1/2/4
-    // over an 8x8 input. Validates:
-    //   • back_propagation pool allocates output_delta slot 0 for every leaf
-    //     Detection (not just the last_trainable one)
-    //   • Loss::calculate_error / calculate_output_deltas dispatch to the
-    //     multi-head path when network has multiple Detection layers
-    //   • yolo_error_cpu_multi / yolo_gradient_cpu_multi correctly slice the
-    //     flat target buffer per head and write per-head deltas
-    //   • make_target_multi_scale lays out targets matching the network's
-    //     head order (large stride first → small stride last)
-    //
-    // No-object dataset → loss is pure noobject branch which is exact (no IoU
-    // approximation), so tolerance can be tight.
 
     TempDir dir;
     const std::filesystem::path images_dir = dir.path / "images";
@@ -278,9 +252,6 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
     constexpr Index boxes_per_head = 3;
     constexpr Index head_channels = boxes_per_head * (5 + classes_number);
 
-    // FPN heads at strides 1 / 2 / 4 over 8x8 input → grid sizes 8 / 4 / 2.
-    // Order in network = large stride first (head_large at grid 2 with the
-    // most-downsampled features), matching set_multi_scale_heads layout.
     const std::vector<Index> head_grids{2, 4, 8};
 
     const std::vector<std::array<float, 2>> anchors_large {{0.6f, 0.6f}, {0.7f, 0.7f}, {0.8f, 0.8f}};
@@ -289,56 +260,43 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
 
     YoloDataset dataset;
     dataset.set_display(false);
-    // Ctor anchors only satisfy the single-scale validator; multi-scale config
-    // below overrides for target encoding.
     dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
-                /*grid_size=*/2, /*boxes_per_cell=*/3, anchors_large);
+                              2,                    3, anchors_large);
     dataset.set_multi_scale_heads(head_grids, {anchors_large, anchors_medium, anchors_small});
     {
         YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
         dataset.set_augmentation(no_aug);
     }
 
-    // Build the network manually: input → 3 stride-2 convs (capturing 3
-    // intermediate features) → each gets a 1×1 yolo_logits → Detection.
-    // Mirrors the structural shape of FPN without using Upsample/Concatenation
-    // (those are validated separately by the smoke test). This isolates the
-    // multi-head loss + pool allocation under test.
     NeuralNetwork neural_network;
 
-    // Stage 1: 8x8x3 → 8x8x4 (stride 1)
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
         "Identity", Shape{1, 1}, "Same", false, "stage1"));
     const Index s1 = neural_network.get_layers_number() - 1;
 
-    // Stage 2: 8x8x4 → 4x4x4 (stride 2)
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 4}, Shape{3, 3, 4, 4},
         "Identity", Shape{2, 2}, "Same", false, "stage2"));
     const Index s2 = neural_network.get_layers_number() - 1;
 
-    // Stage 3: 4x4x4 → 2x2x4 (stride 2)
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{4, 4, 4}, Shape{3, 3, 4, 4},
         "Identity", Shape{2, 2}, "Same", false, "stage3"));
     const Index s3 = neural_network.get_layers_number() - 1;
 
-    // Head LARGE (stride 4, grid 2x2): 1x1 conv on s3 → Detection
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{2, 2, 4}, Shape{1, 1, 4, head_channels},
         "Identity", Shape{1, 1}, "Same", false, "logits_large"), {s3});
     neural_network.add_layer(make_unique<Detection>(
         Shape{2, 2, head_channels}, anchors_large, "detection_large"));
 
-    // Head MEDIUM (stride 2, grid 4x4): 1x1 conv on s2 → Detection
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{4, 4, 4}, Shape{1, 1, 4, head_channels},
         "Identity", Shape{1, 1}, "Same", false, "logits_medium"), {s2});
     neural_network.add_layer(make_unique<Detection>(
         Shape{4, 4, head_channels}, anchors_medium, "detection_medium"));
 
-    // Head SMALL (stride 1, grid 8x8): 1x1 conv on s1 → Detection
     neural_network.add_layer(make_unique<Convolutional>(
         Shape{input_H, input_W, 4}, Shape{1, 1, 4, head_channels},
         "Identity", Shape{1, 1}, "Same", false, "logits_small"), {s1});
@@ -355,8 +313,6 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    // Restrict comparison to layer-owned parameters (alignment padding floats
-    // are interleaved in the buffer and not directly comparable).
     Index sum_per_layer = 0;
     for (Index i = 0; i < neural_network.get_layers_number(); ++i)
         sum_per_layer += neural_network.get_layer(i)->get_parameters_number();
@@ -369,9 +325,6 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         if (d > worst) { worst = d; worst_idx = i; }
     }
 
-    // No-object BCE gradient is exact (no IoU approximation). The single-head
-    // test passes at 1e-3; 0.01 gives 5× margin for float32 accumulation across
-    // 3 heads × 504 no-object cells while still catching sign errors and routing bugs.
     EXPECT_LT(worst, 0.01f)
         << "Worst at idx " << worst_idx
         << ": grad=" << gradient(worst_idx)

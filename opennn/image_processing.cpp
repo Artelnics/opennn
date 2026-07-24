@@ -65,7 +65,7 @@ void read_image_file(const filesystem::path& path, vector<uint8_t>& buffer)
 
     const uint64_t size = file.file_size();
     throw_if(size < 8,
-             format("File too small to be an image: {}", path.string()));
+             "File too small to be an image: {}", path.string());
 
     buffer.resize(size_t(size));
     file.read_at(buffer.data(), size_t(size), 0);
@@ -93,21 +93,21 @@ uint32_t read_be32(const uint8_t* p)
 BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str)
 {
     throw_if(buffer.size() < 54,
-             format("File too small to be a BMP: {}", path_str));
+             "File too small to be a BMP: {}", path_str);
 
     auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
     auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
     auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
     throw_if(read_u16(0) != 0x4D42,
-             format("Not a BMP file (invalid signature 'BM'): {}", path_str));
+             "Not a BMP file (invalid signature 'BM'): {}", path_str);
 
     BmpHeader h;
     h.bfOffBits = read_u32(10);
     const uint32_t biSize = read_u32(14);
 
     throw_if(biSize != 40,
-             format("Unsupported BMP DIB header size in file: {}", path_str));
+             "Unsupported BMP DIB header size in file: {}", path_str);
 
     const int32_t biWidth = read_s32(18);
     const int32_t biHeight_signed = read_s32(22);
@@ -117,9 +117,9 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     const uint32_t biClrUsed = read_u32(46);
 
     throw_if(biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0,
-             format("Invalid or unsupported BMP format in file: {}", path_str));
+             "Invalid or unsupported BMP format in file: {}", path_str);
     throw_if(h.biBitCount != 8 && h.biBitCount != 24 && h.biBitCount != 32,
-             format("Unsupported BMP bit count: {}", h.biBitCount));
+             "Unsupported BMP bit count: {}", h.biBitCount);
 
     h.is_grayscale = false;
 
@@ -133,7 +133,7 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
         h.is_grayscale = true;
 
         throw_if(size_t(14 + biSize) + size_t(num_palette_colors) * 4 > buffer.size(),
-                 format("Corrupted BMP: palette exceeds file size: {}", path_str));
+                 "Corrupted BMP: palette exceeds file size: {}", path_str);
 
         uint32_t pal_offset = 14 + biSize;
         for (uint32_t i = 0; i < num_palette_colors; ++i)
@@ -221,7 +221,7 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
                            const string& path_str)
 {
     throw_if(!has_png_signature(buffer),
-             format("Not a PNG file: {}", path_str));
+             "Not a PNG file: {}", path_str);
 
     compressed.clear();
 
@@ -235,7 +235,7 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         pos += 4;
 
         throw_if(pos + 4 + size_t(length) + 4 > buffer.size(),
-                 format("Corrupted PNG chunk in file: {}", path_str));
+                 "Corrupted PNG chunk in file: {}", path_str);
 
         const string_view type(reinterpret_cast<const char*>(buffer.data() + pos), 4);
         pos += 4;
@@ -244,7 +244,7 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
         if (type == "IHDR")
         {
             throw_if(length != 13,
-                     format("Invalid PNG IHDR in file: {}", path_str));
+                     "Invalid PNG IHDR in file: {}", path_str);
 
             h.width = Index(read_be32(data));
             h.height = Index(read_be32(data + 4));
@@ -289,10 +289,10 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
     }
 
     throw_if(!saw_ihdr || compressed.empty(),
-             format("Incomplete PNG file: {}", path_str));
+             "Incomplete PNG file: {}", path_str);
 
     throw_if(h.color_type == 3 && (h.palette.empty() || h.palette.size() % 3 != 0),
-             format("PNG palette missing or invalid in file: {}", path_str));
+             "PNG palette missing or invalid in file: {}", path_str);
 
     return h;
 }
@@ -312,7 +312,7 @@ void inflate_png_data_into(const vector<uint8_t>& compressed,
                                        compressed.data(), uLong(compressed.size()));
 
     throw_if(zlib_status != Z_OK || actual_size != expected_size,
-             format("Cannot decompress PNG image: {}", path_str));
+             "Cannot decompress PNG image: {}", path_str);
 }
 
 void unfilter_png_rows_into(const vector<uint8_t>& inflated,
@@ -496,7 +496,7 @@ JpegHeader decode_jpeg_pixels(const vector<uint8_t>& buffer,
     jpeg_mem_src(&cinfo, buffer.data(), buffer.size());
 
     throw_if(jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK,
-             format("JPEG: missing or corrupt header in {}", path_for_error));
+             "JPEG: missing or corrupt header in {}", path_for_error);
 
     cinfo.out_color_space = (cinfo.num_components == 1) ? JCS_GRAYSCALE : JCS_RGB;
     jpeg_start_decompress(&cinfo);
@@ -674,7 +674,7 @@ void load_image(const filesystem::path& path,
     }
 
     throw_if(!has_jpeg_signature(buffer),
-             format("Unsupported image file: {}", path.string()));
+             "Unsupported image file: {}", path.string());
 
     Index jh = 0, jw = 0, jc = 0;
     {
@@ -741,18 +741,11 @@ Tensor3 resize_image(const Tensor3& input_image,
             const float x_weight_value = x_weight[x];
 
             for (Index c = 0; c < channels; ++c)
-            {
-                const float top =
-                    (1.0f - x_weight_value) * input_image(y0, x0_value, c) +
-                    x_weight_value             * input_image(y0, x1_value, c);
-
-                const float bottom =
-                    (1.0f - x_weight_value) * input_image(y1, x0_value, c) +
-                    x_weight_value             * input_image(y1, x1_value, c);
-
-                output_image(y, x, c) =
-                    (1.0f - y_weight) * top + y_weight * bottom;
-            }
+                output_image(y, x, c) = bilinear_blend(input_image(y0, x0_value, c),
+                                                       input_image(y0, x1_value, c),
+                                                       input_image(y1, x0_value, c),
+                                                       input_image(y1, x1_value, c),
+                                                       x_weight_value, y_weight);
         }
 
     return output_image;

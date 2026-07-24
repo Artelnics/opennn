@@ -190,61 +190,15 @@ TrainingResult QuasiNewtonMethod::train()
              "its update path maps device pointers as host memory. "
              "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
 
-    TrainingResult results(maximum_epochs + 1);
-
-    if (display) cout << "Training with quasi-Newton method..." << "\n";
-
-    const Dataset* dataset = loss->get_dataset();
-
-    const bool has_validation = dataset->has_validation();
-
-    const Index training_samples_number = dataset->get_samples_number("Training");
-
-    const Index validation_samples_number = dataset->get_samples_number("Validation");
-
-    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-
-    set_names();
-
-    set_scaling();
-
-    Batch training_batch(training_samples_number, dataset, neural_network->get_config());
-    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Training);
-
-    Batch validation_batch(validation_samples_number, dataset, neural_network->get_config());
-    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices, FillMode::Validation);
-
-    ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
-
-    const unique_ptr<ForwardPropagation> validation_forward_propagation =
-        (has_validation && validation_samples_number != training_samples_number)
-            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network,
-                                              ForwardPropagationMode::Inference)
-            : nullptr;
-
-    ForwardPropagation* validation_fp = has_validation
-        ? (validation_forward_propagation ? validation_forward_propagation.get() : &training_forward_propagation)
-        : nullptr;
-
-    mark_validation_propagation(validation_fp);
-
-    loss->set_normalization_coefficient();
+    FullBatchContext context;
+    prepare_full_batch_training(context, "Training with quasi-Newton method...");
 
     // Each BackPropagation construction re-links the layers' gradient outputs to
     // its own buffer; the training one must be constructed last so it is the one
     // that receives the gradients.
-    BackPropagation validation_back_propagation(validation_samples_number, loss);
+    BackPropagation validation_back_propagation(context.validation_samples_number, loss);
 
-    BackPropagation training_back_propagation(training_samples_number, loss);
-
-
-    Index validation_failures = 0;
-    reset_best_parameters();
+    BackPropagation training_back_propagation(context.training_samples_number, loss);
 
     // Reset line-search state so a second train() on the same object does not
     // start from the previous run's learning rate / slope.
@@ -252,125 +206,74 @@ TrainingResult QuasiNewtonMethod::train()
     learning_rate = 0.0f;
     training_slope = 0.0f;
 
-    float old_loss = 0.0f;
-    float loss_decrease = MAX;
-
-    time_t beginning_time;
-    time(&beginning_time);
-    float elapsed_time;
-
     const Index parameters_number = neural_network->get_parameters_size();
 
     OptimizerData optimization_data;
-    optimization_data.set({
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number},
-        Shape{parameters_number, parameters_number},
-        Shape{parameters_number, parameters_number}
-    });
 
-    optimization_data.potential_parameters.resize(parameters_number);
-    optimization_data.training_direction.resize(parameters_number);
+    FullBatchHooks hooks;
+    hooks.minimum_loss_decrease = minimum_loss_decrease;
 
-    optimization_data.views[OldParameters].as_vector() =
-        VectorMap(neural_network->get_parameters_data(), parameters_number);
-
-    optimization_data.views[InverseHessian].as_matrix().setIdentity();
-    optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
-
-
-    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    hooks.setup_state = [&]
     {
-        if (should_display(epoch)) cout << "Epoch: " << epoch << "\n";
+        optimization_data.set({
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number},
+            Shape{parameters_number, parameters_number},
+            Shape{parameters_number, parameters_number}
+        });
 
-        neural_network->forward_propagate(training_batch.get_inputs(),
-                                          training_forward_propagation,
-                                          true);
+        optimization_data.potential_parameters.resize(parameters_number);
+        optimization_data.training_direction.resize(parameters_number);
 
+        optimization_data.views[OldParameters].as_vector() =
+            VectorMap(neural_network->get_parameters_data(), parameters_number);
 
-        loss->back_propagate(training_batch,
-                             training_forward_propagation,
+        optimization_data.views[InverseHessian].as_matrix().setIdentity();
+        optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
+    };
+
+    hooks.train_step = [&]() -> FullBatchStep
+    {
+        loss->back_propagate(*context.training_batch,
+                             *context.training_forward_propagation,
                              training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        const float training_error = training_back_propagation.error;
 
-
-        update_parameters(training_batch,
-                          training_forward_propagation,
+        update_parameters(*context.training_batch,
+                          *context.training_forward_propagation,
                           training_back_propagation,
                           optimization_data);
 
+        return {training_error, training_back_propagation.error, training_back_propagation.loss};
+    };
 
-        if (has_validation)
-        {
-            neural_network->forward_propagate(validation_batch.get_inputs(),
-                                              *validation_fp,
-                                              false);
+    hooks.validation_error = [&]
+    {
+        const Loss::EvaluationResult evaluation_result =
+            loss->calculate_error(*context.validation_batch, *context.validation_fp);
+        validation_back_propagation.error = evaluation_result.error;
+        validation_back_propagation.accuracy = evaluation_result.accuracy;
+        validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;
 
+        return validation_back_propagation.error;
+    };
 
-            const Loss::EvaluationResult evaluation_result = loss->calculate_error(validation_batch,
-                                                                                   *validation_fp);
-            validation_back_propagation.error = evaluation_result.error;
-            validation_back_propagation.accuracy = evaluation_result.accuracy;
-            validation_back_propagation.active_tokens_count = evaluation_result.active_tokens_count;
+    hooks.display_extra = [&]{ cout << "Learning rate: " << learning_rate << "\n"; };
 
-            results.validation_error_history(epoch) = validation_back_propagation.error;
-
-            update_best_parameters(neural_network, validation_back_propagation.error,
-                                   epoch, validation_failures);
-        }
-
-        elapsed_time = get_elapsed_time(beginning_time);
-
-        if (should_display(epoch))
-        {
-            cout << "Training error: " << training_back_propagation.error << "\n";
-            if (has_validation) cout << "Validation error: " << validation_back_propagation.error << "\n";
-            cout << "Learning rate: " << learning_rate << "\n";
-            cout << "Elapsed time: " << get_time(elapsed_time) << "\n";
-        }
-
-        if (epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
-
-        old_loss = training_back_propagation.loss;
-
-        if (loss_decrease < minimum_loss_decrease)
-        {
-            if (display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
-            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-        }
-
-        if (check_stopping_condition(results, epoch, elapsed_time,
-                                     results.training_error_history(epoch),
-                                     validation_failures,
-                                     training_back_propagation.loss,
-                                     has_validation))
-        {
-            results.loss_decrease = loss_decrease;
-            break;
-        }
-
-    }
-
-    restore_best_parameters(neural_network, results);
-
-    set_unscaling();
-
-    if (display) results.print();
-
-    return results;
+    return train_full_batch(context, hooks);
 }
 
 void QuasiNewtonMethod::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("QuasiNewtonMethod");
 
-    add_json_field(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_json_field(printer, "MinimumLossDecrease", minimum_loss_decrease);
     write_common_json(printer);
 
     printer.close_element();

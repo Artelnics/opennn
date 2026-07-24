@@ -308,18 +308,17 @@ vector<string> ModelExpression::get_flat_input_names() const
 vector<string> ModelExpression::split_expression_lines(const string& expression)
 {
     vector<string> lines;
-    stringstream ss(expression);
-    string line;
-
-    while (getline(ss, line, '\n'))
+    for (string_view line_view : get_token_views(expression, '\n'))
     {
-        if (line.empty() || ranges::all_of(line, [](char c) { return isspace(static_cast<unsigned char>(c)); }))
+        if (trim_view(line_view).empty())
             continue;
-        if (line.find('{') != string::npos)
+        if (line_view.find('{') != string_view::npos)
             break;
+
+        string line(line_view);
         if (line.back() != ';')
             line += ';';
-        lines.push_back(line);
+        lines.push_back(move(line));
     }
 
     return lines;
@@ -378,8 +377,8 @@ string ModelExpression::build_expression() const
                  && layer_type != LayerType::LongShortTermMemory
                  && layer_type != LayerType::Unscaling
                  && layer_type != LayerType::Bounding,
-                 format("ModelExpression: layer '{}' ({}) is not supported for export.",
-                        layer_labels[i], layer_type_map().to_string(layer_type)));
+                 "ModelExpression: layer '{}' ({}) is not supported for export.",
+                        layer_labels[i], layer_type_map().to_string(layer_type));
 
         const bool is_last = (i == layers_number - 1);
         vector<string> layer_output_names;
@@ -767,7 +766,7 @@ string ModelExpression::get_expression_c_embedded() const
             throw_if(features_number == 0
                      || total_number % features_number != 0
                      || ssize(descriptives) != features_number,
-                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+                     "ModelExpression: layer '{}' is not configured.", layer_labels[i]);
 
             vector<float> slopes(features_number), offsets(features_number);
             vector<unsigned char> log_pre(features_number, 0), exp_post(features_number, 0);
@@ -883,7 +882,7 @@ string ModelExpression::get_expression_c_embedded() const
             const vector<TensorView>& parameter_views = dense->get_parameter_views();
 
             throw_if(parameter_views.size() < 2 || !parameter_views[0].data || !parameter_views[1].data,
-                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+                     "ModelExpression: layer '{}' is not configured.", layer_labels[i]);
 
             const Index layer_inputs = dense->get_inputs_number();
             const Index layer_outputs = dense->get_outputs_number();
@@ -936,7 +935,7 @@ string ModelExpression::get_expression_c_embedded() const
             const VectorR upper = bounding->get_upper_bounds();
 
             throw_if(ssize(lower) < features_number || ssize(upper) < features_number,
-                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+                     "ModelExpression: layer '{}' is not configured.", layer_labels[i]);
 
             emit_float_array(table_prefix + "_lower", lower.data(), size_t(features_number));
             emit_float_array(table_prefix + "_upper", upper.data(), size_t(features_number));
@@ -953,7 +952,7 @@ string ModelExpression::get_expression_c_embedded() const
 
             throw_if(parameter_views.size() < 3
                      || !parameter_views[0].data || !parameter_views[1].data || !parameter_views[2].data,
-                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+                     "ModelExpression: layer '{}' is not configured.", layer_labels[i]);
 
             const Shape input_shape = recurrent->get_input_shape();
             const Shape output_shape = recurrent->get_output_shape();
@@ -1009,7 +1008,7 @@ string ModelExpression::get_expression_c_embedded() const
                 configured = parameter_views[p].data != nullptr;
 
             throw_if(!configured,
-                     format("ModelExpression: layer '{}' is not configured.", layer_labels[i]));
+                     "ModelExpression: layer '{}' is not configured.", layer_labels[i]);
 
             const Index time_steps = lstm->get_time_steps();
             const Index features = lstm->get_input_features();
@@ -1373,14 +1372,13 @@ string ModelExpression::get_expression_javascript() const
     replace_all_appearances(expression, "]", "_");
 
     vector<string> lines;
-    stringstream ss(expression);
-    string token;
-    while (getline(ss, token, '\n'))
+    for (string_view token_view : get_token_views(expression, '\n'))
     {
-        if (token.empty()) continue;
+        if (token_view.empty()) continue;
+        string token(token_view);
         if (token.size() > 1 && token.back() == '{') break;
         if (token.size() > 1 && token.back() != ';') token += ';';
-        lines.push_back(token);
+        lines.push_back(move(token));
     }
     rename_spaced_var_definitions(lines);
 
@@ -1792,22 +1790,19 @@ vector<string> ModelExpression::fix_output_names(const string& str,
     vector<string> out;
     vector<string> tokens;
 
-    string token;
-    stringstream ss(str);
-
     const size_t num_outputs = outputs.size();
     tokens.reserve(num_outputs);
 
-    while (getline(ss, token, '\n'))
+    for (string_view token_view : get_token_views(str, '\n'))
     {
-        if (token.empty() || ranges::all_of(token, [](char c) { return isspace(c); }))
+        if (trim_view(token_view).empty())
             continue;
 
-        if (token.find('{') != string::npos)
+        if (token_view.find('{') != string_view::npos)
             break;
 
-        if (token.find('=') != string::npos)
-            tokens.push_back(token);
+        if (token_view.find('=') != string_view::npos)
+            tokens.emplace_back(token_view);
     }
 
     vector<string> final_vars;
@@ -1879,7 +1874,7 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     ofstream file(file_name);
 
     throw_if(!file.is_open(),
-             format("Cannot open file: {}", file_name.string()));
+             "Cannot open file: {}", file_name.string());
 
     using enum ProgrammingLanguage;
     switch (language)

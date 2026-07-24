@@ -132,11 +132,11 @@ void Normalization3d::write_JSON_body(JsonWriter& printer) const
 {
     if (get_method() == NormalizationMethod::RMS)
         write_json(printer, {
-            {"Epsilon", to_string(layer_normalization.epsilon)}
+            {"Epsilon", layer_normalization.epsilon}
         });
     else
         write_json(printer, {
-            {"FuseAdd", to_string(layer_normalization.fuse_add)}
+            {"FuseAdd", layer_normalization.fuse_add}
         });
 }
 

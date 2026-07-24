@@ -261,26 +261,6 @@ int main()
     {
         std::cout << "OpenNN. YOLO Example." << std::endl;
 
-        // Check 1: CPU self-consistency — does backward match forward's finite differences?
-        {
-            const float grad_err = opennn::yolo_loss_gradient_check_cpu();
-            std::cout << "YOLO loss check 1 (CPU gradient self-consistency): max rel err = "
-                      << std::scientific << std::setprecision(3) << grad_err;
-            // Threshold 1e-2: float32 BCE uses log(p+ε) in forward but ∂/∂p of log(p) in backward.
-            // The ε-mismatch gives ~3e-3 relative error — acceptable for single-precision.
-            std::cout << (grad_err < 1e-2f ? "  [PASS]\n" : "  [FAIL — forward/backward inconsistent!]\n");
-        }
-
-        // Check 2: independent expected-value verification — does the forward compute
-        // the RIGHT mathematical objective? (sign, lambda, GIoU formula, gradient direction)
-        {
-            std::cout << "YOLO loss check 2 (expected values & gradient directions):\n";
-            const float ev_err = opennn::yolo_loss_expected_value_check_cpu();
-            std::cout << "  max absolute error vs. hand-computed: "
-                      << std::scientific << std::setprecision(3) << ev_err;
-            std::cout << (ev_err < 1e-4f ? "  [PASS]\n" : "  [FAIL — math objective is wrong!]\n");
-        }
-
         set_seed(42);
         Configuration::instance().set(Device::CUDA, Type::FP32);
 

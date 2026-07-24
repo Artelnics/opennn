@@ -50,8 +50,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
     if (!neurons_array || !neurons_array->is_array()) return;
 
     throw_if(ssize(neurons_array->array_value) != ssize(scalers),
-             format("Unscaling::read_JSON_body: \"Neurons\" has {} entries, expected {}.",
-                    neurons_array->array_value.size(), scalers.size()));
+             "Unscaling::read_JSON_body: \"Neurons\" has {} entries, expected {}.",
+                    neurons_array->array_value.size(), scalers.size());
 
     for (size_t i = 0; i < neurons_array->array_value.size(); ++i)
     {
@@ -62,8 +62,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
         const string descriptives_text = read_json_string(neuron, "Descriptives");
         const vector<string> tokens = get_tokens(descriptives_text, " ");
         throw_if(tokens.size() < 4,
-                 format("Unscaling::read_JSON_body: neuron {} \"Descriptives\" has {} tokens, expected 4.",
-                        i, tokens.size()));
+                 "Unscaling::read_JSON_body: neuron {} \"Descriptives\" has {} tokens, expected 4.",
+                        i, tokens.size());
         descriptives[i].minimum            = parse_float(tokens[0], "Unscaling: Descriptives");
         descriptives[i].maximum            = parse_float(tokens[1], "Unscaling: Descriptives");
         descriptives[i].mean               = parse_float(tokens[2], "Unscaling: Descriptives");
@@ -76,8 +76,8 @@ void Unscaling::read_JSON_body(const Json* root_element)
 
 void Unscaling::write_JSON_body(JsonWriter& printer) const
 {
-    add_json_field(printer, "MinRange", to_string(min_range));
-    add_json_field(printer, "MaxRange", to_string(max_range));
+    add_json_field(printer, "MinRange", min_range);
+    add_json_field(printer, "MaxRange", max_range);
 
     const Index features = ssize(descriptives);
 
@@ -104,8 +104,6 @@ void Unscaling::write_JSON_body(JsonWriter& printer) const
 string Unscaling::write_expression(const vector<string>& input_names,
                                    const vector<string>& output_names) const
 {
-    // Rank-2 (time series) outputs have one scaler per feature, applied to
-    // every time step: outputs_number = time_steps * features.
     const Index outputs_number = get_outputs_number();
     throw_if(outputs_number == 0 || ssize(scalers) == 0
              || outputs_number % ssize(scalers) != 0,

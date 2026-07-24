@@ -7,11 +7,36 @@
 //   artelnics@artelnics.com
 
 #include "tokenizer_operator.h"
+#include "io_utilities.h"
 #include "string_utilities.h"
 #include "json.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace opennn
 {
+
+static void hash_bytes(uint64_t& hash, string_view value)
+{
+    for (const unsigned char byte : value)
+    {
+        hash ^= byte;
+        hash *= 1099511628211ull;
+    }
+    hash ^= 0xff;
+    hash *= 1099511628211ull;
+}
+
+static void hash_number(uint64_t& hash, uint64_t value)
+{
+    for (int byte = 0; byte < 8; ++byte)
+    {
+        hash ^= (value >> (byte * 8)) & 0xff;
+        hash *= 1099511628211ull;
+    }
+}
 
 void TokenizerOperator::rebuild_map()
 {
@@ -28,43 +53,94 @@ void TokenizerOperator::set_vocabulary(const vector<string>& new_vocabulary)
     rebuild_map();
 }
 
-void TokenizerOperator::build_vocabulary(const vector<vector<string>>& documents,
-                                 Index maximum_vocabulary_size,
-                                 Index minimum_token_frequency)
+vector<string> make_vocabulary(const unordered_map<string_view, size_t>& token_count,
+                               span<const string> reserved,
+                               Index maximum_size,
+                               Index minimum_frequency)
 {
-    unordered_map<string_view, size_t> token_count;
-
-    for (const vector<string>& document : documents)
-        for (const string& token : document)
-            ++token_count[token];
-
     vector<pair<string_view, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
     ranges::sort(sorted_tokens,
-                 [](const auto& a, const auto& b) { return a.second > b.second; });
+                 [](const auto& first, const auto& second)
+                 {
+                     return first.second != second.second
+                         ? first.second > second.second
+                         : first.first < second.first;
+                 });
 
-    vocabulary = reserved_tokens;
+    vector<string> result(reserved.begin(), reserved.end());
 
     for (const auto& [token, count] : sorted_tokens)
     {
-        if (count < size_t(minimum_token_frequency))
+        if (count < size_t(minimum_frequency))
             continue;
 
-        if (ranges::find(reserved_tokens, token) != reserved_tokens.end())
+        if (ranges::find(reserved, token) != reserved.end())
             continue;
 
-        if (vocabulary.size() >= size_t(maximum_vocabulary_size))
+        if (result.size() >= size_t(maximum_size))
             break;
 
-        vocabulary.emplace_back(token);
+        result.emplace_back(token);
     }
 
+    return result;
+}
+
+void TokenizerOperator::build_vocabulary(const vector<vector<string>>& documents,
+                                         Index maximum_vocabulary_size,
+                                         Index minimum_token_frequency)
+{
+    unordered_map<string_view, size_t> token_count;
+    const size_t tokens_number = transform_reduce(
+        documents.begin(), documents.end(), size_t(0), plus<>{},
+        [](const auto& document) { return document.size(); });
+
+#ifdef _OPENMP
+    if (tokens_number >= 10000)
+    {
+        vector<unordered_map<string_view, size_t>> local_counts(
+            static_cast<size_t>(omp_get_max_threads()));
+
+        #pragma omp parallel
+        {
+            auto& local = local_counts[size_t(omp_get_thread_num())];
+
+            #pragma omp for schedule(static)
+            for (Index i = 0; i < ssize(documents); ++i)
+                for (const string& token : documents[size_t(i)])
+                    ++local[token];
+        }
+
+        for (const auto& local : local_counts)
+            for (const auto& [token, count] : local)
+                token_count[token] += count;
+    }
+    else
+#endif
+    {
+        for (const vector<string>& document : documents)
+            for (const string& token : document)
+                ++token_count[token];
+    }
+
+    vocabulary = make_vocabulary(token_count, reserved_tokens,
+                                 maximum_vocabulary_size, minimum_token_frequency);
     rebuild_map();
+}
+
+uint64_t TokenizerOperator::fingerprint() const
+{
+    uint64_t hash = 1469598103934665603ull;
+    hash_bytes(hash, get_kind());
+    for (const string& token : vocabulary) hash_bytes(hash, token);
+    return hash;
 }
 
 Index TokenizerOperator::token_to_id(string_view token) const
 {
-    const auto it = vocabulary_map.find(string(token));
+    if (token.data() == nullptr) return unk_id;
+    const auto it = vocabulary_map.find(token);
     return it != vocabulary_map.end() ? it->second : unk_id;
 }
 
@@ -91,15 +167,18 @@ vector<Index> TokenizerOperator::encode(string_view text) const
     return ids;
 }
 
-// The fixed-length framing shared by dataset encoding, stored-model inference
-// and generation: [START] + token ids (unknown id for out-of-vocabulary tokens)
-// truncated to sequence_length, plus [END] when it fits. The caller pads the
-// remainder with [PAD] = 0.
+// Maps and truncates tokens to a fixed-length sequence. Tokenizers with
+// configured start/end ids add those markers; the caller pads the remainder.
 vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, Index sequence_length) const
 {
+    if (sequence_length <= 0) return {};
+
     vector<Index> ids;
-    ids.reserve(min(size_t(sequence_length), tokens.size() + 2));
-    ids.push_back(START_INDEX);
+    const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
+    ids.reserve(min(size_t(sequence_length), tokens.size() + framing_tokens));
+
+    if (start_id >= 0 && ssize(ids) < sequence_length)
+        ids.push_back(start_id);
 
     for (const string& token : tokens)
     {
@@ -108,15 +187,34 @@ vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, I
         ids.push_back(it != vocabulary_map.end() ? it->second : unk_id);
     }
 
-    if (ssize(ids) < sequence_length)
-        ids.push_back(END_INDEX);
+    if (end_id >= 0 && ssize(ids) < sequence_length)
+        ids.push_back(end_id);
 
     return ids;
 }
 
 vector<Index> TokenizerOperator::encode_sequence(string_view text, Index sequence_length) const
 {
-    return encode_sequence(tokenize(text), sequence_length);
+    if (sequence_length <= 0) return {};
+
+    const vector<Index> encoded = encode(text);
+    vector<Index> ids;
+    const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
+    ids.reserve(min(size_t(sequence_length), encoded.size() + framing_tokens));
+
+    if (start_id >= 0 && ssize(ids) < sequence_length)
+        ids.push_back(start_id);
+
+    for (const Index id : encoded)
+    {
+        if (ssize(ids) >= sequence_length) break;
+        ids.push_back(id);
+    }
+
+    if (end_id >= 0 && ssize(ids) < sequence_length)
+        ids.push_back(end_id);
+
+    return ids;
 }
 
 string TokenizerOperator::decode(const vector<Index>& ids) const
@@ -137,39 +235,60 @@ string TokenizerOperator::decode(const vector<Index>& ids) const
     return text;
 }
 
+string TokenizerOperator::decode_token(Index id) const
+{
+    return id == 0 ? string{} : id_to_token(id);
+}
+
 void TokenizerOperator::to_JSON(JsonWriter& printer) const
 {
     if (vocabulary.empty()) return;
 
-    write_json(printer, {{"Vocabulary", vector_to_string(vocabulary, "\n")}});
+    write_json(printer, {{"Vocabulary", json_array(vocabulary)}});
 }
 
 void TokenizerOperator::from_JSON(const Json* element)
 {
     if (element->has("Vocabulary"))
-        set_vocabulary(get_tokens(read_json_string(element, "Vocabulary"), "\n"));
+        set_vocabulary(read_json_strings(element, "Vocabulary"));
 }
 
-unique_ptr<TokenizerOperator> make_tokenizer_operator(const string& kind)
+unique_ptr<TokenizerOperator> make_tokenizer_operator(string_view kind)
 {
     if (kind == "WordLevel") return make_unique<WordLevelTokenizer>();
     if (kind == "WordPiece") return make_unique<WordPieceTokenizer>();
     if (kind == "BytePair")  return make_unique<BytePairTokenizer>();
+    if (kind == "Qwen3")     return make_unique<Qwen3Tokenizer>();
 
-    throw runtime_error("make_tokenizer_operator: unknown tokenizer kind: " + kind);
+    throw runtime_error(format("make_tokenizer_operator: unknown tokenizer kind: {}", kind));
 }
 
 WordLevelTokenizer::WordLevelTokenizer()
+    : WordLevelTokenizer({"[PAD]", "[UNK]", "[START]", "[END]"})
 {
-    reserved_tokens = {"[PAD]", "[UNK]", "[START]", "[END]"};
-    unk_id = 1;
+}
+
+WordLevelTokenizer::WordLevelTokenizer(vector<string> new_reserved_tokens)
+{
+    reserved_tokens = move(new_reserved_tokens);
+
+    auto resolve_id = [this](string_view token)
+    {
+        const auto iterator = ranges::find(reserved_tokens, token);
+        return iterator == reserved_tokens.end()
+            ? Index(-1)
+            : Index(distance(reserved_tokens.begin(), iterator));
+    };
+
+    const Index resolved_unk_id = resolve_id("[UNK]");
+    unk_id = resolved_unk_id >= 0 ? resolved_unk_id : 0;
+    start_id = resolve_id("[START]");
+    end_id = resolve_id("[END]");
 }
 
 vector<string> WordLevelTokenizer::tokenize(string_view text) const
 {
-    string lowered(text);
-    for (char& character : lowered)
-        character = static_cast<char>(tolower(static_cast<unsigned char>(character)));
+    string lowered = ascii_lowercase(text);
 
     const vector<string_view> views = tokenize_views(lowered);
 
@@ -182,47 +301,69 @@ vector<string> WordLevelTokenizer::tokenize(string_view text) const
     return tokens;
 }
 
+vector<Index> WordLevelTokenizer::encode(string_view text) const
+{
+    string lowered = ascii_lowercase(text);
+
+    const vector<string_view> views = tokenize_views(lowered);
+    vector<Index> ids;
+    ids.reserve(views.size());
+
+    for (const string_view view : views)
+        ids.push_back(token_to_id(view));
+
+    return ids;
+}
+
 namespace
 {
+
+bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint)
+{
+    if (position >= text.size()) return false;
+
+    const size_t start = position;
+    const unsigned char lead = static_cast<unsigned char>(text[position]);
+
+    codepoint = lead;
+    size_t length = 1;
+
+    if      (lead < 0x80)         { codepoint = lead;        length = 1; }
+    else if ((lead >> 5) == 0x6)  { codepoint = lead & 0x1F; length = 2; }
+    else if ((lead >> 4) == 0xE)  { codepoint = lead & 0x0F; length = 3; }
+    else if ((lead >> 3) == 0x1E) { codepoint = lead & 0x07; length = 4; }
+
+    if (length == 1 || start + length > text.size())
+    {
+        ++position;
+        return true;
+    }
+
+    for (size_t k = 1; k < length; ++k)
+    {
+        const unsigned char continuation = static_cast<unsigned char>(text[start + k]);
+        if ((continuation >> 6) != 0x2)
+        {
+            codepoint = lead;
+            ++position;
+            return true;
+        }
+        codepoint = (codepoint << 6) | (continuation & 0x3F);
+    }
+
+    position += length;
+    return true;
+}
 
 vector<uint32_t> utf8_to_codepoints(string_view text)
 {
     vector<uint32_t> codepoints;
     codepoints.reserve(text.size());
 
-    size_t i = 0;
-    while (i < text.size())
-    {
-        const unsigned char lead = static_cast<unsigned char>(text[i]);
-
-        uint32_t codepoint = lead;
-        size_t   length    = 1;
-
-        if      (lead < 0x80)        { codepoint = lead;        length = 1; }
-        else if ((lead >> 5) == 0x6) { codepoint = lead & 0x1F; length = 2; }
-        else if ((lead >> 4) == 0xE) { codepoint = lead & 0x0F; length = 3; }
-        else if ((lead >> 3) == 0x1E){ codepoint = lead & 0x07; length = 4; }
-
-        if (length == 1 || i + length > text.size())
-        {
-            codepoints.push_back(lead);
-            ++i;
-            continue;
-        }
-
-        bool valid = true;
-        for (size_t k = 1; k < length; ++k)
-        {
-            const unsigned char continuation = static_cast<unsigned char>(text[i + k]);
-            if ((continuation >> 6) != 0x2) { valid = false; break; }
-            codepoint = (codepoint << 6) | (continuation & 0x3F);
-        }
-
-        if (!valid) { codepoints.push_back(lead); ++i; continue; }
-
+    size_t position = 0;
+    uint32_t codepoint = 0;
+    while (next_utf8_codepoint(text, position, codepoint))
         codepoints.push_back(codepoint);
-        i += length;
-    }
 
     return codepoints;
 }
@@ -230,26 +371,7 @@ vector<uint32_t> utf8_to_codepoints(string_view text)
 string codepoint_to_utf8(uint32_t codepoint)
 {
     string out;
-    if (codepoint < 0x80)
-        out += char(codepoint);
-    else if (codepoint < 0x800)
-    {
-        out += char(0xC0 | (codepoint >> 6));
-        out += char(0x80 | (codepoint & 0x3F));
-    }
-    else if (codepoint < 0x10000)
-    {
-        out += char(0xE0 | (codepoint >> 12));
-        out += char(0x80 | ((codepoint >> 6) & 0x3F));
-        out += char(0x80 | (codepoint & 0x3F));
-    }
-    else
-    {
-        out += char(0xF0 | (codepoint >> 18));
-        out += char(0x80 | ((codepoint >> 12) & 0x3F));
-        out += char(0x80 | ((codepoint >> 6) & 0x3F));
-        out += char(0x80 | (codepoint & 0x3F));
-    }
+    append_utf8(out, codepoint);
     return out;
 }
 
@@ -345,8 +467,13 @@ uint32_t fold_uncased(uint32_t cp)
 vector<string> split_codepoints(string_view text)
 {
     vector<string> characters;
-    for (const uint32_t codepoint : utf8_to_codepoints(text))
-        characters.push_back(codepoint_to_utf8(codepoint));
+    size_t position = 0;
+    uint32_t codepoint = 0;
+    while (next_utf8_codepoint(text, position, codepoint))
+    {
+        characters.emplace_back();
+        append_utf8(characters.back(), codepoint);
+    }
     return characters;
 }
 
@@ -385,6 +512,11 @@ void WordPieceTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
     if (it == vocabulary_map.end())
         throw runtime_error("WordPieceTokenizer: vocabulary is missing " + unk_token);
     unk_id = it->second;
+
+    const auto cls = vocabulary_map.find("[CLS]");
+    const auto sep = vocabulary_map.find("[SEP]");
+    start_id = cls == vocabulary_map.end() ? -1 : cls->second;
+    end_id = sep == vocabulary_map.end() ? -1 : sep->second;
 }
 
 void WordPieceTokenizer::load_vocabulary(const filesystem::path& vocabulary_file)
@@ -415,7 +547,9 @@ vector<string> WordPieceTokenizer::basic_tokenize(string_view text) const
         if (!current.empty()) { tokens.push_back(current); current.clear(); }
     };
 
-    for (uint32_t codepoint : utf8_to_codepoints(text))
+    size_t position = 0;
+    uint32_t codepoint = 0;
+    while (next_utf8_codepoint(text, position, codepoint))
     {
         if (codepoint == 0 || codepoint == 0xFFFD || is_control(codepoint)) continue;
 
@@ -430,44 +564,65 @@ vector<string> WordPieceTokenizer::basic_tokenize(string_view text) const
         if (is_punctuation(codepoint) || is_cjk(codepoint))
         {
             flush();
-            tokens.push_back(codepoint_to_utf8(codepoint));
+            tokens.emplace_back();
+            append_utf8(tokens.back(), codepoint);
             continue;
         }
 
-        current += codepoint_to_utf8(codepoint);
+        append_utf8(current, codepoint);
     }
 
     flush();
     return tokens;
 }
 
-vector<string> WordPieceTokenizer::wordpiece(const string& word) const
+void WordPieceTokenizer::wordpiece(const string& word,
+                                   vector<string>* tokens,
+                                   vector<Index>* ids) const
 {
-    const vector<string> characters = split_codepoints(word);
+    vector<size_t> offsets{0};
+    offsets.reserve(word.size() + 1);
 
-    if (Index(characters.size()) > max_input_chars_per_word)
-        return { unk_token };
+    size_t position = 0;
+    uint32_t codepoint = 0;
+    while (next_utf8_codepoint(word, position, codepoint))
+        offsets.push_back(position);
 
-    vector<string> output;
-    size_t start = 0;
-
-    while (start < characters.size())
+    const size_t characters = offsets.size() - 1;
+    const auto append_unknown = [&]
     {
-        size_t end = characters.size();
-        string matched;
+        if (tokens) tokens->push_back(unk_token);
+        if (ids) ids->push_back(unk_id);
+    };
+
+    if (Index(characters) > max_input_chars_per_word)
+    {
+        append_unknown();
+        return;
+    }
+
+    const size_t token_start = tokens ? tokens->size() : 0;
+    const size_t id_start = ids ? ids->size() : 0;
+    size_t start = 0;
+    string candidate;
+    candidate.reserve(word.size() + continuation_prefix.size());
+
+    while (start < characters)
+    {
+        size_t end = characters;
         bool   found = false;
 
         while (start < end)
         {
-            string substring;
-            for (size_t k = start; k < end; ++k)
-                substring += characters[k];
+            candidate.clear();
+            if (start > 0) candidate.append(continuation_prefix);
+            candidate.append(word, offsets[start], offsets[end] - offsets[start]);
 
-            if (start > 0) substring = continuation_prefix + substring;
-
-            if (vocabulary_map.find(substring) != vocabulary_map.end())
+            const auto match = vocabulary_map.find(candidate);
+            if (match != vocabulary_map.end())
             {
-                matched = substring;
+                if (tokens) tokens->push_back(candidate);
+                if (ids) ids->push_back(match->second);
                 found = true;
                 break;
             }
@@ -475,13 +630,15 @@ vector<string> WordPieceTokenizer::wordpiece(const string& word) const
             --end;
         }
 
-        if (!found) return { unk_token };
-
-        output.push_back(matched);
+        if (!found)
+        {
+            if (tokens) tokens->resize(token_start);
+            if (ids) ids->resize(id_start);
+            append_unknown();
+            return;
+        }
         start = end;
     }
-
-    return output;
 }
 
 vector<string> WordPieceTokenizer::tokenize(string_view text) const
@@ -489,19 +646,26 @@ vector<string> WordPieceTokenizer::tokenize(string_view text) const
     vector<string> tokens;
 
     for (const string& word : basic_tokenize(text))
-    {
-        const vector<string> subwords = wordpiece(word);
-        tokens.insert(tokens.end(), subwords.begin(), subwords.end());
-    }
+        wordpiece(word, &tokens, nullptr);
 
     return tokens;
+}
+
+vector<Index> WordPieceTokenizer::encode(string_view text) const
+{
+    vector<Index> ids;
+
+    for (const string& word : basic_tokenize(text))
+        wordpiece(word, nullptr, &ids);
+
+    return ids;
 }
 
 void WordPieceTokenizer::to_JSON(JsonWriter& printer) const
 {
     TokenizerOperator::to_JSON(printer);
 
-    write_json(printer, {{"LowerCase", to_string(do_lower_case)}});
+    write_json(printer, {{"LowerCase", do_lower_case}});
 }
 
 void WordPieceTokenizer::from_JSON(const Json* element)
@@ -510,6 +674,15 @@ void WordPieceTokenizer::from_JSON(const Json* element)
         do_lower_case = read_json_bool(element, "LowerCase");
 
     TokenizerOperator::from_JSON(element);
+}
+
+uint64_t WordPieceTokenizer::fingerprint() const
+{
+    uint64_t hash = TokenizerOperator::fingerprint();
+    hash_number(hash, do_lower_case);
+    hash_bytes(hash, continuation_prefix);
+    hash_number(hash, uint64_t(max_input_chars_per_word));
+    return hash;
 }
 
 BytePairTokenizer::BytePairTokenizer()
@@ -532,28 +705,44 @@ BytePairTokenizer::BytePairTokenizer()
     }
 }
 
+BytePairTokenizer::BytePairTokenizer(const filesystem::path& vocabulary_json,
+                                     const filesystem::path& merges_txt)
+    : BytePairTokenizer()
+{
+    load(vocabulary_json, merges_txt);
+}
+
+void BytePairTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
+{
+    TokenizerOperator::set_vocabulary(new_vocabulary);
+    special_strings.clear();
+    special_ids.clear();
+}
+
 void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
                              const filesystem::path& merges_txt)
 {
     // vocab.json: flat object { "<byte-unicode token>": id, ... }.
-    ifstream vocabulary_file(vocabulary_json, ios::binary);
-    throw_if(!vocabulary_file.is_open(),
-             "Cannot open vocab.json: " + vocabulary_json.string());
-    const string vocabulary_text((istreambuf_iterator<char>(vocabulary_file)),
-                                 istreambuf_iterator<char>());
-
-    const Json parsed = Json::parse(vocabulary_text);
+    const Json parsed = Json::parse(read_text_file(vocabulary_json));
     throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
 
     Index maximum_id = -1;
     for (const auto& [token, id_value] : parsed.object_value)
-        maximum_id = max(maximum_id, Index(id_value.as_long()));
+    {
+        const Index id = Index(id_value.as_long());
+        throw_if(id < 0, "vocab.json contains a negative token id.");
+        maximum_id = max(maximum_id, id);
+    }
 
     // Reserve id 0 for [PAD]; every loaded id shifts +1.
     vector<string> loaded_vocabulary(size_t(maximum_id + 2));
     loaded_vocabulary[0] = string(PAD_TOKEN);
     for (const auto& [token, id_value] : parsed.object_value)
-        loaded_vocabulary[size_t(id_value.as_long()) + 1] = token;
+    {
+        string& destination = loaded_vocabulary[size_t(id_value.as_long()) + 1];
+        throw_if(!destination.empty(), "vocab.json contains duplicate token ids.");
+        destination = token;
+    }
 
     set_vocabulary(loaded_vocabulary);
 
@@ -595,7 +784,6 @@ vector<string> BytePairTokenizer::get_merges() const
 void BytePairTokenizer::set_merges(const vector<string>& merges)
 {
     merge_ranks.clear();
-    bpe_cache.clear();
 
     int rank = 0;
     for (const string& merge_line : merges)
@@ -608,13 +796,45 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
     }
 }
 
+void BytePairTokenizer::set_special_tokens(const vector<string>& new_special_tokens)
+{
+    special_strings.clear();
+    special_ids.clear();
+
+    for (const string& token : new_special_tokens)
+    {
+        const auto iterator = vocabulary_map.find(token);
+        throw_if(iterator == vocabulary_map.end(),
+                 "BytePairTokenizer: special token is missing from the vocabulary: " + token);
+
+        if (special_ids.insert(iterator->second).second)
+            special_strings.push_back(token);
+    }
+
+    ranges::sort(special_strings,
+                 [](const string& first, const string& second)
+                 {
+                     return first.size() > second.size();
+                 });
+}
+
+Index BytePairTokenizer::get_special_token_id(string_view token) const
+{
+    const auto iterator = vocabulary_map.find(token);
+
+    return iterator != vocabulary_map.end() && special_ids.contains(iterator->second)
+        ? iterator->second
+        : -1;
+}
+
 void BytePairTokenizer::to_JSON(JsonWriter& printer) const
 {
     TokenizerOperator::to_JSON(printer);
 
-    if (merge_ranks.empty()) return;
-
-    write_json(printer, {{"Merges", vector_to_string(get_merges(), "\n")}});
+    if (!merge_ranks.empty())
+        write_json(printer, {{"Merges", json_array(get_merges())}});
+    if (!special_strings.empty())
+        write_json(printer, {{"SpecialTokens", json_array(special_strings)}});
 }
 
 void BytePairTokenizer::from_JSON(const Json* element)
@@ -622,15 +842,35 @@ void BytePairTokenizer::from_JSON(const Json* element)
     TokenizerOperator::from_JSON(element);
 
     if (element->has("Merges"))
-        set_merges(get_tokens(read_json_string(element, "Merges"), "\n"));
+        set_merges(read_json_strings(element, "Merges"));
+    set_special_tokens(element->has("SpecialTokens")
+        ? read_json_strings(element, "SpecialTokens")
+        : vector<string>{});
+}
+
+uint64_t BytePairTokenizer::fingerprint() const
+{
+    uint64_t hash = TokenizerOperator::fingerprint();
+    uint64_t merge_hash = 0;
+
+    for (const auto& [pair, rank] : merge_ranks)
+    {
+        uint64_t entry_hash = 1469598103934665603ull;
+        hash_bytes(entry_hash, pair);
+        hash_number(entry_hash, uint64_t(rank));
+        merge_hash ^= entry_hash;
+    }
+
+    hash_number(hash, merge_hash);
+    for (const string& special : special_strings) hash_bytes(hash, special);
+    return hash;
 }
 
 vector<string> BytePairTokenizer::bpe(const string& token) const
 {
-    if (const auto cached = bpe_cache.find(token); cached != bpe_cache.end())
-        return cached->second;
-
     vector<string> symbols = split_codepoints(token);
+    string pair_key;
+    pair_key.reserve(token.size() + 1);
 
     while (symbols.size() > 1)
     {
@@ -639,7 +879,12 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
 
         for (size_t i = 0; i + 1 < symbols.size(); ++i)
         {
-            const auto it = merge_ranks.find(symbols[i] + ' ' + symbols[i + 1]);
+            pair_key.clear();
+            pair_key.append(symbols[i]);
+            pair_key.push_back(' ');
+            pair_key.append(symbols[i + 1]);
+
+            const auto it = merge_ranks.find(pair_key);
             if (it != merge_ranks.end() && it->second < best_rank)
             {
                 best_rank = it->second;
@@ -653,7 +898,6 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
         symbols.erase(symbols.begin() + Index(best_index) + 1);
     }
 
-    bpe_cache.emplace(token, symbols);
     return symbols;
 }
 
@@ -670,7 +914,8 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
     auto emit = [&](size_t start, size_t end)
     {
         string piece;
-        for (size_t k = start; k < end; ++k) piece += codepoint_to_utf8(cps[k]);
+        piece.reserve((end - start) * 2);
+        for (size_t k = start; k < end; ++k) append_utf8(piece, cps[k]);
         pieces.push_back(move(piece));
     };
 
@@ -723,35 +968,109 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
     return pieces;
 }
 
+void BytePairTokenizer::tokenize_into(string_view text,
+                                      vector<string>* tokens,
+                                      vector<Index>* ids) const
+{
+    const auto append = [&](const string& token)
+    {
+        if (tokens) tokens->push_back(token);
+        if (ids) ids->push_back(token_to_id(token));
+    };
+
+    StringMap<vector<string>> cache;
+    cache.reserve(min<size_t>(4096, text.size() / 4 + 1));
+
+    auto append_segment = [&](string_view segment)
+    {
+        for (const string& piece : pre_tokenize(segment))
+        {
+            string byte_unicode;
+            byte_unicode.reserve(piece.size() * 2);
+            for (const char raw : piece)
+                append_utf8(byte_unicode, byte_encoder[static_cast<unsigned char>(raw)]);
+
+            const vector<string>* subwords = nullptr;
+            vector<string> uncached;
+
+            if (cache.size() < 4096)
+            {
+                auto [iterator, inserted] = cache.try_emplace(byte_unicode);
+                if (inserted) iterator->second = bpe(iterator->first);
+                subwords = &iterator->second;
+            }
+            else
+            {
+                uncached = bpe(byte_unicode);
+                subwords = &uncached;
+            }
+
+            for (const string& subword : *subwords)
+                append(subword);
+        }
+    };
+
+    size_t position = 0;
+    while (position < text.size())
+    {
+        size_t special_position = string::npos;
+        const string* matched_special = nullptr;
+
+        for (const string& special : special_strings)
+        {
+            const size_t found = text.find(special, position);
+            if (found != string::npos && found < special_position)
+            {
+                special_position = found;
+                matched_special = &special;
+            }
+        }
+
+        const size_t segment_end =
+            special_position == string::npos ? text.size() : special_position;
+
+        if (segment_end > position)
+            append_segment(text.substr(position, segment_end - position));
+        if (!matched_special)
+            break;
+
+        append(*matched_special);
+        position = special_position + matched_special->size();
+    }
+}
+
 vector<string> BytePairTokenizer::tokenize(string_view text) const
 {
     vector<string> tokens;
-
-    for (const string& piece : pre_tokenize(text))
-    {
-        // Map the piece's raw bytes through byte_encoder, then apply BPE merges.
-        string byte_unicode;
-        for (const char raw : piece)
-            byte_unicode += codepoint_to_utf8(byte_encoder[static_cast<unsigned char>(raw)]);
-
-        const vector<string> subwords = bpe(byte_unicode);
-        tokens.insert(tokens.end(), subwords.begin(), subwords.end());
-    }
-
+    tokenize_into(text, &tokens, nullptr);
     return tokens;
+}
+
+vector<Index> BytePairTokenizer::encode(string_view text) const
+{
+    vector<Index> ids;
+    tokenize_into(text, nullptr, &ids);
+    return ids;
 }
 
 string BytePairTokenizer::decode(const vector<Index>& ids) const
 {
-    string byte_unicode;
+    string bytes;
     for (const Index id : ids)
-    {
-        if (id == 0) continue;                 // [PAD]
-        byte_unicode += id_to_token(id);
-    }
+        bytes += decode_token(id);
+
+    return bytes;
+}
+
+string BytePairTokenizer::decode_token(Index id) const
+{
+    if (id == 0 || special_ids.contains(id)) return {};
 
     string bytes;
-    for (const uint32_t codepoint : utf8_to_codepoints(byte_unicode))
+    const string& token = id_to_token(id);
+    size_t position = 0;
+    uint32_t codepoint = 0;
+    while (next_utf8_codepoint(token, position, codepoint))
     {
         const auto it = byte_decoder.find(codepoint);
         if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
@@ -762,80 +1081,54 @@ string BytePairTokenizer::decode(const vector<Index>& ids) const
 
 // =========================== Qwen3Tokenizer ===========================
 
+Qwen3Tokenizer::Qwen3Tokenizer(const filesystem::path& directory)
+{
+    load(directory / "vocab.json",
+         directory / "merges.txt",
+         directory / "qwen3_special.tsv");
+}
+
 void Qwen3Tokenizer::load(const filesystem::path& vocabulary_json,
                           const filesystem::path& merges_txt,
                           const filesystem::path& special_tokens_tsv)
 {
-    // vocab.json: base byte-level BPE vocab { "<byte-unicode token>": id, ... }.
-    ifstream vocabulary_file(vocabulary_json, ios::binary);
-    throw_if(!vocabulary_file.is_open(), "Cannot open vocab.json: " + vocabulary_json.string());
-    const string vocabulary_text((istreambuf_iterator<char>(vocabulary_file)), istreambuf_iterator<char>());
+    BytePairTokenizer::load(vocabulary_json, merges_txt);
 
-    const Json parsed = Json::parse(vocabulary_text);
-    throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
-
-    vector<pair<string, Index>> entries;   // (token, HF id)
-    Index maximum_id = -1;
-    for (const auto& [token, id_value] : parsed.object_value)
-    {
-        const Index id = Index(id_value.as_long());
-        entries.emplace_back(token, id);
-        maximum_id = max(maximum_id, id);
-    }
-
-    // Special/added tokens: "id<TAB>literal token" per line (matched atomically,
-    // never byte-encoded nor BPE'd).
-    special_strings.clear();
-    special_ids.clear();
-    im_start_id = im_end_id = endoftext_id = -1;
-
-    vector<pair<string, Index>> specials;
     ifstream special_file(special_tokens_tsv, ios::binary);
     throw_if(!special_file.is_open(), "Cannot open special tokens: " + special_tokens_tsv.string());
+
+    vector<string> loaded_specials;
     string line;
+
     while (getline(special_file, line))
     {
         if (!line.empty() && line.back() == '\r') line.pop_back();
+
         const size_t tab = line.find('\t');
         if (tab == string::npos) continue;
-        const Index id = Index(stol(line.substr(0, tab)));
-        const string token = line.substr(tab + 1);
+
+        const string_view line_view = line;
+        const Index id = parse_number<Index>(
+            line_view.substr(0, tab), "Qwen3 special-token id", "integer");
+        const string token(line_view.substr(tab + 1));
         if (token.empty()) continue;
-        specials.emplace_back(token, id);
-        entries.emplace_back(token, id);
-        maximum_id = max(maximum_id, id);
+
+        throw_if(id < 0, "Special-token file contains a negative token id.");
+
+        const size_t shifted_id = size_t(id) + 1;
+        if (shifted_id >= vocabulary.size())
+            vocabulary.resize(shifted_id + 1);
+
+        string& destination = vocabulary[shifted_id];
+        throw_if(!destination.empty() && destination != token,
+                 "Special-token id collides with the base vocabulary.");
+
+        destination = token;
+        loaded_specials.push_back(token);
     }
 
-    // Build the vocabulary; id 0 is reserved for [PAD], every id shifts +1.
-    vector<string> loaded_vocabulary(size_t(maximum_id + 2));
-    loaded_vocabulary[0] = string(PAD_TOKEN);
-    for (const auto& [token, id] : entries) loaded_vocabulary[size_t(id) + 1] = token;
-    set_vocabulary(loaded_vocabulary);
-
-    for (const auto& [token, id] : specials)
-    {
-        special_ids.insert(id + 1);
-        special_strings.push_back(token);
-        if (token == "<|im_start|>")  im_start_id  = id + 1;
-        if (token == "<|im_end|>")    im_end_id    = id + 1;
-        if (token == "<|endoftext|>") endoftext_id = id + 1;
-    }
-    // Longest first so overlapping specials match the longest at a position.
-    ranges::sort(special_strings, [](const string& a, const string& b) { return a.size() > b.size(); });
-
-    // merges.txt: one "A B" pair per line in priority order.
-    ifstream merges_file(merges_txt, ios::binary);
-    throw_if(!merges_file.is_open(), "Cannot open merges.txt: " + merges_txt.string());
-    merge_ranks.clear();
-    bpe_cache.clear();
-    int rank = 0;
-    while (getline(merges_file, line))
-    {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        if (line.empty() || line[0] == '#') continue;
-        if (line.find(' ') == string::npos) continue;
-        merge_ranks.emplace(line, rank++);
-    }
+    rebuild_map();
+    set_special_tokens(loaded_specials);
 }
 
 // Qwen2/Qwen3 pre-tokenization regex, over codepoints:
@@ -853,7 +1146,8 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
     auto emit = [&](size_t start, size_t end)
     {
         string piece;
-        for (size_t k = start; k < end; ++k) piece += codepoint_to_utf8(cps[k]);
+        piece.reserve((end - start) * 2);
+        for (size_t k = start; k < end; ++k) append_utf8(piece, cps[k]);
         pieces.push_back(move(piece));
     };
     auto is_crlf  = [](uint32_t c) { return c == '\r' || c == '\n'; };
@@ -918,67 +1212,6 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
     }
 
     return pieces;
-}
-
-vector<string> Qwen3Tokenizer::tokenize(string_view text) const
-{
-    vector<string> tokens;
-
-    auto bpe_segment = [&](string_view segment)
-    {
-        for (const string& piece : pre_tokenize(segment))
-        {
-            string byte_unicode;
-            for (const char raw : piece)
-                byte_unicode += codepoint_to_utf8(byte_encoder[static_cast<unsigned char>(raw)]);
-            const vector<string> subwords = bpe(byte_unicode);
-            tokens.insert(tokens.end(), subwords.begin(), subwords.end());
-        }
-    };
-
-    size_t pos = 0;
-    const size_t n = text.size();
-    while (pos < n)
-    {
-        // Earliest special-token occurrence (special_strings is longest-first, so
-        // ties at the same position resolve to the longest match).
-        size_t best = string::npos;
-        const string* best_special = nullptr;
-        for (const string& special : special_strings)
-        {
-            const size_t found = text.find(special, pos);
-            if (found != string::npos && found < best) { best = found; best_special = &special; }
-        }
-
-        const size_t segment_end = (best == string::npos) ? n : best;
-        if (segment_end > pos) bpe_segment(text.substr(pos, segment_end - pos));
-        if (best == string::npos) break;
-
-        tokens.push_back(*best_special);
-        pos = best + best_special->size();
-    }
-
-    return tokens;
-}
-
-string Qwen3Tokenizer::decode(const vector<Index>& ids) const
-{
-    string byte_unicode;
-    for (const Index id : ids)
-    {
-        if (id == 0) continue;                  // [PAD]
-        if (special_ids.contains(id)) continue; // ChatML markers -> skip
-        byte_unicode += id_to_token(id);
-    }
-
-    string bytes;
-    for (const uint32_t codepoint : utf8_to_codepoints(byte_unicode))
-    {
-        const auto it = byte_decoder.find(codepoint);
-        if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
-    }
-
-    return bytes;
 }
 
 }

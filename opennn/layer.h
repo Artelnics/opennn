@@ -177,6 +177,9 @@ public:
 
     virtual void read_JSON_body(const Json*) {}
 
+    // Post-load hook: runs at the end of Layer::from_JSON, after operators load.
+    virtual void on_loaded() {}
+
     virtual void load_state_from_JSON(const JsonDocument&);
 
     virtual void to_JSON(JsonWriter&) const;
@@ -185,8 +188,6 @@ public:
 
     virtual string write_expression(const vector<string>& /*input_names*/,
                                     const vector<string>& /*output_names*/) const { return {}; }
-
-    virtual void print() const {}
 
     bool get_is_trainable() const noexcept { return is_trainable; }
     void set_is_trainable(bool trainable) { is_trainable = trainable; }

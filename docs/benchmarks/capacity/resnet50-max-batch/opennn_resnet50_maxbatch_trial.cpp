@@ -15,8 +15,15 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <unistd.h>
 #include <vector>
+
+#ifdef _WIN32
+#include <process.h>
+static int current_pid() { return _getpid(); }
+#else
+#include <unistd.h>
+static int current_pid() { return getpid(); }
+#endif
 
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/configuration.h"
@@ -93,7 +100,7 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
 
     temp.root = fs::temp_directory_path()
               / ("opennn_resnet50_maxbatch_"
-                 + std::to_string(static_cast<long long>(getpid()))
+                 + std::to_string(static_cast<long long>(current_pid()))
                  + "_" + std::to_string(static_cast<long long>(batch)));
 
     fs::create_directories(temp.root);
@@ -116,7 +123,7 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
     return temp.root;
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {
@@ -133,9 +140,7 @@ int main(int argc, char* argv[])
     const std::string data_dir = argc > 1 ? argv[1] : default_data_dir;
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
-    const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;   // 0 = library default
-    // Conv workspace cap A/B: "off"/"0" = autotune (uncapped, colleague default),
-    // "auto" = AUTO cap (largest layer activation), or a positive integer = MiB cap.
+    const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;
     const std::string workspace_arg = argc > 5 ? argv[5] : "off";
 
     try
@@ -150,8 +155,6 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
-        // off = autotune (cap off); heur = plain heuristic (autotune off, cap off);
-        // auto = AUTO cap (heuristic); N = explicit MiB cap (heuristic).
         if (workspace_arg == "off" || workspace_arg == "0")
             { device::set_conv_autotune(true);  device::set_conv_workspace_cap(0); }
         else if (workspace_arg == "heur")
@@ -197,13 +200,8 @@ int main(int argc, char* argv[])
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
 
-        // Max-batch probe: one batch == the whole set, so there is no step-to-step
-        // overlap for a CUDA graph to amortise and nothing to shuffle. Both are
-        // therefore left off in code (no environment switch).
         adam->set_cuda_graph(false);
         adam->set_shuffle(false);
-        // Prefetch-pool depth (0 = library default); the pool1 engine passes 1 to
-        // hold the fewest device batch copies and reach the largest batch.
         adam->set_batch_pool_size(batch_pool);
 
         const TrainingResult result = training_strategy.train();

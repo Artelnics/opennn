@@ -109,7 +109,7 @@ vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 
             ifstream file(entry.path());
             throw_if(!file,
-                     format("Cannot open YOLO classes file: {}", entry.path().string()));
+                     "Cannot open YOLO classes file: {}", entry.path().string());
 
             vector<string> classes;
             string line;
@@ -138,10 +138,18 @@ vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
     {
         if (line.empty()) continue;
 
-        istringstream stream(line);
+        const vector<float> values = parse_number_list<float>(line, "YOLO label");
+        throw_if(values.size() != 5,
+                 "Invalid YOLO label line in {}: {}", label_path.string(), line);
+
         YoloDataset::Box box;
-        throw_if(!(stream >> box.class_id >> box.x >> box.y >> box.w >> box.h),
-                 format("Invalid YOLO label line in {}: {}", label_path.string(), line));
+        box.class_id = Index(values[0]);
+        throw_if(float(box.class_id) != values[0],
+                 "Invalid YOLO label line in {}: {}", label_path.string(), line);
+        box.x = values[1];
+        box.y = values[2];
+        box.w = values[3];
+        box.h = values[4];
 
         if (box.x < 0.0f || box.x > 1.0f || box.y < 0.0f || box.y > 1.0f
         ||  box.w < 0.0f || box.w > 1.0f || box.h < 0.0f || box.h > 1.0f)
@@ -593,9 +601,7 @@ void bilinear_resize_uint8(const uint8_t* src,
 
             for (Index c = 0; c < channels; ++c)
             {
-                const float top = float(p00[c]) * (1.0f - dx) + float(p01[c]) * dx;
-                const float bot = float(p10[c]) * (1.0f - dx) + float(p11[c]) * dx;
-                const float v = top * (1.0f - dy) + bot * dy;
+                const float v = bilinear_blend(p00[c], p01[c], p10[c], p11[c], dx, dy);
                 dst_pixel[c] = uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
             }
         }
@@ -644,6 +650,65 @@ void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
     boxes = move(out);
 }
 
+Index grid_cell(float coordinate, Index grid)
+{
+    return min<Index>(grid - 1, max<Index>(0, Index(floor(coordinate * grid))));
+}
+
+void write_box_target(float* cell, const YoloDataset::Box& box,
+                      Index grid, Index col, Index row, float objectness)
+{
+    cell[0] = box.x * grid - float(col);
+    cell[1] = box.y * grid - float(row);
+    cell[2] = box.w;
+    cell[3] = box.h;
+    cell[4] = objectness;
+    cell[5 + box.class_id] = 1.0f;
+}
+
+// Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
+void mark_ignored_anchors(const YoloDataset::Box& box,
+                          const vector<array<float, 2>>& anchors,
+                          Index grid, Index head_offset,
+                          Index values_per_box, Index head_channels,
+                          Index skip_anchor, float* target)
+{
+    for (Index j = 0; j < ssize(anchors); ++j)
+    {
+        if (j == skip_anchor) continue;
+        if (yolo_iou_wh({box.w, box.h}, anchors[size_t(j)]) < 0.5f) continue;
+        const Index col = grid_cell(box.x, grid);
+        const Index row = grid_cell(box.y, grid);
+        const Index base = head_offset + (row * grid + col) * head_channels + j * values_per_box;
+        if (target[base + 4] < 0.5f)
+            target[base + 4] = -1.0f;
+    }
+}
+
+struct AnchorMatch
+{
+    float iou = -1.0f;
+    size_t head = 0;
+    Index anchor = 0;
+};
+
+AnchorMatch best_anchor_across_heads(const YoloDataset::Box& box,
+                                     const vector<vector<array<float, 2>>>& head_anchors)
+{
+    AnchorMatch match;
+    for (size_t i = 0; i < head_anchors.size(); ++i)
+    {
+        const vector<array<float, 2>>& anchors_h = head_anchors[i];
+        for (Index j = 0; j < ssize(anchors_h); ++j)
+        {
+            const float iou = yolo_iou_wh({box.w, box.h}, anchors_h[size_t(j)]);
+            if (iou > match.iou)
+                match = {iou, i, j};
+        }
+    }
+    return match;
+}
+
 void make_target(const vector<YoloDataset::Box>& boxes,
                  const vector<array<float, 2>>& anchors,
                  Index grid_size,
@@ -662,28 +727,16 @@ void make_target(const vector<YoloDataset::Box>& boxes,
         if (box.class_id < 0 || box.class_id >= classes_number)
             continue;
 
-        const Index col = min<Index>(grid_size - 1, max<Index>(0, Index(floor(box.x * grid_size))));
-        const Index row = min<Index>(grid_size - 1, max<Index>(0, Index(floor(box.y * grid_size))));
+        const Index col = grid_cell(box.x, grid_size);
+        const Index row = grid_cell(box.y, grid_size);
         const Index anchor = best_anchor_for_box(box, anchors);
         const float best_iou = yolo_iou_wh({box.w, box.h}, anchors[size_t(anchor)]);
         const Index base = (row * grid_size + col) * channels + anchor * values_per_box;
 
-        target[base + 0] = box.x * grid_size - float(col);
-        target[base + 1] = box.y * grid_size - float(row);
-        target[base + 2] = box.w;
-        target[base + 3] = box.h;
-        target[base + 4] = max(best_iou, 0.5f);  // soft anchor-IoU objectness target
-        target[base + 5 + box.class_id] = 1.0f;
-
-        // Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
-        for (Index j = 0; j < boxes_per_cell; ++j)
-        {
-            if (j == anchor) continue;
-            if (yolo_iou_wh({box.w, box.h}, anchors[size_t(j)]) < 0.5f) continue;
-            const Index base_j = (row * grid_size + col) * channels + j * values_per_box;
-            if (target[base_j + 4] < 0.5f)
-                target[base_j + 4] = -1.0f;
-        }
+        write_box_target(target + base, box, grid_size, col, row,
+                         max(best_iou, 0.5f));  // soft anchor-IoU objectness target
+        mark_ignored_anchors(box, anchors, grid_size, 0,
+                             values_per_box, channels, anchor, target);
     }
 }
 
@@ -712,56 +765,22 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
         if (box.class_id < 0 || box.class_id >= classes_number)
             continue;
 
-        float best_iou = -1.0f;
-        size_t best_head = 0;
-        Index best_anchor_in_head = 0;
-        for (size_t i = 0; i < head_anchors.size(); ++i)
-        {
-            const vector<array<float, 2>>& anchors_h = head_anchors[i];
-            for (Index j = 0; j < ssize(anchors_h); ++j)
-            {
-                const float iou = yolo_iou_wh({box.w, box.h}, anchors_h[size_t(j)]);
-                if (iou > best_iou)
-                {
-                    best_iou = iou;
-                    best_head = i;
-                    best_anchor_in_head = j;
-                }
-            }
-        }
+        const AnchorMatch best = best_anchor_across_heads(box, head_anchors);
 
-        const Index grid_h = head_grid_sizes[best_head];
-        const Index col = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.x * grid_h))));
-        const Index row = min<Index>(grid_h - 1, max<Index>(0, Index(floor(box.y * grid_h))));
-        const Index base = head_offsets[best_head]
+        const Index grid_h = head_grid_sizes[best.head];
+        const Index col = grid_cell(box.x, grid_h);
+        const Index row = grid_cell(box.y, grid_h);
+        const Index base = head_offsets[best.head]
                          + (row * grid_h + col) * head_channels
-                         + best_anchor_in_head * values_per_box;
+                         + best.anchor * values_per_box;
 
-        target[base + 0] = box.x * grid_h - float(col);
-        target[base + 1] = box.y * grid_h - float(row);
-        target[base + 2] = box.w;
-        target[base + 3] = box.h;
-        target[base + 4] = max(best_iou, 0.5f);  // soft anchor-IoU objectness target
-        target[base + 5 + box.class_id] = 1.0f;
+        write_box_target(target + base, box, grid_h, col, row,
+                         max(best.iou, 0.5f));  // soft anchor-IoU objectness target
 
-        // Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
         for (size_t i = 0; i < head_anchors.size(); ++i)
-        {
-            const vector<array<float, 2>>& anchors_i = head_anchors[i];
-            for (Index j = 0; j < ssize(anchors_i); ++j)
-            {
-                if (i == best_head && j == best_anchor_in_head) continue;
-                if (yolo_iou_wh({box.w, box.h}, anchors_i[size_t(j)]) < 0.5f) continue;
-                const Index grid_i  = head_grid_sizes[i];
-                const Index col_i   = min<Index>(grid_i-1, max<Index>(0, Index(floor(box.x * grid_i))));
-                const Index row_i   = min<Index>(grid_i-1, max<Index>(0, Index(floor(box.y * grid_i))));
-                const Index base_i  = head_offsets[i]
-                                    + (row_i * grid_i + col_i) * head_channels
-                                    + j * values_per_box;
-                if (target[base_i + 4] < 0.5f)
-                    target[base_i + 4] = -1.0f;
-            }
-        }
+            mark_ignored_anchors(box, head_anchors[i], head_grid_sizes[i], head_offsets[i],
+                                 values_per_box, head_channels,
+                                 i == best.head ? best.anchor : Index(-1), target);
     }
 }
 
@@ -775,15 +794,9 @@ static void make_target_v8(const vector<YoloDataset::Box>& boxes,
     for (const auto& box : boxes)
     {
         if (box.class_id < 0 || box.class_id >= classes_number) continue;
-        const Index col = min<Index>(grid_size-1, max<Index>(0, Index(floor(box.x * grid_size))));
-        const Index row = min<Index>(grid_size-1, max<Index>(0, Index(floor(box.y * grid_size))));
-        const Index base = (row * grid_size + col) * ch;
-        target[base + 0] = box.x * grid_size - float(col);
-        target[base + 1] = box.y * grid_size - float(row);
-        target[base + 2] = box.w;
-        target[base + 3] = box.h;
-        target[base + 4] = 1.0f;
-        target[base + 5 + box.class_id] = 1.0f;
+        const Index col = grid_cell(box.x, grid_size);
+        const Index row = grid_cell(box.y, grid_size);
+        write_box_target(target + (row * grid_size + col) * ch, box, grid_size, col, row, 1.0f);
     }
 }
 
@@ -802,18 +815,17 @@ static void make_target_v8_multi(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-string read_voc_tag(const string& xml, const string& tag, size_t from = 0)
+string_view read_voc_element(string_view xml,
+                             string_view open_tag,
+                             string_view close_tag,
+                             size_t from = 0)
 {
-    const string open = "<" + tag + ">";
-    const string close = "</" + tag + ">";
-    const size_t a = xml.find(open, from);
+    const size_t a = xml.find(open_tag, from);
     if (a == string::npos) return {};
-    const size_t b = xml.find(close, a + open.size());
+    const size_t value_start = a + open_tag.size();
+    const size_t b = xml.find(close_tag, value_start);
     if (b == string::npos) return {};
-    string value = xml.substr(a + open.size(), b - a - open.size());
-    const size_t s = value.find_first_not_of(" \t\r\n");
-    const size_t e = value.find_last_not_of(" \t\r\n");
-    return (s == string::npos) ? string{} : value.substr(s, e - s + 1);
+    return trim_view(xml.substr(value_start, b - value_start));
 }
 
 struct VocBox
@@ -831,41 +843,38 @@ struct VocAnnotation
 
 VocAnnotation parse_voc_xml(const filesystem::path& xml_path)
 {
-    ifstream file(xml_path);
-    throw_if(!file,
-             format("Cannot open VOC annotation: {}", xml_path.string()));
-
-    stringstream buffer;
-    buffer << file.rdbuf();
-    const string xml = buffer.str();
+    const string xml = read_text_file(xml_path);
 
     VocAnnotation annotation;
-    const string size_block = read_voc_tag(xml, "size");
-    annotation.width  = parse_float(read_voc_tag(size_block, "width"),  "VOC annotation: width");
-    annotation.height = parse_float(read_voc_tag(size_block, "height"), "VOC annotation: height");
+    const string_view size_block = read_voc_element(xml, "<size>", "</size>");
+    annotation.width = parse_float(
+        read_voc_element(size_block, "<width>", "</width>"), "VOC annotation: width");
+    annotation.height = parse_float(
+        read_voc_element(size_block, "<height>", "</height>"), "VOC annotation: height");
 
     throw_if(annotation.width <= 0.0f || annotation.height <= 0.0f,
-             format("VOC annotation has invalid size: {}", xml_path.string()));
+             "VOC annotation has invalid size: {}", xml_path.string());
 
     size_t cursor = 0;
-    const string obj_open = "<object>";
+    constexpr string_view obj_open = "<object>";
+    constexpr string_view obj_close = "</object>";
     while ((cursor = xml.find(obj_open, cursor)) != string::npos)
     {
-        const size_t obj_end = xml.find("</object>", cursor);
+        const size_t obj_end = xml.find(obj_close, cursor);
         throw_if(obj_end == string::npos,
-                 format("Unterminated <object> in {}", xml_path.string()));
+                 "Unterminated <object> in {}", xml_path.string());
 
-        const string obj = xml.substr(cursor, obj_end - cursor);
-        const string bbox = read_voc_tag(obj, "bndbox");
+        const string_view object = string_view(xml).substr(cursor, obj_end - cursor);
+        const string_view bbox = read_voc_element(object, "<bndbox>", "</bndbox>");
         VocBox box;
-        box.class_name = read_voc_tag(obj, "name");
-        box.xmin = parse_float(read_voc_tag(bbox, "xmin"), "VOC bndbox: xmin");
-        box.ymin = parse_float(read_voc_tag(bbox, "ymin"), "VOC bndbox: ymin");
-        box.xmax = parse_float(read_voc_tag(bbox, "xmax"), "VOC bndbox: xmax");
-        box.ymax = parse_float(read_voc_tag(bbox, "ymax"), "VOC bndbox: ymax");
+        box.class_name = read_voc_element(object, "<name>", "</name>");
+        box.xmin = parse_float(read_voc_element(bbox, "<xmin>", "</xmin>"), "VOC bndbox: xmin");
+        box.ymin = parse_float(read_voc_element(bbox, "<ymin>", "</ymin>"), "VOC bndbox: ymin");
+        box.xmax = parse_float(read_voc_element(bbox, "<xmax>", "</xmax>"), "VOC bndbox: xmax");
+        box.ymax = parse_float(read_voc_element(bbox, "<ymax>", "</ymax>"), "VOC bndbox: ymax");
         annotation.boxes.push_back(box);
 
-        cursor = obj_end + strlen("</object>");
+        cursor = obj_end + obj_close.size();
     }
 
     return annotation;
@@ -890,18 +899,18 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
                                        const vector<string>& class_filter)
 {
     throw_if(!filesystem::is_directory(voc_root),
-             format("VOC root is not a directory: {}", voc_root.string()));
+             "VOC root is not a directory: {}", voc_root.string());
 
     const filesystem::path image_set_path =
         voc_root / "ImageSets" / "Main" / (image_set + ".txt");
     throw_if(!filesystem::is_regular_file(image_set_path),
-             format("VOC image-set file not found: {}",
-                    image_set_path.string()));
+             "VOC image-set file not found: {}",
+                    image_set_path.string());
 
     const filesystem::path annotations_dir = voc_root / "Annotations";
     throw_if(!filesystem::is_directory(annotations_dir),
-             format("VOC Annotations dir not found: {}",
-                    annotations_dir.string()));
+             "VOC Annotations dir not found: {}",
+                    annotations_dir.string());
 
     filesystem::create_directories(output_labels_dir);
 
@@ -914,8 +923,8 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     ofstream names_file(output_labels_dir / "voc.names");
     throw_if(!names_file,
-             format("Cannot write VOC names file in {}",
-                    output_labels_dir.string()));
+             "Cannot write VOC names file in {}",
+                    output_labels_dir.string());
     for (const string& name : active_classes)
         names_file << name << '\n';
     names_file.close();
@@ -955,7 +964,7 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
         ofstream out(out_path);
-        throw_if(!out, format("Cannot write YOLO label: {}", out_path.string()));
+        throw_if(!out, "Cannot write YOLO label: {}", out_path.string());
         for (const auto& [id, b] : kept_boxes)
             out << id << ' ' << b[0] << ' ' << b[1] << ' ' << b[2] << ' ' << b[3] << '\n';
         ++converted;
@@ -985,6 +994,85 @@ float candidate_iou(const array<float, 6>& a, const array<float, 6>& b)
     const float area = a[2] * a[3] + b[2] * b[3] - inter;
 
     return area > 0.0f ? inter / area : 0.0f;
+}
+
+struct LetterboxUnwarp
+{
+    float scale;
+    float offset_x;
+    float offset_y;
+    float original_width;
+    float original_height;
+    float network_width;
+    float network_height;
+};
+
+LetterboxUnwarp make_letterbox_unwarp(Index original_height, Index original_width,
+                                      Index network_height, Index network_width)
+{
+    LetterboxUnwarp unwarp;
+    unwarp.scale = min(float(network_width)  / float(original_width),
+                       float(network_height) / float(original_height));
+    const float scaled_width  = float(original_width)  * unwarp.scale;
+    const float scaled_height = float(original_height) * unwarp.scale;
+    unwarp.offset_x = (float(network_width)  - scaled_width)  * 0.5f;
+    unwarp.offset_y = (float(network_height) - scaled_height) * 0.5f;
+    unwarp.original_width  = float(original_width);
+    unwarp.original_height = float(original_height);
+    unwarp.network_width   = float(network_width);
+    unwarp.network_height  = float(network_height);
+    return unwarp;
+}
+
+// candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id)
+YoloDetection unwarp_candidate(const float* candidate, const LetterboxUnwarp& unwarp)
+{
+    const float cx_net_px = candidate[0] * unwarp.network_width;
+    const float cy_net_px = candidate[1] * unwarp.network_height;
+    const float w_net_px  = candidate[2] * unwarp.network_width;
+    const float h_net_px  = candidate[3] * unwarp.network_height;
+
+    YoloDetection detection;
+    detection.center_x = clamp((cx_net_px - unwarp.offset_x) / unwarp.scale, 0.0f, unwarp.original_width);
+    detection.center_y = clamp((cy_net_px - unwarp.offset_y) / unwarp.scale, 0.0f, unwarp.original_height);
+    detection.width    = w_net_px / unwarp.scale;
+    detection.height   = h_net_px / unwarp.scale;
+    detection.score    = candidate[4];
+    detection.class_id = Index(candidate[5]);
+    return detection;
+}
+
+vector<YoloDetection> nms_and_unwarp(vector<array<float, 6>>& candidates,
+                                     Index original_height, Index original_width,
+                                     Index network_height, Index network_width,
+                                     float iou_threshold)
+{
+    ranges::sort(candidates, greater<>{}, [](const array<float, 6>& c) { return c[4]; });
+
+    vector<array<float, 6>> kept;
+    kept.reserve(candidates.size());
+    for (const array<float, 6>& candidate : candidates)
+    {
+        bool suppressed = false;
+        for (const array<float, 6>& k : kept)
+            if (Index(k[5]) == Index(candidate[5])
+            &&  candidate_iou(candidate, k) > iou_threshold)
+            {
+                suppressed = true;
+                break;
+            }
+        if (!suppressed) kept.push_back(candidate);
+    }
+
+    const LetterboxUnwarp unwarp = make_letterbox_unwarp(original_height, original_width,
+                                                         network_height, network_width);
+
+    vector<YoloDetection> detections;
+    detections.reserve(kept.size());
+    for (const array<float, 6>& k : kept)
+        detections.push_back(unwarp_candidate(k.data(), unwarp));
+
+    return detections;
 }
 
 }
@@ -1049,50 +1137,8 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
             }
     }
 
-    ranges::sort(candidates, greater<>{}, [](const array<float, 6>& c) { return c[4]; });
-
-    vector<array<float, 6>> kept;
-    kept.reserve(candidates.size());
-    for (const array<float, 6>& candidate : candidates)
-    {
-        bool suppressed = false;
-        for (const array<float, 6>& k : kept)
-            if (Index(k[5]) == Index(candidate[5])
-            &&  candidate_iou(candidate, k) > iou_threshold)
-            {
-                suppressed = true;
-                break;
-            }
-        if (!suppressed) kept.push_back(candidate);
-    }
-
-    const float scale = min(float(network_width)  / float(original_width),
-                            float(network_height) / float(original_height));
-    const float scaled_width  = float(original_width)  * scale;
-    const float scaled_height = float(original_height) * scale;
-    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
-    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
-
-    vector<YoloDetection> detections;
-    detections.reserve(kept.size());
-    for (const array<float, 6>& k : kept)
-    {
-        const float cx_net_px = k[0] * float(network_width);
-        const float cy_net_px = k[1] * float(network_height);
-        const float w_net_px  = k[2] * float(network_width);
-        const float h_net_px  = k[3] * float(network_height);
-
-        YoloDetection detection;
-        detection.center_x = clamp((cx_net_px - offset_x) / scale, 0.0f, float(original_width));
-        detection.center_y = clamp((cy_net_px - offset_y) / scale, 0.0f, float(original_height));
-        detection.width    = w_net_px / scale;
-        detection.height   = h_net_px / scale;
-        detection.score    = k[4];
-        detection.class_id = Index(k[5]);
-        detections.push_back(detection);
-    }
-
-    return detections;
+    return nms_and_unwarp(candidates, original_height, original_width,
+                          network_height, network_width, iou_threshold);
 }
 
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& heads,
@@ -1143,50 +1189,8 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
             }
     }
 
-    ranges::sort(candidates, greater<>{}, [](const array<float, 6>& c) { return c[4]; });
-
-    vector<array<float, 6>> kept;
-    kept.reserve(candidates.size());
-    for (const array<float, 6>& candidate : candidates)
-    {
-        bool suppressed = false;
-        for (const array<float, 6>& k : kept)
-            if (Index(k[5]) == Index(candidate[5])
-            &&  candidate_iou(candidate, k) > iou_threshold)
-            {
-                suppressed = true;
-                break;
-            }
-        if (!suppressed) kept.push_back(candidate);
-    }
-
-    const float scale = min(float(network_width)  / float(original_width),
-                            float(network_height) / float(original_height));
-    const float scaled_width  = float(original_width)  * scale;
-    const float scaled_height = float(original_height) * scale;
-    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
-    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
-
-    vector<YoloDetection> detections;
-    detections.reserve(kept.size());
-    for (const array<float, 6>& k : kept)
-    {
-        const float cx_net_px = k[0] * float(network_width);
-        const float cy_net_px = k[1] * float(network_height);
-        const float w_net_px  = k[2] * float(network_width);
-        const float h_net_px  = k[3] * float(network_height);
-
-        YoloDetection detection;
-        detection.center_x = clamp((cx_net_px - offset_x) / scale, 0.0f, float(original_width));
-        detection.center_y = clamp((cy_net_px - offset_y) / scale, 0.0f, float(original_height));
-        detection.width    = w_net_px / scale;
-        detection.height   = h_net_px / scale;
-        detection.score    = k[4];
-        detection.class_id = Index(k[5]);
-        detections.push_back(detection);
-    }
-
-    return detections;
+    return nms_and_unwarp(candidates, original_height, original_width,
+                          network_height, network_width, iou_threshold);
 }
 
 vector<YoloDetection> decode_yolo_detections(const float* nms_output,
@@ -1200,12 +1204,8 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
     ||  network_height  <= 0 || network_width  <= 0)
         throw runtime_error("decode_yolo_detections: dimensions must be positive.");
 
-    const float scale = min(float(network_width)  / float(original_width),
-                            float(network_height) / float(original_height));
-    const float scaled_width  = float(original_width)  * scale;
-    const float scaled_height = float(original_height) * scale;
-    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
-    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
+    const LetterboxUnwarp unwarp = make_letterbox_unwarp(original_height, original_width,
+                                                         network_height, network_width);
 
     vector<YoloDetection> detections;
     detections.reserve(max_boxes);
@@ -1213,27 +1213,10 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
     for (Index i = 0; i < max_boxes; ++i)
     {
         const float* row = nms_output + i * 6;
-        const float score = row[4];
 
-        if (score <= 0.0f) break;
+        if (row[4] <= 0.0f) break;
 
-        const float cx_net_px = row[0] * float(network_width);
-        const float cy_net_px = row[1] * float(network_height);
-        const float w_net_px  = row[2] * float(network_width);
-        const float h_net_px  = row[3] * float(network_height);
-
-        YoloDetection detection;
-        detection.center_x = (cx_net_px - offset_x) / scale;
-        detection.center_y = (cy_net_px - offset_y) / scale;
-        detection.width    = w_net_px / scale;
-        detection.height   = h_net_px / scale;
-        detection.score    = score;
-        detection.class_id = Index(row[5]);
-
-        detection.center_x = clamp(detection.center_x, 0.0f, float(original_width));
-        detection.center_y = clamp(detection.center_y, 0.0f, float(original_height));
-
-        detections.push_back(detection);
+        detections.push_back(unwarp_candidate(row, unwarp));
     }
 
     return detections;
@@ -1418,7 +1401,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
     vector<filesystem::path> image_paths = list_files(images_directory, is_supported_image_file);
     throw_if(image_paths.empty(),
-             format("YoloDataset: no images found in {}", images_directory.string()));
+             "YoloDataset: no images found in {}", images_directory.string());
 
     vector<vector<Box>> labels(image_paths.size());
     Index max_class_id = -1;
@@ -1455,8 +1438,8 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
             image = std::move(rgb);
         }
         throw_if(image.dimension(2) != input_shape[2],
-                 format("YoloDataset: channel mismatch in {} (got {} channels, expected {})",
-                        image_paths[i].string(), image.dimension(2), input_shape[2]));
+                 "YoloDataset: channel mismatch in {} (got {} channels, expected {})",
+                        image_paths[i].string(), image.dimension(2), input_shape[2]);
 
         float scale = 1.0f;
         Index offset_x = 0;
@@ -1742,13 +1725,12 @@ void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
             const Index dst_off = ((dst_y + oy) * canvas_w + (dst_x + ox)) * channels;
             for (Index c = 0; c < channels; ++c)
             {
-                const float v00 = float(src[(sy0 * src_w + sx0) * channels + c]);
-                const float v01 = float(src[(sy0 * src_w + sx1) * channels + c]);
-                const float v10 = float(src[(sy1 * src_w + sx0) * channels + c]);
-                const float v11 = float(src[(sy1 * src_w + sx1) * channels + c]);
-                const float top = v00 * (1.f - dx) + v01 * dx;
-                const float bot = v10 * (1.f - dx) + v11 * dx;
-                canvas[dst_off + c] = uint8_t(min(255.f, max(0.f, top * (1.f - dy) + bot * dy + 0.5f)));
+                const float v = bilinear_blend(src[(sy0 * src_w + sx0) * channels + c],
+                                               src[(sy0 * src_w + sx1) * channels + c],
+                                               src[(sy1 * src_w + sx0) * channels + c],
+                                               src[(sy1 * src_w + sx1) * channels + c],
+                                               dx, dy);
+                canvas[dst_off + c] = uint8_t(min(255.f, max(0.f, v + 0.5f)));
             }
         }
     }
@@ -1787,6 +1769,29 @@ MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
     mp.cx_frac = rand_frac(0.3f, 0.7f);
     mp.cy_frac = rand_frac(0.3f, 0.7f);
     return mp;
+}
+
+struct MosaicQuad
+{
+    Index si;
+    Index dst_x, dst_y, qw, qh;
+};
+
+// Deterministic given (epoch_seed, sample_index, samples_number, height, width):
+// fill_inputs and fill_targets must derive the SAME layout so pixels and boxes agree.
+array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index sample_index,
+                                           Index samples_number, Index height, Index width)
+{
+    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
+    const Index cut_x = max<Index>(1, min(width - 1, Index(mp.cx_frac * float(width))));
+    const Index cut_y = max<Index>(1, min(height - 1, Index(mp.cy_frac * float(height))));
+
+    return {{
+        {sample_index,         0,     0,         cut_x,          cut_y},
+        {mp.companions[0], cut_x,     0, width - cut_x,          cut_y},
+        {mp.companions[1],     0, cut_y,         cut_x, height - cut_y},
+        {mp.companions[2], cut_x, cut_y, width - cut_x, height - cut_y},
+    }};
 }
 
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -1849,17 +1854,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 const Index H = cache_input_shape[0];
                 const Index W = cache_input_shape[1];
                 const Index C = cache_input_shape[2];
-                const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
-                const Index cut_x = max<Index>(1, min(W - 1, Index(mp.cx_frac * float(W))));
-                const Index cut_y = max<Index>(1, min(H - 1, Index(mp.cy_frac * float(H))));
-
-                struct Quad { Index si; Index dst_x, dst_y, qw, qh; };
-                const Quad quads[4] = {
-                    {sample_index,         0,     0,     cut_x,   cut_y},
-                    {mp.companions[0], cut_x,     0, W - cut_x,   cut_y},
-                    {mp.companions[1],     0, cut_y,     cut_x, H - cut_y},
-                    {mp.companions[2], cut_x, cut_y, W - cut_x, H - cut_y},
-                };
+                const array<MosaicQuad, 4> quads =
+                    compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
                 aug_pixels.resize(size_t(H) * size_t(W) * size_t(C));
 
@@ -1871,7 +1867,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 thread_local vector<uint8_t> mosaic_src;
                 thread_local vector<uint8_t> quad_buf;
 
-                for (const Quad& q : quads)
+                for (const MosaicQuad& q : quads)
                 {
                     mosaic_src.resize(size_t(cache_image_record_bytes));
                     if (matrix_storage)
@@ -1978,22 +1974,13 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                 {
                     const Index H = cache_input_shape[0];
                     const Index W = cache_input_shape[1];
-                    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
-                    const Index cut_x = max<Index>(1, min(W - 1, Index(mp.cx_frac * float(W))));
-                    const Index cut_y = max<Index>(1, min(H - 1, Index(mp.cy_frac * float(H))));
-
-                    struct Quad { Index si; Index dst_x, dst_y, qw, qh; };
-                    const Quad quads[4] = {
-                        {sample_index,         0,     0,     cut_x,   cut_y},
-                        {mp.companions[0], cut_x,     0, W - cut_x,   cut_y},
-                        {mp.companions[1],     0, cut_y,     cut_x, H - cut_y},
-                        {mp.companions[2], cut_x, cut_y, W - cut_x, H - cut_y},
-                    };
+                    const array<MosaicQuad, 4> quads =
+                        compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
                     vector<Box> mosaic_boxes;
                     vector<Box> quad_boxes;
 
-                    for (const Quad& q : quads)
+                    for (const MosaicQuad& q : quads)
                     {
                         read_sample_boxes(q.si, quad_boxes);
                         const float qw_frac = float(q.qw) / float(W);
@@ -2103,11 +2090,11 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"ImagesPath", images_directory.string()},
         {"LabelsPath", labels_directory.string()},
         {"StorageMode", get_storage_mode_string()},
-        {"Height", to_string(input_shape[0])},
-        {"Width", to_string(input_shape[1])},
-        {"Channels", to_string(input_shape[2])},
-        {"GridSize", to_string(grid_size)},
-        {"BoxesPerCell", to_string(boxes_per_cell)}
+        {"Height", input_shape[0]},
+        {"Width", input_shape[1]},
+        {"Channels", input_shape[2]},
+        {"GridSize", grid_size},
+        {"BoxesPerCell", boxes_per_cell}
     });
     printer.close_element();
     variables_to_JSON(printer);

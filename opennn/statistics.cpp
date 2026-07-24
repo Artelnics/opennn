@@ -15,6 +15,97 @@
 namespace opennn
 {
 
+namespace
+{
+
+template <typename Sum>
+struct MaskedMoments
+{
+    float minimum = numeric_limits<float>::infinity();
+    float maximum = -numeric_limits<float>::infinity();
+    Sum sum = 0;
+    Sum squared_sum = 0;
+    Index count = 0;
+};
+
+template <typename Sum, typename Addend, typename GetValue>
+MaskedMoments<Sum> masked_moments(Index size,
+                                  GetValue&& value_at,
+                                  float minimum_start = numeric_limits<float>::infinity(),
+                                  float maximum_start = -numeric_limits<float>::infinity())
+{
+    MaskedMoments<Sum> moments;
+    moments.minimum = minimum_start;
+    moments.maximum = maximum_start;
+
+    for (Index i = 0; i < size; ++i)
+    {
+        const float value = value_at(i);
+
+        if (isnan(value)) continue;
+
+        if (value < moments.minimum) moments.minimum = value;
+        if (value > moments.maximum) moments.maximum = value;
+
+        const Addend addend = static_cast<Addend>(value);
+        moments.sum += addend;
+        moments.squared_sum += addend * addend;
+
+        ++moments.count;
+    }
+
+    return moments;
+}
+
+Index clamped_bin(float value, float origin, float inv_length, Index bins_number)
+{
+    return clamp(Index((value - origin) * inv_length), Index(0), bins_number - 1);
+}
+
+Index refined_bin(float value, float origin, float inv_length,
+                  const VectorR& minimums, const VectorR& maximums)
+{
+    const Index bins_number = minimums.size();
+
+    Index j = clamped_bin(value, origin, inv_length, bins_number);
+
+    while (j > 0 && value < minimums(j)) j--;
+    while (j < bins_number - 1 && value >= maximums(j)) j++;
+
+    return j;
+}
+
+template <typename SkipValue>
+void fill_frequencies(const VectorR& data, float origin, float inv_length,
+                      const VectorR& minimums, const VectorR& maximums,
+                      VectorR& frequencies, SkipValue&& skip)
+{
+    for (Index i = 0; i < data.size(); ++i)
+    {
+        const float value = data(i);
+
+        if (skip(value)) continue;
+
+        frequencies(refined_bin(value, origin, inv_length, minimums, maximums))++;
+    }
+}
+
+Histogram assemble_histogram(const VectorR& centers,
+                             const VectorR& minimums,
+                             const VectorR& maximums,
+                             const VectorR& frequencies)
+{
+    Histogram histogram(centers.size());
+    histogram.centers = centers;
+    histogram.minimums = minimums;
+    histogram.maximums = maximums;
+    histogram.frequencies = frequencies;
+
+    return histogram;
+}
+
+}
+
 Descriptives::Descriptives(float new_minimum,
                            float new_maximum,
                            float new_mean,
@@ -101,9 +192,7 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
         const float value = data(i);
         if (isnan(value)) continue;
 
-        const Index corresponding_bin = clamp(Index((value - data_minimum) * inv_step), Index(0), bins_number - 1);
-
-        frequencies(corresponding_bin)++;
+        frequencies(clamped_bin(value, data_minimum, inv_step, bins_number))++;
     }
 }
 
@@ -136,26 +225,18 @@ float minimum(const VectorR& data, const vector<Index>& indices)
 {
     if (indices.empty()) return NAN;
 
-    float minimum = MAX;
-
-    for (const Index index : indices)
-        if (data(index) < minimum && !isnan(data(index)))
-            minimum = data(index);
-
-    return minimum;
+    return masked_moments<float, float>(ssize(indices),
+                                        [&](Index i) { return data(indices[i]); },
+                                        MAX, -MAX).minimum;
 }
 
 float maximum(const VectorR& data, const vector<Index>& indices)
 {
     if (indices.empty()) return NAN;
 
-    float maximum = -MAX;
-
-    for (const Index index : indices)
-        if (!isnan(data(index)) && data(index) > maximum)
-            maximum = data(index);
-
-    return maximum;
+    return masked_moments<float, float>(ssize(indices),
+                                        [&](Index i) { return data(indices[i]); },
+                                        MAX, -MAX).maximum;
 }
 
 float mean(const VectorR& vector)
@@ -185,26 +266,12 @@ float variance(const VectorR& vector)
 
 float variance(const VectorR& vector, const VectorI& indices)
 {
-    const Index size = indices.size();
+    const auto moments = masked_moments<long double, double>(indices.size(),
+        [&](Index i) { return vector(indices(i)); });
 
-    long double sum = 0.0;
-    long double squared_sum = 0.0;
-
-    Index count = 0;
-
-    for (Index i = 0; i < size; ++i)
-    {
-        const float value = vector(indices(i));
-
-        if (!isnan(value))
-        {
-            const double v = value;
-            sum += v;
-            squared_sum += v * v;
-
-            ++count;
-        }
-    }
+    const long double sum = moments.sum;
+    const long double squared_sum = moments.squared_sum;
+    const Index count = moments.count;
 
     if (count <= 1) return 0.0f;
 
@@ -399,31 +466,11 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
             centers(i)  = min + (i + 0.5f) * length;
         }
 
-
-        const Index size = new_vector.size();
-
-        for (Index i = 0; i < size; ++i)
-        {
-            const float value = new_vector(i);
-
-            if (isnan(value) || value < minimums(0)) continue;
-
-            Index j = clamp(Index((value - min) * inv_length), Index(0), bins_number - 1);
-
-            while (j > 0 && value < minimums(j)) j--;
-            while (j < bins_number - 1 && value >= maximums(j)) j++;
-
-            frequencies(j)++;
-        }
+        fill_frequencies(new_vector, min, inv_length, minimums, maximums, frequencies,
+                         [&](float value) { return isnan(value) || value < minimums(0); });
     }
 
-    Histogram histogram(bins_number);
-    histogram.centers = centers;
-    histogram.minimums = minimums;
-    histogram.maximums = maximums;
-    histogram.frequencies = frequencies;
-
-    return histogram;
+    return assemble_histogram(centers, minimums, maximums, frequencies);
 }
 
 Histogram histogram_centered(const VectorR& vector, float center, Index bins_number)
@@ -466,29 +513,10 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     }
 
 
-    const Index size = vector.size();
+    fill_frequencies(vector, minimums(0), inv_length, minimums, maximums, frequencies,
+                     [&](float value) { return !(value >= minimums(0)); });
 
-    for (Index i = 0; i < size; ++i)
-    {
-        const float value = vector(i);
-
-        if (!(value >= minimums(0))) continue;
-
-        Index j = clamp(Index((value - minimums(0)) * inv_length), Index(0), bins_number - 1);
-
-        while (j > 0 && value < minimums(j)) j--;
-        while (j < bins_number - 1 && value >= maximums(j)) j++;
-
-        frequencies(j)++;
-    }
-
-    Histogram histogram(bins_number);
-    histogram.centers = centers;
-    histogram.minimums = minimums;
-    histogram.maximums = maximums;
-    histogram.frequencies = frequencies;
-
-    return histogram;
+    return assemble_histogram(centers, minimums, maximums, frequencies);
 }
 
 Histogram histogram(const VectorB& flags)
@@ -508,13 +536,7 @@ Histogram histogram(const VectorB& flags)
     for (Index i = 0; i < size; ++i)
         frequencies(flags(i) ? 1 : 0)++;
 
-    Histogram histogram(2);
-    histogram.centers = centers;
-    histogram.minimums = minimums;
-    histogram.maximums = maximums;
-    histogram.frequencies = frequencies;
-
-    return histogram;
+    return assemble_histogram(centers, minimums, maximums, frequencies);
 }
 
 vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
@@ -579,35 +601,14 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     {
         const Index column_index = column_indices[j];
 
-        float current_min = numeric_limits<float>::infinity();
-        float current_max = -numeric_limits<float>::infinity();
-        double current_sum = 0;
-        double current_sq_sum = 0;
-        Index current_count = 0;
+        const auto moments = masked_moments<double, double>(row_indices_size,
+            [&](Index i) { return matrix(row_indices[i], column_index); });
 
-        for (Index i = 0; i < row_indices_size; ++i)
-        {
-            const Index row_index = row_indices[i];
-            const float value = matrix(row_index, column_index);
-
-            if (isnan(value)) continue;
-
-            if (value < current_min) current_min = value;
-            if (value > current_max) current_max = value;
-
-            const double v = static_cast<double>(value);
-            current_sum += v;
-            current_sq_sum += v * v;
-            ++current_count;
-        }
-
-        if (current_count == 0) current_min = current_max = 0;
-
-        minimums(j) = current_min;
-        maximums(j) = current_max;
-        sums(j) = current_sum;
-        squared_sums(j) = current_sq_sum;
-        count(j) = current_count;
+        minimums(j) = (moments.count == 0) ? 0 : moments.minimum;
+        maximums(j) = (moments.count == 0) ? 0 : moments.maximum;
+        sums(j) = moments.sum;
+        squared_sums(j) = moments.squared_sum;
+        count(j) = moments.count;
     }
 
     const VectorXd mean = sums.array() / count.cast<double>().array();
@@ -654,18 +655,10 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
     {
         const Index column_index = column_indices[j];
 
-        float sum = 0;
-        Index count = 0;
+        const auto moments = masked_moments<float, float>(row_indices_size,
+            [&](Index i) { return matrix(row_indices[i], column_index); });
 
-        for (Index i = 0; i < row_indices_size; ++i)
-        {
-            const float value = matrix(row_indices[i], column_index);
-            if (isnan(value)) continue;
-            sum += value;
-            ++count;
-        }
-
-        means(j) = (count > 0) ? sum / float(count) : NAN;
+        means(j) = (moments.count > 0) ? moments.sum / float(moments.count) : NAN;
     }
 
     return means;
@@ -693,20 +686,12 @@ VectorR median(const MatrixR& matrix,
                const vector<Index>& row_indices,
                const vector<Index>& column_indices)
 {
-    const Index row_indices_size = ssize(row_indices);
     const Index column_indices_size = ssize(column_indices);
 
     VectorR medians(column_indices_size);
 
     for (Index j = 0; j < column_indices_size; ++j)
-    {
-        VectorR column(row_indices_size);
-
-        for (Index i = 0; i < row_indices_size; ++i)
-            column(i) = matrix(row_indices[i], column_indices[j]);
-
-        medians(j) = median(column);
-    }
+        medians(j) = median(slice_rows(VectorR(matrix.col(column_indices[j])), row_indices));
 
     return medians;
 }

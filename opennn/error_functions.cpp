@@ -83,9 +83,7 @@ static void cross_entropy_3d_gradient_device_count_cuda(const TensorView& input,
     X(float, squared_norm_cuda, (const float*, Index)) \
     X(void,  cross_entropy_3d_gradient_device_count_cuda, (const TensorView&, const TensorView&, const TensorView&, const float*))
 
-#define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig { throw runtime_error(#name " requires CUDA support."); }
 OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
-#undef OPENNN_CUDA_STUB
 #undef OPENNN_CUDA_STUBS
 
 template<typename T>

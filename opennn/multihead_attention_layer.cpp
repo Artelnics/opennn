@@ -168,8 +168,6 @@ bool MultiHeadAttention::should_use_sdpa() const
     if (!sdpa_auto) return false;
     if (!AttentionOperator::sdpa_supported(compute_dtype, compute_device)) return false;
 
-    // The SDPA backend leaves padded-query outputs unspecified, so it cannot
-    // honour zero_padded_queries; correctness wins over the fused kernel.
     if (attention.zero_padded_queries) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
@@ -246,10 +244,10 @@ void MultiHeadAttention::read_JSON_body(const Json* root_element)
 void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
 {
     write_json(printer, {
-        {"SourceSequenceLength", to_string(source_sequence_length)},
-        {"HeadsNumber", to_string(heads_number)},
-        {"CausalMask", to_string(attention.use_causal_mask)},
-        {"ZeroPaddedQueries", to_string(attention.zero_padded_queries)}
+        {"SourceSequenceLength", source_sequence_length},
+        {"HeadsNumber", heads_number},
+        {"CausalMask", attention.use_causal_mask},
+        {"ZeroPaddedQueries", attention.zero_padded_queries}
     });
 }
 

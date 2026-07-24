@@ -33,20 +33,16 @@ int main(int argc, char* argv[])
     set_seed(seed);
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-    // Shared normalized data: 10 inputs + 1 target, comma-separated, no header.
     TabularDataset dataset("rosenbrock.csv", ",", false, false);
 
-    // The blog trains on the full dataset: no validation or test hold-out.
     dataset.set_sample_roles("Training");
 
     ApproximationNetwork network(dataset.get_input_shape(), {10}, dataset.get_target_shape());
 
-    // Neutralize scaling/unscaling/bounding: data is already normalized.
     static_cast<Scaling*>(network.get_first(LayerType::Scaling))->set_scalers("None");
     static_cast<Unscaling*>(network.get_first(LayerType::Unscaling))->set_scalers("None");
     static_cast<Bounding*>(network.get_first(LayerType::Bounding))->set_bounding_method("NoBounding");
 
-    // Blog initialization: all parameters U(-1, 1).
     VectorMap parameters(network.get_parameters_data(), network.get_parameters_size());
     set_random_uniform(parameters, -1.0f, 1.0f);
 
@@ -61,7 +57,6 @@ int main(int argc, char* argv[])
 
     if (auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(optimizer))
     {
-        // Blog Adam configuration (same as the PyTorch/TensorFlow scripts).
         adam->set_batch_size(1000);
         adam->set_learning_rate(0.001f);
         adam->set_gradient_clip_norm(1.0e9f);

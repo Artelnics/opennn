@@ -143,6 +143,9 @@ private:
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
                                                 bool, bool) const;
 
+    MatrixR calculate_errors_by_role(Index, VectorR (TestingAnalysis::*)(const string&) const) const;
+    VectorR calculate_classification_errors(const string&, bool binary) const;
+
     NeuralNetwork* neural_network = nullptr;
 
     Dataset* dataset = nullptr;

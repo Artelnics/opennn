@@ -20,6 +20,7 @@ endif()
 set(PCH_HEADER pch.h)
 
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+list(FILTER TEST_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp")
 
 add_executable(opennn_tests ${TEST_SOURCES})

@@ -111,16 +111,8 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
     write_bmp_24(images_dir / "a.bmp", W, H, 200, 100,  50);
     write_bmp_24(images_dir / "b.bmp", W, H,  50, 100, 200);
 
-    // Sample 0: cx=0.5, cy=0.5, w=0.4, h=0.4, class=0.
-    //   With grid_size=4: col = floor(0.5*4) = 2, row = floor(0.5*4) = 2.
-    //   Anchor IoU on (w,h) only:
-    //     vs (0.2,0.2): inter = 0.04, area = 0.16  -> IoU = 0.25
-    //     vs (0.5,0.5): inter = 0.16, area = 0.25  -> IoU = 0.64  -> best_anchor = 1
     write_label(labels_dir / "a.txt", 0, 0.5f,  0.5f,  0.4f, 0.4f);
 
-    // Sample 1: cx=0.125, cy=0.875, w=0.2, h=0.2, class=1.
-    //   col = floor(0.125*4) = 0, row = floor(0.875*4) = 3.
-    //   vs (0.2,0.2): IoU = 1.0  -> best_anchor = 0
     write_label(labels_dir / "b.txt", 1, 0.125f, 0.875f, 0.2f, 0.2f);
 
     write_classes(labels_dir / "classes.names", {"cat", "dog"});
@@ -152,7 +144,6 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
     std::vector<float> targets(static_cast<size_t>(2 * target_floats_per_sample), 0.0f);
     dataset.fill_targets({0, 1}, {}, targets.data(), FillMode::Inference);
 
-    // ---- Sample 0 ----------------------------------------------------------
     {
         const float* t = targets.data() + 0 * target_floats_per_sample;
         const Index row = 2;
@@ -160,20 +151,18 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
         const Index anchor = 1;
         const Index base = (row * grid_size + col) * channels + anchor * values_per_box;
 
-        EXPECT_FLOAT_EQ(t[base + 0], 0.5f * grid_size - float(col));   // cell-relative x = 0.0
-        EXPECT_FLOAT_EQ(t[base + 1], 0.5f * grid_size - float(row));   // cell-relative y = 0.0
-        EXPECT_FLOAT_EQ(t[base + 2], 0.4f);                            // image-relative w
-        EXPECT_FLOAT_EQ(t[base + 3], 0.4f);                            // image-relative h
-        EXPECT_NEAR(t[base + 4], 0.64f, 1e-4f);                         // max(iou(0.4x0.4, 0.5x0.5)=0.64, 0.5)
-        EXPECT_FLOAT_EQ(t[base + 5 + 0], 1.0f);                        // class 0 one-hot
+        EXPECT_FLOAT_EQ(t[base + 0], 0.5f * grid_size - float(col));
+        EXPECT_FLOAT_EQ(t[base + 1], 0.5f * grid_size - float(row));
+        EXPECT_FLOAT_EQ(t[base + 2], 0.4f);
+        EXPECT_FLOAT_EQ(t[base + 3], 0.4f);
+        EXPECT_NEAR(t[base + 4], 0.64f, 1e-4f);
+        EXPECT_FLOAT_EQ(t[base + 5 + 0], 1.0f);
         EXPECT_FLOAT_EQ(t[base + 5 + 1], 0.0f);
 
-        // The other anchor in the same cell must be empty.
         const Index other_base = (row * grid_size + col) * channels + 0 * values_per_box;
         EXPECT_FLOAT_EQ(t[other_base + 4], 0.0f);
     }
 
-    // ---- Sample 1 ----------------------------------------------------------
     {
         const float* t = targets.data() + 1 * target_floats_per_sample;
         const Index row = 3;
@@ -181,8 +170,8 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
         const Index anchor = 0;
         const Index base = (row * grid_size + col) * channels + anchor * values_per_box;
 
-        EXPECT_FLOAT_EQ(t[base + 0], 0.125f * grid_size - float(col)); // 0.5
-        EXPECT_FLOAT_EQ(t[base + 1], 0.875f * grid_size - float(row)); // 0.5
+        EXPECT_FLOAT_EQ(t[base + 0], 0.125f * grid_size - float(col));
+        EXPECT_FLOAT_EQ(t[base + 1], 0.875f * grid_size - float(row));
         EXPECT_FLOAT_EQ(t[base + 2], 0.2f);
         EXPECT_FLOAT_EQ(t[base + 3], 0.2f);
         EXPECT_FLOAT_EQ(t[base + 4], 1.0f);
@@ -190,7 +179,6 @@ TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)
         EXPECT_FLOAT_EQ(t[base + 5 + 1], 1.0f);
     }
 
-    // ---- Background cells must be all zero in sample 0 ---------------------
     {
         const float* t = targets.data() + 0 * target_floats_per_sample;
         const Index row = 0;
@@ -232,10 +220,8 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
     const Index pixels = H * W * 3;
     std::vector<float> inputs(static_cast<size_t>(pixels), -1.0f);
 
-    // is_training=true scales to [0,1].
     dataset.fill_inputs({0}, {}, inputs.data(), FillMode::Training);
 
-    // Every pixel should be the same solid color, divided by 255.
     constexpr float expected_r = 200.0f / 255.0f;
     constexpr float expected_g = 100.0f / 255.0f;
     constexpr float expected_b =  50.0f / 255.0f;
@@ -250,10 +236,6 @@ TEST(YoloDataset, FillsInputsWithExpectedShapeAndPixelValues)
 
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
-    // Two heads: head0 grid=2 large anchors, head1 grid=4 small anchors.
-    // One large box (0.6x0.6) must land in head0 anchor 0; one small box
-    // (0.1x0.1) must land in head1 anchor 0.  Verifies make_target_multi_scale
-    // routing, buffer layout (head0 floats then head1 floats), and objectness.
 
     TempDir dir;
     const std::filesystem::path images_dir = dir.path / "images";
@@ -266,7 +248,6 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
     constexpr int H = 16;
     write_bmp_24(images_dir / "a.bmp", W, H, 128, 128, 128);
 
-    // Label: large box at (0.25, 0.25) size 0.6x0.6, small box at (0.875, 0.875) size 0.1x0.1
     {
         std::ofstream lf(labels_dir / "a.txt");
         lf << "0 0.25 0.25 0.6 0.6\n";
@@ -277,54 +258,48 @@ TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
     const std::vector<std::array<float, 2>> anchors_small{{0.1f, 0.1f}, {0.2f, 0.2f}};
 
     constexpr Index C = 1;
-    constexpr Index B = 2;  // boxes per head
+    constexpr Index B = 2;
     constexpr Index values_per_box = 5 + C;
     constexpr Index head_channels = B * values_per_box;
     constexpr Index grid0 = 2;
     constexpr Index grid1 = 4;
-    const Index head0_floats = grid0 * grid0 * head_channels;  // 2*2*12 = 48
-    const Index head1_floats = grid1 * grid1 * head_channels;  // 4*4*12 = 192
-    const Index total_floats = head0_floats + head1_floats;    // 240
+    const Index head0_floats = grid0 * grid0 * head_channels;
+    const Index head1_floats = grid1 * grid1 * head_channels;
+    const Index total_floats = head0_floats + head1_floats;
 
     YoloDataset dataset;
     dataset.set_display(false);
     dataset.set(images_dir, labels_dir, Shape{H, W, 3},
-                /*grid_size=*/grid0, /*boxes_per_cell=*/B, anchors_large);
+                              grid0,                    B, anchors_large);
     dataset.set_multi_scale_heads({grid0, grid1}, {anchors_large, anchors_small});
 
     std::vector<float> target(static_cast<size_t>(total_floats), -99.0f);
     dataset.fill_targets({0}, {}, target.data(), FillMode::Inference);
 
-    // ---- Head 0: large box at col=0,row=0, anchor=0 -------------------------
-    // iou(0.6x0.6, 0.6x0.6) = 1.0 → objectness = max(1.0, 0.5) = 1.0
     {
         const Index col = 0, row = 0, anchor = 0;
         const Index base = (row * grid0 + col) * head_channels + anchor * values_per_box;
-        EXPECT_NEAR(target[base + 0], 0.25f * grid0 - float(col), 1e-4f);  // 0.5
-        EXPECT_NEAR(target[base + 1], 0.25f * grid0 - float(row), 1e-4f);  // 0.5
+        EXPECT_NEAR(target[base + 0], 0.25f * grid0 - float(col), 1e-4f);
+        EXPECT_NEAR(target[base + 1], 0.25f * grid0 - float(row), 1e-4f);
         EXPECT_NEAR(target[base + 2], 0.6f, 1e-4f);
         EXPECT_NEAR(target[base + 3], 0.6f, 1e-4f);
-        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);  // max(iou=1.0, 0.5)
-        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);  // class 0 one-hot
+        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
+        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
     }
 
-    // ---- Head 1: small box at col=3,row=3, anchor=0 -------------------------
-    // iou(0.1x0.1, 0.1x0.1) = 1.0 → objectness = 1.0
     {
         const Index col = 3, row = 3, anchor = 0;
         const Index base_in_head1 = (row * grid1 + col) * head_channels + anchor * values_per_box;
         const Index base = head0_floats + base_in_head1;
-        EXPECT_NEAR(target[base + 0], 0.875f * grid1 - float(col), 1e-4f);  // 0.5
-        EXPECT_NEAR(target[base + 1], 0.875f * grid1 - float(row), 1e-4f);  // 0.5
+        EXPECT_NEAR(target[base + 0], 0.875f * grid1 - float(col), 1e-4f);
+        EXPECT_NEAR(target[base + 1], 0.875f * grid1 - float(row), 1e-4f);
         EXPECT_NEAR(target[base + 2], 0.1f, 1e-4f);
         EXPECT_NEAR(target[base + 3], 0.1f, 1e-4f);
         EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
         EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
     }
 
-    // ---- Head 0 must have no entry for the small box -------------------------
     {
-        // small box would land at col=floor(0.875*2)=1, row=1 in grid0
         const Index col = 1, row = 1;
         for (Index anchor = 0; anchor < B; ++anchor)
         {

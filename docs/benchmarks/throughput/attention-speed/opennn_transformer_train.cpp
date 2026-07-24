@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
         Configuration::instance().set(Device::CUDA, use_bf16 ? Type::BF16 : Type::FP32);
 
         LanguageDataset dataset(corpus);
-        dataset.split_samples(1.0f, 0.0f, 0.0f);   // all samples Training
+        dataset.split_samples(1.0f, 0.0f, 0.0f);
 
         const Index samples = dataset.get_samples_number("Training");
         const Index input_vocab  = dataset.get_input_vocabulary_size();
@@ -92,9 +92,6 @@ int main(int argc, char* argv[])
         adam->set_display_period(1);
         std::cout << "learning_rate=" << lr << "\n";
 
-        // Untimed warmup: one full pass (maximum_epochs 0 runs epoch 0 only)
-        // so the timed train() below starts with warm plan caches, like the
-        // PyTorch/TensorFlow counterparts' excluded warmup epoch.
         adam->set_maximum_epochs(0);
         training_strategy.train();
         cudaDeviceSynchronize();
@@ -107,8 +104,6 @@ int main(int argc, char* argv[])
         const auto t1 = std::chrono::high_resolution_clock::now();
 
         const double wall_s = std::chrono::duration<double>(t1 - t0).count();
-        // train() runs exactly maximum_epochs passes (epoch 0..max-1: the
-        // stopping condition fires at epoch + 1 == maximum_epochs), min. one.
         const double timed_passes = double(std::max<Index>(Index(1), epochs));
         const double total_samples = double(samples) * timed_passes;
         const double samples_per_s = total_samples / wall_s;

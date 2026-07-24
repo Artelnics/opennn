@@ -151,12 +151,6 @@ public:
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
 
-    float get_yolo_lambda_giou()      const noexcept { return yolo_lambda_giou;      }
-    float get_yolo_lambda_noobj()     const noexcept { return yolo_lambda_noobj;      }
-    float get_yolo_lambda_class()     const noexcept { return yolo_lambda_class;      }
-    float get_yolo_focal_gamma()      const noexcept { return yolo_focal_gamma;       }
-    float get_yolo_obj_focal_gamma()  const noexcept { return yolo_obj_focal_gamma;   }
-
 private:
 
     void check_neural_network() const
@@ -179,6 +173,12 @@ private:
                                     const ForwardPropagation&,
                                     BackPropagation&) const;
 
+#ifndef OPENNN_NO_VISION
+    EvaluationResult calculate_yolo(const ForwardPropagation&,
+                                    const TensorView& target,
+                                    BackPropagation*) const;
+#endif
+
 protected:
 
     Error error = Error::MeanSquaredError;
@@ -192,8 +192,8 @@ protected:
     float yolo_lambda_giou     = 5.0f;
     float yolo_lambda_noobj    = 0.5f;
     float yolo_lambda_class    = 1.0f;
-    float yolo_focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
-    float yolo_obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+    float yolo_focal_gamma     = 0.0f;
+    float yolo_obj_focal_gamma = 0.0f;
 
     mutable Buffer errors_device{Device::CUDA};
     mutable Buffer metric_results_device{Device::CUDA};
@@ -208,14 +208,36 @@ protected:
     string name = "Loss";
 };
 
-// CPU numerical gradient check: returns max relative error between analytical
-// and finite-difference gradients. Below 1e-4 means the loss is self-consistent.
-float yolo_loss_gradient_check_cpu();
+// ── Internal — exposed with external linkage only so tests/yolo_loss_check_test.cpp
+// can exercise the raw YOLO kernels. Not part of the public API. ──────────────
+#ifndef OPENNN_NO_VISION
 
-// CPU expected-value check: compares forward loss against hand-computed expected
-// values, and verifies gradient directions are correct (not just self-consistent).
-// Returns max absolute error; prints per-test results. Below 1e-4 means correct.
-float yolo_loss_expected_value_check_cpu();
+struct YoloLambdas
+{
+    float giou            = 5.0f;
+    float noobj           = 0.5f;
+    float cls             = 1.0f;
+    float focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
+    float obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+};
+
+float yolo_error_kernel(const TensorView& output,
+                        const TensorView& target,
+                        Index boxes_per_cell,
+                        Index classes_number,
+                        bool sigmoid_classes,
+                        YoloLambdas lam);
+
+void yolo_gradient_kernel(const TensorView& output,
+                          const TensorView& target,
+                          const TensorView& output_delta,
+                          Index boxes_per_cell,
+                          Index classes_number,
+                          bool sigmoid_classes,
+                          float inv_batch,
+                          YoloLambdas lam);
+
+#endif // OPENNN_NO_VISION
 
 }
 

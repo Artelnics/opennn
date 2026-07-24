@@ -782,41 +782,43 @@ TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
                          "3,30,0\n"
                          "4,40,1\n");
 
-    TabularDataset dataset;
+    {
+        TabularDataset dataset;
 
-    dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
-    dataset.set_data_path(csv_path);
-    dataset.set_separator(Dataset::Separator::Comma);
-    dataset.set_has_header(true);
-    dataset.set_has_ids(false);
-    dataset.set_display(false);
+        dataset.set_storage_mode(Dataset::StorageMode::BinaryFile);
+        dataset.set_data_path(csv_path);
+        dataset.set_separator(Dataset::Separator::Comma);
+        dataset.set_has_header(true);
+        dataset.set_has_ids(false);
+        dataset.set_display(false);
 
-    ASSERT_NO_THROW(dataset.read_csv());
+        ASSERT_NO_THROW(dataset.read_csv());
 
-    EXPECT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
-    EXPECT_EQ(dataset.get_samples_number(), 4);
-    EXPECT_EQ(dataset.get_data().size(), 0);
+        EXPECT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+        EXPECT_EQ(dataset.get_samples_number(), 4);
+        EXPECT_EQ(dataset.get_data().size(), 0);
 
-    ASSERT_TRUE(filesystem::exists(cache_path));
-    EXPECT_EQ(filesystem::file_size(cache_path), 4 * 3 * sizeof(float));
+        ASSERT_TRUE(filesystem::exists(cache_path));
+        EXPECT_EQ(filesystem::file_size(cache_path), 4 * 3 * sizeof(float));
 
-    EXPECT_EQ(dataset.get_variable_type(2), VariableType::Binary);
+        EXPECT_EQ(dataset.get_variable_type(2), VariableType::Binary);
 
-    vector<float> inputs(4);
-    dataset.fill_inputs({0, 2}, {0, 1}, inputs.data(), FillMode::Inference);
+        vector<float> inputs(4);
+        dataset.fill_inputs({0, 2}, {0, 1}, inputs.data(), FillMode::Inference);
 
-    EXPECT_NEAR(inputs[0], 1, EPSILON);
-    EXPECT_NEAR(inputs[1], 10, EPSILON);
-    EXPECT_NEAR(inputs[2], 3, EPSILON);
-    EXPECT_NEAR(inputs[3], 30, EPSILON);
+        EXPECT_NEAR(inputs[0], 1, EPSILON);
+        EXPECT_NEAR(inputs[1], 10, EPSILON);
+        EXPECT_NEAR(inputs[2], 3, EPSILON);
+        EXPECT_NEAR(inputs[3], 30, EPSILON);
 
-    vector<float> targets(4);
-    dataset.fill_targets({0, 1, 2, 3}, {2}, targets.data(), FillMode::Inference);
+        vector<float> targets(4);
+        dataset.fill_targets({0, 1, 2, 3}, {2}, targets.data(), FillMode::Inference);
 
-    EXPECT_NEAR(targets[0], 0, EPSILON);
-    EXPECT_NEAR(targets[1], 1, EPSILON);
-    EXPECT_NEAR(targets[2], 0, EPSILON);
-    EXPECT_NEAR(targets[3], 1, EPSILON);
+        EXPECT_NEAR(targets[0], 0, EPSILON);
+        EXPECT_NEAR(targets[1], 1, EPSILON);
+        EXPECT_NEAR(targets[2], 0, EPSILON);
+        EXPECT_NEAR(targets[3], 1, EPSILON);
+    }
 
     filesystem::remove(csv_path);
     filesystem::remove(cache_path);

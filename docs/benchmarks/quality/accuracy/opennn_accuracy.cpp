@@ -170,7 +170,7 @@ BinaryMetrics evaluate(NeuralNetwork& network,
     return metrics;
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[])
 {

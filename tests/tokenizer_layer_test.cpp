@@ -177,6 +177,7 @@ TEST(TokenizerOperatorTest, FactoryCreatesEachKind)
     EXPECT_EQ(make_tokenizer_operator("WordLevel")->get_kind(), "WordLevel");
     EXPECT_EQ(make_tokenizer_operator("WordPiece")->get_kind(), "WordPiece");
     EXPECT_EQ(make_tokenizer_operator("BytePair")->get_kind(), "BytePair");
+    EXPECT_EQ(make_tokenizer_operator("Qwen3")->get_kind(), "Qwen3");
     EXPECT_THROW(make_tokenizer_operator("Unknown"), runtime_error);
 }
 

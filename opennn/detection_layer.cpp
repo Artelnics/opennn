@@ -39,15 +39,14 @@ string anchors_to_string(const vector<array<float, 2>>& anchors)
     return buffer.str();
 }
 
-vector<array<float, 2>> string_to_anchors(const string& text)
+vector<array<float, 2>> string_to_anchors(string_view text)
 {
-    istringstream stream(text);
-    vector<array<float, 2>> anchors;
-    float width = 0.0f;
-    float height = 0.0f;
+    const vector<float> values = parse_number_list<float>(text, "Detection anchors");
+    throw_if(values.size() % 2 != 0, "Detection anchors require width-height pairs.");
 
-    while (stream >> width >> height)
-        anchors.push_back({width, height});
+    vector<array<float, 2>> anchors(values.size() / 2);
+    for (size_t i = 0; i < anchors.size(); ++i)
+        anchors[i] = {values[2 * i], values[2 * i + 1]};
 
     return anchors;
 }

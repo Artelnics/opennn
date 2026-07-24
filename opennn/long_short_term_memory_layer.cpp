@@ -145,7 +145,7 @@ void LongShortTermMemory::set_activation_function(const string& new_activation_f
 
     using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
-             format("LongShortTermMemory: unsupported activation function \"{}\".", new_activation_function));
+             "LongShortTermMemory: unsupported activation function \"{}\".", new_activation_function);
 
     lstm_op.activation_function = function;
 }
@@ -156,8 +156,8 @@ void LongShortTermMemory::set_recurrent_activation_function(const string& new_re
 
     using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
-             format("LongShortTermMemory: unsupported recurrent activation function \"{}\".",
-                    new_recurrent_activation_function));
+             "LongShortTermMemory: unsupported recurrent activation function \"{}\".",
+                    new_recurrent_activation_function);
 
     lstm_op.recurrent_activation_function = function;
 }

@@ -11,8 +11,15 @@
 #include "tensor_types.h"
 #include "io_utilities.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace opennn
 {
+
+static constexpr array<char, 8> TEXT_CACHE_MAGIC{'O', 'N', 'N', 'T', 'E', 'X', 'T', '3'};
+static constexpr uint32_t TEXT_CACHE_VERSION = 1;
 
 TextGenerationDataset::TextGenerationDataset(const filesystem::path& new_data_path,
                                              Index new_sequence_length,
@@ -30,39 +37,37 @@ TextGenerationDataset::TextGenerationDataset(const filesystem::path& new_data_pa
         read_txt();
 }
 
-// Near-duplicate of TokenizerOperator::build_vocabulary, kept separate on
-// purpose: this version tie-breaks equal-frequency tokens alphabetically while
-// the operator's does not, so unifying them would silently reorder existing
-// vocabularies and invalidate the id <-> embedding-row mapping of saved weight
-// files. Revisit when the word-level models are next retrained.
 void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_tokens)
 {
     unordered_map<string_view, size_t> token_count;
 
-    for (string_view token : corpus_tokens)
-        ++token_count[token];
-
-    vector<pair<string_view, size_t>> sorted_tokens(token_count.begin(), token_count.end());
-
-    ranges::sort(sorted_tokens,
-                 [](const auto& a, const auto& b)
-                 { return a.second != b.second ? a.second > b.second : a.first < b.first; });
-
-    vocabulary = reserved_tokens;
-
-    for (const auto& [token, count] : sorted_tokens)
+#ifdef _OPENMP
+    if (corpus_tokens.size() >= 10000)
     {
-        if (count < size_t(minimum_token_frequency))
-            continue;
+        vector<unordered_map<string_view, size_t>> local_counts(
+            static_cast<size_t>(omp_get_max_threads()));
 
-        if (ranges::find(reserved_tokens, token) != reserved_tokens.end())
-            continue;
+        #pragma omp parallel
+        {
+            auto& local = local_counts[size_t(omp_get_thread_num())];
 
-        if (vocabulary.size() >= size_t(maximum_vocabulary_size))
-            break;
+            #pragma omp for schedule(static)
+            for (Index i = 0; i < ssize(corpus_tokens); ++i)
+                ++local[corpus_tokens[size_t(i)]];
+        }
 
-        vocabulary.emplace_back(token);
+        for (const auto& local : local_counts)
+            for (const auto& [token, count] : local)
+                token_count[token] += count;
     }
+    else
+#endif
+        for (string_view token : corpus_tokens)
+            ++token_count[token];
+
+    tokenizer->set_vocabulary(make_vocabulary(token_count, reserved_tokens,
+                                              maximum_vocabulary_size,
+                                              minimum_token_frequency));
 }
 
 void TextGenerationDataset::read_txt()
@@ -74,36 +79,51 @@ void TextGenerationDataset::read_txt()
 
     cache_reader.close();
 
-    string buffer;
-    read_file(buffer);
+    const uint64_t tokenizer_fingerprint =
+        fixed_vocabulary ? tokenizer->fingerprint() : 0;
+    const filesystem::path cache_parent = cache_directory.empty()
+        ? filesystem::path(data_path.string() + ".cache")
+        : cache_directory / (data_path.filename().string() + ".cache");
+    cache_path = cache_parent
+        / format("lm_tokens_v3_{}_{}_{}_{}_{:016x}.bin",
+                 sequence_length,
+                 maximum_vocabulary_size,
+                 minimum_token_frequency,
+                 fixed_vocabulary ? 1 : 0,
+                 tokenizer_fingerprint);
+    const filesystem::path metadata_path = cache_path.string() + ".meta";
+
+    if (storage_mode == StorageMode::BinaryFile
+        && is_file_current(cache_path, {data_path})
+        && is_file_current(metadata_path, {data_path})
+        && load_cache_metadata(metadata_path, tokenizer_fingerprint))
+    {
+        split_samples_random();
+        cout << "Reading finished (cached)" << "\n";
+        return;
+    }
+
+    string buffer = read_text_file(data_path);
 
     // A tokenizer with a fixed loaded vocabulary (subword, e.g. byte-pair)
     // encodes the raw corpus; otherwise the corpus is lowercased and split into
     // whitespace/word-level tokens whose vocabulary is built by frequency.
-    const bool subword = tokenizer && tokenizer->get_vocabulary_size() > 0;
+    const bool subword = fixed_vocabulary;
 
     vector<Index> token_ids;
-    string cache_tag;
-
     if (subword)
     {
         cout << "Tokenizing corpus (subword)..." << "\n";
-        vocabulary = tokenizer->get_vocabulary();
         token_ids = tokenizer->encode(buffer);
-        cache_tag = format("sub{}", vocabulary.size());
     }
     else
     {
-        for (char& character : buffer)
-            character = static_cast<char>(tolower(static_cast<unsigned char>(character)));
+        ascii_lowercase_in_place(buffer);
 
         const vector<string_view> corpus_tokens = tokenize_views(buffer);
         create_vocabulary(corpus_tokens);
         token_ids = encode_corpus(corpus_tokens);
-        cache_tag = "word";
     }
-
-    update_vocabulary_map();
 
     // Non-overlapping blocks of (sequence_length + 1) tokens: inputs are tokens
     // [0, T-1] and targets the same block shifted one position, [1, T].
@@ -111,27 +131,10 @@ void TextGenerationDataset::read_txt()
     const Index samples_number = ssize(token_ids) / record_tokens;
 
     throw_if(samples_number == 0,
-             format("TextGenerationDataset: corpus has {} tokens; at least {} are needed for one sample.",
-                    token_ids.size(), record_tokens));
+             "TextGenerationDataset: corpus has {} tokens; at least {} are needed for one sample.",
+                    token_ids.size(), record_tokens);
 
-    input_shape  = { sequence_length };
-    target_shape = { sequence_length };
-    decoder_shape.clear();
-
-    variables.assign(2, Variable());
-
-    Variable& input_variable = variables[0];
-    input_variable.name = "input_sequence";
-    input_variable.role = VariableRole::Input;
-    input_variable.type = VariableType::Numeric;
-    input_variable.features = sequence_length;
-    input_variable.categories = vocabulary;
-
-    Variable& target_variable = variables[1];
-    target_variable.name = "target_sequence";
-    target_variable.role = VariableRole::Target;
-    target_variable.type = VariableType::Numeric;
-    target_variable.features = sequence_length;
+    configure(samples_number);
 
     if (storage_mode == StorageMode::Matrix)
     {
@@ -150,69 +153,127 @@ void TextGenerationDataset::read_txt()
     }
     else
     {
-        // BinaryFile: fixed-size records of (sequence_length + 1) int32 tokens per
-        // sample. The cache name carries a tokenizer tag so switching tokenizers
-        // never silently reuses a stale cache.
-        cache_path = filesystem::path(data_path.string() + ".cache") / format("lm_tokens_{}.bin", cache_tag);
-
-        const uintmax_t record_bytes = uintmax_t(record_tokens) * sizeof(int32_t);
-
-        const bool cache_valid = filesystem::exists(cache_path)
-            && filesystem::file_size(cache_path) == uintmax_t(samples_number) * record_bytes
-            && filesystem::last_write_time(cache_path) >= filesystem::last_write_time(data_path);
-
-        if (cache_valid)
-            cache_reader.open(cache_path);
-        else
-            write_binary_cache(token_ids, samples_number);
+        write_binary_cache(token_ids, samples_number);
+        save_cache_metadata(metadata_path, tokenizer_fingerprint, samples_number);
     }
-
-    sample_roles.resize(samples_number);
 
     split_samples_random();
 
     cout << "Reading finished" << "\n";
 }
 
-void TextGenerationDataset::update_vocabulary_map()
+void TextGenerationDataset::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    vocabulary_map.clear();
-    vocabulary_map.reserve(vocabulary.size());
-
-    for (Index i = 0; i < ssize(vocabulary); ++i)
-        vocabulary_map[vocabulary[i]] = i;
+    tokenizer = new_tokenizer
+        ? move(new_tokenizer)
+        : make_unique<WordLevelTokenizer>(reserved_tokens);
+    fixed_vocabulary = tokenizer->get_vocabulary_size() > 0;
 }
 
 void TextGenerationDataset::set_vocabulary(const vector<string>& new_vocabulary)
 {
-    vocabulary = new_vocabulary;
-    update_vocabulary_map();
+    tokenizer->set_vocabulary(new_vocabulary);
+    fixed_vocabulary = true;
 }
 
-void TextGenerationDataset::read_file(string& buffer) const
+void TextGenerationDataset::configure(Index samples_number)
 {
-    ifstream file(data_path, ios::binary | ios::ate);
+    input_shape = {sequence_length};
+    target_shape = {sequence_length};
+    decoder_shape.clear();
 
-    throw_if(!file.is_open(),
-             format("Cannot open file {}", data_path.string()));
+    variables.assign(2, Variable());
 
-    const auto file_size = file.tellg();
-    throw_if(file_size < 0,
-             format("Cannot determine file size for {}", data_path.string()));
+    Variable& input_variable = variables[0];
+    input_variable.name = "input_sequence";
+    input_variable.role = VariableRole::Input;
+    input_variable.type = VariableType::Numeric;
+    input_variable.features = sequence_length;
+    input_variable.categories = tokenizer->get_vocabulary();
 
-    file.seekg(0);
+    Variable& target_variable = variables[1];
+    target_variable.name = "target_sequence";
+    target_variable.role = VariableRole::Target;
+    target_variable.type = VariableType::Numeric;
+    target_variable.features = sequence_length;
 
-    buffer.assign(static_cast<size_t>(file_size), '\0');
-    if (file_size > 0)
-        file.read(buffer.data(), file_size);
+    sample_roles.resize(size_t(samples_number));
+}
 
-    throw_if(!file,
-             format("Cannot read file {}", data_path.string()));
+bool TextGenerationDataset::load_cache_metadata(const filesystem::path& metadata_path,
+                                                uint64_t expected_fingerprint)
+{
+    ifstream file(metadata_path, ios::binary);
+    if (!file) return false;
+
+    array<char, 8> magic{};
+    uint32_t version = 0;
+    int64_t stored_sequence_length = 0;
+    int64_t samples_number = 0;
+    uint64_t fingerprint = 0;
+    uint64_t vocabulary_size = 0;
+
+    if (!file.read(magic.data(), magic.size())
+        || !read_binary_value(file, version)
+        || !read_binary_value(file, stored_sequence_length)
+        || !read_binary_value(file, samples_number)
+        || !read_binary_value(file, fingerprint)
+        || !read_binary_value(file, vocabulary_size)
+        || magic != TEXT_CACHE_MAGIC
+        || version != TEXT_CACHE_VERSION
+        || stored_sequence_length != sequence_length
+        || samples_number <= 0
+        || fingerprint != expected_fingerprint
+        || vocabulary_size > uint64_t(numeric_limits<Index>::max()))
+        return false;
+
+    vector<string> cached_vocabulary(static_cast<size_t>(vocabulary_size));
+    for (string& token : cached_vocabulary)
+        if (!read_binary_string(file, token)) return false;
+
+    if (fixed_vocabulary)
+    {
+        if (cached_vocabulary != tokenizer->get_vocabulary()) return false;
+    }
+    else
+        tokenizer->set_vocabulary(cached_vocabulary);
+
+    const uintmax_t expected_bytes =
+        uintmax_t(samples_number) * uintmax_t(sequence_length + 1) * sizeof(int32_t);
+    error_code error;
+    if (filesystem::file_size(cache_path, error) != expected_bytes || error)
+        return false;
+
+    configure(Index(samples_number));
+    cache_reader.open(cache_path);
+    return true;
+}
+
+void TextGenerationDataset::save_cache_metadata(const filesystem::path& metadata_path,
+                                                uint64_t fingerprint,
+                                                Index samples_number) const
+{
+    FileWriter writer;
+    writer.open(metadata_path.string() + ".tmp");
+
+    writer.write(TEXT_CACHE_MAGIC.data(), TEXT_CACHE_MAGIC.size());
+    write_binary_value(writer, TEXT_CACHE_VERSION);
+    write_binary_value(writer, int64_t(sequence_length));
+    write_binary_value(writer, int64_t(samples_number));
+    write_binary_value(writer, fingerprint);
+
+    const vector<string>& vocabulary = tokenizer->get_vocabulary();
+    write_binary_value(writer, uint64_t(vocabulary.size()));
+    for (const string& token : vocabulary)
+        write_binary_string(writer, token);
+
+    writer.finish_with_rename(metadata_path);
 }
 
 vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& corpus_tokens) const
 {
-    const unordered_map<string_view, Index> corpus_vocabulary_map = [this]
+    const vector<string>& vocabulary = tokenizer->get_vocabulary();
+    const unordered_map<string_view, Index> vocabulary_views = [&vocabulary]
     {
         unordered_map<string_view, Index> map;
         map.reserve(vocabulary.size());
@@ -228,8 +289,9 @@ vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& co
     #pragma omp parallel for
     for (Index i = 0; i < tokens_number; ++i)
     {
-        const auto it = corpus_vocabulary_map.find(corpus_tokens[size_t(i)]);
-        token_indices[size_t(i)] = it != corpus_vocabulary_map.end() ? it->second : Index(UNK_INDEX);
+        const auto iterator = vocabulary_views.find(corpus_tokens[size_t(i)]);
+        token_indices[size_t(i)] =
+            iterator != vocabulary_views.end() ? iterator->second : Index(UNK_INDEX);
     }
 
     return token_indices;
@@ -275,38 +337,16 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
         return;
     }
 
-    const Index batch_size = ssize(sample_indices);
-    const Index samples_number = get_samples_number();
-    const uint64_t record_tokens = uint64_t(sequence_length + 1);
-
-    string omp_error;
-
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        try
-        {
-            const Index sample_index = sample_indices[size_t(i)];
-            throw_if(sample_index < 0 || sample_index >= samples_number,
-                     format("TextGenerationDataset {} sample index is out of range.", context));
-
-            thread_local vector<int32_t> buf;
-            buf.resize(size_t(sequence_length));
-            cache_reader.read_at(buf.data(), size_t(sequence_length) * sizeof(int32_t),
-                                 (uint64_t(sample_index) * record_tokens + uint64_t(record_offset)) * sizeof(int32_t));
-
-            for (Index j = 0; j < sequence_length; ++j)
-                output_data[i * sequence_length + j] = float(buf[size_t(j)]);
-        }
-        catch (const exception& e)
-        {
-            #pragma omp critical
-            { omp_error = e.what(); }
-        }
-    }
-
-    throw_if(!omp_error.empty(),
-             omp_error);
+    read_int32_batch(cache_reader,
+                     sample_indices,
+                     get_samples_number(),
+                     uint64_t(sequence_length + 1),
+                     record_offset,
+                     sequence_length,
+                     output_data,
+                     sequence_length,
+                     0,
+                     format("TextGenerationDataset {}", context));
 }
 
 void TextGenerationDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -329,32 +369,22 @@ void TextGenerationDataset::fill_targets(const vector<Index>& sample_indices,
 
 void TextGenerationDataset::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("Dataset");
-
-    printer.open_element("DataSource");
-
-    write_json(printer, {
+    write_json_header(printer, {
         {"FileType", "txt"},
         {"Path", data_path.string()},
         {"StorageMode", get_storage_mode_string()}
     });
-    printer.close_element();
-
-    variables_to_JSON(printer);
-
-    samples_to_JSON(printer);
 
     preview_data_to_JSON(printer);
 
     write_json(printer, {
-        {"Vocabulary", vector_to_string(vocabulary, " ")},
-        {"SequenceLength", to_string(sequence_length)},
-        {"MaximumVocabularySize", to_string(maximum_vocabulary_size)},
-        {"MinimumTokenFrequency", to_string(minimum_token_frequency)},
-        {"Display", to_string(display)}
+        {"Vocabulary", json_array(tokenizer->get_vocabulary())},
+        {"SequenceLength", sequence_length},
+        {"MaximumVocabularySize", maximum_vocabulary_size},
+        {"MinimumTokenFrequency", minimum_token_frequency}
     });
 
-    printer.close_element();
+    write_json_footer(printer);
 }
 
 void TextGenerationDataset::from_JSON(const JsonDocument& data_set_document)
@@ -374,6 +404,9 @@ void TextGenerationDataset::from_JSON(const JsonDocument& data_set_document)
     minimum_token_frequency = Index(read_json_index(data_set_element, "MinimumTokenFrequency"));
 
     set_display(read_json_bool(data_set_element, "Display"));
+
+    if (data_set_element->has("Vocabulary"))
+        set_vocabulary(read_json_strings(data_set_element, "Vocabulary"));
 
     read_txt();
 }

@@ -7,8 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "tabular_dataset.h"
 #include "time_series_dataset.h"
 #include "neural_network.h"
+#include "scaling_layer.h"
 #include "inputs_selection.h"
 
 namespace opennn
@@ -27,12 +29,12 @@ void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_netw
         ? Shape{ time_series_dataset->get_past_time_steps(), input_features_number }
         : Shape{ input_features_number };
     neural_network->set_input_shape(input_shape);
-    dataset->set_shape("Input", input_shape);
+    dataset->set_shape(VariableRole::Input, input_shape);
 
     if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        const vector<string> base_names = dataset->get_variable_names("Input");
+        const vector<string> base_names = dataset->get_variable_names(VariableRole::Input);
 
         vector<string> final_feature_names;
         final_feature_names.reserve(base_names.size() * past_time_steps);
@@ -45,10 +47,27 @@ void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_netw
     }
     else
     {
-        neural_network->set_input_variables(dataset->get_variables("Input"));
+        neural_network->set_input_variables(dataset->get_variables(VariableRole::Input));
     }
 
     neural_network->compile();
+}
+
+InputsSelection::InputScaling InputsSelection::capture_input_scaling(Dataset* dataset)
+{
+    auto* tabular_dataset = dynamic_cast<TabularDataset*>(dataset);
+
+    return {tabular_dataset ? tabular_dataset->get_feature_scalers("Input") : vector<string>{},
+            tabular_dataset ? tabular_dataset->calculate_feature_descriptives("Input") : vector<Descriptives>{}};
+}
+
+void InputsSelection::apply_input_scaling(NeuralNetwork* neural_network, const InputScaling& input_scaling)
+{
+    if (auto* scaling_layer = dynamic_cast<Scaling*>(neural_network->get_first(LayerType::Scaling)))
+    {
+        scaling_layer->set_descriptives(input_scaling.descriptives);
+        scaling_layer->set_scalers(input_scaling.scalers);
+    }
 }
 
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)

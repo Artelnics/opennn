@@ -90,7 +90,7 @@ void* allocate_cuda(Index byte_count)
 {
 #ifdef OPENNN_HAS_CUDA
     throw_if(cuda_allocation_growth_forbidden(),
-             format("CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count));
+             "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
     void* device_pointer = nullptr;
     CHECK_CUDA(cudaMalloc(&device_pointer, static_cast<size_t>(byte_count)));
     return device_pointer;
@@ -143,9 +143,9 @@ bool graph_workspace_override(GraphWorkspaceKind kind,
     const auto [workspace_pointer, capacity] =
         workspace_view(*active_graph_workspace_views, kind);
     throw_if(minimum_bytes > capacity,
-             format("CUDA graph workspace needs {} bytes, but the stable "
+             "CUDA graph workspace needs {} bytes, but the stable "
                     "capture buffer has {} bytes.",
-                    minimum_bytes, capacity));
+                    minimum_bytes, capacity);
 
     pointer = workspace_pointer;
     return true;

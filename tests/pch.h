@@ -1,6 +1,3 @@
-//
-// pch.h
-//
 
 #ifndef PCH_TESTS_H
 #define PCH_TESTS_H

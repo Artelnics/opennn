@@ -50,7 +50,7 @@ void Addition::read_JSON_body(const Json* addition_layer_element)
 
 void Addition::write_JSON_body(JsonWriter& printer) const
 {
-    add_json_field(printer, "InputsNumber", to_string(inputs_number));
+    add_json_field(printer, "InputsNumber", inputs_number);
 }
 
 REGISTER(Layer, Addition, "Addition")

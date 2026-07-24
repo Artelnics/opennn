@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "error_functions.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "loss.h"
@@ -52,17 +53,9 @@ static void update_parameters_cuda(NeuralNetwork* neural_network,
 
 #else
 
-static void update_parameters_cuda(NeuralNetwork*,
-                                   BackPropagation&,
-                                   OptimizerData&,
-                                   float,
-                                   float,
-                                   float,
-                                   float,
-                                   float)
-{
-    throw runtime_error("update_parameters_cuda requires CUDA support.");
-}
+OPENNN_CUDA_STUB(void, update_parameters_cuda,
+                 (NeuralNetwork*, BackPropagation&, OptimizerData&,
+                  float, float, float, float, float))
 
 #endif
 
@@ -257,19 +250,17 @@ void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation& bac
 }
 #else
 void AdaptiveMomentEstimation::update_parameters_capturable(BackPropagation&, OptimizerData&) const
-{
-    throw runtime_error("update_parameters_capturable requires CUDA support.");
-}
+OPENNN_CUDA_STUB_BODY(update_parameters_capturable)
 #endif
 
 void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("AdaptiveMomentEstimation");
 
-    add_json_field(printer, "BatchSize", to_string(batch_size));
-    add_json_field(printer, "LearningRate", to_string(learning_rate));
-    add_json_field(printer, "Beta1", to_string(beta_1));
-    add_json_field(printer, "Beta2", to_string(beta_2));
+    add_json_field(printer, "BatchSize", batch_size);
+    add_json_field(printer, "LearningRate", learning_rate);
+    add_json_field(printer, "Beta1", beta_1);
+    add_json_field(printer, "Beta2", beta_2);
     write_common_json(printer);
 
     printer.close_element();

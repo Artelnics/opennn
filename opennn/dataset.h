@@ -40,7 +40,7 @@ inline const string& sample_role_to_string(SampleRole role)
     return sample_role_map().to_string(role);
 }
 
-inline SampleRole string_to_sample_role(const string& name)
+inline SampleRole string_to_sample_role(string_view name)
 {
     if (name == "0") return SampleRole::Training;
     if (name == "1") return SampleRole::Validation;
@@ -63,58 +63,63 @@ public:
 
     virtual Index get_samples_number() const noexcept { return ssize(sample_roles); }
 
-    Index get_samples_number(const string&) const;
+    Index get_samples_number(SampleRole) const;
+    Index get_samples_number(string_view role) const { return get_samples_number(string_to_sample_role(role)); }
 
     Index get_used_samples_number() const;
 
-    vector<Index> get_sample_indices(const string&) const;
+    vector<Index> get_sample_indices(SampleRole) const;
+    vector<Index> get_sample_indices(string_view role) const { return get_sample_indices(string_to_sample_role(role)); }
 
     vector<Index> get_used_sample_indices() const;
 
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
-    // --- Transient fold split (k-fold CV for input selection) --------------------------------
-    // Overrides which samples count as Training/Validation for the lifetime of a FoldScope,
-    // WITHOUT mutating the user's persistent roles (sample_roles). Every training-time consumer
-    // (optimizers, scaling, loss) reads the split through get_sample_indices / get_samples_number,
-    // so they follow the fold automatically. Testing/None samples are untouched. Never serialized.
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
     void clear_fold_split() noexcept { fold_split_active = false; }
     bool has_fold_split() const noexcept { return fold_split_active; }
 
     Index get_variables_number() const noexcept { return variables.size(); }
-    Index get_variables_number(const string&) const;
+    Index get_variables_number(VariableRole) const;
+    Index get_variables_number(string_view role) const { return get_variables_number(string_to_variable_role(role)); }
     Index get_used_variables_number() const;
 
     const vector<Variable>& get_variables() const noexcept { return variables; }
-    vector<Variable> get_variables(const string&) const;
+    vector<Variable> get_variables(VariableRole) const;
+    vector<Variable> get_variables(string_view role) const { return get_variables(string_to_variable_role(role)); }
 
     Index get_variable_index(const string&) const;
     Index get_variable_index(const Index) const;
 
-    vector<Index> get_variable_indices(const string&) const;
+    vector<Index> get_variable_indices(VariableRole) const;
+    vector<Index> get_variable_indices(string_view role) const { return get_variable_indices(string_to_variable_role(role)); }
     vector<Index> get_used_variables_indices() const;
 
     vector<string> get_variable_names() const;
-    vector<string> get_variable_names(const string&) const;
+    vector<string> get_variable_names(VariableRole) const;
+    vector<string> get_variable_names(string_view role) const { return get_variable_names(string_to_variable_role(role)); }
 
     VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
     vector<VariableType> get_variable_types(const vector<Index>&) const;
     Index get_features_number() const;
-    Index get_features_number(const string&) const;
+    Index get_features_number(VariableRole) const;
+    Index get_features_number(string_view role) const { return get_features_number(string_to_variable_role(role)); }
 
     vector<string> get_feature_names() const;
-    vector<string> get_feature_names(const string&) const;
+    vector<string> get_feature_names(VariableRole) const;
+    vector<string> get_feature_names(string_view role) const { return get_feature_names(string_to_variable_role(role)); }
 
     vector<vector<Index>> get_feature_indices() const;
     vector<Index> get_feature_indices(const Index) const;
-    vector<Index> get_feature_indices(const string&) const;
+    vector<Index> get_feature_indices(VariableRole) const;
+    vector<Index> get_feature_indices(string_view role) const { return get_feature_indices(string_to_variable_role(role)); }
     vector<Index> get_used_feature_indices() const;
 
     vector<Index> get_feature_dimensions() const;
 
-    Shape get_shape(const string&) const;
+    Shape get_shape(VariableRole) const;
+    Shape get_shape(string_view role) const { return get_shape(string_to_variable_role(role)); }
 
     void get_batches(const vector<Index>&, Index, bool, vector<vector<Index>>&) const;
 
@@ -122,11 +127,6 @@ public:
 
     const filesystem::path& get_data_path() const noexcept { return data_path; }
 
-    // Where the dataset may write its derived binary caches (tokens.bin,
-    // images.bin...). Empty (default) = next to the source data, standalone
-    // behaviour. A host application can point it at its own working directory
-    // so user data folders are never polluted with cache artifacts. Runtime
-    // configuration only: not serialized.
     const filesystem::path& get_cache_directory() const noexcept { return cache_directory; }
     void set_cache_directory(const filesystem::path& new_cache_directory) { cache_directory = new_cache_directory; }
 
@@ -159,12 +159,18 @@ public:
     Index get_data_columns() const noexcept { return data.cols(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
 
-    void set_sample_roles(const string&);
+    void set_sample_roles(SampleRole);
+    void set_sample_roles(string_view role) { set_sample_roles(string_to_sample_role(role)); }
 
-    void set_sample_role(const Index, const string&);
+    void set_sample_role(Index, SampleRole);
+    void set_sample_role(Index index, string_view role) { set_sample_role(index, string_to_sample_role(role)); }
 
     void set_sample_roles(const vector<string>&);
-    void set_sample_roles(const vector<Index>&, const string&);
+    void set_sample_roles(const vector<Index>&, SampleRole);
+    void set_sample_roles(const vector<Index>& indices, string_view role)
+    {
+        set_sample_roles(indices, string_to_sample_role(role));
+    }
     void set_variables(const vector<Variable>&);
 
     void set_default_variable_names();
@@ -174,8 +180,13 @@ public:
     void set_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_variables_unused();
 
-    void set_variable_role(const Index, const string&);
-    void set_variable_role(const string&, const string&);
+    void set_variable_role(Index, VariableRole);
+    void set_variable_role(Index index, string_view role) { set_variable_role(index, string_to_variable_role(role)); }
+    void set_variable_role(const string&, VariableRole);
+    void set_variable_role(const string& name, string_view role)
+    {
+        set_variable_role(name, string_to_variable_role(role));
+    }
 
     void set_variable_type(const Index, const VariableType&);
     void set_variable_type(const string&, const VariableType&);
@@ -185,10 +196,12 @@ public:
 
     void set_variables_number(const Index);
 
-    void set_variable_roles(const string&);
+    void set_variable_roles(VariableRole);
+    void set_variable_roles(string_view role) { set_variable_roles(string_to_variable_role(role)); }
 
-    void set_shape(const string&, const Shape&);
-    virtual void resize_input_shape(Index input_features_count) { set_shape("Input", {input_features_count}); }
+    void set_shape(VariableRole, const Shape&);
+    void set_shape(string_view role, const Shape& shape) { set_shape(string_to_variable_role(role), shape); }
+    virtual void resize_input_shape(Index input_features_count) { set_shape(VariableRole::Input, {input_features_count}); }
     virtual void set_data_path(const filesystem::path&);
     virtual void set_storage_mode(StorageMode);
     virtual void set_storage_mode(const string&);
@@ -314,11 +327,9 @@ protected:
     vector<SampleRole> sample_roles;
     vector<string> sample_ids;
 
-    // Transient k-fold CV overlay (see set_fold_split / FoldScope). Never serialized.
     bool fold_split_active = false;
     vector<SampleRole> fold_split_roles;
 
-    // The roles seen by sample queries: the fold overlay when active, else the user's roles.
     const vector<SampleRole>& active_sample_roles() const noexcept
     { return fold_split_active ? fold_split_roles : sample_roles; }
 
@@ -326,7 +337,7 @@ protected:
 
     filesystem::path data_path;
 
-    filesystem::path cache_directory;   // empty = beside the source data
+    filesystem::path cache_directory;
 
     Separator separator = Separator::Comma;
     bool has_header = false;
@@ -342,11 +353,19 @@ protected:
 
     void variables_from_JSON(const Json*);
     void preview_data_from_JSON(const Json*);
+
+    virtual void missing_values_from_JSON(const Json*) {}
+
+    // Common to_JSON skeleton: "Dataset" + "DataSource" fields + Variables + Samples.
+    void write_json_header(JsonWriter&, initializer_list<pair<const char*, Json>>) const;
+
+    // Display field + closing "Dataset".
+    void write_json_footer(JsonWriter&) const;
+
+    // Optional Variables/Samples/MissingValues/PreviewData blocks.
+    void read_json_blocks(const Json*);
 };
 
-// RAII scope that installs a transient train/validation fold split on a dataset and restores the
-// user's persistent roles on destruction (exception-safe). Used by k-fold CV in input selection:
-// the persistent sample_roles are never mutated, so serialization/UI keep the user's assignment.
 struct FoldScope
 {
     Dataset& dataset;

@@ -15,9 +15,10 @@
 #include <string>
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <process.h>
-#include <psapi.h>
 #include <windows.h>
+#include <psapi.h>
 #define popen _popen
 #define pclose _pclose
 static int current_pid() { return _getpid(); }
