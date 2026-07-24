@@ -14,6 +14,7 @@
 
 // OpenNN includes
 
+#include "opennn/chat.h"
 #include "opennn/training_strategy.h"
 #include "opennn/language_dataset.h"
 #include "opennn/standard_networks.h"
@@ -96,11 +97,13 @@ int main()
         // The vocabularies travel with the network; inference needs no dataset.
         transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
+        ChatSession session(transformer);
 
-        // Inference requires GPU (decode is GPU-only).
+        // Inference requires GPU.
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {
-            const string prediction = transformer.decode(test_sources[i]);
+            const string prediction =
+                session.send(test_sources[i]).content;
 
             cout << "Sample " << i << endl;
             cout << "  Source:    " << test_sources[i] << endl;

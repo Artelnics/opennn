@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <functional>
-
 #include "neural_network.h"
 #include "pooling_layer.h"
 
@@ -137,26 +135,6 @@ public:
     const TokenizerOperator* get_tokenizer() const;
 };
 
-struct SamplingConfig
-{
-    float temperature = 1.0f;
-    Index top_k = 0;
-    float top_p = 1.0f;
-    float repetition_penalty = 1.0f;
-    Index maximum_tokens = 0;
-};
-
-using TokenCallback = function<void(const string&)>;
-
-Index sample_token(VectorR& probabilities,
-                   const SamplingConfig& sampling_config,
-                   const vector<Index>& history);
-
-// raw = the callback already receives detokenized text (subword tokenizers emit
-// text deltas with spacing baked in); otherwise a space is inserted between
-// word-level tokens except before punctuation.
-TokenCallback stream_token_callback(ostream& out, bool& first_token, bool raw);
-
 class Transformer final : public NeuralNetwork
 {
 public:
@@ -192,16 +170,6 @@ public:
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;
 
-    string decode(const string&);
-    string decode(const string&, const SamplingConfig&);
-    string decode(const string&, const TokenCallback&);
-    string decode(const string&, const SamplingConfig&, const TokenCallback&);
-
-    string decode_to_stream(const string&, ostream&);
-    string decode_to_stream(const string&, const SamplingConfig&, ostream&);
-
-    void chat();
-    void chat(const SamplingConfig&);
 };
 
 class TextGenerationNetwork final : public NeuralNetwork
@@ -238,16 +206,6 @@ public:
     const TokenizerOperator* get_tokenizer() const;
     const vector<string>& get_vocabulary() const;
 
-    string generate(const string&);
-    string generate(const string&, const SamplingConfig&);
-    string generate(const string&, const TokenCallback&);
-    string generate(const string&, const SamplingConfig&, const TokenCallback&);
-
-    string generate_to_stream(const string&, ostream&);
-    string generate_to_stream(const string&, const SamplingConfig&, ostream&);
-
-    void chat();
-    void chat(const SamplingConfig&);
 };
 
 // Qwen3 / LLaMA-style decoder-only language model: token embedding (position from

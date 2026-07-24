@@ -17,6 +17,7 @@
 #include "opennn/device_backend.h"
 #include "opennn/memory_debug.h"
 #include "opennn/neural_network.h"
+#include "opennn/chat.h"
 #include "opennn/standard_networks.h"
 
 #include "opennn/tabular_dataset.h"
@@ -360,9 +361,10 @@ int main(int argc, char** argv)
                  << "\n-> loading for inference; the corpus is never read." << endl;
 
             Transformer transformer(model_path);
+            ChatSession session(transformer);
 
             cout << "\n================ EN -> DE CHAT ================" << endl;
-            transformer.chat();
+            session.chat();
 
             return 0;
         }
@@ -439,10 +441,11 @@ int main(int argc, char** argv)
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
 
-        // Inference (decode is GPU-only): interactive EN->DE chat.
+        // Inference is GPU-only: interactive EN->DE chat.
         // Type an English sentence and press Enter; empty line or Ctrl+D exits.
         cout << "\n================ EN -> DE CHAT ================" << endl;
-        transformer.chat();
+        ChatSession session(transformer);
+        session.chat();
 
         return 0;
 #endif
@@ -576,9 +579,10 @@ int main(int argc, char** argv)
                  << "\n-> loading for chat; the corpus is never read." << endl;
 
             Transformer transformer(model_path);
+            ChatSession session(transformer);
 
             cout << "\n================ CHAT ================" << endl;
-            transformer.chat();
+            session.chat();
 
             return 0;
         }
@@ -662,7 +666,8 @@ int main(int argc, char** argv)
 
         // Interactive chat: type a prompt, press Enter; empty line / Ctrl+D exits.
         cout << "\n================ CHAT ================" << endl;
-        transformer.chat();
+        ChatSession session(transformer);
+        session.chat();
 
         return 0;
 #endif
@@ -762,6 +767,9 @@ int main(int argc, char** argv)
             sampling.temperature = 0.8f;
             sampling.top_k = 40;
             sampling.maximum_tokens = 40;
+            ChatOptions options;
+            options.sampling = sampling;
+            ChatSession session(network);
 
             cout << "\n================ GENERATED TEXT ================" << endl;
 
@@ -770,12 +778,13 @@ int main(int argc, char** argv)
                                          "world war ii began"})
             {
                 cout << "Prompt:    " << prompt << endl;
-                cout << "Generated: " << network.generate(prompt, sampling) << endl;
+                cout << "Generated: "
+                     << session.send(prompt, options).content << endl;
                 cout << endl;
             }
 
             cout << "================ GPT CHAT ================" << endl;
-            network.chat(sampling);
+            session.chat(options);
 
             return 0;
         }
@@ -870,6 +879,9 @@ int main(int argc, char** argv)
         sampling.temperature = 0.8f;
         sampling.top_k = 40;
         sampling.maximum_tokens = 40;
+        ChatOptions options;
+        options.sampling = sampling;
+        ChatSession session(network);
 
         cout << "\n================ GENERATED TEXT ================" << endl;
 
@@ -883,13 +895,14 @@ int main(int argc, char** argv)
         for (const string& prompt : prompts)
         {
             cout << "Prompt:    " << prompt << endl;
-            cout << "Generated: " << network.generate(prompt, sampling) << endl;
+            cout << "Generated: "
+                 << session.send(prompt, options).content << endl;
             cout << endl;
         }
 
         // Interactive: type a prompt, press Enter; empty line / Ctrl+D exits.
         cout << "================ GPT CHAT ================" << endl;
-        network.chat(sampling);
+        session.chat(options);
 
         return 0;
 #endif

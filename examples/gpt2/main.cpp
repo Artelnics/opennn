@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 
+#include "opennn/chat.h"
 #include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_operator.h"
@@ -93,14 +94,18 @@ int main(int argc, char* argv[])
         sampling.temperature = temperature;
         sampling.top_k = top_k;
 
+        ChatSession session(model);
+        ChatOptions options;
+        options.sampling = sampling;
+
         // Interactive by default; a prompt argument switches to one-shot generation.
         const bool interactive = prompt.empty() || prompt == "--interactive" || prompt == "-i";
 
         if (interactive)
-            model.chat(sampling);
+            session.chat(options);
         else
         {
-            cout << model.generate(prompt, sampling) << endl;
+            cout << session.send(prompt, options).content << endl;
             cout << "Good bye!" << endl;
         }
         return 0;

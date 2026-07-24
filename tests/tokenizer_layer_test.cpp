@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "opennn/chat.h"
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_layer.h"
 #include "opennn/language_dataset.h"
@@ -241,7 +242,7 @@ TEST(TransformerInference, NetworkVocabularySetters)
 }
 
 
-TEST(TransformerInference, DecodeRequiresGpu)
+TEST(TransformerInference, SequenceToSequenceSessionRequiresGpu)
 {
     Transformer transformer(5, 4, 12, 14, 8, 2, 16, 1);
 
@@ -250,11 +251,15 @@ TEST(TransformerInference, DecodeRequiresGpu)
 
     EXPECT_FALSE(transformer.is_gpu());
 
-    EXPECT_THROW(transformer.decode("hello world"), runtime_error);
+    EXPECT_THROW(
+        {
+            ChatSession session(transformer);
+        },
+        runtime_error);
 }
 
 
-TEST(TransformerInference, GenerateRequiresGpu)
+TEST(TransformerInference, DecoderOnlySessionRequiresGpu)
 {
     TextGenerationNetwork network(6, 10, 8, 2, 16, 1, true);
 
@@ -262,7 +267,11 @@ TEST(TransformerInference, GenerateRequiresGpu)
 
     EXPECT_FALSE(network.is_gpu());
 
-    EXPECT_THROW(network.generate("alpha"), runtime_error);
+    EXPECT_THROW(
+        {
+            ChatSession session(network);
+        },
+        runtime_error);
 }
 
 
