@@ -1199,7 +1199,11 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
     {
         const Variable& variable = variables[i];
 
-        if (variable.role == VariableRole::None)
+        // Unused variables (role None, and the Time index in time-series datasets)
+        // are excluded from used_variables_number, so they must NOT advance
+        // used_feature_index — otherwise the per-used-variable results vector
+        // (return_values[1], sized used_variables_number) is written out of bounds.
+        if (!variable.is_used())
         {
             feature_index += variable.get_feature_count();
             continue;
