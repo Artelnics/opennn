@@ -2253,16 +2253,19 @@ static void embedding_lookup_forward_gpu(const TensorView& indices, const Tensor
                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
                                   bool scale_embedding, bool add_positional_encoding)
 {
-    output.dispatch([&](auto tag) {
-        using T = decltype(tag);
-        embedding_forward_cuda<T>(
-            output.size(),
-            indices.as<float>(),
-            weights.as<float>(),
-            add_positional_encoding ? positional_encoding.as<float>() : nullptr,
-            output.as<T>(),
-            to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
-            scale_embedding);
+    output.dispatch([&](auto out_tag) {
+        using T = decltype(out_tag);
+        weights.dispatch([&](auto weight_tag) {
+            using TW = decltype(weight_tag);
+            embedding_forward_cuda<TW, T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<TW>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
     });
 }
 

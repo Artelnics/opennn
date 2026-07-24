@@ -48,7 +48,10 @@ public:
     bool get_learned_positional() const { return embedding_lookup.positional_trainable; }
 
     void set_export_valid_lengths(bool enabled) { embedding_lookup.export_valid_lengths = enabled; }
+    void set_weights_follow_compute_dtype(bool enabled) { embedding_lookup.weights_follow_compute_dtype = enabled; }
     void set_dropout_rate(float rate) { dropout.set_rate(rate); }
+
+    void on_compute_dtype_changed() override { embedding_lookup.compute_dtype = get_compute_dtype(); }
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

@@ -24,6 +24,11 @@ struct EmbeddingLookupOperator : Operator
     bool  positional_trainable    = false;
     bool  export_valid_lengths    = false;
 
+    // Store the table in compute_dtype instead of always-FP32 (opt-in: on a
+    // BF16 inference network this halves the table and makes the mirror copy
+    // the live one). Default off — training networks keep the FP32 table.
+    bool weights_follow_compute_dtype = false;
+
     TensorView weights;
     TensorView positional_encoding;
 

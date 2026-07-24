@@ -61,14 +61,10 @@ struct GroupedQueryAttentionOperator : Operator
     void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
                      const int* position_device);
 
-    // Scratch + RoPE tables, sized to the compiled max sequence.
-    // d_attn_partials is the fp32 split-KV scratch of the decode attention kernel;
-    // d_qkv holds fused-projection rows [q | k | v].
-    mutable Buffer d_cos, d_sin, d_q, d_k, d_v, d_qr, d_kr, d_attn, d_attn_partials, d_qkv;
-    mutable Index gpu_sequence = -1;
-    mutable Type gpu_dtype = Type::FP32;
-
-    // K/V cache [max_seq, kv_dim]: post-RoPE keys, raw values.
+    // Per-pass scratch and RoPE tables live in a pool shared by every GQA layer
+    // (grouped_query_attention_operator.cpp); only the K/V cache — the one
+    // piece of cross-pass state — is per-layer. [max_seq, kv_dim]: post-RoPE
+    // keys, raw values.
     mutable Buffer kv_key, kv_value;
     mutable Index cache_capacity = 0;
     mutable Type cache_dtype = Type::FP32;

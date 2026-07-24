@@ -25,7 +25,8 @@ void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_
 
 vector<TensorSpec> EmbeddingLookupOperator::parameter_specs() const
 {
-    vector<TensorSpec> specs = {{{vocabulary_size, embedding_dimension}, Type::FP32}};
+    vector<TensorSpec> specs = {{{vocabulary_size, embedding_dimension},
+                                 weights_follow_compute_dtype ? compute_dtype : Type::FP32}};
     if (positional_trainable)
         specs.push_back({{sequence_length, embedding_dimension}, Type::FP32});
     return specs;

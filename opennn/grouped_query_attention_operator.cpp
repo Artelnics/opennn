@@ -206,6 +206,35 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
 #ifdef OPENNN_HAS_CUDA
 
+namespace
+{
+
+// Per-pass scratch, RoPE tables and decode buffers carry no state across
+// operator invocations and the layers run serially, so every GQA layer shares
+// one per-thread pool instead of 36 private copies (~1.1 GB on Qwen3-4B).
+// Follows the device_backend shared-workspace precedent, with the same caveat:
+// one GQA model shape per thread at a time — a rebuild moves the addresses a
+// captured graph baked in. K/V caches stay per-layer (the only cross-pass state).
+struct GroupedAttentionScratch
+{
+    Buffer cos{Device::CUDA}, sin{Device::CUDA};
+    Buffer q{Device::CUDA}, k{Device::CUDA}, v{Device::CUDA};
+    Buffer qr{Device::CUDA}, kr{Device::CUDA}, attn{Device::CUDA};
+    Buffer qkv{Device::CUDA}, partials{Device::CUDA};
+    Index sequence = -1;
+    Index q_dim = 0, kv_dim = 0, head_dim = 0;
+    float theta = 0.0f;
+    Type dtype = Type::FP32;
+};
+
+GroupedAttentionScratch& gqa_scratch()
+{
+    thread_local GroupedAttentionScratch scratch;
+    return scratch;
+}
+
+}
+
 void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
                                                 const int* position_device)
 {
@@ -219,10 +248,12 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     const Type  act  = input.type;
     const Index elem = Index(type_bytes(act));
 
-    // Scratch, tables and cache sized to the compiled max seq; rebuilt only when
-    // that length or the dtype changes.
+    // Shared scratch and tables sized to the compiled max seq; rebuilt only when
+    // the shape, dtype or RoPE base changes.
     const Index table_len = sequence_length;
-    if (gpu_sequence != table_len || gpu_dtype != act)
+    auto& s = gqa_scratch();
+    if (s.sequence != table_len || s.dtype != act || s.q_dim != qd || s.kv_dim != kd
+        || s.head_dim != head_dim || s.theta != rope_theta)
     {
         std::vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
         { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
@@ -237,32 +268,39 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         };
         auto alloc = [&](Index n, Buffer& b) { b.resize_bytes(n * elem, Device::CUDA); };
 
-        d_cos = upload(cos_h);   // fp32
-        d_sin = upload(sin_h);   // fp32
-        alloc(table_len * qd, d_q);   alloc(table_len * kd, d_k);   alloc(table_len * kd, d_v);
-        alloc(table_len * qd, d_qr);  alloc(table_len * kd, d_kr);  alloc(table_len * qd, d_attn);
-        alloc(table_len * kd, kv_key);  alloc(table_len * kd, kv_value);
-        alloc(qd + 2 * kd, d_qkv);   // single fused-projection row (decode only)
-        d_attn_partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
-                                     * Index(sizeof(float)), Device::CUDA);
-        gpu_sequence = table_len;
-        gpu_dtype = act;
+        s.cos = upload(cos_h);   // fp32
+        s.sin = upload(sin_h);   // fp32
+        alloc(table_len * qd, s.q);   alloc(table_len * kd, s.k);   alloc(table_len * kd, s.v);
+        alloc(table_len * qd, s.qr);  alloc(table_len * kd, s.kr);  alloc(table_len * qd, s.attn);
+        alloc(qd + 2 * kd, s.qkv);   // single fused-projection row (decode only)
+        s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
+                                * Index(sizeof(float)), Device::CUDA);
+        s.sequence = table_len;
+        s.q_dim = qd; s.kv_dim = kd; s.head_dim = head_dim;
+        s.theta = rope_theta;
+        s.dtype = act;
+    }
+
+    if (cache_capacity != table_len || cache_dtype != act || kv_key.device_type != Device::CUDA)
+    {
+        kv_key.resize_bytes(table_len * kd * elem, Device::CUDA);
+        kv_value.resize_bytes(table_len * kd * elem, Device::CUDA);
         cache_capacity = table_len;
         cache_dtype = act;
     }
 
-    TensorView cos_v(d_cos.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
-    TensorView sin_v(d_sin.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
+    TensorView cos_v(s.cos.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
+    TensorView sin_v(s.sin.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
 
     if (batch == 1)   // incremental path (past == 0 prefill; past > 0 decode)
     {
         const Index total = past + seq;
         TensorView x_b(input.data,  {1, seq, hidden}, act, Device::CUDA);
         TensorView o_b(output.data, {1, seq, hidden}, act, Device::CUDA);
-        TensorView q_v(d_q.data,  {1, seq, qd}, act, Device::CUDA);
-        TensorView k_v(d_k.data,  {1, seq, kd}, act, Device::CUDA);
-        TensorView qr_v(d_qr.data, {1, seq, qd}, act, Device::CUDA);
-        TensorView attn_v(d_attn.data, {1, seq, qd}, act, Device::CUDA);
+        TensorView q_v(s.q.data,  {1, seq, qd}, act, Device::CUDA);
+        TensorView k_v(s.k.data,  {1, seq, kd}, act, Device::CUDA);
+        TensorView qr_v(s.qr.data, {1, seq, qd}, act, Device::CUDA);
+        TensorView attn_v(s.attn.data, {1, seq, qd}, act, Device::CUDA);
 
         // raw v and post-RoPE k written into the cache at the append offset.
         char* v_at = static_cast<char*>(kv_value.data) + size_t(past) * kd * elem;
@@ -276,7 +314,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             // fused projection row, then a single kernel doing QK-Norm + RoPE +
             // cache append at *position_device, then split-KV attention whose
             // valid length also comes from the device position.
-            TensorView qkv_row(d_qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
             tied_lm_head_forward(x_b, qkv_w, qkv_row);
 
@@ -287,7 +325,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
             grouped_attention_forward(qr_v, key_cache, val_cache, attn_v, q_heads, kv_heads, head_dim,
                                       true, scale, past,
-                                      static_cast<float*>(d_attn_partials.data), position_device);
+                                      static_cast<float*>(s.partials.data), position_device);
 
             tied_lm_head_forward(attn_v, o_proj, o_b);
             return;
@@ -297,13 +335,13 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         {
             // One projection for the whole [q | k | v] row; the single-row case
             // keeps q/k/v contiguous, so the per-piece views below just offset it.
-            TensorView qkv_row(d_qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
             tied_lm_head_forward(x_b, qkv_w, qkv_row);
 
-            q_v = TensorView(d_qkv.data, {1, 1, qd}, act, Device::CUDA);
-            k_v = TensorView(static_cast<char*>(d_qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
-            device::copy_async(v_at, static_cast<char*>(d_qkv.data) + size_t(qd + kd) * elem,
+            q_v = TensorView(s.qkv.data, {1, 1, qd}, act, Device::CUDA);
+            k_v = TensorView(static_cast<char*>(s.qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
+            device::copy_async(v_at, static_cast<char*>(s.qkv.data) + size_t(qd + kd) * elem,
                                kd * elem, device::CopyKind::DeviceToDevice, stream);
         }
         else
@@ -325,7 +363,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView key_all(kv_key.data,   {1, total, kd}, act, Device::CUDA);
         TensorView val_all(kv_value.data, {1, total, kd}, act, Device::CUDA);
         grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
-                                  static_cast<float*>(d_attn_partials.data));
+                                  static_cast<float*>(s.partials.data));
 
         tied_lm_head_forward(attn_v, o_proj, o_b);
         return;
@@ -333,12 +371,12 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
     throw_if(past != 0, "GroupedQueryAttentionOperator: KV-cache decoding requires batch size 1.");
 
-    TensorView q_v (d_q.data,    {1, seq, qd}, act, Device::CUDA);
-    TensorView k_v (d_k.data,    {1, seq, kd}, act, Device::CUDA);
-    TensorView v_v (d_v.data,    {1, seq, kd}, act, Device::CUDA);
-    TensorView qr_v(d_qr.data,   {1, seq, qd}, act, Device::CUDA);
-    TensorView kr_v(d_kr.data,   {1, seq, kd}, act, Device::CUDA);
-    TensorView attn_v(d_attn.data, {1, seq, qd}, act, Device::CUDA);
+    TensorView q_v (s.q.data,    {1, seq, qd}, act, Device::CUDA);
+    TensorView k_v (s.k.data,    {1, seq, kd}, act, Device::CUDA);
+    TensorView v_v (s.v.data,    {1, seq, kd}, act, Device::CUDA);
+    TensorView qr_v(s.qr.data,   {1, seq, qd}, act, Device::CUDA);
+    TensorView kr_v(s.kr.data,   {1, seq, kd}, act, Device::CUDA);
+    TensorView attn_v(s.attn.data, {1, seq, qd}, act, Device::CUDA);
 
     for (Index b = 0; b < batch; ++b)
     {

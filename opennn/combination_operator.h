@@ -31,6 +31,12 @@ struct CombinationOperator : Operator
     // projections sharing one input, e.g. the gated Dense).
     bool  accumulate_input_delta = false;
 
+    // The weight view aliases another layer's table stored TRANSPOSED
+    // ([out, in], forward computes y = x @ Wᵀ — e.g. an lm_head tied to the
+    // embedding). Inference-only: backward throws, and the inits leave the
+    // aliased source untouched.
+    bool  tied_transposed = false;
+
     TensorView weights;
     TensorView bias;
 

@@ -211,6 +211,14 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
 
+    // Weight tying: a layer may declare that parameter tensor `spec_index`
+    // aliases another layer's tensor `source_spec_index` (stored transposed,
+    // e.g. an output projection reusing the embedding table). link_parameters
+    // resolves the alias: the tied slot keeps its place in the master layout
+    // (its stored copy is loaded but never read) and owns no device storage.
+    struct TiedWeight { const Layer* source = nullptr; size_t spec_index = 0; size_t source_spec_index = 0; };
+    virtual TiedWeight get_tied_weight() const { return {}; }
+
     void redistribute_parameters_to_operators();
 
 protected:

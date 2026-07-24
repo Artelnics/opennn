@@ -187,8 +187,8 @@ template void scaled_diff_cuda_typed<float,         __nv_bfloat16>(const Index, 
 template void scaled_diff_cuda_typed<__nv_bfloat16, float>        (const Index, const __nv_bfloat16*, const float*, float, float*);
 template void scaled_diff_cuda_typed<__nv_bfloat16, __nv_bfloat16>(const Index, const __nv_bfloat16*, const float*, float, __nv_bfloat16*);
 
-template<typename T>
-__global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const float* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+template<typename TW, typename T>
+__global__ void embedding_forward_kernel(const int n, const float* __restrict__ inputs, const TW* __restrict__ weights, const float* __restrict__ positional_encoding, T* __restrict__ outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     const float scale = scale_embedding ? sqrtf(static_cast<float>(embedding_dimension)) : 1.0f;
 
@@ -199,7 +199,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
         const int token_id = static_cast<int>(inputs[token_index]);
 
         float val = (token_id > 0 && token_id < vocabulary_size)
-            ? scale * weights[token_id * embedding_dimension + dim_index]
+            ? scale * static_cast<float>(weights[token_id * embedding_dimension + dim_index])
             : 0.0f;
 
         if (positional_encoding != nullptr && token_id > 0)
@@ -212,20 +212,22 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
     }
 }
 
-template<typename T>
-void embedding_forward_cuda(const Index n, const float* inputs, const float* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+template<typename TW, typename T>
+void embedding_forward_cuda(const Index n, const float* inputs, const TW* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
     if (n == 0) return;
 
     const int total = checked_int(n);
 
-    OPENNN_CUDA_LAUNCH(embedding_forward_kernel<T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH((embedding_forward_kernel<TW, T><<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(
         total, inputs, weights, positional_encoding, outputs,
-        sequence_length, embedding_dimension, vocabulary_size, scale_embedding));
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding)));
 }
 
-template void embedding_forward_cuda<float>        (const Index, const float*, const float*, const float*, float*,         const int, const int, const int, const bool);
-template void embedding_forward_cuda<__nv_bfloat16>(const Index, const float*, const float*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
+template void embedding_forward_cuda<float, float>                (const Index, const float*, const float*,         const float*, float*,         const int, const int, const int, const bool);
+template void embedding_forward_cuda<float, __nv_bfloat16>        (const Index, const float*, const float*,         const float*, __nv_bfloat16*, const int, const int, const int, const bool);
+template void embedding_forward_cuda<__nv_bfloat16, float>        (const Index, const float*, const __nv_bfloat16*, const float*, float*,         const int, const int, const int, const bool);
+template void embedding_forward_cuda<__nv_bfloat16, __nv_bfloat16>(const Index, const float*, const __nv_bfloat16*, const float*, __nv_bfloat16*, const int, const int, const int, const bool);
 
 template<typename T>
 __global__ void embedding_backward_kernel(const int n, const float* __restrict__ inputs, const T* __restrict__ output_deltas, float* __restrict__ weight_gradients, float* __restrict__ positional_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)

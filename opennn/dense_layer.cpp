@@ -219,6 +219,15 @@ void Dense::set_gated(bool new_gated)
     configure_operators();
 }
 
+void Dense::set_tied_weight_source(const Layer* source)
+{
+    throw_if(source && (combination.use_bias || gated || batch_norm.active() || dropout.active()
+                        || activation_operator.activation_function != ActivationFunction::Identity),
+             "Dense::set_tied_weight_source: only a bias-free, non-gated, identity Dense can tie its weight.");
+    tied_source = source;
+    combination.tied_transposed = source != nullptr;
+}
+
 void Dense::set(const Shape& new_input_shape,
                 const Shape& new_output_shape,
                 const string& new_activation_function,

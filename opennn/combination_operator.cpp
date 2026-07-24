@@ -61,14 +61,14 @@ void CombinationOperator::link_gradients(span<const TensorView> views)
 
 void CombinationOperator::set_parameters_random()
 {
-    if (weights.empty()) return;
+    if (weights.empty() || tied_transposed) return;
     set_random_uniform(weights.as_vector());
     if (!bias.empty()) bias.setZero();
 }
 
 void CombinationOperator::set_parameters_glorot()
 {
-    if (weights.empty()) return;
+    if (weights.empty() || tied_transposed) return;
     const float limit = glorot_limit(input_features, output_features);
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) bias.setZero();
@@ -77,7 +77,7 @@ void CombinationOperator::set_parameters_glorot()
 void CombinationOperator::set_parameters_pytorch()
 {
     // nn.Linear default: weight and bias ~ U(+-1/sqrt(fan_in)).
-    if (weights.empty()) return;
+    if (weights.empty() || tied_transposed) return;
     const float limit = 1.0f / sqrt(float(input_features > 0 ? input_features : 1));
     set_random_uniform(weights.as_vector(), -limit, limit);
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
@@ -87,6 +87,12 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 {
     PROFILE_SCOPE("op:combination_fwd");
     TensorView& output = get_output(forward_propagation, layer);
+
+    if (tied_transposed)
+    {
+        tied_lm_head_forward(get_input(forward_propagation, layer), weights, output);
+        return;
+    }
 
     // GELUTanh with a separate pre-activation slot (e.g. GPT-2 FFN): fold the
     // tanh-GELU into the epilogue and keep the pre-activation for the backward.
@@ -111,6 +117,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
     PROFILE_SCOPE("op:combination_bwd");
+    throw_if(tied_transposed, "CombinationOperator: a tied projection is inference-only.");
     auto& backward_slots = back_propagation.backward_slots[layer];
 
     const TensorView& input        = get_input(forward_propagation, layer);

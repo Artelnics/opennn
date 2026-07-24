@@ -1580,8 +1580,11 @@ Qwen3::Qwen3(Index sequence_length,
 
     // Token embedding: id 0 is reserved for [PAD], so the table has vocabulary_size + 1
     // rows. No positional encoding (RoPE is applied inside the attention layer).
+    // The table follows compute_dtype: on a BF16 inference build it is stored
+    // once in BF16 instead of FP32-plus-dead-mirror.
     auto embedding = make_unique<Embedding>(Shape{vocabulary_size + 1, sequence_length}, hidden_size, "embed_tokens");
     embedding->set_scale_embedding(false);
+    embedding->set_weights_follow_compute_dtype(true);
     add_layer(move(embedding), {-1});
     Index current = get_layers_number() - 1;
 
@@ -1628,7 +1631,10 @@ Qwen3::Qwen3(Index sequence_length,
 
     add_norm("final_norm", current);
     current = get_layers_number() - 1;
-    add_linear(block, vocabulary_size + 1, "lm_head", current);   // raw logits, tied (copied) to the embedding
+    // Raw logits. The lm_head weight is truly tied to the embedding table (the
+    // .bin stores it transposed; that block is loaded but never read on device).
+    const Index lm_head = add_linear(block, vocabulary_size + 1, "lm_head", current);
+    static_cast<Dense*>(layers[size_t(lm_head)].get())->set_tied_weight_source(layers.front().get());
 
     compile();
     set_parameters_random();   // QK-Norm scales -> 1; everything is overwritten by load_parameters_binary

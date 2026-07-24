@@ -272,6 +272,11 @@ protected:
     Buffer parameters_bf16_mirror{Device::CUDA};
     Buffer parameters_fp32_inference_storage{Device::CUDA};
 
+    // True when the bf16 mirror holds only the BF16-spec, non-tied tensors
+    // (upload_parameters_bf16_inference); the full-layout training mirror,
+    // which the fused optimizer updates index by master offset, keeps false.
+    bool parameters_bf16_mirror_compact = false;
+
     Buffer states;
 
     Configuration::Resolved config;
