@@ -65,6 +65,11 @@ void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views
     v_proj = views[2];
     o_proj = views[3];
 
+    const Index elem = Index(type_bytes(q_proj.type));
+    qkv_fused = q_proj.type == k_proj.type && k_proj.type == v_proj.type
+        && static_cast<const char*>(k_proj.data) == static_cast<const char*>(q_proj.data) + q_proj.size() * elem
+        && static_cast<const char*>(v_proj.data) == static_cast<const char*>(k_proj.data) + k_proj.size() * elem;
+
     if (use_qk_norm && views.size() >= 6)
     {
         q_norm = views[4];
@@ -231,6 +236,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         alloc(table_len * qd, d_q);   alloc(table_len * kd, d_k);   alloc(table_len * kd, d_v);
         alloc(table_len * qd, d_qr);  alloc(table_len * kd, d_kr);  alloc(table_len * qd, d_attn);
         alloc(table_len * kd, kv_key);  alloc(table_len * kd, kv_value);
+        alloc(qd + 2 * kd, d_qkv);   // single fused-projection row (decode only)
         d_attn_partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
                                      * Index(sizeof(float)), Device::CUDA);
         gpu_sequence = table_len;
@@ -258,9 +264,25 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView v_slot(v_at, {1, seq, kd}, act, Device::CUDA);
         TensorView k_slot(k_at, {1, seq, kd}, act, Device::CUDA);
 
-        tied_lm_head_forward(x_b, q_proj, q_v);
-        tied_lm_head_forward(x_b, k_proj, k_v);
-        tied_lm_head_forward(x_b, v_proj, v_slot);
+        if (seq == 1 && qkv_fused)
+        {
+            // One projection for the whole [q | k | v] row; the single-row case
+            // keeps q/k/v contiguous, so the per-piece views below just offset it.
+            TensorView qkv_row(d_qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
+            tied_lm_head_forward(x_b, qkv_w, qkv_row);
+
+            q_v = TensorView(d_qkv.data, {1, 1, qd}, act, Device::CUDA);
+            k_v = TensorView(static_cast<char*>(d_qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
+            device::copy_async(v_at, static_cast<char*>(d_qkv.data) + size_t(qd + kd) * elem,
+                               kd * elem, device::CopyKind::DeviceToDevice, stream);
+        }
+        else
+        {
+            tied_lm_head_forward(x_b, q_proj, q_v);
+            tied_lm_head_forward(x_b, k_proj, k_v);
+            tied_lm_head_forward(x_b, v_proj, v_slot);
+        }
 
         if (use_qk_norm)
         {

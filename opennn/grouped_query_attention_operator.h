@@ -34,6 +34,11 @@ struct GroupedQueryAttentionOperator : Operator
 
     TensorView q_proj, k_proj, v_proj, o_proj, q_norm, k_norm;
 
+    // The q/k/v parameter blocks are usually contiguous (specs 0-2, aligned
+    // sizes); when they are, decode runs one fused [q_dim + 2*kv_dim, hidden]
+    // projection instead of three.
+    bool qkv_fused = false;
+
     void set(Index new_sequence_length, Index new_hidden,
              Index new_q_heads, Index new_kv_heads, Index new_head_dim,
              float new_rope_theta, float new_rms_epsilon, bool new_use_qk_norm);
@@ -52,8 +57,9 @@ struct GroupedQueryAttentionOperator : Operator
     void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past);
 
     // Scratch + RoPE tables, sized to the compiled max sequence.
-    // d_attn_partials is the fp32 split-KV scratch of the decode attention kernel.
-    mutable Buffer d_cos, d_sin, d_q, d_k, d_v, d_qr, d_kr, d_attn, d_attn_partials;
+    // d_attn_partials is the fp32 split-KV scratch of the decode attention kernel;
+    // d_qkv holds fused-projection rows [q | k | v].
+    mutable Buffer d_cos, d_sin, d_q, d_k, d_v, d_qr, d_kr, d_attn, d_attn_partials, d_qkv;
     mutable Index gpu_sequence = -1;
     mutable Type gpu_dtype = Type::FP32;
 
