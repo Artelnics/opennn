@@ -17,13 +17,13 @@
 //     seq         sequence length; must match the weights (default 64)
 
 #include <algorithm>
-#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "opennn/bert_dataset.h"
+#include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/training_strategy.h"
 #include "opennn/adaptive_moment_estimation.h"
@@ -45,16 +45,6 @@ constexpr Index HIDDEN_SIZE     = 768;
 constexpr Index HEADS_NUMBER    = 12;
 constexpr Index INTERMEDIATE    = 3072;
 constexpr Index LAYERS_NUMBER   = 12;
-
-void download_if_missing(const string& path, const string& url)
-{
-    if (filesystem::exists(path)) return;
-
-    cout << "Downloading " << url << " -> " << path << " ..." << endl;
-    const string command = "curl -L --fail -o \"" + path + "\" \"" + url + "\"";
-    if (system(command.c_str()) != 0 || !filesystem::exists(path))
-        throw runtime_error("Download failed. Get it manually from:\n  " + url);
-}
 
 void evaluate(NeuralNetwork& model, Dataset& dataset, Index sequence_length)
 {

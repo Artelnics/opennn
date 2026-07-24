@@ -8,6 +8,9 @@
 #include "io_utilities.h"
 #include "string_utilities.h"
 
+#include <cstdlib>
+#include <iostream>
+
 #if defined(_WIN32)
     #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
@@ -49,6 +52,28 @@ bool has_bom(string_view s)
     return s.starts_with(bom);
 }
 
+}
+
+void download_if_missing(const filesystem::path& path, const string& url)
+{
+    if (filesystem::exists(path)) return;
+
+    if (path.has_parent_path())
+        filesystem::create_directories(path.parent_path());
+
+    cout << "Downloading " << url << " -> " << path.string() << " ..." << endl;
+
+#if defined(_WIN32)
+    const string curl = "curl.exe";
+#else
+    const string curl = "curl";
+#endif
+
+    const string command =
+        curl + " -L --fail -o \"" + path.string() + "\" \"" + url + "\"";
+
+    if (system(command.c_str()) != 0 || !filesystem::exists(path))
+        throw runtime_error("Download failed. Get it manually from:\n  " + url);
 }
 
 FileMapping::~FileMapping() { reset(); }

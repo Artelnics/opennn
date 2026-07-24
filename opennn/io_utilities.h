@@ -12,6 +12,8 @@
 namespace opennn
 {
 
+void download_if_missing(const filesystem::path&, const string&);
+
 class FileReader
 {
 public:

@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 
+#include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/neural_network.h"
 #include "opennn/forward_propagation.h"
@@ -70,17 +71,6 @@ constexpr float SAMPLING_TOP_P     = 0.8f;
 const string HF_BASE = "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
 const char* const DATA_FILES[] = { "qwen3_meta.txt", "vocab.json", "merges.txt",
                                    "qwen3_special.tsv", "qwen3.bin" };
-
-
-void download_if_missing(const string& path, const string& url)
-{
-    if (std::filesystem::exists(path)) return;
-
-    cout << "Downloading " << url << " ..." << endl;
-    const string command = "curl -L --fail -o \"" + path + "\" \"" + url + "\"";
-    if (system(command.c_str()) != 0 || !std::filesystem::exists(path))
-        throw runtime_error("Download failed. Get it manually from:\n  " + url);
-}
 
 
 // An explicit argument or $QWEN3_DATA win; otherwise a few common relative
@@ -415,7 +405,6 @@ int main(int argc, char* argv[])
 
         cout << "OpenNN. Qwen3 chat." << endl;
 
-        std::filesystem::create_directories(data_dir);
         for (const char* file : DATA_FILES)
             download_if_missing(data_dir + "/" + file, HF_BASE + file);
 

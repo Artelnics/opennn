@@ -17,12 +17,12 @@
 //     temperature sampling temperature; <= 0 = greedy (default 0.8)
 //     top_k       keep only the top-k most likely tokens when sampling (default 40)
 
-#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
 
+#include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
@@ -46,16 +46,6 @@ constexpr Index INTERMEDIATE    = 3072;
 constexpr Index LAYERS_NUMBER   = 12;
 constexpr Index SEQUENCE_LENGTH = 256;
 
-void download_if_missing(const string& path, const string& url)
-{
-    if (filesystem::exists(path)) return;
-
-    cout << "Downloading " << url << " -> " << path << " ..." << endl;
-    const string command = "curl -L --fail -o \"" + path + "\" \"" + url + "\"";
-    if (system(command.c_str()) != 0 || !filesystem::exists(path))
-        throw runtime_error("Download failed. Get it manually from:\n  " + url);
-}
-
 }
 
 
@@ -76,7 +66,6 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(Device::CUDA, Type::FP32);   // weights .bin is FP32
 
-        filesystem::create_directories("../data/gpt2");
         download_if_missing(weights_path, WEIGHTS_URL);
         download_if_missing(vocab_path, VOCAB_URL);
         download_if_missing(merges_path, MERGES_URL);
