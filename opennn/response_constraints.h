@@ -9,56 +9,10 @@
 #pragma once
 
 #include "pch.h"
+#include "expression_evaluator.h"
 
 namespace opennn
 {
-
-enum class FormulaShape { Affine, Nonlinear };
-enum class FormulaScope { InputsOnly, OutputsOnly, Mixed };
-
-struct ExpressionOp
-{
-    enum class Kind
-    {
-        PushConst, PushInput, PushOutput,
-        Add, Sub, Mul, Div, Pow, Neg,
-        Sqrt, Exp, Log, Abs, Sin, Cos, Tan, Min, Max
-    };
-
-    Kind kind = Kind::PushConst;
-    Index index = 0;
-    float constant = 0.0f;
-};
-
-struct CompiledExpression
-{
-    vector<ExpressionOp> operations;
-
-    FormulaShape shape = FormulaShape::Nonlinear;
-    FormulaScope scope = FormulaScope::InputsOnly;
-
-    vector<Index> input_indices;
-    vector<Index> output_indices;
-
-    vector<pair<Index, float>> affine_input_terms;
-    vector<pair<Index, float>> affine_output_terms;
-    
-    float affine_constant = 0.0f;
-
-    vector<pair<Index, vector<ExpressionOp>>> input_gradient;
-    vector<pair<Index, vector<ExpressionOp>>> output_gradient;
-
-    float evaluate(const VectorR&, const VectorR&) const;
-};
-
-float evaluate_operations(const vector<ExpressionOp>&,
-                   const VectorR&,
-                   const VectorR&);
-
-CompiledExpression compile_formula(const string&,
-                                const vector<pair<string, Index>>&,
-                            const vector<pair<string, Index>>&);
-
 
 enum class Condition
 {
