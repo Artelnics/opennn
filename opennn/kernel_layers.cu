@@ -1299,7 +1299,8 @@ template void layernorm_backward_cuda<float>        (const int, const int, const
 template void layernorm_backward_cuda<__nv_bfloat16>(const int, const int, const __nv_bfloat16*, const __nv_bfloat16*, const float*, const float*, const float*, __nv_bfloat16*, float*, float*);
 
 // RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps), no mean subtraction, no
-// bias. `inv_rms` stores the per-row 1/rms for the backward pass.
+// bias. `inv_rms` stores the per-row 1/rms for the backward pass; null skips
+// the stash (inference-only callers).
 template<typename T>
 __global__ void rmsnorm_forward_kernel(const int N, const int D, const T* __restrict__ X, T* __restrict__ Y, float* __restrict__ inv_rms, const float* __restrict__ weight, const float eps)
 {
@@ -1340,8 +1341,8 @@ __global__ void rmsnorm_forward_kernel(const int N, const int D, const T* __rest
         {
             const float inv_D = 1.0f / static_cast<float>(D);
             const float inverse = rsqrtf(s_sq * inv_D + eps);
-            s_inv_rms    = inverse;
-            inv_rms[idx] = inverse;
+            s_inv_rms = inverse;
+            if (inv_rms) inv_rms[idx] = inverse;
         }
     }
     __syncthreads();

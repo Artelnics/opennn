@@ -2193,12 +2193,10 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
                         Index head_dim, float epsilon)
 {
     const int rows = to_int(input.size() / head_dim);
-    Buffer inv_rms(Device::CUDA);
-    inv_rms.resize_bytes(Index(rows) * Index(sizeof(float)), Device::CUDA);
     output.dispatch([&](auto tag) {
         using T = decltype(tag);
         rmsnorm_forward_cuda<T>(rows, to_int(head_dim), input.as<T>(), output.as<T>(),
-                                inv_rms.as<float>(), weight.as<float>(), epsilon);
+                                nullptr, weight.as<float>(), epsilon);
     });
 }
 

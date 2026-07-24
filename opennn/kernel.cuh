@@ -272,7 +272,8 @@ void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R
 template<typename T>
 void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, float* dGamma, float* dBeta);
 
-// RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps). `inv_rms` receives 1/rms per row.
+// RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps). `inv_rms` receives 1/rms per
+// row (needed for backward); null skips the stash.
 template<typename T>
 void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps);
 

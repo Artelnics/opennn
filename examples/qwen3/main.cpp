@@ -116,97 +116,143 @@ struct Qwen3Config
 };
 
 
-// Sample the next token from a decoded logits row. Column 0 ([PAD]) is never
-// chosen. temperature <= 0 gives greedy; otherwise temperature scaling, then top-k,
-// then top-p (nucleus). Qwen3's recommended top-k / top-p are used as constants.
-Index sample_token(const vector<float>& logits, float temperature, mt19937& rng)
+// Length of the longest prefix of `bytes` ending on a complete UTF-8 sequence.
+// A BPE token can end mid-codepoint, so up to 3 trailing bytes are held back.
+size_t utf8_complete_prefix(const string& bytes)
 {
-    const Index vocabulary = Index(logits.size());
-
-    if (temperature <= 0.0f)   // greedy
+    const size_t n = bytes.size();
+    for (size_t back = 1; back <= 3 && back <= n; ++back)
     {
-        Index best = 1; float best_value = logits[1];
-        for (Index i = 2; i < vocabulary; ++i) if (logits[size_t(i)] > best_value) { best_value = logits[size_t(i)]; best = i; }
-        return best;
+        const unsigned char c = static_cast<unsigned char>(bytes[n - back]);
+        if ((c & 0xC0) == 0x80) continue;   // continuation byte, keep scanning
+        const size_t needed = (c & 0x80) == 0x00 ? 1
+                            : (c & 0xE0) == 0xC0 ? 2
+                            : (c & 0xF0) == 0xE0 ? 3
+                            : (c & 0xF8) == 0xF0 ? 4 : 1;
+        return needed > back ? n - back : n;
     }
-
-    vector<pair<float, Index>> candidates;
-    candidates.reserve(size_t(vocabulary - 1));
-    for (Index i = 1; i < vocabulary; ++i) candidates.push_back({ logits[size_t(i)] / temperature, i });
-
-    if (SAMPLING_TOP_K > 0 && SAMPLING_TOP_K < Index(candidates.size()))
-    {
-        nth_element(candidates.begin(), candidates.begin() + SAMPLING_TOP_K, candidates.end(),
-                    [](const auto& a, const auto& b) { return a.first > b.first; });
-        candidates.resize(size_t(SAMPLING_TOP_K));
-    }
-
-    float maximum = -1.0e30f;
-    for (const auto& p : candidates) maximum = max(maximum, p.first);
-    double sum = 0.0;
-    for (auto& p : candidates) { p.first = float(exp(double(p.first - maximum))); sum += p.first; }
-    for (auto& p : candidates) p.first = float(p.first / sum);
-
-    if (SAMPLING_TOP_P > 0.0f && SAMPLING_TOP_P < 1.0f)
-    {
-        sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
-        double cumulative = 0.0; size_t keep = 0;
-        for (size_t i = 0; i < candidates.size(); ++i) { cumulative += candidates[i].first; keep = i + 1; if (cumulative >= SAMPLING_TOP_P) break; }
-        candidates.resize(keep);
-    }
-
-    vector<double> weights; weights.reserve(candidates.size());
-    for (const auto& p : candidates) weights.push_back(double(p.first));
-    discrete_distribution<size_t> distribution(weights.begin(), weights.end());
-    return candidates[distribution(rng)].second;
+    return n;
 }
 
 
-// Sample a token from the logits row at sequence position `pos` (output may be BF16).
-Index sample_row(const ForwardPropagation& forward_propagation, Index pos, Index open_vocabulary,
-                 float temperature, mt19937& rng)
+// Samples the next token from a logits row. Column 0 ([PAD]) is never chosen.
+// temperature <= 0 gives greedy; otherwise temperature scaling, then top-k, then
+// top-p (nucleus). All buffers are allocated once and reused every token.
+struct Sampler
 {
-    const TensorView output = forward_propagation.get_outputs();
-    const Index elem = Index(type_bytes(output.type));
-    const char* row = static_cast<const char*>(output.data) + size_t(pos) * open_vocabulary * elem;
-    vector<char> host_row(size_t(open_vocabulary) * size_t(elem));
+    Index vocabulary;
+    mt19937 rng;
+    vector<float> logits;
+    vector<pair<float, Index>> candidates;
+    void* pinned = nullptr;   // staging for the device logits row
+
+    Sampler(Index open_vocabulary, unsigned seed, bool gpu)
+        : vocabulary(open_vocabulary), rng(seed), logits(size_t(open_vocabulary))
+    {
+        candidates.reserve(size_t(open_vocabulary));
+#ifdef OPENNN_HAS_CUDA
+        if (gpu) pinned = device::allocate_pinned_host(vocabulary * Index(sizeof(float)));
+#else
+        (void)gpu;
+#endif
+    }
+
+    ~Sampler()
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (pinned) device::deallocate_pinned_host(pinned);
+#endif
+    }
+
+    Sampler(const Sampler&) = delete;
+    Sampler& operator=(const Sampler&) = delete;
+
+    // Reads the logits row at sequence position `pos` (FP32 or BF16) and samples.
+    Index sample_row(const ForwardPropagation& forward_propagation, Index pos, float temperature)
+    {
+        const TensorView output = forward_propagation.get_outputs();
+        const Index elem = Index(type_bytes(output.type));
+        const char* row = static_cast<const char*>(output.data) + size_t(pos) * vocabulary * elem;
 
 #ifdef OPENNN_HAS_CUDA
-    if (output.is_cuda())
-    {
-        cudaStream_t stream = device::get_compute_stream();
-        device::copy_async(host_row.data(), row, Index(host_row.size()), Device::CUDA, Device::CPU, stream);
-        device::synchronize(stream);
-    }
-    else
-#endif
-        std::memcpy(host_row.data(), row, host_row.size());
-
-    vector<float> logits(size_t(open_vocabulary), 0.0f);
-    if (output.is_fp32())
-        std::memcpy(logits.data(), host_row.data(), size_t(open_vocabulary) * sizeof(float));
-    else   // BF16 -> FP32 (bf16 is the high 16 bits of the float)
-    {
-        const uint16_t* bf16 = reinterpret_cast<const uint16_t*>(host_row.data());
-        for (Index i = 0; i < open_vocabulary; ++i)
+        if (output.is_cuda())
         {
-            const uint32_t bits = uint32_t(bf16[size_t(i)]) << 16;
-            float value; std::memcpy(&value, &bits, sizeof(float));
-            logits[size_t(i)] = value;
+            cudaStream_t stream = device::get_compute_stream();
+            device::copy_async(pinned, row, vocabulary * elem, Device::CUDA, Device::CPU, stream);
+            device::synchronize(stream);
+            row = static_cast<const char*>(pinned);
         }
+#endif
+
+        if (output.is_fp32())
+            std::memcpy(logits.data(), row, size_t(vocabulary) * sizeof(float));
+        else   // BF16 -> FP32 (bf16 is the high 16 bits of the float)
+        {
+            const uint16_t* bf16 = reinterpret_cast<const uint16_t*>(row);
+            for (Index i = 0; i < vocabulary; ++i)
+            {
+                const uint32_t bits = uint32_t(bf16[size_t(i)]) << 16;
+                float value; std::memcpy(&value, &bits, sizeof(float));
+                logits[size_t(i)] = value;
+            }
+        }
+
+        return sample(temperature);
     }
 
-    return sample_token(logits, temperature, rng);
-}
+    Index sample(float temperature)
+    {
+        if (temperature <= 0.0f)   // greedy
+        {
+            Index best = 1; float best_value = logits[1];
+            for (Index i = 2; i < vocabulary; ++i) if (logits[size_t(i)] > best_value) { best_value = logits[size_t(i)]; best = i; }
+            return best;
+        }
+
+        candidates.clear();
+        for (Index i = 1; i < vocabulary; ++i) candidates.push_back({ logits[size_t(i)] / temperature, i });
+
+        if (SAMPLING_TOP_K > 0 && SAMPLING_TOP_K < Index(candidates.size()))
+        {
+            nth_element(candidates.begin(), candidates.begin() + SAMPLING_TOP_K, candidates.end(),
+                        [](const auto& a, const auto& b) { return a.first > b.first; });
+            candidates.resize(size_t(SAMPLING_TOP_K));
+        }
+
+        float maximum = -1.0e30f;
+        for (const auto& p : candidates) maximum = max(maximum, p.first);
+        double sum = 0.0;
+        for (auto& p : candidates) { p.first = float(exp(double(p.first - maximum))); sum += p.first; }
+        for (auto& p : candidates) p.first = float(p.first / sum);
+
+        double kept = 1.0;
+        if (SAMPLING_TOP_P > 0.0f && SAMPLING_TOP_P < 1.0f)
+        {
+            sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+            double cumulative = 0.0; size_t keep = 0;
+            for (size_t i = 0; i < candidates.size(); ++i) { cumulative += candidates[i].first; keep = i + 1; if (cumulative >= SAMPLING_TOP_P) break; }
+            candidates.resize(keep);
+            kept = cumulative;
+        }
+
+        // CDF draw over the kept (unnormalized) probabilities.
+        const double u = uniform_real_distribution<double>(0.0, kept)(rng);
+        double cumulative = 0.0;
+        for (const auto& p : candidates) { cumulative += p.first; if (u <= cumulative) return p.second; }
+        return candidates.back().second;
+    }
+};
 
 
-// Generate a reply with a KV cache: one prefill over the whole context, then a
+// Generate a reply with a KV cache: one prefill over the new suffix of the
+// context (tokens already in the cache from previous turns are skipped), then a
 // single-token decode pass per token. The <think> block is a transient generation
 // prompt (not stored). The reply is streamed and returned for the caller to append.
 vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& tokenizer,
                              const vector<Index>& conversation, const vector<Index>& think_prompt,
-                             Index open_vocabulary, Index max_new, float temperature, mt19937& rng,
-                             ForwardPropagation& forward_propagation, vector<float>& window)
+                             Index max_new, float temperature, Sampler& sampler,
+                             ForwardPropagation& forward_propagation, vector<float>& window,
+                             vector<Index>& cached_tokens)
 {
     const Index im_end = tokenizer.get_im_end_id();
     const Index eos    = tokenizer.get_endoftext_id();
@@ -225,18 +271,31 @@ vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& token
 
     using clock_type = chrono::steady_clock;
 
-    // Prefill: the window keeps the last CONTEXT_LENGTH tokens (oldest dropped).
-    const Index prompt = min(CONTEXT_LENGTH, Index(context.size()));
-    const Index start  = Index(context.size()) - prompt;
-    for (Index i = 0; i < prompt; ++i) window[size_t(i)] = float(context[size_t(start + i)]);
+    // The window keeps the last CONTEXT_LENGTH tokens (oldest dropped). KV rows
+    // for the common prefix with the previous turn are still valid (RoPE positions
+    // are window-relative, so a slid window naturally yields a tiny prefix), and
+    // overwriting from a smaller `past` is the only invalidation needed. At least
+    // one token is always re-forwarded so this turn has fresh logits.
+    const Index window_start = max(Index(0), Index(context.size()) - CONTEXT_LENGTH);
+    const Index total        = Index(context.size()) - window_start;
+
+    Index prefix = 0;
+    const Index reusable = min(Index(cached_tokens.size()), total);
+    while (prefix < reusable && cached_tokens[size_t(prefix)] == context[size_t(window_start + prefix)]) ++prefix;
+    const Index past  = min(prefix, total - 1);
+    const Index count = total - past;
+
+    for (Index i = 0; i < count; ++i) window[size_t(i)] = float(context[size_t(window_start + past + i)]);
     const auto prefill_start = clock_type::now();
-    run(prompt, 0);
-    Index next      = sample_row(forward_propagation, prompt - 1, open_vocabulary, temperature, rng);
+    run(count, past);
+    Index next = sampler.sample_row(forward_propagation, count - 1, temperature);
     const double prefill_ms = chrono::duration<double, milli>(clock_type::now() - prefill_start).count();
-    Index cache_len = prompt;
+    Index cache_len = total;
+    cached_tokens.assign(context.begin() + window_start, context.end());
 
     vector<Index> reply;
-    string printed;
+    string pending;
+    vector<Index> last_token(1);
     const auto decode_start = clock_type::now();
 
     for (Index step = 0; step < max_new; ++step)
@@ -244,22 +303,29 @@ vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& token
         if (next == im_end || next == eos) break;
         reply.push_back(next);
 
-        const string text = tokenizer.decode(reply);
-        if (text.size() > printed.size()) { cout << text.substr(printed.size()) << flush; printed = text; }
+        last_token[0] = next;
+        pending += tokenizer.decode(last_token);
+        const size_t ready = utf8_complete_prefix(pending);
+        if (ready > 0)
+        {
+            cout.write(pending.data(), streamsize(ready)) << flush;
+            pending.erase(0, ready);
+        }
 
         if (cache_len >= CONTEXT_LENGTH) break;   // window full
 
         window[0] = float(next);
         run(1, cache_len);
+        cached_tokens.push_back(next);
         ++cache_len;
-        next = sample_row(forward_propagation, 0, open_vocabulary, temperature, rng);
+        next = sampler.sample_row(forward_propagation, 0, temperature);
     }
 
-    cout << endl;
+    cout << pending << endl;
 
     const double decode_ms = chrono::duration<double, milli>(clock_type::now() - decode_start).count();
     const Index  decoded   = Index(reply.size());
-    cerr << "[" << prompt << " prompt tok, prefill " << fixed << setprecision(0) << prefill_ms << " ms | "
+    cerr << "[" << count << "/" << total << " prompt tok, prefill " << fixed << setprecision(0) << prefill_ms << " ms | "
          << decoded << " gen tok, " << setprecision(1)
          << (decoded > 1 && decode_ms > 0 ? (decoded - 1) * 1000.0 / decode_ms : 0.0) << " tok/s]" << endl;
 
@@ -338,12 +404,14 @@ int main(int argc, char* argv[])
              << "Type a message; empty line, 'exit' or 'quit' to leave.\n" << endl;
 
         // The history grows every turn; the sliding window keeps the last
-        // CONTEXT_LENGTH tokens. ForwardPropagation and the window are reused.
+        // CONTEXT_LENGTH tokens. ForwardPropagation, the window, the sampler and
+        // the KV-cache token mirror are reused across turns.
         vector<Index> conversation;
         const vector<Index> think_prompt = tokenizer.encode("<think>\n\n</think>\n\n");
-        mt19937 rng(random_device{}());
+        Sampler sampler(config.vocabulary + 1, random_device{}(), want_gpu);
         ForwardPropagation forward_propagation(1, &model);
         vector<float> window(size_t(CONTEXT_LENGTH), 0.0f);
+        vector<Index> cached_tokens;
 
         string line;
         while (true)
@@ -361,8 +429,8 @@ int main(int argc, char* argv[])
 
             cout << "Qwen: " << flush;
             const vector<Index> reply = generate_reply(model, tokenizer, conversation, think_prompt,
-                                                       config.vocabulary + 1, max_new, temperature, rng,
-                                                       forward_propagation, window);
+                                                       max_new, temperature, sampler,
+                                                       forward_propagation, window, cached_tokens);
 
             // Store the reply and close the assistant turn (clean history: no <think>).
             conversation.insert(conversation.end(), reply.begin(), reply.end());
