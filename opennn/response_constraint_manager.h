@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E S P O N S E   C O N S T R A I N T S   H E A D E R
+//   R E S P O N S E   C O N S T R A I N T   M A N A G E R   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -20,7 +20,7 @@ enum class Condition
 };
 
 
-enum class RepairKind { Unrepairable, AffineInput, NonlinearInput, OutputDependent };
+enum class RepairRegime { None, InputAffine, InputNonlinear, OutputCoupled };
 
 
 struct MultivariateConstraint
@@ -34,7 +34,7 @@ struct MultivariateConstraint
     vector<float> allowed_values;
 
     CompiledExpression compiled;
-    RepairKind kind = RepairKind::Unrepairable;
+    RepairRegime kind = RepairRegime::None;
 };
 
 
@@ -81,7 +81,7 @@ struct Lattice
     vector<float> max;
 };
 
-RepairKind classify(const MultivariateConstraint&);
+RepairRegime classify(const MultivariateConstraint&);
 
 vector<vector<MultivariateConstraint>> expand_constraint(const string&,
                                                          Condition,

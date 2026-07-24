@@ -219,10 +219,7 @@ void IDC::ConstraintHandler::build(const IDC& new_owner, const bool lower)
     problem = new_owner.problem;
 
     constraint_set = ConstraintSet{};
-    objective_specs.clear();
-
-    for (const ResponseOptimization::Objective& objective : problem->get_objectives())
-        objective_specs[objective.expression] = { objective.sense, objective.value };
+    absorbed_objectives.clear();
 
     build_columns();
 
@@ -374,17 +371,18 @@ void IDC::ConstraintHandler::add_formula(const string& expression, const Conditi
 
 void IDC::ConstraintHandler::expand_fixed_objectives()
 {
-    const bool any_fixed = ranges::any_of(objective_specs,
-        [](const auto& entry){ return entry.second.sense == Sense::Fixed; });
+    // Fixed objectives keyed by name (sorted) — reproduces the original lowering order.
+    map<string, float> fixed_targets;
+    for (const ResponseOptimization::Objective& objective : problem->get_objectives())
+        if (objective.sense == Sense::Fixed)
+            fixed_targets[objective.expression] = objective.value;
 
-    if (!any_fixed)
+    if (fixed_targets.empty())
         return;
 
     map<string, float> output_range;
-    const bool any_output_fixed = ranges::any_of(objective_specs, [&](const auto& entry)
-    {
-        return entry.second.sense == Sense::Fixed && !is_input_name(entry.first);
-    });
+    const bool any_output_fixed = ranges::any_of(fixed_targets,
+        [&](const auto& entry){ return !is_input_name(entry.first); });
 
     if (any_output_fixed)
     {
@@ -394,19 +392,12 @@ void IDC::ConstraintHandler::expand_fixed_objectives()
                 static_cast<float>(target_descriptives[i].maximum - target_descriptives[i].minimum);
     }
 
-    vector<string> input_fixed_names;
-
-    for (const auto& [name, spec] : objective_specs)
+    for (const auto& [name, target] : fixed_targets)
     {
-        if (spec.sense != Sense::Fixed)
-            continue;
-
-        const float target = spec.value;
-
         if (is_input_name(name))
         {
             constraint_set.univariate[name] = UnivariateConstraint(Condition::EqualTo, target, target);
-            input_fixed_names.push_back(name);
+            absorbed_objectives.insert(name);
             continue;
         }
 
@@ -419,9 +410,6 @@ void IDC::ConstraintHandler::expand_fixed_objectives()
         cout << "> Fixed objective '" << name << "' -> output equality band ["
              << (target - half_width) << ", " << (target + half_width) << "].\n";
     }
-
-    for (const string& name : input_fixed_names)
-        objective_specs.erase(name);
 }
 
 
@@ -539,19 +527,19 @@ void IDC::ConstraintHandler::promote_single_variable_constraints()
 
 bool IDC::ConstraintHandler::is_objective(const string& name) const
 {
-    return objective_specs.count(name) > 0;
+    return problem->is_objective(name) && absorbed_objectives.count(name) == 0;
 }
 
 
 IDC::Sense IDC::ConstraintHandler::get_sense(const string& name) const
 {
-    return objective_specs.at(name).sense;
+    return problem->get_sense(name);
 }
 
 
 float IDC::ConstraintHandler::get_fixed_value(const string& name) const
 {
-    return objective_specs.at(name).value;
+    return problem->get_fixed_value(name);
 }
 
 
@@ -759,7 +747,7 @@ static void round_discrete_inputs(MatrixR& inputs,
 }
 
 
-IDC::Objectives::Objectives(const IDC& idc)
+IDC::ObjectiveNormalizer::ObjectiveNormalizer(const IDC& idc)
 {
     const Index objectives_number = idc.handler.get_objectives_number();
 
@@ -853,7 +841,7 @@ IDC::Objectives::Objectives(const IDC& idc)
 }
 
 
-MatrixR IDC::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
+MatrixR IDC::ObjectiveNormalizer::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
     const Index objectives_number = source_and_column.cols();
 
@@ -874,7 +862,7 @@ MatrixR IDC::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) 
 }
 
 
-void IDC::Objectives::normalize(MatrixR& objective_matrix) const
+void IDC::ObjectiveNormalizer::normalize(MatrixR& objective_matrix) const
 {
     const auto combined_scale = scale_and_offset.row(0).array() * utopian_and_sense.row(1).array();
     const auto combined_offset = scale_and_offset.row(1).array() * utopian_and_sense.row(1).array();
@@ -884,7 +872,7 @@ void IDC::Objectives::normalize(MatrixR& objective_matrix) const
 }
 
 
-bool IDC::Objectives::update_utopian_from_points(const MatrixR& unnormalized_objective_values)
+bool IDC::ObjectiveNormalizer::update_utopian_from_points(const MatrixR& unnormalized_objective_values)
 {
     if (unnormalized_objective_values.rows() == 0)
         return false;
@@ -1274,7 +1262,7 @@ MatrixR IDC::calculate_random_inputs(const Domain& input_domain, const Index eva
     bool discrete_is_coupled = false;
     for (const MultivariateConstraint& constraint : handler.constraint_set.multivariate)
     {
-        if (constraint.kind != RepairKind::AffineInput && constraint.kind != RepairKind::NonlinearInput)
+        if (constraint.kind != RepairRegime::InputAffine && constraint.kind != RepairRegime::InputNonlinear)
             continue;
         for (const Index column : constraint.compiled.input_indices)
             if (column >= 0 && column < inputs_features_number && fixed_mask[column])
@@ -1511,7 +1499,7 @@ pair<MatrixR, MatrixR> IDC::generate_feasible_points(const Domain& input_domain,
 
 pair<MatrixR, MatrixR> IDC::calculate_optimal_points(const MatrixR& feasible_inputs,
                                                      const MatrixR& feasible_outputs,
-                                                     const Objectives& objective_set) const
+                                                     const ObjectiveNormalizer& objective_set) const
 {
     MatrixR objective_matrix = objective_set.extract(feasible_inputs, feasible_outputs);
     objective_set.normalize(objective_matrix);
@@ -1522,7 +1510,7 @@ pair<MatrixR, MatrixR> IDC::calculate_optimal_points(const MatrixR& feasible_inp
 
 pair<MatrixR, MatrixR> IDC::calculate_optimal_points(const MatrixR& feasible_inputs,
                                                      const MatrixR& feasible_outputs,
-                                                     const Objectives& objective_set,
+                                                     const ObjectiveNormalizer& objective_set,
                                                      const MatrixR& normalized_objective_matrix) const
 {
     const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
@@ -1625,7 +1613,7 @@ pair<MatrixR, MatrixR> IDC::calculate_pareto(const MatrixR& inputs,
 
 pair<float, float> IDC::calculate_quality_metrics(const MatrixR& inputs,
                                                   const MatrixR& outputs,
-                                                  const Objectives& objective_set) const
+                                                  const ObjectiveNormalizer& objective_set) const
 {
     const Index points_number = inputs.rows();
 
@@ -1783,7 +1771,7 @@ void IDC::restore_cardinality_columns(Domain& domain, const Domain& original) co
 
 MatrixR IDC::perform_single_objective_optimization() const
 {
-    const Objectives objective_set(*this);
+    const ObjectiveNormalizer objective_set(*this);
 
     const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
@@ -1865,7 +1853,7 @@ MatrixR IDC::perform_single_objective_optimization() const
 
 MatrixR IDC::perform_multiobjective_optimization() const
 {
-    Objectives objective_set(*this);
+    ObjectiveNormalizer objective_set(*this);
 
     const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
 
@@ -2186,7 +2174,7 @@ vector<float> IDC::get_utopian_point(const ResponseOptimization& new_problem) co
     handler.relative_tolerance = relative_tolerance;
     handler.build(*this, false);
 
-    const Objectives objective_set(*this);
+    const ObjectiveNormalizer objective_set(*this);
 
     const Index objectives_number = objective_set.utopian_and_sense.cols();
 
@@ -2234,7 +2222,7 @@ pair<Index, VectorR> IDC::get_advised_point(const ResponseOptimization& new_prob
     const MatrixR pareto_inputs  = pareto_front.leftCols(inputs_number);
     const MatrixR pareto_outputs = pareto_front.rightCols(pareto_front.cols() - inputs_number);
 
-    const Objectives objective_set(*this);
+    const ObjectiveNormalizer objective_set(*this);
 
     MatrixR objective_matrix = objective_set.extract(pareto_inputs, pareto_outputs);
 
@@ -2505,7 +2493,7 @@ MatrixR IDC::run_branch_search(const vector<BranchAxis>& axes, const vector<vect
 
     const Index input_features = get_features_number(get_variables_and_descriptives("Input").first);
 
-    const Objectives objective_set(*this);
+    const ObjectiveNormalizer objective_set(*this);
     const Index objectives_number = static_cast<Index>(objective_set.utopian_and_sense.cols());
 
     Index spent = 0;

@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E S P O N S E   C O N S T R A I N T S   C L A S S
+//   R E S P O N S E   C O N S T R A I N T   M A N A G E R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "pch.h"
-#include "response_constraints.h"
+#include "response_constraint_manager.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 
@@ -285,10 +285,10 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 }
 
 
-RepairKind classify(const MultivariateConstraint& constraint)
+RepairRegime classify(const MultivariateConstraint& constraint)
 {
     if (constraint.condition == Condition::None)
-        return RepairKind::Unrepairable;
+        return RepairRegime::None;
 
     const CompiledExpression& formula = constraint.compiled;
 
@@ -299,13 +299,13 @@ RepairKind classify(const MultivariateConstraint& constraint)
     if (formula.scope == FormulaScope::InputsOnly)
     {
         if (affine && !formula.affine_input_terms.empty())
-            return RepairKind::AffineInput;
+            return RepairRegime::InputAffine;
         if (nonlinear_ready)
-            return RepairKind::NonlinearInput;
-        return RepairKind::Unrepairable;
+            return RepairRegime::InputNonlinear;
+        return RepairRegime::None;
     }
 
-    return (affine || nonlinear_ready) ? RepairKind::OutputDependent : RepairKind::Unrepairable;
+    return (affine || nonlinear_ready) ? RepairRegime::OutputCoupled : RepairRegime::None;
 }
 
 
@@ -386,7 +386,7 @@ vector<const MultivariateConstraint*> input_repairable_constraints(const vector<
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == RepairKind::AffineInput || constraint.kind == RepairKind::NonlinearInput)
+        if (constraint.kind == RepairRegime::InputAffine || constraint.kind == RepairRegime::InputNonlinear)
             constraints.push_back(&constraint);
 
     return constraints;
@@ -513,7 +513,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
     vector<const MultivariateConstraint*> affine_constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == RepairKind::AffineInput)
+        if (constraint.kind == RepairRegime::InputAffine)
             affine_constraints.push_back(&constraint);
 
     if (affine_constraints.empty())
@@ -771,7 +771,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const Index max_correction_passes)
 {
     const bool any_nonlinear = ranges::any_of(formula_constraints, [](const MultivariateConstraint& constraint)
-        { return constraint.kind == RepairKind::NonlinearInput; });
+        { return constraint.kind == RepairRegime::InputNonlinear; });
 
     if (!any_nonlinear)
         return;
@@ -824,8 +824,8 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
     vector<const MultivariateConstraint*> repairable;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == RepairKind::AffineInput
-            || constraint.kind == RepairKind::NonlinearInput)
+        if (constraint.kind == RepairRegime::InputAffine
+            || constraint.kind == RepairRegime::InputNonlinear)
             repairable.push_back(&constraint);
 
     const Index constraint_number = ssize(repairable);
@@ -886,12 +886,12 @@ void repair_inputs(MatrixR& random_inputs,
 
         for (const MultivariateConstraint& constraint : block)
         {
-            if (constraint.kind == RepairKind::AffineInput)
+            if (constraint.kind == RepairRegime::InputAffine)
             {
                 ++affine_number;
                 single_affine = &constraint;
             }
-            else if (constraint.kind == RepairKind::NonlinearInput)
+            else if (constraint.kind == RepairRegime::InputNonlinear)
                 any_nonlinear = true;
         }
 
@@ -1009,7 +1009,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 
     for (const MultivariateConstraint& constraint : formula_constraints)
     {
-        if (constraint.kind != RepairKind::AffineInput)
+        if (constraint.kind != RepairRegime::InputAffine)
             continue;
 
         bool all_free_discrete = true;
@@ -1072,7 +1072,7 @@ void repair_output_constraints(MatrixR& inputs,
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == RepairKind::OutputDependent)
+        if (constraint.kind == RepairRegime::OutputCoupled)
             constraints.push_back(&constraint);
 
     if (constraints.empty())

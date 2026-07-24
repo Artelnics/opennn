@@ -9,7 +9,7 @@
 #pragma once
 
 #include "pch.h"
-#include "response_constraints.h"
+#include "response_constraint_manager.h"
 #include "response_algorithm.h"
 
 namespace opennn

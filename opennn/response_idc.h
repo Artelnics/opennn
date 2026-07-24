@@ -13,7 +13,7 @@
 #include "variable.h"
 #include "response_algorithm.h"
 #include "response_optimization.h"
-#include "response_constraints.h"
+#include "response_constraint_manager.h"
 #include "network_differential.h"
 
 #include <set>
@@ -79,17 +79,14 @@ private:
 
     struct ConstraintHandler
     {
-        struct ObjectiveSpec
-        {
-            Sense sense = Sense::Minimize;
-            float value = 0.0f;
-        };
-
         const IDC* owner = nullptr;
         const ResponseOptimization* problem = nullptr;
 
         ConstraintSet constraint_set;
-        map<string, ObjectiveSpec> objective_specs;
+
+        // Objectives absorbed into constraints by lowering (fixed inputs -> equality box);
+        // sense/value are read straight from the problem's Objective list, not duplicated here.
+        set<string> absorbed_objectives;
 
         vector<pair<string, Index>> input_columns;
         vector<pair<string, Index>> output_columns;
@@ -148,9 +145,9 @@ private:
         VectorR superior_frontier;
     };
 
-    struct Objectives
+    struct ObjectiveNormalizer
     {
-        Objectives(const IDC&);
+        ObjectiveNormalizer(const IDC&);
 
         MatrixR source_and_column;
         MatrixR utopian_and_sense;
@@ -202,10 +199,10 @@ private:
     void restore_cardinality_columns(Domain&, const Domain&) const;
     void initialize_network_differential() const;
 
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&, const MatrixR&, const Objectives&) const;
-    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&, const MatrixR&, const Objectives&, const MatrixR&) const;
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&, const MatrixR&, const ObjectiveNormalizer&) const;
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR&, const MatrixR&, const ObjectiveNormalizer&, const MatrixR&) const;
     pair<MatrixR, MatrixR> calculate_pareto(const MatrixR&, const MatrixR&, const MatrixR&) const;
-    pair<float, float> calculate_quality_metrics(const MatrixR&, const MatrixR&, const Objectives&) const;
+    pair<float, float> calculate_quality_metrics(const MatrixR&, const MatrixR&, const ObjectiveNormalizer&) const;
 
     MatrixR perform_single_objective_optimization() const;
     MatrixR perform_multiobjective_optimization() const;
