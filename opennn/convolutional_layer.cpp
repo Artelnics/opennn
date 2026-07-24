@@ -299,13 +299,6 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-void Convolutional::from_JSON(const JsonDocument& document)
-{
-    Layer::from_JSON(document);
-
-    update_convolution_operator();
-}
-
 void Convolutional::load_darknet_weights(FILE* f)
 {
     throw_if(!f, "load_darknet_weights: file handle is null.");

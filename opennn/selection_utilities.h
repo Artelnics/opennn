@@ -9,6 +9,7 @@
 #pragma once
 
 #include "opennn_types.h"
+#include "tensor_types.h"
 
 namespace opennn
 {
@@ -30,13 +31,35 @@ struct CandidateEvaluation
 // folds_number > 1, otherwise trials_number random-restart trainings keeping the lowest
 // validation error. After every training on_trial receives (trial, training_error,
 // validation_error, improved) so each caller keeps its exact display and optimum bookkeeping.
+// initialize_trial, when given, replaces the default set_parameters_random() before each trial
+// (warm starts); the folds path never uses it.
 CandidateEvaluation evaluate_candidate(TrainingStrategy*,
                                        NeuralNetwork*,
                                        Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
                                        Index trials_number,
                                        bool use_validation_history_minimum,
-                                       const function<void(Index, float, float, bool)>& on_trial);
+                                       const function<void(Index, float, float, bool)>& on_trial,
+                                       const function<void(Index)>& initialize_trial = {});
+
+// Host copy of every parameter tensor, per layer and per view (tied slots skipped), taken
+// before compile() rebuilds the parameter buffer for the next candidate architecture.
+struct ParameterSnapshot
+{
+    struct Block { Shape shape; vector<float> values; };
+    vector<vector<Block>> layers;
+    bool empty() const noexcept { return layers.empty(); }
+};
+
+ParameterSnapshot capture_parameter_snapshot(NeuralNetwork*);
+
+// Warm start: overwrite the region of each parameter tensor that overlaps its snapshot block
+// (identical shapes fully, rank-1 prefix, rank-2 top-left block in row-major layout); the rest
+// keeps its fresh random initialization. input_row_map (new row -> old row, -1 = keep random)
+// remaps the first trainable layer's weight rows when input features were inserted mid-order.
+void seed_parameters_from_snapshot(NeuralNetwork*,
+                                   const ParameterSnapshot&,
+                                   const vector<Index>& input_row_map = {});
 
 // Install the winning parameters when they still fit the final architecture; otherwise refit on
 // all development samples (k-fold mode) or retrain from random parameters.

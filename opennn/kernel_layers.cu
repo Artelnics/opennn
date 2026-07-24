@@ -21,7 +21,7 @@ void bounding_cuda(const Index n, const int features,
                    const TIn* input, const float* lower, const float* upper,
                    TOut* output)
 {
-    launch_elementwise(n, bounding_kernel<TIn, TOut>, features, input, lower, upper, output);
+    launch_elementwise_strided(n, bounding_kernel<TIn, TOut>, features, input, lower, upper, output);
 }
 
 template<typename TIn, typename TOut, bool Inverse>
@@ -92,7 +92,7 @@ void scale_cuda(const Index n, const int features,
                 const float min_range, const float max_range,
                 TOut* output)
 {
-    launch_elementwise(n, scale_kernel<TIn, TOut, false>, features,
+    launch_elementwise_strided(n, scale_kernel<TIn, TOut, false>, features,
                        input, minimums, maximums, means, stds, scalers,
                        min_range, max_range, output);
 }
@@ -106,7 +106,7 @@ void unscale_cuda(const Index n, const int features,
                   const float min_range, const float max_range,
                   TOut* output)
 {
-    launch_elementwise(n, scale_kernel<TIn, TOut, true>, features,
+    launch_elementwise_strided(n, scale_kernel<TIn, TOut, true>, features,
                        input, minimums, maximums, means, stds, scalers,
                        min_range, max_range, output);
 }
@@ -124,7 +124,7 @@ __global__ void diff_to_fp32_kernel(const int n,
 template<typename TIn>
 void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output)
 {
-    launch_elementwise(n, diff_to_fp32_kernel<TIn>, input, target, output);
+    launch_elementwise_strided(n, diff_to_fp32_kernel<TIn>, input, target, output);
 }
 
 template<typename TIn, typename TOut>
@@ -145,7 +145,7 @@ template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             const float scale, TOut* output)
 {
-    launch_elementwise(n, scaled_diff_kernel<TIn, TOut>, input, target, scale, output);
+    launch_elementwise_strided(n, scaled_diff_kernel<TIn, TOut>, input, target, scale, output);
 }
 
 template<typename TW, typename T>
@@ -176,7 +176,7 @@ __global__ void embedding_forward_kernel(const int n, const float* __restrict__ 
 template<typename TW, typename T>
 void embedding_forward_cuda(const Index n, const float* inputs, const TW* weights, const float* positional_encoding, T* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
 {
-    launch_elementwise(n, embedding_forward_kernel<TW, T>, inputs, weights, positional_encoding, outputs,
+    launch_elementwise_strided(n, embedding_forward_kernel<TW, T>, inputs, weights, positional_encoding, outputs,
                        sequence_length, embedding_dimension, vocabulary_size, scale_embedding);
 }
 
@@ -250,10 +250,10 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
-        launch_elementwise(n / vec_width, swap_heads_vec_kernel<T>, in, out, S, H, D / vec_width);
+        launch_elementwise_strided(n / vec_width, swap_heads_vec_kernel<T>, in, out, S, H, D / vec_width);
     }
     else
-        launch_elementwise(n, swap_heads_scalar_kernel<T>, in, out, S, H, D);
+        launch_elementwise_strided(n, swap_heads_scalar_kernel<T>, in, out, S, H, D);
 }
 
 template<typename T>
@@ -396,7 +396,7 @@ void attention_masked_softmax_cuda(const int batch_size, const int heads_number,
                           T* attention_weights, T* padding_mask, const bool use_causal_mask,
                           const bool zero_padded_queries)
 {
-    launch_elementwise(Index(batch_size) * source_sequence_length, padding_mask_kernel<T>,
+    launch_elementwise_strided(Index(batch_size) * source_sequence_length, padding_mask_kernel<T>,
                        source_input, padding_mask, embedding_dimension);
 
     launch_masked_softmax_rows<T>(batch_size, heads_number,
@@ -421,27 +421,18 @@ __global__ void length_to_padding_mask_kernel(const int n, const int source_sequ
 template<typename T>
 void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number,
                                 const int query_sequence_length, const int source_sequence_length,
-                                const int* host_lengths, T* attention_weights, T* padding_mask,
+                                const int* device_lengths, T* attention_weights, T* padding_mask,
                                 const bool use_causal_mask, const bool zero_padded_queries)
 {
     if (batch_size == 0) return;
 
-    cudaStream_t stream = opennn::device::get_compute_stream();
-
-    int* device_lengths = nullptr;
-    cudaMallocAsync(&device_lengths, size_t(batch_size) * sizeof(int), stream);
-    cudaMemcpyAsync(device_lengths, host_lengths, size_t(batch_size) * sizeof(int),
-                    cudaMemcpyHostToDevice, stream);
-
-    launch_elementwise(Index(batch_size) * source_sequence_length, length_to_padding_mask_kernel<T>,
+    launch_elementwise_strided(Index(batch_size) * source_sequence_length, length_to_padding_mask_kernel<T>,
                        source_sequence_length, device_lengths, padding_mask);
 
     launch_masked_softmax_rows<T>(batch_size, heads_number,
                                   query_sequence_length, source_sequence_length,
                                   attention_weights, padding_mask, use_causal_mask,
-                                  zero_padded_queries, stream);
-
-    cudaFreeAsync(device_lengths, stream);
+                                  zero_padded_queries, opennn::device::get_compute_stream());
 }
 
 template<typename T>
@@ -531,7 +522,7 @@ __global__ void max_pooling_3d_forward_kernel(const int n, const T* __restrict__
 template<typename T>
 void max_pooling_3d_forward_cuda(const Index n, const T* in, T* out, float* indices, const int S, const int F)
 {
-    launch_elementwise(n, max_pooling_3d_forward_kernel<T>, in, out, indices, S, F);
+    launch_elementwise_strided(n, max_pooling_3d_forward_kernel<T>, in, out, indices, S, F);
 }
 
 template<typename T>
@@ -550,7 +541,7 @@ __global__ void max_pooling_3d_backward_kernel(const int n, const T* __restrict_
 template<typename T>
 void max_pooling_3d_backward_cuda(const Index n, const T* delta, T* in_gradient, const float* indices, const int S, const int F)
 {
-    launch_elementwise(n, max_pooling_3d_backward_kernel<T>, delta, in_gradient, indices, S, F);
+    launch_elementwise_strided(n, max_pooling_3d_backward_kernel<T>, delta, in_gradient, indices, S, F);
 }
 
 namespace
@@ -660,7 +651,7 @@ void average_pooling_3d_forward_cuda(const Index n, const T* in, T* out, const i
     float* counts     = nullptr;
     prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
 
-    launch_elementwise(n, average_pooling_3d_forward_kernel<T>, in, out, S, F, valid_mask, counts);
+    launch_elementwise_strided(n, average_pooling_3d_forward_kernel<T>, in, out, S, F, valid_mask, counts);
 }
 
 template<typename T>
@@ -698,7 +689,7 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     float* counts     = nullptr;
     prepare_pooling_valid_mask(B, S, F, in, valid_mask, counts);
 
-    launch_elementwise(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
+    launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
 
 template<typename T>
@@ -715,7 +706,7 @@ __global__ void first_token_3d_forward_kernel(const int n, const int S, const in
 template<typename T>
 void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out)
 {
-    launch_elementwise(Index(B) * F, first_token_3d_forward_kernel<T>, S, F, in, out);
+    launch_elementwise_strided(Index(B) * F, first_token_3d_forward_kernel<T>, S, F, in, out);
 }
 
 template<typename T>
@@ -732,7 +723,7 @@ __global__ void first_token_3d_backward_kernel(const int n, const int S, const i
 template<typename T>
 void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient)
 {
-    launch_elementwise(Index(B) * F, first_token_3d_backward_kernel<T>, S, F, delta, in_gradient);
+    launch_elementwise_strided(Index(B) * F, first_token_3d_backward_kernel<T>, S, F, delta, in_gradient);
 }
 
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
@@ -893,7 +884,7 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                               const float epsilon, const bool apply_relu, T* y)
 {
     if (channels == 0) return;
-    launch_elementwise(total, batchnorm_inference_kernel<T>, checked_int(channels),
+    launch_elementwise_strided(total, batchnorm_inference_kernel<T>, checked_int(channels),
                        x, residual, gamma, beta, mean, variance,
                        epsilon, apply_relu ? 1 : 0, y);
 }
@@ -936,7 +927,7 @@ void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
                        const float epsilon, const bool transpose,
                        float* folded_weights, float* folded_bias)
 {
-    launch_elementwise(kernels * kernel_size, conv_bn_fold_kernel,
+    launch_elementwise_strided(kernels * kernel_size, conv_bn_fold_kernel,
                        checked_int(kernel_size), checked_int(kernels), weights,
                        gamma, beta, mean, variance, epsilon, transpose ? 1 : 0,
                        folded_weights, folded_bias);
@@ -959,7 +950,7 @@ __global__ void add_relu_kernel(const Index total,
 void add_relu_cuda(const Index total, const float* a, const float* b,
                    const bool apply_relu, float* y)
 {
-    launch_elementwise(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
+    launch_elementwise_strided(total, add_relu_kernel, a, b, apply_relu ? 1 : 0, y);
 }
 
 template<typename T>
@@ -1331,10 +1322,12 @@ void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up
     launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
 }
 
-// Grouped-query causal attention. One thread per query (b, hq, i); flash-style
-// online softmax so scores are not materialized. Q head hq uses KV head
-// hq/(n_query_heads/n_kv_heads). Causal: query i (abs pos offset+i) attends keys
-// 0..(offset+i). head_dim capped at 256 (Qwen3=128, Qwen3.5=256).
+// Grouped-query causal attention, last-resort fallback: one thread per query
+// (b, hq, i) with a flash-style online softmax so scores are not materialized.
+// Q head hq uses KV head hq/(n_query_heads/n_kv_heads). Causal: query i (abs
+// pos offset+i) attends keys 0..(offset+i). head_dim capped at 256. General
+// shapes normally take the batched-GEMM route in tensor_operations.cpp; this
+// kernel only runs when that route cannot allocate its workspace.
 template<typename T>
 __global__ void grouped_attention_kernel(const int total_queries, const int query_seq, const int key_seq,
                                           const int n_query_heads, const int n_kv_heads, const int head_dim,
@@ -1376,6 +1369,55 @@ __global__ void grouped_attention_kernel(const int total_queries, const int quer
 
     const float inv_l = 1.0f / l;
     for (int d = 0; d < head_dim; ++d) o_vec[d] = static_cast<T>(acc[d] * inv_l);
+}
+
+// Masked softmax over materialized GQA score rows (the batched-GEMM route):
+// one warp per row (b, hq, i), strided over key_seq so the length is uncapped.
+// valid = causal ? min(qoffset + i + 1, key_seq) : key_seq — the same rule as
+// grouped_attention_kernel; masked columns are written as exact zeros so the
+// probs x V GEMM reproduces the naive kernel's masking.
+template<typename T>
+__global__ void grouped_attention_softmax_kernel(const int rows, const int query_seq, const int key_seq,
+                                                 const int qoffset, const int causal,
+                                                 const float* __restrict__ scores, T* __restrict__ probs)
+{
+    const int warps_per_block = blockDim.x >> 5;
+    const int row = blockIdx.x * warps_per_block + (int(threadIdx.x) >> 5);
+    if (row >= rows) return;
+
+    const int lane = threadIdx.x & 31;
+    const int i = row % query_seq;
+    const int valid = causal ? min(qoffset + i + 1, key_seq) : key_seq;
+
+    const float* s_row = scores + size_t(row) * key_seq;
+    T* p_row = probs + size_t(row) * key_seq;
+
+    float m = -1e30f;
+    for (int j = lane; j < valid; j += 32) m = fmaxf(m, s_row[j]);
+    for (int offset = 16; offset > 0; offset >>= 1)
+        m = fmaxf(m, __shfl_xor_sync(0xffffffffu, m, offset));
+
+    float l = 0.0f;
+    for (int j = lane; j < valid; j += 32) l += __expf(s_row[j] - m);
+    for (int offset = 16; offset > 0; offset >>= 1)
+        l += __shfl_xor_sync(0xffffffffu, l, offset);
+
+    const float inv_l = 1.0f / l;
+    for (int j = lane; j < key_seq; j += 32)
+        p_row[j] = static_cast<T>(j < valid ? __expf(s_row[j] - m) * inv_l : 0.0f);
+}
+
+template<typename T>
+void grouped_attention_softmax_cuda(const int rows, const int query_seq, const int key_seq,
+                                    const int query_position_offset, const bool causal,
+                                    const float* scores, T* probs)
+{
+    if (rows <= 0 || key_seq <= 0) return;
+
+    constexpr int threads = 128;
+    const int blocks = (rows + (threads / 32) - 1) / (threads / 32);
+    OPENNN_CUDA_LAUNCH((grouped_attention_softmax_kernel<T><<<blocks, threads, 0, opennn::device::get_compute_stream()>>>(
+        rows, query_seq, key_seq, query_position_offset, causal ? 1 : 0, scores, probs)));
 }
 
 // Loads N consecutive elements at p (16/8/4-byte aligned by construction: head
@@ -1692,13 +1734,6 @@ void sample_logits_row_cuda(const int n, const float temperature, const int top_
         blocks * k, k, temperature, top_p, seed, step, candidates_scratch, id_out, token_out)));
 }
 
-constexpr bool grouped_attention_decode_supported(const int head_dim, const int group)
-{
-    const bool dim_ok = head_dim == 64 || head_dim == 128 || head_dim == 256;
-    const bool group_ok = group == 1 || group == 2 || group == 4 || group == 8;
-    return dim_ok && group_ok && group * head_dim <= 1024;   // register budget
-}
-
 template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
                             const int n_query_heads, const int n_kv_heads, const int head_dim,
@@ -1814,11 +1849,11 @@ void activation_forward_cuda(const Index n, T* data, const int function)
     if constexpr (std::is_same_v<T, __nv_bfloat16>)
         if ((n & 1) == 0)
         {
-            launch_elementwise(n / 2, activation_forward_kernel_bf162, reinterpret_cast<__nv_bfloat162*>(data), function);
+            launch_elementwise_strided(n / 2, activation_forward_kernel_bf162, reinterpret_cast<__nv_bfloat162*>(data), function);
             return;
         }
 
-    launch_elementwise(n, activation_forward_kernel<T>, data, function);
+    launch_elementwise_strided(n, activation_forward_kernel<T>, data, function);
 }
 
 template<typename T>
@@ -1847,13 +1882,13 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
     if constexpr (std::is_same_v<T, __nv_bfloat16>)
         if ((n & 1) == 0)
         {
-            launch_elementwise(n / 2, activation_backward_kernel_bf162,
+            launch_elementwise_strided(n / 2, activation_backward_kernel_bf162,
                                reinterpret_cast<const __nv_bfloat162*>(outputs),
                                reinterpret_cast<__nv_bfloat162*>(delta), function);
             return;
         }
 
-    launch_elementwise(n, activation_backward_kernel<T>, outputs, delta, function);
+    launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);
 }
 
 template<typename T>
@@ -2338,7 +2373,7 @@ void detection_forward_cuda(const Index batch_size,
     if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
 
     const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
-    OPENNN_CUDA_LAUNCH(detection_forward_kernel<<<grid_size_for(total), block_size, 0,
+    OPENNN_CUDA_LAUNCH(detection_forward_kernel<<<grid_size_strided_for(total), block_size, 0,
                                opennn::device::get_compute_stream()>>>(
         checked_int(batch_size),
         checked_int(grid_size),
@@ -2423,7 +2458,7 @@ void detection_backward_cuda(const Index batch_size,
     if (batch_size == 0 || grid_size == 0 || boxes_per_cell == 0) return;
 
     const int total = checked_int(batch_size * grid_size * grid_size * boxes_per_cell);
-    OPENNN_CUDA_LAUNCH(detection_backward_kernel<<<grid_size_for(total), block_size, 0,
+    OPENNN_CUDA_LAUNCH(detection_backward_kernel<<<grid_size_strided_for(total), block_size, 0,
                                 opennn::device::get_compute_stream()>>>(
         checked_int(batch_size),
         checked_int(grid_size),
@@ -2473,7 +2508,7 @@ void detection_v8_forward_cuda(const Index batch_size,
 
     const int total   = checked_int(batch_size * grid_size * grid_width);
     const int channels = checked_int(4 + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_for(total), block_size, 0,
+    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_strided_for(total), block_size, 0,
                                opennn::device::get_compute_stream()>>>(
         checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
         channels, input, output));
@@ -2520,7 +2555,7 @@ void detection_v8_backward_cuda(const Index batch_size,
 
     const int total   = checked_int(batch_size * grid_size * grid_width);
     const int channels = checked_int(4 + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_for(total), block_size, 0,
+    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_strided_for(total), block_size, 0,
                                 opennn::device::get_compute_stream()>>>(
         checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
         channels, output, output_delta, input_delta));
@@ -2580,7 +2615,7 @@ void upsample_forward_cuda(const int batch, const int in_h, const int in_w, cons
                            const float* src, float* dst)
 {
     const int n = batch * (in_h * scale) * (in_w * scale) * channels;
-    launch_elementwise(n, upsample_forward_kernel,
+    launch_elementwise_strided(n, upsample_forward_kernel,
                        src, dst, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
@@ -2590,7 +2625,7 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
     const int n = batch * in_h * in_w * channels;
     if (n == 0) return;
     cudaMemsetAsync(in_delta, 0, size_t(n) * sizeof(float), opennn::device::get_compute_stream());
-    launch_elementwise(n, upsample_backward_kernel,
+    launch_elementwise_strided(n, upsample_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
@@ -2635,7 +2670,7 @@ void concat_forward_slice_cuda(const int batch, const int H, const int W,
                                const int slice_ch, const int total_ch, const int ch_offset,
                                const float* src, float* dst)
 {
-    launch_elementwise(Index(batch) * H * W * slice_ch, concat_forward_slice_kernel,
+    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_forward_slice_kernel,
                        src, dst, H, W, slice_ch, total_ch, ch_offset);
 }
 
@@ -2643,7 +2678,7 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
                                 const int slice_ch, const int total_ch, const int ch_offset,
                                 const float* out_delta, float* in_delta)
 {
-    launch_elementwise(Index(batch) * H * W * slice_ch, concat_backward_slice_kernel,
+    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_backward_slice_kernel,
                        out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset);
 }
 
@@ -2674,6 +2709,7 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
     template void swiglu_backward_cuda<T>(const int, const T*, const T*, const T*, T*, T*); \
     template void sample_logits_row_cuda<T>(const int, const float, const int, const float, const unsigned long long, const unsigned long long, const T*, float2*, int*, float*); \
     template void grouped_attention_cuda<T>(const int, const int, const int, const int, const int, const int, const float, const int, const bool, const int*, float*, const T*, const T*, const T*, T*); \
+    template void grouped_attention_softmax_cuda<T>(const int, const int, const int, const int, const bool, const float*, T*); \
     template void activation_forward_cuda<T>(const Index, T*, const int); \
     template void activation_backward_cuda<T>(const Index, const T*, T*, const int); \
     template void dropout_forward_cuda<T>(const Index, T*, uint8_t*, const float, const unsigned long long); \

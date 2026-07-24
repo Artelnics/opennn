@@ -91,7 +91,7 @@ public:
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
-    void from_JSON(const JsonDocument&) override;
+    void on_loaded() override { update_convolution_operator(); }
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 

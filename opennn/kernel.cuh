@@ -190,9 +190,11 @@ void attention_masked_softmax_cuda(const int batch_size, const int heads_number,
                           const T* source_input, T* attention_weights, T* padding_mask,
                           const bool use_causal_mask, const bool zero_padded_queries);
 
+// device_lengths: device pointer to batch_size valid lengths, resident on the
+// compute stream (the caller stages it; see stage_attention_lengths).
 template<typename T>
 void attention_length_masked_softmax_cuda(const int batch_size, const int heads_number, const int query_sequence_length,
-                                const int source_sequence_length, const int* host_lengths,
+                                const int source_sequence_length, const int* device_lengths,
                                 T* attention_weights, T* padding_mask, const bool use_causal_mask,
                                 const bool zero_padded_queries);
 
@@ -296,15 +298,25 @@ template<typename T>
 void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup);
 
 // Grouped-query causal attention. Q/K/V/O laid out [batch, seq, heads*head_dim];
-// keys/values have n_kv_heads. The general kernel runs one thread per query with
-// an online softmax. Single-token decode (batch 1, query_seq 1, causal) instead
+// keys/values have n_kv_heads. Single-token decode (batch 1, query_seq 1, causal)
 // uses a split-KV kernel — warps hold flash-style partials for a key subset,
 // shared across the query heads of each kv head, merged by a combine pass — when
 // `decode_partials` provides its scratch (grouped_attention_decode_scratch_floats
 // fp32 values). `position_device`, when non-null, holds the cached-token count
 // before this token (valid keys = *position_device + 1) so a captured graph
-// replays correctly as the KV cache grows.
+// replays correctly as the KV cache grows. Every other shape is a last-resort
+// one-thread-per-query kernel: the dispatcher in tensor_operations.cpp routes
+// general shapes through batched GEMMs plus grouped_attention_softmax_cuda and
+// only falls back here when that route cannot allocate its workspace.
 inline constexpr int GROUPED_ATTENTION_DECODE_SPLITS = 128;
+
+// Shapes the split-KV decode kernel supports (register budget).
+constexpr bool grouped_attention_decode_supported(const int head_dim, const int group)
+{
+    const bool dim_ok = head_dim == 64 || head_dim == 128 || head_dim == 256;
+    const bool group_ok = group == 1 || group == 2 || group == 4 || group == 8;
+    return dim_ok && group_ok && group * head_dim <= 1024;
+}
 
 template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
@@ -312,6 +324,15 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
                             const float scale, const int query_position_offset, const bool causal,
                             const int* position_device, float* decode_partials,
                             const T* Q, const T* K, const T* V, T* O);
+
+// Masked softmax over materialized GQA score rows [batch*heads*query_seq,
+// key_seq] (fp32), writing probabilities as T (probs may alias scores when T is
+// float); masked columns become exact zeros. Valid keys for query i follow the
+// grouped_attention_kernel rule: causal ? min(offset + i + 1, key_seq) : key_seq.
+template<typename T>
+void grouped_attention_softmax_cuda(const int rows, const int query_seq, const int key_seq,
+                                    const int query_position_offset, const bool causal,
+                                    const float* scores, T* probs);
 
 // Fused per-head QK-Norm + RoPE + KV-cache append for one decoded token, over a
 // fused [q | k | v] projection row; the append position is read from device
@@ -453,6 +474,14 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
                         int classes_number, int sigmoid_classes, float inv_batch,
                         float lambda_giou, float lambda_noobj, float lambda_class,
                         float focal_gamma, float obj_focal_gamma);
+
+// Device-side per-head YOLO target assembly — pure gather from the flat
+// per-sample target: head_target[n*head_floats + j] =
+// target_flat[n*per_sample_floats + head_offset + j] (see assemble_head_target
+// in loss.cpp).
+void yolo_assemble_head_target_cuda(const float* target_flat, float* head_target,
+                                    Index batch, Index per_sample_floats,
+                                    Index head_offset, Index head_floats);
 
 #endif // OPENNN_HAS_CUDA
 

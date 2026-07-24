@@ -10,6 +10,7 @@
 #include "opennn/embedding_layer.h"
 #include "opennn/forward_propagation.h"
 #include "opennn/neural_network.h"
+#include "opennn/random_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_operator.h"
 #ifdef OPENNN_HAS_CUDA
@@ -501,6 +502,11 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();
 
+    // The greedy 3-token turns must produce visible text, which depends on the
+    // random weights: seed explicitly so the outcome does not depend on how
+    // many global-RNG draws earlier tests consumed.
+    set_seed(42);
+
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
     const TemplateTokenizer tokenizer;
@@ -529,6 +535,7 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
     void* graph_identity = nullptr;
     for (Index turn = 0; turn < 5; ++turn)
     {
+        SCOPED_TRACE("turn " + to_string(turn));
         const ChatResponse response =
             session.send("turn " + to_string(turn), options);
         EXPECT_EQ(response.generated_tokens, 3);

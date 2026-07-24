@@ -86,6 +86,32 @@ string role_name(ChatRole role)
     throw runtime_error("Qwen3ChatTemplate: unknown chat role.");
 }
 
+SamplingConfig clamp_sampling(const SamplingConfig& sampling_config)
+{
+    SamplingConfig config = sampling_config;
+    config.temperature = max(config.temperature, 0.0f);
+    config.top_k = max(config.top_k, Index(0));
+    config.top_p = clamp(config.top_p, 0.0f, 1.0f);
+    if (config.repetition_penalty <= 0.0f)
+        config.repetition_penalty = 1.0f;
+    return config;
+}
+
+bool descending_first(const pair<float, Index>& left,
+                      const pair<float, Index>& right)
+{
+    return left.first > right.first;
+}
+
+// Moves the top_k highest-valued entries to the front (unsorted partition).
+void top_k_partition(vector<pair<float, Index>>& values, Index top_k)
+{
+    nth_element(values.begin(),
+                values.begin() + top_k,
+                values.end(),
+                descending_first);
+}
+
 }
 
 Index sample_token(VectorR& probabilities,
@@ -96,12 +122,7 @@ Index sample_token(VectorR& probabilities,
     throw_if(vocabulary_size == 0,
              "sample_token: probability distribution is empty.");
 
-    SamplingConfig config = sampling_config;
-    config.temperature = max(config.temperature, 0.0f);
-    config.top_k = max(config.top_k, Index(0));
-    config.top_p = clamp(config.top_p, 0.0f, 1.0f);
-    if (config.repetition_penalty <= 0.0f)
-        config.repetition_penalty = 1.0f;
+    const SamplingConfig config = clamp_sampling(sampling_config);
 
     if (config.temperature == 0.0f)
     {
@@ -110,7 +131,12 @@ Index sample_token(VectorR& probabilities,
         return best;
     }
 
-    const VectorR original = probabilities;
+    // Per-thread scratch: avoids vocabulary-sized allocations on every token.
+    static thread_local VectorR original;
+    static thread_local vector<pair<float, Index>> ranked;
+    static thread_local vector<char> keep;
+
+    original = probabilities;
     if (config.repetition_penalty != 1.0f)
         for (const Index token : history)
             if (token >= 0 && token < vocabulary_size)
@@ -126,43 +152,31 @@ Index sample_token(VectorR& probabilities,
 
     if (config.top_k > 0 && config.top_k < vocabulary_size)
     {
-        vector<pair<float, Index>> indexed;
-        indexed.resize(size_t(vocabulary_size));
+        ranked.resize(size_t(vocabulary_size));
         for (Index i = 0; i < vocabulary_size; ++i)
-            indexed[size_t(i)] = {probabilities(i), i};
-        nth_element(indexed.begin(),
-                    indexed.begin() + config.top_k,
-                    indexed.end(),
-                    [](const auto& left, const auto& right)
-                    {
-                        return left.first > right.first;
-                    });
+            ranked[size_t(i)] = {probabilities(i), i};
+        top_k_partition(ranked, config.top_k);
 
-        vector<char> keep(size_t(vocabulary_size), 0);
+        keep.assign(size_t(vocabulary_size), 0);
         for (Index i = 0; i < config.top_k; ++i)
-            keep[size_t(indexed[size_t(i)].second)] = 1;
+            keep[size_t(ranked[size_t(i)].second)] = 1;
         for (Index i = 0; i < vocabulary_size; ++i)
             if (!keep[size_t(i)]) probabilities(i) = 0.0f;
     }
 
     if (config.top_p > 0.0f && config.top_p < 1.0f)
     {
-        vector<pair<float, Index>> sorted;
-        sorted.resize(size_t(vocabulary_size));
+        ranked.resize(size_t(vocabulary_size));
         const float total = probabilities.sum();
         for (Index i = 0; i < vocabulary_size; ++i)
-            sorted[size_t(i)] = {probabilities(i), i};
+            ranked[size_t(i)] = {probabilities(i), i};
 
         if (total > 0.0f)
         {
-            ranges::sort(sorted,
-                         [](const auto& left, const auto& right)
-                         {
-                             return left.first > right.first;
-                         });
+            ranges::sort(ranked, descending_first);
             float cumulative = 0.0f;
-            vector<char> keep(size_t(vocabulary_size), 0);
-            for (const auto& [probability, token] : sorted)
+            keep.assign(size_t(vocabulary_size), 0);
+            for (const auto& [probability, token] : ranked)
             {
                 cumulative += probability / total;
                 keep[size_t(token)] = 1;
@@ -266,7 +280,8 @@ GenerationParser::GenerationParser(
     const GenerationParserSpec& new_spec)
     : tokenizer(&new_tokenizer),
       spec(new_spec),
-      channel(new_spec.initial_channel)
+      channel(new_spec.initial_channel),
+      incremental(new_tokenizer.supports_incremental_decode())
 {
     const auto validate = [](const vector<Index>& sequence, const char* label)
     {
@@ -355,43 +370,69 @@ bool GenerationParser::process_pending(const ChatCallback& callback,
 void GenerationParser::append_data_token(const Index token_id,
                                          const ChatCallback& callback)
 {
-    if (channel == GenerationChannel::Reasoning)
-    {
-        reasoning_ids.push_back(token_id);
-        ++reasoning_tokens;
-    }
+    ChannelState& state = channel_state(channel);
+    ++(channel == GenerationChannel::Reasoning
+           ? reasoning_tokens
+           : content_tokens);
+
+    if (incremental)
+        state.tail += tokenizer->decode_token(token_id);
     else
-    {
-        content_ids.push_back(token_id);
-        ++content_tokens;
-    }
+        state.ids.push_back(token_id);
 
     emit_stable_delta(channel, callback);
+}
+
+GenerationParser::ChannelState& GenerationParser::channel_state(
+    const GenerationChannel output_channel) noexcept
+{
+    return output_channel == GenerationChannel::Reasoning
+        ? reasoning_state
+        : content_state;
 }
 
 void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
                                          const ChatCallback& callback)
 {
-    vector<Index>& ids = output_channel == GenerationChannel::Reasoning
-        ? reasoning_ids
-        : content_ids;
-    string& emitted = output_channel == GenerationChannel::Reasoning
-        ? reasoning_text
-        : content_text;
+    ChannelState& state = channel_state(output_channel);
+    string delta;
 
-    const string decoded = tokenizer->decode(ids);
-    size_t stable_bytes = 0;
-    is_complete_utf8_prefix(decoded, stable_bytes);
+    if (incremental)
+    {
+        // state.text always ends on a UTF-8 boundary, so scanning only the
+        // withheld tail matches rescanning the full decoded string.
+        size_t stable_bytes = 0;
+        const bool complete = is_complete_utf8_prefix(state.tail, stable_bytes);
+        if (stable_bytes == 0) return;
 
-    throw_if(stable_bytes < emitted.size()
-             || decoded.compare(0, emitted.size(), emitted) != 0,
-             "GenerationParser: tokenizer decoding is not prefix-stable.");
+        if (complete)
+        {
+            delta = move(state.tail);
+            state.tail.clear();
+        }
+        else
+        {
+            delta.assign(state.tail, 0, stable_bytes);
+            state.tail.erase(0, stable_bytes);
+        }
+    }
+    else
+    {
+        const string decoded = tokenizer->decode(state.ids);
+        size_t stable_bytes = 0;
+        is_complete_utf8_prefix(decoded, stable_bytes);
 
-    if (stable_bytes <= emitted.size()) return;
+        throw_if(stable_bytes < state.text.size()
+                 || decoded.compare(0, state.text.size(), state.text) != 0,
+                 "GenerationParser: tokenizer decoding is not prefix-stable.");
 
-    const string delta = decoded.substr(emitted.size(),
-                                        stable_bytes - emitted.size());
-    emitted.append(delta);
+        if (stable_bytes <= state.text.size()) return;
+
+        delta = decoded.substr(state.text.size(),
+                               stable_bytes - state.text.size());
+    }
+
+    state.text.append(delta);
     if (callback && !delta.empty())
         callback({output_channel, delta});
 }
@@ -444,12 +485,7 @@ public:
                      const SamplingConfig& input_config,
                      const vector<Index>& history)
     {
-        SamplingConfig config = input_config;
-        config.temperature = max(config.temperature, 0.0f);
-        config.top_k = max(config.top_k, Index(0));
-        config.top_p = clamp(config.top_p, 0.0f, 1.0f);
-        if (config.repetition_penalty <= 0.0f)
-            config.repetition_penalty = 1.0f;
+        const SamplingConfig config = clamp_sampling(input_config);
 
         const TensorView output = propagation.get_outputs();
         throw_if(output.shape.empty()
@@ -563,7 +599,7 @@ private:
     Index sample_host(const SamplingConfig& config,
                       const vector<Index>& history)
     {
-        vector<float> adjusted = logits;
+        adjusted = logits;
         adjusted[0] = -numeric_limits<float>::infinity();
 
         if (config.repetition_penalty != 1.0f)
@@ -581,7 +617,7 @@ private:
                                   max_element(adjusted.begin(),
                                               adjusted.end())));
 
-        vector<pair<float, Index>> candidates;
+        candidates.clear();
         candidates.reserve(size_t(vocabulary - 1));
         for (Index token = 1; token < vocabulary; ++token)
             candidates.push_back({
@@ -591,21 +627,11 @@ private:
 
         if (config.top_k > 0 && config.top_k < ssize(candidates))
         {
-            nth_element(candidates.begin(),
-                        candidates.begin() + config.top_k,
-                        candidates.end(),
-                        [](const auto& left, const auto& right)
-                        {
-                            return left.first > right.first;
-                        });
+            top_k_partition(candidates, config.top_k);
             candidates.resize(size_t(config.top_k));
         }
 
-        ranges::sort(candidates,
-                     [](const auto& left, const auto& right)
-                     {
-                         return left.first > right.first;
-                     });
+        ranges::sort(candidates, descending_first);
 
         const float maximum = candidates.front().first;
         double probability_sum = 0.0;
@@ -657,6 +683,9 @@ private:
 
     vector<float> logits;
     vector<uint16_t> bf16_logits;
+    // Reused per token so ~vocabulary-sized buffers are allocated only once.
+    vector<float> adjusted;
+    vector<pair<float, Index>> candidates;
     int* pinned_id = nullptr;
     Buffer gpu_candidates{Device::CUDA};
     Buffer gpu_id{Device::CUDA};

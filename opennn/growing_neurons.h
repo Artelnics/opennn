@@ -24,6 +24,11 @@ public:
 
     void set_neurons_increment(const Index);
 
+    // Warm start: trial 0 of each neuron count seeds the overlapping weight blocks from the
+    // previous candidate's best trial; remaining trials stay pure random restarts.
+    void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
+    bool get_warm_start() const noexcept { return warm_start; }
+
     NeuronsSelectionResult perform_neurons_selection() override;
 
     void from_JSON(const JsonDocument&) override;
@@ -33,6 +38,8 @@ public:
 private:
 
     Index neurons_increment = 0;
+
+    bool warm_start = true;
 };
 
 }

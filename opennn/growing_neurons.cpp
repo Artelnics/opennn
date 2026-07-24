@@ -73,6 +73,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
+    ParameterSnapshot warm_snapshot;
+    ParameterSnapshot candidate_snapshot;
+
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
         if (display) cout << "\nGrowing neurons epoch: " << epoch << "\n";
@@ -101,6 +104,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
                 if (improved)
                 {
+                    if (warm_start)
+                        candidate_snapshot = capture_parameter_snapshot(neural_network);
+
                     neuron_selection_results.training_error_history(epoch) = training_error;
                     neuron_selection_results.validation_error_history(epoch) = validation_error;
 
@@ -115,7 +121,20 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                         neuron_selection_results.optimum_validation_error = validation_error;
                     }
                 }
+            },
+            [&](Index trial)
+            {
+                neural_network->set_parameters_random();
+
+                if (trial == 0 && warm_start && !warm_snapshot.empty())
+                    seed_parameters_from_snapshot(neural_network, warm_snapshot);
             });
+
+        if (warm_start && !candidate_snapshot.empty())
+        {
+            warm_snapshot = move(candidate_snapshot);
+            candidate_snapshot = {};
+        }
 
         const float minimum_training_error = candidate_evaluation.training_error;
         const float minimum_validation_error = candidate_evaluation.validation_error;
@@ -203,6 +222,7 @@ void GrowingNeurons::to_JSON(JsonWriter& printer) const
         {"MaximumNeurons", maximum_neurons},
         {"NeuronsIncrement", neurons_increment},
         {"TrialsNumber", trials_number},
+        {"WarmStart", warm_start},
         {"ValidationErrorGoal", validation_error_goal},
         {"MaximumValidationFailures", maximum_validation_failures},
         {"MaximumTime", maximum_time},
@@ -226,6 +246,9 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
 
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));
+
+    if (root_element->has("WarmStart"))
+        set_warm_start(read_json_bool(root_element, "WarmStart"));
 }
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");

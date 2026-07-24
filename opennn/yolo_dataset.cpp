@@ -1977,8 +1977,10 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                     const array<MosaicQuad, 4> quads =
                         compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
-                    vector<Box> mosaic_boxes;
-                    vector<Box> quad_boxes;
+                    thread_local vector<Box> mosaic_boxes;
+                    thread_local vector<Box> quad_boxes;
+                    mosaic_boxes.clear();
+                    quad_boxes.clear();
 
                     for (const MosaicQuad& q : quads)
                     {
@@ -2026,7 +2028,8 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                 }
                 else
                 {
-                    vector<Box> boxes;
+                    thread_local vector<Box> boxes;
+                    boxes.clear();
                     read_sample_boxes(sample_index, boxes);
 
                     if (augment)

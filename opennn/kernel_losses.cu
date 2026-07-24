@@ -637,6 +637,39 @@ __global__ void yolo_loss_gradient_kernel(
     }
 }
 
+// ── per-head target assembly ──────────────────────────────────────────────────
+// Pure gather mirroring assemble_head_target (loss.cpp): the flat per-sample
+// target is the concatenation of every head's block, so
+// head_target[n*head_floats + j] = target_flat[n*per_sample_floats + head_offset + j].
+// Index (not int) source offsets: batch*per_sample_floats can exceed int range
+// even when batch*head_floats fits.
+
+__global__ void yolo_assemble_head_target_kernel(
+    const int n,   // batch * head_floats
+    const float* __restrict__ target_flat,
+    float* __restrict__ head_target,
+    const int per_sample_floats,
+    const int head_offset,
+    const int head_floats)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const Index sample = i / head_floats;
+        const Index j = i - sample * head_floats;
+        head_target[i] = target_flat[sample * Index(per_sample_floats) + head_offset + j];
+    }
+}
+
+void yolo_assemble_head_target_cuda(const float* target_flat, float* head_target,
+                                    Index batch, Index per_sample_floats,
+                                    Index head_offset, Index head_floats)
+{
+    launch_elementwise(batch * head_floats, yolo_assemble_head_target_kernel,
+                       target_flat, head_target,
+                       checked_int(per_sample_floats), checked_int(head_offset),
+                       checked_int(head_floats));
+}
+
 // ── wrappers ──────────────────────────────────────────────────────────────────
 
 void yolo_error_cuda(const float* output, const float* target, float* error_accumulator,

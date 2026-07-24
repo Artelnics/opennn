@@ -207,7 +207,9 @@ void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
 // fp32 values) enables the split-KV single-token decode kernel on GPU; when
 // `position_device` is non-null it holds the cached-token count before this
 // token on device (valid keys = *position_device + 1, CUDA-graph replay),
-// otherwise the count comes from query_position_offset + 1.
+// otherwise the count comes from query_position_offset + 1. Other GPU shapes
+// run as cuBLAS batched GEMMs plus a masked softmax over an internal
+// thread-local workspace (naive kernel only if that workspace cannot grow).
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                bool causal, float scale, Index query_position_offset = 0,

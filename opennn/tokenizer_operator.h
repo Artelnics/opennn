@@ -52,6 +52,9 @@ public:
     vector<Index> encode_sequence(string_view text, Index sequence_length) const;
     virtual string decode(const vector<Index>& ids) const;
     virtual string decode_token(Index id) const;
+    // True only when decode(ids) equals concatenating decode_token over ids,
+    // so streaming consumers may decode one token at a time.
+    virtual bool supports_incremental_decode() const noexcept { return false; }
 
     Index get_unk_id() const noexcept { return unk_id; }
     const vector<string>& get_reserved_tokens() const noexcept { return reserved_tokens; }
@@ -150,6 +153,7 @@ public:
     vector<Index> encode(string_view text) const override;
     string decode(const vector<Index>& ids) const override;
     string decode_token(Index id) const override;
+    bool supports_incremental_decode() const noexcept override { return true; }
 
     void build_vocabulary(const vector<vector<string>>&, Index, Index) override {}
 
@@ -179,6 +183,9 @@ protected:
     array<uint32_t, 256> byte_encoder{};
     unordered_map<uint32_t, unsigned char> byte_decoder;
     StringMap<int> merge_ranks;
+    // Identifies the current merge table; bumped by set_merges so the
+    // thread-local BPE memoization cache in tokenize_into stays coherent.
+    uint64_t merges_revision = 0;
     vector<string> special_strings;
     unordered_set<Index> special_ids;
 };

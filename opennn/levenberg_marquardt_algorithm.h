@@ -37,6 +37,12 @@ struct BackPropagationLM
 
     VectorR gradient;
     MatrixR hessian;
+
+    // compute_jacobian workspace; sizes are fixed per network/batch, reused across epochs
+    vector<Index> dense_indices;
+    vector<Index> parameter_offsets;
+    vector<MatrixR> deltas;
+    vector<MatrixR> activation_derivatives;
 };
 
 class LevenbergMarquardtAlgorithm final : public Optimizer

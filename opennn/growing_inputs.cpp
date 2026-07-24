@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <map>
+
 #include "registry.h"
 #include "dataset.h"
 #include "tabular_dataset.h"
@@ -19,6 +21,38 @@
 
 namespace opennn
 {
+
+// Identity (variable index, feature offset) of each input feature, in the dataset order the
+// first trainable layer's weight rows follow.
+static vector<pair<Index, Index>> input_feature_ids(const Dataset* dataset)
+{
+    const vector<Variable>& variables = dataset->get_variables();
+
+    vector<pair<Index, Index>> ids;
+
+    for (Index variable_index : dataset->get_variable_indices(VariableRole::Input))
+        for (Index feature = 0; feature < variables[variable_index].get_feature_count(); ++feature)
+            ids.emplace_back(variable_index, feature);
+
+    return ids;
+}
+
+// new row -> old row (-1 = new feature, keep its random initialization). Handles features
+// inserted mid-order: dataset order is by variable index, not by order of addition.
+static vector<Index> map_feature_rows(const vector<pair<Index, Index>>& old_ids,
+                                      const vector<pair<Index, Index>>& new_ids)
+{
+    map<pair<Index, Index>, Index> old_rows;
+    for (Index row = 0; row < ssize(old_ids); ++row)
+        old_rows.emplace(old_ids[row], row);
+
+    vector<Index> row_map(new_ids.size(), -1);
+    for (Index row = 0; row < ssize(new_ids); ++row)
+        if (const auto it = old_rows.find(new_ids[row]); it != old_rows.end())
+            row_map[row] = it->second;
+
+    return row_map;
+}
 
 GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
@@ -115,6 +149,10 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
 
+    ParameterSnapshot warm_snapshot;
+    ParameterSnapshot candidate_snapshot;
+    vector<pair<Index, Index>> warm_feature_ids;
+
     while (!input_selection_results.stopping_condition)
     {
         if (variable_index >= correlations_rank_descending.size())
@@ -147,10 +185,17 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             cout << "\nTrying to add \"" << candidate_name << "\"  ->  "
                  << input_variables_number << " inputs\n";
 
+        const vector<Index> warm_row_map = warm_start && !warm_snapshot.empty() && folds_number == 1
+            ? map_feature_rows(warm_feature_ids, input_feature_ids(dataset))
+            : vector<Index>{};
+
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
             training_strategy, neural_network, folds_number, fold_partition, trials_number, false,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
+                if (improved && warm_start)
+                    candidate_snapshot = capture_parameter_snapshot(neural_network);
+
                 if (improved && validation_error < input_selection_results.optimum_validation_error)
                 {
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices(VariableRole::Input);
@@ -167,6 +212,13 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
                     cout << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
                          << "training error " << training_error
                          << ", validation error " << validation_error << "\n";
+            },
+            [&](Index trial)
+            {
+                neural_network->set_parameters_random();
+
+                if (trial == 0 && !warm_row_map.empty())
+                    seed_parameters_from_snapshot(neural_network, warm_snapshot, warm_row_map);
             });
 
         const float minimum_training_error = candidate_evaluation.training_error;
@@ -199,10 +251,19 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
             dataset->set_variable_role(current_variable_index,
                 dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget ? "Target" : "None");
+
+            candidate_snapshot = {};
         }
         else
         {
             previous_validation_error = minimum_validation_error;
+
+            if (warm_start && !candidate_snapshot.empty())
+            {
+                warm_snapshot = move(candidate_snapshot);
+                candidate_snapshot = {};
+                warm_feature_ids = input_feature_ids(dataset);
+            }
 
             input_selection_results.training_error_history(epoch) = minimum_training_error;
             input_selection_results.validation_error_history(epoch) = minimum_validation_error;
@@ -271,6 +332,7 @@ void GrowingInputs::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"TrialsNumber", trials_number},
+        {"WarmStart", warm_start},
         {"ValidationErrorGoal", validation_error_goal},
         {"MaximumValidationFailures", maximum_validation_failures},
         {"MinimumInputsNumber", minimum_inputs_number},
@@ -297,6 +359,9 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
 
     if (root_element->has("FoldsNumber"))
         set_folds_number(read_json_index(root_element, "FoldsNumber"));
+
+    if (root_element->has("WarmStart"))
+        set_warm_start(read_json_bool(root_element, "WarmStart"));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");

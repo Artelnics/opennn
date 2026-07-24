@@ -49,6 +49,27 @@ static inline int grid_size_for(int n)
     return ceil_div(n, block_size);
 }
 
+// Capped grid for kernels verified to use a grid-stride loop
+// (`i += blockDim.x * gridDim.x`): a few block waves per SM schedule better
+// than hundreds of thousands of blocks. One-thread-per-element kernels with an
+// `if (i >= n) return;` guard must keep grid_size_for's uncapped grid, and
+// kernels whose float accumulation order depends on the grid (atomicAdd) must
+// too, so results stay bit-identical.
+static inline int grid_size_strided_for(int n)
+{
+    static const int max_blocks = [] {
+        int device = 0, sm_count = 0;
+        if (cudaGetDevice(&device) == cudaSuccess
+            && cudaDeviceGetAttribute(&sm_count, cudaDevAttrMultiProcessorCount, device) == cudaSuccess
+            && sm_count > 0)
+            return 32 * sm_count;
+        cudaGetLastError();
+        return std::numeric_limits<int>::max();
+    }();
+    const int blocks = ceil_div(n, block_size);
+    return blocks < max_blocks ? blocks : max_blocks;
+}
+
 static inline int checked_int(Index value)
 {
     if (value > Index(std::numeric_limits<int>::max())
@@ -77,6 +98,16 @@ static inline void launch_elementwise(Index n, K kernel, Args... args)
     if (n == 0) return;
     const int total = checked_int(n);
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
+}
+
+// launch_elementwise with the capped grid of grid_size_strided_for; only for
+// kernels verified to be grid-stride (see grid_size_strided_for's caveats).
+template<typename K, typename... Args>
+static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
+{
+    if (n == 0) return;
+    const int total = checked_int(n);
+    OPENNN_CUDA_LAUNCH(kernel<<<grid_size_strided_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
 }
 
 #define OPENNN_INSTANTIATE_FLOAT_BF16(X) \

@@ -1109,7 +1109,10 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         for (Index hq = 0; hq < n_query_heads; ++hq)
         {
             const Index hkv = hq / group;
-            vector<float> scores(size_t(key_seq), 0.0f);
+            // scores[0..valid) is always written before it is read, so the
+            // buffer needs no zero-fill and can be reused across iterations.
+            thread_local vector<float> scores;
+            if (scores.size() < size_t(key_seq)) scores.resize(size_t(key_seq));
 
             for (Index i = 0; i < query_seq; ++i)
             {
@@ -1801,6 +1804,16 @@ static void add_gpu(const TensorView& input_1,
              const TensorView& input_2,
              TensorView& output)
 {
+    // add() enforces equal element counts, so this is always a plain
+    // elementwise sum; the custom kernel spares fp32-only networks the cuDNN
+    // handle. add_relu_cuda has no bf16 instantiation: non-fp32 keeps cuDNN.
+    if (input_1.is_fp32() && input_2.is_fp32() && output.is_fp32())
+    {
+        add_relu_cuda(output.size(), input_1.as<float>(), input_2.as<float>(),
+                      /*apply_relu=*/false, output.as<float>());
+        return;
+    }
+
     CHECK_CUDNN(cudnnOpTensor(Backend::get_cudnn_handle(),
                               Backend::get_operator_sum_descriptor(),
                               &one, input_1.get_descriptor(), input_1.data,
@@ -2129,6 +2142,164 @@ Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_di
     return n_query_heads * GROUPED_ATTENTION_DECODE_SPLITS * (head_dim + 2);
 }
 
+// Dedicated handle for the grouped-attention GEMMs: the shared handle carries
+// TF32 math mode and a workspace pool whose state varies with what ran before,
+// both of which steer cuBLAS algorithm selection — attention logits must not
+// depend on process history. A private handle with default math mode and a
+// fixed workspace keeps the algorithm choice (and thus the numerics) stable.
+static cublasHandle_t grouped_attention_cublas()
+{
+    thread_local Buffer cublas_workspace{Device::CUDA};
+    thread_local cublasHandle_t handle = nullptr;
+    if (!handle)
+    {
+        constexpr Index workspace_bytes = Index(4) << 20;
+        cublas_workspace.grow_to(workspace_bytes);
+        CHECK_CUBLAS(cublasCreate(&handle));
+        CHECK_CUBLAS(cublasSetStream(handle, device::get_compute_stream()));
+        CHECK_CUBLAS(cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH));
+        CHECK_CUBLAS(cublasSetWorkspace(handle, cublas_workspace.as<char>(), size_t(workspace_bytes)));
+    }
+    return handle;
+}
+
+// Full-precision strided-batched GEMM for the grouped-attention path. Not the
+// shared gemm_strided_batched_cuda wrapper: that one hardcodes fast-math
+// compute types (TF32 / FAST_16BF), whose score error is amplified through the
+// softmax and would break parity with the fp32 CPU reference.
+static void grouped_attention_gemm(cublasOperation_t transa, cublasOperation_t transb,
+                                   int m, int n, int k, float alpha,
+                                   const void* A, cudaDataType_t a_type, int lda, long long stride_a,
+                                   const void* B, cudaDataType_t b_type, int ldb, long long stride_b,
+                                   void* C, cudaDataType_t c_type, int ldc, long long stride_c,
+                                   int batch_count)
+{
+    const float beta = 0.0f;
+    CHECK_CUBLAS(cublasGemmStridedBatchedEx(grouped_attention_cublas(),
+                                            transa, transb, m, n, k,
+                                            &alpha,
+                                            A, a_type, lda, stride_a,
+                                            B, b_type, ldb, stride_b,
+                                            &beta,
+                                            C, c_type, ldc, stride_c,
+                                            batch_count,
+                                            CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
+}
+
+// General-case grouped attention as batched GEMMs. Q/K/V are staged head-major
+// ([b, h, s, d]) so the `group` query heads of each kv head form one contiguous
+// (group*query_seq, head_dim) operand: QK^T and probs x V each become a single
+// strided-batched GEMM over batch*n_kv_heads with no K/V duplication, and the
+// score block layout [b, hkv, g, i, j] is exactly [b, hq, i, j]. Scores stay
+// fp32 through the masked softmax; probabilities quantize to T only for the
+// second GEMM. Workspace is a thread-local high-water buffer, chunked over the
+// batch dimension; returns false (caller falls back to the naive kernel) when
+// the workspace cannot grow (OOM, CUDA-graph capture with unwarmed sizes).
+template<typename T>
+static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, const int key_seq,
+                                       const int n_query_heads, const int n_kv_heads, const int head_dim,
+                                       const float scale, const int query_position_offset, const bool causal,
+                                       const T* Q, const T* K, const T* V, T* O)
+{
+    const int group = n_kv_heads > 0 ? n_query_heads / n_kv_heads : 0;
+    if (group < 1 || group * n_kv_heads != n_query_heads || key_seq <= 0 || head_dim <= 0)
+        return false;
+
+    constexpr bool is_fp32 = std::is_same_v<T, float>;
+    const cudaDataType_t dtype = is_fp32 ? CUDA_R_32F : CUDA_R_16BF;
+
+    const Index q_elems  = Index(query_seq) * n_query_heads * head_dim;   // per batch item
+    const Index kv_elems = Index(key_seq) * n_kv_heads * head_dim;
+    const Index s_elems  = Index(n_query_heads) * query_seq * key_seq;
+
+    const Index per_batch_bytes = s_elems * Index(sizeof(float))
+                                + (is_fp32 ? 0 : s_elems * Index(sizeof(T)))
+                                + 2 * (q_elems + kv_elems) * Index(sizeof(T));
+
+    constexpr Index budget_bytes = Index(256) << 20;   // chunk target, not a hard cap
+    const int chunk = to_int(max(Index(1), min(Index(batch), budget_bytes / per_batch_bytes)));
+
+    // Contiguous per-region layout (regions 16B-aligned; no per-batch padding,
+    // the GEMM batch strides chain across the chunk's batch items).
+    auto aligned = [](Index bytes) { return (bytes + 15) & ~Index(15); };
+    const Index scores_bytes = aligned(Index(chunk) * s_elems * Index(sizeof(float)));
+    const Index probs_bytes  = is_fp32 ? 0 : aligned(Index(chunk) * s_elems * Index(sizeof(T)));
+    const Index q_bytes      = aligned(Index(chunk) * q_elems * Index(sizeof(T)));
+    const Index kv_bytes     = aligned(Index(chunk) * kv_elems * Index(sizeof(T)));
+
+    thread_local Buffer workspace{Device::CUDA};
+
+    try
+    {
+        workspace.grow_to(scores_bytes + probs_bytes + 2 * q_bytes + 2 * kv_bytes);
+
+        char* base    = workspace.as<char>();
+        float* scores = reinterpret_cast<float*>(base);
+        T* probs      = is_fp32 ? reinterpret_cast<T*>(scores)
+                                : reinterpret_cast<T*>(base + scores_bytes);
+        T* Qt         = reinterpret_cast<T*>(base + scores_bytes + probs_bytes);
+        T* Ot         = reinterpret_cast<T*>(base + scores_bytes + probs_bytes + q_bytes);
+        T* Kt         = reinterpret_cast<T*>(base + scores_bytes + probs_bytes + 2 * q_bytes);
+        T* Vt         = reinterpret_cast<T*>(base + scores_bytes + probs_bytes + 2 * q_bytes + kv_bytes);
+
+        const int mq = group * query_seq;
+
+        for (int b0 = 0; b0 < batch; b0 += chunk)
+        {
+            const int bc = min(chunk, batch - b0);
+            const int batch_count = bc * n_kv_heads;
+
+            split_heads_cuda<T>(Index(bc) * q_elems, Q + Index(b0) * q_elems, Qt,
+                                query_seq, n_query_heads, head_dim);
+            split_heads_cuda<T>(Index(bc) * kv_elems, K + Index(b0) * kv_elems, Kt,
+                                key_seq, n_kv_heads, head_dim);
+            split_heads_cuda<T>(Index(bc) * kv_elems, V + Index(b0) * kv_elems, Vt,
+                                key_seq, n_kv_heads, head_dim);
+
+            // The K/V views can span the KV-cache capacity: rows >= kv_valid
+            // were never written. Their masked scores are overwritten with
+            // exact zeros, but probs x V still computes 0 x garbage — NaN when
+            // recycled device memory decodes as NaN/Inf — so the staged V tail
+            // must be zeroed. (The naive kernel never reads those rows.)
+            const int kv_valid = causal ? min(query_position_offset + query_seq, key_seq) : key_seq;
+            if (kv_valid < key_seq)
+            {
+                const size_t tail_bytes = size_t(key_seq - kv_valid) * head_dim * sizeof(T);
+                for (int i = 0; i < bc * n_kv_heads; ++i)
+                    CHECK_CUDA(cudaMemsetAsync(Vt + (Index(i) * key_seq + kv_valid) * head_dim,
+                                               0, tail_bytes, device::get_compute_stream()));
+            }
+
+            // scores[b,hq,i,j] = scale * Qt_block x Kt_block^T
+            grouped_attention_gemm(CUBLAS_OP_T, CUBLAS_OP_N, key_seq, mq, head_dim, scale,
+                                   Kt, dtype, head_dim, Index(key_seq) * head_dim,
+                                   Qt, dtype, head_dim, Index(mq) * head_dim,
+                                   scores, CUDA_R_32F, key_seq, Index(mq) * key_seq,
+                                   batch_count);
+
+            grouped_attention_softmax_cuda<T>(bc * n_query_heads * query_seq, query_seq, key_seq,
+                                              query_position_offset, causal, scores, probs);
+
+            // Ot_block = probs_block x Vt_block
+            grouped_attention_gemm(CUBLAS_OP_N, CUBLAS_OP_N, head_dim, mq, key_seq, 1.0f,
+                                   Vt, dtype, head_dim, Index(key_seq) * head_dim,
+                                   probs, dtype, key_seq, Index(mq) * key_seq,
+                                   Ot, dtype, head_dim, Index(mq) * head_dim,
+                                   batch_count);
+
+            merge_heads_cuda<T>(Index(bc) * q_elems, Ot, O + Index(b0) * q_elems,
+                                query_seq, n_query_heads, head_dim);
+        }
+    }
+    catch (...)
+    {
+        device::reset_last_error();
+        return false;   // workspace growth or an unsupported GEMM combo: naive fallback
+    }
+
+    return true;
+}
+
 static void grouped_attention_gpu(const TensorView& query, const TensorView& key, const TensorView& value,
                                   TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                   bool causal, float scale, Index query_position_offset,
@@ -2137,9 +2308,21 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
     const int batch     = to_int(query.shape[0]);
     const int query_seq = to_int(query.shape[1]);
     const int key_seq   = to_int(key.shape[1]);
+    const int group     = to_int(n_kv_heads) > 0 ? to_int(n_query_heads / n_kv_heads) : 0;
+
+    const bool decode = batch == 1 && query_seq == 1 && causal && decode_partials
+                     && grouped_attention_decode_supported(to_int(head_dim), group);
 
     output.dispatch([&](auto tag) {
         using T = decltype(tag);
+
+        if (batch * query_seq * to_int(n_query_heads) > 0 && !decode
+            && grouped_attention_gemm_gpu<T>(batch, query_seq, key_seq,
+                                             to_int(n_query_heads), to_int(n_kv_heads), to_int(head_dim),
+                                             scale, to_int(query_position_offset), causal,
+                                             query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>()))
+            return;
+
         grouped_attention_cuda<T>(batch, query_seq, key_seq, to_int(n_query_heads), to_int(n_kv_heads),
                                   to_int(head_dim), scale, to_int(query_position_offset), causal,
                                   kv_length_device, decode_partials,

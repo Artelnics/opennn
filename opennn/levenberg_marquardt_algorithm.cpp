@@ -139,13 +139,14 @@ void LevenbergMarquardtAlgorithm::calculate_error(const Batch&,
                               / float(back_propagation_lm.squared_errors.size());
 }
 
-static MatrixR lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs)
+static void lm_activation_derivative(ActivationFunction activation_function, const MatrixMap& outputs, MatrixR& result)
 {
     throw_if(activation_function == ActivationFunction::Softmax,
              "LevenbergMarquardtAlgorithm: Softmax activation is not supported "
              "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewtonMethod.");
 
-    return activation_derivative_from_output_values(activation_function, outputs);
+    result = outputs.unaryExpr([activation_function](float value)
+             { return activation_derivative_from_output_value(activation_function, value); });
 }
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
@@ -159,8 +160,10 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     MatrixR& jacobian = back_propagation_lm.squared_errors_jacobian;
     jacobian.setZero();
 
-    vector<Index> dense_indices;
-    vector<Index> parameter_offsets;
+    vector<Index>& dense_indices = back_propagation_lm.dense_indices;
+    vector<Index>& parameter_offsets = back_propagation_lm.parameter_offsets;
+    dense_indices.clear();
+    parameter_offsets.clear();
 
     Index offset = 0;
     for (size_t i = 0; i < layers.size(); ++i)
@@ -197,21 +200,42 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
     const Index outputs_number = static_cast<const Dense*>(layers[last_layer].get())->get_outputs_number();
     const Index rows = batch_size * outputs_number;
 
+    const size_t layers_count = dense_indices.size();
+
+    // Workspace reused across epochs; resize is a no-op once sized.
+    vector<MatrixR>& deltas = back_propagation_lm.deltas;
+    vector<MatrixR>& activation_derivatives = back_propagation_lm.activation_derivatives;
+    deltas.resize(layers_count);
+    activation_derivatives.resize(layers_count);
+
+    for (size_t n = 0; n < layers_count; ++n)
+    {
+        const Index neurons = static_cast<const Dense*>(layers[dense_indices[n]].get())->get_outputs_number();
+        deltas[n].resize(rows, neurons);
+        activation_derivatives[n].resize(batch_size, neurons);
+    }
+
     // delta(sample * outputs_number + j, k) = d output_j(sample) / d combination_k(sample)
     // of the layer being processed; rows match the errors vector layout.
-    MatrixR delta = MatrixR::Zero(rows, outputs_number);
     {
         const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
         const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
-        const MatrixR act_deriv = lm_activation_derivative(
-            static_cast<const Dense*>(layers[last_layer].get())->get_activation_function(), outputs);
 
-        for (Index j = 0; j < outputs_number; ++j)
-            for (Index sample = 0; sample < batch_size; ++sample)
+        MatrixR& act_deriv = activation_derivatives[layers_count - 1];
+        lm_activation_derivative(
+            static_cast<const Dense*>(layers[last_layer].get())->get_activation_function(), outputs, act_deriv);
+
+        MatrixR& delta = deltas[layers_count - 1];
+        delta.setZero();
+
+        // Sample s writes only rows [s*outputs_number, (s+1)*outputs_number): disjoint.
+        #pragma omp parallel for
+        for (Index sample = 0; sample < batch_size; ++sample)
+            for (Index j = 0; j < outputs_number; ++j)
                 delta(sample * outputs_number + j, j) = act_deriv(sample, j);
     }
 
-    for (Index n = Index(dense_indices.size()) - 1; n >= 0; --n)
+    for (Index n = Index(layers_count) - 1; n >= 0; --n)
     {
         const Index layer_index = dense_indices[n];
         const auto* dense = static_cast<const Dense*>(layers[layer_index].get());
@@ -223,16 +247,21 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
         const Index bias_offset = parameter_offsets[n];
         const Index weight_offset = bias_offset + get_aligned_size(neurons);
 
-        jacobian.block(0, bias_offset, rows, neurons) = delta.leftCols(neurons);
+        const MatrixR& delta = deltas[n];
 
-        for (Index i = 0; i < inputs_number; ++i)
-            for (Index k = 0; k < neurons; ++k)
+        jacobian.block(0, bias_offset, rows, neurons) = delta;
+
+        // Each entry is one independent product; sample s owns rows
+        // [s*outputs_number, (s+1)*outputs_number) of the weight block: disjoint.
+        #pragma omp parallel for
+        for (Index sample = 0; sample < batch_size; ++sample)
+            for (Index j = 0; j < outputs_number; ++j)
             {
-                const Index column = weight_offset + i * neurons + k;
-                for (Index j = 0; j < outputs_number; ++j)
-                    for (Index sample = 0; sample < batch_size; ++sample)
-                        jacobian(sample * outputs_number + j, column) =
-                            inputs(sample, i) * delta(sample * outputs_number + j, k);
+                const Index row = sample * outputs_number + j;
+
+                for (Index i = 0; i < inputs_number; ++i)
+                    for (Index k = 0; k < neurons; ++k)
+                        jacobian(row, weight_offset + i * neurons + k) = inputs(sample, i) * delta(row, k);
             }
 
         if (n == 0) break;
@@ -241,18 +270,22 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
                                 inputs_number, neurons);
 
         const auto* previous_dense = static_cast<const Dense*>(layers[dense_indices[n - 1]].get());
-        const MatrixR previous_act_deriv =
-            lm_activation_derivative(previous_dense->get_activation_function(), inputs);
+        MatrixR& previous_act_deriv = activation_derivatives[n - 1];
+        lm_activation_derivative(previous_dense->get_activation_function(), inputs, previous_act_deriv);
 
-        MatrixR previous_delta(rows, inputs_number);
+        MatrixR& previous_delta = deltas[n - 1];
         previous_delta.noalias() = delta * weights.transpose();
 
-        for (Index k = 0; k < inputs_number; ++k)
+        // Elementwise in-place scaling; sample s owns disjoint rows.
+        #pragma omp parallel for
+        for (Index sample = 0; sample < batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
-                for (Index sample = 0; sample < batch_size; ++sample)
-                    previous_delta(sample * outputs_number + j, k) *= previous_act_deriv(sample, k);
+            {
+                const Index row = sample * outputs_number + j;
 
-        delta = move(previous_delta);
+                for (Index k = 0; k < inputs_number; ++k)
+                    previous_delta(row, k) *= previous_act_deriv(sample, k);
+            }
     }
 }
 

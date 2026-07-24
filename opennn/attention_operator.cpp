@@ -582,6 +582,68 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
                     query_delta, key_delta, value_delta);
 }
 
+#ifdef OPENNN_HAS_CUDA
+namespace
+{
+
+// Persistent staging for the per-batch valid lengths consumed by
+// attention_length_masked_softmax_cuda: a pinned host ring plus one high-water
+// device buffer, reused across calls instead of a per-call cudaMallocAsync.
+// Every consumer runs on the compute stream, so stream order protects the
+// device buffer; the per-slot events keep the host from rewriting a pinned
+// slot while its previous H2D copy is still in flight.
+struct AttentionLengthsStaging
+{
+    static constexpr int slots = 4;
+
+    Buffer device_lengths{Device::CUDA};
+    int* pinned = nullptr;
+    Index capacity = 0;
+    int slot = 0;
+    CudaEvent copy_done[slots];
+
+    ~AttentionLengthsStaging() { if (pinned) device::deallocate_pinned_host(pinned); }
+};
+
+const int* stage_attention_lengths(const vector<Index>& lengths)
+{
+    thread_local AttentionLengthsStaging staging;
+
+    const Index batch_size = Index(lengths.size());
+    if (batch_size == 0) return nullptr;
+
+    cudaStream_t stream = device::get_compute_stream();
+
+    if (batch_size > staging.capacity)
+    {
+        device::synchronize(stream);
+        if (staging.pinned) device::deallocate_pinned_host(staging.pinned);
+        staging.pinned = static_cast<int*>(device::allocate_pinned_host(
+            AttentionLengthsStaging::slots * batch_size * Index(sizeof(int))));
+        staging.device_lengths.grow_to(batch_size * Index(sizeof(int)));
+        staging.capacity = batch_size;
+    }
+
+    staging.slot = (staging.slot + 1) % AttentionLengthsStaging::slots;
+    CudaEvent& copy_done = staging.copy_done[staging.slot];
+    if (copy_done) device::synchronize_event(copy_done);
+    else copy_done.create();
+
+    int* host_slot = staging.pinned + staging.slot * staging.capacity;
+    for (Index i = 0; i < batch_size; ++i)
+        host_slot[i] = int(lengths[i]);
+
+    device::copy_async(staging.device_lengths.data, host_slot,
+                       batch_size * Index(sizeof(int)),
+                       device::CopyKind::HostToDevice, stream);
+    device::record_event(copy_done, stream);
+
+    return staging.device_lengths.as<int>();
+}
+
+}
+#endif
+
 void AttentionOperator::apply_unfused(const TensorView& query,
                               const TensorView& key,
                               const TensorView& value,
@@ -675,14 +737,14 @@ void AttentionOperator::apply_unfused(const TensorView& query,
     if (attention_weights.is_cuda() && explicit_lengths
         && Index(explicit_lengths->size()) == batch_size)
     {
-        const vector<int> lengths_int(explicit_lengths->begin(), explicit_lengths->end());
+        const int* device_lengths = stage_attention_lengths(*explicit_lengths);
         attention_weights.dispatch([&](auto tag) {
             using T = decltype(tag);
             attention_length_masked_softmax_cuda<T>(to_int(batch_size),
                                           to_int(heads_number),
                                           to_int(query_sequence_length),
                                           to_int(source_sequence_length),
-                                          lengths_int.data(),
+                                          device_lengths,
                                           attention_weights.as<T>(),
                                           reinterpret_cast<T*>(scratch),
                                           use_causal_mask,

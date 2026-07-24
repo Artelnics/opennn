@@ -97,6 +97,49 @@ void GroupedQueryAttentionOperator::back_propagate(ForwardPropagation&, BackProp
     throw runtime_error("GroupedQueryAttention is inference-only: back-propagation is not implemented.");
 }
 
+namespace
+{
+
+// CPU counterpart of the CUDA shared scratch below: the RoPE tables are a pure
+// function of (table_len, head_dim, theta) and the work buffers carry no state
+// across calls, and layers run serially, so every GQA layer shares one
+// per-thread copy instead of rebuilding/reallocating each forward. Same caveat
+// as the CUDA pool: one GQA model config per thread at a time.
+struct GroupedAttentionCpuScratch
+{
+    std::vector<float> cos, sin;
+    std::vector<float> q, k, v, qr, kr, attn;
+    Index table_len = -1, head_dim = 0;
+    float theta = 0.0f;
+
+    void build_tables(Index new_table_len, Index new_head_dim, float new_theta)
+    {
+        if (table_len == new_table_len && head_dim == new_head_dim && theta == new_theta) return;
+        cos.resize(size_t(new_table_len) * new_head_dim);
+        sin.resize(size_t(new_table_len) * new_head_dim);
+        TensorView cos_v(cos.data(), {new_table_len, new_head_dim});
+        TensorView sin_v(sin.data(), {new_table_len, new_head_dim});
+        rotary_build_tables(cos_v, sin_v, new_table_len, new_head_dim, new_theta);
+        table_len = new_table_len; head_dim = new_head_dim; theta = new_theta;
+    }
+};
+
+GroupedAttentionCpuScratch& gqa_cpu_scratch()
+{
+    thread_local GroupedAttentionCpuScratch scratch;
+    return scratch;
+}
+
+// Every consumer fully overwrites these buffers before reading, so grow-only
+// resizing without a zero-fill is safe.
+float* grown(std::vector<float>& buffer, size_t n)
+{
+    if (buffer.size() < n) buffer.resize(n);
+    return buffer.data();
+}
+
+}
+
 void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
 {
     TensorView& input  = get_input(forward_propagation, layer);    // [batch, seq, hidden]
@@ -118,11 +161,12 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     const Index kd    = kv_dim();
     const float scale = 1.0f / std::sqrt(float(head_dim));
 
-    // Tables span the compiled window so decode can index positions past..past+seq-1.
+    // Tables span the compiled window so decode can index positions past..past+seq-1;
+    // cached per thread, rebuilt only when (table_len, head_dim, theta) changes.
     const Index table_len = sequence_length;
-    std::vector<float> cos_tab(size_t(table_len) * head_dim), sin_tab(size_t(table_len) * head_dim);
-    TensorView cos_v(cos_tab.data(), {table_len, head_dim}), sin_v(sin_tab.data(), {table_len, head_dim});
-    rotary_build_tables(cos_v, sin_v, table_len, head_dim, rope_theta);
+    auto& scratch = gqa_cpu_scratch();
+    scratch.build_tables(table_len, head_dim, rope_theta);
+    TensorView cos_v(scratch.cos.data(), {table_len, head_dim}), sin_v(scratch.sin.data(), {table_len, head_dim});
 
     float* x_all = input.as<float>();
     float* o_all = output.as<float>();
@@ -142,10 +186,13 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
         float* kcache = kv_key.as<float>();
         float* vcache = kv_value.as<float>();
 
-        std::vector<float> q(size_t(seq) * qd), k(size_t(seq) * kd), qr(size_t(seq) * qd), attn(size_t(seq) * qd);
+        float* q    = grown(scratch.q,    size_t(seq) * qd);
+        float* k    = grown(scratch.k,    size_t(seq) * kd);
+        float* qr   = grown(scratch.qr,   size_t(seq) * qd);
+        float* attn = grown(scratch.attn, size_t(seq) * qd);
 
         TensorView x_b(x_all, {1, seq, hidden});
-        TensorView q_v(q.data(), {1, seq, qd}), k_v(k.data(), {1, seq, kd});
+        TensorView q_v(q, {1, seq, qd}), k_v(k, {1, seq, kd});
         TensorView v_slot(vcache + size_t(past) * kd, {1, seq, kd});   // raw v into cache
         TensorView k_slot(kcache + size_t(past) * kd, {1, seq, kd});   // post-RoPE k into cache
 
@@ -159,12 +206,12 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
-        TensorView qr_v(qr.data(), {1, seq, qd});
+        TensorView qr_v(qr, {1, seq, qd});
         rotary_forward(q_v, cos_v, sin_v, qr_v,   head_dim, head_dim, past);
         rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
 
         TensorView key_all(kcache, {1, total, kd}), val_all(vcache, {1, total, kd});
-        TensorView attn_v(attn.data(), {1, seq, qd});
+        TensorView attn_v(attn, {1, seq, qd});
         grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past);
 
         TensorView o_b(o_all, {1, seq, hidden});
@@ -175,13 +222,17 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     throw_if(forward_propagation.past_length != 0,
              "GroupedQueryAttentionOperator: KV-cache decoding requires batch size 1.");
 
-    std::vector<float> q(size_t(seq) * qd), k(size_t(seq) * kd), v(size_t(seq) * kd);
-    std::vector<float> qr(size_t(seq) * qd), kr(size_t(seq) * kd), attn(size_t(seq) * qd);
+    float* q    = grown(scratch.q,    size_t(seq) * qd);
+    float* k    = grown(scratch.k,    size_t(seq) * kd);
+    float* v    = grown(scratch.v,    size_t(seq) * kd);
+    float* qr   = grown(scratch.qr,   size_t(seq) * qd);
+    float* kr   = grown(scratch.kr,   size_t(seq) * kd);
+    float* attn = grown(scratch.attn, size_t(seq) * qd);
 
     for (Index b = 0; b < batch; ++b)
     {
         TensorView x_b(x_all + size_t(b) * seq * hidden, {1, seq, hidden});
-        TensorView q_v(q.data(), {1, seq, qd}), k_v(k.data(), {1, seq, kd}), v_v(v.data(), {1, seq, kd});
+        TensorView q_v(q, {1, seq, qd}), k_v(k, {1, seq, kd}), v_v(v, {1, seq, kd});
 
         tied_lm_head_forward(x_b, q_proj, q_v);
         tied_lm_head_forward(x_b, k_proj, k_v);
@@ -193,11 +244,11 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
-        TensorView qr_v(qr.data(), {1, seq, qd}), kr_v(kr.data(), {1, seq, kd});
+        TensorView qr_v(qr, {1, seq, qd}), kr_v(kr, {1, seq, kd});
         rotary_forward(q_v, cos_v, sin_v, qr_v, head_dim, head_dim, 0);
         rotary_forward(k_v, cos_v, sin_v, kr_v, head_dim, head_dim, 0);
 
-        TensorView attn_v(attn.data(), {1, seq, qd});
+        TensorView attn_v(attn, {1, seq, qd});
         grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
 
         TensorView o_b(o_all + size_t(b) * seq * hidden, {1, seq, hidden});

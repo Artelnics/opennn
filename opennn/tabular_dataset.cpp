@@ -1487,9 +1487,7 @@ void TabularDataset::read_csv()
     else
         set_default_variable_names();
 
-    infer_column_types(lines, file_separator, has_quotes);
-
-    const DateFormat date_format = infer_dataset_date_format(variables, lines, file_separator, has_sample_ids, missing_values_label, has_quotes);
+    const DateFormat date_format = infer_column_types(lines, file_separator, has_quotes);
 
     for (Variable& variable : variables)
         if (variable.is_categorical() && variable.get_categories_number() == 2)
@@ -2083,12 +2081,12 @@ void TabularDataset::calculate_missing_values_statistics()
     rows_missing_values_number = count_rows_with_nan();
 }
 
-void TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char file_separator, bool has_quotes)
+DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_lines, char file_separator, bool has_quotes)
 {
     const Index variables_number = variables.size();
     const size_t total_rows = sample_lines.size();
 
-    if (total_rows == 0) return;
+    if (total_rows == 0) return Auto;
 
     const size_t rows_to_check = min(size_t(100), total_rows);
     const size_t id_offset = has_sample_ids ? 1 : 0;
@@ -2141,10 +2139,46 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
             variable.type = VariableType::Numeric;
     }
 
+    // Formato de fecha desde las filas ya tokenizadas (visitadas en orden de
+    // fichero desde la fila 0). La pasada completa de infer_dataset_date_format
+    // solo se omite cuando su salida temprana queda reproducida exactamente:
+    // primer acierto en la fila 0, o muestreo que cubrio todas las filas. Un
+    // acierto posterior no basta: una fila intermedia no muestreada podria
+    // contener antes una fecha con otro formato.
+    DateFormat date_format = Auto;
+
+    if (ranges::any_of(variables, [](const Variable& v) { return v.type == VariableType::DateTime; }))
+    {
+        size_t hit_row = rows_to_check;
+
+        for (size_t i = 0; i < rows_to_check && date_format == Auto; ++i)
+        {
+            const vector<string_view>& tokens = sampled_tokens[i];
+
+            for (Index col_index = 0; col_index < variables_number; ++col_index)
+            {
+                if (variables[col_index].type != VariableType::DateTime) continue;
+
+                const size_t token_index = col_index + id_offset;
+                if (token_index >= tokens.size()) continue;
+
+                const string_view token = tokens[token_index];
+                if (is_missing_token(token, missing_values_label)) continue;
+
+                const DateFormat detected = detect_date_format(token);
+                if (detected != Auto) { date_format = detected; hit_row = i; break; }
+            }
+        }
+
+        if (rows_to_check != total_rows && hit_row != 0)
+            date_format = infer_dataset_date_format(variables, sample_lines, file_separator,
+                                                    has_sample_ids, missing_values_label, has_quotes);
+    }
+
     const bool any_categorical = ranges::any_of(variables,
         [](const Variable& v) { return v.is_categorical(); });
 
-    if (!any_categorical) return;
+    if (!any_categorical) return date_format;
 
     vector<unordered_set<string>> unique_categories(variables_number);
     const Index n_lines = ssize(sample_lines);
@@ -2181,6 +2215,8 @@ void TabularDataset::infer_column_types(const vector<string_view>& sample_lines,
                               unique_categories[col_index].end());
             ranges::sort(categories);
         }
+
+    return date_format;
 }
 
 vector<string> TabularDataset::get_feature_scalers(const string& variable_role) const

@@ -358,13 +358,6 @@ void Dense::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-void Dense::from_JSON(const JsonDocument& document)
-{
-    Layer::from_JSON(document);
-
-    configure_operators();
-}
-
 REGISTER(Layer, Dense, "Dense")
 
 }

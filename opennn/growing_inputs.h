@@ -28,6 +28,11 @@ public:
     void set_maximum_inputs_number(const Index);
     void set_minimum_inputs_number(const Index new_minimum_inputs_number) { minimum_inputs_number = new_minimum_inputs_number; }
 
+    // Warm start: trial 0 of each candidate seeds the weight blocks of the features shared with
+    // the last accepted candidate's best trial; remaining trials stay pure random restarts.
+    void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
+    bool get_warm_start() const noexcept { return warm_start; }
+
     InputsSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
@@ -38,6 +43,8 @@ private:
 
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number = 1;
+
+    bool warm_start = true;
 
 };
 

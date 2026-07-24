@@ -157,28 +157,35 @@ public:
     bool push(Index, const ChatCallback& = {});
     void finish(const ChatCallback& = {});
 
-    const string& get_reasoning() const noexcept { return reasoning_text; }
-    const string& get_content() const noexcept { return content_text; }
+    const string& get_reasoning() const noexcept { return reasoning_state.text; }
+    const string& get_content() const noexcept { return content_state.text; }
 
     Index get_reasoning_tokens() const noexcept { return reasoning_tokens; }
     Index get_content_tokens() const noexcept { return content_tokens; }
     Index get_control_tokens() const noexcept { return control_tokens; }
 
 private:
+    struct ChannelState
+    {
+        vector<Index> ids;   // accumulated only on the full re-decode fallback
+        string text;         // stable emitted text
+        string tail;         // incremental mode: withheld incomplete UTF-8 bytes
+    };
+
     bool process_pending(const ChatCallback&, bool flush);
     void append_data_token(Index, const ChatCallback&);
     void emit_stable_delta(GenerationChannel, const ChatCallback&);
+    ChannelState& channel_state(GenerationChannel) noexcept;
 
     const TokenizerOperator* tokenizer = nullptr;
     GenerationParserSpec spec;
     GenerationChannel channel = GenerationChannel::Content;
+    bool incremental = false;
     vector<Index> pending;
     bool stopped = false;
 
-    vector<Index> reasoning_ids;
-    vector<Index> content_ids;
-    string reasoning_text;
-    string content_text;
+    ChannelState reasoning_state;
+    ChannelState content_state;
     Index reasoning_tokens = 0;
     Index content_tokens = 0;
     Index control_tokens = 0;

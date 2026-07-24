@@ -205,7 +205,7 @@ protected:
     mutable vector<float> cache_feature_replacement;
     vector<ScalerMethod> cache_feature_transforms;
 
-    void infer_column_types(const vector<string_view>&, char, bool has_quotes = false);
+    DateFormat infer_column_types(const vector<string_view>&, char, bool has_quotes = false);
 
     void apply_scaler(Index, const string&, const Descriptives&, bool);
 };

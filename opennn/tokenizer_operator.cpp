@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include <atomic>
+
 #include "tokenizer_operator.h"
 #include "io_utilities.h"
 #include "string_utilities.h"
@@ -794,6 +796,9 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
 
         merge_ranks.emplace(merge_line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
     }
+
+    static atomic<uint64_t> revision_counter{0};
+    merges_revision = ++revision_counter;
 }
 
 void BytePairTokenizer::set_special_tokens(const vector<string>& new_special_tokens)
@@ -978,8 +983,17 @@ void BytePairTokenizer::tokenize_into(string_view text,
         if (ids) ids->push_back(token_to_id(token));
     };
 
-    StringMap<vector<string>> cache;
-    cache.reserve(min<size_t>(4096, text.size() / 4 + 1));
+    // Persistent BPE memoization. bpe() output is a pure function of the merge
+    // table, so entries are keyed by merges_revision: clones and copies share
+    // hits, and reloaded merges never see stale results. The storage is
+    // thread-local because shared tokenizer instances are used concurrently
+    // from OpenMP loops (e.g. LanguageDataset::load_documents), which a
+    // mutable member cache would turn into a data race.
+    constexpr size_t maximum_cache_entries = 4096;
+    static thread_local unordered_map<uint64_t, StringMap<vector<string>>> caches;
+    if (caches.size() > 8 && !caches.contains(merges_revision))
+        caches.clear();
+    StringMap<vector<string>>& cache = caches[merges_revision];
 
     auto append_segment = [&](string_view segment)
     {
@@ -993,10 +1007,15 @@ void BytePairTokenizer::tokenize_into(string_view text,
             const vector<string>* subwords = nullptr;
             vector<string> uncached;
 
-            if (cache.size() < 4096)
+            if (cache.size() < maximum_cache_entries)
             {
                 auto [iterator, inserted] = cache.try_emplace(byte_unicode);
                 if (inserted) iterator->second = bpe(iterator->first);
+                subwords = &iterator->second;
+            }
+            else if (const auto iterator = cache.find(byte_unicode);
+                     iterator != cache.end())
+            {
                 subwords = &iterator->second;
             }
             else
