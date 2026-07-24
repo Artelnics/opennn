@@ -1662,24 +1662,207 @@ __global__ void grouped_attention_kernel(const int total_queries, const int quer
     for (int d = 0; d < head_dim; ++d) o_vec[d] = static_cast<T>(acc[d] * inv_l);
 }
 
+// Loads N consecutive elements at p (16/8/4-byte aligned by construction: head
+// vectors start at multiples of head_dim elements) widened to fp32.
+template<typename T, int N>
+__device__ __forceinline__ void load_head_fragment(const T* __restrict__ p, float* out)
+{
+    if constexpr (std::is_same_v<T, __nv_bfloat16> && N % 2 == 0)
+    {
+        const __nv_bfloat162* p2 = reinterpret_cast<const __nv_bfloat162*>(p);
+        #pragma unroll
+        for (int i = 0; i < N / 2; ++i)
+        {
+            const float2 f = __bfloat1622float2(p2[i]);
+            out[2 * i] = f.x; out[2 * i + 1] = f.y;
+        }
+    }
+    else
+    {
+        #pragma unroll
+        for (int i = 0; i < N; ++i) out[i] = static_cast<float>(p[i]);
+    }
+}
+
+// Split-KV decode attention (batch 1, query_seq 1). One block per (kv head,
+// key-range block); each warp is an independent split holding flash-style
+// partials — running max, denominator and fp32 accumulators in registers — for
+// an interleaved subset of the keys, serving all GROUP query heads of its kv
+// head so every K/V row is read once instead of GROUP times. Partials go to
+// scratch laid out [kv_head][split][GROUP][HEAD_DIM + 2] (acc, max, denom);
+// empty splits write denom 0. The valid key count may come from device memory
+// (kv_length_device) so a captured graph replays as the cache grows.
+template<typename T, int HEAD_DIM, int GROUP>
+__global__ void grouped_attention_decode_kernel(const int n_kv_heads, const float scale,
+                                                const int* __restrict__ kv_length_device, const int kv_length_host,
+                                                const T* __restrict__ Q, const T* __restrict__ K,
+                                                const T* __restrict__ V, float* __restrict__ partials)
+{
+    constexpr int FRAG = HEAD_DIM / 32;   // fp32 elements per lane
+
+    const int hkv      = blockIdx.x;
+    const int lane     = threadIdx.x & 31;
+    const int warp     = threadIdx.x >> 5;
+    const int warps    = blockDim.x >> 5;
+    const int split    = blockIdx.y * warps + warp;
+    const int n_splits = gridDim.y * warps;
+    const int valid    = kv_length_device ? *kv_length_device : kv_length_host;
+
+    float q[GROUP][FRAG];
+    #pragma unroll
+    for (int g = 0; g < GROUP; ++g)
+        load_head_fragment<T, FRAG>(Q + (size_t(hkv) * GROUP + g) * HEAD_DIM + lane * FRAG, q[g]);
+
+    float m[GROUP], l[GROUP], acc[GROUP][FRAG];
+    #pragma unroll
+    for (int g = 0; g < GROUP; ++g)
+    {
+        m[g] = -1e30f; l[g] = 0.0f;
+        #pragma unroll
+        for (int f = 0; f < FRAG; ++f) acc[g][f] = 0.0f;
+    }
+
+    for (int j = split; j < valid; j += n_splits)
+    {
+        const size_t row = (size_t(j) * n_kv_heads + hkv) * HEAD_DIM + size_t(lane) * FRAG;
+
+        float k_frag[FRAG];
+        load_head_fragment<T, FRAG>(K + row, k_frag);
+
+        float s[GROUP];
+        #pragma unroll
+        for (int g = 0; g < GROUP; ++g)
+        {
+            float dot = 0.0f;
+            #pragma unroll
+            for (int f = 0; f < FRAG; ++f) dot += q[g][f] * k_frag[f];
+            #pragma unroll
+            for (int offset = 16; offset > 0; offset >>= 1)
+                dot += __shfl_xor_sync(0xffffffffu, dot, offset);
+            s[g] = dot * scale;
+        }
+
+        float v_frag[FRAG];
+        load_head_fragment<T, FRAG>(V + row, v_frag);
+
+        #pragma unroll
+        for (int g = 0; g < GROUP; ++g)
+        {
+            const float m_new = fmaxf(m[g], s[g]);
+            const float corr  = __expf(m[g] - m_new);
+            const float p     = __expf(s[g] - m_new);
+            l[g] = l[g] * corr + p;
+            m[g] = m_new;
+            #pragma unroll
+            for (int f = 0; f < FRAG; ++f) acc[g][f] = acc[g][f] * corr + p * v_frag[f];
+        }
+    }
+
+    #pragma unroll
+    for (int g = 0; g < GROUP; ++g)
+    {
+        float* slot = partials + ((size_t(hkv) * n_splits + split) * GROUP + g) * (HEAD_DIM + 2);
+        #pragma unroll
+        for (int f = 0; f < FRAG; ++f) slot[lane * FRAG + f] = acc[g][f];
+        if (lane == 0) { slot[HEAD_DIM] = m[g]; slot[HEAD_DIM + 1] = l[g]; }
+    }
+}
+
+// Log-sum-exp merge of the split partials: one block per query head, one thread
+// per head_dim channel.
+template<typename T>
+__global__ void grouped_attention_decode_combine_kernel(const int group, const int head_dim, const int n_splits,
+                                                        const float* __restrict__ partials, T* __restrict__ O)
+{
+    const int hq  = blockIdx.x;
+    const int hkv = hq / group;
+    const int g   = hq % group;
+    const int d   = threadIdx.x;
+
+    extern __shared__ float sm[];
+    float* sm_m = sm;               // [n_splits]
+    float* sm_l = sm + n_splits;    // [n_splits]
+
+    const float* base = partials + (size_t(hkv) * n_splits * group + g) * (head_dim + 2);
+    const size_t stride = size_t(group) * (head_dim + 2);
+
+    for (int s = threadIdx.x; s < n_splits; s += blockDim.x)
+    {
+        sm_m[s] = base[s * stride + head_dim];
+        sm_l[s] = base[s * stride + head_dim + 1];
+    }
+    __syncthreads();
+
+    float M = -1e30f;
+    for (int s = 0; s < n_splits; ++s) if (sm_l[s] > 0.0f) M = fmaxf(M, sm_m[s]);
+
+    float L = 0.0f, out = 0.0f;
+    for (int s = 0; s < n_splits; ++s)
+    {
+        if (sm_l[s] <= 0.0f) continue;
+        const float e = __expf(sm_m[s] - M);
+        L += sm_l[s] * e;
+        out += e * base[s * stride + d];
+    }
+
+    O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
+}
+
+constexpr bool grouped_attention_decode_supported(const int head_dim, const int group)
+{
+    const bool dim_ok = head_dim == 64 || head_dim == 128 || head_dim == 256;
+    const bool group_ok = group == 1 || group == 2 || group == 4 || group == 8;
+    return dim_ok && group_ok && group * head_dim <= 1024;   // register budget
+}
+
 template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
                             const int n_query_heads, const int n_kv_heads, const int head_dim,
                             const float scale, const int query_position_offset, const bool causal,
+                            const int* kv_length_device, float* decode_partials,
                             const T* Q, const T* K, const T* V, T* O)
 {
     const int total = batch * n_query_heads * query_seq;
     if (total == 0) return;
     const int group = n_query_heads / n_kv_heads;
+    cudaStream_t stream = opennn::device::get_compute_stream();
+
+    if (batch == 1 && query_seq == 1 && causal && decode_partials
+        && grouped_attention_decode_supported(head_dim, group))
+    {
+        constexpr int warps = 8;
+        const int split_blocks = GROUPED_ATTENTION_DECODE_SPLITS / warps;
+        const dim3 grid(n_kv_heads, split_blocks);
+        const int valid = std::min(query_position_offset + 1, key_seq);
+
+        #define OPENNN_DECODE_ATTENTION_CASE(HD, G) \
+            if (head_dim == HD && group == G) \
+                OPENNN_CUDA_LAUNCH((grouped_attention_decode_kernel<T, HD, G><<<grid, warps * 32, 0, stream>>>( \
+                    n_kv_heads, scale, kv_length_device, valid, Q, K, V, decode_partials)));
+
+        OPENNN_DECODE_ATTENTION_CASE(64, 1)  OPENNN_DECODE_ATTENTION_CASE(64, 2)
+        OPENNN_DECODE_ATTENTION_CASE(64, 4)  OPENNN_DECODE_ATTENTION_CASE(64, 8)
+        OPENNN_DECODE_ATTENTION_CASE(128, 1) OPENNN_DECODE_ATTENTION_CASE(128, 2)
+        OPENNN_DECODE_ATTENTION_CASE(128, 4) OPENNN_DECODE_ATTENTION_CASE(128, 8)
+        OPENNN_DECODE_ATTENTION_CASE(256, 1) OPENNN_DECODE_ATTENTION_CASE(256, 2)
+        OPENNN_DECODE_ATTENTION_CASE(256, 4)
+        #undef OPENNN_DECODE_ATTENTION_CASE
+
+        const int smem = 2 * GROUPED_ATTENTION_DECODE_SPLITS * int(sizeof(float));
+        OPENNN_CUDA_LAUNCH((grouped_attention_decode_combine_kernel<T><<<n_query_heads, head_dim, smem, stream>>>(
+            group, head_dim, GROUPED_ATTENTION_DECODE_SPLITS, decode_partials, O)));
+        return;
+    }
+
     const int block = 128;
     const int grid = (total + block - 1) / block;
-    OPENNN_CUDA_LAUNCH((grouped_attention_kernel<T><<<grid, block, 0, opennn::device::get_compute_stream()>>>(
+    OPENNN_CUDA_LAUNCH((grouped_attention_kernel<T><<<grid, block, 0, stream>>>(
         total, query_seq, key_seq, n_query_heads, n_kv_heads, head_dim, group, scale,
         query_position_offset, causal ? 1 : 0, Q, K, V, O)));
 }
 
-template void grouped_attention_cuda<float>        (const int, const int, const int, const int, const int, const int, const float, const int, const bool, const float*,         const float*,         const float*,         float*);
-template void grouped_attention_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const float, const int, const bool, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
+template void grouped_attention_cuda<float>        (const int, const int, const int, const int, const int, const int, const float, const int, const bool, const int*, float*, const float*,         const float*,         const float*,         float*);
+template void grouped_attention_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const float, const int, const bool, const int*, float*, const __nv_bfloat16*, const __nv_bfloat16*, const __nv_bfloat16*, __nv_bfloat16*);
 
 __device__ __forceinline__ float opennn_activation_value(float x, int function)
 {

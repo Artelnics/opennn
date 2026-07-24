@@ -152,9 +152,17 @@ void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
 // is decoupled from the model width. query_position_offset is the absolute
 // position of the first query (the KV-cache length when decoding), so query i
 // attends keys 0..(offset+i); query_seq != key_seq is the KV-cache case.
+// `decode_partials` (device scratch of grouped_attention_decode_scratch_floats
+// fp32 values) enables the split-KV single-token decode kernel on GPU; when
+// `kv_length_device` is non-null the valid key count is read from it on device
+// (CUDA-graph replay), otherwise from query_position_offset + 1.
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
-                               bool causal, float scale, Index query_position_offset = 0);
+                               bool causal, float scale, Index query_position_offset = 0,
+                               float* decode_partials = nullptr, const int* kv_length_device = nullptr);
+
+// fp32 element count of the split-KV decode scratch for the shape above.
+Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim);
 
 // QK-Norm: RMSNorm applied independently to each head's head_dim vector of a
 // (batch, seq, heads*head_dim) tensor, with a per-channel weight of size head_dim.

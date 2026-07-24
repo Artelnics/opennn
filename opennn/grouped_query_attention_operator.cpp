@@ -231,6 +231,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         alloc(table_len * qd, d_q);   alloc(table_len * kd, d_k);   alloc(table_len * kd, d_v);
         alloc(table_len * qd, d_qr);  alloc(table_len * kd, d_kr);  alloc(table_len * qd, d_attn);
         alloc(table_len * kd, kv_key);  alloc(table_len * kd, kv_value);
+        d_attn_partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
+                                     * Index(sizeof(float)), Device::CUDA);
         gpu_sequence = table_len;
         gpu_dtype = act;
         cache_capacity = table_len;
@@ -271,7 +273,8 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         TensorView key_all(kv_key.data,   {1, total, kd}, act, Device::CUDA);
         TensorView val_all(kv_value.data, {1, total, kd}, act, Device::CUDA);
-        grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past);
+        grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
+                                  static_cast<float*>(d_attn_partials.data));
 
         tied_lm_head_forward(attn_v, o_proj, o_b);
         return;

@@ -228,7 +228,7 @@ MatrixR activation_derivative_from_output_values(ActivationFunction function, co
     X(rope_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index)) \
     X(swiglu_forward_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&)) \
-    X(grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index)) \
+    X(grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*)) \
     X(qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float)) \
     X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
     X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool)) \
@@ -1131,11 +1131,12 @@ void swiglu_backward(const TensorView& output_delta, const TensorView& gate, con
 
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
-                               bool causal, float scale, Index query_position_offset)
+                               bool causal, float scale, Index query_position_offset,
+                               float* decode_partials, const int* kv_length_device)
 {
     if (query.is_cuda()) {
         grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
-                              causal, scale, query_position_offset);
+                              causal, scale, query_position_offset, decode_partials, kv_length_device);
         return;
     }
 
@@ -2173,9 +2174,15 @@ static void swiglu_backward_gpu(const TensorView& output_delta, const TensorView
     });
 }
 
+Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim)
+{
+    return n_query_heads * GROUPED_ATTENTION_DECODE_SPLITS * (head_dim + 2);
+}
+
 static void grouped_attention_gpu(const TensorView& query, const TensorView& key, const TensorView& value,
                                   TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
-                                  bool causal, float scale, Index query_position_offset)
+                                  bool causal, float scale, Index query_position_offset,
+                                  float* decode_partials, const int* kv_length_device)
 {
     const int batch     = to_int(query.shape[0]);
     const int query_seq = to_int(query.shape[1]);
@@ -2185,6 +2192,7 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
         using T = decltype(tag);
         grouped_attention_cuda<T>(batch, query_seq, key_seq, to_int(n_query_heads), to_int(n_kv_heads),
                                   to_int(head_dim), scale, to_int(query_position_offset), causal,
+                                  kv_length_device, decode_partials,
                                   query.as<T>(), key.as<T>(), value.as<T>(), output.as<T>());
     });
 }

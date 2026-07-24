@@ -295,12 +295,21 @@ void swiglu_forward_cuda(const int n, const T* gate, const T* up, T* out);
 template<typename T>
 void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up, T* dgate, T* dup);
 
-// Grouped-query causal attention (Qwen3). One thread per query, online softmax.
-// Q/K/V/O laid out [batch, seq, heads*head_dim]; keys/values have n_kv_heads.
+// Grouped-query causal attention. Q/K/V/O laid out [batch, seq, heads*head_dim];
+// keys/values have n_kv_heads. The general kernel runs one thread per query with
+// an online softmax. Single-token decode (batch 1, query_seq 1, causal) instead
+// uses a split-KV kernel — warps hold flash-style partials for a key subset,
+// shared across the query heads of each kv head, merged by a combine pass — when
+// `decode_partials` provides its scratch (grouped_attention_decode_scratch_floats
+// fp32 values). `kv_length_device`, when non-null, overrides the host valid-key
+// count so a captured graph replays correctly as the KV cache grows.
+inline constexpr int GROUPED_ATTENTION_DECODE_SPLITS = 128;
+
 template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
                             const int n_query_heads, const int n_kv_heads, const int head_dim,
                             const float scale, const int query_position_offset, const bool causal,
+                            const int* kv_length_device, float* decode_partials,
                             const T* Q, const T* K, const T* V, T* O);
 
 template<typename T>
