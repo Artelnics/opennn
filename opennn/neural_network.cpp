@@ -834,6 +834,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         cudaStream_t stream = Backend::get_compute_stream();
         bool staged_inputs = false;
 
+        // Stateful decode kernels read the KV-cache position from device memory
+        // (graph-replay safe); mirror past_length there before the pass.
+        if (has(LayerType::GroupedQueryAttention))
+            forward_propagation.stage_position(stream);
+
         for (size_t i = 0; i < input_view.size(); ++i)
         {
             const TensorView& source = input_view[i];
@@ -1791,6 +1796,9 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         if (same_input_pointers(gpu_inputs, forward_propagation.captured_input_pointers))
         {
             PROFILE_SCOPE_HOST("inference:graph_launch");
+            // The captured graph re-reads the pinned position on every replay.
+            if (forward_propagation.position_pinned)
+                *static_cast<int*>(forward_propagation.position_pinned) = int(forward_propagation.past_length);
             device::launch_graph(forward_propagation.inference_graph_exec, compute);
             return forward_propagation.get_outputs();
         }

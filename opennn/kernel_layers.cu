@@ -1565,6 +1565,100 @@ template void rope_forward_cuda<__nv_bfloat16>(const int, const int, const int, 
 template void rope_backward_cuda<float>        (const int, const int, const int, const int, const int, const int, const float*,         float*,         const float*, const float*);
 template void rope_backward_cuda<__nv_bfloat16>(const int, const int, const int, const int, const int, const int, const __nv_bfloat16*, __nv_bfloat16*, const float*, const float*);
 
+// Fused per-head QK-Norm + rotary embedding + KV-cache append for one decoded
+// token. One block per head over the fused [q | k | v] projection row: q heads
+// are normalized, rotated and written to q_out; k heads likewise, appended to
+// the key cache; v heads copied raw into the value cache. The append position
+// is read from device memory so a captured graph replays as the cache grows.
+// Matches rmsnorm_forward_kernel + rope_apply_kernel numerics (fp32 math,
+// rotate_half, rotary_dim == head_dim).
+template<typename T>
+__global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_heads, const int head_dim,
+                                            const float eps, const int* __restrict__ position,
+                                            const T* __restrict__ qkv,
+                                            const float* __restrict__ q_norm_w, const float* __restrict__ k_norm_w,
+                                            const float* __restrict__ cos_table, const float* __restrict__ sin_table,
+                                            T* __restrict__ q_out, T* __restrict__ k_cache, T* __restrict__ v_cache)
+{
+    const int h      = blockIdx.x;
+    const int pos    = *position;
+    const int kv_dim = n_kv_heads * head_dim;
+    const T* src     = qkv + size_t(h) * head_dim;
+
+    if (h >= n_q_heads + n_kv_heads)   // v head: raw append
+    {
+        T* dst = v_cache + size_t(pos) * kv_dim + size_t(h - n_q_heads - n_kv_heads) * head_dim;
+        for (int d = threadIdx.x; d < head_dim; d += blockDim.x) dst[d] = src[d];
+        return;
+    }
+
+    const bool is_q = h < n_q_heads;
+    const float* norm_w = is_q ? q_norm_w : k_norm_w;
+    T* dst = is_q ? q_out + size_t(h) * head_dim
+                  : k_cache + size_t(pos) * kv_dim + size_t(h - n_q_heads) * head_dim;
+
+    extern __shared__ float vals[];   // normalized head vector
+
+    float local_sum_sq = 0.0f;
+    float ignore = 0.0f;
+    for (int d = threadIdx.x; d < head_dim; d += blockDim.x)
+    {
+        const float x = static_cast<float>(src[d]);
+        local_sum_sq += x * x;
+    }
+    warp_reduce_sum2(local_sum_sq, ignore);
+
+    __shared__ float warp_sum_sq[32];
+    __shared__ float s_inv_rms;
+    const int lane    = threadIdx.x & 31;
+    const int warp_id = threadIdx.x >> 5;
+    if (lane == 0) warp_sum_sq[warp_id] = local_sum_sq;
+    __syncthreads();
+
+    const int num_warps = (blockDim.x + 31) >> 5;
+    if (warp_id == 0)
+    {
+        float s_sq = (threadIdx.x < num_warps) ? warp_sum_sq[threadIdx.x] : 0.0f;
+        float d = 0.0f;
+        warp_reduce_sum2(s_sq, d);
+        if (threadIdx.x == 0)
+            s_inv_rms = rsqrtf(s_sq / static_cast<float>(head_dim) + eps);
+    }
+    __syncthreads();
+
+    const float inv = s_inv_rms;
+    for (int d = threadIdx.x; d < head_dim; d += blockDim.x)
+        vals[d] = static_cast<float>(src[d]) * inv * (norm_w ? norm_w[d] : 1.0f);
+    __syncthreads();
+
+    const int half   = head_dim >> 1;
+    const float* cr  = cos_table + size_t(pos) * head_dim;
+    const float* sr  = sin_table + size_t(pos) * head_dim;
+    for (int d = threadIdx.x; d < head_dim; d += blockDim.x)
+    {
+        const float partner = d < half ? -vals[d + half] : vals[d - half];
+        dst[d] = static_cast<T>(vals[d] * cr[d] + partner * sr[d]);
+    }
+}
+
+template<typename T>
+void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const int head_dim,
+                               const float eps, const int* position,
+                               const T* qkv, const float* q_norm_w, const float* k_norm_w,
+                               const float* cos_table, const float* sin_table,
+                               T* q_out, T* k_cache, T* v_cache)
+{
+    const int blocks = n_q_heads + 2 * n_kv_heads;
+    const int threads = rope_threads(head_dim);
+    const int smem = head_dim * int(sizeof(float));
+    OPENNN_CUDA_LAUNCH((qk_rope_cache_append_kernel<T><<<blocks, threads, smem, opennn::device::get_compute_stream()>>>(
+        n_q_heads, n_kv_heads, head_dim, eps, position, qkv, q_norm_w, k_norm_w,
+        cos_table, sin_table, q_out, k_cache, v_cache)));
+}
+
+template void qk_rope_cache_append_cuda<float>        (const int, const int, const int, const float, const int*, const float*,         const float*, const float*, const float*, const float*, float*,         float*,         float*);
+template void qk_rope_cache_append_cuda<__nv_bfloat16>(const int, const int, const int, const float, const int*, const __nv_bfloat16*, const float*, const float*, const float*, const float*, __nv_bfloat16*, __nv_bfloat16*, __nv_bfloat16*);
+
 // SwiGLU: out = silu(gate) * up (element-wise). silu(g) = g * sigmoid(g).
 template<typename T>
 __global__ void swiglu_forward_kernel(const int n, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ out)
@@ -1690,11 +1784,12 @@ __device__ __forceinline__ void load_head_fragment(const T* __restrict__ p, floa
 // an interleaved subset of the keys, serving all GROUP query heads of its kv
 // head so every K/V row is read once instead of GROUP times. Partials go to
 // scratch laid out [kv_head][split][GROUP][HEAD_DIM + 2] (acc, max, denom);
-// empty splits write denom 0. The valid key count may come from device memory
-// (kv_length_device) so a captured graph replays as the cache grows.
+// empty splits write denom 0. `position_device`, when non-null, holds the
+// cached-token count BEFORE this token (valid keys = *position_device + 1) so
+// a captured graph replays as the cache grows.
 template<typename T, int HEAD_DIM, int GROUP>
 __global__ void grouped_attention_decode_kernel(const int n_kv_heads, const float scale,
-                                                const int* __restrict__ kv_length_device, const int kv_length_host,
+                                                const int* __restrict__ position_device, const int kv_length_host,
                                                 const T* __restrict__ Q, const T* __restrict__ K,
                                                 const T* __restrict__ V, float* __restrict__ partials)
 {
@@ -1706,7 +1801,7 @@ __global__ void grouped_attention_decode_kernel(const int n_kv_heads, const floa
     const int warps    = blockDim.x >> 5;
     const int split    = blockIdx.y * warps + warp;
     const int n_splits = gridDim.y * warps;
-    const int valid    = kv_length_device ? *kv_length_device : kv_length_host;
+    const int valid    = position_device ? *position_device + 1 : kv_length_host;
 
     float q[GROUP][FRAG];
     #pragma unroll
@@ -1819,7 +1914,7 @@ template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
                             const int n_query_heads, const int n_kv_heads, const int head_dim,
                             const float scale, const int query_position_offset, const bool causal,
-                            const int* kv_length_device, float* decode_partials,
+                            const int* position_device, float* decode_partials,
                             const T* Q, const T* K, const T* V, T* O)
 {
     const int total = batch * n_query_heads * query_seq;
@@ -1838,7 +1933,7 @@ void grouped_attention_cuda(const int batch, const int query_seq, const int key_
         #define OPENNN_DECODE_ATTENTION_CASE(HD, G) \
             if (head_dim == HD && group == G) \
                 OPENNN_CUDA_LAUNCH((grouped_attention_decode_kernel<T, HD, G><<<grid, warps * 32, 0, stream>>>( \
-                    n_kv_heads, scale, kv_length_device, valid, Q, K, V, decode_partials)));
+                    n_kv_heads, scale, position_device, valid, Q, K, V, decode_partials)));
 
         OPENNN_DECODE_ATTENTION_CASE(64, 1)  OPENNN_DECODE_ATTENTION_CASE(64, 2)
         OPENNN_DECODE_ATTENTION_CASE(64, 4)  OPENNN_DECODE_ATTENTION_CASE(64, 8)

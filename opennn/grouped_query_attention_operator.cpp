@@ -104,7 +104,12 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     const Index batch = forward_propagation.batch_size;
 
 #ifdef OPENNN_HAS_CUDA
-    if (input.is_cuda()) { forward_gpu(input, output, batch, forward_propagation.past_length); return; }
+    if (input.is_cuda())
+    {
+        forward_gpu(input, output, batch, forward_propagation.past_length,
+                    static_cast<const int*>(forward_propagation.position_device.data));
+        return;
+    }
 #endif
 
     const Index seq   = input.shape[1];   // tokens this pass
@@ -201,7 +206,8 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
 #ifdef OPENNN_HAS_CUDA
 
-void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past)
+void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
+                                                const int* position_device)
 {
     const Index seq = input.shape[1];   // tokens this pass
     const Index qd  = q_dim();
@@ -263,6 +269,29 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         char* k_at = static_cast<char*>(kv_key.data)   + size_t(past) * kd * elem;
         TensorView v_slot(v_at, {1, seq, kd}, act, Device::CUDA);
         TensorView k_slot(k_at, {1, seq, kd}, act, Device::CUDA);
+
+        if (seq == 1 && qkv_fused && position_device && use_qk_norm)
+        {
+            // Fully device-positioned decode step (CUDA-graph capturable): one
+            // fused projection row, then a single kernel doing QK-Norm + RoPE +
+            // cache append at *position_device, then split-KV attention whose
+            // valid length also comes from the device position.
+            TensorView qkv_row(d_qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
+            TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
+            tied_lm_head_forward(x_b, qkv_w, qkv_row);
+
+            TensorView key_cache(kv_key.data,   {1, table_len, kd}, act, Device::CUDA);
+            TensorView val_cache(kv_value.data, {1, table_len, kd}, act, Device::CUDA);
+            qk_rope_cache_append(qkv_row, q_norm, k_norm, cos_v, sin_v, qr_v, key_cache, val_cache,
+                                 q_heads, kv_heads, head_dim, rms_epsilon, position_device);
+
+            grouped_attention_forward(qr_v, key_cache, val_cache, attn_v, q_heads, kv_heads, head_dim,
+                                      true, scale, past,
+                                      static_cast<float*>(d_attn_partials.data), position_device);
+
+            tied_lm_head_forward(attn_v, o_proj, o_b);
+            return;
+        }
 
         if (seq == 1 && qkv_fused)
         {

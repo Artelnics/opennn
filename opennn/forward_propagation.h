@@ -24,7 +24,19 @@ struct ForwardPropagation
 
     ForwardPropagation(Index, NeuralNetwork*);
 
+    ~ForwardPropagation();
+
+    ForwardPropagation(const ForwardPropagation&) = delete;
+    ForwardPropagation& operator=(const ForwardPropagation&) = delete;
+
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr);
+
+    // Mirrors past_length into a device int (via pinned staging) for stateful
+    // operators whose kernels read the cache position from device memory: a
+    // captured graph re-reads the pinned value on every replay, so the host
+    // past_length stays the single source of truth. Lazily allocates the
+    // 4-byte pinned + device pair on first use (warmup, before any capture).
+    void stage_position(cudaStream_t stream);
 
     // Run the next pass over a seq=length prefix of the arena (batch-1,
     // [batch, seq, feature] layout), for KV-cache prefill/decode. See past_length.
@@ -62,6 +74,10 @@ struct ForwardPropagation
 
     Buffer data;
     vector<Buffer> device_input_buffers;
+
+    // Device-visible KV-cache position (see stage_position).
+    Buffer position_device{Device::CUDA};
+    void* position_pinned = nullptr;
 
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;

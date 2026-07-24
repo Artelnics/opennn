@@ -252,7 +252,9 @@ vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& token
                              const vector<Index>& conversation, const vector<Index>& think_prompt,
                              Index max_new, float temperature, Sampler& sampler,
                              ForwardPropagation& forward_propagation, vector<float>& window,
-                             vector<Index>& cached_tokens)
+                             vector<Index>& cached_tokens,
+                             ForwardPropagation* decode_propagation, float* token_pinned,
+                             const vector<TensorView>* decode_inputs)
 {
     const Index im_end = tokenizer.get_im_end_id();
     const Index eos    = tokenizer.get_endoftext_id();
@@ -260,13 +262,34 @@ vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& token
     vector<Index> context = conversation;
     context.insert(context.end(), think_prompt.begin(), think_prompt.end());
 
-    // Forward over `count` tokens in window[0..count-1] at positions past..past+count-1.
+    // Prefill: forward `count` tokens in window[0..count-1] at positions past..past+count-1.
     const auto run = [&](Index count, Index past)
     {
         forward_propagation.past_length = past;
         forward_propagation.set_active_sequence_length(count);
         vector<TensorView> inputs = { TensorView(window.data(), {1, count}) };
         network.forward_propagate(inputs, forward_propagation, false);
+    };
+
+    // Single-token decode pass: device-resident with a CUDA graph on GPU (the
+    // token id goes through a persistent pinned + device pair, so the captured
+    // graph replays with the same input pointer), the prefill propagation otherwise.
+    const auto decode_step = [&](Index token, Index past) -> ForwardPropagation&
+    {
+#ifdef OPENNN_HAS_CUDA
+        if (decode_propagation)
+        {
+            *token_pinned = float(token);
+            device::copy_async((*decode_inputs)[0].data, token_pinned, Index(sizeof(float)),
+                               device::CopyKind::HostToDevice, device::get_compute_stream());
+            decode_propagation->past_length = past;
+            network.calculate_outputs_resident(*decode_inputs, *decode_propagation, false);
+            return *decode_propagation;
+        }
+#endif
+        window[0] = float(token);
+        run(1, past);
+        return forward_propagation;
     };
 
     using clock_type = chrono::steady_clock;
@@ -314,11 +337,10 @@ vector<Index> generate_reply(NeuralNetwork& network, const Qwen3Tokenizer& token
 
         if (cache_len >= CONTEXT_LENGTH) break;   // window full
 
-        window[0] = float(next);
-        run(1, cache_len);
+        ForwardPropagation& decoded = decode_step(next, cache_len);
         cached_tokens.push_back(next);
         ++cache_len;
-        next = sampler.sample_row(forward_propagation, 0, temperature);
+        next = sampler.sample_row(decoded, 0, temperature);
     }
 
     cout << pending << endl;
@@ -413,6 +435,28 @@ int main(int argc, char* argv[])
         vector<float> window(size_t(CONTEXT_LENGTH), 0.0f);
         vector<Index> cached_tokens;
 
+        // GPU decode is device-resident with fixed [1,1] shapes and a CUDA
+        // graph: its propagation aliases the prefill arena (zero extra VRAM;
+        // the shapes pinned here are never touched by the prefill passes) and
+        // its input is a persistent 1-token device buffer.
+        ForwardPropagation decode_propagation;
+        float* token_pinned = nullptr;
+        vector<TensorView> decode_inputs;
+        bool decode_resident = false;
+#ifdef OPENNN_HAS_CUDA
+        Buffer token_device{Device::CUDA};
+        if (want_gpu)
+        {
+            decode_propagation.set(1, &model, &forward_propagation.data);
+            decode_propagation.set_active_sequence_length(1);
+            decode_propagation.set_cuda_graph(true);
+            token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
+            token_pinned = static_cast<float*>(device::allocate_pinned_host(Index(sizeof(float))));
+            decode_inputs = { TensorView(token_device.data, {1, 1}, Type::FP32, Device::CUDA) };
+            decode_resident = true;
+        }
+#endif
+
         string line;
         while (true)
         {
@@ -430,13 +474,20 @@ int main(int argc, char* argv[])
             cout << "Qwen: " << flush;
             const vector<Index> reply = generate_reply(model, tokenizer, conversation, think_prompt,
                                                        max_new, temperature, sampler,
-                                                       forward_propagation, window, cached_tokens);
+                                                       forward_propagation, window, cached_tokens,
+                                                       decode_resident ? &decode_propagation : nullptr,
+                                                       token_pinned,
+                                                       decode_resident ? &decode_inputs : nullptr);
 
             // Store the reply and close the assistant turn (clean history: no <think>).
             conversation.insert(conversation.end(), reply.begin(), reply.end());
             const vector<Index> end_ids = tokenizer.encode("<|im_end|>\n");
             conversation.insert(conversation.end(), end_ids.begin(), end_ids.end());
         }
+
+#ifdef OPENNN_HAS_CUDA
+        if (token_pinned) device::deallocate_pinned_host(token_pinned);
+#endif
 
         cout << "Good bye!" << endl;
         return 0;

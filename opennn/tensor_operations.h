@@ -154,15 +154,28 @@ void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
 // attends keys 0..(offset+i); query_seq != key_seq is the KV-cache case.
 // `decode_partials` (device scratch of grouped_attention_decode_scratch_floats
 // fp32 values) enables the split-KV single-token decode kernel on GPU; when
-// `kv_length_device` is non-null the valid key count is read from it on device
-// (CUDA-graph replay), otherwise from query_position_offset + 1.
+// `position_device` is non-null it holds the cached-token count before this
+// token on device (valid keys = *position_device + 1, CUDA-graph replay),
+// otherwise the count comes from query_position_offset + 1.
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                bool causal, float scale, Index query_position_offset = 0,
-                               float* decode_partials = nullptr, const int* kv_length_device = nullptr);
+                               float* decode_partials = nullptr, const int* position_device = nullptr);
 
 // fp32 element count of the split-KV decode scratch for the shape above.
 Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim);
+
+// Fused per-head QK-Norm + RoPE + KV-cache append for one decoded token (GPU
+// only). `qkv_row` is the fused [q | k | v] projection row; rotated q goes to
+// `q_out`, rotated k and raw v are appended to the caches at *position_device
+// (cached tokens before this token, read on device for CUDA-graph replay).
+// Empty norm weights skip QK-Norm. rotary_dim == head_dim.
+void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_weight,
+                          const TensorView& k_norm_weight, const TensorView& cos_table,
+                          const TensorView& sin_table, TensorView& q_out,
+                          TensorView& key_cache, TensorView& value_cache,
+                          Index n_query_heads, Index n_kv_heads, Index head_dim,
+                          float epsilon, const int* position_device);
 
 // QK-Norm: RMSNorm applied independently to each head's head_dim vector of a
 // (batch, seq, heads*head_dim) tensor, with a per-channel weight of size head_dim.

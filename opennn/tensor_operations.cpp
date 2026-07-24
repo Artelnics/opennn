@@ -1132,11 +1132,11 @@ void swiglu_backward(const TensorView& output_delta, const TensorView& gate, con
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                bool causal, float scale, Index query_position_offset,
-                               float* decode_partials, const int* kv_length_device)
+                               float* decode_partials, const int* position_device)
 {
     if (query.is_cuda()) {
         grouped_attention_gpu(query, key, value, output, n_query_heads, n_kv_heads, head_dim,
-                              causal, scale, query_position_offset, decode_partials, kv_length_device);
+                              causal, scale, query_position_offset, decode_partials, position_device);
         return;
     }
 
@@ -2197,6 +2197,26 @@ static void grouped_attention_gpu(const TensorView& query, const TensorView& key
     });
 }
 
+void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_weight,
+                          const TensorView& k_norm_weight, const TensorView& cos_table,
+                          const TensorView& sin_table, TensorView& q_out,
+                          TensorView& key_cache, TensorView& value_cache,
+                          Index n_query_heads, Index n_kv_heads, Index head_dim,
+                          float epsilon, const int* position_device)
+{
+    throw_if(!qkv_row.is_cuda() || !position_device, "qk_rope_cache_append: GPU tensors and a device position are required.");
+
+    q_out.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        qk_rope_cache_append_cuda<T>(to_int(n_query_heads), to_int(n_kv_heads), to_int(head_dim),
+                                     epsilon, position_device, qkv_row.as<T>(),
+                                     q_norm_weight.empty() ? nullptr : q_norm_weight.as<float>(),
+                                     k_norm_weight.empty() ? nullptr : k_norm_weight.as<float>(),
+                                     cos_table.as<float>(), sin_table.as<float>(),
+                                     q_out.as<T>(), key_cache.as<T>(), value_cache.as<T>());
+    });
+}
+
 static void qk_norm_gpu(const TensorView& input, const TensorView& weight, TensorView& output,
                         Index head_dim, float epsilon)
 {
@@ -2353,6 +2373,18 @@ static void merge_heads_gpu(const TensorView& source, TensorView& destination)
 #define OPENNN_STUB_GPU_OP(name, sig) static void name sig { throw runtime_error(#name ": CUDA support not compiled in."); }
 OPENNN_GPU_OPS(OPENNN_STUB_GPU_OP)
 #undef OPENNN_STUB_GPU_OP
+
+Index grouped_attention_decode_scratch_floats(Index, Index)
+{
+    return 0;
+}
+
+void qk_rope_cache_append(const TensorView&, const TensorView&, const TensorView&, const TensorView&,
+                          const TensorView&, TensorView&, TensorView&, TensorView&,
+                          Index, Index, Index, float, const int*)
+{
+    throw runtime_error("qk_rope_cache_append: CUDA support not compiled in.");
+}
 
 #endif // OPENNN_HAS_CUDA
 

@@ -19,6 +19,30 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
     set(new_batch_size, new_neural_network);
 }
 
+ForwardPropagation::~ForwardPropagation()
+{
+#ifdef OPENNN_HAS_CUDA
+    if (position_pinned) device::deallocate_pinned_host(position_pinned);
+#endif
+}
+
+void ForwardPropagation::stage_position(cudaStream_t stream)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (!position_pinned)
+    {
+        position_pinned = device::allocate_pinned_host(Index(sizeof(int)));
+        position_device.resize_bytes(Index(sizeof(int)), Device::CUDA);
+    }
+
+    *static_cast<int*>(position_pinned) = int(past_length);
+    device::copy_async(position_device.data, position_pinned, Index(sizeof(int)),
+                       device::CopyKind::HostToDevice, stream);
+#else
+    (void)stream;
+#endif
+}
+
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network,
                              Buffer* external_storage)
 {

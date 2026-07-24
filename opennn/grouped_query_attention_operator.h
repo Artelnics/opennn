@@ -54,7 +54,12 @@ struct GroupedQueryAttentionOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     // GPU forward; past is ForwardPropagation::past_length (0 restarts the cache).
-    void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past);
+    // position_device mirrors past on device (ForwardPropagation::stage_position);
+    // single-token decode then runs the fused QK-Norm+RoPE+append kernel and the
+    // attention kernel with device-side positions, so the whole step is
+    // CUDA-graph capturable.
+    void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
+                     const int* position_device);
 
     // Scratch + RoPE tables, sized to the compiled max sequence.
     // d_attn_partials is the fp32 split-KV scratch of the decode attention kernel;

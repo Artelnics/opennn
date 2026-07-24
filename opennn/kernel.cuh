@@ -301,16 +301,27 @@ void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up
 // uses a split-KV kernel — warps hold flash-style partials for a key subset,
 // shared across the query heads of each kv head, merged by a combine pass — when
 // `decode_partials` provides its scratch (grouped_attention_decode_scratch_floats
-// fp32 values). `kv_length_device`, when non-null, overrides the host valid-key
-// count so a captured graph replays correctly as the KV cache grows.
+// fp32 values). `position_device`, when non-null, holds the cached-token count
+// before this token (valid keys = *position_device + 1) so a captured graph
+// replays correctly as the KV cache grows.
 inline constexpr int GROUPED_ATTENTION_DECODE_SPLITS = 128;
 
 template<typename T>
 void grouped_attention_cuda(const int batch, const int query_seq, const int key_seq,
                             const int n_query_heads, const int n_kv_heads, const int head_dim,
                             const float scale, const int query_position_offset, const bool causal,
-                            const int* kv_length_device, float* decode_partials,
+                            const int* position_device, float* decode_partials,
                             const T* Q, const T* K, const T* V, T* O);
+
+// Fused per-head QK-Norm + RoPE + KV-cache append for one decoded token, over a
+// fused [q | k | v] projection row; the append position is read from device
+// memory. norm weights may be null (no QK-Norm).
+template<typename T>
+void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const int head_dim,
+                               const float eps, const int* position,
+                               const T* qkv, const float* q_norm_w, const float* k_norm_w,
+                               const float* cos_table, const float* sin_table,
+                               T* q_out, T* k_cache, T* v_cache);
 
 template<typename T>
 void gather_time_slice_cuda(const Index batch, const Index time_steps,
