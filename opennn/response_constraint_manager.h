@@ -164,6 +164,19 @@ public:
                         const SurrogateOracle& oracle,
                         const vector<char>& fixed_columns) const;
 
+    struct RepairStrategy
+    {
+        static void repair_affine_inputs(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, Index max_correction_passes = 64);
+        static void repair_nonlinear_inputs(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, Index max_correction_passes = 64);
+        static void repair_single_affine_input(MatrixR&, const VectorR&, const VectorR&, const MultivariateConstraint&);
+        static void repair_single_affine_integer(MatrixR&, const VectorR&, const VectorR&, const MultivariateConstraint&);
+        static void repair_inputs(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&);
+        static void repair_affine_inputs_with_fixed(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, const vector<char>&, Index max_correction_passes = 64);
+        static void repair_mixed_integer_inputs(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, const vector<char>&, const Lattice&, const vector<vector<Index>>&, const Lattice&, Index, float);
+        static void repair_output_constraints(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, const SurrogateForward&, const SurrogateVjp&, Index max_correction_passes = 64, const vector<char>& fixed_columns = {});
+        static void repair_output_constraints(MatrixR&, const VectorR&, const VectorR&, const vector<MultivariateConstraint>&, const SurrogateBatchForward&, Index max_correction_passes = 64, const vector<char>& fixed_columns = {});
+    };
+
 private:
 
     const ResponseOptimization* problem = nullptr;
@@ -199,68 +212,6 @@ bool constraint_is_satisfied(const MultivariateConstraint&,
 LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>&,
                                                 const Index,
                                                 const Index);
-
-void repair_affine_inputs(MatrixR&,
-                          const VectorR&,
-                          const VectorR&,
-                          const vector<MultivariateConstraint>&,
-                          Index max_correction_passes = 64);
-
-void repair_nonlinear_inputs(MatrixR&,
-                             const VectorR&,
-                             const VectorR&,
-                             const vector<MultivariateConstraint>&,
-                             Index max_correction_passes = 64);
-
-void repair_single_affine_input(MatrixR&,
-                                const VectorR&,
-                                const VectorR&,
-                                const MultivariateConstraint&);
-
-void repair_single_affine_integer(MatrixR&,
-                                  const VectorR&,
-                                  const VectorR&,
-                                  const MultivariateConstraint&);
-
-void repair_inputs(MatrixR&,
-                   const VectorR&,
-                   const VectorR&,
-                   const vector<MultivariateConstraint>&);
-
-void repair_affine_inputs_with_fixed(MatrixR&,
-                                     const VectorR&,
-                                     const VectorR&,
-                                     const vector<MultivariateConstraint>&,
-                                     const vector<char>&,
-                                     Index max_correction_passes = 64);
-
-void repair_mixed_integer_inputs(MatrixR&,
-                                 const VectorR&,
-                                 const VectorR&,
-                                 const vector<MultivariateConstraint>&,
-                                 const vector<char>&,
-                                 const Lattice&,
-                                 const vector<vector<Index>>&,
-                                 const Lattice&,
-                                 Index,
-                                 float);
-
-void repair_output_constraints(MatrixR&,
-                               const VectorR&,
-                               const VectorR&,
-                               const vector<MultivariateConstraint>&,
-                               const SurrogateForward&,
-                               const SurrogateVjp&,
-                               Index max_correction_passes = 64,
-                               const vector<char>& fixed_columns = {});
-
-void repair_output_constraints(MatrixR&,
-                               const VectorR&,
-                               const VectorR&,
-                               const vector<MultivariateConstraint>&,
-                               const SurrogateBatchForward&,
-                               Index max_correction_passes = 64,
-                               const vector<char>& fixed_columns = {});
 
 
 }

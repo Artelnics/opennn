@@ -923,7 +923,7 @@ MatrixR IDC::calculate_random_inputs(const Domain& input_domain, const Index eva
     }
 
     if (!handler.constraint_set.cardinality.empty() || discrete_is_coupled)
-        repair_mixed_integer_inputs(random_inputs,
+        ConstraintManager::RepairStrategy::repair_mixed_integer_inputs(random_inputs,
                                     input_domain.inferior_frontier,
                                     input_domain.superior_frontier,
                                     handler.constraint_set.multivariate,
@@ -934,7 +934,7 @@ MatrixR IDC::calculate_random_inputs(const Domain& input_domain, const Index eva
                                     8, discrete_explore);
     else
     {
-        repair_inputs(random_inputs,
+        ConstraintManager::RepairStrategy::repair_inputs(random_inputs,
                       input_domain.inferior_frontier,
                       input_domain.superior_frontier,
                       handler.constraint_set.multivariate);

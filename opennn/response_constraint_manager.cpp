@@ -629,10 +629,10 @@ void ConstraintManager::repair_outputs(MatrixR& points,
                                        const vector<char>& fixed_columns) const
 {
     if (oracle.has_differential)
-        repair_output_constraints(points, inferior_frontier, superior_frontier,
+        RepairStrategy::repair_output_constraints(points, inferior_frontier, superior_frontier,
                                   constraint_set.multivariate, oracle.forward, oracle.vjp, 64, fixed_columns);
     else
-        repair_output_constraints(points, inferior_frontier, superior_frontier,
+        RepairStrategy::repair_output_constraints(points, inferior_frontier, superior_frontier,
                                   constraint_set.multivariate, oracle.batch_forward, 64, fixed_columns);
 }
 
@@ -973,7 +973,7 @@ void gauss_newton_repair_row(VectorR& point,
 }
 
 
-void repair_affine_inputs(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
                           const VectorR& superior_frontier,
                           const vector<MultivariateConstraint>& formula_constraints,
@@ -1117,7 +1117,7 @@ void repair_affine_inputs(MatrixR& random_inputs,
 }
 
 
-void repair_single_affine_input(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
                                 const MultivariateConstraint& constraint)
@@ -1169,7 +1169,7 @@ void repair_single_affine_input(MatrixR& random_inputs,
 }
 
 
-void repair_single_affine_integer(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
                                   const MultivariateConstraint& constraint)
@@ -1233,7 +1233,7 @@ void repair_single_affine_integer(MatrixR& random_inputs,
 }
 
 
-void repair_nonlinear_inputs(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
                              const vector<MultivariateConstraint>& formula_constraints,
@@ -1250,7 +1250,7 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
 }
 
 
-void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
                                      const VectorR& superior_frontier,
                                      const vector<MultivariateConstraint>& formula_constraints,
@@ -1336,7 +1336,7 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
 }
 
 
-void repair_inputs(MatrixR& random_inputs,
+void ConstraintManager::RepairStrategy::repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
@@ -1453,7 +1453,7 @@ void unlock_free_integers_row(VectorR& point, const Lattice& lattice, const floa
 }
 
 
-void repair_mixed_integer_inputs(MatrixR& inputs,
+void ConstraintManager::RepairStrategy::repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& inferior_frontier,
                                  const VectorR& superior_frontier,
                                  const vector<MultivariateConstraint>& formula_constraints,
@@ -1529,7 +1529,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
 }
 
 
-void repair_output_constraints(MatrixR& inputs,
+void ConstraintManager::RepairStrategy::repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
                                const vector<MultivariateConstraint>& formula_constraints,
@@ -1562,7 +1562,7 @@ void repair_output_constraints(MatrixR& inputs,
 }
 
 
-void repair_output_constraints(MatrixR& inputs,
+void ConstraintManager::RepairStrategy::repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
                                const vector<MultivariateConstraint>& formula_constraints,
