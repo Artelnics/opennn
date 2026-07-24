@@ -69,55 +69,6 @@ public:
 
 private:
 
-    struct ConstraintSet
-    {
-        map<string, UnivariateConstraint> univariate;
-        vector<MultivariateConstraint> multivariate;
-        vector<vector<vector<MultivariateConstraint>>> disjunctive;
-        vector<Cardinality> cardinality;
-    };
-
-    struct ConstraintHandler
-    {
-        const IDC* owner = nullptr;
-        const ResponseOptimization* problem = nullptr;
-
-        ConstraintSet constraint_set;
-
-        // Objectives absorbed into constraints by lowering (fixed inputs -> equality box);
-        // sense/value are read straight from the problem's Objective list, not duplicated here.
-        set<string> absorbed_objectives;
-
-        vector<pair<string, Index>> input_columns;
-        vector<pair<string, Index>> output_columns;
-        set<string> input_names;
-
-        float relative_tolerance = 1e-6f;
-
-        void build(const IDC&, bool lower);
-
-        bool is_objective(const string&) const;
-        Sense get_sense(const string&) const;
-        float get_fixed_value(const string&) const;
-
-        UnivariateConstraint get_constraint(const string&) const;
-
-        Index get_objectives_number() const;
-        Index get_optimizing_objectives_number() const;
-
-    private:
-
-        void build_columns();
-        void add_constraint(const Constraint&);
-        void add_cardinality(const Constraint&);
-        void add_formula(const string&, Condition, float low, float up);
-        void expand_fixed_objectives();
-        void promote_single_variable_constraints();
-
-        bool is_input_name(const string&) const;
-        Index input_column_of(const string&) const;
-    };
-
     struct SamplingMemory
     {
         map<string, vector<Index>> category_frequencies;
@@ -182,6 +133,8 @@ private:
 
     Domain get_original_domain(string_view role) const;
 
+    ConstraintGeometry build_geometry() const;
+
     vector<char> discrete_column_mask(const vector<Variable>&) const;
 
     Lattice build_input_lattice(const vector<Variable>&, const Domain&, map<string, Index>&) const;
@@ -213,7 +166,7 @@ private:
     MatrixR run_branch_search(const vector<BranchAxis>&, const vector<vector<float>>&);
 
     mutable const ResponseOptimization* problem = nullptr;
-    mutable ConstraintHandler handler;
+    mutable ConstraintManager handler;
     mutable SamplingMemory sampling_memory;
     mutable NetworkJacobian network_jacobian;
     mutable Index evaluations_used = 0;

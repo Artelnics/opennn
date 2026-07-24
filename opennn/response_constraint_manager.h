@@ -10,9 +10,17 @@
 
 #include "pch.h"
 #include "expression_evaluator.h"
+#include "variable.h"
+#include "statistics.h"
 
 namespace opennn
 {
+
+class NeuralNetwork;
+class ResponseOptimization;
+
+enum class Sense { Minimize, Maximize, Fixed };
+
 
 enum class Condition
 {
@@ -80,6 +88,67 @@ struct Lattice
     vector<float> min;
     vector<float> max;
 };
+
+
+struct ConstraintGeometry
+{
+    NeuralNetwork* neural_network = nullptr;
+    function<bool(const string&)> is_history;
+    const vector<Variable>* input_variables = nullptr;      // filtered "Input" variables
+    const vector<Variable>* target_variables = nullptr;     // filtered "Target" variables
+    const vector<Descriptives>* target_descriptives = nullptr;
+};
+
+
+struct ConstraintSet
+{
+    map<string, UnivariateConstraint> univariate;
+    vector<MultivariateConstraint> multivariate;
+    vector<vector<vector<MultivariateConstraint>>> disjunctive;
+    vector<Cardinality> cardinality;
+};
+
+
+class ConstraintManager
+{
+public:
+
+    ConstraintSet constraint_set;
+    set<string> absorbed_objectives;
+
+    vector<pair<string, Index>> input_columns;
+    vector<pair<string, Index>> output_columns;
+    set<string> input_names;
+
+    float relative_tolerance = 1e-6f;
+
+    void build(const ResponseOptimization&, const ConstraintGeometry&, bool lower);
+
+    bool is_objective(const string&) const;
+    Sense get_sense(const string&) const;
+    float get_fixed_value(const string&) const;
+
+    UnivariateConstraint get_constraint(const string&) const;
+
+    Index get_objectives_number() const;
+    Index get_optimizing_objectives_number() const;
+
+private:
+
+    const ResponseOptimization* problem = nullptr;
+    ConstraintGeometry geometry;
+
+    void build_columns();
+    void add_constraint(const string& expression, Condition condition, const vector<float>& values);
+    void add_cardinality(const string& expression, const vector<float>& values);
+    void add_formula(const string&, Condition, float low, float up);
+    void expand_fixed_objectives();
+    void promote_single_variable_constraints();
+
+    bool is_input_name(const string&) const;
+    Index input_column_of(const string&) const;
+};
+
 
 RepairRegime classify(const MultivariateConstraint&);
 

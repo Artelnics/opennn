@@ -23,11 +23,9 @@ public:
 
     struct Objective
     {
-        enum class Sense { Minimize, Maximize, Fixed };
-
         string expression;
 
-        Sense sense = Sense::Minimize;
+        opennn::Sense sense = opennn::Sense::Minimize;
 
         float value = 0.0f;
     };
@@ -43,7 +41,7 @@ public:
         void check() const;
     };
 
-    using Sense = Objective::Sense;
+    using Sense = opennn::Sense;
 
     explicit ResponseOptimization(NeuralNetwork* = nullptr);
 

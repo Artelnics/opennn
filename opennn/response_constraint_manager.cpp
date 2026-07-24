@@ -8,6 +8,8 @@
 
 #include "pch.h"
 #include "response_constraint_manager.h"
+#include "response_optimization.h"
+#include "neural_network.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 
@@ -165,6 +167,364 @@ vector<vector<MultivariateConstraint>> expand_ast(const ExpressionNode& root,
     return enumerate_regions(root, comparison, low, up, selectors);
 }
 
+}
+
+
+void ConstraintManager::build(const ResponseOptimization& new_problem, const ConstraintGeometry& new_geometry, const bool lower)
+{
+    problem = &new_problem;
+    geometry = new_geometry;
+
+    constraint_set = ConstraintSet{};
+    absorbed_objectives.clear();
+
+    build_columns();
+
+    for (const auto& constraint : problem->get_constraints())
+        if (constraint.condition == Condition::Cardinality)
+            add_cardinality(constraint.expression, constraint.values);
+        else
+            add_constraint(constraint.expression, constraint.condition, constraint.values);
+
+    if (lower)
+    {
+        expand_fixed_objectives();
+        promote_single_variable_constraints();
+    }
+}
+
+
+void ConstraintManager::build_columns()
+{
+    input_columns.clear();
+    output_columns.clear();
+    input_names.clear();
+
+    NeuralNetwork* neural_network = geometry.neural_network;
+
+    Index input_column = 0;
+    for (const Variable& variable : neural_network->get_input_variables())
+    {
+        input_names.insert(variable.name);
+
+        if (variable.get_feature_count() == 1 && variable.get_role() == "Input" && !geometry.is_history(variable.name))
+            input_columns.emplace_back(variable.name, input_column);
+
+        input_column += variable.get_feature_count();
+    }
+
+    Index output_column = 0;
+    for (const Variable& variable : neural_network->get_output_variables())
+    {
+        if (variable.get_feature_count() == 1)
+            output_columns.emplace_back(variable.name, output_column);
+
+        output_column += variable.get_feature_count();
+    }
+}
+
+
+Index ConstraintManager::input_column_of(const string& name) const
+{
+    for (const auto& column : input_columns)
+        if (column.first == name)
+            return column.second;
+    return -1;
+}
+
+
+bool ConstraintManager::is_input_name(const string& name) const
+{
+    return input_names.count(name) > 0;
+}
+
+
+void ConstraintManager::add_constraint(const string& expression, const Condition condition, const vector<float>& values)
+{
+    if (condition == Condition::None || condition == Condition::Integer)
+        return;
+
+    const Condition comparison = condition;
+
+    const float low = values.empty() ? 0.0f : values[0];
+    const float up = values.size() > 1 ? values[1] : low;
+
+    if (is_input_name(expression))
+    {
+        if (condition == Condition::AllowedSet)
+        {
+            UnivariateConstraint univariate(Condition::AllowedSet);
+            univariate.allowed_values = values;
+            constraint_set.univariate[expression] = move(univariate);
+        }
+        else
+            constraint_set.univariate[expression] = UnivariateConstraint(comparison, low, up);
+
+        return;
+    }
+
+    if (condition == Condition::AllowedSet)
+    {
+        MultivariateConstraint formula_constraint;
+        formula_constraint.expression = expression;
+        formula_constraint.condition = Condition::AllowedSet;
+        formula_constraint.allowed_values = values;
+        formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+        formula_constraint.kind = classify(formula_constraint);
+        constraint_set.multivariate.push_back(move(formula_constraint));
+        return;
+    }
+
+    add_formula(expression, comparison, low, up);
+}
+
+
+void ConstraintManager::add_cardinality(const string& expression, const vector<float>& values)
+{
+    vector<string> names;
+    string current;
+    for (const char character : expression)
+    {
+        if (character == ',') { names.push_back(current); current.clear(); }
+        else current += character;
+    }
+    if (!current.empty())
+        names.push_back(current);
+
+    const Index k = values.empty() ? 0 : Index(llround(values[0]));
+    const bool force_nonzero = values.size() > 1 ? values[1] > 0.5f : true;
+
+    constraint_set.cardinality.push_back({ move(names), k, force_nonzero });
+}
+
+
+void ConstraintManager::add_formula(const string& expression, const Condition op, const float low, const float up)
+{
+    vector<vector<MultivariateConstraint>> branches;
+
+    try
+    {
+        branches = expand_constraint(expression, op, low, up, input_columns, output_columns);
+    }
+    catch (const exception&)
+    {
+        MultivariateConstraint formula_constraint;
+        formula_constraint.expression = expression;
+        formula_constraint.condition = op;
+        formula_constraint.low_bound = low;
+        formula_constraint.up_bound = up;
+        formula_constraint.compiled = compile_formula(expression, input_columns, output_columns);
+        formula_constraint.kind = classify(formula_constraint);
+        branches = { { move(formula_constraint) } };
+    }
+
+    if (branches.size() == 1)
+        for (MultivariateConstraint& formula_constraint : branches[0])
+            constraint_set.multivariate.push_back(move(formula_constraint));
+    else
+        constraint_set.disjunctive.push_back(move(branches));
+}
+
+
+void ConstraintManager::expand_fixed_objectives()
+{
+    // Fixed objectives keyed by name (sorted) — reproduces the original lowering order.
+    map<string, float> fixed_targets;
+    for (const ResponseOptimization::Objective& objective : problem->get_objectives())
+        if (objective.sense == Sense::Fixed)
+            fixed_targets[objective.expression] = objective.value;
+
+    if (fixed_targets.empty())
+        return;
+
+    map<string, float> output_range;
+    const bool any_output_fixed = ranges::any_of(fixed_targets,
+        [&](const auto& entry){ return !is_input_name(entry.first); });
+
+    if (any_output_fixed)
+    {
+        const vector<Variable>& target_variables = *geometry.target_variables;
+        const vector<Descriptives>& target_descriptives = *geometry.target_descriptives;
+        for (size_t i = 0; i < target_variables.size(); ++i)
+            output_range[target_variables[i].name] =
+                static_cast<float>(target_descriptives[i].maximum - target_descriptives[i].minimum);
+    }
+
+    for (const auto& [name, target] : fixed_targets)
+    {
+        if (is_input_name(name))
+        {
+            constraint_set.univariate[name] = UnivariateConstraint(Condition::EqualTo, target, target);
+            absorbed_objectives.insert(name);
+            continue;
+        }
+
+        const auto found = output_range.find(name);
+        const float range = (found != output_range.end()) ? found->second : abs(target);
+        const float half_width = max(bound_tolerance(target), relative_tolerance * max(EPSILON, range));
+
+        add_formula(name, Condition::Between, target - half_width, target + half_width);
+
+        cout << "> Fixed objective '" << name << "' -> output equality band ["
+             << (target - half_width) << ", " << (target + half_width) << "].\n";
+    }
+}
+
+
+void ConstraintManager::promote_single_variable_constraints()
+{
+    if (constraint_set.multivariate.empty())
+        return;
+
+    map<Index, string> name_of_column;
+    for (const auto& column : input_columns)
+        name_of_column[column.second] = column.first;
+
+    auto interval_of = [](const UnivariateConstraint& constraint, float& lo, float& hi) -> bool
+    {
+        lo = -numeric_limits<float>::infinity();
+        hi =  numeric_limits<float>::infinity();
+        switch (constraint.condition)
+        {
+        case Condition::None:           return true;
+        case Condition::EqualTo:        lo = hi = constraint.low_bound; return true;
+        case Condition::Between:        lo = constraint.low_bound; hi = constraint.up_bound; return true;
+        case Condition::GreaterEqualTo:
+        case Condition::GreaterThan:    lo = constraint.low_bound; return true;
+        case Condition::LessEqualTo:
+        case Condition::LessThan:       hi = constraint.up_bound; return true;
+        case Condition::AllowedSet:
+        default:                                 return false;
+        }
+    };
+
+    vector<MultivariateConstraint> kept;
+    kept.reserve(constraint_set.multivariate.size());
+
+    for (MultivariateConstraint& formula_constraint : constraint_set.multivariate)
+    {
+        const CompiledExpression& compiled = formula_constraint.compiled;
+
+        const bool promotable = formula_constraint.condition != Condition::None
+            && formula_constraint.condition != Condition::AllowedSet
+            && compiled.shape == FormulaShape::Affine
+            && compiled.scope == FormulaScope::InputsOnly
+            && compiled.affine_input_terms.size() == 1
+            && compiled.affine_output_terms.empty();
+
+        if (!promotable) { kept.push_back(move(formula_constraint)); continue; }
+
+        const Index column = compiled.affine_input_terms.front().first;
+        const float coefficient = compiled.affine_input_terms.front().second;
+        const auto found = name_of_column.find(column);
+
+        if (found == name_of_column.end() || coefficient == 0.0f)
+        { kept.push_back(move(formula_constraint)); continue; }
+
+        const float constant = compiled.affine_constant;
+        const float low = formula_constraint.low_bound;
+        const float up  = formula_constraint.up_bound;
+        const auto solve = [&](const float bound) { return (bound - constant) / coefficient; };
+
+        float implied_lo = -numeric_limits<float>::infinity();
+        float implied_hi =  numeric_limits<float>::infinity();
+
+        switch (formula_constraint.condition)
+        {
+        case Condition::EqualTo:
+            implied_lo = implied_hi = solve(low); break;
+        case Condition::Between:
+            implied_lo = min(solve(low), solve(up));
+            implied_hi = max(solve(low), solve(up)); break;
+        case Condition::GreaterEqualTo:
+        case Condition::GreaterThan:
+            (coefficient > 0.0f ? implied_lo : implied_hi) = solve(low); break;
+        case Condition::LessEqualTo:
+        case Condition::LessThan:
+            (coefficient > 0.0f ? implied_hi : implied_lo) = solve(up); break;
+        case Condition::None:
+        case Condition::AllowedSet:
+            break;
+        default: break;
+        }
+
+        const string& name = found->second;
+
+        float existing_lo = -numeric_limits<float>::infinity();
+        float existing_hi =  numeric_limits<float>::infinity();
+        const auto existing = constraint_set.univariate.find(name);
+        if (existing != constraint_set.univariate.end() && !interval_of(existing->second, existing_lo, existing_hi))
+        { kept.push_back(move(formula_constraint)); continue; }
+
+        const float new_lo = max(implied_lo, existing_lo);
+        const float new_hi = min(implied_hi, existing_hi);
+
+        throw_if(new_lo > new_hi + bound_tolerance(new_hi),
+                 "IDC: constraint '" + formula_constraint.expression
+                 + "' leaves variable '" + name + "' with an empty box.");
+
+        const bool lo_finite = isfinite(new_lo);
+        const bool hi_finite = isfinite(new_hi);
+
+        if (lo_finite && hi_finite && new_lo == new_hi)
+            constraint_set.univariate[name] = UnivariateConstraint(Condition::EqualTo, new_lo, new_lo);
+        else if (lo_finite && hi_finite)
+            constraint_set.univariate[name] = UnivariateConstraint(Condition::Between, new_lo, new_hi);
+        else if (lo_finite)
+            constraint_set.univariate[name] = UnivariateConstraint(Condition::GreaterEqualTo, new_lo, 0.0f);
+        else if (hi_finite)
+            constraint_set.univariate[name] = UnivariateConstraint(Condition::LessEqualTo, 0.0f, new_hi);
+
+        cout << "> Promoted single-variable constraint '" << formula_constraint.expression
+             << "' to a box on '" << name << "'." << "\n";
+    }
+
+    constraint_set.multivariate = move(kept);
+}
+
+
+bool ConstraintManager::is_objective(const string& name) const
+{
+    return problem->is_objective(name) && absorbed_objectives.count(name) == 0;
+}
+
+
+Sense ConstraintManager::get_sense(const string& name) const
+{
+    return problem->get_sense(name);
+}
+
+
+float ConstraintManager::get_fixed_value(const string& name) const
+{
+    return problem->get_fixed_value(name);
+}
+
+
+UnivariateConstraint ConstraintManager::get_constraint(const string& name) const
+{
+    const auto it = constraint_set.univariate.find(name);
+    return it != constraint_set.univariate.end() ? it->second : UnivariateConstraint(Condition::None);
+}
+
+
+Index ConstraintManager::get_optimizing_objectives_number() const
+{
+    const auto is_opt = [&](const Variable& v){ return is_objective(v.name) && get_sense(v.name) != Sense::Fixed; };
+    return ranges::count_if((*geometry.input_variables), is_opt)
+         + ranges::count_if((*geometry.target_variables), is_opt);
+}
+
+
+Index ConstraintManager::get_objectives_number() const
+{
+    const Index optimizing = get_optimizing_objectives_number();
+    if (optimizing > 0)
+        return optimizing;
+
+    const auto is_fixed = [&](const Variable& v){ return is_objective(v.name) && get_sense(v.name) == Sense::Fixed; };
+    return ranges::count_if((*geometry.input_variables), is_fixed)
+         + ranges::count_if((*geometry.target_variables), is_fixed);
 }
 
 
