@@ -2217,6 +2217,26 @@ void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_we
     });
 }
 
+void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
+                       unsigned long long seed, unsigned long long step,
+                       void* candidates_scratch, int* id_device, float* token_device)
+{
+    throw_if(!logits_row.is_cuda() || !candidates_scratch || !id_device,
+             "sample_logits_row: a GPU logits row, device scratch and a device id are required.");
+
+    logits_row.dispatch([&](auto tag) {
+        using T = decltype(tag);
+        sample_logits_row_cuda<T>(to_int(logits_row.size()), temperature, to_int(top_k), top_p,
+                                  seed, step, logits_row.as<T>(),
+                                  static_cast<float2*>(candidates_scratch), id_device, token_device);
+    });
+}
+
+Index sample_logits_scratch_floats()
+{
+    return Index(LOGITS_SAMPLE_BLOCKS) * 32 * 2;
+}
+
 static void qk_norm_gpu(const TensorView& input, const TensorView& weight, TensorView& output,
                         Index head_dim, float epsilon)
 {
@@ -2384,6 +2404,17 @@ void qk_rope_cache_append(const TensorView&, const TensorView&, const TensorView
                           Index, Index, Index, float, const int*)
 {
     throw runtime_error("qk_rope_cache_append: CUDA support not compiled in.");
+}
+
+void sample_logits_row(const TensorView&, float, Index, float, unsigned long long, unsigned long long,
+                       void*, int*, float*)
+{
+    throw runtime_error("sample_logits_row: CUDA support not compiled in.");
+}
+
+Index sample_logits_scratch_floats()
+{
+    return 0;
 }
 
 #endif // OPENNN_HAS_CUDA

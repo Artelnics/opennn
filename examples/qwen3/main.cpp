@@ -40,6 +40,7 @@
 #include "opennn/neural_network.h"
 #include "opennn/forward_propagation.h"
 #include "opennn/tensor_types.h"
+#include "opennn/tensor_operations.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
 #ifdef OPENNN_HAS_CUDA
@@ -137,21 +138,34 @@ size_t utf8_complete_prefix(const string& bytes)
 
 // Samples the next token from a logits row. Column 0 ([PAD]) is never chosen.
 // temperature <= 0 gives greedy; otherwise temperature scaling, then top-k, then
-// top-p (nucleus). All buffers are allocated once and reused every token.
+// top-p (nucleus). On GPU the whole selection runs on device (sample_logits_row)
+// and only the 4-byte id crosses to the host; the CPU path keeps persistent,
+// reused buffers. All allocations happen once, at construction.
 struct Sampler
 {
     Index vocabulary;
     mt19937 rng;
     vector<float> logits;
     vector<pair<float, Index>> candidates;
-    void* pinned = nullptr;   // staging for the device logits row
+    void* pinned = nullptr;            // 4-byte landing pad for the device-sampled id
+    unsigned long long seed64 = 0;     // Philox seed (GPU path)
+    unsigned long long step = 0;
+#ifdef OPENNN_HAS_CUDA
+    Buffer gpu_candidates{Device::CUDA};
+    Buffer gpu_id{Device::CUDA};
+#endif
 
     Sampler(Index open_vocabulary, unsigned seed, bool gpu)
-        : vocabulary(open_vocabulary), rng(seed), logits(size_t(open_vocabulary))
+        : vocabulary(open_vocabulary), rng(seed), logits(size_t(open_vocabulary)), seed64(seed)
     {
         candidates.reserve(size_t(open_vocabulary));
 #ifdef OPENNN_HAS_CUDA
-        if (gpu) pinned = device::allocate_pinned_host(vocabulary * Index(sizeof(float)));
+        if (gpu)
+        {
+            pinned = device::allocate_pinned_host(Index(sizeof(int)));
+            gpu_candidates.resize_bytes(sample_logits_scratch_floats() * Index(sizeof(float)), Device::CUDA);
+            gpu_id.resize_bytes(Index(sizeof(int)), Device::CUDA);
+        }
 #else
         (void)gpu;
 #endif
@@ -178,9 +192,13 @@ struct Sampler
         if (output.is_cuda())
         {
             cudaStream_t stream = device::get_compute_stream();
-            device::copy_async(pinned, row, vocabulary * elem, Device::CUDA, Device::CPU, stream);
+            const TensorView row_view(const_cast<char*>(row), {vocabulary}, output.type, Device::CUDA);
+            sample_logits_row(row_view, temperature, SAMPLING_TOP_K, SAMPLING_TOP_P,
+                              seed64, step++, gpu_candidates.data,
+                              static_cast<int*>(gpu_id.data), nullptr);
+            device::copy_async(pinned, gpu_id.data, Index(sizeof(int)), Device::CUDA, Device::CPU, stream);
             device::synchronize(stream);
-            row = static_cast<const char*>(pinned);
+            return Index(*static_cast<const int*>(pinned));
         }
 #endif
 

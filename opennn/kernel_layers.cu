@@ -1903,6 +1903,176 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
+// (value, index) argmax reductions; ties resolve to the lower index so the
+// greedy path matches the CPU first-maximum scan exactly.
+__device__ __forceinline__ void warp_argmax(float& v, int& i)
+{
+    #pragma unroll
+    for (int offset = 16; offset > 0; offset >>= 1)
+    {
+        const float ov = __shfl_xor_sync(0xffffffffu, v, offset);
+        const int   oi = __shfl_xor_sync(0xffffffffu, i, offset);
+        if (ov > v || (ov == v && oi < i)) { v = ov; i = oi; }
+    }
+}
+
+__device__ __forceinline__ void block_argmax(float& v, int& i, float* sm_v, int* sm_i)
+{
+    warp_argmax(v, i);
+    const int lane = threadIdx.x & 31;
+    const int warp = threadIdx.x >> 5;
+    if (lane == 0) { sm_v[warp] = v; sm_i[warp] = i; }
+    __syncthreads();
+
+    if (threadIdx.x < 32)
+    {
+        const int warps = (blockDim.x + 31) >> 5;
+        v = threadIdx.x < warps ? sm_v[threadIdx.x] : -1e30f;
+        i = threadIdx.x < warps ? sm_i[threadIdx.x] : 0x7fffffff;
+        warp_argmax(v, i);
+        if (threadIdx.x == 0) { sm_v[0] = v; sm_i[0] = i; }
+    }
+    __syncthreads();
+    v = sm_v[0]; i = sm_i[0];
+    __syncthreads();
+}
+
+// Per-block top-k of a logits row (column 0, [PAD], excluded): every thread
+// keeps its strided slice in registers and the block emits its k best
+// (value, index) pairs — the global top-k is a subset of the block-local ones.
+template<typename T, int SLOTS>
+__global__ void logits_top_candidates_kernel(const int n, const int k, const T* __restrict__ logits,
+                                             float2* __restrict__ out)
+{
+    const int stride = gridDim.x * blockDim.x;
+
+    float v[SLOTS]; int vi[SLOTS];
+    #pragma unroll
+    for (int j = 0; j < SLOTS; ++j) { v[j] = -1e30f; vi[j] = 0x7fffffff; }
+
+    int cnt = 0;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n && cnt < SLOTS; i += stride)
+    {
+        if (i == 0) continue;
+        v[cnt] = static_cast<float>(logits[i]); vi[cnt] = i; ++cnt;
+    }
+
+    __shared__ float sm_v[32];
+    __shared__ int   sm_i[32];
+
+    for (int round = 0; round < k; ++round)
+    {
+        float best = -1e30f; int besti = 0x7fffffff, slot = -1;
+        #pragma unroll
+        for (int j = 0; j < SLOTS; ++j)
+            if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
+
+        float wv = best; int wi = besti;
+        block_argmax(wv, wi, sm_v, sm_i);
+
+        if (threadIdx.x == 0) out[blockIdx.x * k + round] = make_float2(wv, __int_as_float(wi));
+        if (slot >= 0 && besti == wi) v[slot] = -1e30f;
+        __syncthreads();
+    }
+}
+
+// Merges the block-local candidates to the global top-k, then samples: argmax
+// when temperature <= 0; otherwise temperature scaling, softmax, top-p
+// truncation and a Philox draw seeded by (seed, step). Writes the id to
+// id_out and, when given, its float form to token_out (a decode input buffer).
+template<int SLOTS>
+__global__ void sample_from_candidates_kernel(const int m, const int k,
+                                              const float temperature, const float top_p,
+                                              const unsigned long long seed, const unsigned long long step,
+                                              const float2* __restrict__ candidates,
+                                              int* __restrict__ id_out, float* __restrict__ token_out)
+{
+    float v[SLOTS]; int vi[SLOTS];
+    #pragma unroll
+    for (int j = 0; j < SLOTS; ++j) { v[j] = -1e30f; vi[j] = 0x7fffffff; }
+
+    int cnt = 0;
+    for (int i = threadIdx.x; i < m && cnt < SLOTS; i += blockDim.x)
+    {
+        const float2 c = candidates[i];
+        v[cnt] = c.x; vi[cnt] = __float_as_int(c.y); ++cnt;
+    }
+
+    __shared__ float sm_v[32];
+    __shared__ int   sm_i[32];
+    __shared__ float top_v[32];
+    __shared__ int   top_i[32];
+
+    for (int round = 0; round < k; ++round)
+    {
+        float best = -1e30f; int besti = 0x7fffffff, slot = -1;
+        #pragma unroll
+        for (int j = 0; j < SLOTS; ++j)
+            if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
+
+        float wv = best; int wi = besti;
+        block_argmax(wv, wi, sm_v, sm_i);
+
+        if (threadIdx.x == 0) { top_v[round] = wv; top_i[round] = wi; }
+        if (slot >= 0 && besti == wi) v[slot] = -1e30f;
+        __syncthreads();
+    }
+
+    if (threadIdx.x != 0) return;
+
+    int pick = top_i[0];   // greedy / fallback
+
+    if (temperature > 0.0f)
+    {
+        float p[32];
+        float sum = 0.0f;
+        for (int j = 0; j < k; ++j)
+        {
+            p[j] = __expf((top_v[j] - top_v[0]) / temperature);
+            sum += p[j];
+        }
+        for (int j = 0; j < k; ++j) p[j] /= sum;
+
+        float kept = 1.0f;
+        int keep = k;
+        if (top_p > 0.0f && top_p < 1.0f)
+        {
+            float cumulative = 0.0f;
+            for (int j = 0; j < k; ++j) { cumulative += p[j]; keep = j + 1; if (cumulative >= top_p) break; }
+            kept = cumulative;
+        }
+
+        curandStatePhilox4_32_10_t state;
+        curand_init(seed, 0, step, &state);
+        const float u = curand_uniform(&state) * kept;
+
+        float cumulative = 0.0f;
+        pick = top_i[keep - 1];
+        for (int j = 0; j < keep; ++j) { cumulative += p[j]; if (u <= cumulative) { pick = top_i[j]; break; } }
+    }
+
+    *id_out = pick;
+    if (token_out) *token_out = float(pick);
+}
+
+template<typename T>
+void sample_logits_row_cuda(const int n, const float temperature, const int top_k, const float top_p,
+                            const unsigned long long seed, const unsigned long long step,
+                            const T* logits, float2* candidates_scratch, int* id_out, float* token_out)
+{
+    cudaStream_t stream = opennn::device::get_compute_stream();
+    const int k = temperature <= 0.0f ? 1 : std::max(1, std::min(top_k, 32));
+    const int blocks = LOGITS_SAMPLE_BLOCKS;
+
+    OPENNN_CUDA_LAUNCH((logits_top_candidates_kernel<T, 8><<<blocks, 256, 0, stream>>>(
+        n, k, logits, candidates_scratch)));
+    OPENNN_CUDA_LAUNCH((sample_from_candidates_kernel<16><<<1, 256, 0, stream>>>(
+        blocks * k, k, temperature, top_p, seed, step, candidates_scratch, id_out, token_out)));
+}
+
+template void sample_logits_row_cuda<float>        (const int, const float, const int, const float, const unsigned long long, const unsigned long long, const float*,         float2*, int*, float*);
+template void sample_logits_row_cuda<__nv_bfloat16>(const int, const float, const int, const float, const unsigned long long, const unsigned long long, const __nv_bfloat16*, float2*, int*, float*);
+
 constexpr bool grouped_attention_decode_supported(const int head_dim, const int group)
 {
     const bool dim_ok = head_dim == 64 || head_dim == 128 || head_dim == 256;

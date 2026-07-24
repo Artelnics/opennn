@@ -323,6 +323,18 @@ void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const 
                                const float* cos_table, const float* sin_table,
                                T* q_out, T* k_cache, T* v_cache);
 
+// Device-side token sampling from a logits row (column 0 excluded): block-local
+// top-k candidates, merge, then argmax (temperature <= 0) or temperature/
+// softmax/top-p with a Philox draw. candidates_scratch holds
+// LOGITS_SAMPLE_BLOCKS * min(top_k, 32) float2 pairs; the picked id goes to
+// id_out (device int) and, when token_out is non-null, its float form there.
+inline constexpr int LOGITS_SAMPLE_BLOCKS = 128;
+
+template<typename T>
+void sample_logits_row_cuda(const int n, const float temperature, const int top_k, const float top_p,
+                            const unsigned long long seed, const unsigned long long step,
+                            const T* logits, float2* candidates_scratch, int* id_out, float* token_out);
+
 template<typename T>
 void gather_time_slice_cuda(const Index batch, const Index time_steps,
                             const Index features, const Index t,

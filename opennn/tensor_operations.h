@@ -177,6 +177,18 @@ void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_we
                           Index n_query_heads, Index n_kv_heads, Index head_dim,
                           float epsilon, const int* position_device);
 
+// Samples a token id from a device logits row without copying it to the host
+// (GPU only; column 0, [PAD], is excluded). temperature <= 0 is argmax;
+// otherwise temperature scaling, top-k (clamped to 32), softmax and top-p with
+// a Philox draw seeded by (seed, step). The id lands in id_device (device int)
+// and, when token_device is non-null, as float there (a decode input buffer).
+// candidates_scratch: device buffer of sample_logits_scratch_floats() floats.
+void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
+                       unsigned long long seed, unsigned long long step,
+                       void* candidates_scratch, int* id_device, float* token_device);
+
+Index sample_logits_scratch_floats();
+
 // QK-Norm: RMSNorm applied independently to each head's head_dim vector of a
 // (batch, seq, heads*head_dim) tensor, with a per-channel weight of size head_dim.
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
