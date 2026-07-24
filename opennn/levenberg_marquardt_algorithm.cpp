@@ -310,7 +310,8 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     const unique_ptr<ForwardPropagation> validation_forward_propagation =
         (has_validation && validation_samples_number != training_samples_number)
-            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network)
+            ? make_unique<ForwardPropagation>(validation_samples_number, neural_network,
+                                              ForwardPropagationMode::Inference)
             : nullptr;
 
     ForwardPropagation* validation_fp = has_validation

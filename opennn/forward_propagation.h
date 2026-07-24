@@ -18,18 +18,26 @@ namespace opennn
 
 class NeuralNetwork;
 
+enum class ForwardPropagationMode
+{
+    Training,
+    Inference
+};
+
 struct ForwardPropagation
 {
     ForwardPropagation() = default;
 
-    ForwardPropagation(Index, NeuralNetwork*);
+    ForwardPropagation(Index, NeuralNetwork*,
+                       ForwardPropagationMode = ForwardPropagationMode::Training);
 
     ~ForwardPropagation();
 
     ForwardPropagation(const ForwardPropagation&) = delete;
     ForwardPropagation& operator=(const ForwardPropagation&) = delete;
 
-    void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr);
+    void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
+             ForwardPropagationMode = ForwardPropagationMode::Training);
 
     // Mirrors past_length into a device int (via pinned staging) for stateful
     // operators whose kernels read the cache position from device memory: a
@@ -55,8 +63,12 @@ struct ForwardPropagation
     void set_cuda_graph(bool);
     bool get_cuda_graph() const noexcept { return use_cuda_graph; }
     void reset_cuda_graph() noexcept;
+    void prepare_cuda_graph_workspaces();
+    bool cuda_graph_workspaces_need_growth() const noexcept;
+    device::GraphWorkspaceViews get_cuda_graph_workspace_views() const noexcept;
 
     Index batch_size = 0;
+    ForwardPropagationMode mode = ForwardPropagationMode::Training;
 
     // KV-cache length before this pass: stateful operators (GroupedQueryAttention) place
     // the new tokens at this absolute position. 0 = fresh sequence (the default,
@@ -89,6 +101,12 @@ struct ForwardPropagation
     Index cuda_graph_warmup_calls = 0;
     device::GraphExecHandle inference_graph_exec;
     vector<const void*> captured_input_pointers;
+
+    device::GraphWorkspaceRequirements inference_graph_workspace_requirements;
+    Buffer inference_graph_shared_scratch{Device::CUDA};
+    Buffer inference_graph_bf16_input{Device::CUDA};
+    Buffer inference_graph_bf16_gradient{Device::CUDA};
+    Buffer inference_graph_bf16_to_fp32{Device::CUDA};
 };
 
 }

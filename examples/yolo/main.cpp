@@ -960,7 +960,9 @@ int main()
                 // Manual forward pass — we need every Detection layer's output,
                 // not just the network terminal. Walk layers, build YoloFpnHead
                 // entries for each Detection layer, then cross-scale NMS.
-                ForwardPropagation forward_propagation(/*batch_size=*/1, &yolo_network);
+                ForwardPropagation forward_propagation(
+                    /*batch_size=*/1, &yolo_network,
+                    ForwardPropagationMode::Inference);
                 const std::vector<TensorView> input_views = {
                     TensorView(input.data(),
                                {1, input.dimension(1), input.dimension(2), input.dimension(3)},
@@ -1439,7 +1441,8 @@ int main()
                 std::vector<YoloDetection> dets;
                 if (is_fpn)
                 {
-                    ForwardPropagation fp_m(1, &yolo_network);
+                    ForwardPropagation fp_m(1, &yolo_network,
+                                            ForwardPropagationMode::Inference);
                     const std::vector<TensorView> iv = {
                         TensorView(input.data(),
                                    {1, input.dimension(1), input.dimension(2), input.dimension(3)},

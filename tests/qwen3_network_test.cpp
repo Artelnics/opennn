@@ -171,4 +171,98 @@ TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
     EXPECT_LT(multi_turn_max_logit_diff(d, false), 1.0e-3f);
     Configuration::instance().set();
 }
+
+
+// Regression for decode graphs capturing the thread-global cuBLASLt scratch:
+// a later suffix prefill can introduce a larger GEMM plan and move that global
+// buffer. Decode must instead keep using its ForwardPropagation-owned stable
+// workspaces, without recapturing between chat turns.
+TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const Dims d { 64, 50, 32, 2, 4, 2, 8, 64, 4, 0, 0 };
+    Qwen3 network(d.seq, d.vocab, d.hidden, d.layers,
+                  d.q_heads, d.kv_heads, d.head_dim, d.intermediate,
+                  1000000.0f, 1.0e-6f);
+    fill_parameters(network);
+    network.upload_parameters_bf16_inference();
+
+    ForwardPropagation prefill(
+        1, &network, ForwardPropagationMode::Inference);
+    ForwardPropagation decode;
+    decode.set(1, &network, &prefill.data, ForwardPropagationMode::Inference);
+    decode.set_active_sequence_length(1);
+    decode.set_cuda_graph(true);
+
+    Buffer token_device{Device::CUDA};
+    token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
+    const vector<TensorView> decode_inputs = {
+        TensorView(token_device.data, {1, 1}, Type::FP32, Device::CUDA)
+    };
+
+    vector<float> window(size_t(d.seq), 0.0f);
+    run(network, prefill, window, {3, 7, 11, 13}, 0);
+    Index position = 4;
+
+    const auto decode_token = [&](Index token)
+    {
+        const float token_value = float(token);
+        device::copy_async(token_device.data, &token_value, Index(sizeof(float)),
+                           device::CopyKind::HostToDevice,
+                           device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
+        decode.past_length = position++;
+        return network.calculate_outputs_resident(decode_inputs, decode, false);
+    };
+
+    decode_token(17);  // measured warmup 1
+    decode_token(19);  // measured warmup 2 + capture
+    ASSERT_TRUE(static_cast<bool>(decode.inference_graph_exec));
+    ASSERT_FALSE(decode.cuda_graph_workspaces_need_growth());
+    auto* const graph_identity = decode.inference_graph_exec.get();
+
+    const vector<vector<Index>> suffixes = {
+        {2, 5},
+        {23, 29, 31, 37, 41},
+        {43},
+        {3, 5, 7, 11, 13, 17, 19},
+        {23, 31, 47}
+    };
+
+    for (size_t turn = 0; turn < suffixes.size(); ++turn)
+    {
+        run(network, prefill, window, suffixes[turn], position);
+        position += Index(suffixes[turn].size());
+
+        const Index token = 1 + Index((turn * 7 + 3) % size_t(d.vocab - 1));
+        const TensorView graph_view = decode_token(token);
+        const vector<float> graph_logits = logits_row(decode, 0);
+        ASSERT_EQ(graph_view.data, decode.get_outputs().data);
+
+        // Re-run the same position eagerly. It overwrites the same KV row with
+        // the same values and gives a direct numerical reference while leaving
+        // the instantiated graph intact.
+        --position;
+        decode.past_length = position;
+        network.forward_propagate(decode_inputs, decode, false);
+        ++position;
+        const vector<float> eager_logits = logits_row(decode, 0);
+
+        ASSERT_EQ(graph_logits.size(), eager_logits.size());
+        EXPECT_EQ(distance(graph_logits.begin(),
+                           max_element(graph_logits.begin(), graph_logits.end())),
+                  distance(eager_logits.begin(),
+                           max_element(eager_logits.begin(), eager_logits.end())))
+            << "turn=" << turn;
+        for (size_t i = 0; i < graph_logits.size(); ++i)
+            ASSERT_NEAR(graph_logits[i], eager_logits[i], 1.0e-2f)
+                << "turn=" << turn << " logit=" << i;
+
+        EXPECT_EQ(decode.inference_graph_exec.get(), graph_identity);
+        EXPECT_FALSE(decode.cuda_graph_workspaces_need_growth());
+    }
+
+    Configuration::instance().set();
+}
 #endif

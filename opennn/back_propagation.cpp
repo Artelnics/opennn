@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "back_propagation.h"
+#include "memory_pool.h"
 #include "loss.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
@@ -102,8 +103,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
             && layers[layer_index]->get_forward_specs(batch_size).empty();
     };
 
-    const Index last_backward_step = last_trainable_layer_index - first_trainable_layer_index;
-
     const Shape output_delta_shape = Shape({batch_size}).append(layers[last_trainable_layer_index]->get_output_shape());
 
     // If the last trainable layer is a passthrough (e.g. Flatten), the loss
@@ -172,80 +171,31 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         delta_entries.push_back({layer_index, 0, {delta_shape, compute_dtype}, first_step, last_step});
     }
 
-    vector<vector<size_t>> entries_starting_at_backward_step(size_t(last_backward_step + 1));
-    vector<vector<size_t>> entries_ending_at_backward_step(size_t(last_backward_step + 1));
+    vector<MemoryPoolEntry> lifetime_entries;
+    lifetime_entries.reserve(delta_entries.size());
+    for (const DeltaEntry& entry : delta_entries)
+        lifetime_entries.push_back({get_aligned_bytes(entry.spec),
+                                    entry.first_step,
+                                    entry.last_step});
 
-    for (size_t entry_index = 0; entry_index < delta_entries.size(); ++entry_index)
-    {
-        entries_starting_at_backward_step[size_t(delta_entries[entry_index].first_step)].push_back(entry_index);
-        entries_ending_at_backward_step[size_t(delta_entries[entry_index].last_step)].push_back(entry_index);
-    }
-
-    Index live_bytes = 0;
-    Index lower_bound_live_bytes = 0;
-    vector<pair<Index, Index>> free_blocks = {{0, numeric_limits<Index>::max()}};
-    Index peak_bytes = 0;
-
-    for (Index backward_step = 0; backward_step <= last_backward_step; ++backward_step)
-    {
-        for (size_t entry_index : entries_starting_at_backward_step[size_t(backward_step)])
-        {
-            const Index bytes = get_aligned_bytes(delta_entries[entry_index].spec);
-            live_bytes += bytes;
-
-            auto it = ranges::find_if(free_blocks, [bytes](const auto& block) { return block.second >= bytes; });
-            if (it != free_blocks.end())
-            {
-                delta_entries[entry_index].byte_offset = it->first;
-                if (it->second == bytes)
-                    free_blocks.erase(it);
-                else
-                {
-                    it->first  += bytes;
-                    it->second -= bytes;
-                }
-            }
-            peak_bytes = max(peak_bytes, delta_entries[entry_index].byte_offset + bytes);
-        }
-
-        lower_bound_live_bytes = max(lower_bound_live_bytes, live_bytes);
-
-        for (size_t entry_index : entries_ending_at_backward_step[size_t(backward_step)])
-        {
-            const Index bytes = get_aligned_bytes(delta_entries[entry_index].spec);
-            live_bytes -= bytes;
-
-            auto it = ranges::lower_bound(free_blocks, delta_entries[entry_index].byte_offset, {}, &pair<Index, Index>::first);
-            it = free_blocks.insert(it, {delta_entries[entry_index].byte_offset, bytes});
-
-            if (it + 1 != free_blocks.end() && it->first + it->second == (it + 1)->first)
-            {
-                it->second += (it + 1)->second;
-                free_blocks.erase(it + 1);
-            }
-
-            if (it != free_blocks.begin() && (it - 1)->first + (it - 1)->second == it->first)
-            {
-                (it - 1)->second += it->second;
-                free_blocks.erase(it);
-            }
-        }
-    }
+    const MemoryPoolPlan pool_plan = plan_memory_pool(lifetime_entries);
+    for (size_t i = 0; i < delta_entries.size(); ++i)
+        delta_entries[i].byte_offset = pool_plan.byte_offsets[i];
 
     layer_output_deltas.assign(size_t(layers_number), TensorView{});
     backward_slots.assign(size_t(layers_number), {});
     for (Index i = 0; i < layers_number; ++i)
         backward_slots[i].assign(backward_specs[i].size() + 1, TensorView{});
 
-    delta_pool.resize_bytes(peak_bytes, neural_network->get_device());
+    delta_pool.resize_bytes(pool_plan.peak_bytes, neural_network->get_device());
     delta_pool.setZero();
-    memory_debug::record("backward", "BackPropagation::delta_pool", peak_bytes,
+    memory_debug::record("backward", "BackPropagation::delta_pool", pool_plan.peak_bytes,
                          format("batch={}", batch_size));
     memory_debug::record("backward.delta_pool_analysis", "live_bytes_lower_bound",
-                         lower_bound_live_bytes,
+                         pool_plan.lower_bound_live_bytes,
                          format("batch={},entries={}", batch_size, delta_entries.size()));
     memory_debug::record("backward.delta_pool_analysis", "allocator_fragmentation_overhead",
-                         peak_bytes - lower_bound_live_bytes,
+                         pool_plan.fragmentation_bytes(),
                          format("batch={},entries={}", batch_size, delta_entries.size()));
 
     uint8_t* const base = delta_pool.as<uint8_t>();

@@ -940,7 +940,8 @@ TrainingResult Optimizer::train()
     {
         validation_forward_propagation = make_unique<ForwardPropagation>();
         validation_forward_propagation->set(validation_batch_size, neural_network,
-                                            &training_forward_propagation.data);
+                                            &training_forward_propagation.data,
+                                            ForwardPropagationMode::Inference);
     }
 
     ForwardPropagation* validation_fp = validation_forward_propagation.get();

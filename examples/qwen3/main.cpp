@@ -449,7 +449,8 @@ int main(int argc, char* argv[])
         vector<Index> conversation;
         const vector<Index> think_prompt = tokenizer.encode("<think>\n\n</think>\n\n");
         Sampler sampler(config.vocabulary + 1, random_device{}(), want_gpu);
-        ForwardPropagation forward_propagation(1, &model);
+        ForwardPropagation forward_propagation(
+            1, &model, ForwardPropagationMode::Inference);
         vector<float> window(size_t(CONTEXT_LENGTH), 0.0f);
         vector<Index> cached_tokens;
 
@@ -465,7 +466,8 @@ int main(int argc, char* argv[])
         Buffer token_device{Device::CUDA};
         if (want_gpu)
         {
-            decode_propagation.set(1, &model, &forward_propagation.data);
+            decode_propagation.set(1, &model, &forward_propagation.data,
+                                   ForwardPropagationMode::Inference);
             decode_propagation.set_active_sequence_length(1);
             decode_propagation.set_cuda_graph(true);
             token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);

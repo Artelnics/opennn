@@ -37,6 +37,54 @@ std::string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 
+enum class GraphWorkspaceKind
+{
+    SharedScratch,
+    Bf16Input,
+    Bf16Gradient,
+    Bf16ToFp32
+};
+
+struct GraphWorkspaceRequirements
+{
+    Index shared_scratch = 0;
+    Index bf16_input = 0;
+    Index bf16_gradient = 0;
+    Index bf16_to_fp32 = 0;
+};
+
+struct GraphWorkspaceViews
+{
+    void* shared_scratch = nullptr;
+    Index shared_scratch_bytes = 0;
+    void* bf16_input = nullptr;
+    Index bf16_input_bytes = 0;
+    void* bf16_gradient = nullptr;
+    Index bf16_gradient_bytes = 0;
+    void* bf16_to_fp32 = nullptr;
+    Index bf16_to_fp32_bytes = 0;
+};
+
+// During CUDA-graph warmup, records the high-water request for every backend
+// scratch buffer. During capture it additionally redirects those requests to
+// stable ForwardPropagation-owned buffers, so later eager work cannot move an
+// address embedded in the graph.
+class CudaGraphWorkspaceScope
+{
+public:
+    explicit CudaGraphWorkspaceScope(GraphWorkspaceRequirements&,
+                                     const GraphWorkspaceViews* = nullptr);
+    ~CudaGraphWorkspaceScope() noexcept;
+
+    CudaGraphWorkspaceScope(const CudaGraphWorkspaceScope&) = delete;
+    CudaGraphWorkspaceScope& operator=(const CudaGraphWorkspaceScope&) = delete;
+
+private:
+    GraphWorkspaceRequirements* previous_requirements = nullptr;
+    const GraphWorkspaceViews* previous_views = nullptr;
+    GraphWorkspaceViews owned_views;
+};
+
 // Per-conv cuDNN-frontend workspace cap.
 // conv_workspace_limit_bytes(): effective cap in bytes; 0 means uncapped.
 // set_conv_workspace_cap(mode): 0 = off (uncapped/autotune), >0 = explicit cap

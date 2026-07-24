@@ -1953,7 +1953,8 @@ GenerationSession make_seq2seq_session(Transformer& network)
                                            Type::FP32,
                                            Device::CUDA);
 
-    session.forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
+    session.forward_propagation = make_unique<ForwardPropagation>(
+        batch_size, &network, ForwardPropagationMode::Inference);
 
     session.source_ids = Tensor2(batch_size, session.input_sequence_length);
     session.target_ids = Tensor2(batch_size, session.sequence_length);
@@ -1994,7 +1995,8 @@ GenerationSession make_decoder_only_session(TextGenerationNetwork& network)
                                            Type::FP32,
                                            Device::CUDA);
 
-    session.forward_propagation = make_unique<ForwardPropagation>(batch_size, &network);
+    session.forward_propagation = make_unique<ForwardPropagation>(
+        batch_size, &network, ForwardPropagationMode::Inference);
 
     session.target_ids = Tensor2(batch_size, session.sequence_length);
     session.history.reserve(session.sequence_length);

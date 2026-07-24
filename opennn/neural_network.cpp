@@ -651,7 +651,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     const Index batch_size = inputs_1.dimension(0);
 
-    ForwardPropagation forward_propagation(batch_size, this);
+    ForwardPropagation forward_propagation(batch_size, this,
+                                           ForwardPropagationMode::Inference);
 
     const vector<TensorView> input_views = {TensorView(const_cast<float*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
                                             TensorView(const_cast<float*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
@@ -684,7 +685,8 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
     if (is_gpu())
     {
-        ForwardPropagation forward_propagation(batch_size, this);
+        ForwardPropagation forward_propagation(batch_size, this,
+                                               ForwardPropagationMode::Inference);
         return calculate_outputs_device(input_views, forward_propagation);
     }
 
@@ -717,12 +719,14 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
     if (!tileable)
     {
-        ForwardPropagation forward_propagation(batch_size, this);
+        ForwardPropagation forward_propagation(batch_size, this,
+                                               ForwardPropagationMode::Inference);
         forward_propagate(input_views, forward_propagation, false);
         return forward_propagation.get_outputs().as_matrix();
     }
 
-    ForwardPropagation tile_propagation(tile_rows_max, this);
+    ForwardPropagation tile_propagation(tile_rows_max, this,
+                                        ForwardPropagationMode::Inference);
     unique_ptr<ForwardPropagation> tail_propagation;   // last partial tile
 
     MatrixR outputs;
@@ -734,7 +738,8 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
         ForwardPropagation* propagation = &tile_propagation;
         if (rows != tile_rows_max)
         {
-            tail_propagation = make_unique<ForwardPropagation>(rows, this);
+            tail_propagation = make_unique<ForwardPropagation>(
+                rows, this, ForwardPropagationMode::Inference);
             propagation = tail_propagation.get();
         }
 
@@ -905,6 +910,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       Index first_layer_index,
                                       Index last_layer_index) const
 {
+    throw_if(is_training
+             && forward_propagation.mode != ForwardPropagationMode::Training,
+             "NeuralNetwork::forward_propagate: an inference ForwardPropagation "
+             "cannot be used for training.");
+
     const auto pick_input = [&](size_t input_index) -> const TensorView& {
         throw_if(input_index >= input_view.size(),
                  format("NeuralNetwork::forward_propagate: input index {} out of range (have {} input views). Network wiring expects more inputs than were provided.",
@@ -1866,7 +1876,11 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         return forward_propagation.get_outputs();
     }
 
-    forward_propagate(gpu_inputs, forward_propagation, false);
+    {
+        device::CudaGraphWorkspaceScope workspace_measurement(
+            forward_propagation.inference_graph_workspace_requirements);
+        forward_propagate(gpu_inputs, forward_propagation, false);
+    }
 
     if (++forward_propagation.cuda_graph_warmup_calls < inference_graph_warmup_calls)
         return forward_propagation.get_outputs();
@@ -1886,10 +1900,17 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     const bool profiler_was_enabled = ::opennn::enabled();
     ::opennn::enabled() = false;
 
+    forward_propagation.prepare_cuda_graph_workspaces();
+    const device::GraphWorkspaceViews graph_workspace_views =
+        forward_propagation.get_cuda_graph_workspace_views();
+
     try
     {
         device::synchronize(compute);
         device::CudaAllocationGrowthGuard growth_guard(true);
+        device::CudaGraphWorkspaceScope stable_workspaces(
+            forward_propagation.inference_graph_workspace_requirements,
+            &graph_workspace_views);
         device::StreamCapture capture(compute);
 
         forward_propagate(gpu_inputs, forward_propagation, false);
@@ -1903,10 +1924,23 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     }
     catch (const exception& capture_error)
     {
-        forward_propagation.reset_cuda_graph();
-        forward_propagation.cuda_graph_failed = true;
-        cerr << "NeuralNetwork::calculate_outputs_resident: cuda graph capture "
-                "unavailable (" << capture_error.what() << "); continuing eager.\n";
+        if (forward_propagation.cuda_graph_workspaces_need_growth())
+        {
+            // A lazy path requested more scratch than both warmups observed.
+            // Keep the new high-water mark and retry after one measured eager
+            // pass instead of disabling graph replay for the whole session.
+            forward_propagation.inference_graph_exec.reset();
+            forward_propagation.captured_input_pointers.clear();
+            forward_propagation.cuda_graph_warmup_calls =
+                inference_graph_warmup_calls - 1;
+        }
+        else
+        {
+            forward_propagation.reset_cuda_graph();
+            forward_propagation.cuda_graph_failed = true;
+            cerr << "NeuralNetwork::calculate_outputs_resident: cuda graph capture "
+                    "unavailable (" << capture_error.what() << "); continuing eager.\n";
+        }
     }
 
     ::opennn::enabled() = profiler_was_enabled;

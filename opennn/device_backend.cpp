@@ -37,6 +37,41 @@ atomic<int64_t> conv_workspace_cap_mode{-1};                          // AUTO
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
 
+thread_local GraphWorkspaceRequirements* active_graph_workspace_requirements = nullptr;
+thread_local const GraphWorkspaceViews* active_graph_workspace_views = nullptr;
+
+Index& workspace_requirement(GraphWorkspaceRequirements& requirements,
+                             GraphWorkspaceKind kind)
+{
+    switch (kind)
+    {
+    case GraphWorkspaceKind::SharedScratch: return requirements.shared_scratch;
+    case GraphWorkspaceKind::Bf16Input:     return requirements.bf16_input;
+    case GraphWorkspaceKind::Bf16Gradient:  return requirements.bf16_gradient;
+    case GraphWorkspaceKind::Bf16ToFp32:    return requirements.bf16_to_fp32;
+    }
+
+    throw runtime_error("Unknown CUDA graph workspace kind.");
+}
+
+pair<void*, Index> workspace_view(const GraphWorkspaceViews& views,
+                                  GraphWorkspaceKind kind)
+{
+    switch (kind)
+    {
+    case GraphWorkspaceKind::SharedScratch:
+        return {views.shared_scratch, views.shared_scratch_bytes};
+    case GraphWorkspaceKind::Bf16Input:
+        return {views.bf16_input, views.bf16_input_bytes};
+    case GraphWorkspaceKind::Bf16Gradient:
+        return {views.bf16_gradient, views.bf16_gradient_bytes};
+    case GraphWorkspaceKind::Bf16ToFp32:
+        return {views.bf16_to_fp32, views.bf16_to_fp32_bytes};
+    }
+
+    throw runtime_error("Unknown CUDA graph workspace kind.");
+}
+
 void throw_if_auto(Device device_type)
 {
     throw_if(device_type == Device::Auto,
@@ -63,6 +98,57 @@ void* allocate_cuda(Index byte_count)
     (void)byte_count;
     throw_cuda_unavailable();
 #endif
+}
+
+}
+
+CudaGraphWorkspaceScope::CudaGraphWorkspaceScope(
+    GraphWorkspaceRequirements& requirements,
+    const GraphWorkspaceViews* views)
+    : previous_requirements(active_graph_workspace_requirements),
+      previous_views(active_graph_workspace_views)
+{
+    active_graph_workspace_requirements = &requirements;
+    if (views)
+    {
+        owned_views = *views;
+        active_graph_workspace_views = &owned_views;
+    }
+    else
+        active_graph_workspace_views = nullptr;
+}
+
+CudaGraphWorkspaceScope::~CudaGraphWorkspaceScope() noexcept
+{
+    active_graph_workspace_requirements = previous_requirements;
+    active_graph_workspace_views = previous_views;
+}
+
+namespace
+{
+
+bool graph_workspace_override(GraphWorkspaceKind kind,
+                              Index minimum_bytes,
+                              void*& pointer)
+{
+    if (active_graph_workspace_requirements)
+    {
+        Index& high_water =
+            workspace_requirement(*active_graph_workspace_requirements, kind);
+        high_water = max(high_water, minimum_bytes);
+    }
+
+    if (!active_graph_workspace_views) return false;
+
+    const auto [workspace_pointer, capacity] =
+        workspace_view(*active_graph_workspace_views, kind);
+    throw_if(minimum_bytes > capacity,
+             format("CUDA graph workspace needs {} bytes, but the stable "
+                    "capture buffer has {} bytes.",
+                    minimum_bytes, capacity));
+
+    pointer = workspace_pointer;
+    return true;
 }
 
 }
@@ -739,9 +825,15 @@ namespace
     }
 
     template <typename T>
-    T* ensure_workspace(Buffer& workspace_buffer, Index n)
+    T* ensure_workspace(Buffer& workspace_buffer, Index n,
+                        device::GraphWorkspaceKind kind)
     {
-        if (n * Index(sizeof(T)) > workspace_buffer.bytes && workspace_buffer.data)
+        const Index minimum_bytes = n * Index(sizeof(T));
+        void* graph_workspace = nullptr;
+        if (device::graph_workspace_override(kind, minimum_bytes, graph_workspace))
+            return static_cast<T*>(graph_workspace);
+
+        if (minimum_bytes > workspace_buffer.bytes && workspace_buffer.data)
         {
             throw_if(device::cuda_allocation_growth_forbidden(),
                      "workspace growth forbidden (warmup incomplete).");
@@ -759,7 +851,8 @@ namespace
     {
         Buffer& buffer = thread_state().workspace;
         const Index before = buffer.bytes;
-        void* pointer = ensure_workspace<uint8_t>(buffer, Index(min_bytes));
+        void* pointer = ensure_workspace<uint8_t>(
+            buffer, Index(min_bytes), device::GraphWorkspaceKind::SharedScratch);
         if (buffer.bytes > before)
             memory_debug::record("workspace.cudnn_frontend", "shared_scratch",
                                  buffer.bytes - before, "high_water");
@@ -768,7 +861,9 @@ namespace
 
     bfloat16* ensure_bf16_input_workspace(Index n)
     {
-        return ensure_workspace<bfloat16>(thread_state().bf16_input, n);
+        return ensure_workspace<bfloat16>(
+            thread_state().bf16_input, n,
+            device::GraphWorkspaceKind::Bf16Input);
     }
 
     LtMatmulPlan& get_lt_matmul_plan(
@@ -849,12 +944,16 @@ namespace
 
 bfloat16* ensure_bf16_gradient_workspace(Index n)
 {
-    return ensure_workspace<bfloat16>(thread_state().bf16_gradient, n);
+    return ensure_workspace<bfloat16>(
+        thread_state().bf16_gradient, n,
+        device::GraphWorkspaceKind::Bf16Gradient);
 }
 
 float* ensure_bf16_to_fp32_workspace(Index n)
 {
-    return ensure_workspace<float>(thread_state().bf16_to_fp32, n);
+    return ensure_workspace<float>(
+        thread_state().bf16_to_fp32, n,
+        device::GraphWorkspaceKind::Bf16ToFp32);
 }
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)

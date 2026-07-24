@@ -95,6 +95,10 @@ Makefile.in
 
 # Downloaded GPT-2 weights and tokenizer assets
 /data/gpt2/
+/examples/data/
+
+# Downloaded Qwen weights and tokenizer assets
+/examples/qwen3/data/
 
 ### C template
 # Object files
