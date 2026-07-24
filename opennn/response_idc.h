@@ -143,9 +143,6 @@ private:
 
     MatrixR calculate_random_inputs(const Domain&, Index evaluations_count = -1) const;
 
-    bool row_satisfies_formula_constraints(const VectorR&, const VectorR&) const;
-
-    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR&, const MatrixR&, const Domain&) const;
     pair<MatrixR, MatrixR> sample_feasible_points(const Domain&, const Domain&, Index evaluations_multiplier = 1) const;
     pair<MatrixR, MatrixR> generate_feasible_points(const Domain&, const Domain&, Index) const;
 

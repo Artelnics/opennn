@@ -10,6 +10,7 @@
 #include "response_constraint_manager.h"
 #include "response_optimization.h"
 #include "neural_network.h"
+#include "tensor_operations.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
 
@@ -525,6 +526,114 @@ Index ConstraintManager::get_objectives_number() const
     const auto is_fixed = [&](const Variable& v){ return is_objective(v.name) && get_sense(v.name) == Sense::Fixed; };
     return ranges::count_if((*geometry.input_variables), is_fixed)
          + ranges::count_if((*geometry.target_variables), is_fixed);
+}
+
+
+bool ConstraintManager::is_feasible(const VectorR& input_row, const VectorR& output_row) const
+{
+    return ranges::all_of(constraint_set.multivariate, [&](const MultivariateConstraint& c) {
+        return constraint_is_satisfied(c, input_row, output_row);
+    });
+}
+
+
+pair<MatrixR, MatrixR> ConstraintManager::filter_feasible(const MatrixR& inputs,
+                                                          const MatrixR& outputs,
+                                                          const VectorR& inferior_frontier,
+                                                          const VectorR& superior_frontier) const
+{
+    const vector<Variable>& all_target_variables = geometry.neural_network->get_output_variables();
+    const Index rows_number = outputs.rows();
+
+    vector<Index> feasible_indices(rows_number);
+    iota(feasible_indices.begin(), feasible_indices.end(), 0);
+
+    Index domain_index = 0;
+
+    for (Index column_index = 0; column_index < ssize(all_target_variables); ++column_index)
+    {
+        const string& variable_name = all_target_variables[column_index].name;
+
+        if (geometry.is_history(variable_name))
+            continue;
+
+        if (get_constraint(variable_name).condition != Condition::None)
+        {
+            feasible_indices = filter_selected_indices_by_column(outputs,
+                                                                 feasible_indices,
+                                                                 column_index,
+                                                                 inferior_frontier(domain_index),
+                                                                 superior_frontier(domain_index));
+        }
+
+        ++domain_index;
+
+        if (feasible_indices.empty())
+            break;
+    }
+
+    if (!constraint_set.multivariate.empty() && !feasible_indices.empty())
+    {
+        vector<Index> formula_feasible_indices;
+        formula_feasible_indices.reserve(feasible_indices.size());
+
+        if (all_formula_constraints_are_linear(constraint_set.multivariate))
+        {
+            const Index feasible_count = ssize(feasible_indices);
+            const Index inputs_number = inputs.cols();
+            const Index outputs_number = outputs.cols();
+
+            const MatrixR feasible_inputs = slice_rows(inputs, feasible_indices);
+            const MatrixR feasible_outputs = slice_rows(outputs, feasible_indices);
+
+            const LinearConstraintSet linear_set = build_linear_constraint_set(constraint_set.multivariate, inputs_number, outputs_number);
+
+            const MatrixR values = feasible_inputs * linear_set.A.leftCols(inputs_number).transpose()
+                                 + feasible_outputs * linear_set.A.rightCols(outputs_number).transpose();
+
+            for (Index i = 0; i < feasible_count; ++i)
+            {
+                const bool feasible = ((values.row(i).transpose().array() >= linear_set.lower.array()) &&
+                                       (values.row(i).transpose().array() <= linear_set.upper.array())).all();
+
+                if (feasible)
+                    formula_feasible_indices.push_back(feasible_indices[i]);
+            }
+        }
+        else
+        {
+            for (const Index row_index : feasible_indices)
+            {
+                const VectorR input_row = inputs.row(row_index).transpose();
+                const VectorR output_row = outputs.row(row_index).transpose();
+
+                if (is_feasible(input_row, output_row))
+                    formula_feasible_indices.push_back(row_index);
+            }
+        }
+
+        feasible_indices = move(formula_feasible_indices);
+    }
+
+    if (feasible_indices.empty())
+        return {MatrixR(), MatrixR()};
+
+    return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
+}
+
+
+void ConstraintManager::repair_outputs(MatrixR& points,
+                                       const VectorR& inferior_frontier,
+                                       const VectorR& superior_frontier,
+                                       const SurrogateOracle& oracle,
+                                       const vector<char>& fixed_columns) const
+{
+    if (oracle.has_differential)
+        repair_output_constraints(points, inferior_frontier, superior_frontier,
+                                  constraint_set.multivariate, oracle.forward, oracle.vjp, 64, fixed_columns);
+    else
+        repair_output_constraints(points, inferior_frontier, superior_frontier,
+                                  constraint_set.multivariate, oracle.batch_forward, 64, fixed_columns);
 }
 
 

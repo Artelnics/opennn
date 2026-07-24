@@ -109,6 +109,22 @@ struct ConstraintSet
 };
 
 
+using SurrogateForward      = function<VectorR(const VectorR&)>;
+using SurrogateVjp          = function<VectorR(const VectorR&, const VectorR&)>;
+using SurrogateBatchForward = function<MatrixR(const MatrixR&)>;
+
+
+// Network evaluation the algorithm injects for output-coupled repair: either the analytic
+// forward+VJP pair (has_differential) or a batch forward fallback.
+struct SurrogateOracle
+{
+    bool has_differential = false;
+    SurrogateForward forward;
+    SurrogateVjp vjp;
+    SurrogateBatchForward batch_forward;
+};
+
+
 class ConstraintManager
 {
 public:
@@ -132,6 +148,21 @@ public:
 
     Index get_objectives_number() const;
     Index get_optimizing_objectives_number() const;
+
+    // Feasibility + output-coupled repair verbs (input/combinatorial enforcement stays with the
+    // sampler, which is algorithm-specific). frontiers are the output-domain [inferior, superior].
+    bool is_feasible(const VectorR& input_row, const VectorR& output_row) const;
+
+    pair<MatrixR, MatrixR> filter_feasible(const MatrixR& inputs,
+                                           const MatrixR& outputs,
+                                           const VectorR& inferior_frontier,
+                                           const VectorR& superior_frontier) const;
+
+    void repair_outputs(MatrixR& points,
+                        const VectorR& inferior_frontier,
+                        const VectorR& superior_frontier,
+                        const SurrogateOracle& oracle,
+                        const vector<char>& fixed_columns) const;
 
 private:
 
@@ -213,10 +244,6 @@ void repair_mixed_integer_inputs(MatrixR&,
                                  const Lattice&,
                                  Index,
                                  float);
-
-using SurrogateForward      = function<VectorR(const VectorR&)>;
-using SurrogateVjp          = function<VectorR(const VectorR&, const VectorR&)>;
-using SurrogateBatchForward = function<MatrixR(const MatrixR&)>;
 
 void repair_output_constraints(MatrixR&,
                                const VectorR&,

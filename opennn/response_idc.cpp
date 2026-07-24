@@ -948,98 +948,6 @@ MatrixR IDC::calculate_random_inputs(const Domain& input_domain, const Index eva
 }
 
 
-bool IDC::row_satisfies_formula_constraints(const VectorR& input_row, const VectorR& output_row) const
-{
-    return ranges::all_of(handler.constraint_set.multivariate, [&](const MultivariateConstraint& c) {
-        return constraint_is_satisfied(c, input_row, output_row);
-    });
-}
-
-
-pair<MatrixR, MatrixR> IDC::filter_feasible_points(const MatrixR& inputs,
-                                                   const MatrixR& outputs,
-                                                   const Domain& output_domain) const
-{
-    const vector<Variable>& all_target_variables = problem->get_neural_network()->get_output_variables();
-    const Index rows_number = outputs.rows();
-
-    vector<Index> feasible_indices(rows_number);
-    iota(feasible_indices.begin(), feasible_indices.end(), 0);
-
-    Index domain_index = 0;
-
-    for (Index column_index = 0; column_index < ssize(all_target_variables); ++column_index)
-    {
-        const string& variable_name = all_target_variables[column_index].name;
-
-        if (is_history(variable_name))
-            continue;
-
-        if (handler.get_constraint(variable_name).condition != Condition::None)
-        {
-            feasible_indices = filter_selected_indices_by_column(outputs,
-                                                                 feasible_indices,
-                                                                 column_index,
-                                                                 output_domain.inferior_frontier(domain_index),
-                                                                 output_domain.superior_frontier(domain_index));
-        }
-
-        ++domain_index;
-
-        if (feasible_indices.empty())
-            break;
-    }
-
-    if (!handler.constraint_set.multivariate.empty() && !feasible_indices.empty())
-    {
-        vector<Index> formula_feasible_indices;
-        formula_feasible_indices.reserve(feasible_indices.size());
-
-        if (all_formula_constraints_are_linear(handler.constraint_set.multivariate))
-        {
-            const Index feasible_count = ssize(feasible_indices);
-            const Index inputs_number = inputs.cols();
-            const Index outputs_number = outputs.cols();
-
-            const MatrixR feasible_inputs = slice_rows(inputs, feasible_indices);
-            const MatrixR feasible_outputs = slice_rows(outputs, feasible_indices);
-
-            const LinearConstraintSet linear_set = build_linear_constraint_set(handler.constraint_set.multivariate, inputs_number, outputs_number);
-
-            const MatrixR values = feasible_inputs * linear_set.A.leftCols(inputs_number).transpose()
-                                 + feasible_outputs * linear_set.A.rightCols(outputs_number).transpose();
-
-            for (Index i = 0; i < feasible_count; ++i)
-            {
-                const bool feasible = ((values.row(i).transpose().array() >= linear_set.lower.array()) &&
-                                       (values.row(i).transpose().array() <= linear_set.upper.array())).all();
-
-                if (feasible)
-                    formula_feasible_indices.push_back(feasible_indices[i]);
-            }
-        }
-        else
-        {
-            for (const Index row_index : feasible_indices)
-            {
-                const VectorR input_row = inputs.row(row_index).transpose();
-                const VectorR output_row = outputs.row(row_index).transpose();
-
-                if (row_satisfies_formula_constraints(input_row, output_row))
-                    formula_feasible_indices.push_back(row_index);
-            }
-        }
-
-        feasible_indices = move(formula_feasible_indices);
-    }
-
-    if (feasible_indices.empty())
-        return {MatrixR(), MatrixR()};
-
-    return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
-}
-
-
 pair<MatrixR, MatrixR> IDC::sample_feasible_points(const Domain& input_domain,
                                                    const Domain& output_domain,
                                                    const Index evaluations_multiplier) const
@@ -1112,27 +1020,20 @@ pair<MatrixR, MatrixR> IDC::generate_feasible_points(const Domain& input_domain,
     const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
     const vector<char> fixed_columns = discrete_column_mask(input_variables);
 
+    SurrogateOracle oracle;
     if (network_jacobian.differential)
     {
-        repair_output_constraints(random_inputs,
-                                  input_domain.inferior_frontier,
-                                  input_domain.superior_frontier,
-                                  handler.constraint_set.multivariate,
-                                  [this](const VectorR& x) { return network_jacobian.differential->forward(x); },
-                                  [this](const VectorR& x, const VectorR& cotangent) { return network_jacobian.differential->vjp(x, cotangent); },
-                                  64, fixed_columns);
+        oracle.has_differential = true;
+        oracle.forward = [this](const VectorR& x) { return network_jacobian.differential->forward(x); };
+        oracle.vjp = [this](const VectorR& x, const VectorR& cotangent) { return network_jacobian.differential->vjp(x, cotangent); };
     }
     else
-    {
-        const SurrogateBatchForward batch_forward = [this](const MatrixR& x) -> MatrixR { return calculate_outputs(x); };
+        oracle.batch_forward = [this](const MatrixR& x) -> MatrixR { return calculate_outputs(x); };
 
-        repair_output_constraints(random_inputs,
-                                  input_domain.inferior_frontier,
-                                  input_domain.superior_frontier,
-                                  handler.constraint_set.multivariate,
-                                  batch_forward,
-                                  64, fixed_columns);
-    }
+    handler.repair_outputs(random_inputs,
+                           input_domain.inferior_frontier,
+                           input_domain.superior_frontier,
+                           oracle, fixed_columns);
 
     round_discrete_inputs(random_inputs,
                           input_variables,
@@ -1142,7 +1043,9 @@ pair<MatrixR, MatrixR> IDC::generate_feasible_points(const Domain& input_domain,
     const MatrixR outputs = calculate_outputs(random_inputs);
     evaluations_used += evaluations_count;
 
-    pair<MatrixR, MatrixR> feasible = filter_feasible_points(random_inputs, outputs, output_domain);
+    pair<MatrixR, MatrixR> feasible = handler.filter_feasible(random_inputs, outputs,
+                                                              output_domain.inferior_frontier,
+                                                              output_domain.superior_frontier);
 
     sampling_memory.last_feasibility_rate = clamp(float(feasible.first.rows()) / float(max(Index(1), random_inputs.rows())), 0.0f, 1.0f);
 
