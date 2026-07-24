@@ -2,6 +2,7 @@
 
 #include "opennn/yolo_dataset.h"
 #include "opennn/detection_layer.h"
+#include "opennn/detection_v8_layer.h"
 #include "opennn/convolutional_layer.h"
 #include "opennn/pooling_layer.h"
 #include "opennn/concatenation_layer.h"
@@ -378,4 +379,113 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     EXPECT_LT(error_long, error_short * 0.90f)
         << "Loss barely decreased (" << error_short << " → " << error_long
         << ") — backprop through CSP split/concat/residual may be broken.";
+}
+
+TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
+{
+    // Validates the YOLOv8 anchor-free head:
+    //   decoupled box branch (3×3→3×3→1×1 ×4) + class branch (3×3→3×3→1×1 ×C),
+    //   concatenated → DetectionV8, loss = CIoU (positive) + focal BCE (all).
+    // No objectness channel. One center-point assignment per GT per head.
+    // 32×32 input, 4×4 grid, 1 class. Should overfit in ≤200 epochs on CPU.
+    //
+    // Class lambda is kept very small (0.01) so the box regression signal dominates.
+    // With solid-color images all spatial features are identical, so class gradient
+    // cannot spatially distinguish positive from negative cells — the class branch
+    // gradient correctness is tested separately by V8*GradientMatchesNumericalGradient.
+
+    TempDir dir;
+    const auto images_dir = dir.path / "images";
+    const auto labels_dir = dir.path / "labels";
+    std::filesystem::create_directories(images_dir);
+    std::filesystem::create_directories(labels_dir);
+
+    write_bmp_24(images_dir / "a.bmp", 32, 32, 200,  50,  50);
+    write_bmp_24(images_dir / "b.bmp", 32, 32,  50, 200,  50);
+    write_bmp_24(images_dir / "c.bmp", 32, 32,  50,  50, 200);
+    write_bmp_24(images_dir / "d.bmp", 32, 32, 200, 200,  50);
+    { std::ofstream f(labels_dir / "a.txt"); f << "0 0.5 0.5 0.4 0.4\n"; }
+    { std::ofstream f(labels_dir / "b.txt"); f << "0 0.25 0.5 0.3 0.3\n"; }
+    { std::ofstream f(labels_dir / "c.txt"); f << "0 0.75 0.5 0.3 0.3\n"; }
+    { std::ofstream f(labels_dir / "d.txt"); f << "0 0.5 0.25 0.4 0.3\n"; }
+    { std::ofstream f(labels_dir / "classes.names"); f << "object\n"; }
+
+    constexpr Index H = 32, W = 32, grid = 4, C = 1;
+    constexpr Index head_ch = 8;
+    constexpr Index det_ch  = 4 + C;
+
+    YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
+
+    auto build_v8_net = [&]() {
+        auto net = std::make_unique<NeuralNetwork>();
+
+        const Shape input{H, W, 3};
+        net->add_layer(std::make_unique<Convolutional>(
+            input, Shape{3, 3, 3, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
+        const Index stem = net->get_layers_number() - 1;
+        const Shape feat{H, W, head_ch};
+
+        // Box branch
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c1"), {stem});
+        const Index bc1 = net->get_layers_number() - 1;
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c2"), {bc1});
+        const Index bc2 = net->get_layers_number() - 1;
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{1, 1, head_ch, 4}, "Identity", Shape{1, 1}, "Same", false, "box_out"), {bc2});
+        const Index box_out = net->get_layers_number() - 1;
+
+        // Class branch
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c1"), {stem});
+        const Index cc1 = net->get_layers_number() - 1;
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c2"), {cc1});
+        const Index cc2 = net->get_layers_number() - 1;
+        net->add_layer(std::make_unique<Convolutional>(
+            feat, Shape{1, 1, head_ch, C}, "Identity", Shape{1, 1}, "Same", false, "cls_out"), {cc2});
+        const Index cls_out = net->get_layers_number() - 1;
+
+        // Concat box+class → [grid, grid, 4+C]
+        const Shape box_shape{grid, grid, 4};
+        net->add_layer(std::make_unique<Concatenation>(box_shape, std::vector<Index>{4, C}, "cat"),
+                       {box_out, cls_out});
+        const Index cat = net->get_layers_number() - 1;
+        net->add_layer(std::make_unique<DetectionV8>(Shape{grid, grid, det_ch}, "det"));
+
+        net->compile();
+        VectorMap(net->get_parameters_data(), net->get_parameters_size()).setConstant(0.05f);
+        return net;
+    };
+
+    auto run = [&](Index epochs) -> float {
+        YoloDataset ds; ds.set_display(false);
+        ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, /*bpc=*/0, {});
+        ds.set_v8_mode(true);
+        ds.set_augmentation(no_aug);
+        auto net = build_v8_net();
+        Loss loss(net.get(), &ds);
+        loss.set_error(Loss::Error::Yolo);
+        loss.set_regularization(Loss::Regularization::NoRegularization);
+        loss.set_yolo_focal_gamma(2.0f);
+        loss.set_yolo_lambda_giou(5.0f);
+        loss.set_yolo_lambda_class(0.01f);  // solid-color images → class can't localize; box drives convergence
+        AdaptiveMomentEstimation adam(&loss);
+        adam.set_maximum_epochs(epochs);
+        adam.set_learning_rate(1e-3f);
+        adam.set_display(false);
+        return adam.train().get_training_error();
+    };
+
+    const float error_short = run(2);
+    const float error_long  = run(300);
+
+    EXPECT_FALSE(std::isnan(error_short)) << "NaN after 2 epochs — v8 forward/backward broken.";
+    EXPECT_FALSE(std::isnan(error_long))  << "NaN after 200 epochs — v8 gradient instability.";
+    EXPECT_LT(error_long, error_short)
+        << "Loss did not decrease: short=" << error_short << " long=" << error_long;
+    EXPECT_LT(error_long, error_short * 0.90f)
+        << "Loss barely decreased (" << error_short << " → " << error_long
+        << ") — DetectionV8 backprop or v8 loss may be broken.";
 }

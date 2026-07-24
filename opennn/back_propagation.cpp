@@ -155,8 +155,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         const auto& edges = consumer_edges[layer_index];
 
         const bool has_multiple_consumers = edges.size() > 1;
-        const bool is_detached_detection_layer = layers[layer_index]->get_type() == LayerType::Detection
-                                              && edges.empty();
+        const auto layer_type = layers[layer_index]->get_type();
+        const bool is_detached_detection_layer =
+            (layer_type == LayerType::Detection || layer_type == LayerType::DetectionV8)
+            && edges.empty();
 
         if (!has_multiple_consumers && !is_detached_detection_layer) continue;
 

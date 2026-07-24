@@ -2476,6 +2476,98 @@ void detection_backward_cuda(const Index batch_size,
         output, output_delta, input_delta));
 }
 
+// ── YOLOv8 anchor-free DetectionV8Operator ────────────────────────────────────
+// All 4+C channels are sigmoid-gated. One "box" per cell, no anchor parameters.
+
+__global__ void detection_v8_forward_kernel(const int batch_size,
+                                            const int grid_size,
+                                            const int grid_width,
+                                            const int channels,  // = 4 + classes_number
+                                            const float* __restrict__ src,
+                                            float* __restrict__ dst)
+{
+    const int total = batch_size * grid_size * grid_width;
+
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+         idx < total;
+         idx += Index(blockDim.x) * gridDim.x)
+    {
+        const int col = idx % grid_width;
+        const int t   = idx / grid_width;
+        const int row = t % grid_size;
+        const int b   = t / grid_size;
+
+        const int base = ((b * grid_size + row) * grid_width + col) * channels;
+
+        for (int ch = 0; ch < channels; ++ch)
+            dst[base + ch] = sigmoid_f(src[base + ch]);
+    }
+}
+
+void detection_v8_forward_cuda(const Index batch_size,
+                               const Index grid_size,
+                               const Index grid_width,
+                               const Index classes_number,
+                               const float* input,
+                               float* output)
+{
+    if (batch_size == 0 || grid_size == 0) return;
+
+    const int total   = checked_int(batch_size * grid_size * grid_width);
+    const int channels = checked_int(4 + classes_number);
+    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_for(total), block_size, 0,
+                               opennn::device::get_compute_stream()>>>(
+        checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
+        channels, input, output));
+}
+
+__global__ void detection_v8_backward_kernel(const int batch_size,
+                                             const int grid_size,
+                                             const int grid_width,
+                                             const int channels,
+                                             const float* __restrict__ out,
+                                             const float* __restrict__ delta,
+                                             float* __restrict__ in_delta)
+{
+    const int total = batch_size * grid_size * grid_width;
+
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+         idx < total;
+         idx += Index(blockDim.x) * gridDim.x)
+    {
+        const int col = idx % grid_width;
+        const int t   = idx / grid_width;
+        const int row = t % grid_size;
+        const int b   = t / grid_size;
+
+        const int base = ((b * grid_size + row) * grid_width + col) * channels;
+
+        for (int ch = 0; ch < channels; ++ch)
+        {
+            const float s = out[base + ch];
+            in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
+        }
+    }
+}
+
+void detection_v8_backward_cuda(const Index batch_size,
+                                const Index grid_size,
+                                const Index grid_width,
+                                const Index classes_number,
+                                const float* output,
+                                const float* output_delta,
+                                float* input_delta)
+{
+    if (batch_size == 0 || grid_size == 0) return;
+
+    const int total   = checked_int(batch_size * grid_size * grid_width);
+    const int channels = checked_int(4 + classes_number);
+    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_for(total), block_size, 0,
+                                opennn::device::get_compute_stream()>>>(
+        checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
+        channels, output, output_delta, input_delta));
+}
+
 // ── Nearest-neighbor upsample (NHWC layout) ───────────────────────────────────
 
 __global__ void upsample_forward_kernel(

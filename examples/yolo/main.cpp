@@ -315,13 +315,18 @@ int main()
         // SPPF: three cascaded 5×5 max-pools + concat before the FPN neck. Tested on VOC 2007:
         // 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled; left for reference.
         const bool use_sppf    = false;
+        // YOLOv8 anchor-free decoupled head (Phase 5a). Switches head to FPNv8,
+        // removes anchors/objectness, uses center-point target assignment.
+        const bool use_v8      = true;  // smoke run
 
         const auto backbone = (use_coco || use_voc)
             ? (use_csp ? YoloNetwork::Backbone::CSPDarknet53 : YoloNetwork::Backbone::Darknet53)
             : YoloNetwork::Backbone::Vgg;
 
         const auto head_style = (use_coco || use_voc)
-            ? (use_panet ? YoloNetwork::HeadStyle::PANet : YoloNetwork::HeadStyle::FPN)
+            ? (use_panet ? YoloNetwork::HeadStyle::PANet
+                         : use_v8 ? YoloNetwork::HeadStyle::FPNv8
+                                  : YoloNetwork::HeadStyle::FPN)
             : YoloNetwork::HeadStyle::Single;
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
@@ -466,7 +471,7 @@ int main()
         const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
         const bool is_csp53     = (backbone == YoloNetwork::Backbone::CSPDarknet53);
         const bool is_large_backbone = is_darknet53 || is_csp53;
-        if (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+        if (!use_v8 && (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet))
         {
             if (is_v3std)
             {
@@ -513,19 +518,30 @@ int main()
 
         // Dataset constructor validates anchors.size() == boxes_per_cell. In
         // FPN mode the single-scale path is unused after set_multi_scale_heads,
-        // so any 3 anchors satisfy the constructor.
-        const std::vector<std::array<float, 2>> ctor_anchors =
-            (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+        // so any 3 anchors satisfy the constructor. For FPNv8, no anchors needed.
+        const std::vector<std::array<float, 2>> ctor_anchors = use_v8
+            ? std::vector<std::array<float, 2>>{}
+            : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? std::vector<std::array<float, 2>>{anchors[0], anchors[1], anchors[2]}
                 : anchors;
+        const Index ctor_bpc = use_v8 ? 0 : boxes_per_cell;
 
         YoloDataset dataset(images_dir, labels_dir, input_shape,
-                            grid_size, boxes_per_cell, ctor_anchors);
+                            grid_size, ctor_bpc, ctor_anchors);
 
         // FPN dataset configuration: grid scales and anchor groups per head.
         // DarknetTinyV3: 2 heads (13×13 large, 26×26 small).
         // DarknetTiny / Darknet53: 3 heads (13×13 large, 26×26 medium, 52×52 small).
-        if (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+        if (head_style == YoloNetwork::HeadStyle::FPNv8)
+        {
+            // Anchor-free multi-scale: 3 heads, one dummy anchor per head (ignored by v8 path).
+            const std::vector<Index> head_grids = {grid_size, grid_size * 2, grid_size * 4};
+            const std::array<float, 2> dummy{{0.5f, 0.5f}};
+            const std::vector<std::vector<std::array<float, 2>>> dummy_anchors(3, {dummy});
+            dataset.set_multi_scale_heads(head_grids, dummy_anchors);
+            dataset.set_v8_mode(true);
+        }
+        else if (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
         {
             if (is_v3std)
             {
@@ -597,8 +613,10 @@ int main()
         // Network anchors: FPN needs all 6 (DarknetTinyV3) or 9 (DarknetTiny)
         // anchors (the dataset only stores its 3 single-scale ctor anchors after
         // multi-scale config). Single-head continues to use the dataset's anchor list.
-        const std::vector<std::array<float, 2>>& network_anchors =
-            (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+        // FPNv8 is anchor-free — pass an empty list.
+        const std::vector<std::array<float, 2>>& network_anchors = use_v8
+            ? anchors  // anchors is empty for v8 (set above)
+            : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
 
         YoloNetwork yolo_network(input_shape,
@@ -622,8 +640,9 @@ int main()
                   << ", class_activation="
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
-                  << (head_style == YoloNetwork::HeadStyle::FPN   ? "FPN"   :
-                      head_style == YoloNetwork::HeadStyle::PANet  ? "PANet" : "Single")
+                  << (head_style == YoloNetwork::HeadStyle::FPN    ? "FPN"    :
+                      head_style == YoloNetwork::HeadStyle::PANet   ? "PANet"  :
+                      head_style == YoloNetwork::HeadStyle::FPNv8   ? "FPNv8"  : "Single")
                   << ", body_activation="
                   << (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
                   << (use_csp ? ", csp=on" : "")
@@ -635,7 +654,8 @@ int main()
         // even on an under-trained tiny model. FPN mode has no NMS layer —
         // cross-scale NMS happens externally in decode_yolo_fpn_detections, so
         // skip the NMS configuration in that case.
-        if (head_style != YoloNetwork::HeadStyle::FPN && head_style != YoloNetwork::HeadStyle::PANet)
+        if (head_style != YoloNetwork::HeadStyle::FPN && head_style != YoloNetwork::HeadStyle::PANet
+        &&  head_style != YoloNetwork::HeadStyle::FPNv8)
         {
             auto* nms_layer = dynamic_cast<NonMaxSuppression*>(
                 yolo_network.get_layer("non_max_suppression_layer").get());
@@ -688,7 +708,8 @@ int main()
            : backbone == YoloNetwork::Backbone::Darknet53     ? "darknet53"
            :                                                     "darknet") +
             (head_style == YoloNetwork::HeadStyle::FPN    ? "_fpn"    :
-             head_style == YoloNetwork::HeadStyle::PANet  ? "_panet"  : "") +
+             head_style == YoloNetwork::HeadStyle::PANet  ? "_panet"  :
+             head_style == YoloNetwork::HeadStyle::FPNv8  ? "_fpnv8"  : "") +
             (use_sppf && is_large_backbone ? "_sppf" : "") +
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
@@ -852,7 +873,8 @@ int main()
         // cross-scale NMS in decode_yolo_fpn_detections. Single-head mode
         // continues to read from the appended NMS layer below.
         const bool is_fpn = (head_style == YoloNetwork::HeadStyle::FPN ||
-                              head_style == YoloNetwork::HeadStyle::PANet);
+                              head_style == YoloNetwork::HeadStyle::PANet ||
+                              head_style == YoloNetwork::HeadStyle::FPNv8);
 
         // Inference on 5 SELECTION (held-out) samples — the model has never
         // seen these during training, so this is the real generalization test.
@@ -949,15 +971,19 @@ int main()
                 std::vector<YoloFpnHead> fpn_heads;
                 std::vector<std::vector<float>> fpn_cpu_buffers; // keep CPU copies alive
                 const auto& layers = yolo_network.get_layers();
+                const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
                 for (size_t li = 0; li < layers.size(); ++li)
                 {
-                    if (!layers[li] || layers[li]->get_type() != LayerType::Detection) continue;
+                    const bool is_det = layers[li] && (
+                        (!is_v8_head && layers[li]->get_type() == LayerType::Detection) ||
+                        ( is_v8_head && layers[li]->get_type() == LayerType::DetectionV8));
+                    if (!is_det) continue;
                     const Shape head_shape = layers[li]->get_output_shape();
-                    // Shape per Detection layer: [grid, grid, 3*(5+classes)] — drop batch.
                     const TensorView view = forward_propagation.forward_slots[li].back();
                     const Index channels = head_shape[2];
                     const Index classes_n = Index(dataset.get_classes_number());
-                    const Index boxes_per_head = channels / (5 + classes_n);
+                    // v8: layout [G,G,4+C], so boxes_per_head=1; anchor-based: [G,G,bpc*(5+C)].
+                    const Index boxes_per_head = is_v8_head ? 1 : channels / (5 + classes_n);
 
                     const float* data_ptr = view.as<float>();
 #ifdef OPENNN_HAS_CUDA
@@ -975,44 +1001,70 @@ int main()
                 // Raw-score diagnostics — printed before NMS so we can see what
                 // the model is actually predicting even when nothing survives.
                 {
-                    float max_obj = 0.f, max_score = 0.f;
+                    float max_score = 0.f;
                     int above_001 = 0, above_01 = 0, above_025 = 0;
                     for (const YoloFpnHead& h : fpn_heads)
                     {
-                        const Index vpb = 5 + h.classes_number;
-                        const Index chan = h.boxes_per_cell * vpb;
-                        for (Index r = 0; r < h.grid_size; ++r)
-                        for (Index c = 0; c < h.grid_size; ++c)
-                        for (Index b = 0; b < h.boxes_per_cell; ++b)
+                        if (is_v8_head)
                         {
-                            const Index base = (r * h.grid_size + c) * chan + b * vpb;
-                            const float obj = h.data[base + 4];
-                            float best_p = 0.f;
-                            for (Index cl = 0; cl < h.classes_number; ++cl)
-                                best_p = std::max(best_p, h.data[base + 5 + cl]);
-                            const float score = obj * best_p;
-                            max_obj   = std::max(max_obj,   obj);
-                            max_score = std::max(max_score, score);
-                            if (score >= 0.01f)  ++above_001;
-                            if (score >= 0.1f)   ++above_01;
-                            if (score >= 0.25f)  ++above_025;
+                            const Index ch = 4 + h.classes_number;
+                            for (Index r = 0; r < h.grid_size; ++r)
+                            for (Index c = 0; c < h.grid_size; ++c)
+                            {
+                                const Index base = (r * h.grid_size + c) * ch;
+                                float best_p = 0.f;
+                                for (Index cl = 0; cl < h.classes_number; ++cl)
+                                    best_p = std::max(best_p, h.data[base + 4 + cl]);
+                                max_score = std::max(max_score, best_p);
+                                if (best_p >= 0.01f)  ++above_001;
+                                if (best_p >= 0.1f)   ++above_01;
+                                if (best_p >= 0.25f)  ++above_025;
+                            }
+                        }
+                        else
+                        {
+                            const Index vpb = 5 + h.classes_number;
+                            const Index chan = h.boxes_per_cell * vpb;
+                            for (Index r = 0; r < h.grid_size; ++r)
+                            for (Index c = 0; c < h.grid_size; ++c)
+                            for (Index b = 0; b < h.boxes_per_cell; ++b)
+                            {
+                                const Index base = (r * h.grid_size + c) * chan + b * vpb;
+                                const float obj = h.data[base + 4];
+                                float best_p = 0.f;
+                                for (Index cl = 0; cl < h.classes_number; ++cl)
+                                    best_p = std::max(best_p, h.data[base + 5 + cl]);
+                                const float score = obj * best_p;
+                                max_score = std::max(max_score, score);
+                                if (score >= 0.01f)  ++above_001;
+                                if (score >= 0.1f)   ++above_01;
+                                if (score >= 0.25f)  ++above_025;
+                            }
                         }
                     }
-                    std::cout << "  Raw : max_obj=" << max_obj
-                              << " max_score=" << max_score
+                    std::cout << "  Raw : max_score=" << max_score
                               << " boxes≥0.01:" << above_001
                               << " ≥0.1:" << above_01
                               << " ≥0.25:" << above_025 << "\n";
                 }
 
-                detections = decode_yolo_fpn_detections(
-                    fpn_heads,
-                    /*original_height=*/input_shape[0],
-                    /*original_width=*/input_shape[1],
-                    /*network_height=*/input_shape[0],
-                    /*network_width=*/input_shape[1],
-                    /*confidence_threshold=*/0.001f,
-                    /*iou_threshold=*/0.45f);
+                detections = is_v8_head
+                    ? decode_yolo_v8_fpn_detections(
+                        fpn_heads,
+                        /*original_height=*/input_shape[0],
+                        /*original_width=*/input_shape[1],
+                        /*network_height=*/input_shape[0],
+                        /*network_width=*/input_shape[1],
+                        /*confidence_threshold=*/0.001f,
+                        /*iou_threshold=*/0.45f)
+                    : decode_yolo_fpn_detections(
+                        fpn_heads,
+                        /*original_height=*/input_shape[0],
+                        /*original_width=*/input_shape[1],
+                        /*network_height=*/input_shape[0],
+                        /*network_width=*/input_shape[1],
+                        /*confidence_threshold=*/0.001f,
+                        /*iou_threshold=*/0.45f);
             }
             else
             {
@@ -1398,12 +1450,17 @@ int main()
                     std::vector<YoloFpnHead> heads;
                     std::vector<std::vector<float>> cpu_bufs;
                     const auto& all_layers = yolo_network.get_layers();
+                    const bool is_v8_map = (head_style == YoloNetwork::HeadStyle::FPNv8);
                     for (size_t li = 0; li < all_layers.size(); ++li)
                     {
-                        if (!all_layers[li] || all_layers[li]->get_type() != LayerType::Detection)
-                            continue;
+                        const bool is_det = all_layers[li] && (
+                            (!is_v8_map && all_layers[li]->get_type() == LayerType::Detection) ||
+                            ( is_v8_map && all_layers[li]->get_type() == LayerType::DetectionV8));
+                        if (!is_det) continue;
                         const Shape hs = all_layers[li]->get_output_shape();
                         const TensorView view = fp_m.forward_slots[li].back();
+                        const Index classes_n = Index(N_cls);
+                        const Index bph = is_v8_map ? 1 : hs[2] / (5 + classes_n);
                         const float* ptr = view.as<float>();
 #ifdef OPENNN_HAS_CUDA
                         if (view.is_cuda())
@@ -1415,14 +1472,17 @@ int main()
                             ptr = cpu_bufs.back().data();
                         }
 #endif
-                        heads.push_back({ptr, hs[0],
-                                         hs[2] / (5 + Index(N_cls)),
-                                         Index(N_cls)});
+                        heads.push_back({ptr, hs[0], bph, classes_n});
                     }
-                    dets = decode_yolo_fpn_detections(heads,
-                               input_shape[0], input_shape[1],
-                               input_shape[0], input_shape[1],
-                               0.001f, 0.45f);
+                    dets = is_v8_map
+                        ? decode_yolo_v8_fpn_detections(heads,
+                              input_shape[0], input_shape[1],
+                              input_shape[0], input_shape[1],
+                              0.001f, 0.45f)
+                        : decode_yolo_fpn_detections(heads,
+                              input_shape[0], input_shape[1],
+                              input_shape[0], input_shape[1],
+                              0.001f, 0.45f);
                 }
                 else
                 {

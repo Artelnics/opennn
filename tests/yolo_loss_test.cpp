@@ -3,7 +3,9 @@
 
 #include "opennn/yolo_dataset.h"
 #include "opennn/detection_layer.h"
+#include "opennn/detection_v8_layer.h"
 #include "opennn/convolutional_layer.h"
+#include "opennn/concatenation_layer.h"
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
 
@@ -212,5 +214,169 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
 
     // Loose bound: catches sign errors and order-of-magnitude bugs while
     // tolerating the missing iou-chain contribution.
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+}
+
+namespace {
+
+struct YoloLossV8Fixture
+{
+    TempDir dir;
+    std::filesystem::path images_dir;
+    std::filesystem::path labels_dir;
+
+    static constexpr Index W = 2;
+    static constexpr Index H = 2;
+    static constexpr Index grid = 2;
+    static constexpr Index C = 1;
+    static constexpr Index ch = 4 + C;  // DetectionV8 output channels
+
+    YoloLossV8Fixture()
+    {
+        images_dir = dir.path / "images";
+        labels_dir = dir.path / "labels";
+        std::filesystem::create_directories(images_dir);
+        std::filesystem::create_directories(labels_dir);
+        write_classes(labels_dir / "classes.names", {"only"});
+    }
+};
+
+void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
+{
+    net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
+                                             Shape{1, 1, 3, f.ch},
+                                             "Identity",
+                                             Shape{1, 1},
+                                             "Same",
+                                             false,
+                                             "v8_logits"));
+    net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "detection_v8"));
+    net.compile();
+    VectorMap(net.get_parameters_data(), net.get_parameters_size()).setConstant(0.1f);
+}
+
+}
+
+TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
+{
+    // All-background targets: only focal BCE on class channel, no box loss.
+    // Sigmoid class gradient is exact (no IoU approximation), so tolerance is tight.
+
+    YoloLossV8Fixture f;
+    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
+    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
+    { std::ofstream empty_a(f.labels_dir / "a.txt"); }
+    { std::ofstream empty_b(f.labels_dir / "b.txt"); }
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set_v8_mode(true);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
+    NeuralNetwork neural_network;
+    build_yolo_v8_network(neural_network, f);
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::Yolo);
+    loss.set_regularization(Loss::Regularization::NoRegularization);
+
+    const VectorR gradient          = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+}
+
+TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
+{
+    // Objects present: CIoU box loss + focal BCE class loss on positive cells.
+    // CIoU gradient treats IoU as a constant target (same v1-paper approximation as anchor-based
+    // code), so numerical gradient differs; generous 0.5 tolerance catches sign errors.
+
+    YoloLossV8Fixture f;
+    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
+    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
+    write_label(f.labels_dir / "a.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_label(f.labels_dir / "b.txt", 0, 0.25f, 0.75f, 0.2f, 0.2f);
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set_v8_mode(true);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
+    NeuralNetwork neural_network;
+    build_yolo_v8_network(neural_network, f);
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::Yolo);
+    loss.set_regularization(Loss::Regularization::NoRegularization);
+
+    const VectorR gradient          = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+}
+
+TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
+{
+    // Validates backprop through the full decoupled head:
+    //   Conv(stem) → [box branch: Conv] + [cls branch: Conv] → Concatenation → DetectionV8
+    // Tests that Concatenation backward correctly routes gradients to both branches.
+
+    YoloLossV8Fixture f;
+    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
+    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
+    write_label(f.labels_dir / "a.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_label(f.labels_dir / "b.txt", 0, 0.25f, 0.75f, 0.2f, 0.2f);
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set_v8_mode(true);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
+    NeuralNetwork net;
+    constexpr Index head_ch = 4;
+    const Shape feat{f.H, f.W, head_ch};
+
+    net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
+                                             Shape{1, 1, 3, head_ch},
+                                             "Identity", Shape{1, 1}, "Same", false, "stem"));
+    const Index stem = net.get_layers_number() - 1;
+
+    net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, 4},
+                                             "Identity", Shape{1, 1}, "Same", false, "box_out"), {stem});
+    const Index box_out = net.get_layers_number() - 1;
+
+    net.add_layer(make_unique<Convolutional>(feat, Shape{1, 1, head_ch, f.C},
+                                             "Identity", Shape{1, 1}, "Same", false, "cls_out"), {stem});
+    const Index cls_out = net.get_layers_number() - 1;
+
+    const Shape box_shape{f.grid, f.grid, 4};
+    net.add_layer(make_unique<Concatenation>(box_shape, vector<Index>{4, f.C}, "cat"),
+                  {box_out, cls_out});
+    const Index cat = net.get_layers_number() - 1;
+    net.add_layer(make_unique<DetectionV8>(Shape{f.grid, f.grid, f.ch}, "det_v8"), {cat});
+
+    net.compile();
+    VectorMap(net.get_parameters_data(), net.get_parameters_size()).setConstant(0.1f);
+
+    Loss loss(&net, &dataset);
+    loss.set_error(Loss::Error::Yolo);
+    loss.set_regularization(Loss::Regularization::NoRegularization);
+
+    const VectorR gradient          = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }

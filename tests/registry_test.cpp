@@ -35,6 +35,7 @@ TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
         "Convolutional",
         "Dense",
         "Detection",
+        "DetectionV8",
         "Embedding",
         "Flatten",
         "GroupedQueryAttention",

@@ -18,6 +18,7 @@
 #include "tokenizer_layer.h"
 #include "convolutional_layer.h"
 #include "detection_layer.h"
+#include "detection_v8_layer.h"
 #include "pooling_layer.h"
 #include "pooling_layer_3d.h"
 #include "non_max_suppression_layer.h"
@@ -863,6 +864,81 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 const Index n5d = add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, true, "pan_n5_pre");
                 add_det_head(n5d, anchors_large, "large");
             }
+
+            compile();
+            set_parameters_random();
+            return;
+        }
+
+        if (head_style == HeadStyle::FPNv8)
+        {
+            // YOLOv8-style: decoupled anchor-free heads on each FPN scale.
+            // Two parallel 3×3→3×3→1×1 branches (box and class) per scale.
+            // Output per head: [G, G, 4+C] → DetectionV8 (all-sigmoid decode).
+            // No anchors, no objectness channel; class scores = confidence.
+            constexpr Index head_ch = 64;
+
+            auto add_yolo_neck_v8 = [&](Index idx, Index in_ch,
+                                        Index ch_small, Index ch_large, const string& pfx) -> Index {
+                Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, true, pfx+"_c1");
+                x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c2");
+                x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c3");
+                x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, true, pfx+"_c4");
+                x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, true, pfx+"_c5");
+                return x;
+            };
+
+            auto add_det_head_v8 = [&](Index feat_idx, const string& name) {
+                const Index in_ch = get_layer(feat_idx)->get_output_shape()[2];
+
+                // Box branch: 3×3 → 3×3 → 1×1(4 outputs)
+                Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},    act,        stride, true,  name+"_box_c1");
+                box       = add_conv(box,      Shape{3,3,head_ch,head_ch},  act,        stride, true,  name+"_box_c2");
+                box       = add_conv(box,      Shape{1,1,head_ch,4},        "Identity", stride, false, name+"_box_out");
+
+                // Class branch: 3×3 → 3×3 → 1×1(C outputs)
+                Index cls = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},               act,        stride, true,  name+"_cls_c1");
+                cls       = add_conv(cls,      Shape{3,3,head_ch,head_ch},             act,        stride, true,  name+"_cls_c2");
+                cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
+
+                // Concat [box(4), class(C)] → [G, G, 4+C]
+                const Shape hw = get_layer(box)->get_output_shape();
+                add_layer(make_unique<Concatenation>(hw, vector<Index>{4, classes_number}, name+"_cat"),
+                          {box, cls});
+                const Index cat = get_layers_number() - 1;
+                add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), name+"_det"), {cat});
+            };
+
+            // ── Top-down FPN path (identical to FPN neck) ────────────────────
+            const Index p5n = add_yolo_neck_v8(c5_index, 1024, 512, 1024, "v8_neck_p5");
+
+            const Index p5l = add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, true, "v8_neck_p5_lat");
+            add_layer(make_unique<Upsample>(get_layer(p5l)->get_output_shape(), 2, "v8_fpn_p5_up"), {p5l});
+            const Index p5u = get_layers_number() - 1;
+
+            add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
+                                                 vector<Index>{256, 512}, "v8_fpn_p4_cat"),
+                      {p5u, c4_index});
+            const Index p4c = get_layers_number() - 1;
+            const Index p4n = add_yolo_neck_v8(p4c, 768, 256, 512, "v8_neck_p4");
+
+            const Index p4l = add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, true, "v8_neck_p4_lat");
+            add_layer(make_unique<Upsample>(get_layer(p4l)->get_output_shape(), 2, "v8_fpn_p4_up"), {p4l});
+            const Index p4u = get_layers_number() - 1;
+
+            add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
+                                                 vector<Index>{128, 256}, "v8_fpn_p3_cat"),
+                      {p4u, c3_index});
+            const Index p3c = get_layers_number() - 1;
+            const Index p3n = add_yolo_neck_v8(p3c, 384, 128, 256, "v8_neck_p3");
+
+            // ── Decoupled detection heads at each scale ───────────────────────
+            const Index p5d = add_conv(p5n, Shape{3, 3, 512, 1024}, act, stride, true, "v8_neck_p5_pre");
+            add_det_head_v8(p5d, "v8_large");
+            const Index p4d = add_conv(p4n, Shape{3, 3, 256, 512}, act, stride, true, "v8_neck_p4_pre");
+            add_det_head_v8(p4d, "v8_medium");
+            const Index p3d = add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, true, "v8_neck_p3_pre");
+            add_det_head_v8(p3d, "v8_small");
 
             compile();
             set_parameters_random();

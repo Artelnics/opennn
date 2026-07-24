@@ -57,6 +57,15 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
+// Anchor-free variant: boxes_per_cell unused, confidence = max class score.
+vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
+                                                     Index,
+                                                     Index,
+                                                     Index,
+                                                     Index,
+                                                     float confidence_threshold = 0.25f,
+                                                     float iou_threshold = 0.45f);
+
 class YoloDataset final : public ImageDataset
 {
 public:
@@ -96,6 +105,10 @@ public:
     Index get_boxes_per_head() const noexcept { return boxes_per_head; }
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
+
+    // YOLOv8 anchor-free mode: changes target encoding to [5+C] per cell (no anchor dim).
+    bool is_v8_mode() const noexcept { return v8_mode; }
+    void set_v8_mode(bool enabled);
 
     void set(const filesystem::path&,
              const filesystem::path&,
@@ -188,6 +201,8 @@ private:
     vector<Index> head_grid_sizes;
     vector<vector<array<float, 2>>> head_anchors;
     Index boxes_per_head = 0;
+
+    bool v8_mode = false;
 
     void open_or_build_cache(const vector<array<float, 2>>&);
     bool try_open_cache(const vector<array<float, 2>>&);

@@ -243,6 +243,9 @@ float yolo_iou_wh(const array<float, 2>& box, const array<float, 2>& anchor)
 vector<array<float, 2>> calculate_yolo_anchors(const vector<vector<YoloDataset::Box>>& labels,
                                                Index boxes_per_cell)
 {
+    if (boxes_per_cell <= 0)
+        return {};
+
     vector<array<float, 2>> boxes;
 
     for (const auto& sample : labels)
@@ -648,6 +651,8 @@ void make_target(const vector<YoloDataset::Box>& boxes,
                  Index classes_number,
                  float* target)
 {
+    if (boxes_per_cell <= 0) return;  // v8 anchor-free: no anchor-based target
+
     const Index values_per_box = 5 + classes_number;
     const Index channels = boxes_per_cell * values_per_box;
     fill_n(target, grid_size * grid_size * channels, 0.0f);
@@ -757,6 +762,43 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
                     target[base_i + 4] = -1.0f;
             }
         }
+    }
+}
+
+// YOLOv8 anchor-free: center-point assignment, one cell per GT, no anchor dim.
+static void make_target_v8(const vector<YoloDataset::Box>& boxes,
+                            Index grid_size, Index classes_number,
+                            float* target)
+{
+    const Index ch = 5 + classes_number;
+    fill_n(target, grid_size * grid_size * ch, 0.0f);
+    for (const auto& box : boxes)
+    {
+        if (box.class_id < 0 || box.class_id >= classes_number) continue;
+        const Index col = min<Index>(grid_size-1, max<Index>(0, Index(floor(box.x * grid_size))));
+        const Index row = min<Index>(grid_size-1, max<Index>(0, Index(floor(box.y * grid_size))));
+        const Index base = (row * grid_size + col) * ch;
+        target[base + 0] = box.x * grid_size - float(col);
+        target[base + 1] = box.y * grid_size - float(row);
+        target[base + 2] = box.w;
+        target[base + 3] = box.h;
+        target[base + 4] = 1.0f;
+        target[base + 5 + box.class_id] = 1.0f;
+    }
+}
+
+// Each head gets an independent center-point assignment (one cell per GT per head).
+static void make_target_v8_multi(const vector<YoloDataset::Box>& boxes,
+                                  const vector<Index>& head_grid_sizes,
+                                  Index classes_number,
+                                  float* target)
+{
+    const Index ch = 5 + classes_number;
+    float* ptr = target;
+    for (Index grid_i : head_grid_sizes)
+    {
+        make_target_v8(boxes, grid_i, classes_number, ptr);
+        ptr += grid_i * grid_i * ch;
     }
 }
 
@@ -1053,6 +1095,100 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
     return detections;
 }
 
+vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& heads,
+                                                     Index original_height,
+                                                     Index original_width,
+                                                     Index network_height,
+                                                     Index network_width,
+                                                     float confidence_threshold,
+                                                     float iou_threshold)
+{
+    if (original_height <= 0 || original_width <= 0
+    ||  network_height  <= 0 || network_width  <= 0)
+        throw runtime_error("decode_yolo_v8_fpn_detections: dimensions must be positive.");
+
+    vector<array<float, 6>> candidates;
+
+    for (const YoloFpnHead& head : heads)
+    {
+        if (!head.data || head.grid_size <= 0 || head.classes_number <= 0) continue;
+
+        const Index ch = 4 + head.classes_number;
+        const float inv_grid = 1.0f / float(head.grid_size);
+
+        for (Index row = 0; row < head.grid_size; ++row)
+            for (Index col = 0; col < head.grid_size; ++col)
+            {
+                const Index base = (row * head.grid_size + col) * ch;
+
+                Index best_class = 0;
+                float best_prob = head.data[base + 4];
+                for (Index c = 1; c < head.classes_number; ++c)
+                    if (head.data[base + 4 + c] > best_prob)
+                    {
+                        best_prob = head.data[base + 4 + c];
+                        best_class = c;
+                    }
+
+                if (best_prob < confidence_threshold) continue;
+
+                candidates.push_back({
+                    (float(col) + head.data[base + 0]) * inv_grid,
+                    (float(row) + head.data[base + 1]) * inv_grid,
+                    head.data[base + 2],
+                    head.data[base + 3],
+                    best_prob,
+                    float(best_class)
+                });
+            }
+    }
+
+    ranges::sort(candidates, greater<>{}, [](const array<float, 6>& c) { return c[4]; });
+
+    vector<array<float, 6>> kept;
+    kept.reserve(candidates.size());
+    for (const array<float, 6>& candidate : candidates)
+    {
+        bool suppressed = false;
+        for (const array<float, 6>& k : kept)
+            if (Index(k[5]) == Index(candidate[5])
+            &&  candidate_iou(candidate, k) > iou_threshold)
+            {
+                suppressed = true;
+                break;
+            }
+        if (!suppressed) kept.push_back(candidate);
+    }
+
+    const float scale = min(float(network_width)  / float(original_width),
+                            float(network_height) / float(original_height));
+    const float scaled_width  = float(original_width)  * scale;
+    const float scaled_height = float(original_height) * scale;
+    const float offset_x = (float(network_width)  - scaled_width)  * 0.5f;
+    const float offset_y = (float(network_height) - scaled_height) * 0.5f;
+
+    vector<YoloDetection> detections;
+    detections.reserve(kept.size());
+    for (const array<float, 6>& k : kept)
+    {
+        const float cx_net_px = k[0] * float(network_width);
+        const float cy_net_px = k[1] * float(network_height);
+        const float w_net_px  = k[2] * float(network_width);
+        const float h_net_px  = k[3] * float(network_height);
+
+        YoloDetection detection;
+        detection.center_x = clamp((cx_net_px - offset_x) / scale, 0.0f, float(original_width));
+        detection.center_y = clamp((cy_net_px - offset_y) / scale, 0.0f, float(original_height));
+        detection.width    = w_net_px / scale;
+        detection.height   = h_net_px / scale;
+        detection.score    = k[4];
+        detection.class_id = Index(k[5]);
+        detections.push_back(detection);
+    }
+
+    return detections;
+}
+
 vector<YoloDetection> decode_yolo_detections(const float* nms_output,
                                              Index max_boxes,
                                              Index original_height,
@@ -1123,8 +1259,10 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
 {
     throw_if(new_input_shape.rank != 3,
              "YoloDataset: input_shape must be rank 3.");
-    throw_if(new_grid_size <= 0 || new_boxes_per_cell <= 0,
-             "YoloDataset: grid_size and boxes_per_cell must be positive.");
+    throw_if(new_grid_size <= 0,
+             "YoloDataset: grid_size must be positive.");
+    throw_if(new_boxes_per_cell < 0,
+             "YoloDataset: boxes_per_cell must be non-negative (0 = v8 anchor-free mode).");
 
     images_directory = new_images_dir;
     labels_directory = new_labels_dir;
@@ -1500,6 +1638,28 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
     target_shape = {target_record_floats};
 }
 
+void YoloDataset::set_v8_mode(bool enabled)
+{
+    v8_mode = enabled;
+    if (!enabled) return;
+
+    const Index ch = 5 + classes_number;
+    if (is_multi_scale())
+    {
+        Index total = 0;
+        for (Index g : head_grid_sizes)
+            total += g * g * ch;
+        target_record_floats = total;
+    }
+    else
+    {
+        target_record_floats = grid_size * grid_size * ch;
+    }
+    target_shape = {target_record_floats};
+    if (variables.size() >= 2)
+        variables[1].features = target_record_floats;
+}
+
 void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
 {
     throw_if(sample_index < 0 || sample_index >= samples_number,
@@ -1794,7 +1954,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     AugmentationConfig cfg = augmentation;
 
     const bool grid_changed = (grid_size != cache_grid_size);
-    const bool reencode = augment || grid_changed || is_multi_scale();
+    const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;
 
     if (matrix_storage && !reencode)
         load_targets_to_ram();
@@ -1865,7 +2025,12 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         }
                     }
 
-                    if (is_multi_scale())
+                    if (v8_mode && is_multi_scale())
+                        make_target_v8_multi(mosaic_boxes, head_grid_sizes,
+                                             classes_number, target_ptr);
+                    else if (v8_mode)
+                        make_target_v8(mosaic_boxes, grid_size, classes_number, target_ptr);
+                    else if (is_multi_scale())
                         make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
                                                 boxes_per_head, classes_number, target_ptr);
                     else
@@ -1887,7 +2052,12 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         apply_geometric_to_boxes(boxes, p);
                     }
 
-                    if (is_multi_scale())
+                    if (v8_mode && is_multi_scale())
+                        make_target_v8_multi(boxes, head_grid_sizes,
+                                             classes_number, target_ptr);
+                    else if (v8_mode)
+                        make_target_v8(boxes, grid_size, classes_number, target_ptr);
+                    else if (is_multi_scale())
                         make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
                                                 boxes_per_head, classes_number, target_ptr);
                     else

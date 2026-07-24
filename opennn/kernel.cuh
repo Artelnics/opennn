@@ -382,6 +382,23 @@ void detection_backward_cuda(const Index batch_size,
                              const float* output_delta,
                              float* input_delta);
 
+// YOLOv8-style anchor-free DetectionV8Operator
+// All 4+C channels are sigmoid-gated: sigmoid(tx/ty/tw/th/cls...).
+void detection_v8_forward_cuda(Index batch_size,
+                               Index grid_size,
+                               Index grid_width,
+                               Index classes_number,
+                               const float* input,
+                               float* output);
+
+void detection_v8_backward_cuda(Index batch_size,
+                                Index grid_size,
+                                Index grid_width,
+                                Index classes_number,
+                                const float* output,
+                                const float* output_delta,
+                                float* input_delta);
+
 // Nearest-neighbor upsample (NHWC).
 void upsample_forward_cuda(int batch, int in_h, int in_w, int channels, int scale,
                            const float* src, float* dst);
