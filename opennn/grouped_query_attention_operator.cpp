@@ -15,6 +15,7 @@
 #include "forward_propagation.h"
 #ifdef OPENNN_HAS_CUDA
 #include "device_backend.h"
+#include "cudnn_frontend_utilities.h"
 #endif
 
 namespace opennn
@@ -233,6 +234,101 @@ GroupedAttentionScratch& gqa_scratch()
     return scratch;
 }
 
+// cuDNN-frontend flash-attention graph for the prefill (seq > 1, BF16). One
+// graph built at the compiled max dims with a padding mask: the actual query
+// and key counts live in two device int32 scalars, and the bottom-right causal
+// diagonal aligns to them, so suffix prefill (kv longer than q after prefix
+// caching) masks correctly without per-shape rebuilds. A build failure falls
+// back to the generic kernel for good.
+struct GroupedAttentionSDPA
+{
+    shared_ptr<cudnn_frontend::graph::Graph> graph;
+    shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
+    void* workspace = nullptr;
+    int32_t* seq_device = nullptr;   // [seq_q, seq_kv]
+    int32_t* seq_pinned = nullptr;
+    Index max_seq = 0, q_heads = 0, kv_heads = 0, head_dim = 0;
+    bool failed = false;
+
+    ~GroupedAttentionSDPA()
+    {
+        device::deallocate(Device::CUDA, workspace, 0);
+        device::deallocate(Device::CUDA, seq_device, 0);
+        if (seq_pinned) device::deallocate_pinned_host(seq_pinned);
+    }
+};
+
+GroupedAttentionSDPA& gqa_sdpa()
+{
+    thread_local GroupedAttentionSDPA sdpa;
+    return sdpa;
+}
+
+// BSHD tensor ({batch 1, heads, max_seq, head_dim} over rows of heads*head_dim).
+shared_ptr<cudnn_frontend::graph::Tensor_attributes>
+gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
+                int64_t heads, int64_t max_seq, int64_t head_dim)
+{
+    return graph.tensor(cudnn_frontend::graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim   ({1, heads, max_seq, head_dim})
+                        .set_stride({heads * max_seq * head_dim, head_dim, heads * head_dim, 1}));
+}
+
+void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index kv_heads,
+                    Index head_dim, float scale)
+{
+    auto graph = make_shared<cudnn_frontend::graph::Graph>();
+    graph->set_io_data_type(cudnn_frontend::DataType_t::BFLOAT16)
+         .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
+         .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
+
+    s.Q = gqa_bshd_tensor(*graph, "Q", q_heads,  max_seq, head_dim);
+    s.K = gqa_bshd_tensor(*graph, "K", kv_heads, max_seq, head_dim);
+    s.V = gqa_bshd_tensor(*graph, "V", kv_heads, max_seq, head_dim);
+
+    auto seq_scalar = [&](const char* name) {
+        return graph->tensor(cudnn_frontend::graph::Tensor_attributes()
+                             .set_name(name).set_dim({1, 1, 1, 1}).set_stride({1, 1, 1, 1})
+                             .set_data_type(cudnn_frontend::DataType_t::INT32));
+    };
+    s.SeqQ  = seq_scalar("SeqQ");
+    s.SeqKV = seq_scalar("SeqKV");
+
+    auto options = cudnn_frontend::graph::SDPA_attributes()
+                   .set_name("gqa_prefill")
+                   .set_is_inference(true)
+                   .set_padding_mask(true)
+                   .set_seq_len_q(s.SeqQ)
+                   .set_seq_len_kv(s.SeqKV)
+                   .set_causal_mask_bottom_right(true)
+                   .set_attn_scale(scale);
+
+    auto [O, stats] = graph->sdpa(s.Q, s.K, s.V, options);
+    (void)stats;
+    O->set_output(true)
+      .set_dim   ({1, q_heads, max_seq, head_dim})
+      .set_stride({q_heads * max_seq * head_dim, head_dim, q_heads * head_dim, 1});
+    s.O = O;
+
+    cudnnHandle_t handle = Backend::get_cudnn_handle();
+    cudnn_frontend::check_status(graph->validate(), "gqa sdpa validate");
+    cudnn_frontend::check_status(graph->build_operation_graph(handle), "gqa sdpa build_operation_graph");
+    cudnn_frontend::check_status(graph->create_execution_plans({cudnn_frontend::HeurMode_t::A}), "gqa sdpa plans");
+    cudnn_frontend::check_status(graph->build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), "gqa sdpa build_plans");
+
+    int64_t workspace_bytes = 0;
+    graph->get_workspace_size(workspace_bytes);
+    device::deallocate(Device::CUDA, s.workspace, 0);
+    s.workspace = workspace_bytes > 0 ? device::allocate(Device::CUDA, Index(workspace_bytes)) : nullptr;
+
+    if (!s.seq_device) s.seq_device = static_cast<int32_t*>(device::allocate(Device::CUDA, Index(2 * sizeof(int32_t))));
+    if (!s.seq_pinned) s.seq_pinned = static_cast<int32_t*>(device::allocate_pinned_host(Index(2 * sizeof(int32_t))));
+
+    s.graph = move(graph);
+    s.max_seq = max_seq; s.q_heads = q_heads; s.kv_heads = kv_heads; s.head_dim = head_dim;
+}
+
 }
 
 void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
@@ -359,6 +455,44 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         rotary_forward(q_v, cos_v, sin_v, qr_v,   head_dim, head_dim, past);
         rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
+
+        auto& sdpa = gqa_sdpa();
+        if (seq > 1 && act == Type::BF16 && !sdpa.failed)
+        {
+            if (!sdpa.graph || sdpa.max_seq != table_len || sdpa.q_heads != q_heads
+                || sdpa.kv_heads != kv_heads || sdpa.head_dim != head_dim)
+            {
+                try { gqa_sdpa_build(sdpa, table_len, q_heads, kv_heads, head_dim, scale); }
+                catch (const exception& e)
+                {
+                    sdpa.failed = true;
+                    cerr << "GroupedQueryAttention: cuDNN flash-attention prefill unavailable ("
+                         << e.what() << "); using the generic kernel.\n";
+                }
+            }
+
+            if (!sdpa.failed)
+            {
+                sdpa.seq_pinned[0] = int32_t(seq);
+                sdpa.seq_pinned[1] = int32_t(total);
+                device::copy_async(sdpa.seq_device, sdpa.seq_pinned, Index(2 * sizeof(int32_t)),
+                                   device::CopyKind::HostToDevice, stream);
+
+                std::unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
+                tensors[sdpa.Q]     = s.qr.data;
+                tensors[sdpa.K]     = kv_key.data;
+                tensors[sdpa.V]     = kv_value.data;
+                tensors[sdpa.O]     = s.attn.data;
+                tensors[sdpa.SeqQ]  = sdpa.seq_device;
+                tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
+                cudnn_frontend::check_status(
+                    sdpa.graph->execute(Backend::get_cudnn_handle(), tensors, sdpa.workspace),
+                    "gqa sdpa execute");
+
+                tied_lm_head_forward(attn_v, o_proj, o_b);
+                return;
+            }
+        }
 
         TensorView key_all(kv_key.data,   {1, total, kd}, act, Device::CUDA);
         TensorView val_all(kv_value.data, {1, total, kd}, act, Device::CUDA);
