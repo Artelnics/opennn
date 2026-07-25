@@ -69,7 +69,8 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense, 
         fixed_values.erase(name);
 }
 
-vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
+template <typename Predicate>
+static vector<NamedColumn> collect_scalar_columns(const vector<Variable>& variables, Predicate keep)
 {
     vector<NamedColumn> columns;
     columns.reserve(variables.size());
@@ -80,7 +81,7 @@ vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Varia
     {
         const Index dimension = variable.get_feature_count();
 
-        if (variable.get_role() == "Input" && !is_history(variable.name) && dimension == 1)
+        if (dimension == 1 && keep(variable))
             columns.push_back({variable.name, column});
 
         column += dimension;
@@ -89,22 +90,15 @@ vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Varia
     return columns;
 }
 
+vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
+{
+    return collect_scalar_columns(variables, [this](const Variable& variable)
+        { return variable.get_role() == "Input" && !is_history(variable.name); });
+}
+
 vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Variable>& variables) const
 {
-    vector<NamedColumn> columns;
-    columns.reserve(variables.size());
-
-    Index column = 0;
-
-    for (const Variable& variable : variables)
-    {
-        if (variable.get_feature_count() == 1)
-            columns.push_back({variable.name, column});
-
-        column += variable.get_feature_count();
-    }
-
-    return columns;
+    return collect_scalar_columns(variables, [](const Variable&) { return true; });
 }
 
 void ResponseOptimization::set_formula_constraint(const string& expression,
@@ -392,8 +386,6 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(string_vi
     throw_if(descriptives.size() != variables_number,
              "ResponseOptimization: Descriptives count ({}) does not match variables count ({}) for {}", descriptives.size(), variables_number, role);
 
-    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
-
     vector<UnivariateConstraint> applicable_constraints;
     applicable_constraints.reserve(variables_number);
 
@@ -481,16 +473,10 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
                     scale_and_offset(1, current_objective_index) = -inferior_frontier / safe_range;
 
-                    if (response_optimization.get_sense(variable_name) == Sense::Maximize)
-                    {
-                        utopian_and_sense(0, current_objective_index) = superior_frontier;
-                        utopian_and_sense(1, current_objective_index) = 1.0;
-                    }
-                    else
-                    {
-                        utopian_and_sense(0, current_objective_index) = inferior_frontier;
-                        utopian_and_sense(1, current_objective_index) = -1.0;
-                    }
+                    const bool maximize = (response_optimization.get_sense(variable_name) == Sense::Maximize);
+
+                    utopian_and_sense(0, current_objective_index) = maximize ? superior_frontier : inferior_frontier;
+                    utopian_and_sense(1, current_objective_index) = maximize ? 1.0 : -1.0;
                 }
 
                 current_objective_index++;
@@ -548,9 +534,8 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
         {
             for(Index j = 0; j < feature_dimension; ++j)
             {
-                bool allowed = false;
-                for (const float value : constraint.allowed_values)
-                    if (static_cast<Index>(llround(value)) == j) { allowed = true; break; }
+                const bool allowed = ranges::any_of(constraint.allowed_values,
+                    [j](const float value) { return static_cast<Index>(llround(value)) == j; });
 
                 inferior_frontier(feature_index + j) = 0.0;
                 superior_frontier(feature_index + j) = allowed ? 1.0 : 0.0;
@@ -1974,15 +1959,11 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
         else
             objective_matrix.col(j).setZero();
 
+        objective_matrix.col(j) *= scale(j);
+
         const float sense = objective_set.utopian_and_sense(1, j);
 
-        normalized_utopian(j) = (sense > float(0)) ? float(1) : float(0);
-    }
-
-    for (Index j = 0; j < objectives_number; ++j)
-    {
-        objective_matrix.col(j) *= scale(j);
-        normalized_utopian(j)   *= scale(j);
+        normalized_utopian(j) = ((sense > float(0)) ? float(1) : float(0)) * scale(j);
     }
 
     const VectorI nearest = get_nearest_points(objective_matrix, normalized_utopian, 1);
@@ -2012,10 +1993,9 @@ void ResponseOptimization::initialize_network_differential() const
         });
     };
 
-    bool has_output = has_output_constraint(constraint_set.multivariate);
-    for (const vector<vector<MultivariateConstraint>>& disjunction : constraint_set.disjunctive)
-        for (const vector<MultivariateConstraint>& branch : disjunction)
-            has_output = has_output || has_output_constraint(branch);
+    const bool has_output = has_output_constraint(constraint_set.multivariate)
+        || ranges::any_of(constraint_set.disjunctive, [&](const vector<vector<MultivariateConstraint>>& disjunction)
+           { return ranges::any_of(disjunction, has_output_constraint); });
 
     if (!has_output)
         return;
@@ -2241,10 +2221,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
     const vector<NamedColumn> input_columns = build_input_columns(input_variables);
 
-    bool any_callback_formula = false;
-    for (const MultivariateConstraint& formula_constraint : constraint_set.multivariate)
-        if (formula_constraint.uses_callback)
-            any_callback_formula = true;
+    const bool any_callback_formula = ranges::any_of(constraint_set.multivariate,
+        [](const MultivariateConstraint& formula_constraint) { return formula_constraint.uses_callback; });
 
     auto input_column_of = [&](const string& name) -> Index
     {

@@ -140,6 +140,32 @@ struct Ast
     vector<AstPtr> children;
 };
 
+AstPtr make_const(const float value)
+{
+    auto node = make_unique<Ast>();
+    node->kind = Ast::Kind::Const;
+    node->constant = value;
+    return node;
+}
+
+AstPtr make_reference(const Ast::Kind kind, const Index index)
+{
+    auto node = make_unique<Ast>();
+    node->kind = kind;
+    node->index = index;
+    return node;
+}
+
+AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
+{
+    auto node = make_unique<Ast>();
+    node->kind = kind;
+    node->children.reserve(2);
+    node->children.push_back(move(left));
+    node->children.push_back(move(right));
+    return node;
+}
+
 struct Parser
 {
     Lexer& lexer;
@@ -170,12 +196,8 @@ struct Parser
 
             AstPtr right_node = parse_term();
 
-            auto combined_node = make_unique<Ast>();
-            combined_node->kind = (operator_text == "+") ? Ast::Kind::Add : Ast::Kind::Sub;
-            combined_node->children.reserve(2);
-            combined_node->children.push_back(move(left_node));
-            combined_node->children.push_back(move(right_node));
-            left_node = move(combined_node);
+            left_node = make_binary((operator_text == "+") ? Ast::Kind::Add : Ast::Kind::Sub,
+                                    move(left_node), move(right_node));
         }
 
         return left_node;
@@ -196,12 +218,8 @@ struct Parser
 
             AstPtr right_node = parse_factor();
 
-            auto combined_node = make_unique<Ast>();
-            combined_node->kind = (operator_text == "*") ? Ast::Kind::Mul : Ast::Kind::Div;
-            combined_node->children.reserve(2);
-            combined_node->children.push_back(move(left_node));
-            combined_node->children.push_back(move(right_node));
-            left_node = move(combined_node);
+            left_node = make_binary((operator_text == "*") ? Ast::Kind::Mul : Ast::Kind::Div,
+                                    move(left_node), move(right_node));
         }
 
         return left_node;
@@ -219,12 +237,7 @@ struct Parser
 
             AstPtr right_node = parse_factor();
 
-            auto combined_node = make_unique<Ast>();
-            combined_node->kind = Ast::Kind::Pow;
-            combined_node->children.reserve(2);
-            combined_node->children.push_back(move(left_node));
-            combined_node->children.push_back(move(right_node));
-            return combined_node;
+            return make_binary(Ast::Kind::Pow, move(left_node), move(right_node));
         }
 
         return left_node;
@@ -260,12 +273,7 @@ struct Parser
         Token token = lexer.consume();
 
         if (token.kind == Token::Kind::Number)
-        {
-            auto constant_node = make_unique<Ast>();
-            constant_node->kind = Ast::Kind::Const;
-            constant_node->constant = token.number;
-            return constant_node;
-        }
+            return make_const(token.number);
 
         if (token.kind == Token::Kind::LeftParen)
         {
@@ -308,21 +316,11 @@ struct Parser
 
             for (const NamedColumn& named_column : input_columns)
                 if (named_column.name == token.text)
-                {
-                    auto input_node = make_unique<Ast>();
-                    input_node->kind = Ast::Kind::Input;
-                    input_node->index = named_column.column_index;
-                    return input_node;
-                }
+                    return make_reference(Ast::Kind::Input, named_column.column_index);
 
             for (const NamedColumn& named_column : output_columns)
                 if (named_column.name == token.text)
-                {
-                    auto output_node = make_unique<Ast>();
-                    output_node->kind = Ast::Kind::Output;
-                    output_node->index = named_column.column_index;
-                    return output_node;
-                }
+                    return make_reference(Ast::Kind::Output, named_column.column_index);
 
             throw runtime_error(format("FormulaParser: unknown identifier '{}' "
                                        "(not a registered input, output, or supported function)",
@@ -421,27 +419,22 @@ AffineForm analyze_affine(const Ast& node)
         AffineForm right_form = analyze_affine(*node.children[1]);
         if (!left_form.is_affine || !right_form.is_affine) { result.is_affine = false; return result; }
 
-        if (left_form.is_constant())
+        const float product = left_form.constant * right_form.constant;
+
+        if (!left_form.is_constant())
+            swap(left_form, right_form);
+
+        if (!left_form.is_constant())
         {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(right_form.input_terms, left_form.constant);
-            scale_terms_in_place(right_form.output_terms, left_form.constant);
-            result.input_terms = move(right_form.input_terms);
-            result.output_terms = move(right_form.output_terms);
+            result.is_affine = false;
             return result;
         }
 
-        if (right_form.is_constant())
-        {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(left_form.input_terms, right_form.constant);
-            scale_terms_in_place(left_form.output_terms, right_form.constant);
-            result.input_terms = move(left_form.input_terms);
-            result.output_terms = move(left_form.output_terms);
-            return result;
-        }
-
-        result.is_affine = false;
+        result.constant = product;
+        scale_terms_in_place(right_form.input_terms, left_form.constant);
+        scale_terms_in_place(right_form.output_terms, left_form.constant);
+        result.input_terms = move(right_form.input_terms);
+        result.output_terms = move(right_form.output_terms);
         return result;
     }
 
@@ -511,37 +504,38 @@ void collect_variable_references(const Ast& node,
         collect_variable_references(*child, input_references, output_references);
 }
 
+struct FunctionInfo
+{
+    size_t arity;
+    RpnOp::Kind kind;
+};
+
+const FunctionInfo& function_info(const string& function_name)
+{
+    static const unordered_map<string, FunctionInfo> table =
+    { {"sqrt",{1,RpnOp::Kind::Sqrt}}, {"exp",{1,RpnOp::Kind::Exp}}, {"log",{1,RpnOp::Kind::Log}},
+      {"abs",{1,RpnOp::Kind::Abs}}, {"sin",{1,RpnOp::Kind::Sin}}, {"cos",{1,RpnOp::Kind::Cos}},
+      {"tan",{1,RpnOp::Kind::Tan}}, {"min",{2,RpnOp::Kind::Min}}, {"max",{2,RpnOp::Kind::Max}},
+      {"pow",{2,RpnOp::Kind::Pow}} };
+
+    const auto found = table.find(function_name);
+
+    if (found == table.end())
+        throw runtime_error(format("FormulaParser: unknown function '{}'", function_name));
+
+    return found->second;
+}
+
 void validate_function_arities(const Ast& node)
 {
     if (node.kind == Ast::Kind::Func)
     {
         const size_t arguments_count = node.children.size();
-        const string& function_name = node.function_name;
+        const size_t arity = function_info(node.function_name).arity;
 
-        static const unordered_map<string, size_t> unary_functions =
-        { {"sqrt",1}, {"exp",1}, {"log",1}, {"abs",1}, {"sin",1}, {"cos",1}, {"tan",1} };
-        static const unordered_map<string, size_t> binary_functions =
-        { {"min",2}, {"max",2}, {"pow",2} };
-
-        const auto unary_iterator = unary_functions.find(function_name);
-        const auto binary_iterator = binary_functions.find(function_name);
-
-        if (unary_iterator != unary_functions.end())
-        {
-            throw_if(arguments_count != unary_iterator->second,
-                     "FormulaParser: function '{}' expects {} argument, got {}",
-                            function_name, unary_iterator->second, arguments_count);
-        }
-        else if (binary_iterator != binary_functions.end())
-        {
-            throw_if(arguments_count != binary_iterator->second,
-                     "FormulaParser: function '{}' expects {} arguments, got {}",
-                            function_name, binary_iterator->second, arguments_count);
-        }
-        else
-        {
-            throw runtime_error(format("FormulaParser: unknown function '{}'", function_name));
-        }
+        throw_if(arguments_count != arity,
+                 "FormulaParser: function '{}' expects {} argument{}, got {}",
+                        node.function_name, arity, arity == 1 ? "" : "s", arguments_count);
     }
 
     for (const AstPtr& child : node.children)
@@ -595,22 +589,7 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
         for (const AstPtr& child : node.children)
             emit_bytecode(*child, bytecode);
 
-        const string& function_name = node.function_name;
-
-        RpnOp::Kind rpn_kind = RpnOp::Kind::Sqrt;
-        if      (function_name == "sqrt") rpn_kind = RpnOp::Kind::Sqrt;
-        else if (function_name == "exp")  rpn_kind = RpnOp::Kind::Exp;
-        else if (function_name == "log")  rpn_kind = RpnOp::Kind::Log;
-        else if (function_name == "abs")  rpn_kind = RpnOp::Kind::Abs;
-        else if (function_name == "sin")  rpn_kind = RpnOp::Kind::Sin;
-        else if (function_name == "cos")  rpn_kind = RpnOp::Kind::Cos;
-        else if (function_name == "tan")  rpn_kind = RpnOp::Kind::Tan;
-        else if (function_name == "min")  rpn_kind = RpnOp::Kind::Min;
-        else if (function_name == "max")  rpn_kind = RpnOp::Kind::Max;
-        else if (function_name == "pow")  rpn_kind = RpnOp::Kind::Pow;
-        else throw runtime_error(format("FormulaParser: unknown function '{}'", function_name));
-
-        bytecode.push_back({rpn_kind, 0, 0.0f});
+        bytecode.push_back({function_info(node.function_name).kind, 0, 0.0f});
         return;
     }
     }
@@ -633,24 +612,6 @@ bool is_const(const Ast& node, float& value)
 {
     if (node.kind == Ast::Kind::Const) { value = node.constant; return true; }
     return false;
-}
-
-AstPtr make_const(const float value)
-{
-    auto node = make_unique<Ast>();
-    node->kind = Ast::Kind::Const;
-    node->constant = value;
-    return node;
-}
-
-AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
-{
-    auto node = make_unique<Ast>();
-    node->kind = kind;
-    node->children.reserve(2);
-    node->children.push_back(move(left));
-    node->children.push_back(move(right));
-    return node;
 }
 
 AstPtr make_neg(AstPtr a)
@@ -1322,15 +1283,21 @@ bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
     return true;
 }
 
-vector<const MultivariateConstraint*> input_repairable_constraints(const vector<MultivariateConstraint>& formula_constraints)
+vector<const MultivariateConstraint*> constraints_of_kind(const vector<MultivariateConstraint>& formula_constraints,
+                                                          const initializer_list<ConstraintKind> kinds)
 {
     vector<const MultivariateConstraint*> constraints;
 
     for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput || constraint.kind == ConstraintKind::NonlinearInput)
+        if (ranges::find(kinds, constraint.kind) != kinds.end())
             constraints.push_back(&constraint);
 
     return constraints;
+}
+
+vector<const MultivariateConstraint*> input_repairable_constraints(const vector<MultivariateConstraint>& formula_constraints)
+{
+    return constraints_of_kind(formula_constraints, {ConstraintKind::AffineInput, ConstraintKind::NonlinearInput});
 }
 
 bool collect_violations(const vector<const MultivariateConstraint*>& constraints,
@@ -1429,6 +1396,30 @@ void gauss_newton_repair_row(VectorR& point,
     }
 }
 
+void repair_rows(MatrixR& inputs,
+                 const vector<const MultivariateConstraint*>& constraints,
+                 const SurrogateForward& forward, const SurrogateVjp& vjp,
+                 const vector<char>& fixed_columns,
+                 const VectorR& inferior_frontier, const VectorR& superior_frontier,
+                 const Index max_correction_passes)
+{
+    if (constraints.empty())
+        return;
+
+    const Index rows_number = inputs.rows();
+    const Index passes      = max(Index(1), max_correction_passes);
+
+    for (Index r = 0; r < rows_number; ++r)
+    {
+        VectorR point = inputs.row(r).transpose();
+
+        gauss_newton_repair_row(point, constraints, forward, vjp, fixed_columns,
+                                inferior_frontier, superior_frontier, passes);
+
+        inputs.row(r) = point.transpose();
+    }
+}
+
 }
 
 void repair_affine_inputs(MatrixR& random_inputs,
@@ -1437,11 +1428,8 @@ void repair_affine_inputs(MatrixR& random_inputs,
                           const vector<MultivariateConstraint>& formula_constraints,
                           const Index max_correction_passes)
 {
-    vector<const MultivariateConstraint*> affine_constraints;
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput)
-            affine_constraints.push_back(&constraint);
+    const vector<const MultivariateConstraint*> affine_constraints =
+        constraints_of_kind(formula_constraints, {ConstraintKind::AffineInput});
 
     if (affine_constraints.empty())
         return;
@@ -1489,19 +1477,14 @@ void repair_affine_inputs(MatrixR& random_inputs,
             break;
 
         case Between:
-            augmented_matrix(i, inputs_number + slack_index) = -1;
-            right_hand_side(i) = low - constant;
-            slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
-            slack_superior(slack_index) = max(slack_inferior(slack_index), min(up - low, expression_maximum - low));
-            ++slack_index;
-            break;
-
         case GreaterEqualTo:
         case GreaterThan:
             augmented_matrix(i, inputs_number + slack_index) = -1;
             right_hand_side(i) = low - constant;
             slack_inferior(slack_index) = max(0.0f, expression_minimum - low);
-            slack_superior(slack_index) = max(slack_inferior(slack_index), expression_maximum - low);
+            slack_superior(slack_index) = max(slack_inferior(slack_index),
+                constraint.comparison_operator == Between ? min(up - low, expression_maximum - low)
+                                                          : expression_maximum - low);
             ++slack_index;
             break;
 
@@ -1574,10 +1557,14 @@ void repair_affine_inputs(MatrixR& random_inputs,
     random_inputs = augmented_points.leftCols(inputs_number);
 }
 
-void repair_single_affine_input(MatrixR& random_inputs,
-                                const VectorR& inferior_frontier,
-                                const VectorR& superior_frontier,
-                                const MultivariateConstraint& constraint)
+namespace
+{
+
+void repair_single_affine(MatrixR& random_inputs,
+                          const VectorR& inferior_frontier,
+                          const VectorR& superior_frontier,
+                          const MultivariateConstraint& constraint,
+                          const bool integer)
 {
     const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
 
@@ -1595,6 +1582,11 @@ void repair_single_affine_input(MatrixR& random_inputs,
 
     for (Index r = 0; r < rows_number; ++r)
     {
+        if (integer)
+            for (const auto& [column, coefficient] : shuffled)
+                random_inputs(r, column) = min(floor(superior_frontier(column)),
+                                               max(ceil(inferior_frontier(column)), round(random_inputs(r, column))));
+
         float expression = constant;
         for (const auto& [column, coefficient] : shuffled)
             expression += coefficient * random_inputs(r, column);
@@ -1611,10 +1603,21 @@ void repair_single_affine_input(MatrixR& random_inputs,
             if (coefficient == 0.0f)
                 continue;
 
+            float delta = residual / coefficient;
+
+            if (integer)
+            {
+                delta = (delta > 0.0f) ? floor(delta) : ceil(delta);
+
+                if (delta == 0.0f)
+                    continue;
+            }
+
+            const float column_minimum = integer ? ceil(inferior_frontier(column)) : inferior_frontier(column);
+            const float column_maximum = integer ? floor(superior_frontier(column)) : superior_frontier(column);
+
             const float old_value = random_inputs(r, column);
-            const float wanted = old_value + residual / coefficient;
-            const float new_value = min(superior_frontier(column),
-                                        max(inferior_frontier(column), wanted));
+            const float new_value = min(column_maximum, max(column_minimum, old_value + delta));
 
             residual -= coefficient * (new_value - old_value);
             random_inputs(r, column) = new_value;
@@ -1625,67 +1628,22 @@ void repair_single_affine_input(MatrixR& random_inputs,
     }
 }
 
+}
+
+void repair_single_affine_input(MatrixR& random_inputs,
+                                const VectorR& inferior_frontier,
+                                const VectorR& superior_frontier,
+                                const MultivariateConstraint& constraint)
+{
+    repair_single_affine(random_inputs, inferior_frontier, superior_frontier, constraint, false);
+}
+
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
                                   const VectorR& superior_frontier,
                                   const MultivariateConstraint& constraint)
 {
-    const vector<pair<Index, float>>& terms = constraint.compiled.affine_input_terms;
-
-    if (terms.empty())
-        return;
-
-    const float constant = constraint.compiled.affine_constant;
-    const float low = constraint.low_bound;
-    const float up  = constraint.up_bound;
-    const Index rows_number = random_inputs.rows();
-
-    vector<pair<Index, float>> shuffled(terms.begin(), terms.end());
-    const Index terms_number = ssize(shuffled);
-
-    for (Index r = 0; r < rows_number; ++r)
-    {
-        for (const auto& [column, coefficient] : shuffled)
-        {
-            const float lattice_min = ceil(inferior_frontier(column));
-            const float lattice_max = floor(superior_frontier(column));
-            random_inputs(r, column) = min(lattice_max, max(lattice_min, round(random_inputs(r, column))));
-        }
-
-        float expression = constant;
-        for (const auto& [column, coefficient] : shuffled)
-            expression += coefficient * random_inputs(r, column);
-
-        float residual;
-        if (!constraint_residual(constraint.comparison_operator, low, up, expression, residual))
-            continue;
-        residual = -residual;
-
-        partial_shuffle(shuffled, terms_number);
-
-        for (const auto& [column, coefficient] : shuffled)
-        {
-            if (coefficient == 0.0f)
-                continue;
-
-            const float lattice_min = ceil(inferior_frontier(column));
-            const float lattice_max = floor(superior_frontier(column));
-
-            const float real_delta = residual / coefficient;
-            const float integer_delta = (real_delta > 0.0f) ? floor(real_delta) : ceil(real_delta);
-            if (integer_delta == 0.0f)
-                continue;
-
-            const float old_value = random_inputs(r, column);
-            const float new_value = min(lattice_max, max(lattice_min, old_value + integer_delta));
-
-            residual -= coefficient * (new_value - old_value);
-            random_inputs(r, column) = new_value;
-
-            if (abs(residual) <= EPSILON)
-                break;
-        }
-    }
+    repair_single_affine(random_inputs, inferior_frontier, superior_frontier, constraint, true);
 }
 
 void repair_nonlinear_inputs(MatrixR& random_inputs,
@@ -1711,23 +1669,8 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const vector<char>& fixed_columns,
                                      const Index max_correction_passes)
 {
-    const vector<const MultivariateConstraint*> constraints = input_repairable_constraints(formula_constraints);
-
-    if (constraints.empty())
-        return;
-
-    const Index rows_number = random_inputs.rows();
-    const Index passes      = max(Index(1), max_correction_passes);
-
-    for (Index r = 0; r < rows_number; ++r)
-    {
-        VectorR point = random_inputs.row(r).transpose();
-
-        gauss_newton_repair_row(point, constraints, {}, {}, fixed_columns,
-                                inferior_frontier, superior_frontier, passes);
-
-        random_inputs.row(r) = point.transpose();
-    }
+    repair_rows(random_inputs, input_repairable_constraints(formula_constraints), {}, {},
+                fixed_columns, inferior_frontier, superior_frontier, max_correction_passes);
 }
 
 namespace
@@ -1736,12 +1679,7 @@ namespace
 vector<vector<MultivariateConstraint>>
 partition_input_constraints_by_variable(const vector<MultivariateConstraint>& formula_constraints)
 {
-    vector<const MultivariateConstraint*> repairable;
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::AffineInput
-            || constraint.kind == ConstraintKind::NonlinearInput)
-            repairable.push_back(&constraint);
+    const vector<const MultivariateConstraint*> repairable = input_repairable_constraints(formula_constraints);
 
     const Index constraint_number = ssize(repairable);
 
@@ -1973,27 +1911,8 @@ void repair_output_constraints(MatrixR& inputs,
                                const Index max_correction_passes,
                                const vector<char>& fixed_columns)
 {
-    vector<const MultivariateConstraint*> constraints;
-
-    for (const MultivariateConstraint& constraint : formula_constraints)
-        if (constraint.kind == ConstraintKind::OutputDependent)
-            constraints.push_back(&constraint);
-
-    if (constraints.empty())
-        return;
-
-    const Index rows_number = inputs.rows();
-    const Index passes      = max(Index(1), max_correction_passes);
-
-    for (Index r = 0; r < rows_number; ++r)
-    {
-        VectorR point = inputs.row(r).transpose();
-
-        gauss_newton_repair_row(point, constraints, forward, vjp, fixed_columns,
-                                inferior_frontier, superior_frontier, passes);
-
-        inputs.row(r) = point.transpose();
-    }
+    repair_rows(inputs, constraints_of_kind(formula_constraints, {ConstraintKind::OutputDependent}),
+                forward, vjp, fixed_columns, inferior_frontier, superior_frontier, max_correction_passes);
 }
 
 void repair_output_constraints(MatrixR& inputs,

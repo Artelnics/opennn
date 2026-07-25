@@ -363,11 +363,6 @@ void unscale(const TensorView& input,
               min_range, max_range, output, true);
 }
 
-static void copy_cpu(const TensorView& source, TensorView& destination)
-{
-    memcpy(destination.data, source.data, source.byte_size());
-}
-
 void copy(const TensorView& source, TensorView& destination)
 {
     throw_if(source.size() != destination.size(),
@@ -376,14 +371,7 @@ void copy(const TensorView& source, TensorView& destination)
              "Tensor dtypes mismatch in copy operation.");
 
     if (source.is_cuda()) { copy_gpu(source, destination); return; }
-    copy_cpu(source, destination);
-}
-
-static void add_cpu(const TensorView& input_1,
-             const TensorView& input_2,
-             TensorView& output)
-{
-    output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
+    memcpy(destination.data, source.data, source.byte_size());
 }
 
 void add(const TensorView& input_1,
@@ -394,7 +382,7 @@ void add(const TensorView& input_1,
              "Tensor dimensions do not match.");
 
     if (input_1.is_cuda()) { add_gpu(input_1, input_2, output); return; }
-    add_cpu(input_1, input_2, output);
+    output.as_vector().noalias() = input_1.as_vector() + input_2.as_vector();
 }
 
 static void multiply_cpu(const TensorView& input_a, bool transpose_a,
@@ -578,13 +566,6 @@ static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
     }
 }
 
-static void dropout_backward_cpu(TensorView& delta, const Buffer& mask)
-{
-    const Index element_count = delta.size();
-    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), element_count);
-    delta.as_vector().array() *= mask_view.array();
-}
-
 void dropout_forward(TensorView& output, Buffer& mask, float rate)
 {
     if (rate <= 0.0f) return;
@@ -596,7 +577,8 @@ void dropout_backward(TensorView& delta, const Buffer& mask, float rate)
 {
     if (rate <= 0.0f) return;
     if (delta.is_cuda()) { dropout_backward_gpu(delta, mask, rate); return; }
-    dropout_backward_cpu(delta, mask);
+    Map<const VectorR, AlignedMax> mask_view(mask.as<float>(), delta.size());
+    delta.as_vector().array() *= mask_view.array();
 }
 
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
@@ -1455,12 +1437,12 @@ void for_each_pool_window(Index batch_size, Index input_channels,
 
 }
 
-static void pooling_2d_forward_cpu(const TensorView& input, TensorView& output, TensorView& maximal_indices,
-                                   Index input_height, Index input_width, Index input_channels,
-                                   Index pool_height, Index pool_width,
-                                   Index row_stride, Index column_stride,
-                                   Index padding_height, Index padding_width,
-                                   bool max_pooling)
+void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
+                        Index input_height, Index input_width, Index input_channels,
+                        Index pool_height, Index pool_width,
+                        Index row_stride, Index column_stride,
+                        Index padding_height, Index padding_width,
+                        bool max_pooling)
 {
     const TensorMap4 inputs = input.as_tensor<4>();
     TensorMap4 outputs      = output.as_tensor<4>();
@@ -1507,28 +1489,13 @@ static void pooling_2d_forward_cpu(const TensorView& input, TensorView& output, 
         });
 }
 
-void pooling_2d_forward(const TensorView& input, TensorView& output, TensorView& maximal_indices,
-                        Index input_height, Index input_width, Index input_channels,
-                        Index pool_height, Index pool_width,
-                        Index row_stride, Index column_stride,
-                        Index padding_height, Index padding_width,
-                        bool max_pooling)
-{
-    pooling_2d_forward_cpu(input, output, maximal_indices,
-                           input_height, input_width, input_channels,
-                           pool_height, pool_width,
-                           row_stride, column_stride,
-                           padding_height, padding_width,
-                           max_pooling);
-}
-
-static void pooling_2d_backward_cpu(const TensorView& output_delta, const TensorView& maximal_indices,
-                                    TensorView& input_delta,
-                                    Index input_height, Index input_width, Index input_channels,
-                                    Index pool_height, Index pool_width,
-                                    Index row_stride, Index column_stride,
-                                    Index padding_height, Index padding_width,
-                                    bool max_pooling)
+void pooling_2d_backward(const TensorView& output_delta, const TensorView& maximal_indices,
+                         TensorView& input_delta,
+                         Index input_height, Index input_width, Index input_channels,
+                         Index pool_height, Index pool_width,
+                         Index row_stride, Index column_stride,
+                         Index padding_height, Index padding_width,
+                         bool max_pooling)
 {
     const TensorMap4 output_deltas = output_delta.as_tensor<4>();
     TensorMap4       input_deltas  = input_delta.as_tensor<4>().setZero();
@@ -1573,22 +1540,6 @@ static void pooling_2d_backward_cpu(const TensorView& output_delta, const Tensor
                     input_deltas(window.batch, window.in_row_start + pr,
                                  window.in_col_start + pc, window.channel) += avg_delta;
         });
-}
-
-void pooling_2d_backward(const TensorView& output_delta, const TensorView& maximal_indices,
-                         TensorView& input_delta,
-                         Index input_height, Index input_width, Index input_channels,
-                         Index pool_height, Index pool_width,
-                         Index row_stride, Index column_stride,
-                         Index padding_height, Index padding_width,
-                         bool max_pooling)
-{
-    pooling_2d_backward_cpu(output_delta, maximal_indices, input_delta,
-                            input_height, input_width, input_channels,
-                            pool_height, pool_width,
-                            row_stride, column_stride,
-                            padding_height, padding_width,
-                            max_pooling);
 }
 
 static void first_token_3d_forward_cpu(const TensorView& input, TensorView& output)
@@ -1682,38 +1633,18 @@ static void transpose_middle_axes(const float* src, float* dst,
                        D * sizeof(float));
 }
 
-static void split_heads_cpu(const TensorView& source, TensorView& destination)
-{
-    const Index batch_size = source.shape[0];
-    const Index sequence_length = source.shape[1];
-    const Index heads_number = source.shape[2];
-    const Index head_dimension = source.shape[3];
-
-    transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          batch_size, sequence_length, heads_number, head_dimension);
-}
-
 void split_heads(const TensorView& source, TensorView& destination)
 {
     if (source.is_cuda()) { split_heads_gpu(source, destination); return; }
-    split_heads_cpu(source, destination);
-}
-
-static void merge_heads_cpu(const TensorView& source, TensorView& destination)
-{
-    const Index batch_size = source.shape[0];
-    const Index heads_number = source.shape[1];
-    const Index sequence_length = source.shape[2];
-    const Index head_dimension = source.shape[3];
-
     transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          batch_size, heads_number, sequence_length, head_dimension);
+                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
 }
 
 void merge_heads(const TensorView& source, TensorView& destination)
 {
     if (source.is_cuda()) { merge_heads_gpu(source, destination); return; }
-    merge_heads_cpu(source, destination);
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
+                          source.shape[0], source.shape[1], source.shape[2], source.shape[3]);
 }
 
 #ifdef OPENNN_HAS_CUDA

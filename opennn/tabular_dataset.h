@@ -187,6 +187,10 @@ protected:
 
     vector<Index> filter_used_samples_by_column(Index, bool) const;
 
+    vector<Descriptives> calculate_variable_descriptives_samples(bool positive) const;
+
+    void unuse_samples_with_missing_targets(const vector<Index>&, const vector<Index>&);
+
     void compute_cache_descriptives() const;
     void compute_cache_replacement() const;
     vector<Descriptives> compute_descriptives_streaming(const vector<Index>&) const;

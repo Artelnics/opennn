@@ -9,6 +9,7 @@
 #include "image_dataset.h"
 #include "device_backend.h"
 #include "image_processing.h"
+#include "scaling.h"
 #include "tensor_types.h"
 #include "string_utilities.h"
 #include "random_utilities.h"
@@ -57,36 +58,6 @@ static string image_cache_signature(Index samples, Index height, Index width, In
     for (const filesystem::path& folder : class_folders)
         signature += folder.filename().string() + ",";
     return signature;
-}
-
-static pair<float, float> scaling_affine(ScalerMethod scaler,
-                                  const Descriptives& descriptives,
-                                  float min_range,
-                                  float max_range)
-{
-    switch (scaler)
-    {
-    case ScalerMethod::MinimumMaximum:
-    {
-        const float scale = (max_range - min_range)
-                          / ((descriptives.maximum - descriptives.minimum) + EPSILON);
-        return {scale, min_range - descriptives.minimum * scale};
-    }
-    case ScalerMethod::MeanStandardDeviation:
-    {
-        const float scale = 1.0f / (descriptives.standard_deviation + EPSILON);
-        return {scale, -descriptives.mean * scale};
-    }
-    case ScalerMethod::StandardDeviation:
-        return {1.0f / (descriptives.standard_deviation + EPSILON), 0.0f};
-    case ScalerMethod::ImageMinMax:
-        return {1.0f / 255.0f, 0.0f};
-    case ScalerMethod::None:
-    case ScalerMethod::Logarithm:
-        return {1.0f, 0.0f};
-    }
-
-    throw runtime_error("ImageDataset: invalid scaler method.");
 }
 
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()

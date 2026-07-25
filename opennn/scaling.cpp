@@ -17,7 +17,7 @@ void scale_mean_standard_deviation(MatrixMap matrix,
                                    const Descriptives& column_descriptives)
 {
     if (column_descriptives.standard_deviation > EPSILON)
-        matrix.col(column_index).array() = (matrix.col(column_index).array() - column_descriptives.mean) / column_descriptives.standard_deviation;
+        matrix.col(column_index).array() = scale_mean_standard_deviation_formula(matrix.col(column_index).array(), column_descriptives);
     else
         matrix.col(column_index).setZero();
 }
@@ -39,16 +39,14 @@ void scale_minimum_maximum(MatrixMap matrix,
                            float min_range,
                            float max_range)
 {
-    const float range = column_descriptives.maximum - column_descriptives.minimum;
-
-    if (range < EPSILON)
+    if (column_descriptives.maximum - column_descriptives.minimum < EPSILON)
     {
         matrix.col(column_index).setZero();
         return;
     }
 
     matrix.col(column_index).array() =
-        (matrix.col(column_index).array() - column_descriptives.minimum) / range * (max_range - min_range) + min_range;
+        scale_minimum_maximum_formula(matrix.col(column_index).array(), column_descriptives, min_range, max_range);
 }
 
 void scale_logarithmic(MatrixMap matrix, Index column_index)

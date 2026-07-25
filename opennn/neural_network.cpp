@@ -193,25 +193,27 @@ Layer* NeuralNetwork::get_first(LayerType type)
     return const_cast<Layer*>(static_cast<const NeuralNetwork*>(this)->get_first(type));
 }
 
+static void define_variables_from_names(vector<Variable>& variables,
+                                        const vector<string>& names,
+                                        VariableRole role)
+{
+    variables.assign(names.size(), Variable());
+
+    for (size_t i = 0; i < names.size(); ++i)
+    {
+        variables[i].name = names[i];
+        variables[i].role = role;
+        variables[i].type = VariableType::Numeric;
+    }
+}
+
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
 
     if (ranges::any_of(variables,
                        [](const Variable& v) { return !v.is_categorical() && v.features > 1; }))
-    {
-        const VariableRole role = variables.empty() ? VariableRole::None : variables[0].role;
-
-        variables.assign(new_names.size(), Variable());
-
-        for (size_t i = 0; i < new_names.size(); ++i)
-        {
-            variables[i].name = new_names[i];
-            variables[i].role = role;
-            variables[i].type = VariableType::Numeric;
-        }
-
-        return;
-    }
+        return define_variables_from_names(variables, new_names,
+                                           variables.empty() ? VariableRole::None : variables[0].role);
 
     const size_t total = new_names.size();
     size_t name_index = 0;
@@ -239,20 +241,6 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
     throw_if(name_index != total,
              "set_variable_names: received {} names but variables expected {}.",
                     total, name_index);
-}
-
-static void define_variables_from_names(vector<Variable>& variables,
-                                        const vector<string>& names,
-                                        VariableRole role)
-{
-    variables.assign(names.size(), Variable());
-
-    for (size_t i = 0; i < names.size(); ++i)
-    {
-        variables[i].name = names[i];
-        variables[i].role = role;
-        variables[i].type = VariableType::Numeric;
-    }
 }
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
@@ -409,11 +397,9 @@ Index NeuralNetwork::get_inputs_number() const
     if (get_first(LayerType::Embedding))
         return get_layer(0)->get_inputs_number();
 
-    if (const Layer* recurrent = get_first(LayerType::Recurrent))
-        return recurrent->get_input_shape()[1];
-
-    if (const Layer* lstm = get_first(LayerType::LongShortTermMemory))
-        return lstm->get_input_shape()[1];
+    for (const LayerType type : {LayerType::Recurrent, LayerType::LongShortTermMemory})
+        if (const Layer* layer = get_first(type))
+            return layer->get_input_shape()[1];
 
     return layers[0]->get_input_shape().size();
 }

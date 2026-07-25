@@ -353,65 +353,19 @@ void unfilter_png_rows_into(const vector<uint8_t>& inflated,
     }
 }
 
-static void decode_png_grayscale(const PngHeader& h,
-                                 const uint8_t* unfiltered,
-                                 float* dst)
+template <typename WritePixel>
+void decode_png_rows(const PngHeader& h,
+                     const uint8_t* unfiltered,
+                     float* dst,
+                     WritePixel&& write_pixel)
 {
     for (Index y = 0; y < h.height; ++y)
     {
         const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
 
         for (Index x = 0; x < h.width; ++x)
-        {
-            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
-            const Index out = (y * h.width + x) * h.channels;
-
-            dst[out] = float(p[0]);
-        }
-    }
-}
-
-static void decode_png_truecolor(const PngHeader& h,
-                                 const uint8_t* unfiltered,
-                                 float* dst)
-{
-    for (Index y = 0; y < h.height; ++y)
-    {
-        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
-
-        for (Index x = 0; x < h.width; ++x)
-        {
-            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
-            const Index out = (y * h.width + x) * h.channels;
-
-            dst[out + 0] = float(p[0]);
-            dst[out + 1] = float(p[1]);
-            dst[out + 2] = float(p[2]);
-        }
-    }
-}
-
-static void decode_png_palette(const PngHeader& h,
-                               const uint8_t* unfiltered,
-                               float* dst)
-{
-    for (Index y = 0; y < h.height; ++y)
-    {
-        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
-
-        for (Index x = 0; x < h.width; ++x)
-        {
-            const uint8_t* p = row + size_t(x) * size_t(h.bytes_per_pixel);
-            const Index out = (y * h.width + x) * h.channels;
-
-            const size_t pal = size_t(p[0]) * 3;
-            throw_if(pal + 2 >= h.palette.size(),
-                     "PNG palette index out of range.");
-
-            dst[out + 0] = float(h.palette[pal + 0]);
-            dst[out + 1] = float(h.palette[pal + 1]);
-            dst[out + 2] = float(h.palette[pal + 2]);
-        }
+            write_pixel(row + size_t(x) * size_t(h.bytes_per_pixel),
+                        dst + (y * h.width + x) * h.channels);
     }
 }
 
@@ -430,14 +384,34 @@ void decode_png_pixels(const PngHeader& h,
     {
         case 0:
         case 4:
-            decode_png_grayscale(h, unfiltered.data(), dst);
+            decode_png_rows(h, unfiltered.data(), dst,
+                            [](const uint8_t* p, float* out)
+            {
+                out[0] = float(p[0]);
+            });
             break;
         case 2:
         case 6:
-            decode_png_truecolor(h, unfiltered.data(), dst);
+            decode_png_rows(h, unfiltered.data(), dst,
+                            [](const uint8_t* p, float* out)
+            {
+                out[0] = float(p[0]);
+                out[1] = float(p[1]);
+                out[2] = float(p[2]);
+            });
             break;
         case 3:
-            decode_png_palette(h, unfiltered.data(), dst);
+            decode_png_rows(h, unfiltered.data(), dst,
+                            [&](const uint8_t* p, float* out)
+            {
+                const size_t pal = size_t(p[0]) * 3;
+                throw_if(pal + 2 >= h.palette.size(),
+                         "PNG palette index out of range.");
+
+                out[0] = float(h.palette[pal + 0]);
+                out[1] = float(h.palette[pal + 1]);
+                out[2] = float(h.palette[pal + 2]);
+            });
             break;
     }
 }
@@ -619,37 +593,9 @@ void load_image(const filesystem::path& path,
                 Index expected_width,
                 Index expected_channels)
 {
-    thread_local vector<uint8_t> buffer;
+    const Tensor3 image = load_image(path);
 
-    read_image_file(path, buffer);
-
-    if (has_bmp_signature(buffer))
-    {
-        const BmpHeader h = parse_bmp_header(buffer, path.string());
-        Tensor3 temp(h.height, h.width, h.channels);
-        decode_bmp_pixels(buffer, h, temp.data());
-        copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
-                                     expected_channels, path.string());
-        return;
-    }
-
-    if (has_png_signature(buffer))
-    {
-        thread_local vector<uint8_t> compressed;
-        const PngHeader h = parse_png_chunks(buffer, compressed, path.string());
-        Tensor3 temp(h.height, h.width, h.channels);
-        decode_png_pixels(h, compressed, temp.data(), path.string());
-        copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
-                                     expected_channels, path.string());
-        return;
-    }
-
-    throw_if(!has_jpeg_signature(buffer),
-             "Unsupported image file: {}", path.string());
-
-    Tensor3 temp;
-    decode_jpeg_pixels(buffer, temp, path.string());
-    copy_image_to_expected_shape(temp, dst, expected_height, expected_width,
+    copy_image_to_expected_shape(image, dst, expected_height, expected_width,
                                  expected_channels, path.string());
 }
 
@@ -784,6 +730,21 @@ void rotate_image(const TensorMap3& input, TensorMap3& output, float angle_degre
     }
 }
 
+static void shift_and_zero(float* data, bool forward,
+                           Index move_size, Index fill_size, Index total_size)
+{
+    if (forward)
+    {
+        memmove(data + fill_size, data, size_t(move_size) * sizeof(float));
+        std::fill(data, data + fill_size, 0.0f);
+    }
+    else
+    {
+        memmove(data, data + fill_size, size_t(move_size) * sizeof(float));
+        std::fill(data + move_size, data + total_size, 0.0f);
+    }
+}
+
 void translate_image_x(TensorMap3& image, Index shift)
 {
     if (shift == 0) return;
@@ -805,20 +766,7 @@ void translate_image_x(TensorMap3& image, Index shift)
     const Index fill_size = abs(shift) * channels;
 
     for (Index y = 0; y < height; ++y)
-    {
-        float* row = data + y * row_size;
-
-        if (shift > 0)
-        {
-            memmove(row + fill_size, row, size_t(move_size) * sizeof(float));
-            std::fill(row, row + fill_size, 0.0f);
-        }
-        else
-        {
-            memmove(row, row + fill_size, size_t(move_size) * sizeof(float));
-            std::fill(row + move_size, row + row_size, 0.0f);
-        }
-    }
+        shift_and_zero(data + y * row_size, shift > 0, move_size, fill_size, row_size);
 }
 
 void translate_image_y(TensorMap3& image, Index shift)
@@ -842,16 +790,7 @@ void translate_image_y(TensorMap3& image, Index shift)
     const Index move_size = move_rows * row_size;
     const Index fill_size = abs(shift) * row_size;
 
-    if (shift > 0)
-    {
-        memmove(data + fill_size, data, size_t(move_size) * sizeof(float));
-        std::fill(data, data + fill_size, 0.0f);
-    }
-    else
-    {
-        memmove(data, data + fill_size, size_t(move_size) * sizeof(float));
-        std::fill(data + move_size, data + pixels, 0.0f);
-    }
+    shift_and_zero(data, shift > 0, move_size, fill_size, pixels);
 }
 
 }

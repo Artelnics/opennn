@@ -14,19 +14,53 @@
 namespace opennn
 {
 
-vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
+namespace
 {
-    const vector<SampleRole>& roles = active_sample_roles();
-    const Index samples_number = ssize(roles);
 
+template<typename Item, typename Predicate>
+vector<Index> filter_indices(const vector<Item>& items, Index reserve_size, Predicate include)
+{
     vector<Index> indices;
-    indices.reserve(get_samples_number(role_type));
+    indices.reserve(reserve_size);
 
-    for (Index i = 0; i < samples_number; ++i)
-        if (roles[i] == role_type)
+    for (Index i = 0; i < ssize(items); ++i)
+        if (include(items[i]))
             indices.push_back(i);
 
     return indices;
+}
+
+template<typename Predicate>
+vector<Index> collect_feature_indices(const vector<Variable>& variables, Index count, Predicate include)
+{
+    vector<Index> indices(count);
+
+    Index feature_index = 0;
+    Index output_index = 0;
+
+    for (const Variable& variable : variables)
+    {
+        const Index features = variable.get_feature_count();
+
+        if (!include(variable))
+        {
+            feature_index += features;
+            continue;
+        }
+
+        for (Index j = 0; j < features; ++j)
+            indices[output_index++] = feature_index++;
+    }
+
+    return indices;
+}
+
+}
+
+vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
+{
+    return filter_indices(active_sample_roles(), get_samples_number(role_type),
+                          [role_type](SampleRole role) { return role == role_type; });
 }
 
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
@@ -100,37 +134,24 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
         data.resize(0, 0);
 }
 
+static const vector<pair<Dataset::StorageMode, string>> storage_mode_map = {
+    {Dataset::StorageMode::Matrix,            "Matrix"},
+    {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
+    {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
+};
+
 string Dataset::get_storage_mode_string() const
 {
-    switch (storage_mode)
-    {
-    case StorageMode::Matrix:           return "Matrix";
-    case StorageMode::BinaryFile:       return "BinaryFile";
-    case StorageMode::GPUPersistantData: return "GPUPersistantData";
-    }
+    for (const auto& [mode, name] : storage_mode_map)
+        if (mode == storage_mode) return name;
 
     return "Matrix";
 }
 
 void Dataset::set_storage_mode(const string& new_storage_mode)
 {
-    if (new_storage_mode == "Matrix")
-    {
-        set_storage_mode(StorageMode::Matrix);
-        return;
-    }
-
-    if (new_storage_mode == "BinaryFile")
-    {
-        set_storage_mode(StorageMode::BinaryFile);
-        return;
-    }
-
-    if (new_storage_mode == "GPUPersistantData")
-    {
-        set_storage_mode(StorageMode::GPUPersistantData);
-        return;
-    }
+    for (const auto& [mode, name] : storage_mode_map)
+        if (name == new_storage_mode) { set_storage_mode(mode); return; }
 
     throw runtime_error(format("Unknown dataset storage mode: {}", new_storage_mode));
 }
@@ -424,51 +445,20 @@ void Dataset::set_shape(VariableRole role, const Shape& new_shape)
 
 vector<Index> Dataset::get_feature_indices(VariableRole role_type) const
 {
-    const Index this_features_number = get_features_number(role_type);
-    vector<Index> this_feature_indices(this_features_number);
-
-    Index feature_index = 0;
-    Index this_feature_index = 0;
-
-    for (const Variable& variable : variables)
-    {
-        const Index count = variable.get_feature_count();
-
-        if (!role_applies_to(variable.role, role_type))
-        {
-            feature_index += count;
-            continue;
-        }
-
-        for (Index j = 0; j < count; ++j)
-            this_feature_indices[this_feature_index++] = feature_index++;
-    }
-
-    return this_feature_indices;
+    return collect_feature_indices(variables, get_features_number(role_type),
+        [role_type](const Variable& variable) { return role_applies_to(variable.role, role_type); });
 }
 
 vector<Index> Dataset::get_variable_indices(VariableRole role_type) const
 {
-    vector<Index> indices;
-    indices.reserve(get_variables_number(role_type));
-
-    for (size_t i = 0; i < variables.size(); ++i)
-        if (role_applies_to(variables[i].role, role_type))
-            indices.push_back(i);
-
-    return indices;
+    return filter_indices(variables, get_variables_number(role_type),
+        [role_type](const Variable& variable) { return role_applies_to(variable.role, role_type); });
 }
 
 vector<Index> Dataset::get_used_variables_indices() const
 {
-    vector<Index> used_indices;
-    used_indices.reserve(get_used_variables_number());
-
-    for (size_t i = 0; i < variables.size(); ++i)
-        if (variables[i].is_used())
-            used_indices.push_back(i);
-
-    return used_indices;
+    return filter_indices(variables, get_used_variables_number(),
+                          [](const Variable& variable) { return variable.is_used(); });
 }
 
 vector<string> Dataset::get_variable_names() const
@@ -532,28 +522,10 @@ Index Dataset::get_features_number(VariableRole role_type) const
 
 vector<Index> Dataset::get_used_feature_indices() const
 {
-    const Index used_features_number =
-        get_features_number() - get_features_number(VariableRole::None) - get_features_number(VariableRole::Time);
-    vector<Index> used_feature_indices(used_features_number);
-
-    Index feature_index = 0;
-    Index used_feature_index = 0;
-
-    for (const Variable& variable : variables)
-    {
-        const Index count = variable.get_feature_count();
-
-        if (variable.role == VariableRole::None || variable.role == VariableRole::Time)
-        {
-            feature_index += count;
-            continue;
-        }
-
-        for (Index j = 0; j < count; ++j)
-            used_feature_indices[used_feature_index++] = feature_index++;
-    }
-
-    return used_feature_indices;
+    return collect_feature_indices(variables,
+        get_features_number() - get_features_number(VariableRole::None) - get_features_number(VariableRole::Time),
+        [](const Variable& variable)
+        { return variable.role != VariableRole::None && variable.role != VariableRole::Time; });
 }
 
 void Dataset::set_variable_roles(const vector<string>& new_variables_roles)

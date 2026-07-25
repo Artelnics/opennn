@@ -280,3 +280,78 @@ TEST(ScalingTest, UnscaleStandardDeviationZeroDeviationIsNoOp)
 
     EXPECT_TRUE(matrix.array().isFinite().all());
 }
+
+
+TEST(ScalingTest, ScaleValueMinimumMaximumUsesMinusOneOneRange)
+{
+    Descriptives descriptives;
+    descriptives.minimum = type(2);
+    descriptives.maximum = type(6);
+
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(2)), type(-1), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(4)), type(0), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, descriptives, type(6)), type(1), 1e-6);
+
+    Descriptives constant;
+    constant.minimum = type(3);
+    constant.maximum = type(3);
+
+    EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, constant, type(3)), type(0), 1e-6);
+}
+
+
+TEST(ScalingTest, ScaleValueGuardsDegenerateDeviationToZero)
+{
+    Descriptives descriptives;
+    descriptives.mean = type(5);
+    descriptives.standard_deviation = type(0);
+
+    EXPECT_NEAR(scale_value(ScalerMethod::MeanStandardDeviation, descriptives, type(7)), type(0), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::StandardDeviation, descriptives, type(7)), type(0), 1e-6);
+
+    descriptives.standard_deviation = type(2);
+
+    EXPECT_NEAR(scale_value(ScalerMethod::MeanStandardDeviation, descriptives, type(7)), type(1), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::StandardDeviation, descriptives, type(7)), type(3.5), 1e-6);
+    EXPECT_NEAR(scale_value(ScalerMethod::None, descriptives, type(7)), type(7), 1e-6);
+}
+
+
+TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
+{
+    Descriptives descriptives;
+    descriptives.minimum = type(0);
+    descriptives.maximum = type(255);
+    descriptives.mean = type(100);
+    descriptives.standard_deviation = type(50);
+
+    const auto [minmax_scale, minmax_offset] =
+        scaling_affine(ScalerMethod::MinimumMaximum, descriptives, type(0), type(1));
+    EXPECT_NEAR(minmax_scale, type(1) / (type(255) + EPSILON), 1e-9);
+    EXPECT_NEAR(minmax_offset, type(0), 1e-9);
+
+    const auto [meanstd_scale, meanstd_offset] =
+        scaling_affine(ScalerMethod::MeanStandardDeviation, descriptives, type(0), type(1));
+    EXPECT_NEAR(meanstd_scale, type(1) / (type(50) + EPSILON), 1e-9);
+    EXPECT_NEAR(meanstd_offset, type(-100) / (type(50) + EPSILON), 1e-6);
+
+    const auto [image_scale, image_offset] =
+        scaling_affine(ScalerMethod::ImageMinMax, descriptives, type(0), type(1));
+    EXPECT_NEAR(image_scale, type(1) / type(255), 1e-9);
+    EXPECT_NEAR(image_offset, type(0), 1e-9);
+
+    Descriptives constant;
+    constant.minimum = type(3);
+    constant.maximum = type(3);
+    constant.standard_deviation = type(0);
+
+    const auto [flat_scale, flat_offset] =
+        scaling_affine(ScalerMethod::MinimumMaximum, constant, type(-1), type(1));
+    EXPECT_NEAR(flat_scale, type(2) / EPSILON, type(1));
+    EXPECT_TRUE(std::isfinite(flat_scale) && std::isfinite(flat_offset));
+
+    const auto [zero_deviation_scale, zero_deviation_offset] =
+        scaling_affine(ScalerMethod::StandardDeviation, constant, type(0), type(1));
+    EXPECT_NEAR(zero_deviation_scale, type(1) / EPSILON, type(1));
+    EXPECT_NEAR(zero_deviation_offset, type(0), 1e-9);
+}

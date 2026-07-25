@@ -22,27 +22,14 @@ string TrainingResult::write_stopping_condition() const
 {
     if (!stopping_condition) return "None";
 
-    using enum StoppingCondition;
-    switch (*stopping_condition)
-    {
-    case MinimumLossDecrease:
-        return "Minimum loss decrease";
+    static constexpr const char* names[] = {"Minimum loss decrease",
+                                            "Loss goal",
+                                            "Maximum validation error increases",
+                                            "Maximum epochs number",
+                                            "Maximum training time"};
 
-    case LossGoal:
-        return "Loss goal";
-
-    case MaximumValidationErrorIncreases:
-        return "Maximum validation error increases";
-
-    case MaximumEpochsNumber:
-        return "Maximum epochs number";
-
-    case MaximumTime:
-        return "Maximum training time";
-
-    default:
-        return {};
-    }
+    const size_t index = size_t(*stopping_condition);
+    return index < size(names) ? names[index] : "";
 }
 
 float TrainingResult::get_training_error() const
@@ -125,11 +112,10 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
 {
     Tensor<string, 2> override_results(5, 2);
 
-    override_results(0, 0) = "Epochs number";
-    override_results(1, 0) = "Elapsed time";
-    override_results(2, 0) = "Stopping criterion";
-    override_results(3, 0) = "Training error";
-    override_results(4, 0) = "Validation error";
+    static constexpr const char* labels[] = {"Epochs number", "Elapsed time", "Stopping criterion",
+                                             "Training error", "Validation error"};
+    for (Index i = 0; i < 5; ++i)
+        override_results(i, 0) = labels[i];
 
     const Index size = training_error_history.size();
 

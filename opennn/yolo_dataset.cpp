@@ -125,6 +125,15 @@ vector<string> read_yolo_classes(const filesystem::path& labels_directory)
     return {};
 }
 
+void assign_default_class_names(vector<string>& class_names, Index classes_number)
+{
+    if (!class_names.empty()) return;
+
+    class_names.resize(size_t(classes_number));
+    for (Index i = 0; i < classes_number; ++i)
+        class_names[size_t(i)] = to_string(i);
+}
+
 vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
 {
     ifstream file(label_path);
@@ -139,13 +148,11 @@ vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
         if (line.empty()) continue;
 
         const vector<float> values = parse_number_list<float>(line, "YOLO label");
-        throw_if(values.size() != 5,
+        throw_if(values.size() != 5 || float(Index(values[0])) != values[0],
                  "Invalid YOLO label line in {}: {}", label_path.string(), line);
 
         YoloDataset::Box box;
         box.class_id = Index(values[0]);
-        throw_if(float(box.class_id) != values[0],
-                 "Invalid YOLO label line in {}: {}", label_path.string(), line);
         box.x = values[1];
         box.y = values[2];
         box.w = values[3];
@@ -410,18 +417,9 @@ uint64_t splitmix64(uint64_t x)
     return x ^ (x >> 31);
 }
 
-struct AugmentationConfig
-{
-    float jitter = 0.2f;
-    float exposure = 1.5f;
-    float saturation = 1.5f;
-    float hue = 0.1f;
-    bool flip = true;
-};
-
 AugmentationParams derive_augmentation_params(uint64_t epoch_counter,
                                               uint64_t sample_index,
-                                              const AugmentationConfig& cfg)
+                                              const YoloDataset::AugmentationConfig& cfg)
 {
     auto rand_unit = [](uint64_t& rng_state) -> float
     {
@@ -549,13 +547,9 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
 
             for (Index c = 0; c < channels; ++c)
             {
-                const float v00 = sample(x0, y0, c);
-                const float v10 = sample(x1, y0, c);
-                const float v01 = sample(x0, y1, c);
-                const float v11 = sample(x1, y1, c);
-                const float v0 = v00 * (1.0f - ax) + v10 * ax;
-                const float v1 = v01 * (1.0f - ax) + v11 * ax;
-                const float v = v0 * (1.0f - ay) + v1 * ay;
+                const float v = bilinear_blend(sample(x0, y0, c), sample(x1, y0, c),
+                                               sample(x0, y1, c), sample(x1, y1, c),
+                                               ax, ay);
                 dst[(dy * width + out_x) * channels + c] =
                     uint8_t(min(255.0f, max(0.0f, v + 0.5f)));
             }
@@ -1337,12 +1331,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
         anchors = move(cached_anchors);
         classes_number = Index(target_header.classes_number);
-        if (class_names.empty())
-        {
-            class_names.resize(size_t(classes_number));
-            for (Index i = 0; i < classes_number; ++i)
-                class_names[size_t(i)] = to_string(i);
-        }
+        assign_default_class_names(class_names, classes_number);
 
         target_record_floats = Index(target_header.target_floats);
         target_data_offset = target_header.targets_offset;
@@ -1461,12 +1450,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     throw_if(classes_number <= 0,
              "YoloDataset: cannot infer classes_number.");
 
-    if (class_names.empty())
-    {
-        class_names.resize(size_t(classes_number));
-        for (Index i = 0; i < classes_number; ++i)
-            class_names[size_t(i)] = to_string(i);
-    }
+    assign_default_class_names(class_names, classes_number);
 
     anchors = requested_anchors.empty()
         ? calculate_yolo_anchors(labels, boxes_per_cell)
@@ -1653,13 +1637,8 @@ void YoloDataset::read_sample_boxes(Index sample_index, vector<Box>& out) const
                                boxes_data_offset + begin * sizeof(YoloBoxRecord));
 
     for (size_t i = 0; i < records.size(); ++i)
-    {
-        out[i].class_id = records[i].class_id;
-        out[i].x = records[i].x;
-        out[i].y = records[i].y;
-        out[i].w = records[i].w;
-        out[i].h = records[i].h;
-    }
+        out[i] = {records[i].class_id, records[i].x, records[i].y,
+                  records[i].w, records[i].h};
 }
 
 void YoloDataset::load_images_to_ram() const
@@ -1797,6 +1776,17 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool resize_needed = (input_shape[0] != cache_input_shape[0])
                             || (input_shape[1] != cache_input_shape[1]);
 
+    auto read_image_record = [&](Index sample, uint8_t* destination)
+    {
+        if (matrix_storage)
+            copy_n(images_ram.data() + size_t(sample) * size_t(cache_image_record_bytes),
+                   size_t(cache_image_record_bytes), destination);
+        else
+            image_cache_reader.read_at(destination, size_t(cache_image_record_bytes),
+                                       sizeof(YoloImageCacheHeader)
+                                       + uint64_t(sample) * uint64_t(cache_image_record_bytes));
+    };
+
     #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < batch_size; ++i)
     {
@@ -1811,19 +1801,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             throw_if(sample_index < 0 || sample_index >= samples_number,
                      "YoloDataset input sample index is out of range.");
 
-            const uint64_t offset = sizeof(YoloImageCacheHeader)
-                + uint64_t(sample_index) * uint64_t(cache_image_record_bytes);
-
-            if (matrix_storage)
-            {
-                copy_n(images_ram.data() + size_t(sample_index) * size_t(cache_image_record_bytes),
-                       pixels.size(),
-                       pixels.data());
-            }
-            else
-            {
-                image_cache_reader.read_at(pixels.data(), pixels.size(), offset);
-            }
+            read_image_record(sample_index, pixels.data());
 
             const uint8_t* image_bytes = pixels.data();
 
@@ -1837,33 +1815,22 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
                 aug_pixels.resize(size_t(H) * size_t(W) * size_t(C));
 
-                const ::opennn::AugmentationConfig color_cfg{
-                    0.0f, cfg.exposure, cfg.saturation, cfg.hue, false
-                };
+                AugmentationConfig color_cfg = cfg;
+                color_cfg.jitter = 0.0f;
+                color_cfg.flip = false;
 
                 thread_local vector<uint8_t> mosaic_src;
-                thread_local vector<uint8_t> quad_buf;
 
                 for (const MosaicQuad& q : quads)
                 {
                     mosaic_src.resize(size_t(cache_image_record_bytes));
-                    if (matrix_storage)
-                        copy_n(images_ram.data() + size_t(q.si) * size_t(cache_image_record_bytes),
-                               size_t(cache_image_record_bytes), mosaic_src.data());
-                    else
-                    {
-                        const uint64_t off = sizeof(YoloImageCacheHeader)
-                            + uint64_t(q.si) * uint64_t(cache_image_record_bytes);
-                        image_cache_reader.read_at(mosaic_src.data(),
-                                                   size_t(cache_image_record_bytes), off);
-                    }
+                    read_image_record(q.si, mosaic_src.data());
 
-                    quad_buf.assign(mosaic_src.begin(), mosaic_src.end());
                     const AugmentationParams qp = derive_augmentation_params(
                         epoch_seed, uint64_t(q.si), color_cfg);
-                    apply_color_jitter(quad_buf.data(), H, W, C, qp);
+                    apply_color_jitter(mosaic_src.data(), H, W, C, qp);
 
-                    blit_resized_into_canvas(quad_buf.data(), H, W,
+                    blit_resized_into_canvas(mosaic_src.data(), H, W,
                                              aug_pixels.data(), W,
                                              q.dst_x, q.dst_y, q.qw, q.qh, C);
                 }
@@ -1871,11 +1838,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
             }
             else if (augment)
             {
-                const ::opennn::AugmentationConfig free_cfg{
-                    cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
-                };
                 const AugmentationParams p = derive_augmentation_params(
-                    epoch_seed, uint64_t(sample_index), free_cfg);
+                    epoch_seed, uint64_t(sample_index), cfg);
 
                 aug_pixels.resize(size_t(cache_image_record_bytes));
                 apply_geometric_to_image(pixels.data(), aug_pixels.data(),
@@ -1931,6 +1895,21 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (matrix_storage && !reencode)
         load_targets_to_ram();
+
+    auto encode_target = [&](const vector<Box>& encode_boxes, float* target_ptr)
+    {
+        if (v8_mode && is_multi_scale())
+            make_target_v8_multi(encode_boxes, head_grid_sizes,
+                                 classes_number, target_ptr);
+        else if (v8_mode)
+            make_target_v8(encode_boxes, grid_size, classes_number, target_ptr);
+        else if (is_multi_scale())
+            make_target_multi_scale(encode_boxes, head_anchors, head_grid_sizes,
+                                    boxes_per_head, classes_number, target_ptr);
+        else
+            make_target(encode_boxes, anchors, grid_size, boxes_per_cell,
+                        classes_number, target_ptr);
+    };
 
     string omp_error;
 
@@ -1991,17 +1970,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         }
                     }
 
-                    if (v8_mode && is_multi_scale())
-                        make_target_v8_multi(mosaic_boxes, head_grid_sizes,
-                                             classes_number, target_ptr);
-                    else if (v8_mode)
-                        make_target_v8(mosaic_boxes, grid_size, classes_number, target_ptr);
-                    else if (is_multi_scale())
-                        make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
-                                                boxes_per_head, classes_number, target_ptr);
-                    else
-                        make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
-                                    classes_number, target_ptr);
+                    encode_target(mosaic_boxes, target_ptr);
                 }
                 else
                 {
@@ -2011,44 +1980,26 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 
                     if (augment)
                     {
-                        const ::opennn::AugmentationConfig free_cfg{
-                            cfg.jitter, cfg.exposure, cfg.saturation, cfg.hue, cfg.flip
-                        };
                         const AugmentationParams p = derive_augmentation_params(
-                            epoch_seed, uint64_t(sample_index), free_cfg);
+                            epoch_seed, uint64_t(sample_index), cfg);
                         apply_geometric_to_boxes(boxes, p);
                     }
 
-                    if (v8_mode && is_multi_scale())
-                        make_target_v8_multi(boxes, head_grid_sizes,
-                                             classes_number, target_ptr);
-                    else if (v8_mode)
-                        make_target_v8(boxes, grid_size, classes_number, target_ptr);
-                    else if (is_multi_scale())
-                        make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
-                                                boxes_per_head, classes_number, target_ptr);
-                    else
-                        make_target(boxes, anchors, grid_size, boxes_per_cell,
-                                    classes_number, target_ptr);
+                    encode_target(boxes, target_ptr);
                 }
+            }
+            else if (matrix_storage)
+            {
+                copy_n(targets_ram.data() + size_t(sample_index) * size_t(cache_target_record_floats),
+                       cache_target_record_floats,
+                       target_data + i * target_record_floats);
             }
             else
             {
-                const uint64_t offset = target_data_offset
-                    + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float);
-
-                if (matrix_storage)
-                {
-                    copy_n(targets_ram.data() + size_t(sample_index) * size_t(cache_target_record_floats),
-                           cache_target_record_floats,
-                           target_data + i * target_record_floats);
-                }
-                else
-                {
-                    target_cache_reader.read_at(target_data + i * target_record_floats,
-                                                size_t(cache_target_record_floats) * sizeof(float),
-                                                offset);
-                }
+                target_cache_reader.read_at(target_data + i * target_record_floats,
+                                            size_t(cache_target_record_floats) * sizeof(float),
+                                            target_data_offset
+                                            + uint64_t(sample_index) * uint64_t(cache_target_record_floats) * sizeof(float));
             }
         }
         catch (const exception& e)

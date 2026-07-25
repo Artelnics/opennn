@@ -168,30 +168,6 @@ void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_pat
         cache_reader.open(cache_path);
 }
 
-static float scale_value(ScalerMethod method, const Descriptives& desc, float value)
-{
-    using enum ScalerMethod;
-    switch (method)
-    {
-    case None:
-    case ImageMinMax:
-        return value;
-    case MinimumMaximum:
-    {
-        const float range = desc.maximum - desc.minimum;
-        return range < EPSILON ? 0.0f : (value - desc.minimum) / range * 2.0f - 1.0f;
-    }
-    case MeanStandardDeviation:
-        return desc.standard_deviation > EPSILON ? (value - desc.mean) / desc.standard_deviation : 0.0f;
-    case StandardDeviation:
-        return desc.standard_deviation > EPSILON ? value / desc.standard_deviation : 0.0f;
-    case Logarithm:
-        return log(max(value, EPSILON));
-    }
-
-    return value;
-}
-
 void TabularDataset::compute_cache_replacement() const
 {
 
@@ -778,24 +754,24 @@ vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool p
     return filtered;
 }
 
-vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
+vector<Descriptives> TabularDataset::calculate_variable_descriptives_samples(bool positive) const
 {
     const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
     if (target_feature_indices.empty()) return {};
 
     return descriptives(data,
-                        filter_used_samples_by_column(target_feature_indices[0], true),
+                        filter_used_samples_by_column(target_feature_indices[0], positive),
                         get_feature_indices(VariableRole::Input));
+}
+
+vector<Descriptives> TabularDataset::calculate_variable_descriptives_positive_samples() const
+{
+    return calculate_variable_descriptives_samples(true);
 }
 
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_negative_samples() const
 {
-    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
-    if (target_feature_indices.empty()) return {};
-
-    return descriptives(data,
-                        filter_used_samples_by_column(target_feature_indices[0], false),
-                        get_feature_indices(VariableRole::Input));
+    return calculate_variable_descriptives_samples(false);
 }
 
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_categories(Index class_index) const
@@ -924,28 +900,20 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
     case None:
         break;
     case MinimumMaximum:
-        if (unscale)
-            unscale_minimum_maximum(map, feature_index, desc);
-        else
-            scale_minimum_maximum(map, feature_index, desc);
+        unscale ? unscale_minimum_maximum(map, feature_index, desc)
+                : scale_minimum_maximum(map, feature_index, desc);
         break;
     case MeanStandardDeviation:
-        if (unscale)
-            unscale_mean_standard_deviation(map, feature_index, desc);
-        else
-            scale_mean_standard_deviation(map, feature_index, desc);
+        unscale ? unscale_mean_standard_deviation(map, feature_index, desc)
+                : scale_mean_standard_deviation(map, feature_index, desc);
         break;
     case StandardDeviation:
-        if (unscale)
-            unscale_standard_deviation(map, feature_index, desc);
-        else
-            scale_standard_deviation(map, feature_index, desc);
+        unscale ? unscale_standard_deviation(map, feature_index, desc)
+                : scale_standard_deviation(map, feature_index, desc);
         break;
     case Logarithm:
-        if (unscale)
-            unscale_logarithmic(map, feature_index);
-        else
-            scale_logarithmic(map, feature_index);
+        unscale ? unscale_logarithmic(map, feature_index)
+                : scale_logarithmic(map, feature_index);
         break;
     case ImageMinMax:
         if (unscale) unscale_image_minimum_maximum(map, feature_index);
@@ -972,17 +940,19 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
+    const auto statistic_sample_indices = [this]
+    {
+        vector<Index> indices = get_sample_indices(SampleRole::Training);
+        if (indices.empty())
+            indices = get_used_sample_indices();
+        return indices;
+    };
+
     if (storage_mode == StorageMode::BinaryFile)
     {
 
         if (cache_transform_descriptives.empty())
-        {
-            vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
-            if (statistic_sample_indices.empty())
-                statistic_sample_indices = get_used_sample_indices();
-
-            cache_transform_descriptives = compute_descriptives_streaming(statistic_sample_indices);
-        }
+            cache_transform_descriptives = compute_descriptives_streaming(statistic_sample_indices());
 
         if (cache_feature_transforms.empty())
             cache_feature_transforms.assign(size_t(cache_columns_number), ScalerMethod::None);
@@ -997,12 +967,8 @@ vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
         return feature_descriptives;
     }
 
-    vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
-    if (statistic_sample_indices.empty())
-        statistic_sample_indices = get_used_sample_indices();
-
     const vector<Descriptives> feature_descriptives =
-        calculate_feature_descriptives(variable_role, statistic_sample_indices);
+        calculate_feature_descriptives(variable_role, statistic_sample_indices());
 
     #pragma omp parallel for
     for (Index i = 0; i < Index(feature_indices.size()); ++i)
@@ -1777,6 +1743,15 @@ void TabularDataset::impute_missing_values_unuse()
             set_sample_role(i, "None");
 }
 
+void TabularDataset::unuse_samples_with_missing_targets(const vector<Index>& sample_indices,
+                                                        const vector<Index>& target_feature_indices)
+{
+    for (const Index current_variable : target_feature_indices)
+        for (const Index current_sample : sample_indices)
+            if (isnan(data(current_sample, current_variable)))
+                set_sample_role(current_sample, "None");
+}
+
 void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& method)
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -1795,7 +1770,6 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
-    const Index target_features_number = target_feature_indices.size();
 
     for (Index j = 0; j < features_number; ++j)
     {
@@ -1815,19 +1789,7 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
         }
     }
 
-    for (Index j = 0; j < target_features_number; ++j)
-    {
-        const Index current_variable = target_feature_indices[j];
-
-        for (Index i = 0; i < samples_number; ++i)
-        {
-            const Index current_sample = used_sample_indices[i];
-
-            if (isnan(data(current_sample, current_variable)))
-                set_sample_role(current_sample, "None");
-        }
-    }
-
+    unuse_samples_with_missing_targets(used_sample_indices, target_feature_indices);
 }
 
 void TabularDataset::reuse_input_incomplete_rows_binary()
@@ -1911,17 +1873,7 @@ void TabularDataset::impute_missing_values_interpolate()
         }
     }
 
-    for (const Index current_variable : target_feature_indices)
-    {
-        for (Index i = 0; i < samples_number; ++i)
-        {
-            const Index current_sample = used_sample_indices[i];
-
-            if (isnan(data(current_sample, current_variable)))
-                set_sample_role(current_sample, "None");
-        }
-    }
-
+    unuse_samples_with_missing_targets(used_sample_indices, target_feature_indices);
 }
 
 void TabularDataset::scrub_missing_values()
