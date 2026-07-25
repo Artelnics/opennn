@@ -21,8 +21,6 @@ struct Correlation
 
     void set_perfect();
 
-    void print() const;
-
     float intercept = NAN;
     float slope = NAN;
     float coefficient = NAN;
@@ -44,15 +42,7 @@ Correlation power_correlation(const VectorR&, const VectorR&);
 
 Correlation logistic_correlation(const VectorR&, const VectorR&);
 
-Correlation logistic_correlation(const VectorR&, const MatrixR&);
-
-Correlation logistic_correlation(const MatrixR&, const VectorR&);
-
 Correlation logistic_correlation(const MatrixR&, const MatrixR&);
-
-Correlation point_biserial_correlation(const VectorR&, const VectorR&);
-
-Correlation eta_squared_correlation(const VectorR&, const MatrixR&);
 
 Correlation correlation(const MatrixR&, const MatrixR&);
 Correlation correlation_spearman(const MatrixR&, const MatrixR&);

@@ -760,9 +760,8 @@ TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)
     dataset.set_missing_values_method(TabularDataset::MissingValuesMethod::Unuse);
     dataset.scrub_missing_values();
 
-    EXPECT_FALSE(dataset.is_sample_used(1));
-    EXPECT_TRUE(dataset.is_sample_used(0));
-    EXPECT_TRUE(dataset.is_sample_used(2));
+    EXPECT_EQ(dataset.get_used_samples_number(), 2);
+    EXPECT_EQ(dataset.get_sample_roles()[1], SampleRole::None);
 
     EXPECT_EQ(dataset.get_missing_values_number(), 1);
 }

@@ -3,7 +3,6 @@
 #include "opennn/chat.h"
 #include "opennn/standard_networks.h"
 #include "opennn/tokenizer_layer.h"
-#include "opennn/language_dataset.h"
 
 using namespace opennn;
 
@@ -204,8 +203,6 @@ TEST(TransformerInference, DimensionGettersSurviveTokenizerLayers)
 
     EXPECT_EQ(transformer.get_input_sequence_length(), input_sequence_length);
     EXPECT_EQ(transformer.get_decoder_sequence_length(), decoder_sequence_length);
-    EXPECT_EQ(transformer.get_embedding_dimension(), embedding_dimension);
-    EXPECT_EQ(transformer.get_heads_number(), heads_number);
     EXPECT_EQ(transformer.is_gpu(), false);
 }
 
@@ -273,30 +270,4 @@ TEST(TransformerInference, DecoderOnlySessionRequiresGpu)
             ChatSession session(network);
         },
         runtime_error);
-}
-
-
-TEST(TransformerInference, LanguageDatasetVocabularySetters)
-{
-    LanguageDataset language_dataset;
-
-    EXPECT_TRUE(language_dataset.get_input_vocabulary_map().empty());
-    EXPECT_TRUE(language_dataset.get_target_vocabulary().empty());
-
-    const vector<string> input_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "alpha"};
-    const vector<string> target_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "beta", "gamma"};
-
-    language_dataset.set_input_vocabulary(input_vocabulary);
-    language_dataset.set_target_vocabulary(target_vocabulary);
-
-    EXPECT_EQ(language_dataset.get_input_vocabulary_size(), Index(input_vocabulary.size()));
-    EXPECT_EQ(language_dataset.get_target_vocabulary_size(), Index(target_vocabulary.size()));
-
-    EXPECT_FALSE(language_dataset.get_input_vocabulary_map().empty());
-    EXPECT_EQ(language_dataset.get_target_vocabulary(), target_vocabulary);
-
-    const auto& input_map = language_dataset.get_input_vocabulary_map();
-    const auto start_iterator = input_map.find("[START]");
-    ASSERT_NE(start_iterator, input_map.end());
-    EXPECT_EQ(start_iterator->second, Index(2));
 }

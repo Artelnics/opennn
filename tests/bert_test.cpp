@@ -196,10 +196,6 @@ TEST(BertTest, ForwardShapeAndFinite)
 
     Bert bert(seq, vocab, hidden, heads, intermediate, layers);
 
-    EXPECT_EQ(bert.get_sequence_length(), seq);
-    EXPECT_EQ(bert.get_hidden_size(), hidden);
-    EXPECT_EQ(bert.get_heads_number(), heads);
-
     std::vector<float> input_ids(size_t(batch * seq));
     std::vector<float> token_type_ids(size_t(batch * seq));
     for (Index b = 0; b < batch; ++b)

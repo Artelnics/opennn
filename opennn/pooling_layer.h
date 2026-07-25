@@ -43,7 +43,6 @@ public:
 
     Index get_input_height() const noexcept { return input_height; }
     Index get_input_width() const noexcept { return input_width; }
-    Index get_input_channels() const noexcept { return input_channels; }
 
     Index get_pool_height() const noexcept { return pool_height; }
     Index get_pool_width() const noexcept { return pool_width; }
@@ -66,11 +65,8 @@ public:
              const string & = "pooling_layer");
 
     void set_input_shape(const Shape&) override;
-    void set_pool_size(Index, Index);
     void set_row_stride(Index);
     void set_column_stride(Index);
-    void set_padding_height(Index);
-    void set_padding_width(Index);
     void set_pooling_method(const string&);
 
     void read_JSON_body(const Json*) override;

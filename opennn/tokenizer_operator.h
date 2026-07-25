@@ -67,7 +67,6 @@ public:
     virtual bool supports_incremental_decode() const noexcept { return false; }
 
     Index get_unk_id() const noexcept { return unk_id; }
-    const vector<string>& get_reserved_tokens() const noexcept { return reserved_tokens; }
 
     virtual unique_ptr<TokenizerOperator> clone() const = 0;
     virtual string_view get_kind() const = 0;
@@ -122,7 +121,6 @@ public:
     void build_vocabulary(const vector<vector<string>>&, Index, Index) override {}
 
     void set_lower_case(bool value) noexcept { do_lower_case = value; }
-    bool get_lower_case() const noexcept { return do_lower_case; }
 
     unique_ptr<TokenizerOperator> clone() const override { return make_unique<WordPieceTokenizer>(*this); }
     string_view get_kind() const override { return "WordPiece"; }
@@ -166,7 +164,6 @@ public:
     vector<string> get_merges() const;
     void set_merges(const vector<string>&);
     void set_special_tokens(const vector<string>&);
-    bool is_special(Index id) const { return special_ids.contains(id); }
     Index get_special_token_id(string_view) const;
 
     unique_ptr<TokenizerOperator> clone() const override { return make_unique<BytePairTokenizer>(*this); }

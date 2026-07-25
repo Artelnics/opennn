@@ -377,40 +377,9 @@ void Dataset::set_default_variable_roles_implementation(bool forecasting)
     }
 }
 
-vector<Index> Dataset::get_feature_dimensions() const
-{
-    const Index used_variables_number = get_used_variables_number();
-
-    vector<Index> feature_dimensions(used_variables_number);
-
-    Index i = 0;
-
-    for (const Variable& variable : variables)
-    {
-        if (!variable.is_used())
-            continue;
-
-        feature_dimensions[i] = variable.get_feature_count();
-
-        ++i;
-    }
-
-    return feature_dimensions;
-}
-
 void Dataset::set_default_variable_roles_forecasting()
 {
     set_default_variable_roles_implementation(true);
-}
-
-vector<VariableType> Dataset::get_variable_types(const vector<Index>& indices) const
-{
-    vector<VariableType> variable_types(indices.size());
-
-    ranges::transform(indices, variable_types.begin(),
-                      [this](Index i) { return get_variable_type(i); });
-
-    return variable_types;
 }
 
 void Dataset::set_default_variable_names()

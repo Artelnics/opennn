@@ -30,24 +30,13 @@ public:
     Index get_input_vocabulary_size() const noexcept { return input_tokenizer->get_vocabulary_size(); }
     Index get_target_vocabulary_size() const noexcept { return target_tokenizer->get_vocabulary_size(); }
 
-    const TokenizerOperator::VocabularyMap& get_input_vocabulary_map() const noexcept { return input_tokenizer->get_vocabulary_map(); }
-
     const TokenizerOperator& get_input_tokenizer() const noexcept { return *input_tokenizer; }
-    const TokenizerOperator& get_target_tokenizer() const noexcept { return *target_tokenizer; }
 
     Index get_maximum_input_sequence_length() const noexcept { return maximum_input_sequence_length; }
     Index get_maximum_target_sequence_length() const noexcept { return maximum_target_sequence_length; }
 
-    void set_input_vocabulary(const vector<string>&);
-    void set_target_vocabulary(const vector<string>&);
-
-    void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
-    void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
-
     void set_classification_target(bool new_classification_target) { classification_target = new_classification_target; }
-    bool get_classification_target() const noexcept { return classification_target; }
 
-    Index get_input_sequence_length_limit() const noexcept { return input_sequence_length_limit; }
     void set_input_sequence_length_limit(Index new_limit) { input_sequence_length_limit = new_limit; }
 
     VectorI calculate_target_distribution() const override;

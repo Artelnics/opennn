@@ -1245,18 +1245,6 @@ void Transformer::set_dropout_rate(const float new_dropout_rate)
     recompile_if_specs_changed(*this, forward_before, backward_before);
 }
 
-void Transformer::set_attention_sdpa_auto(bool new_sdpa_auto)
-{
-    const auto forward_before = get_forward_specs(1);
-    const auto backward_before = get_backward_specs(1);
-
-    for (auto& layer : get_layers())
-        if (auto* mha = dynamic_cast<MultiHeadAttention*>(layer.get()))
-            mha->set_sdpa_auto(new_sdpa_auto);
-
-    recompile_if_specs_changed(*this, forward_before, backward_before);
-}
-
 void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
 {
     const auto forward_before = get_forward_specs(1);
@@ -1277,19 +1265,6 @@ Index Transformer::get_input_sequence_length() const
 Index Transformer::get_decoder_sequence_length() const
 {
     return get_layer("decoder_embedding")->get_input_shape()[0];
-}
-
-Index Transformer::get_embedding_dimension() const
-{
-    return get_layer("decoder_embedding")->get_output_shape().back();
-}
-
-Index Transformer::get_heads_number() const
-{
-    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
-        return mha->get_heads_number();
-
-    return 0;
 }
 
 TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
@@ -1594,11 +1569,6 @@ Index TextGenerationNetwork::get_sequence_length() const
     return get_layer("embedding")->get_input_shape()[0];
 }
 
-Index TextGenerationNetwork::get_embedding_dimension() const
-{
-    return get_layer("embedding")->get_output_shape().back();
-}
-
 namespace
 {
 
@@ -1630,18 +1600,6 @@ Tokenizer& get_tokenizer_layer(const NeuralNetwork& network,
 Transformer::Transformer(const filesystem::path& path)
     : NeuralNetwork(path)
 {
-}
-
-void Transformer::set_input_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
-{
-    get_tokenizer_layer(*this, "encoder_tokenizer", "Transformer::set_input_tokenizer")
-        .set_tokenizer(move(new_tokenizer));
-}
-
-void Transformer::set_target_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
-{
-    get_tokenizer_layer(*this, "decoder_tokenizer", "Transformer::set_target_tokenizer")
-        .set_tokenizer(move(new_tokenizer));
 }
 
 void Transformer::set_input_vocabulary(const vector<string>& new_vocabulary)
@@ -1707,37 +1665,6 @@ void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_
 const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
 {
     return get_tokenizer_layer(*this, "tokenizer", "TextClassificationNetwork::get_tokenizer").get_tokenizer();
-}
-
-const vector<string>& TextGenerationNetwork::get_vocabulary() const
-{
-    return get_tokenizer_layer(*this, "tokenizer", "TextGenerationNetwork::get_vocabulary").get_vocabulary();
-}
-
-Index Bert::get_sequence_length() const
-{
-    return get_layer("word_embeddings")->get_input_shape()[0];
-}
-
-Index Bert::get_hidden_size() const
-{
-    return get_layer(0)->get_output_shape().back();
-}
-
-Index TextGenerationNetwork::get_heads_number() const
-{
-    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
-        return mha->get_heads_number();
-
-    return 0;
-}
-
-Index Bert::get_heads_number() const
-{
-    if (auto* mha = dynamic_cast<const MultiHeadAttention*>(get_first(LayerType::MultiHeadAttention)))
-        return mha->get_heads_number();
-
-    return 0;
 }
 
 BertForSequenceClassification::BertForSequenceClassification(Index sequence_length,

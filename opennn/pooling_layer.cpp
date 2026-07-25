@@ -153,14 +153,6 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
     update_pool_operator();
 }
 
-void Pooling::set_pool_size(Index new_pool_rows_number, Index new_pool_columns_number)
-{
-    pool_height = new_pool_rows_number;
-    pool_width = new_pool_columns_number;
-
-    update_pool_operator();
-}
-
 void Pooling::set_row_stride(Index new_row_stride)
 {
     throw_if(new_row_stride <= 0, "Row stride must be positive.");
@@ -175,24 +167,6 @@ void Pooling::set_column_stride(Index new_column_stride)
     throw_if(new_column_stride <= 0, "Column stride must be positive.");
 
     column_stride = new_column_stride;
-
-    update_pool_operator();
-}
-
-void Pooling::set_padding_height(Index new_padding_height)
-{
-    throw_if(new_padding_height < 0, "Padding height cannot be negative.");
-
-    padding_height = new_padding_height;
-
-    update_pool_operator();
-}
-
-void Pooling::set_padding_width(Index new_padding_width)
-{
-    throw_if(new_padding_width < 0, "Padding width cannot be negative.");
-
-    padding_width = new_padding_width;
 
     update_pool_operator();
 }

@@ -495,41 +495,6 @@ Correlation logistic_correlation_spearman(const VectorR& x, const VectorR& y)
     return fit_logistic_correlation(calculate_spearman_ranks(x_filter), y_filter, "MinimumMaximum");
 }
 
-Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
-{
-    Correlation correlation;
-    correlation.form = Correlation::Form::Sigmoid;
-
-    const auto [x_filter, y_filter] = filter_missing_values(x, y);
-
-    if (y_filter.cols() > 50)
-    {
-        cerr << "Warning: Y variable has too many categories.\n";
-
-        correlation.coefficient = NAN;
-        return correlation;
-    }
-
-    if (x_filter.size() == 0)
-    {
-        correlation.coefficient = NAN;
-        return correlation;
-    }
-
-    return fit_softmax_correlation(MatrixR(x_filter), y_filter, correlation,
-                                   {.hidden_shape = {1},
-                                    .set_binary_and_default_scalers = true,
-                                    .set_feature_shapes = true,
-                                    .error_type = "CrossEntropy",
-                                    .display_period = 1000,
-                                    .confidence_sample_count = x_filter.size()});
-}
-
-Correlation logistic_correlation(const MatrixR& y, const VectorR& x)
-{
-    return logistic_correlation(x, y);
-}
-
 Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 {
     Correlation correlation;
@@ -564,113 +529,6 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
                                     .maximum_epochs = 500});
 }
 
-Correlation point_biserial_correlation(const VectorR& continuous,
-                                       const VectorR& binary)
-{
-    Correlation result;
-    result.form   = Correlation::Form::Identity;
-    result.method = Correlation::Method::Pearson;
-
-    const auto [x_filter, y_filter] = filter_missing_values(continuous, binary);
-
-    if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
-    {
-        result.coefficient = 0.0f;
-        return result;
-    }
-
-    const Index sample_count = x_filter.size();
-
-    const auto x_double = x_filter.cast<double>();
-    const double sum_all = x_double.sum();
-    const double sum_sq = x_double.squaredNorm();
-
-    const auto positive_mask = (y_filter.array() > 0.5f);
-    const Index positive_count = positive_mask.count();
-    const Index negative_count = sample_count - positive_count;
-    const double positive_sum = positive_mask.select(x_double.array(), 0.0).sum();
-    const double negative_sum = sum_all - positive_sum;
-
-    if (positive_count == 0 || negative_count == 0)
-    {
-        result.coefficient = 0.0f;
-        return result;
-    }
-
-    const double mean_all = sum_all / double(sample_count);
-    const double variance  = (sum_sq / double(sample_count)) - (mean_all * mean_all);
-
-    if (variance <= 0)
-    {
-        result.coefficient = 0.0f;
-        return result;
-    }
-
-    const double s_x  = sqrt(variance);
-    const double group_one_mean   = positive_sum / double(positive_count);
-    const double group_zero_mean   = negative_sum / double(negative_count);
-    const double point_biserial_r = (group_one_mean - group_zero_mean) / s_x
-                        * sqrt(double(positive_count) * double(negative_count) / (double(sample_count) * double(sample_count)));
-
-    result.coefficient = float(clamp(point_biserial_r, -1.0, 1.0));
-
-    set_confidence_interval(result, sample_count);
-
-    return result;
-}
-
-Correlation eta_squared_correlation(const VectorR& continuous,
-                                    const MatrixR& categorical)
-{
-    Correlation result;
-    result.form   = Correlation::Form::Identity;
-    result.method = Correlation::Method::Pearson;
-
-    const auto [x_filter, y_filter] = filter_missing_values(continuous, categorical);
-
-    if (x_filter.size() < 2 || is_constant(x_filter))
-    {
-        result.coefficient = 0.0f;
-        return result;
-    }
-
-    const Index sample_count = x_filter.size();
-    const Index categories_number     = y_filter.cols();
-
-    const auto x_double = x_filter.cast<double>();
-    const double grand_mean = x_double.mean();
-    const double ss_total = (x_double.array() - grand_mean).square().sum();
-
-    if (ss_total <= 0)
-    {
-        result.coefficient = 0.0f;
-        return result;
-    }
-
-    double ss_between = 0;
-
-    for (Index i = 0; i < categories_number; ++i)
-    {
-        const auto mask = (y_filter.col(i).array() > 0.5f);
-        const double group_sum = mask.select(x_double.array(), 0.0).sum();
-        const Index group_count = mask.count();
-
-        if (group_count == 0) continue;
-
-        const double group_mean = group_sum / double(group_count);
-        const double diff       = group_mean - grand_mean;
-        ss_between += double(group_count) * diff * diff;
-    }
-
-    const double eta_sq = ss_between / ss_total;
-
-    result.coefficient = float(clamp(sqrt(eta_sq), 0.0, 1.0));
-
-    set_confidence_interval(result, sample_count);
-
-    return result;
-}
-
 Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
     if ((x.array() <= 0.0f).any() || (y.array() <= 0.0f).any())
@@ -694,31 +552,6 @@ void Correlation::set_perfect()
     upper_confidence = 1.0f;
     lower_confidence = 1.0f;
     form = Correlation::Form::Identity;
-}
-
-static const char* form_to_string(Correlation::Form form)
-{
-    using enum Correlation::Form;
-    switch (form)
-    {
-    case Identity:    return "linear";
-    case Sigmoid:     return "logistic";
-    case Logarithmic: return "logarithmic";
-    case Exponential: return "exponential";
-    case Power:       return "power";
-    default:          return "";
-    }
-}
-
-void Correlation::print() const
-{
-    cout << "Correlation\n"
-         << "Type: " << form_to_string(form) << "\n"
-         << "Intercept: " << intercept << "\n"
-         << "Slope: " << slope << "\n"
-         << "Coefficient: " << coefficient << "\n"
-         << "Lower confidence: " << lower_confidence << "\n"
-         << "Upper confidence: " << upper_confidence << "\n";
 }
 
 }

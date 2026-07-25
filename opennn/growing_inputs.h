@@ -29,7 +29,6 @@ public:
     void set_minimum_inputs_number(const Index new_minimum_inputs_number) { minimum_inputs_number = new_minimum_inputs_number; }
 
     void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
-    bool get_warm_start() const noexcept { return warm_start; }
 
     InputsSelectionResult perform_input_selection() override;
 

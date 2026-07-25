@@ -71,35 +71,22 @@ public:
     void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
     Index get_batch_size() const { return batch_size; }
     void check() const;
-    MatrixR calculate_error() const;
 
     Tensor3 calculate_error_data() const;
     MatrixR calculate_percentage_error_data() const;
-
-    vector<Descriptives> calculate_absolute_errors_descriptives() const;
-    vector<Descriptives> calculate_absolute_errors_descriptives(const MatrixR&, const MatrixR&) const;
-
-    vector<Descriptives> calculate_percentage_errors_descriptives() const;
-    vector<Descriptives> calculate_percentage_errors_descriptives(const MatrixR&, const MatrixR&) const;
 
     vector<vector<Descriptives>> calculate_error_data_descriptives() const;
 
     vector<Histogram> calculate_error_data_histograms(const Index = 10) const;
 
-    Tensor<VectorI, 1> calculate_maximal_errors(const Index = 10) const;
-
-    MatrixR calculate_errors() const;
     VectorR calculate_errors(const MatrixR&, const MatrixR&) const;
     VectorR calculate_errors(const string&) const;
 
-    MatrixR calculate_binary_classification_errors() const;
     VectorR calculate_binary_classification_errors(const string&) const;
 
-    MatrixR calculate_multiple_classification_errors() const;
     VectorR calculate_multiple_classification_errors(const string&) const;
 
     float calculate_determination(const VectorR&, const VectorR&) const;
-    Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
     Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
     void print_goodness_of_fit_analysis() const;
@@ -140,7 +127,6 @@ private:
     vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, float,
                                                 bool, bool) const;
 
-    MatrixR calculate_errors_by_role(Index, VectorR (TestingAnalysis::*)(const string&) const) const;
     VectorR calculate_classification_errors(const string&, bool binary) const;
 
     NeuralNetwork* neural_network = nullptr;

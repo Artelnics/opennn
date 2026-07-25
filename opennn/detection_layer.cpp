@@ -83,12 +83,6 @@ void Detection::set_input_shape(const Shape& new_input_shape)
     configure_operator();
 }
 
-void Detection::set_anchors(const vector<array<float, 2>>& new_anchors)
-{
-    detection.anchors = new_anchors;
-    configure_operator();
-}
-
 void Detection::configure_operator()
 {
     if (input_shape.empty() || detection.anchors.empty()) return;

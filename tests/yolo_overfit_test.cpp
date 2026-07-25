@@ -469,7 +469,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
         loss.set_yolo_focal_gamma(2.0f);
-        loss.set_yolo_lambda_giou(5.0f);
         loss.set_yolo_lambda_class(0.01f);  // solid-color images → class can't localize; box drives convergence
         AdaptiveMomentEstimation adam(&loss);
         adam.set_maximum_epochs(epochs);

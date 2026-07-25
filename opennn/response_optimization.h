@@ -99,25 +99,15 @@ public:
 
     void set(NeuralNetwork* = nullptr);
 
-    void clear_constraints();
-    void clear_constraints(const string&);
-
     void clear_objectives();
-    void clear_objectives(const string&);
-
-    void clear_time_roles();
-    void clear_time_roles(const string&);
 
     void set_constraint(const string&, const ComparisonOperator comparison = ComparisonOperator::None, float low = 0.0f, float up = 0.0f);
 
     void set_constraint(const string&, const vector<float>&);
 
     void set_cardinality_constraint(const vector<string>&, Index, bool force_nonzero = true);
-    void clear_cardinality_constraints();
 
     void set_objective(const string&, const Sense, const float value = 0.0f);
-
-    void set_time_role(const string&, const TimeType);
 
     void set_formula_constraint(const string&,
                                 ComparisonOperator,
@@ -129,42 +119,22 @@ public:
 
     void set_formula_constraint(const string&, const vector<float>&);
 
-    void clear_formula_constraints();
-
-    void set_min_feasible_ratio(float);
     void set_max_oversample_factor(Index);
     void set_exploration_ratio(float);
 
-    void set_fixed_history(const Tensor3&);
-    void clear_fixed_history();
-
     void set_iterations(const int);
-    void set_zoom_factor(float);
     void set_evaluations_number(const int);
     void set_relative_tolerance(float);
-    void set_max_pareto_number(const Index);
     void set_max_total_evaluations(const Index);
-    void set_initial_sampling_factor(const Index);
 
     void set_branch_mode(const BranchMode);
-
-    void set_deformation_domain_factor(float);
-    float get_deformation_domain_factor();
 
     vector<Descriptives> get_descriptives(const string&) const;
 
     const pair<vector<Variable>, vector<Descriptives>>& get_variables_and_descriptives(const string&) const;
 
-    vector<float> get_utopian_point() const;
-
-    const map<string, vector<Index>>& get_category_frequencies() const noexcept { return sampling_memory.category_frequencies; }
-
-    const vector<CardinalityConstraint>& get_cardinality_constraints() const noexcept { return constraint_set.cardinality; }
-
     pair<Index, VectorR> get_advised_point(const MatrixR&,
                                                          const VectorR& importance_scale = VectorR()) const;
-
-    pair<Index, VectorR> get_robust_point(const MatrixR&, float balance = 0.5f) const;
 
     Domain get_original_domain(string_view role) const;
 
@@ -219,8 +189,6 @@ public:
     Index get_objectives_number() const;
 
     Index get_optimizing_objectives_number() const;
-
-    Index get_evaluations_used() const;
 
     vector<NamedColumn> build_input_columns(const vector<Variable>&) const;
     vector<NamedColumn> build_output_columns(const vector<Variable>&) const;

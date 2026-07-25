@@ -147,15 +147,10 @@ public:
 
     Index get_input_sequence_length() const;
     Index get_decoder_sequence_length() const;
-    Index get_embedding_dimension() const;
-    Index get_heads_number() const;
 
     void set_dropout_rate(const float);
-    void set_attention_sdpa_auto(bool);
     void set_attention_sdpa_min_sequence_length(Index);
 
-    void set_input_tokenizer(unique_ptr<TokenizerOperator>);
-    void set_target_tokenizer(unique_ptr<TokenizerOperator>);
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
     const TokenizerOperator* get_input_tokenizer() const;
@@ -185,8 +180,6 @@ public:
     explicit TextGenerationNetwork(const filesystem::path&);
 
     Index get_sequence_length() const;
-    Index get_embedding_dimension() const;
-    Index get_heads_number() const;
 
     void set_dropout_rate(const float);
     void set_attention_sdpa_auto(bool);
@@ -194,7 +187,6 @@ public:
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     void set_vocabulary(const vector<string>&);
     const TokenizerOperator* get_tokenizer() const;
-    const vector<string>& get_vocabulary() const;
 
 };
 
@@ -229,10 +221,6 @@ public:
          Index intermediate_size,
          Index layers_number,
          Index type_vocabulary_size = 2);
-
-    Index get_sequence_length() const;
-    Index get_hidden_size() const;
-    Index get_heads_number() const;
 };
 
 class BertForSequenceClassification final : public NeuralNetwork

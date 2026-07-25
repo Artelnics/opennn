@@ -19,8 +19,6 @@ class NeuralNetwork;
 
 struct NetworkDifferential
 {
-    static inline long long benchmark_vjp_count = 0;
-
     enum class Kind { Scale, Dense, Unscale, Bound, Activate };
 
     struct LayerSnapshot
@@ -166,7 +164,6 @@ struct NetworkDifferential
 
     VectorR vjp(const VectorR& x, const VectorR& cotangent) const
     {
-        ++benchmark_vjp_count;
         if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
             forward(x);
 

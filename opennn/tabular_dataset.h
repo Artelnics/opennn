@@ -69,8 +69,6 @@ public:
     void set_default_variable_scalers();
     void apply_default_variable_roles() { set_default_variable_roles(); }
 
-    void set_gmt(const Index new_gmt) { gmt = new_gmt; }
-
     MissingValuesMethod get_missing_values_method() const { return missing_values_method; }
     string get_missing_values_method_string() const;
     const string& get_missing_values_label() const { return missing_values_label; }
@@ -120,13 +118,11 @@ public:
     VectorI calculate_target_distribution() const override;
     vector<vector<Index>> calculate_Tukey_outliers(const float = 1.5f, bool = false);
     vector<vector<Index>> replace_Tukey_outliers_with_NaN(const float = 1.5f);
-    void unuse_Tukey_outliers(const float = 1.5f);
 
     bool has_nan() const override;
     bool has_nan_row(Index) const;
 
     VectorI count_nans_per_variable() const;
-    Index count_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
 

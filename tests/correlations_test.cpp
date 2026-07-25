@@ -81,8 +81,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     Correlation correlation = logistic_correlation(x, y);
 
-    correlation.print();
-
     EXPECT_LE(abs(correlation.coefficient), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 

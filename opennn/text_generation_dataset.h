@@ -30,20 +30,12 @@ public:
     const vector<string>& get_vocabulary() const noexcept { return tokenizer->get_vocabulary(); }
     Index get_vocabulary_size() const noexcept { return tokenizer->get_vocabulary_size(); }
 
-    const TokenizerOperator::VocabularyMap& get_vocabulary_map() const noexcept
-    {
-        return tokenizer->get_vocabulary_map();
-    }
-
     Index get_sequence_length() const noexcept { return sequence_length; }
 
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
 
     void set_vocabulary(const vector<string>&);
-
-    void set_maximum_vocabulary_size(Index new_maximum) { maximum_vocabulary_size = new_maximum; }
-    void set_minimum_token_frequency(Index new_minimum) { minimum_token_frequency = new_minimum; }
 
     void read_txt();
 

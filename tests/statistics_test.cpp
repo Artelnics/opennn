@@ -429,7 +429,6 @@ TEST(StatisticsTest, Histogram)
     vector.resize(11);
     vector << type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10);
     Histogram histogram(vector, 10);
-    EXPECT_EQ(histogram.get_bins_number(), 10);
 
     centers = histogram.centers;
     frequencies = histogram.frequencies;
@@ -527,53 +526,6 @@ TEST(StatisticsTest, MaximalIndex)
 }
 
 
-TEST(StatisticsTest, MinimalIndices)
-{
-    
-    VectorR vector;
-
-   
-    EXPECT_EQ(minimal_indices(vector, 0).rows(), 0);
-
-    
-    vector.resize(3);
-    vector <<  type(-1),type(0),type(1);
-
-    EXPECT_EQ(minimal_indices(vector, 1)(0), 0);
-
-    EXPECT_EQ(minimal_indices(vector, 3)(0), 0);
-    EXPECT_EQ(minimal_indices(vector, 3)(1), 1);
-    EXPECT_EQ(minimal_indices(vector, 3)(2), 2);
-
-
-    vector.resize(4);
-    vector <<  type(0),type(0),type(0),type(1);
-
-    EXPECT_EQ(minimal_indices(vector, 4)(0), 0);
-    EXPECT_EQ(minimal_indices(vector, 4)(1), 1);
-    EXPECT_EQ(minimal_indices(vector, 4)(3), 3);
-
-  
-    vector.resize(5);
-    vector << type(0),type(1),type(0),type(2),type(0);
-
-    EXPECT_EQ(minimal_indices(vector, 5)(0) == 0 || minimal_indices(vector, 5)(0) == 2 || minimal_indices(vector, 5)(0) == 4, true);
-    EXPECT_EQ(minimal_indices(vector, 5)(1) == 0 || minimal_indices(vector, 5)(1) == 2 || minimal_indices(vector, 5)(1) == 4, true);
-    EXPECT_EQ(minimal_indices(vector, 5)(2) == 0 || minimal_indices(vector, 5)(2) == 2 || minimal_indices(vector, 5)(2) == 4, true);
-    EXPECT_EQ(minimal_indices(vector, 5)(3), 1);
-    EXPECT_EQ(minimal_indices(vector, 5)(4), 3);
-    
-
-
-    vector.resize(4);
-    vector << type(-1),type(2),type(-3),type(4);
-
-    EXPECT_EQ(minimal_indices(vector, 2)(0), 2);
-    EXPECT_EQ(minimal_indices(vector, 2)(1), 0);
-    
-}
-
-
 TEST(StatisticsTest, MaximalIndices)
 {
     
@@ -635,7 +587,7 @@ TEST(StatisticsTest, BoxPlot)
 
     box_plot = opennn::box_plot(vector);
 
-    solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
+    solution = BoxPlot(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
     EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
 
@@ -650,7 +602,7 @@ TEST(StatisticsTest, BoxPlot)
 
     box_plot = opennn::box_plot(vector);
 
-    solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
+    solution = BoxPlot(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
     EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
 

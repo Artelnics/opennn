@@ -44,7 +44,6 @@ TEST(TextGenerationDataset, OwnsVocabularyThroughTokenizer)
 
     EXPECT_EQ(dataset.get_vocabulary(), expected_vocabulary);
     EXPECT_EQ(dataset.get_tokenizer()->get_vocabulary(), expected_vocabulary);
-    EXPECT_EQ(dataset.get_vocabulary_map().at("alpha"), 2);
 
     const Index sequence_length = dataset.get_sequence_length();
     const MatrixR& data = dataset.get_data();
@@ -145,7 +144,7 @@ TEST(TextGenerationDataset, UsesLoadedBytePairTokenizer)
     dataset.read_txt();
 
     EXPECT_EQ(dataset.get_vocabulary_size(), 4);
-    EXPECT_EQ(dataset.get_vocabulary_map().at("ab"), 3);
+    EXPECT_EQ(dataset.get_vocabulary()[3], "ab");
     EXPECT_GT(dataset.get_samples_number(), 0);
 
     error_code error;

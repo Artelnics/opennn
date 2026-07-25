@@ -62,9 +62,6 @@ TEST(Dataset, SampleRoles)
     EXPECT_EQ(dataset.get_samples_number("Training"), 10);
     EXPECT_EQ(dataset.get_used_samples_number(), 10);
     EXPECT_EQ(ssize(dataset.get_sample_indices("Training")), 10);
-
-    EXPECT_TRUE(dataset.is_sample_used(0));
-    EXPECT_TRUE(dataset.is_sample_used(9));
 }
 
 

@@ -20,8 +20,6 @@ struct Descriptives
 
     void set(const float = NAN, float = NAN, float = NAN, float = NAN);
 
-    void print(const string& = "Descriptives:") const;
-
     string name = "Descriptives";
 
     float minimum = -1.0f;
@@ -51,12 +49,6 @@ struct BoxPlot
             float = NAN,
             float = NAN);
 
-    void set(const float = NAN,
-             float = NAN,
-             float = NAN,
-             float = NAN,
-             float = NAN);
-
     float minimum = NAN;
 
     float first_quartile = NAN;
@@ -75,8 +67,6 @@ struct Histogram
     Histogram(const VectorR&, const VectorR&);
 
     Histogram(const VectorR&, Index);
-
-    Index get_bins_number() const;
 
     VectorR minimums;
 
@@ -133,11 +123,8 @@ vector<Descriptives> descriptives(const MatrixR&);
 vector<Descriptives> descriptives(const MatrixR&, const vector<Index>&, const vector<Index>&);
 Histogram histogram(const VectorR&, Index  = 10);
 Histogram histogram_centered(const VectorR&, float = 0.0f, Index  = 10);
-Histogram histogram(const VectorB&);
 vector<Histogram> histograms(const MatrixR&, Index = 10);
 Index minimal_index(const VectorR&);
-VectorI minimal_indices(const VectorR&, Index);
-VectorI minimal_indices(const MatrixR&);
 Index maximal_index(const VectorR&);
 VectorI maximal_indices(const VectorR&, Index);
 VectorI maximal_indices(const MatrixR&);
@@ -169,8 +156,6 @@ inline bool is_binary(const T& tensor)
                   [](float value) { return value == 0.0f || value == 1.0f || isnan(value); });
 }
 
-vector<Index> build_feasible_rows_mask(const MatrixR&, const VectorR&, const VectorR&);
-
 template <typename T>
 inline bool is_constant(const T& tensor)
 {
@@ -188,23 +173,9 @@ inline bool is_constant(const T& tensor)
                   [reference_value](float value) { return isnan(value) || abs(reference_value - value) <= numeric_limits<float>::min(); });
 }
 
-inline vector<Index> get_true_indices(const VectorB& flags)
-{
-    vector<Index> indices;
-    indices.reserve(flags.size());
-
-    for (Index i = 0; i < flags.size(); ++i)
-        if (flags(i))
-            indices.push_back(i);
-
-    return indices;
-}
-
 VectorR local_outlier_factor(const MatrixR&, Index);
 
 VectorI calculate_rank(const VectorR&, bool ascending = true);
-
-vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 

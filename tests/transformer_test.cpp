@@ -88,28 +88,6 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(in[15], (vector<Index>{12, 14}));
 
     EXPECT_EQ(in[16], (vector<Index>{15}));
-
-    const vector<vector<Index>> out = transformer.get_consumer_layers();
-
-    ASSERT_EQ(out.size(), 17);
-
-    EXPECT_EQ(out[0],  (vector<Index>{1}));
-    EXPECT_EQ(out[1],  (vector<Index>{10, 9}));
-    EXPECT_EQ(out[2],  (vector<Index>{3}));
-    EXPECT_EQ(out[3],  (vector<Index>{5, 4}));
-    EXPECT_EQ(out[4],  (vector<Index>{5}));
-    EXPECT_EQ(out[5],  (vector<Index>{8, 6}));
-    EXPECT_EQ(out[6],  (vector<Index>{7}));
-    EXPECT_EQ(out[7],  (vector<Index>{8}));
-    EXPECT_EQ(out[8],  (vector<Index>{11}));
-    EXPECT_EQ(out[9],  (vector<Index>{10}));
-    EXPECT_EQ(out[10], (vector<Index>{12, 11}));
-    EXPECT_EQ(out[11], (vector<Index>{12}));
-    EXPECT_EQ(out[12], (vector<Index>{15, 13}));
-    EXPECT_EQ(out[13], (vector<Index>{14}));
-    EXPECT_EQ(out[14], (vector<Index>{15}));
-    EXPECT_EQ(out[15], (vector<Index>{16}));
-    EXPECT_EQ(out[16], (vector<Index>{-1}));
 }
 
 // OpenNN: Open Neural Networks Library.

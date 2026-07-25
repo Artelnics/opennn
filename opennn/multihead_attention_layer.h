@@ -62,15 +62,11 @@ public:
     void set_dropout_rate(float new_dropout_rate) { attention.dropout.set_rate(new_dropout_rate); }
 
     void set_zero_padded_queries(bool);
-    bool get_zero_padded_queries() const noexcept { return attention.zero_padded_queries; }
 
     static constexpr Index default_sdpa_min_sequence_length = 192;
 
     void set_sdpa_auto(bool);
     void set_sdpa_min_sequence_length(Index);
-
-    bool  get_sdpa_auto() const noexcept { return sdpa_auto; }
-    Index get_sdpa_min_sequence_length() const noexcept { return sdpa_min_sequence_length; }
 
     bool should_use_sdpa() const;
 

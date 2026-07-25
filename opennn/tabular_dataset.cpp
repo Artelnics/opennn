@@ -95,8 +95,6 @@ bool TabularDataset::has_nan_row(Index row_index) const { return data.row(row_in
 
 VectorI TabularDataset::count_nans_per_variable() const { return data.array().isNaN().cast<Index>().colwise().sum(); }
 
-Index TabularDataset::count_variables_with_nan() const { return (count_nans_per_variable().array() > 0).count(); }
-
 Index TabularDataset::count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
 
 Index TabularDataset::count_nan() const { return data.array().isNaN().count(); }
@@ -1213,23 +1211,6 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
 vector<vector<Index>> TabularDataset::replace_Tukey_outliers_with_NaN(const float cleaning_parameter)
 {
     return calculate_Tukey_outliers(cleaning_parameter, true);
-}
-
-void TabularDataset::unuse_Tukey_outliers(const float cleaning_parameter)
-{
-    const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
-
-    const vector<Index>& outliers_mask = outliers_indices[0];
-    const vector<Index> sample_indices = get_used_sample_indices();
-
-    vector<Index> outliers_samples;
-    outliers_samples.reserve(outliers_mask.size());
-
-    for (size_t j = 0; j < outliers_mask.size(); ++j)
-        if (outliers_mask[j] > 0)
-            outliers_samples.push_back(sample_indices[j]);
-
-    set_sample_roles(outliers_samples, "None");
 }
 
 void TabularDataset::set_data_binary_classification()

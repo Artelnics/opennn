@@ -126,15 +126,6 @@ void Descriptives::set(const float new_minimum, float new_maximum,
     standard_deviation = new_standard_deviation;
 }
 
-void Descriptives::print(const string& title) const
-{
-    cout << title << "\n"
-         << "Minimum: " << minimum << "\n"
-         << "Maximum: " << maximum << "\n"
-         << "Mean: " << mean << "\n"
-         << "Standard deviation: " << standard_deviation << "\n";
-}
-
 BoxPlot::BoxPlot(float new_minimum,
                  float new_first_quartile,
                  float new_median,
@@ -146,19 +137,6 @@ BoxPlot::BoxPlot(float new_minimum,
       third_quartile(new_third_quartile),
       maximum(new_maximum)
 {
-}
-
-void BoxPlot::set(float new_minimum,
-                  float new_first_quartile,
-                  float new_median,
-                  float new_third_quartile,
-                  float new_maximum)
-{
-    minimum = new_minimum;
-    first_quartile = new_first_quartile;
-    median = new_median;
-    third_quartile = new_third_quartile;
-    maximum = new_maximum;
 }
 
 Histogram::Histogram(const Index bins_number)
@@ -194,11 +172,6 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
 
         frequencies(clamped_bin(value, data_minimum, inv_step, bins_number))++;
     }
-}
-
-Index Histogram::get_bins_number() const
-{
-    return centers.size();
 }
 
 float minimum(const MatrixR& matrix)
@@ -517,25 +490,6 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     return assemble_histogram(centers, minimums, maximums, frequencies);
 }
 
-Histogram histogram(const VectorB& flags)
-{
-    VectorR minimums = VectorR::Zero(2);
-
-    VectorR maximums = VectorR::Ones(2);
-
-    VectorR centers(2);
-    centers << 0.0f, 1.0f;
-
-    VectorR frequencies = VectorR::Zero(2);
-
-    const Index size = flags.size();
-
-    for (Index i = 0; i < size; ++i)
-        frequencies(flags(i) ? 1 : 0)++;
-
-    return assemble_histogram(centers, minimums, maximums, frequencies);
-}
-
 vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 {
     const Index columns_number = matrix.cols();
@@ -709,24 +663,6 @@ Index maximal_index(const VectorR& vector)
     return index;
 }
 
-VectorI minimal_indices(const VectorR& data, Index count)
-{
-    vector<Index> indices(data.size());
-    iota(indices.begin(), indices.end(), 0);
-
-    count = min(count, ssize(data));
-
-    partial_sort(indices.begin(),
-                 indices.begin() + count,
-                 indices.end(),
-                 [&data](Index i, Index j) {
-                     if (data(i) == data(j)) return i < j;
-                     return data(i) < data(j);
-                 });
-
-    return Map<VectorI>(indices.data(), count);
-}
-
 VectorI maximal_indices(const VectorR& data, Index count)
 {
     vector<Index> indices(data.size());
@@ -741,13 +677,6 @@ VectorI maximal_indices(const VectorR& data, Index count)
                  });
 
     return Map<VectorI>(indices.data(), count);
-}
-
-VectorI minimal_indices(const MatrixR& matrix)
-{
-    VectorI result(2);
-    matrix.minCoeff(&result(0), &result(1));
-    return result;
 }
 
 VectorI maximal_indices(const MatrixR& matrix)
@@ -803,31 +732,6 @@ VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
     return outlier_factor;
 }
 
-vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
-{
-    const Index rows_unfiltered = outputs.rows();
-    const Index variables_to_filter = outputs.cols();
-
-    throw_if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter,
-             "build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
-
-    vector<Index> feasible_rows;
-    feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
-
-    const auto min_bound = minimums.transpose().array();
-    const auto max_bound = maximums.transpose().array();
-
-    for (Index i = 0; i < rows_unfiltered; ++i)
-    {
-        const auto row_arr = outputs.row(i).array();
-
-        if ((row_arr >= min_bound && row_arr <= max_bound).all())
-            feasible_rows.push_back(i);
-    }
-
-    return feasible_rows;
-}
-
 VectorI calculate_rank(const VectorR& vector, bool ascending)
 {
     const Index size = vector.size();
@@ -840,16 +744,6 @@ VectorI calculate_rank(const VectorR& vector, bool ascending)
          [&](Index i, Index j) { return ascending ? vector[i] < vector[j] : vector[i] > vector[j]; });
 
     return rank;
-}
-
-vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
-{
-    vector<Index> indices;
-    indices.reserve(data.size());
-
-    ranges::copy_if(data, back_inserter(indices),
-                    [bound](Index value) { return value > bound; });
-    return indices;
 }
 
 VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)

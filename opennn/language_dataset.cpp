@@ -199,16 +199,6 @@ void LanguageDataset::read_txt()
     cout << "Reading finished" << "\n";
 }
 
-void LanguageDataset::set_input_vocabulary(const vector<string>& new_vocabulary)
-{
-    input_tokenizer->set_vocabulary(new_vocabulary);
-}
-
-void LanguageDataset::set_target_vocabulary(const vector<string>& new_vocabulary)
-{
-    target_tokenizer->set_vocabulary(new_vocabulary);
-}
-
 void LanguageDataset::configure(Index samples_number, bool has_decoder)
 {
     input_shape = {maximum_input_sequence_length};

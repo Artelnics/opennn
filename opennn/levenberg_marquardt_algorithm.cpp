@@ -47,25 +47,9 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_damping_parameter = 1.0e6f;
 }
 
-void LevenbergMarquardtAlgorithm::set_damping_parameter(const float new_damping_parameter)
-{
-    initial_damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
-    damping_parameter = initial_damping_parameter;
-}
-
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const float new_damping_parameter_factor)
 {
     damping_parameter_factor = new_damping_parameter_factor;
-}
-
-void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const float new_minimum_damping_parameter)
-{
-    minimum_damping_parameter = new_minimum_damping_parameter;
-}
-
-void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const float new_maximum_damping_parameter)
-{
-    maximum_damping_parameter = new_maximum_damping_parameter;
 }
 
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const float new_minimum_loss_decrease)

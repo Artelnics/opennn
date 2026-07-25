@@ -38,10 +38,6 @@ public:
 
     const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
 
-    bool has_training_strategy() const noexcept { return training_strategy; }
-
-    bool get_display() const noexcept { return display; }
-
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;
 
@@ -57,7 +53,6 @@ public:
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
-    Index get_folds_number() const noexcept { return folds_number; }
 
     virtual InputsSelectionResult perform_input_selection() = 0;
 

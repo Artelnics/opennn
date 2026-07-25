@@ -32,12 +32,6 @@ public:
     void set_beta_1(const float);
     void set_beta_2(const float);
 
-    void set_update_period(const Index new_period)
-    {
-        throw_if(new_period < 1, "update period must be >= 1.");
-        update_period = new_period;
-    }
-
     void update_parameters(BackPropagation&, OptimizerData&) override;
 
     void update_parameters_capturable(BackPropagation&, OptimizerData&) const;

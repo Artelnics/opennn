@@ -38,12 +38,6 @@ void set_seed(unsigned seed)
     srand(seed);
 }
 
-long long get_seed()
-{
-    lock_guard<mutex> lock(rng_mutex);
-    return current_seed;
-}
-
 float random_uniform(float min, float max)
 {
     lock_guard<mutex> lock(rng_mutex);
@@ -158,29 +152,6 @@ bool draw_k_hot(const Index count, const Index k,
         out[free_indices[pick]] = 1.0f;
 
     return true;
-}
-
-void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
-{
-    const size_t size = vec.size();
-    if (size < 2) return;
-
-    const size_t block_size = size / max(size_t(1), blocks_number);
-
-    if (block_size < 10)
-    {
-        shuffle_vector(vec);
-        return;
-    }
-
-    lock_guard<mutex> lock(rng_mutex);
-    for (size_t i = 0; i < size; i += block_size)
-    {
-        const auto start = vec.begin() + i;
-        const auto end = (i + block_size > size) ? vec.end() : start + block_size;
-
-        shuffle(start, end, generator);
-    }
 }
 
 void shuffle(VectorB& vector_to_shuffle)

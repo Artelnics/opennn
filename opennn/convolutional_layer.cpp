@@ -233,16 +233,6 @@ void Convolutional::set_column_stride(const Index new_stride_column)
     update_convolution_operator();
 }
 
-void Convolutional::set_convolution_type(const string& new_convolution_type)
-{
-    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
-             "Convolution type must be 'Valid' or 'Same'.");
-
-    use_padding = (new_convolution_type == "Same");
-
-    update_convolution_operator();
-}
-
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
     const ActivationFunction function = ActivationOperator::from_string(new_activation_function);

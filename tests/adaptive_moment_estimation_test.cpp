@@ -576,18 +576,6 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
 }
 
 
-TEST_F(AdaptiveMomentEstimationTest, GradientClipNormRoundTrip)
-{
-    AdaptiveMomentEstimation adaptive_moment_estimation;
-
-    adaptive_moment_estimation.set_gradient_clip_norm(2.5f);
-    EXPECT_FLOAT_EQ(adaptive_moment_estimation.get_gradient_clip_norm(), 2.5f);
-
-    adaptive_moment_estimation.set_gradient_clip_norm(0.5f);
-    EXPECT_FLOAT_EQ(adaptive_moment_estimation.get_gradient_clip_norm(), 0.5f);
-}
-
-
 TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);

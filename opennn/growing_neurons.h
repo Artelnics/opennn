@@ -25,7 +25,6 @@ public:
     void set_neurons_increment(const Index);
 
     void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
-    bool get_warm_start() const noexcept { return warm_start; }
 
     NeuronsSelectionResult perform_neurons_selection() override;
 

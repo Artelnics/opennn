@@ -37,7 +37,6 @@ public:
 
     Index get_input_height() const noexcept { return input_height; }
     Index get_input_width() const noexcept { return input_width; }
-    Index get_input_channels() const noexcept { return input_channels; }
 
     Index get_kernel_height() const noexcept { return kernel_height; }
     Index get_kernel_width() const noexcept { return kernel_width; }
@@ -49,8 +48,6 @@ public:
 
     Index get_padding_height() const;
     Index get_padding_width() const;
-
-    bool get_use_padding() const noexcept { return use_padding; }
 
     ActivationFunction get_activation_function() const noexcept { return activation_operator.activation_function; }
     ActivationFunction get_output_activation() const noexcept override { return activation_operator.activation_function; }
@@ -77,7 +74,6 @@ public:
 
     void set_row_stride(const Index);
     void set_column_stride(const Index);
-    void set_convolution_type(const string&);
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
 

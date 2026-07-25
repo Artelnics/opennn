@@ -93,7 +93,6 @@ public:
     Index get_layer_index(const string&) const;
 
     const vector<vector<Index>>& get_source_layers() const noexcept { return source_layers; }
-    vector<vector<Index>> get_consumer_layers() const;
 
     Layer* get_first(const string&);
     Layer* get_first(LayerType);
@@ -153,11 +152,7 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
-    MatrixR calculate_directional_inputs(const Index, const VectorR&, float, float, Index = 101) const;
-
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
-
-    Index calculate_image_output(const filesystem::path&);
 
     MatrixR calculate_text_outputs(const Tensor<string, 1>&);
     void from_JSON(const JsonDocument&);
@@ -189,8 +184,6 @@ public:
 public:
 
     void cast_parameters_to_bf16();
-
-    void release_bf16_fp32_parameter_master_for_inference();
 
     void upload_parameters_bf16_inference();
 

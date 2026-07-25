@@ -13,8 +13,6 @@ using namespace opennn;
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
     GeneticAlgorithm genetic_algorithm;
-
-    EXPECT_EQ(genetic_algorithm.has_training_strategy(), false);
 }
 
 
@@ -23,8 +21,6 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
     TrainingStrategy training_strategy;
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
-
-    EXPECT_EQ(genetic_algorithm.has_training_strategy(), true);
 }
 
 

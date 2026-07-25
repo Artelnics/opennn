@@ -145,7 +145,6 @@ public:
 
     void print() const {}
 
-    void set_yolo_lambda_giou(float v)      { yolo_lambda_giou      = v; }
     void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
     void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }

@@ -52,12 +52,8 @@ public:
    explicit LevenbergMarquardtAlgorithm(Loss* = nullptr);
    void set_default();
 
-   void set_damping_parameter(const float);
-
    void set_damping_parameter_factor(const float);
 
-   void set_minimum_damping_parameter(const float);
-   void set_maximum_damping_parameter(const float);
    void set_minimum_loss_decrease(const float);
    TrainingResult train() override;
 

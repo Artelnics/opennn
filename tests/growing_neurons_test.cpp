@@ -12,20 +12,14 @@ using namespace opennn;
 TEST(GrowingNeuronsTest, DefaultConstructor)
 {
     GrowingNeurons growing_neurons;
-
-    EXPECT_EQ(growing_neurons.has_training_strategy(), false);
 }
 
 
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
-
     TrainingStrategy training_strategy;
-    
+
     GrowingNeurons growing_neurons(&training_strategy);
-
-    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
-
 }
 
 

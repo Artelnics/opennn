@@ -59,11 +59,6 @@ void ResponseOptimization::set_cardinality_constraint(const vector<string>& vari
     constraint_set.cardinality.push_back({ variable_names, k, force_nonzero });
 }
 
-void ResponseOptimization::clear_cardinality_constraints()
-{
-    constraint_set.cardinality.clear();
-}
-
 void ResponseOptimization::set_objective(const string& name, const Sense sense, const float value)
 {
     objectives[name] = sense;
@@ -72,12 +67,6 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense, 
         fixed_values[name] = value;
     else
         fixed_values.erase(name);
-}
-
-void ResponseOptimization::set_time_role(const string& name, const TimeType role)
-{
-    time_roles[name] = role;
-    variables_descriptives.clear();
 }
 
 vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
@@ -201,18 +190,6 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     network_jacobian.ready = false;
 }
 
-void ResponseOptimization::clear_formula_constraints()
-{
-    constraint_set.multivariate.clear();
-    constraint_set.disjunctive.clear();
-    network_jacobian.ready = false;
-}
-
-void ResponseOptimization::set_min_feasible_ratio(float new_ratio)
-{
-    min_feasible_ratio = new_ratio;
-}
-
 void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 {
     max_oversample_factor = new_factor;
@@ -223,38 +200,10 @@ void ResponseOptimization::set_exploration_ratio(float new_ratio)
     exploration_ratio = new_ratio;
 }
 
-void ResponseOptimization::clear_constraints()
-{
-    constraint_set.univariate.clear();
-}
-
-void ResponseOptimization::clear_constraints(const string& name)
-{
-    constraint_set.univariate.erase(name);
-}
-
 void ResponseOptimization::clear_objectives()
 {
     objectives.clear();
     fixed_values.clear();
-}
-
-void ResponseOptimization::clear_objectives(const string& name)
-{
-    objectives.erase(name);
-    fixed_values.erase(name);
-}
-
-void ResponseOptimization::clear_time_roles()
-{
-    time_roles.clear();
-    variables_descriptives.clear();
-}
-
-void ResponseOptimization::clear_time_roles(const string& name)
-{
-    time_roles.erase(name);
-    variables_descriptives.clear();
 }
 
 UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
@@ -284,18 +233,6 @@ bool ResponseOptimization::is_history(const string& name) const
     return it != time_roles.end() && is_past(it->second);
 }
 
-void ResponseOptimization::set_fixed_history(const Tensor3& history)
-{
-    fixed_history = history;
-    network_jacobian.ready = false;
-}
-
-void ResponseOptimization::clear_fixed_history()
-{
-    fixed_history = Tensor3();
-    network_jacobian.ready = false;
-}
-
 void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
 {
     evaluations_number = new_evaluations_number;
@@ -306,19 +243,9 @@ void ResponseOptimization::set_iterations(const int new_max_iterations)
     max_iterations = new_max_iterations;
 }
 
-void ResponseOptimization::set_zoom_factor(float new_zoom_factor)
-{
-    zoom_factor = new_zoom_factor;
-}
-
 void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
 {
     relative_tolerance = new_relative_tolerance;
-}
-
-void ResponseOptimization::set_max_pareto_number(const Index new_max_pareto_number)
-{
-    max_pareto_number = new_max_pareto_number;
 }
 
 void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_evaluations)
@@ -326,29 +253,9 @@ void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_e
     max_total_evaluations = new_max_total_evaluations;
 }
 
-void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_sampling_factor)
-{
-    initial_sampling_factor = max(Index(1), new_initial_sampling_factor);
-}
-
 void ResponseOptimization::set_branch_mode(const BranchMode new_branch_mode)
 {
     branch_mode = new_branch_mode;
-}
-
-Index ResponseOptimization::get_evaluations_used() const
-{
-    return evaluations_used;
-}
-
-void ResponseOptimization::set_deformation_domain_factor(float new_deformation_domain_factor)
-{
-    deformation_domain_factor = new_deformation_domain_factor;
-}
-
-float ResponseOptimization::get_deformation_domain_factor()
-{
-    return deformation_domain_factor;
 }
 
 Index ResponseOptimization::get_optimizing_objectives_number() const
@@ -2021,20 +1928,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     return append_columns(global_pareto_inputs, global_pareto_outputs);
 }
 
-vector<float> ResponseOptimization::get_utopian_point() const
-{
-    const Objectives objective_set(*this);
-
-    const Index objectives_number = objective_set.utopian_and_sense.cols();
-
-    vector<float> utopian_point(static_cast<size_t>(objectives_number));
-
-    for (Index j = 0; j < objectives_number; ++j)
-        utopian_point[static_cast<size_t>(j)] = objective_set.utopian_and_sense(0, j);
-
-    return utopian_point;
-}
-
 pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pareto_front,
                                                              const VectorR& importance_scale) const
 {
@@ -2097,132 +1990,6 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
     const Index advised_row_index = nearest(0);
 
     return {advised_row_index, pareto_front.row(advised_row_index).transpose()};
-}
-
-pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front, const float balance) const
-{
-    if (front.rows() == 0)
-        return {-1, VectorR()};
-    if (front.rows() == 1)
-        return {0, front.row(0).transpose()};
-
-    const float alpha = clamp(balance, 0.0f, 1.0f);
-
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    throw_if(front.cols() < inputs_number,
-             "get_robust_point: front has fewer columns than the number of input features.\n");
-
-    const Index rows = front.rows();
-    const MatrixR inputs = front.leftCols(inputs_number);
-
-    const Domain domain = get_original_domain("Input");
-    const vector<Variable>& input_variables = get_variables_and_descriptives("Input").first;
-    const vector<char> discrete = discrete_column_mask(input_variables);
-
-    VectorR span(inputs_number);
-    for (Index c = 0; c < inputs_number; ++c)
-        span(c) = domain.superior_frontier(c) - domain.inferior_frontier(c);
-
-    VectorR margin(rows);
-    for (Index r = 0; r < rows; ++r)
-    {
-        float worst = 1.0f;
-        bool any_continuous = false;
-        for (Index c = 0; c < inputs_number; ++c)
-        {
-            if (discrete[static_cast<size_t>(c)] || span(c) < EPSILON) continue;
-            any_continuous = true;
-            const float half = 0.5f * span(c);
-            const float m = min(inputs(r, c) - domain.inferior_frontier(c),
-                                domain.superior_frontier(c) - inputs(r, c)) / half;
-            worst = min(worst, clamp(m, 0.0f, 1.0f));
-        }
-        margin(r) = any_continuous ? worst : 1.0f;
-    }
-
-    const NetworkDifferential* differential = network_jacobian.differential.get();
-    unique_ptr<NetworkDifferential> local_differential;
-    if (!differential && neural_network && !is_forecasting())
-    {
-        local_differential = make_unique<NetworkDifferential>();
-        try { local_differential->build(*neural_network); differential = local_differential.get(); }
-        catch (const exception&) { differential = nullptr; }
-    }
-
-    const auto sensitivity_of = [&](const VectorR& x) -> float
-    {
-        double sum_sq = 0.0;
-
-        if (differential)
-        {
-            for (Index o = 0; o < outputs_number; ++o)
-            {
-                VectorR cotangent = VectorR::Zero(outputs_number);
-                cotangent(o) = 1.0f;
-                const VectorR gradient = differential->vjp(x, cotangent);
-                for (Index c = 0; c < inputs_number; ++c)
-                    sum_sq += double(gradient(c) * span(c)) * double(gradient(c) * span(c));
-            }
-        }
-        else if (!is_forecasting())
-        {
-            MatrixR probe(2 * inputs_number, inputs_number);
-            for (Index c = 0; c < inputs_number; ++c)
-            {
-                const float h = max(1e-4f, 1e-3f * span(c));
-                probe.row(2 * c)     = x.transpose(); probe(2 * c, c)     += h;
-                probe.row(2 * c + 1) = x.transpose(); probe(2 * c + 1, c) -= h;
-            }
-            const MatrixR out = calculate_outputs(probe);
-            for (Index c = 0; c < inputs_number; ++c)
-            {
-                const float h = max(1e-4f, 1e-3f * span(c));
-                for (Index o = 0; o < outputs_number; ++o)
-                {
-                    const float derivative = (out(2 * c, o) - out(2 * c + 1, o)) / (2.0f * h);
-                    sum_sq += double(derivative * span(c)) * double(derivative * span(c));
-                }
-            }
-        }
-
-        return float(sqrt(sum_sq));
-    };
-
-    VectorR sensitivity(rows);
-    for (Index r = 0; r < rows; ++r)
-        sensitivity(r) = sensitivity_of(inputs.row(r).transpose());
-
-    const auto minmax_to_score = [](const VectorR& v, const bool invert) -> VectorR
-    {
-        const float lo = v.minCoeff();
-        const float range = v.maxCoeff() - lo;
-        VectorR s(v.size());
-        if (range < EPSILON) { s.setConstant(1.0f); return s; }
-        for (Index i = 0; i < v.size(); ++i)
-        {
-            const float t = (v(i) - lo) / range;
-            s(i) = invert ? (1.0f - t) : t;
-        }
-        return s;
-    };
-
-    const VectorR centrality_score = minmax_to_score(margin, false);
-    const VectorR robustness_score = minmax_to_score(sensitivity, true);
-
-    constexpr float floor_value = 1e-3f;
-    Index best = 0;
-    float best_score = -1.0f;
-    for (Index r = 0; r < rows; ++r)
-    {
-        const float centrality = max(floor_value, centrality_score(r));
-        const float robustness = max(floor_value, robustness_score(r));
-        const float score = pow(centrality, 1.0f - alpha) * pow(robustness, alpha);
-        if (score > best_score) { best_score = score; best = r; }
-    }
-
-    return {best, front.row(best).transpose()};
 }
 
 void ResponseOptimization::initialize_network_differential() const

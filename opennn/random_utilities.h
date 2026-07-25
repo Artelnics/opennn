@@ -13,7 +13,6 @@
 namespace opennn
 {
     void set_seed(unsigned seed);
-    long long get_seed();
 
     float random_uniform(float = -1, float = 1);
     Index random_integer(Index, Index);
@@ -44,8 +43,6 @@ namespace opennn
 
     bool draw_k_hot(Index, Index, const vector<char>&,
                     const vector<char>&, vector<float>&);
-
-    void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
     Index get_random_element(const vector<Index>&);
 

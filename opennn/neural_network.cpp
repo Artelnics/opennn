@@ -170,25 +170,6 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     throw runtime_error(format("Layer not found: {}", new_label));
 }
 
-vector<vector<Index>> NeuralNetwork::get_consumer_layers() const
-{
-    const Index layers_number = ssize(source_layers);
-
-    vector<vector<Index>> consumer_layers(layers_number);
-
-    for (Index i = layers_number - 1; i >= 0; --i)
-    {
-        if (consumer_layers[i].empty())
-            consumer_layers[i].push_back(-1);
-
-        for (const Index source_layer : source_layers[i])
-            if (source_layer >= 0)
-                consumer_layers[source_layer].push_back(i);
-    }
-
-    return consumer_layers;
-}
-
 const Layer* NeuralNetwork::get_first(const string& name) const
 {
     return get_first(string_to_layer_type(name));
@@ -912,60 +893,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     }
 }
 
-MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
-                                                    const VectorR& point,
-                                                    float minimum,
-                                                    float maximum,
-                                                    Index points_number) const
-{
-    const Index inputs_number = get_inputs_number();
-
-    MatrixR directional_inputs(points_number, inputs_number);
-
-    VectorR inputs = point;
-
-    for (Index i = 0; i < points_number; ++i)
-    {
-        inputs(direction) = lerp(minimum, maximum, float(i)/float(points_number-1));
-        directional_inputs.row(i) = inputs.transpose();
-    }
-
-    return directional_inputs;
-}
-
-Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
-{
-    Tensor3 image = load_image(image_path);
-
-    const auto* scaling_layer = dynamic_cast<Scaling*>(get_first(LayerType::Scaling));
-    throw_if(!scaling_layer || scaling_layer->get_input_shape().rank != 3,
-             "Expected 4D image Scaling layer.");
-
-    const Index height = scaling_layer->get_input_shape()[0];
-    const Index width = scaling_layer->get_input_shape()[1];
-    const Index channels = scaling_layer->get_input_shape()[2];
-
-    const Index current_height = image.dimension(0);
-    const Index current_width = image.dimension(1);
-    const Index current_channels = image.dimension(2);
-
-    throw_if(current_channels != channels,
-             "Different channels number {}\n", image_path.string());
-
-    if (current_height != height || current_width != width)
-        image = resize_image(image, height, width);
-
-    Tensor4 input_data(1, height, width, channels);
-
-    const Index pixels_number = height * width * channels;
-
-    copy_n(image.data(), pixels_number, input_data.data());
-
-    const Matrix outputs = calculate_outputs(input_data);
-
-    return outputs.size() > 1 ? maximal_index(outputs.row(0)) : Index(outputs(0));
-}
-
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
     const auto* tokenizer_layer = dynamic_cast<const Tokenizer*>(get_first(LayerType::Tokenizer));
@@ -1491,71 +1418,6 @@ void NeuralNetwork::cast_parameters_to_bf16()
                            parameters_bf16_mirror.as<bfloat16>());
 }
 
-void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
-{
-    if (config.training_type != Type::BF16
-        || parameters.device_type != Device::CUDA
-        || parameters.empty()
-        || parameters_bf16_mirror.empty()
-        || !parameters.owns)
-        return;
-
-    const auto specs = get_parameter_specs();
-
-    Index fp32_keep_floats = 0;
-    for (const auto& layer_specs : specs)
-        for (const auto& [shape, dtype] : layer_specs)
-            if (!shape.empty() && dtype != Type::BF16)
-                fp32_keep_floats += get_aligned_size(shape.size());
-
-    if (fp32_keep_floats > 0)
-    {
-        parameters_fp32_inference_storage.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
-
-        cudaStream_t stream = Backend::get_compute_stream();
-        float* const source_base = parameters.as<float>();
-        float* const destination_base = parameters_fp32_inference_storage.as<float>();
-
-        Index source_offset = 0;
-        Index destination_offset = 0;
-
-        for (const auto& layer_specs : specs)
-            for (const auto& [shape, dtype] : layer_specs)
-            {
-                if (shape.empty()) continue;
-
-                const Index aligned = get_aligned_size(shape.size());
-                if (dtype != Type::BF16)
-                {
-                    device::copy_async(destination_base + destination_offset,
-                                       source_base + source_offset,
-                                       aligned * Index(sizeof(float)),
-                                       device::CopyKind::DeviceToDevice,
-                                       stream);
-                    destination_offset += aligned;
-                }
-                source_offset += aligned;
-            }
-
-        device::synchronize(stream);
-        memory_debug::record("parameters",
-                             "fp32_compact_inference",
-                             parameters_fp32_inference_storage.bytes,
-                             "bf16_release");
-    }
-    else
-    {
-        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-    }
-
-    const Index fp32_master_bytes = parameters.bytes;
-    parameters.resize_bytes(0, Device::CUDA);
-    parameters.set_view(parameters_bf16_mirror.data,
-                        fp32_master_bytes,
-                        Device::CUDA);
-    link_parameters();
-}
-
 #ifdef OPENNN_HAS_CUDA
 
 static inline uint16_t float_to_bfloat16_host(float value)
@@ -1842,10 +1704,6 @@ void NeuralNetwork::copy_parameters_device()
 void NeuralNetwork::cast_parameters_to_bf16()
 {
     throw runtime_error("NeuralNetwork::cast_parameters_to_bf16 requires CUDA support.");
-}
-
-void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
-{
 }
 
 void NeuralNetwork::upload_parameters_bf16_inference()

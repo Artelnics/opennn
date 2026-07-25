@@ -30,7 +30,6 @@ public:
 
     void set(const Shape&, const vector<array<float, 2>>&, const string&);
     void set_input_shape(const Shape&) override;
-    void set_anchors(const vector<array<float, 2>>&);
     void set_class_activation(ClassActivation new_class_activation) { detection.class_activation = new_class_activation; }
 
     void read_JSON_body(const Json*) override;

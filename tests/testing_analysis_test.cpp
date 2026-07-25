@@ -56,50 +56,6 @@ TEST(TestingAnalysis, PercentageErrorData)
 }
 
 
-TEST(TestingAnalysis, AbsoluteErrorDescriptives)
-{
-    TestingAnalysis testing_analysis;
-
-    MatrixR targets(4, 1);
-    targets << type(1), type(2), type(3), type(4);
-
-    MatrixR outputs(4, 1);
-    outputs << type(1.5), type(2), type(2), type(4);
-
-    const vector<Descriptives> error_data =
-        testing_analysis.calculate_absolute_errors_descriptives(targets, outputs);
-
-    ASSERT_EQ(ssize(error_data), 1);
-    EXPECT_NEAR(error_data[0].minimum, type(0),     1e-5);
-    EXPECT_NEAR(error_data[0].maximum, type(1),     1e-5);
-    EXPECT_NEAR(error_data[0].mean,    type(0.375), 1e-5);
-}
-
-
-TEST(TestingAnalysis, PercentageErrorDescriptives)
-{
-    vector<Descriptives> error_data;
-
-
-    const Index samples_number = 1;
-    const Index inputs_number = 1;
-    const Index targets_number = 1;
-
-    TabularDataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
-    dataset.set_data_constant(type(0));
-    dataset.set_sample_roles("Testing");
-
-    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
-    neural_network.set_parameters_random();
-
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
-    error_data = testing_analysis.calculate_percentage_errors_descriptives();
-
-    EXPECT_EQ(error_data.size(), 1);
-    EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation), 0.0);
-}
-
 TEST(TestingAnalysis, ErrorDataDescriptives)
 {
     const Index samples_number = 1;
@@ -145,49 +101,6 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
     EXPECT_EQ(error_data_histograms.size(), 1);
-    EXPECT_EQ(error_data_histograms[0].get_bins_number(), 10);
-}
-
-
-TEST(TestingAnalysis, MaximalErrors)
-{
-    Tensor<VectorI, 1> maximal_errors;
-
-    const Index samples_number = 1;
-    const Index inputs_number = 1;
-    const Index targets_number = 1;
-
-    TabularDataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
-    dataset.set_data_constant(type(0));
-    dataset.set_sample_roles("Testing");
-
-    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
-
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
-    maximal_errors = testing_analysis.calculate_maximal_errors(2);
-
-    EXPECT_EQ(maximal_errors.rank(), 1);
-    EXPECT_EQ(maximal_errors[0](0), 0 );
-}
-
-
-TEST(TestingAnalysis, LinearRegression)
-{
-    TabularDataset dataset(5, { 1 }, { 1 });
-    ApproximationNetwork neural_network({ 1 }, {}, { 1 });
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
-
-    MatrixR targets(5, 1);
-    targets << type(1), type(2), type(3), type(4), type(5);
-
-    MatrixR outputs(5, 1);
-    outputs << type(1), type(2), type(3), type(4), type(5);
-
-    const Tensor<Correlation, 1> correlation = testing_analysis.linear_correlation(targets, outputs);
-
-    ASSERT_EQ(correlation.size(), 1);
-    EXPECT_NEAR(correlation(0).coefficient, type(1), 1e-4);
 }
 
 

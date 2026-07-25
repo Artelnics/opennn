@@ -35,18 +35,6 @@ void TestingAnalysis::check() const
              "dataset is not set.");
 }
 
-Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
-{
-    const Index outputs_number = dataset->get_features_number(VariableRole::Target);
-
-    Tensor<Correlation, 1> linear_correlation(outputs_number);
-
-    for (Index i = 0; i < outputs_number; ++i)
-        linear_correlation(i) = opennn::linear_correlation(output.col(i), target.col(i));
-
-    return linear_correlation;
-}
-
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
     check();
@@ -148,13 +136,6 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     return {target_data, output_data};
 }
 
-MatrixR TestingAnalysis::calculate_error() const
-{
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    return targets - outputs;
-}
-
 Tensor3 TestingAnalysis::calculate_error_data() const
 {
     check();
@@ -229,37 +210,6 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     return error_data;
 }
 
-vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() const
-{
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    return calculate_absolute_errors_descriptives(targets, outputs);
-}
-
-vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(const MatrixR& targets,
-                                                                             const MatrixR& outputs) const
-{
-    const MatrixR difference = (targets-outputs).array().abs();
-
-    return descriptives(difference);
-}
-
-vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives() const
-{
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    return calculate_percentage_errors_descriptives(targets, outputs);
-}
-
-vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const MatrixR& targets,
-                                                                               const MatrixR& outputs) const
-{
-    MatrixR difference = 100.0f*(targets-outputs).array().abs()/targets.array();
-    difference = difference.array().isFinite().select(difference.array(), 0.0f).matrix();
-
-    return descriptives(difference);
-}
-
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
 
@@ -293,53 +243,6 @@ vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index b
         histograms[i] = histogram_centered(error_data.col(i), 0.0f, bins_number);
 
     return histograms;
-}
-
-Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples_number) const
-{
-    Tensor3 error_data = calculate_error_data();
-
-    const Index outputs_number = error_data.dimension(2);
-    const Index testing_samples_number = error_data.dimension(0);
-
-    Tensor<VectorI, 1> maximal_errors(outputs_number);
-
-    const Index stride = testing_samples_number * 3;
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        const MatrixMap matrix_error(error_data.data() + i * stride, testing_samples_number, 3);
-        maximal_errors[i] = maximal_indices(matrix_error.col(0), samples_number);
-    }
-
-    return maximal_errors;
-}
-
-MatrixR TestingAnalysis::calculate_errors_by_role(const Index rows_number,
-                                                  VectorR (TestingAnalysis::*calculate_role_errors)(const string&) const) const
-{
-    MatrixR errors(rows_number, 3);
-
-    errors.col(0) = (this->*calculate_role_errors)("Training");
-    errors.col(1) = (this->*calculate_role_errors)("Validation");
-    errors.col(2) = (this->*calculate_role_errors)("Testing");
-
-    return errors;
-}
-
-MatrixR TestingAnalysis::calculate_errors() const
-{
-    return calculate_errors_by_role(5, &TestingAnalysis::calculate_errors);
-}
-
-MatrixR TestingAnalysis::calculate_binary_classification_errors() const
-{
-    return calculate_errors_by_role(6, &TestingAnalysis::calculate_binary_classification_errors);
-}
-
-MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
-{
-    return calculate_errors_by_role(5, &TestingAnalysis::calculate_multiple_classification_errors);
 }
 
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,

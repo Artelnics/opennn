@@ -89,10 +89,7 @@ TEST_F(LevenbergMarquardtAlgorithmTest, DampingParametersConverge)
     loss.set_error(Loss::Error::MeanSquaredError);
     loss.set_regularization("None");
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&loss);
-    levenberg_marquardt_algorithm.set_damping_parameter(0.01f);
     levenberg_marquardt_algorithm.set_damping_parameter_factor(10.0f);
-    levenberg_marquardt_algorithm.set_minimum_damping_parameter(1.0e-6f);
-    levenberg_marquardt_algorithm.set_maximum_damping_parameter(1.0e6f);
     levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0f);
     levenberg_marquardt_algorithm.set_display(false);
 

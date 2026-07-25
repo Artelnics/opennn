@@ -99,7 +99,6 @@ public:
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
 
-    bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
 
     void set(const filesystem::path&,

@@ -67,33 +67,6 @@ TEST(LanguageDataset, ReservedTokenConstants)
 }
 
 
-TEST(LanguageDataset, SetVocabularyRoundTrip)
-{
-    LanguageDataset dataset;
-
-    const vector<string> input_vocabulary = { "[PAD]", "[UNK]", "[START]", "[END]", "hello", "world" };
-    const vector<string> target_vocabulary = { "[PAD]", "[UNK]", "[START]", "[END]", "yes", "no" };
-
-    dataset.set_input_vocabulary(input_vocabulary);
-    dataset.set_target_vocabulary(target_vocabulary);
-
-    EXPECT_EQ(dataset.get_input_vocabulary_size(), 6);
-    EXPECT_EQ(dataset.get_target_vocabulary_size(), 6);
-
-    EXPECT_EQ(dataset.get_target_vocabulary(), target_vocabulary);
-
-    const auto& input_map = dataset.get_input_vocabulary_map();
-
-    ASSERT_EQ(input_map.size(), 6);
-    EXPECT_EQ(input_map.at("[PAD]"), 0);
-    EXPECT_EQ(input_map.at("[UNK]"), 1);
-    EXPECT_EQ(input_map.at("[START]"), 2);
-    EXPECT_EQ(input_map.at("[END]"), 3);
-    EXPECT_EQ(input_map.at("hello"), 4);
-    EXPECT_EQ(input_map.at("world"), 5);
-}
-
-
 TEST(LanguageDataset, ReadTxtBuildsVocabularyAndSequences)
 {
     const string file_path = temp_language_file("opennn_language_sentiment.txt", sentiment_content);
@@ -117,7 +90,7 @@ TEST(LanguageDataset, ReadTxtBuildsVocabularyAndSequences)
 }
 
 
-TEST(LanguageDataset, ReadTxtInputVocabularyMapContainsReservedTokens)
+TEST(LanguageDataset, ReadTxtInputVocabularyContainsReservedTokens)
 {
     const string file_path = temp_language_file("opennn_language_reserved.txt", sentiment_content);
 
@@ -130,19 +103,16 @@ TEST(LanguageDataset, ReadTxtInputVocabularyMapContainsReservedTokens)
 
     ASSERT_NO_THROW(dataset.read_txt());
 
-    const auto& input_map = dataset.get_input_vocabulary_map();
+    const vector<string>& input_vocabulary = dataset.get_input_vocabulary();
 
-    ASSERT_TRUE(input_map.contains("[PAD]"));
-    ASSERT_TRUE(input_map.contains("[UNK]"));
-    ASSERT_TRUE(input_map.contains("[START]"));
-    ASSERT_TRUE(input_map.contains("[END]"));
+    ASSERT_GE(ssize(input_vocabulary), 4);
 
-    EXPECT_EQ(input_map.at("[PAD]"), 0);
-    EXPECT_EQ(input_map.at("[UNK]"), 1);
-    EXPECT_EQ(input_map.at("[START]"), 2);
-    EXPECT_EQ(input_map.at("[END]"), 3);
+    EXPECT_EQ(input_vocabulary[0], "[PAD]");
+    EXPECT_EQ(input_vocabulary[1], "[UNK]");
+    EXPECT_EQ(input_vocabulary[2], "[START]");
+    EXPECT_EQ(input_vocabulary[3], "[END]");
 
-    EXPECT_EQ(Index(input_map.size()), dataset.get_input_vocabulary_size());
+    EXPECT_EQ(ssize(input_vocabulary), dataset.get_input_vocabulary_size());
 
     remove_language_file(file_path);
 }
@@ -240,8 +210,10 @@ TEST(LanguageDataset, CsvReaderPreservesQuotedSeparators)
 
     ASSERT_NO_THROW(dataset.read_txt());
     EXPECT_EQ(dataset.get_samples_number(), 2);
-    EXPECT_TRUE(dataset.get_input_vocabulary_map().contains("hello"));
-    EXPECT_TRUE(dataset.get_input_vocabulary_map().contains("world"));
+
+    const vector<string>& input_vocabulary = dataset.get_input_vocabulary();
+    EXPECT_NE(ranges::find(input_vocabulary, "hello"), input_vocabulary.end());
+    EXPECT_NE(ranges::find(input_vocabulary, "world"), input_vocabulary.end());
 
     remove_language_file(file_path);
 }

@@ -54,10 +54,6 @@ public:
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
-    void set_shuffle(bool enabled) { shuffle_samples = enabled; }
-
-    void set_batch_pool_size(int size) { batch_pool_size_override = size; }
-
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     Index get_maximum_epochs() const noexcept { return maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -66,9 +62,6 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
-    float get_gradient_clip_norm() const noexcept { return gradient_clip_norm; }
-
-    void set_restore_best(bool enabled) { restore_best = enabled; }
 
     virtual TrainingResult train();
 

@@ -77,7 +77,6 @@ public:
 
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
     void clear_fold_split() noexcept { fold_split_active = false; }
-    bool has_fold_split() const noexcept { return fold_split_active; }
 
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(VariableRole) const;
@@ -101,7 +100,6 @@ public:
 
     VariableType get_variable_type(const Index index) const { return variables[index].type; }
 
-    vector<VariableType> get_variable_types(const vector<Index>&) const;
     Index get_features_number() const;
     Index get_features_number(VariableRole) const;
     Index get_features_number(string_view role) const { return get_features_number(string_to_variable_role(role)); }
@@ -116,8 +114,6 @@ public:
     vector<Index> get_feature_indices(string_view role) const { return get_feature_indices(string_to_variable_role(role)); }
     vector<Index> get_used_feature_indices() const;
 
-    vector<Index> get_feature_dimensions() const;
-
     Shape get_shape(VariableRole) const;
     Shape get_shape(string_view role) const { return get_shape(string_to_variable_role(role)); }
 
@@ -127,7 +123,6 @@ public:
 
     const filesystem::path& get_data_path() const noexcept { return data_path; }
 
-    const filesystem::path& get_cache_directory() const noexcept { return cache_directory; }
     void set_cache_directory(const filesystem::path& new_cache_directory) { cache_directory = new_cache_directory; }
 
     StorageMode get_storage_mode() const noexcept { return storage_mode; }
@@ -156,7 +151,6 @@ public:
     void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
     bool is_device_resident() const noexcept { return data_device.data != nullptr; }
     const float* get_device_data() const { return data_device.as<float>(); }
-    Index get_data_columns() const noexcept { return data.cols(); }
     Index get_device_data_columns() const noexcept { return device_data_columns; }
 
     void set_sample_roles(SampleRole);
@@ -230,8 +224,6 @@ public:
     void set_codification(const string&);
 
     void set_display(bool new_display) { display = new_display; }
-
-    bool is_sample_used(const Index i) const { return sample_roles[i] != SampleRole::None; }
 
     bool has_validation() const;
 
