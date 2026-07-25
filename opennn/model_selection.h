@@ -21,7 +21,6 @@ class ModelSelection
 
 public:
 
-
     explicit ModelSelection(TrainingStrategy* = nullptr);
     const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
     bool has_training_strategy() const noexcept { return training_strategy; }

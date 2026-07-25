@@ -25,7 +25,6 @@ void load_image(const filesystem::path&,
 
 Tensor3 resize_image(const Tensor3&, Index, Index);
 
-// Shared 2x2 bilinear blend; coordinate mapping, clamping and rounding stay in the callers.
 template <typename Pixel>
 inline float bilinear_blend(Pixel v00, Pixel v01, Pixel v10, Pixel v11, float dx, float dy)
 {

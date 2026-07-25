@@ -29,7 +29,6 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     name = "LevenbergMarquardt";
 
-
     minimum_loss_decrease = 0.0f;
     training_loss_goal = 0.0f;
     maximum_validation_failures = 1000;
@@ -37,9 +36,7 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-
     display_period = 10;
-
 
     initial_damping_parameter = 1.0e-3f;
     damping_parameter = initial_damping_parameter;
@@ -149,7 +146,7 @@ static void lm_activation_derivative(ActivationFunction activation_function, con
              { return activation_derivative_from_output_value(activation_function, value); });
 }
 
-void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
+void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm)
 {
@@ -202,7 +199,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
     const size_t layers_count = dense_indices.size();
 
-    // Workspace reused across epochs; resize is a no-op once sized.
     vector<MatrixR>& deltas = back_propagation_lm.deltas;
     vector<MatrixR>& activation_derivatives = back_propagation_lm.activation_derivatives;
     deltas.resize(layers_count);
@@ -215,8 +211,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
         activation_derivatives[n].resize(batch_size, neurons);
     }
 
-    // delta(sample * outputs_number + j, k) = d output_j(sample) / d combination_k(sample)
-    // of the layer being processed; rows match the errors vector layout.
     {
         const size_t output_slot = forward_propagation.forward_slots[last_layer].size() - 1;
         const MatrixMap outputs = forward_propagation.forward_slots[last_layer][output_slot].as_matrix();
@@ -228,7 +222,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
         MatrixR& delta = deltas[layers_count - 1];
         delta.setZero();
 
-        // Sample s writes only rows [s*outputs_number, (s+1)*outputs_number): disjoint.
         #pragma omp parallel for
         for (Index sample = 0; sample < batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
@@ -251,8 +244,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
 
         jacobian.block(0, bias_offset, rows, neurons) = delta;
 
-        // Each entry is one independent product; sample s owns rows
-        // [s*outputs_number, (s+1)*outputs_number) of the weight block: disjoint.
         #pragma omp parallel for
         for (Index sample = 0; sample < batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
@@ -276,7 +267,6 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& /*batch*/,
         MatrixR& previous_delta = deltas[n - 1];
         previous_delta.noalias() = delta * weights.transpose();
 
-        // Elementwise in-place scaling; sample s owns disjoint rows.
         #pragma omp parallel for
         for (Index sample = 0; sample < batch_size; ++sample)
             for (Index j = 0; j < outputs_number; ++j)
@@ -350,8 +340,6 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     hooks.display_extra = [&]{ cout << "Damping parameter: " << damping_parameter << "\n"; };
 
-    // Unlike quasi-Newton, the LM update runs after the stopping check so the
-    // stopping epoch's parameters are the ones its recorded errors refer to.
     hooks.post_step = [&]
     {
         update_parameters(*context.training_batch,

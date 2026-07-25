@@ -86,10 +86,10 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
         dropout_states_buf.grow_to(Index(dropout_states_bytes));
         CHECK_CUDNN(cudnnSetDropoutDescriptor(
             dropout_desc, Backend::get_cudnn_handle(),
-            /*dropout=*/0.0f,
+             0.0f,
             dropout_states_buf.data,
             size_t(dropout_states_buf.bytes),
-            /*seed=*/0ULL));
+             0ULL));
 
         CHECK_CUDNN(cudnnSetRNNDescriptor_v8(
             rnn_desc,
@@ -104,7 +104,7 @@ void CudnnRnnState::cudnn_setup_attempt_(const CudnnRnnConfig& config,
             CUDNN_TENSOR_OP_MATH,
             int(F),
             int(H),
-            /*projSize=*/ int(H),
+              int(H),
             1,
             dropout_desc,
             persist_algo_active_ ? CUDNN_RNN_PADDED_IO_DISABLED
@@ -317,7 +317,7 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
 
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

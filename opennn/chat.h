@@ -144,16 +144,12 @@ public:
                                       const TokenizerOperator&) const override;
 };
 
-// Incrementally separates generated token ids into reasoning and final-content
-// channels. Control and stop sequences may contain more than one token and are
-// never included in either output string.
 class GenerationParser
 {
 public:
     GenerationParser(const TokenizerOperator&,
                      const GenerationParserSpec&);
 
-    // Returns true when a configured stop sequence has completed.
     bool push(Index, const ChatCallback& = {});
     void finish(const ChatCallback& = {});
 
@@ -167,9 +163,9 @@ public:
 private:
     struct ChannelState
     {
-        vector<Index> ids;   // accumulated only on the full re-decode fallback
-        string text;         // stable emitted text
-        string tail;         // incremental mode: withheld incomplete UTF-8 bytes
+        vector<Index> ids;
+        string text;
+        string tail;
     };
 
     bool process_pending(const ChatCallback&, bool flush);
@@ -191,13 +187,10 @@ private:
     Index control_tokens = 0;
 };
 
-// Reusable text session for encoder-decoder, classic decoder-only and
-// template-driven decoder chat. The networks and tokenizers remain caller-owned.
 class ChatSession
 {
 public:
-    // Encoder-decoder and classic decoder-only networks use the same send()
-    // API as templated decoder chat. They do not keep semantic history.
+
     explicit ChatSession(Transformer&);
     explicit ChatSession(TextGenerationNetwork&);
 

@@ -15,7 +15,6 @@
 namespace opennn
 {
 
-
 struct LongShortTermMemoryOperator : Operator, CudnnRnnState
 {
     enum ForwardSlot

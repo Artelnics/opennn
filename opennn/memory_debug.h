@@ -23,4 +23,3 @@ void record(const string&,
 void print(ostream&);
 
 }
-

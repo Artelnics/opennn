@@ -105,9 +105,6 @@ void TextGenerationDataset::read_txt()
 
     string buffer = read_text_file(data_path);
 
-    // A tokenizer with a fixed loaded vocabulary (subword, e.g. byte-pair)
-    // encodes the raw corpus; otherwise the corpus is lowercased and split into
-    // whitespace/word-level tokens whose vocabulary is built by frequency.
     const bool subword = fixed_vocabulary;
 
     vector<Index> token_ids;
@@ -125,8 +122,6 @@ void TextGenerationDataset::read_txt()
         token_ids = encode_corpus(corpus_tokens);
     }
 
-    // Non-overlapping blocks of (sequence_length + 1) tokens: inputs are tokens
-    // [0, T-1] and targets the same block shifted one position, [1, T].
     const Index record_tokens = sequence_length + 1;
     const Index samples_number = ssize(token_ids) / record_tokens;
 

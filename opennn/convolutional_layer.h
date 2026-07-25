@@ -81,12 +81,6 @@ public:
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
 
-    // Load weights (and BN) for this layer from an open Darknet
-    // binary weights file.  The file position must be placed immediately at
-    // the start of this layer's data (i.e. after the Darknet file header and
-    // all preceding layers).  With BN: reads beta, gamma, running_mean,
-    // running_var then conv weights.  Without BN: reads bias then conv weights.
-    // Conv weights are transposed from Darknet [O,I,H,W] → OpenNN [O,H,W,I].
     void load_darknet_weights(FILE*);
 
     void read_JSON_body(const Json*) override;
@@ -97,12 +91,6 @@ public:
 
 private:
 
-    // Inference-time copy of the convolution parameters with the batchnorm
-    // affine folded in (weights then bias, fp32, device-resident). Rebuilt
-    // whenever a training step or a parameter relink touches the originals —
-    // the same freshness contract as BatchNorm's inference scale/shift cache.
-    // Always present so the class layout is identical in CPU and CUDA builds;
-    // stays empty on CPU.
     Buffer folded_parameters;
     bool   folded_dirty = true;
 

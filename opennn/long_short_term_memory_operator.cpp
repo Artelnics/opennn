@@ -22,7 +22,6 @@ namespace opennn
 namespace
 {
 
-
 void link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
 {
     if (views.size() < targets.size()) return;
@@ -62,7 +61,6 @@ inline float lstm_derivative_from_output(ActivationFunction function, float y)
 }
 
 }
-
 
 void LongShortTermMemoryOperator::set(Index new_input_features,
                                 Index new_output_features,
@@ -250,7 +248,6 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
         const VectorMap bg_m = candidate_bias.as_vector();
         const VectorMap bo_m = output_bias.as_vector();
 
-        // Gate fusion: stack [f|i|g|o] so each step is 1+1 GEMM instead of 4+4.
         MatrixR Wcat(F, 4 * H);
         Wcat.leftCols(H)          = Wf_m;
         Wcat.middleCols(H, H)     = Wi_m;
@@ -543,7 +540,6 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
         VectorMap gbg_v = candidate_bias_gradient.as_vector();
         VectorMap gbo_v = output_bias_gradient.as_vector();
 
-        // Gate fusion: stack [f|i|g|o] so each step is 1+1+1 GEMM instead of 4×4.
         MatrixR Wcat(F, 4 * H);
         Wcat.leftCols(H)          = Wf_m;
         Wcat.middleCols(H, H)     = Wi_m;
@@ -959,8 +955,6 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
     const CudnnRnnShapeSlot& shape = active_shape();
 
-    // cuDNN always writes dx; when the previous layer needs no gradient
-    // (input_delta unlinked) give it a scratch sink sized (B, T, F).
     void* dx_data = input_delta.data;
     if (!dx_data || input_delta.empty())
     {
@@ -973,9 +967,9 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         rnn_desc,
         shape.seq_dev.as<int32_t>(),
         shape.y_desc, y_data, dy_data,
-        shape.x_desc, dx_data,   // dx
-        shape.h_desc, nullptr, nullptr, nullptr,   // hx, dhy, dhx
-        shape.c_desc, nullptr, nullptr, nullptr,   // cx, dcy, dcx
+        shape.x_desc, dx_data,
+        shape.h_desc, nullptr, nullptr, nullptr,
+        shape.c_desc, nullptr, nullptr, nullptr,
         size_t(weight_space_buf.bytes), weight_space_buf.data,
         size_t(workspace_buf.bytes), workspace_buf.data,
         size_t(reserve_space_buf.bytes), reserve_space_buf.data));
@@ -1010,7 +1004,7 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const Tenso
     throw runtime_error("apply_delta_gpu requires CUDA.");
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 }
 

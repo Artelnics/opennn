@@ -171,7 +171,7 @@ struct AttentionOperator::SDPACache
                                 Index(k.dropout_active), Index(k.causal), Index(k.is_training));
         }
     };
-    
+
     struct Entry
     {
         shared_ptr<cudnn_frontend::graph::Graph> fwd_graph;
@@ -194,10 +194,7 @@ struct AttentionOperator::SDPACache
 
         int32_t* query_lengths  = nullptr;
         int32_t* source_lengths = nullptr;
-        // The per-sample valid sequence lengths depend only on the source
-        // content (which positions are padding). On a repeated-inference loop the
-        // source buffer is reused, so cache the pointer and skip the scan when it
-        // is unchanged. A weight update / new source resets it via the pointer.
+
         const void* seq_len_source_ptr = nullptr;
         bfloat16* query = nullptr;
         bfloat16* key = nullptr;
@@ -320,8 +317,6 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-    // Skip the padding scan when the source buffer is the same one we last
-    // scanned for this entry: the lengths in seq_len_*_buf are already correct.
     if (source_input.data == entry.seq_len_source_ptr)
         return;
 
@@ -338,7 +333,7 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     entry.seq_len_source_ptr = source_input.data;
 }
 
-}  // namespace
+}
 
 static void build_sdpa_forward_graph(AttentionOperator::SDPACache::Entry& entry,
                                       const AttentionOperator::SDPACache::CacheKey& k,
@@ -488,11 +483,9 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
 
 #else
 
-// The header member unique_ptr<SDPACache> exists in every build; CPU builds
-// only need the type to be complete for the destructor instantiation.
 struct AttentionOperator::SDPACache {};
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 AttentionOperator::AttentionOperator() = default;
 AttentionOperator::~AttentionOperator() = default;
@@ -586,12 +579,6 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
 namespace
 {
 
-// Persistent staging for the per-batch valid lengths consumed by
-// attention_length_masked_softmax_cuda: a pinned host ring plus one high-water
-// device buffer, reused across calls instead of a per-call cudaMallocAsync.
-// Every consumer runs on the compute stream, so stream order protects the
-// device buffer; the per-slot events keep the host from rewriting a pinned
-// slot while its previous H2D copy is still in flight.
 struct AttentionLengthsStaging
 {
     static constexpr int slots = 4;
@@ -889,11 +876,6 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
     void* o_ptr = output.data;
     const bool fp32_via_bf16 = query.is_fp32();
 
-    // The backward graph needs the forward's O in BHSD layout, but `output`
-    // here is the shared transient scratch (clobbered by later layers); the
-    // persistent slot only keeps the head-merged copy. Keep a private O in the
-    // cache entry during training so apply_sdpa_backward reads valid data —
-    // the fp32 path already does this implicitly through its cast buffer.
     const bool keep_private_output = is_training && !fp32_via_bf16;
     if (keep_private_output)
     {
@@ -1003,7 +985,7 @@ void AttentionOperator::apply_delta_unfused(const TensorView& query,
 void AttentionOperator::apply_delta_cpu(const TensorView& query,
                                 const TensorView& key,
                                 const TensorView& value,
-                                const TensorView& /*attention_output*/,
+                                const TensorView&  ,
                                 const TensorView& attention_weights,
                                 const TensorView& attention_weights_dropped,
                                 const TensorView& output_delta,
@@ -1155,10 +1137,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bq  = query.data;
     void* bk  = key.data;
     void* bv  = value.data;
-    // O comes from the private copy kept by apply_sdpa_forward: the slot passed
-    // as attention_output holds the head-MERGED layout (and the BHSD scratch the
-    // graph wrote to is long since clobbered), so reading it would corrupt the
-    // dO*O row-sums that dQ/dK depend on.
+
     throw_if(!entry.output,
              "SDPA backward: no private forward output copy (forward not run with is_training).");
     void* bo  = entry.output;
@@ -1173,7 +1152,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
         const Index do_elems = output_delta.size();
-        // reuse the forward's cast Q/K/V/O (same iteration's forward populated them)
+
         bq  = entry.query;
         bk  = entry.key;
         bv  = entry.value;

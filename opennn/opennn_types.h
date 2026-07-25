@@ -19,9 +19,6 @@
 #define OPENNN_HAS_CUDA
 #endif
 
-// Eigen ABI/behavior configuration. Also injected as PUBLIC compile
-// definitions by the CMake target so they reach consumer TUs that include
-// Eigen before this header; the #ifndef copies cover non-CMake consumers.
 #ifndef EIGEN_USE_THREADS
 #define EIGEN_USE_THREADS
 #endif
@@ -98,7 +95,6 @@ void check_cuda_status(T status, const char* msg,
 
 #else
 
-
 using cudaStream_t     = void*;
 using cudaEvent_t      = void*;
 using cudaGraph_t      = void*;
@@ -110,8 +106,6 @@ using cublasLtMatmulDesc_t   = void*;
 using cublasLtMatrixLayout_t = void*;
 struct cublasLtMatmulAlgo_t {};
 
-// Same size as the real CUDA types so TypeInfo<BF16>::bytes and any
-// sizeof-based buffer math agree between CPU and CUDA builds.
 struct __nv_bfloat16 { unsigned short __x; };
 struct __half { unsigned short __x; };
 
@@ -136,7 +130,6 @@ using cudnnRNNDataDescriptor_t     = void*;
 using namespace std;
 using Eigen::Index;
 
-// Global alias: neuraleditor and other callers use bare 'type' for float
 using type = float;
 
 namespace opennn {
@@ -144,11 +137,8 @@ namespace opennn {
 using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
 
-// Compatibility alias: opennn internals can also use opennn::type
 using type = float;
 
-// JSON support types appear in header signatures only by reference; the full
-// definitions live in json.h, included by the TUs that use them.
 class Json;
 class JsonDocument;
 class JsonWriter;
@@ -161,7 +151,6 @@ inline void throw_if(bool condition, string_view message,
                                         message, loc.file_name(), loc.line()));
 }
 
-// Format diagnostics only on the exceptional path.
 template <typename... Args>
 inline void throw_if(bool condition, format_string<Args...> message, Args&&... args)
 {
@@ -218,7 +207,7 @@ using TensorMap4 = Eigen::TensorMap<Eigen::Tensor<float, 4, Layout | Eigen::Alig
 template <int Rank>
 using TensorMapR = Eigen::TensorMap<Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 
-#endif // OPENNN_TYPES_H_
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

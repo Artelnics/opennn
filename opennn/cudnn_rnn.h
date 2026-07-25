@@ -26,9 +26,6 @@ struct CudnnRnnConfig
 
 #endif
 
-// Shared cuDNN plumbing for the recurrent operators (vanilla RNN and LSTM):
-// descriptor/buffer state plus the setup / weight-space marshalling routines,
-// parameterized by cell mode, linear-layer count and persist-algo env var.
 struct CudnnRnnState
 {
 protected:

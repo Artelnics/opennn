@@ -277,9 +277,6 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
 
 static inline int layernorm_threads(int D);
 
-// One warp per row, the row slice cached in registers, shuffle-only reductions.
-// Masked positions behave like a -1e9 penalty, so a fully masked row still
-// softmaxes to uniform.
 template<typename T, int MAX_ELEMS>
 __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequence_length,
                                            const int heads_number, const int query_sequence_length,
@@ -736,8 +733,6 @@ __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
     }
 }
 
-// Block-wide two-accumulator sum. Returns true on thread 0, where (a, b) then
-// hold the block totals; other threads' accumulators are left partial.
 __device__ __forceinline__ bool block_reduce_sum2(float& a, float& b)
 {
     warp_reduce_sum2(a, b);
@@ -765,9 +760,6 @@ __device__ __forceinline__ bool block_reduce_sum2(float& a, float& b)
     return threadIdx.x == 0;
 }
 
-// LayerNorm (HasMean) / RMSNorm (!HasMean: mean 0, no beta, nullable inv_vars
-// stash) forward; FuseResidual additionally computes S = X + R once, writes S
-// to `sum` (the residual-stream tensor the backward needs) and normalizes S.
 template<typename T, bool FuseResidual, bool HasMean>
 __global__ void norm_forward_kernel(const int N, const int D, const T* __restrict__ X, const T* __restrict__ R, T* __restrict__ sum, T* __restrict__ Y, float* __restrict__ means, float* __restrict__ inv_vars, const float* __restrict__ gamma, const float* __restrict__ beta, const float eps)
 {
@@ -804,8 +796,7 @@ __global__ void norm_forward_kernel(const int N, const int D, const T* __restric
         if constexpr (HasMean)
         {
             const float mean = local_sum * inv_D;
-            // Clamp variance to >= 0: E[x^2] - E[x]^2 can go slightly negative
-            // from catastrophic cancellation, making rsqrtf return inf/nan.
+
             const float variance = fmaxf(local_sum_sq * inv_D - mean * mean, 0.0f);
             const float inv_var = rsqrtf(variance + eps);
             s_mean    = mean;
@@ -850,8 +841,6 @@ static inline int layernorm_threads(int D)
     return 256;
 }
 
-// NHWC batchnorm inference with the residual add and ReLU fused in (cuDNN's
-// legacy inference call has no NHWC kernel for several ResNet shapes).
 template<typename T>
 __global__ void batchnorm_inference_kernel(const Index total, const int channels,
                                            const T* __restrict__ x,
@@ -889,10 +878,6 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
-// Inference-time batchnorm folding: the BN affine collapses into the
-// convolution as W'[k,...] = W[k,...] * gamma[k]/sqrt(var[k]+eps) and
-// b'[k] = beta[k] - mean[k] * gamma[k]/sqrt(var[k]+eps). transpose flips the
-// folded weights from KRSC to [RSC, kernels], the GEMM layout 1x1 convs need.
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
                                     const float* __restrict__ weights,
                                     const float* __restrict__ gamma,
@@ -969,9 +954,6 @@ void layernorm_add_forward_cuda(const int N, const int D, const T* X, const T* R
     OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, true, true><<<N, layernorm_threads(D), 0, opennn::device::get_compute_stream()>>>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
 }
 
-// dX for LayerNorm (HasMean) and RMSNorm (!HasMean: x_hat = X * inv_rms and no
-// -mean(d) centring term). `gamma` is the RMSNorm weight; `means` may be null
-// when !HasMean.
 template<typename T, bool HasMean>
 __global__ void norm_backward_kernel(const int N, const int D, const T* __restrict__ dY, const T* __restrict__ X, const float* __restrict__ means, const float* __restrict__ inv_vars, const float* __restrict__ gamma, T* __restrict__ dX)
 {
@@ -1027,8 +1009,6 @@ __global__ void norm_backward_kernel(const int N, const int D, const T* __restri
     }
 }
 
-// dGamma (and dBeta when HasMean) for both norms; `dBeta`/`means` may be null
-// when !HasMean.
 template<typename T, int NUM_WARPS, bool HasMean>
 __global__ void norm_weight_gradient_coalesced_kernel(const int N, const int D,
                                                       const int chunk,
@@ -1101,9 +1081,7 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
     constexpr int NUM_WARPS = 8;
     const dim3 block(32, NUM_WARPS);
     const int grid_x = (D + 31) / 32;
-    // Narrow D gives few blocks in x (d_model 256 -> 8), so split the row
-    // range across grid.y until the GPU is covered; multi-chunk grids
-    // accumulate with atomics into zeroed buffers.
+
     const int desired_chunks = grid_x < 192 ? 192 / grid_x : 1;
     int chunk = ceil_div(N, desired_chunks);
     if (chunk < NUM_WARPS * 8) chunk = NUM_WARPS * 8;
@@ -1127,9 +1105,6 @@ void layernorm_backward_cuda(const int N, const int D, const T* dY, const T* X, 
     norm_backward_launch<T, true>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
 }
 
-// RMSNorm: Y = weight * X / sqrt(mean(X^2) + eps), no mean subtraction, no
-// bias. `inv_rms` stores the per-row 1/rms for the backward pass; null skips
-// the stash (inference-only callers).
 template<typename T>
 void rmsnorm_forward_cuda(const int N, const int D, const T* X, T* Y, float* inv_rms, const float* weight, const float eps)
 {
@@ -1146,10 +1121,6 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
     norm_backward_launch<T, false>(N, D, dY, X, nullptr, inv_rms, weight, dX, dWeight, nullptr);
 }
 
-// RoPE (rotate_half): one block per row, threads stride over the model_dim
-// channels. For channel d of head h, pair (d, d+half) within the head is rotated
-// by the row's sequence position. Channels >= rotary_dim pass through. Forward
-// uses +sin; backward (SIGN = -1) applies the transpose (inverse) rotation.
 template<typename T, int SIGN>
 __global__ void rope_apply_kernel(const int rows, const int seq, const int model_dim, const int head_dim, const int rotary_dim, const int offset, const T* __restrict__ in, T* __restrict__ out, const float* __restrict__ cos, const float* __restrict__ sin)
 {
@@ -1165,12 +1136,12 @@ __global__ void rope_apply_kernel(const int rows, const int seq, const int model
 
     for (int e = threadIdx.x; e < model_dim; e += blockDim.x)
     {
-        const int d = e % head_dim;              // channel within the head
+        const int d = e % head_dim;
         const int base_e = row_base + e;
 
         if (d < rotary_dim)
         {
-            const int head_start = base_e - d;   // row_base + h*head_dim
+            const int head_start = base_e - d;
             const float partner = (d < half)
                 ? -static_cast<float>(in[head_start + d + half])
                 :  static_cast<float>(in[head_start + d - half]);
@@ -1206,13 +1177,6 @@ void rope_backward_cuda(const int rows, const int seq, const int model_dim, cons
     OPENNN_CUDA_LAUNCH((rope_apply_kernel<T, -1><<<rows, rope_threads(model_dim), 0, opennn::device::get_compute_stream()>>>(rows, seq, model_dim, head_dim, rotary_dim, offset, dout, din, cos, sin)));
 }
 
-// Fused per-head QK-Norm + rotary embedding + KV-cache append for one decoded
-// token. One block per head over the fused [q | k | v] projection row: q heads
-// are normalized, rotated and written to q_out; k heads likewise, appended to
-// the key cache; v heads copied raw into the value cache. The append position
-// is read from device memory so a captured graph replays as the cache grows.
-// Matches rmsnorm_forward_kernel + rope_apply_kernel numerics (fp32 math,
-// rotate_half, rotary_dim == head_dim).
 template<typename T>
 __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_heads, const int head_dim,
                                             const float eps, const int* __restrict__ position,
@@ -1226,7 +1190,7 @@ __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_
     const int kv_dim = n_kv_heads * head_dim;
     const T* src     = qkv + size_t(h) * head_dim;
 
-    if (h >= n_q_heads + n_kv_heads)   // v head: raw append
+    if (h >= n_q_heads + n_kv_heads)
     {
         T* dst = v_cache + size_t(pos) * kv_dim + size_t(h - n_q_heads - n_kv_heads) * head_dim;
         for (int d = threadIdx.x; d < head_dim; d += blockDim.x) dst[d] = src[d];
@@ -1238,7 +1202,7 @@ __global__ void qk_rope_cache_append_kernel(const int n_q_heads, const int n_kv_
     T* dst = is_q ? q_out + size_t(h) * head_dim
                   : k_cache + size_t(pos) * kv_dim + size_t(h - n_q_heads) * head_dim;
 
-    extern __shared__ float vals[];   // normalized head vector
+    extern __shared__ float vals[];
 
     float local_sum_sq = 0.0f;
     float ignore = 0.0f;
@@ -1283,7 +1247,6 @@ void qk_rope_cache_append_cuda(const int n_q_heads, const int n_kv_heads, const 
         cos_table, sin_table, q_out, k_cache, v_cache)));
 }
 
-// SwiGLU: out = silu(gate) * up (element-wise). silu(g) = g * sigmoid(g).
 template<typename T>
 __global__ void swiglu_forward_kernel(const int n, const T* __restrict__ gate, const T* __restrict__ up, T* __restrict__ out)
 {
@@ -1322,12 +1285,6 @@ void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up
     launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
 }
 
-// Grouped-query causal attention, last-resort fallback: one thread per query
-// (b, hq, i) with a flash-style online softmax so scores are not materialized.
-// Q head hq uses KV head hq/(n_query_heads/n_kv_heads). Causal: query i (abs
-// pos offset+i) attends keys 0..(offset+i). head_dim capped at 256. General
-// shapes normally take the batched-GEMM route in tensor_operations.cpp; this
-// kernel only runs when that route cannot allocate its workspace.
 template<typename T>
 __global__ void grouped_attention_kernel(const int total_queries, const int query_seq, const int key_seq,
                                           const int n_query_heads, const int n_kv_heads, const int head_dim,
@@ -1371,11 +1328,6 @@ __global__ void grouped_attention_kernel(const int total_queries, const int quer
     for (int d = 0; d < head_dim; ++d) o_vec[d] = static_cast<T>(acc[d] * inv_l);
 }
 
-// Masked softmax over materialized GQA score rows (the batched-GEMM route):
-// one warp per row (b, hq, i), strided over key_seq so the length is uncapped.
-// valid = causal ? min(qoffset + i + 1, key_seq) : key_seq — the same rule as
-// grouped_attention_kernel; masked columns are written as exact zeros so the
-// probs x V GEMM reproduces the naive kernel's masking.
 template<typename T>
 __global__ void grouped_attention_softmax_kernel(const int rows, const int query_seq, const int key_seq,
                                                  const int qoffset, const int causal,
@@ -1420,8 +1372,6 @@ void grouped_attention_softmax_cuda(const int rows, const int query_seq, const i
         rows, query_seq, key_seq, query_position_offset, causal ? 1 : 0, scores, probs)));
 }
 
-// Loads N consecutive elements at p (16/8/4-byte aligned by construction: head
-// vectors start at multiples of head_dim elements) widened to fp32.
 template<typename T, int N>
 __device__ __forceinline__ void load_head_fragment(const T* __restrict__ p, float* out)
 {
@@ -1442,22 +1392,13 @@ __device__ __forceinline__ void load_head_fragment(const T* __restrict__ p, floa
     }
 }
 
-// Split-KV decode attention (batch 1, query_seq 1). One block per (kv head,
-// key-range block); each warp is an independent split holding flash-style
-// partials — running max, denominator and fp32 accumulators in registers — for
-// an interleaved subset of the keys, serving all GROUP query heads of its kv
-// head so every K/V row is read once instead of GROUP times. Partials go to
-// scratch laid out [kv_head][split][GROUP][HEAD_DIM + 2] (acc, max, denom);
-// empty splits write denom 0. `position_device`, when non-null, holds the
-// cached-token count BEFORE this token (valid keys = *position_device + 1) so
-// a captured graph replays as the cache grows.
 template<typename T, int HEAD_DIM, int GROUP>
 __global__ void grouped_attention_decode_kernel(const int n_kv_heads, const float scale,
                                                 const int* __restrict__ position_device, const int kv_length_host,
                                                 const T* __restrict__ Q, const T* __restrict__ K,
                                                 const T* __restrict__ V, float* __restrict__ partials)
 {
-    constexpr int FRAG = HEAD_DIM / 32;   // fp32 elements per lane
+    constexpr int FRAG = HEAD_DIM / 32;
 
     const int hkv      = blockIdx.x;
     const int lane     = threadIdx.x & 31;
@@ -1527,8 +1468,6 @@ __global__ void grouped_attention_decode_kernel(const int n_kv_heads, const floa
     }
 }
 
-// Log-sum-exp merge of the split partials: one block per query head, one thread
-// per head_dim channel.
 template<typename T>
 __global__ void grouped_attention_decode_combine_kernel(const int group, const int head_dim, const int n_splits,
                                                         const float* __restrict__ partials, T* __restrict__ O)
@@ -1539,8 +1478,8 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     const int d   = threadIdx.x;
 
     extern __shared__ float sm[];
-    float* sm_m = sm;               // [n_splits]
-    float* sm_l = sm + n_splits;    // [n_splits]
+    float* sm_m = sm;
+    float* sm_l = sm + n_splits;
 
     const float* base = partials + (size_t(hkv) * n_splits * group + g) * (head_dim + 2);
     const size_t stride = size_t(group) * (head_dim + 2);
@@ -1567,8 +1506,6 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
-// (value, index) argmax reductions; ties resolve to the lower index so the
-// greedy path matches the CPU first-maximum scan exactly.
 __device__ __forceinline__ void warp_argmax(float& v, int& i)
 {
     #pragma unroll
@@ -1601,9 +1538,6 @@ __device__ __forceinline__ void block_argmax(float& v, int& i, float* sm_v, int*
     __syncthreads();
 }
 
-// Per-block top-k of a logits row (column 0, [PAD], excluded): every thread
-// keeps its strided slice in registers and the block emits its k best
-// (value, index) pairs — the global top-k is a subset of the block-local ones.
 template<typename T, int SLOTS>
 __global__ void logits_top_candidates_kernel(const int n, const int k, const T* __restrict__ logits,
                                              float2* __restrict__ out)
@@ -1640,10 +1574,6 @@ __global__ void logits_top_candidates_kernel(const int n, const int k, const T* 
     }
 }
 
-// Merges the block-local candidates to the global top-k, then samples: argmax
-// when temperature <= 0; otherwise temperature scaling, softmax, top-p
-// truncation and a Philox draw seeded by (seed, step). Writes the id to
-// id_out and, when given, its float form to token_out (a decode input buffer).
 template<int SLOTS>
 __global__ void sample_from_candidates_kernel(const int m, const int k,
                                               const float temperature, const float top_p,
@@ -1684,7 +1614,7 @@ __global__ void sample_from_candidates_kernel(const int m, const int k,
 
     if (threadIdx.x != 0) return;
 
-    int pick = top_i[0];   // greedy / fallback
+    int pick = top_i[0];
 
     if (temperature > 0.0f)
     {
@@ -1819,7 +1749,7 @@ __device__ __forceinline__ float opennn_activation_grad(float y, float d, int fu
     }
     if (function == activation_silu)
     {
-        // `y` is the pre-activation input for needs_input activations.
+
         const float s = 1.0f / (1.0f + expf(-y));
         return d * s * (1.0f + y * (1.0f - s));
     }
@@ -2195,8 +2125,6 @@ void rnn_step_fused_forward_cuda(const Index batch,
         step_hidden, derivs_or_null, activation_id));
 }
 
-// Column-sum of a (batch x features) delta into an fp32 bias gradient.
-// The caller must zero bias_grad first (this atomicAdds).
 template<typename T>
 __global__ void bias_grad_sum_kernel(const int batch, const int features, const int chunk,
                                      const T* __restrict__ delta, float* __restrict__ bias_grad)
@@ -2216,8 +2144,7 @@ void bias_grad_sum_cuda(const Index batch, const Index features, const T* delta,
 {
     if (batch == 0 || features == 0) return;
     const int f = checked_int(features);
-    // Shrink the batch chunk until the grid covers the whole GPU (narrow
-    // feature counts give few blocks in x).
+
     const int f_blocks = ceil_div(f, block_size);
     const int desired_chunks = f_blocks < 256 ? 256 / f_blocks : 1;
     int chunk = checked_int((batch + desired_chunks - 1) / desired_chunks);
@@ -2288,15 +2215,6 @@ void rnn_step_fused_backward_pre_cuda(const Index batch,
         delta));
 }
 
-
-// -----------------------------------------------------------------------------
-// YOLO DetectionOperator
-// -----------------------------------------------------------------------------
-// CPU reference: operators.cpp:DetectionOperator::apply / apply_delta.
-// Thread layout: one thread per box. Tile = (batch, grid, grid, boxes_per_cell);
-// each thread owns a contiguous span of (5 + classes_number) floats in NHWC
-// layout (channels-last), matching the CPU loop's `base` index arithmetic.
-
 __global__ void detection_forward_kernel(const int batch_size,
                                          const int grid_size,
                                          const int boxes_per_cell,
@@ -2338,7 +2256,7 @@ __global__ void detection_forward_kernel(const int batch_size,
             for (int c = 0; c < classes_number; ++c)
                 dst[base + 5 + c] = sigmoid_f(src[base + 5 + c]);
         }
-        else  // Softmax
+        else
         {
             float max_logit = src[base + 5];
             for (int c = 1; c < classes_number; ++c)
@@ -2417,7 +2335,7 @@ __global__ void detection_backward_kernel(const int batch_size,
 
         in_delta[base + 0] = delta[base + 0] * ox * (1.0f - ox);
         in_delta[base + 1] = delta[base + 1] * oy * (1.0f - oy);
-        // d/dx exp(x)*a evaluated through the output o = exp(x)*a is just o (the anchor cancels).
+
         in_delta[base + 2] = delta[base + 2] * out[base + 2];
         in_delta[base + 3] = delta[base + 3] * out[base + 3];
         in_delta[base + 4] = delta[base + 4] * oo * (1.0f - oo);
@@ -2430,7 +2348,7 @@ __global__ void detection_backward_kernel(const int batch_size,
                 in_delta[base + 5 + c] = delta[base + 5 + c] * s * (1.0f - s);
             }
         }
-        else  // Softmax: ∂L/∂x_i = s_i * (g_i - Σ_j g_j s_j)
+        else
         {
             float dot = 0.0f;
             for (int c = 0; c < classes_number; ++c)
@@ -2469,13 +2387,10 @@ void detection_backward_cuda(const Index batch_size,
         output, output_delta, input_delta));
 }
 
-// ── YOLOv8 anchor-free DetectionV8Operator ────────────────────────────────────
-// All 4+C channels are sigmoid-gated. One "box" per cell, no anchor parameters.
-
 __global__ void detection_v8_forward_kernel(const int batch_size,
                                             const int grid_size,
                                             const int grid_width,
-                                            const int channels,  // = 4 + classes_number
+                                            const int channels,
                                             const float* __restrict__ src,
                                             float* __restrict__ dst)
 {
@@ -2561,10 +2476,8 @@ void detection_v8_backward_cuda(const Index batch_size,
         channels, output, output_delta, input_delta));
 }
 
-// ── Nearest-neighbor upsample (NHWC layout) ───────────────────────────────────
-
 __global__ void upsample_forward_kernel(
-    const int n,               // total output elements = batch * out_h * out_w * channels
+    const int n,
     const float* __restrict__ src,
     float* __restrict__ dst,
     const int in_h, const int in_w,
@@ -2585,7 +2498,7 @@ __global__ void upsample_forward_kernel(
 }
 
 __global__ void upsample_backward_kernel(
-    const int n,               // total input elements = batch * in_h * in_w * channels
+    const int n,
     const float* __restrict__ out_delta,
     float* __restrict__ in_delta,
     const int in_h, const int in_w,
@@ -2629,11 +2542,8 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
-// ── Channel concatenation (NHWC) ─────────────────────────────────────────────
-// One call per input slice; each thread handles one element of that slice.
-
 __global__ void concat_forward_slice_kernel(
-    const int n,                        // batch * H * W * slice_ch
+    const int n,
     const float* __restrict__ src,
     float* __restrict__ dst,
     const int H, const int W,

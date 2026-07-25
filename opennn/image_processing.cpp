@@ -371,7 +371,6 @@ static void decode_png_grayscale(const PngHeader& h,
     }
 }
 
-
 static void decode_png_truecolor(const PngHeader& h,
                                  const uint8_t* unfiltered,
                                  float* dst)
@@ -391,7 +390,6 @@ static void decode_png_truecolor(const PngHeader& h,
         }
     }
 }
-
 
 static void decode_png_palette(const PngHeader& h,
                                const uint8_t* unfiltered,
@@ -416,7 +414,6 @@ static void decode_png_palette(const PngHeader& h,
         }
     }
 }
-
 
 void decode_png_pixels(const PngHeader& h,
                        const vector<uint8_t>& compressed,
@@ -466,7 +463,6 @@ bool has_jpeg_signature(const vector<uint8_t>& buffer)
     return buffer.size() >= 3 && buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;
 }
 
-// Single-pass decode: reads the header, sizes `image` and fills it from one decompress struct.
 void decode_jpeg_pixels(const vector<uint8_t>& buffer,
                         Tensor3& image,
                         const string& path_for_error)

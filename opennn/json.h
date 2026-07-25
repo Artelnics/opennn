@@ -172,4 +172,4 @@ const Json*  get_json_root (const JsonDocument&, std::string_view);
 
 }
 
-#endif // OPENNN_JSON_H_
+#endif

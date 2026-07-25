@@ -38,8 +38,6 @@ struct ConvolutionOperator : Operator
 
     bool fuse_relu = false;
 
-    // Set by link_parameters; the owning layer consumes it to invalidate its
-    // inference-time folded-parameter cache.
     bool weights_relinked = true;
 
     bool is_pointwise() const noexcept
@@ -50,14 +48,11 @@ struct ConvolutionOperator : Operator
     }
 
     struct ConvGraphCache;
-    // Always present so the class layout is identical in CPU and CUDA builds;
-    // stays null on CPU. The cache type is completed in the .cpp.
+
     mutable unique_ptr<ConvGraphCache> conv_graph_cache;
 
 #ifdef OPENNN_HAS_CUDA
-    // Folded-BN inference forward for pointwise convolutions: the 1x1 conv
-    // runs as a cuBLASLt GEMM with the pre-folded bias (and optional ReLU)
-    // fused into the epilogue.
+
     void apply_gpu_folded(const TensorView& input,
                           const TensorView& folded_weights,
                           const TensorView& folded_bias,

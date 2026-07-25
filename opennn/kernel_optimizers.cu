@@ -132,7 +132,6 @@ void adam_update_cuda(
         nullptr));
 }
 
-
 __global__ void adam_prepare_kernel(int* __restrict__ step,
                                     float beta_1, float beta_2,
                                     float learning_rate, float epsilon,

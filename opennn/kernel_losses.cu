@@ -325,10 +325,6 @@ void l1_gradient_cuda(const Index n, T* deltas, const T* parameters, const float
     OPENNN_CUDA_LAUNCH(l1_gradient_kernel<T><<<grid_size, block_size, 0, opennn::device::get_compute_stream()>>>(n_vec, total, deltas, parameters, weight));
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// YOLO GIoU loss kernels
-// ──────────────────────────────────────────────────────────────────────────────
-
 static constexpr float YOLO_EPSILON       = 1e-7f;
 static constexpr float YOLO_CORNER_EPS    = 1e-6f;
 static constexpr float YOLO_GRAD_CLIP     = 10.0f;
@@ -362,7 +358,6 @@ __device__ __forceinline__ float yolo_giou_forward(const float* pred, const floa
 
     const float giou = (enc > 0.0f) ? (iou - (enc - uni) / enc) : iou;
 
-    // CIoU: add center-distance and aspect-ratio penalty
     const float dx   = pred[0] - gt[0];
     const float dy   = pred[1] - gt[1];
     const float rho2 = dx*dx + dy*dy;
@@ -454,7 +449,6 @@ __device__ __forceinline__ void yolo_giou_grad(
     w_grad  = 0.5f * (d_loss_r - d_loss_l);
     h_grad  = 0.5f * (d_loss_b - d_loss_t);
 
-    // CIoU extra gradient terms
     const float dx   = pred[0] - gt[0];
     const float dy   = pred[1] - gt[1];
     const float rho2 = dx*dx + dy*dy;
@@ -480,13 +474,11 @@ __device__ __forceinline__ void yolo_giou_grad(
     h_grad += coeff * (pw / wh2);
 }
 
-// ── forward kernel ────────────────────────────────────────────────────────────
-
 __global__ void yolo_loss_forward_kernel(
-    const int n_boxes,            // batch * grid * grid * boxes_per_cell
+    const int n_boxes,
     const float* __restrict__ output,
     const float* __restrict__ target,
-    float* __restrict__ error_accum,  // single float, pre-zeroed
+    float* __restrict__ error_accum,
     const int values_per_box,
     const int classes_number,
     const int sigmoid_classes,
@@ -502,7 +494,7 @@ __global__ void yolo_loss_forward_kernel(
     {
         const int base = i * values_per_box;
 
-        if (target[base + 4] >= 0.5f)  // positive cell (anchor-IoU soft target)
+        if (target[base + 4] >= 0.5f)
         {
             const float* pred_raw = output + base;
             const float* gt_raw   = target + base;
@@ -518,7 +510,7 @@ __global__ void yolo_loss_forward_kernel(
             const float ciou = yolo_giou_forward(pred, gt, &iou_unused);
 
             float contrib = lambda_giou * (1.0f - ciou);
-            // Soft BCE objectness: target = anchor-IoU (in [0.5,1.0]), trains calibrated confidence
+
             const float iou_t = target[base + 4];
             contrib -= iou_t * logf(pred_raw[4] + YOLO_EPSILON) + (1.0f - iou_t) * logf(1.0f - pred_raw[4] + YOLO_EPSILON);
 
@@ -543,7 +535,7 @@ __global__ void yolo_loss_forward_kernel(
 
             atomicAdd(error_accum, contrib + lambda_class * class_contrib);
         }
-        else if (target[base + 4] > -0.5f)  // skip ignore slots (sentinel -1.0)
+        else if (target[base + 4] > -0.5f)
         {
             const float conf  = output[base + 4];
             const float w_bg  = (obj_focal_gamma > 0.0f) ? __powf(conf, obj_focal_gamma) : 1.0f;
@@ -552,13 +544,11 @@ __global__ void yolo_loss_forward_kernel(
     }
 }
 
-// ── gradient kernel ───────────────────────────────────────────────────────────
-
 __global__ void yolo_loss_gradient_kernel(
     const int n_boxes,
     const float* __restrict__ output,
     const float* __restrict__ target,
-    float* __restrict__ delta,        // pre-zeroed by wrapper
+    float* __restrict__ delta,
     const int values_per_box,
     const int classes_number,
     const int sigmoid_classes,
@@ -575,7 +565,7 @@ __global__ void yolo_loss_gradient_kernel(
     {
         const int base = i * values_per_box;
 
-        if (target[base + 4] >= 0.5f)  // positive cell (anchor-IoU soft target)
+        if (target[base + 4] >= 0.5f)
         {
             const float* pred_raw = output + base;
             const float* gt_raw   = target + base;
@@ -598,7 +588,7 @@ __global__ void yolo_loss_gradient_kernel(
             delta[base + 3] = scale * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, h_g));
             {
                 const float c4    = pred_raw[4];
-                const float iou_t = target[base + 4];  // soft anchor-IoU target in [0.5,1.0]
+                const float iou_t = target[base + 4];
                 delta[base + 4] = (c4 - iou_t) / (c4 * (1.0f - c4) + YOLO_EPSILON) * inv_batch;
             }
 
@@ -620,14 +610,14 @@ __global__ void yolo_loss_gradient_kernel(
                         delta[base + 5 + c] = lambda_class * (-gt_raw[5 + c] / (pred_raw[5 + c] + YOLO_EPSILON)) * inv_batch;
             }
         }
-        else if (target[base + 4] > -0.5f)  // skip ignore slots (sentinel -1.0)
+        else if (target[base + 4] > -0.5f)
         {
             const float c4 = output[base + 4];
             float d4;
             if (obj_focal_gamma == 0.0f) {
                 d4 = lambda_noobj * c4 / (c4 * (1.0f - c4) + YOLO_EPSILON);
             } else {
-                // dL/dp for L=-p^γ*log(1-p): p^(γ-1)*(-γ*log(1-p)+p/(1-p))
+
                 const float omc = fmaxf(1.0f - c4, YOLO_EPSILON);
                 d4 = lambda_noobj * __powf(fmaxf(c4, YOLO_EPSILON), obj_focal_gamma - 1.0f)
                      * (-obj_focal_gamma * logf(omc) + c4 / omc);
@@ -637,16 +627,11 @@ __global__ void yolo_loss_gradient_kernel(
     }
 }
 
-// ── v8 kernels ────────────────────────────────────────────────────────────────
-// Anchor-free (mirrors yolo_v8_error_kernel / yolo_v8_gradient_kernel in
-// loss.cpp): focal BCE over all non-ignore cells + CIoU on positives.
-// Output stride 4+C, target stride 5+C (channel 4 = flag).
-
 __global__ void yolo_v8_loss_forward_kernel(
-    const int n_cells,            // batch * grid * grid
+    const int n_cells,
     const float* __restrict__ output,
     const float* __restrict__ target,
-    float* __restrict__ error_accum,  // single float, pre-zeroed
+    float* __restrict__ error_accum,
     const int classes_number,
     const int grid_size,
     const float lambda_giou,
@@ -662,7 +647,7 @@ __global__ void yolo_v8_loss_forward_kernel(
         const float* tgt_c = target + Index(i) * ch_tgt;
         const float flag = tgt_c[4];
 
-        if (flag <= -0.5f) continue;  // ignore slot (sentinel -1.0)
+        if (flag <= -0.5f) continue;
 
         float class_contrib = 0.0f;
         for (int c = 0; c < classes_number; ++c)
@@ -676,7 +661,7 @@ __global__ void yolo_v8_loss_forward_kernel(
 
         float contrib = lambda_class * class_contrib;
 
-        if (flag >= 0.5f)  // positive cell: CIoU box term
+        if (flag >= 0.5f)
         {
             const int col = i % grid_size;
             const int row = (i / grid_size) % grid_size;
@@ -696,7 +681,7 @@ __global__ void yolo_v8_loss_gradient_kernel(
     const int n_cells,
     const float* __restrict__ output,
     const float* __restrict__ target,
-    float* __restrict__ delta,        // pre-zeroed by wrapper
+    float* __restrict__ delta,
     const int classes_number,
     const int grid_size,
     const float inv_batch,
@@ -714,7 +699,7 @@ __global__ void yolo_v8_loss_gradient_kernel(
         float* delta_c = delta + Index(i) * ch_out;
         const float flag = tgt_c[4];
 
-        if (flag <= -0.5f) continue;  // ignore slot (sentinel -1.0)
+        if (flag <= -0.5f) continue;
 
         for (int c = 0; c < classes_number; ++c)
         {
@@ -725,7 +710,7 @@ __global__ void yolo_v8_loss_gradient_kernel(
             delta_c[4 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + YOLO_EPSILON) * inv_batch;
         }
 
-        if (flag >= 0.5f)  // positive cell: CIoU box term
+        if (flag >= 0.5f)
         {
             const int col = i % grid_size;
             const int row = (i / grid_size) % grid_size;
@@ -746,15 +731,8 @@ __global__ void yolo_v8_loss_gradient_kernel(
     }
 }
 
-// ── per-head target assembly ──────────────────────────────────────────────────
-// Pure gather mirroring assemble_head_target (loss.cpp): the flat per-sample
-// target is the concatenation of every head's block, so
-// head_target[n*head_floats + j] = target_flat[n*per_sample_floats + head_offset + j].
-// Index (not int) source offsets: batch*per_sample_floats can exceed int range
-// even when batch*head_floats fits.
-
 __global__ void yolo_assemble_head_target_kernel(
-    const int n,   // batch * head_floats
+    const int n,
     const float* __restrict__ target_flat,
     float* __restrict__ head_target,
     const int per_sample_floats,
@@ -778,8 +756,6 @@ void yolo_assemble_head_target_cuda(const float* target_flat, float* head_target
                        checked_int(per_sample_floats), checked_int(head_offset),
                        checked_int(head_floats));
 }
-
-// ── wrappers ──────────────────────────────────────────────────────────────────
 
 void yolo_error_cuda(const float* output, const float* target, float* error_accumulator,
                      int batch, int grid, int boxes_per_cell, int values_per_box,

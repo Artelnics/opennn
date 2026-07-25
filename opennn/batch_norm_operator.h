@@ -35,8 +35,7 @@ struct BatchNormalizationOperator : Operator
     ~BatchNormalizationOperator() override;
 
     struct BatchNormalizationGraphCache;
-    // Always present so the class layout is identical in CPU and CUDA builds;
-    // stays null on CPU. The cache type is completed in the .cpp.
+
     mutable unique_ptr<BatchNormalizationGraphCache> bn_graph_cache;
 
     void set(Index, float new_momentum = 0.1f);

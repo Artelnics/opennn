@@ -22,7 +22,6 @@ vector<string> make_vocabulary(const unordered_map<string_view, size_t>&,
                                Index maximum_size,
                                Index minimum_frequency);
 
-// Sequence length a UTF-8 lead byte announces; 1 for ASCII and invalid leads.
 inline size_t utf8_sequence_length(unsigned char lead)
 {
     if ((lead & 0xE0) == 0xC0) return 2;
@@ -55,8 +54,6 @@ public:
     Index token_to_id(string_view token) const;
     const string& id_to_token(Index id) const;
 
-    // Word-level reserved-token ids; [PAD] = 0 is implicit in zero-initialized
-    // buffers. Other tokenizers do not add start/end framing unless configured.
     static constexpr Index UNK_INDEX   = 1;
     static constexpr Index START_INDEX = 2;
     static constexpr Index END_INDEX   = 3;
@@ -66,8 +63,7 @@ public:
     vector<Index> encode_sequence(string_view text, Index sequence_length) const;
     virtual string decode(const vector<Index>& ids) const;
     virtual string decode_token(Index id) const;
-    // True only when decode(ids) equals concatenating decode_token over ids,
-    // so streaming consumers may decode one token at a time.
+
     virtual bool supports_incremental_decode() const noexcept { return false; }
 
     Index get_unk_id() const noexcept { return unk_id; }
@@ -95,7 +91,6 @@ protected:
 
 unique_ptr<TokenizerOperator> make_tokenizer_operator(string_view kind);
 
-// Reserved tokens: [PAD]=0, [UNK]=1, [START]=2, [END]=3.
 class WordLevelTokenizer : public TokenizerOperator
 {
 public:
@@ -109,7 +104,6 @@ public:
     unique_ptr<TokenizerOperator> clone() const override { return make_unique<WordLevelTokenizer>(*this); }
     string_view get_kind() const override { return "WordLevel"; }
 };
-
 
 class WordPieceTokenizer : public TokenizerOperator
 {
@@ -148,8 +142,6 @@ private:
     bool   do_lower_case = true;
 };
 
-
-// Id 0 is reserved for [PAD]
 class BytePairTokenizer : public TokenizerOperator
 {
 public:
@@ -188,8 +180,6 @@ public:
 
 protected:
 
-    // Split raw text into pieces before byte-level BPE. Virtual so decoder-model
-    // tokenizers (e.g. Qwen3) can supply their own pre-tokenization regex.
     virtual vector<string> pre_tokenize(string_view text) const;
     vector<string> bpe(const string& token) const;
     void tokenize_into(string_view, vector<string>*, vector<Index>*) const;
@@ -197,20 +187,12 @@ protected:
     array<uint32_t, 256> byte_encoder{};
     unordered_map<uint32_t, unsigned char> byte_decoder;
     StringMap<int> merge_ranks;
-    // Identifies the current merge table; bumped by set_merges so the
-    // thread-local BPE memoization cache in tokenize_into stays coherent.
+
     uint64_t merges_revision = 0;
     vector<string> special_strings;
     unordered_set<Index> special_ids;
 };
 
-
-// Byte-level BPE tokenizer for Qwen3 / Qwen2 decoder models. Differs from the
-// GPT-2 BytePairTokenizer in two ways: (1) the Qwen pre-tokenization regex
-// (each digit is its own piece; a single non-letter char can lead a word), and
-// (2) ChatML special tokens (<|im_start|>, <|im_end|>, <|endoftext|>, ...) are
-// matched atomically before BPE. Loads vocab.json + merges.txt + a special-token
-// list. Ids are shifted +1 (id 0 = [PAD]) to match OpenNN's Embedding.
 class Qwen3Tokenizer : public BytePairTokenizer
 {
 public:
@@ -218,12 +200,10 @@ public:
     Qwen3Tokenizer() = default;
     explicit Qwen3Tokenizer(const filesystem::path& directory);
 
-    // special_tokens_tsv: one "id<TAB>token" line per special/added token.
     void load(const filesystem::path& vocabulary_json,
               const filesystem::path& merges_txt,
               const filesystem::path& special_tokens_tsv);
 
-    // ChatML / generation ids (already +1 shifted). -1 if absent.
     Index get_im_start_id()  const { return get_special_token_id("<|im_start|>"); }
     Index get_im_end_id()    const { return get_special_token_id("<|im_end|>"); }
     Index get_endoftext_id() const { return get_special_token_id("<|endoftext|>"); }

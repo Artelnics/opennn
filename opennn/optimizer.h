@@ -170,12 +170,6 @@ protected:
     struct EpochLoopContext;
     Loss::EvaluationResult run_epoch_loop(EpochLoopContext&);
 
-    // Full-batch scaffold shared by the quasi-Newton and Levenberg-Marquardt
-    // trainers. The scaffold owns the training/validation forward passes;
-    // train_step runs backprop (plus any update that must precede validation)
-    // and reports the history error, the displayed error and the loss driving
-    // MinimumLossDecrease; post_step is for updates that must not run on the
-    // stopping epoch.
     struct FullBatchContext
     {
         NeuralNetwork* neural_network = nullptr;

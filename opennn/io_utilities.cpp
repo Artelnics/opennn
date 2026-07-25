@@ -404,7 +404,6 @@ void read_int32_batch(const FileReader& reader,
     throw_if(!omp_error.empty(), omp_error);
 }
 
-
 FileWriter::~FileWriter()
 {
     if (stream_.is_open()) stream_.close();
@@ -481,9 +480,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
 
     Result result;
 
-    // Camino normal: mmap zero-copy. Las comillas ya NO fuerzan copiar el fichero
-    // completo ni una pasada de strip: el tokenizer (get_token_views_maybe_quoted)
-    // maneja las comillas por linea sobre el propio mmap.
     if (result.mapping.map(path))
     {
         string_view mapped(result.mapping.data(), result.mapping.size());
@@ -495,8 +491,6 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
         return result;
     }
 
-    // Fallback (el mmap fallo): leer a buffer, SIN strip. El tokenizer se encarga
-    // de las comillas igual que en el camino mmap.
     ifstream input_file(path, ios::binary | ios::ate);
 
     throw_if(!input_file.is_open(),

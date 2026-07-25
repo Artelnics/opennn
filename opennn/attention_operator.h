@@ -23,9 +23,6 @@ struct AttentionOperator : Operator
     bool  use_causal_mask = false;
     bool use_sdpa = false;
 
-    // Self-attention only: also zero the attention rows and output rows of
-    // padded query positions (detected as all-zero source rows), so downstream
-    // consumers that treat zero rows as padding (average pooling) exclude them.
     bool zero_padded_queries = false;
 
     MatrixR causal_mask;
@@ -123,8 +120,6 @@ private:
                               TensorView&,
                               SoftmaxBwd&&) const;
 
-    // Always present so the class layout is identical in CPU and CUDA builds;
-    // stays null on CPU. The cache type is completed in the .cpp.
     mutable unique_ptr<SDPACache> sdpa_cache;
 
     uint64_t sdpa_dropout_seed   = 0x9E3779B97F4A7C15ULL;

@@ -22,8 +22,6 @@
 namespace opennn
 {
 
-// Identity (variable index, feature offset) of each input feature, in the dataset order the
-// first trainable layer's weight rows follow.
 static vector<pair<Index, Index>> input_feature_ids(const Dataset* dataset)
 {
     const vector<Variable>& variables = dataset->get_variables();
@@ -37,8 +35,6 @@ static vector<pair<Index, Index>> input_feature_ids(const Dataset* dataset)
     return ids;
 }
 
-// new row -> old row (-1 = new feature, keep its random initialization). Handles features
-// inserted mid-order: dataset order is by variable index, not by order of addition.
 static vector<Index> map_feature_rows(const vector<pair<Index, Index>>& old_ids,
                                       const vector<pair<Index, Index>>& new_ids)
 {
@@ -97,7 +93,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     InputsSelectionResult input_selection_results(original_input_variables_number);
 
-
     training_strategy->get_optimization_algorithm()->set_display(false);
 
     float previous_validation_error = MAX;
@@ -132,12 +127,9 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index variable_index = 0;
 
-
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
-
     Index validation_failures = 0;
-
 
     time_t beginning_time;
     time_t current_time;
@@ -280,7 +272,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         time(&current_time);
         elapsed_time = float(difftime(current_time, beginning_time));
 
-
         const Index current_inputs = dataset->get_variables_number(VariableRole::Input);
 
         input_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
@@ -300,7 +291,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
-
 
     dataset->set_variable_indices(input_selection_results.optimal_input_variables_indices,
         target_variable_indices);

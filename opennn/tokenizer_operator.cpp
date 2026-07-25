@@ -169,8 +169,6 @@ vector<Index> TokenizerOperator::encode(string_view text) const
     return ids;
 }
 
-// Maps and truncates tokens to a fixed-length sequence. Tokenizers with
-// configured start/end ids add those markers; the caller pads the remainder.
 vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, Index sequence_length) const
 {
     if (sequence_length <= 0) return {};
@@ -328,7 +326,6 @@ bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint
     const unsigned char lead = static_cast<unsigned char>(text[position]);
     const size_t length = utf8_sequence_length(lead);
 
-    // Payload bits: 0x1F / 0x0F / 0x07 for lengths 2 / 3 / 4.
     codepoint = length == 1 ? lead : (lead & (0xFFu >> (length + 1)));
 
     if (length == 1 || start + length > text.size())
@@ -688,8 +685,6 @@ BytePairTokenizer::BytePairTokenizer()
     reserved_tokens = {string(PAD_TOKEN)};
     unk_id = 0;
 
-    // bytes_to_unicode: printable bytes map to themselves; the rest map to
-    // codepoints 256.. in order, so every byte becomes one printable codepoint.
     array<bool, 256> is_direct{};
     auto mark = [&](int lo, int hi) { for (int b = lo; b <= hi; ++b) is_direct[b] = true; };
     mark('!', '~'); mark(0xA1, 0xAC); mark(0xAE, 0xFF);
@@ -720,7 +715,7 @@ void BytePairTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
 void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
                              const filesystem::path& merges_txt)
 {
-    // vocab.json: flat object { "<byte-unicode token>": id, ... }.
+
     const Json parsed = Json::parse(read_text_file(vocabulary_json));
     throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
 
@@ -732,7 +727,6 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
         maximum_id = max(maximum_id, id);
     }
 
-    // Reserve id 0 for [PAD]; every loaded id shifts +1.
     vector<string> loaded_vocabulary(size_t(maximum_id + 2));
     loaded_vocabulary[0] = string(PAD_TOKEN);
     for (const auto& [token, id_value] : parsed.object_value)
@@ -744,7 +738,6 @@ void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
 
     set_vocabulary(loaded_vocabulary);
 
-    // merges.txt: one "A B" pair per line, in priority order (skips the header).
     ifstream merges_file(merges_txt, ios::binary);
     throw_if(!merges_file.is_open(),
              "Cannot open merges.txt: " + merges_txt.string());
@@ -790,7 +783,7 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
 
         if (merge_line.find(' ') == string::npos) continue;
 
-        merge_ranks.emplace(merge_line, rank++);   // key = "A B" (byte-unicode tokens never contain ' ')
+        merge_ranks.emplace(merge_line, rank++);
     }
 
     static atomic<uint64_t> revision_counter{0};
@@ -905,10 +898,6 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
 namespace
 {
 
-// Frame shared by the GPT-2 and Qwen pre-tokenizers: the codepoint view of the
-// text, the piece emitter and the common contraction rule ('s|'t|'m|'d + 're|
-// 've|'ll, ASCII apostrophe, case-insensitive). Run classification stays with
-// each tokenizer.
 struct PreTokenizeRun
 {
     explicit PreTokenizeRun(string_view text)
@@ -949,8 +938,7 @@ struct PreTokenizeRun
 
 vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
 {
-    // Regex 's|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
-    // implemented over codepoints; a leading space attaches to the following piece.
+
     PreTokenizeRun run(text);
     const vector<uint32_t>& cps = run.cps;
     const size_t n = run.n;
@@ -962,7 +950,6 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
 
         if (run.try_contraction(i)) continue;
 
-        // Optional single leading space, then a run of letters / digits / others.
         const size_t k = (c == ' ') ? i + 1 : i;
         if (k < n && is_letter(cps[k]))
         {
@@ -980,7 +967,6 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
             run.emit(i, j); i = j; continue;
         }
 
-        // Whitespace run: keep the last space for the next piece's optional lead.
         if (is_whitespace(c))
         {
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
@@ -988,7 +974,7 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
             run.emit(i, end); i = end; continue;
         }
 
-        run.emit_single(i);   // defensive fallback
+        run.emit_single(i);
     }
 
     return move(run.pieces);
@@ -1004,12 +990,6 @@ void BytePairTokenizer::tokenize_into(string_view text,
         if (ids) ids->push_back(token_to_id(token));
     };
 
-    // Persistent BPE memoization. bpe() output is a pure function of the merge
-    // table, so entries are keyed by merges_revision: clones and copies share
-    // hits, and reloaded merges never see stale results. The storage is
-    // thread-local because shared tokenizer instances are used concurrently
-    // from OpenMP loops (e.g. LanguageDataset::load_documents), which a
-    // mutable member cache would turn into a data race.
     constexpr size_t maximum_cache_entries = 4096;
     static thread_local unordered_map<uint64_t, StringMap<vector<string>>> caches;
     if (caches.size() > 8 && !caches.contains(merges_revision))
@@ -1119,8 +1099,6 @@ string BytePairTokenizer::decode_token(Index id) const
     return bytes;
 }
 
-// =========================== Qwen3Tokenizer ===========================
-
 Qwen3Tokenizer::Qwen3Tokenizer(const filesystem::path& directory)
 {
     load(directory / "vocab.json",
@@ -1171,10 +1149,6 @@ void Qwen3Tokenizer::load(const filesystem::path& vocabulary_json,
     set_special_tokens(loaded_specials);
 }
 
-// Qwen2/Qwen3 pre-tokenization regex, over codepoints:
-//   (?i:'s|'t|'re|'ve|'m|'ll|'d) | [^\r\n\p{L}\p{N}]?\p{L}+ | \p{N}
-//   |  ?[^\s\p{L}\p{N}]+[\r\n]* | \s*[\r\n]+ | \s+(?!\S) | \s+
-// (\p{N} approximated by ASCII digits; each digit is its own piece.)
 vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
 {
     PreTokenizeRun run(text);
@@ -1189,10 +1163,8 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
     {
         const uint32_t c = cps[i];
 
-        // 1. Contractions.
         if (run.try_contraction(i)) continue;
 
-        // 2. [^\r\n\p{L}\p{N}]? \p{L}+  : one optional non-(crlf/letter/digit) lead, then letters.
         {
             size_t run_start = string::npos;
             if (is_letter(c)) run_start = i;
@@ -1204,10 +1176,8 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             }
         }
 
-        // 3. \p{N} : a single digit.
         if (is_ascii_digit(c)) { run.emit_single(i); continue; }
 
-        // 4.  ?[^\s\p{L}\p{N}]+[\r\n]* : optional space, then "others", then trailing newlines.
         {
             const size_t other_start = (c == ' ') ? i + 1 : i;
             if (other_start < n && is_other(cps[other_start]))
@@ -1218,8 +1188,6 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             }
         }
 
-        // 5-7. Whitespace: group runs ending in newlines; otherwise leave the last
-        // space of a run for the following token's optional lead.
         if (is_whitespace(c))
         {
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
@@ -1230,7 +1198,7 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             run.emit(i, end); i = end; continue;
         }
 
-        run.emit_single(i);   // defensive fallback
+        run.emit_single(i);
     }
 
     return move(run.pieces);

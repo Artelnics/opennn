@@ -65,10 +65,6 @@ struct GraphWorkspaceViews
     Index bf16_to_fp32_bytes = 0;
 };
 
-// During CUDA-graph warmup, records the high-water request for every backend
-// scratch buffer. During capture it additionally redirects those requests to
-// stable ForwardPropagation-owned buffers, so later eager work cannot move an
-// address embedded in the graph.
 class CudaGraphWorkspaceScope
 {
 public:
@@ -85,23 +81,12 @@ private:
     GraphWorkspaceViews owned_views;
 };
 
-// Per-conv cuDNN-frontend workspace cap.
-// conv_workspace_limit_bytes(): effective cap in bytes; 0 means uncapped.
-// set_conv_workspace_cap(mode): 0 = off (uncapped/autotune), >0 = explicit cap
-//   in bytes, <0 = AUTO (use the per-network auto value below). DEFAULT = AUTO.
-// set_conv_workspace_auto_limit_bytes(): the AUTO value, set per network by
-//   ForwardPropagation to the largest single-layer activation, clamped to a
-//   256 MiB ceiling (a small cap forces a low-workspace plan with no speed loss).
 int64_t conv_workspace_limit_bytes() noexcept;
 void    set_conv_workspace_cap(int64_t mode) noexcept;
 void    set_conv_workspace_auto_limit_bytes(int64_t) noexcept;
 
-// cuDNN-frontend conv autotune toggle. On = time all plans (high memory transient,
-// a net slowdown on small/medium convs). Off (DEFAULT) = heuristic plan pick under
-// the workspace cap, no transient.
 bool conv_autotune_enabled() noexcept;
 void set_conv_autotune(bool) noexcept;
-
 
 class CudaAllocationGrowthGuard
 {
@@ -174,9 +159,6 @@ struct GraphExecDeleter { void operator()(std::remove_pointer_t<cudaGraphExec_t>
 using GraphHandle     = std::unique_ptr<std::remove_pointer_t<cudaGraph_t>,     GraphDeleter>;
 using GraphExecHandle = std::unique_ptr<std::remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
 
-// RAII over a stream-capture window: if the captured body throws before end(),
-// the destructor closes the capture and discards the orphaned graph instead of
-// leaving the stream stuck in capture mode.
 class StreamCapture
 {
 public:
@@ -193,8 +175,6 @@ private:
     bool finished = false;
 };
 
-// Refreshes an instantiated graph in place via cudaGraphExecUpdate when the
-// topology is unchanged; falls back to a full re-instantiation otherwise.
 void instantiate_or_update(GraphExecHandle&, cudaGraph_t);
 void launch_graph(const GraphExecHandle&, cudaStream_t);
 
@@ -254,14 +234,9 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int);
 
-    // The legacy cuBLAS handle initializes lazily like cuDNN below: creating
-    // it reserves a device workspace, and the inference path runs entirely on
-    // cuBLASLt plus custom kernels.
     static cublasHandle_t get_cublas_handle()                      { return instance().cublas(); }
     static cublasLtHandle_t get_cublas_lt_handle()                 { return instance().cublas_lt_handle; }
-    // cuDNN initializes lazily on first use: creating its handle loads kernel
-    // images into VRAM, a fixed cost that dense-only networks (cuBLAS GEMMs
-    // with fused epilogues, custom activation kernels) never need to pay.
+
     static cudnnHandle_t get_cudnn_handle()                        { return instance().cudnn(); }
     static cudaStream_t get_compute_stream()                       { return instance().compute_stream; }
     static cudaStream_t get_transfer_stream()                      { return instance().transfer_stream; }

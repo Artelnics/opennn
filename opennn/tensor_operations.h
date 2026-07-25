@@ -17,16 +17,8 @@ namespace opennn
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
-// Negative-side slope for LeakyReLU. 0.1 matches the Darknet/YOLO default.
-// The CUDA kernels keep their own mirrored copy in kernel_common.cuh, like the
-// activation ids above.
 inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
-// Shared GELU / GELUTanh / SiLU scalar formulas, used by the scalar switch below
-// and by the CPU closures in tensor_operations.cpp. The vectorized Eigen forward
-// expressions for GELUTanh/SiLU stay as array expressions there (Eigen's
-// vectorized tanh/exp differ from libm in the last ulps) and share only the
-// constants.
 inline constexpr float INV_SQRT_2      = 0.70710678118654752440f;
 inline constexpr float INV_SQRT_2_PI   = 0.39894228040143267794f;
 inline constexpr float SQRT_2_OVER_PI  = 0.7978845608028654f;
@@ -44,11 +36,9 @@ inline float gelu_tanh_value(float x)
 
 inline float silu_value(float x)
 {
-    return x / (1.0f + exp(-x));   // x * sigmoid(x) (Swish)
+    return x / (1.0f + exp(-x));
 }
 
-// Derivatives with respect to the pre-activation input x (these activations
-// need the input, not the output, to differentiate).
 inline float gelu_derivative(float x)
 {
     const float cdf = 0.5f * (1.0f + erff(x * INV_SQRT_2));
@@ -109,7 +99,7 @@ inline float activation_derivative_from_output_value(ActivationFunction function
     case Softmax:   break;
     case GELU:
     case GELUTanh:
-    case SiLU:      break;   // derivative needs the pre-activation input, not y
+    case SiLU:      break;
     }
 
     throw runtime_error("activation_derivative_from_output_value: Softmax/GELU/GELUTanh/SiLU must be handled separately.");
@@ -183,46 +173,23 @@ void rms_normalization_backward(const TensorView&, const TensorView&,
                        const TensorView&, const TensorView&, const TensorView&,
                        const TensorView&, TensorView&);
 
-// Rotary position embedding (RoPE). Fills [positions, rotary_dim] cos/sin tables
-// (HF "rotate_half" convention: emb = cat(freqs, freqs)); rotary_forward rotates
-// each head's first rotary_dim channels of a (batch, sequence, heads*head_dim)
-// tensor by its sequence position. rotary_backward applies the inverse rotation.
 void rotary_build_tables(TensorView&, TensorView&, Index sequence_length, Index rotary_dim, float base);
 void rotary_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
 void rotary_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, Index head_dim, Index rotary_dim, Index position_offset);
 
-// SwiGLU gated activation: output = silu(gate) * up (element-wise).
 void swiglu_forward(const TensorView&, const TensorView&, TensorView&);
 void swiglu_backward(const TensorView&, const TensorView&, const TensorView&,
                      TensorView&, TensorView&);
 
-// Grouped-query causal attention, laid out [batch, seq, heads*head_dim]; each
-// key/value head is shared by n_query_heads/n_kv_heads query heads and head_dim
-// is decoupled from the model width. query_position_offset is the absolute
-// position of the first query (the KV-cache length when decoding), so query i
-// attends keys 0..(offset+i); query_seq != key_seq is the KV-cache case.
-// `decode_partials` (device scratch of grouped_attention_decode_scratch_floats
-// fp32 values) enables the split-KV single-token decode kernel on GPU; when
-// `position_device` is non-null it holds the cached-token count before this
-// token on device (valid keys = *position_device + 1, CUDA-graph replay),
-// otherwise the count comes from query_position_offset + 1. Other GPU shapes
-// run as cuBLAS batched GEMMs plus a masked softmax over an internal
-// thread-local workspace (naive kernel only if that workspace cannot grow).
 void grouped_attention_forward(const TensorView& query, const TensorView& key, const TensorView& value,
                                TensorView& output, Index n_query_heads, Index n_kv_heads, Index head_dim,
                                bool causal, float scale, Index query_position_offset = 0,
                                float* decode_partials = nullptr, const int* position_device = nullptr);
 
-// fp32 element count of the split-KV decode scratch for the shape above.
 Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_dim);
 
-// Fused per-head QK-Norm + RoPE + KV-cache append for one decoded token (GPU
-// only). `qkv_row` is the fused [q | k | v] projection row; rotated q goes to
-// `q_out`, rotated k and raw v are appended to the caches at *position_device
-// (cached tokens before this token, read on device for CUDA-graph replay).
-// Empty norm weights skip QK-Norm. rotary_dim == head_dim.
 void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_weight,
                           const TensorView& k_norm_weight, const TensorView& cos_table,
                           const TensorView& sin_table, TensorView& q_out,
@@ -230,25 +197,15 @@ void qk_rope_cache_append(const TensorView& qkv_row, const TensorView& q_norm_we
                           Index n_query_heads, Index n_kv_heads, Index head_dim,
                           float epsilon, const int* position_device);
 
-// Samples a token id from a device logits row without copying it to the host
-// (GPU only; column 0, [PAD], is excluded). temperature <= 0 is argmax;
-// otherwise temperature scaling, top-k (clamped to 32), softmax and top-p with
-// a Philox draw seeded by (seed, step). The id lands in id_device (device int)
-// and, when token_device is non-null, as float there (a decode input buffer).
-// candidates_scratch: device buffer of sample_logits_scratch_floats() floats.
 void sample_logits_row(const TensorView& logits_row, float temperature, Index top_k, float top_p,
                        unsigned long long seed, unsigned long long step,
                        void* candidates_scratch, int* id_device, float* token_device);
 
 Index sample_logits_scratch_floats();
 
-// QK-Norm: RMSNorm applied independently to each head's head_dim vector of a
-// (batch, seq, heads*head_dim) tensor, with a per-channel weight of size head_dim.
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
                      Index head_dim, float epsilon);
 
-// Tied language-model head: raw logits = input @ embed_weight^T, straight from
-// the shared token-embedding matrix [vocabulary, hidden]; no softmax.
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output);
 
 void embedding_lookup_forward(const TensorView&, const TensorView&,

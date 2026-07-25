@@ -14,10 +14,6 @@
 namespace opennn
 {
 
-// Self-attention layer of a LLaMA-family decoder: grouped-query attention
-// (q_heads >= kv_heads) with decoupled head_dim, RoPE, causal mask and optional
-// per-head QK-Norm (the Qwen3 variant). (sequence, hidden) -> same shape.
-// Inference forward only.
 class GroupedQueryAttention final : public Layer
 {
 public:

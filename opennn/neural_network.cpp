@@ -71,10 +71,6 @@ void NeuralNetwork::compile()
     compile(Configuration::instance().resolve().device);
 }
 
-// Compile onto an explicit device, overriding the global Configuration. Used by
-// callers that must stay on a particular device regardless of the process-wide
-// setting -- e.g. the tiny correlation fits, which run optimizers (QuasiNewton,
-// LevenbergMarquardt) that reject GPU training.
 void NeuralNetwork::compile(const Device device)
 {
     if (get_layers_number() == 0) return;
@@ -218,8 +214,7 @@ Layer* NeuralNetwork::get_first(LayerType type)
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
 {
-    // Block variables hold a single name for many features; when the caller
-    // provides per-feature names, rebuild the list as one scalar variable per name.
+
     if (ranges::any_of(variables,
                        [](const Variable& v) { return !v.is_categorical() && v.features > 1; }))
     {
@@ -265,11 +260,6 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
                     total, name_index);
 }
 
-// A freshly-built network (standard-network constructor + steal_from) has no
-// input/output variables yet: assigning names must DEFINE them, one scalar
-// variable per name, mirroring the pre-refactor resize behaviour. Without this,
-// set_variable_names throws "received N names but variables expected 0" the
-// first time a dataset hands its feature names to a new network.
 static void define_variables_from_names(vector<Variable>& variables,
                                         const vector<string>& names,
                                         VariableRole role)
@@ -522,8 +512,6 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
                             [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
-// Resize `buffer` on its current device and fill it from a host vector.
-// Returns true when the upload went to the CUDA device.
 static bool upload_host_vector(Buffer& buffer, const VectorR& values)
 {
     const Index byte_count = values.size() * Index(sizeof(float));
@@ -657,17 +645,6 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
         return calculate_outputs_device(input_views, forward_propagation);
     }
 
-    // CPU inference is batch-separable: with is_training == false no layer
-    // mixes samples (batch normalization applies its running statistics), so
-    // large batches run in row tiles and activation memory is O(tile) instead
-    // of O(batch) -- the memory ceiling becomes the caller's input/output
-    // data. The tile is sized to a fixed activation budget rather than a
-    // fixed row count: smaller tiles starve the threaded GEMMs (measured -15%
-    // with MKL at half this budget), while the budget bounds the footprint
-    // for arbitrarily wide networks. Since tiling only engages when the batch
-    // arena would exceed the budget anyway, memory use is always <= the
-    // untiled path. The row count must stay a multiple of 16 so tile views
-    // keep the 64-byte alignment MatrixMap assumes.
     constexpr Index tile_budget_bytes = Index(1024) * 1024 * 1024;
 
     const Index row_bytes = max(Index(1), get_aligned_bytes(get_forward_specs(1)));
@@ -694,7 +671,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
     ForwardPropagation tile_propagation(tile_rows_max, this,
                                         ForwardPropagationMode::Inference);
-    unique_ptr<ForwardPropagation> tail_propagation;   // last partial tile
+    unique_ptr<ForwardPropagation> tail_propagation;
 
     MatrixR outputs;
 
@@ -757,17 +734,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
 
-    // Run the full forward pass -- the old skip-to-first-trainable shortcut
-    // broke skip connections crossing the frozen/trainable boundary (FPN/PANet
-    // backbone→neck shortcuts) -- EXCEPT the leading Scaling layers when the
-    // batches come from a dataset that Optimizer::set_scaling() pre-scaled in
-    // place: running them there would scale the inputs twice (that double
-    // scaling diverges tabular training and flattens images to ~zero). This
-    // covers training passes AND the optimizer's in-loop validation passes
-    // (is_training == false but inputs_pre_scaled set on the propagation);
-    // without the latter, validation errors rise while the model improves and
-    // early stopping restores a barely-trained network. Frozen compute layers
-    // past the Scaling chain still run.
     Index first_layer_index = 0;
     if (is_training || forward_propagation.inputs_pre_scaled)
         while (first_layer_index < get_layers_number()
@@ -807,8 +773,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         cudaStream_t stream = Backend::get_compute_stream();
         bool staged_inputs = false;
 
-        // Stateful decode kernels read the KV-cache position from device memory
-        // (graph-replay safe); mirror past_length there before the pass.
         if (has(LayerType::GroupedQueryAttention))
             forward_propagation.stage_position(stream);
 
@@ -821,7 +785,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             throw_if(source.device == Device::Auto,
                      "NeuralNetwork::forward_propagate: input device must be CPU or CUDA.");
 
-            // Embedding/Tokenizer inputs are float-backed token ids; keep them FP32 so ids stay exact.
             const bool cast_input_to_bf16 = config.training_type == Type::BF16
                                          && source.is_fp32()
                                          && !input_feeds_token_ids(i);
@@ -920,11 +883,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    // Save, swap in the trial parameters, run, restore. The parameter buffer can
-    // be device-resident (CUDA mode), so a host VectorMap over parameters.data()
-    // would read/write device memory from the host (illegal access). Route the
-    // save and the swaps through set_parameters(), which copies device-side and
-    // refreshes the bf16 working copy and the layer links.
+
     const Device original_parameters_device = parameters.device_type;
     const Index parameters_size = get_parameters_size();
     VectorR saved_parameters(parameters_size);
@@ -1037,7 +996,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
-    // Historical condition: states staging keyed on the parameters device.
+
     const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this),
                                 parameters.device_type == Device::CUDA);
 
@@ -1045,9 +1004,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
-    // One entry per variable; blocks carry a "Features" count and categoricals
-    // their categories, so feature names are regenerated on load instead of
-    // being written one per feature.
     const auto write_variables_array = [&printer](const vector<Variable>& variables, const char* tag)
     {
         printer.begin_array(tag);
@@ -1074,12 +1030,10 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     printer.open_element("NeuralNetwork");
 
-
     printer.open_element("Inputs");
     add_json_field(printer, "InputsNumber", inputs_number);
     write_variables_array(input_variables, "Input");
     printer.close_element();
-
 
     printer.open_element("Layers");
     add_json_field(printer, "LayersNumber", layers_number);
@@ -1107,7 +1061,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
     printer.close_element();
 
-
     printer.open_element("Outputs");
     const Index outputs_count = has(LayerType::Embedding)
                               ? outputs_number
@@ -1124,9 +1077,6 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
-    // Entries may be fewer than InputsNumber/OutputsNumber: block variables
-    // carry a "Features" count instead of one entry per feature. Legacy files
-    // with per-feature entries load as single-feature variables.
     const auto read_variables_array = [](const Json* parent, const char* tag,
                                          vector<Variable>& variables, const char* role)
     {
@@ -1394,7 +1344,7 @@ void NeuralNetwork::link_parameters()
 
     Index offset = 0;
     Index fp32_inference_offset = 0;
-    Index bf16_mirror_offset = 0;   // compact-mirror indexing (bf16 inference upload)
+    Index bf16_mirror_offset = 0;
 
     for (auto& layer : layers)
     {
@@ -1420,9 +1370,7 @@ void NeuralNetwork::link_parameters()
 
             if (tie.source && spec_index == tie.spec_index)
             {
-                // The tied slot keeps its place in the master layout (its stored
-                // copy is loaded but never read); the view aliases the source's
-                // storage and keeps the source's (transposed) shape.
+
                 const auto& source_views = tie.source->get_parameter_views();
                 throw_if(source_views.size() <= tie.source_spec_index
                          || source_views[tie.source_spec_index].empty(),
@@ -1519,7 +1467,7 @@ void NeuralNetwork::copy_parameters_device()
     if (config.training_type == Type::BF16)
     {
         parameters_bf16_mirror.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
-        parameters_bf16_mirror_compact = false;   // full layout: fused optimizer updates index by master offset
+        parameters_bf16_mirror_compact = false;
         cast_parameters_to_bf16();
     }
     else
@@ -1609,7 +1557,7 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 }
 
 #ifdef OPENNN_HAS_CUDA
-// Host fp32 -> bf16 (high 16 bits, round half to even).
+
 static inline uint16_t float_to_bfloat16_host(float value)
 {
     uint32_t bits;
@@ -1635,11 +1583,6 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     cudaStream_t stream = Backend::get_compute_stream();
     const float* const host_fp32 = parameters.as<float>();
 
-    // Compact device storage: the bf16 mirror holds only the BF16-spec tensors
-    // and the fp32 storage only the FP32-spec ones (norms; the embedding when
-    // it does not follow compute_dtype); tied slots alias their source and get
-    // neither storage nor a conversion. link_parameters indexes both with its
-    // own counters when parameters_bf16_mirror_compact is set.
     Index bf16_keep = 0;
     Index fp32_keep = 0;
     for (const auto& layer : layers)
@@ -1660,13 +1603,10 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     uint16_t* const mirror = bf16_keep > 0 ? parameters_bf16_mirror.as<uint16_t>() : nullptr;
     float* const fp32_compact = fp32_keep > 0 ? parameters_fp32_inference_storage.as<float>() : nullptr;
 
-    // Upload tensor by tensor: each copy is a single parameter (< 2^31 elements),
-    // so neither the 32-bit CUDA wrappers nor the device memory ever see the whole
-    // 4B-parameter buffer.
     vector<uint16_t> host_bf16;
-    Index offset = 0;         // element offset into the master layout
-    Index bf16_offset = 0;    // element offset into the compact bf16 mirror
-    Index fp32_offset = 0;    // element offset into the compact fp32 storage
+    Index offset = 0;
+    Index bf16_offset = 0;
+    Index fp32_offset = 0;
 
     for (const auto& layer : layers)
     {
@@ -1682,7 +1622,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
 
             if (tie.source && spec_index == tie.spec_index)
             {
-                offset += aligned;   // stored copy is never read on device
+                offset += aligned;
                 continue;
             }
 
@@ -1693,7 +1633,7 @@ void NeuralNetwork::upload_parameters_bf16_inference()
                     host_bf16[static_cast<size_t>(i)] = float_to_bfloat16_host(host_fp32[offset + i]);
                 device::copy_async(mirror + bf16_offset, host_bf16.data(),
                                    size * Index(sizeof(uint16_t)), Device::CPU, Device::CUDA, stream);
-                device::synchronize(stream);   // host_bf16 is reused next iteration
+                device::synchronize(stream);
                 bf16_offset += aligned;
             }
             else if (fp32_compact)
@@ -1793,17 +1733,12 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
                                                      ForwardPropagation& forward_propagation,
                                                      bool upload_parameters)
 {
-    // Upload weights only when asked (first call / after a weight update); on a
-    // pure repeated-inference loop this is skipped, so the per-call cost is just
-    // the forward kernels -- no param re-upload, no input H2D, no output D2H, no
-    // ForwardPropagation (re)allocation. Input must already be Device::CUDA.
+
     if (upload_parameters)
     {
         copy_parameters_device();
         copy_states_device();
 
-        // Fresh parameters: any captured graph would replay stale folded/cached
-        // copies, so the next calls run eagerly (refolding) and then recapture.
         forward_propagation.reset_cuda_graph();
     }
 
@@ -1820,15 +1755,13 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         if (same_input_pointers(gpu_inputs, forward_propagation.captured_input_pointers))
         {
             PROFILE_SCOPE_HOST("inference:graph_launch");
-            // The captured graph re-reads the pinned position on every replay.
+
             if (forward_propagation.position_pinned)
                 *static_cast<int*>(forward_propagation.position_pinned) = int(forward_propagation.past_length);
             device::launch_graph(forward_propagation.inference_graph_exec, compute);
             return forward_propagation.get_outputs();
         }
 
-        // Different input buffers: serve this call eagerly and keep the exec
-        // for when the captured pointer set comes back.
         forward_propagate(gpu_inputs, forward_propagation, false);
         return forward_propagation.get_outputs();
     }
@@ -1850,10 +1783,6 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
         return forward_propagation.get_outputs();
     }
 
-    // The eager pass above already produced this call's outputs; the pass below
-    // is recorded into the graph, not executed. PROFILE_SCOPE syncs and lazy
-    // allocations are illegal mid-capture: the profiler is muted and the growth
-    // guard turns any missed first-touch allocation into a clean fallback.
     const bool profiler_was_enabled = ::opennn::enabled();
     ::opennn::enabled() = false;
 
@@ -1883,9 +1812,7 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
     {
         if (forward_propagation.cuda_graph_workspaces_need_growth())
         {
-            // A lazy path requested more scratch than both warmups observed.
-            // Keep the new high-water mark and retry after one measured eager
-            // pass instead of disabling graph replay for the whole session.
+
             forward_propagation.inference_graph_exec.reset();
             forward_propagation.captured_input_pointers.clear();
             forward_propagation.cuda_graph_warmup_calls =

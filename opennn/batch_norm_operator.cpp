@@ -178,8 +178,7 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     if (!delta.is_cuda())
     {
-        // The activation has already been undone in place, so the residual
-        // branch gets its delta before the in-place transform destroys it.
+
         if (!residual_delta.empty()) copy(delta, residual_delta);
         apply_delta_cpu(input, mean, inverse_variance, delta);
         return;
@@ -286,9 +285,7 @@ BatchNormalizationOperator::BatchNormalizationOperator() = default;
 BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
 #ifndef OPENNN_HAS_CUDA
-// The header member unique_ptr<BatchNormalizationGraphCache> exists in every
-// build; CPU builds only need the type to be complete for the destructor
-// instantiation.
+
 struct BatchNormalizationOperator::BatchNormalizationGraphCache {};
 #endif
 
@@ -303,13 +300,13 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> fwd_X, fwd_Scale, fwd_Bias,
             fwd_PrevMean, fwd_PrevVar, fwd_Eps, fwd_Mom, fwd_Residual,
             fwd_Y, fwd_Mean, fwd_InvVar, fwd_NextMean, fwd_NextVar;
-            
+
         shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_X, bwd_Scale, bwd_Bias,
             bwd_Mean, bwd_InvVar, bwd_Residual, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
 
         int64_t fwd_workspace_bytes = 0;
         int64_t bwd_workspace_bytes = 0;
-        
+
         bool bwd_forked = false;
         bool fwd_autotune = false;
         bool bwd_autotune = false;
@@ -326,8 +323,7 @@ using namespace ::cudnn_frontend;
 shared_ptr<graph::Tensor_attributes>
 per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
 {
-    // BN scale/bias/stats stay FP32 in every mode (cuDNN mixed-precision BN
-    // requires FP32 per-channel tensors even with BF16 io).
+
     return graph.tensor(graph::Tensor_attributes()
                         .set_name(name)
                         .set_data_type(DataType_t::FLOAT)
@@ -467,10 +463,6 @@ void BatchNormalizationOperator::apply_inference_gpu(const TensorView& input, Te
 {
     PROFILE_SCOPE("op:bn_infer_fwd");
 
-    // One fused NHWC pass (BN + optional residual + optional ReLU). The legacy
-    // cudnnBatchNormalizationForwardInference call had no NHWC kernel for
-    // several ResNet shapes and silently inserted NCHW layout converts, which
-    // cost ~40% of a ResNet-50 inference forward.
     input.dispatch([&](auto tag)
     {
         using T = decltype(tag);
@@ -491,8 +483,6 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 {
     PROFILE_SCOPE("op:bn_fwd");
 
-    // cuDNN's BF16 batchnorm-backward has no engine, so BN runs entirely in FP32
-    // (the PyTorch/TF AMP convention): cast X/residual up, run FP32, cast Y back.
     const bool bf16 = input.is_bf16();
     const Type graph_dtype = bf16 ? Type::FP32 : input.type;
 
@@ -563,7 +553,7 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 
     if (!ran)
     {
-        // Legacy cuDNN path for GPUs older than SM 8.0 (e.g. RTX 2080 = SM 7.5).
+
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
             Backend::get_cudnn_handle(),
             CUDNN_BATCHNORM_SPATIAL,
@@ -591,13 +581,6 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 {
     PROFILE_SCOPE("op:bn_bwd");
 
-    // Residual blocks try the forked graph (BN_infer + add -> dReLU, whose
-    // result is both a real output for the skip branch and the DBN input);
-    // every unforked path undoes the activation and copies the delta to the
-    // skip branch by hand before the plain batch-norm backward.
-    // cuDNN has no BF16 batchnorm-backward engine, so in BF16 the backward runs
-    // FP32: X/DY are cast up at the boundary and DX cast back. Forced-unforked
-    // there to keep the FP32 scratch to a single 2N buffer.
     const bool bf16 = input.is_bf16();
     const Type graph_dtype = bf16 ? Type::FP32 : input.type;
     const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty() && !bf16;
@@ -637,7 +620,6 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
             if (!residual_delta.empty()) copy(delta, residual_delta);
         }
 
-        // BF16: cast X and DY (DX shares the buffer, in place) into FP32 scratch.
         void* x_ptr    = input.data;
         void* dy_ptr   = delta.data;
         float* dx_fp32 = nullptr;
@@ -683,7 +665,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
     if (!ran)
     {
-        // Legacy cuDNN backward path for GPUs older than SM 8.0.
+
         if (fuse_relu) activation_backward(output, delta, ActivationFunction::ReLU);
         if (fuse_add && !residual_delta.empty()) copy(delta, residual_delta);
         CHECK_CUDNN(cudnnBatchNormalizationBackward(

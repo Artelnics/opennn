@@ -144,11 +144,6 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-    // Spec index as in get_forward_specs. A transient slot's content never
-    // survives its own operator invocation (forward or backward staging only),
-    // so every transient slot across all layers views one shared max-sized
-    // block of the arena. The output (last spec) can never be transient:
-    // consumers read it through input_views in forward and backward.
     virtual bool is_forward_slot_transient(size_t) const { return false; }
 
     virtual Shape get_input_shape() const noexcept { return input_shape; }
@@ -160,7 +155,7 @@ public:
     Index get_inputs_number() const noexcept { return get_input_shape().size(); }
 
     Index get_outputs_number() const { return get_output_shape().size(); }
-    
+
     virtual void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
     {
         for (Operator* op : get_operators())
@@ -177,7 +172,6 @@ public:
 
     virtual void read_JSON_body(const Json*) {}
 
-    // Post-load hook: runs at the end of Layer::from_JSON, after operators load.
     virtual void on_loaded() {}
 
     virtual void load_state_from_JSON(const JsonDocument&);
@@ -186,8 +180,8 @@ public:
 
     virtual void write_JSON_body(JsonWriter&) const {}
 
-    virtual string write_expression(const vector<string>& /*input_names*/,
-                                    const vector<string>& /*output_names*/) const { return {}; }
+    virtual string write_expression(const vector<string>&  ,
+                                    const vector<string>&  ) const { return {}; }
 
     bool get_is_trainable() const noexcept { return is_trainable; }
     void set_is_trainable(bool trainable) { is_trainable = trainable; }
@@ -212,11 +206,6 @@ public:
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
 
-    // Weight tying: a layer may declare that parameter tensor `spec_index`
-    // aliases another layer's tensor `source_spec_index` (stored transposed,
-    // e.g. an output projection reusing the embedding table). link_parameters
-    // resolves the alias: the tied slot keeps its place in the master layout
-    // (its stored copy is loaded but never read) and owns no device storage.
     struct TiedWeight { const Layer* source = nullptr; size_t spec_index = 0; size_t source_spec_index = 0; };
     virtual TiedWeight get_tied_weight() const { return {}; }
 

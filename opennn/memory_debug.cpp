@@ -106,4 +106,3 @@ void print(ostream& os)
 }
 
 }
-

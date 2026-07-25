@@ -22,7 +22,7 @@ void LayerNormalizationOperator::set(Index new_sequence_length, Index new_embedd
 
 vector<TensorSpec> LayerNormalizationOperator::parameter_specs() const
 {
-    // LayerNorm: gamma + beta; RMS: a single scale, no bias.
+
     const size_t count = (method == NormalizationMethod::RMS) ? 1 : 2;
     return vector<TensorSpec>(count, {Shape{embedding_dimension}, Type::FP32});
 }
@@ -59,14 +59,13 @@ void LayerNormalizationOperator::init_defaults()
     if (beta.data)  beta.as_vector().setZero();
 }
 
-void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
     const TensorView& input = get_input(forward_propagation, layer);
 
     if (method == NormalizationMethod::RMS)
     {
-        // Slot map for RMS: the Means slot holds inverse_rms and the
-        // StandardDeviations slot is unused (unsized by the layer's specs).
+
         TensorView& inverse_rms = get_output(forward_propagation, layer);
         TensorView& normalized  = get_output(forward_propagation, layer, 2);
         TensorView& output      = get_output(forward_propagation, layer, 3);
@@ -82,8 +81,7 @@ void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_p
 
     if (fuse_add)
     {
-        // The residual is the second gathered source input; `normalized` slot
-        // holds the post-add sum (mirrors BatchNormOperator's fuse_add).
+
         const TensorView& residual = forward_propagation.input_views[layer][1];
         layer_normalization_add_forward(input, residual, gamma, beta, means, stds, normalized, normalized, output);
         return;
@@ -110,9 +108,6 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
     const TensorView& stds       = get_output(forward_propagation, layer, 1);
     const TensorView& normalized = get_output(forward_propagation, layer, 2);
 
-    // When fused, the norm operated on the post-add sum (stored in `normalized`);
-    // use it as the forward input. The add's backward passes the same gradient to
-    // both inputs, so the residual input_delta (slot 1) is a copy of input_delta.
     const TensorView& norm_input = fuse_add ? normalized : get_input(forward_propagation, layer);
 
     layer_normalization_backward(norm_input, output_delta, get_output(forward_propagation, layer),
@@ -121,8 +116,7 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     if (fuse_add && residual_delta_slot)
     {
-        // The residual stream's gradient equals the norm input's gradient (the
-        // add forks the same delta to both inputs), written to its own slot.
+
         TensorView& residual_delta = back_propagation.backward_slots[layer][residual_delta_slot];
         if (residual_delta.data) copy(input_delta, residual_delta);
     }

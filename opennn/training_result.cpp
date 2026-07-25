@@ -146,7 +146,6 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
     override_results(2, 1) = write_stopping_condition();
     override_results(3, 1) = to_string(training_error_history(size - 1));
 
-
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NAN"
         : format("{:.{}g}", validation_error_history(size - 1), precision);

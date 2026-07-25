@@ -19,7 +19,7 @@ class NeuralNetwork;
 
 struct NetworkDifferential
 {
-    static inline long long benchmark_vjp_count = 0;  // benchmark-only: counts VJP evaluations for the surrogate-access budget, not used by the library
+    static inline long long benchmark_vjp_count = 0;
 
     enum class Kind { Scale, Dense, Unscale, Bound, Activate };
 
@@ -166,7 +166,7 @@ struct NetworkDifferential
 
     VectorR vjp(const VectorR& x, const VectorR& cotangent) const
     {
-        ++benchmark_vjp_count;  // benchmark-only: surrogate-access budget accounting
+        ++benchmark_vjp_count;
         if (!tape_valid || tape_x.size() != x.size() || !(tape_x.array() == x.array()).all())
             forward(x);
 
@@ -195,10 +195,6 @@ struct NetworkDifferential
     }
 };
 
-
-// Built-once analytic Jacobian plus the flag tracking whether it has been built/decided for the
-// current network; the two always change together. A null differential means the finite-difference
-// fallback is in effect.
 struct NetworkJacobian
 {
     unique_ptr<NetworkDifferential> differential;

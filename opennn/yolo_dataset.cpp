@@ -75,7 +75,7 @@ static_assert(sizeof(YoloTargetCacheHeader) == 64);
 static_assert(sizeof(YoloBoxesCacheHeader) == 64);
 static_assert(sizeof(YoloBoxRecord) == 20);
 
-constexpr uint32_t YOLO_CACHE_VERSION = 3;  // bumped: anchor-IoU soft objectness targets
+constexpr uint32_t YOLO_CACHE_VERSION = 3;
 constexpr char YOLO_IMAGE_MAGIC[8] = {'O','P','E','N','N','Y','I','M'};
 constexpr char YOLO_TARGET_MAGIC[8] = {'O','P','E','N','N','Y','T','G'};
 constexpr char YOLO_BOXES_MAGIC[8] = {'O','P','E','N','N','Y','B','X'};
@@ -94,7 +94,7 @@ vector<filesystem::path> list_files(const filesystem::path& directory,
 
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
-    // Search the labels directory, then the parent (dataset root) for a .names file.
+
     vector<filesystem::path> search_dirs = { labels_directory };
     if (labels_directory.has_parent_path())
         search_dirs.push_back(labels_directory.parent_path());
@@ -666,7 +666,6 @@ void write_box_target(float* cell, const YoloDataset::Box& box,
     cell[5 + box.class_id] = 1.0f;
 }
 
-// Mark non-best anchors with IoU > 0.5 as ignore (no noobj gradient)
 void mark_ignored_anchors(const YoloDataset::Box& box,
                           const vector<array<float, 2>>& anchors,
                           Index grid, Index head_offset,
@@ -716,7 +715,7 @@ void make_target(const vector<YoloDataset::Box>& boxes,
                  Index classes_number,
                  float* target)
 {
-    if (boxes_per_cell <= 0) return;  // v8 anchor-free: no anchor-based target
+    if (boxes_per_cell <= 0) return;
 
     const Index values_per_box = 5 + classes_number;
     const Index channels = boxes_per_cell * values_per_box;
@@ -734,7 +733,7 @@ void make_target(const vector<YoloDataset::Box>& boxes,
         const Index base = (row * grid_size + col) * channels + anchor * values_per_box;
 
         write_box_target(target + base, box, grid_size, col, row,
-                         max(best_iou, 0.5f));  // soft anchor-IoU objectness target
+                         max(best_iou, 0.5f));
         mark_ignored_anchors(box, anchors, grid_size, 0,
                              values_per_box, channels, anchor, target);
     }
@@ -775,7 +774,7 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
                          + best.anchor * values_per_box;
 
         write_box_target(target + base, box, grid_h, col, row,
-                         max(best.iou, 0.5f));  // soft anchor-IoU objectness target
+                         max(best.iou, 0.5f));
 
         for (size_t i = 0; i < head_anchors.size(); ++i)
             mark_ignored_anchors(box, head_anchors[i], head_grid_sizes[i], head_offsets[i],
@@ -784,7 +783,6 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-// YOLOv8 anchor-free: center-point assignment, one cell per GT, no anchor dim.
 static void make_target_v8(const vector<YoloDataset::Box>& boxes,
                             Index grid_size, Index classes_number,
                             float* target)
@@ -800,7 +798,6 @@ static void make_target_v8(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-// Each head gets an independent center-point assignment (one cell per GT per head).
 static void make_target_v8_multi(const vector<YoloDataset::Box>& boxes,
                                   const vector<Index>& head_grid_sizes,
                                   Index classes_number,
@@ -891,7 +888,7 @@ const vector<string>& voc_class_names()
     return names;
 }
 
-} // namespace
+}
 
 Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
                                        const string& image_set,
@@ -914,8 +911,6 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     filesystem::create_directories(output_labels_dir);
 
-    // Build class→id mapping. With a filter, only the listed classes are kept
-    // and IDs are remapped to 0-indexed within the filter.
     const vector<string>& active_classes = class_filter.empty() ? voc_class_names() : class_filter;
     unordered_map<string, Index> class_index;
     for (Index i = 0; i < ssize(active_classes); ++i)
@@ -943,7 +938,6 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const VocAnnotation ann = parse_voc_xml(xml_path);
 
-        // Collect surviving boxes (matching the class filter)
         vector<pair<Index, array<float,4>>> kept_boxes;
         for (const VocBox& box : ann.boxes)
         {
@@ -958,7 +952,6 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
             kept_boxes.push_back({it->second, {cx, cy, bw, bh}});
         }
 
-        // With a filter, skip images that have no objects of the requested classes
         if (!class_filter.empty() && kept_boxes.empty())
             continue;
 
@@ -1024,7 +1017,6 @@ LetterboxUnwarp make_letterbox_unwarp(Index original_height, Index original_widt
     return unwarp;
 }
 
-// candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id)
 YoloDetection unwarp_candidate(const float* candidate, const LetterboxUnwarp& unwarp)
 {
     const float cx_net_px = candidate[0] * unwarp.network_width;
@@ -1091,9 +1083,6 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
 
     vector<array<float, 6>> candidates;
 
-    // Each candidate: (cx_norm, cy_norm, w_norm, h_norm, score, class_id).
-    // Decoded output from DetectionOperator: x,y are sigmoid([0,1]) cell-relative
-    // offsets; w,h are already image-normalized (anchor * exp(raw)).
     for (const YoloFpnHead& head : heads)
     {
         if (!head.data || head.grid_size <= 0 || head.boxes_per_cell <= 0
@@ -1428,7 +1417,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     for (size_t i = 0; i < image_paths.size(); ++i)
     {
         Tensor3 image = load_image(image_paths[i]);
-        // Convert grayscale → RGB by replicating the single channel.
+
         if (image.dimension(2) == 1 && input_shape[2] == 3)
         {
             Tensor3 rgb(image.dimension(0), image.dimension(1), 3);
@@ -1697,12 +1686,6 @@ void YoloDataset::load_targets_to_ram() const
                                 target_data_offset);
 }
 
-// Blit a bilinearly-resized source image into a sub-rectangle of a canvas.
-// src:        source pixels, shape [src_h, src_w, channels]
-// canvas:     destination buffer, shape [canvas_h, canvas_w, channels]
-// canvas_w:   width of the full canvas (stride)
-// dst_x/y:   top-left corner of the destination rectangle in the canvas
-// qw/qh:     width/height of the destination rectangle
 void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
                                uint8_t* canvas, Index canvas_w,
                                Index dst_x, Index dst_y, Index qw, Index qh,
@@ -1743,9 +1726,6 @@ struct MosaicParams
     float cy_frac;
 };
 
-// Derive mosaic companion indices and cut point from the same epoch/sample seed
-// used by derive_augmentation_params, but with a different hash so the two
-// streams are independent.
 MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
                                   Index samples_number)
 {
@@ -1777,8 +1757,6 @@ struct MosaicQuad
     Index dst_x, dst_y, qw, qh;
 };
 
-// Deterministic given (epoch_seed, sample_index, samples_number, height, width):
-// fill_inputs and fill_targets must derive the SAME layout so pixels and boxes agree.
 array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index sample_index,
                                            Index samples_number, Index height, Index width)
 {
@@ -1859,7 +1837,6 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 
                 aug_pixels.resize(size_t(H) * size_t(W) * size_t(C));
 
-                // Color-only cfg for per-quadrant jitter (no geometric crop/flip inside mosaic)
                 const ::opennn::AugmentationConfig color_cfg{
                     0.0f, cfg.exposure, cfg.saturation, cfg.hue, false
                 };
@@ -2130,7 +2107,6 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     FILE* f = fopen(weights_path.string().c_str(), "rb");
     throw_if(!f, "load_darknet_backbone: cannot open file: " + weights_path.string());
 
-    // Darknet header: 3 x int32 (major, minor, revision) + 1 x int64 (seen)
     int32_t header[3];
     int64_t seen;
     throw_if(fread(header, sizeof(int32_t), 3, f) != 3,

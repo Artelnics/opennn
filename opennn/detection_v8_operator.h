@@ -13,15 +13,6 @@
 namespace opennn
 {
 
-// Anchor-free detection operator for YOLOv8-style heads.
-// Input layout:  [B, G, G, 4+C]  — raw logits from concatenated box+class branches
-// Output layout: [B, G, G, 4+C]  — decoded in-place
-//   ch 0: sigmoid(tx) → x offset within grid cell ∈ [0,1]
-//   ch 1: sigmoid(ty) → y offset within grid cell ∈ [0,1]
-//   ch 2: sigmoid(tw) → normalized width ∈ [0,1]
-//   ch 3: sigmoid(th) → normalized height ∈ [0,1]
-//   ch 4..4+C-1: sigmoid(cls_c) → per-class probabilities
-// No anchor parameters, no objectness channel.
 struct DetectionV8Operator : Operator
 {
     Index grid_size    = 0;

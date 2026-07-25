@@ -384,7 +384,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
     for (Index token_index = 0; token_index < token_count; ++token_index)
     {
         const Index target_index = static_cast<Index>(targets_flat(token_index));
-        
+
         if (target_index <= 0 || target_index >= vocabulary_size) continue;
 
         total_log_loss -= log(outputs_flat(token_index, target_index) + EPSILON);

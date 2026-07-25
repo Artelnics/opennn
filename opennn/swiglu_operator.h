@@ -13,8 +13,6 @@
 namespace opennn
 {
 
-// silu(gate) * up element-wise over two same-shaped tensors read through
-// input_slots (the gate and up projection slots of a gated Dense).
 struct SwiGLUOperator : Operator
 {
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

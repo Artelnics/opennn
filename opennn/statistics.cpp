@@ -495,7 +495,6 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
     maximums(bin_center-1) = center + length;
     centers(bin_center-1) = center;
 
-
     for (Index i = bin_center; i < bins_number; ++i)
     {
         minimums(i) = minimums(i - 1) + length;
@@ -511,7 +510,6 @@ Histogram histogram_centered(const VectorR& vector, float center, Index bins_num
 
         centers(i) = (maximums(i) + minimums(i)) /2.0f;
     }
-
 
     fill_frequencies(vector, minimums(0), inv_length, minimums, maximums, frequencies,
                      [&](float value) { return !(value >= minimums(0)); });
@@ -529,7 +527,6 @@ Histogram histogram(const VectorB& flags)
     centers << 0.0f, 1.0f;
 
     VectorR frequencies = VectorR::Zero(2);
-
 
     const Index size = flags.size();
 

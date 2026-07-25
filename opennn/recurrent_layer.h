@@ -18,7 +18,6 @@ class Recurrent final : public Layer
 {
 public:
 
-
     Recurrent(const Shape& = {0, 0},
               const Shape& = {0},
               const string& = "Tanh",

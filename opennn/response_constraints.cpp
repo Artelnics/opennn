@@ -32,7 +32,6 @@ struct Token
     size_t position = 0;
 };
 
-
 struct Lexer
 {
     vector<Token> tokens;
@@ -127,7 +126,6 @@ struct Lexer
     Token consume() { return tokens[cursor++]; }
 };
 
-
 struct Ast;
 using AstPtr = unique_ptr<Ast>;
 
@@ -141,7 +139,6 @@ struct Ast
     string function_name;
     vector<AstPtr> children;
 };
-
 
 struct Parser
 {
@@ -337,7 +334,6 @@ struct Parser
     }
 };
 
-
 struct AffineForm
 {
     bool is_affine = true;
@@ -347,7 +343,6 @@ struct AffineForm
 
     bool is_constant() const { return input_terms.empty() && output_terms.empty(); }
 };
-
 
 void accumulate_into(unordered_map<Index, float>& destination,
                      const unordered_map<Index, float>& source,
@@ -366,13 +361,11 @@ void accumulate_into(unordered_map<Index, float>& destination,
     }
 }
 
-
 void scale_terms_in_place(unordered_map<Index, float>& terms, const float scaling)
 {
     for (auto& [column, coefficient] : terms)
         coefficient *= scaling;
 }
-
 
 AffineForm analyze_affine(const Ast& node)
 {
@@ -507,7 +500,6 @@ AffineForm analyze_affine(const Ast& node)
     return result;
 }
 
-
 void collect_variable_references(const Ast& node,
                                  std::set<Index>& input_references,
                                  std::set<Index>& output_references)
@@ -518,7 +510,6 @@ void collect_variable_references(const Ast& node,
     for (const AstPtr& child : node.children)
         collect_variable_references(*child, input_references, output_references);
 }
-
 
 void validate_function_arities(const Ast& node)
 {
@@ -556,7 +547,6 @@ void validate_function_arities(const Ast& node)
     for (const AstPtr& child : node.children)
         validate_function_arities(*child);
 }
-
 
 void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
 {
@@ -626,7 +616,6 @@ void emit_bytecode(const Ast& node, vector<RpnOp>& bytecode)
     }
 }
 
-
 AstPtr clone(const Ast& node)
 {
     auto copy = make_unique<Ast>();
@@ -640,13 +629,11 @@ AstPtr clone(const Ast& node)
     return copy;
 }
 
-
 bool is_const(const Ast& node, float& value)
 {
     if (node.kind == Ast::Kind::Const) { value = node.constant; return true; }
     return false;
 }
-
 
 AstPtr make_const(const float value)
 {
@@ -655,7 +642,6 @@ AstPtr make_const(const float value)
     node->constant = value;
     return node;
 }
-
 
 AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
 {
@@ -666,7 +652,6 @@ AstPtr make_binary(const Ast::Kind kind, AstPtr left, AstPtr right)
     node->children.push_back(move(right));
     return node;
 }
-
 
 AstPtr make_neg(AstPtr a)
 {
@@ -679,7 +664,6 @@ AstPtr make_neg(AstPtr a)
     return node;
 }
 
-
 AstPtr make_add(AstPtr a, AstPtr b)
 {
     float av, bv;
@@ -691,7 +675,6 @@ AstPtr make_add(AstPtr a, AstPtr b)
     return make_binary(Ast::Kind::Add, move(a), move(b));
 }
 
-
 AstPtr make_sub(AstPtr a, AstPtr b)
 {
     float av, bv;
@@ -702,7 +685,6 @@ AstPtr make_sub(AstPtr a, AstPtr b)
     if (a_c && av == 0.0f) return make_neg(move(b));
     return make_binary(Ast::Kind::Sub, move(a), move(b));
 }
-
 
 AstPtr make_mul(AstPtr a, AstPtr b)
 {
@@ -717,7 +699,6 @@ AstPtr make_mul(AstPtr a, AstPtr b)
     return make_binary(Ast::Kind::Mul, move(a), move(b));
 }
 
-
 AstPtr make_div(AstPtr a, AstPtr b)
 {
     float av, bv;
@@ -728,7 +709,6 @@ AstPtr make_div(AstPtr a, AstPtr b)
     if (a_c && b_c && bv != 0.0f) return make_const(av / bv);
     return make_binary(Ast::Kind::Div, move(a), move(b));
 }
-
 
 AstPtr make_pow(AstPtr a, AstPtr b)
 {
@@ -743,7 +723,6 @@ AstPtr make_pow(AstPtr a, AstPtr b)
     return make_binary(Ast::Kind::Pow, move(a), move(b));
 }
 
-
 AstPtr make_func(const string& name, AstPtr argument)
 {
     auto node = make_unique<Ast>();
@@ -753,7 +732,6 @@ AstPtr make_func(const string& name, AstPtr argument)
     return node;
 }
 
-
 bool is_smooth(const Ast& node)
 {
     if (node.kind == Ast::Kind::Func
@@ -762,7 +740,6 @@ bool is_smooth(const Ast& node)
 
     return ranges::all_of(node.children, [](const AstPtr& child) { return is_smooth(*child); });
 }
-
 
 AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_index)
 {
@@ -864,7 +841,6 @@ AstPtr differentiate(const Ast& node, const bool wrt_is_output, const Index wrt_
 
 }
 
-
 float evaluate_rpn(const vector<RpnOp>& bytecode,
                    const VectorR& inputs_row,
                    const VectorR& outputs_row)
@@ -918,7 +894,6 @@ float evaluate_rpn(const vector<RpnOp>& bytecode,
     return evaluation_stack.back();
 }
 
-
 float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
 {
     if (shape == FormulaShape::Affine)
@@ -936,7 +911,6 @@ float CompiledFormula::evaluate(const VectorR& inputs_row, const VectorR& output
 
     return evaluate_rpn(bytecode, inputs_row, outputs_row);
 }
-
 
 CompiledFormula compile_ast(const Ast& ast)
 {
@@ -1008,7 +982,6 @@ CompiledFormula compile_ast(const Ast& ast)
     return result;
 }
 
-
 AstPtr parse_to_ast(const string& expression,
                     const vector<NamedColumn>& inputs,
                     const vector<NamedColumn>& outputs)
@@ -1027,14 +1000,12 @@ AstPtr parse_to_ast(const string& expression,
     return ast;
 }
 
-
 CompiledFormula compile_formula(const string& expression,
                                 const vector<NamedColumn>& inputs,
                                 const vector<NamedColumn>& outputs)
 {
     return compile_ast(*parse_to_ast(expression, inputs, outputs));
 }
-
 
 namespace
 {
@@ -1045,7 +1016,6 @@ bool is_selector(const Ast& node)
         && (node.function_name == "min" || node.function_name == "max" || node.function_name == "abs");
 }
 
-
 void collect_selectors(const Ast& node, vector<const Ast*>& selectors)
 {
     if (is_selector(node))
@@ -1054,7 +1024,6 @@ void collect_selectors(const Ast& node, vector<const Ast*>& selectors)
         collect_selectors(*child, selectors);
 }
 
-
 vector<const Ast*> selectors_of(const Ast& node)
 {
     vector<const Ast*> selectors;
@@ -1062,12 +1031,8 @@ vector<const Ast*> selectors_of(const Ast& node)
     return selectors;
 }
 
-
 bool has_selector(const Ast& node) { return !selectors_of(node).empty(); }
 
-
-// Rebuild the AST with every min/max/abs replaced by the argument the mode selects, so the
-// result is smooth in the region defined by those mode choices.
 AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
 {
     if (is_selector(node))
@@ -1092,7 +1057,6 @@ AstPtr resolve_smooth(const Ast& node, const map<const Ast*, int>& modes)
     return rebuilt;
 }
 
-
 MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperator comparison, const float low, const float up)
 {
     MultivariateConstraint constraint;
@@ -1104,8 +1068,6 @@ MultivariateConstraint make_smooth_constraint(AstPtr ast, const ComparisonOperat
     return constraint;
 }
 
-
-// Inequality that pins one min/max/abs node to the argument chosen by `mode`.
 MultivariateConstraint region_constraint(const Ast& selector, const int mode, const map<const Ast*, int>& modes)
 {
     if (selector.function_name == "abs")
@@ -1120,10 +1082,6 @@ MultivariateConstraint region_constraint(const Ast& selector, const int mode, co
                                   less_equal ? ComparisonOperator::LessEqualTo : ComparisonOperator::GreaterEqualTo, 0.0f, 0.0f);
 }
 
-
-// Full 2^k region enumeration: exact for any operator and any nesting of min/max/abs. Each
-// branch is a conjunction (the substituted-smooth constraint plus the region inequalities); the
-// union over branches reproduces the original feasible set.
 vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
                                                          const ComparisonOperator comparison, const float low, const float up,
                                                          const vector<const Ast*>& selectors)
@@ -1149,10 +1107,6 @@ vector<vector<MultivariateConstraint>> enumerate_regions(const Ast& root,
     return branches;
 }
 
-
-// Disjunctive-normal-form expansion of one (possibly non-smooth) constraint. A top-level AND
-// case with smooth arguments stays a single branch (no disjunction); everything else falls back
-// to the general region enumeration.
 vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
                                                   const ComparisonOperator comparison, const float low, const float up)
 {
@@ -1184,7 +1138,6 @@ vector<vector<MultivariateConstraint>> expand_ast(const Ast& root,
 
 }
 
-
 vector<vector<MultivariateConstraint>> expand_constraint(const string& expression,
                                                          const ComparisonOperator comparison,
                                                          const float low, const float up,
@@ -1201,7 +1154,6 @@ vector<vector<MultivariateConstraint>> expand_constraint(const string& expressio
     return branches;
 }
 
-
 bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& formula_constraints)
 {
     return !formula_constraints.empty()
@@ -1211,7 +1163,6 @@ bool all_formula_constraints_are_linear(const vector<MultivariateConstraint>& fo
                    && formula_constraint.compiled.shape == FormulaShape::Affine;
            });
 }
-
 
 LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstraint>& formula_constraints,
                                                 const Index n_in,
@@ -1271,7 +1222,6 @@ LinearConstraintSet build_linear_constraint_set(const vector<MultivariateConstra
     return linear_set;
 }
 
-
 bool constraint_is_satisfied(const MultivariateConstraint& constraint,
                              const VectorR& input_row,
                              const VectorR& output_row)
@@ -1285,12 +1235,10 @@ bool constraint_is_satisfied(const MultivariateConstraint& constraint,
 
     float low, up;
     if (!interval_from_comparison(constraint.comparison_operator, constraint.low_bound, constraint.up_bound, low, up))
-        return true;   // AllowedSet: no interval to check
+        return true;
 
-    // bound_tolerance(+/-inf) is +inf, so a missing side never rejects.
     return value >= low - bound_tolerance(low) && value <= up + bound_tolerance(up);
 }
-
 
 ConstraintKind classify(const MultivariateConstraint& constraint)
 {
@@ -1317,12 +1265,10 @@ ConstraintKind classify(const MultivariateConstraint& constraint)
     return (affine || nonlinear_ready) ? ConstraintKind::OutputDependent : ConstraintKind::Unrepairable;
 }
 
-
 void snap_to_lattice(MatrixR& inputs, const Index column, const float minimum, const float maximum)
 {
     inputs.col(column).array() = inputs.col(column).array().round().max(minimum).min(maximum);
 }
-
 
 namespace
 {
@@ -1332,7 +1278,6 @@ bool constraint_residual(const ComparisonOperator comparison, const float low, c
 {
     residual = 0.0f;
 
-    // EqualTo is always active: callers use the signed offset even when it is zero.
     if (comparison == ComparisonOperator::EqualTo) { residual = value - low; return true; }
 
     float interval_low, interval_up;
@@ -1377,7 +1322,6 @@ bool gauss_newton_project_row(const MatrixR& jacobian, const VectorR& rhs,
     return true;
 }
 
-
 vector<const MultivariateConstraint*> input_repairable_constraints(const vector<MultivariateConstraint>& formula_constraints)
 {
     vector<const MultivariateConstraint*> constraints;
@@ -1389,10 +1333,6 @@ vector<const MultivariateConstraint*> input_repairable_constraints(const vector<
     return constraints;
 }
 
-
-// Collects the constraints violated at `point` (with surrogate outputs `output`, empty for
-// input-only constraints) together with their signed residuals. Returns false when none are
-// violated or the worst residual is already within tolerance: nothing left to repair.
 bool collect_violations(const vector<const MultivariateConstraint*>& constraints,
                         const VectorR& point, const VectorR& output,
                         vector<const MultivariateConstraint*>& active, vector<float>& residuals)
@@ -1419,10 +1359,6 @@ bool collect_violations(const vector<const MultivariateConstraint*>& constraints
     return VectorR::Map(residuals.data(), Index(residuals.size())).cwiseAbs().maxCoeff() > EPSILON;
 }
 
-
-// Gradient of one constraint with respect to the inputs. For output-dependent constraints `vjp`
-// back-propagates the output sensitivity through the surrogate; for input-only constraints it is
-// null and only the direct input gradient is returned.
 VectorR constraint_gradient(const MultivariateConstraint& constraint,
                             const VectorR& point, const VectorR& output, const SurrogateVjp& vjp)
 {
@@ -1452,11 +1388,6 @@ VectorR constraint_gradient(const MultivariateConstraint& constraint,
     return gradient + vjp(point, cotangent);
 }
 
-
-// Iterated Gauss-Newton projection of a single row onto the feasible set of `constraints`.
-// `forward` maps the row to its surrogate outputs (null for input-only constraints); `vjp`
-// back-propagates an output cotangent (null for input-only). Columns flagged in `fixed_columns`
-// are held constant.
 void gauss_newton_repair_row(VectorR& point,
                              const vector<const MultivariateConstraint*>& constraints,
                              const SurrogateForward& forward, const SurrogateVjp& vjp,
@@ -1499,7 +1430,6 @@ void gauss_newton_repair_row(VectorR& point,
 }
 
 }
-
 
 void repair_affine_inputs(MatrixR& random_inputs,
                           const VectorR& inferior_frontier,
@@ -1644,7 +1574,6 @@ void repair_affine_inputs(MatrixR& random_inputs,
     random_inputs = augmented_points.leftCols(inputs_number);
 }
 
-
 void repair_single_affine_input(MatrixR& random_inputs,
                                 const VectorR& inferior_frontier,
                                 const VectorR& superior_frontier,
@@ -1695,7 +1624,6 @@ void repair_single_affine_input(MatrixR& random_inputs,
         }
     }
 }
-
 
 void repair_single_affine_integer(MatrixR& random_inputs,
                                   const VectorR& inferior_frontier,
@@ -1760,7 +1688,6 @@ void repair_single_affine_integer(MatrixR& random_inputs,
     }
 }
 
-
 void repair_nonlinear_inputs(MatrixR& random_inputs,
                              const VectorR& inferior_frontier,
                              const VectorR& superior_frontier,
@@ -1776,7 +1703,6 @@ void repair_nonlinear_inputs(MatrixR& random_inputs,
     repair_affine_inputs_with_fixed(random_inputs, inferior_frontier, superior_frontier,
                                     formula_constraints, {}, max_correction_passes);
 }
-
 
 void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
                                      const VectorR& inferior_frontier,
@@ -1804,17 +1730,9 @@ void repair_affine_inputs_with_fixed(MatrixR& random_inputs,
     }
 }
 
-
 namespace
 {
 
-// Partition the input-repairable constraints (AffineInput / NonlinearInput) into blocks whose
-// variable sets are pairwise disjoint -- the connected components of the variable-constraint
-// bipartite graph. Two constraints fall in the same block iff they share at least one input column
-// (directly or transitively). Each block can then be repaired independently with the projector
-// matched to its OWN kind, so a single nonlinear constraint no longer drags unrelated affine blocks
-// through Gauss-Newton. This is the standard independent-components decomposition (cf. SCIP
-// cons_components; Pierra's product-space projection), here applied to surrogate input repair.
 vector<vector<MultivariateConstraint>>
 partition_input_constraints_by_variable(const vector<MultivariateConstraint>& formula_constraints)
 {
@@ -1836,7 +1754,6 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
         return x;
     };
 
-    // Union any two constraints that reference a common input column.
     unordered_map<Index, Index> column_owner;
 
     for (Index i = 0; i < constraint_number; ++i)
@@ -1863,17 +1780,12 @@ partition_input_constraints_by_variable(const vector<MultivariateConstraint>& fo
 
 }
 
-
 void repair_inputs(MatrixR& random_inputs,
                    const VectorR& inferior_frontier,
                    const VectorR& superior_frontier,
                    const vector<MultivariateConstraint>& formula_constraints)
 {
-    // Each block holds constraints over a variable set disjoint from every other block, so repairing
-    // them one block at a time on the shared matrix is exact: an inner repairer only writes the
-    // columns its constraints reference, leaving the other blocks' columns untouched. The win is
-    // routing purity -- the affine blocks get Dykstra and only the genuinely nonlinear block gets
-    // Gauss-Newton, instead of the whole input vector being forced through GN by one nonlinear term.
+
     for (const vector<MultivariateConstraint>& block :
          partition_input_constraints_by_variable(formula_constraints))
     {
@@ -1901,7 +1813,6 @@ void repair_inputs(MatrixR& random_inputs,
     }
 }
 
-
 namespace
 {
 
@@ -1915,7 +1826,6 @@ bool row_satisfies_input_affine(const VectorR& point,
     });
 }
 
-
 void cardinality_swap_row(VectorR& point,
                           const vector<Index>& columns,
                           const VectorR& inferior_frontier,
@@ -1923,16 +1833,16 @@ void cardinality_swap_row(VectorR& point,
                           const vector<char>& is_discrete,
                           const Index swaps)
 {
-    // Turn a cardinality member "on" with a type-consistent nonzero value in its box.
+
     const auto sample_on = [&](const Index column) -> float
     {
         const float inferior = inferior_frontier(column);
         const float superior = superior_frontier(column);
 
         if (column < ssize(is_discrete) && is_discrete[column])
-            return (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);   // nonzero integer/binary
+            return (floor(superior) >= 1.0f) ? 1.0f : ceil(inferior);
 
-        float value = random_uniform(inferior, superior);               // continuous
+        float value = random_uniform(inferior, superior);
         if (abs(value) < EPSILON)
             value = (superior > EPSILON) ? superior : inferior;
         return value;
@@ -1966,7 +1876,6 @@ void cardinality_swap_row(VectorR& point,
     }
 }
 
-
 void unlock_free_integers_row(VectorR& point, const Lattice& lattice, const float fraction)
 {
     for (size_t c = 0; c < lattice.columns.size(); ++c)
@@ -1979,7 +1888,6 @@ void unlock_free_integers_row(VectorR& point, const Lattice& lattice, const floa
 }
 
 }
-
 
 void repair_mixed_integer_inputs(MatrixR& inputs,
                                  const VectorR& inferior_frontier,
@@ -2056,7 +1964,6 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     }
 }
 
-
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
@@ -2089,7 +1996,6 @@ void repair_output_constraints(MatrixR& inputs,
     }
 }
 
-
 void repair_output_constraints(MatrixR& inputs,
                                const VectorR& inferior_frontier,
                                const VectorR& superior_frontier,
@@ -2104,7 +2010,6 @@ void repair_output_constraints(MatrixR& inputs,
     for (Index j = 0; j < inputs_number; ++j)
         step(j) = max(1e-4f, 1e-3f * (superior_frontier(j) - inferior_frontier(j)));
 
-    // Single-row forward for the constraint evaluation inside the Gauss-Newton loop.
     const SurrogateForward forward = [&batch_forward](const VectorR& x) -> VectorR
     {
         MatrixR single(1, x.size());
@@ -2112,8 +2017,6 @@ void repair_output_constraints(MatrixR& inputs,
         return batch_forward(single).row(0).transpose();
     };
 
-    // Central-difference VJP: stack all 2*inputs_number perturbations of the row and evaluate them
-    // in one batched forward call (rows are independent), instead of two forwards per dimension.
     const SurrogateVjp finite_difference_vjp =
         [&batch_forward, inputs_number, step](const VectorR& x, const VectorR& cotangent)
     {

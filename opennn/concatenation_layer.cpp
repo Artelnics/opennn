@@ -59,9 +59,6 @@ void Concatenation::set_input_shape(const Shape& new_input_shape)
     input_shape = new_input_shape;
 }
 
-
-// Legacy "Concatenate" tag: re-wrap the body under the current name so the base
-// loaders find it (get_json_root throws on a tag mismatch).
 const Json* Concatenation::legacy_body(const JsonDocument& document) const
 {
     if (document.first_child(get_name())) return nullptr;

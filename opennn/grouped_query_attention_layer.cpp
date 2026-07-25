@@ -63,7 +63,6 @@ void GroupedQueryAttention::read_JSON_body(const Json* element)
     const float new_rope_theta  = read_json_float(element, "RopeTheta");
     const float new_rms_epsilon = read_json_float(element, "RmsEpsilon");
 
-    // Optional; defaults to the Qwen3 style.
     const bool new_use_qk_norm = element->has("QKNorm") ? read_json_bool(element, "QKNorm") : true;
 
     set(new_input_shape, new_q_heads, new_kv_heads, new_head_dim,

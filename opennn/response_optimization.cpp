@@ -24,9 +24,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
     set(new_neural_network);
 }
 
-
 ResponseOptimization::~ResponseOptimization() = default;
-
 
 void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
@@ -35,12 +33,10 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
     network_jacobian = {};
 }
 
-
 void ResponseOptimization::set_constraint(const string& name, const ComparisonOperator comparison, float low, float up)
 {
     constraint_set.univariate[name] = UnivariateConstraint(comparison, low, up);
 }
-
 
 void ResponseOptimization::set_constraint(const string& name, const vector<float>& allowed_values)
 {
@@ -51,7 +47,6 @@ void ResponseOptimization::set_constraint(const string& name, const vector<float
     constraint.allowed_values = allowed_values;
     constraint_set.univariate[name] = move(constraint);
 }
-
 
 void ResponseOptimization::set_cardinality_constraint(const vector<string>& variable_names, const Index k, const bool force_nonzero)
 {
@@ -64,12 +59,10 @@ void ResponseOptimization::set_cardinality_constraint(const vector<string>& vari
     constraint_set.cardinality.push_back({ variable_names, k, force_nonzero });
 }
 
-
 void ResponseOptimization::clear_cardinality_constraints()
 {
     constraint_set.cardinality.clear();
 }
-
 
 void ResponseOptimization::set_objective(const string& name, const Sense sense, const float value)
 {
@@ -81,13 +74,11 @@ void ResponseOptimization::set_objective(const string& name, const Sense sense, 
         fixed_values.erase(name);
 }
 
-
 void ResponseOptimization::set_time_role(const string& name, const TimeType role)
 {
     time_roles[name] = role;
     variables_descriptives.clear();
 }
-
 
 vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Variable>& variables) const
 {
@@ -109,7 +100,6 @@ vector<NamedColumn> ResponseOptimization::build_input_columns(const vector<Varia
     return columns;
 }
 
-
 vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Variable>& variables) const
 {
     vector<NamedColumn> columns;
@@ -127,7 +117,6 @@ vector<NamedColumn> ResponseOptimization::build_output_columns(const vector<Vari
 
     return columns;
 }
-
 
 void ResponseOptimization::set_formula_constraint(const string& expression,
                                                   const ComparisonOperator comparison,
@@ -166,7 +155,6 @@ void ResponseOptimization::set_formula_constraint(const string& expression,
     network_jacobian.ready = false;
 }
 
-
 void ResponseOptimization::set_formula_constraint(function<float(const VectorR&, const VectorR&)> callback,
                                                   const ComparisonOperator comparison,
                                                   const float low,
@@ -187,7 +175,6 @@ void ResponseOptimization::set_formula_constraint(function<float(const VectorR&,
 
     network_jacobian.ready = false;
 }
-
 
 void ResponseOptimization::set_formula_constraint(const string& expression, const vector<float>& allowed_values)
 {
@@ -214,7 +201,6 @@ void ResponseOptimization::set_formula_constraint(const string& expression, cons
     network_jacobian.ready = false;
 }
 
-
 void ResponseOptimization::clear_formula_constraints()
 {
     constraint_set.multivariate.clear();
@@ -222,36 +208,30 @@ void ResponseOptimization::clear_formula_constraints()
     network_jacobian.ready = false;
 }
 
-
 void ResponseOptimization::set_min_feasible_ratio(float new_ratio)
 {
     min_feasible_ratio = new_ratio;
 }
-
 
 void ResponseOptimization::set_max_oversample_factor(Index new_factor)
 {
     max_oversample_factor = new_factor;
 }
 
-
 void ResponseOptimization::set_exploration_ratio(float new_ratio)
 {
     exploration_ratio = new_ratio;
 }
-
 
 void ResponseOptimization::clear_constraints()
 {
     constraint_set.univariate.clear();
 }
 
-
 void ResponseOptimization::clear_constraints(const string& name)
 {
     constraint_set.univariate.erase(name);
 }
-
 
 void ResponseOptimization::clear_objectives()
 {
@@ -259,13 +239,11 @@ void ResponseOptimization::clear_objectives()
     fixed_values.clear();
 }
 
-
 void ResponseOptimization::clear_objectives(const string& name)
 {
     objectives.erase(name);
     fixed_values.erase(name);
 }
-
 
 void ResponseOptimization::clear_time_roles()
 {
@@ -273,13 +251,11 @@ void ResponseOptimization::clear_time_roles()
     variables_descriptives.clear();
 }
 
-
 void ResponseOptimization::clear_time_roles(const string& name)
 {
     time_roles.erase(name);
     variables_descriptives.clear();
 }
-
 
 UnivariateConstraint ResponseOptimization::get_constraint(const string& name) const
 {
@@ -287,24 +263,20 @@ UnivariateConstraint ResponseOptimization::get_constraint(const string& name) co
     return it != constraint_set.univariate.end() ? it->second : UnivariateConstraint(ComparisonOperator::None);
 }
 
-
 bool ResponseOptimization::is_objective(const string& name) const
 {
     return objectives.find(name) != objectives.end();
 }
-
 
 ResponseOptimization::Sense ResponseOptimization::get_sense(const string& name) const
 {
     return objectives.at(name);
 }
 
-
 bool ResponseOptimization::is_past(const TimeType role)
 {
     return role == TimeType::PastContinuous || role == TimeType::PastBatch;
 }
-
 
 bool ResponseOptimization::is_history(const string& name) const
 {
@@ -312,13 +284,11 @@ bool ResponseOptimization::is_history(const string& name) const
     return it != time_roles.end() && is_past(it->second);
 }
 
-
 void ResponseOptimization::set_fixed_history(const Tensor3& history)
 {
     fixed_history = history;
     network_jacobian.ready = false;
 }
-
 
 void ResponseOptimization::clear_fixed_history()
 {
@@ -326,66 +296,55 @@ void ResponseOptimization::clear_fixed_history()
     network_jacobian.ready = false;
 }
 
-
 void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
 {
     evaluations_number = new_evaluations_number;
 }
-
 
 void ResponseOptimization::set_iterations(const int new_max_iterations)
 {
     max_iterations = new_max_iterations;
 }
 
-
 void ResponseOptimization::set_zoom_factor(float new_zoom_factor)
 {
     zoom_factor = new_zoom_factor;
 }
-
 
 void ResponseOptimization::set_relative_tolerance(float new_relative_tolerance)
 {
     relative_tolerance = new_relative_tolerance;
 }
 
-
 void ResponseOptimization::set_max_pareto_number(const Index new_max_pareto_number)
 {
     max_pareto_number = new_max_pareto_number;
 }
-
 
 void ResponseOptimization::set_max_total_evaluations(const Index new_max_total_evaluations)
 {
     max_total_evaluations = new_max_total_evaluations;
 }
 
-
 void ResponseOptimization::set_initial_sampling_factor(const Index new_initial_sampling_factor)
 {
     initial_sampling_factor = max(Index(1), new_initial_sampling_factor);
 }
-
 
 void ResponseOptimization::set_branch_mode(const BranchMode new_branch_mode)
 {
     branch_mode = new_branch_mode;
 }
 
-
 Index ResponseOptimization::get_evaluations_used() const
 {
     return evaluations_used;
 }
 
-
 void ResponseOptimization::set_deformation_domain_factor(float new_deformation_domain_factor)
 {
     deformation_domain_factor = new_deformation_domain_factor;
 }
-
 
 float ResponseOptimization::get_deformation_domain_factor()
 {
@@ -398,7 +357,6 @@ Index ResponseOptimization::get_optimizing_objectives_number() const
     return ranges::count_if(get_variables_and_descriptives("Input").first, is_opt)
          + ranges::count_if(get_variables_and_descriptives("Target").first, is_opt);
 }
-
 
 Index ResponseOptimization::get_objectives_number() const
 {
@@ -491,7 +449,6 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
     inferior_frontier.resize(total_feature_dimensions);
     superior_frontier.resize(total_feature_dimensions);
 
-
     Index feature_index = 0;
 
     for(Index variable = 0; variable < variables_number; ++variable)
@@ -519,7 +476,6 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
     }
 }
 
-
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(string_view role) const
 {
     const auto& [variables, descriptives] = get_variables_and_descriptives(string(role));
@@ -530,7 +486,6 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(string_vi
              "ResponseOptimization: Descriptives count ({}) does not match variables count ({}) for {}", descriptives.size(), variables_number, role);
 
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
-
 
     vector<UnivariateConstraint> applicable_constraints;
     applicable_constraints.reserve(variables_number);
@@ -544,7 +499,6 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(string_vi
 
     return original_domain;
 }
-
 
 ResponseOptimization::Objectives::Objectives(const ResponseOptimization& response_optimization)
 {
@@ -643,7 +597,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     process_role("Target");
 }
 
-
 void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<UnivariateConstraint>& constraints)
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
@@ -701,7 +654,6 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
     }
 }
 
-
 static void round_discrete_inputs(MatrixR& inputs,
                                   const vector<Variable>& variables,
                                   const VectorR& inferior_frontier,
@@ -724,7 +676,6 @@ static void round_discrete_inputs(MatrixR& inputs,
         feature_index += feature_dimensions[i];
     }
 }
-
 
 Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variables,
                                                   const vector<Index>& feature_dimensions,
@@ -753,7 +704,6 @@ Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variab
 
     return lattice;
 }
-
 
 vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Domain& input_domain,
                                                                         const map<string, Index>& scalar_column_of,
@@ -871,7 +821,6 @@ vector<vector<Index>> ResponseOptimization::resolve_cardinality_columns(const Do
 
     return cardinality_columns;
 }
-
 
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain, const Index evaluations_count) const
 {
@@ -1084,7 +1033,6 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     return random_inputs;
 }
 
-
 Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
     const vector<Variable>& input_variables = neural_network->get_input_variables();
@@ -1121,7 +1069,6 @@ Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
     return input_combined;
 }
 
-
 MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 {
     if (is_forecasting())
@@ -1136,7 +1083,6 @@ MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 
     return neural_network->calculate_outputs(input);
 }
-
 
 void ResponseOptimization::Domain::reshape(const float zoom_factor,
                                            const VectorR& center,
@@ -1178,7 +1124,6 @@ void ResponseOptimization::Domain::reshape(const float zoom_factor,
     }
 }
 
-
 bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& input_row,
                                                              const VectorR& output_row) const
 {
@@ -1186,7 +1131,6 @@ bool ResponseOptimization::row_satisfies_formula_constraints(const VectorR& inpu
         return constraint_is_satisfied(c, input_row, output_row);
     });
 }
-
 
 pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs,
                                                                     const MatrixR& outputs,
@@ -1271,7 +1215,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     return {slice_rows(inputs, feasible_indices), slice_rows(outputs, feasible_indices)};
 }
 
-
 pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain& input_domain,
                                                                     const Domain& output_domain,
                                                                     const Index evaluations_multiplier) const
@@ -1334,7 +1277,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::sample_feasible_points(const Domain
     return feasible_result;
 }
 
-
 pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Domain& input_domain,
                                                          const Domain& output_domain,
                                                          const Index evaluations_count) const
@@ -1381,7 +1323,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::generate_feasible_points(const Doma
     return feasible;
 }
 
-
 MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
     const Index objectives_number = source_and_column.cols();
@@ -1402,7 +1343,6 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     return objective_matrix;
 }
 
-
 void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) const
 {
     const auto combined_scale = scale_and_offset.row(0).array() * utopian_and_sense.row(1).array();
@@ -1411,7 +1351,6 @@ void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) cons
     objective_matrix.array().rowwise() *= combined_scale;
     objective_matrix.array().rowwise() += combined_offset;
 }
-
 
 bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR& unnormalized_objective_values)
 {
@@ -1466,7 +1405,6 @@ bool ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR&
     return any_updated;
 }
 
-
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                       const MatrixR& feasible_outputs,
                                                                       const Objectives& objective_set) const
@@ -1476,7 +1414,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     return calculate_optimal_points(feasible_inputs, feasible_outputs, objective_set, objective_matrix);
 }
-
 
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
                                                                       const MatrixR& feasible_outputs,
@@ -1500,7 +1437,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     return {nearest_inputs, nearest_outputs};
 }
-
 
 void ResponseOptimization::promote_single_variable_constraints()
 {
@@ -1600,7 +1536,6 @@ void ResponseOptimization::promote_single_variable_constraints()
     constraint_set.multivariate = move(kept);
 }
 
-
 vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& variables) const
 {
     const vector<Index> dimensions = get_feature_dimensions(variables);
@@ -1620,7 +1555,6 @@ vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& 
 
     return mask;
 }
-
 
 void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Domain& original) const
 {
@@ -1661,7 +1595,6 @@ void ResponseOptimization::restore_cardinality_columns(Domain& domain, const Dom
         domain.superior_frontier(column) = original.superior_frontier(column);
     }
 }
-
 
 MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
@@ -1744,7 +1677,6 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
         : append_columns(optimal_set.first, optimal_set.second);
 }
 
-
 static MatrixR stack_rows(const vector<MatrixR>& blocks)
 {
     if (blocks.empty())
@@ -1768,7 +1700,6 @@ static MatrixR stack_rows(const vector<MatrixR>& blocks)
     return result;
 }
 
-
 static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, const Index b)
 {
     bool strictly_better = false;
@@ -1782,7 +1713,6 @@ static bool pareto_dominates(const MatrixR& objective_matrix, const Index a, con
 
     return strictly_better;
 }
-
 
 static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
 {
@@ -1810,7 +1740,6 @@ static vector<Index> pareto_front_indices(const MatrixR& objective_matrix)
     return front;
 }
 
-
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs,
                                                               const MatrixR& outputs,
                                                               const MatrixR& objective_matrix) const
@@ -1822,7 +1751,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
 
     return {slice_rows(inputs, front), slice_rows(outputs, front)};
 }
-
 
 pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs,
                                                                  const MatrixR& outputs,
@@ -1870,7 +1798,6 @@ pair<float, float> ResponseOptimization::calculate_quality_metrics(const MatrixR
 
     return {maximum_internal_gap, normalized_boundary_gap};
 }
-
 
 static vector<Index> reselect_pareto_front(const MatrixR& objective_matrix, const Index maximum_number)
 {
@@ -1939,7 +1866,6 @@ static vector<Index> reselect_pareto_front(const MatrixR& objective_matrix, cons
 
     return selection;
 }
-
 
 MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
@@ -2095,7 +2021,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     return append_columns(global_pareto_inputs, global_pareto_outputs);
 }
 
-
 vector<float> ResponseOptimization::get_utopian_point() const
 {
     const Objectives objective_set(*this);
@@ -2109,7 +2034,6 @@ vector<float> ResponseOptimization::get_utopian_point() const
 
     return utopian_point;
 }
-
 
 pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pareto_front,
                                                              const VectorR& importance_scale) const
@@ -2174,7 +2098,6 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& pare
 
     return {advised_row_index, pareto_front.row(advised_row_index).transpose()};
 }
-
 
 pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front, const float balance) const
 {
@@ -2302,7 +2225,6 @@ pair<Index, VectorR> ResponseOptimization::get_robust_point(const MatrixR& front
     return {best, front.row(best).transpose()};
 }
 
-
 void ResponseOptimization::initialize_network_differential() const
 {
     if (network_jacobian.ready)
@@ -2410,7 +2332,6 @@ void ResponseOptimization::initialize_network_differential() const
              << "); falling back to the finite-difference VJP." << "\n";
 }
 
-
 static bool branch_is_dominated(const MatrixR& branch_objective,
                                 const MatrixR& incumbent_objective,
                                 const Index objectives_number,
@@ -2445,7 +2366,6 @@ static bool branch_is_dominated(const MatrixR& branch_objective,
     return true;
 }
 
-
 MatrixR ResponseOptimization::solve_once() const
 {
     const Index objectives_number = get_objectives_number();
@@ -2461,7 +2381,6 @@ MatrixR ResponseOptimization::solve_once() const
         ? perform_multiobjective_optimization()
         : perform_single_objective_optimization();
 }
-
 
 void ResponseOptimization::expand_fixed_objectives()
 {
@@ -2521,7 +2440,6 @@ void ResponseOptimization::expand_fixed_objectives()
     }
 }
 
-
 MatrixR ResponseOptimization::perform_response_optimization()
 {
     const auto restore_state = [this, saved_objectives = objectives, saved_fixed_values = fixed_values,
@@ -2541,7 +2459,6 @@ MatrixR ResponseOptimization::perform_response_optimization()
     expand_fixed_objectives();
 
     promote_single_variable_constraints();
-
 
     struct BranchAxis
     {

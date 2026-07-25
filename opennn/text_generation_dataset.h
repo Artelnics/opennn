@@ -37,8 +37,6 @@ public:
 
     Index get_sequence_length() const noexcept { return sequence_length; }
 
-    // A tokenizer with a loaded vocabulary uses that fixed vocabulary. The
-    // default word-level tokenizer builds one from the corpus.
     void set_tokenizer(unique_ptr<TokenizerOperator>);
     const TokenizerOperator* get_tokenizer() const noexcept { return tokenizer.get(); }
 

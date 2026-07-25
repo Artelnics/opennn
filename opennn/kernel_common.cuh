@@ -35,8 +35,6 @@ static constexpr int activation_silu      = 8;
 static constexpr int class_activation_softmax = 0;
 static constexpr int class_activation_sigmoid = 1;
 
-// Mirror of opennn::LEAKY_RELU_SLOPE (tensor_operations.h), like the
-// activation ids above mirror ActivationFunction.
 static constexpr float leaky_relu_slope = 0.1f;
 
 static inline int ceil_div(int a, int b)
@@ -49,12 +47,6 @@ static inline int grid_size_for(int n)
     return ceil_div(n, block_size);
 }
 
-// Capped grid for kernels verified to use a grid-stride loop
-// (`i += blockDim.x * gridDim.x`): a few block waves per SM schedule better
-// than hundreds of thousands of blocks. One-thread-per-element kernels with an
-// `if (i >= n) return;` guard must keep grid_size_for's uncapped grid, and
-// kernels whose float accumulation order depends on the grid (atomicAdd) must
-// too, so results stay bit-identical.
 static inline int grid_size_strided_for(int n)
 {
     static const int max_blocks = [] {
@@ -89,9 +81,6 @@ static inline void checked_host_condition(bool condition, const char* message)
         opennn::device::check_last_error(); \
     } while (false)
 
-// Guard + checked_int + launch for grid-stride/elementwise kernels whose first
-// parameter is the element count (block_size threads, no shared memory, compute
-// stream).
 template<typename K, typename... Args>
 static inline void launch_elementwise(Index n, K kernel, Args... args)
 {
@@ -100,8 +89,6 @@ static inline void launch_elementwise(Index n, K kernel, Args... args)
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(total), block_size, 0, opennn::device::get_compute_stream()>>>(total, args...));
 }
 
-// launch_elementwise with the capped grid of grid_size_strided_for; only for
-// kernels verified to be grid-stride (see grid_size_strided_for's caveats).
 template<typename K, typename... Args>
 static inline void launch_elementwise_strided(Index n, K kernel, Args... args)
 {
@@ -167,4 +154,4 @@ __device__ inline void rnn_activation(int activation_id, float z, float& h, floa
     }
 }
 
-#endif // KERNEL_COMMON_CUH
+#endif

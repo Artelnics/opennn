@@ -28,7 +28,7 @@ struct BatchSlot
     Buffer buffer;
     Shape  shape;
     Index  features_number = 0;
-    
+
     float* host = nullptr;
     Index  host_allocated_size = 0;
     uint16_t* host_bf16 = nullptr;

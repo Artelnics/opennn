@@ -208,8 +208,6 @@ protected:
     string name = "Loss";
 };
 
-// ── Internal — exposed with external linkage only so tests/yolo_loss_check_test.cpp
-// can exercise the raw YOLO kernels. Not part of the public API. ──────────────
 #ifndef OPENNN_NO_VISION
 
 struct YoloLambdas
@@ -217,8 +215,8 @@ struct YoloLambdas
     float giou            = 5.0f;
     float noobj           = 0.5f;
     float cls             = 1.0f;
-    float focal_gamma     = 0.0f;  // 0 = standard BCE; 2.0 = focal on class
-    float obj_focal_gamma = 0.0f;  // 0 = standard BCE; 2.0 = focal on objectness
+    float focal_gamma     = 0.0f;
+    float obj_focal_gamma = 0.0f;
 };
 
 float yolo_error_kernel(const TensorView& output,
@@ -237,7 +235,6 @@ void yolo_gradient_kernel(const TensorView& output,
                           float inv_batch,
                           YoloLambdas lam);
 
-// YOLOv8 anchor-free pair: output [B,G,G,4+C], target [B,G,G,5+C] (ch4 = flag).
 float yolo_v8_error_kernel(const TensorView& output,
                            const TensorView& target,
                            Index classes_number,
@@ -250,7 +247,7 @@ void yolo_v8_gradient_kernel(const TensorView& output,
                              float inv_batch,
                              YoloLambdas lam);
 
-#endif // OPENNN_NO_VISION
+#endif
 
 }
 

@@ -51,9 +51,7 @@ private:
 
     float first_learning_rate = 0.01f;
 
-
     float minimum_loss_decrease = EPSILON;
-
 
     float training_slope = 0.0f;
     float learning_rate = 0.0f;

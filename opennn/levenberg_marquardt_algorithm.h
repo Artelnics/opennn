@@ -38,7 +38,6 @@ struct BackPropagationLM
     VectorR gradient;
     MatrixR hessian;
 
-    // compute_jacobian workspace; sizes are fixed per network/batch, reused across epochs
     vector<Index> dense_indices;
     vector<Index> parameter_offsets;
     vector<MatrixR> deltas;
@@ -94,7 +93,6 @@ private:
    float maximum_damping_parameter = 0.0f;
 
    float damping_parameter_factor = 0.0f;
-
 
    float minimum_loss_decrease = 0.0f;
 

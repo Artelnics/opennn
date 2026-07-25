@@ -56,11 +56,6 @@ public:
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
 
-    // Inner k-fold cross-validation for scoring feature subsets during selection. folds_number == 1
-    // keeps the legacy single Training/Validation-split behaviour. >1 scores each subset by the mean
-    // validation error over a stratified (or, for time series, sequential) partition of the
-    // Training+Validation pool -- a robust, less overfittable selection criterion. Testing/None
-    // samples are never touched and the persistent sample roles are never mutated (see FoldScope).
     void set_folds_number(const Index new_folds_number) { folds_number = max<Index>(new_folds_number, Index(1)); }
     Index get_folds_number() const noexcept { return folds_number; }
 
@@ -81,8 +76,6 @@ protected:
 
     void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
 
-    // Scalers/descriptives of the selected input features, captured from the dataset and
-    // re-applied to the network's scaling layer after the final architecture is configured.
     struct InputScaling
     {
         vector<string> scalers;
@@ -92,9 +85,6 @@ protected:
     static InputScaling capture_input_scaling(Dataset*);
     static void apply_input_scaling(NeuralNetwork*, const InputScaling&);
 
-    // k-fold CV scoring lives in cross_validation.h (build_fold_partition / evaluate_folds /
-    // refit_final_model_on_development), shared with neuron selection.
-
     TrainingStrategy* training_strategy = nullptr;
 
     Index trials_number = 1;
@@ -102,7 +92,6 @@ protected:
     Index folds_number = 1;
 
     bool display = true;
-
 
     float validation_error_goal = 0;
 
@@ -127,9 +116,7 @@ struct InputsSelectionResult
 
     void print() const;
 
-
     VectorR optimal_parameters;
-
 
     VectorR training_error_history;
 
@@ -148,7 +135,6 @@ struct InputsSelectionResult
     vector<Index> optimal_input_variables_indices;
 
     VectorB optimal_inputs;
-
 
     optional<InputsSelection::StoppingCondition> stopping_condition;
 

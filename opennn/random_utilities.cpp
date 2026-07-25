@@ -124,7 +124,6 @@ void shuffle_vector(vector<T>& vec)
 template void shuffle_vector<Index>(vector<Index>&);
 template void shuffle_vector<size_t>(vector<size_t>&);
 
-
 bool draw_k_hot(const Index count, const Index k,
                 const vector<char>& force_on,
                 const vector<char>& force_off,

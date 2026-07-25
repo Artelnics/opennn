@@ -49,8 +49,6 @@ bool is_complete_utf8_prefix(string_view text, size_t& complete_bytes)
             valid = valid && is_utf8_continuation(
                 static_cast<unsigned char>(text[i + j]));
 
-        // Tokenizers are expected to produce valid UTF-8. Preserve an isolated
-        // invalid byte rather than blocking every later delta.
         if (length > 1 && !valid) length = 1;
 
         i += length;
@@ -99,7 +97,6 @@ bool descending_first(const pair<float, Index>& left,
     return left.first > right.first;
 }
 
-// Moves the top_k highest-valued entries to the front (unsorted partition).
 void top_k_partition(vector<pair<float, Index>>& values, Index top_k)
 {
     nth_element(values.begin(),
@@ -127,7 +124,6 @@ Index sample_token(VectorR& probabilities,
         return best;
     }
 
-    // Per-thread scratch: avoids vocabulary-sized allocations on every token.
     static thread_local VectorR original;
     static thread_local vector<pair<float, Index>> ranked;
     static thread_local vector<char> keep;
@@ -395,8 +391,7 @@ void GenerationParser::emit_stable_delta(const GenerationChannel output_channel,
 
     if (incremental)
     {
-        // state.text always ends on a UTF-8 boundary, so scanning only the
-        // withheld tail matches rescanning the full decoded string.
+
         size_t stable_bytes = 0;
         const bool complete = is_complete_utf8_prefix(state.tail, stable_bytes);
         if (stable_bytes == 0) return;
@@ -679,7 +674,7 @@ private:
 
     vector<float> logits;
     vector<uint16_t> bf16_logits;
-    // Reused per token so ~vocabulary-sized buffers are allocated only once.
+
     vector<float> adjusted;
     vector<pair<float, Index>> candidates;
     int* pinned_id = nullptr;
@@ -713,7 +708,6 @@ bool remove_oldest_turn(vector<ChatMessage>& messages)
            && messages[first].role == ChatRole::System)
         ++first;
 
-    // The last element is the current user turn and is never removed.
     if (first + 1 >= messages.size()) return false;
     if (messages[first].role != ChatRole::User
         || messages[first + 1].role != ChatRole::Assistant)
@@ -1095,9 +1089,6 @@ ChatSession::~ChatSession() = default;
 namespace
 {
 
-// Decode-loop frame shared by both classic session kinds: parser wiring, the
-// token budget, per-step read/sample/accounting, the content-vs-control
-// dispatch and the response tail. The forward passes stay with each caller.
 struct ClassicDecodeLoop
 {
     ClassicDecodeLoop(ClassicGenerationState& new_state,

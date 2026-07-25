@@ -59,8 +59,6 @@ OPENNN_CUDA_STUB(void, update_parameters_cuda,
 
 #endif
 
-// accumulator += alpha * gradient, on the gradient's device. Used by the
-// set_update_period path; gradients are fp32 masters on both devices.
 static void accumulate_scaled_gradient(Buffer& accumulator, Buffer& gradient, float alpha)
 {
 #ifdef OPENNN_HAS_CUDA
@@ -125,9 +123,6 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 
     optimization_data.iteration = 0;
 
-    // Gradient accumulation (see set_update_period): sub-batch gradients are
-    // per-batch means, so averaging them with weight 1/period reproduces the
-    // full virtual-batch gradient exactly when the mini-batches are equal.
     throw_if(update_period > 1 && use_cuda_graph,
              "gradient accumulation is not supported with the CUDA graph.");
 

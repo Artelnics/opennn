@@ -76,7 +76,7 @@ void CombinationOperator::set_parameters_glorot()
 
 void CombinationOperator::set_parameters_pytorch()
 {
-    // nn.Linear default: weight and bias ~ U(+-1/sqrt(fan_in)).
+
     if (weights.empty() || tied_transposed) return;
     const float limit = 1.0f / sqrt(float(input_features > 0 ? input_features : 1));
     set_random_uniform(weights.as_vector(), -limit, limit);
@@ -94,8 +94,6 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         return;
     }
 
-    // GELUTanh with a separate pre-activation slot (e.g. GPT-2 FFN): fold the
-    // tanh-GELU into the epilogue and keep the pre-activation for the backward.
     if (fused_activation == ActivationFunction::GELUTanh
         && output_slots.size() > 1
         && output.is_cuda())
@@ -112,7 +110,6 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);
     linear_forward(get_input(forward_propagation, layer), weights, bias, output, epilogue);
 }
-
 
 void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {

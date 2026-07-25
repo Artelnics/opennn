@@ -356,13 +356,10 @@ protected:
 
     virtual void missing_values_from_JSON(const Json*) {}
 
-    // Common to_JSON skeleton: "Dataset" + "DataSource" fields + Variables + Samples.
     void write_json_header(JsonWriter&, initializer_list<pair<const char*, Json>>) const;
 
-    // Display field + closing "Dataset".
     void write_json_footer(JsonWriter&) const;
 
-    // Optional Variables/Samples/MissingValues/PreviewData blocks.
     void read_json_blocks(const Json*);
 };
 

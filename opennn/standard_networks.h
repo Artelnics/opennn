@@ -101,13 +101,6 @@ public:
 
     enum class HeadStyle { Single, FPN, PANet, FPNv8 };
 
-    // ReLU = the activation used since Phase 1 — preserves saved-weight effect.
-    // LeakyReLU = Darknet/YOLO-v3 convention (slope 0.1) — applied uniformly
-    // to every conv in the backbone (Vgg or DarknetTiny, residual
-    // blocks, FPN lateral convs). The Detection layer's class activation and
-    // the final logits stay as-is. Switching this changes forward outputs even
-    // with identical parameters, so saved Phase 1/2 weights should not be
-    // loaded across this flag.
     enum class BodyActivation { ReLU, LeakyReLU };
 
     YoloNetwork(const Shape&,
@@ -178,9 +171,6 @@ public:
 
     TextGenerationNetwork() = default;
 
-    // pre_normalization = true builds pre-LN blocks (norm before attention/FFN,
-    // plain residual adds, final norm before the projection); false keeps the
-    // post-LN layout shared with Transformer.
     TextGenerationNetwork(Index,
                           Index,
                           Index,
@@ -208,12 +198,6 @@ public:
 
 };
 
-// Qwen3 / LLaMA-style decoder-only language model: token embedding (position from
-// RoPE inside attention), decoder blocks of pre-RMSNorm -> grouped-query attention
-// -> add -> pre-RMSNorm -> gated (SwiGLU) Dense -> down -> add, then a final RMSNorm
-// and a bias-free output projection tied to the embedding (copied; the framework
-// does not alias parameters). Token ids use OpenNN's +1 / [PAD]=0 convention, so
-// the effective vocabulary is vocabulary_size + 1.
 class Qwen3 final : public NeuralNetwork
 {
 public:
@@ -269,7 +253,7 @@ public:
     void set_dropout_rate(const float);
 };
 
-#endif // OPENNN_NO_VISION
+#endif
 
 }
 

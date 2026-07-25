@@ -35,24 +35,20 @@ void GroupedQueryAttentionOperator::set(Index new_sequence_length, Index new_hid
     use_qk_norm     = new_use_qk_norm;
 }
 
-// Parameter order (defines the byte layout in the network's .bin): q, k, v, o
-// projections (bias-free, stored [out, in] like the HF checkpoint) then, when
-// QK-Norm is enabled, the two norm weights of size head_dim.
 vector<TensorSpec> GroupedQueryAttentionOperator::parameter_specs() const
 {
-    // Projections follow compute_dtype (bf16 mirror on a CUDA/BF16 build); the
-    // QK-Norm weights stay FP32. The fp32 master (.bin) layout is unchanged.
+
     vector<TensorSpec> specs = {
-        {Shape{q_dim(),  hidden},   compute_dtype},   // q_proj
-        {Shape{kv_dim(), hidden},   compute_dtype},   // k_proj
-        {Shape{kv_dim(), hidden},   compute_dtype},   // v_proj
-        {Shape{hidden,   q_dim()},  compute_dtype},   // o_proj
+        {Shape{q_dim(),  hidden},   compute_dtype},
+        {Shape{kv_dim(), hidden},   compute_dtype},
+        {Shape{kv_dim(), hidden},   compute_dtype},
+        {Shape{hidden,   q_dim()},  compute_dtype},
     };
 
     if (use_qk_norm)
     {
-        specs.push_back({Shape{head_dim}, Type::FP32});   // q_norm
-        specs.push_back({Shape{head_dim}, Type::FP32});   // k_norm
+        specs.push_back({Shape{head_dim}, Type::FP32});
+        specs.push_back({Shape{head_dim}, Type::FP32});
     }
 
     return specs;
@@ -85,26 +81,20 @@ void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views
 
 void GroupedQueryAttentionOperator::set_parameters_random()
 {
-    // Pretrained weights are loaded afterwards; QK-Norm scales at 1 keep an
-    // unloaded layer a no-op rather than a zero.
+
     if (q_norm.data) q_norm.as_vector().setOnes();
     if (k_norm.data) k_norm.as_vector().setOnes();
 }
 
 void GroupedQueryAttentionOperator::back_propagate(ForwardPropagation&, BackPropagation&, size_t) const
 {
-    // The base class no-op would silently kill the gradient flow mid-network.
+
     throw runtime_error("GroupedQueryAttention is inference-only: back-propagation is not implemented.");
 }
 
 namespace
 {
 
-// CPU counterpart of the CUDA shared scratch below: the RoPE tables are a pure
-// function of (table_len, head_dim, theta) and the work buffers carry no state
-// across calls, and layers run serially, so every GQA layer shares one
-// per-thread copy instead of rebuilding/reallocating each forward. Same caveat
-// as the CUDA pool: one GQA model config per thread at a time.
 struct GroupedAttentionCpuScratch
 {
     std::vector<float> cos, sin;
@@ -130,8 +120,6 @@ GroupedAttentionCpuScratch& gqa_cpu_scratch()
     return scratch;
 }
 
-// Every consumer fully overwrites these buffers before reading, so grow-only
-// resizing without a zero-fill is safe.
 float* grown(std::vector<float>& buffer, size_t n)
 {
     if (buffer.size() < n) buffer.resize(n);
@@ -140,10 +128,10 @@ float* grown(std::vector<float>& buffer, size_t n)
 
 }
 
-void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
-    TensorView& input  = get_input(forward_propagation, layer);    // [batch, seq, hidden]
-    TensorView& output = get_output(forward_propagation, layer);   // [batch, seq, hidden]
+    TensorView& input  = get_input(forward_propagation, layer);
+    TensorView& output = get_output(forward_propagation, layer);
 
     const Index batch = forward_propagation.batch_size;
 
@@ -156,13 +144,11 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     }
 #endif
 
-    const Index seq   = input.shape[1];   // tokens this pass
+    const Index seq   = input.shape[1];
     const Index qd    = q_dim();
     const Index kd    = kv_dim();
     const float scale = 1.0f / std::sqrt(float(head_dim));
 
-    // Tables span the compiled window so decode can index positions past..past+seq-1;
-    // cached per thread, rebuilt only when (table_len, head_dim, theta) changes.
     const Index table_len = sequence_length;
     auto& scratch = gqa_cpu_scratch();
     scratch.build_tables(table_len, head_dim, rope_theta);
@@ -171,7 +157,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     float* x_all = input.as<float>();
     float* o_all = output.as<float>();
 
-    if (batch == 1)   // incremental path (past == 0 prefill; past > 0 decode)
+    if (batch == 1)
     {
         const Index past  = forward_propagation.past_length;
         const Index total = past + seq;
@@ -193,8 +179,8 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
         TensorView x_b(x_all, {1, seq, hidden});
         TensorView q_v(q, {1, seq, qd}), k_v(k, {1, seq, kd});
-        TensorView v_slot(vcache + size_t(past) * kd, {1, seq, kd});   // raw v into cache
-        TensorView k_slot(kcache + size_t(past) * kd, {1, seq, kd});   // post-RoPE k into cache
+        TensorView v_slot(vcache + size_t(past) * kd, {1, seq, kd});
+        TensorView k_slot(kcache + size_t(past) * kd, {1, seq, kd});
 
         tied_lm_head_forward(x_b, q_proj, q_v);
         tied_lm_head_forward(x_b, k_proj, k_v);
@@ -202,7 +188,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
         if (use_qk_norm)
         {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);   // QK-Norm, before RoPE
+            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
@@ -240,7 +226,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 
         if (use_qk_norm)
         {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);   // QK-Norm, before RoPE
+            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
@@ -261,12 +247,6 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
 namespace
 {
 
-// Per-pass scratch, RoPE tables and decode buffers carry no state across
-// operator invocations and the layers run serially, so every GQA layer shares
-// one per-thread pool instead of 36 private copies (~1.1 GB on Qwen3-4B).
-// Follows the device_backend shared-workspace precedent, with the same caveat:
-// one GQA model shape per thread at a time — a rebuild moves the addresses a
-// captured graph baked in. K/V caches stay per-layer (the only cross-pass state).
 struct GroupedAttentionScratch
 {
     Buffer cos{Device::CUDA}, sin{Device::CUDA};
@@ -285,18 +265,12 @@ GroupedAttentionScratch& gqa_scratch()
     return scratch;
 }
 
-// cuDNN-frontend flash-attention graph for the prefill (seq > 1, BF16). One
-// graph built at the compiled max dims with a padding mask: the actual query
-// and key counts live in two device int32 scalars, and the bottom-right causal
-// diagonal aligns to them, so suffix prefill (kv longer than q after prefix
-// caching) masks correctly without per-shape rebuilds. A build failure falls
-// back to the generic kernel for good.
 struct GroupedAttentionSDPA
 {
     shared_ptr<cudnn_frontend::graph::Graph> graph;
     shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
     void* workspace = nullptr;
-    int32_t* seq_device = nullptr;   // [seq_q, seq_kv]
+    int32_t* seq_device = nullptr;
     int32_t* seq_pinned = nullptr;
     Index max_seq = 0, q_heads = 0, kv_heads = 0, head_dim = 0;
     bool failed = false;
@@ -315,7 +289,6 @@ GroupedAttentionSDPA& gqa_sdpa()
     return sdpa;
 }
 
-// BSHD tensor ({batch 1, heads, max_seq, head_dim} over rows of heads*head_dim).
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
                 int64_t heads, int64_t max_seq, int64_t head_dim)
@@ -385,18 +358,15 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index
 void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
                                                 const int* position_device)
 {
-    const Index seq = input.shape[1];   // tokens this pass
+    const Index seq = input.shape[1];
     const Index qd  = q_dim();
     const Index kd  = kv_dim();
     const float scale = 1.0f / std::sqrt(float(head_dim));
     cudaStream_t stream = device::get_compute_stream();
 
-    // Activations follow the network dtype; cos/sin and QK-Norm weights stay FP32.
     const Type  act  = input.type;
     const Index elem = Index(type_bytes(act));
 
-    // Shared scratch and tables sized to the compiled max seq; rebuilt only when
-    // the shape, dtype or RoPE base changes.
     const Index table_len = sequence_length;
     auto& s = gqa_scratch();
     if (s.sequence != table_len || s.dtype != act || s.q_dim != qd || s.kv_dim != kd
@@ -415,11 +385,11 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         };
         auto alloc = [&](Index n, Buffer& b) { b.resize_bytes(n * elem, Device::CUDA); };
 
-        s.cos = upload(cos_h);   // fp32
-        s.sin = upload(sin_h);   // fp32
+        s.cos = upload(cos_h);
+        s.sin = upload(sin_h);
         alloc(table_len * qd, s.q);   alloc(table_len * kd, s.k);   alloc(table_len * kd, s.v);
         alloc(table_len * qd, s.qr);  alloc(table_len * kd, s.kr);  alloc(table_len * qd, s.attn);
-        alloc(qd + 2 * kd, s.qkv);   // single fused-projection row (decode only)
+        alloc(qd + 2 * kd, s.qkv);
         s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
                                 * Index(sizeof(float)), Device::CUDA);
         s.sequence = table_len;
@@ -439,7 +409,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     TensorView cos_v(s.cos.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
     TensorView sin_v(s.sin.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
 
-    if (batch == 1)   // incremental path (past == 0 prefill; past > 0 decode)
+    if (batch == 1)
     {
         const Index total = past + seq;
         TensorView x_b(input.data,  {1, seq, hidden}, act, Device::CUDA);
@@ -449,7 +419,6 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView qr_v(s.qr.data, {1, seq, qd}, act, Device::CUDA);
         TensorView attn_v(s.attn.data, {1, seq, qd}, act, Device::CUDA);
 
-        // raw v and post-RoPE k written into the cache at the append offset.
         char* v_at = static_cast<char*>(kv_value.data) + size_t(past) * kd * elem;
         char* k_at = static_cast<char*>(kv_key.data)   + size_t(past) * kd * elem;
         TensorView v_slot(v_at, {1, seq, kd}, act, Device::CUDA);
@@ -457,10 +426,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (seq == 1 && qkv_fused && position_device && use_qk_norm)
         {
-            // Fully device-positioned decode step (CUDA-graph capturable): one
-            // fused projection row, then a single kernel doing QK-Norm + RoPE +
-            // cache append at *position_device, then split-KV attention whose
-            // valid length also comes from the device position.
+
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
             tied_lm_head_forward(x_b, qkv_w, qkv_row);
@@ -480,8 +446,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (seq == 1 && qkv_fused)
         {
-            // One projection for the whole [q | k | v] row; the single-row case
-            // keeps q/k/v contiguous, so the per-piece views below just offset it.
+
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
             tied_lm_head_forward(x_b, qkv_w, qkv_row);
@@ -500,7 +465,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (use_qk_norm)
         {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);   // QK-Norm, before RoPE
+            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
@@ -576,7 +541,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (use_qk_norm)
         {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);   // QK-Norm, before RoPE
+            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
             qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
         }
 
@@ -589,7 +554,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     }
 }
 
-#endif  // OPENNN_HAS_CUDA
+#endif
 
 }
 

@@ -116,7 +116,7 @@ public:
     void set_input_shape(const Shape&);
 
     void clear();
-    void steal_from(NeuralNetwork& src);  // replace this network's layers with src's (leaves src empty)
+    void steal_from(NeuralNetwork& src);
 
     Index get_layers_number() const noexcept { return ssize(layers); }
     Index get_layers_number(const string&) const;
@@ -143,17 +143,6 @@ public:
     void link_states(Device);
     MatrixR calculate_outputs(const vector<TensorView>&);
 
-    // Device-resident inference: input already on GPU, caller-owned persistent
-    // ForwardPropagation (activations allocated once), parameters uploaded only
-    // when upload_parameters=true (skip on repeat calls with unchanged weights).
-    // Output is left on the GPU; returns its TensorView (no D2H). This is
-    // the zero-per-call-overhead path -- the PyTorch-equivalent inference loop.
-    // With forward_propagation.set_cuda_graph(true) the forward is captured
-    // into a CUDA graph after two eager calls and replayed while the input
-    // pointers stay the same; any weight change must go through an
-    // upload_parameters=true call (the pre-existing contract), which also
-    // invalidates the captured graph. Release any bf16 fp32 master before the
-    // first resident call so the captured pointers are final.
     TensorView calculate_outputs_resident(const vector<TensorView>&,
                                           ForwardPropagation&,
                                           bool upload_parameters = true);
@@ -200,18 +189,9 @@ public:
 public:
 
     void cast_parameters_to_bf16();
-    // Inference-only BF16 memory trim: after copy_parameters_device(), operators
-    // read parameters_bf16_mirror, so benchmark resident inference can release
-    // the CUDA fp32 master before allocating large activation arenas.
+
     void release_bf16_fp32_parameter_master_for_inference();
 
-    // BF16 inference upload for LARGE models (billions of parameters): builds the
-    // device bf16 mirror + the compact fp32 storage tensor by tensor from the
-    // HOST fp32 master, then releases it. Unlike copy_parameters_device() it never
-    // materialises the full fp32 master on the device (no 24 GB peak for a 4B
-    // model) and never operates on the whole >2^31-element buffer at once (no
-    // 32-bit CUDA-wrapper overflow). Precondition: host-resident fp32 parameters
-    // and a CUDA/BF16 configuration; otherwise it falls back to copy_parameters_device().
     void upload_parameters_bf16_inference();
 
     bfloat16* get_parameters_bf16_mirror_data()
@@ -240,9 +220,6 @@ public:
 
 private:
 
-    // Stage a device-resident buffer on the host for the enclosed scope, then
-    // restore it to the device (also on exceptions, unlike the previous
-    // hand-written call pairs).
     struct HostParametersGuard
     {
         explicit HostParametersGuard(NeuralNetwork& n)
@@ -313,9 +290,6 @@ protected:
     Buffer parameters_bf16_mirror{Device::CUDA};
     Buffer parameters_fp32_inference_storage{Device::CUDA};
 
-    // True when the bf16 mirror holds only the BF16-spec, non-tied tensors
-    // (upload_parameters_bf16_inference); the full-layout training mirror,
-    // which the fused optimizer updates index by master offset, keeps false.
     bool parameters_bf16_mirror_compact = false;
 
     Buffer states;

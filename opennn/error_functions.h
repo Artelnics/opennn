@@ -10,9 +10,6 @@
 
 #include "tensor_types.h"
 
-// Throwing stubs for CUDA-only helpers in CPU-only builds. Use OPENNN_CUDA_STUB
-// directly (or as the X of an X-macro list) for static free functions, and
-// OPENNN_CUDA_STUB_BODY as the body of member-function stubs.
 #define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
 

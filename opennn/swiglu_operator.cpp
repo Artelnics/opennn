@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
     const TensorView& gate = get_input(forward_propagation, layer, 0);
     const TensorView& up   = get_input(forward_propagation, layer, 1);

@@ -65,16 +65,11 @@ CompiledFormula compile_formula(const string&,
                                               const vector<NamedColumn>&,
                                               const vector<NamedColumn>&);
 
-
 enum class ComparisonOperator : uint8_t
 {
     None, EqualTo, Between, GreaterEqualTo, LessEqualTo, GreaterThan, LessThan, AllowedSet
 };
 
-
-// [low, up] interval implied by a comparison on the constrained value (strict and
-// non-strict operators map identically; missing sides are +/-infinity). Returns
-// false for AllowedSet, which is not an interval.
 inline bool interval_from_comparison(ComparisonOperator comparison,
                                      float low_bound, float up_bound,
                                      float& low, float& up)
@@ -97,9 +92,7 @@ inline bool interval_from_comparison(ComparisonOperator comparison,
     }
 }
 
-
 enum class ConstraintKind { Unrepairable, Callback, AffineInput, NonlinearInput, OutputDependent };
-
 
 struct MultivariateConstraint
 {
@@ -117,7 +110,6 @@ struct MultivariateConstraint
     ConstraintKind kind = ConstraintKind::Unrepairable;
 };
 
-
 struct UnivariateConstraint
 {
     ComparisonOperator comparison;
@@ -130,18 +122,13 @@ struct UnivariateConstraint
         : comparison(new_comparison), low_bound(new_low_bound), up_bound(new_up_bound) {}
 };
 
-
 struct CardinalityConstraint
 {
     vector<string> variable_names;
     Index k = 0;
 
-    // true  -> the k selected members are forced nonzero (binary -> 1): exactly k active.
-    // false -> the k selected members are free to take any value including 0, only the
-    //          non-selected members are pinned to 0: at most k active (sparsity budget).
     bool force_nonzero = true;
 };
-
 
 struct LinearConstraintSet
 {
@@ -150,12 +137,10 @@ struct LinearConstraintSet
     VectorR upper;
 };
 
-
 inline float bound_tolerance(float bound) { return max(EPSILON, abs(bound) * 1e-4f); }
 
 void snap_to_lattice(MatrixR&, Index, float, float);
 
-// Integer/binary columns with their per-column lattice bounds [min, max].
 struct Lattice
 {
     vector<Index> columns;
@@ -165,10 +150,6 @@ struct Lattice
 
 [[nodiscard]] ConstraintKind classify(const MultivariateConstraint&);
 
-// Expand one constraint into disjunctive normal form over the smooth pieces of any min/max/abs
-// it contains: returns a list of branches, each a conjunction of smooth constraints, whose union
-// equals the original feasible set. A smooth constraint (or a top-level AND) yields a single
-// branch; OR / nested non-smooth cases yield several (the caller branches over them).
 vector<vector<MultivariateConstraint>> expand_constraint(const string&,
                                                          ComparisonOperator,
                                                          float, float,
@@ -243,8 +224,6 @@ void repair_output_constraints(MatrixR&,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
 
-// Finite-difference fallback: builds a central-difference VJP from a batched forward, evaluating
-// all 2*inputs_number perturbations of a row in a single forward call instead of one per dimension.
 void repair_output_constraints(MatrixR&,
                                const VectorR&,
                                const VectorR&,
@@ -252,7 +231,6 @@ void repair_output_constraints(MatrixR&,
                                const SurrogateBatchForward&,
                                Index max_correction_passes = 64,
                                const vector<char>& fixed_columns = {});
-
 
 }
 

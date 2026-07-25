@@ -50,7 +50,6 @@ void TrainingStrategy::set_default()
     if (!get_neural_network())
         return;
 
-
     if (neural_network->has(LayerType::Recurrent)
         || neural_network->has(LayerType::LongShortTermMemory))
     {
@@ -58,7 +57,6 @@ void TrainingStrategy::set_default()
         set_optimization_algorithm("AdaptiveMomentEstimation");
         return;
     }
-
 
     if (neural_network->has(LayerType::Convolutional))
     {
@@ -81,7 +79,6 @@ void TrainingStrategy::set_default()
         return;
     }
 
-
     if (neural_network->has(LayerType::Embedding) || neural_network->has(LayerType::MultiHeadAttention))
     {
         set_loss("CrossEntropy");
@@ -89,7 +86,6 @@ void TrainingStrategy::set_default()
         dynamic_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
         return;
     }
-
 
     const ActivationFunction output_activation = neural_network->get_output_activation();
 
@@ -155,9 +151,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
 {
     const Json* root_element = get_json_root(document, "TrainingStrategy");
 
-
     const Json* loss_element = require_json_field(root_element, "Loss");
-
 
     const string loss_method = read_json_string(loss_element, "Error");
 
@@ -168,9 +162,7 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     set_loss(loss_method);
     loss->from_JSON(JsonDocument::wrap(loss_method, *loss_method_element));
 
-
     const Json* optimization_algorithm_element = require_json_field(root_element, "Optimizer");
-
 
     const string optimization_method = read_json_string(optimization_algorithm_element, "OptimizationMethod");
 
@@ -181,12 +173,10 @@ void TrainingStrategy::from_JSON(const JsonDocument& document)
     set_optimization_algorithm(optimization_method);
     optimizer->from_JSON(JsonDocument::wrap(optimization_method, *optimization_method_element));
 
-
     const Json* regularization_element = loss_element->find("Regularization");
 
     if (regularization_element)
         loss->regularization_from_JSON(JsonDocument::wrap("Regularization", *regularization_element));
-
 
     optimizer->set_display(read_json_bool(root_element, "Display"));
 }

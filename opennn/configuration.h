@@ -47,8 +47,6 @@ private:
     Device device         = Device::Auto;
     Type   training_type  = Type::Auto;
 
-    // Bumped by every set(); NeuralNetwork::compile() snapshots it so a later
-    // set() can be detected as stale instead of being ignored silently.
     unsigned generation   = 0;
 };
 

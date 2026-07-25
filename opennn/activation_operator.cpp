@@ -29,7 +29,7 @@ void ActivationOperator::set_activation_function(const string& name)
 void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     PROFILE_SCOPE("op:activation_fwd");
-    
+
     TensorView& output = get_output(forward_propagation, layer);
 
     if (output.empty() || (forward_fused && output.is_cuda()))

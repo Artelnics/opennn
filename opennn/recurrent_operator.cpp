@@ -158,7 +158,7 @@ void activate_in_place(ActivationFunction activation,
     }
 }
 
-} // namespace
+}
 
 void RecurrentOperator::apply(const TensorView& input,
                             TensorView& hidden_states,

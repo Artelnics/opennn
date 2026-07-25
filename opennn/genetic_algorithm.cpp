@@ -462,7 +462,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     Dataset* dataset = loss->get_dataset();
 
-
     original_input_indices = dataset->get_variable_indices(VariableRole::Input);
     original_target_indices = dataset->get_variable_indices(VariableRole::Target);
     const vector<Index> time_variable_indices = dataset->get_variable_indices(VariableRole::Time);
@@ -477,10 +476,8 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     initialize_population();
 
-
     if (dataset->has_nan())
         dataset->scrub_missing_values();
-
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
@@ -497,7 +494,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         input_selection_results.resize_history(input_selection_results.mean_training_error_history.size() + 1);
 
         evaluate_population();
-
 
         const Index optimal_individual_index = minimal_index(validation_errors);
 
@@ -547,7 +543,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
                  << "Elapsed time: " << get_time(elapsed_time) << "\n"
                  << "Best generation by validation error: " << best_generation << "\n";
 
-
         input_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {
             {input_selection_results.optimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
@@ -574,7 +569,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_mutation();
     }
 
-
     const vector<Index> optimal_variable_indices = genes_to_variable_indices(input_selection_results.optimal_inputs);
 
     dataset->set_variable_indices(optimal_variable_indices, original_target_indices);
@@ -582,7 +576,6 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     const InputScaling input_scaling = capture_input_scaling(dataset);
 
     const Index optimal_variables_number = dataset->get_features_number(VariableRole::Input);
-
 
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 

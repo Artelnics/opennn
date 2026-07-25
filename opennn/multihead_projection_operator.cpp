@@ -75,8 +75,8 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? TensorView{}
         : input_delta.reshape({rows, input_features});
 
-    const bool accumulate = self_attention 
-        ? accumulate_input_delta_self 
+    const bool accumulate = self_attention
+        ? accumulate_input_delta_self
         : accumulate_input_delta_cross;
 
     linear_backward(scratch_2d, input_2d, combination.weights, combination.weight_gradient, combination.bias_gradient, input_delta_2d, accumulate);

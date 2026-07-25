@@ -29,8 +29,7 @@ ConvolutionOperator::ConvolutionOperator() = default;
 ConvolutionOperator::~ConvolutionOperator() = default;
 
 #ifndef OPENNN_HAS_CUDA
-// The header member unique_ptr<ConvGraphCache> exists in every build; CPU
-// builds only need the type to be complete for the destructor instantiation.
+
 struct ConvolutionOperator::ConvGraphCache {};
 #endif
 
@@ -168,7 +167,7 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
     entry.bgrad_DB = graph->reduction(entry.bgrad_DY,
                                       graph::Reduction_attributes()
                                       .set_mode(ReductionMode_t::ADD));
-    // The bias gradient is the FP32 master gradient regardless of io dtype.
+
     entry.bgrad_DB->set_output(true)
                    .set_data_type(DataType_t::FLOAT)
                    .set_dim({1, d.kernels, 1, 1})
@@ -205,7 +204,6 @@ string timing_label(const ConvolutionOperator& op, const char* kind)
 
 #endif
 
-
 void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
                       Index new_kernels_n, Index new_kernel_h, Index new_kernel_w, Index new_kernel_c,
                       Index new_row_stride, Index new_column_stride,
@@ -228,7 +226,7 @@ void ConvolutionOperator::set(Index new_input_h, Index new_input_w,
 
 vector<TensorSpec> ConvolutionOperator::parameter_specs() const
 {
-    // The bias is redundant under batch normalization (its beta absorbs it).
+
     if (!use_bias)
         return {{{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype}};
 
@@ -269,8 +267,7 @@ void ConvolutionOperator::set_parameters_glorot()
     if (!bias.empty()) bias.setZero();
 }
 
-
-void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool /*is_training*/)
+void ConvolutionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
     const TensorView& input = get_input(forward_propagation, layer);
     TensorView& output      = get_output(forward_propagation, layer);
@@ -295,10 +292,6 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
 namespace
 {
 
-// One row per output position, one column block per (kernel_row, kernel_column,
-// channel) matching the row-major kernel layout, so the whole convolution is a
-// single GEMM against the (kernels x kernel_height*kernel_width*channels)
-// weight matrix. Out-of-range taps (padding) become zero columns.
 void im2col(const float* image, Index input_height, Index input_width, Index channels,
             Index kernel_height, Index kernel_width,
             Index padding_height, Index padding_width,
@@ -346,8 +339,6 @@ void im2col(const float* image, Index input_height, Index input_width, Index cha
         }
 }
 
-// Scatter-add inverse of im2col: accumulates each patch column back onto the
-// image position it was read from (padding taps are dropped).
 void col2im(const float* col, Index input_height, Index input_width, Index channels,
             Index kernel_height, Index kernel_width,
             Index padding_height, Index padding_width,
@@ -446,8 +437,6 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
     const bool write_input_delta = !input_delta.empty();
 
-    // Per-thread partials summed in thread order afterwards, so the result does
-    // not depend on OpenMP scheduling.
     const int threads_number = omp_get_max_threads();
     MatrixR weight_gradient_partials = MatrixR::Zero(threads_number, kernels_number * patch_size);
     MatrixR bias_gradient_partials = MatrixR::Zero(use_bias ? threads_number : 0,
@@ -540,7 +529,6 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     throw_if(!ran, "ConvolutionOperator: GPU convolution requires SM 8.0+ (Ampere).");
 }
 
-
 void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
                                            const TensorView& folded_weights,
                                            const TensorView& folded_bias,
@@ -548,10 +536,6 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
 {
     PROFILE_SCOPE("op:conv_fwd");
 
-    // A stride-1 unpadded 1x1 convolution is a GEMM over the channel
-    // dimension; folded_weights comes transposed to [channels, kernels],
-    // the layout linear_forward expects, and cuBLASLt fuses the folded
-    // bias (and ReLU) into the epilogue.
     linear_forward(input, folded_weights, folded_bias, output,
                    relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
 }
@@ -576,8 +560,6 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
         if (!entry.wgrad) cudnn_frontend::build_wgrad(entry, dims, input.type);
 
-        // cuDNN emits DW in the io dtype; in BF16 accumulate it into the FP32
-        // master gradient through a scratch buffer + cast (as the dense path does).
         const bool wgrad_bf16 = input.is_bf16();
         bfloat16* dw_bf16 = wgrad_bf16 ? ensure_bf16_gradient_workspace(weight_gradient.size()) : nullptr;
 

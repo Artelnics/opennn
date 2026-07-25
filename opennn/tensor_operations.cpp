@@ -147,19 +147,14 @@ const EnumMap<ActivationFunction>& activation_function_map()
         {ActivationFunction::GELUTanh,  "GELUTanh"},
         {ActivationFunction::SiLU,      "SiLU"},
         {ActivationFunction::SiLU,      "Swish"},
-        // Legacy aliases emitted by the Neural Designer editor's activation combobox
-        // (old opennn names). from_string() accepts them so a saved model does not
-        // crash the engine on load; to_string() still returns the CANONICAL name above
-        // (it returns the first entry matching the enum value, so these are read-only).
-        // ScaledExponentialLinear (SELU) is not implemented in the refactor: map it to
-        // the nearest supported activation (ReLU) instead of throwing.
+
         {ActivationFunction::Identity,  "Linear"},
         {ActivationFunction::Sigmoid,   "Logistic"},
         {ActivationFunction::Tanh,      "HyperbolicTangent"},
         {ActivationFunction::ReLU,      "RectifiedLinear"},
         {ActivationFunction::ReLU,      "ScaledExponentialLinear"}
     };
-    
+
     static const EnumMap<ActivationFunction> instance{entries};
     return instance;
 }
@@ -363,7 +358,7 @@ void unscale(const TensorView& input,
                     min_range, max_range, output);
         return;
     }
-    
+
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
               min_range, max_range, output, true);
 }
@@ -410,7 +405,6 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
     const size_t rank = input_a.get_rank();
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
-    // Serial below this element count; guard pattern and threshold follow add_bias.
     const bool parallel = output.size() >= 65536;
 
     #pragma omp parallel for schedule(static) if(parallel)
@@ -496,11 +490,11 @@ static void activation_forward_cpu(TensorView& output, ActivationFunction functi
         a = a.unaryExpr([](float x) { return gelu_value(x); });
         return;
     case GELUTanh:
-        // Vectorized form of gelu_tanh_value (Eigen array tanh).
+
         a = 0.5f * a * (1.0f + (SQRT_2_OVER_PI * (a + GELU_TANH_CUBIC * a * a * a)).tanh());
         return;
     case SiLU:
-        // Vectorized form of silu_value (Eigen array exp).
+
         a = a / (1.0f + (-a).exp());
         return;
     }
@@ -529,7 +523,7 @@ static void activation_backward_cpu(const TensorView& outputs, TensorView& delta
     case LeakyReLU:
         d = (y >= 0.0f).select(d, d * LEAKY_RELU_SLOPE);
         return;
-    // For GELU/GELUTanh/SiLU `y` holds the pre-activation input (needs_input).
+
     case GELU:
         d *= y.unaryExpr([](float x) { return gelu_derivative(x); });
         return;
@@ -612,10 +606,6 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
-    // Two statements on purpose: fusing the bias into the product expression
-    // ((input * weights).rowwise() + bias) makes Eigen materialize the whole
-    // product in a heap temporary before the add -- an extra batch x outputs
-    // allocation and copy per call.
     auto output_matrix = output.as_flat_matrix();
     output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
     if (!bias.empty())
@@ -695,9 +685,7 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
         const float sum_sq = input_map.square().sum();
 
         const float mean    = sum * inv_D;
-        // Variance via E[x^2] - E[x]^2 can go slightly negative from catastrophic
-        // cancellation when activations are large (high embedding dimension); clamp
-        // to >= 0 before the sqrt so the layer norm cannot produce NaN.
+
         const float variance = max(sum_sq * inv_D - mean * mean, 0.0f);
         const float std_val = sqrt(variance + EPSILON);
         const float inv_std = 1.0f / std_val;
@@ -753,8 +741,6 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        // gamma * delta computed once into the output buffer, reused by both
-        // reductions and the final update (no extra allocation).
         input_delta_map = gamma_map * output_delta_map;
 
         const float sum_scaled_gradient      = input_delta_map.sum() * inv_D;
@@ -773,8 +759,6 @@ void layer_normalization_forward(const TensorView& input, const TensorView& gamm
     layer_normalization_forward_cpu(input, gamma, beta, means, standard_deviations, normalized, output);
 }
 
-// Fused residual-add + layer norm: writes the sum (input + residual) to `sum`
-// (the residual-stream value the backward needs) and LayerNorm(sum) to output.
 void layer_normalization_add_forward(const TensorView& input, const TensorView& residual,
                             const TensorView& gamma, const TensorView& beta,
                             TensorView& means, TensorView& standard_deviations,
@@ -838,7 +822,7 @@ static void rms_normalization_forward_cpu(const TensorView& input, const TensorV
         float* out_row         = output_data + row * embedding_dimension;
 
         const Map<const Array<float, Dynamic, 1>> input_map(input_row, embedding_dimension);
-        // RMSNorm normalizes by the root mean square only; no mean subtraction.
+
         const float mean_square = input_map.square().sum() * inv_D;
         const float inverse     = 1.0f / sqrt(mean_square + epsilon);
 
@@ -867,7 +851,6 @@ static void rms_normalization_backward_cpu(const TensorView& output_delta,
     const MatrixMap output_delta_flat = output_delta.as_flat_matrix();
     const MatrixMap norm_flat         = normalized.as_flat_matrix();
 
-    // dWeight = sum over rows of (output_delta * x_hat). RMSNorm has no bias.
     weight_gradient.as_vector().noalias() = (output_delta_flat.array() * norm_flat.array()).matrix().colwise().sum();
 
     if (input_delta.empty()) return;
@@ -891,8 +874,6 @@ static void rms_normalization_backward_cpu(const TensorView& output_delta,
         const Map<const Array<float, Dynamic, 1>> norm_map(norm_row, embedding_dimension);
         Map<Array<float, Dynamic, 1>> input_delta_map(input_delta_row, embedding_dimension);
 
-        // d = weight * output_delta, reused for both the reduction and the update.
-        // Unlike layer norm there is no -mean(d) term (no mean subtraction).
         input_delta_map = weight_map * output_delta_map;
 
         const float mean_d_norm = (input_delta_map * norm_map).sum() * inv_D;
@@ -931,9 +912,6 @@ void rotary_build_tables(TensorView& cos_table, TensorView& sin_table,
     float* sin_data = sin_table.as<float>();
     const Index half = rotary_dim / 2;
 
-    // HF convention: inv_freq[i] = base^(-2i/rotary_dim), emb = cat(freqs, freqs),
-    // so cos/sin of a position are duplicated across the two halves. float32 math
-    // to match transformers' Qwen3RotaryEmbedding.
     #pragma omp parallel for schedule(static)
     for (Index pos = 0; pos < sequence_length; ++pos)
         for (Index i = 0; i < half; ++i)
@@ -975,7 +953,7 @@ static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_ta
         for (Index h = 0; h < num_heads; ++h)
         {
             const Index base = row * model_dim + h * head_dim;
-            // y = x*cos + rotate_half(x)*sin, rotate_half pairs (j, j+half).
+
             for (Index j = 0; j < rotary_dim; ++j)
             {
                 const float rotated = (j < half) ? -in[base + j + half] : in[base + j - half];
@@ -1013,7 +991,7 @@ static void rotary_backward_cpu(const TensorView& output_delta, const TensorView
         for (Index h = 0; h < num_heads; ++h)
         {
             const Index base = row * model_dim + h * head_dim;
-            // Inverse rotation: transpose of the forward map (sin negated).
+
             for (Index j = 0; j < rotary_dim; ++j)
             {
                 const float rotated = (j < half) ? -dout[base + j + half] : dout[base + j - half];
@@ -1052,7 +1030,7 @@ static void swiglu_forward_cpu(const TensorView& gate, const TensorView& up, Ten
     for (Index i = 0; i < n; ++i)
     {
         const float gi = g[i];
-        const float silu = gi / (1.0f + expf(-gi));   // gi * sigmoid(gi)
+        const float silu = gi / (1.0f + expf(-gi));
         o[i] = silu * u[i];
     }
 }
@@ -1076,7 +1054,7 @@ static void swiglu_backward_cpu(const TensorView& output_delta, const TensorView
         const float sig = 1.0f / (1.0f + expf(-gi));
         const float silu = gi * sig;
         if (du) du[i] = d[i] * silu;
-        // d(silu)/dgate = sigmoid + gate*sigmoid*(1 - sigmoid).
+
         if (dg) dg[i] = d[i] * u[i] * sig * (1.0f + gi * (1.0f - sig));
     }
 }
@@ -1108,14 +1086,13 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
     const Index batch     = query.shape[0];
     const Index query_seq = query.shape[1];
     const Index key_seq   = key.shape[1];
-    const Index group     = n_query_heads / n_kv_heads;   // query heads per kv head
+    const Index group     = n_query_heads / n_kv_heads;
 
     const float* Q = query.as<float>();
     const float* K = key.as<float>();
     const float* V = value.as<float>();
     float* O       = output.as<float>();
 
-    // Flat offset of head h's vector for token t (heads contiguous within a token).
     auto q_off = [&](Index b, Index t, Index h) { return ((b * query_seq + t) * n_query_heads + h) * head_dim; };
     auto kv_off = [&](Index b, Index t, Index h) { return ((b * key_seq + t) * n_kv_heads + h) * head_dim; };
 
@@ -1124,15 +1101,13 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
         for (Index hq = 0; hq < n_query_heads; ++hq)
         {
             const Index hkv = hq / group;
-            // scores[0..valid) is always written before it is read, so the
-            // buffer needs no zero-fill and can be reused across iterations.
+
             thread_local vector<float> scores;
             if (scores.size() < size_t(key_seq)) scores.resize(size_t(key_seq));
 
             for (Index i = 0; i < query_seq; ++i)
             {
-                // Causal mask: query i (absolute position query_position_offset+i)
-                // attends key positions 0..(query_position_offset+i).
+
                 const Index valid = causal ? min(query_position_offset + i + 1, key_seq) : key_seq;
                 const float* q_vec = Q + q_off(b, i, hq);
 
@@ -1173,7 +1148,7 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 {
     if (input.is_cuda()) { qk_norm_gpu(input, weight, output, head_dim, epsilon); return; }
 
-    const Index rows  = input.size() / head_dim;   // batch * seq * heads
+    const Index rows  = input.size() / head_dim;
     const float inv_D = 1.0f / to_type(head_dim);
 
     const float* x = input.as<float>();
@@ -1197,10 +1172,7 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 
 void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output)
 {
-    // logits = input @ embed_weight^T. embed_weight is the token-embedding matrix
-    // [vocabulary, hidden]; sharing it avoids a duplicated lm_head weight. Raw
-    // logits (no softmax): parity with HF's tied lm_head (F.linear(x, embed)).
-    // Also used as the generic bias-free linear (y = x @ W^T) in the Qwen3 forward.
+
     if (input.is_cuda()) { multiply(input, false, embed_weight, true, output, 1.0f, 0.0f); return; }
     output.as_flat_matrix().noalias() =
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
@@ -1823,13 +1795,11 @@ static void add_gpu(const TensorView& input_1,
              const TensorView& input_2,
              TensorView& output)
 {
-    // add() enforces equal element counts, so this is always a plain
-    // elementwise sum; the custom kernel spares fp32-only networks the cuDNN
-    // handle. add_relu_cuda has no bf16 instantiation: non-fp32 keeps cuDNN.
+
     if (input_1.is_fp32() && input_2.is_fp32() && output.is_fp32())
     {
         add_relu_cuda(output.size(), input_1.as<float>(), input_2.as<float>(),
-                      /*apply_relu=*/false, output.as<float>());
+                       false, output.as<float>());
         return;
     }
 
@@ -1946,10 +1916,6 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
-    // cuBLASLt's fused BIAS epilogue requires the bias data type to match the
-    // matmul I/O type. The bias is stored fp32, so for a bf16 matmul we must
-    // cast it to bf16 first; a bf16-I/O + fp32-bias fused epilogue is rejected
-    // by the heuristic (no algorithm) and the matmul then fails (cuBLAS 14).
     const void* bias_for_gemm = (bias.data && output.is_bf16() && bias.is_fp32())
         ? bias_for_gemm_bf16(bias)
         : bias.data;
@@ -1992,11 +1958,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     if (output_delta.type == Type::BF16)
     {
-        // The fused bias-gradient epilogue (BGRADA) has no bf16 tensor-core
-        // algorithm in cuBLASLt, so it falls back to a slow magma_sgemmEx kernel
-        // (~10x slower, ~80% of the bf16 step). Compute the weight gradient with a
-        // plain bf16 tensor-core GEMM (cast into the fp32 master gradient) and the
-        // bias gradient with a separate fp32 reduction.
+
         bfloat16* dw_bf16 = ensure_bf16_gradient_workspace(weight_gradient.size());
         run_lt_matmul_cached(
             output_columns, input_columns, total_rows,
@@ -2161,11 +2123,6 @@ Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_di
     return n_query_heads * GROUPED_ATTENTION_DECODE_SPLITS * (head_dim + 2);
 }
 
-// Dedicated handle for the grouped-attention GEMMs: the shared handle carries
-// TF32 math mode and a workspace pool whose state varies with what ran before,
-// both of which steer cuBLAS algorithm selection — attention logits must not
-// depend on process history. A private handle with default math mode and a
-// fixed workspace keeps the algorithm choice (and thus the numerics) stable.
 static cublasHandle_t grouped_attention_cublas()
 {
     thread_local Buffer cublas_workspace{Device::CUDA};
@@ -2182,10 +2139,6 @@ static cublasHandle_t grouped_attention_cublas()
     return handle;
 }
 
-// Full-precision strided-batched GEMM for the grouped-attention path. Not the
-// shared gemm_strided_batched_cuda wrapper: that one hardcodes fast-math
-// compute types (TF32 / FAST_16BF), whose score error is amplified through the
-// softmax and would break parity with the fp32 CPU reference.
 static void grouped_attention_gemm(cublasOperation_t transa, cublasOperation_t transb,
                                    int m, int n, int k, float alpha,
                                    const void* A, cudaDataType_t a_type, int lda, long long stride_a,
@@ -2205,15 +2158,6 @@ static void grouped_attention_gemm(cublasOperation_t transa, cublasOperation_t t
                                             CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
 }
 
-// General-case grouped attention as batched GEMMs. Q/K/V are staged head-major
-// ([b, h, s, d]) so the `group` query heads of each kv head form one contiguous
-// (group*query_seq, head_dim) operand: QK^T and probs x V each become a single
-// strided-batched GEMM over batch*n_kv_heads with no K/V duplication, and the
-// score block layout [b, hkv, g, i, j] is exactly [b, hq, i, j]. Scores stay
-// fp32 through the masked softmax; probabilities quantize to T only for the
-// second GEMM. Workspace is a thread-local high-water buffer, chunked over the
-// batch dimension; returns false (caller falls back to the naive kernel) when
-// the workspace cannot grow (OOM, CUDA-graph capture with unwarmed sizes).
 template<typename T>
 static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, const int key_seq,
                                        const int n_query_heads, const int n_kv_heads, const int head_dim,
@@ -2227,7 +2171,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     constexpr bool is_fp32 = std::is_same_v<T, float>;
     const cudaDataType_t dtype = is_fp32 ? CUDA_R_32F : CUDA_R_16BF;
 
-    const Index q_elems  = Index(query_seq) * n_query_heads * head_dim;   // per batch item
+    const Index q_elems  = Index(query_seq) * n_query_heads * head_dim;
     const Index kv_elems = Index(key_seq) * n_kv_heads * head_dim;
     const Index s_elems  = Index(n_query_heads) * query_seq * key_seq;
 
@@ -2235,11 +2179,9 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
                                 + (is_fp32 ? 0 : s_elems * Index(sizeof(T)))
                                 + 2 * (q_elems + kv_elems) * Index(sizeof(T));
 
-    constexpr Index budget_bytes = Index(256) << 20;   // chunk target, not a hard cap
+    constexpr Index budget_bytes = Index(256) << 20;
     const int chunk = to_int(max(Index(1), min(Index(batch), budget_bytes / per_batch_bytes)));
 
-    // Contiguous per-region layout (regions 16B-aligned; no per-batch padding,
-    // the GEMM batch strides chain across the chunk's batch items).
     auto aligned = [](Index bytes) { return (bytes + 15) & ~Index(15); };
     const Index scores_bytes = aligned(Index(chunk) * s_elems * Index(sizeof(float)));
     const Index probs_bytes  = is_fp32 ? 0 : aligned(Index(chunk) * s_elems * Index(sizeof(T)));
@@ -2275,11 +2217,6 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
             split_heads_cuda<T>(Index(bc) * kv_elems, V + Index(b0) * kv_elems, Vt,
                                 key_seq, n_kv_heads, head_dim);
 
-            // The K/V views can span the KV-cache capacity: rows >= kv_valid
-            // were never written. Their masked scores are overwritten with
-            // exact zeros, but probs x V still computes 0 x garbage — NaN when
-            // recycled device memory decodes as NaN/Inf — so the staged V tail
-            // must be zeroed. (The naive kernel never reads those rows.)
             const int kv_valid = causal ? min(query_position_offset + query_seq, key_seq) : key_seq;
             if (kv_valid < key_seq)
             {
@@ -2289,7 +2226,6 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
                                                0, tail_bytes, device::get_compute_stream()));
             }
 
-            // scores[b,hq,i,j] = scale * Qt_block x Kt_block^T
             grouped_attention_gemm(CUBLAS_OP_T, CUBLAS_OP_N, key_seq, mq, head_dim, scale,
                                    Kt, dtype, head_dim, Index(key_seq) * head_dim,
                                    Qt, dtype, head_dim, Index(mq) * head_dim,
@@ -2299,7 +2235,6 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
             grouped_attention_softmax_cuda<T>(bc * n_query_heads * query_seq, query_seq, key_seq,
                                               query_position_offset, causal, scores, probs);
 
-            // Ot_block = probs_block x Vt_block
             grouped_attention_gemm(CUBLAS_OP_N, CUBLAS_OP_N, head_dim, mq, key_seq, 1.0f,
                                    Vt, dtype, head_dim, Index(key_seq) * head_dim,
                                    probs, dtype, key_seq, Index(mq) * key_seq,
@@ -2313,7 +2248,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     catch (...)
     {
         device::reset_last_error();
-        return false;   // workspace growth or an unsupported GEMM combo: naive fallback
+        return false;
     }
 
     return true;
@@ -2443,7 +2378,7 @@ static void embedding_lookup_backward_gpu(const TensorView& indices, const Tenso
     });
 }
 
-static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool /* is_training */)
+static void max_pooling_3d_forward_gpu(const TensorView& input, TensorView& output, TensorView& maximal_indices, bool  )
 {
     output.dispatch([&](auto tag) {
         using T = decltype(tag);
@@ -2572,8 +2507,7 @@ Index sample_logits_scratch_floats()
     return 0;
 }
 
-#endif // OPENNN_HAS_CUDA
-
+#endif
 
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
@@ -2594,7 +2528,6 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     return final_matrix;
 }
 
-
 MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix)
 {
     MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
@@ -2602,7 +2535,6 @@ MatrixR append_columns(const MatrixR& first_matrix, const MatrixR& second_matrix
     result.rightCols(second_matrix.cols()) = second_matrix;
     return result;
 }
-
 
 VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
 {
@@ -2614,7 +2546,6 @@ VectorR slice_rows(const VectorR& values, const vector<Index>& indices)
     return result;
 }
 
-
 MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
 {
     MatrixR result(ssize(indices), matrix.cols());
@@ -2624,7 +2555,6 @@ MatrixR slice_rows(const MatrixR& matrix, const vector<Index>& indices)
 
     return result;
 }
-
 
 VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neighbors_number)
 {
@@ -2648,7 +2578,6 @@ VectorI get_nearest_points(const MatrixR& matrix, const VectorR& point, int neig
     return result;
 }
 
-
 MatrixR calculate_distances(const MatrixR& points)
 {
     const VectorR squared_norms = points.rowwise().squaredNorm();
@@ -2659,7 +2588,6 @@ MatrixR calculate_distances(const MatrixR& points)
 
     return squared_distances.cwiseMax(0.0f).cwiseSqrt();
 }
-
 
 vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
                                                 const vector<Index>& selected_indices,

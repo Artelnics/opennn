@@ -24,7 +24,7 @@
 
 #include "json.h"
 
-#endif // OPENNN_PCH_H_
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.

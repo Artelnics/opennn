@@ -32,10 +32,6 @@ struct MemoryPoolPlan
     }
 };
 
-// First-fit interval allocator shared by forward inference activations and
-// backward deltas. Entries starting at a step are allocated before entries
-// ending at that step are released, so producer/consumer buffers that meet at
-// one execution step can never alias.
 MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>&);
 
 }

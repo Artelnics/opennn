@@ -67,7 +67,6 @@ GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
     r.iou  = (union_area > 0.0f) ? (intersection_area / union_area) : 0.0f;
     r.giou = (enclosing_area > 0.0f) ? (r.iou - (enclosing_area - union_area) / enclosing_area) : r.iou;
 
-    // CIoU: extend GIoU with center-distance and aspect-ratio penalty
     const float dx   = pred[0] - gt[0];
     const float dy   = pred[1] - gt[1];
     const float rho2 = dx*dx + dy*dy;
@@ -78,7 +77,7 @@ GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
     const float v     = INV_PI2 * v_diff * v_diff;
     const float alpha = (r.iou > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
 
-    r.giou -= rho2/c2 + alpha*v;  // r.giou now holds CIoU
+    r.giou -= rho2/c2 + alpha*v;
     return r;
 }
 
@@ -160,14 +159,12 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.w_gradient  = 0.5f * (d_loss_right - d_loss_left);
     r.h_gradient  = 0.5f * (d_loss_bottom - d_loss_top);
 
-    // CIoU extra gradient terms
     const float dx   = pred[0] - gt[0];
     const float dy   = pred[1] - gt[1];
     const float rho2 = dx*dx + dy*dy;
     const float c2   = enclosing_width*enclosing_width + enclosing_height*enclosing_height + EPSILON;
     const float ic4  = 1.0f / (c2 * c2);
 
-    // d(rho2/c2) gradient — c2 changes as pred corners move relative to enclosing box
     const float dew_dcx = max_grad(predicted_right, ground_right) - min_grad(predicted_left, ground_left);
     const float deh_dcy = max_grad(predicted_bottom, ground_bottom) - min_grad(predicted_top, ground_top);
     const float dew_dw  = 0.5f * (max_grad(predicted_right, ground_right) + min_grad(predicted_left, ground_left));
@@ -177,7 +174,6 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.w_gradient  += -rho2 * 2.0f*enclosing_width*dew_dw * ic4;
     r.h_gradient  += -rho2 * 2.0f*enclosing_height*deh_dh * ic4;
 
-    // d(alpha*v) gradient — alpha treated as constant
     const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
     constexpr float INV_PI2 = 4.0f / (3.14159265f * 3.14159265f);
     const float v     = INV_PI2 * v_diff * v_diff;
@@ -209,8 +205,6 @@ bool yolo_uses_sigmoid_classes(const NeuralNetwork* nn)
 
 }
 
-// Kernel definitions declared in loss.h — external linkage so unit tests can call them.
-
 float yolo_error_kernel(const TensorView& output,
                         const TensorView& target,
                         Index boxes_per_cell,
@@ -232,7 +226,7 @@ float yolo_error_kernel(const TensorView& output,
 
     float coordinate_loss = 0.0f;
     float object_loss = 0.0f;
-    float noobject_loss = 0.0f, noobject_comp = 0.0f;  // Kahan compensated sum
+    float noobject_loss = 0.0f, noobject_comp = 0.0f;
     float class_loss = 0.0f;
 
     for (Index n = 0; n < batch_size; ++n)
@@ -245,7 +239,7 @@ float yolo_error_kernel(const TensorView& output,
                 {
                     const Index base = cell + box * values_per_box;
 
-                    if (tgt[base + 4] >= 0.5f)  // positive cell (anchor-IoU soft target)
+                    if (tgt[base + 4] >= 0.5f)
                     {
                         const float inv_grid = 1.0f / float(grid_size);
                         const float output_box[4] = {(out[base + 0] + float(col)) * inv_grid, (out[base + 1] + float(row)) * inv_grid, out[base + 2], out[base + 3]};
@@ -253,7 +247,7 @@ float yolo_error_kernel(const TensorView& output,
                         const GIoUResult g = yolo_loss_giou_forward(output_box, target_box);
 
                         coordinate_loss += 1.0f - g.giou;
-                        // Soft BCE objectness: target = anchor-IoU (in [0.5,1.0]), trains calibrated confidence
+
                         const float iou_t = tgt[base + 4];
                         object_loss -= iou_t * log(out[base + 4] + EPSILON) + (1.0f - iou_t) * log(1.0f - out[base + 4] + EPSILON);
 
@@ -275,13 +269,12 @@ float yolo_error_kernel(const TensorView& output,
                                     class_loss -= log(out[base + 5 + c] + EPSILON);
                         }
                     }
-                    else if (tgt[base + 4] > -0.5f)  // skip ignore slots (sentinel -1.0)
+                    else if (tgt[base + 4] > -0.5f)
                     {
                         const float c4 = out[base + 4];
                         const float w_bg = (lam.obj_focal_gamma > 0.0f)
                                            ? pow(c4, lam.obj_focal_gamma) : 1.0f;
-                        // Kahan compensated sum prevents float32 cancellation when accumulating
-                        // many background-cell terms into a large total (sum >> per-cell delta).
+
                         const float term = w_bg * log(1.0f - c4 + EPSILON);
                         const float kahan_y = -term - noobject_comp;
                         const float kahan_t = noobject_loss + kahan_y;
@@ -354,7 +347,7 @@ void yolo_gradient_kernel(const TensorView& output,
                 {
                     const Index base = cell + box * values_per_box;
 
-                    if (tgt[base + 4] >= 0.5f)  // positive cell (anchor-IoU soft target)
+                    if (tgt[base + 4] >= 0.5f)
                     {
                         const float inv_grid = 1.0f / float(grid_size);
                         const float output_box[4] = {(out[base + 0] + float(col)) * inv_grid, (out[base + 1] + float(row)) * inv_grid, out[base + 2], out[base + 3]};
@@ -368,7 +361,7 @@ void yolo_gradient_kernel(const TensorView& output,
                         delta[base + 3] = scale * clamp(g.h_gradient,  -grad_clip, grad_clip);
                         {
                             const float c4 = out[base + 4];
-                            const float iou_t = tgt[base + 4];  // soft anchor-IoU target in [0.5,1.0]
+                            const float iou_t = tgt[base + 4];
                             delta[base + 4] = (c4 - iou_t) / (c4 * (1.0f - c4) + EPSILON) * inv_batch;
                         }
 
@@ -390,15 +383,14 @@ void yolo_gradient_kernel(const TensorView& output,
                                     delta[base + 5 + c] = lambda_class * (-tgt[base + 5 + c] / (out[base + 5 + c] + EPSILON)) * inv_batch;
                         }
                     }
-                    else if (tgt[base + 4] > -0.5f)  // skip ignore slots (sentinel -1.0)
+                    else if (tgt[base + 4] > -0.5f)
                     {
                         const float c4 = out[base + 4];
                         float d4;
                         if (lam.obj_focal_gamma == 0.0f) {
                             d4 = lambda_noobject * c4 / (c4 * (1.0f - c4) + EPSILON);
                         } else {
-                            // dL/dp for L=-p^γ*log(1-p):
-                            // = p^(γ-1) * (-γ*log(1-p) + p/(1-p))
+
                             const float g   = lam.obj_focal_gamma;
                             const float omc = max(1.0f - c4, EPSILON);
                             d4 = lambda_noobject * pow(max(c4, EPSILON), g - 1.0f)
@@ -461,11 +453,6 @@ vector<float> assemble_head_target(const float* tgt,
     return head_target;
 }
 
-// Shared per-head layout walk: the flat per-sample target is the concatenation of
-// every head's interleaved block. Invokes fn(detection_idx, head_shape, channels,
-// per_sample_floats, head_offset, head_floats) per head, in order.
-// target_channels == 0 uses the head's own channel count (anchor-based heads);
-// v8 passes 5 + classes_number (target carries one extra flag channel).
 template <typename LayoutFn>
 void for_each_yolo_head_layout(const NeuralNetwork* nn,
                                const vector<Index>& detection_indices,
@@ -493,8 +480,6 @@ void for_each_yolo_head_layout(const NeuralNetwork* nn,
     }
 }
 
-// CPU per-head scaffold: assembles each head's interleaved target from the flat
-// per-sample layout and invokes fn(detection_idx, head_output, head_target_view).
 template <typename HeadFn>
 void for_each_yolo_head(const ForwardPropagation& forward_propagation,
                         const NeuralNetwork* nn,
@@ -594,9 +579,6 @@ vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
 
 }
 
-// YOLOv8 anchor-free loss: CIoU on positives + focal BCE on all non-ignore cells.
-// Output shape [B,G,G,4+C], target shape [B,G,G,5+C] (ch4 = flag).
-// External linkage (declared in loss.h) so tests can exercise the raw kernels.
 float yolo_v8_error_kernel(const TensorView& output,
                             const TensorView& target,
                             Index classes_number,
@@ -772,12 +754,6 @@ void yolo_v8_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
 
 #ifdef OPENNN_HAS_CUDA
 
-// GPU per-head scaffold: yields each head's target as a device-resident view.
-// A device-resident flat target is gathered per head directly on device into the
-// reused target_device workspace — no host round-trip (a single head is used in
-// place: the flat layout already is the head layout). Host-resident targets
-// (fallback) keep the CPU assembly plus a per-head H2D stage. All launches and
-// copies ride the compute stream, so reusing one workspace across heads is safe.
 template <typename HeadFn>
 void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
                             const NeuralNetwork* nn,
@@ -829,9 +805,6 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
         });
 }
 
-// Zeroes error_accum then adds every head's raw (batch-unnormalized) error into
-// it. Everything rides the compute stream — no host sync, so the device epoch
-// metrics path can chain it into its accumulator.
 void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                const TensorView& target_flat,
                                const Dataset* dataset,
@@ -844,8 +817,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
 {
     check_yolo_loss(dataset, nn);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
-    // boxes_per_head is only set by set_multi_scale_heads. For single-head GPU training,
-    // fall back to boxes_per_cell so the CUDA kernel receives the correct value.
+
     const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
         ? yolo_dataset->get_boxes_per_head()
         : yolo_dataset->get_boxes_per_cell();
@@ -878,15 +850,11 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
 {
     const Index batch_size = target_flat.shape[0];
 
-    // Reuse the existing allocation; only the first float is used.
     error_device.grow_to(Index(sizeof(float)));
     yolo_error_gpu_accumulate(forward_propagation, target_flat, dataset, nn,
                               detection_indices, sigmoid_classes, target_device,
                               error_device.as<float>(), lam);
 
-    // Single 4-byte readback — calculate_error's contract hands the caller a
-    // host float per batch. The epoch loops route YOLO through
-    // calculate_error_device_metrics instead, which keeps the sum on device.
     cudaStreamSynchronize(device::get_compute_stream());
     float total_error = 0.0f;
     cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
@@ -928,7 +896,6 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
         });
 }
 
-// v8 twin of yolo_error_gpu_accumulate: async, batch-unnormalized head sum.
 void yolo_v8_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                   const TensorView& target_flat,
                                   const NeuralNetwork* nn,
@@ -968,8 +935,6 @@ Loss::EvaluationResult yolo_v8_error_gpu_multi(const ForwardPropagation& forward
     yolo_v8_error_gpu_accumulate(forward_propagation, target_flat, nn, detection_indices,
                                  classes_number, target_device, error_device.as<float>(), lam);
 
-    // Single 4-byte readback for calculate_error's host-float contract; the
-    // epoch loops keep the sum on device via calculate_error_device_metrics.
     cudaStreamSynchronize(device::get_compute_stream());
     float total_error = 0.0f;
     cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
@@ -1002,10 +967,10 @@ void yolo_v8_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
         });
 }
 
-#endif // OPENNN_HAS_CUDA
+#endif
 
 }
-#endif // OPENNN_NO_VISION
+#endif
 
 Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
@@ -1066,10 +1031,6 @@ void Loss::set_normalization_coefficient()
         positives_weight = total / (2.0f * float(positives));
         negatives_weight = total / (2.0f * float(negatives));
 
-        // Normalize so a model that outputs the target mean (base rate p) yields a
-        // weighted squared error of 1, the same way NormalizedSquaredError does.
-        // K = weighted squared error of the mean model (before get_weighted_coefficient):
-        //   0.5 * [positives * w_pos * (1-p)^2 + negatives * w_neg * p^2].
         const float p = float(positives) / total;
         const float mean_model_error =
             0.5f * (float(positives) * positives_weight * (1.0f - p) * (1.0f - p)
@@ -1098,7 +1059,6 @@ void Loss::back_propagate(const Batch& batch,
     back_propagation.regularization = 0.0f;
     back_propagation.loss = back_propagation.error;
 
-
     add_regularization(back_propagation);
 
     add_regularization_gradient(back_propagation);
@@ -1115,8 +1075,6 @@ float Loss::get_weighted_coefficient(const Batch& batch) const
 
 #ifndef OPENNN_NO_VISION
 
-// Shared v8/sigmoid/GPU dispatch for the YOLO loss; a null back_propagation
-// selects the error path, otherwise the gradient path.
 Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_propagation,
                                             const TensorView& target,
                                             BackPropagation* back_propagation) const
@@ -1155,7 +1113,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 #ifdef OPENNN_HAS_CUDA
     if (on_gpu)
     {
-        // The gpu_multi functions handle both single-head (size==1) and multi-head.
+
         if (!is_gradient)
             return yolo_error_gpu_multi(forward_propagation, target, dataset, neural_network,
                                         detection_indices, sigmoid,
@@ -1183,7 +1141,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     return {};
 }
 
-#endif // OPENNN_NO_VISION
+#endif
 
 Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
                                               const ForwardPropagation& forward_propagation) const
@@ -1377,9 +1335,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     case Yolo:
     {
 #ifndef OPENNN_NO_VISION
-        // Per-head raw sums land in results_device[0]; one tiny kernel then
-        // folds sum/batch_size into the epoch accumulator — no host sync. YOLO
-        // has no accuracy metric, so accuracy_sum_device stays untouched.
+
         const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_noobj, yolo_lambda_class,
                               yolo_focal_gamma, yolo_obj_focal_gamma};
 
@@ -1472,10 +1428,6 @@ bool Loss::back_propagate_device_metrics(const Batch&,
 
 #endif
 
-// The softmax+CrossEntropy3d backward is delta = p - y, element-wise over the
-// probabilities, and nothing reads them afterwards (the softmax derivative is
-// already folded into the combined gradient), so the delta can overwrite the
-// forward output buffer instead of holding the largest delta_pool entry.
 bool Loss::output_delta_overwrites_outputs() const
 {
     if (error != Error::CrossEntropy3d || !neural_network || !neural_network->is_gpu())
@@ -1688,11 +1640,7 @@ float Loss::calculate_h(const float x)
 
 void Loss::to_JSON(JsonWriter& printer) const
 {
-    // The element must be named after the error method ("MeanSquaredError",
-    // ...): TrainingStrategy::from_JSON looks it up by that name. It used to be
-    // the literal "Loss", which made every TrainingStrategy round-trip throw
-    // (and the callers silently swallowed it, so models always trained with
-    // default hyperparameters).
+
     printer.open_element(get_name());
     write_json(printer, {
         {"Method", get_name()},
@@ -1717,9 +1665,7 @@ void Loss::to_JSON(JsonWriter& printer) const
 
 void Loss::from_JSON(const JsonDocument& document)
 {
-    // TrainingStrategy wraps the element under the error-method name (set_error
-    // runs before this call, so get_name() matches). Fall back to the legacy
-    // "Loss" tag for files written before the to_JSON fix above.
+
     const Json* root = document.first_child(get_name());
     if (!root) root = document.first_child("Loss");
     throw_if(!root, "Loss::from_JSON error: missing Loss element.");

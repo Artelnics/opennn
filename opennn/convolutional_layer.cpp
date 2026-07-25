@@ -119,7 +119,7 @@ void Convolutional::update_convolution_operator()
                     get_padding_height(), get_padding_width(),
                     compute_dtype);
 
-    convolution.output_slots = batch_norm.active() 
+    convolution.output_slots = batch_norm.active()
         ? vector<size_t>{ConvolutionView}
         : vector<size_t>{Output};
 

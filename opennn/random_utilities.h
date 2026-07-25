@@ -33,8 +33,6 @@ namespace opennn
     template<typename T>
     void shuffle_vector(vector<T>&);
 
-    // Partial Fisher-Yates: randomly permute the first `count` elements of `v` (each becomes a
-    // uniform pick from the not-yet-placed elements). Pass count >= v.size() for a full shuffle.
     template<typename T>
     void partial_shuffle(vector<T>& v, Index count)
     {
@@ -44,10 +42,6 @@ namespace opennn
             swap(v[i], v[i + random_integer(0, n - 1 - i)]);
     }
 
-    // Box-respecting K-hot draw into `out` (sized to `count`): `force_on` indices are set to 1,
-    // `force_off` to 0, and the remaining k - |force_on| ones are chosen uniformly at random from
-    // the free indices. Returns false (with `out` cleared) when exactly-k is infeasible: an index
-    // forced both on and off, more than k forced on, or too few free indices to reach k.
     bool draw_k_hot(Index, Index, const vector<char>&,
                     const vector<char>&, vector<float>&);
 

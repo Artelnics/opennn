@@ -38,9 +38,7 @@ vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
     if (get_method() == NormalizationMethod::RMS)
     {
-        // RMS slot map: Means holds inverse_rms, StandardDeviations is unused.
-        // Normalized (x_hat) is only read by the CPU backward; the CUDA backward
-        // recomputes it from the input + inverse_rms, so leave it unsized there.
+
         const bool need_normalized = get_compute_device() != Device::CUDA;
         return {
             {{batch_size, sequence_length}, Type::FP32},
@@ -50,8 +48,6 @@ vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
         };
     }
 
-    // The NormalizedInput slot is unused on CUDA in the plain path, but the
-    // fused residual-add path stores the post-add sum there, so it must be sized.
     const bool need_sum = layer_normalization.fuse_add || get_compute_device() != Device::CUDA;
     return {
         {{batch_size, sequence_length},                      Type::FP32},
@@ -63,8 +59,7 @@ vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 
 vector<TensorSpec> Normalization3d::get_backward_specs(Index batch_size) const
 {
-    // Fused norm has two source layers (main, residual), so the backward must
-    // provide a gradient buffer for each, mirroring the Addition layer.
+
     const Index inputs = layer_normalization.fuse_add ? 2 : 1;
     return vector<TensorSpec>(size_t(inputs),
         {Shape{batch_size, sequence_length, embedding_dimension}, compute_dtype});
@@ -77,8 +72,6 @@ void Normalization3d::set_method(NormalizationMethod new_method)
 
     layer_normalization.method = new_method;
 
-    // The serialized tag doubles as the method discriminator, so JSON files
-    // written by the former RMSNormalization3d class keep loading unchanged.
     layer_type = (new_method == NormalizationMethod::RMS)
         ? LayerType::RMSNormalization3d
         : LayerType::Normalization3d;
@@ -90,9 +83,7 @@ void Normalization3d::set_fuse_add(bool on)
              "Normalization3d: fuse_add is not supported with the RMS method.");
 
     layer_normalization.fuse_add = on;
-    // The compute reads the main input via slot 0 and the residual directly from
-    // the second gathered source, so input_slots stays {0}. The backward routes a
-    // gradient to each of the two source layers: slot 1 -> main, slot 2 -> residual.
+
     layer_normalization.input_delta_slots   = on ? vector<size_t>{1, 2} : vector<size_t>{1};
     layer_normalization.residual_delta_slot = on ? 2 : 0;
 }
@@ -142,7 +133,6 @@ void Normalization3d::write_JSON_body(JsonWriter& printer) const
 
 REGISTER(Layer, Normalization3d, "Normalization3d")
 
-// Legacy tag of the former RMS layer class; kept so existing JSON files load.
 namespace {
 const bool RMSNormalization3d_registered = []() {
     Registry<Layer>::instance().register_component("RMSNormalization3d", []() -> std::unique_ptr<Layer> {

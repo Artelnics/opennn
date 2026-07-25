@@ -39,25 +39,14 @@ struct ForwardPropagation
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
              ForwardPropagationMode = ForwardPropagationMode::Training);
 
-    // Mirrors past_length into a device int (via pinned staging) for stateful
-    // operators whose kernels read the cache position from device memory: a
-    // captured graph re-reads the pinned value on every replay, so the host
-    // past_length stays the single source of truth. Lazily allocates the
-    // 4-byte pinned + device pair on first use (warmup, before any capture).
     void stage_position(cudaStream_t stream);
 
-    // Run the next pass over a seq=length prefix of the arena (batch-1,
-    // [batch, seq, feature] layout), for KV-cache prefill/decode. See past_length.
     void set_active_sequence_length(Index length);
 
     TensorView get_last_trainable_layer_outputs() const;
 
     TensorView get_outputs() const;
 
-    // CUDA graph replay for the device-resident inference path (opt-in,
-    // default off): NeuralNetwork::calculate_outputs_resident captures the
-    // forward after two eager passes and replays it while the input pointers
-    // and parameters stay unchanged (upload_parameters=true invalidates).
     void set_cuda_graph(bool);
     bool get_cuda_graph() const noexcept { return use_cuda_graph; }
     void reset_cuda_graph() noexcept;
@@ -68,27 +57,17 @@ struct ForwardPropagation
     Index batch_size = 0;
     ForwardPropagationMode mode = ForwardPropagationMode::Training;
 
-    // KV-cache length before this pass: stateful operators (GroupedQueryAttention) place
-    // the new tokens at this absolute position. 0 = fresh sequence (the default,
-    // so non-incremental callers are unaffected).
     Index past_length = 0;
 
-    // True when the batches fed through this propagation come from a dataset
-    // that Optimizer::set_scaling() already scaled in place (training and
-    // in-loop validation). NeuralNetwork::forward_propagate then skips the
-    // leading Scaling layers even with is_training == false, so validation
-    // inputs are not scaled twice.
     bool inputs_pre_scaled = false;
 
     NeuralNetwork* neural_network = nullptr;
 
     Buffer data;
     vector<Buffer> device_input_buffers;
-    // Reused host staging for the non-resident BF16 input cast (one per input,
-    // like device_input_buffers) -- avoids a per-call allocation.
+
     vector<vector<uint16_t>> host_bf16_input_scratch;
 
-    // Device-visible KV-cache position (see stage_position).
     Buffer position_device{Device::CUDA};
     void* position_pinned = nullptr;
 

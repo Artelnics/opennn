@@ -23,17 +23,8 @@ namespace
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
 
-// Conv workspace cap state. mode: 0 = off (uncapped/autotune), >0 = explicit
-// bytes, <0 = AUTO (use the per-network auto value). auto value = largest single
-// -layer activation, set by ForwardPropagation, clamped to conv_workspace_auto_ceiling.
-//
-// Defaults: AUTO cap + autotune off. Uncapped autotune lets the cuDNN-frontend
-// consider (and, on an allocation failure it silently swallows, select) plans whose
-// workspace scales with batch size into GBs — which OOMs on large batches for no
-// speed gain (autotune probing is a net slowdown on small/medium convs). A bounded
-// AUTO cap forces a small-workspace plan: same result, less memory, faster here.
-constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;  // 256 MiB
-atomic<int64_t> conv_workspace_cap_mode{-1};                          // AUTO
+constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
+atomic<int64_t> conv_workspace_cap_mode{-1};
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
 
@@ -77,7 +68,6 @@ void throw_if_auto(Device device_type)
     throw_if(device_type == Device::Auto,
              "device backend expects a resolved device.");
 }
-
 
 #ifndef OPENNN_HAS_CUDA
 [[noreturn]] void throw_cuda_unavailable()
@@ -153,11 +143,10 @@ bool graph_workspace_override(GraphWorkspaceKind kind,
 
 }
 
-
 bool has_cuda_device() noexcept
 {
 #ifdef OPENNN_HAS_CUDA
-    // The visible device count cannot change within a process, so probe once.
+
     static const bool available = []() noexcept
     {
         int count = 0;
@@ -238,9 +227,9 @@ void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
 int64_t conv_workspace_limit_bytes() noexcept
 {
     const int64_t mode = conv_workspace_cap_mode.load(memory_order_relaxed);
-    if (mode == 0) return 0;                                       // off (autotune)
-    if (mode > 0)  return mode;                                    // explicit bytes
-    return conv_workspace_auto_bytes.load(memory_order_relaxed);   // AUTO
+    if (mode == 0) return 0;
+    if (mode > 0)  return mode;
+    return conv_workspace_auto_bytes.load(memory_order_relaxed);
 }
 
 void set_conv_workspace_cap(int64_t mode) noexcept
@@ -619,9 +608,7 @@ namespace opennn
 
 Backend::Backend()
 {
-    // OPENNN_THREADS caps the host thread pool (Eigen + OpenMP GEMM paths);
-    // unset or <= 0 keeps the hardware concurrency default. Benchmarks use it
-    // to run every engine at the same thread count.
+
     const char* threads_env = std::getenv("OPENNN_THREADS");
     set_threads_number(threads_env ? std::atoi(threads_env) : 0);
 
@@ -636,25 +623,20 @@ Backend::Backend()
         return;
     }
 
-    // Default (blocking) stream: must serialize with legacy stream 0, else recurrent/LSTM training races and diverges.
     compute_stream = device::create_stream(cudaStreamDefault);
     transfer_stream = device::create_stream(cudaStreamNonBlocking);
 
     CHECK_CUBLAS(cublasLtCreate(&cublas_lt_handle));
-    // The legacy cuBLAS handle and cuDNN are NOT created here -- see
-    // Backend::cublas() and Backend::cudnn().
+
 #endif
 }
 
-// Deferred from the constructor (see get_cublas_handle() in the header):
-// creating the legacy handle reserves a device workspace that the
-// cuBLASLt-plus-custom-kernels inference path never uses.
 cublasHandle_t Backend::cublas()
 {
 #ifdef OPENNN_HAS_CUDA
     call_once(cublas_init_once, [this]
     {
-        if (!compute_stream) return;   // no CUDA device: stay null, as before
+        if (!compute_stream) return;
 
         CHECK_CUBLAS(cublasCreate(&cublas_handle));
         CHECK_CUBLAS(cublasSetMathMode(cublas_handle, CUBLAS_TF32_TENSOR_OP_MATH));
@@ -664,14 +646,12 @@ cublasHandle_t Backend::cublas()
     return cublas_handle;
 }
 
-// Deferred from the constructor (see get_cudnn_handle() in the header): a
-// cuDNN handle costs fixed VRAM whether or not any cuDNN op ever runs.
 cudnnHandle_t Backend::cudnn()
 {
 #ifdef OPENNN_HAS_CUDA
     call_once(cudnn_init_once, [this]
     {
-        if (!compute_stream) return;   // no CUDA device: stay null, as before
+        if (!compute_stream) return;
 
         CHECK_CUDNN(cudnnCreate(&cudnn_handle));
         CHECK_CUDNN(cudnnSetStream(cudnn_handle, compute_stream));
@@ -781,9 +761,9 @@ namespace
         int k;
         int transA;
         int transB;
-        int epilogue;   // cublasLtEpilogue_t cast to int (e.g. BIAS, RELU_BIAS, BGRADA)
-        int io_dtype;   // cudaDataType_t for A and B (inputs)
-        int out_dtype;  // cudaDataType_t for C and D (outputs)
+        int epilogue;
+        int io_dtype;
+        int out_dtype;
 
         bool operator==(const LtMatmulPlanKey&) const noexcept = default;
     };
@@ -843,10 +823,6 @@ namespace
         return workspace_buffer.ensure<T>(n);
     }
 
-    // cublasLt and the cuDNN-frontend graphs all draw scratch from this one
-    // buffer (ops run serially on the compute stream, so the live peak is the
-    // max single workspace, not the sum). Record each growth delta so
-    // memory_debug telescopes to the final buffer size, the achieved floor.
     void* ensure_shared_scratch(size_t min_bytes)
     {
         Buffer& buffer = thread_state().workspace;
@@ -982,9 +958,6 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
     throw runtime_error("data_for_gemm_dtype: unsupported type pair");
 }
 
-// Cast an fp32 bias to bf16 for a fused bf16 cuBLASLt BIAS epilogue (which
-// rejects an fp32 bias). Uses the gradient workspace, which is unused during
-// forward propagation, so it does not clobber the input cast.
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
@@ -1105,7 +1078,7 @@ void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
 
 }
 
-#endif // OPENNN_HAS_CUDA
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

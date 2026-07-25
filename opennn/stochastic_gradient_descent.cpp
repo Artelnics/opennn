@@ -67,18 +67,15 @@ void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";
 
-
     initial_learning_rate = 0.001f;
     initial_decay = 0.001f;
     momentum = 0.0f;
     nesterov = false;
     batch_size = 0;
 
-
     training_loss_goal = 0.0f;
     maximum_time = 3600.0f;
     maximum_epochs = 1000;
-
 
     display_period = 100;
 }
@@ -199,8 +196,6 @@ void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_da
 
     optimizer_data.iteration = 1;
 
-    // The warmup runs before any on_epoch_begin, so it must see the epoch-0
-    // learning rate.
     current_learning_rate = initial_learning_rate;
 
 #ifdef OPENNN_HAS_CUDA

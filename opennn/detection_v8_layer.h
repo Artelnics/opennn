@@ -14,8 +14,6 @@
 namespace opennn
 {
 
-// Thin layer wrapper around DetectionV8Operator.
-// Placed after the concatenated box+class logit branches in a YOLOv8-style head.
 class DetectionV8 final : public Layer
 {
 public:

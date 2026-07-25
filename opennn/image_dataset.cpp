@@ -253,7 +253,6 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
-
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
     const Index requested_height   = read_json_index(data_source_element, "Height");

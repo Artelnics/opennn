@@ -198,7 +198,6 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 {
     const Json* data_set_element = get_json_root(data_set_document, "Dataset");
 
-
     const Json* data_source_element = require_json_field(data_set_element, "DataSource");
 
     require_json_field(data_source_element, "FileType");
@@ -211,7 +210,6 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_past_time_steps(parse_int(read_json_string(data_source_element, "LagsNumber"), "LagsNumber"));
     set_future_time_steps(parse_int(read_json_string(data_source_element, "StepsAhead"), "StepsAhead"));
     set_codification(read_json_string(data_source_element, "Codification"));
-
 
     read_json_blocks(data_set_element);
 

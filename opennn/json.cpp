@@ -228,7 +228,6 @@ string Json::dump(int indent) const
     return out;
 }
 
-
 namespace {
 
 struct Parser

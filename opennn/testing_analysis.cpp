@@ -51,12 +51,10 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 {
     check();
 
-
     const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
 
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
-
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -204,12 +202,10 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 {
     check();
 
-
     const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
 
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
-
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -657,7 +653,6 @@ MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const
 
     const Index testing_samples_number = targets.rows();
 
-
     vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
     iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
 
@@ -703,7 +698,6 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
     const Index rows_number = cumulative_gain.rows();
 
     MatrixR lift_chart(rows_number, cumulative_gain.cols());
-
 
     lift_chart(0, 0) = 0.0f;
     lift_chart(0, 1) = 1.0f;
@@ -804,7 +798,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
     for (Index i = 0; i < targets_number; ++i)
         for (Index j = 0; j < targets_number; ++j)
             multiple_classification_rates(i, j).resize(confusion(i, j));
-
 
     MatrixI indices = MatrixI::Zero(targets_number, targets_number);
 

@@ -32,7 +32,6 @@ public:
     void set(const Shape&, const vector<Index>&, const string&);
     void set_input_shape(const Shape&) override;
 
-    // Accept the legacy "Concatenate" tag in addition to the current one.
     void from_JSON(const JsonDocument&) override;
     void load_state_from_JSON(const JsonDocument&) override;
 
@@ -41,7 +40,6 @@ public:
 
 private:
 
-    // Body of a legacy-tagged document, or null when the current tag is present.
     const Json* legacy_body(const JsonDocument&) const;
 
     ConcatenationOperator concatenation;

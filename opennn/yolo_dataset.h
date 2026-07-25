@@ -35,20 +35,14 @@ vector<YoloDetection> decode_yolo_detections(const float*,
                                              Index,
                                              Index);
 
-// Single Detection head's output, post-DetectionOperator (x/y sigmoid, w/h = anchor*exp,
-// objectness sigmoid, class probs sigmoid/softmax). Used as input to cross-scale NMS.
 struct YoloFpnHead
 {
-    const float* data = nullptr;     // shape implicit: [grid_size, grid_size, boxes_per_cell * (5+classes)]
+    const float* data = nullptr;
     Index grid_size = 0;
     Index boxes_per_cell = 0;
     Index classes_number = 0;
 };
 
-// Cross-scale NMS for FPN-style YOLO inference. Decodes candidates from each
-// head's already-decoded output, merges them in normalized image coords,
-// runs unified class-aware greedy NMS, then letterbox-unwarps to the original
-// image size. Single-sample (no batch dimension).
 vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  Index,
                                                  Index,
@@ -57,7 +51,6 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
-// Anchor-free variant: boxes_per_cell unused, confidence = max class score.
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
                                                      Index,
                                                      Index,
@@ -106,7 +99,6 @@ public:
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
 
-    // YOLOv8 anchor-free mode: changes target encoding to [5+C] per cell (no anchor dim).
     bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
 
@@ -149,17 +141,11 @@ public:
 
     void set_augmentation(const AugmentationConfig& cfg) { augmentation = cfg; }
 
-    // class_filter: if non-empty, only convert objects whose class name is in the list
-    // and remap class IDs to 0-indexed within the filter (writes a custom .names file).
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,
                                      const filesystem::path&,
                                      const vector<string>& class_filter = {});
 
-    // Load the first n_backbone_convs convolutional layers of network from a
-    // Darknet binary weights file (e.g. yolov3-tiny.weights).  The file header
-    // (20 bytes: 3×int32 + 1×int64) is consumed before walking layers.
-    // Returns the number of conv layers actually loaded.
     static Index load_darknet_backbone(NeuralNetwork&,
                                        const filesystem::path&,
                                        Index);
@@ -189,7 +175,7 @@ private:
     Index cache_target_record_floats = 0;
     uint64_t target_data_offset = 0;
     uint64_t boxes_data_offset = 0;
-    vector<uint64_t> boxes_offsets; 
+    vector<uint64_t> boxes_offsets;
 
     AugmentationConfig augmentation{};
     mutable atomic<uint64_t> augmentation_counter{0};
