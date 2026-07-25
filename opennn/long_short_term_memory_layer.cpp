@@ -204,7 +204,7 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
     const Index F = get_input_features();
     const Index H = output_features;
 
-    auto h_name = [&](Index t, Index j) -> string {
+    const auto h_name = [&](Index t, Index j) -> string {
         const string internal = format("lstm_h_{}_{}", t, j);
         if (return_sequences)
         {
@@ -219,7 +219,7 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
     ostringstream buf;
     buf.precision(10);
 
-    auto gate_expr = [&](const string& name,
+    const auto gate_expr = [&](const string& name,
                          const string& activation,
                          const VectorMap& b,
                          const MatrixMap& W,

@@ -164,7 +164,7 @@ void RecurrentOperator::apply(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
                             TensorView& output,
-                            bool is_training)
+                            bool is_training) const
 {
     const Index batch_size = input.shape[0];
     const Index BT = batch_size * time_steps;
@@ -372,7 +372,7 @@ void RecurrentOperator::unpack_gradients_from_cudnn_() const
 void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
                                          TensorView& hidden_states,
                                          TensorView& output,
-                                         bool is_training)
+                                         bool is_training) const
 {
     const Index batch_size = input.shape[0];
 
@@ -480,7 +480,7 @@ void RecurrentOperator::apply_gpu(const TensorView& input,
                             TensorView& hidden_states,
                             TensorView& activation_derivatives,
                             TensorView& output,
-                            bool is_training)
+                            bool is_training) const
 {
     if (!input.data || output_features == 0 || time_steps == 0) return;
 
@@ -695,7 +695,7 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool)
+void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool) const
 {
     throw runtime_error("apply_gpu requires CUDA.");
 }

@@ -276,7 +276,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
     OptimizerData& optimization_data,
-    float current_loss)
+    float current_loss) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
 

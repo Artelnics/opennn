@@ -28,14 +28,14 @@ bool Json::has(string_view key) const
 const Json* Json::find(string_view key) const
 {
     if (!is_object()) return nullptr;
-    auto it = ranges::find_if(object_value,
+    const auto it = ranges::find_if(object_value,
                               [key](const auto& item) { return item.first == key; });
     return it != object_value.end() ? &it->second : nullptr;
 }
 
 const Json& Json::at(string_view key) const
 {
-    const Json* v = find(key);
+    const Json* const v = find(key);
     throw_if(!v, "JSON: missing key '{}'", key);
     return *v;
 }
@@ -105,8 +105,8 @@ double Json::as_double() const
     case String: {
         if (string_value.empty()) return 0.0;
         double value = 0.0;
-        const char* first = string_value.data();
-        const char* last = first + string_value.size();
+        const char* const first = string_value.data();
+        const char* const last = first + string_value.size();
         const auto [end, error] = from_chars(first, last, value);
         throw_if(error != errc{} || end != last,
                  "JSON: invalid numeric value '{}'", string_value);
@@ -138,7 +138,7 @@ bool Json::as_bool() const
 static void escape_string(string& out, const string& s)
 {
     out.push_back('"');
-    for (char c : s)
+    for (const char c : s)
     {
         switch (c)
         {
@@ -241,7 +241,7 @@ struct Parser
     {
         while (position < s.size())
         {
-            char c = s[position];
+            const char c = s[position];
             if (c == ' ' || c == '\t' || c == '\n' || c == '\r') ++position;
             else break;
         }
@@ -282,12 +282,12 @@ struct Parser
         string out;
         while (position < s.size())
         {
-            char c = s[position++];
+            const char c = s[position++];
             if (c == '"') return out;
             if (c == '\\')
             {
                 if (position >= s.size()) fail("bad escape");
-                char e = s[position++];
+                const char e = s[position++];
                 switch (e)
                 {
                 case '"':  out.push_back('"');  break;
@@ -303,7 +303,7 @@ struct Parser
                     unsigned code = 0;
                     for (int i = 0; i < 4; ++i)
                     {
-                        char h = s[position++];
+                        const char h = s[position++];
                         code <<= 4;
                         if (h >= '0' && h <= '9')      code |= unsigned(h - '0');
                         else if (h >= 'a' && h <= 'f') code |= unsigned(h - 'a' + 10);
@@ -347,16 +347,16 @@ struct Parser
         }
         Json j;
         j.kind = Json::Kind::Number;
-        const char* first = s.data() + start;
-        const char* last = s.data() + position;
-        auto [ptr, ec] = from_chars(first, last, j.number_value);
+        const char* const first = s.data() + start;
+        const char* const last = s.data() + position;
+        const auto [ptr, ec] = from_chars(first, last, j.number_value);
         if (ec != errc() || ptr != last) fail("bad number");
         return j;
     }
 
     Json parse_value()
     {
-        char c = peek();
+        const char c = peek();
         if (c == '"') { Json j; j.kind = Json::Kind::String; j.string_value = parse_string(); return j; }
         if (c == '{') return parse_object();
         if (c == '[') return parse_array();
@@ -542,34 +542,34 @@ void write_json(JsonWriter& writer,
 float read_json_float(const Json* root, string_view field)
 {
     if (!root) return 0.0f;
-    const Json* v = root->find(field);
+    const Json* const v = root->find(field);
     return v ? float(v->as_double()) : 0.0f;
 }
 
 long long read_json_index(const Json* root, string_view field)
 {
     if (!root) return 0;
-    const Json* v = root->find(field);
+    const Json* const v = root->find(field);
     return v ? v->as_long() : 0;
 }
 
 bool read_json_bool(const Json* root, string_view field)
 {
     if (!root) return false;
-    const Json* v = root->find(field);
+    const Json* const v = root->find(field);
     return v && v->as_bool();
 }
 
 string read_json_string(const Json* root, string_view field)
 {
     if (!root) return "";
-    const Json* v = root->find(field);
+    const Json* const v = root->find(field);
     return v ? v->as_string() : string();
 }
 
 vector<string> read_json_strings(const Json* root, string_view field)
 {
-    const Json* value = root ? root->find(field) : nullptr;
+    const Json* const value = root ? root->find(field) : nullptr;
     if (!value) return {};
     if (!value->is_array()) return get_tokens(value->as_string(), "\n");
 
@@ -586,7 +586,7 @@ string read_json_string_fallback(const Json* root,
     if (!root) return "";
     for (const auto& name : names)
     {
-        const Json* v = root->find(name);
+        const Json* const v = root->find(name);
         if (v) return v->as_string();
     }
     return "";
@@ -595,7 +595,7 @@ string read_json_string_fallback(const Json* root,
 const Json* require_json_field(const Json* root, string_view field)
 {
     throw_if(!root, "JSON: missing root for field '{}'", field);
-    const Json* v = root->find(field);
+    const Json* const v = root->find(field);
     throw_if(!v, "JSON: missing required field '{}'", field);
     return v;
 }
@@ -609,7 +609,7 @@ JsonDocument load_json_file(const filesystem::path& file_name)
 
 const Json* get_json_root(const JsonDocument& document, string_view tag)
 {
-    const Json* v = document.first_child(tag);
+    const Json* const v = document.first_child(tag);
     throw_if(!v, "JSON: missing root tag '{}'", tag);
     return v;
 }

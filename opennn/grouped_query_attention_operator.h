@@ -44,7 +44,7 @@ struct GroupedQueryAttentionOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
-                     const int* position_device);
+                     const int* position_device) const;
 
     mutable Buffer kv_key, kv_value;
     mutable Index cache_capacity = 0;

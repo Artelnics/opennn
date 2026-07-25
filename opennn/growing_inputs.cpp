@@ -28,7 +28,7 @@ static vector<pair<Index, Index>> input_feature_ids(const Dataset* dataset)
 
     vector<pair<Index, Index>> ids;
 
-    for (Index variable_index : dataset->get_variable_indices(VariableRole::Input))
+    for (const Index variable_index : dataset->get_variable_indices(VariableRole::Input))
         for (Index feature = 0; feature < variables[variable_index].get_feature_count(); ++feature)
             ids.emplace_back(variable_index, feature);
 

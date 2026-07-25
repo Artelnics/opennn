@@ -71,7 +71,7 @@ void Batch::set(const Index new_samples_number,
 
     const bool host_bf16_input_cast = input_is_bf16 && bf16_host_input_cast_enabled();
 
-    auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
+    const auto setup_buffer = [&](const string& role, BatchSlot& slot, Index device_elem_bytes)
     {
         const Shape& dataset_shape = dataset->get_shape(role);
 
@@ -290,7 +290,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
         return;
     }
 
-    auto copy_to_device_async = [&](void* destination, const void* source, Index bytes) {
+    const auto copy_to_device_async = [&](void* destination, const void* source, Index bytes) {
         device::copy_async(destination, source, bytes, device::CopyKind::HostToDevice, stream);
     };
 

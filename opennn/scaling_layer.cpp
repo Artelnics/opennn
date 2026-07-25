@@ -166,7 +166,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
 {
     if (!scaling_layer_element) return;
 
-    auto parse_field = [&](const string& field, float Descriptives::* member)
+    const auto parse_field = [&](const string& field, float Descriptives::* member)
     {
         if (!scaling_layer_element->has(field)) return;
         VectorR values;

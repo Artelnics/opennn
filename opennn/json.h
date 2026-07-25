@@ -159,7 +159,7 @@ void for_json_items(const Json* parent, const char* tag, long count, Func func)
     if (!parent || !parent->is_object())
         throw std::runtime_error(std::format("Missing JSON parent for: {}", tag));
 
-    const Json* arr = parent->find(tag);
+    const Json* const arr = parent->find(tag);
     if (!arr || !arr->is_array() || long(arr->array_value.size()) != count)
         throw std::runtime_error(std::format("Missing or wrong-size JSON array: {}", tag));
 

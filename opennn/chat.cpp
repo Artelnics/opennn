@@ -1371,7 +1371,7 @@ ChatResponse ChatSession::send(
             break;
         }
 
-        ForwardPropagation& decoded =
+        const ForwardPropagation& decoded =
             impl->run_decode(next, cache_length);
         impl->cached_tokens.push_back(next);
         ++cache_length;

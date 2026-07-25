@@ -294,7 +294,7 @@ vector<Index> GeneticAlgorithm::get_selected_indices() const
     return selection_indices;
 }
 
-VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& parent_2)
+VectorB GeneticAlgorithm::crossover(const VectorB& parent_1, const VectorB& parent_2) const
 {
     const Index genes_number = get_genes_number();
 

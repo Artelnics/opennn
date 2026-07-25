@@ -95,9 +95,9 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
     throw_if(buffer.size() < 54,
              "File too small to be a BMP: {}", path_str);
 
-    auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
-    auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
-    auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
+    const auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
+    const auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
+    const auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
 
     throw_if(read_u16(0) != 0x4D42,
              "Not a BMP file (invalid signature 'BM'): {}", path_str);
@@ -163,19 +163,19 @@ BmpHeader parse_bmp_header(const vector<uint8_t>& buffer, const string& path_str
 
 void decode_bmp_pixels(const vector<uint8_t>& buffer, const BmpHeader& h, float* dst)
 {
-    const uint8_t* pixel_data = buffer.data() + h.bfOffBits;
+    const uint8_t* const pixel_data = buffer.data() + h.bfOffBits;
 
     for (Index y = 0; y < h.height; ++y)
     {
         const Index tensor_y = h.top_down ? y : (h.height - 1 - y);
-        const uint8_t* row_ptr = pixel_data + y * h.row_stride;
+        const uint8_t* const row_ptr = pixel_data + y * h.row_stride;
         const Index row_start_index = tensor_y * h.width * h.channels;
 
         if (h.biBitCount == 24 || h.biBitCount == 32)
         {
             for (Index x = 0; x < h.width; ++x)
             {
-                const uint8_t* p = row_ptr + x * h.bytes_per_pixel;
+                const uint8_t* const p = row_ptr + x * h.bytes_per_pixel;
                 const Index pi = row_start_index + x * h.channels;
                 dst[pi + 0] = float(p[2]);
                 dst[pi + 1] = float(p[1]);
@@ -239,7 +239,7 @@ PngHeader parse_png_chunks(const vector<uint8_t>& buffer,
 
         const string_view type(reinterpret_cast<const char*>(buffer.data() + pos), 4);
         pos += 4;
-        const uint8_t* data = buffer.data() + pos;
+        const uint8_t* const data = buffer.data() + pos;
 
         if (type == "IHDR")
         {
@@ -328,7 +328,7 @@ void unfilter_png_rows_into(const vector<uint8_t>& inflated,
     {
         const uint8_t filter_type = inflated[src++];
         uint8_t* row = unfiltered.data() + size_t(y) * size_t(row_bytes);
-        const uint8_t* prev = y > 0 ? row - row_bytes : nullptr;
+        const uint8_t* const prev = y > 0 ? row - row_bytes : nullptr;
 
         for (Index x = 0; x < row_bytes; ++x)
         {
@@ -361,7 +361,7 @@ void decode_png_rows(const PngHeader& h,
 {
     for (Index y = 0; y < h.height; ++y)
     {
-        const uint8_t* row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
+        const uint8_t* const row = unfiltered + size_t(y) * size_t(h.width) * size_t(h.bytes_per_pixel);
 
         for (Index x = 0; x < h.width; ++x)
             write_pixel(row + size_t(x) * size_t(h.bytes_per_pixel),
@@ -518,7 +518,7 @@ void copy_image_to_expected_shape(const Tensor3& source,
 
     if (channels == 1 && expected_channels == 3)
     {
-        const float* src = image->data();
+        const float* const src = image->data();
         for (Index i = 0; i < pixels; ++i)
         {
             dst[3 * i + 0] = src[i];
@@ -530,7 +530,7 @@ void copy_image_to_expected_shape(const Tensor3& source,
 
     if (channels == 3 && expected_channels == 1)
     {
-        const float* src = image->data();
+        const float* const src = image->data();
         for (Index i = 0; i < pixels; ++i)
             dst[i] = (src[3 * i + 0] + src[3 * i + 1] + src[3 * i + 2]) / 3.0f;
         return;

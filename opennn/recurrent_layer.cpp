@@ -143,7 +143,7 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 
     const string& activation_name = ActivationOperator::to_string(recurrent_op.activation);
 
-    auto step_var = [&](Index t, Index j) -> string {
+    const auto step_var = [&](Index t, Index j) -> string {
         const string internal = format("recurrent_hidden_step_{}_neuron_{}", t, j);
         if (return_sequences)
         {

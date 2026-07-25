@@ -328,7 +328,7 @@ void Convolutional::load_darknet_weights(FILE* f)
     throw_if(fread(tmp.data(), sizeof(float), n_weights, f) != n_weights,
              "load_darknet_weights: short read on conv weights.");
 
-    float* dst = convolution.weights.as<float>();
+    float* const dst = convolution.weights.as<float>();
     for (Index o = 0; o < O; ++o)
         for (Index h = 0; h < kH; ++h)
             for (Index w = 0; w < kW; ++w)

@@ -302,8 +302,8 @@ string Dense::write_expression(const vector<string>& input_names,
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const float* bias_data = parameter_views[0].as<float>();
-    const float* weight_data = parameter_views[1].as<float>();
+    const float* const bias_data = parameter_views[0].as<float>();
+    const float* const weight_data = parameter_views[1].as<float>();
 
     const string& activation_function_local = ActivationOperator::to_string(get_activation_function());
 

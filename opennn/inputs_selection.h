@@ -69,7 +69,7 @@ public:
 
 protected:
 
-    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index);
+    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index) const;
 
     struct InputScaling
     {

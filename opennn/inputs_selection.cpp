@@ -21,7 +21,7 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
+void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number) const
 {
     const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 

@@ -175,7 +175,7 @@ bool FileMapping::map(const filesystem::path& path)
     mapping_handle_ = ::CreateFileMappingW(file_handle_, nullptr, PAGE_READONLY, 0, 0, nullptr);
     if (!mapping_handle_) { reset(); return false; }
 
-    void* view = ::MapViewOfFile(mapping_handle_, FILE_MAP_READ, 0, 0, 0);
+    void* const view = ::MapViewOfFile(mapping_handle_, FILE_MAP_READ, 0, 0, 0);
     if (!view) { reset(); return false; }
 
     data_ = static_cast<const char*>(view);
@@ -204,7 +204,7 @@ bool FileMapping::map(const filesystem::path& path)
     struct stat st;
     if (::fstat(fd_, &st) != 0 || st.st_size == 0) { reset(); return false; }
 
-    void* addr = ::mmap(nullptr, size_t(st.st_size), PROT_READ, MAP_PRIVATE, fd_, 0);
+    void* const addr = ::mmap(nullptr, size_t(st.st_size), PROT_READ, MAP_PRIVATE, fd_, 0);
     if (addr == MAP_FAILED) { reset(); return false; }
 
     data_ = static_cast<const char*>(addr);
@@ -532,9 +532,9 @@ bool is_numeric_string(string_view text)
     if (text.empty()) return false;
 
     double value;
-    const char* first = text.data();
-    const char* last  = first + text.size();
-    auto [ptr, ec] = from_chars(first, last, value);
+    const char* const first = text.data();
+    const char* const last  = first + text.size();
+    const auto [ptr, ec] = from_chars(first, last, value);
 
     if (ec != errc{} || ptr == first) return false;
 

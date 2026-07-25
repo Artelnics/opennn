@@ -319,7 +319,7 @@ static vector<Index> string_to_source_indices(const string& text)
 
 static void validate_source_indices(const vector<Index>& sources, Index layer_index, Index layers_count)
 {
-    for (Index src : sources)
+    for (const Index src : sources)
     {
         if (src < 0) continue;
         throw_if(src >= layers_count || src >= layer_index,

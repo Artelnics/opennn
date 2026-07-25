@@ -65,12 +65,12 @@ private:
                TensorView&,
                TensorView&,
                TensorView&,
-               bool);
+               bool) const;
     void apply_gpu(const TensorView&,
                    TensorView&,
                    TensorView&,
                    TensorView&,
-                   bool);
+                   bool) const;
 
     void apply_delta(const TensorView&,
                      const TensorView&,
@@ -97,7 +97,7 @@ private:
     void ensure_cudnn_setup_(Index, bool) const;
     void pack_weights_to_cudnn_() const;
     void unpack_gradients_from_cudnn_() const;
-    void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&, bool);
+    void apply_gpu_cudnn_(const TensorView&, TensorView&, TensorView&, bool) const;
     void apply_delta_gpu_cudnn_(const TensorView&, const TensorView&,
                                 const TensorView&, TensorView&) const;
 };

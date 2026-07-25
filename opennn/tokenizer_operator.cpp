@@ -288,7 +288,7 @@ WordLevelTokenizer::WordLevelTokenizer(vector<string> new_reserved_tokens)
 
 vector<string> WordLevelTokenizer::tokenize(string_view text) const
 {
-    string lowered = ascii_lowercase(text);
+    const string lowered = ascii_lowercase(text);
 
     const vector<string_view> views = tokenize_views(lowered);
 
@@ -303,7 +303,7 @@ vector<string> WordLevelTokenizer::tokenize(string_view text) const
 
 vector<Index> WordLevelTokenizer::encode(string_view text) const
 {
-    string lowered = ascii_lowercase(text);
+    const string lowered = ascii_lowercase(text);
 
     const vector<string_view> views = tokenize_views(lowered);
     vector<Index> ids;

@@ -270,7 +270,7 @@ struct Parser
 
     AstPtr parse_primary()
     {
-        Token token = lexer.consume();
+        const Token token = lexer.consume();
 
         if (token.kind == Token::Kind::Number)
             return make_const(token.number);

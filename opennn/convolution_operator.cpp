@@ -383,7 +383,7 @@ void col2im(const float* col, Index input_height, Index input_width, Index chann
 
 }
 
-void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
+void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output) const
 {
     const Index batch_size = input.shape[0];
     const Index output_height = output.shape[1];
@@ -499,7 +499,7 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
+void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output) const
 {
     PROFILE_SCOPE("op:conv_fwd");
 
@@ -532,7 +532,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
                                            const TensorView& folded_weights,
                                            const TensorView& folded_bias,
-                                           bool relu, TensorView& output)
+                                           bool relu, TensorView& output) const
 {
     PROFILE_SCOPE("op:conv_fwd");
 
@@ -611,7 +611,7 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&)                                { throw runtime_error("apply_gpu requires CUDA."); }
+void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&) const                          { throw runtime_error("apply_gpu requires CUDA."); }
 void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("apply_delta_gpu requires CUDA."); }
 
 #endif

@@ -1195,7 +1195,7 @@ void TabularDataset::set_data_binary_classification()
 static float parse_float_or_nan(string_view token)
 {
     float value;
-    auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
+    const auto [ptr, ec] = from_chars(token.data(), token.data() + token.size(), value);
     return (ec == errc{} && ptr == token.data() + token.size()) ? value : NAN;
 }
 
@@ -1234,7 +1234,7 @@ static void parse_categorical_token(float* row, const vector<Index>& feature_ind
             row[cat_index] = NAN;
     else
     {
-        auto it = category_map.find(token);
+        const auto it = category_map.find(token);
         if (it != category_map.end())
             row[feature_indices[it->second]] = 1;
     }
@@ -1336,7 +1336,7 @@ void TabularDataset::read_csv()
 
     const Index samples_number = lines.size();
 
-    auto is_missing = [&](string_view t) { return is_missing_token(t, missing_values_label); };
+    const auto is_missing = [&](string_view t) { return is_missing_token(t, missing_values_label); };
 
     if (!has_sample_ids && samples_number > 0)
     {
@@ -1444,7 +1444,7 @@ void TabularDataset::read_csv()
     struct NumericColumnValues { bool has_value = false; float first_value = 0.0f; bool constant = true; bool zero_one = true; };
     vector<NumericColumnValues> numeric_column_values(variables_number);
 
-    auto parse_row = [&](float* row, const vector<string_view>& row_tokens)
+    const auto parse_row = [&](float* row, const vector<string_view>& row_tokens)
     {
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
@@ -1475,7 +1475,7 @@ void TabularDataset::read_csv()
         }
     };
 
-    auto refine_numeric = [&](const float* row)
+    const auto refine_numeric = [&](const float* row)
     {
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
@@ -1499,7 +1499,7 @@ void TabularDataset::read_csv()
         }
     };
 
-    auto count_missing = [&](const vector<string_view>& row_tokens,
+    const auto count_missing = [&](const vector<string_view>& row_tokens,
                              Index& th_rows_mv, Index& th_mv, vector<Index>& th_var_mv)
     {
         bool row_has_missing = false;
@@ -1532,7 +1532,7 @@ void TabularDataset::read_csv()
     Index parse_error_index = samples_number;
     string parse_error_msg;
 
-    auto parse_rows = [&](Index base, Index end, float* destination)
+    const auto parse_rows = [&](Index base, Index end, float* destination)
     {
         Index range_rows_mv = 0, range_mv = 0;
         vector<Index> range_var_mv(variables_number, 0);

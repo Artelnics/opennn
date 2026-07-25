@@ -192,7 +192,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     for (const auto& entry : delta_entries)
     {
-        TensorView delta_view(base + entry.byte_offset,
+        const TensorView delta_view(base + entry.byte_offset,
                               entry.spec.shape,
                               entry.spec.dtype,
                               delta_pool.device_type);

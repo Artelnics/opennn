@@ -47,7 +47,7 @@ private:
                                                  ForwardPropagation&,
                                                  BackPropagation&,
                                                  OptimizerData&,
-                                                 float);
+                                                 float) const;
 
     float first_learning_rate = 0.01f;
 

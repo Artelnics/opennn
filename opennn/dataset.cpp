@@ -303,7 +303,7 @@ void Dataset::split_samples(const float training_samples_ratio,
     if (shuffle)
         shuffle_vector(indices);
 
-    auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
+    const auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
     {
         Index assigned = 0;
 
@@ -670,7 +670,7 @@ string Dataset::get_codification_string() const
 
 Index Dataset::get_variable_index(const string& variable_name) const
 {
-    auto it = ranges::find_if(variables,
+    const auto it = ranges::find_if(variables,
                               [&](const Variable& v) { return v.name == variable_name; });
 
     throw_if(it == variables.end(),
@@ -791,7 +791,7 @@ void Dataset::preview_data_to_JSON(JsonWriter &printer) const
 
     add_json_field(printer, "PreviewSize", data_file_preview.size());
 
-    vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
+    const vector<string> vector_data_file_preview = convert_string_vector(data_file_preview, ",");
 
     printer.begin_array("Row");
     for (const string& row_text : vector_data_file_preview)
@@ -824,7 +824,7 @@ void Dataset::variables_from_JSON(const Json *variables_element)
 
         if (variable.is_categorical() || variable.is_binary())
         {
-            const Json* categories_element = el->find("Categories");
+            const Json* const categories_element = el->find("Categories");
 
             if (categories_element)
                 variable.categories = get_tokens(read_json_string(el, "Categories"), ";");

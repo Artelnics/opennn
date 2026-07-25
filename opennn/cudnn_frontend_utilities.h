@@ -173,7 +173,7 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
 inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag,
                      bool request_autotune = false)
 {
-    cudnnHandle_t handle = Backend::get_cudnn_handle();
+    const cudnnHandle_t handle = Backend::get_cudnn_handle();
 
     workspace_bytes = 0;
 

@@ -454,7 +454,7 @@ bool starts_with_any(string_view text, initializer_list<string_view> prefixes)
 
 bool env_flag_enabled(const char* name) noexcept
 {
-    const char* value = getenv(name);
+    const char* const value = getenv(name);
     if (!value) return false;
 
     const string_view text(value);

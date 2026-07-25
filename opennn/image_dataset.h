@@ -70,7 +70,7 @@ public:
 
 private:
 
-    void write_image_cache(const vector<filesystem::path>&, const string& trailer);
+    void write_image_cache(const vector<filesystem::path>&, const string& trailer) const;
 
     AugmentationSettings augmentation;
 

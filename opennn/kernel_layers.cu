@@ -628,7 +628,7 @@ static void prepare_pooling_valid_mask(const int B, const int S, const int F, co
     const int BS = checked_int(Index(B) * S);
     const cudaStream_t stream = opennn::device::get_compute_stream();
 
-    float* scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
+    float* const scratch = get_pooling_scratch(static_cast<size_t>(BS) + B);
     valid_mask = scratch;
     counts     = scratch + BS;
     opennn::device::set_zero_async(counts, Index(B) * Index(sizeof(float)), stream);
@@ -1088,7 +1088,7 @@ static void norm_backward_launch(const int N, const int D, const T* dY, const T*
     const int grid_y = ceil_div(N, chunk);
     if (grid_y > 1)
     {
-        cudaStream_t stream = opennn::device::get_compute_stream();
+        const cudaStream_t stream = opennn::device::get_compute_stream();
         cudaMemsetAsync(dGamma, 0, size_t(D) * sizeof(float), stream);
         if constexpr (HasMean) cudaMemsetAsync(dBeta, 0, size_t(D) * sizeof(float), stream);
     }

@@ -51,7 +51,7 @@ private:
     void evaluate_population();
     void assign_fitness();
     void perform_selection();
-    VectorB crossover(const VectorB&, const VectorB&);
+    VectorB crossover(const VectorB&, const VectorB&) const;
     void perform_crossover();
     void perform_mutation();
     vector<Index> get_selected_indices() const;

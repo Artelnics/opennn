@@ -190,7 +190,7 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
         if (use_rotation)
         {
             copy_n(sample, pixels, scratch_storage->data());
-            TensorMap3 scratch(scratch_storage->data(), height, width, channels);
+            const TensorMap3 scratch(scratch_storage->data(), height, width, channels);
             rotate_image(scratch, image, sample_augmentation_value(augmentation.rotation_minimum,
                                                                    augmentation.rotation_maximum));
         }
@@ -218,9 +218,9 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 
 void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const Json* image_dataset_element = get_json_root(data_set_document, "Dataset");
+    const Json* const image_dataset_element = get_json_root(data_set_document, "Dataset");
 
-    const Json* data_source_element = require_json_field(image_dataset_element, "DataSource");
+    const Json* const data_source_element = require_json_field(image_dataset_element, "DataSource");
 
     set_data_path(read_json_string(data_source_element, "Path"));
 
@@ -264,7 +264,7 @@ VectorI ImageDataset::calculate_target_distribution() const
 {
     VectorI distribution = VectorI::Zero(Index(classes_number));
 
-    for (int32_t label : sample_labels)
+    for (const int32_t label : sample_labels)
         if (label >= 0 && label < distribution.size())
             distribution(label)++;
 
@@ -448,7 +448,7 @@ void ImageDataset::read_images()
     }
 }
 
-void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, const string& trailer)
+void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, const string& trailer) const
 {
     const Index samples_number = ssize(paths);
     const Index height = input_shape[0];

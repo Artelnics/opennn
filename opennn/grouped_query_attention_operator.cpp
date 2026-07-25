@@ -356,7 +356,7 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index
 }
 
 void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
-                                                const int* position_device)
+                                                const int* position_device) const
 {
     const Index seq = input.shape[1];
     const Index qd  = q_dim();

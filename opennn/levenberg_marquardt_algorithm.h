@@ -70,7 +70,7 @@ public:
 
 private:
 
-   void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&);
+   void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
    void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
    void calculate_squared_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
@@ -78,7 +78,7 @@ private:
 
    void compute_jacobian(const Batch&,
                          const ForwardPropagation&,
-                         BackPropagationLM&);
+                         BackPropagationLM&) const;
 
    float initial_damping_parameter = 0.0f;
 

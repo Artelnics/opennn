@@ -609,7 +609,7 @@ namespace opennn
 Backend::Backend()
 {
 
-    const char* threads_env = std::getenv("OPENNN_THREADS");
+    const char* const threads_env = std::getenv("OPENNN_THREADS");
     set_threads_number(threads_env ? std::atoi(threads_env) : 0);
 
 #ifdef OPENNN_HAS_CUDA

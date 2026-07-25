@@ -196,9 +196,9 @@ void TimeSeriesDataset::to_JSON(JsonWriter& printer) const
 
 void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
 {
-    const Json* data_set_element = get_json_root(data_set_document, "Dataset");
+    const Json* const data_set_element = get_json_root(data_set_document, "Dataset");
 
-    const Json* data_source_element = require_json_field(data_set_element, "DataSource");
+    const Json* const data_source_element = require_json_field(data_set_element, "DataSource");
 
     require_json_field(data_source_element, "FileType");
 
@@ -457,7 +457,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
         if (variables[i].role == VariableRole::None || variables[i].type != VariableType::Numeric)
             continue;
 
-        MatrixR input_i = get_variable_data(i);
+        const MatrixR input_i = get_variable_data(i);
         cout << "Calculating " << variables[i].name << " autocorrelations" << "\n";
 
         const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
@@ -512,7 +512,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
     {
         const Index variable_i = numeric_variable_indices[i];
 
-        MatrixR input_i = get_variable_data(variable_i);
+        const MatrixR input_i = get_variable_data(variable_i);
 
         if (display) cout << "Calculating " << variables[variable_i].name << " cross correlations:" << "\n";
 
@@ -520,7 +520,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
         {
             const Index variable_j = numeric_variable_indices[j];
 
-            MatrixR input_j = get_variable_data(variable_j);
+            const MatrixR input_j = get_variable_data(variable_j);
 
             if (display) cout << "  vs. " << variables[variable_j].name << "\n";
 

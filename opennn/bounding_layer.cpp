@@ -153,7 +153,7 @@ void Bounding::read_JSON_body(const Json* root_element)
 
     set_bounding_method(read_json_string(root_element, "BoundingMethod"));
 
-    auto parse_bounds = [&](const string& field, vector<float>& dest)
+    const auto parse_bounds = [&](const string& field, vector<float>& dest)
     {
         if (!root_element->has(field)) return;
         VectorR values;

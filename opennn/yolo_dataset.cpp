@@ -230,7 +230,7 @@ uint64_t hash_sources(const filesystem::path& images_dir,
             mix_u64(uint64_t(mtime.time_since_epoch().count()));
     };
 
-    vector<filesystem::path> image_paths = list_files(images_dir, is_supported_image_file);
+    const vector<filesystem::path> image_paths = list_files(images_dir, is_supported_image_file);
     mix_u64(uint64_t(image_paths.size()));
 
     for (const auto& image_path : image_paths)
@@ -1377,7 +1377,7 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
 
 void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 {
-    vector<filesystem::path> image_paths = list_files(images_directory, is_supported_image_file);
+    const vector<filesystem::path> image_paths = list_files(images_directory, is_supported_image_file);
     throw_if(image_paths.empty(),
              "YoloDataset: no images found in {}", images_directory.string());
 
@@ -1769,7 +1769,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     if (matrix_storage)
         load_images_to_ram();
 
-    AugmentationConfig cfg = augmentation;
+    const AugmentationConfig cfg = augmentation;
 
     string omp_error;
 
@@ -1888,7 +1888,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         ? augmentation_counter.load(memory_order_relaxed)
         : 0;
 
-    AugmentationConfig cfg = augmentation;
+    const AugmentationConfig cfg = augmentation;
 
     const bool grid_changed = (grid_size != cache_grid_size);
     const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;

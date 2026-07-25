@@ -56,7 +56,7 @@ struct ConvolutionOperator : Operator
     void apply_gpu_folded(const TensorView& input,
                           const TensorView& folded_weights,
                           const TensorView& folded_bias,
-                          bool relu, TensorView& output);
+                          bool relu, TensorView& output) const;
 #endif
 
     void set(Index, Index,
@@ -82,8 +82,8 @@ struct ConvolutionOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
-    void apply_cpu(const TensorView&, TensorView&);
-    void apply_gpu(const TensorView&, TensorView&);
+    void apply_cpu(const TensorView&, TensorView&) const;
+    void apply_gpu(const TensorView&, TensorView&) const;
 
     void apply_delta_cpu(const TensorView&, const TensorView&,
                          TensorView&) const;

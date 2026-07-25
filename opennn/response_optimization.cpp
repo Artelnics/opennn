@@ -1516,7 +1516,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
             break;
         }
 
-        auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
+        const auto [feasible_inputs, feasible_outputs] = sample_feasible_points(input_domain, original_output_domain);
 
         if (feasible_outputs.size() > 0 && !feasible_outputs.allFinite())
         {
@@ -1768,7 +1768,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
 
-    auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain, initial_sampling_factor);
+    const auto [first_feasible_inputs, first_feasible_outputs] = sample_feasible_points(original_input_domain, original_output_domain, initial_sampling_factor);
 
     if (first_feasible_inputs.rows() == 0)
     {
@@ -1812,7 +1812,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
             if (max_total_evaluations > 0 && evaluations_used >= max_total_evaluations)
                 break;
 
-            auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
+            const auto [local_feasible_inputs, local_feasible_outputs] = sample_feasible_points(input_domains[j], original_output_domain);
 
             MatrixR local_objective_matrix = objective_set.extract(local_feasible_inputs, local_feasible_outputs);
             objective_set.normalize(local_objective_matrix);

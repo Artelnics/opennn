@@ -46,7 +46,7 @@ void Unscaling::read_JSON_body(const Json* root_element)
     if (root_element->has("MaxRange"))
         max_range = parse_float(read_json_string(root_element, "MaxRange"), "Unscaling: MaxRange");
 
-    const Json* neurons_array = root_element->find("Neurons");
+    const Json* const neurons_array = root_element->find("Neurons");
     if (!neurons_array || !neurons_array->is_array()) return;
 
     throw_if(ssize(neurons_array->array_value) != ssize(scalers),
@@ -55,7 +55,7 @@ void Unscaling::read_JSON_body(const Json* root_element)
 
     for (size_t i = 0; i < neurons_array->array_value.size(); ++i)
     {
-        const Json* neuron = &neurons_array->array_value[i];
+        const Json* const neuron = &neurons_array->array_value[i];
 
         scalers[i] = string_to_scaler_method(read_json_string(neuron, "Scaler"));
 

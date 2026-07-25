@@ -99,7 +99,7 @@ void LanguageDataset::read_txt()
 
     load_documents(input_document_tokens, target_document_tokens);
 
-    auto get_maximum_size = [](const auto& nested_values) {
+    const auto get_maximum_size = [](const auto& nested_values) {
         const auto it = ranges::max_element(nested_values,
                                             [](const auto& a, const auto& b) { return a.size() < b.size(); });
         return it == nested_values.end() ? size_t(0) : it->size();
@@ -332,8 +332,8 @@ void LanguageDataset::load_documents(vector<vector<string>>& input_documents,
     const string separator_string = get_separator_string();
     const char field_separator = separator_string.empty() ? '\t' : separator_string[0];
 
-    CsvReader reader({field_separator, {}});
-    CsvReader::Result result = reader.read(data_path);
+    const CsvReader reader({field_separator, {}});
+    const CsvReader::Result result = reader.read(data_path);
 
     const size_t first_line = has_header ? 1 : 0;
     const size_t documents_number = result.lines.size() - min(first_line, result.lines.size());

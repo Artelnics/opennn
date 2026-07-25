@@ -59,7 +59,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const float new_mini
 
 void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
                                                   const ForwardPropagation& forward_propagation,
-                                                  BackPropagationLM& back_propagation_lm)
+                                                  BackPropagationLM& back_propagation_lm) const
 {
     if (batch.is_empty()) return;
 
@@ -132,7 +132,7 @@ static void lm_activation_derivative(ActivationFunction activation_function, con
 
 void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
                                                    const ForwardPropagation& forward_propagation,
-                                                   BackPropagationLM& back_propagation_lm)
+                                                   BackPropagationLM& back_propagation_lm) const
 {
     NeuralNetwork* neural_network = loss->get_neural_network();
     const auto& layers = neural_network->get_layers();
