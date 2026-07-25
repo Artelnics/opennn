@@ -475,6 +475,18 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
                         float lambda_giou, float lambda_noobj, float lambda_class,
                         float focal_gamma, float obj_focal_gamma);
 
+// YOLOv8 anchor-free loss — one thread per (batch * grid * grid) cell.
+// Output [B,G,G,4+C], target [B,G,G,5+C] (ch4 = positive/ignore flag).
+// error_accumulator must be pre-zeroed on device; result is added atomically.
+void yolo_v8_error_cuda(const float* output, const float* target, float* error_accumulator,
+                        int batch, int grid, int classes_number,
+                        float lambda_giou, float lambda_class, float focal_gamma);
+
+// YOLOv8 gradient — delta is zeroed inside, then filled per-cell.
+void yolo_v8_gradient_cuda(const float* output, const float* target, float* delta,
+                           int batch, int grid, int classes_number, float inv_batch,
+                           float lambda_giou, float lambda_class, float focal_gamma);
+
 // Device-side per-head YOLO target assembly — pure gather from the flat
 // per-sample target: head_target[n*head_floats + j] =
 // target_flat[n*per_sample_floats + head_offset + j] (see assemble_head_target

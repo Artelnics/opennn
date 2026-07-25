@@ -44,22 +44,8 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
     }
 #endif
 
-    const Index batch_size = input.shape[0];
-    const Index channels   = 4 + classes_number;
-
-    const float* src = input.as<float>();
-    float*       dst = output.as<float>();
-
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
-            {
-                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
-
-                for (Index ch = 0; ch < channels; ++ch)
-                    dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
-            }
+    copy(input, output);
+    activation_forward(output, ActivationFunction::Sigmoid);
 }
 
 void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation,
@@ -82,26 +68,8 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
     }
 #endif
 
-    const Index batch_size = output.shape[0];
-    const Index channels   = 4 + classes_number;
-
-    const float* out      = output.as<float>();
-    const float* delta    = output_delta.as<float>();
-    float*       in_delta = input_delta.as<float>();
-
-    #pragma omp parallel for collapse(3)
-    for (Index b = 0; b < batch_size; ++b)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_width; ++col)
-            {
-                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
-
-                for (Index ch = 0; ch < channels; ++ch)
-                {
-                    const float s = out[base + ch];
-                    in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
-                }
-            }
+    copy(output_delta, input_delta);
+    activation_backward(output, input_delta, ActivationFunction::Sigmoid);
 }
 
 }

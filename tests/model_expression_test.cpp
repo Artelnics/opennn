@@ -278,3 +278,112 @@ TEST_F(ModelExpressionTest, SaveThrowsOnUnwritablePath)
 
     EXPECT_ANY_THROW(model_expression.save(path, ModelExpression::ProgrammingLanguage::C));
 }
+
+
+// Pins the per-language numerically stable softmax blocks of the exported
+// models (max-shift, exp call, normalize) for a softmax classification network.
+class ModelExpressionSoftmaxTest : public ::testing::Test
+{
+protected:
+
+    unique_ptr<ClassificationNetwork> neural_network;
+
+    const vector<string> input_names = { "alpha", "beta" };
+    const vector<string> output_names = { "setosa", "versicolor", "virginica" };
+
+    void SetUp() override
+    {
+        neural_network = make_unique<ClassificationNetwork>(Shape{ 2 }, Shape{ 3 }, Shape{ 3 });
+        neural_network->set_input_variables(vector<Variable>(neural_network->get_inputs_number()));
+        neural_network->set_output_variables(vector<Variable>(neural_network->get_outputs_number()));
+        neural_network->set_input_names(input_names);
+        neural_network->set_output_names(output_names);
+    }
+
+    string save_and_read(ModelExpression::ProgrammingLanguage language, const string& file_name) const
+    {
+        const ModelExpression model_expression(neural_network.get());
+
+        const filesystem::path path = filesystem::temp_directory_path() / file_name;
+
+        model_expression.save(path, language);
+
+        const string source = read_whole_file(path);
+        filesystem::remove(path);
+        return source;
+    }
+};
+
+
+TEST_F(ModelExpressionSoftmaxTest, BuildExpressionContainsSoftmax)
+{
+    const ModelExpression model_expression(neural_network.get());
+
+    EXPECT_TRUE(contains_token(model_expression.build_expression(), "Softmax"));
+}
+
+
+TEST_F(ModelExpressionSoftmaxTest, SaveCExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::C, "opennn_model_expression_softmax_test.c");
+
+    EXPECT_TRUE(contains_token(source, "// Softmax (numerically stable)"));
+    EXPECT_TRUE(contains_token(source, "float max_out = out[0];"));
+    EXPECT_TRUE(contains_token(source, "for(int i = 1; i < 3; ++i) if(out[i] > max_out) max_out = out[i];"));
+    EXPECT_TRUE(contains_token(source, "float sum = 0.0f;"));
+    EXPECT_TRUE(contains_token(source, "out[i] = expf(out[i] - max_out); sum += out[i];"));
+    EXPECT_TRUE(contains_token(source, "for(int i = 0; i < 3; ++i) out[i] /= sum;"));
+}
+
+
+TEST_F(ModelExpressionSoftmaxTest, SaveCEmbeddedExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::CEmbedded, "opennn_model_expression_softmax_test_embedded.c");
+
+    EXPECT_TRUE(contains_token(source, "nn_softmax_inplace"));
+    EXPECT_TRUE(contains_token(source, "float max_value = values[0];"));
+    EXPECT_TRUE(contains_token(source, "values[i] = expf(values[i] - max_value); sum += values[i];"));
+    EXPECT_TRUE(contains_token(source, "for (int i = 0; i < n; ++i) values[i] /= sum;"));
+}
+
+
+TEST_F(ModelExpressionSoftmaxTest, SaveJavaScriptExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::JavaScript, "opennn_model_expression_softmax_test.html");
+
+    EXPECT_TRUE(contains_token(source, "// Softmax (numerically stable)"));
+    EXPECT_TRUE(contains_token(source, "var max_out = out[0];"));
+    EXPECT_TRUE(contains_token(source, "for(var i = 1; i < out.length; ++i) if(out[i] > max_out) max_out = out[i];"));
+    EXPECT_TRUE(contains_token(source, "var sum = 0;"));
+    EXPECT_TRUE(contains_token(source, "out[i] = Math.exp(out[i] - max_out); sum += out[i];"));
+    EXPECT_TRUE(contains_token(source, "for(var i = 0; i < out.length; ++i) out[i] /= sum;"));
+}
+
+
+TEST_F(ModelExpressionSoftmaxTest, SavePythonExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::Python, "opennn_model_expression_softmax_test.py");
+
+    EXPECT_TRUE(contains_token(source, "# Softmax (numerically stable)"));
+    EXPECT_TRUE(contains_token(source, "max_out = np.max(outputs)"));
+    EXPECT_TRUE(contains_token(source, "outputs = [np.exp(x - max_out) for x in outputs]"));
+    EXPECT_TRUE(contains_token(source, "sum_val = np.sum(outputs)"));
+    EXPECT_TRUE(contains_token(source, "outputs = [x / sum_val for x in outputs]"));
+}
+
+
+TEST_F(ModelExpressionSoftmaxTest, SavePhpExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::PHP, "opennn_model_expression_softmax_test.php");
+
+    EXPECT_TRUE(contains_token(source, "// Softmax (numerically stable)"));
+    EXPECT_TRUE(contains_token(source, "$max_out = max($setosa, $versicolor, $virginica);"));
+    EXPECT_TRUE(contains_token(source, "$setosa = exp($setosa - $max_out);"));
+    EXPECT_TRUE(contains_token(source, "$sum += $virginica;"));
+    EXPECT_TRUE(contains_token(source, "$versicolor /= $sum;"));
+}

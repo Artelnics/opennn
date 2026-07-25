@@ -326,14 +326,10 @@ bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint
 
     const size_t start = position;
     const unsigned char lead = static_cast<unsigned char>(text[position]);
+    const size_t length = utf8_sequence_length(lead);
 
-    codepoint = lead;
-    size_t length = 1;
-
-    if      (lead < 0x80)         { codepoint = lead;        length = 1; }
-    else if ((lead >> 5) == 0x6)  { codepoint = lead & 0x1F; length = 2; }
-    else if ((lead >> 4) == 0xE)  { codepoint = lead & 0x0F; length = 3; }
-    else if ((lead >> 3) == 0x1E) { codepoint = lead & 0x07; length = 4; }
+    // Payload bits: 0x1F / 0x0F / 0x07 for lengths 2 / 3 / 4.
+    codepoint = length == 1 ? lead : (lead & (0xFFu >> (length + 1)));
 
     if (length == 1 || start + length > text.size())
     {
@@ -344,7 +340,7 @@ bool next_utf8_codepoint(string_view text, size_t& position, uint32_t& codepoint
     for (size_t k = 1; k < length; ++k)
     {
         const unsigned char continuation = static_cast<unsigned char>(text[start + k]);
-        if ((continuation >> 6) != 0x2)
+        if (!is_utf8_continuation(continuation))
         {
             codepoint = lead;
             ++position;
@@ -906,57 +902,82 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
     return symbols;
 }
 
-vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
+namespace
 {
-    // Regex 's|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
-    // implemented over codepoints; a leading space attaches to the following piece.
-    const vector<uint32_t> cps = utf8_to_codepoints(text);
-    const size_t n = cps.size();
 
-    vector<string> pieces;
-    size_t i = 0;
+// Frame shared by the GPT-2 and Qwen pre-tokenizers: the codepoint view of the
+// text, the piece emitter and the common contraction rule ('s|'t|'m|'d + 're|
+// 've|'ll, ASCII apostrophe, case-insensitive). Run classification stays with
+// each tokenizer.
+struct PreTokenizeRun
+{
+    explicit PreTokenizeRun(string_view text)
+        : cps(utf8_to_codepoints(text)), n(cps.size())
+    {
+    }
 
-    auto emit = [&](size_t start, size_t end)
+    void emit(size_t start, size_t end)
     {
         string piece;
         piece.reserve((end - start) * 2);
         for (size_t k = start; k < end; ++k) append_utf8(piece, cps[k]);
         pieces.push_back(move(piece));
-    };
+    }
+
+    bool try_contraction(size_t& i)
+    {
+        if (cps[i] != '\'' || i + 1 >= n) return false;
+        const uint32_t d = to_lower_ascii(cps[i + 1]);
+        if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; return true; }
+        if (i + 2 < n)
+        {
+            const uint32_t e = to_lower_ascii(cps[i + 2]);
+            if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
+            { emit(i, i + 3); i += 3; return true; }
+        }
+        return false;
+    }
+
+    void emit_single(size_t& i) { emit(i, i + 1); ++i; }
+
+    vector<uint32_t> cps;
+    size_t n;
+    vector<string> pieces;
+};
+
+}
+
+vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
+{
+    // Regex 's|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+
+    // implemented over codepoints; a leading space attaches to the following piece.
+    PreTokenizeRun run(text);
+    const vector<uint32_t>& cps = run.cps;
+    const size_t n = run.n;
+    size_t i = 0;
 
     while (i < n)
     {
         const uint32_t c = cps[i];
 
-        // Contractions (ASCII apostrophe only).
-        if (c == '\'' && i + 1 < n)
-        {
-            const uint32_t d = to_lower_ascii(cps[i + 1]);
-            if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; continue; }
-            if (i + 2 < n)
-            {
-                const uint32_t e = to_lower_ascii(cps[i + 2]);
-                if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
-                { emit(i, i + 3); i += 3; continue; }
-            }
-        }
+        if (run.try_contraction(i)) continue;
 
         // Optional single leading space, then a run of letters / digits / others.
         const size_t k = (c == ' ') ? i + 1 : i;
         if (k < n && is_letter(cps[k]))
         {
             size_t j = k; while (j < n && is_letter(cps[j])) ++j;
-            emit(i, j); i = j; continue;
+            run.emit(i, j); i = j; continue;
         }
         if (k < n && is_ascii_digit(cps[k]))
         {
             size_t j = k; while (j < n && is_ascii_digit(cps[j])) ++j;
-            emit(i, j); i = j; continue;
+            run.emit(i, j); i = j; continue;
         }
         if (k < n && !is_whitespace(cps[k]) && !is_letter(cps[k]) && !is_ascii_digit(cps[k]))
         {
             size_t j = k; while (j < n && !is_whitespace(cps[j]) && !is_letter(cps[j]) && !is_ascii_digit(cps[j])) ++j;
-            emit(i, j); i = j; continue;
+            run.emit(i, j); i = j; continue;
         }
 
         // Whitespace run: keep the last space for the next piece's optional lead.
@@ -964,13 +985,13 @@ vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
         {
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
             const size_t end = (j < n && j - i > 1) ? j - 1 : j;
-            emit(i, end); i = end; continue;
+            run.emit(i, end); i = end; continue;
         }
 
-        emit(i, i + 1); ++i;   // defensive fallback
+        run.emit_single(i);   // defensive fallback
     }
 
-    return pieces;
+    return move(run.pieces);
 }
 
 void BytePairTokenizer::tokenize_into(string_view text,
@@ -1156,19 +1177,11 @@ void Qwen3Tokenizer::load(const filesystem::path& vocabulary_json,
 // (\p{N} approximated by ASCII digits; each digit is its own piece.)
 vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
 {
-    const vector<uint32_t> cps = utf8_to_codepoints(text);
-    const size_t n = cps.size();
-
-    vector<string> pieces;
+    PreTokenizeRun run(text);
+    const vector<uint32_t>& cps = run.cps;
+    const size_t n = run.n;
     size_t i = 0;
 
-    auto emit = [&](size_t start, size_t end)
-    {
-        string piece;
-        piece.reserve((end - start) * 2);
-        for (size_t k = start; k < end; ++k) append_utf8(piece, cps[k]);
-        pieces.push_back(move(piece));
-    };
     auto is_crlf  = [](uint32_t c) { return c == '\r' || c == '\n'; };
     auto is_other = [&](uint32_t c) { return !is_whitespace(c) && !is_letter(c) && !is_ascii_digit(c); };
 
@@ -1176,18 +1189,8 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
     {
         const uint32_t c = cps[i];
 
-        // 1. Contractions (case-insensitive apostrophe).
-        if (c == '\'' && i + 1 < n)
-        {
-            const uint32_t d = to_lower_ascii(cps[i + 1]);
-            if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; continue; }
-            if (i + 2 < n)
-            {
-                const uint32_t e = to_lower_ascii(cps[i + 2]);
-                if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
-                { emit(i, i + 3); i += 3; continue; }
-            }
-        }
+        // 1. Contractions.
+        if (run.try_contraction(i)) continue;
 
         // 2. [^\r\n\p{L}\p{N}]? \p{L}+  : one optional non-(crlf/letter/digit) lead, then letters.
         {
@@ -1197,12 +1200,12 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             if (run_start != string::npos)
             {
                 size_t j = run_start; while (j < n && is_letter(cps[j])) ++j;
-                emit(i, j); i = j; continue;
+                run.emit(i, j); i = j; continue;
             }
         }
 
         // 3. \p{N} : a single digit.
-        if (is_ascii_digit(c)) { emit(i, i + 1); ++i; continue; }
+        if (is_ascii_digit(c)) { run.emit_single(i); continue; }
 
         // 4.  ?[^\s\p{L}\p{N}]+[\r\n]* : optional space, then "others", then trailing newlines.
         {
@@ -1211,7 +1214,7 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             {
                 size_t j = other_start; while (j < n && is_other(cps[j])) ++j;
                 while (j < n && is_crlf(cps[j])) ++j;
-                emit(i, j); i = j; continue;
+                run.emit(i, j); i = j; continue;
             }
         }
 
@@ -1222,15 +1225,15 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
             size_t last_newline = string::npos;
             for (size_t k = i; k < j; ++k) if (is_crlf(cps[k])) last_newline = k;
-            if (last_newline != string::npos) { emit(i, last_newline + 1); i = last_newline + 1; continue; }
+            if (last_newline != string::npos) { run.emit(i, last_newline + 1); i = last_newline + 1; continue; }
             const size_t end = (j < n && j - i > 1) ? j - 1 : j;
-            emit(i, end); i = end; continue;
+            run.emit(i, end); i = end; continue;
         }
 
-        emit(i, i + 1); ++i;   // defensive fallback
+        run.emit_single(i);   // defensive fallback
     }
 
-    return pieces;
+    return move(run.pieces);
 }
 
 }

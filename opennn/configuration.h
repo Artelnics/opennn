@@ -53,7 +53,6 @@ private:
 };
 
 inline bool   is_gpu()            { return Configuration::instance().is_gpu(); }
-inline Device current_device()    { return Configuration::instance().resolve().device; }
 
 }
 

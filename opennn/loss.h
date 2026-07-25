@@ -237,6 +237,19 @@ void yolo_gradient_kernel(const TensorView& output,
                           float inv_batch,
                           YoloLambdas lam);
 
+// YOLOv8 anchor-free pair: output [B,G,G,4+C], target [B,G,G,5+C] (ch4 = flag).
+float yolo_v8_error_kernel(const TensorView& output,
+                           const TensorView& target,
+                           Index classes_number,
+                           YoloLambdas lam);
+
+void yolo_v8_gradient_kernel(const TensorView& output,
+                             const TensorView& target,
+                             const TensorView& output_delta,
+                             Index classes_number,
+                             float inv_batch,
+                             YoloLambdas lam);
+
 #endif // OPENNN_NO_VISION
 
 }

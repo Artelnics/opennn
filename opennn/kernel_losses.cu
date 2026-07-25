@@ -637,6 +637,115 @@ __global__ void yolo_loss_gradient_kernel(
     }
 }
 
+// ── v8 kernels ────────────────────────────────────────────────────────────────
+// Anchor-free (mirrors yolo_v8_error_kernel / yolo_v8_gradient_kernel in
+// loss.cpp): focal BCE over all non-ignore cells + CIoU on positives.
+// Output stride 4+C, target stride 5+C (channel 4 = flag).
+
+__global__ void yolo_v8_loss_forward_kernel(
+    const int n_cells,            // batch * grid * grid
+    const float* __restrict__ output,
+    const float* __restrict__ target,
+    float* __restrict__ error_accum,  // single float, pre-zeroed
+    const int classes_number,
+    const int grid_size,
+    const float lambda_giou,
+    const float lambda_class,
+    const float focal_gamma)
+{
+    const int ch_out = 4 + classes_number;
+    const int ch_tgt = 5 + classes_number;
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_cells; i += blockDim.x * gridDim.x)
+    {
+        const float* out_c = output + Index(i) * ch_out;
+        const float* tgt_c = target + Index(i) * ch_tgt;
+        const float flag = tgt_c[4];
+
+        if (flag <= -0.5f) continue;  // ignore slot (sentinel -1.0)
+
+        float class_contrib = 0.0f;
+        for (int c = 0; c < classes_number; ++c)
+        {
+            const float p = out_c[4 + c];
+            const float t = tgt_c[5 + c];
+            const float p_t   = (t > 0.5f) ? p : (1.0f - p);
+            const float focal = __powf(1.0f - p_t, focal_gamma);
+            class_contrib -= focal * (t * logf(p + YOLO_EPSILON) + (1.0f - t) * logf(1.0f - p + YOLO_EPSILON));
+        }
+
+        float contrib = lambda_class * class_contrib;
+
+        if (flag >= 0.5f)  // positive cell: CIoU box term
+        {
+            const int col = i % grid_size;
+            const int row = (i / grid_size) % grid_size;
+            const float inv_grid = 1.0f / float(grid_size);
+            const float pred[4] = {(out_c[0] + float(col)) * inv_grid, (out_c[1] + float(row)) * inv_grid, out_c[2], out_c[3]};
+            const float gt[4]   = {(tgt_c[0] + float(col)) * inv_grid, (tgt_c[1] + float(row)) * inv_grid, tgt_c[2], tgt_c[3]};
+
+            float iou_unused;
+            contrib += lambda_giou * (1.0f - yolo_giou_forward(pred, gt, &iou_unused));
+        }
+
+        atomicAdd(error_accum, contrib);
+    }
+}
+
+__global__ void yolo_v8_loss_gradient_kernel(
+    const int n_cells,
+    const float* __restrict__ output,
+    const float* __restrict__ target,
+    float* __restrict__ delta,        // pre-zeroed by wrapper
+    const int classes_number,
+    const int grid_size,
+    const float inv_batch,
+    const float lambda_giou,
+    const float lambda_class,
+    const float focal_gamma)
+{
+    const int ch_out = 4 + classes_number;
+    const int ch_tgt = 5 + classes_number;
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_cells; i += blockDim.x * gridDim.x)
+    {
+        const float* out_c = output + Index(i) * ch_out;
+        const float* tgt_c = target + Index(i) * ch_tgt;
+        float* delta_c = delta + Index(i) * ch_out;
+        const float flag = tgt_c[4];
+
+        if (flag <= -0.5f) continue;  // ignore slot (sentinel -1.0)
+
+        for (int c = 0; c < classes_number; ++c)
+        {
+            const float p = out_c[4 + c];
+            const float t = tgt_c[5 + c];
+            const float p_t   = (t > 0.5f) ? p : (1.0f - p);
+            const float focal = __powf(1.0f - p_t, focal_gamma);
+            delta_c[4 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + YOLO_EPSILON) * inv_batch;
+        }
+
+        if (flag >= 0.5f)  // positive cell: CIoU box term
+        {
+            const int col = i % grid_size;
+            const int row = (i / grid_size) % grid_size;
+            const float inv_grid = 1.0f / float(grid_size);
+            const float pred[4] = {(out_c[0] + float(col)) * inv_grid, (out_c[1] + float(row)) * inv_grid, out_c[2], out_c[3]};
+            const float gt[4]   = {(tgt_c[0] + float(col)) * inv_grid, (tgt_c[1] + float(row)) * inv_grid, tgt_c[2], tgt_c[3]};
+
+            float iou, giou;
+            float cx_g, cy_g, w_g, h_g;
+            yolo_giou_grad(pred, gt, &iou, &giou, cx_g, cy_g, w_g, h_g);
+
+            const float scale = lambda_giou * inv_batch;
+            delta_c[0] = scale * inv_grid * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, cx_g));
+            delta_c[1] = scale * inv_grid * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, cy_g));
+            delta_c[2] = scale * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, w_g));
+            delta_c[3] = scale * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, h_g));
+        }
+    }
+}
+
 // ── per-head target assembly ──────────────────────────────────────────────────
 // Pure gather mirroring assemble_head_target (loss.cpp): the flat per-sample
 // target is the concatenation of every head's block, so
@@ -695,6 +804,28 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     launch_elementwise(n_boxes, yolo_loss_gradient_kernel,
                        output, target, delta, values_per_box, classes_number, sigmoid_classes, inv_batch,
                        grid, boxes_per_cell, lambda_giou, lambda_noobj, lambda_class, focal_gamma, obj_focal_gamma);
+}
+
+void yolo_v8_error_cuda(const float* output, const float* target, float* error_accumulator,
+                        int batch, int grid, int classes_number,
+                        float lambda_giou, float lambda_class, float focal_gamma)
+{
+    launch_elementwise(Index(batch) * grid * grid, yolo_v8_loss_forward_kernel,
+                       output, target, error_accumulator, classes_number, grid,
+                       lambda_giou, lambda_class, focal_gamma);
+}
+
+void yolo_v8_gradient_cuda(const float* output, const float* target, float* delta,
+                           int batch, int grid, int classes_number, float inv_batch,
+                           float lambda_giou, float lambda_class, float focal_gamma)
+{
+    const Index n_cells = Index(batch) * grid * grid;
+    if (n_cells == 0) return;
+    cudaMemsetAsync(delta, 0, size_t(n_cells) * (4 + classes_number) * sizeof(float),
+                    opennn::device::get_compute_stream());
+    launch_elementwise(n_cells, yolo_v8_loss_gradient_kernel,
+                       output, target, delta, classes_number, grid, inv_batch,
+                       lambda_giou, lambda_class, focal_gamma);
 }
 
 #define INSTANTIATE(T) \

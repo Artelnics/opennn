@@ -22,6 +22,20 @@ vector<string> make_vocabulary(const unordered_map<string_view, size_t>&,
                                Index maximum_size,
                                Index minimum_frequency);
 
+// Sequence length a UTF-8 lead byte announces; 1 for ASCII and invalid leads.
+inline size_t utf8_sequence_length(unsigned char lead)
+{
+    if ((lead & 0xE0) == 0xC0) return 2;
+    if ((lead & 0xF0) == 0xE0) return 3;
+    if ((lead & 0xF8) == 0xF0) return 4;
+    return 1;
+}
+
+inline bool is_utf8_continuation(unsigned char byte)
+{
+    return (byte & 0xC0) == 0x80;
+}
+
 class TokenizerOperator : public Operator
 {
 public:

@@ -288,14 +288,6 @@ const TensorView& BackPropagation::get_output_delta() const
     return layer_output_deltas[neural_network->get_last_trainable_layer_index()];
 }
 
-void BackPropagation::print() const
-{
-    cout << "Back-propagation" << "\n"
-         << "Error: " << error << "\n"
-         << "Regularization: " << regularization << "\n"
-         << "Loss:  " << loss << "\n";
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.

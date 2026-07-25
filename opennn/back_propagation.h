@@ -42,8 +42,6 @@ struct BackPropagation
     TensorView& get_output_delta();
     const TensorView& get_output_delta() const;
 
-    void print() const;
-
     Index batch_size = 0;
 
     Loss* loss_pointer = nullptr;

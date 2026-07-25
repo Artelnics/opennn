@@ -522,6 +522,32 @@ Index NeuralNetwork::get_layers_number(LayerType type) const
                             [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
+// Resize `buffer` on its current device and fill it from a host vector.
+// Returns true when the upload went to the CUDA device.
+static bool upload_host_vector(Buffer& buffer, const VectorR& values)
+{
+    const Index byte_count = values.size() * Index(sizeof(float));
+
+    if (buffer.device_type == Device::CUDA)
+    {
+        buffer.resize_bytes(byte_count, Device::CUDA);
+        if (byte_count > 0)
+        {
+            cudaStream_t stream = Backend::get_compute_stream();
+            device::copy_async(buffer.data, values.data(), byte_count,
+                               device::CopyKind::HostToDevice,
+                               stream);
+            device::synchronize(stream);
+        }
+        return true;
+    }
+
+    buffer.resize_bytes(byte_count, Device::CPU);
+    if (byte_count > 0)
+        memcpy(buffer.data, values.data(), static_cast<size_t>(byte_count));
+    return false;
+}
+
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
     throw_if(new_parameters.size() == 0,
@@ -531,28 +557,11 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     throw_if(expected_size > 0 && new_parameters.size() != expected_size,
              "NeuralNetwork::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size);
 
-    const Index byte_count = new_parameters.size() * Index(sizeof(float));
     parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
 
-    if (parameters.device_type == Device::CUDA)
-    {
-        parameters.resize_bytes(byte_count, Device::CUDA);
-        if (byte_count > 0)
-        {
-            cudaStream_t stream = Backend::get_compute_stream();
-            device::copy_async(parameters.data, new_parameters.data(), byte_count,
-                               device::CopyKind::HostToDevice,
-                               stream);
-            device::synchronize(stream);
-        }
+    if (upload_host_vector(parameters, new_parameters))
         cast_parameters_to_bf16();
-        link_parameters();
-        return;
-    }
 
-    parameters.resize_bytes(byte_count, Device::CPU);
-    if (byte_count > 0)
-        memcpy(parameters.data, new_parameters.data(), static_cast<size_t>(byte_count));
     link_parameters();
 }
 
@@ -569,68 +578,33 @@ void NeuralNetwork::set_states(const VectorR& new_states)
     throw_if(new_states.size() != expected_size,
              "NeuralNetwork::set_states: size mismatch (got {}, expected {}).", new_states.size(), expected_size);
 
-    const Index byte_count = new_states.size() * Index(sizeof(float));
-
-    if (states.device_type == Device::CUDA)
-    {
-        states.resize_bytes(byte_count, Device::CUDA);
-        if (byte_count > 0)
-        {
-            cudaStream_t stream = Backend::get_compute_stream();
-            device::copy_async(states.data, new_states.data(), byte_count,
-                               device::CopyKind::HostToDevice,
-                               stream);
-            device::synchronize(stream);
-        }
-        link_states();
-        return;
-    }
-
-    states.resize_bytes(byte_count, Device::CPU);
-    if (byte_count > 0)
-        memcpy(states.data, new_states.data(), static_cast<size_t>(byte_count));
+    upload_host_vector(states, new_states);
 
     link_states();
 }
 
-void NeuralNetwork::set_parameters_random()
+void NeuralNetwork::initialize_parameters(void (Operator::*initializer)())
 {
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device) copy_parameters_host();
+    const HostParametersGuard guard(*this);
 
     for (const auto& layer : layers)
         for (Operator* op : layer->get_operators())
-            op->set_parameters_random();
+            (op->*initializer)();
+}
 
-    if (was_on_device) copy_parameters_device();
+void NeuralNetwork::set_parameters_random()
+{
+    initialize_parameters(&Operator::set_parameters_random);
 }
 
 void NeuralNetwork::set_parameters_glorot()
 {
-    const Index layers_number = get_layers_number();
-
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device) copy_parameters_host();
-
-    for (Index i = 0; i < layers_number; ++i)
-        for (Operator* op : layers[i]->get_operators())
-            op->set_parameters_glorot();
-
-    if (was_on_device) copy_parameters_device();
+    initialize_parameters(&Operator::set_parameters_glorot);
 }
 
 void NeuralNetwork::set_parameters_pytorch()
 {
-    const Index layers_number = get_layers_number();
-
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device) copy_parameters_host();
-
-    for (Index i = 0; i < layers_number; ++i)
-        for (Operator* op : layers[i]->get_operators())
-            op->set_parameters_pytorch();
-
-    if (was_on_device) copy_parameters_device();
+    initialize_parameters(&Operator::set_parameters_pytorch);
 }
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
@@ -814,6 +788,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         vector<TensorView> input_views_device = input_view;
         forward_propagation.device_input_buffers.resize(input_view.size());
+        forward_propagation.host_bf16_input_scratch.resize(input_view.size());
 
         const auto input_feeds_token_ids = [&](size_t input_index)
         {
@@ -856,12 +831,13 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             if (cast_input_to_bf16)
             {
                 const Index n = source.size();
-                vector<uint16_t> bf16_cpu(size_t(n), uint16_t(0));
+                vector<uint16_t>& bf16_cpu = forward_propagation.host_bf16_input_scratch[i];
+                bf16_cpu.resize(size_t(n));
                 const float* src = source.as<float>();
+                uint16_t* dst = bf16_cpu.data();
+                #pragma omp parallel for if(n > 4096)
                 for (Index j = 0; j < n; ++j)
-                {
-                    bf16_cpu[size_t(j)] = static_cast<uint16_t>(bit_cast<uint32_t>(src[j]) >> 16);
-                }
+                    dst[j] = static_cast<uint16_t>(bit_cast<uint32_t>(src[j]) >> 16);
                 input_buffer.resize_bytes(n * Index(sizeof(uint16_t)), Device::CUDA);
                 device::copy_async(input_buffer.data,
                                    bf16_cpu.data(),
@@ -1061,10 +1037,9 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
 void NeuralNetwork::to_JSON(JsonWriter& printer) const
 {
-    auto* self = const_cast<NeuralNetwork*>(this);
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device)
-        self->copy_states_host();
+    // Historical condition: states staging keyed on the parameters device.
+    const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this),
+                                parameters.device_type == Device::CUDA);
 
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
@@ -1141,9 +1116,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
     write_variables_array(output_variables, "Output");
     printer.close_element();
     printer.close_element();
-
-    if (was_on_device)
-        self->copy_states_device();
 }
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
@@ -1273,10 +1245,8 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
     const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
 
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device) copy_parameters_host();
+    const HostParametersGuard guard(*this);
     std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
-    if (was_on_device) copy_parameters_device();
 }
 
 void NeuralNetwork::save(const filesystem::path& file_name) const
@@ -1296,48 +1266,61 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     save_parameters_binary(binary_path);
 }
 
-void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
+static ofstream open_binary_output(const filesystem::path& file_name)
 {
     ofstream file(file_name, ios::binary);
 
     throw_if(!file.is_open(),
              "Cannot open binary file for writing: {}\n", file_name.string());
 
-    auto* self = const_cast<NeuralNetwork*>(this);
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device)
-        self->copy_parameters_host();
+    return file;
+}
 
-    const Index parameters_number = parameters.size_in_floats();
-
-    file.write(reinterpret_cast<const char*>(parameters.as<float>()),
-               parameters_number * sizeof(float));
+static void write_binary_payload(ofstream& file, const filesystem::path& file_name,
+                                 const void* data, Index byte_count)
+{
+    if (byte_count > 0)
+        file.write(static_cast<const char*>(data), byte_count);
 
     throw_if(!file, "Error writing binary file: {}\n", file_name.string());
+}
 
-    if (was_on_device)
-        self->copy_parameters_device();
+static ifstream open_binary_input(const filesystem::path& file_name,
+                                  uintmax_t expected_bytes, const char* caller)
+{
+    ifstream file(file_name, ios::binary);
+
+    throw_if(!file.is_open(),
+             "Cannot open binary file: {}\n", file_name.string());
+
+    const uintmax_t file_bytes = filesystem::file_size(file_name);
+    throw_if(file_bytes != expected_bytes,
+             "NeuralNetwork::{}: size mismatch for {} (got {} bytes, expected {} bytes).",
+                    caller,
+                    file_name.string(),
+                    file_bytes,
+                    expected_bytes);
+
+    return file;
+}
+
+void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
+{
+    ofstream file = open_binary_output(file_name);
+
+    const HostParametersGuard guard(*const_cast<NeuralNetwork*>(this));
+
+    write_binary_payload(file, file_name, parameters.as<float>(),
+                         parameters.size_in_floats() * Index(sizeof(float)));
 }
 
 void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
 {
-    ofstream file(file_name, ios::binary);
+    ofstream file = open_binary_output(file_name);
 
-    throw_if(!file.is_open(),
-             "Cannot open binary file for writing: {}\n", file_name.string());
+    const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this));
 
-    auto* self = const_cast<NeuralNetwork*>(this);
-    const bool was_on_device = (states.device_type == Device::CUDA);
-    if (was_on_device)
-        self->copy_states_host();
-
-    if (states.bytes > 0)
-        file.write(reinterpret_cast<const char*>(states.data), states.bytes);
-
-    throw_if(!file, "Error writing binary file: {}\n", file_name.string());
-
-    if (was_on_device)
-        self->copy_states_device();
+    write_binary_payload(file, file_name, states.data, states.bytes);
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)
@@ -1355,53 +1338,34 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
-    ifstream file(file_name, ios::binary);
-
-    throw_if(!file.is_open(),
-             "Cannot open binary file: {}\n", file_name.string());
-
     const Index parameters_number = parameters.size_in_floats();
-    const uintmax_t file_bytes = filesystem::file_size(file_name);
-    const uintmax_t expected_bytes = uintmax_t(parameters_number) * sizeof(float);
-    throw_if(file_bytes != expected_bytes,
-             "NeuralNetwork::load_parameters_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
-                    file_name.string(),
-                    file_bytes,
-                    expected_bytes);
 
-    const bool was_on_device = (parameters.device_type == Device::CUDA);
-    if (was_on_device) copy_parameters_host();
-    file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
-    if (was_on_device) copy_parameters_device();
+    ifstream file = open_binary_input(file_name,
+                                      uintmax_t(parameters_number) * sizeof(float),
+                                      "load_parameters_binary");
+
+    {
+        const HostParametersGuard guard(*this);
+        file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
+    }
 
     throw_if(!file, "Error reading binary file: {}", file_name.string());
 }
 
 void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
 {
-    ifstream file(file_name, ios::binary);
+    ifstream file = open_binary_input(file_name, uintmax_t(states.bytes),
+                                      "load_states_binary");
 
-    throw_if(!file.is_open(),
-             "Cannot open binary file: {}\n", file_name.string());
+    {
+        const HostStatesGuard guard(*this);
 
-    const uintmax_t file_bytes = filesystem::file_size(file_name);
-    throw_if(file_bytes != uintmax_t(states.bytes),
-             "NeuralNetwork::load_states_binary: size mismatch for {} (got {} bytes, expected {} bytes).",
-                    file_name.string(),
-                    file_bytes,
-                    states.bytes);
+        if (states.bytes > 0)
+            file.read(reinterpret_cast<char*>(states.data), states.bytes);
 
-    const bool was_on_device = (states.device_type == Device::CUDA);
-    if (was_on_device)
-        copy_states_host();
-
-    if (states.bytes > 0)
-        file.read(reinterpret_cast<char*>(states.data), states.bytes);
-
-    if (was_on_device)
-        copy_states_device();
-    else
-        link_states();
+        if (!guard.was_on_device)
+            link_states();
+    }
 
     throw_if(!file, "Error reading binary file: {}", file_name.string());
 }

@@ -517,6 +517,62 @@ const vector<pair<string, ModelExpression::ActivationBodies>>& ModelExpression::
     return table;
 }
 
+ModelExpression::LanguageSyntax ModelExpression::language_syntax(ProgrammingLanguage language, Index outputs_number)
+{
+    using enum ProgrammingLanguage;
+    switch (language)
+    {
+    case C:          return {"\t", "double ", true, false, "float ", "int", "0.0f", "expf", to_string(outputs_number)};
+    case JavaScript: return {"\t", "var ", false, true, "var ", "var", "0", "Math.exp", "out.length"};
+    case Python:     return {"\t\t"};
+    default:         return {};
+    }
+}
+
+void ModelExpression::emit_body_lines(ostringstream& buffer,
+                                      const vector<string>& lines,
+                                      const LanguageSyntax& syntax,
+                                      const function<string(const string&)>& transform)
+{
+    unordered_set<string> declared;
+
+    for (const string& line : lines)
+    {
+        const string processed = transform ? transform(line) : line;
+
+        if (syntax.blank_short_lines && processed.size() <= 1)
+        {
+            buffer << "\n";
+            continue;
+        }
+
+        const char* declaration = syntax.body_declaration;
+
+        if (syntax.declare_first_assignment_only)
+        {
+            const size_t eq = processed.find('=');
+            const string lhs = eq == string::npos ? "" : get_trimmed(processed.substr(0, eq));
+            if (lhs.empty() || !declared.insert(lhs).second)
+                declaration = "";
+        }
+
+        buffer << syntax.body_indent << declaration << processed << "\n";
+    }
+}
+
+void ModelExpression::emit_softmax_block(ostringstream& buffer, const LanguageSyntax& syntax)
+{
+    buffer << "\n\t// Softmax (numerically stable)\n"
+           << "\t" << syntax.softmax_declaration << "max_out = out[0];\n"
+           << "\tfor(" << syntax.softmax_counter << " i = 1; i < " << syntax.softmax_limit
+           << "; ++i) if(out[i] > max_out) max_out = out[i];\n"
+           << "\t" << syntax.softmax_declaration << "sum = " << syntax.softmax_zero << ";\n"
+           << "\tfor(" << syntax.softmax_counter << " i = 0; i < " << syntax.softmax_limit
+           << "; ++i) { out[i] = " << syntax.softmax_exp << "(out[i] - max_out); sum += out[i]; }\n"
+           << "\tfor(" << syntax.softmax_counter << " i = 0; i < " << syntax.softmax_limit
+           << "; ++i) out[i] /= sum;\n";
+}
+
 string ModelExpression::get_expression_c() const
 {
     const vector<string> output_names = neural_network->get_output_feature_names();
@@ -578,15 +634,10 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
     buffer << "\n";
 
-    unordered_set<string> declared;
-    for (const string& l : lines)
-    {
-        const string processed = process_body_line(l, input_names, fixed_input_names);
-        const size_t eq = processed.find('=');
-        const string lhs = eq == string::npos ? "" : get_trimmed(processed.substr(0, eq));
-        const bool first = !lhs.empty() && declared.insert(lhs).second;
-        buffer << "\t" << (first ? "double " : "") << processed << "\n";
-    }
+    const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::C, outputs_number);
+
+    emit_body_lines(buffer, lines, syntax,
+        [&](const string& l) { return process_body_line(l, input_names, fixed_input_names); });
 
     const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::C);
     if (!fixed_outputs.empty())
@@ -602,12 +653,7 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
         buffer << "\tout[" << i << "] = " << fixed_output_names[i] << ";\n";
 
     if (has_softmax)
-        buffer << "\n\t// Softmax (numerically stable)\n"
-                  "\tfloat max_out = out[0];\n"
-                  "\tfor(int i = 1; i < " << outputs_number << "; ++i) if(out[i] > max_out) max_out = out[i];\n"
-                  "\tfloat sum = 0.0f;\n"
-                  "\tfor(int i = 0; i < " << outputs_number << "; ++i) { out[i] = expf(out[i] - max_out); sum += out[i]; }\n"
-                  "\tfor(int i = 0; i < " << outputs_number << "; ++i) out[i] /= sum;\n";
+        emit_softmax_block(buffer, syntax);
 
     buffer << "\n\treturn out;\n}\n\n";
 }
@@ -1326,9 +1372,10 @@ void ModelExpression::emit_php_body(ostringstream& buffer, const vector<string>&
 {
     const vector<string> fixed_output_names = fix_names(neural_network->get_output_feature_names(), "output_");
 
-    for (const string& l : lines)
-        buffer << l << "\n";
+    emit_body_lines(buffer, lines, language_syntax(ProgrammingLanguage::PHP), nullptr);
 
+    // Hand-written softmax: PHP unrolls over named $variables with variadic
+    // max(), which does not fit the array-loop shape of the shared emitter.
     if (has_softmax)
     {
         buffer << "\n// Softmax (numerically stable)\n$max_out = max(";
@@ -1557,18 +1604,20 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
 
     static const char* const math_keywords[] = {"exp", "tanh", "max", "min"};
 
-    for (const string& raw_line : lines)
-    {
-        string line = raw_line;
-        for (Index j = 0; j < inputs_number; ++j)
-            replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
+    const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::JavaScript);
 
-        for (const char* kw : math_keywords)
-            replace_all_word_appearances(line, kw, string("Math.") + kw);
+    emit_body_lines(buffer, lines, syntax,
+        [&](const string& raw_line)
+        {
+            string line = raw_line;
+            for (Index j = 0; j < inputs_number; ++j)
+                replace_all_word_appearances(line, input_names[j], fixes_feature_names[j]);
 
-        if (line.size() <= 1) buffer << "\n";
-        else                 buffer << "\tvar " << line << "\n";
-    }
+            for (const char* kw : math_keywords)
+                replace_all_word_appearances(line, kw, string("Math.") + kw);
+
+            return line;
+        });
 
     const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::JavaScript);
     for (const string& l : fixed_outputs)
@@ -1579,12 +1628,7 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
         buffer << "\tout.push(" << fixes_output_names[i] << ");\n";
 
     if (has_softmax)
-        buffer << "\n\t// Softmax (numerically stable)\n"
-                  "\tvar max_out = out[0];\n"
-                  "\tfor(var i = 1; i < out.length; ++i) if(out[i] > max_out) max_out = out[i];\n"
-                  "\tvar sum = 0;\n"
-                  "\tfor(var i = 0; i < out.length; ++i) { out[i] = Math.exp(out[i] - max_out); sum += out[i]; }\n"
-                  "\tfor(var i = 0; i < out.length; ++i) out[i] /= sum;\n";
+        emit_softmax_block(buffer, syntax);
 
     buffer << "\n\treturn out;\n}\n\n"
               "function updateTextInput1(value, id)\n{\n"
@@ -1672,16 +1716,17 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
 
     buffer << "\n";
 
-    for (const string& l : lines)
-    {
-        string processed_line = process_body_line(l, input_names, python_mapped);
+    emit_body_lines(buffer, lines, language_syntax(ProgrammingLanguage::Python),
+        [&](const string& l)
+        {
+            string processed_line = process_body_line(l, input_names, python_mapped);
 
-        for (const auto& [name, _] : activation_table())
-            replace_all_word_appearances(processed_line, name, "self." + name);
+            for (const auto& [name, _] : activation_table())
+                replace_all_word_appearances(processed_line, name, "self." + name);
 
-        replace(processed_line, ";", "");
-        buffer << "\t\t" << processed_line << "\n";
-    }
+            replace(processed_line, ";", "");
+            return processed_line;
+        });
 
     const vector<string> output_fixups =
         fix_output_names(expression, output_names, ProgrammingLanguage::Python);
@@ -1697,6 +1742,9 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
     return_list += "]";
 
     buffer << "\t\toutputs = " << return_list << "\n";
+
+    // Hand-written softmax: Python uses list comprehensions over the outputs
+    // list, which does not fit the array-loop shape of the shared emitter.
     if (has_softmax)
     {
         buffer << "\t\t# Softmax (numerically stable)\n";

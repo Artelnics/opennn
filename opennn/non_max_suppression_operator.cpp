@@ -8,6 +8,7 @@
 
 #include "non_max_suppression_operator.h"
 #include "tensor_operations.h"
+#include "device_backend.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -71,9 +72,13 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        const size_t bytes = size_t(input.size()) * sizeof(float);
+        cudaStream_t stream = device::get_compute_stream();
+
         cpu_input_staging.resize(size_t(input.size()));
-        cudaMemcpy(cpu_input_staging.data(), input.as<float>(), bytes, cudaMemcpyDeviceToHost);
+        device::copy_async(cpu_input_staging.data(), input.as<float>(),
+                           input.size() * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
 
         TensorView cpu_in{cpu_input_staging.data(), input.shape};
 
@@ -82,8 +87,10 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 
         apply(cpu_in, cpu_out);
 
-        const size_t out_bytes = size_t(output.size()) * sizeof(float);
-        cudaMemcpy(output.as<float>(), cpu_output_staging.data(), out_bytes, cudaMemcpyHostToDevice);
+        // No trailing sync: pageable H2D stages before returning; consumers are stream-ordered.
+        device::copy_async(output.as<float>(), cpu_output_staging.data(),
+                           output.size() * Index(sizeof(float)),
+                           device::CopyKind::HostToDevice, stream);
         return;
     }
 #endif
@@ -101,6 +108,7 @@ void NonMaxSuppressionOperator::apply(const TensorView& input, TensorView& outpu
     float* dst = output.as<float>();
     fill_n(dst, output.size(), 0.0f);
 
+    #pragma omp parallel for
     for (Index b = 0; b < batch_size; ++b)
     {
         vector<array<float, 6>> candidates;

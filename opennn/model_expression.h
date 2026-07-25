@@ -84,6 +84,26 @@ private:
     static string process_body_line(const string&, const vector<string>&, const vector<string>&);
     static string replace_reserved_keywords(const string&);
 
+    // Per-language surface syntax driving the shared body-line and softmax
+    // emitters. PHP (unrolled named $variables via variadic max()) and Python
+    // (list comprehensions) keep hand-written softmax blocks.
+    struct LanguageSyntax
+    {
+        const char* body_indent = "";
+        const char* body_declaration = "";
+        bool declare_first_assignment_only = false;
+        bool blank_short_lines = false;
+        const char* softmax_declaration = "";
+        const char* softmax_counter = "";
+        const char* softmax_zero = "";
+        const char* softmax_exp = "";
+        string softmax_limit;
+    };
+
+    static LanguageSyntax language_syntax(ProgrammingLanguage, Index outputs_number = 0);
+    static void emit_body_lines(ostringstream&, const vector<string>&, const LanguageSyntax&, const function<string(const string&)>&);
+    static void emit_softmax_block(ostringstream&, const LanguageSyntax&);
+
     struct ActivationBodies
     {
         const char* c;

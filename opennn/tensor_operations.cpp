@@ -410,7 +410,10 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
     const size_t rank = input_a.get_rank();
     const Index batch_count = input_a.size() / (input_a.shape[rank - 2] * input_a.shape[rank - 1]);
 
-    #pragma omp parallel for
+    // Serial below this element count; guard pattern and threshold follow add_bias.
+    const bool parallel = output.size() >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index batch_index = 0; batch_index < batch_count; ++batch_index)
     {
         const MatrixMap matrix_a = input_a.as_matrix(batch_index);
@@ -446,7 +449,9 @@ static void softmax_cpu(TensorView& output)
     MatrixMap output_matrix = output.as_flat_matrix();
     const Index rows = output_matrix.rows();
 
-    #pragma omp parallel for
+    const bool parallel = output_matrix.size() >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < rows; ++i)
     {
         const float max_val = output_matrix.row(i).maxCoeff();
@@ -568,7 +573,9 @@ static void dropout_forward_cpu(TensorView& output, Buffer& mask, float rate)
 
     set_random_uniform(VectorMap(mask_values, element_count), 0.0f, 1.0f);
 
-    #pragma omp parallel for
+    const bool parallel = element_count >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < element_count; ++i)
     {
         const float keep_value = mask_values[i] < rate ? 0.0f : keep_scale;
@@ -676,7 +683,7 @@ static void layer_normalization_forward_cpu(const TensorView& input, const Tenso
     const float* gamma_data = gamma.as<float>();
     const float* beta_data  = beta.as<float>();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index row = 0; row < total_rows; ++row)
     {
         const float* input_row = input_data + row * embedding_dimension;
@@ -733,7 +740,7 @@ static void layer_normalization_backward_cpu(const TensorView& output_delta,
     const float* gamma_data        = gamma.as<float>();
     float* input_delta_data        = input_delta.as<float>();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index row = 0; row < total_rows; ++row)
     {
         const float* output_delta_row = output_delta_data + row * embedding_dimension;
@@ -823,7 +830,7 @@ static void rms_normalization_forward_cpu(const TensorView& input, const TensorV
     float* output_data           = output.as<float>();
     const float* weight_data     = weight.as<float>();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index row = 0; row < total_rows; ++row)
     {
         const float* input_row = input_data + row * embedding_dimension;
@@ -871,7 +878,7 @@ static void rms_normalization_backward_cpu(const TensorView& output_delta,
     const float* weight_data       = weight.as<float>();
     float* input_delta_data        = input_delta.as<float>();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index row = 0; row < total_rows; ++row)
     {
         const float* output_delta_row = output_delta_data + row * embedding_dimension;
@@ -927,7 +934,7 @@ void rotary_build_tables(TensorView& cos_table, TensorView& sin_table,
     // HF convention: inv_freq[i] = base^(-2i/rotary_dim), emb = cat(freqs, freqs),
     // so cos/sin of a position are duplicated across the two halves. float32 math
     // to match transformers' Qwen3RotaryEmbedding.
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index pos = 0; pos < sequence_length; ++pos)
         for (Index i = 0; i < half; ++i)
         {
@@ -956,7 +963,9 @@ static void rotary_forward_cpu(const TensorView& input, const TensorView& cos_ta
     const float* cos_data = cos_table.as<float>();
     const float* sin_data = sin_table.as<float>();
 
-    #pragma omp parallel for
+    const bool parallel = rows * model_dim >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index row = 0; row < rows; ++row)
     {
         const Index pos = (row % seq) + position_offset;
@@ -992,7 +1001,9 @@ static void rotary_backward_cpu(const TensorView& output_delta, const TensorView
     const float* cos_data = cos_table.as<float>();
     const float* sin_data = sin_table.as<float>();
 
-    #pragma omp parallel for
+    const bool parallel = rows * model_dim >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index row = 0; row < rows; ++row)
     {
         const Index pos = (row % seq) + position_offset;
@@ -1035,7 +1046,9 @@ static void swiglu_forward_cpu(const TensorView& gate, const TensorView& up, Ten
     const float* u = up.as<float>();
     float* o       = output.as<float>();
 
-    #pragma omp parallel for
+    const bool parallel = n >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < n; ++i)
     {
         const float gi = g[i];
@@ -1054,7 +1067,9 @@ static void swiglu_backward_cpu(const TensorView& output_delta, const TensorView
     float* dg = gate_delta.empty() ? nullptr : gate_delta.as<float>();
     float* du = up_delta.empty()   ? nullptr : up_delta.as<float>();
 
-    #pragma omp parallel for
+    const bool parallel = n >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index i = 0; i < n; ++i)
     {
         const float gi  = g[i];
@@ -1104,7 +1119,7 @@ void grouped_attention_forward(const TensorView& query, const TensorView& key, c
     auto q_off = [&](Index b, Index t, Index h) { return ((b * query_seq + t) * n_query_heads + h) * head_dim; };
     auto kv_off = [&](Index b, Index t, Index h) { return ((b * key_seq + t) * n_kv_heads + h) * head_dim; };
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) schedule(static)
     for (Index b = 0; b < batch; ++b)
         for (Index hq = 0; hq < n_query_heads; ++hq)
         {
@@ -1165,7 +1180,7 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
     float* o       = output.as<float>();
     const float* w = weight.as<float>();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index r = 0; r < rows; ++r)
     {
         const float* x_row = x + r * head_dim;
@@ -1204,7 +1219,7 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
 
     static atomic<bool> out_of_range_warned{false};
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index i = 0; i < total_tokens; ++i)
     {
         const Index token_id = static_cast<Index>(input_indices[i]);
@@ -1314,7 +1329,7 @@ static void max_pooling_3d_forward_cpu(const TensorView& input, TensorView& outp
 
     MatrixMap max_indices = maximal_indices.as_matrix();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         outputs.row(batch_index).setConstant(NEG_INFINITY);
@@ -1345,7 +1360,7 @@ static void average_pooling_3d_forward_cpu(const TensorView& input, TensorView& 
     const Index sequence_length = inputs.dimension(1);
     const Index features = inputs.dimension(2);
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
@@ -1372,7 +1387,7 @@ static void max_pooling_3d_backward_cpu(const TensorView& maximal_indices, const
     const Index batch_size = output_delta_matrix.rows();
     const Index features = output_delta_matrix.cols();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for (Index feature_index = 0; feature_index < features; ++feature_index)
         {
@@ -1399,7 +1414,7 @@ static void average_pooling_3d_backward_cpu(const TensorView& input,
     const Index sequence_length = inputs.dimension(1);
     const Index features = inputs.dimension(2);
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
@@ -1444,7 +1459,7 @@ void for_each_pool_window(Index batch_size, Index input_channels,
                           Index padding_height, Index padding_width,
                           Visit&& visit)
 {
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) schedule(static)
     for (Index b = 0; b < batch_size; ++b)
         for (Index c = 0; c < input_channels; ++c)
             for (Index out_row = 0; out_row < output_height; ++out_row)
@@ -1554,7 +1569,7 @@ static void pooling_2d_backward_cpu(const TensorView& output_delta, const Tensor
     {
         const TensorMap4 max_indices = maximal_indices.as_tensor<4>();
 
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) schedule(static)
         for (Index b = 0; b < batch_size; ++b)
             for (Index c = 0; c < input_channels; ++c)
                 for (Index out_row = 0; out_row < output_height; ++out_row)
@@ -1613,7 +1628,9 @@ static void first_token_3d_forward_cpu(const TensorView& input, TensorView& outp
     const Index sequence_length = inputs.dimension(1);
     const Index features = inputs.dimension(2);
 
-    #pragma omp parallel for
+    const bool parallel = batch_size * features >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         const Map<const MatrixR> seq_matrix(&inputs(batch_index, 0, 0), sequence_length, features);
@@ -1636,7 +1653,9 @@ static void first_token_3d_backward_cpu(const TensorView& output_delta, TensorVi
     const Index sequence_length = input_delta_map.dimension(1);
     const Index features = output_delta_matrix.cols();
 
-    #pragma omp parallel for
+    const bool parallel = batch_size * features >= 65536;
+
+    #pragma omp parallel for schedule(static) if(parallel)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
     {
         Map<MatrixR> gradient_matrix(&input_delta_map(batch_index, 0, 0), sequence_length, features);
@@ -1682,7 +1701,7 @@ void compute_token_valid_lengths(const TensorView& indices, Index sequence_lengt
 static void transpose_middle_axes(const float* src, float* dst,
                                   Index batch_size, Index src_m1, Index src_m2, Index D)
 {
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) schedule(static)
     for (Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for (Index i = 0; i < src_m2; ++i)
             for (Index j = 0; j < src_m1; ++j)

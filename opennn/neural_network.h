@@ -124,7 +124,6 @@ public:
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
-    void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
     Index get_inputs_number() const;
     Index get_outputs_number() const;
 
@@ -240,6 +239,48 @@ public:
     vector<string> get_layer_labels() const;
 
 private:
+
+    // Stage a device-resident buffer on the host for the enclosed scope, then
+    // restore it to the device (also on exceptions, unlike the previous
+    // hand-written call pairs).
+    struct HostParametersGuard
+    {
+        explicit HostParametersGuard(NeuralNetwork& n)
+            : network(n), was_on_device(n.parameters.device_type == Device::CUDA)
+        {
+            if (was_on_device) network.copy_parameters_host();
+        }
+
+        ~HostParametersGuard() { if (was_on_device) network.copy_parameters_device(); }
+
+        HostParametersGuard(const HostParametersGuard&) = delete;
+        HostParametersGuard& operator=(const HostParametersGuard&) = delete;
+
+        NeuralNetwork& network;
+        const bool was_on_device;
+    };
+
+    struct HostStatesGuard
+    {
+        explicit HostStatesGuard(NeuralNetwork& n)
+            : HostStatesGuard(n, n.states.device_type == Device::CUDA) {}
+
+        HostStatesGuard(NeuralNetwork& n, bool stage)
+            : network(n), was_on_device(stage)
+        {
+            if (was_on_device) network.copy_states_host();
+        }
+
+        ~HostStatesGuard() { if (was_on_device) network.copy_states_device(); }
+
+        HostStatesGuard(const HostStatesGuard&) = delete;
+        HostStatesGuard& operator=(const HostStatesGuard&) = delete;
+
+        NeuralNetwork& network;
+        const bool was_on_device;
+    };
+
+    void initialize_parameters(void (Operator::*)());
 
     void validate_type(LayerType) const;
 

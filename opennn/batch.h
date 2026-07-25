@@ -80,8 +80,6 @@ struct Batch
 
     Index get_samples_number() const;
 
-    void print() const;
-
     bool is_empty() const;
 
     Index samples_number = 0;

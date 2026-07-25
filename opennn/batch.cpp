@@ -213,53 +213,6 @@ Index Batch::get_samples_number() const
     return samples_number;
 }
 
-void Batch::print() const
-{
-    cout << "Batch\n"
-         << "Inputs:\n"
-         << "Input shape:" << input.shape << "\n";
-
-    if (input.buffer.data)
-    {
-        if (uses_cuda())
-            cout << "<CUDA input data not printed>";
-        else if (input.shape.rank == 4)
-            cout << TensorMap4(const_cast<float*>(input.buffer.as<float>()),
-                               input.shape[0],
-                               input.shape[1],
-                               input.shape[2],
-                               input.shape[3]);
-        else if (input.shape.rank == 3)
-            cout << TensorMap3(const_cast<float*>(input.buffer.as<float>()),
-                               input.shape[0],
-                               input.shape[1],
-                               input.shape[2]);
-        else if (input.shape.rank == 2)
-            cout << MatrixMap(const_cast<float*>(input.buffer.as<float>()),
-                              input.shape[0],
-                              input.shape[1]);
-    }
-
-    cout << "\n";
-
-    if (!decoder.shape.empty())
-        cout << "Decoder:\n"
-             << "Decoder shape:" << decoder.shape << "\n";
-
-    cout << "Targets:\n"
-         << "Target shape:" << target.shape << "\n";
-
-    if (target.buffer.data && target.shape.rank == 2)
-    {
-        if (uses_cuda())
-            cout << "<CUDA target data not printed>\n";
-        else
-            cout << MatrixMap(const_cast<float*>(target.buffer.as<float>()),
-                              target.shape[0],
-                              target.shape[1]) << "\n";
-    }
-}
-
 bool Batch::is_empty() const
 {
     return input.buffer.empty() && decoder.buffer.empty() && target.buffer.empty();

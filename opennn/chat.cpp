@@ -39,19 +39,15 @@ bool is_complete_utf8_prefix(string_view text, size_t& complete_bytes)
 
     while (i < text.size())
     {
-        const unsigned char lead = static_cast<unsigned char>(text[i]);
-        size_t length = 1;
-        if ((lead & 0x80) == 0x00) length = 1;
-        else if ((lead & 0xE0) == 0xC0) length = 2;
-        else if ((lead & 0xF0) == 0xE0) length = 3;
-        else if ((lead & 0xF8) == 0xF0) length = 4;
+        size_t length =
+            utf8_sequence_length(static_cast<unsigned char>(text[i]));
 
         if (i + length > text.size()) return false;
 
         bool valid = length > 1;
         for (size_t j = 1; j < length; ++j)
-            valid = valid
-                && (static_cast<unsigned char>(text[i + j]) & 0xC0) == 0x80;
+            valid = valid && is_utf8_continuation(
+                static_cast<unsigned char>(text[i + j]));
 
         // Tokenizers are expected to produce valid UTF-8. Preserve an isolated
         // invalid byte rather than blocking every later delta.
@@ -1099,15 +1095,64 @@ ChatSession::~ChatSession() = default;
 namespace
 {
 
-void finish_content_response(ChatResponse& response,
-                             GenerationParser& parser,
-                             const ChatCallback& callback)
+// Decode-loop frame shared by both classic session kinds: parser wiring, the
+// token budget, per-step read/sample/accounting, the content-vs-control
+// dispatch and the response tail. The forward passes stay with each caller.
+struct ClassicDecodeLoop
 {
-    parser.finish(callback);
-    response.content = parser.get_content();
-    response.content_tokens = parser.get_content_tokens();
-    response.control_tokens += parser.get_control_tokens();
-}
+    ClassicDecodeLoop(ClassicGenerationState& new_state,
+                      const SamplingConfig& new_sampling,
+                      const ChatCallback& new_callback)
+        : state(new_state),
+          sampling(new_sampling),
+          callback(new_callback),
+          parser(*new_state.output_tokenizer, {})
+    {
+    }
+
+    Index token_budget() const
+    {
+        return sampling.maximum_tokens > 0
+            ? sampling.maximum_tokens
+            : state.sequence_length;
+    }
+
+    Index sample_at(Index position)
+    {
+        read_classic_distribution(state, position);
+        const Index next =
+            sample_token(state.distribution, sampling, state.history);
+        ++response.generated_tokens;
+        state.history.push_back(next);
+        return next;
+    }
+
+    void dispatch(Index next)
+    {
+        constexpr Index pad = 0;
+        if (next == pad
+            || next < 0
+            || next >= state.output_tokenizer->get_vocabulary_size())
+            ++response.control_tokens;
+        else
+            parser.push(next, callback);
+    }
+
+    ChatResponse finish()
+    {
+        parser.finish(callback);
+        response.content = parser.get_content();
+        response.content_tokens = parser.get_content_tokens();
+        response.control_tokens += parser.get_control_tokens();
+        return move(response);
+    }
+
+    ClassicGenerationState& state;
+    const SamplingConfig& sampling;
+    const ChatCallback& callback;
+    GenerationParser parser;
+    ChatResponse response;
+};
 
 ChatResponse send_sequence_to_sequence(
     ClassicGenerationState& state,
@@ -1132,7 +1177,8 @@ ChatResponse send_sequence_to_sequence(
         state.source(0, i) = float(source_ids[size_t(i)]);
     copy_classic_input(state.source_device, state.source.data());
 
-    ChatResponse response;
+    ClassicDecodeLoop loop(state, sampling, callback);
+    ChatResponse& response = loop.response;
     response.prompt_tokens = ssize(source_ids);
     response.prefill_tokens = ssize(source_ids);
 
@@ -1145,10 +1191,8 @@ ChatResponse send_sequence_to_sequence(
     response.prefill_milliseconds =
         chrono::duration<double, milli>(prefill_end - prefill_start).count();
 
-    GenerationParser parser(*state.output_tokenizer, {});
-    const Index limit = sampling.maximum_tokens > 0
-        ? min(sampling.maximum_tokens + 1, state.sequence_length)
-        : state.sequence_length;
+    const Index limit =
+        min(loop.token_budget() + 1, state.sequence_length);
 
     response.finish_reason =
         sampling.maximum_tokens > 0
@@ -1166,11 +1210,7 @@ ChatResponse send_sequence_to_sequence(
             state.inputs, *state.propagation, false,
             state.decoder_first, state.output_projection);
 
-        read_classic_distribution(state, position - 1);
-        const Index next =
-            sample_token(state.distribution, sampling, state.history);
-        ++response.generated_tokens;
-        state.history.push_back(next);
+        const Index next = loop.sample_at(position - 1);
         state.target(0, position) = float(next);
         device::copy_async(state.target_device.as<float>() + position,
                            &state.target(0, position),
@@ -1185,18 +1225,12 @@ ChatResponse send_sequence_to_sequence(
             break;
         }
 
-        if (next == pad
-            || next < 0
-            || next >= state.output_tokenizer->get_vocabulary_size())
-            ++response.control_tokens;
-        else
-            parser.push(next, callback);
+        loop.dispatch(next);
     }
     const auto decode_end = Clock::now();
     response.decode_milliseconds =
         chrono::duration<double, milli>(decode_end - decode_start).count();
-    finish_content_response(response, parser, callback);
-    return response;
+    return loop.finish();
 }
 
 ChatResponse send_classic_decoder(
@@ -1213,16 +1247,14 @@ ChatResponse send_classic_decoder(
              "ChatSession: prompt produced no tokens.");
     state.history = context;
 
-    ChatResponse response;
+    ClassicDecodeLoop loop(state, sampling, callback);
+    ChatResponse& response = loop.response;
     response.prompt_tokens = ssize(context);
     response.prefill_tokens =
         min(ssize(context), state.sequence_length);
     response.finish_reason = FinishReason::MaximumTokens;
 
-    GenerationParser parser(*state.output_tokenizer, {});
-    const Index maximum_tokens = sampling.maximum_tokens > 0
-        ? sampling.maximum_tokens
-        : state.sequence_length;
+    const Index maximum_tokens = loop.token_budget();
 
     double decode_milliseconds = 0.0;
     for (Index step = 0; step < maximum_tokens; ++step)
@@ -1240,9 +1272,7 @@ ChatResponse send_classic_decoder(
         const auto step_start = Clock::now();
         state.decoder->forward_propagate(
             state.inputs, *state.propagation, false);
-        read_classic_distribution(state, window_length - 1);
-        const Index next =
-            sample_token(state.distribution, sampling, state.history);
+        const Index next = loop.sample_at(window_length - 1);
         const auto step_end = Clock::now();
         const double elapsed =
             chrono::duration<double, milli>(step_end - step_start).count();
@@ -1251,21 +1281,12 @@ ChatResponse send_classic_decoder(
         else
             decode_milliseconds += elapsed;
 
-        ++response.generated_tokens;
         context.push_back(next);
-        state.history.push_back(next);
-
-        if (next == pad
-            || next < 0
-            || next >= state.output_tokenizer->get_vocabulary_size())
-            ++response.control_tokens;
-        else
-            parser.push(next, callback);
+        loop.dispatch(next);
     }
 
     response.decode_milliseconds = decode_milliseconds;
-    finish_content_response(response, parser, callback);
-    return response;
+    return loop.finish();
 }
 
 }

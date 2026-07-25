@@ -15,6 +15,26 @@
 namespace opennn
 {
 
+// Follow a passthrough chain (layers with empty forward specs) upstream to the
+// layer that actually produced the data; negative = external input index.
+static Index resolve_producer(const vector<vector<TensorSpec>>& forward_specs,
+                              const vector<vector<Index>>& source_layers,
+                              Index source_layer)
+{
+    Index resolved = source_layer;
+    while (resolved >= 0 && forward_specs[size_t(resolved)].empty())
+    {
+        const auto& upstream = source_layers[size_t(resolved)];
+        if (upstream.empty())
+        {
+            resolved = -1;
+            break;
+        }
+        resolved = upstream.front();
+    }
+    return resolved;
+}
+
 ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        NeuralNetwork* new_neural_network,
                                        const ForwardPropagationMode new_mode)
@@ -63,6 +83,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();
+    host_bf16_input_scratch.clear();
     passthrough_overrides.clear();
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
@@ -141,26 +162,10 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         for (size_t i = 0; i < layers_number; ++i)
             last_consumers[i] = Index(i);
 
-        const auto resolve_producer = [&](Index source_layer)
-        {
-            Index resolved = source_layer;
-            while (resolved >= 0 && forward_specs[size_t(resolved)].empty())
-            {
-                const auto& upstream = source_layers[size_t(resolved)];
-                if (upstream.empty())
-                {
-                    resolved = -1;
-                    break;
-                }
-                resolved = upstream.front();
-            }
-            return resolved;
-        };
-
         for (size_t consumer = 0; consumer < layers_number; ++consumer)
             for (const Index source_layer : source_layers[consumer])
             {
-                const Index producer = resolve_producer(source_layer);
+                const Index producer = resolve_producer(forward_specs, source_layers, source_layer);
                 if (producer < 0) continue;
 
                 has_consumers[size_t(producer)] = true;
@@ -181,7 +186,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             if (forward_specs[size_t(producer)].empty())
             {
                 const auto& sources = source_layers[size_t(producer)];
-                producer = sources.empty() ? Index(-1) : resolve_producer(sources.front());
+                producer = sources.empty() ? Index(-1) : resolve_producer(forward_specs, source_layers, sources.front());
             }
 
             if (producer >= 0) externally_observable[size_t(producer)] = true;
@@ -326,13 +331,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             }
 
             // Passthrough layer (empty specs): follow the chain upstream
-            Index resolved = source_layer;
-            while (resolved >= 0 && forward_specs[resolved].empty())
-            {
-                const auto& up = source_layers[resolved];
-                if (up.empty()) { resolved = -1; break; }
-                resolved = up[0];
-            }
+            const Index resolved = resolve_producer(forward_specs, source_layers, source_layer);
 
             if (resolved >= 0)
             {
@@ -500,24 +499,6 @@ ForwardPropagation::get_cuda_graph_workspace_views() const noexcept
         inference_graph_bf16_to_fp32.data,
         inference_graph_bf16_to_fp32.bytes
     };
-}
-
-void ForwardPropagation::print() const
-{
-    cout << "Neural network forward propagation\n";
-
-    if (!neural_network)
-    {
-        cout << "Neural network is not set.\n";
-        return;
-    }
-
-    const size_t layers_number = neural_network->get_layers_number();
-
-    cout << "Layers number: " << layers_number << "\n";
-
-    for (size_t i = 0; i < layers_number; ++i)
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(static_cast<Index>(i))->get_label() << "\n";
 }
 
 }

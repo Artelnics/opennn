@@ -54,8 +54,6 @@ struct ForwardPropagation
 
     TensorView get_outputs() const;
 
-    void print() const;
-
     // CUDA graph replay for the device-resident inference path (opt-in,
     // default off): NeuralNetwork::calculate_outputs_resident captures the
     // forward after two eager passes and replays it while the input pointers
@@ -86,6 +84,9 @@ struct ForwardPropagation
 
     Buffer data;
     vector<Buffer> device_input_buffers;
+    // Reused host staging for the non-resident BF16 input cast (one per input,
+    // like device_input_buffers) -- avoids a per-call allocation.
+    vector<vector<uint16_t>> host_bf16_input_scratch;
 
     // Device-visible KV-cache position (see stage_position).
     Buffer position_device{Device::CUDA};
