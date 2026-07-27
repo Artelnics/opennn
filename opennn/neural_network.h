@@ -123,6 +123,12 @@ public:
 
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
+
+    // Resets the first/last-trainable index cache so the getters recompute it.
+    // Needed after changing a layer's trainable flag (e.g. YOLO transfer learning
+    // freezes backbone layers), otherwise the cache baked in from_JSON is stale.
+    void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
+
     Index get_inputs_number() const;
     Index get_outputs_number() const;
 

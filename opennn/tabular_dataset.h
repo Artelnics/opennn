@@ -86,6 +86,7 @@ public:
     virtual void impute_missing_values_interpolate();
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f);
+    vector<string> unuse_collinear_variables(const float = 0.95f);
     vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;

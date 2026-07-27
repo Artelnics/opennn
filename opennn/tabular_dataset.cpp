@@ -529,6 +529,80 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
     return unused_variables;
 }
 
+// Removes redundant inputs that are highly correlated WITH EACH OTHER (collinear),
+// as opposed to unuse_uncorrelated_variables which drops inputs weakly correlated
+// with the target. Backs the "Unuse collinear variables" task; the caller handles
+// the network/input-shape rebuild, so this only flips the redundant variables to None.
+vector<string> TabularDataset::unuse_collinear_variables(const float maximum_correlation)
+{
+    const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
+    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const Index input_variables_number = input_variable_indices.size();
+
+    vector<Index> high_corr_counts(input_variables_number, 0);
+    vector<float> mean_abs_corr(input_variables_number, 0.0);
+    vector<bool> to_be_removed(input_variables_number, false);
+
+    for (Index i = 0; i < input_variables_number; ++i)
+    {
+        float sum_of_abs_corr = 0.0;
+        for (Index j = 0; j < input_variables_number; ++j)
+        {
+            if (i == j) continue;
+
+            const float abs_r = abs(correlations(i, j).coefficient);
+            if (!isnan(abs_r))
+            {
+                if (abs_r >= maximum_correlation)
+                    high_corr_counts[i]++;
+
+                sum_of_abs_corr += abs_r;
+            }
+        }
+
+        if (input_variables_number > 1)
+            mean_abs_corr[i] = sum_of_abs_corr / (input_variables_number - 1);
+    }
+
+    for (Index i = 0; i < input_variables_number; ++i)
+    {
+        for (Index j = i + 1; j < input_variables_number; ++j)
+        {
+
+            if (to_be_removed[i] || to_be_removed[j])
+                continue;
+
+            const float r = correlations(i, j).coefficient;
+
+            if (!isnan(r) && abs(r) >= maximum_correlation)
+            {
+                const Index index_to_flag_for_removal =
+                    (high_corr_counts[i] > high_corr_counts[j]) ? i :
+                        (high_corr_counts[j] > high_corr_counts[i]) ? j :
+                        (mean_abs_corr[i] >= mean_abs_corr[j]) ? i : j;
+
+                to_be_removed[index_to_flag_for_removal] = true;
+            }
+        }
+    }
+
+    vector<string> unused_variables;
+    for (Index i = 0; i < input_variables_number; ++i)
+    {
+        if (!to_be_removed[i]) continue;
+
+        Variable& variable = variables[input_variable_indices[i]];
+
+        if (variable.role != VariableRole::None)
+        {
+            variable.set_role("None");
+            unused_variables.push_back(variable.name);
+        }
+    }
+
+    return unused_variables;
+}
+
 vector<string> TabularDataset::unuse_least_correlated_variables(const Index inputs_to_keep)
 {
     vector<string> unused_variables;
