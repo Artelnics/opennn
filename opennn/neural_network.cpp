@@ -75,6 +75,13 @@ void NeuralNetwork::compile(const Device device)
 {
     if (get_layers_number() == 0) return;
 
+    memory_debug::name_buffer(&parameters, "NeuralNetwork.parameters");
+    memory_debug::name_buffer(&parameters_bf16_mirror,
+                              "NeuralNetwork.parameters_bf16_mirror");
+    memory_debug::name_buffer(&parameters_fp32_inference_storage,
+                              "NeuralNetwork.parameters_fp32_inference_storage");
+    memory_debug::name_buffer(&states, "NeuralNetwork.states");
+
     config = Configuration::instance().resolve();
     config.device = device;
     if (device != Device::CUDA) config.training_type = Type::FP32;
@@ -719,7 +726,9 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
         self->copy_states_device();
 
-        vector<TensorView> input_views_device = input_view;
+        vector<TensorView>& input_views_device =
+            forward_propagation.device_input_views;
+        input_views_device.assign(input_view.begin(), input_view.end());
         forward_propagation.device_input_buffers.resize(input_view.size());
         forward_propagation.host_bf16_input_scratch.resize(input_view.size());
 
@@ -757,6 +766,13 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                          && !input_feeds_token_ids(i);
 
             Buffer& input_buffer = forward_propagation.device_input_buffers[i];
+            const auto ensure_cuda_capacity = [&](Index required_bytes)
+            {
+                if (input_buffer.device_type != Device::CUDA)
+                    input_buffer.resize_bytes(required_bytes, Device::CUDA);
+                else
+                    input_buffer.grow_to(required_bytes);
+            };
 
             if (cast_input_to_bf16)
             {
@@ -768,7 +784,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 #pragma omp parallel for if(n > 4096)
                 for (Index j = 0; j < n; ++j)
                     dst[j] = static_cast<uint16_t>(bit_cast<uint32_t>(src[j]) >> 16);
-                input_buffer.resize_bytes(n * Index(sizeof(uint16_t)), Device::CUDA);
+                ensure_cuda_capacity(n * Index(sizeof(uint16_t)));
                 device::copy_async(input_buffer.data,
                                    bf16_cpu.data(),
                                    size_t(n) * sizeof(uint16_t),
@@ -778,7 +794,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             }
             else
             {
-                input_buffer.resize_bytes(source.byte_size(), Device::CUDA);
+                ensure_cuda_capacity(source.byte_size());
                 device::copy_async(input_buffer.data,
                                    source.data,
                                    source.byte_size(),
@@ -841,7 +857,9 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 input_slot[source_index] = pick_input(source_index);
         }
 
-        PROFILE_SCOPE("fwd:" + layers[i]->get_name());
+        PROFILE_SCOPE(format("layer:{:03}:{}:{}", i,
+                             layers[i]->get_label(),
+                             layers[i]->get_name()));
         layers[i]->forward_propagate(forward_propagation, i, is_training);
     }
 }
@@ -1501,6 +1519,30 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     parameters.set_view(parameters_bf16_mirror.data, master_bytes, Device::CUDA);
 
     link_parameters();
+
+    for (const auto& layer : layers)
+    {
+        auto* dense = dynamic_cast<Dense*>(layer.get());
+        if (!dense || !dense->get_transposed_inference()
+            || dense->get_gated() || dense->get_use_bias()
+            || layer->get_tied_weight().source) continue;
+
+        const TensorView& weight = layer->get_parameter_views().back();
+        if (!weight.is_cuda() || weight.get_rank() != 2) continue;
+
+        Buffer scratch{Device::CUDA};
+        scratch.resize_bytes(weight.byte_size(), Device::CUDA);
+        weight.dispatch([&](auto tag)
+        {
+            using T = decltype(tag);
+            transpose_2d_cuda<T>(weight.shape[0], weight.shape[1],
+                                 weight.as<T>(), scratch.as<T>());
+        });
+        device::copy_async(weight.data, scratch.data, weight.byte_size(),
+                           device::CopyKind::DeviceToDevice, stream);
+        device::synchronize(stream);
+        dense->set_transposed_inference_active(true);
+    }
 #endif
 }
 
@@ -1521,6 +1563,10 @@ void NeuralNetwork::copy_parameters_host()
     parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
     parameters_bf16_mirror_compact = false;
     parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+
+    for (const auto& layer : layers)
+        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+            dense->set_transposed_inference_active(false);
 
     link_parameters();
 }

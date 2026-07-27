@@ -72,8 +72,6 @@ TEST(SiLUTest, ActivationGradientMatchesNumerical)
 }
 
 
-// Parameter views: gate weight first, up weight second (the .bin layout of a
-// separate gate/up Dense pair).
 TEST(GatedDenseTest, ForwardMatchesHandComputed)
 {
     const Index batch_size = 1;
@@ -88,7 +86,6 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
     neural_network.add_layer(move(dense));
     neural_network.compile();
 
-    // Weights are [in, out] row-major: w[i * outputs + j].
     const vector<float> gate_weights = { 0.5f, -1.0f,  2.0f,
                                          1.0f,  0.25f, -0.5f };
     const vector<float> up_weights   = { 1.5f,  2.0f, -1.0f,

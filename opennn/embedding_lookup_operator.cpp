@@ -12,6 +12,7 @@
 #include "tensor_operations.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -112,6 +113,8 @@ void EmbeddingLookupOperator::init_positional_encoding()
 
 void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
+    PROFILE_SCOPE("op:embedding_lookup");
+
     const TensorView& indices = get_input(forward_propagation, layer);
     TensorView& output        = get_output(forward_propagation, layer);
 

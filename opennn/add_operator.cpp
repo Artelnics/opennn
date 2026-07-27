@@ -10,12 +10,15 @@
 #include "tensor_operations.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "profiler.h"
 
 namespace opennn
 {
 
 void AdditionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
+    PROFILE_SCOPE("op:addition");
+
     const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
     TensorView& output               = get_output(forward_propagation, layer);
 

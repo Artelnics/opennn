@@ -10,6 +10,7 @@
 #include "tensor_operations.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -61,6 +62,8 @@ void LayerNormalizationOperator::init_defaults()
 
 void LayerNormalizationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
+    PROFILE_SCOPE("op:normalization");
+
     const TensorView& input = get_input(forward_propagation, layer);
 
     if (method == NormalizationMethod::RMS)

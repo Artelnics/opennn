@@ -59,6 +59,10 @@ public:
     void set_gated(bool);
     bool get_gated() const { return gated; }
 
+    void set_transposed_inference(bool v) { combination.transposed_inference_preferred = v; }
+    bool get_transposed_inference() const { return combination.transposed_inference_preferred; }
+    void set_transposed_inference_active(bool v) { combination.transposed_inference_active = v; }
+
     void set_tied_weight_source(const Layer*);
     TiedWeight get_tied_weight() const override
     {

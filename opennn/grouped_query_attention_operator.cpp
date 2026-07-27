@@ -13,6 +13,8 @@
 #include "grouped_query_attention_operator.h"
 #include "tensor_operations.h"
 #include "forward_propagation.h"
+#include "profiler.h"
+#include "memory_debug.h"
 #ifdef OPENNN_HAS_CUDA
 #include "device_backend.h"
 #include "cudnn_frontend_utilities.h"
@@ -33,6 +35,9 @@ void GroupedQueryAttentionOperator::set(Index new_sequence_length, Index new_hid
     rope_theta      = new_rope_theta;
     rms_epsilon     = new_rms_epsilon;
     use_qk_norm     = new_use_qk_norm;
+
+    memory_debug::name_buffer(&kv_key, "GQA.kv_key");
+    memory_debug::name_buffer(&kv_value, "GQA.kv_value");
 }
 
 vector<TensorSpec> GroupedQueryAttentionOperator::parameter_specs() const
@@ -130,6 +135,8 @@ float* grown(std::vector<float>& buffer, size_t n)
 
 void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
+    PROFILE_SCOPE("op:gqa_total");
+
     TensorView& input  = get_input(forward_propagation, layer);
     TensorView& output = get_output(forward_propagation, layer);
 
@@ -269,6 +276,7 @@ struct GroupedAttentionSDPA
 {
     shared_ptr<cudnn_frontend::graph::Graph> graph;
     shared_ptr<cudnn_frontend::graph::Tensor_attributes> Q, K, V, O, SeqQ, SeqKV;
+    unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
     void* workspace = nullptr;
     int32_t* seq_device = nullptr;
     int32_t* seq_pinned = nullptr;
@@ -350,6 +358,8 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index
     if (!s.seq_pinned) s.seq_pinned = static_cast<int32_t*>(device::allocate_pinned_host(Index(2 * sizeof(int32_t))));
 
     s.graph = move(graph);
+    s.tensors.clear();
+    s.tensors.reserve(6);
     s.max_seq = max_seq; s.q_heads = q_heads; s.kv_heads = kv_heads; s.head_dim = head_dim;
 }
 
@@ -369,41 +379,55 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
     const Index table_len = sequence_length;
     auto& s = gqa_scratch();
-    if (s.sequence != table_len || s.dtype != act || s.q_dim != qd || s.kv_dim != kd
-        || s.head_dim != head_dim || s.theta != rope_theta)
+    memory_debug::name_buffer(&s.cos, "GQA.scratch.cos");
+    memory_debug::name_buffer(&s.sin, "GQA.scratch.sin");
+    memory_debug::name_buffer(&s.q, "GQA.scratch.q");
+    memory_debug::name_buffer(&s.k, "GQA.scratch.k");
+    memory_debug::name_buffer(&s.v, "GQA.scratch.v");
+    memory_debug::name_buffer(&s.qr, "GQA.scratch.qr");
+    memory_debug::name_buffer(&s.kr, "GQA.scratch.kr");
+    memory_debug::name_buffer(&s.attn, "GQA.scratch.attn");
+    memory_debug::name_buffer(&s.qkv, "GQA.scratch.qkv");
+    memory_debug::name_buffer(&s.partials, "GQA.scratch.partials");
     {
-        std::vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
-        { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
-          rotary_build_tables(cv, sv, table_len, head_dim, rope_theta); }
+        PROFILE_SCOPE("op:gqa_prepare");
 
-        auto upload = [&](const std::vector<float>& host) {
-            Buffer b(Device::CPU);
-            b.resize_bytes(Index(host.size()) * Index(sizeof(float)), Device::CPU);
-            std::memcpy(b.data, host.data(), host.size() * sizeof(float));
-            b.migrate_to(Device::CUDA, stream);
-            return b;
-        };
-        auto alloc = [&](Index n, Buffer& b) { b.resize_bytes(n * elem, Device::CUDA); };
+        if (s.sequence != table_len || s.dtype != act || s.q_dim != qd || s.kv_dim != kd
+            || s.head_dim != head_dim || s.theta != rope_theta)
+        {
+            std::vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
+            { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
+              rotary_build_tables(cv, sv, table_len, head_dim, rope_theta); }
 
-        s.cos = upload(cos_h);
-        s.sin = upload(sin_h);
-        alloc(table_len * qd, s.q);   alloc(table_len * kd, s.k);   alloc(table_len * kd, s.v);
-        alloc(table_len * qd, s.qr);  alloc(table_len * kd, s.kr);  alloc(table_len * qd, s.attn);
-        alloc(qd + 2 * kd, s.qkv);
-        s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
-                                * Index(sizeof(float)), Device::CUDA);
-        s.sequence = table_len;
-        s.q_dim = qd; s.kv_dim = kd; s.head_dim = head_dim;
-        s.theta = rope_theta;
-        s.dtype = act;
-    }
+            auto upload = [&](const std::vector<float>& host) {
+                Buffer b(Device::CPU);
+                b.resize_bytes(Index(host.size()) * Index(sizeof(float)), Device::CPU);
+                std::memcpy(b.data, host.data(), host.size() * sizeof(float));
+                b.migrate_to(Device::CUDA, stream);
+                return b;
+            };
+            auto alloc = [&](Index n, Buffer& b) { b.resize_bytes(n * elem, Device::CUDA); };
 
-    if (cache_capacity != table_len || cache_dtype != act || kv_key.device_type != Device::CUDA)
-    {
-        kv_key.resize_bytes(table_len * kd * elem, Device::CUDA);
-        kv_value.resize_bytes(table_len * kd * elem, Device::CUDA);
-        cache_capacity = table_len;
-        cache_dtype = act;
+            s.cos = upload(cos_h);
+            s.sin = upload(sin_h);
+            alloc(table_len * qd, s.q);   alloc(table_len * kd, s.k);   alloc(table_len * kd, s.v);
+            alloc(table_len * qd, s.qr);  alloc(table_len * kd, s.kr);  alloc(table_len * qd, s.attn);
+            alloc(qd + 2 * kd, s.qkv);
+            s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
+                                    * Index(sizeof(float)), Device::CUDA);
+            s.sequence = table_len;
+            s.q_dim = qd; s.kv_dim = kd; s.head_dim = head_dim;
+            s.theta = rope_theta;
+            s.dtype = act;
+        }
+
+        if (cache_capacity != table_len || cache_dtype != act || kv_key.device_type != Device::CUDA)
+        {
+            kv_key.resize_bytes(table_len * kd * elem, Device::CUDA);
+            kv_value.resize_bytes(table_len * kd * elem, Device::CUDA);
+            cache_capacity = table_len;
+            cache_dtype = act;
+        }
     }
 
     TensorView cos_v(s.cos.data, {table_len, head_dim}, Type::FP32, Device::CUDA);
@@ -426,31 +450,40 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         if (seq == 1 && qkv_fused && position_device && use_qk_norm)
         {
-
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
-            TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
-            tied_lm_head_forward(x_b, qkv_w, qkv_row);
+            {
+                PROFILE_SCOPE("op:gqa_qkv_projection");
+                TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
+                tied_lm_head_forward(x_b, qkv_w, qkv_row);
+            }
 
             TensorView key_cache(kv_key.data,   {1, table_len, kd}, act, Device::CUDA);
             TensorView val_cache(kv_value.data, {1, table_len, kd}, act, Device::CUDA);
-            qk_rope_cache_append(qkv_row, q_norm, k_norm, cos_v, sin_v, qr_v, key_cache, val_cache,
-                                 q_heads, kv_heads, head_dim, rms_epsilon, position_device);
-
-            grouped_attention_forward(qr_v, key_cache, val_cache, attn_v, q_heads, kv_heads, head_dim,
-                                      true, scale, past,
-                                      static_cast<float*>(s.partials.data), position_device);
-
-            tied_lm_head_forward(attn_v, o_proj, o_b);
+            {
+                PROFILE_SCOPE("op:gqa_qk_norm_rope_cache");
+                qk_rope_cache_append(qkv_row, q_norm, k_norm, cos_v, sin_v, qr_v, key_cache, val_cache,
+                                     q_heads, kv_heads, head_dim, rms_epsilon, position_device);
+            }
+            {
+                PROFILE_SCOPE("op:gqa_attention");
+                grouped_attention_forward(qr_v, key_cache, val_cache, attn_v, q_heads, kv_heads, head_dim,
+                                          true, scale, past,
+                                          static_cast<float*>(s.partials.data), position_device);
+            }
+            {
+                PROFILE_SCOPE("op:gqa_output_projection");
+                tied_lm_head_forward(attn_v, o_proj, o_b);
+            }
             return;
         }
 
         if (seq == 1 && qkv_fused)
         {
+            PROFILE_SCOPE("op:gqa_qkv_projection");
 
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
             tied_lm_head_forward(x_b, qkv_w, qkv_row);
-
             q_v = TensorView(s.qkv.data, {1, 1, qd}, act, Device::CUDA);
             k_v = TensorView(static_cast<char*>(s.qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
             device::copy_async(v_at, static_cast<char*>(s.qkv.data) + size_t(qd + kd) * elem,
@@ -458,19 +491,23 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         }
         else
         {
+            PROFILE_SCOPE("op:gqa_qkv_projection");
             tied_lm_head_forward(x_b, q_proj, q_v);
             tied_lm_head_forward(x_b, k_proj, k_v);
             tied_lm_head_forward(x_b, v_proj, v_slot);
         }
 
-        if (use_qk_norm)
         {
-            qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
-            qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
-        }
+            PROFILE_SCOPE("op:gqa_qk_norm_rope_cache");
+            if (use_qk_norm)
+            {
+                qk_norm_forward(q_v, q_norm, q_v, head_dim, rms_epsilon);
+                qk_norm_forward(k_v, k_norm, k_v, head_dim, rms_epsilon);
+            }
 
-        rotary_forward(q_v, cos_v, sin_v, qr_v,   head_dim, head_dim, past);
-        rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
+            rotary_forward(q_v, cos_v, sin_v, qr_v,   head_dim, head_dim, past);
+            rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
+        }
 
         auto& sdpa = gqa_sdpa();
         if (seq > 1 && act == Type::BF16 && !sdpa.failed)
@@ -489,33 +526,42 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
             if (!sdpa.failed)
             {
-                sdpa.seq_pinned[0] = int32_t(seq);
-                sdpa.seq_pinned[1] = int32_t(total);
-                device::copy_async(sdpa.seq_device, sdpa.seq_pinned, Index(2 * sizeof(int32_t)),
-                                   device::CopyKind::HostToDevice, stream);
+                {
+                    PROFILE_SCOPE("op:gqa_attention_sdpa");
+                    sdpa.seq_pinned[0] = int32_t(seq);
+                    sdpa.seq_pinned[1] = int32_t(total);
+                    device::copy_async(sdpa.seq_device, sdpa.seq_pinned, Index(2 * sizeof(int32_t)),
+                                       device::CopyKind::HostToDevice, stream);
 
-                std::unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
-                tensors[sdpa.Q]     = s.qr.data;
-                tensors[sdpa.K]     = kv_key.data;
-                tensors[sdpa.V]     = kv_value.data;
-                tensors[sdpa.O]     = s.attn.data;
-                tensors[sdpa.SeqQ]  = sdpa.seq_device;
-                tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
-                cudnn_frontend::check_status(
-                    sdpa.graph->execute(Backend::get_cudnn_handle(), tensors, sdpa.workspace),
-                    "gqa sdpa execute");
-
-                tied_lm_head_forward(attn_v, o_proj, o_b);
+                    sdpa.tensors[sdpa.Q]     = s.qr.data;
+                    sdpa.tensors[sdpa.K]     = kv_key.data;
+                    sdpa.tensors[sdpa.V]     = kv_value.data;
+                    sdpa.tensors[sdpa.O]     = s.attn.data;
+                    sdpa.tensors[sdpa.SeqQ]  = sdpa.seq_device;
+                    sdpa.tensors[sdpa.SeqKV] = sdpa.seq_device + 1;
+                    cudnn_frontend::check_status(
+                        sdpa.graph->execute(Backend::get_cudnn_handle(), sdpa.tensors, sdpa.workspace),
+                        "gqa sdpa execute");
+                }
+                {
+                    PROFILE_SCOPE("op:gqa_output_projection");
+                    tied_lm_head_forward(attn_v, o_proj, o_b);
+                }
                 return;
             }
         }
 
         TensorView key_all(kv_key.data,   {1, total, kd}, act, Device::CUDA);
         TensorView val_all(kv_value.data, {1, total, kd}, act, Device::CUDA);
-        grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
-                                  static_cast<float*>(s.partials.data));
-
-        tied_lm_head_forward(attn_v, o_proj, o_b);
+        {
+            PROFILE_SCOPE("op:gqa_attention");
+            grouped_attention_forward(qr_v, key_all, val_all, attn_v, q_heads, kv_heads, head_dim, true, scale, past,
+                                      static_cast<float*>(s.partials.data));
+        }
+        {
+            PROFILE_SCOPE("op:gqa_output_projection");
+            tied_lm_head_forward(attn_v, o_proj, o_b);
+        }
         return;
     }
 

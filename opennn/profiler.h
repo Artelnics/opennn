@@ -70,6 +70,38 @@ inline bool& enabled()
     return is_enabled;
 }
 
+inline string& profile_context()
+{
+    static thread_local string context;
+    return context;
+}
+
+class ScopedProfileContext
+{
+    string previous_;
+    bool active_ = false;
+
+public:
+    explicit ScopedProfileContext(string context)
+    {
+        if (!enabled()) return;
+
+        active_ = true;
+        previous_ = profile_context();
+        profile_context() = previous_.empty()
+            ? move(context)
+            : previous_ + "/" + context;
+    }
+
+    ~ScopedProfileContext()
+    {
+        if (active_) profile_context() = move(previous_);
+    }
+
+    ScopedProfileContext(const ScopedProfileContext&) = delete;
+    ScopedProfileContext& operator=(const ScopedProfileContext&) = delete;
+};
+
 class ScopedTimer
 {
     string key_;
@@ -78,10 +110,12 @@ class ScopedTimer
 
 public:
     ScopedTimer(string key, bool sync_gpu = true)
-        : key_(move(key))
-        , sync_gpu_(sync_gpu)
+        : sync_gpu_(sync_gpu)
     {
         if (!enabled()) return;
+        key_ = profile_context().empty()
+            ? move(key)
+            : profile_context() + "/" + key;
         if (sync_gpu_) device::synchronize();
         t0_ = chrono::steady_clock::now();
     }
@@ -104,6 +138,10 @@ public:
 #define PROFILE_SCOPE_IMPL(name, sync) \
     ::opennn::ScopedTimer OPENNN_PROFILE_CAT(_profile_, __LINE__)( \
         ::opennn::enabled() ? string(name) : string{}, sync)
+
+#define PROFILE_CONTEXT(name) \
+    ::opennn::ScopedProfileContext OPENNN_PROFILE_CAT(_profile_context_, __LINE__)( \
+        ::opennn::enabled() ? string(name) : string{})
 
 #define PROFILE_SCOPE(name)      PROFILE_SCOPE_IMPL(name, true)
 #define PROFILE_SCOPE_HOST(name) PROFILE_SCOPE_IMPL(name, false)

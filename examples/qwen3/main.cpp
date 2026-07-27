@@ -36,6 +36,8 @@
 #include "opennn/neural_network.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
+#include "opennn/memory_debug.h"
+#include "opennn/profiler.h"
 
 using namespace opennn;
 using namespace std;
@@ -43,22 +45,14 @@ using namespace std;
 namespace
 {
 
-// Context window: fixed at build time (the network is compiled for this
-// sequence length); it bounds the KV cache and the kept conversation.
-constexpr Index CONTEXT_LENGTH = 1024;
 
+constexpr Index CONTEXT_LENGTH = 1024;
 constexpr Index DEFAULT_MAX_NEW = 640;
 
-// Weights (.bin) and tokenizer files, downloaded on first run and cached in the
-// data directory. qwen3_meta.txt carries the config, so the network adapts to
-// whatever repo this points at.
 const string HF_BASE = "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
 const char* const DATA_FILES[] = { "qwen3_meta.txt", "vocab.json", "merges.txt",
                                    "qwen3_special.tsv", "qwen3.bin" };
 
-
-// An explicit argument or $QWEN3_DATA win; otherwise a few common relative
-// paths are probed so the binary "just runs" from the build dir or repo root.
 string find_data_dir(const string& override_dir)
 {
     if (!override_dir.empty()) return override_dir;
@@ -69,7 +63,7 @@ string find_data_dir(const string& override_dir)
                                      string("examples/qwen3/data") })
         if (ifstream(candidate + "/qwen3.bin").good()) return candidate;
 
-    return "../data";   // fall back; a clear error is raised later if it is missing
+    return "../data";
 }
 
 
@@ -121,12 +115,15 @@ int main(int argc, char* argv[])
         bool want_gpu = false;
 #endif
         Index max_new = DEFAULT_MAX_NEW;
+        bool max_new_explicit = false;
+        bool audit = false;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
         bool show_thinking = true;
         optional<float> temperature_override;
         optional<Index> top_k_override;
         optional<float> top_p_override;
         string data_arg;
+        string audit_prompt = "Explica brevemente que es una red neuronal.";
         for (int i = 1; i < argc; ++i)
         {
             const string a = argv[i];
@@ -137,20 +134,25 @@ int main(int argc, char* argv[])
             else if (a == "--no-think")                      reasoning_mode = ReasoningMode::Disabled;
             else if (a == "--show-thinking")                 show_thinking = true;
             else if (a == "--hide-thinking")                 show_thinking = false;
-            else if (a == "--max"  && i + 1 < argc)         max_new = Index(stol(argv[++i]));
+            else if (a == "--max"  && i + 1 < argc)
+            {
+                max_new = Index(stol(argv[++i]));
+                max_new_explicit = true;
+            }
             else if (a == "--temp" && i + 1 < argc)         temperature_override = stof(argv[++i]);
             else if (a == "--top-k" && i + 1 < argc)        top_k_override = Index(stol(argv[++i]));
             else if (a == "--top-p" && i + 1 < argc)        top_p_override = stof(argv[++i]);
             else if (a == "--data" && i + 1 < argc)         data_arg = argv[++i];
+            else if (a == "--audit")                        audit = true;
+            else if (a == "--audit-prompt" && i + 1 < argc) audit_prompt = argv[++i];
             else if (a.rfind("--", 0) != 0)                 data_arg = a;   // bare argument = data dir
             else throw runtime_error("Unknown option: " + a);
         }
+        if (audit && !max_new_explicit) max_new = 8;
         throw_if(max_new <= 0, "--max must be greater than zero.");
         const string data_dir = find_data_dir(data_arg);
 
 #ifdef OPENNN_HAS_CUDA
-        // BF16 on GPU: tensor cores + half the weight VRAM (the .bin stays FP32; the
-        // network builds a bf16 mirror on the device).
         Configuration::instance().set(want_gpu ? Device::CUDA : Device::CPU,
                                       want_gpu ? Type::BF16 : Type::FP32);
 #else
@@ -164,11 +166,9 @@ int main(int argc, char* argv[])
 
         cout << "Loading..." << flush;
 
-        // Tokenizer: native byte-level BPE with the Qwen pre-tokenizer and ChatML.
         Qwen3Tokenizer tokenizer;
         tokenizer.load(data_dir + "/vocab.json", data_dir + "/merges.txt", data_dir + "/qwen3_special.tsv");
 
-        // Neural network: the Qwen3 architecture, weights from the .bin.
         Qwen3Config config;
         config.load(data_dir + "/qwen3_meta.txt");
         Qwen3 model(CONTEXT_LENGTH, config.vocabulary, config.hidden, config.layers,
@@ -177,13 +177,16 @@ int main(int argc, char* argv[])
         model.load_parameters_binary(data_dir + "/qwen3.bin");
 
 #ifdef OPENNN_HAS_CUDA
-        // Build the device bf16 mirror tensor-by-tensor: the full fp32 master
-        // never hits the device.
         if (want_gpu) model.upload_parameters_bf16_inference();
 #endif
 
         ChatSession session(
             model, tokenizer, make_unique<Qwen3ChatTemplate>());
+
+        const bool profile_audit = getenv("OPENNN_PROFILE") != nullptr;
+        const bool memory_audit = memory_debug::enabled();
+        throw_if(profile_audit && memory_audit,
+                 "Use OPENNN_PROFILE and OPENNN_MEMORY_DEBUG in separate runs.");
 
         const auto make_chat_options = [&]()
         {
@@ -221,6 +224,93 @@ int main(int argc, char* argv[])
         cout << "\rDevice: "
              << (want_gpu ? "GPU (CUDA, BF16)" : "CPU (FP32)") << endl;
         print_settings();
+
+        if (audit)
+        {
+            ChatOptions audit_options = make_chat_options();
+            SamplingConfig audit_sampling = *audit_options.sampling;
+            audit_sampling.temperature = 0.0f;
+            audit_sampling.top_k = 1;
+            audit_sampling.top_p = 1.0f;
+            audit_sampling.maximum_tokens = max_new;
+            audit_options.sampling = audit_sampling;
+
+            ChatOptions warmup_options = audit_options;
+            SamplingConfig warmup_sampling = *warmup_options.sampling;
+            warmup_sampling.maximum_tokens = max<Index>(4, max_new);
+            warmup_options.sampling = warmup_sampling;
+
+            cout << "[AUDIT] warmup_tokens=" << warmup_sampling.maximum_tokens
+                 << " measured_tokens=" << audit_sampling.maximum_tokens
+                 << " prompt=\"" << audit_prompt << "\"\n";
+
+            enabled() = false;
+            {
+                memory_debug::ScopedPhase memory_phase("warmup");
+                session.send(audit_prompt, warmup_options);
+            }
+            session.clear();
+            device::synchronize();
+
+            global_stats().clear();
+            enabled() = profile_audit;
+
+            const auto audit_start = chrono::steady_clock::now();
+            ChatResponse response;
+            {
+                memory_debug::ScopedPhase memory_phase("measured");
+                memory_debug::AllocationGuard allocation_guard(memory_audit);
+                response = session.send(audit_prompt, audit_options);
+            }
+            device::synchronize();
+            const auto audit_end = chrono::steady_clock::now();
+            enabled() = false;
+
+            if (memory_audit)
+            {
+                session.clear();
+                const string repeat_prompt =
+                    audit_prompt + " Describe tambien sus principales componentes.";
+                memory_debug::ScopedPhase memory_phase("measured_repeat");
+                memory_debug::AllocationGuard allocation_guard(true);
+                session.send(repeat_prompt, audit_options);
+                device::synchronize();
+                cout << "[AUDIT] guarded_backend_allocations=0"
+                        " steady_state_repetitions=2"
+                        " variable_prompt_length=1\n";
+            }
+
+            const double audit_ms =
+                chrono::duration<double, milli>(audit_end - audit_start).count();
+            const double decode_tokens_per_second =
+                response.generated_tokens > 1
+                    && response.decode_milliseconds > 0.0
+                ? (response.generated_tokens - 1) * 1000.0
+                    / response.decode_milliseconds
+                : 0.0;
+
+            cout << "[AUDIT] prompt_tokens=" << response.prompt_tokens
+                 << " prefill_tokens=" << response.prefill_tokens
+                 << " generated_tokens=" << response.generated_tokens
+                 << " prefill_ms=" << fixed << setprecision(3)
+                 << response.prefill_milliseconds
+                 << " decode_ms=" << response.decode_milliseconds
+                 << " total_ms=" << audit_ms
+                 << " decode_tok_s=" << decode_tokens_per_second << "\n";
+
+            if (profile_audit)
+                global_stats().print(cout, "Qwen3 measured inference", audit_ms);
+            if (memory_audit)
+            {
+                memory_debug::print(cout);
+                memory_debug::print_buffers(cout);
+                memory_debug::print_allocations(cout);
+            }
+
+            cout << "[AUDIT] RESULT=OK\n";
+            return 0;
+        }
+
         cout << "Commands: :auto, :think, :no-think, :clear. "
                 "Empty line, 'exit' or 'quit' leaves.\n"
              << endl;

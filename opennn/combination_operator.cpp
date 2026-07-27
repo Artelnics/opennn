@@ -94,6 +94,14 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         return;
     }
 
+    if (transposed_inference_active)
+    {
+        const TensorView transposed(weights.data, {output_features, input_features},
+                                    weights.type, weights.device);
+        tied_lm_head_forward(get_input(forward_propagation, layer), transposed, output);
+        return;
+    }
+
     if (fused_activation == ActivationFunction::GELUTanh
         && output_slots.size() > 1
         && output.is_cuda())

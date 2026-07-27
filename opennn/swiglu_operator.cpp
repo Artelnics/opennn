@@ -10,12 +10,15 @@
 #include "tensor_operations.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "profiler.h"
 
 namespace opennn
 {
 
 void SwiGLUOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool  )
 {
+    PROFILE_SCOPE("op:swiglu");
+
     const TensorView& gate = get_input(forward_propagation, layer, 0);
     const TensorView& up   = get_input(forward_propagation, layer, 1);
     TensorView& output     = get_output(forward_propagation, layer);

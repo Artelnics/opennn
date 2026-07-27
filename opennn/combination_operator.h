@@ -26,6 +26,11 @@ struct CombinationOperator : Operator
 
     bool  tied_transposed = false;
 
+    // Inference-only fast path: the BF16 upload physically transposes this
+    // weight to (out, in) so the decode GEMV runs with contiguous output rows.
+    bool  transposed_inference_preferred = false;
+    bool  transposed_inference_active    = false;
+
     TensorView weights;
     TensorView bias;
 

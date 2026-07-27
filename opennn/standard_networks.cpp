@@ -1362,6 +1362,7 @@ Qwen3::Qwen3(Index sequence_length,
         add_layer(move(gate_up), {post_norm});
         const Index ffn = get_layers_number() - 1;
         const Index down = add_linear(Shape{sequence_length, intermediate_size}, hidden_size, "down" + suffix, ffn);
+        static_cast<Dense*>(layers[size_t(down)].get())->set_transposed_inference(true);
         add_layer(make_unique<Addition>(block, "ffn_add" + suffix), {residual, down});
         current = get_layers_number() - 1;
     }

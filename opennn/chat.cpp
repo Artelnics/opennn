@@ -19,6 +19,8 @@
 #include "standard_networks.h"
 #include "tensor_operations.h"
 #include "tokenizer_operator.h"
+#include "memory_debug.h"
+#include "profiler.h"
 
 namespace opennn
 {
@@ -454,6 +456,10 @@ public:
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
+            memory_debug::name_buffer(&gpu_candidates,
+                                      "DecoderSampler.gpu_candidates");
+            memory_debug::name_buffer(&gpu_id,
+                                      "DecoderSampler.gpu_id");
             pinned_id = static_cast<int*>(
                 device::allocate_pinned_host(Index(sizeof(int))));
             gpu_candidates.resize_bytes(
@@ -972,15 +978,29 @@ struct ChatSession::Impl
                         tokenizer->get_vocabulary_size(), vocabulary));
 
         token_window.assign(size_t(context_length), 0.0f);
+        cached_tokens.reserve(size_t(context_length));
+        prefill_inputs.resize(1);
+        memory_debug::name_buffer(&token_device,
+                                  "ChatSession.token_device");
 
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
             token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
+            prefill.device_input_buffers.resize(1);
+            prefill.device_input_views.resize(1);
+            prefill.host_bf16_input_scratch.resize(1);
+            prefill.device_input_buffers[0].resize_bytes(
+                context_length * Index(sizeof(float)), Device::CUDA);
+            memory_debug::name_buffer(&prefill.device_input_buffers[0],
+                                      "ChatSession.prefill_token_staging");
             decode.set(1, network, &prefill.data,
                        ForwardPropagationMode::Inference);
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
+            const cudaStream_t stream = device::get_compute_stream();
+            prefill.stage_position(stream);
+            decode.stage_position(stream);
             decode_inputs = {
                 TensorView(token_device.data, {1, 1},
                            Type::FP32, Device::CUDA)
@@ -1022,10 +1042,8 @@ struct ChatSession::Impl
     {
         prefill.past_length = past;
         prefill.set_active_sequence_length(count);
-        const vector<TensorView> inputs = {
-            TensorView(token_window.data(), {1, count})
-        };
-        network->forward_propagate(inputs, prefill, false);
+        prefill_inputs[0] = TensorView(token_window.data(), {1, count});
+        network->forward_propagate(prefill_inputs, prefill, false);
     }
 
     ForwardPropagation& run_decode(Index token, Index past)
@@ -1060,6 +1078,7 @@ struct ChatSession::Impl
     ForwardPropagation prefill;
     ForwardPropagation decode;
     Buffer token_device{Device::CUDA};
+    vector<TensorView> prefill_inputs;
     vector<TensorView> decode_inputs;
     unique_ptr<DecoderSampler> sampler;
 };
@@ -1287,6 +1306,8 @@ ChatResponse ChatSession::send(
     const ChatOptions& options,
     const ChatCallback& callback)
 {
+    PROFILE_SCOPE_HOST("chat:send_total");
+
     throw_if(user_message.empty(),
              "ChatSession::send: user message cannot be empty.");
 
@@ -1306,10 +1327,17 @@ ChatResponse ChatSession::send(
         ? sampling.maximum_tokens
         : impl->context_length;
 
-    vector<ChatMessage> candidate = impl->messages;
-    candidate.push_back({ChatRole::User, string(user_message)});
-    const vector<Index> prompt =
-        impl->render_fitting_prompt(candidate, mode);
+    vector<ChatMessage> candidate;
+    vector<Index> prompt;
+    {
+        PROFILE_CONTEXT("prompt");
+        PROFILE_SCOPE_HOST("prepare");
+        memory_debug::ScopedPhase memory_phase("prompt");
+
+        candidate = impl->messages;
+        candidate.push_back({ChatRole::User, string(user_message)});
+        prompt = impl->render_fitting_prompt(candidate, mode);
+    }
 
     Index prefix = 0;
     const Index reusable =
@@ -1327,11 +1355,25 @@ ChatResponse ChatSession::send(
 
     using Clock = chrono::steady_clock;
     const auto prefill_start = Clock::now();
-    impl->run_prefill(count, past);
-
     vector<Index> sampling_history = prompt;
-    Index next = impl->sampler->sample_row(
-        impl->prefill, count - 1, sampling, sampling_history);
+    sampling_history.reserve(size_t(min(impl->context_length,
+                                        ssize(prompt) + maximum_tokens)));
+    Index next = -1;
+    {
+        PROFILE_CONTEXT("prefill");
+        PROFILE_SCOPE("total");
+        memory_debug::ScopedPhase memory_phase("prefill");
+
+        {
+            PROFILE_SCOPE("network");
+            impl->run_prefill(count, past);
+        }
+        {
+            PROFILE_SCOPE("sampling");
+            next = impl->sampler->sample_row(
+                impl->prefill, count - 1, sampling, sampling_history);
+        }
+    }
     const auto prefill_end = Clock::now();
 
     impl->cached_tokens = prompt;
@@ -1348,35 +1390,50 @@ ChatResponse ChatSession::send(
         chrono::duration<double, milli>(prefill_end - prefill_start).count();
 
     const auto decode_start = Clock::now();
-    for (Index generated = 0; generated < maximum_tokens; ++generated)
     {
-        ++response.generated_tokens;
-        sampling_history.push_back(next);
+        PROFILE_CONTEXT("decode");
+        PROFILE_SCOPE("total");
+        memory_debug::ScopedPhase memory_phase("decode");
 
-        if (parser.push(next, callback))
+        for (Index generated = 0; generated < maximum_tokens; ++generated)
         {
-            response.finish_reason = FinishReason::Stop;
-            break;
-        }
+            ++response.generated_tokens;
+            sampling_history.push_back(next);
 
-        if (generated + 1 >= maximum_tokens)
-        {
-            response.finish_reason = FinishReason::MaximumTokens;
-            break;
-        }
+            {
+                PROFILE_SCOPE_HOST("parse_token");
+                if (parser.push(next, callback))
+                {
+                    response.finish_reason = FinishReason::Stop;
+                    break;
+                }
+            }
 
-        if (cache_length >= impl->context_length)
-        {
-            response.finish_reason = FinishReason::ContextLimit;
-            break;
-        }
+            if (generated + 1 >= maximum_tokens)
+            {
+                response.finish_reason = FinishReason::MaximumTokens;
+                break;
+            }
 
-        const ForwardPropagation& decoded =
-            impl->run_decode(next, cache_length);
-        impl->cached_tokens.push_back(next);
-        ++cache_length;
-        next = impl->sampler->sample_row(
-            decoded, 0, sampling, sampling_history);
+            if (cache_length >= impl->context_length)
+            {
+                response.finish_reason = FinishReason::ContextLimit;
+                break;
+            }
+
+            const ForwardPropagation* decoded = nullptr;
+            {
+                PROFILE_SCOPE("network");
+                decoded = &impl->run_decode(next, cache_length);
+            }
+            impl->cached_tokens.push_back(next);
+            ++cache_length;
+            {
+                PROFILE_SCOPE("sampling");
+                next = impl->sampler->sample_row(
+                    *decoded, 0, sampling, sampling_history);
+            }
+        }
     }
     const auto decode_end = Clock::now();
 

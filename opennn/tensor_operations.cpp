@@ -1160,6 +1160,7 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
 
+
 static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
                                   const TensorView& positional_encoding, TensorView& output,
                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
@@ -1844,6 +1845,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     const int output_columns = to_int(weights.shape.back());
     const int total_rows     = to_int(input.size() / input.shape.back());
 
+
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
 
@@ -2057,6 +2059,8 @@ Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_di
 static cublasHandle_t grouped_attention_cublas()
 {
     thread_local Buffer cublas_workspace{Device::CUDA};
+    memory_debug::name_buffer(&cublas_workspace,
+                              "GQA.cublas_workspace");
     thread_local cublasHandle_t handle = nullptr;
     if (!handle)
     {
@@ -2120,6 +2124,8 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     const Index kv_bytes     = aligned(Index(chunk) * kv_elems * Index(sizeof(T)));
 
     thread_local Buffer workspace{Device::CUDA};
+    memory_debug::name_buffer(&workspace,
+                              "GQA.generic_attention_workspace");
 
     try
     {

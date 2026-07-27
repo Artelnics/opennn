@@ -65,6 +65,7 @@ struct ForwardPropagation
 
     Buffer data;
     vector<Buffer> device_input_buffers;
+    vector<TensorView> device_input_views;
 
     vector<vector<uint16_t>> host_bf16_input_scratch;
 

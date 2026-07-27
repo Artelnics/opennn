@@ -277,10 +277,16 @@ void* allocate(Device device_type, Index byte_count)
 
     if (byte_count == 0) return nullptr;
 
-    if (device_type == Device::CUDA)
-        return allocate_cuda(byte_count);
+    memory_debug::check_allocation_allowed(device_type, byte_count);
 
-    return Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
+    void* pointer = nullptr;
+    if (device_type == Device::CUDA)
+        pointer = allocate_cuda(byte_count);
+    else
+        pointer = Eigen::aligned_allocator<uint8_t>{}.allocate(static_cast<size_t>(byte_count));
+
+    memory_debug::allocation_created(pointer, device_type, byte_count);
+    return pointer;
 }
 
 void deallocate(Device device_type, void* pointer, Index byte_count)
@@ -288,6 +294,7 @@ void deallocate(Device device_type, void* pointer, Index byte_count)
     if (!pointer) return;
 
     throw_if_auto(device_type);
+    memory_debug::allocation_released(pointer);
 
     if (device_type == Device::CUDA)
     {
@@ -443,21 +450,25 @@ void* allocate_pinned_host(Index byte_count)
 
     if (byte_count == 0) return nullptr;
 
+    memory_debug::check_allocation_allowed(Device::CPU, byte_count);
+
 #ifdef OPENNN_HAS_CUDA
     void* host_pointer = nullptr;
     CHECK_CUDA(cudaMallocHost(&host_pointer, static_cast<size_t>(byte_count)));
-    return host_pointer;
 #else
     void* host_pointer = malloc(static_cast<size_t>(byte_count));
     if (!host_pointer) throw bad_alloc();
-    return host_pointer;
 #endif
+    memory_debug::allocation_created(host_pointer, Device::CPU, byte_count,
+                                     "pinned");
+    return host_pointer;
 }
 
 void deallocate_pinned_host(void* pointer)
 {
     if (!pointer) return;
 
+    memory_debug::allocation_released(pointer);
 #ifdef OPENNN_HAS_CUDA
     cudaFreeHost(pointer);
 #else
