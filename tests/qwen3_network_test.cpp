@@ -129,6 +129,113 @@ float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
     return max_diff;
 }
 
+float max_difference(const std::vector<float>& a,
+                     const std::vector<float>& b)
+{
+    EXPECT_EQ(a.size(), b.size());
+    float result = 0.0f;
+    for (size_t i = 0; i < min(a.size(), b.size()); ++i)
+        result = max(result, abs(a[i] - b[i]));
+    return result;
+}
+
+unique_ptr<Qwen3> make_tiny_qwen(const Dims& d)
+{
+    auto network = make_unique<Qwen3>(
+        d.seq, d.vocab, d.hidden, d.layers, d.q_heads, d.kv_heads,
+        d.head_dim, d.intermediate, 1000000.0f, 1.0e-6f);
+    fill_parameters(*network);
+    return network;
+}
+
+float compact_last_row_max_diff(const Dims& d, bool bf16_upload)
+{
+    unique_ptr<Qwen3> network = make_tiny_qwen(d);
+#ifdef OPENNN_HAS_CUDA
+    if (bf16_upload) network->upload_parameters_bf16_inference();
+#else
+    (void)bf16_upload;
+#endif
+
+    vector<float> window(size_t(d.seq), 0.0f);
+    vector<Index> ids(size_t(d.prompt2));
+    for (Index i = 0; i < d.prompt2; ++i)
+        ids[size_t(i)] = i + 1;
+
+    ForwardPropagation full(
+        1, network.get(), ForwardPropagationMode::Inference);
+    run(*network, full, window, ids, 0);
+    const vector<float> expected =
+        logits_row(full, d.prompt2 - 1);
+
+    ForwardPropagation compact(
+        1, network.get(), ForwardPropagationMode::Inference,
+        {d.prompt2, 1});
+    run(*network, compact, window, ids, 0);
+
+    EXPECT_EQ(compact.get_outputs().shape[1], 1);
+    EXPECT_LT(compact.data.bytes, full.data.bytes);
+    return max_difference(expected, logits_row(compact, 0));
+}
+
+float chunked_prefill_and_decode_max_diff(const Dims& d,
+                                          Index block,
+                                          bool bf16_upload)
+{
+    unique_ptr<Qwen3> full_network = make_tiny_qwen(d);
+    unique_ptr<Qwen3> chunked_network = make_tiny_qwen(d);
+#ifdef OPENNN_HAS_CUDA
+    if (bf16_upload)
+    {
+        full_network->upload_parameters_bf16_inference();
+        chunked_network->upload_parameters_bf16_inference();
+    }
+#else
+    (void)bf16_upload;
+#endif
+
+    vector<Index> ids(size_t(d.prompt2));
+    for (Index i = 0; i < d.prompt2; ++i)
+        ids[size_t(i)] = 1 + (i * 7) % (d.vocab - 1);
+    vector<float> full_window(size_t(d.seq), 0.0f);
+    vector<float> chunk_window(size_t(d.seq), 0.0f);
+
+    ForwardPropagation full_prefill(
+        1, full_network.get(), ForwardPropagationMode::Inference);
+    run(*full_network, full_prefill, full_window, ids, 0);
+    const vector<float> full_last =
+        logits_row(full_prefill, d.prompt2 - 1);
+
+    ForwardPropagation chunked_prefill(
+        1, chunked_network.get(), ForwardPropagationMode::Inference,
+        {block, 1});
+    for (Index offset = 0; offset < d.prompt2; offset += block)
+    {
+        const Index count = min(block, d.prompt2 - offset);
+        vector<Index> part(ids.begin() + offset,
+                           ids.begin() + offset + count);
+        run(*chunked_network, chunked_prefill,
+            chunk_window, part, offset);
+        chunked_prefill.set_output_sequence_window(count - 1, 1);
+    }
+    const vector<float> chunked_last =
+        logits_row(chunked_prefill, 0);
+
+    const Index decode_id = d.vocab - 1;
+    ForwardPropagation full_decode(
+        1, full_network.get(), ForwardPropagationMode::Inference, {1, 1});
+    ForwardPropagation chunked_decode(
+        1, chunked_network.get(), ForwardPropagationMode::Inference, {1, 1});
+    run(*full_network, full_decode, full_window,
+        {decode_id}, d.prompt2);
+    run(*chunked_network, chunked_decode, chunk_window,
+        {decode_id}, d.prompt2);
+
+    return max(max_difference(full_last, chunked_last),
+               max_difference(logits_row(full_decode, 0),
+                              logits_row(chunked_decode, 0)));
+}
+
 }
 
 
@@ -136,6 +243,72 @@ TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheCpu)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
     EXPECT_LT(multi_turn_max_logit_diff(TINY), 1.0e-4f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, CompactLogitsEqualFullLastRowCpu)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    EXPECT_LT(compact_last_row_max_diff(TINY, false), 1.0e-4f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassCpu)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    EXPECT_LT(chunked_prefill_and_decode_max_diff(TINY, 3, false),
+              1.0e-4f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, CompactPoolDependsOnBlockNotModelContext)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Dims short_dims = TINY;
+    Dims long_dims = TINY;
+    short_dims.seq = 16;
+    long_dims.seq = 64;
+
+    unique_ptr<Qwen3> short_network = make_tiny_qwen(short_dims);
+    unique_ptr<Qwen3> long_network = make_tiny_qwen(long_dims);
+    ForwardPropagation short_compact(
+        1, short_network.get(), ForwardPropagationMode::Inference, {4, 1});
+    ForwardPropagation long_compact(
+        1, long_network.get(), ForwardPropagationMode::Inference, {4, 1});
+
+    EXPECT_EQ(short_compact.data.bytes, long_compact.data.bytes);
+    EXPECT_EQ(short_compact.get_sequence_capacity(), 4);
+    EXPECT_EQ(long_compact.get_sequence_capacity(), 4);
+    EXPECT_EQ(short_compact.get_final_output_capacity(), 1);
+    EXPECT_EQ(long_compact.get_final_output_capacity(), 1);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    unique_ptr<Qwen3> network = make_tiny_qwen(TINY);
+    vector<float> window(size_t(TINY.seq), 0.0f);
+    const vector<Index> ids = {2, 3, 5, 7, 11, 13};
+
+    ForwardPropagation full(
+        1, network.get(), ForwardPropagationMode::Inference);
+    run(*network, full, window, ids, 0);
+
+    ForwardPropagation selected(
+        1, network.get(), ForwardPropagationMode::Inference, {6, 4});
+    run(*network, selected, window, ids, 0);
+    selected.set_output_sequence_window(1, 4);
+    vector<TensorView> inputs = {
+        TensorView(window.data(), {1, Index(ids.size())})
+    };
+    network->forward_propagate(inputs, selected, false);
+
+    ASSERT_EQ(selected.get_outputs().shape[1], 4);
+    for (Index row = 0; row < 4; ++row)
+        EXPECT_LT(max_difference(logits_row(full, row + 1),
+                                 logits_row(selected, row)),
+                  1.0e-4f);
     Configuration::instance().set();
 }
 
@@ -156,6 +329,21 @@ TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpuBf16Upload)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
     EXPECT_LT(multi_turn_max_logit_diff(TINY, /*bf16_upload*/ true), 1.0e-2f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, CompactLogitsEqualFullLastRowGpuBf16)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    EXPECT_LT(compact_last_row_max_diff(TINY, true), 1.0e-2f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassGpuBf16)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    EXPECT_LT(chunked_prefill_and_decode_max_diff(TINY, 3, true),
+              1.0e-2f);
     Configuration::instance().set();
 }
 

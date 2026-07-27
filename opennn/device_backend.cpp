@@ -22,6 +22,7 @@ namespace
 {
 
 atomic_bool cuda_allocation_growth_forbidden_runtime{false};
+atomic_bool cuda_matmul_plan_creation_forbidden_runtime{false};
 
 constexpr int64_t conv_workspace_auto_ceiling = int64_t(256) * 1024 * 1024;
 atomic<int64_t> conv_workspace_cap_mode{-1};
@@ -224,6 +225,12 @@ void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept
     cuda_allocation_growth_forbidden_runtime.store(forbidden, memory_order_relaxed);
 }
 
+bool cuda_matmul_plan_creation_forbidden() noexcept
+{
+    return cuda_matmul_plan_creation_forbidden_runtime.load(
+        memory_order_relaxed);
+}
+
 int64_t conv_workspace_limit_bytes() noexcept
 {
     const int64_t mode = conv_workspace_cap_mode.load(memory_order_relaxed);
@@ -254,20 +261,33 @@ void set_conv_autotune(bool enabled) noexcept
     conv_autotune_enabled_flag.store(enabled, memory_order_relaxed);
 }
 
-CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(bool enabled)
-    : active(enabled && is_cuda_build())
+CudaAllocationGrowthGuard::CudaAllocationGrowthGuard(
+    bool enabled, bool forbid_matmul_plan_creation)
+    : active(enabled && is_cuda_build()),
+      guard_matmul_plans(active && forbid_matmul_plan_creation)
 {
     if (active)
     {
         previous = cuda_allocation_growth_forbidden();
         set_cuda_allocation_growth_forbidden(true);
+        if (guard_matmul_plans)
+        {
+            previous_matmul_plan_guard =
+                cuda_matmul_plan_creation_forbidden_runtime.exchange(
+                    true, memory_order_relaxed);
+        }
     }
 }
 
 CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
 {
     if (active)
+    {
         set_cuda_allocation_growth_forbidden(previous);
+        if (guard_matmul_plans)
+            cuda_matmul_plan_creation_forbidden_runtime.store(
+                previous_matmul_plan_guard, memory_order_relaxed);
+    }
 }
 
 void* allocate(Device device_type, Index byte_count)
@@ -857,7 +877,8 @@ namespace
         auto it = plans.find(key);
         if (it != plans.end()) return it->second;
 
-        throw_if(device::cuda_allocation_growth_forbidden(), "matmul plan forbidden (warmup incomplete).");
+        throw_if(device::cuda_matmul_plan_creation_forbidden(),
+                 "matmul plan forbidden (warmup incomplete).");
 
         LtMatmulPlan plan;
 

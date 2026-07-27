@@ -36,6 +36,7 @@ size_t available_memory();
 std::string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
+bool cuda_matmul_plan_creation_forbidden() noexcept;
 
 enum class GraphWorkspaceKind
 {
@@ -91,7 +92,11 @@ void set_conv_autotune(bool) noexcept;
 class CudaAllocationGrowthGuard
 {
 public:
-    explicit CudaAllocationGrowthGuard(bool);
+    // CUDA graph capture also forbids creating new cuBLASLt host plans.
+    // Tests that only assert stable device buffers can leave plan creation
+    // enabled with the second argument.
+    explicit CudaAllocationGrowthGuard(bool,
+                                       bool forbid_matmul_plan_creation = true);
     ~CudaAllocationGrowthGuard() noexcept;
 
     CudaAllocationGrowthGuard(const CudaAllocationGrowthGuard&) = delete;
@@ -100,6 +105,8 @@ public:
 private:
     bool active = false;
     bool previous = false;
+    bool guard_matmul_plans = false;
+    bool previous_matmul_plan_guard = false;
 };
 
 void* allocate(Device, Index);

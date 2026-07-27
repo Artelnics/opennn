@@ -191,6 +191,8 @@ class ChatSession
 {
 public:
 
+    static constexpr Index PREFILL_BLOCK_SIZE = 1024;
+
     explicit ChatSession(Transformer&);
     explicit ChatSession(TextGenerationNetwork&);
 

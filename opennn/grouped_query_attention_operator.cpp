@@ -140,6 +140,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     if (input.is_cuda())
     {
         forward_gpu(input, output, batch, forward_propagation.past_length,
+                    forward_propagation.get_sequence_capacity(),
                     static_cast<const int*>(forward_propagation.position_device.data));
         return;
     }
@@ -151,6 +152,12 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     const float scale = 1.0f / std::sqrt(float(head_dim));
 
     const Index table_len = sequence_length;
+    throw_if(seq < 1 || forward_propagation.past_length < 0
+             || forward_propagation.past_length + seq > table_len,
+             "GroupedQueryAttentionOperator: query [{}, {}) exceeds the "
+             "{}-token KV cache.",
+             forward_propagation.past_length,
+             forward_propagation.past_length + seq, table_len);
     auto& scratch = gqa_cpu_scratch();
     scratch.build_tables(table_len, head_dim, rope_theta);
     TensorView cos_v(scratch.cos.data(), {table_len, head_dim}), sin_v(scratch.sin.data(), {table_len, head_dim});
@@ -255,6 +262,7 @@ struct GroupedAttentionScratch
     Buffer qr{Device::CUDA}, kr{Device::CUDA}, attn{Device::CUDA};
     Buffer qkv{Device::CUDA}, partials{Device::CUDA};
     Index sequence = -1;
+    Index query_capacity = 0;
     Index q_dim = 0, kv_dim = 0, head_dim = 0;
     float theta = 0.0f;
     Type dtype = Type::FP32;
@@ -280,7 +288,8 @@ struct GroupedAttentionSDPA
     void* workspace = nullptr;
     int32_t* seq_device = nullptr;
     int32_t* seq_pinned = nullptr;
-    Index max_seq = 0, q_heads = 0, kv_heads = 0, head_dim = 0;
+    Index max_q = 0, max_kv = 0;
+    Index q_heads = 0, kv_heads = 0, head_dim = 0;
     bool failed = false;
 
     ~GroupedAttentionSDPA()
@@ -291,10 +300,12 @@ struct GroupedAttentionSDPA
     }
 };
 
-GroupedAttentionSDPA& gqa_sdpa(Index max_seq, Index q_heads, Index kv_heads, Index head_dim)
+GroupedAttentionSDPA& gqa_sdpa(Index max_q, Index max_kv,
+                               Index q_heads, Index kv_heads, Index head_dim)
 {
-    thread_local map<tuple<Index, Index, Index, Index>, GroupedAttentionSDPA> graphs;
-    return graphs[{max_seq, q_heads, kv_heads, head_dim}];
+    thread_local map<tuple<Index, Index, Index, Index, Index>,
+                     GroupedAttentionSDPA> graphs;
+    return graphs[{max_q, max_kv, q_heads, kv_heads, head_dim}];
 }
 
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
@@ -307,17 +318,17 @@ gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
                         .set_stride({heads * max_seq * head_dim, head_dim, heads * head_dim, 1}));
 }
 
-void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index kv_heads,
-                    Index head_dim, float scale)
+void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
+                    Index q_heads, Index kv_heads, Index head_dim, float scale)
 {
     auto graph = make_shared<cudnn_frontend::graph::Graph>();
     graph->set_io_data_type(cudnn_frontend::DataType_t::BFLOAT16)
          .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
          .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
 
-    s.Q = gqa_bshd_tensor(*graph, "Q", q_heads,  max_seq, head_dim);
-    s.K = gqa_bshd_tensor(*graph, "K", kv_heads, max_seq, head_dim);
-    s.V = gqa_bshd_tensor(*graph, "V", kv_heads, max_seq, head_dim);
+    s.Q = gqa_bshd_tensor(*graph, "Q", q_heads,  max_q,  head_dim);
+    s.K = gqa_bshd_tensor(*graph, "K", kv_heads, max_kv, head_dim);
+    s.V = gqa_bshd_tensor(*graph, "V", kv_heads, max_kv, head_dim);
 
     auto seq_scalar = [&](const char* name) {
         return graph->tensor(cudnn_frontend::graph::Tensor_attributes()
@@ -339,8 +350,8 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index
     auto [O, stats] = graph->sdpa(s.Q, s.K, s.V, options);
     (void)stats;
     O->set_output(true)
-      .set_dim   ({1, q_heads, max_seq, head_dim})
-      .set_stride({q_heads * max_seq * head_dim, head_dim, q_heads * head_dim, 1});
+      .set_dim   ({1, q_heads, max_q, head_dim})
+      .set_stride({q_heads * max_q * head_dim, head_dim, q_heads * head_dim, 1});
     s.O = O;
 
     cudnnHandle_t handle = Backend::get_cudnn_handle();
@@ -360,12 +371,17 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_seq, Index q_heads, Index
     s.graph = move(graph);
     s.tensors.clear();
     s.tensors.reserve(6);
-    s.max_seq = max_seq; s.q_heads = q_heads; s.kv_heads = kv_heads; s.head_dim = head_dim;
+    s.max_q = max_q;
+    s.max_kv = max_kv;
+    s.q_heads = q_heads;
+    s.kv_heads = kv_heads;
+    s.head_dim = head_dim;
 }
 
 }
 
 void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& output, Index batch, Index past,
+                                                Index query_capacity,
                                                 const int* position_device) const
 {
     const Index seq = input.shape[1];
@@ -378,10 +394,19 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     const Index elem = Index(type_bytes(act));
 
     const Index table_len = sequence_length;
+    throw_if(seq < 1 || query_capacity < seq,
+             "GroupedQueryAttentionOperator: query length {} exceeds its "
+             "temporary capacity {}.", seq, query_capacity);
+    throw_if(past < 0 || past + seq > table_len,
+             "GroupedQueryAttentionOperator: query [{}, {}) exceeds the "
+             "{}-token KV cache.", past, past + seq, table_len);
     auto& s = gqa_scratch(table_len, qd, kd, head_dim, rope_theta, act);
     {
-        if (s.sequence != table_len || s.dtype != act || s.q_dim != qd || s.kv_dim != kd
-            || s.head_dim != head_dim || s.theta != rope_theta)
+        const bool geometry_changed =
+            s.sequence != table_len || s.dtype != act
+            || s.q_dim != qd || s.kv_dim != kd
+            || s.head_dim != head_dim || s.theta != rope_theta;
+        if (geometry_changed)
         {
             std::vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
             { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
@@ -394,19 +419,31 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                 b.migrate_to(Device::CUDA, stream);
                 return b;
             };
-            auto alloc = [&](Index n, Buffer& b) { b.resize_bytes(n * elem, Device::CUDA); };
-
             s.cos = upload(cos_h);
             s.sin = upload(sin_h);
-            alloc(table_len * qd, s.q);   alloc(table_len * kd, s.k);   alloc(table_len * kd, s.v);
-            alloc(table_len * qd, s.qr);  alloc(table_len * kd, s.kr);  alloc(table_len * qd, s.attn);
-            alloc(qd + 2 * kd, s.qkv);
+            s.query_capacity = 0;
             s.partials.resize_bytes(grouped_attention_decode_scratch_floats(q_heads, head_dim)
                                     * Index(sizeof(float)), Device::CUDA);
             s.sequence = table_len;
             s.q_dim = qd; s.kv_dim = kd; s.head_dim = head_dim;
             s.theta = rope_theta;
             s.dtype = act;
+        }
+
+        if (s.query_capacity < query_capacity)
+        {
+            const auto grow = [&](Index n, Buffer& b)
+            {
+                b.grow_to(n * elem);
+            };
+            grow(query_capacity * qd, s.q);
+            grow(query_capacity * kd, s.k);
+            grow(query_capacity * kd, s.v);
+            grow(query_capacity * qd, s.qr);
+            grow(query_capacity * kd, s.kr);
+            grow(query_capacity * qd, s.attn);
+            grow(qd + 2 * kd, s.qkv);
+            s.query_capacity = query_capacity;
         }
 
         if (cache_capacity != table_len || cache_dtype != act || kv_key.device_type != Device::CUDA)
@@ -489,13 +526,19 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             rotary_forward(k_v, cos_v, sin_v, k_slot, head_dim, head_dim, past);
         }
 
-        auto& sdpa = gqa_sdpa(table_len, q_heads, kv_heads, head_dim);
+        auto& sdpa = gqa_sdpa(query_capacity, table_len,
+                              q_heads, kv_heads, head_dim);
         if (seq > 1 && act == Type::BF16 && !sdpa.failed)
         {
-            if (!sdpa.graph || sdpa.max_seq != table_len || sdpa.q_heads != q_heads
+            if (!sdpa.graph || sdpa.max_q != query_capacity
+                || sdpa.max_kv != table_len || sdpa.q_heads != q_heads
                 || sdpa.kv_heads != kv_heads || sdpa.head_dim != head_dim)
             {
-                try { gqa_sdpa_build(sdpa, table_len, q_heads, kv_heads, head_dim, scale); }
+                try
+                {
+                    gqa_sdpa_build(sdpa, query_capacity, table_len,
+                                   q_heads, kv_heads, head_dim, scale);
+                }
                 catch (const exception& e)
                 {
                     sdpa.failed = true;

@@ -35,9 +35,11 @@ static Index resolve_producer(const vector<vector<TensorSpec>>& forward_specs,
 
 ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        NeuralNetwork* new_neural_network,
-                                       const ForwardPropagationMode new_mode)
+                                       const ForwardPropagationMode new_mode,
+                                       const InferenceShapePolicy new_shape_policy)
 {
-    set(new_batch_size, new_neural_network, nullptr, new_mode);
+    set(new_batch_size, new_neural_network, nullptr, new_mode,
+        new_shape_policy);
 }
 
 ForwardPropagation::~ForwardPropagation()
@@ -66,15 +68,21 @@ void ForwardPropagation::stage_position(cudaStream_t stream)
 
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network,
                              Buffer* external_storage,
-                             const ForwardPropagationMode new_mode)
+                             const ForwardPropagationMode new_mode,
+                             const InferenceShapePolicy new_shape_policy)
 {
     throw_if(!new_neural_network, "neural network is not set.");
+    throw_if(new_mode != ForwardPropagationMode::Inference
+             && (new_shape_policy.sequence_capacity > 0
+                 || new_shape_policy.final_output_capacity > 0),
+             "ForwardPropagation::set: compact capacities are inference-only.");
 
     reset_cuda_graph();
 
     batch_size = new_batch_size;
     neural_network = new_neural_network;
     mode = new_mode;
+    inference_shape_policy = new_shape_policy;
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
@@ -85,7 +93,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     input_views.resize(layers_number);
     forward_slots.resize(layers_number);
 
-    const auto forward_specs = neural_network->get_forward_specs(batch_size);
+    auto forward_specs = neural_network->get_forward_specs(batch_size);
 
     throw_if(forward_specs.size() != layers_number,
              "ForwardPropagation::set: forward specs size ({}) does not match layers number ({}).",
@@ -96,6 +104,56 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     throw_if(source_layers.size() != layers_number,
              "ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
                     source_layers.size(), layers_number);
+
+    const Shape model_input_shape = neural_network->get_input_shape();
+    const Index model_sequence_capacity =
+        model_input_shape.empty() ? Index(0) : model_input_shape[0];
+    sequence_capacity = new_shape_policy.sequence_capacity > 0
+        ? new_shape_policy.sequence_capacity
+        : model_sequence_capacity;
+    throw_if(new_shape_policy.sequence_capacity > model_sequence_capacity,
+             "ForwardPropagation::set: sequence capacity {} exceeds the "
+             "network capacity {}.",
+             new_shape_policy.sequence_capacity, model_sequence_capacity);
+
+    if (new_shape_policy.sequence_capacity > 0)
+        for (auto& layer_specs : forward_specs)
+            for (TensorSpec& spec : layer_specs)
+                if (spec.shape.rank >= 2
+                    && spec.shape[1] == model_sequence_capacity)
+                    spec.shape[1] = sequence_capacity;
+
+    final_output_layer = -1;
+    for (Index i = Index(layers_number) - 1; i >= 0; --i)
+        if (!forward_specs[size_t(i)].empty())
+        {
+            final_output_layer = i;
+            break;
+        }
+
+    final_output_capacity = new_shape_policy.final_output_capacity > 0
+        ? new_shape_policy.final_output_capacity
+        : sequence_capacity;
+    throw_if(new_shape_policy.final_output_capacity > 0
+             && new_shape_policy.sequence_capacity <= 0,
+             "ForwardPropagation::set: final_output_capacity requires an "
+             "explicit sequence_capacity.");
+    throw_if(final_output_capacity > sequence_capacity,
+             "ForwardPropagation::set: final output capacity {} exceeds "
+             "sequence capacity {}.",
+             final_output_capacity, sequence_capacity);
+
+    if (new_shape_policy.final_output_capacity > 0
+        && final_output_layer >= 0)
+    {
+        TensorSpec& output_spec =
+            forward_specs[size_t(final_output_layer)].back();
+        throw_if(output_spec.shape.rank < 2
+                 || output_spec.shape[1] != sequence_capacity,
+                 "ForwardPropagation::set: final output does not expose a "
+                 "sequence dimension compatible with compact inference.");
+        output_spec.shape[1] = final_output_capacity;
+    }
 
     vector<vector<Index>> slot_offsets(layers_number);
     Index logical_persistent_bytes = 0;
@@ -332,15 +390,37 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 
     device::set_conv_workspace_auto_limit_bytes(max_layer_bytes);
+
+    capacity_input_views = input_views;
+    capacity_forward_slots = forward_slots;
+    active_sequence_length = sequence_capacity;
+
+    if (new_shape_policy.sequence_capacity > 0)
+    {
+        set_active_sequence_length(sequence_capacity);
+        const Index count = min(final_output_capacity, sequence_capacity);
+        set_output_sequence_window(sequence_capacity - count, count);
+    }
 }
 
 void ForwardPropagation::set_active_sequence_length(Index length)
 {
+    throw_if(length < 1 || length > sequence_capacity,
+             "ForwardPropagation::set_active_sequence_length: length {} is "
+             "outside [1, {}].",
+             length, sequence_capacity);
+
     reset_cuda_graph();
 
-    const auto shrink_sequence = [length](TensorView& view)
+    input_views = capacity_input_views;
+    forward_slots = capacity_forward_slots;
+    active_sequence_length = length;
+
+    const auto shrink_sequence = [this, length](TensorView& view)
     {
-        if (!view.empty() && view.get_rank() >= 2) view.shape[1] = length;
+        if (!view.empty() && view.get_rank() >= 2
+            && view.shape[1] == sequence_capacity)
+            view.shape[1] = length;
     };
 
     for (auto& layer_slots : forward_slots)
@@ -348,6 +428,57 @@ void ForwardPropagation::set_active_sequence_length(Index length)
 
     for (auto& layer_inputs : input_views)
         for (auto& view : layer_inputs) shrink_sequence(view);
+
+    if (inference_shape_policy.final_output_capacity > 0)
+    {
+        const Index count = min(final_output_capacity, length);
+        set_output_sequence_window(length - count, count);
+    }
+}
+
+void ForwardPropagation::set_output_sequence_window(Index start, Index count)
+{
+    throw_if(inference_shape_policy.final_output_capacity <= 0,
+             "ForwardPropagation::set_output_sequence_window requires a "
+             "compact final output capacity.");
+    throw_if(batch_size != 1,
+             "ForwardPropagation::set_output_sequence_window currently "
+             "supports batch size 1.");
+    throw_if(start < 0 || count < 1
+             || start + count > active_sequence_length,
+             "ForwardPropagation::set_output_sequence_window: window [{}, {}) "
+             "is outside the active sequence length {}.",
+             start, start + count, active_sequence_length);
+    throw_if(count > final_output_capacity,
+             "ForwardPropagation::set_output_sequence_window: {} rows exceed "
+             "the final output capacity {}.",
+             count, final_output_capacity);
+    throw_if(final_output_layer < 0
+             || size_t(final_output_layer) >= input_views.size()
+             || input_views[size_t(final_output_layer)].empty(),
+             "ForwardPropagation::set_output_sequence_window: final layer has "
+             "no input view.");
+
+    reset_cuda_graph();
+
+    TensorView& input = input_views[size_t(final_output_layer)].front();
+    const TensorView& capacity_input =
+        capacity_input_views[size_t(final_output_layer)].front();
+    throw_if(capacity_input.empty() || capacity_input.get_rank() < 2,
+             "ForwardPropagation::set_output_sequence_window: final layer "
+             "input is not sequence-shaped.");
+
+    const Index row_elements =
+        capacity_input.shape.size() / capacity_input.shape[0]
+        / capacity_input.shape[1];
+    input = capacity_input;
+    input.data = static_cast<char*>(capacity_input.data)
+        + start * row_elements * type_bytes(capacity_input.type);
+    input.shape[1] = count;
+
+    TensorView& output = forward_slots[size_t(final_output_layer)].back();
+    output = capacity_forward_slots[size_t(final_output_layer)].back();
+    output.shape[1] = count;
 }
 
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const

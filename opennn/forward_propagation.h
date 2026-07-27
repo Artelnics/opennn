@@ -24,12 +24,22 @@ enum class ForwardPropagationMode
     Inference
 };
 
+// Optional inference-only capacity policy. A zero value preserves the network
+// shapes verbatim, which is the historical behaviour used by training and by
+// the public calculate_outputs APIs.
+struct InferenceShapePolicy
+{
+    Index sequence_capacity = 0;
+    Index final_output_capacity = 0;
+};
+
 struct ForwardPropagation
 {
     ForwardPropagation() = default;
 
     ForwardPropagation(Index, NeuralNetwork*,
-                       ForwardPropagationMode = ForwardPropagationMode::Training);
+                       ForwardPropagationMode = ForwardPropagationMode::Training,
+                       InferenceShapePolicy = {});
 
     ~ForwardPropagation();
 
@@ -37,11 +47,17 @@ struct ForwardPropagation
     ForwardPropagation& operator=(const ForwardPropagation&) = delete;
 
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
-             ForwardPropagationMode = ForwardPropagationMode::Training);
+             ForwardPropagationMode = ForwardPropagationMode::Training,
+             InferenceShapePolicy = {});
 
     void stage_position(cudaStream_t stream);
 
     void set_active_sequence_length(Index length);
+    void set_output_sequence_window(Index start, Index count);
+
+    Index get_sequence_capacity() const noexcept { return sequence_capacity; }
+    Index get_active_sequence_length() const noexcept { return active_sequence_length; }
+    Index get_final_output_capacity() const noexcept { return final_output_capacity; }
 
     TensorView get_last_trainable_layer_outputs() const;
 
@@ -74,8 +90,16 @@ struct ForwardPropagation
 
     vector<vector<TensorView>> input_views;
     vector<vector<TensorView>> forward_slots;
+    vector<vector<TensorView>> capacity_input_views;
+    vector<vector<TensorView>> capacity_forward_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
     vector<Index> attention_valid_lengths;
+
+    InferenceShapePolicy inference_shape_policy;
+    Index sequence_capacity = 0;
+    Index active_sequence_length = 0;
+    Index final_output_capacity = 0;
+    Index final_output_layer = -1;
 
     bool use_cuda_graph = false;
     bool cuda_graph_failed = false;

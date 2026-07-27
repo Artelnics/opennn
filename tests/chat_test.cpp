@@ -650,6 +650,38 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
     Configuration::instance().set();
 }
 
+TEST(ChatSessionTest, NoCudaBufferGrowthFromFirstSend)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    const TemplateTokenizer tokenizer;
+    Qwen3 network(
+        64,
+        tokenizer.get_vocabulary_size() - 1,
+        32,
+        1,
+        4,
+        2,
+        8,
+        64);
+    network.set_parameters_random();
+    network.upload_parameters_bf16_inference();
+
+    ChatSession session(
+        network, tokenizer, make_unique<PlainChatTemplate>(), 42);
+    ChatOptions options = greedy_options(3);
+
+    {
+        device::CudaAllocationGrowthGuard no_growth(
+            true, /*forbid_matmul_plan_creation*/ false);
+        EXPECT_NO_THROW(session.send("first", options));
+        EXPECT_NO_THROW(session.send("a longer second turn", options));
+    }
+
+    Configuration::instance().set();
+}
+
 TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();
@@ -683,14 +715,20 @@ TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
 
     string streamed;
     const ChatOptions options = greedy_options(7);
-    const ChatResponse expected = baseline.send("prompt", options);
-    const ChatResponse actual = speculative.send(
-        "prompt", options,
-        [&](const ChatDelta& delta)
-        {
-            EXPECT_EQ(delta.channel, GenerationChannel::Content);
-            streamed += delta.text;
-        });
+    ChatResponse expected;
+    ChatResponse actual;
+    {
+        device::CudaAllocationGrowthGuard no_growth(
+            true, /*forbid_matmul_plan_creation*/ false);
+        expected = baseline.send("prompt", options);
+        actual = speculative.send(
+            "prompt", options,
+            [&](const ChatDelta& delta)
+            {
+                EXPECT_EQ(delta.channel, GenerationChannel::Content);
+                streamed += delta.text;
+            });
+    }
 
     expect_same_response(expected, actual);
     EXPECT_EQ(actual.content, string(7, 'A'));

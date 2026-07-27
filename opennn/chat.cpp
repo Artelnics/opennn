@@ -958,7 +958,8 @@ struct ChatSession::Impl
           vocabulary(new_network.get_output_shape().empty()
                          ? Index(0)
                          : new_network.get_output_shape().back()),
-          prefill(1, &new_network, ForwardPropagationMode::Inference)
+          prefill(1, &new_network, ForwardPropagationMode::Inference,
+                  {min(context_length, ChatSession::PREFILL_BLOCK_SIZE), 1})
     {
         throw_if(!chat_template,
                  "ChatSession: chat template is not set.");
@@ -983,9 +984,10 @@ struct ChatSession::Impl
             prefill.device_input_views.resize(1);
             prefill.host_bf16_input_scratch.resize(1);
             prefill.device_input_buffers[0].resize_bytes(
-                context_length * Index(sizeof(float)), Device::CUDA);
+                prefill.get_sequence_capacity() * Index(sizeof(float)),
+                Device::CUDA);
             decode.set(1, network, &prefill.data,
-                       ForwardPropagationMode::Inference);
+                       ForwardPropagationMode::Inference, {1, 1});
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
             const cudaStream_t stream = device::get_compute_stream();
@@ -1006,6 +1008,22 @@ struct ChatSession::Impl
             vocabulary, tokenizer->get_vocabulary_size(),
             effective_seed, gpu,
             gpu ? &token_device : nullptr);
+
+#ifdef OPENNN_HAS_CUDA
+        if (gpu)
+        {
+            // Reserve every high-water CUDA buffer before the first user
+            // send(). The real prefill starts at past=0 and overwrites this
+            // disposable cache contents.
+            const Index warmup_tokens = prefill.get_sequence_capacity();
+            fill_n(token_window.begin(), size_t(warmup_tokens), 0.0f);
+            run_prefill(warmup_tokens, 0);
+            stage_token(token_device, 0);
+            run_decode(0, 0);
+            run_decode(0, 0);
+            device::synchronize(device::get_compute_stream());
+        }
+#endif
     }
 
     vector<Index> render_fitting_prompt(vector<ChatMessage>& candidate,
@@ -1034,19 +1052,32 @@ struct ChatSession::Impl
         Index propose_count = 4;
         ForwardPropagation prefill;
         ForwardPropagation decode;
+        ForwardPropagation target_verify;
         Buffer token_device{Device::CUDA};
         vector<TensorView> prefill_inputs;
         vector<TensorView> decode_inputs;
+        vector<TensorView> target_verify_inputs;
         unique_ptr<DecoderSampler> sampler;
         vector<Index> proposals;
     };
 
     void run_prefill(Index count, Index past)
     {
-        prefill.past_length = past;
-        prefill.set_active_sequence_length(count);
-        prefill_inputs[0] = TensorView(token_window.data(), {1, count});
-        network->forward_propagate(prefill_inputs, prefill, false);
+        throw_if(count < 1 || past < 0 || past + count > context_length,
+                 "ChatSession: prefill [{}, {}) exceeds the {}-token context.",
+                 past, past + count, context_length);
+
+        const Index block_capacity = prefill.get_sequence_capacity();
+        for (Index offset = 0; offset < count; offset += block_capacity)
+        {
+            const Index block = min(block_capacity, count - offset);
+            prefill.past_length = past + offset;
+            prefill.set_active_sequence_length(block);
+            prefill.set_output_sequence_window(block - 1, 1);
+            prefill_inputs[0] =
+                TensorView(token_window.data() + offset, {1, block});
+            network->forward_propagate(prefill_inputs, prefill, false);
+        }
     }
 
     static void stage_token(Buffer& destination, Index token)
@@ -1060,10 +1091,44 @@ struct ChatSession::Impl
 
     void run_draft_prefill(Index count, Index past)
     {
-        draft->prefill.past_length = past;
-        draft->prefill.set_active_sequence_length(count);
-        draft->prefill_inputs[0] = TensorView(token_window.data(), {1, count});
-        draft->network->forward_propagate(draft->prefill_inputs, draft->prefill, false);
+        throw_if(count < 1 || past < 0 || past + count > context_length,
+                 "ChatSession: draft prefill [{}, {}) exceeds the {}-token context.",
+                 past, past + count, context_length);
+
+        const Index block_capacity =
+            draft->prefill.get_sequence_capacity();
+        for (Index offset = 0; offset < count; offset += block_capacity)
+        {
+            const Index block = min(block_capacity, count - offset);
+            draft->prefill.past_length = past + offset;
+            draft->prefill.set_active_sequence_length(block);
+            draft->prefill.set_output_sequence_window(block - 1, 1);
+            draft->prefill_inputs[0] =
+                TensorView(token_window.data() + offset, {1, block});
+            draft->network->forward_propagate(
+                draft->prefill_inputs, draft->prefill, false);
+        }
+    }
+
+    ForwardPropagation& run_target_verify(Index count, Index past)
+    {
+        throw_if(!draft || count < 1
+                 || count > draft->target_verify.get_sequence_capacity(),
+                 "ChatSession: invalid speculative verification width {}.",
+                 count);
+        throw_if(past < 0 || past + count > context_length,
+                 "ChatSession: speculative verification [{}, {}) exceeds "
+                 "the {}-token context.",
+                 past, past + count, context_length);
+
+        draft->target_verify.past_length = past;
+        draft->target_verify.set_active_sequence_length(count);
+        draft->target_verify.set_output_sequence_window(0, count);
+        draft->target_verify_inputs[0] =
+            TensorView(token_window.data(), {1, count});
+        network->forward_propagate(
+            draft->target_verify_inputs, draft->target_verify, false);
+        return draft->target_verify;
     }
 
     ForwardPropagation& run_draft_decode(Index past)
@@ -1159,21 +1224,37 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     draft->propose_count = draft_tokens;
 
     draft->prefill.set(1, &draft_network, nullptr,
-                       ForwardPropagationMode::Inference);
+                       ForwardPropagationMode::Inference,
+                       {min(impl->context_length,
+                            ChatSession::PREFILL_BLOCK_SIZE), 1});
     draft->token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
     draft->prefill_inputs.resize(1);
     draft->prefill.device_input_buffers.resize(1);
     draft->prefill.device_input_views.resize(1);
     draft->prefill.host_bf16_input_scratch.resize(1);
     draft->prefill.device_input_buffers[0].resize_bytes(
-        impl->context_length * Index(sizeof(float)), Device::CUDA);
+        draft->prefill.get_sequence_capacity() * Index(sizeof(float)),
+        Device::CUDA);
     draft->decode.set(1, &draft_network, &draft->prefill.data,
-                      ForwardPropagationMode::Inference);
+                      ForwardPropagationMode::Inference, {1, 1});
     draft->decode.set_active_sequence_length(1);
     draft->decode.set_cuda_graph(true);
+
+    const Index verify_capacity = draft_tokens + 1;
+    draft->target_verify.set(
+        1, impl->network, nullptr, ForwardPropagationMode::Inference,
+        {verify_capacity, verify_capacity});
+    draft->target_verify_inputs.resize(1);
+    draft->target_verify.device_input_buffers.resize(1);
+    draft->target_verify.device_input_views.resize(1);
+    draft->target_verify.host_bf16_input_scratch.resize(1);
+    draft->target_verify.device_input_buffers[0].resize_bytes(
+        verify_capacity * Index(sizeof(float)), Device::CUDA);
+
     const cudaStream_t stream = device::get_compute_stream();
     draft->prefill.stage_position(stream);
     draft->decode.stage_position(stream);
+    draft->target_verify.stage_position(stream);
     draft->decode_inputs = {
         TensorView(draft->token_device.data, {1, 1},
                    Type::FP32, Device::CUDA)
@@ -1184,6 +1265,20 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     draft->proposals.reserve(size_t(draft_tokens));
 
     impl->draft = move(draft);
+
+    // As for the target model, establish all draft and verification CUDA
+    // high-water marks before attach_draft_model returns.
+    const Index warmup_tokens =
+        impl->draft->prefill.get_sequence_capacity();
+    fill_n(impl->token_window.begin(), size_t(warmup_tokens), 0.0f);
+    impl->run_draft_prefill(warmup_tokens, 0);
+    Impl::stage_token(impl->draft->token_device, 0);
+    impl->run_draft_decode(0);
+    impl->run_draft_decode(0);
+    fill_n(impl->token_window.begin(), size_t(verify_capacity), 0.0f);
+    for (Index width = 2; width <= verify_capacity; ++width)
+        impl->run_target_verify(width, 0);
+    device::synchronize(device::get_compute_stream());
 #endif
 }
 
@@ -1443,7 +1538,7 @@ ChatResponse ChatSession::send(
     {
         impl->run_prefill(count, past);
         next = impl->sampler->sample_row(
-            impl->prefill, count - 1, sampling, sampling_history);
+            impl->prefill, 0, sampling, sampling_history);
 
         if (speculative)
         {
@@ -1548,14 +1643,15 @@ ChatResponse ChatSession::send(
             impl->token_window[0] = float(next);
             for (Index j = 0; j < propose; ++j)
                 impl->token_window[size_t(1 + j)] = float(proposals[size_t(j)]);
-            impl->run_prefill(propose + 1, cache_length);
+            ForwardPropagation& verification =
+                impl->run_target_verify(propose + 1, cache_length);
 
             Index accepted = 0;
             Index correction = -1;
             for (Index j = 0; j <= propose; ++j)
             {
                 const Index choice = impl->sampler->sample_row(
-                    impl->prefill, j, sampling, sampling_history);
+                    verification, j, sampling, sampling_history);
                 if (j < propose && choice == proposals[size_t(j)])
                 {
                     ++accepted;

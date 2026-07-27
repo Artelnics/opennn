@@ -17,7 +17,8 @@
 //   the binary and chat. To use local files instead, drop them in the data directory
 //   and the download is skipped.
 //
-//   usage: qwen3 [data_dir] [cpu|gpu] [--auto|--think|--no-think]
+//   usage: qwen3 [data_dir] [cpu|gpu] [--context N]
+//                [--auto|--think|--no-think]
 //     data_dir   where to cache the .bin + tokenizer files (default ../data)
 //     cpu | gpu  compute device (default: gpu when built with CUDA, else cpu)
 
@@ -36,6 +37,7 @@
 #include "opennn/neural_network.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
+#include "opennn/device_backend.h"
 
 using namespace opennn;
 using namespace std;
@@ -44,7 +46,8 @@ namespace
 {
 
 
-constexpr Index CONTEXT_LENGTH = 1024;
+constexpr Index MODEL_MAX_CONTEXT = 32768;
+constexpr Index DEFAULT_CONTEXT_LENGTH = MODEL_MAX_CONTEXT;
 constexpr Index DEFAULT_MAX_NEW = 640;
 
 const string HF_BASE = "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
@@ -93,6 +96,43 @@ string reasoning_mode_name(const ReasoningMode mode)
     return "unknown";
 }
 
+size_t estimate_qwen3_draft_bytes(const Qwen3Config& config,
+                                  const Index context_length)
+{
+    const size_t hidden = size_t(config.hidden);
+    const size_t q_dim =
+        size_t(config.query_heads * config.head_dim);
+    const size_t kv_dim =
+        size_t(config.key_value_heads * config.head_dim);
+    const size_t intermediate = size_t(config.intermediate);
+    const size_t layers = size_t(config.layers);
+
+    // Tied embedding/LM-head storage plus all BF16 projection matrices.
+    const size_t matrix_elements =
+        size_t(config.vocabulary) * hidden
+        + layers * ((q_dim + 2 * kv_dim) * hidden
+                    + hidden * q_dim
+                    + 3 * intermediate * hidden);
+    const size_t bf16_weights = matrix_elements * sizeof(uint16_t);
+
+    // Two FP32 RMSNorms and two QK norms per block, plus final RMSNorm.
+    const size_t fp32_weights =
+        (layers * (2 * hidden + 2 * size_t(config.head_dim)) + hidden)
+        * sizeof(float);
+
+    const size_t kv_cache =
+        layers * size_t(context_length) * kv_dim
+        * 2 /* K + V */ * sizeof(uint16_t);
+
+    // Compact activation arena, RoPE tables, query scratch, sampler and
+    // library workspaces. This is deliberately conservative; the separate
+    // 1-GiB safety margin below is not included here.
+    constexpr size_t compact_runtime_reserve =
+        size_t(512) * 1024 * 1024;
+    return bf16_weights + fp32_weights + kv_cache
+        + compact_runtime_reserve;
+}
+
 }
 
 
@@ -113,6 +153,7 @@ int main(int argc, char* argv[])
         bool want_gpu = false;
 #endif
         Index max_new = DEFAULT_MAX_NEW;
+        Index context_length = DEFAULT_CONTEXT_LENGTH;
         bool use_draft = false;
         Index draft_tokens = 4;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
@@ -132,6 +173,7 @@ int main(int argc, char* argv[])
             else if (a == "--show-thinking")                 show_thinking = true;
             else if (a == "--hide-thinking")                 show_thinking = false;
             else if (a == "--max"  && i + 1 < argc)         max_new = Index(stol(argv[++i]));
+            else if (a == "--context" && i + 1 < argc)      context_length = Index(stol(argv[++i]));
             else if (a == "--temp" && i + 1 < argc)         temperature_override = stof(argv[++i]);
             else if (a == "--top-k" && i + 1 < argc)        top_k_override = Index(stol(argv[++i]));
             else if (a == "--top-p" && i + 1 < argc)        top_p_override = stof(argv[++i]);
@@ -142,6 +184,9 @@ int main(int argc, char* argv[])
             else throw runtime_error("Unknown option: " + a);
         }
         throw_if(max_new <= 0, "--max must be greater than zero.");
+        throw_if(context_length < 1 || context_length > MODEL_MAX_CONTEXT,
+                 "--context must be between 1 and {} tokens.",
+                 MODEL_MAX_CONTEXT);
         const string data_dir = find_data_dir(data_arg);
 
 #ifdef OPENNN_HAS_CUDA
@@ -163,7 +208,7 @@ int main(int argc, char* argv[])
 
         Qwen3Config config;
         config.load(data_dir + "/qwen3_meta.txt");
-        Qwen3 model(CONTEXT_LENGTH, config.vocabulary, config.hidden, config.layers,
+        Qwen3 model(context_length, config.vocabulary, config.hidden, config.layers,
                     config.query_heads, config.key_value_heads, config.head_dim, config.intermediate,
                     config.rope_theta, config.rms_epsilon);
         model.load_parameters_binary(data_dir + "/qwen3.bin");
@@ -179,12 +224,35 @@ int main(int argc, char* argv[])
         if (use_draft)
         {
             throw_if(!want_gpu, "--draft requires the GPU build.");
-            for (const char* file : {"qwen3_draft_meta.txt", "qwen3_draft.bin"})
-                download_if_missing(data_dir + "/" + file, HF_BASE + file);
+            download_if_missing(data_dir + "/qwen3_draft_meta.txt",
+                                HF_BASE + "qwen3_draft_meta.txt");
             Qwen3Config draft_config;
             draft_config.load(data_dir + "/qwen3_draft_meta.txt");
+
+#ifdef OPENNN_HAS_CUDA
+            constexpr size_t safety_margin =
+                size_t(1024) * 1024 * 1024;
+            const size_t model_bytes =
+                estimate_qwen3_draft_bytes(draft_config, context_length);
+            const size_t required_bytes = model_bytes + safety_margin;
+            const size_t available_bytes = device::available_memory();
+            const auto mib = [](size_t bytes)
+            {
+                return double(bytes) / (1024.0 * 1024.0);
+            };
+            throw_if(required_bytes > available_bytes,
+                     "--draft preflight failed at context {}: {:.0f} MiB "
+                     "additional GPU memory is required (including a 1024 MiB "
+                     "safety margin), but only {:.0f} MiB is available. "
+                     "Reduce --context or run without --draft.",
+                     context_length, mib(required_bytes),
+                     mib(available_bytes));
+#endif
+
+            download_if_missing(data_dir + "/qwen3_draft.bin",
+                                HF_BASE + "qwen3_draft.bin");
             draft_model = make_unique<Qwen3>(
-                CONTEXT_LENGTH, draft_config.vocabulary, draft_config.hidden,
+                context_length, draft_config.vocabulary, draft_config.hidden,
                 draft_config.layers, draft_config.query_heads, draft_config.key_value_heads,
                 draft_config.head_dim, draft_config.intermediate,
                 draft_config.rope_theta, draft_config.rms_epsilon);
@@ -230,6 +298,10 @@ int main(int argc, char* argv[])
 
         cout << "\rDevice: "
              << (want_gpu ? "GPU (CUDA, BF16)" : "CPU (FP32)") << endl;
+        cout << "Context: " << context_length
+             << " tokens; prefill block: "
+             << min(context_length, ChatSession::PREFILL_BLOCK_SIZE)
+             << " tokens." << endl;
         print_settings();
 
         cout << "Commands: :auto, :think, :no-think, :clear. "
