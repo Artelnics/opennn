@@ -19,8 +19,6 @@
 #include "standard_networks.h"
 #include "tensor_operations.h"
 #include "tokenizer_operator.h"
-#include "memory_debug.h"
-#include "profiler.h"
 
 namespace opennn
 {
@@ -456,10 +454,6 @@ public:
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
-            memory_debug::name_buffer(&gpu_candidates,
-                                      "DecoderSampler.gpu_candidates");
-            memory_debug::name_buffer(&gpu_id,
-                                      "DecoderSampler.gpu_id");
             pinned_id = static_cast<int*>(
                 device::allocate_pinned_host(Index(sizeof(int))));
             gpu_candidates.resize_bytes(
@@ -980,8 +974,6 @@ struct ChatSession::Impl
         token_window.assign(size_t(context_length), 0.0f);
         cached_tokens.reserve(size_t(context_length));
         prefill_inputs.resize(1);
-        memory_debug::name_buffer(&token_device,
-                                  "ChatSession.token_device");
 
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
@@ -992,8 +984,6 @@ struct ChatSession::Impl
             prefill.host_bf16_input_scratch.resize(1);
             prefill.device_input_buffers[0].resize_bytes(
                 context_length * Index(sizeof(float)), Device::CUDA);
-            memory_debug::name_buffer(&prefill.device_input_buffers[0],
-                                      "ChatSession.prefill_token_staging");
             decode.set(1, network, &prefill.data,
                        ForwardPropagationMode::Inference);
             decode.set_active_sequence_length(1);
@@ -1038,12 +1028,50 @@ struct ChatSession::Impl
         return prompt;
     }
 
+    struct SpeculativeDraft
+    {
+        NeuralNetwork* network = nullptr;
+        Index propose_count = 4;
+        ForwardPropagation prefill;
+        ForwardPropagation decode;
+        Buffer token_device{Device::CUDA};
+        vector<TensorView> prefill_inputs;
+        vector<TensorView> decode_inputs;
+        unique_ptr<DecoderSampler> sampler;
+        vector<Index> proposals;
+    };
+
     void run_prefill(Index count, Index past)
     {
         prefill.past_length = past;
         prefill.set_active_sequence_length(count);
         prefill_inputs[0] = TensorView(token_window.data(), {1, count});
         network->forward_propagate(prefill_inputs, prefill, false);
+    }
+
+    static void stage_token(Buffer& destination, Index token)
+    {
+        const float value = float(token);
+        device::copy_async(destination.data, &value, Index(sizeof(float)),
+                           device::CopyKind::HostToDevice,
+                           device::get_compute_stream());
+        device::synchronize(device::get_compute_stream());
+    }
+
+    void run_draft_prefill(Index count, Index past)
+    {
+        draft->prefill.past_length = past;
+        draft->prefill.set_active_sequence_length(count);
+        draft->prefill_inputs[0] = TensorView(token_window.data(), {1, count});
+        draft->network->forward_propagate(draft->prefill_inputs, draft->prefill, false);
+    }
+
+    ForwardPropagation& run_draft_decode(Index past)
+    {
+        draft->decode.past_length = past;
+        draft->network->calculate_outputs_resident(
+            draft->decode_inputs, draft->decode, false);
+        return draft->decode;
     }
 
     ForwardPropagation& run_decode(Index token, Index past)
@@ -1081,6 +1109,7 @@ struct ChatSession::Impl
     vector<TensorView> prefill_inputs;
     vector<TensorView> decode_inputs;
     unique_ptr<DecoderSampler> sampler;
+    unique_ptr<SpeculativeDraft> draft;
 };
 
 ChatSession::ChatSession(Transformer& network)
@@ -1104,6 +1133,59 @@ ChatSession::ChatSession(
 }
 
 ChatSession::~ChatSession() = default;
+
+void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_tokens)
+{
+    throw_if(static_cast<bool>(impl->classic),
+             "ChatSession::attach_draft_model: unsupported session type.");
+    throw_if(!impl->gpu,
+             "ChatSession::attach_draft_model: speculative decoding requires the GPU session.");
+    throw_if(draft_tokens < 1,
+             "ChatSession::attach_draft_model: draft_tokens must be at least 1.");
+    throw_if(draft_network.get_output_shape().empty()
+             || draft_network.get_output_shape().back() != impl->vocabulary,
+             "ChatSession::attach_draft_model: draft vocabulary does not match the main network.");
+    throw_if(draft_network.get_input_shape().empty()
+             || draft_network.get_input_shape()[0] < impl->context_length,
+             "ChatSession::attach_draft_model: draft context is shorter than the session context.");
+    throw_if(!draft_network.is_gpu(),
+             "ChatSession::attach_draft_model: the draft network is not compiled for CUDA.");
+    throw_if(draft_network.get_training_type() != impl->network->get_training_type(),
+             "ChatSession::attach_draft_model: draft compute dtype does not match the main network.");
+
+#ifdef OPENNN_HAS_CUDA
+    auto draft = make_unique<Impl::SpeculativeDraft>();
+    draft->network = &draft_network;
+    draft->propose_count = draft_tokens;
+
+    draft->prefill.set(1, &draft_network, nullptr,
+                       ForwardPropagationMode::Inference);
+    draft->token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
+    draft->prefill_inputs.resize(1);
+    draft->prefill.device_input_buffers.resize(1);
+    draft->prefill.device_input_views.resize(1);
+    draft->prefill.host_bf16_input_scratch.resize(1);
+    draft->prefill.device_input_buffers[0].resize_bytes(
+        impl->context_length * Index(sizeof(float)), Device::CUDA);
+    draft->decode.set(1, &draft_network, &draft->prefill.data,
+                      ForwardPropagationMode::Inference);
+    draft->decode.set_active_sequence_length(1);
+    draft->decode.set_cuda_graph(true);
+    const cudaStream_t stream = device::get_compute_stream();
+    draft->prefill.stage_position(stream);
+    draft->decode.stage_position(stream);
+    draft->decode_inputs = {
+        TensorView(draft->token_device.data, {1, 1},
+                   Type::FP32, Device::CUDA)
+    };
+    draft->sampler = make_unique<DecoderSampler>(
+        impl->vocabulary, impl->tokenizer->get_vocabulary_size(),
+        1ull, true, &draft->token_device);
+    draft->proposals.reserve(size_t(draft_tokens));
+
+    impl->draft = move(draft);
+#endif
+}
 
 namespace
 {
@@ -1306,8 +1388,6 @@ ChatResponse ChatSession::send(
     const ChatOptions& options,
     const ChatCallback& callback)
 {
-    PROFILE_SCOPE_HOST("chat:send_total");
-
     throw_if(user_message.empty(),
              "ChatSession::send: user message cannot be empty.");
 
@@ -1330,10 +1410,6 @@ ChatResponse ChatSession::send(
     vector<ChatMessage> candidate;
     vector<Index> prompt;
     {
-        PROFILE_CONTEXT("prompt");
-        PROFILE_SCOPE_HOST("prepare");
-        memory_debug::ScopedPhase memory_phase("prompt");
-
         candidate = impl->messages;
         candidate.push_back({ChatRole::User, string(user_message)});
         prompt = impl->render_fitting_prompt(candidate, mode);
@@ -1353,6 +1429,11 @@ ChatResponse ChatSession::send(
         impl->token_window[size_t(i)] =
             float(prompt[size_t(past + i)]);
 
+    const bool speculative = impl->draft
+        && impl->gpu
+        && sampling.temperature == 0.0f
+        && sampling.repetition_penalty == 1.0f;
+
     using Clock = chrono::steady_clock;
     const auto prefill_start = Clock::now();
     vector<Index> sampling_history = prompt;
@@ -1360,18 +1441,15 @@ ChatResponse ChatSession::send(
                                         ssize(prompt) + maximum_tokens)));
     Index next = -1;
     {
-        PROFILE_CONTEXT("prefill");
-        PROFILE_SCOPE("total");
-        memory_debug::ScopedPhase memory_phase("prefill");
+        impl->run_prefill(count, past);
+        next = impl->sampler->sample_row(
+            impl->prefill, count - 1, sampling, sampling_history);
 
+        if (speculative)
         {
-            PROFILE_SCOPE("network");
-            impl->run_prefill(count, past);
-        }
-        {
-            PROFILE_SCOPE("sampling");
-            next = impl->sampler->sample_row(
-                impl->prefill, count - 1, sampling, sampling_history);
+            for (Index i = 0; i < ssize(prompt); ++i)
+                impl->token_window[size_t(i)] = float(prompt[size_t(i)]);
+            impl->run_draft_prefill(ssize(prompt), 0);
         }
     }
     const auto prefill_end = Clock::now();
@@ -1390,23 +1468,131 @@ ChatResponse ChatSession::send(
         chrono::duration<double, milli>(prefill_end - prefill_start).count();
 
     const auto decode_start = Clock::now();
+    if (speculative)
     {
-        PROFILE_CONTEXT("decode");
-        PROFILE_SCOPE("total");
-        memory_debug::ScopedPhase memory_phase("decode");
+        Index draft_cache = ssize(prompt);
+        vector<Index>& proposals = impl->draft->proposals;
 
+        // Emits one accepted token; false means generation must stop.
+        const auto emit = [&](Index token)
+        {
+            ++response.generated_tokens;
+            sampling_history.push_back(token);
+
+            if (parser.push(token, callback))
+            {
+                response.finish_reason = FinishReason::Stop;
+                return false;
+            }
+            if (response.generated_tokens >= maximum_tokens)
+            {
+                response.finish_reason = FinishReason::MaximumTokens;
+                return false;
+            }
+            return true;
+        };
+
+        while (true)
+        {
+            if (!emit(next)) break;
+
+            if (cache_length >= impl->context_length)
+            {
+                response.finish_reason = FinishReason::ContextLimit;
+                break;
+            }
+
+            const Index propose = min({impl->draft->propose_count,
+                                       impl->context_length - cache_length - 1,
+                                       maximum_tokens - response.generated_tokens});
+
+            if (propose < 1)
+            {
+                Impl::stage_token(impl->token_device, next);
+                const ForwardPropagation* decoded =
+                    &impl->run_decode(next, cache_length);
+                impl->cached_tokens.push_back(next);
+                ++cache_length;
+                next = impl->sampler->sample_row(
+                    *decoded, 0, sampling, sampling_history);
+                continue;
+            }
+
+            {
+                // Catch the draft up with every stream token it has not seen,
+                // ending with the pending one, then chain the proposals.
+                proposals.clear();
+                for (Index i = draft_cache; i < cache_length; ++i)
+                {
+                    Impl::stage_token(impl->draft->token_device,
+                                      impl->cached_tokens[size_t(i)]);
+                    impl->run_draft_decode(draft_cache);
+                    ++draft_cache;
+                }
+                Impl::stage_token(impl->draft->token_device, next);
+                impl->run_draft_decode(draft_cache);
+                ++draft_cache;
+
+                while (ssize(proposals) < propose)
+                {
+                    if (!proposals.empty())
+                    {
+                        impl->run_draft_decode(draft_cache);
+                        ++draft_cache;
+                    }
+                    proposals.push_back(impl->draft->sampler->sample_row(
+                        impl->draft->decode, 0, sampling, sampling_history));
+                }
+            }
+
+            impl->token_window[0] = float(next);
+            for (Index j = 0; j < propose; ++j)
+                impl->token_window[size_t(1 + j)] = float(proposals[size_t(j)]);
+            impl->run_prefill(propose + 1, cache_length);
+
+            Index accepted = 0;
+            Index correction = -1;
+            for (Index j = 0; j <= propose; ++j)
+            {
+                const Index choice = impl->sampler->sample_row(
+                    impl->prefill, j, sampling, sampling_history);
+                if (j < propose && choice == proposals[size_t(j)])
+                {
+                    ++accepted;
+                    continue;
+                }
+                correction = choice;
+                break;
+            }
+
+            impl->cached_tokens.push_back(next);
+            ++cache_length;
+            for (Index j = 0; j < accepted; ++j)
+            {
+                impl->cached_tokens.push_back(proposals[size_t(j)]);
+                ++cache_length;
+            }
+            draft_cache = min(draft_cache, ssize(impl->cached_tokens));
+
+            bool stopped = false;
+            for (Index j = 0; j < accepted && !stopped; ++j)
+                stopped = !emit(proposals[size_t(j)]);
+            if (stopped) break;
+
+            next = correction;
+        }
+    }
+    else
+    {
         for (Index generated = 0; generated < maximum_tokens; ++generated)
         {
             ++response.generated_tokens;
             sampling_history.push_back(next);
 
+            if (parser.push(next, callback))
             {
-                PROFILE_SCOPE_HOST("parse_token");
-                if (parser.push(next, callback))
-                {
-                    response.finish_reason = FinishReason::Stop;
-                    break;
-                }
+                response.finish_reason = FinishReason::Stop;
+                break;
             }
 
             if (generated + 1 >= maximum_tokens)
@@ -1421,18 +1607,12 @@ ChatResponse ChatSession::send(
                 break;
             }
 
-            const ForwardPropagation* decoded = nullptr;
-            {
-                PROFILE_SCOPE("network");
-                decoded = &impl->run_decode(next, cache_length);
-            }
+            const ForwardPropagation* decoded =
+                &impl->run_decode(next, cache_length);
             impl->cached_tokens.push_back(next);
             ++cache_length;
-            {
-                PROFILE_SCOPE("sampling");
-                next = impl->sampler->sample_row(
-                    *decoded, 0, sampling, sampling_history);
-            }
+            next = impl->sampler->sample_row(
+                *decoded, 0, sampling, sampling_history);
         }
     }
     const auto decode_end = Clock::now();

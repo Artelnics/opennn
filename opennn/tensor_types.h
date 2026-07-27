@@ -11,7 +11,6 @@
 #include "opennn_types.h"
 #include "configuration.h"
 #include "device_backend.h"
-#include "memory_debug.h"
 
 namespace opennn
 {
@@ -281,15 +280,10 @@ struct Buffer
 
         free_buffer();
         device_type = allocation_device;
-        if (byte_count == 0)
-        {
-            memory_debug::update_buffer(this, data, bytes, device_type, owns);
-            return;
-        }
+        if (byte_count == 0) return;
 
         data = device::allocate(allocation_device, byte_count);
         bytes = byte_count;
-        memory_debug::update_buffer(this, data, bytes, device_type, owns);
     }
 
     void set_view(void* external_data, Index byte_count, Device view_device) noexcept
@@ -299,7 +293,6 @@ struct Buffer
         bytes = byte_count;
         device_type = view_device;
         owns = false;
-        memory_debug::update_buffer(this, data, bytes, device_type, owns);
     }
 
     void grow_to(Index minimum_bytes)
@@ -332,12 +325,7 @@ struct Buffer
         swap(target_buffer);
     }
 
-    explicit Buffer(Device initial_device = Device::CPU,
-                    source_location location = source_location::current()) noexcept
-        : device_type(initial_device)
-    {
-        memory_debug::register_buffer(this, initial_device, location);
-    }
+    explicit Buffer(Device initial_device = Device::CPU) noexcept : device_type(initial_device) {}
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
@@ -357,17 +345,10 @@ struct Buffer
         other.device_type = Device::CPU;
         other.owns = true;
 
-        memory_debug::update_buffer(this, data, bytes, device_type, owns);
-        memory_debug::update_buffer(&other, other.data, other.bytes,
-                                    other.device_type, other.owns);
         return *this;
     }
 
-    ~Buffer()
-    {
-        free_buffer();
-        memory_debug::unregister_buffer(this);
-    }
+    ~Buffer() { free_buffer(); }
 
     void swap(Buffer& other) noexcept
     {
@@ -375,9 +356,6 @@ struct Buffer
         std::swap(bytes, other.bytes);
         std::swap(device_type, other.device_type);
         std::swap(owns, other.owns);
-        memory_debug::update_buffer(this, data, bytes, device_type, owns);
-        memory_debug::update_buffer(&other, other.data, other.bytes,
-                                    other.device_type, other.owns);
     }
 
 private:

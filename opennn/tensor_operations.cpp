@@ -2059,8 +2059,6 @@ Index grouped_attention_decode_scratch_floats(Index n_query_heads, Index head_di
 static cublasHandle_t grouped_attention_cublas()
 {
     thread_local Buffer cublas_workspace{Device::CUDA};
-    memory_debug::name_buffer(&cublas_workspace,
-                              "GQA.cublas_workspace");
     thread_local cublasHandle_t handle = nullptr;
     if (!handle)
     {
@@ -2124,8 +2122,6 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     const Index kv_bytes     = aligned(Index(chunk) * kv_elems * Index(sizeof(T)));
 
     thread_local Buffer workspace{Device::CUDA};
-    memory_debug::name_buffer(&workspace,
-                              "GQA.generic_attention_workspace");
 
     try
     {

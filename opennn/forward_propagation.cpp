@@ -76,22 +76,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     neural_network = new_neural_network;
     mode = new_mode;
 
-    const string mode_name = mode == ForwardPropagationMode::Training
-        ? "training"
-        : "inference";
-    memory_debug::name_buffer(&data,
-        format("ForwardPropagation.data.{}", mode_name));
-    memory_debug::name_buffer(&position_device,
-        format("ForwardPropagation.position_device.{}", mode_name));
-    memory_debug::name_buffer(&inference_graph_shared_scratch,
-        format("ForwardPropagation.graph_shared_scratch.{}", mode_name));
-    memory_debug::name_buffer(&inference_graph_bf16_input,
-        format("ForwardPropagation.graph_bf16_input.{}", mode_name));
-    memory_debug::name_buffer(&inference_graph_bf16_gradient,
-        format("ForwardPropagation.graph_bf16_gradient.{}", mode_name));
-    memory_debug::name_buffer(&inference_graph_bf16_to_fp32,
-        format("ForwardPropagation.graph_bf16_to_fp32.{}", mode_name));
-
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
     device_input_buffers.clear();

@@ -36,8 +36,6 @@
 #include "opennn/neural_network.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
-#include "opennn/memory_debug.h"
-#include "opennn/profiler.h"
 
 using namespace opennn;
 using namespace std;
@@ -115,15 +113,14 @@ int main(int argc, char* argv[])
         bool want_gpu = false;
 #endif
         Index max_new = DEFAULT_MAX_NEW;
-        bool max_new_explicit = false;
-        bool audit = false;
+        bool use_draft = false;
+        Index draft_tokens = 4;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
         bool show_thinking = true;
         optional<float> temperature_override;
         optional<Index> top_k_override;
         optional<float> top_p_override;
         string data_arg;
-        string audit_prompt = "Explica brevemente que es una red neuronal.";
         for (int i = 1; i < argc; ++i)
         {
             const string a = argv[i];
@@ -134,21 +131,16 @@ int main(int argc, char* argv[])
             else if (a == "--no-think")                      reasoning_mode = ReasoningMode::Disabled;
             else if (a == "--show-thinking")                 show_thinking = true;
             else if (a == "--hide-thinking")                 show_thinking = false;
-            else if (a == "--max"  && i + 1 < argc)
-            {
-                max_new = Index(stol(argv[++i]));
-                max_new_explicit = true;
-            }
+            else if (a == "--max"  && i + 1 < argc)         max_new = Index(stol(argv[++i]));
             else if (a == "--temp" && i + 1 < argc)         temperature_override = stof(argv[++i]);
             else if (a == "--top-k" && i + 1 < argc)        top_k_override = Index(stol(argv[++i]));
             else if (a == "--top-p" && i + 1 < argc)        top_p_override = stof(argv[++i]);
             else if (a == "--data" && i + 1 < argc)         data_arg = argv[++i];
-            else if (a == "--audit")                        audit = true;
-            else if (a == "--audit-prompt" && i + 1 < argc) audit_prompt = argv[++i];
+            else if (a == "--draft")                        use_draft = true;
+            else if (a == "--draft-k" && i + 1 < argc)      { use_draft = true; draft_tokens = Index(stol(argv[++i])); }
             else if (a.rfind("--", 0) != 0)                 data_arg = a;   // bare argument = data dir
             else throw runtime_error("Unknown option: " + a);
         }
-        if (audit && !max_new_explicit) max_new = 8;
         throw_if(max_new <= 0, "--max must be greater than zero.");
         const string data_dir = find_data_dir(data_arg);
 
@@ -180,13 +172,28 @@ int main(int argc, char* argv[])
         if (want_gpu) model.upload_parameters_bf16_inference();
 #endif
 
+        unique_ptr<Qwen3> draft_model;
         ChatSession session(
             model, tokenizer, make_unique<Qwen3ChatTemplate>());
 
-        const bool profile_audit = getenv("OPENNN_PROFILE") != nullptr;
-        const bool memory_audit = memory_debug::enabled();
-        throw_if(profile_audit && memory_audit,
-                 "Use OPENNN_PROFILE and OPENNN_MEMORY_DEBUG in separate runs.");
+        if (use_draft)
+        {
+            throw_if(!want_gpu, "--draft requires the GPU build.");
+            for (const char* file : {"qwen3_draft_meta.txt", "qwen3_draft.bin"})
+                download_if_missing(data_dir + "/" + file, HF_BASE + file);
+            Qwen3Config draft_config;
+            draft_config.load(data_dir + "/qwen3_draft_meta.txt");
+            draft_model = make_unique<Qwen3>(
+                CONTEXT_LENGTH, draft_config.vocabulary, draft_config.hidden,
+                draft_config.layers, draft_config.query_heads, draft_config.key_value_heads,
+                draft_config.head_dim, draft_config.intermediate,
+                draft_config.rope_theta, draft_config.rms_epsilon);
+            draft_model->load_parameters_binary(data_dir + "/qwen3_draft.bin");
+            draft_model->upload_parameters_bf16_inference();
+            session.attach_draft_model(*draft_model, draft_tokens);
+            cout << "Draft: qwen3_draft.bin (K=" << draft_tokens
+                 << ", greedy only)" << endl;
+        }
 
         const auto make_chat_options = [&]()
         {
@@ -224,92 +231,6 @@ int main(int argc, char* argv[])
         cout << "\rDevice: "
              << (want_gpu ? "GPU (CUDA, BF16)" : "CPU (FP32)") << endl;
         print_settings();
-
-        if (audit)
-        {
-            ChatOptions audit_options = make_chat_options();
-            SamplingConfig audit_sampling = *audit_options.sampling;
-            audit_sampling.temperature = 0.0f;
-            audit_sampling.top_k = 1;
-            audit_sampling.top_p = 1.0f;
-            audit_sampling.maximum_tokens = max_new;
-            audit_options.sampling = audit_sampling;
-
-            ChatOptions warmup_options = audit_options;
-            SamplingConfig warmup_sampling = *warmup_options.sampling;
-            warmup_sampling.maximum_tokens = max<Index>(4, max_new);
-            warmup_options.sampling = warmup_sampling;
-
-            cout << "[AUDIT] warmup_tokens=" << warmup_sampling.maximum_tokens
-                 << " measured_tokens=" << audit_sampling.maximum_tokens
-                 << " prompt=\"" << audit_prompt << "\"\n";
-
-            enabled() = false;
-            {
-                memory_debug::ScopedPhase memory_phase("warmup");
-                session.send(audit_prompt, warmup_options);
-            }
-            session.clear();
-            device::synchronize();
-
-            global_stats().clear();
-            enabled() = profile_audit;
-
-            const auto audit_start = chrono::steady_clock::now();
-            ChatResponse response;
-            {
-                memory_debug::ScopedPhase memory_phase("measured");
-                memory_debug::AllocationGuard allocation_guard(memory_audit);
-                response = session.send(audit_prompt, audit_options);
-            }
-            device::synchronize();
-            const auto audit_end = chrono::steady_clock::now();
-            enabled() = false;
-
-            if (memory_audit)
-            {
-                session.clear();
-                const string repeat_prompt =
-                    audit_prompt + " Describe tambien sus principales componentes.";
-                memory_debug::ScopedPhase memory_phase("measured_repeat");
-                memory_debug::AllocationGuard allocation_guard(true);
-                session.send(repeat_prompt, audit_options);
-                device::synchronize();
-                cout << "[AUDIT] guarded_backend_allocations=0"
-                        " steady_state_repetitions=2"
-                        " variable_prompt_length=1\n";
-            }
-
-            const double audit_ms =
-                chrono::duration<double, milli>(audit_end - audit_start).count();
-            const double decode_tokens_per_second =
-                response.generated_tokens > 1
-                    && response.decode_milliseconds > 0.0
-                ? (response.generated_tokens - 1) * 1000.0
-                    / response.decode_milliseconds
-                : 0.0;
-
-            cout << "[AUDIT] prompt_tokens=" << response.prompt_tokens
-                 << " prefill_tokens=" << response.prefill_tokens
-                 << " generated_tokens=" << response.generated_tokens
-                 << " prefill_ms=" << fixed << setprecision(3)
-                 << response.prefill_milliseconds
-                 << " decode_ms=" << response.decode_milliseconds
-                 << " total_ms=" << audit_ms
-                 << " decode_tok_s=" << decode_tokens_per_second << "\n";
-
-            if (profile_audit)
-                global_stats().print(cout, "Qwen3 measured inference", audit_ms);
-            if (memory_audit)
-            {
-                memory_debug::print(cout);
-                memory_debug::print_buffers(cout);
-                memory_debug::print_allocations(cout);
-            }
-
-            cout << "[AUDIT] RESULT=OK\n";
-            return 0;
-        }
 
         cout << "Commands: :auto, :think, :no-think, :clear. "
                 "Empty line, 'exit' or 'quit' leaves.\n"

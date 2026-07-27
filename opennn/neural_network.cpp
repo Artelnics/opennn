@@ -75,13 +75,6 @@ void NeuralNetwork::compile(const Device device)
 {
     if (get_layers_number() == 0) return;
 
-    memory_debug::name_buffer(&parameters, "NeuralNetwork.parameters");
-    memory_debug::name_buffer(&parameters_bf16_mirror,
-                              "NeuralNetwork.parameters_bf16_mirror");
-    memory_debug::name_buffer(&parameters_fp32_inference_storage,
-                              "NeuralNetwork.parameters_fp32_inference_storage");
-    memory_debug::name_buffer(&states, "NeuralNetwork.states");
-
     config = Configuration::instance().resolve();
     config.device = device;
     if (device != Device::CUDA) config.training_type = Type::FP32;
@@ -857,9 +850,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                 input_slot[source_index] = pick_input(source_index);
         }
 
-        PROFILE_SCOPE(format("layer:{:03}:{}:{}", i,
-                             layers[i]->get_label(),
-                             layers[i]->get_name()));
+        PROFILE_SCOPE("fwd:" + layers[i]->get_name());
         layers[i]->forward_propagate(forward_propagation, i, is_training);
     }
 }

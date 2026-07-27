@@ -137,6 +137,51 @@ public:
     }
 };
 
+class StopPairChatTemplate final : public ChatTemplate
+{
+public:
+    explicit StopPairChatTemplate(Index new_stop_token)
+        : stop_token(new_stop_token)
+    {
+    }
+
+    bool supports_reasoning() const noexcept override { return false; }
+    ReasoningMode default_reasoning_mode() const noexcept override
+    {
+        return ReasoningMode::Disabled;
+    }
+
+    SamplingConfig default_sampling(ReasoningMode mode) const override
+    {
+        EXPECT_EQ(resolve_reasoning_mode(mode), ReasoningMode::Disabled);
+        SamplingConfig config;
+        config.temperature = 0.0f;
+        config.maximum_tokens = 8;
+        return config;
+    }
+
+    vector<Index> render(const vector<ChatMessage>& messages,
+                         ReasoningMode mode,
+                         const TokenizerOperator&) const override
+    {
+        EXPECT_EQ(resolve_reasoning_mode(mode), ReasoningMode::Disabled);
+        return vector<Index>(messages.size() + 1, Index(2));
+    }
+
+    GenerationParserSpec parser_spec(
+        ReasoningMode mode,
+        const TokenizerOperator&) const override
+    {
+        EXPECT_EQ(resolve_reasoning_mode(mode), ReasoningMode::Disabled);
+        GenerationParserSpec spec;
+        spec.stop_sequences = {{stop_token, stop_token}};
+        return spec;
+    }
+
+private:
+    Index stop_token = 0;
+};
+
 void make_tiny_decoder(NeuralNetwork& network,
                        Index sequence_length,
                        Index vocabulary_size)
@@ -155,6 +200,52 @@ void make_tiny_decoder(NeuralNetwork& network,
         {0});
     network.compile();
     network.set_parameters_random();
+}
+
+void make_constant_tiny_decoder(NeuralNetwork& network,
+                                Index sequence_length,
+                                Index vocabulary_size,
+                                Index preferred_token)
+{
+    make_tiny_decoder(network, sequence_length, vocabulary_size);
+
+    VectorMap(network.get_parameters_data(),
+              network.get_parameters_size()).setZero();
+
+    vector<TensorView>& dense_parameters =
+        network.get_layer(1)->get_parameter_views();
+    ASSERT_EQ(dense_parameters.size(), 2);
+    VectorMap bias = dense_parameters[0].as_vector();
+    bias.setConstant(-8.0f);
+    ASSERT_GT(preferred_token, 0);
+    ASSERT_LT(preferred_token, bias.size());
+    bias(preferred_token) = 8.0f;
+}
+
+ChatOptions greedy_options(Index maximum_tokens)
+{
+    ChatOptions options;
+    options.reasoning_mode = ReasoningMode::Disabled;
+    SamplingConfig sampling;
+    sampling.temperature = 0.0f;
+    sampling.repetition_penalty = 1.0f;
+    sampling.maximum_tokens = maximum_tokens;
+    options.sampling = sampling;
+    return options;
+}
+
+void expect_same_response(const ChatResponse& baseline,
+                          const ChatResponse& speculative)
+{
+    EXPECT_EQ(speculative.reasoning, baseline.reasoning);
+    EXPECT_EQ(speculative.content, baseline.content);
+    EXPECT_EQ(speculative.finish_reason, baseline.finish_reason);
+    EXPECT_EQ(speculative.prompt_tokens, baseline.prompt_tokens);
+    EXPECT_EQ(speculative.prefill_tokens, baseline.prefill_tokens);
+    EXPECT_EQ(speculative.generated_tokens, baseline.generated_tokens);
+    EXPECT_EQ(speculative.reasoning_tokens, baseline.reasoning_tokens);
+    EXPECT_EQ(speculative.content_tokens, baseline.content_tokens);
+    EXPECT_EQ(speculative.control_tokens, baseline.control_tokens);
 }
 
 }
@@ -555,6 +646,200 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
     for (size_t i = 1; i < session.get_messages().size(); i += 2)
         EXPECT_EQ(session.get_messages()[i].role,
                   ChatRole::Assistant);
+
+    Configuration::instance().set();
+}
+
+TEST(ChatSessionTest, SpeculativeGreedyFullAcceptanceMatchesBaseline)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const TemplateTokenizer tokenizer;
+    const Index token_a = tokenizer.id("A");
+    const Index vocabulary = tokenizer.get_vocabulary_size();
+
+    NeuralNetwork baseline_network;
+    NeuralNetwork speculative_network;
+    NeuralNetwork matching_draft;
+    make_constant_tiny_decoder(
+        baseline_network, 16, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        speculative_network, 16, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        matching_draft, 16, vocabulary, token_a);
+    baseline_network.upload_parameters_bf16_inference();
+    speculative_network.upload_parameters_bf16_inference();
+    matching_draft.upload_parameters_bf16_inference();
+
+    ChatSession baseline(
+        baseline_network, tokenizer,
+        make_unique<PlainChatTemplate>(), 42);
+    ChatSession speculative(
+        speculative_network, tokenizer,
+        make_unique<PlainChatTemplate>(), 42);
+    speculative.attach_draft_model(matching_draft, 3);
+
+    string streamed;
+    const ChatOptions options = greedy_options(7);
+    const ChatResponse expected = baseline.send("prompt", options);
+    const ChatResponse actual = speculative.send(
+        "prompt", options,
+        [&](const ChatDelta& delta)
+        {
+            EXPECT_EQ(delta.channel, GenerationChannel::Content);
+            streamed += delta.text;
+        });
+
+    expect_same_response(expected, actual);
+    EXPECT_EQ(actual.content, string(7, 'A'));
+    EXPECT_EQ(streamed, actual.content);
+    EXPECT_EQ(actual.finish_reason, FinishReason::MaximumTokens);
+
+    Configuration::instance().set();
+}
+
+TEST(ChatSessionTest, SpeculativeGreedyRejectsWrongDraftAndHonorsContext)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const TemplateTokenizer tokenizer;
+    const Index token_a = tokenizer.id("A");
+    const Index token_b = tokenizer.id("B");
+    const Index vocabulary = tokenizer.get_vocabulary_size();
+
+    NeuralNetwork baseline_network;
+    NeuralNetwork speculative_network;
+    NeuralNetwork rejecting_draft;
+    make_constant_tiny_decoder(
+        baseline_network, 6, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        speculative_network, 6, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        rejecting_draft, 6, vocabulary, token_b);
+    baseline_network.upload_parameters_bf16_inference();
+    speculative_network.upload_parameters_bf16_inference();
+    rejecting_draft.upload_parameters_bf16_inference();
+
+    ChatSession baseline(
+        baseline_network, tokenizer,
+        make_unique<PlainChatTemplate>(), 42);
+    ChatSession speculative(
+        speculative_network, tokenizer,
+        make_unique<PlainChatTemplate>(), 42);
+    speculative.attach_draft_model(rejecting_draft, 3);
+
+    const ChatOptions options = greedy_options(10);
+    const ChatResponse expected_first =
+        baseline.send("first", options);
+    const ChatResponse actual_first =
+        speculative.send("first", options);
+    expect_same_response(expected_first, actual_first);
+    EXPECT_EQ(actual_first.content, string(5, 'A'));
+    EXPECT_EQ(actual_first.finish_reason, FinishReason::ContextLimit);
+
+    const ChatResponse expected_second =
+        baseline.send("second", options);
+    const ChatResponse actual_second =
+        speculative.send("second", options);
+    expect_same_response(expected_second, actual_second);
+    EXPECT_EQ(actual_second.finish_reason, FinishReason::ContextLimit);
+
+    Configuration::instance().set();
+}
+
+TEST(ChatSessionTest, SpeculativeStopInsideAcceptedBatchRestartsCleanly)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const TemplateTokenizer tokenizer;
+    const Index token_a = tokenizer.id("A");
+    const Index vocabulary = tokenizer.get_vocabulary_size();
+
+    NeuralNetwork baseline_network;
+    NeuralNetwork speculative_network;
+    NeuralNetwork matching_draft;
+    make_constant_tiny_decoder(
+        baseline_network, 16, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        speculative_network, 16, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        matching_draft, 16, vocabulary, token_a);
+    baseline_network.upload_parameters_bf16_inference();
+    speculative_network.upload_parameters_bf16_inference();
+    matching_draft.upload_parameters_bf16_inference();
+
+    ChatSession baseline(
+        baseline_network, tokenizer,
+        make_unique<StopPairChatTemplate>(token_a), 42);
+    ChatSession speculative(
+        speculative_network, tokenizer,
+        make_unique<StopPairChatTemplate>(token_a), 42);
+    speculative.attach_draft_model(matching_draft, 3);
+
+    const ChatOptions options = greedy_options(8);
+    for (const string prompt : {"first", "second"})
+    {
+        SCOPED_TRACE(prompt);
+        const ChatResponse expected = baseline.send(prompt, options);
+        const ChatResponse actual = speculative.send(prompt, options);
+        expect_same_response(expected, actual);
+        EXPECT_EQ(actual.generated_tokens, 2);
+        EXPECT_EQ(actual.control_tokens, 2);
+        EXPECT_EQ(actual.finish_reason, FinishReason::Stop);
+    }
+
+    Configuration::instance().set();
+}
+
+TEST(ChatSessionTest, SpeculativeDraftRejectsInvalidConfiguration)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    const TemplateTokenizer tokenizer;
+    const Index token_a = tokenizer.id("A");
+    const Index vocabulary = tokenizer.get_vocabulary_size();
+
+    NeuralNetwork main_network;
+    NeuralNetwork valid_draft;
+    NeuralNetwork short_draft;
+    NeuralNetwork wrong_vocabulary_draft;
+    make_constant_tiny_decoder(
+        main_network, 8, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        valid_draft, 8, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        short_draft, 7, vocabulary, token_a);
+    make_constant_tiny_decoder(
+        wrong_vocabulary_draft, 8, vocabulary - 1, Index(2));
+    main_network.upload_parameters_bf16_inference();
+    valid_draft.upload_parameters_bf16_inference();
+    short_draft.upload_parameters_bf16_inference();
+    wrong_vocabulary_draft.upload_parameters_bf16_inference();
+
+    ChatSession session(
+        main_network, tokenizer,
+        make_unique<PlainChatTemplate>(), 42);
+
+    EXPECT_THROW(session.attach_draft_model(valid_draft, 0),
+                 runtime_error);
+    EXPECT_THROW(session.attach_draft_model(short_draft, 2),
+                 runtime_error);
+    EXPECT_THROW(
+        session.attach_draft_model(wrong_vocabulary_draft, 2),
+        runtime_error);
+
+    session.attach_draft_model(valid_draft, 2);
+    const ChatResponse response =
+        session.send("valid", greedy_options(3));
+    EXPECT_EQ(response.content, string(3, 'A'));
 
     Configuration::instance().set();
 }
