@@ -109,7 +109,6 @@ public:
 
     bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
-    bool is_v8_mode() const noexcept { return v8_mode; }
 
     void set(const filesystem::path&,
              const filesystem::path&,
