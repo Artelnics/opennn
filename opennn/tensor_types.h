@@ -35,6 +35,15 @@ template<> struct TypeInfo<Type::BF16>
     static constexpr const char*     name  = "BF16";
 };
 
+template<> struct TypeInfo<Type::INT8>
+{
+    using type = int8_t;
+    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_INT8;
+    static constexpr cudaDataType_t  cuda  = CUDA_R_8I;
+    static constexpr Index           bytes = Index(sizeof(int8_t));
+    static constexpr const char*     name  = "INT8";
+};
+
 template<Type... Supported, typename F>
 void visit_type(Type t, F&& f)
 {
@@ -68,6 +77,7 @@ inline cudnnDataType_t to_cudnn(Type type)
     {
     case Type::FP32: return TypeInfo<Type::FP32>::cudnn;
     case Type::BF16: return TypeInfo<Type::BF16>::cudnn;
+    case Type::INT8: return TypeInfo<Type::INT8>::cudnn;
     case Type::Auto: break;
     }
 
@@ -80,6 +90,7 @@ inline cudaDataType_t to_cuda(Type type)
     {
     case Type::FP32: return TypeInfo<Type::FP32>::cuda;
     case Type::BF16: return TypeInfo<Type::BF16>::cuda;
+    case Type::INT8: return TypeInfo<Type::INT8>::cuda;
     case Type::Auto: break;
     }
 
@@ -92,6 +103,7 @@ inline Index type_bytes(Type type)
     {
     case Type::FP32: return TypeInfo<Type::FP32>::bytes;
     case Type::BF16: return TypeInfo<Type::BF16>::bytes;
+    case Type::INT8: return TypeInfo<Type::INT8>::bytes;
     case Type::Auto: break;
     }
 
@@ -392,6 +404,7 @@ struct TensorView
     bool is_cuda() const noexcept { return device == Device::CUDA; }
     bool is_fp32() const noexcept { return type == Type::FP32; }
     bool is_bf16() const noexcept { return type == Type::BF16; }
+    bool is_int8() const noexcept { return type == Type::INT8; }
 
     template<typename T>
     T* as() const noexcept

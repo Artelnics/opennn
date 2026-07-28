@@ -11,7 +11,8 @@
 //   only the weights (.bin) and the byte-pair tokenizer (vocab.json + merges.txt) are
 //   downloaded (GitHub release assets)
 //
-//   usage: gpt2 [prompt] [max_new] [temperature] [top_k]
+//   usage: gpt2 [--int8] [prompt] [max_new] [temperature] [top_k]
+//     --int8      weight-only INT8 inference (CUDA); weights are quantized after loading
 //     prompt      text to continue in one shot; omit it (or pass --interactive) for a REPL
 //     max_new     number of tokens to generate (default 40)
 //     temperature sampling temperature; <= 0 = greedy (default 0.8)
@@ -50,15 +51,25 @@ int main(int argc, char* argv[])
 
         cout << "OpenNN. GPT-2 text generation example." << endl;
 
-        const string prompt         = argc > 1 ? argv[1] : "";   // no prompt => interactive REPL
-        const Index  max_new_tokens = argc > 2 ? Index(stol(argv[2])) : 40;
-        const float  temperature    = argc > 3 ? stof(argv[3]) : 0.8f;
-        const Index  top_k          = argc > 4 ? Index(stol(argv[4])) : 40;
+        vector<string> args;
+        bool want_int8 = false;
+        for (int i = 1; i < argc; ++i)
+        {
+            const string argument = argv[i];
+            if (argument == "--int8") want_int8 = true;
+            else args.push_back(argument);
+        }
+
+        const string prompt         = args.size() > 0 ? args[0] : "";   // no prompt => interactive REPL
+        const Index  max_new_tokens = args.size() > 1 ? Index(stol(args[1])) : 40;
+        const float  temperature    = args.size() > 2 ? stof(args[2]) : 0.8f;
+        const Index  top_k          = args.size() > 3 ? Index(stol(args[3])) : 40;
 
         const filesystem::path data_directory = "../data/gpt2";
         const filesystem::path weights_path = data_directory / "gpt2-small-seq256.bin";
 
-        Configuration::instance().set(Device::CUDA, Type::FP32);   // weights .bin is FP32
+        // The weights .bin is FP32; --int8 quantizes it after loading.
+        Configuration::instance().set(Device::CUDA, want_int8 ? Type::INT8 : Type::FP32);
 
         download_files_if_missing(data_directory, base_url, data_files);
 
@@ -75,6 +86,7 @@ int main(int argc, char* argv[])
 
         cout << "Loading pretrained weights..." << endl;
         model.load_parameters_binary(weights_path);
+        if (want_int8) model.upload_parameters_int8_inference();
 
         SamplingConfig sampling;
         sampling.maximum_tokens = max_new_tokens;

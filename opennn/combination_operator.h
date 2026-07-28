@@ -33,6 +33,7 @@ struct CombinationOperator : Operator
 
     TensorView weights;
     TensorView bias;
+    TensorView weight_scale;
 
     TensorView weight_gradient;
     TensorView bias_gradient;
@@ -40,8 +41,10 @@ struct CombinationOperator : Operator
     void set(Index, Index, Type new_compute_dtype = Type::FP32);
 
     vector<TensorSpec> parameter_specs() const override;
+    vector<SlotQuantization> parameter_quantization() const override;
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
+    void link_parameter_scales(span<const TensorView>) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

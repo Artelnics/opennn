@@ -41,7 +41,8 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     const TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     const TensorView  input_2d    = input.reshape({rows, input_features});
 
-    linear_forward(input_2d, combination.weights, combination.bias, scratch_2d);
+    linear_forward(input_2d, combination.weights, combination.bias, scratch_2d,
+                   CUBLASLT_EPILOGUE_BIAS, nullptr, combination.weight_scale);
     split_heads(scratch_4d, head_output);
 }
 

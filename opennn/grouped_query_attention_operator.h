@@ -26,6 +26,7 @@ struct GroupedQueryAttentionOperator : Operator
     bool use_qk_norm = true;
 
     TensorView q_proj, k_proj, v_proj, o_proj, q_norm, k_norm;
+    TensorView q_scale, k_scale, v_scale, o_scale, qkv_scale;
 
     bool qkv_fused = false;
 
@@ -37,7 +38,9 @@ struct GroupedQueryAttentionOperator : Operator
     Index kv_dim() const { return kv_heads * head_dim; }
 
     vector<TensorSpec> parameter_specs() const override;
+    vector<SlotQuantization> parameter_quantization() const override;
     void link_parameters(span<const TensorView>) override;
+    void link_parameter_scales(span<const TensorView>) override;
     void set_parameters_random() override;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

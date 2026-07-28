@@ -27,12 +27,20 @@ void CombinationOperator::set(Index new_input_features, Index new_output_feature
 vector<TensorSpec> CombinationOperator::parameter_specs() const
 {
     if (!use_bias)
-        return {{{input_features, output_features}, compute_dtype}};
+        return {{{input_features, output_features}, weights_dtype}};
 
     return {
         {{output_features},                  compute_dtype},
-        {{input_features, output_features},  compute_dtype},
+        {{input_features, output_features},  weights_dtype},
     };
+}
+
+vector<Operator::SlotQuantization> CombinationOperator::parameter_quantization() const
+{
+    if (!use_bias)
+        return {{output_features, 1}};
+
+    return {{}, {output_features, 1}};
 }
 
 void CombinationOperator::link_parameters(span<const TensorView> views)
@@ -45,6 +53,12 @@ void CombinationOperator::link_parameters(span<const TensorView> views)
     if (views.size() < 2) return;
     bias    = views[0];
     weights = views[1];
+}
+
+void CombinationOperator::link_parameter_scales(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    weight_scale = use_bias && views.size() >= 2 ? views[1] : views[0];
 }
 
 void CombinationOperator::link_gradients(span<const TensorView> views)
@@ -90,7 +104,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 
     if (tied_transposed)
     {
-        tied_lm_head_forward(get_input(forward_propagation, layer), weights, output);
+        tied_lm_head_forward(get_input(forward_propagation, layer), weights, output, weight_scale);
         return;
     }
 
@@ -98,7 +112,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     {
         const TensorView transposed(weights.data, {output_features, input_features},
                                     weights.type, weights.device);
-        tied_lm_head_forward(get_input(forward_propagation, layer), transposed, output);
+        tied_lm_head_forward(get_input(forward_propagation, layer), transposed, output, weight_scale);
         return;
     }
 
@@ -108,7 +122,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     {
         TensorView& activated = forward_propagation.forward_slots[layer][output_slots[1]];
         linear_forward(get_input(forward_propagation, layer), weights, bias,
-                       activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output);
+                       activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
         return;
     }
 
@@ -116,7 +130,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     const cublasLtEpilogue_t epilogue = use_bias
         ? (relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS)
         : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);
-    linear_forward(get_input(forward_propagation, layer), weights, bias, output, epilogue);
+    linear_forward(get_input(forward_propagation, layer), weights, bias, output, epilogue, nullptr, weight_scale);
 }
 
 void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

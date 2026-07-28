@@ -91,9 +91,17 @@ struct Operator
     virtual vector<TensorSpec> parameter_specs() const { return {}; }
     virtual vector<TensorSpec> state_specs()     const { return {}; }
 
+    // Per-output-channel INT8 scale metadata, parallel to parameter_specs();
+    // channels == 0 marks a non-quantized slot. axis: 0 = rows, 1 = columns.
+    struct SlotQuantization { Index channels = 0; int axis = 0; };
+    virtual vector<SlotQuantization> parameter_quantization() const { return {}; }
+
     virtual void link_parameters(span<const TensorView>) {}
     virtual void link_gradients (span<const TensorView>) {}
     virtual void link_states    (span<const TensorView>) {}
+    virtual void link_parameter_scales(span<const TensorView>) {}
+
+    virtual void set_weights_dtype(Type new_weights_dtype) { weights_dtype = new_weights_dtype; }
 
     virtual void set_parameters_random() {}
     virtual void set_parameters_glorot() {}
@@ -108,6 +116,7 @@ struct Operator
     virtual void load_state_from_JSON(const Json*) {}
 
     Type compute_dtype = Type::FP32;
+    Type weights_dtype = Type::FP32;
 
     vector<size_t> input_slots = {0};
     vector<size_t> output_slots = {1};

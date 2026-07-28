@@ -41,6 +41,7 @@ Index& workspace_requirement(GraphWorkspaceRequirements& requirements,
     case GraphWorkspaceKind::Bf16Input:     return requirements.bf16_input;
     case GraphWorkspaceKind::Bf16Gradient:  return requirements.bf16_gradient;
     case GraphWorkspaceKind::Bf16ToFp32:    return requirements.bf16_to_fp32;
+    case GraphWorkspaceKind::Int8Dequant:   return requirements.int8_dequant;
     }
 
     throw runtime_error("Unknown CUDA graph workspace kind.");
@@ -59,6 +60,8 @@ pair<void*, Index> workspace_view(const GraphWorkspaceViews& views,
         return {views.bf16_gradient, views.bf16_gradient_bytes};
     case GraphWorkspaceKind::Bf16ToFp32:
         return {views.bf16_to_fp32, views.bf16_to_fp32_bytes};
+    case GraphWorkspaceKind::Int8Dequant:
+        return {views.int8_dequant, views.int8_dequant_bytes};
     }
 
     throw runtime_error("Unknown CUDA graph workspace kind.");
@@ -805,6 +808,7 @@ namespace
         Buffer bf16_input{Device::CUDA};
         Buffer bf16_gradient{Device::CUDA};
         Buffer bf16_to_fp32{Device::CUDA};
+        Buffer int8_dequant{Device::CUDA};
 
         unordered_map<LtMatmulPlanKey, LtMatmulPlan, LtMatmulPlanKeyHash> lt_matmul_plans;
     };
@@ -951,6 +955,13 @@ float* ensure_bf16_to_fp32_workspace(Index n)
     return ensure_workspace<float>(
         thread_state().bf16_to_fp32, n,
         device::GraphWorkspaceKind::Bf16ToFp32);
+}
+
+bfloat16* ensure_int8_dequant_workspace(Index n)
+{
+    return ensure_workspace<bfloat16>(
+        thread_state().int8_dequant, n,
+        device::GraphWorkspaceKind::Int8Dequant);
 }
 
 void* ensure_cudnn_conv_workspace(size_t min_bytes)

@@ -320,6 +320,37 @@ template<typename T>
 void transpose_2d_cuda(const Index rows, const Index cols,
                        const T* src, T* dst);
 
+inline constexpr int W8A16_MAX_M = 16;
+
+// Warps cooperating on one output row. One warp keeps the most rows in flight;
+// vocabulary-sized outputs stream better with a whole block per row.
+inline int w8a16_out_major_warps(const Index out_features)
+{
+    return out_features >= 32768 ? 8 : 1;
+}
+
+// Weight-only INT8 linear: y = scale[j] * (x @ Wq) + bias, FP32 accumulate.
+// weights_out_major: W is {out, in} (row per output channel) — the fast path;
+// else {in, out}, which only reaches a fraction of the bandwidth.
+template<typename T>
+void w8a16_linear_cuda(const int m, const int in_features, const int out_features,
+                       const bool weights_out_major,
+                       const T* x, const int8_t* w, const float* scales,
+                       const T* bias, T* y);
+
+// Dequantizes a {rows, row_length} INT8 matrix. scale_by_row picks scales[row]
+// (out-major weights, conv kernels) versus scales[column] (in-major weights).
+template<typename T>
+void w8_dequant_cuda(const Index rows, const Index row_length, const bool scale_by_row,
+                     const int8_t* q, const float* scales, T* out);
+
+template<typename T>
+void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t* weights,
+                               const float* weight_scales, const float* positional_encoding,
+                               T* outputs, const int sequence_length,
+                               const int embedding_dimension, const int vocabulary_size,
+                               const bool scale_embedding);
+
 template<typename T>
 void rnn_step_fused_forward_cuda(const Index batch,
                                  const Index in_features,

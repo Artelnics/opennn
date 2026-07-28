@@ -65,7 +65,7 @@ void Batch::set(const Index new_samples_number,
     const bool on_gpu = uses_cuda();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
     input_is_bf16 = on_gpu
-                 && config.training_type == Type::BF16
+                 && activation_dtype(config.training_type) == Type::BF16
                  && dataset->supports_bf16_inputs();
     const Index input_device_bytes = input_is_bf16 ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 

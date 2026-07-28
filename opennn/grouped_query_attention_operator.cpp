@@ -40,10 +40,10 @@ vector<TensorSpec> GroupedQueryAttentionOperator::parameter_specs() const
 {
 
     vector<TensorSpec> specs = {
-        {Shape{q_dim(),  hidden},   compute_dtype},
-        {Shape{kv_dim(), hidden},   compute_dtype},
-        {Shape{kv_dim(), hidden},   compute_dtype},
-        {Shape{hidden,   q_dim()},  compute_dtype},
+        {Shape{q_dim(),  hidden},   weights_dtype},
+        {Shape{kv_dim(), hidden},   weights_dtype},
+        {Shape{kv_dim(), hidden},   weights_dtype},
+        {Shape{hidden,   q_dim()},  weights_dtype},
     };
 
     if (use_qk_norm)
@@ -53,6 +53,11 @@ vector<TensorSpec> GroupedQueryAttentionOperator::parameter_specs() const
     }
 
     return specs;
+}
+
+vector<Operator::SlotQuantization> GroupedQueryAttentionOperator::parameter_quantization() const
+{
+    return {{q_dim(), 0}, {kv_dim(), 0}, {kv_dim(), 0}, {hidden, 0}};
 }
 
 void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views)
@@ -78,6 +83,27 @@ void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views
         q_norm = {};
         k_norm = {};
     }
+}
+
+void GroupedQueryAttentionOperator::link_parameter_scales(span<const TensorView> views)
+{
+    if (views.size() < 4) return;
+    q_scale = views[0];
+    k_scale = views[1];
+    v_scale = views[2];
+    o_scale = views[3];
+
+    const bool scales_fused = q_scale.data && k_scale.data && v_scale.data
+        && k_scale.as<const float>() == q_scale.as<const float>() + q_scale.size()
+        && v_scale.as<const float>() == k_scale.as<const float>() + k_scale.size();
+
+    qkv_scale = scales_fused
+        ? TensorView(q_scale.data, Shape{q_dim() + 2 * kv_dim()}, Type::FP32, q_scale.device)
+        : TensorView{};
+
+    // The fused single-token decode needs one contiguous scale vector.
+    if (q_proj.is_int8() && !scales_fused)
+        qkv_fused = false;
 }
 
 void GroupedQueryAttentionOperator::set_parameters_random()
@@ -478,7 +504,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             {
                 TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
-                tied_lm_head_forward(x_b, qkv_w, qkv_row);
+                tied_lm_head_forward(x_b, qkv_w, qkv_row, qkv_scale);
             }
 
             TensorView key_cache(kv_key.data,   {1, table_len, kd}, act, Device::CUDA);
@@ -493,7 +519,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                           static_cast<float*>(s.partials.data), position_device);
             }
             {
-                tied_lm_head_forward(attn_v, o_proj, o_b);
+                tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
             }
             return;
         }
@@ -502,7 +528,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         {
             TensorView qkv_row(s.qkv.data, {1, 1, qd + 2 * kd}, act, Device::CUDA);
             TensorView qkv_w(q_proj.data, {qd + 2 * kd, hidden}, q_proj.type, Device::CUDA);
-            tied_lm_head_forward(x_b, qkv_w, qkv_row);
+            tied_lm_head_forward(x_b, qkv_w, qkv_row, qkv_scale);
             q_v = TensorView(s.qkv.data, {1, 1, qd}, act, Device::CUDA);
             k_v = TensorView(static_cast<char*>(s.qkv.data) + size_t(qd) * elem, {1, 1, kd}, act, Device::CUDA);
             device::copy_async(v_at, static_cast<char*>(s.qkv.data) + size_t(qd + kd) * elem,
@@ -510,9 +536,9 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         }
         else
         {
-            tied_lm_head_forward(x_b, q_proj, q_v);
-            tied_lm_head_forward(x_b, k_proj, k_v);
-            tied_lm_head_forward(x_b, v_proj, v_slot);
+            tied_lm_head_forward(x_b, q_proj, q_v, q_scale);
+            tied_lm_head_forward(x_b, k_proj, k_v, k_scale);
+            tied_lm_head_forward(x_b, v_proj, v_slot, v_scale);
         }
 
         {
@@ -566,7 +592,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                         "gqa sdpa execute");
                 }
                 {
-                    tied_lm_head_forward(attn_v, o_proj, o_b);
+                    tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
                 }
                 return;
             }
@@ -579,7 +605,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
                                       static_cast<float*>(s.partials.data));
         }
         {
-            tied_lm_head_forward(attn_v, o_proj, o_b);
+            tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
         }
         return;
     }
@@ -600,9 +626,9 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
         TensorView x_b(in_b,  {1, seq, hidden}, act, Device::CUDA);
         TensorView o_b(out_b, {1, seq, hidden}, act, Device::CUDA);
 
-        tied_lm_head_forward(x_b, q_proj, q_v);
-        tied_lm_head_forward(x_b, k_proj, k_v);
-        tied_lm_head_forward(x_b, v_proj, v_v);
+        tied_lm_head_forward(x_b, q_proj, q_v, q_scale);
+        tied_lm_head_forward(x_b, k_proj, k_v, k_scale);
+        tied_lm_head_forward(x_b, v_proj, v_v, v_scale);
 
         if (use_qk_norm)
         {
@@ -615,7 +641,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
 
         grouped_attention_forward(qr_v, kr_v, v_v, attn_v, q_heads, kv_heads, head_dim, true, scale, 0);
 
-        tied_lm_head_forward(attn_v, o_proj, o_b);
+        tied_lm_head_forward(attn_v, o_proj, o_b, o_scale);
     }
 }
 

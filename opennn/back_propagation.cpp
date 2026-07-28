@@ -33,6 +33,9 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     throw_if(!neural_network, "neural network is not set.");
 
+    throw_if(neural_network->get_training_type() == Type::INT8,
+             "INT8 is inference-only; training requires FP32 or BF16.");
+
     error = 0.0f;
     accuracy = 0.0f;
     regularization = 0.0f;

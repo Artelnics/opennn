@@ -32,8 +32,16 @@ struct MultiHeadProjectionOperator : Operator
     void set(Index, Index, Index, Type);
 
     vector<TensorSpec> parameter_specs() const override { return combination.parameter_specs(); }
+    vector<SlotQuantization> parameter_quantization() const override { return combination.parameter_quantization(); }
     void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
     void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
+    void link_parameter_scales(span<const TensorView> views) override { combination.link_parameter_scales(views); }
+
+    void set_weights_dtype(Type new_weights_dtype) override
+    {
+        weights_dtype = new_weights_dtype;
+        combination.set_weights_dtype(new_weights_dtype);
+    }
 
     void set_parameters_random() override { combination.set_parameters_random(); }
     void set_parameters_glorot() override { combination.set_parameters_glorot(); }

@@ -26,10 +26,15 @@ void EmbeddingLookupOperator::set(Index new_vocabulary_size, Index new_sequence_
 vector<TensorSpec> EmbeddingLookupOperator::parameter_specs() const
 {
     vector<TensorSpec> specs = {{{vocabulary_size, embedding_dimension},
-                                 weights_follow_compute_dtype ? compute_dtype : Type::FP32}};
+                                 weights_follow_compute_dtype ? weights_dtype : Type::FP32}};
     if (positional_trainable)
         specs.push_back({{sequence_length, embedding_dimension}, Type::FP32});
     return specs;
+}
+
+vector<Operator::SlotQuantization> EmbeddingLookupOperator::parameter_quantization() const
+{
+    return {{vocabulary_size, 0}};
 }
 
 vector<TensorSpec> EmbeddingLookupOperator::state_specs() const
@@ -46,6 +51,12 @@ void EmbeddingLookupOperator::link_parameters(span<const TensorView> views)
     weights = views[0];
     if (positional_trainable && views.size() > 1)
         positional_encoding = views[1];
+}
+
+void EmbeddingLookupOperator::link_parameter_scales(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    weight_scale = views[0];
 }
 
 void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
@@ -120,7 +131,7 @@ void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_prop
 
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,
-                             scale_embedding, add_positional_encoding);
+                             scale_embedding, add_positional_encoding, weight_scale);
 }
 
 void EmbeddingLookupOperator::compute_valid_lengths(const TensorView& indices, vector<Index>& valid_lengths) const
