@@ -157,7 +157,7 @@ protected:
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_batch_workers_number(const NeuralNetwork&) const;
+    int get_batch_workers_number(const NeuralNetwork&) const { return workers_number; }
     int get_batch_pool_size(const NeuralNetwork&) const;
 
     struct EpochLoopContext;
@@ -204,7 +204,7 @@ protected:
 
     void reset_graph_capture();
 
-    bool cuda_graph_requested() const;
+    bool cuda_graph_requested() const { return use_cuda_graph; }
     bool graph_epoch_enabled(bool, Batch*) const;
     Loss::EvaluationResult run_graph_epoch(ForwardPropagation&,
                                            BackPropagation&,

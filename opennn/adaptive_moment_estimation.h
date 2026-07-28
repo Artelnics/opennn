@@ -24,11 +24,11 @@ public:
 
     explicit AdaptiveMomentEstimation(Loss* = nullptr);
 
-    void set_batch_size(const Index);
+    void set_batch_size(const Index new_batch_size) { batch_size = new_batch_size; }
 
     void set_default();
 
-    void set_learning_rate(const float);
+    void set_learning_rate(const float new_learning_rate) { learning_rate = new_learning_rate; }
     float get_learning_rate() const { return learning_rate; }
     void set_beta_1(const float);
     void set_beta_2(const float);

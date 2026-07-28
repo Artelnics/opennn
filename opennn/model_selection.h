@@ -9,7 +9,7 @@
 #pragma once
 
 #include "inputs_selection.h"
-#include "neuron_selection.h"
+#include "growing_neurons.h"
 
 namespace opennn
 {
@@ -42,14 +42,12 @@ public:
 
 private:
 
-    NeuronSelection* get_neurons_selection() const { return neurons_selection.get(); }
     InputsSelection* get_inputs_selection() const { return inputs_selection.get(); }
-    void set_neurons_selection(const string&);
     void set_inputs_selection(const string&);
 
     TrainingStrategy* training_strategy = nullptr;
 
-    unique_ptr<NeuronSelection> neurons_selection;
+    GrowingNeurons neurons_selection;
 
     unique_ptr<InputsSelection> inputs_selection;
 };

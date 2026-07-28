@@ -236,6 +236,60 @@ float chunked_prefill_and_decode_max_diff(const Dims& d,
                               logits_row(chunked_decode, 0)));
 }
 
+uint16_t to_bfloat16(const float value)
+{
+    uint32_t bits;
+    std::memcpy(&bits, &value, sizeof(bits));
+    bits += 0x7FFFu + ((bits >> 16) & 1u);
+    return uint16_t(bits >> 16);
+}
+
+float from_bfloat16(const uint16_t value)
+{
+    const uint32_t bits = uint32_t(value) << 16;
+    float result;
+    std::memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+void round_parameters_to_bf16(NeuralNetwork& network)
+{
+    for (auto& layer : network.get_layers())
+        for (TensorView& view : layer->get_parameter_views())
+            for (Index i = 0; i < view.size(); ++i)
+                view.as<float>()[i] =
+                    from_bfloat16(to_bfloat16(view.as<float>()[i]));
+}
+
+void write_logical_bf16_parameters(
+    const NeuralNetwork& network,
+    const filesystem::path& path)
+{
+    filesystem::path fp32_path = path;
+    fp32_path += ".fp32";
+    network.save_parameters_binary(fp32_path);
+
+    ifstream input(fp32_path, ios::binary | ios::ate);
+    ASSERT_TRUE(input.is_open());
+    const streamoff bytes = input.tellg();
+    ASSERT_GE(bytes, 0);
+    ASSERT_EQ(bytes % streamoff(sizeof(float)), 0);
+    input.seekg(0);
+
+    vector<float> fp32(size_t(bytes / streamoff(sizeof(float))));
+    input.read(reinterpret_cast<char*>(fp32.data()), bytes);
+    ASSERT_TRUE(input.good());
+
+    vector<uint16_t> bf16(fp32.size());
+    transform(fp32.begin(), fp32.end(), bf16.begin(), to_bfloat16);
+    ofstream output(path, ios::binary | ios::trunc);
+    ASSERT_TRUE(output.is_open());
+    output.write(reinterpret_cast<const char*>(bf16.data()),
+                 streamsize(bf16.size() * sizeof(uint16_t)));
+    ASSERT_TRUE(output.good());
+    filesystem::remove(fp32_path);
+}
+
 }
 
 
@@ -312,6 +366,41 @@ TEST(Qwen3NetworkTest, CompactOutputWindowMatchesSelectedFullRowsCpu)
     Configuration::instance().set();
 }
 
+TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchRoundedCpu)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Qwen3 expected(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    Qwen3 loaded(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    fill_parameters(expected);
+    round_parameters_to_bf16(expected);
+
+    const filesystem::path path =
+        filesystem::temp_directory_path()
+        / "opennn_qwen3_logical_bf16_cpu.bin";
+    write_logical_bf16_parameters(expected, path);
+    loaded.load_parameters_bf16_inference_binary(path);
+
+    vector<float> expected_window(size_t(TINY.seq), 0.0f);
+    vector<float> loaded_window(size_t(TINY.seq), 0.0f);
+    const vector<Index> ids = {2, 3, 5, 7, 11};
+    ForwardPropagation expected_fp(1, &expected);
+    ForwardPropagation loaded_fp(1, &loaded);
+    run(expected, expected_fp, expected_window, ids, 0);
+    run(loaded, loaded_fp, loaded_window, ids, 0);
+
+    EXPECT_LT(max_difference(logits_row(expected_fp, ssize(ids) - 1),
+                             logits_row(loaded_fp, ssize(ids) - 1)),
+              1.0e-6f);
+    filesystem::remove(path);
+    Configuration::instance().set();
+}
+
 
 #ifdef OPENNN_HAS_CUDA
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpu)
@@ -329,6 +418,42 @@ TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpuBf16Upload)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
     EXPECT_LT(multi_turn_max_logit_diff(TINY, /*bf16_upload*/ true), 1.0e-2f);
+    Configuration::instance().set();
+}
+
+TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchUploadGpu)
+{
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+    Qwen3 uploaded(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    Qwen3 direct(
+        TINY.seq, TINY.vocab, TINY.hidden, TINY.layers,
+        TINY.q_heads, TINY.kv_heads, TINY.head_dim, TINY.intermediate,
+        1000000.0f, 1.0e-6f);
+    fill_parameters(uploaded);
+    round_parameters_to_bf16(uploaded);
+
+    const filesystem::path path =
+        filesystem::temp_directory_path()
+        / "opennn_qwen3_logical_bf16_gpu.bin";
+    write_logical_bf16_parameters(uploaded, path);
+    direct.load_parameters_bf16_inference_binary(path);
+    uploaded.upload_parameters_bf16_inference();
+
+    vector<float> uploaded_window(size_t(TINY.seq), 0.0f);
+    vector<float> direct_window(size_t(TINY.seq), 0.0f);
+    const vector<Index> ids = {2, 3, 5, 7, 11};
+    ForwardPropagation uploaded_fp(1, &uploaded);
+    ForwardPropagation direct_fp(1, &direct);
+    run(uploaded, uploaded_fp, uploaded_window, ids, 0);
+    run(direct, direct_fp, direct_window, ids, 0);
+
+    EXPECT_LT(max_difference(logits_row(uploaded_fp, ssize(ids) - 1),
+                             logits_row(direct_fp, ssize(ids) - 1)),
+              1.0e-2f);
+    filesystem::remove(path);
     Configuration::instance().set();
 }
 

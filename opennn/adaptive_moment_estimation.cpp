@@ -81,11 +81,6 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     set_default();
 }
 
-void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
-{
-    batch_size = new_batch_size;
-}
-
 void AdaptiveMomentEstimation::set_beta_1(const float new_beta_1)
 {
     throw_if(new_beta_1 < 0.0f || new_beta_1 >= 1.0f,
@@ -107,11 +102,6 @@ void AdaptiveMomentEstimation::set_default()
     batch_size = 0;
     display_period = 100;
     name = "AdaptiveMomentEstimation";
-}
-
-void AdaptiveMomentEstimation::set_learning_rate(const float new_learning_rate)
-{
-    learning_rate = new_learning_rate;
 }
 
 void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_data,

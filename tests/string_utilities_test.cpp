@@ -9,24 +9,18 @@
 
 using namespace opennn;
 
-TEST(StringUtilitiesTest, GetTrimmed)
-{
-    EXPECT_EQ(get_trimmed("   hello   "), "hello");
-    EXPECT_EQ(get_trimmed("\t\n hello world \r\n"), "hello world");
-    EXPECT_EQ(get_trimmed("nopadding"), "nopadding");
-    EXPECT_EQ(get_trimmed(""), "");
-    EXPECT_EQ(get_trimmed("     "), "");
-    EXPECT_EQ(get_trimmed("  a  "), "a");
-    EXPECT_EQ(get_trimmed("a b"), "a b");
-}
-
 TEST(StringUtilitiesTest, TrimView)
 {
     EXPECT_EQ(trim_view("   hello   "), "hello");
+    EXPECT_EQ(trim_view("\t\n hello world \r\n"), "hello world");
     EXPECT_EQ(trim_view("\t\n value \r"), "value");
     EXPECT_EQ(trim_view("plain"), "plain");
+    EXPECT_EQ(trim_view("nopadding"), "nopadding");
     EXPECT_EQ(trim_view(""), "");
     EXPECT_EQ(trim_view("    "), "");
+    EXPECT_EQ(trim_view("     "), "");
+    EXPECT_EQ(trim_view("  a  "), "a");
+    EXPECT_EQ(trim_view("a b"), "a b");
     EXPECT_EQ(trim_view("x"), "x");
 }
 

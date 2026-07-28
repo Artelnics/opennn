@@ -58,7 +58,6 @@ namespace opennn
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    string get_trimmed(const string&);
     string join_strings(span<const string>, string_view = " ");
 
     template <typename T>

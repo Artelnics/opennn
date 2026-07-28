@@ -28,9 +28,9 @@ public:
                       bool = false,
                       const Codification& = Codification::UTF8);
 
-    Index get_past_time_steps() const;
-    Index get_future_time_steps() const;
-    bool get_multi_target() const;
+    Index get_past_time_steps() const { return past_time_steps; }
+    Index get_future_time_steps() const { return future_time_steps; }
+    bool get_multi_target() const { return multi_target; }
 
     Tensor3 get_data(const string&, const string&) const;
 

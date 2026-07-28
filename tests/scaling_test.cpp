@@ -252,33 +252,43 @@ TEST(ScalingTest, ScaleLogarithmicClampsNonPositiveValues)
     MatrixR matrix(3, 1);
     matrix << type(-2), type(0), type(3);
 
-    MatrixMap map(matrix.data(), 3, 1);
-    scale_logarithmic(map, 0);
+    TabularDataset dataset(3, { 1 }, { 0 });
+    dataset.set_data(matrix);
+    dataset.set_variable_scalers("Logarithm");
 
-    EXPECT_NEAR(matrix(0, 0), std::log(EPSILON), 1e-5f);
-    EXPECT_NEAR(matrix(1, 0), std::log(EPSILON), 1e-5f);
-    EXPECT_NEAR(matrix(2, 0), std::log(3.0f), 1e-5f);
+    dataset.scale_data();
 
-    EXPECT_TRUE(matrix.array().isFinite().all());
+    const MatrixR scaled = dataset.get_data();
+
+    EXPECT_NEAR(scaled(0, 0), std::log(EPSILON), 1e-5f);
+    EXPECT_NEAR(scaled(1, 0), std::log(EPSILON), 1e-5f);
+    EXPECT_NEAR(scaled(2, 0), std::log(3.0f), 1e-5f);
+
+    EXPECT_TRUE(scaled.array().isFinite().all());
 }
 
 
 TEST(ScalingTest, UnscaleStandardDeviationZeroDeviationIsNoOp)
 {
     MatrixR matrix(3, 1);
-    matrix << type(1), type(2), type(3);
+    matrix << type(1), type(1), type(1);
 
-    Descriptives descriptives;
-    descriptives.standard_deviation = type(0);
+    TabularDataset dataset(3, { 1 }, { 0 });
+    dataset.set_data(matrix);
+    dataset.set_variable_scalers("StandardDeviation");
 
-    MatrixMap map(matrix.data(), 3, 1);
-    unscale_standard_deviation(map, 0, descriptives);
+    vector<Descriptives> descriptives = dataset.calculate_feature_descriptives();
+    ASSERT_NEAR(descriptives[0].standard_deviation, type(0), 1e-6);
 
-    EXPECT_NEAR(matrix(0, 0), type(1), 1e-6);
-    EXPECT_NEAR(matrix(1, 0), type(2), 1e-6);
-    EXPECT_NEAR(matrix(2, 0), type(3), 1e-6);
+    dataset.unscale_features("Input", descriptives);
 
-    EXPECT_TRUE(matrix.array().isFinite().all());
+    const MatrixR unscaled = dataset.get_data();
+
+    EXPECT_NEAR(unscaled(0, 0), type(1), 1e-6);
+    EXPECT_NEAR(unscaled(1, 0), type(1), 1e-6);
+    EXPECT_NEAR(unscaled(2, 0), type(1), 1e-6);
+
+    EXPECT_TRUE(unscaled.array().isFinite().all());
 }
 
 

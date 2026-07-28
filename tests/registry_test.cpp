@@ -4,7 +4,6 @@
 #include "opennn/layer.h"
 #include "opennn/optimizer.h"
 #include "opennn/inputs_selection.h"
-#include "opennn/neuron_selection.h"
 
 using namespace opennn;
 
@@ -65,12 +64,7 @@ TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
         "GrowingInputs"
     };
 
-    const vector<string> expected_neuron_selection = {
-        "GrowingNeurons"
-    };
-
     EXPECT_EQ(sorted_registered_names<Layer>(), expected_layers);
     EXPECT_EQ(sorted_registered_names<Optimizer>(), expected_optimizers);
     EXPECT_EQ(sorted_registered_names<InputsSelection>(), expected_inputs_selection);
-    EXPECT_EQ(sorted_registered_names<NeuronSelection>(), expected_neuron_selection);
 }

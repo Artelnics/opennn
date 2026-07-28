@@ -357,11 +357,6 @@ void replace_all_appearances(string& text, const string& to_replace, const strin
     text.swap(buffer);
 }
 
-string get_trimmed(const string& text)
-{
-    return string(trim_view(text));
-}
-
 string join_strings(span<const string> values, string_view separator)
 {
     if (values.empty()) return {};

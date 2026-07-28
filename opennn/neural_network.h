@@ -171,6 +171,9 @@ public:
 
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
+    // Logical parameter-buffer order, one BF16 value per FP32 master slot.
+    // CUDA inference streams BF16 weights directly into compact device storage.
+    void load_parameters_bf16_inference_binary(const filesystem::path&);
     void load_states_binary(const filesystem::path&);
 
     void forward_propagate(const vector<TensorView>&,
@@ -257,6 +260,8 @@ private:
     };
 
     void initialize_parameters(void (Operator::*)());
+
+    void activate_transposed_inference_weights();
 
     void validate_type(LayerType) const;
 

@@ -165,7 +165,7 @@ public:
     {
         set_sample_roles(indices, string_to_sample_role(role));
     }
-    void set_variables(const vector<Variable>&);
+    void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
 
@@ -196,7 +196,7 @@ public:
     void set_shape(VariableRole, const Shape&);
     void set_shape(string_view role, const Shape& shape) { set_shape(string_to_variable_role(role), shape); }
     virtual void resize_input_shape(Index input_features_count) { set_shape(VariableRole::Input, {input_features_count}); }
-    virtual void set_data_path(const filesystem::path&);
+    virtual void set_data_path(const filesystem::path& new_data_path) { data_path = new_data_path; }
     virtual void set_storage_mode(StorageMode);
     virtual void set_storage_mode(const string&);
 

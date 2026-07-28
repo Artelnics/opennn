@@ -16,11 +16,6 @@
 namespace opennn
 {
 
-void ActivationOperator::set_activation_function(ActivationFunction new_function)
-{
-    activation_function = new_function;
-}
-
 void ActivationOperator::set_activation_function(const string& name)
 {
     set_activation_function(from_string(name));

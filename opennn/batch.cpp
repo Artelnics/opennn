@@ -204,11 +204,6 @@ void Batch::fill(const vector<Index>& sample_indices,
                         mode);
 }
 
-Index Batch::get_samples_number() const
-{
-    return samples_number;
-}
-
 bool Batch::is_empty() const
 {
     return input.buffer.empty() && decoder.buffer.empty() && target.buffer.empty();

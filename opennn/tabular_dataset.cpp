@@ -968,32 +968,53 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
 
     MatrixMap map(data.data(), data.rows(), data.cols());
 
+    auto column = map.col(feature_index);
+
+    constexpr float min_range = -1.0f;
+    constexpr float max_range = 1.0f;
+
     using enum ScalerMethod;
     switch (method)
     {
     case None:
         break;
+
     case MinimumMaximum:
-        unscale ? unscale_minimum_maximum(map, feature_index, desc)
-                : scale_minimum_maximum(map, feature_index, desc);
+        if (unscale)
+            column.array() = (column.array() - min_range) / (max_range - min_range)
+                           * (desc.maximum - desc.minimum) + desc.minimum;
+        else if (desc.maximum - desc.minimum < EPSILON)
+            column.setZero();
+        else
+            column.array() = scale_minimum_maximum_formula(column.array(), desc, min_range, max_range);
         break;
+
     case MeanStandardDeviation:
-        unscale ? unscale_mean_standard_deviation(map, feature_index, desc)
-                : scale_mean_standard_deviation(map, feature_index, desc);
+        if (unscale && desc.standard_deviation < EPSILON)
+            column.setConstant(desc.mean);
+        else if (unscale)
+            column.array() = desc.mean + column.array() * desc.standard_deviation;
+        else if (desc.standard_deviation > EPSILON)
+            column.array() = scale_mean_standard_deviation_formula(column.array(), desc);
+        else
+            column.setZero();
         break;
+
     case StandardDeviation:
-        unscale ? unscale_standard_deviation(map, feature_index, desc)
-                : scale_standard_deviation(map, feature_index, desc);
+        column *= unscale
+            ? (abs(desc.standard_deviation) < EPSILON ? 1.0f : desc.standard_deviation)
+            : (desc.standard_deviation > EPSILON ? 1.0f / desc.standard_deviation : 0.0f);
         break;
+
     case Logarithm:
-        unscale ? unscale_logarithmic(map, feature_index)
-                : scale_logarithmic(map, feature_index);
+        if (unscale) column.array() = column.array().exp();
+        else         column.array() = column.array().max(EPSILON).log();
         break;
+
     case ImageMinMax:
-        if (unscale) unscale_image_minimum_maximum(map, feature_index);
+        if (unscale) column *= 255.0f;
         break;
     }
-
 }
 
 vector<Descriptives> TabularDataset::scale_data()

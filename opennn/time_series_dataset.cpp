@@ -80,21 +80,6 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     configure_forecasting();
 }
 
-Index TimeSeriesDataset::get_past_time_steps() const
-{
-    return past_time_steps;
-}
-
-Index TimeSeriesDataset::get_future_time_steps() const
-{
-    return future_time_steps;
-}
-
-bool TimeSeriesDataset::get_multi_target() const
-{
-    return multi_target;
-}
-
 Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& feature_role) const
 {
     const vector<Index> sample_indices = get_sample_indices(sample_role);

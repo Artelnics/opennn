@@ -277,15 +277,15 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         input_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {
             {elapsed_time >= maximum_time, StoppingCondition::MaximumTime,
-             compose_message("Epoch ", epoch, "\nMaximum time reached: ", get_time(elapsed_time), "\n")},
+             format("Epoch {}\nMaximum time reached: {}\n", epoch, get_time(elapsed_time))},
             {input_selection_results.optimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
-             compose_message("\nValidation error goal reached: ", input_selection_results.optimum_validation_error, "\n")},
+             format("\nValidation error goal reached: {:g}\n", input_selection_results.optimum_validation_error)},
             {epoch >= maximum_epochs, StoppingCondition::MaximumEpochs,
-             compose_message("\nMaximum number of epochs reached.\n")},
+             "\nMaximum number of epochs reached.\n"},
             {validation_failures >= maximum_validation_failures, StoppingCondition::MaximumValidationFailures,
-             compose_message("\nMaximum validation failures (", validation_failures, ") reached.\n")},
+             format("\nMaximum validation failures ({}) reached.\n", validation_failures)},
             {current_inputs >= maximum_inputs_number, StoppingCondition::MaximumInputs,
-             compose_message("\nMaximum inputs (", current_inputs, ") reached.\n")}
+             format("\nMaximum inputs ({}) reached.\n", current_inputs)}
         });
     }
 

@@ -21,16 +21,9 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 
 void ModelSelection::set_default()
 {
-    set_neurons_selection("GrowingNeurons");
+    neurons_selection.set(training_strategy);
 
     set_inputs_selection("GrowingInputs");
-}
-
-void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
-{
-    neurons_selection = Registry<NeuronSelection>::instance().create(new_neurons_selection);
-
-    neurons_selection->set(training_strategy);
 }
 
 void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
@@ -42,7 +35,7 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 
 NeuronsSelectionResult ModelSelection::perform_neurons_selection()
 {
-    return neurons_selection->perform_neurons_selection();
+    return neurons_selection.perform_neurons_selection();
 }
 
 InputsSelectionResult ModelSelection::perform_input_selection()
@@ -56,9 +49,9 @@ void ModelSelection::to_JSON(JsonWriter& printer) const
 
     printer.open_element("NeuronSelection");
 
-    add_json_field(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
+    add_json_field(printer, "NeuronsSelectionMethod", neurons_selection.get_name());
 
-    neurons_selection->to_JSON(printer);
+    neurons_selection.to_JSON(printer);
 
     printer.close_element();
 
@@ -86,8 +79,8 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     throw_if(!neurons_selection_method_element,
              "{} element is nullptr.\n", selection_method);
 
-    set_neurons_selection(selection_method);
-    neurons_selection->from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
+    neurons_selection.set(training_strategy);
+    neurons_selection.from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
     const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
 

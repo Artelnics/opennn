@@ -1176,6 +1176,24 @@ static ifstream open_binary_input(const filesystem::path& file_name,
     return file;
 }
 
+static inline float bfloat16_to_float_host(const uint16_t value)
+{
+    const uint32_t bits = uint32_t(value) << 16;
+    float result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
+
+#ifdef OPENNN_HAS_CUDA
+static inline uint16_t float_to_bfloat16_host(const float value)
+{
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof(bits));
+    bits += 0x7FFFu + ((bits >> 16) & 1u);
+    return uint16_t(bits >> 16);
+}
+#endif
+
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
     ofstream file = open_binary_output(file_name);
@@ -1222,6 +1240,197 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     }
 
     throw_if(!file, "Error reading binary file: {}", file_name.string());
+}
+
+void NeuralNetwork::load_parameters_bf16_inference_binary(
+    const filesystem::path& file_name)
+{
+    throw_if(parameters.empty() || !parameters.owns,
+             "NeuralNetwork::load_parameters_bf16_inference_binary: "
+             "the network must own its compiled parameter storage.");
+
+    const Index parameters_number = parameters.size_in_floats();
+    ifstream file = open_binary_input(
+        file_name, uintmax_t(parameters_number) * sizeof(uint16_t),
+        "load_parameters_bf16_inference_binary");
+
+    constexpr Index chunk_elements = Index(8) * 1024 * 1024;
+    vector<uint16_t> bf16_chunk(
+        size_t(min(chunk_elements, max(Index(1), parameters_number))));
+    vector<float> fp32_chunk(bf16_chunk.size());
+
+#ifdef OPENNN_HAS_CUDA
+    const bool direct_cuda =
+        config.device == Device::CUDA
+        && config.training_type == Type::BF16;
+    if (config.device == Device::CUDA)
+        throw_if(!direct_cuda,
+                 "NeuralNetwork::load_parameters_bf16_inference_binary: "
+                 "CUDA direct loading requires BF16 configuration.");
+
+    if (direct_cuda)
+    {
+        Index bf16_keep = 0;
+        Index fp32_keep = 0;
+        for (const auto& layer : layers)
+        {
+            const Layer::TiedWeight tie = layer->get_tied_weight();
+            const auto specs = layer->get_parameter_specs();
+            for (size_t spec_index = 0; spec_index < specs.size(); ++spec_index)
+            {
+                const auto& [shape, dtype] = specs[spec_index];
+                if (shape.empty()
+                    || (tie.source && spec_index == tie.spec_index))
+                    continue;
+
+                (dtype == Type::BF16 ? bf16_keep : fp32_keep)
+                    += get_aligned_size(shape.size());
+            }
+        }
+
+        parameters_bf16_mirror.resize_bytes(
+            bf16_keep * Index(sizeof(bfloat16)), Device::CUDA);
+        parameters_fp32_inference_storage.resize_bytes(
+            fp32_keep * Index(sizeof(float)), Device::CUDA);
+        parameters_bf16_mirror_compact = true;
+
+        uint16_t* const mirror =
+            bf16_keep > 0
+                ? parameters_bf16_mirror.as<uint16_t>()
+                : nullptr;
+        float* const fp32_compact =
+            fp32_keep > 0
+                ? parameters_fp32_inference_storage.as<float>()
+                : nullptr;
+        cudaStream_t stream = Backend::get_compute_stream();
+
+        const auto skip = [&](const Index count)
+        {
+            if (count <= 0) return;
+            file.seekg(
+                streamoff(count * Index(sizeof(uint16_t))), ios::cur);
+            throw_if(!file,
+                     "Error seeking through BF16 parameter file: {}",
+                     file_name.string());
+        };
+
+        const auto read_bf16_to_device =
+            [&](uint16_t* destination, const Index count)
+        {
+            Index copied = 0;
+            while (copied < count)
+            {
+                const Index chunk =
+                    min(chunk_elements, count - copied);
+                file.read(
+                    reinterpret_cast<char*>(bf16_chunk.data()),
+                    streamsize(chunk * Index(sizeof(uint16_t))));
+                throw_if(!file,
+                         "Error reading BF16 parameter file: {}",
+                         file_name.string());
+                device::copy_async(
+                    destination + copied, bf16_chunk.data(),
+                    chunk * Index(sizeof(uint16_t)),
+                    Device::CPU, Device::CUDA, stream);
+                device::synchronize(stream);
+                copied += chunk;
+            }
+        };
+
+        const auto read_bf16_as_fp32_to_device =
+            [&](float* destination, const Index count)
+        {
+            Index copied = 0;
+            while (copied < count)
+            {
+                const Index chunk =
+                    min(chunk_elements, count - copied);
+                file.read(
+                    reinterpret_cast<char*>(bf16_chunk.data()),
+                    streamsize(chunk * Index(sizeof(uint16_t))));
+                throw_if(!file,
+                         "Error reading BF16 parameter file: {}",
+                         file_name.string());
+                for (Index i = 0; i < chunk; ++i)
+                    fp32_chunk[size_t(i)] =
+                        bfloat16_to_float_host(bf16_chunk[size_t(i)]);
+                device::copy_async(
+                    destination + copied, fp32_chunk.data(),
+                    chunk * Index(sizeof(float)),
+                    Device::CPU, Device::CUDA, stream);
+                device::synchronize(stream);
+                copied += chunk;
+            }
+        };
+
+        Index bf16_offset = 0;
+        Index fp32_offset = 0;
+        for (const auto& layer : layers)
+        {
+            const Layer::TiedWeight tie = layer->get_tied_weight();
+            const auto specs = layer->get_parameter_specs();
+            for (size_t spec_index = 0;
+                 spec_index < specs.size(); ++spec_index)
+            {
+                const auto& [shape, dtype] = specs[spec_index];
+                if (shape.empty()) continue;
+
+                const Index size = shape.size();
+                const Index aligned = get_aligned_size(size);
+                if (tie.source && spec_index == tie.spec_index)
+                {
+                    skip(aligned);
+                    continue;
+                }
+
+                if (dtype == Type::BF16)
+                {
+                    read_bf16_to_device(
+                        mirror + bf16_offset, size);
+                    bf16_offset += aligned;
+                }
+                else
+                {
+                    read_bf16_as_fp32_to_device(
+                        fp32_compact + fp32_offset, size);
+                    fp32_offset += aligned;
+                }
+                skip(aligned - size);
+            }
+        }
+
+        throw_if(file.peek() != ifstream::traits_type::eof(),
+                 "NeuralNetwork::load_parameters_bf16_inference_binary: "
+                 "unconsumed data remains in {}.",
+                 file_name.string());
+
+        const Index master_bytes = parameters.bytes;
+        parameters.resize_bytes(0, Device::CPU);
+        parameters.set_view(
+            parameters_bf16_mirror.data, master_bytes, Device::CUDA);
+        link_parameters();
+        activate_transposed_inference_weights();
+        return;
+    }
+#endif
+
+    float* const host_parameters = parameters.as<float>();
+    Index converted = 0;
+    while (converted < parameters_number)
+    {
+        const Index chunk =
+            min(chunk_elements, parameters_number - converted);
+        file.read(reinterpret_cast<char*>(bf16_chunk.data()),
+                  streamsize(chunk * Index(sizeof(uint16_t))));
+        throw_if(!file,
+                 "Error reading BF16 parameter file: {}",
+                 file_name.string());
+        for (Index i = 0; i < chunk; ++i)
+            host_parameters[converted + i] =
+                bfloat16_to_float_host(bf16_chunk[size_t(i)]);
+        converted += chunk;
+    }
+    link_parameters();
 }
 
 void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
@@ -1413,17 +1622,6 @@ void NeuralNetwork::cast_parameters_to_bf16()
                            parameters_bf16_mirror.as<bfloat16>());
 }
 
-#ifdef OPENNN_HAS_CUDA
-
-static inline uint16_t float_to_bfloat16_host(float value)
-{
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    bits += 0x7FFFu + ((bits >> 16) & 1u);
-    return static_cast<uint16_t>(bits >> 16);
-}
-#endif
-
 void NeuralNetwork::upload_parameters_bf16_inference()
 {
 #ifdef OPENNN_HAS_CUDA
@@ -1510,7 +1708,14 @@ void NeuralNetwork::upload_parameters_bf16_inference()
     parameters.set_view(parameters_bf16_mirror.data, master_bytes, Device::CUDA);
 
     link_parameters();
+    activate_transposed_inference_weights();
+#endif
+}
 
+void NeuralNetwork::activate_transposed_inference_weights()
+{
+#ifdef OPENNN_HAS_CUDA
+    cudaStream_t stream = Backend::get_compute_stream();
     for (const auto& layer : layers)
     {
         auto* dense = dynamic_cast<Dense*>(layer.get());

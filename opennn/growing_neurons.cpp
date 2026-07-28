@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "neural_network.h"
 #include "optimizer.h"
 #include "training_strategy.h"
@@ -19,26 +18,47 @@ namespace opennn
 {
 
 GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
-    : NeuronSelection(new_training_strategy)
 {
+    set(new_training_strategy);
+}
+
+void GrowingNeurons::set(TrainingStrategy* new_training_strategy)
+{
+    training_strategy = new_training_strategy;
+
     set_default();
 }
 
 void GrowingNeurons::set_default()
 {
-    name = "GrowingNeurons";
-
     minimum_neurons = 1;
     maximum_neurons = 10;
     trials_number = 3;
     neurons_increment = 1;
+    validation_error_goal = 0.0f;
+    maximum_epochs = 1000;
     maximum_validation_failures = 100;
     maximum_time = 3600.0f;
+    display = true;
+
+    const NeuralNetwork* neural_network = training_strategy
+        ? training_strategy->get_neural_network()
+        : nullptr;
+
+    if (!neural_network) return;
+
+    maximum_neurons = 2 * (neural_network->get_inputs_number() + neural_network->get_outputs_number());
+    trials_number = 1;
 }
 
-void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
+void GrowingNeurons::save(const filesystem::path& file_name) const
 {
-    neurons_increment = new_neurons_increment;
+    save_json_file(file_name, *this);
+}
+
+void GrowingNeurons::load(const filesystem::path& file_name)
+{
+    from_JSON(load_json_file(file_name));
 }
 
 NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
@@ -169,13 +189,13 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         neuron_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {
             {elapsed_time >= maximum_time, StoppingCondition::MaximumTime,
-             compose_message("Epoch ", epoch, "\nMaximum time reached: ", get_time(elapsed_time), "\n")},
+             format("Epoch {}\nMaximum time reached: {}\n", epoch, get_time(elapsed_time))},
             {minimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
-             compose_message("Epoch ", epoch, "\nValidation error goal reached: ", minimum_validation_error, "\n")},
+             format("Epoch {}\nValidation error goal reached: {:g}\n", epoch, minimum_validation_error)},
             {validation_failures >= maximum_validation_failures, StoppingCondition::MaximumValidationFailures,
-             compose_message("Epoch ", epoch, "\nMaximum validation failures reached: ", validation_failures, "\n")},
+             format("Epoch {}\nMaximum validation failures reached: {}\n", epoch, validation_failures)},
             {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
-             compose_message("Epoch ", epoch, "\nMaximum number of neurons reached: ", neurons_number, "\n")}
+             format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)}
         });
 
         if (neuron_selection_results.stopping_condition)
@@ -243,7 +263,32 @@ void GrowingNeurons::from_JSON(const JsonDocument& document)
         set_warm_start(read_json_bool(root_element, "WarmStart"));
 }
 
-REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");
+NeuronsSelectionResult::NeuronsSelectionResult(const Index maximum_epochs)
+{
+    neurons_number_history = VectorI::Zero(maximum_epochs);
+
+    training_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+    validation_error_history = VectorR::Constant(maximum_epochs, -1.0f);
+
+    optimum_training_error = MAX;
+    optimum_validation_error = MAX;
+}
+
+void NeuronsSelectionResult::resize_history(const Index new_size)
+{
+    neurons_number_history.conservativeResize(new_size);
+    training_error_history.conservativeResize(new_size);
+    validation_error_history.conservativeResize(new_size);
+}
+
+void NeuronsSelectionResult::print() const
+{
+    cout << "\n"
+         << "Neuron Selection Results" << "\n"
+         << "Optimal neurons number: " << optimal_neurons_number << "\n"
+         << "Optimum training error: " << optimum_training_error << "\n"
+         << "Optimum validation error: " << optimum_validation_error << "\n";
+}
 
 }
 

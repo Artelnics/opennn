@@ -121,11 +121,6 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
     }
 }
 
-void Dataset::set_data_path(const filesystem::path& new_data_path)
-{
-    data_path = new_data_path;
-}
-
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
     storage_mode = new_storage_mode;
@@ -609,12 +604,7 @@ void Dataset::set_variable_names(const vector<string>& new_names)
                     new_names.size(), variables_number);
 
     for (Index i = 0; i < variables_number; ++i)
-        variables[i].name = get_trimmed(new_names[i]);
-}
-
-void Dataset::set_variables(const vector<Variable>& new_variables)
-{
-    variables = new_variables;
+        variables[i].name = trim_view(new_names[i]);
 }
 
 void Dataset::set_variables_number(const Index new_size)

@@ -7,7 +7,30 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-#include "operators.h"
+
+#include "operator.h"
+#include "activation_operator.h"
+#include "add_operator.h"
+#include "attention_operator.h"
+#include "batch_norm_operator.h"
+#include "bound_operator.h"
+#include "combination_operator.h"
+#include "concatenation_operator.h"
+#include "convolution_operator.h"
+#include "detection_operator.h"
+#include "dropout_operator.h"
+#include "embedding_lookup_operator.h"
+#include "layer_normalization_operator.h"
+#include "long_short_term_memory_operator.h"
+#include "merge_operator.h"
+#include "multihead_projection_operator.h"
+#include "non_max_suppression_operator.h"
+#include "pool3d_operator.h"
+#include "pool_operator.h"
+#include "recurrent_operator.h"
+#include "scale_operator.h"
+#include "swiglu_operator.h"
+#include "upsample_operator.h"
 
 namespace opennn
 {

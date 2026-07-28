@@ -546,11 +546,11 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         input_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,
         {
             {input_selection_results.optimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
-             compose_message("Epoch ", epoch, "\nValidation error goal reached: ", input_selection_results.optimum_validation_error, "\n")},
+             format("Epoch {}\nValidation error goal reached: {:g}\n", epoch, input_selection_results.optimum_validation_error)},
             {elapsed_time >= maximum_time, StoppingCondition::MaximumTime,
-             compose_message("Epoch ", epoch, "\nMaximum time reached: ", get_time(elapsed_time), "\n")},
+             format("Epoch {}\nMaximum time reached: {}\n", epoch, get_time(elapsed_time))},
             {epoch >= maximum_epochs - 1, StoppingCondition::MaximumEpochs,
-             compose_message("Epoch ", epoch, "\nMaximum epochs number reached: ", epoch + 1, "\n")}
+             format("Epoch {}\nMaximum epochs number reached: {}\n", epoch, epoch + 1)}
         });
 
         if (input_selection_results.stopping_condition)

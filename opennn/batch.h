@@ -78,7 +78,7 @@ struct Batch
         return config.device == Device::CUDA && device::is_cuda_build();
     }
 
-    Index get_samples_number() const;
+    Index get_samples_number() const { return samples_number; }
 
     bool is_empty() const;
 

@@ -80,31 +80,6 @@ void StochasticGradientDescent::set_default()
     display_period = 100;
 }
 
-void StochasticGradientDescent::set_batch_size(const Index new_batch_size)
-{
-    batch_size = new_batch_size;
-}
-
-void StochasticGradientDescent::set_initial_learning_rate(const float new_learning_rate)
-{
-    initial_learning_rate = new_learning_rate;
-}
-
-void StochasticGradientDescent::set_initial_decay(const float new_decay)
-{
-    initial_decay = new_decay;
-}
-
-void StochasticGradientDescent::set_momentum(const float new_momentum)
-{
-    momentum = new_momentum;
-}
-
-void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
-{
-    nesterov = new_nesterov_momentum;
-}
-
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   OptimizerData& optimizer_data)
 {

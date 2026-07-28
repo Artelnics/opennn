@@ -194,11 +194,6 @@ void Optimizer::reset_graph_capture()
     graph_update = nullptr;
 }
 
-bool Optimizer::cuda_graph_requested() const
-{
-    return use_cuda_graph;
-}
-
 void Optimizer::to_JSON(JsonWriter& printer) const
 {
     printer.open_element("Optimizer");
@@ -384,11 +379,6 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
     return session;
 }
 
-int Optimizer::get_batch_workers_number(const NeuralNetwork&) const
-{
-    return workers_number;
-}
-
 int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
 {
 
@@ -446,6 +436,7 @@ Index Optimizer::get_maximum_batch_size() const
     const Index parameters_number       = neural_network->get_parameters_number();
     const Index parameters_aligned_size = get_aligned_size(neural_network->get_parameter_specs());
     const Index slot_aligned_size       = get_aligned_size(parameters_number);
+    
     const bool bf16_train = on_gpu && neural_network->get_training_type() == Type::BF16;
     const bool bf16_input = bf16_train && dataset->supports_bf16_inputs();
     const bool dataset_will_be_device_resident =
@@ -456,13 +447,11 @@ Index Optimizer::get_maximum_batch_size() const
         && !bf16_host_input_cast_enabled()
         && !dataset_will_be_device_resident;
 
-    Index fixed_bytes = 0;
+    Index fixed_bytes = (neural_network->get_states_size()
+                      + 2 * parameters_aligned_size
+                      + 2 * slot_aligned_size) * Index(sizeof(float));
 
-    fixed_bytes += parameters_aligned_size * Index(sizeof(float));
     if (bf16_train) fixed_bytes += parameters_aligned_size * Index(sizeof(bfloat16));
-    fixed_bytes += neural_network->get_states_size() * Index(sizeof(float));
-    fixed_bytes += parameters_aligned_size * Index(sizeof(float));
-    fixed_bytes += 2 * slot_aligned_size * Index(sizeof(float));
 
     throw_if(fixed_bytes >= budget,
              "Fixed memory ({} MiB) exceeds 80% GPU budget ({} MiB).",

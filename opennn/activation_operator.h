@@ -26,7 +26,7 @@ struct ActivationOperator : Operator
     bool forward_fused = false;
     bool backward_fused = false;
 
-    void set_activation_function(ActivationFunction);
+    void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }
     void set_activation_function(const string&);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;

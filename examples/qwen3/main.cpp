@@ -10,7 +10,7 @@
 //   imported into OpenNN. The architecture is a standard OpenNN Qwen3 network
 //   (grouped-query attention with RoPE + QK-Norm, SwiGLU MLP, RMSNorm, tied output
 //   projection); it uses the native Qwen3Tokenizer (byte-level BPE + ChatML) and the
-//   weights from a single .bin. No Python at runtime.
+//   BF16 weights streamed directly from a single .bin. No Python at runtime.
 //
 //   The weights (.bin) and the tokenizer files are downloaded from the Hugging Face
 //   Hub on first run (cached in the data directory afterwards), so you can just run
@@ -23,13 +23,22 @@
 //     cpu | gpu  compute device (default: gpu when built with CUDA, else cpu)
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
+
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #include "opennn/chat.h"
 #include "opennn/io_utilities.h"
@@ -50,9 +59,46 @@ constexpr Index MODEL_MAX_CONTEXT = 32768;
 constexpr Index DEFAULT_CONTEXT_LENGTH = MODEL_MAX_CONTEXT;
 constexpr Index DEFAULT_MAX_NEW = 640;
 
-const string HF_BASE = "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
+struct ConsoleColors
+{
+    const char* thinking = "";
+    const char* response = "";
+    const char* reset = "";
+};
+
+ConsoleColors console_colors()
+{
+    if (getenv("NO_COLOR")) return {};
+
+    const char* term = getenv("TERM");
+    if (term && string_view(term) == "dumb") return {};
+
+#ifdef _WIN32
+    if (!_isatty(_fileno(stdout))) return {};
+
+    const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0;
+    if (output == INVALID_HANDLE_VALUE
+        || !GetConsoleMode(output, &mode)
+        || !SetConsoleMode(
+            output, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+        return {};
+#else
+    if (!isatty(STDOUT_FILENO)) return {};
+#endif
+
+    // Muted mauve-gray for the internal reasoning, bright white for the answer.
+    return {"\033[38;5;102m", "\033[97m", "\033[0m"};
+}
+
+const string MAIN_HF_BASE =
+    "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
+const string DRAFT_HF_BASE =
+    "https://huggingface.co/Artelnics/qwen3-0.6b-opennn/resolve/main/";
+constexpr const char* MAIN_BF16_WEIGHTS = "qwen3_bf16.bin";
+constexpr const char* DRAFT_BF16_WEIGHTS = "qwen3_draft_bf16.bin";
 const char* const DATA_FILES[] = { "qwen3_meta.txt", "vocab.json", "merges.txt",
-                                   "qwen3_special.tsv", "qwen3.bin" };
+                                   "qwen3_special.tsv" };
 
 string find_data_dir(const string& override_dir)
 {
@@ -62,7 +108,7 @@ string find_data_dir(const string& override_dir)
     for (const string& candidate : { string("data"), string("../data"),
                                      string("../../examples/qwen3/data"),
                                      string("examples/qwen3/data") })
-        if (ifstream(candidate + "/qwen3.bin").good()) return candidate;
+        if (ifstream(candidate + "/qwen3_meta.txt").good()) return candidate;
 
     return "../data";
 }
@@ -158,6 +204,7 @@ int main(int argc, char* argv[])
         Index draft_tokens = 4;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
         bool show_thinking = true;
+        const ConsoleColors colors = console_colors();
         optional<float> temperature_override;
         optional<Index> top_k_override;
         optional<float> top_p_override;
@@ -167,11 +214,11 @@ int main(int argc, char* argv[])
             const string a = argv[i];
             if      (a == "--cpu" || a == "cpu")            want_gpu = false;
             else if (a == "--gpu" || a == "gpu")            want_gpu = true;
-            else if (a == "--auto")                          reasoning_mode = ReasoningMode::Automatic;
-            else if (a == "--think")                         reasoning_mode = ReasoningMode::Enabled;
-            else if (a == "--no-think")                      reasoning_mode = ReasoningMode::Disabled;
-            else if (a == "--show-thinking")                 show_thinking = true;
-            else if (a == "--hide-thinking")                 show_thinking = false;
+            else if (a == "--auto")                         reasoning_mode = ReasoningMode::Automatic;
+            else if (a == "--think")                        reasoning_mode = ReasoningMode::Enabled;
+            else if (a == "--no-think")                     reasoning_mode = ReasoningMode::Disabled;
+            else if (a == "--show-thinking")                show_thinking = true;
+            else if (a == "--hide-thinking")                show_thinking = false;
             else if (a == "--max"  && i + 1 < argc)         max_new = Index(stol(argv[++i]));
             else if (a == "--context" && i + 1 < argc)      context_length = Index(stol(argv[++i]));
             else if (a == "--temp" && i + 1 < argc)         temperature_override = stof(argv[++i]);
@@ -199,7 +246,9 @@ int main(int argc, char* argv[])
         cout << "OpenNN. Qwen3 chat." << endl;
 
         for (const char* file : DATA_FILES)
-            download_if_missing(data_dir + "/" + file, HF_BASE + file);
+            download_if_missing(data_dir + "/" + file, MAIN_HF_BASE + file);
+        download_if_missing(data_dir + "/" + MAIN_BF16_WEIGHTS,
+                            MAIN_HF_BASE + MAIN_BF16_WEIGHTS);
 
         cout << "Loading..." << flush;
 
@@ -211,11 +260,8 @@ int main(int argc, char* argv[])
         Qwen3 model(context_length, config.vocabulary, config.hidden, config.layers,
                     config.query_heads, config.key_value_heads, config.head_dim, config.intermediate,
                     config.rope_theta, config.rms_epsilon);
-        model.load_parameters_binary(data_dir + "/qwen3.bin");
-
-#ifdef OPENNN_HAS_CUDA
-        if (want_gpu) model.upload_parameters_bf16_inference();
-#endif
+        model.load_parameters_bf16_inference_binary(
+            data_dir + "/" + MAIN_BF16_WEIGHTS);
 
         unique_ptr<Qwen3> draft_model;
         ChatSession session(
@@ -225,7 +271,7 @@ int main(int argc, char* argv[])
         {
             throw_if(!want_gpu, "--draft requires the GPU build.");
             download_if_missing(data_dir + "/qwen3_draft_meta.txt",
-                                HF_BASE + "qwen3_draft_meta.txt");
+                                DRAFT_HF_BASE + "qwen3_meta.txt");
             Qwen3Config draft_config;
             draft_config.load(data_dir + "/qwen3_draft_meta.txt");
 
@@ -249,17 +295,18 @@ int main(int argc, char* argv[])
                      mib(available_bytes));
 #endif
 
-            download_if_missing(data_dir + "/qwen3_draft.bin",
-                                HF_BASE + "qwen3_draft.bin");
+            download_if_missing(data_dir + "/" + DRAFT_BF16_WEIGHTS,
+                                DRAFT_HF_BASE + "qwen3_bf16.bin");
             draft_model = make_unique<Qwen3>(
                 context_length, draft_config.vocabulary, draft_config.hidden,
                 draft_config.layers, draft_config.query_heads, draft_config.key_value_heads,
                 draft_config.head_dim, draft_config.intermediate,
                 draft_config.rope_theta, draft_config.rms_epsilon);
-            draft_model->load_parameters_binary(data_dir + "/qwen3_draft.bin");
-            draft_model->upload_parameters_bf16_inference();
+            draft_model->load_parameters_bf16_inference_binary(
+                data_dir + "/" + DRAFT_BF16_WEIGHTS);
             session.attach_draft_model(*draft_model, draft_tokens);
-            cout << "Draft: qwen3_draft.bin (K=" << draft_tokens
+            cout << "Draft: " << DRAFT_BF16_WEIGHTS << " (K="
+                 << draft_tokens
                  << ", greedy only)" << endl;
         }
 
@@ -343,7 +390,7 @@ int main(int argc, char* argv[])
                     if (!show_thinking) return;
                     if (!reasoning_started)
                     {
-                        cout << "Thinking: " << flush;
+                        cout << colors.thinking << "Thinking: " << flush;
                         reasoning_started = true;
                     }
                     cout << delta.text << flush;
@@ -352,8 +399,9 @@ int main(int argc, char* argv[])
 
                 if (!content_started)
                 {
-                    if (reasoning_started) cout << "\n";
-                    cout << "Qwen: " << flush;
+                    if (reasoning_started)
+                        cout << colors.reset << "\n";
+                    cout << colors.response << "Qwen: " << flush;
                     content_started = true;
                 }
                 cout << delta.text << flush;
@@ -363,10 +411,11 @@ int main(int argc, char* argv[])
                 session.send(line, make_chat_options(), stream);
             if (!content_started)
             {
-                if (reasoning_started) cout << "\n";
-                cout << "Qwen: " << response.content;
+                if (reasoning_started)
+                    cout << colors.reset << "\n";
+                cout << colors.response << "Qwen: " << response.content;
             }
-            cout << endl;
+            cout << colors.reset << endl;
 
             const double tokens_per_second =
                 response.generated_tokens > 1

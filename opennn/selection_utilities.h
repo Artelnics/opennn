@@ -55,14 +55,6 @@ void finalize_selected_model(TrainingStrategy*,
 float read_json_float_alias(const Json*, string_view primary, string_view legacy);
 long long read_json_index_alias(const Json*, string_view primary, string_view legacy);
 
-template <typename... Args>
-string compose_message(const Args&... args)
-{
-    ostringstream stream;
-    (stream << ... << args);
-    return stream.str();
-}
-
 template <typename Condition>
 struct StoppingCheck
 {

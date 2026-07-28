@@ -550,7 +550,7 @@ void ModelExpression::emit_body_lines(ostringstream& buffer,
         if (syntax.declare_first_assignment_only)
         {
             const size_t eq = processed.find('=');
-            const string lhs = eq == string::npos ? "" : get_trimmed(processed.substr(0, eq));
+            const string lhs = eq == string::npos ? string() : string(trim_view(string_view(processed).substr(0, eq)));
             if (lhs.empty() || !declared.insert(lhs).second)
                 declaration = "";
         }
