@@ -1795,6 +1795,71 @@ void NeuralNetwork::cast_parameters_to_bf16()
                            parameters_bf16_mirror.as<bfloat16>());
 }
 
+void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
+{
+    if (config.training_type != Type::BF16
+        || parameters.device_type != Device::CUDA
+        || parameters.empty()
+        || parameters_bf16_mirror.empty()
+        || !parameters.owns)
+        return;
+
+    const auto specs = get_parameter_specs();
+
+    Index fp32_keep_floats = 0;
+    for (const auto& layer_specs : specs)
+        for (const auto& [shape, dtype] : layer_specs)
+            if (!shape.empty() && dtype != Type::BF16)
+                fp32_keep_floats += get_aligned_size(shape.size());
+
+    if (fp32_keep_floats > 0)
+    {
+        parameters_fp32_inference_storage.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
+
+        cudaStream_t stream = Backend::get_compute_stream();
+        float* const source_base = parameters.as<float>();
+        float* const destination_base = parameters_fp32_inference_storage.as<float>();
+
+        Index source_offset = 0;
+        Index destination_offset = 0;
+
+        for (const auto& layer_specs : specs)
+            for (const auto& [shape, dtype] : layer_specs)
+            {
+                if (shape.empty()) continue;
+
+                const Index aligned = get_aligned_size(shape.size());
+                if (dtype != Type::BF16)
+                {
+                    device::copy_async(destination_base + destination_offset,
+                                       source_base + source_offset,
+                                       aligned * Index(sizeof(float)),
+                                       device::CopyKind::DeviceToDevice,
+                                       stream);
+                    destination_offset += aligned;
+                }
+                source_offset += aligned;
+            }
+
+        device::synchronize(stream);
+        memory_debug::record("parameters",
+                             "fp32_compact_inference",
+                             parameters_fp32_inference_storage.bytes,
+                             "bf16_release");
+    }
+    else
+    {
+        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+    }
+
+    const Index fp32_master_bytes = parameters.bytes;
+    parameters.resize_bytes(0, Device::CUDA);
+    parameters.set_view(parameters_bf16_mirror.data,
+                        fp32_master_bytes,
+                        Device::CUDA);
+    link_parameters();
+}
+
 void NeuralNetwork::upload_parameters_bf16_inference()
 {
 #ifdef OPENNN_HAS_CUDA
@@ -2143,6 +2208,10 @@ void NeuralNetwork::copy_parameters_device()
 void NeuralNetwork::cast_parameters_to_bf16()
 {
     throw runtime_error("NeuralNetwork::cast_parameters_to_bf16 requires CUDA support.");
+}
+
+void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
+{
 }
 
 void NeuralNetwork::upload_parameters_bf16_inference()

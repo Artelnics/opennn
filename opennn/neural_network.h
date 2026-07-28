@@ -196,6 +196,8 @@ public:
 
     void cast_parameters_to_bf16();
 
+    void release_bf16_fp32_parameter_master_for_inference();
+
     void upload_parameters_bf16_inference();
 
     // Quantizes the host FP32 master to per-output-channel symmetric INT8

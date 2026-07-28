@@ -183,7 +183,13 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 
     for (const char c : line)
     {
-        if (c == '"') { in_quote = !in_quote; continue; }
+        // A quote only delimits a field when it opens one; anywhere else it is literal
+        // text, so a stray quote cannot swallow the separators of the rest of the line.
+        if (c == '"' && (in_quote || scratch.size() == field_start))
+        {
+            in_quote = !in_quote;
+            continue;
+        }
 
         if (!in_quote && c == separator)
         {
@@ -223,7 +229,7 @@ string_view first_token_maybe_quoted(string_view line, char separator, bool file
 
     for (const char c : line)
     {
-        if (c == '"') { in_quote = !in_quote; continue; }
+        if (c == '"' && (in_quote || scratch.empty())) { in_quote = !in_quote; continue; }
         if (!in_quote && c == separator) break;
         if (in_quote && (c == ',' || c == ';')) continue;
         scratch.push_back(c);
