@@ -2390,7 +2390,8 @@ void detection_backward_cuda(const Index batch_size,
 __global__ void detection_v8_forward_kernel(const int batch_size,
                                             const int grid_size,
                                             const int grid_width,
-                                            const int channels,
+                                            const int channels,  // = 4*reg_max + classes_number
+                                            const int box_ch,    // = 4*reg_max (pass-through when >4)
                                             const float* __restrict__ src,
                                             float* __restrict__ dst)
 {
@@ -2407,7 +2408,9 @@ __global__ void detection_v8_forward_kernel(const int batch_size,
 
         const int base = ((b * grid_size + row) * grid_width + col) * channels;
 
-        for (int ch = 0; ch < channels; ++ch)
+        for (int ch = 0; ch < box_ch; ++ch)
+            dst[base + ch] = (box_ch == 4) ? sigmoid_f(src[base + ch]) : src[base + ch];
+        for (int ch = box_ch; ch < channels; ++ch)
             dst[base + ch] = sigmoid_f(src[base + ch]);
     }
 }
@@ -2416,23 +2419,26 @@ void detection_v8_forward_cuda(const Index batch_size,
                                const Index grid_size,
                                const Index grid_width,
                                const Index classes_number,
+                               const Index reg_max,
                                const float* input,
                                float* output)
 {
     if (batch_size == 0 || grid_size == 0) return;
 
-    const int total   = checked_int(batch_size * grid_size * grid_width);
-    const int channels = checked_int(4 + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_strided_for(total), block_size, 0,
+    const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
+    const int total    = checked_int(batch_size * grid_size * grid_width);
+    const int channels = checked_int(box_ch + classes_number);
+    OPENNN_CUDA_LAUNCH(detection_v8_forward_kernel<<<grid_size_for(total), block_size, 0,
                                opennn::device::get_compute_stream()>>>(
         checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
-        channels, input, output));
+        channels, box_ch, input, output));
 }
 
 __global__ void detection_v8_backward_kernel(const int batch_size,
                                              const int grid_size,
                                              const int grid_width,
                                              const int channels,
+                                             const int box_ch,
                                              const float* __restrict__ out,
                                              const float* __restrict__ delta,
                                              float* __restrict__ in_delta)
@@ -2450,7 +2456,19 @@ __global__ void detection_v8_backward_kernel(const int batch_size,
 
         const int base = ((b * grid_size + row) * grid_width + col) * channels;
 
-        for (int ch = 0; ch < channels; ++ch)
+        for (int ch = 0; ch < box_ch; ++ch)
+        {
+            if (box_ch == 4)
+            {
+                const float s = out[base + ch];
+                in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
+            }
+            else
+            {
+                in_delta[base + ch] = delta[base + ch];  // DFL: identity
+            }
+        }
+        for (int ch = box_ch; ch < channels; ++ch)
         {
             const float s = out[base + ch];
             in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
@@ -2462,18 +2480,20 @@ void detection_v8_backward_cuda(const Index batch_size,
                                 const Index grid_size,
                                 const Index grid_width,
                                 const Index classes_number,
+                                const Index reg_max,
                                 const float* output,
                                 const float* output_delta,
                                 float* input_delta)
 {
     if (batch_size == 0 || grid_size == 0) return;
 
-    const int total   = checked_int(batch_size * grid_size * grid_width);
-    const int channels = checked_int(4 + classes_number);
-    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_strided_for(total), block_size, 0,
+    const int box_ch   = checked_int(4 * max(reg_max, Index(1)));
+    const int total    = checked_int(batch_size * grid_size * grid_width);
+    const int channels = checked_int(box_ch + classes_number);
+    OPENNN_CUDA_LAUNCH(detection_v8_backward_kernel<<<grid_size_for(total), block_size, 0,
                                 opennn::device::get_compute_stream()>>>(
         checked_int(batch_size), checked_int(grid_size), checked_int(grid_width),
-        channels, output, output_delta, input_delta));
+        channels, box_ch, output, output_delta, input_delta));
 }
 
 __global__ void upsample_forward_kernel(

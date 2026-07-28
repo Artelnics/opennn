@@ -403,6 +403,7 @@ void detection_v8_forward_cuda(Index batch_size,
                                Index grid_size,
                                Index grid_width,
                                Index classes_number,
+                               Index reg_max,
                                const float* input,
                                float* output);
 
@@ -410,6 +411,7 @@ void detection_v8_backward_cuda(Index batch_size,
                                 Index grid_size,
                                 Index grid_width,
                                 Index classes_number,
+                                Index reg_max,
                                 const float* output,
                                 const float* output_delta,
                                 float* input_delta);

@@ -86,7 +86,13 @@ void* allocate_cuda(Index byte_count)
     throw_if(cuda_allocation_growth_forbidden(),
              "CUDA alloc of {} bytes forbidden (warmup incomplete).", byte_count);
     void* device_pointer = nullptr;
-    CHECK_CUDA(cudaMalloc(&device_pointer, static_cast<size_t>(byte_count)));
+    const cudaError_t cuda_err = cudaMalloc(&device_pointer, static_cast<size_t>(byte_count));
+    if (cuda_err != cudaSuccess)
+        throw std::runtime_error(
+            std::string("CUDA Error: ") + std::to_string(static_cast<int>(cuda_err)) +
+            " in " + std::string(__FILE__) + ":" + std::to_string(__LINE__) +
+            " — cudaMalloc(" + std::to_string(byte_count) + " bytes = " +
+            std::to_string(byte_count / Index(1024*1024)) + " MiB)");
     return device_pointer;
 #else
     (void)byte_count;

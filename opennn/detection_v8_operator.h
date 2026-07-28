@@ -13,13 +13,21 @@
 namespace opennn
 {
 
+// Anchor-free detection operator for YOLOv8-style heads.
+// reg_max=1 (default, Phase 5a): sigmoid applied to all channels.
+//   ch 0..3:        sigmoid(t) → x/y offset, w, h ∈ [0,1]
+//   ch 4..4+C-1:    sigmoid(cls_c)
+// reg_max>1 (DFL):  box channels pass through as raw logits; only class channels get sigmoid.
+//   ch 0..4*RM-1:   raw DFL logits (RM = reg_max)
+//   ch 4*RM..end:   sigmoid(cls_c)
 struct DetectionV8Operator : Operator
 {
-    Index grid_size    = 0;
-    Index grid_width   = 0;
+    Index grid_size      = 0;
+    Index grid_width     = 0;
     Index classes_number = 0;
+    Index reg_max        = 1;
 
-    void set(const Shape&);
+    void set(const Shape&, Index reg_max = 1);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

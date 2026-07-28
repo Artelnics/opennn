@@ -380,3 +380,77 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
+
+// GT box (0.5, 0.5, 0.6, 0.6) covers all 4 cell centers on a 2×2 grid (at 0.25/0.75).
+// TAL assigns positives, ensuring the VFL + CIoU gradient paths are exercised.
+TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
+{
+    YoloLossV8Fixture f;
+    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
+    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
+    write_label(f.labels_dir / "a.txt", 0, 0.5f, 0.5f, 0.6f, 0.6f);
+    write_label(f.labels_dir / "b.txt", 0, 0.5f, 0.5f, 0.6f, 0.6f);
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, /*bpc=*/0, {});
+    dataset.set_v8_mode(true);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
+    NeuralNetwork neural_network;
+    build_yolo_v8_network(neural_network, f);
+
+    Loss loss_fn(&neural_network, &dataset);
+    loss_fn.set_error(Loss::Error::Yolo);
+    loss_fn.set_regularization(Loss::Regularization::NoRegularization);
+
+    const VectorR gradient           = calculate_gradient(loss_fn);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss_fn);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+}
+
+// DFL variant: reg_max=2 (smallest DFL > 1). Box channels are raw logits [4*2=8] + 1 class.
+// GT box covers all cell centers → TAL assigns positives → DFL gradient path exercised.
+TEST(YoloLoss, V8DFLGradientMatchesNumerical)
+{
+    YoloLossV8Fixture f;
+    write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
+    write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
+    write_label(f.labels_dir / "a.txt", 0, 0.5f, 0.5f, 0.6f, 0.6f);
+    write_label(f.labels_dir / "b.txt", 0, 0.5f, 0.5f, 0.6f, 0.6f);
+
+    constexpr Index grid = 2;
+    constexpr Index C    = 1;
+    constexpr Index rm   = 2;
+    constexpr Index dfl_ch = 4 * rm + C;
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, grid, /*bpc=*/0, {});
+    dataset.set_v8_mode(true);
+
+    YoloDataset::AugmentationConfig no_aug;
+    no_aug.enabled = false;
+    dataset.set_augmentation(no_aug);
+
+    NeuralNetwork net;
+    net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
+                                             Shape{1, 1, 3, dfl_ch},
+                                             "Identity", Shape{1, 1}, "Same", false, "v8_logits"));
+    net.add_layer(make_unique<DetectionV8>(Shape{grid, grid, dfl_ch}, rm, "detection_v8"));
+    net.compile();
+    VectorMap(net.get_parameters_data(), net.get_parameters_size()).setConstant(0.1f);
+
+    Loss loss_fn(&net, &dataset);
+    loss_fn.set_error(Loss::Error::Yolo);
+    loss_fn.set_regularization(Loss::Regularization::NoRegularization);
+
+    const VectorR gradient           = calculate_gradient(loss_fn);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss_fn);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+}

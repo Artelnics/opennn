@@ -739,95 +739,10 @@ TEST_F(GpuComparison, TransformerForward)
 // (yolo_v8_error_kernel / yolo_v8_gradient_kernel) against the CUDA pair
 // (yolo_v8_error_cuda / yolo_v8_gradient_cuda) on identical data. Error
 // accumulation order differs on the GPU (atomicAdd), hence relative tolerance.
-TEST_F(GpuComparison, YoloV8LossParity)
+// Phase 5a grid-based kernel superseded by TAL (Phase 5b); CPU functions removed.
+TEST_F(GpuComparison, DISABLED_YoloV8LossParity)
 {
-    constexpr Index batch = 2;
-    constexpr Index grid = 4;
-    constexpr Index ncls = 3;
-    constexpr Index ch_out = 4 + ncls;
-    constexpr Index ch_tgt = 5 + ncls;
-    const Index n_cells = batch * grid * grid;
-    const Index out_floats = n_cells * ch_out;
-    const Index tgt_floats = n_cells * ch_tgt;
-
-    Configuration::instance().set(Device::CUDA, Type::FP32);
-
-    // Deterministic mix of positive (flag 1), background (flag 0) and
-    // ignore (flag -1) cells; predicted boxes overlap the ground truth.
-    vector<float> out(size_t(out_floats), 0.0f);
-    vector<float> tgt(size_t(tgt_floats), 0.0f);
-    for (Index i = 0; i < n_cells; ++i)
-    {
-        float* o = out.data() + i * ch_out;
-        float* t = tgt.data() + i * ch_tgt;
-
-        o[0] = 0.35f + 0.3f * float(i % 3) / 3.0f;
-        o[1] = 0.30f + 0.4f * float(i % 5) / 5.0f;
-        o[2] = 0.15f + 0.02f * float(i % 4);
-        o[3] = 0.12f + 0.03f * float(i % 3);
-        for (Index c = 0; c < ncls; ++c)
-            o[4 + c] = 0.1f + 0.8f * float((i + c) % 7) / 7.0f;
-
-        if (i % 3 == 0)
-        {
-            t[0] = 0.5f; t[1] = 0.5f;
-            t[2] = 0.18f; t[3] = 0.14f;
-            t[4] = 1.0f;
-            t[5 + (i % ncls)] = 1.0f;
-        }
-        else if (i % 7 == 1)
-            t[4] = -1.0f;
-    }
-
-    const Shape out_shape({batch, grid, grid, ch_out});
-    const Shape tgt_shape({batch, grid, grid, ch_tgt});
-    const TensorView out_view(out.data(), out_shape, Type::FP32);
-    const TensorView tgt_view(tgt.data(), tgt_shape, Type::FP32);
-
-    const YoloLambdas lam{5.0f, 0.5f, 1.0f, 2.0f, 0.0f};
-    const float inv_batch = 1.0f / float(batch);
-
-    const float cpu_error = yolo_v8_error_kernel(out_view, tgt_view, ncls, lam);
-
-    vector<float> cpu_delta(size_t(out_floats), 0.0f);
-    const TensorView cpu_delta_view(cpu_delta.data(), out_shape, Type::FP32);
-    yolo_v8_gradient_kernel(out_view, tgt_view, cpu_delta_view, ncls, inv_batch, lam);
-
-    const Index out_bytes = out_floats * Index(sizeof(float));
-    Buffer out_dev, tgt_dev, err_dev, delta_dev;
-    out_dev.resize_bytes(out_bytes, Device::CUDA);
-    tgt_dev.resize_bytes(tgt_floats * Index(sizeof(float)), Device::CUDA);
-    err_dev.resize_bytes(Index(sizeof(float)), Device::CUDA);
-    delta_dev.resize_bytes(out_bytes, Device::CUDA);
-    device::copy_async(out_dev.data, out.data(), out_bytes, device::CopyKind::HostToDevice);
-    device::copy_async(tgt_dev.data, tgt.data(), tgt_floats * Index(sizeof(float)),
-                       device::CopyKind::HostToDevice);
-    err_dev.setZero();
-    device::synchronize();
-
-    yolo_v8_error_cuda(out_dev.as<float>(), tgt_dev.as<float>(), err_dev.as<float>(),
-                       int(batch), int(grid), int(ncls), lam.giou, lam.cls, lam.focal_gamma);
-    yolo_v8_gradient_cuda(out_dev.as<float>(), tgt_dev.as<float>(), delta_dev.as<float>(),
-                          int(batch), int(grid), int(ncls), inv_batch,
-                          lam.giou, lam.cls, lam.focal_gamma);
-    device::synchronize();
-
-    float gpu_error = 0.0f;
-    vector<float> gpu_delta(size_t(out_floats), 0.0f);
-    device::copy_async(&gpu_error, err_dev.data, Index(sizeof(float)),
-                       device::CopyKind::DeviceToHost);
-    device::copy_async(gpu_delta.data(), delta_dev.data, out_bytes,
-                       device::CopyKind::DeviceToHost);
-    device::synchronize();
-
-    Configuration::instance().set(Device::CPU, Type::FP32);
-
-    const float error_scale = max(1.0f, abs(cpu_error));
-    EXPECT_LT(abs(cpu_error - gpu_error) / error_scale, 1.0e-3f);
-
-    const VectorR cpu_delta_flat = Map<const VectorR>(cpu_delta.data(), out_floats);
-    const VectorR gpu_delta_flat = Map<const VectorR>(gpu_delta.data(), out_floats);
-    EXPECT_LT(relative_difference(cpu_delta_flat, gpu_delta_flat), 1.0e-3f);
+    GTEST_SKIP() << "Obsolete: yolo_v8_error_kernel removed in Phase 5b (TAL replaces it)";
 }
 
 #endif // OPENNN_NO_VISION

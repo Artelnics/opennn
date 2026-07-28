@@ -18,16 +18,18 @@
 namespace opennn
 {
 
-void DetectionV8Operator::set(const Shape& input_shape)
+void DetectionV8Operator::set(const Shape& input_shape, Index new_reg_max)
 {
     throw_if(input_shape.rank != 3,
              "DetectionV8Operator: input shape must be rank 3.");
-    throw_if(input_shape[2] <= 4,
-             "DetectionV8Operator: channels must be > 4 (need at least 1 class).");
+    reg_max = max(Index(1), new_reg_max);
+    const Index box_ch = 4 * reg_max;
+    throw_if(input_shape[2] <= box_ch,
+             "DetectionV8Operator: channels must be > 4*reg_max (need at least 1 class).");
 
     grid_size      = input_shape[0];
     grid_width     = input_shape[1];
-    classes_number = input_shape[2] - 4;
+    classes_number = input_shape[2] - box_ch;
 }
 
 void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
@@ -39,13 +41,38 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
     if (input.is_cuda())
     {
         detection_v8_forward_cuda(input.shape[0], grid_size, grid_width, classes_number,
-                                  input.as<float>(), output.as<float>());
+                                  reg_max, input.as<float>(), output.as<float>());
         return;
     }
 #endif
 
-    copy(input, output);
-    activation_forward(output, ActivationFunction::Sigmoid);
+    const Index batch_size = input.shape[0];
+    const Index box_ch     = 4 * reg_max;
+    const Index channels   = box_ch + classes_number;
+
+    const float* src = input.as<float>();
+    float*       dst = output.as<float>();
+
+    #pragma omp parallel for collapse(3)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_width; ++col)
+            {
+                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
+
+                if (reg_max > 1)
+                {
+                    for (Index ch = 0; ch < box_ch; ++ch)
+                        dst[base + ch] = src[base + ch];  // DFL: pass-through box logits
+                    for (Index ch = box_ch; ch < channels; ++ch)
+                        dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
+                }
+                else
+                {
+                    for (Index ch = 0; ch < channels; ++ch)
+                        dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
+                }
+            }
 }
 
 void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation,
@@ -62,14 +89,46 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
     if (output_delta.is_cuda())
     {
         detection_v8_backward_cuda(output.shape[0], grid_size, grid_width, classes_number,
-                                   output.as<float>(), output_delta.as<float>(),
+                                   reg_max, output.as<float>(), output_delta.as<float>(),
                                    input_delta.as<float>());
         return;
     }
 #endif
 
-    copy(output_delta, input_delta);
-    activation_backward(output, input_delta, ActivationFunction::Sigmoid);
+    const Index batch_size = output.shape[0];
+    const Index box_ch     = 4 * reg_max;
+    const Index channels   = box_ch + classes_number;
+
+    const float* out      = output.as<float>();
+    const float* delta    = output_delta.as<float>();
+    float*       in_delta = input_delta.as<float>();
+
+    #pragma omp parallel for collapse(3)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index row = 0; row < grid_size; ++row)
+            for (Index col = 0; col < grid_width; ++col)
+            {
+                const Index base = ((b * grid_size + row) * grid_width + col) * channels;
+
+                if (reg_max > 1)
+                {
+                    for (Index ch = 0; ch < box_ch; ++ch)
+                        in_delta[base + ch] = delta[base + ch];  // DFL: identity (loss wrote dL/d(logit))
+                    for (Index ch = box_ch; ch < channels; ++ch)
+                    {
+                        const float s = out[base + ch];
+                        in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
+                    }
+                }
+                else
+                {
+                    for (Index ch = 0; ch < channels; ++ch)
+                    {
+                        const float s = out[base + ch];
+                        in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
+                    }
+                }
+            }
 }
 
 }
