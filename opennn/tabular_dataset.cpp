@@ -17,6 +17,33 @@
 namespace opennn
 {
 
+namespace
+{
+
+bool looks_like_id_variable(const Variable& variable, const Index samples_number)
+{
+    if (!variable.is_categorical() || samples_number == 0)
+        return false;
+
+    const Index categories_number = ssize(variable.categories);
+
+    if (categories_number == samples_number)
+        return true;
+
+    string name = variable.name;
+    ranges::transform(name, name.begin(), [](unsigned char c) { return char(tolower(c)); });
+
+    const bool id_name = name == "id"
+                      || name.ends_with(" id")
+                      || name.ends_with("_id")
+                      || name.ends_with("-id")
+                      || name.ends_with(".id");
+
+    return id_name && categories_number * 10 >= samples_number * 9;
+}
+
+}
+
 void TabularDataset::set(const Index new_samples_number,
                          const Shape& new_input_shape,
                          const Shape& new_target_shape)
@@ -1459,7 +1486,9 @@ void TabularDataset::read_csv()
     throw_if(columns_number <= id_offset,
              "Data file contains no variables.");
 
-    const Index variables_number = columns_number - id_offset;
+    const vector<Variable> previous_variables = variables;
+
+    Index variables_number = columns_number - id_offset;
     variables.resize(variables_number);
 
     if (has_header)
@@ -1472,6 +1501,37 @@ void TabularDataset::read_csv()
     for (Variable& variable : variables)
         if (variable.is_categorical() && variable.get_categories_number() == 2)
             variable.type = VariableType::Binary;
+
+    vector<Index> variable_token_indices(variables.size());
+    for (Index i = 0; i < ssize(variables); ++i)
+        variable_token_indices[i] = i + id_offset;
+
+    for (Index i = ssize(variables) - 1; i >= 0; --i)
+        if (looks_like_id_variable(variables[i], samples_number))
+        {
+            cout << "Excluding identifier column: " << variables[i].name << endl;
+            variables.erase(variables.begin() + i);
+            variable_token_indices.erase(variable_token_indices.begin() + i);
+        }
+
+    throw_if(variables.empty(),
+             "Data file contains no variables (all columns are identifiers).");
+
+    variables_number = ssize(variables);
+
+    const Index required_tokens = variable_token_indices.back() + 1;
+
+    for (Variable& variable : variables)
+    {
+        const auto it = ranges::find_if(previous_variables,
+            [&](const Variable& previous) { return previous.name == variable.name; });
+
+        if (it != previous_variables.end())
+        {
+            variable.role = it->role;
+            variable.scaler = it->scaler;
+        }
+    }
 
     sample_roles.resize(samples_number, SampleRole::Training);
     sample_ids.resize(samples_number);
@@ -1523,7 +1583,7 @@ void TabularDataset::read_csv()
         for (Index variable_index = 0; variable_index < variables_number; ++variable_index)
         {
             const Variable& variable = variables[variable_index];
-            const string_view token = row_tokens[variable_index + id_offset];
+            const string_view token = row_tokens[variable_token_indices[variable_index]];
             const vector<Index>& feature_indices = all_feature_indices[variable_index];
 
             using enum VariableType;
@@ -1577,23 +1637,23 @@ void TabularDataset::read_csv()
                              Index& th_rows_mv, Index& th_mv, vector<Index>& th_var_mv)
     {
         bool row_has_missing = false;
-        for (const string_view t : row_tokens)
-            if (is_missing(t)) { row_has_missing = true; break; }
 
-        if (row_has_missing)
+        for (Index v = 0; v < variables_number; ++v)
         {
-            ++th_rows_mv;
-            for (size_t k = id_offset; k < row_tokens.size(); ++k)
-            {
-                if (Index(k - id_offset) >= variables_number) break;
+            const size_t k = size_t(variable_token_indices[v]);
 
-                if (is_missing(row_tokens[k]))
-                {
-                    ++th_mv;
-                    th_var_mv[k - id_offset]++;
-                }
+            if (k >= row_tokens.size()) break;
+
+            if (is_missing(row_tokens[k]))
+            {
+                row_has_missing = true;
+                ++th_mv;
+                th_var_mv[v]++;
             }
         }
+
+        if (row_has_missing)
+            ++th_rows_mv;
 
         return row_has_missing;
     };
@@ -1633,7 +1693,7 @@ void TabularDataset::read_csv()
                 if (binary_storage && row_has_missing)
                     sample_roles[i] = SampleRole::None;
 
-                if (Index(ssize(th_tokens)) < variables_number + id_offset)
+                if (Index(ssize(th_tokens)) < required_tokens)
                 {
                     #pragma omp critical
                     {
