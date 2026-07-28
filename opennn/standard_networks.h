@@ -111,7 +111,8 @@ public:
                 ClassActivation class_activation = ClassActivation::Softmax,
                 HeadStyle head_style = HeadStyle::Single,
                 BodyActivation body_activation = BodyActivation::ReLU,
-                bool use_sppf = false);
+                bool use_sppf = false,
+                Index reg_max = 1);
 };
 
 class TextClassificationNetwork : public NeuralNetwork

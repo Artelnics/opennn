@@ -51,13 +51,16 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
+// Anchor-free variant: boxes_per_cell unused, confidence = max class score.
+// reg_max=1: box channels are post-sigmoid (cx,cy,w,h). reg_max>1: DFL logits.
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
                                                      Index,
                                                      Index,
                                                      Index,
                                                      Index,
                                                      float confidence_threshold = 0.25f,
-                                                     float iou_threshold = 0.45f);
+                                                     float iou_threshold = 0.45f,
+                                                     Index reg_max = 1);
 
 class YoloDataset final : public ImageDataset
 {
@@ -99,6 +102,12 @@ public:
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
 
+    // YOLOv8 anchor-free mode: target is a flat GT list [MAX_GT_BOXES * 5] per sample.
+    // Each row: (cx, cy, w, h, class_id+1). Zero rows = empty slot.
+    // Assignment (TAL) happens at loss time using current predictions.
+    static constexpr Index MAX_GT_BOXES = 100;
+
+    bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
 
     void set(const filesystem::path&,

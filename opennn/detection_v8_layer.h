@@ -19,11 +19,14 @@ class DetectionV8 final : public Layer
 public:
 
     DetectionV8(const Shape& = {}, const string& = "detection_v8");
+    DetectionV8(const Shape&, Index reg_max, const string& = "detection_v8");
 
     Shape get_output_shape() const override { return input_shape; }
     Index get_classes_number() const { return detection.classes_number; }
+    Index get_reg_max() const { return detection.reg_max; }
 
     void set(const Shape&, const string&);
+    void set(const Shape&, Index reg_max, const string&);
     void set_input_shape(const Shape&) override;
 
     void read_JSON_body(const Json*) override;

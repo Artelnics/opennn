@@ -777,32 +777,24 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-static void make_target_v8(const vector<YoloDataset::Box>& boxes,
-                            Index grid_size, Index classes_number,
-                            float* target)
+// YOLOv8 GT-list target: one row of 5 floats per GT box (cx, cy, w, h, class_id+1).
+// Row 0 = first GT, remaining rows zero-padded. Assignment is done at loss time via TAL.
+static void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
+                                   Index classes_number,
+                                   float* target)
 {
-    const Index ch = 5 + classes_number;
-    fill_n(target, grid_size * grid_size * ch, 0.0f);
-    for (const auto& box : boxes)
+    constexpr Index MAX_GT = YoloDataset::MAX_GT_BOXES;
+    fill_n(target, MAX_GT * 5, 0.0f);
+    const Index n = min<Index>(ssize(boxes), MAX_GT);
+    for (Index i = 0; i < n; ++i)
     {
-        if (box.class_id < 0 || box.class_id >= classes_number) continue;
-        const Index col = grid_cell(box.x, grid_size);
-        const Index row = grid_cell(box.y, grid_size);
-        write_box_target(target + (row * grid_size + col) * ch, box, grid_size, col, row, 1.0f);
-    }
-}
-
-static void make_target_v8_multi(const vector<YoloDataset::Box>& boxes,
-                                  const vector<Index>& head_grid_sizes,
-                                  Index classes_number,
-                                  float* target)
-{
-    const Index ch = 5 + classes_number;
-    float* ptr = target;
-    for (Index grid_i : head_grid_sizes)
-    {
-        make_target_v8(boxes, grid_i, classes_number, ptr);
-        ptr += grid_i * grid_i * ch;
+        const auto& b = boxes[size_t(i)];
+        if (b.class_id < 0 || b.class_id >= classes_number) continue;
+        target[i*5 + 0] = b.x;
+        target[i*5 + 1] = b.y;
+        target[i*5 + 2] = b.w;
+        target[i*5 + 3] = b.h;
+        target[i*5 + 4] = float(b.class_id + 1);  // 0 = empty slot
     }
 }
 
@@ -1124,17 +1116,30 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
                           network_height, network_width, iou_threshold);
 }
 
+static float v8_dfl_decode(const float* logits, Index reg_max)
+{
+    float max_l = *max_element(logits, logits + reg_max);
+    float sum = 0.0f;
+    for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
+    float d = 0.0f;
+    for (Index i = 0; i < reg_max; ++i) d += float(i) * expf(logits[i] - max_l) / sum;
+    return d;
+}
+
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& heads,
                                                      Index original_height,
                                                      Index original_width,
                                                      Index network_height,
                                                      Index network_width,
                                                      float confidence_threshold,
-                                                     float iou_threshold)
+                                                     float iou_threshold,
+                                                     Index reg_max)
 {
     if (original_height <= 0 || original_width <= 0
     ||  network_height  <= 0 || network_width  <= 0)
         throw runtime_error("decode_yolo_v8_fpn_detections: dimensions must be positive.");
+
+    const Index box_ch = 4 * max(reg_max, Index(1));
 
     vector<array<float, 6>> candidates;
 
@@ -1142,33 +1147,49 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
     {
         if (!head.data || head.grid_size <= 0 || head.classes_number <= 0) continue;
 
-        const Index ch = 4 + head.classes_number;
-        const float inv_grid = 1.0f / float(head.grid_size);
+        const Index G  = head.grid_size;
+        const Index ch = box_ch + head.classes_number;
+        const float inv_grid = 1.0f / float(G);
 
-        for (Index row = 0; row < head.grid_size; ++row)
-            for (Index col = 0; col < head.grid_size; ++col)
+        for (Index row = 0; row < G; ++row)
+            for (Index col = 0; col < G; ++col)
             {
-                const Index base = (row * head.grid_size + col) * ch;
+                const Index base = (row * G + col) * ch;
 
                 Index best_class = 0;
-                float best_prob = head.data[base + 4];
+                float best_prob = head.data[base + box_ch];
                 for (Index c = 1; c < head.classes_number; ++c)
-                    if (head.data[base + 4 + c] > best_prob)
+                    if (head.data[base + box_ch + c] > best_prob)
                     {
-                        best_prob = head.data[base + 4 + c];
+                        best_prob = head.data[base + box_ch + c];
                         best_class = c;
                     }
 
                 if (best_prob < confidence_threshold) continue;
 
-                candidates.push_back({
-                    (float(col) + head.data[base + 0]) * inv_grid,
-                    (float(row) + head.data[base + 1]) * inv_grid,
-                    head.data[base + 2],
-                    head.data[base + 3],
-                    best_prob,
-                    float(best_class)
-                });
+                float pred_cx, pred_cy, pred_w, pred_h;
+                if (reg_max > 1)
+                {
+                    const float cell_cx = (float(col) + 0.5f) * inv_grid;
+                    const float cell_cy = (float(row) + 0.5f) * inv_grid;
+                    const float d_l = v8_dfl_decode(head.data + base + 0            , reg_max);
+                    const float d_t = v8_dfl_decode(head.data + base + reg_max       , reg_max);
+                    const float d_r = v8_dfl_decode(head.data + base + 2 * reg_max   , reg_max);
+                    const float d_b = v8_dfl_decode(head.data + base + 3 * reg_max   , reg_max);
+                    pred_cx = cell_cx + (d_r - d_l) * inv_grid * 0.5f;
+                    pred_cy = cell_cy + (d_b - d_t) * inv_grid * 0.5f;
+                    pred_w  = (d_l + d_r) * inv_grid;
+                    pred_h  = (d_t + d_b) * inv_grid;
+                }
+                else
+                {
+                    pred_cx = (float(col) + head.data[base + 0]) * inv_grid;
+                    pred_cy = (float(row) + head.data[base + 1]) * inv_grid;
+                    pred_w  = head.data[base + 2];
+                    pred_h  = head.data[base + 3];
+                }
+
+                candidates.push_back({pred_cx, pred_cy, pred_w, pred_h, best_prob, float(best_class)});
             }
     }
 
@@ -1599,18 +1620,7 @@ void YoloDataset::set_v8_mode(bool enabled)
     v8_mode = enabled;
     if (!enabled) return;
 
-    const Index ch = 5 + classes_number;
-    if (is_multi_scale())
-    {
-        Index total = 0;
-        for (Index g : head_grid_sizes)
-            total += g * g * ch;
-        target_record_floats = total;
-    }
-    else
-    {
-        target_record_floats = grid_size * grid_size * ch;
-    }
+    target_record_floats = MAX_GT_BOXES * 5;
     target_shape = {target_record_floats};
     if (variables.size() >= 2)
         variables[1].features = target_record_floats;
@@ -1896,21 +1906,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     if (matrix_storage && !reencode)
         load_targets_to_ram();
 
-    auto encode_target = [&](const vector<Box>& encode_boxes, float* target_ptr)
-    {
-        if (v8_mode && is_multi_scale())
-            make_target_v8_multi(encode_boxes, head_grid_sizes,
-                                 classes_number, target_ptr);
-        else if (v8_mode)
-            make_target_v8(encode_boxes, grid_size, classes_number, target_ptr);
-        else if (is_multi_scale())
-            make_target_multi_scale(encode_boxes, head_anchors, head_grid_sizes,
-                                    boxes_per_head, classes_number, target_ptr);
-        else
-            make_target(encode_boxes, anchors, grid_size, boxes_per_cell,
-                        classes_number, target_ptr);
-    };
-
     string omp_error;
 
     #pragma omp parallel for
@@ -1970,7 +1965,14 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         }
                     }
 
-                    encode_target(mosaic_boxes, target_ptr);
+                    if (v8_mode)
+                        make_target_v8_gtlist(mosaic_boxes, classes_number, target_ptr);
+                    else if (is_multi_scale())
+                        make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
+                                                boxes_per_head, classes_number, target_ptr);
+                    else
+                        make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
+                                    classes_number, target_ptr);
                 }
                 else
                 {
@@ -1985,7 +1987,14 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         apply_geometric_to_boxes(boxes, p);
                     }
 
-                    encode_target(boxes, target_ptr);
+                    if (v8_mode)
+                        make_target_v8_gtlist(boxes, classes_number, target_ptr);
+                    else if (is_multi_scale())
+                        make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                                boxes_per_head, classes_number, target_ptr);
+                    else
+                        make_target(boxes, anchors, grid_size, boxes_per_cell,
+                                    classes_number, target_ptr);
                 }
             }
             else if (matrix_storage)

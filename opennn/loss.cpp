@@ -14,6 +14,7 @@
 #include "memory_debug.h"
 #include "yolo_dataset.h"
 #include "detection_layer.h"
+#include "detection_v8_layer.h"
 #include "neural_network.h"
 #include "error_functions.h"
 #include "profiler.h"
@@ -577,140 +578,421 @@ vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
     return result;
 }
 
+// TAL constants
+static constexpr float TAL_ALPHA = 0.5f;
+static constexpr float TAL_BETA  = 6.0f;
+static constexpr Index TAL_TOP_K = 10;
+
+struct TalResult {
+    vector<Index> assign;   // [B * G * G], 0=background, gt_idx+1 for positive
+    vector<float> iou_map;  // [B * G * G], IoU with assigned GT (0 for background)
+};
+
+static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
+                         float cx2, float cy2, float w2, float h2)
+{
+    const float iw = max(0.0f, min(cx1+w1*0.5f, cx2+w2*0.5f) - max(cx1-w1*0.5f, cx2-w2*0.5f));
+    const float ih = max(0.0f, min(cy1+h1*0.5f, cy2+h2*0.5f) - max(cy1-h1*0.5f, cy2-h2*0.5f));
+    const float inter = iw * ih;
+    return inter / (w1*h1 + w2*h2 - inter + 1e-7f);
 }
 
-float yolo_v8_error_kernel(const TensorView& output,
-                            const TensorView& target,
-                            Index classes_number,
-                            YoloLambdas lam)
+// DFL: decode one coordinate group (reg_max logits) → expected distance in grid units.
+static float dfl_decode(const float* logits, Index reg_max)
 {
-    const Index batch_size = output.shape[0];
-    const Index grid_size  = output.shape[1];
-    const Index ch_out     = 4 + classes_number;
-    const Index ch_tgt     = 5 + classes_number;
+    float max_l = *max_element(logits, logits + reg_max);
+    float sum = 0.0f;
+    for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
+    float d = 0.0f;
+    for (Index i = 0; i < reg_max; ++i) d += float(i) * expf(logits[i] - max_l) / sum;
+    return d;
+}
 
-    const float* out = output.as<float>();
-    const float* tgt = target.as<float>();
+// Decode DFL box logits [4*reg_max] for cell (col, row) on G×G grid → (cx, cy, w, h) normalised.
+static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, Index row, Index G,
+                            float& pred_cx, float& pred_cy, float& pred_w, float& pred_h)
+{
+    const float inv_g   = 1.0f / float(G);
+    const float cell_cx = (float(col) + 0.5f) * inv_g;
+    const float cell_cy = (float(row) + 0.5f) * inv_g;
+    const float d_l = dfl_decode(box_logits + 0          , reg_max);
+    const float d_t = dfl_decode(box_logits + reg_max     , reg_max);
+    const float d_r = dfl_decode(box_logits + 2 * reg_max , reg_max);
+    const float d_b = dfl_decode(box_logits + 3 * reg_max , reg_max);
+    pred_cx = cell_cx + (d_r - d_l) * inv_g * 0.5f;
+    pred_cy = cell_cy + (d_b - d_t) * inv_g * 0.5f;
+    pred_w  = (d_l + d_r) * inv_g;
+    pred_h  = (d_t + d_b) * inv_g;
+}
 
-    float coordinate_loss = 0.0f;
-    float class_loss      = 0.0f;
+// Task-Aligned Assigner. output: [B, G, G, box_ch+C]. gt_list: [B, MAX_GT_BOXES, 5].
+// reg_max=1: box channels are sigmoid(cx,cy,w,h). reg_max>1: box channels are DFL logits.
+static TalResult tal_assign_head(const TensorView& output,
+                                  const float* gt_list,
+                                  Index batch_size, Index G, Index C,
+                                  Index reg_max = 1)
+{
+    const Index cells  = G * G;
+    const float inv_g  = 1.0f / float(G);
+    const Index box_ch = 4 * reg_max;
+    const Index ch_out = box_ch + C;
+
+    TalResult res;
+    res.assign.assign(size_t(batch_size * cells), 0);
+    res.iou_map.assign(size_t(batch_size * cells), 0.0f);
 
     for (Index n = 0; n < batch_size; ++n)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
-            {
-                const Index base_o = ((n * grid_size + row) * grid_size + col) * ch_out;
-                const Index base_t = ((n * grid_size + row) * grid_size + col) * ch_tgt;
-                const float flag = tgt[base_t + 4];
+    {
+        const float* gt    = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        const float* out_n = output.as<float>() + n * cells * ch_out;
 
-                if (flag > -0.5f)
+        vector<float> assign_iou(size_t(cells), -1.0f);
+
+        for (Index gi = 0; gi < YoloDataset::MAX_GT_BOXES; ++gi)
+        {
+            if (gt[gi*5 + 4] < 0.5f) continue;  // empty slot
+
+            const float gt_cx  = gt[gi*5 + 0];
+            const float gt_cy  = gt[gi*5 + 1];
+            const float gt_w   = gt[gi*5 + 2];
+            const float gt_h   = gt[gi*5 + 3];
+            const Index gt_cls = Index(gt[gi*5 + 4]) - 1;
+
+            const float gt_x0 = gt_cx - gt_w*0.5f, gt_x1 = gt_cx + gt_w*0.5f;
+            const float gt_y0 = gt_cy - gt_h*0.5f, gt_y1 = gt_cy + gt_h*0.5f;
+
+            struct CellScore { float score; Index cell; float iou; };
+            vector<CellScore> cands;
+            cands.reserve(size_t(cells));
+
+            for (Index row = 0; row < G; ++row)
+                for (Index col = 0; col < G; ++col)
                 {
-                    for (Index c = 0; c < classes_number; ++c)
+                    const float cx_c = (float(col) + 0.5f) * inv_g;
+                    const float cy_c = (float(row) + 0.5f) * inv_g;
+                    if (cx_c <= gt_x0 || cx_c >= gt_x1 || cy_c <= gt_y0 || cy_c >= gt_y1) continue;
+
+                    const Index base_o = (row * G + col) * ch_out;
+                    float pred_cx, pred_cy, pred_w, pred_h;
+                    if (reg_max > 1)
+                        dfl_decode_box(out_n + base_o, reg_max, col, row, G,
+                                       pred_cx, pred_cy, pred_w, pred_h);
+                    else
                     {
-                        const float p = out[base_o + 4 + c];
-                        const float t = tgt[base_t + 5 + c];
-                        const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                        const float focal = pow(1.0f - p_t, lam.focal_gamma);
-                        class_loss -= focal * (t * log(p + EPSILON) + (1.0f - t) * log(1.0f - p + EPSILON));
+                        pred_cx = (float(col) + out_n[base_o + 0]) * inv_g;
+                        pred_cy = (float(row) + out_n[base_o + 1]) * inv_g;
+                        pred_w  = out_n[base_o + 2];
+                        pred_h  = out_n[base_o + 3];
                     }
+                    const float cls_p = (gt_cls < C) ? out_n[base_o + box_ch + gt_cls] : 0.0f;
+                    const float iou   = iou_cxcywh(pred_cx, pred_cy, pred_w, pred_h,
+                                                    gt_cx,   gt_cy,   gt_w,   gt_h);
+                    const float score = powf(cls_p + EPSILON, TAL_ALPHA) *
+                                        powf(iou   + EPSILON, TAL_BETA);
+                    cands.push_back({score, row*G + col, iou});
                 }
 
-                if (flag >= 0.5f)
+            sort(cands.begin(), cands.end(), [](const CellScore& a, const CellScore& b){ return a.score > b.score; });
+
+            const Index k = min<Index>(TAL_TOP_K, ssize(cands));
+            for (Index i = 0; i < k; ++i)
+            {
+                const Index cell = cands[size_t(i)].cell;
+                const float iou  = cands[size_t(i)].iou;
+                if (iou > assign_iou[size_t(cell)])
                 {
-                    const float inv_grid = 1.0f / float(grid_size);
-                    const float output_box[4] = {
-                        (out[base_o + 0] + float(col)) * inv_grid,
-                        (out[base_o + 1] + float(row)) * inv_grid,
-                        out[base_o + 2],
-                        out[base_o + 3]
-                    };
-                    const float target_box[4] = {
-                        (tgt[base_t + 0] + float(col)) * inv_grid,
-                        (tgt[base_t + 1] + float(row)) * inv_grid,
-                        tgt[base_t + 2],
-                        tgt[base_t + 3]
-                    };
-                    const GIoUResult g = yolo_loss_giou_forward(output_box, target_box);
-                    coordinate_loss += 1.0f - g.giou;
+                    assign_iou[size_t(cell)] = iou;
+                    res.assign [size_t(n * cells + cell)] = gi + 1;
+                    res.iou_map[size_t(n * cells + cell)] = iou;
                 }
             }
+        }
+    }
+    return res;
+}
 
-    return lam.giou * coordinate_loss + lam.cls * class_loss;
+// YOLOv8 TAL/VFL+DFL loss: CIoU+DFL on positives + Varifocal class loss.
+// output: [B,G,G,box_ch+C]. gt_list: [B, MAX_GT_BOXES, 5].
+// reg_max=1: box channels are sigmoid; reg_max>1: DFL logits (4 groups of reg_max bins).
+static float yolo_v8_error_kernel_tal(const TensorView& output,
+                                       const float* gt_list,
+                                       Index batch_size, Index G, Index C,
+                                       const TalResult& tal,
+                                       YoloLambdas lam,
+                                       Index reg_max = 1)
+{
+    const float* out   = output.as<float>();
+    const float inv_g  = 1.0f / float(G);
+    const Index cells  = G * G;
+    const Index box_ch = 4 * reg_max;
+    const Index ch_out = box_ch + C;
+
+    float coord_loss = 0.0f;
+    float dfl_loss   = 0.0f;
+    float cls_loss   = 0.0f;
+
+    for (Index n = 0; n < batch_size; ++n)
+    {
+        const float* gt = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        for (Index row = 0; row < G; ++row)
+            for (Index col = 0; col < G; ++col)
+            {
+                const Index cell   = row * G + col;
+                const Index base_o = (n * cells + cell) * ch_out;
+                const Index gt_id1 = tal.assign [size_t(n * cells + cell)];
+                const float q      = tal.iou_map[size_t(n * cells + cell)];
+
+                if (gt_id1 > 0)
+                {
+                    const float* gr    = gt + (gt_id1 - 1) * 5;
+                    const Index gt_cls = Index(gr[4]) - 1;
+
+                    float pred_cx, pred_cy, pred_w, pred_h;
+                    if (reg_max > 1)
+                        dfl_decode_box(out + base_o, reg_max, col, row, G,
+                                       pred_cx, pred_cy, pred_w, pred_h);
+                    else
+                    {
+                        pred_cx = (float(col) + out[base_o + 0]) * inv_g;
+                        pred_cy = (float(row) + out[base_o + 1]) * inv_g;
+                        pred_w  = out[base_o + 2];
+                        pred_h  = out[base_o + 3];
+                    }
+                    const float ob[4] = {pred_cx, pred_cy, pred_w, pred_h};
+                    const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
+                    coord_loss += 1.0f - yolo_loss_giou_forward(ob, tb).giou;
+
+                    // DFL loss: bilinear cross-entropy over bin distributions
+                    if (reg_max > 1)
+                    {
+                        const float gt_cx = gr[0], gt_cy = gr[1];
+                        const float gt_w  = gr[2], gt_h  = gr[3];
+                        const float cell_cx = (float(col) + 0.5f) * inv_g;
+                        const float cell_cy = (float(row) + 0.5f) * inv_g;
+                        const float rm1     = float(reg_max - 1);
+                        const float d_tgts[4] = {
+                            clamp((cell_cx - (gt_cx - gt_w*0.5f)) * float(G), 0.0f, rm1),
+                            clamp((cell_cy - (gt_cy - gt_h*0.5f)) * float(G), 0.0f, rm1),
+                            clamp(((gt_cx + gt_w*0.5f) - cell_cx) * float(G), 0.0f, rm1),
+                            clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
+                        };
+                        for (Index g = 0; g < 4; ++g)
+                        {
+                            const float* logits = out + base_o + g * reg_max;
+                            const float  dt     = d_tgts[g];
+                            const Index  df     = min(Index(dt), reg_max - 2);
+                            const Index  dc     = df + 1;
+                            const float  wl     = float(dc) - dt;
+                            const float  wu     = dt - float(df);
+                            float max_l = *max_element(logits, logits + reg_max);
+                            float sum   = 0.0f;
+                            for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
+                            const float pf = expf(logits[df] - max_l) / sum;
+                            const float pc = expf(logits[dc] - max_l) / sum;
+                            dfl_loss -= wl * logf(pf + EPSILON) + wu * logf(pc + EPSILON);
+                        }
+                    }
+
+                    for (Index c = 0; c < C; ++c)
+                    {
+                        const float p = out[base_o + box_ch + c];
+                        if (c == gt_cls)
+                            cls_loss -= q * logf(p + EPSILON);
+                        else
+                            cls_loss -= powf(p, lam.focal_gamma) * logf(1.0f - p + EPSILON);
+                    }
+                }
+                else
+                {
+                    for (Index c = 0; c < C; ++c)
+                    {
+                        const float p = out[base_o + box_ch + c];
+                        cls_loss -= powf(p, lam.focal_gamma) * logf(1.0f - p + EPSILON);
+                    }
+                }
+            }
+    }
+    return lam.giou * coord_loss + lam.giou * dfl_loss + lam.cls * cls_loss;
 }
 
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
-void yolo_v8_gradient_kernel(const TensorView& output,
-                              const TensorView& target,
-                              const TensorView& output_delta,
-                              Index classes_number,
-                              float inv_batch,
-                              YoloLambdas lam)
+static void yolo_v8_gradient_kernel_tal(const TensorView& output,
+                                         const float* gt_list,
+                                         const TensorView& output_delta,
+                                         Index batch_size, Index G, Index C,
+                                         const TalResult& tal,
+                                         float inv_batch,
+                                         YoloLambdas lam,
+                                         Index reg_max = 1)
 {
     constexpr float grad_clip = 10.0f;
 
-    const Index batch_size = output.shape[0];
-    const Index grid_size  = output.shape[1];
-    const Index ch_out     = 4 + classes_number;
-    const Index ch_tgt     = 5 + classes_number;
-
-    const float* out = output.as<float>();
-    const float* tgt = target.as<float>();
-    float* delta = output_delta.as<float>();
+    const float* out   = output.as<float>();
+    float*       delta = output_delta.as<float>();
+    const float inv_g  = 1.0f / float(G);
+    const Index cells  = G * G;
+    const Index box_ch = 4 * reg_max;
+    const Index ch_out = box_ch + C;
 
     fill_n(delta, output_delta.size(), 0.0f);
 
     for (Index n = 0; n < batch_size; ++n)
-        for (Index row = 0; row < grid_size; ++row)
-            for (Index col = 0; col < grid_size; ++col)
+    {
+        const float* gt = gt_list + n * YoloDataset::MAX_GT_BOXES * 5;
+        for (Index row = 0; row < G; ++row)
+            for (Index col = 0; col < G; ++col)
             {
-                const Index base_o = ((n * grid_size + row) * grid_size + col) * ch_out;
-                const Index base_t = ((n * grid_size + row) * grid_size + col) * ch_tgt;
-                const float flag = tgt[base_t + 4];
+                const Index cell   = row * G + col;
+                const Index base_o = (n * cells + cell) * ch_out;
+                const Index gt_id1 = tal.assign [size_t(n * cells + cell)];
+                const float q      = tal.iou_map[size_t(n * cells + cell)];
 
-                if (flag > -0.5f)
+                const float cls_s = lam.cls * inv_batch;
+                const float box_s = lam.giou * inv_batch;
+                const float gam   = lam.focal_gamma;
+
+                if (gt_id1 > 0)
                 {
-                    for (Index c = 0; c < classes_number; ++c)
+                    const float* gr    = gt + (gt_id1 - 1) * 5;
+                    const Index gt_cls = Index(gr[4]) - 1;
+
+                    float pred_cx, pred_cy, pred_w, pred_h;
+                    if (reg_max > 1)
+                        dfl_decode_box(out + base_o, reg_max, col, row, G,
+                                       pred_cx, pred_cy, pred_w, pred_h);
+                    else
                     {
-                        const float p = out[base_o + 4 + c];
-                        const float t = tgt[base_t + 5 + c];
-                        const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                        const float focal = pow(1.0f - p_t, lam.focal_gamma);
-                        delta[base_o + 4 + c] = lam.cls * focal * (p - t) / (p * (1.0f - p) + EPSILON) * inv_batch;
+                        pred_cx = (float(col) + out[base_o + 0]) * inv_g;
+                        pred_cy = (float(row) + out[base_o + 1]) * inv_g;
+                        pred_w  = out[base_o + 2];
+                        pred_h  = out[base_o + 3];
+                    }
+                    const float ob[4] = {pred_cx, pred_cy, pred_w, pred_h};
+                    const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
+                    const GIoUResult gr_res = yolo_loss_giou_grad(ob, tb);
+
+                    if (reg_max > 1)
+                    {
+                        // Full DFL gradient = DFL_target_grad + CIoU_chain_through_decode.
+                        //
+                        // DFL_target: d(DFL)/d(z[i]) = probs[i] - w_target[i]
+                        //
+                        // CIoU_chain: d(CIoU)/d(z[i]) = d(CIoU)/d(d_g) * d(d_g)/d(z[i])
+                        //   d(d_g)/d(z[i]) = probs[i] * (i - d_g)
+                        //   d(CIoU)/d(d_l) = cx_grad*(-inv_g*0.5) + w_grad*inv_g
+                        //   d(CIoU)/d(d_t) = cy_grad*(-inv_g*0.5) + h_grad*inv_g
+                        //   d(CIoU)/d(d_r) = cx_grad*(+inv_g*0.5) + w_grad*inv_g
+                        //   d(CIoU)/d(d_b) = cy_grad*(+inv_g*0.5) + h_grad*inv_g
+
+                        const float gt_cx = gr[0], gt_cy = gr[1];
+                        const float gt_w  = gr[2], gt_h  = gr[3];
+                        const float cell_cx = (float(col) + 0.5f) * inv_g;
+                        const float cell_cy = (float(row) + 0.5f) * inv_g;
+                        const float rm1     = float(reg_max - 1);
+                        const float d_tgts[4] = {
+                            clamp((cell_cx - (gt_cx - gt_w*0.5f)) * float(G), 0.0f, rm1),
+                            clamp((cell_cy - (gt_cy - gt_h*0.5f)) * float(G), 0.0f, rm1),
+                            clamp(((gt_cx + gt_w*0.5f) - cell_cx) * float(G), 0.0f, rm1),
+                            clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
+                        };
+
+                        // CIoU chain coefficients per coordinate group (d_l,d_t,d_r,d_b)
+                        const float cx_g = clamp(gr_res.cx_gradient, -grad_clip, grad_clip);
+                        const float cy_g = clamp(gr_res.cy_gradient, -grad_clip, grad_clip);
+                        const float w_g  = clamp(gr_res.w_gradient,  -grad_clip, grad_clip);
+                        const float h_g  = clamp(gr_res.h_gradient,  -grad_clip, grad_clip);
+                        const float d_ciou_dd[4] = {
+                            cx_g * (-inv_g * 0.5f) + w_g * inv_g,
+                            cy_g * (-inv_g * 0.5f) + h_g * inv_g,
+                            cx_g * (inv_g * 0.5f)  + w_g * inv_g,
+                            cy_g * (inv_g * 0.5f)  + h_g * inv_g,
+                        };
+
+                        // Softmax probs and decoded distance per group
+                        float d_g[4] = {};
+                        vector<float> all_probs(size_t(4 * reg_max));
+                        for (Index g = 0; g < 4; ++g)
+                        {
+                            const float* logits = out + base_o + g * reg_max;
+                            float max_l = *max_element(logits, logits + reg_max);
+                            float sum   = 0.0f;
+                            for (Index i = 0; i < reg_max; ++i) sum += expf(logits[i] - max_l);
+                            for (Index i = 0; i < reg_max; ++i)
+                            {
+                                const float p = expf(logits[i] - max_l) / sum;
+                                all_probs[size_t(g * reg_max + i)] = p;
+                                d_g[g] += float(i) * p;
+                            }
+                        }
+
+                        for (Index g = 0; g < 4; ++g)
+                        {
+                            float*      dlogit = delta + base_o + g * reg_max;
+                            const float dt     = d_tgts[g];
+                            const Index df     = min(Index(dt), reg_max - 2);
+                            const Index dc     = df + 1;
+                            const float wl     = float(dc) - dt;
+                            const float wu     = dt - float(df);
+                            for (Index i = 0; i < reg_max; ++i)
+                            {
+                                const float p = all_probs[size_t(g * reg_max + i)];
+                                float w_tgt = 0.0f;
+                                if (i == df) w_tgt += wl;
+                                if (i == dc) w_tgt += wu;
+                                // DFL target gradient + CIoU chain
+                                dlogit[i] = box_s * ((p - w_tgt)
+                                            + d_ciou_dd[g] * p * (float(i) - d_g[g]));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        delta[base_o+0] = box_s * inv_g * clamp(gr_res.cx_gradient, -grad_clip, grad_clip);
+                        delta[base_o+1] = box_s * inv_g * clamp(gr_res.cy_gradient, -grad_clip, grad_clip);
+                        delta[base_o+2] = box_s * clamp(gr_res.w_gradient, -grad_clip, grad_clip);
+                        delta[base_o+3] = box_s * clamp(gr_res.h_gradient, -grad_clip, grad_clip);
+                    }
+
+                    for (Index c = 0; c < C; ++c)
+                    {
+                        const float p = out[base_o + box_ch + c];
+                        float d;
+                        if (c == gt_cls)
+                        {
+                            d = -q / (p + EPSILON);
+                        }
+                        else
+                        {
+                            d = (gam > 0.0f ? -gam * powf(p, gam-1.0f) * logf(1.0f-p+EPSILON) : 0.0f)
+                                + powf(p, gam) / (1.0f-p+EPSILON);
+                        }
+                        delta[base_o + box_ch + c] = cls_s * d;
                     }
                 }
-
-                if (flag >= 0.5f)
+                else
                 {
-                    const float inv_grid = 1.0f / float(grid_size);
-                    const float output_box[4] = {
-                        (out[base_o + 0] + float(col)) * inv_grid,
-                        (out[base_o + 1] + float(row)) * inv_grid,
-                        out[base_o + 2],
-                        out[base_o + 3]
-                    };
-                    const float target_box[4] = {
-                        (tgt[base_t + 0] + float(col)) * inv_grid,
-                        (tgt[base_t + 1] + float(row)) * inv_grid,
-                        tgt[base_t + 2],
-                        tgt[base_t + 3]
-                    };
-                    const GIoUResult g = yolo_loss_giou_grad(output_box, target_box);
-                    const float scale = lam.giou * inv_batch;
-                    delta[base_o + 0] = scale * inv_grid * clamp(g.cx_gradient, -grad_clip, grad_clip);
-                    delta[base_o + 1] = scale * inv_grid * clamp(g.cy_gradient, -grad_clip, grad_clip);
-                    delta[base_o + 2] = scale * clamp(g.w_gradient,  -grad_clip, grad_clip);
-                    delta[base_o + 3] = scale * clamp(g.h_gradient,  -grad_clip, grad_clip);
+                    for (Index c = 0; c < C; ++c)
+                    {
+                        const float p = out[base_o + box_ch + c];
+                        const float d = (gam > 0.0f ? -gam * powf(p, gam-1.0f) * logf(1.0f-p+EPSILON) : 0.0f)
+                                        + powf(p, gam) / (1.0f-p+EPSILON);
+                        delta[base_o + box_ch + c] = cls_s * d;
+                    }
                 }
             }
+    }
 }
 #ifdef _MSC_VER
 #pragma optimize("", on)
 #endif
 
-namespace
+static Index get_v8_reg_max(const NeuralNetwork* nn, Index detection_idx)
 {
+    const auto* layer = dynamic_cast<const DetectionV8*>(nn->get_layer(detection_idx).get());
+    return layer ? layer->get_reg_max() : Index(1);
+}
 
 Loss::EvaluationResult yolo_v8_error_cpu_multi(const ForwardPropagation& forward_propagation,
                                                const TensorView& target_flat,
@@ -720,14 +1002,18 @@ Loss::EvaluationResult yolo_v8_error_cpu_multi(const ForwardPropagation& forward
                                                YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
+    const float* const tgt = target_flat.as<float>();
 
     float total_error = 0.0f;
-    for_each_yolo_head(forward_propagation, nn, detection_indices,
-                       target_flat.as<float>(), batch_size, 5 + classes_number,
-        [&](Index, const TensorView& head_output, const TensorView& head_target)
-        {
-            total_error += yolo_v8_error_kernel(head_output, head_target, classes_number, lam);
-        });
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
+        const Index G       = hs[0];
+        const Index reg_max = get_v8_reg_max(nn, detection_idx);
+        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+        total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
+    }
     return {.error = total_error / float(batch_size)};
 }
 
@@ -740,16 +1026,19 @@ void yolo_v8_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                                 YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
+    const float* const tgt = target_flat.as<float>();
     const float inv_batch = 1.0f / float(batch_size);
 
-    for_each_yolo_head(forward_propagation, nn, detection_indices,
-                       target_flat.as<float>(), batch_size, 5 + classes_number,
-        [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
-        {
-            TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
-            yolo_v8_gradient_kernel(head_output, head_target, head_delta,
-                                    classes_number, inv_batch, lam);
-        });
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
+        const Index G       = hs[0];
+        const Index reg_max = get_v8_reg_max(nn, detection_idx);
+        TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
+        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+        yolo_v8_gradient_kernel_tal(head_output, tgt, head_delta, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
+    }
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -930,15 +1219,30 @@ Loss::EvaluationResult yolo_v8_error_gpu_multi(const ForwardPropagation& forward
                                                YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
-
-    error_device.grow_to(Index(sizeof(float)));
-    yolo_v8_error_gpu_accumulate(forward_propagation, target_flat, nn, detection_indices,
-                                 classes_number, target_device, error_device.as<float>(), lam);
-
+    const Index tgt_floats = target_flat.size();
+    vector<float> tgt_cpu(static_cast<size_t>(tgt_floats));
     cudaStreamSynchronize(device::get_compute_stream());
-    float total_error = 0.0f;
-    cudaMemcpy(&total_error, error_device.as<float>(), sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
+               size_t(tgt_floats) * sizeof(float), cudaMemcpyDeviceToHost);
+    const float* const tgt = tgt_cpu.data();
 
+    float total_error = 0.0f;
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_out_gpu = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
+        const Index G             = hs[0];
+        const Index reg_max       = get_v8_reg_max(nn, detection_idx);
+        const Index head_out_floats = head_out_gpu.size();
+
+        vector<float> out_cpu(static_cast<size_t>(head_out_floats));
+        cudaMemcpy(out_cpu.data(), head_out_gpu.as<float>(),
+                   size_t(head_out_floats) * sizeof(float), cudaMemcpyDeviceToHost);
+        TensorView head_output(out_cpu.data(), head_out_gpu.shape, Type::FP32);
+
+        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+        total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
+    }
     return {.error = total_error / float(batch_size)};
 }
 
@@ -952,19 +1256,36 @@ void yolo_v8_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                                 YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
+    const Index tgt_floats = target_flat.size();
+    vector<float> tgt_cpu(static_cast<size_t>(tgt_floats));
+    cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
+               size_t(tgt_floats) * sizeof(float), cudaMemcpyDeviceToHost);
+    const float* const tgt = tgt_cpu.data();
     const float inv_batch = 1.0f / float(batch_size);
 
-    for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat,
-                           5 + classes_number, target_device,
-        [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
-        {
-            TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
-            const Index grid_size = head_target.shape[1];
-            yolo_v8_gradient_cuda(head_output.as<float>(), head_target.as<float>(),
-                                  head_delta.as<float>(),
-                                  to_int(batch_size), to_int(grid_size), to_int(classes_number),
-                                  inv_batch, lam.giou, lam.cls, lam.focal_gamma);
-        });
+    for (Index detection_idx : detection_indices)
+    {
+        const TensorView head_out_gpu = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
+        const Index G             = hs[0];
+        const Index reg_max       = get_v8_reg_max(nn, detection_idx);
+        const Index head_out_floats = head_out_gpu.size();
+
+        vector<float> out_cpu(static_cast<size_t>(head_out_floats));
+        cudaMemcpy(out_cpu.data(), head_out_gpu.as<float>(),
+                   size_t(head_out_floats) * sizeof(float), cudaMemcpyDeviceToHost);
+        TensorView head_output(out_cpu.data(), head_out_gpu.shape, Type::FP32);
+
+        TensorView& head_delta_gpu = back_propagation.layer_output_deltas[size_t(detection_idx)];
+        vector<float> delta_cpu(size_t(head_out_floats), 0.0f);
+        TensorView head_delta_cpu(delta_cpu.data(), head_delta_gpu.shape, Type::FP32);
+
+        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+        yolo_v8_gradient_kernel_tal(head_output, tgt, head_delta_cpu, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
+
+        cudaMemcpy(head_delta_gpu.as<float>(), delta_cpu.data(),
+                   size_t(head_out_floats) * sizeof(float), cudaMemcpyHostToDevice);
+    }
 }
 
 #endif

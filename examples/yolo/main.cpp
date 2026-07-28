@@ -295,9 +295,11 @@ int main()
         // SPPF: three cascaded 5×5 max-pools + concat before the FPN neck. Tested on VOC 2007:
         // 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled; left for reference.
         const bool use_sppf    = false;
-        // YOLOv8 anchor-free decoupled head (Phase 5a). Switches head to FPNv8,
-        // removes anchors/objectness, uses center-point target assignment.
-        const bool use_v8      = true;  // smoke run
+        // YOLOv8 anchor-free decoupled head. Switches head to FPNv8,
+        // removes anchors/objectness, uses TAL target assignment.
+        const bool use_v8      = true;
+        // reg_max=1: Phase 5a compat (sigmoid box). reg_max=16: DFL (Phase 5b).
+        const Index reg_max    = 16;
 
         const auto backbone = (use_coco || use_voc)
             ? (use_csp ? YoloNetwork::Backbone::CSPDarknet53 : YoloNetwork::Backbone::Darknet53)
@@ -607,7 +609,8 @@ int main()
                                  class_activation,
                                  head_style,
                                  body_activation,
-                                 use_sppf && is_large_backbone);
+                                 use_sppf && is_large_backbone,
+                                 use_v8 ? reg_max : Index(1));
 
         std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
                   << "  " << device::gpu_info_string() << "\n";
@@ -693,6 +696,7 @@ int main()
             (use_sppf && is_large_backbone ? "_sppf" : "") +
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
+            (use_v8 && reg_max > 1 ? "_dfl" : "") +
             filter_tag +
             std::string("_bce_ig_bgfocal.bin");  // bgfocal = focal on bg objectness only (asymmetric)
         std::filesystem::path weights_path = data_dir / weights_filename;
@@ -989,14 +993,15 @@ int main()
                     {
                         if (is_v8_head)
                         {
-                            const Index ch = 4 + h.classes_number;
+                            const Index box_ch = Index(4) * reg_max;  // 64 for reg_max=16
+                            const Index ch = box_ch + h.classes_number;
                             for (Index r = 0; r < h.grid_size; ++r)
                             for (Index c = 0; c < h.grid_size; ++c)
                             {
                                 const Index base = (r * h.grid_size + c) * ch;
                                 float best_p = 0.f;
                                 for (Index cl = 0; cl < h.classes_number; ++cl)
-                                    best_p = std::max(best_p, h.data[base + 4 + cl]);
+                                    best_p = std::max(best_p, h.data[base + box_ch + cl]);
                                 max_score = std::max(max_score, best_p);
                                 if (best_p >= 0.01f)  ++above_001;
                                 if (best_p >= 0.1f)   ++above_01;
@@ -1038,7 +1043,8 @@ int main()
                         /*network_height=*/input_shape[0],
                         /*network_width=*/input_shape[1],
                         /*confidence_threshold=*/0.001f,
-                        /*iou_threshold=*/0.45f)
+                        /*iou_threshold=*/0.45f,
+                        /*reg_max=*/reg_max)
                     : decode_yolo_fpn_detections(
                         fpn_heads,
                         /*original_height=*/input_shape[0],
@@ -1461,7 +1467,7 @@ int main()
                         ? decode_yolo_v8_fpn_detections(heads,
                               input_shape[0], input_shape[1],
                               input_shape[0], input_shape[1],
-                              0.001f, 0.45f)
+                              0.001f, 0.45f, reg_max)
                         : decode_yolo_fpn_detections(heads,
                               input_shape[0], input_shape[1],
                               input_shape[0], input_shape[1],

@@ -404,10 +404,12 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     write_bmp_24(images_dir / "b.bmp", 32, 32,  50, 200,  50);
     write_bmp_24(images_dir / "c.bmp", 32, 32,  50,  50, 200);
     write_bmp_24(images_dir / "d.bmp", 32, 32, 200, 200,  50);
-    { std::ofstream f(labels_dir / "a.txt"); f << "0 0.5 0.5 0.4 0.4\n"; }
-    { std::ofstream f(labels_dir / "b.txt"); f << "0 0.25 0.5 0.3 0.3\n"; }
-    { std::ofstream f(labels_dir / "c.txt"); f << "0 0.75 0.5 0.3 0.3\n"; }
-    { std::ofstream f(labels_dir / "d.txt"); f << "0 0.5 0.25 0.4 0.3\n"; }
+    // GT boxes sized so exactly 1 cell center (at 0.125/0.375/0.625/0.875) lies inside each
+    // box — avoids symmetric gradient cancellation with solid-color constant-feature images.
+    { std::ofstream f(labels_dir / "a.txt"); f << "0 0.375 0.375 0.18 0.18\n"; }  // cell(1,1)
+    { std::ofstream f(labels_dir / "b.txt"); f << "0 0.125 0.125 0.15 0.15\n"; }  // cell(0,0)
+    { std::ofstream f(labels_dir / "c.txt"); f << "0 0.875 0.625 0.15 0.15\n"; }  // cell(2,3)
+    { std::ofstream f(labels_dir / "d.txt"); f << "0 0.125 0.875 0.15 0.15\n"; }  // cell(3,0)
     { std::ofstream f(labels_dir / "classes.names"); f << "object\n"; }
 
     constexpr Index H = 32, W = 32, grid = 4, C = 1;
@@ -478,13 +480,13 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     };
 
     const float error_short = run(2);
-    const float error_long  = run(300);
+    const float error_long  = run(500);
 
     EXPECT_FALSE(std::isnan(error_short)) << "NaN after 2 epochs — v8 forward/backward broken.";
-    EXPECT_FALSE(std::isnan(error_long))  << "NaN after 200 epochs — v8 gradient instability.";
+    EXPECT_FALSE(std::isnan(error_long))  << "NaN after 500 epochs — v8 gradient instability.";
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease: short=" << error_short << " long=" << error_long;
     EXPECT_LT(error_long, error_short * 0.90f)
         << "Loss barely decreased (" << error_short << " → " << error_long
-        << ") — DetectionV8 backprop or v8 loss may be broken.";
+        << ") — TAL/VFL backprop or v8 loss may be broken.";
 }

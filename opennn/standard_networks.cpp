@@ -419,7 +419,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          ClassActivation class_activation,
                          HeadStyle head_style,
                          BodyActivation body_activation,
-                         bool use_sppf) : NeuralNetwork()
+                         bool use_sppf,
+                         Index reg_max) : NeuralNetwork()
 {
     throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -768,22 +769,26 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             constexpr Index head_ch = 64;
 
+            const Index box_ch = 4 * max(reg_max, Index(1));
+
             auto add_det_head_v8 = [&](Index feat_idx, const string& name) {
                 const Index in_ch = get_layer(feat_idx)->get_output_shape()[2];
 
-                Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},    act,        stride, true,  name+"_box_c1");
-                box       = add_conv(box,      Shape{3,3,head_ch,head_ch},  act,        stride, true,  name+"_box_c2");
-                box       = add_conv(box,      Shape{1,1,head_ch,4},        "Identity", stride, false, name+"_box_out");
+                // Box branch: 3×3 → 3×3 → 1×1(4*reg_max outputs)
+                Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},        act,        stride, true,  name+"_box_c1");
+                box       = add_conv(box,      Shape{3,3,head_ch,head_ch},      act,        stride, true,  name+"_box_c2");
+                box       = add_conv(box,      Shape{1,1,head_ch,box_ch},       "Identity", stride, false, name+"_box_out");
 
                 Index cls = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},               act,        stride, true,  name+"_cls_c1");
                 cls       = add_conv(cls,      Shape{3,3,head_ch,head_ch},             act,        stride, true,  name+"_cls_c2");
                 cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
 
+                // Concat [box(4*reg_max), class(C)] → [G, G, box_ch+C]
                 const Shape hw = get_layer(box)->get_output_shape();
-                add_layer(make_unique<Concatenation>(hw, vector<Index>{4, classes_number}, name+"_cat"),
+                add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),
                           {box, cls});
                 const Index cat = get_layers_number() - 1;
-                add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), name+"_det"), {cat});
+                add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name+"_det"), {cat});
             };
 
             const auto [p5n, p4n, p3n] = build_fpn_trunk(c5_index, "v8_");
