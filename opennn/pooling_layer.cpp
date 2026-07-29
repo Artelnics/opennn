@@ -189,6 +189,24 @@ void Pooling::read_JSON_body(const Json* pooling_layer_element)
     padding_height  = read_json_index(pooling_layer_element, "PaddingHeight");
     padding_width   = read_json_index(pooling_layer_element, "PaddingWidth");
 
+    // These assign the members directly, bypassing set_pool_size/set_row_stride
+    // and their checks. A missing or empty field reads back as 0, and a zero
+    // stride divides by zero in get_output_height() — a SIGFPE with no context
+    // instead of a diagnosable error. Enforce the same invariant the setters do.
+    throw_if(pool_height <= 0 || pool_width <= 0,
+             "Pooling layer '{}': pool size must be positive, read {}x{}. "
+             "The model file is missing its PoolHeight/PoolWidth settings.",
+             label, pool_height, pool_width);
+
+    throw_if(row_stride <= 0 || column_stride <= 0,
+             "Pooling layer '{}': stride must be positive, read {}x{}. "
+             "The model file is missing its RowStride/ColumnStride settings.",
+             label, row_stride, column_stride);
+
+    throw_if(padding_height < 0 || padding_width < 0,
+             "Pooling layer '{}': padding cannot be negative, read {}x{}.",
+             label, padding_height, padding_width);
+
     pooling_method  = string_to_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
 
     update_pool_operator();

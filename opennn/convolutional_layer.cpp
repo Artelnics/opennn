@@ -261,8 +261,26 @@ void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
     kernels_number  = read_json_index(convolutional_layer_element, "KernelsNumber");
 
     const Shape stride_shape = string_to_shape(read_json_string(convolutional_layer_element, "StrideDimensions"));
+
+    throw_if(stride_shape.rank != 2,
+             "Convolutional layer '{}': StrideDimensions must have 2 values, read {}.",
+             label, stride_shape.rank);
+
     row_stride      = stride_shape[0];
     column_stride   = stride_shape[1];
+
+    // As in Pooling::read_JSON_body: these bypass the setters, an absent field
+    // reads back as 0, and a zero stride divides by zero in get_output_height().
+    throw_if(kernel_height <= 0 || kernel_width <= 0 || kernels_number <= 0,
+             "Convolutional layer '{}': kernel size and kernel count must be positive, "
+             "read {} kernels of {}x{}. The model file is missing its "
+             "KernelsNumber/KernelsHeight/KernelsWidth settings.",
+             label, kernels_number, kernel_height, kernel_width);
+
+    throw_if(row_stride <= 0 || column_stride <= 0,
+             "Convolutional layer '{}': stride must be positive, read {}x{}. "
+             "The model file is missing its StrideDimensions setting.",
+             label, row_stride, column_stride);
 
     const string convolution_type = read_json_string(convolutional_layer_element, "Convolution");
     throw_if(!contains({"Valid", "Same"}, convolution_type),
