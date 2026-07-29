@@ -147,7 +147,7 @@ __global__ void adam_prepare_kernel(int* __restrict__ step,
     const float bias_correction_2 = 1.0f - powf(beta_2, float(t));
     const float sqrt_bc2 = sqrtf(bias_correction_2);
 
-    *effective_lr  = learning_rate * sqrt_bc2 / bias_correction_1;
+    *effective_lr = learning_rate * sqrt_bc2 / bias_correction_1;
     *effective_eps = epsilon * sqrt_bc2;
 }
 

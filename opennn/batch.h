@@ -75,7 +75,7 @@ struct Batch
 
     bool uses_cuda() const
     {
-        return config.device == Device::CUDA && device::is_cuda_build();
+        return input.buffer.device_type == Device::CUDA && device::is_cuda_build();
     }
 
     Index get_samples_number() const { return samples_number; }
@@ -85,10 +85,8 @@ struct Batch
     Index samples_number = 0;
     bool needs_device_copy = true;
     bool input_is_bf16 = false;
-    bool prefetch_only = false;
 
     const Dataset* dataset = nullptr;
-    Configuration::Resolved config;
 
     BatchSlot input;
     BatchSlot decoder;
@@ -142,8 +140,6 @@ struct BatchPools
     vector<unique_ptr<Batch>> validation_pool;
     unique_ptr<Batch> fixed_training_batch;
     vector<unique_ptr<Batch>> graph_slot_pool;
-
-    bool validation_uses_training_pool = false;
 
     ThreadSafeQueue<Batch*>& validation_queue();
 };

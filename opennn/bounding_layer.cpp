@@ -82,7 +82,7 @@ void Bounding::set_lower_bound(Index index, float new_lower_bound)
                     index, lower_bounds.size());
     lower_bounds[size_t(index)] = new_lower_bound;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 void Bounding::set_upper_bound(Index index, float new_upper_bound)
@@ -92,7 +92,7 @@ void Bounding::set_upper_bound(Index index, float new_upper_bound)
                     index, upper_bounds.size());
     upper_bounds[size_t(index)] = new_upper_bound;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 float* Bounding::link_states(float* pointer, Device device)
@@ -103,8 +103,6 @@ float* Bounding::link_states(float* pointer, Device device)
 
 void Bounding::refresh_op_storage(Device device)
 {
-    op_storage_device = device;
-
     const Index features = ssize(lower_bounds);
     const Index bytes    = 2 * features * Index(sizeof(float));
 
@@ -169,7 +167,7 @@ void Bounding::read_JSON_body(const Json* root_element)
     parse_bounds("UpperBounds", upper_bounds);
 
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 void Bounding::write_JSON_body(JsonWriter& printer) const

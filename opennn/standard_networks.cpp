@@ -1333,14 +1333,17 @@ Qwen3::Qwen3(Index sequence_length,
 
     const Shape block{sequence_length, hidden_size};
 
-    auto add_norm = [&](const string& name, Index source) {
+    auto add_norm = [&](const string& name, Index source) 
+    {
         auto norm = make_unique<Normalization3d>(block, name);
         norm->set_method(NormalizationMethod::RMS);
         norm->set_epsilon(rms_epsilon);
         add_layer(move(norm), {source});
         return get_layers_number() - 1;
     };
-    auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source) {
+
+    auto add_linear = [&](const Shape& in_shape, Index out_features, const string& name, Index source) 
+    {
         auto dense = make_unique<Dense>(in_shape, Shape{out_features}, "Identity", false, name);
         dense->set_use_bias(false);
         add_layer(move(dense), {source});

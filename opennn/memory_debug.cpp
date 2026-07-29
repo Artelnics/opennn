@@ -91,8 +91,8 @@ void print(ostream& os)
 
     os << "[MEMORY_DEBUG] rows=" << rows.size()
        << " total_recorded_mib=" << fixed << setprecision(2)
-       << double(total) / (1024.0 * 1024.0) << "\n";
-    os << "[MEMORY_DEBUG] category,name,count,MiB,note\n";
+       << double(total) / (1024.0 * 1024.0) << "\n"
+       << "[MEMORY_DEBUG] category,name,count,MiB,note\n";
 
     for (const Entry& row : rows)
     {

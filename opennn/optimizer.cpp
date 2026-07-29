@@ -292,9 +292,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             }
     }
 
-    pools.validation_uses_training_pool = validation_reuses_training_pool;
-
-    if (has_validation && !pools.validation_uses_training_pool)
+    if (has_validation && !validation_reuses_training_pool)
         fill_pool(pools.validation_empty_queue,
                   pools.validation_pool,
                   validation_batch_size,

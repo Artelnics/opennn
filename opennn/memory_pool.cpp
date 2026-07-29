@@ -83,14 +83,14 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries)
             block = free_blocks.insert(block, {plan.byte_offsets[entry_index], bytes});
 
             if (block + 1 != free_blocks.end()
-                && block->first + block->second == (block + 1)->first)
+            && block->first + block->second == (block + 1)->first)
             {
                 block->second += (block + 1)->second;
                 free_blocks.erase(block + 1);
             }
 
             if (block != free_blocks.begin()
-                && (block - 1)->first + (block - 1)->second == block->first)
+            && (block - 1)->first + (block - 1)->second == block->first)
             {
                 (block - 1)->second += block->second;
                 free_blocks.erase(block);

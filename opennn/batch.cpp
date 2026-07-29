@@ -230,6 +230,7 @@ void Batch::copy_device_async(cudaStream_t stream)
 void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
 {
     const Index current_batch_size = samples_number;
+    
     throw_if(!uses_cuda() || !destination.uses_cuda(),
              "Batch::upload_to_device_batch_async requires CUDA batches.");
     throw_if(current_batch_size > destination.samples_number,
