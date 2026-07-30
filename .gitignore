@@ -339,6 +339,9 @@ __pycache__/
 # Local benchmark scratch (datasets, scripts, generated TSV)
 /temp/
 
+# Local document/image review scratch
+/.tmp_*/
+
 # Fetched dependencies (downloaded at configure time, never vendored)
 /eigen/
 
