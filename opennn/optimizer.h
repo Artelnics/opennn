@@ -93,6 +93,11 @@ public:
     // Use for per-step EMA updates; receives the live network pointer.
     function<void(NeuralNetwork*)> post_batch_callback;
 
+    // Called whenever a new best validation error is recorded (inside update_best_parameters).
+    // Receives the epoch index and the new best validation error.
+    // Use for periodic best-model checkpointing without waiting for phase end.
+    function<void(Index, float)> post_best_callback;
+
 protected:
 
     void set_names();

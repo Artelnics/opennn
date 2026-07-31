@@ -1249,6 +1249,9 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network, float vali
     best_epoch = epoch;
     validation_failures = 0;
 
+    if (post_best_callback)
+        post_best_callback(epoch, validation_error);
+
     const tuple<vector<float>&, const float*, Index> snapshots[] = {
         {best_parameters, neural_network->get_parameters_data(), neural_network->get_parameters_size()},
         {best_states,     neural_network->get_states_data(),     neural_network->get_states_buffer_size()}

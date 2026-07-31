@@ -992,6 +992,27 @@ int main()
             ema_updated_this_run = true;
         };
 
+        // Save best model to disk every time validation error improves.
+        // Fires inside update_best_parameters (every validation_period epochs = every 5).
+        // Protects against crashes during long LR phases without waiting for phase end.
+        adam->post_best_callback = [&](Index epoch, float val_error) {
+            yolo_network.save_parameters_binary(weights_path);
+            yolo_network.save_states_binary(states_path);
+            { std::ofstream ef(epochs_file); ef << (epochs_done + static_cast<int>(epoch) + 1); }
+            std::cout << "Best checkpoint saved at epoch "
+                      << (epochs_done + static_cast<int>(epoch) + 1)
+                      << " (val=" << val_error << ")\n";
+            // Also save EMA alongside the live best weights.
+            if (ema_updated_this_run) {
+                VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
+                yolo_network.set_parameters(ema_vec);
+                yolo_network.save_parameters_binary(ema_weights_path);
+                yolo_network.load_parameters_binary(weights_path);
+                if (std::filesystem::exists(states_path))
+                    yolo_network.load_states_binary(states_path);
+            }
+        };
+
         if (resume_training || !std::filesystem::exists(weights_path))
         {
             // Initialize EMA from live weights, then try to resume from disk if available.
