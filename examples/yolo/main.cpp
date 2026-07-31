@@ -321,7 +321,14 @@ int main()
 
         const auto body_activation = YoloNetwork::BodyActivation::LeakyReLU;
 
-        const std::filesystem::path voc_root = "/home/alvaromartin/VOCdevkit/VOC2007";
+        const std::filesystem::path voc_root = []() -> std::filesystem::path {
+            if (const char* env = std::getenv("VOC_ROOT")) return env;
+            for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2007",
+                                   "/home/artelnics/VOCdevkit/VOC2007",
+                                   "VOCdevkit/VOC2007"})
+                if (std::filesystem::is_directory(c)) return c;
+            return "/home/alvaromartin/VOCdevkit/VOC2007";
+        }();
         const std::string voc_image_set = "trainval";
 
         // Leave empty for all 20 VOC classes.
