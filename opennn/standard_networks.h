@@ -95,13 +95,17 @@ class YoloNetwork : public NeuralNetwork
 {
 public:
 
-    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53, CSPDarknet53 };
+    enum class Backbone { Vgg, DarknetTiny, DarknetTinyV3, Darknet53, CSPDarknet53, CSPDarknet53v11 };
 
     enum class ClassActivation { Softmax, Sigmoid };
 
     enum class HeadStyle { Single, FPN, PANet, FPNv8 };
 
     enum class BodyActivation { ReLU, LeakyReLU };
+
+    // Depth and width multipliers for CSPDarknet53v11 scaling.
+    // n≈2.6M params, s≈9.5M, m≈21M, l≈43M (default), x≈68M.
+    enum class ModelSize { n, s, m, l, x };
 
     YoloNetwork(const Shape&,
                 Index,
@@ -112,7 +116,8 @@ public:
                 HeadStyle head_style = HeadStyle::Single,
                 BodyActivation body_activation = BodyActivation::ReLU,
                 bool use_sppf = false,
-                Index reg_max = 1);
+                Index reg_max = 1,
+                ModelSize model_size = ModelSize::l);
 };
 
 class TextClassificationNetwork : public NeuralNetwork

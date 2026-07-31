@@ -147,6 +147,8 @@ public:
 
     void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
     void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }
+    void set_yolo_lambda_giou(float v)      { yolo_lambda_giou      = v; }
+    void set_yolo_lambda_dfl(float v)       { yolo_lambda_dfl       = v; }
     void set_yolo_focal_gamma(float v)      { yolo_focal_gamma      = v; }
     void set_yolo_obj_focal_gamma(float v)  { yolo_obj_focal_gamma  = v; }
 
@@ -189,6 +191,7 @@ protected:
     float minkowski_parameter = 1.5f;
 
     float yolo_lambda_giou     = 5.0f;
+    float yolo_lambda_dfl      = 1.5f;
     float yolo_lambda_noobj    = 0.5f;
     float yolo_lambda_class    = 1.0f;
     float yolo_focal_gamma     = 0.0f;
@@ -212,6 +215,7 @@ protected:
 struct YoloLambdas
 {
     float giou            = 5.0f;
+    float dfl             = 1.5f;
     float noobj           = 0.5f;
     float cls             = 1.0f;
     float focal_gamma     = 0.0f;

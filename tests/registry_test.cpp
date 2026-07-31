@@ -29,6 +29,7 @@ TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
         "Activation",
         "Addition",
         "Bounding",
+        "C2PSA",
         "Concatenate",
         "Concatenation",
         "Convolutional",

@@ -47,7 +47,8 @@ enum class LayerType
     Scaling,
     Tokenizer,
     Unscaling,
-    Upsample
+    Upsample,
+    C2PSA
 };
 
 inline const EnumMap<LayerType>& layer_type_map()
@@ -76,7 +77,8 @@ inline const EnumMap<LayerType>& layer_type_map()
         {LayerType::Scaling,            "Scaling"},
         {LayerType::Tokenizer,          "Tokenizer"},
         {LayerType::Unscaling,          "Unscaling"},
-        {LayerType::Upsample,           "Upsample"}
+        {LayerType::Upsample,           "Upsample"},
+        {LayerType::C2PSA,              "C2PSA"}
     };
     static const EnumMap<LayerType> map{entries};
     return map;

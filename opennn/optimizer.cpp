@@ -1002,7 +1002,7 @@ TrainingResult Optimizer::train()
             training_accuracy = training_evaluation_result.accuracy;
             results.training_error_history(epoch) = training_error;
 
-            if (has_validation)
+            if (has_validation && (epoch % validation_period == 0))
             {
                 dataset->get_batches(validation_sample_indices, validation_batch_size, false, validation_batches);
 
@@ -1025,6 +1025,9 @@ TrainingResult Optimizer::train()
             display_epoch_results(epoch, training_error, training_accuracy,
                                   validation_error, validation_accuracy,
                                   has_validation, is_token_cross_entropy, elapsed_time);
+
+            if (post_epoch_callback)
+                post_epoch_callback(epoch, neural_network);
 
             if (check_stopping_condition(results, epoch, elapsed_time,
                                          results.training_error_history(epoch),
@@ -1994,6 +1997,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
             update(back_propagation);
         }
         sync_cuda_for_debug(on_gpu);
+
+        if (post_batch_callback)
+            post_batch_callback(neural_network);
     };
 
     epoch_result = run_epoch_loop(context);

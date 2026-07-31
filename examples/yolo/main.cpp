@@ -262,6 +262,9 @@ int main()
         std::cout << "OpenNN. YOLO Example." << std::endl;
 
         set_seed(42);
+        // BF16 disabled: detection/upsample/concat operators use as<float>() unconditionally,
+        // causing 2× overflow writes into BF16 slots that corrupt adjacent GPU memory.
+        // Those operators need BF16-aware dispatch before enabling BF16 training.
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
         // ===== Configuration toggles =====
@@ -291,7 +294,10 @@ int main()
         // branches — one goes through N residual blocks, the other is a linear skip — then concat
         // + merge. Halves gradient duplication vs plain Darknet53 at similar param count.
         // Trains from scratch (CSP layer names differ from darknet53.conv.74 weights).
-        const bool use_csp     = true;
+        const bool use_csp     = false;
+        // C3k2 backbone (§26, YOLOv11-style): replaces 1×1→3×3 bottlenecks with 3×3→3×3 cascaded
+        // convs inside each CSP stage. Same channel plan as CSPDarknet53. use_c11 implies use_csp.
+        const bool use_c11     = true;
         // SPPF: three cascaded 5×5 max-pools + concat before the FPN neck. Tested on VOC 2007:
         // 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled; left for reference.
         const bool use_sppf    = false;
@@ -302,7 +308,9 @@ int main()
         const Index reg_max    = 16;
 
         const auto backbone = (use_coco || use_voc)
-            ? (use_csp ? YoloNetwork::Backbone::CSPDarknet53 : YoloNetwork::Backbone::Darknet53)
+            ? (use_c11 ? YoloNetwork::Backbone::CSPDarknet53v11
+             : use_csp ? YoloNetwork::Backbone::CSPDarknet53
+             :           YoloNetwork::Backbone::Darknet53)
             : YoloNetwork::Backbone::Vgg;
 
         const auto head_style = (use_coco || use_voc)
@@ -375,9 +383,11 @@ int main()
                 std::cout << "Filtered to " << linked << " images containing the requested classes.\n";
             }
 
-            grid_size = 13;
-            boxes_per_cell = 3;          // 3 anchors per head × 2 FPN heads = 6 total
-            input_shape = Shape{416, 416, 3};
+            // Anchor-free FPNv8 (use_v8): 640×640 matches Ultralytics YOLO11 reference.
+            // Anchor-based FPN: keep 416×416 (anchors are tuned to that scale).
+            grid_size = use_v8 ? 20 : 13;   // 640/32=20  or  416/32=13
+            boxes_per_cell = 3;
+            input_shape = use_v8 ? Shape{640, 640, 3} : Shape{416, 416, 3};
             // Standard YOLOv3-tiny anchors (in image-fraction units).
             // Matches yolov3-tiny.weights training configuration so pretrained
             // backbone features align with anchor scale expectations.
@@ -452,7 +462,8 @@ int main()
         const bool is_v3std     = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
         const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
         const bool is_csp53     = (backbone == YoloNetwork::Backbone::CSPDarknet53);
-        const bool is_large_backbone = is_darknet53 || is_csp53;
+        const bool is_csp53v11  = (backbone == YoloNetwork::Backbone::CSPDarknet53v11);
+        const bool is_large_backbone = is_darknet53 || is_csp53 || is_csp53v11;
         if (!use_v8 && (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet))
         {
             if (is_v3std)
@@ -581,13 +592,16 @@ int main()
             aug.enabled     = false;
         }
         dataset.set_augmentation(aug);
+        dataset.set_storage_mode(Dataset::StorageMode::Matrix);  // preload all images to RAM
 
         // 70% training, 30% selection (held-out) — gives a generalization signal:
         // TrainingStrategy reports both training_error and selection_error per epoch,
         // and the visualization at the end runs inference on samples the model has
         // never seen during training.
-        const double train_frac = use_raccoon ? 0.8 : 0.7;
-        const double val_frac   = use_raccoon ? 0.2 : 0.3;
+        // 85/15 split on VOC2007 trainval (5011 imgs): 4259 train, 752 val.
+        // Was 70/30 (3508/1503) — 21% more training samples from same data.
+        const double train_frac = use_raccoon ? 0.8 : (use_voc ? 0.85 : 0.7);
+        const double val_frac   = use_raccoon ? 0.2 : (use_voc ? 0.15 : 0.3);
         dataset.split_samples_random(train_frac, val_frac, 0.0);
 
         // Network.
@@ -601,6 +615,13 @@ int main()
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
 
+        // ModelSize::s (9.5M params) vs ::l (50M params).
+        // With VOC2007 only (~4200 training images), l-size has 11k params/image → severe overfit.
+        // s-size: 2.3k params/image → much better generalisation. Also fits batch=16 at 640×640.
+        const auto model_size = is_csp53v11
+            ? YoloNetwork::ModelSize::s
+            : YoloNetwork::ModelSize::l;
+
         YoloNetwork yolo_network(input_shape,
                                  dataset.get_classes_number(),
                                  network_anchors,
@@ -610,16 +631,18 @@ int main()
                                  head_style,
                                  body_activation,
                                  use_sppf && is_large_backbone,
-                                 use_v8 ? reg_max : Index(1));
+                                 use_v8 ? reg_max : Index(1),
+                                 model_size);
 
         std::cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
                   << "  " << device::gpu_info_string() << "\n";
         std::cout << "Network: backbone="
-                  << (backbone == YoloNetwork::Backbone::Vgg           ? "Vgg"
-                    : backbone == YoloNetwork::Backbone::DarknetTinyV3  ? "DarknetTinyV3"
-                    : backbone == YoloNetwork::Backbone::Darknet53      ? "Darknet53"
-                    : backbone == YoloNetwork::Backbone::CSPDarknet53   ? "CSPDarknet53"
-                    :                                                      "DarknetTiny")
+                  << (backbone == YoloNetwork::Backbone::Vgg              ? "Vgg"
+                    : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "DarknetTinyV3"
+                    : backbone == YoloNetwork::Backbone::Darknet53        ? "Darknet53"
+                    : backbone == YoloNetwork::Backbone::CSPDarknet53     ? "CSPDarknet53"
+                    : backbone == YoloNetwork::Backbone::CSPDarknet53v11  ? "CSPDarknet53v11"
+                    :                                                        "DarknetTiny")
                   << ", class_activation="
                   << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
@@ -628,7 +651,7 @@ int main()
                       head_style == YoloNetwork::HeadStyle::FPNv8   ? "FPNv8"  : "Single")
                   << ", body_activation="
                   << (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
-                  << (use_csp ? ", csp=on" : "")
+                  << (use_c11 ? ", c3k2=on" : use_csp ? ", csp=on" : "")
                   << (use_sppf && is_large_backbone ? ", sppf=on" : "")
                   << ", layers=" << yolo_network.get_layers_number()
                   << ", parameters=" << yolo_network.get_parameters_number() << "\n";
@@ -653,25 +676,32 @@ int main()
         TrainingStrategy training_strategy(&yolo_network, &dataset);
         training_strategy.set_loss("Yolo");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        // L2 weight decay is the brake on directional weight drift from the
-        // geometry-coupled YOLO loss (especially when GIoU/DIoU is enabled).
-        // Default weight 0.001 — matches every other example in the repo.
+        // L2 weight decay. CSPDarknet53v11 (50M params, 3508 train images) overfits early —
+        // 0.002 (2× default) pushes against weight drift without collapsing gradients.
         training_strategy.get_loss()->set_regularization("L2");
-        training_strategy.get_loss()->set_yolo_lambda_noobj(1.0f);      // raised from 0.5: suppress the massive false-positive rate
-        training_strategy.get_loss()->set_yolo_lambda_class(2.0f);
-        training_strategy.get_loss()->set_yolo_focal_gamma(2.0f);      // focal loss on class BCE
-        training_strategy.get_loss()->set_yolo_obj_focal_gamma(2.0f);  // focal loss on objectness BCE
+        // s-size has 9.5M params vs 50M for l — needs far less L2 to avoid shrinking learned features.
+        if (is_csp53v11 && use_voc)
+            training_strategy.get_loss()->set_regularization_weight(0.0005f);
+        training_strategy.get_loss()->set_yolo_lambda_noobj(0.5f);
+        training_strategy.get_loss()->set_yolo_lambda_class(0.5f);      // YOLOv8 ref: cls_gain=0.5
+        training_strategy.get_loss()->set_yolo_lambda_giou(7.5f);       // YOLOv8 ref: box_gain=7.5
+        training_strategy.get_loss()->set_yolo_lambda_dfl(1.5f);        // YOLOv8 ref: dfl_gain=1.5
+        training_strategy.get_loss()->set_yolo_focal_gamma(0.5f);       // YOLOv8 ref: fl_gamma=0.5
+        training_strategy.get_loss()->set_yolo_obj_focal_gamma(0.0f);
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
         // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
-        const int batch_size = is_large_backbone ? 4 : 16;
+        // c11 s-size at 640×640: activations ≈ 5GB at batch=16 (fits in 7.7GB FP32).
+        // c11 l-size at 640×640 would need ~14GB at batch=16 — use s-size to avoid OOM.
+        const int batch_size = is_csp53v11 ? 16 : (is_large_backbone ? 4 : 16);
         adam->set_batch_size(batch_size);
         adam->set_display_period(1);
-        adam->set_gradient_clip_norm(0.1f);
+        adam->set_gradient_clip_norm(10.0f);  // YOLOv8 ref: clip_grad_norm=10.0 (was 0.1 = 100× too tight)
         adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
+        adam->set_validation_period(5);  // validate every 5 epochs to save ~60% of validation overhead
 
         // Training control:
         //   resume_training = true  → load weights if they exist, then continue
@@ -685,11 +715,12 @@ int main()
         const std::string filter_tag   = voc_class_filter.empty() ? "" :
             "_" + std::to_string(voc_class_filter.size()) + "cls";
         const std::string weights_filename = std::string("yolo_weights_") + dataset_tag + "_" +
-            (backbone == YoloNetwork::Backbone::Vgg           ? "vgg"
-           : backbone == YoloNetwork::Backbone::DarknetTinyV3 ? "darknet_v3std"
-           : backbone == YoloNetwork::Backbone::CSPDarknet53  ? "csp53"
-           : backbone == YoloNetwork::Backbone::Darknet53     ? "darknet53"
-           :                                                     "darknet") +
+            (backbone == YoloNetwork::Backbone::Vgg              ? "vgg"
+           : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "darknet_v3std"
+           : backbone == YoloNetwork::Backbone::CSPDarknet53     ? "csp53"
+           : backbone == YoloNetwork::Backbone::CSPDarknet53v11  ? "c11"
+           : backbone == YoloNetwork::Backbone::Darknet53        ? "darknet53"
+           :                                                        "darknet") +
             (head_style == YoloNetwork::HeadStyle::FPN    ? "_fpn"    :
              head_style == YoloNetwork::HeadStyle::PANet  ? "_panet"  :
              head_style == YoloNetwork::HeadStyle::FPNv8  ? "_fpnv8"  : "") +
@@ -697,6 +728,7 @@ int main()
             (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
             (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
             (use_v8 && reg_max > 1 ? "_dfl" : "") +
+            (model_size == YoloNetwork::ModelSize::s ? "_s" : "") +
             filter_tag +
             std::string("_bce_ig_bgfocal.bin");  // bgfocal = focal on bg objectness only (asymmetric)
         std::filesystem::path weights_path = data_dir / weights_filename;
@@ -726,25 +758,38 @@ int main()
         const bool needs_darknet_backbone =
             (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
              backbone == YoloNetwork::Backbone::Darknet53 ||
-             backbone == YoloNetwork::Backbone::CSPDarknet53) && !weights_exist;
+             backbone == YoloNetwork::Backbone::CSPDarknet53 ||
+             backbone == YoloNetwork::Backbone::CSPDarknet53v11) && !weights_exist;
         bool backbone_pretrained_loaded = false;
         if (needs_darknet_backbone)
         {
-            const bool is53  = (backbone == YoloNetwork::Backbone::Darknet53);
-            const bool iscsp = (backbone == YoloNetwork::Backbone::CSPDarknet53);
+            const bool is53    = (backbone == YoloNetwork::Backbone::Darknet53);
+            const bool iscsp   = (backbone == YoloNetwork::Backbone::CSPDarknet53);
+            const bool isv11   = (backbone == YoloNetwork::Backbone::CSPDarknet53v11);
             // yolov4.conv.137 = first 137 conv layers of YOLOv4; backbone is first 72.
             const std::string darknet_filename = is53 ? "darknet53.conv.74"
-                                               : iscsp ? "yolov4.conv.137"
+                                               : (iscsp || isv11) ? "yolov4.conv.137"
                                                : "yolov3-tiny.weights";
             // Look in data_dir first, then in yolo_voc_data (where it was originally downloaded).
             std::filesystem::path darknet_weights = data_dir / darknet_filename;
             if (!std::filesystem::exists(darknet_weights))
                 darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
-            const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
             if (std::filesystem::exists(darknet_weights))
             {
-                const Index loaded = YoloDataset::load_darknet_backbone(
-                    yolo_network, darknet_weights, n_backbone_convs);
+                Index loaded = 0;
+                if (isv11)
+                {
+                    // CSPDarknet53v11 uses C3k2 blocks that don't match YOLOv4's CSP bottlenecks.
+                    // Load only the 6 stride-2 downsampling convolutions that both architectures share
+                    // (stem + 5 stage downs). The C3k2 internal convolutions train from scratch.
+                    loaded = YoloDataset::load_darknet_backbone_v11(yolo_network, darknet_weights);
+                }
+                else
+                {
+                    const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
+                    loaded = YoloDataset::load_darknet_backbone(
+                        yolo_network, darknet_weights, n_backbone_convs);
+                }
                 std::cout << "Loaded " << loaded
                           << " backbone layers from " << darknet_weights << "\n";
                 backbone_pretrained_loaded = true;
@@ -756,13 +801,9 @@ int main()
                     std::cout << "Download darknet53.conv.74 from "
                               << "https://pjreddie.com/media/files/darknet53.conv.74 "
                               << "and place it in " << data_dir << "\n";
-                else if (iscsp)
+                else
                     std::cout << "Download yolov4.conv.137 from "
                               << "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137 "
-                              << "and place it in " << data_dir << "\n";
-                else
-                    std::cout << "Download yolov3-tiny.weights from "
-                              << "https://pjreddie.com/media/files/yolov3-tiny.weights "
                               << "and place it in " << data_dir << "\n";
                 std::cout << "Training from scratch instead.\n";
             }
@@ -773,9 +814,10 @@ int main()
         // Only applies on a fresh run where backbone weights were just loaded.
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
-            const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)    ? "dn53_"  :
-                                       (backbone == YoloNetwork::Backbone::CSPDarknet53) ? "csp53_" :
-                                       (backbone == YoloNetwork::Backbone::DarknetTinyV3) ? "dntv3_" : "";
+            const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)      ? "dn53_"  :
+                                       (backbone == YoloNetwork::Backbone::CSPDarknet53)   ? "csp53_" :
+                                       (backbone == YoloNetwork::Backbone::CSPDarknet53v11)? "c11_"   :
+                                       (backbone == YoloNetwork::Backbone::DarknetTinyV3)  ? "dntv3_" : "";
             if (prefix.empty()) return;
             for (auto& layer : yolo_network.get_layers())
                 if (layer && layer->get_label().rfind(prefix, 0) == 0)
@@ -798,15 +840,15 @@ int main()
         // Scale LR ∝ batch_size vs the batch=16 baseline: ×(4/16) = ×0.25.
         // CSPDarknet53 trains from scratch (no pretrained weights) — runs 200 epochs
         // at the main LR to compensate.
+        // CSPDarknet53v11 s-size batch=16: use full baseline LR (linear scaling rule: ×2 vs batch=8).
         const std::vector<TrainingRound> lr_schedule =
-            use_coco         ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
-            (use_voc && is_csp53)
-                             ? std::vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            (use_voc && is_darknet53)
-                             ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            use_voc          ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
-            use_raccoon      ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
-                               std::vector<TrainingRound>{{1e-3f, 200}};
+            use_coco                      ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
+            (use_voc && is_csp53)         ? std::vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
+            (use_voc && is_csp53v11)      ? std::vector<TrainingRound>{{2.5e-5f, 5}, {5e-4f, 150}, {1e-4f, 100}, {2e-5f, 50}}  :  // warmup 5ep; batch=16 LR ×2 vs batch=8
+            (use_voc && is_darknet53)     ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
+            use_voc                       ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
+            use_raccoon                   ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
+                                            std::vector<TrainingRound>{{1e-3f, 200}};
 
         // Epochs file is scoped to the weights filename so switching variants
         // (backbone, class activation, head style) always starts from 0.
@@ -820,8 +862,59 @@ int main()
         }
         std::cout << "Epochs completed so far: " << epochs_done << "\n";
 
+        // EMA (Exponential Moving Average) of network weights — updated per batch.
+        // Decay=0.9999 per step (matching YOLOv8/v11): after ~87k steps (~200 epochs × 438
+        // batches) the EMA has converged and gives ~0.5–1pp mAP over live weights.
+        // Previous runs used per-epoch updates (0.9999^200 ≈ 0.98 × random init) which
+        // produced near-random EMA weights — per-batch is the correct granularity.
+        const std::filesystem::path ema_weights_path = [&] {
+            auto p = weights_path;
+            p.replace_filename(weights_path.stem().string() + "_ema.bin");
+            return p;
+        }();
+        const Index n_params = yolo_network.get_parameters_size();
+        // ema_params starts as live weights so mAP evaluation works even when not training.
+        std::vector<float> ema_params(static_cast<size_t>(n_params));
+        bool ema_updated_this_run = false;  // true once post_batch_callback fires
+
+        constexpr float EMA_DECAY = 0.9999f;
+        // Scratch buffer for GPU→CPU parameter copy (reused each batch to avoid alloc).
+        std::vector<float> ema_live_cpu(static_cast<size_t>(n_params));
+        adam->post_batch_callback = [&](NeuralNetwork* nn) {
+            const float* src = nn->get_parameters_data();
+#ifdef OPENNN_HAS_CUDA
+            if (nn->get_parameters_device() == Device::CUDA)
+            {
+                cudaMemcpy(ema_live_cpu.data(), src,
+                           size_t(n_params) * sizeof(float), cudaMemcpyDeviceToHost);
+                src = ema_live_cpu.data();
+            }
+#endif
+            for (Index i = 0; i < n_params; ++i)
+                ema_params[size_t(i)] =
+                    EMA_DECAY * ema_params[size_t(i)] + (1.f - EMA_DECAY) * src[i];
+            ema_updated_this_run = true;
+        };
+
         if (resume_training || !std::filesystem::exists(weights_path))
         {
+            // Initialize EMA from live weights, then try to resume from disk if available.
+            // This loading is inside the training block so a corrupt EMA file on disk never
+            // poisons a mAP-only evaluation run.
+            {
+                const float* live = yolo_network.get_parameters_data();
+                std::copy(live, live + n_params, ema_params.begin());
+            }
+            if (std::filesystem::exists(ema_weights_path))
+            {
+                std::vector<float> live_snapshot(ema_params);
+                yolo_network.load_parameters_binary(ema_weights_path);
+                const float* saved_ema = yolo_network.get_parameters_data();
+                std::copy(saved_ema, saved_ema + n_params, ema_params.begin());
+                yolo_network.set_parameters(Eigen::Map<const VectorR>(live_snapshot.data(), n_params));
+                std::cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
+            }
+
             int cumulative = 0;
             for (const TrainingRound& rnd : lr_schedule)
             {
@@ -837,6 +930,15 @@ int main()
                 const int to_run = round_end - epochs_done;
                 adam->set_learning_rate(rnd.lr);
                 adam->set_maximum_epochs(to_run);
+
+                // Reset EMA to live weights at the start of each LR phase.
+                // Without this, multi-phase training poisons the EMA with weights from
+                // plateau phases (decay=0.9999 over 200k+ steps → EMA ≈ final weights only).
+                {
+                    const float* live = yolo_network.get_parameters_data();
+                    std::copy(live, live + n_params, ema_params.begin());
+                }
+
                 std::cout << "\nTraining: lr=" << rnd.lr
                           << " for " << to_run << " epochs"
                           << " (target epoch " << round_end << ").\n";
@@ -848,6 +950,18 @@ int main()
                 yolo_network.save_states_binary(states_path);
                 { std::ofstream ef(epochs_file); ef << epochs_done; }
                 std::cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
+
+                // Save EMA checkpoint alongside the live weights.
+                {
+                    VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
+                    yolo_network.set_parameters(ema_vec);
+                    yolo_network.save_parameters_binary(ema_weights_path);
+                    // Restore live weights so training can continue.
+                    yolo_network.load_parameters_binary(weights_path);
+                    if (std::filesystem::exists(states_path))
+                        yolo_network.load_states_binary(states_path);
+                }
+                std::cout << "EMA checkpoint saved: \"" << ema_weights_path.string() << "\".\n";
             }
             std::cout << "Training complete (" << epochs_done << " total epochs).\n";
         }
@@ -1319,6 +1433,19 @@ int main()
 
         std::cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
+
+        // Use EMA weights for mAP only when training ran this session (post_batch_callback
+        // fired at least once), so we never evaluate with a stale or corrupt EMA file.
+        if (ema_updated_this_run)
+        {
+            VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
+            yolo_network.set_parameters(ema_vec);
+            std::cout << "Using in-memory EMA weights for final mAP evaluation.\n";
+        }
+        else
+        {
+            std::cout << "Using live (best-epoch checkpoint) weights for final mAP evaluation.\n";
+        }
 
         // ===== VOC mAP@0.5 =====
         // Standard 11-point interpolated AP per class, averaged to mAP.

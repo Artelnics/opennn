@@ -60,6 +60,7 @@ public:
 
     void set_loss_goal(const float new_loss_goal) { training_loss_goal = new_loss_goal; }
     void set_maximum_validation_failures(const Index new_maximum_validation_failures) { maximum_validation_failures = new_maximum_validation_failures; }
+    void set_validation_period(const Index n) { validation_period = n; }
 
     void set_gradient_clip_norm(const float new_clip) { gradient_clip_norm = new_clip; }
 
@@ -79,6 +80,14 @@ public:
     void load(const filesystem::path&);
 
     static float get_elapsed_time(const time_t&);
+
+    // Called at the end of every epoch, after parameter update and validation.
+    // Set from outside (e.g. main.cpp) to implement per-epoch logic such as EMA.
+    function<void(Index, NeuralNetwork*)> post_epoch_callback;
+
+    // Called after every batch parameter update (inside train_epoch).
+    // Use for per-step EMA updates; receives the live network pointer.
+    function<void(NeuralNetwork*)> post_batch_callback;
 
 protected:
 
@@ -237,6 +246,7 @@ protected:
     float training_loss_goal = 0.0f;
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
+    Index validation_period = 1;
 
     float gradient_clip_norm = 0.0f;
 

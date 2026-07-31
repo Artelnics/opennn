@@ -812,7 +812,7 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
                 }
             }
     }
-    return lam.giou * coord_loss + lam.giou * dfl_loss + lam.cls * cls_loss;
+    return lam.giou * coord_loss + lam.dfl * dfl_loss + lam.cls * cls_loss;
 }
 
 #ifdef _MSC_VER
@@ -1402,7 +1402,7 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 {
     const bool is_gradient = back_propagation != nullptr;
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
-    const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
+    const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 
     if (yolo_uses_v8(neural_network))
     {
@@ -1529,9 +1529,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 
 bool Loss::supports_device_epoch_metrics() const
 {
-#ifdef OPENNN_NO_VISION
     if (error == Error::Yolo) return false;
-#endif
     return device::is_cuda_build()
         && neural_network
         && neural_network->is_gpu()
@@ -1657,7 +1655,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     {
 #ifndef OPENNN_NO_VISION
 
-        const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_noobj, yolo_lambda_class,
+        const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class,
                               yolo_focal_gamma, yolo_obj_focal_gamma};
 
         if (yolo_uses_v8(neural_network))

@@ -26,6 +26,7 @@
 #include "addition_layer.h"
 #include "upsample_layer.h"
 #include "concatenation_layer.h"
+#include "c2psa_layer.h"
 #include "normalization_layer_3d.h"
 #include "grouped_query_attention_layer.h"
 #include "multihead_attention_layer.h"
@@ -420,7 +421,8 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          HeadStyle head_style,
                          BodyActivation body_activation,
                          bool use_sppf,
-                         Index reg_max) : NeuralNetwork()
+                         Index reg_max,
+                         ModelSize model_size) : NeuralNetwork()
 {
     throw_if(input_shape.rank != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
@@ -603,6 +605,170 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             set_parameters_random();
             return;
         }
+    }
+    else if (backbone == Backbone::CSPDarknet53v11)
+    {
+        // YOLOv11-style backbone: replaces 1×1→3×3 residual bottlenecks with
+        // two cascaded 3×3 convs (C3k2 = Cross Stage Partial with k=3, 2 convs).
+        // Same channel plan as CSPDarknet53; the C3k2 bottleneck improves gradient
+        // flow and feature re-use vs the YOLOv8 1×1→3×3 pattern.
+
+        auto add_c3k2_block = [&](Index input_index, Index ch, const string& prefix) -> Index {
+            const Index mid = ch / 2;
+            Index x = add_conv(input_index, Shape{3, 3, ch, mid},  act,        stride, true, prefix + "_c1");
+            x       = add_conv(x,           Shape{3, 3, mid, ch},  "Identity", stride, true, prefix + "_c2");
+            add_layer(make_unique<Addition>(get_layer(x)->get_output_shape(), prefix + "_add"), {x, input_index});
+            const Index add_index = get_layers_number() - 1;
+            add_layer(make_unique<Activation>(get_layer(add_index)->get_output_shape(), act, prefix + "_act"), {add_index});
+            return get_layers_number() - 1;
+        };
+
+        auto add_c3k2_stage = [&](Index input_index, Index in_ch, Index out_ch,
+                                   Index n_blocks, const string& prefix, bool first_stage) -> Index {
+            const Index half      = out_ch / 2;
+            const Index branch_ch = first_stage ? out_ch : half;
+
+            const Index down = add_conv(input_index, Shape{3, 3, in_ch, out_ch}, act, stride_2, true, prefix + "_down");
+
+            Index branch2 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix + "_s2");
+            for (Index j = 0; j < n_blocks; ++j)
+                branch2 = add_c3k2_block(branch2, branch_ch, prefix + format("_b{}", j + 1));
+            const Index trans = add_conv(branch2, Shape{1, 1, branch_ch, branch_ch}, act, stride, true, prefix + "_trans");
+
+            const Index branch1 = add_conv(down, Shape{1, 1, out_ch, branch_ch}, act, stride, true, prefix + "_s1");
+
+            const Shape hw = get_layer(branch1)->get_output_shape();
+            add_layer(make_unique<Concatenation>(hw, vector<Index>{branch_ch, branch_ch}, prefix + "_cat"),
+                      {trans, branch1});
+            const Index cat = get_layers_number() - 1;
+            return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix + "_merge");
+        };
+
+        // Depth/width multipliers: scale bottleneck counts and channel widths.
+        // Channels are rounded to multiples of 8 to keep SIMD-friendly alignment.
+        auto scale_ch = [&](Index base) -> Index {
+            float w = model_size == ModelSize::n ? 0.25f
+                    : model_size == ModelSize::s ? 0.50f
+                    : model_size == ModelSize::m ? 0.75f
+                    : model_size == ModelSize::x ? 1.25f
+                    :                              1.00f;   // l (default)
+            return max(Index(8), Index(std::round(float(base) * w / 8.f) * 8));
+        };
+        auto scale_d = [&](Index base) -> Index {
+            float d = model_size == ModelSize::n ? 0.33f
+                    : model_size == ModelSize::s ? 0.33f
+                    : model_size == ModelSize::m ? 0.67f
+                    :                              1.00f;   // l or x
+            return max(Index(1), Index(std::round(float(base) * d)));
+        };
+
+        // Base channel counts and block depths (l-size reference).
+        const vector<pair<Index, Index>> stages = {
+            {scale_ch(64),   scale_d(1)},
+            {scale_ch(128),  scale_d(2)},
+            {scale_ch(256),  scale_d(8)},
+            {scale_ch(512),  scale_d(8)},
+            {scale_ch(1024), scale_d(4)},
+        };
+
+        const Index stem_ch = max(Index(8), Index(std::round(32.f * (
+            model_size == ModelSize::n ? 0.25f :
+            model_size == ModelSize::s ? 0.50f :
+            model_size == ModelSize::m ? 0.75f :
+            model_size == ModelSize::x ? 1.25f : 1.00f) / 8.f) * 8));
+
+        add_layer(make_unique<Convolutional>(input_shape, Shape{3, 3, input_shape[2], stem_ch},
+                                             act, stride, "Same", true, "c11_stem"));
+        Index last_index = get_layers_number() - 1;
+        Index c3_index = -1, c4_index = -1, c5_index = -1;
+        Index in_ch = stem_ch;
+        for (size_t i = 0; i < stages.size(); ++i)
+        {
+            const auto& [ch, nblocks] = stages[i];
+            last_index = add_c3k2_stage(last_index, in_ch, ch, nblocks, format("c11_s{}", i + 1), i == 0);
+            in_ch = ch;
+            if (i == 2) c3_index = last_index;
+            if (i == 3) c4_index = last_index;
+            if (i == 4) c5_index = last_index;
+        }
+
+        if (head_style == HeadStyle::FPNv8)
+        {
+            constexpr Index head_ch = 64;
+            const Index box_ch = 4 * max(reg_max, Index(1));
+
+            auto add_det_head_v8_c11 = [&](Index feat_idx, const string& name) {
+                const Index in_ch_h = get_layer(feat_idx)->get_output_shape()[2];
+                Index box = add_conv(feat_idx, Shape{3, 3, in_ch_h, head_ch},    act,        stride, true,  name + "_box_c1");
+                box       = add_conv(box,      Shape{3, 3, head_ch, head_ch},    act,        stride, true,  name + "_box_c2");
+                box       = add_conv(box,      Shape{1, 1, head_ch, box_ch},     "Identity", stride, false, name + "_box_out");
+                Index cls = add_conv(feat_idx, Shape{3, 3, in_ch_h, head_ch},    act,        stride, true,  name + "_cls_c1");
+                cls       = add_conv(cls,      Shape{3, 3, head_ch, head_ch},    act,        stride, true,  name + "_cls_c2");
+                cls       = add_conv(cls,      Shape{1, 1, head_ch, classes_number}, "Identity", stride, false, name + "_cls_out");
+                const Shape hw = get_layer(box)->get_output_shape();
+                add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name + "_cat"),
+                          {box, cls});
+                const Index cat = get_layers_number() - 1;
+                add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name + "_det"), {cat});
+            };
+
+            // FPN trunk: all channel sizes derived dynamically from scaled backbone outputs.
+            const Index c5_ch = get_layer(c5_index)->get_output_shape()[2];  // e.g. 1024 for l
+            const Index c4_ch = get_layer(c4_index)->get_output_shape()[2];  // e.g. 512
+            const Index c3_ch = get_layer(c3_index)->get_output_shape()[2];  // e.g. 256
+            const Index p5_small = c5_ch / 2;
+            const Index p4_small = c4_ch / 2;
+            const Index p3_small = c3_ch / 2;
+
+            auto build_fpn_trunk_c11 = [&](Index entry, const string& pfx) -> array<Index, 3> {
+                const Index p5n = add_yolo_neck(entry, c5_ch, p5_small, c5_ch, pfx + "neck_p5");
+                const Index p5l = add_conv(p5n, Shape{1, 1, p5_small, p4_small}, act, stride, true, pfx + "neck_p5_lat");
+                add_layer(make_unique<Upsample>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_up"), {p5l});
+                const Index p5u = get_layers_number() - 1;
+                add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
+                                                     vector<Index>{p4_small, c4_ch}, pfx + "fpn_p4_cat"),
+                          {p5u, c4_index});
+                const Index p4n = add_yolo_neck(get_layers_number() - 1, p4_small + c4_ch, p4_small, c4_ch, pfx + "neck_p4");
+                const Index p4l = add_conv(p4n, Shape{1, 1, p4_small, p3_small}, act, stride, true, pfx + "neck_p4_lat");
+                add_layer(make_unique<Upsample>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_up"), {p4l});
+                const Index p4u = get_layers_number() - 1;
+                add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
+                                                     vector<Index>{p3_small, c3_ch}, pfx + "fpn_p3_cat"),
+                          {p4u, c3_index});
+                return {p5n, p4n, add_yolo_neck(get_layers_number() - 1, p3_small + c3_ch, p3_small, c3_ch, pfx + "neck_p3")};
+            };
+
+            // Insert C2PSA after c5 (position self-attention over 1024-ch spatial feature map)
+            add_layer(make_unique<C2PSA>(get_layer(c5_index)->get_output_shape(), "c11_c2psa"), {c5_index});
+            const Index c2psa_index = get_layers_number() - 1;
+            const auto [p5n, p4n, p3n] = build_fpn_trunk_c11(c2psa_index, "c11_");
+            const Index p5d = add_conv(p5n, Shape{3, 3, p5_small, c5_ch}, act, stride, true, "c11_neck_p5_pre");
+            add_det_head_v8_c11(p5d, "c11_large");
+            const Index p4d = add_conv(p4n, Shape{3, 3, p4_small, c4_ch}, act, stride, true, "c11_neck_p4_pre");
+            add_det_head_v8_c11(p4d, "c11_medium");
+            const Index p3d = add_conv(p3n, Shape{3, 3, p3_small, c3_ch}, act, stride, true, "c11_neck_p3_pre");
+            add_det_head_v8_c11(p3d, "c11_small");
+
+            compile();
+            set_parameters_random();
+            {
+                // YOLOv8 prior bias: sigmoid(bias)≈0.01 suppresses 70k background gradient terms
+                // that dominate at init when bias=0 (sigmoid(0)=0.5 for every class×cell).
+                static constexpr float PRIOR_BIAS = -4.5951f; // -log((1-0.01)/0.01)
+                for (const auto& layer : get_layers())
+                {
+                    auto* conv = dynamic_cast<Convolutional*>(layer.get());
+                    if (!conv || !conv->get_label().ends_with("_cls_out")) continue;
+                    auto& views = conv->get_parameter_views();
+                    if (views.empty() || views[0].empty()) continue;
+                    float* b = views[0].as<float>();
+                    std::fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
+                }
+            }
+            return;
+        }
+
+        throw runtime_error("YoloNetwork: CSPDarknet53v11 backbone only supports FPNv8 head style.");
     }
     else if (backbone == Backbone::Darknet53 || backbone == Backbone::CSPDarknet53)
     {
@@ -802,6 +968,18 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
             compile();
             set_parameters_random();
+            {
+                static constexpr float PRIOR_BIAS = -4.5951f;
+                for (const auto& layer : get_layers())
+                {
+                    auto* conv = dynamic_cast<Convolutional*>(layer.get());
+                    if (!conv || !conv->get_label().ends_with("_cls_out")) continue;
+                    auto& views = conv->get_parameter_views();
+                    if (views.empty() || views[0].empty()) continue;
+                    float* b = views[0].as<float>();
+                    std::fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
+                }
+            }
             return;
         }
     }

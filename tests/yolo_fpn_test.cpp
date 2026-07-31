@@ -7,6 +7,7 @@
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
 #include "opennn/batch.h"
+#include "opennn/standard_networks.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -329,4 +330,32 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         << "Worst at idx " << worst_idx
         << ": grad=" << gradient(worst_idx)
         << " num=" << numerical_gradient(worst_idx);
+}
+
+// Verify that CSPDarknet53v11 + FPNv8 builds at all 5 model sizes without crashing,
+// and that parameter counts scale monotonically with model size.
+TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
+{
+    const Shape input_shape{320, 320, 3};
+    const int classes = 4;
+    const std::vector<std::array<float, 2>> anchors(9, {0.1f, 0.1f});
+    const int grid_size = 10;
+
+    using B  = YoloNetwork::Backbone;
+    using CA = YoloNetwork::ClassActivation;
+    using HS = YoloNetwork::HeadStyle;
+    using BA = YoloNetwork::BodyActivation;
+    using MS = YoloNetwork::ModelSize;
+
+    Index prev_params = 0;
+    for (MS ms : {MS::n, MS::s, MS::m, MS::l, MS::x})
+    {
+        YoloNetwork nn(input_shape, classes, anchors, grid_size,
+                       B::CSPDarknet53v11, CA::Sigmoid, HS::FPNv8,
+                       BA::LeakyReLU, false, 16, ms);
+        const Index params = nn.get_parameters_number();
+        EXPECT_GT(params, prev_params)
+            << "Parameter count did not increase for model_size=" << static_cast<int>(ms);
+        prev_params = params;
+    }
 }

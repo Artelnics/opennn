@@ -158,6 +158,12 @@ public:
                                        const filesystem::path&,
                                        Index);
 
+    // Loads only the 6 stride-2 downsampling convolutions from yolov4.conv.137 into a
+    // CSPDarknet53v11 network. The CSP / C3k2 internal convolutions differ in structure
+    // so only the shared downsampling convolutions (stem + 5 stage downs) are transferred.
+    static Index load_darknet_backbone_v11(NeuralNetwork&,
+                                           const filesystem::path&);
+
 private:
 
     filesystem::path images_directory;

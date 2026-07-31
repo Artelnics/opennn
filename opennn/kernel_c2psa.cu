@@ -1,0 +1,193 @@
+#include "kernel_common.cuh"
+#include "device_backend.h"
+
+// ---------------------------------------------------------------------------
+// Type helpers — upcast to float for stable arithmetic, downcast back.
+// ---------------------------------------------------------------------------
+
+template<typename T> __device__ __forceinline__ float to_float(T x);
+template<> __device__ __forceinline__ float to_float<float>(float x) { return x; }
+template<> __device__ __forceinline__ float to_float<__nv_bfloat16>(__nv_bfloat16 x) { return __bfloat162float(x); }
+
+template<typename T> __device__ __forceinline__ T from_float(float x);
+template<> __device__ __forceinline__ float from_float<float>(float x) { return x; }
+template<> __device__ __forceinline__ __nv_bfloat16 from_float<__nv_bfloat16>(float x) { return __float2bfloat16_rn(x); }
+
+// ---------------------------------------------------------------------------
+// C2PSA forward helpers
+// ---------------------------------------------------------------------------
+
+// Extract left half of x[B*T, C] into xa[B*T, H].
+// Simultaneously fill the right half of cat[B*T, C] with the identity path
+// (right half of x), so cat[:, H:] = x[:, H:].
+template<typename T>
+__global__ void c2psa_split_kernel(
+    const T* __restrict__ x,     // [B*T, C]
+    T* __restrict__ xa,          // [B*T, H]
+    T* __restrict__ cat,         // [B*T, C]
+    int n,                       // n = B*T*H
+    int C, int H)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int row = i / H;
+        const int col = i % H;
+        xa[i]                  = x[row * C + col];           // left half → xa
+        cat[row * C + H + col] = x[row * C + H + col];      // right half identity → cat
+    }
+}
+
+// Write attn_v[B*T, H] into the left half of cat[B*T, C].
+template<typename T>
+__global__ void c2psa_fill_cat_left_kernel(
+    const T* __restrict__ attn_v, // [B*T, H]
+    T* __restrict__ cat,          // [B*T, C]
+    int n,                        // n = B*T*H
+    int C, int H)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int row = i / H;
+        const int col = i % H;
+        cat[row * C + col] = attn_v[i];
+    }
+}
+
+// Row-wise softmax in-place on A[rows, T_sz].
+// Each thread handles one row; accumulates in float for numerical stability.
+template<typename T>
+__global__ void c2psa_row_softmax_kernel(T* __restrict__ A, int rows, int T_sz)
+{
+    const int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row >= rows) return;
+    T* p = A + row * T_sz;
+
+    float maxv = to_float(p[0]);
+    for (int j = 1; j < T_sz; ++j) maxv = fmaxf(maxv, to_float(p[j]));
+
+    float sum = 0.f;
+    for (int j = 0; j < T_sz; ++j)
+    {
+        const float v = expf(to_float(p[j]) - maxv);
+        p[j] = from_float<T>(v);
+        sum += v;
+    }
+    const float inv = 1.f / sum;
+    for (int j = 0; j < T_sz; ++j) p[j] = from_float<T>(to_float(p[j]) * inv);
+}
+
+// ---------------------------------------------------------------------------
+// C2PSA backward helpers
+// ---------------------------------------------------------------------------
+
+// Softmax backward in-place, float accumulation:
+//   dA[i,j] = A[i,j] * (dA[i,j] - dot(A[i,:], dA[i,:])) * scale
+template<typename T>
+__global__ void c2psa_softmax_bwd_kernel(
+    const T* __restrict__ A,   // [rows, T_sz] post-softmax attention
+    T* __restrict__ dA,        // [rows, T_sz] in/out gradient
+    float scale,
+    int rows, int T_sz)
+{
+    const int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row >= rows) return;
+    const T* Ap  = A  + row * T_sz;
+    T*       dAp = dA + row * T_sz;
+
+    float dot = 0.f;
+    for (int j = 0; j < T_sz; ++j) dot += to_float(Ap[j]) * to_float(dAp[j]);
+    for (int j = 0; j < T_sz; ++j)
+        dAp[j] = from_float<T>(to_float(Ap[j]) * (to_float(dAp[j]) - dot) * scale);
+}
+
+// Scatter gradients into din[B*T, C]:
+//   din[:, :H]  = d_xa[:, :]        (gradient through xa path)
+//   din[:, H:]  = d_cat[:, H:]      (identity gradient for right half)
+template<typename T>
+__global__ void c2psa_scatter_dx_kernel(
+    const T* __restrict__ d_xa,   // [B*T, H]
+    const T* __restrict__ d_cat,  // [B*T, C]
+    T* __restrict__ din,          // [B*T, C]
+    int n,                        // n = B*T*C
+    int C, int H)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const int row = i / C;
+        const int col = i % C;
+        din[i] = (col < H) ? d_xa[row * H + col] : d_cat[i];
+    }
+}
+
+// ---------------------------------------------------------------------------
+// C++ wrappers called from c2psa_operator.cpp — dispatch on cudaDataType_t.
+// ---------------------------------------------------------------------------
+
+namespace opennn
+{
+
+void c2psa_split_cuda(
+    const void* x, void* xa, void* cat,
+    int BT, int C, int H, cudaDataType_t dtype)
+{
+    const int n = BT * H;
+    auto s = opennn::device::get_compute_stream();
+    if (dtype == CUDA_R_32F)
+        OPENNN_CUDA_LAUNCH(c2psa_split_kernel<float><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const float*)x, (float*)xa, (float*)cat, n, C, H));
+    else
+        OPENNN_CUDA_LAUNCH(c2psa_split_kernel<__nv_bfloat16><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const __nv_bfloat16*)x, (__nv_bfloat16*)xa, (__nv_bfloat16*)cat, n, C, H));
+}
+
+void c2psa_fill_cat_left_cuda(
+    const void* attn_v, void* cat,
+    int BT, int C, int H, cudaDataType_t dtype)
+{
+    const int n = BT * H;
+    auto s = opennn::device::get_compute_stream();
+    if (dtype == CUDA_R_32F)
+        OPENNN_CUDA_LAUNCH(c2psa_fill_cat_left_kernel<float><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const float*)attn_v, (float*)cat, n, C, H));
+    else
+        OPENNN_CUDA_LAUNCH(c2psa_fill_cat_left_kernel<__nv_bfloat16><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const __nv_bfloat16*)attn_v, (__nv_bfloat16*)cat, n, C, H));
+}
+
+void c2psa_row_softmax_cuda(void* A, int rows, int T, cudaDataType_t dtype)
+{
+    auto s = opennn::device::get_compute_stream();
+    if (dtype == CUDA_R_32F)
+        OPENNN_CUDA_LAUNCH(c2psa_row_softmax_kernel<float><<<grid_size_for(rows), block_size, 0, s>>>(
+            (float*)A, rows, T));
+    else
+        OPENNN_CUDA_LAUNCH(c2psa_row_softmax_kernel<__nv_bfloat16><<<grid_size_for(rows), block_size, 0, s>>>(
+            (__nv_bfloat16*)A, rows, T));
+}
+
+void c2psa_softmax_bwd_cuda(const void* A, void* dA, float scale, int rows, int T, cudaDataType_t dtype)
+{
+    auto s = opennn::device::get_compute_stream();
+    if (dtype == CUDA_R_32F)
+        OPENNN_CUDA_LAUNCH(c2psa_softmax_bwd_kernel<float><<<grid_size_for(rows), block_size, 0, s>>>(
+            (const float*)A, (float*)dA, scale, rows, T));
+    else
+        OPENNN_CUDA_LAUNCH(c2psa_softmax_bwd_kernel<__nv_bfloat16><<<grid_size_for(rows), block_size, 0, s>>>(
+            (const __nv_bfloat16*)A, (__nv_bfloat16*)dA, scale, rows, T));
+}
+
+void c2psa_scatter_dx_cuda(
+    const void* d_xa, const void* d_cat, void* din,
+    int BT, int C, int H, cudaDataType_t dtype)
+{
+    const int n = BT * C;
+    auto s = opennn::device::get_compute_stream();
+    if (dtype == CUDA_R_32F)
+        OPENNN_CUDA_LAUNCH(c2psa_scatter_dx_kernel<float><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const float*)d_xa, (const float*)d_cat, (float*)din, n, C, H));
+    else
+        OPENNN_CUDA_LAUNCH(c2psa_scatter_dx_kernel<__nv_bfloat16><<<grid_size_strided_for(n), block_size, 0, s>>>(
+            (const __nv_bfloat16*)d_xa, (const __nv_bfloat16*)d_cat, (__nv_bfloat16*)din, n, C, H));
+}
+
+} // namespace opennn

@@ -2095,6 +2095,76 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     return loaded;
 }
 
+// Load only the 6 stride-2 downsampling convolutions from yolov4.conv.137 into a
+// CSPDarknet53v11 network. The file is stored in CSPDarknet53 conv order; C3k2 has the
+// same channel plan (32→64→128→256→512→1024) but different internal bottleneck structure.
+// We seek past each stage's CSP internal convolutions (which don't match C3k2) and load
+// only the downsampling convolutions that both architectures share.
+//
+// Skip floats after each stage's down conv (computed from CSPDarknet53 conv sizes):
+//   s1_CSP (n=1, 64ch):  6 convs = 42,368 floats
+//   s2_CSP (n=2, 64ch):  8 convs = 79,872 floats
+//   s3_CSP (n=8, 128ch): 20 convs = 811,520 floats
+//   s4_CSP (n=8, 256ch): 20 convs = 3,228,672 floats
+Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
+                                              const filesystem::path& weights_path)
+{
+    FILE* f = fopen(weights_path.string().c_str(), "rb");
+    throw_if(!f, "load_darknet_backbone_v11: cannot open file: " + weights_path.string());
+
+    int32_t header[3];
+    int64_t seen;
+    throw_if(fread(header, sizeof(int32_t), 3, f) != 3,
+             "load_darknet_backbone_v11: failed to read header.");
+    throw_if(fread(&seen, sizeof(int64_t), 1, f) != 1,
+             "load_darknet_backbone_v11: failed to read header seen.");
+
+    cout << "Darknet weights header: major=" << header[0]
+         << " minor=" << header[1]
+         << " revision=" << header[2]
+         << " seen=" << seen << "\n";
+
+    // Pairs of (layer_label, floats_to_skip_BEFORE_reading_this_layer).
+    // Skip sizes are in number of float32 values.
+    static const pair<const char*, size_t> targets[] = {
+        {"c11_stem",    0},
+        {"c11_s1_down", 0},
+        {"c11_s2_down", 42368},
+        {"c11_s3_down", 79872},
+        {"c11_s4_down", 811520},
+        {"c11_s5_down", 3228672},
+    };
+
+    // Build a label → layer pointer map once.
+    map<string, Convolutional*> label_to_conv;
+    for (const auto& layer : network.get_layers())
+    {
+        auto* conv = dynamic_cast<Convolutional*>(layer.get());
+        if (conv) label_to_conv[conv->get_label()] = conv;
+    }
+
+    Index loaded = 0;
+    for (const auto& [label, skip_floats] : targets)
+    {
+        if (skip_floats > 0)
+            fseek(f, long(skip_floats) * long(sizeof(float)), SEEK_CUR);
+
+        auto it = label_to_conv.find(label);
+        if (it == label_to_conv.end())
+        {
+            cout << "load_darknet_backbone_v11: layer \"" << label << "\" not found — skipping.\n";
+            continue;
+        }
+
+        it->second->load_darknet_weights(f);
+        ++loaded;
+        cout << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
+    }
+
+    fclose(f);
+    return loaded;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
