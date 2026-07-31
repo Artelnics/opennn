@@ -343,6 +343,18 @@ int main()
                                              :               "yolo_data";
         std::filesystem::create_directories(data_dir);
 
+        // Tee cout → log file so training output survives terminal disconnects.
+        const std::filesystem::path log_path = data_dir / "training_log.txt";
+        std::ofstream log_file(log_path, std::ios::app);
+        struct TeeBuf : std::streambuf {
+            TeeBuf(std::streambuf* a, std::streambuf* b) : a(a), b(b) {}
+            int overflow(int c) override { a->sputc(char(c)); b->sputc(char(c)); return c; }
+            std::streamsize xsputn(const char* s, std::streamsize n) override { a->sputn(s,n); b->sputn(s,n); return n; }
+            std::streambuf *a, *b;
+        } tee_buf(std::cout.rdbuf(), log_file.rdbuf());
+        auto* old_rdbuf = std::cout.rdbuf(&tee_buf);
+        std::cout << "\n[Log file: " << log_path << "]\n";
+
         std::filesystem::path images_dir;
         std::filesystem::path labels_dir;
         Index grid_size;
@@ -352,13 +364,81 @@ int main()
 
         if (use_voc)
         {
-            images_dir = voc_root / "JPEGImages";
-            // Use a separate labels dir when filtering so the 20-class cache is untouched
-            labels_dir = data_dir / (voc_class_filter.empty() ? "voc_labels" : "voc_labels_filtered");
-            const Index converted =
-                YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir, voc_class_filter);
-            std::cout << "Converted " << converted
-                      << " VOC samples to YOLO format in " << labels_dir << "\n";
+            // Detect optional VOC2012 (same probing pattern as voc_root above).
+            const std::filesystem::path voc12_root = []() -> std::filesystem::path {
+                if (const char* env = std::getenv("VOC12_ROOT")) return env;
+                for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2012",
+                                       "/home/artelnics/VOCdevkit/VOC2012",
+                                       "VOCdevkit/VOC2012"})
+                    if (std::filesystem::is_directory(c)) return c;
+                return {};
+            }();
+            const bool use_voc12 = !voc12_root.empty();
+
+            if (use_voc12)
+            {
+                // Convert each year into its own label dir, then symlink both into a
+                // combined dir with year-prefixed filenames (VOC2007 and VOC2012 share
+                // the same 6-digit image IDs so a plain merge would collide).
+                const auto labels07 = data_dir / "voc07_labels";
+                const auto labels12 = data_dir / "voc12_labels";
+                YoloDataset::convert_voc_to_yolo(voc_root,   voc_image_set, labels07, voc_class_filter);
+                YoloDataset::convert_voc_to_yolo(voc12_root, voc_image_set, labels12, voc_class_filter);
+
+                labels_dir = data_dir / (voc_class_filter.empty() ? "voc_combined_labels" : "voc_combined_labels_filtered");
+                std::filesystem::create_directories(labels_dir);
+
+                // Symlink label .txt files with year prefix; .names file goes in once (same content).
+                auto link_dir = [](const std::filesystem::path& src,
+                                   const std::filesystem::path& dst_dir,
+                                   const std::string& prefix) {
+                    for (const auto& e : std::filesystem::directory_iterator(src)) {
+                        const auto ext = e.path().extension().string();
+                        if (ext != ".txt" && ext != ".names") continue;
+                        const std::string dst_name = (ext == ".names")
+                            ? e.path().filename().string()
+                            : prefix + e.path().filename().string();
+                        const auto dst = dst_dir / dst_name;
+                        if (!std::filesystem::exists(dst))
+                            std::filesystem::create_symlink(
+                                std::filesystem::absolute(e.path()), dst);
+                    }
+                };
+                link_dir(labels07, labels_dir, "07_");
+                link_dir(labels12, labels_dir, "12_");
+
+                // Symlink images with year prefix so the combined images_dir is self-contained.
+                images_dir = data_dir / "voc_combined_images";
+                std::filesystem::create_directories(images_dir);
+                auto link_images = [](const std::filesystem::path& src,
+                                      const std::filesystem::path& dst_dir,
+                                      const std::string& prefix) {
+                    if (!std::filesystem::is_directory(src)) return;
+                    for (const auto& e : std::filesystem::directory_iterator(src)) {
+                        if (!e.is_regular_file()) continue;
+                        const auto ext = e.path().extension().string();
+                        if (ext != ".jpg" && ext != ".jpeg" && ext != ".JPG"
+                         && ext != ".JPEG" && ext != ".png" && ext != ".PNG") continue;
+                        const auto dst = dst_dir / (prefix + e.path().filename().string());
+                        if (!std::filesystem::exists(dst))
+                            std::filesystem::create_symlink(
+                                std::filesystem::absolute(e.path()), dst);
+                    }
+                };
+                link_images(voc_root   / "JPEGImages", images_dir, "07_");
+                link_images(voc12_root / "JPEGImages", images_dir, "12_");
+                std::cout << "Using VOC2007+VOC2012 combined dataset in " << images_dir << "\n";
+            }
+            else
+            {
+                images_dir = voc_root / "JPEGImages";
+                // Use a separate labels dir when filtering so the 20-class cache is untouched
+                labels_dir = data_dir / (voc_class_filter.empty() ? "voc_labels" : "voc_labels_filtered");
+                const Index converted =
+                    YoloDataset::convert_voc_to_yolo(voc_root, voc_image_set, labels_dir, voc_class_filter);
+                std::cout << "Converted " << converted
+                          << " VOC2007 samples to YOLO format in " << labels_dir << "\n";
+            }
 
             // When filtering, only use images that actually have filtered-class objects.
             // Without this, the ~3000 images with no labels are treated as all-background
@@ -1708,6 +1788,7 @@ int main()
 
         std::cout << "Bye!" << std::endl;
 
+        std::cout.rdbuf(old_rdbuf);
         return 0;
     }
     catch (const std::exception& e)
