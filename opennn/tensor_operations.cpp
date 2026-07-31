@@ -188,7 +188,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
     X(dropout_forward_gpu, (TensorView&, Buffer&, float)) \
     X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
-    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*)) \
+    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
     X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
     X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
@@ -200,7 +200,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(swiglu_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&)) \
     X(grouped_attention_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, float, Index, float*, const int*)) \
     X(qk_norm_gpu, (const TensorView&, const TensorView&, TensorView&, Index, float)) \
-    X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool)) \
+    X(embedding_lookup_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, Index, Index, Index, bool, bool, const TensorView&)) \
     X(embedding_lookup_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, Index, Index, Index, bool)) \
     X(max_pooling_3d_forward_gpu, (const TensorView&, TensorView&, TensorView&, bool)) \
     X(average_pooling_3d_forward_gpu, (const TensorView&, TensorView&)) \
@@ -615,9 +615,12 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
 }
 
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                    TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation)
+                    TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
+                    const TensorView& weight_scale)
 {
-    if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation); return; }
+    if (input.is_cuda()) { linear_forward_gpu(input, weights, bias, output, epilogue, pre_activation, weight_scale); return; }
+
+    throw_if(weights.is_int8(), "linear_forward: INT8 weights are CUDA-only.");
 
     throw_if(epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS,
              "linear_forward: the GELU_AUX_BIAS epilogue is CUDA-only.");
@@ -1152,8 +1155,43 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
     }
 }
 
-void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output)
+void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
+                          const TensorView& weight_scale)
 {
+#ifdef OPENNN_HAS_CUDA
+    if (input.is_cuda() && embed_weight.is_int8())
+    {
+        throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
+                 "tied_lm_head_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
+
+        const Index in_features  = embed_weight.shape.back();
+        const Index out_features = embed_weight.size() / in_features;
+        const Index rows = input.size() / in_features;
+        constexpr Index large_weight_bytes = Index(256) * 1024 * 1024;
+
+        if (rows <= W8A16_MAX_M || embed_weight.byte_size() > large_weight_bytes)
+        {
+            // Chunked GEMV: never dequantize a vocab-sized table into a scratch.
+            for (Index row = 0; row < rows; row += W8A16_MAX_M)
+            {
+                const Index m = min(Index(W8A16_MAX_M), rows - row);
+                w8a16_linear_cuda<bfloat16>(to_int(m), to_int(in_features), to_int(out_features), true,
+                                            input.as<bfloat16>() + row * in_features,
+                                            embed_weight.as<int8_t>(), weight_scale.as<float>(),
+                                            nullptr,
+                                            output.as<bfloat16>() + row * out_features);
+            }
+            return;
+        }
+
+        bfloat16* dequantized = ensure_int8_dequant_workspace(embed_weight.size());
+        w8_dequant_cuda<bfloat16>(out_features, in_features, true, embed_weight.as<int8_t>(),
+                                  weight_scale.as<float>(), dequantized);
+        const TensorView dequantized_weights(dequantized, embed_weight.shape, Type::BF16, Device::CUDA);
+        multiply(input, false, dequantized_weights, true, output, 1.0f, 0.0f);
+        return;
+    }
+#endif
 
     if (input.is_cuda()) { multiply(input, false, embed_weight, true, output, 1.0f, 0.0f); return; }
     output.as_flat_matrix().noalias() =
@@ -1243,15 +1281,17 @@ static void embedding_lookup_backward_cpu(const TensorView& indices, const Tenso
 void embedding_lookup_forward(const TensorView& indices, const TensorView& weights,
                               const TensorView& positional_encoding, TensorView& output,
                               Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                              bool scale_embedding, bool add_positional_encoding)
+                              bool scale_embedding, bool add_positional_encoding,
+                              const TensorView& weight_scale)
 {
     if (output.is_cuda())
     {
         embedding_lookup_forward_gpu(indices, weights, positional_encoding, output,
                                      sequence_length, embedding_dimension, vocabulary_size,
-                                     scale_embedding, add_positional_encoding);
+                                     scale_embedding, add_positional_encoding, weight_scale);
         return;
     }
+    throw_if(weights.is_int8(), "embedding_lookup_forward: INT8 weights are CUDA-only.");
     embedding_lookup_forward_cpu(indices, weights, positional_encoding, output,
                                  sequence_length, embedding_dimension, vocabulary_size,
                                  scale_embedding, add_positional_encoding);
@@ -1839,12 +1879,40 @@ static void dropout_backward_gpu(TensorView& delta, const Buffer& mask, float ra
 }
 
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                        TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation)
+                        TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
+                        const TensorView& weight_scale)
 {
     const int input_columns  = to_int(input.shape.back());
     const int output_columns = to_int(weights.shape.back());
     const int total_rows     = to_int(input.size() / input.shape.back());
 
+    if (weights.is_int8())
+    {
+        throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
+                 "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
+
+        const bool gemv_path = total_rows <= W8A16_MAX_M
+            && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
+            && (!bias.data || bias.is_bf16());
+
+        if (gemv_path)
+        {
+            const bfloat16* gemv_bias =
+                epilogue == CUBLASLT_EPILOGUE_BIAS && bias.data ? bias.as<bfloat16>() : nullptr;
+            w8a16_linear_cuda<bfloat16>(total_rows, input_columns, output_columns, false,
+                                        input.as<bfloat16>(), weights.as<int8_t>(),
+                                        weight_scale.as<float>(), gemv_bias,
+                                        output.as<bfloat16>());
+            return;
+        }
+
+        bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
+        w8_dequant_cuda<bfloat16>(input_columns, output_columns, false, weights.as<int8_t>(),
+                                  weight_scale.as<float>(), dequantized);
+        const TensorView dequantized_weights(dequantized, weights.shape, Type::BF16, Device::CUDA);
+        linear_forward_gpu(input, dequantized_weights, bias, output, epilogue, pre_activation, {});
+        return;
+    }
 
     const void* input_for_gemm = data_for_gemm_dtype(input, weights.type);
     const cudaDataType_t io_type = output.cuda_dtype();
@@ -1867,7 +1935,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     {
         if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS && pre_activation)
         {
-            linear_forward_gpu(input, weights, bias, *pre_activation, CUBLASLT_EPILOGUE_BIAS, nullptr);
+            linear_forward_gpu(input, weights, bias, *pre_activation, CUBLASLT_EPILOGUE_BIAS, nullptr, {});
             copy_gpu(*pre_activation, output);
             activation_forward_gpu(output, ActivationFunction::GELUTanh);
             return;
@@ -2271,8 +2339,28 @@ static void qk_norm_gpu(const TensorView& input, const TensorView& weight, Tenso
 static void embedding_lookup_forward_gpu(const TensorView& indices, const TensorView& weights,
                                   const TensorView& positional_encoding, TensorView& output,
                                   Index sequence_length, Index embedding_dimension, Index vocabulary_size,
-                                  bool scale_embedding, bool add_positional_encoding)
+                                  bool scale_embedding, bool add_positional_encoding,
+                                  const TensorView& weight_scale)
 {
+    if (weights.is_int8())
+    {
+        throw_if(weight_scale.empty(),
+                 "embedding_lookup_forward: INT8 weights require a per-row scale vector.");
+        output.dispatch([&](auto out_tag) {
+            using T = decltype(out_tag);
+            embedding_forward_w8_cuda<T>(
+                output.size(),
+                indices.as<float>(),
+                weights.as<int8_t>(),
+                weight_scale.as<float>(),
+                add_positional_encoding ? positional_encoding.as<float>() : nullptr,
+                output.as<T>(),
+                to_int(sequence_length), to_int(embedding_dimension), to_int(vocabulary_size),
+                scale_embedding);
+        });
+        return;
+    }
+
     output.dispatch([&](auto out_tag) {
         using T = decltype(out_tag);
         weights.dispatch([&](auto weight_tag) {

@@ -191,10 +191,16 @@ public:
     Type get_compute_dtype() const noexcept { return compute_dtype; }
     Device get_compute_device() const noexcept { return compute_device; }
 
+    Type get_weights_dtype() const noexcept { return weights_dtype; }
+
     void set_compute_dtype(Type new_compute_dtype)
     {
-        compute_dtype = new_compute_dtype;
+        weights_dtype = new_compute_dtype;
+        compute_dtype = activation_dtype(new_compute_dtype);
         on_compute_dtype_changed();
+        // After on_compute_dtype_changed(): layer configure calls reset Operator::compute_dtype.
+        for (Operator* op : operators)
+            op->set_weights_dtype(weights_dtype);
     }
 
     void set_compute_device(Device new_compute_device) { compute_device = new_compute_device; }
@@ -207,6 +213,11 @@ public:
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }
+
+    vector<TensorView>& get_parameter_scales() { return parameter_scales; }
+    const vector<TensorView>& get_parameter_scales() const noexcept { return parameter_scales; }
+
+    vector<Operator::SlotQuantization> get_parameter_quantization() const;
 
     struct TiedWeight { const Layer* source = nullptr; size_t spec_index = 0; size_t source_spec_index = 0; };
     virtual TiedWeight get_tied_weight() const { return {}; }
@@ -232,9 +243,11 @@ protected:
     Shape input_shape;
 
     Type compute_dtype = Type::FP32;
+    Type weights_dtype = Type::FP32;
     Device compute_device = Device::CPU;
 
     vector<TensorView> parameters;
+    vector<TensorView> parameter_scales;
     vector<TensorView> states;
 
     vector<Operator*> operators;

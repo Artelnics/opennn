@@ -14,7 +14,10 @@ namespace opennn
 {
 
 enum class Device { Auto, CPU, CUDA };
-enum class Type { Auto, FP32, BF16 };
+enum class Type { Auto, FP32, BF16, INT8 };
+
+// INT8 is weight-only: activations run in BF16.
+inline Type activation_dtype(Type type) { return type == Type::INT8 ? Type::BF16 : type; }
 
 class Configuration
 {

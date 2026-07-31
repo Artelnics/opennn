@@ -27,6 +27,46 @@ const EnumMap<PoolingMethod>& pooling_method_map()
     return instance;
 }
 
+void validate_pooling_configuration(const Shape& input_shape,
+                                    const Shape& pool_shape,
+                                    const Shape& stride_shape,
+                                    const Shape& padding_shape,
+                                    const string& label)
+{
+    throw_if(input_shape.rank != 3,
+             "Pooling layer '{}': input shape must have 3 dimensions, read {}.",
+             label, input_shape.rank);
+    throw_if(pool_shape.rank != 2,
+             "Pooling layer '{}': pool shape must have 2 dimensions, read {}.",
+             label, pool_shape.rank);
+    throw_if(stride_shape.rank != 2,
+             "Pooling layer '{}': stride must have 2 dimensions, read {}.",
+             label, stride_shape.rank);
+    throw_if(padding_shape.rank != 2,
+             "Pooling layer '{}': padding must have 2 dimensions, read {}.",
+             label, padding_shape.rank);
+
+    throw_if(pool_shape[0] <= 0 || pool_shape[1] <= 0,
+             "Pooling layer '{}': pool size must be positive, read {}.",
+             label, shape_to_string(pool_shape));
+    throw_if(stride_shape[0] <= 0 || stride_shape[1] <= 0,
+             "Pooling layer '{}': stride must be positive, read {}.",
+             label, shape_to_string(stride_shape));
+    throw_if(padding_shape[0] < 0 || padding_shape[1] < 0,
+             "Pooling layer '{}': padding cannot be negative, read {}.",
+             label, shape_to_string(padding_shape));
+
+    const Index padded_height = input_shape[0] + 2 * padding_shape[0];
+    const Index padded_width  = input_shape[1] + 2 * padding_shape[1];
+    const Shape padded_input_shape{padded_height, padded_width, input_shape[2]};
+    throw_if(pool_shape[0] > padded_height || pool_shape[1] > padded_width,
+             "Pooling layer '{}': pool shape {} cannot be bigger than padded input shape {}.",
+             label, shape_to_string(pool_shape), shape_to_string(padded_input_shape));
+    throw_if(stride_shape[0] > padded_height || stride_shape[1] > padded_width,
+             "Pooling layer '{}': stride {} cannot be bigger than padded input shape {}.",
+             label, shape_to_string(stride_shape), shape_to_string(padded_input_shape));
+}
+
 }
 
 const string& pooling_method_to_string(PoolingMethod method)
@@ -104,23 +144,11 @@ void Pooling::set(const Shape& new_input_shape,
                   const string& new_pooling_method,
                   const string& new_label)
 {
-    throw_if(new_pool_dimensions.rank != 2, "Pool shape must be 2");
-
-    throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
-
-    throw_if(new_padding_dimensions.rank != 2, "Padding shape must be 2");
-
-    throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
-
-    throw_if(new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0, "Padding shape cannot be negative");
-
-    throw_if(new_pool_dimensions[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
-             || new_pool_dimensions[1] > new_input_shape[1] + 2 * new_padding_dimensions[1],
-             "Pool shape cannot be bigger than padded input shape");
-
-    throw_if(new_stride_shape[0] > new_input_shape[0] + 2 * new_padding_dimensions[0]
-             || new_stride_shape[1] > new_input_shape[1] + 2 * new_padding_dimensions[1],
-             "Stride shape cannot be bigger than padded input shape");
+    validate_pooling_configuration(new_input_shape,
+                                   new_pool_dimensions,
+                                   new_stride_shape,
+                                   new_padding_dimensions,
+                                   new_label);
 
     input_height    = new_input_shape[0];
     input_width     = new_input_shape[1];
@@ -180,16 +208,35 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
 void Pooling::read_JSON_body(const Json* pooling_layer_element)
 {
-    pool_height     = read_json_index(pooling_layer_element, "PoolHeight");
-    pool_width      = read_json_index(pooling_layer_element, "PoolWidth");
+    const Shape pool_shape{
+        read_json_index(pooling_layer_element, "PoolHeight"),
+        read_json_index(pooling_layer_element, "PoolWidth")
+    };
+    const Shape stride_shape{
+        read_json_index(pooling_layer_element, "RowStride"),
+        read_json_index(pooling_layer_element, "ColumnStride")
+    };
+    const Shape padding_shape{
+        read_json_index(pooling_layer_element, "PaddingHeight"),
+        read_json_index(pooling_layer_element, "PaddingWidth")
+    };
 
-    row_stride      = read_json_index(pooling_layer_element, "RowStride");
-    column_stride   = read_json_index(pooling_layer_element, "ColumnStride");
+    validate_pooling_configuration(get_input_shape(),
+                                   pool_shape,
+                                   stride_shape,
+                                   padding_shape,
+                                   label);
 
-    padding_height  = read_json_index(pooling_layer_element, "PaddingHeight");
-    padding_width   = read_json_index(pooling_layer_element, "PaddingWidth");
+    const PoolingMethod new_pooling_method =
+        string_to_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
 
-    pooling_method  = string_to_pooling_method(read_json_string(pooling_layer_element, "PoolingMethod"));
+    pool_height     = pool_shape[0];
+    pool_width      = pool_shape[1];
+    row_stride      = stride_shape[0];
+    column_stride   = stride_shape[1];
+    padding_height  = padding_shape[0];
+    padding_width   = padding_shape[1];
+    pooling_method  = new_pooling_method;
 
     update_pool_operator();
 }

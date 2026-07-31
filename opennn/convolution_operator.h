@@ -32,6 +32,7 @@ struct ConvolutionOperator : Operator
 
     TensorView weights;
     TensorView bias;
+    TensorView weight_scale;
 
     TensorView weight_gradient;
     TensorView bias_gradient;
@@ -66,8 +67,10 @@ struct ConvolutionOperator : Operator
              Type);
 
     vector<TensorSpec> parameter_specs() const override;
+    vector<SlotQuantization> parameter_quantization() const override;
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
+    void link_parameter_scales(span<const TensorView>) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

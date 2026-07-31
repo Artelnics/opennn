@@ -79,6 +79,12 @@ Configuration::Resolved Configuration::resolve() const
                  "Configuration: BF16 requires CUDA compute capability >= 8.0 (Ampere+).");
         resolved.training_type = Type::BF16;
         break;
+    case Type::INT8:
+        throw_if(resolved.device != Device::CUDA, "Configuration: INT8 requires CUDA.");
+        throw_if(compute_capability < 80,
+                 "Configuration: INT8 requires CUDA compute capability >= 8.0 (Ampere+).");
+        resolved.training_type = Type::INT8;
+        break;
     }
 
     return resolved;

@@ -65,7 +65,6 @@ protected:
     float max_range = 1.0f;
 
     Buffer op_storage;
-    Device op_storage_device = Device::CPU;
     bool   op_storage_dirty = true;
 
     ScaleOperator scale_op;

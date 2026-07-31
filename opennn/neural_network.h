@@ -13,6 +13,8 @@
 #include "tensor_types.h"
 #include "variable.h"
 
+#include <functional>
+
 namespace opennn
 {
 
@@ -194,7 +196,13 @@ public:
 
     void cast_parameters_to_bf16();
 
+    void release_bf16_fp32_parameter_master_for_inference();
+
     void upload_parameters_bf16_inference();
+
+    // Quantizes the host FP32 master to per-output-channel symmetric INT8
+    // compact device storage; requires an INT8-configured network.
+    void upload_parameters_int8_inference();
 
     bfloat16* get_parameters_bf16_mirror_data()
     {
@@ -263,6 +271,37 @@ private:
 
     void activate_transposed_inference_weights();
 
+    // One canonical walk over every parameter slot, shared by sizing, the
+    // inference loaders/uploads and link_parameters() so their compact-storage
+    // offsets can never drift. Offsets in the slot are the slot's own start.
+    struct ParameterSlot
+    {
+        Layer* layer = nullptr;
+        size_t spec_index = 0;
+        Shape shape;
+        Type dtype = Type::FP32;
+        bool tied = false;
+        Index scale_channels = 0;
+        int   scale_axis = 0;
+        Index master_offset = 0;
+        Index bf16_offset = 0;
+        Index int8_offset = 0;
+        Index fp32_offset = 0;
+        Index scale_offset = 0;
+    };
+
+    struct ParameterSlotTotals
+    {
+        Index master_elements = 0;
+        Index bf16_elements = 0;
+        Index int8_elements = 0;
+        Index fp32_elements = 0;
+    };
+
+    ParameterSlotTotals for_each_parameter_slot(
+        const function<void(const ParameterSlot&)>& visit,
+        const function<void(Layer&)>& begin_layer = {}) const;
+
     void validate_type(LayerType) const;
 
     static void force_specs_to_fp32(vector<vector<TensorSpec>>& specs)
@@ -293,6 +332,7 @@ protected:
     Buffer parameters;
     Buffer parameters_bf16_mirror{Device::CUDA};
     Buffer parameters_fp32_inference_storage{Device::CUDA};
+    Buffer parameters_int8_storage{Device::CUDA};
 
     bool parameters_bf16_mirror_compact = false;
 

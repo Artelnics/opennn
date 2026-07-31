@@ -8,6 +8,7 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
+#include "opennn/json.h"
 
 using namespace opennn;
 
@@ -24,6 +25,29 @@ struct ConvolutionalLayerConfig {
 
 
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
+
+namespace
+{
+
+Json convolution_json_body(const Shape& kernel_shape,
+                           const Shape& stride_shape = {1, 1},
+                           const string& convolution_type = "Valid",
+                           bool batch_normalization = false,
+                           bool residual = false)
+{
+    Json body = Json::make_object();
+    body.set("KernelsHeight", kernel_shape[0]);
+    body.set("KernelsWidth", kernel_shape[1]);
+    body.set("KernelsChannels", kernel_shape[2]);
+    body.set("KernelsNumber", kernel_shape[3]);
+    body.set("StrideDimensions", shape_to_string(stride_shape));
+    body.set("Convolution", convolution_type);
+    body.set("BatchNormalization", batch_normalization);
+    body.set("Residual", residual);
+    return body;
+}
+
+}
 
 INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
 
@@ -110,6 +134,48 @@ TEST_P(ConvolutionalLayerTest, OutputShapeDerivedFromConfig) {
     EXPECT_EQ(convolutional_layer.get_output_shape(), expected_output_shape);
     EXPECT_EQ(convolutional_layer.get_output_height(), expected_height);
     EXPECT_EQ(convolutional_layer.get_output_width(), expected_width);
+}
+
+TEST(ConvolutionalLayerTest, JsonRejectsMismatchedKernelChannels)
+{
+    Convolutional layer({8, 8, 3}, {3, 3, 3, 4});
+    const Json body = convolution_json_body({3, 3, 1, 4});
+
+    EXPECT_THROW(layer.read_JSON_body(&body), runtime_error);
+}
+
+TEST(ConvolutionalLayerTest, JsonRejectsOversizedKernelAndStride)
+{
+    Convolutional layer({4, 4, 1}, {3, 3, 1, 4});
+    const Json oversized_kernel = convolution_json_body({5, 3, 1, 4});
+    const Json oversized_stride = convolution_json_body({3, 3, 1, 4}, {5, 1});
+
+    EXPECT_THROW(layer.read_JSON_body(&oversized_kernel), runtime_error);
+    EXPECT_THROW(layer.read_JSON_body(&oversized_stride), runtime_error);
+}
+
+TEST(ConvolutionalLayerTest, JsonRejectsInvalidSameAndResidualConfigurations)
+{
+    Convolutional layer({8, 8, 3}, {3, 3, 3, 4});
+    const Json even_same_kernel =
+        convolution_json_body({4, 3, 3, 4}, {1, 1}, "Same");
+    const Json residual_without_batch_norm =
+        convolution_json_body({3, 3, 3, 4}, {1, 1}, "Same", false, true);
+
+    EXPECT_THROW(layer.read_JSON_body(&even_same_kernel), runtime_error);
+    EXPECT_THROW(layer.read_JSON_body(&residual_without_batch_norm), runtime_error);
+}
+
+TEST(ConvolutionalLayerTest, JsonAcceptsValidConfiguration)
+{
+    Convolutional layer({8, 8, 3}, {3, 3, 3, 4});
+    const Json body = convolution_json_body({3, 3, 3, 4}, {2, 2}, "Same", true, true);
+
+    EXPECT_NO_THROW(layer.read_JSON_body(&body));
+    EXPECT_EQ(layer.get_kernel_channels(), 3);
+    EXPECT_EQ(layer.get_row_stride(), 2);
+    EXPECT_TRUE(layer.get_batch_normalization());
+    EXPECT_TRUE(layer.get_residual());
 }
 
 

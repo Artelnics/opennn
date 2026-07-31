@@ -27,6 +27,7 @@ struct EmbeddingLookupOperator : Operator
     bool weights_follow_compute_dtype = false;
 
     TensorView weights;
+    TensorView weight_scale;
     TensorView positional_encoding;
 
     TensorView weight_gradient;
@@ -35,10 +36,12 @@ struct EmbeddingLookupOperator : Operator
     void set(Index, Index, Index);
 
     vector<TensorSpec> parameter_specs() const override;
+    vector<SlotQuantization> parameter_quantization() const override;
     vector<TensorSpec> state_specs()     const override;
     void link_parameters(span<const TensorView>) override;
     void link_gradients (span<const TensorView>) override;
     void link_states    (span<const TensorView>) override;
+    void link_parameter_scales(span<const TensorView>) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

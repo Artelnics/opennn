@@ -149,7 +149,8 @@ void dropout_backward(TensorView&, const Buffer&, float);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
-                    TensorView* pre_activation = nullptr);
+                    TensorView* pre_activation = nullptr,
+                    const TensorView& weight_scale = {});
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
                      TensorView&, bool accumulate_input_delta = false);
@@ -206,12 +207,14 @@ Index sample_logits_scratch_floats();
 void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorView& output,
                      Index head_dim, float epsilon);
 
-void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output);
+void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weight, TensorView& output,
+                          const TensorView& weight_scale = {});
 
 void embedding_lookup_forward(const TensorView&, const TensorView&,
                               const TensorView&, TensorView&,
                               Index, Index, Index,
-                              bool, bool);
+                              bool, bool,
+                              const TensorView& weight_scale = {});
 void embedding_lookup_backward(const TensorView&, const TensorView&,
                                const TensorView&, const TensorView&,
                                Index, Index, Index,

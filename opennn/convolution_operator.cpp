@@ -228,12 +228,20 @@ vector<TensorSpec> ConvolutionOperator::parameter_specs() const
 {
 
     if (!use_bias)
-        return {{{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype}};
+        return {{{kernels_number, kernel_height, kernel_width, kernel_channels}, weights_dtype}};
 
     return {
         {{kernels_number}, compute_dtype},
-        {{kernels_number, kernel_height, kernel_width, kernel_channels}, compute_dtype},
+        {{kernels_number, kernel_height, kernel_width, kernel_channels}, weights_dtype},
     };
+}
+
+vector<Operator::SlotQuantization> ConvolutionOperator::parameter_quantization() const
+{
+    if (!use_bias)
+        return {{kernels_number, 0}};
+
+    return {{}, {kernels_number, 0}};
 }
 
 void ConvolutionOperator::link_parameters(span<const TensorView> views)
@@ -242,6 +250,12 @@ void ConvolutionOperator::link_parameters(span<const TensorView> views)
     bias    = use_bias ? views[0] : TensorView{};
     weights = views[use_bias ? 1 : 0];
     weights_relinked = true;
+}
+
+void ConvolutionOperator::link_parameter_scales(span<const TensorView> views)
+{
+    if (views.empty()) return;
+    weight_scale = views[use_bias && views.size() >= 2 ? 1 : 0];
 }
 
 void ConvolutionOperator::link_gradients(span<const TensorView> views)
@@ -506,6 +520,17 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
     throw_if(!input.is_fp32() && !input.is_bf16(),
              "ConvolutionOperator: GPU convolution requires FP32 or BF16 input.");
 
+    void* weights_data = weights.data;
+    if (weights.is_int8())
+    {
+        throw_if(weight_scale.empty() || !input.is_bf16(),
+                 "ConvolutionOperator: INT8 kernels require BF16 activations and a per-kernel scale vector.");
+        bfloat16* dequantized = ensure_int8_dequant_workspace(weights.size());
+        w8_dequant_cuda<bfloat16>(kernels_number, weights.size() / kernels_number, true,
+                                  weights.as<int8_t>(), weight_scale.as<float>(), dequantized);
+        weights_data = dequantized;
+    }
+
     const bool ran = cudnn_frontend::frontend_enabled()
         && cudnn_frontend::run_frontend(conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
     {
@@ -516,7 +541,7 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
 
         unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensors;
         tensors[entry.fwd_X] = input.data;
-        tensors[entry.fwd_W] = weights.data;
+        tensors[entry.fwd_W] = weights_data;
         if (use_bias) tensors[entry.fwd_B] = bias.data;
         tensors[entry.fwd_Y] = output.data;
 

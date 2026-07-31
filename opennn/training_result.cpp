@@ -130,7 +130,12 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
     override_results(0, 1) = to_string(size);
     override_results(1, 1) = elapsed_time;
     override_results(2, 1) = write_stopping_condition();
-    override_results(3, 1) = to_string(training_error_history(size - 1));
+    // Same formatting as the validation error below. to_string() ignored
+    // `precision` (always 6 fixed decimals, so 0.018293 next to a 4-significant
+    // -digit 0.578) and, unlike std::format, honours LC_NUMERIC -- under a
+    // Spanish locale it produced "0,018293" in a report the viewer parses with
+    // the C locale.
+    override_results(3, 1) = format("{:.{}g}", training_error_history(size - 1), precision);
 
     override_results(4, 1) = validation_error_history.size() == 0
         ? "NAN"

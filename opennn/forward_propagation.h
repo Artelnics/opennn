@@ -112,6 +112,7 @@ struct ForwardPropagation
     Buffer inference_graph_bf16_input{Device::CUDA};
     Buffer inference_graph_bf16_gradient{Device::CUDA};
     Buffer inference_graph_bf16_to_fp32{Device::CUDA};
+    Buffer inference_graph_int8_dequant{Device::CUDA};
 };
 
 }

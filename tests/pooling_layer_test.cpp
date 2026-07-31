@@ -9,6 +9,7 @@
 #include "opennn/tabular_dataset.h"
 #include "opennn/neural_network.h"
 #include "opennn/loss.h"
+#include "opennn/json.h"
 
 using namespace opennn;
 
@@ -42,6 +43,27 @@ struct PoolingLayerConfig {
 };
 
 class PoolingLayerTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
+
+namespace
+{
+
+Json pooling_json_body(const Shape& pool_shape,
+                       const Shape& stride_shape = {1, 1},
+                       const Shape& padding_shape = {0, 0},
+                       const string& pooling_method = "MaxPooling")
+{
+    Json body = Json::make_object();
+    body.set("PoolHeight", pool_shape[0]);
+    body.set("PoolWidth", pool_shape[1]);
+    body.set("RowStride", stride_shape[0]);
+    body.set("ColumnStride", stride_shape[1]);
+    body.set("PaddingHeight", padding_shape[0]);
+    body.set("PaddingWidth", padding_shape[1]);
+    body.set("PoolingMethod", pooling_method);
+    return body;
+}
+
+}
 
 INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
                                                                   PoolingLayerConfig
@@ -109,6 +131,31 @@ TEST(PoolingLayerTest, DefaultConstructorDerivedShapes)
     EXPECT_EQ(pooling_layer.get_pooling_method(), PoolingMethod::MaxPooling);
 
     EXPECT_EQ(pooling_layer.get_output_shape(), (Shape{1, 1, 1}));
+}
+
+TEST(PoolingLayerTest, JsonRejectsPoolLargerThanPaddedInput)
+{
+    Pooling layer({4, 4, 1}, {2, 2}, {1, 1});
+    const Json body = pooling_json_body({5, 2});
+
+    EXPECT_THROW(layer.read_JSON_body(&body), runtime_error);
+}
+
+TEST(PoolingLayerTest, JsonRejectsStrideLargerThanPaddedInput)
+{
+    Pooling layer({4, 4, 1}, {2, 2}, {1, 1});
+    const Json body = pooling_json_body({2, 2}, {5, 1});
+
+    EXPECT_THROW(layer.read_JSON_body(&body), runtime_error);
+}
+
+TEST(PoolingLayerTest, JsonUsesPaddingWhenValidatingDimensions)
+{
+    Pooling layer({4, 4, 1}, {2, 2}, {1, 1});
+    const Json body = pooling_json_body({6, 6}, {6, 6}, {1, 1});
+
+    EXPECT_NO_THROW(layer.read_JSON_body(&body));
+    EXPECT_EQ(layer.get_output_shape(), (Shape{1, 1, 1}));
 }
 
 TEST_P(PoolingLayerTest, ForwardPropagate)

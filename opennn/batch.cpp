@@ -45,10 +45,8 @@ void Batch::set(const Index new_samples_number,
 
     samples_number = new_samples_number;
     needs_device_copy = true;
-    prefetch_only = new_prefetch_only;
 
     dataset = new_dataset;
-    config = new_config;
 
     input.shape.clear();
     decoder.shape.clear();
@@ -62,10 +60,16 @@ void Batch::set(const Index new_samples_number,
     input_views_cache.clear();
     target_view_cache = {};
 
-    const bool on_gpu = uses_cuda();
+    // Not uses_cuda(): that now reads input.buffer.device_type, which the
+    // setup_buffer calls below have yet to set -- on a fresh Batch it is still
+    // the default Device::CPU, so asking here would report "no GPU" and every
+    // slot would be allocated on the host. The device is known from the
+    // configuration at this point; uses_cuda() is correct only once the buffers
+    // exist.
+    const bool on_gpu = new_config.device == Device::CUDA && device::is_cuda_build();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
     input_is_bf16 = on_gpu
-                 && config.training_type == Type::BF16
+                 && activation_dtype(new_config.training_type) == Type::BF16
                  && dataset->supports_bf16_inputs();
     const Index input_device_bytes = input_is_bf16 ? Index(sizeof(bfloat16)) : Index(sizeof(float));
 
@@ -87,7 +91,7 @@ void Batch::set(const Index new_samples_number,
         const Index element_bytes = on_gpu ? device_elem_bytes : Index(sizeof(float));
         const Index device_bytes = slot.shape.size() * element_bytes;
 
-        const Index allocated_device_bytes = (on_gpu && prefetch_only) ? Index(0) : device_bytes;
+        const Index allocated_device_bytes = (on_gpu && new_prefetch_only) ? Index(0) : device_bytes;
         slot.buffer.resize_bytes(allocated_device_bytes, batch_device);
         memory_debug::record("batch.device",
                              format("Batch::{}.buffer", role),
@@ -148,7 +152,7 @@ void Batch::set(const Index new_samples_number,
 
     const bool needs_fp32_staging = input_is_bf16
         && !host_bf16_input_cast
-        && !prefetch_only
+        && !new_prefetch_only
         && !(dataset && dataset->is_device_resident());
     const Index fp32_staging_bytes = needs_fp32_staging
         ? samples_number * input.features_number * Index(sizeof(float))
@@ -230,6 +234,7 @@ void Batch::copy_device_async(cudaStream_t stream)
 void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
 {
     const Index current_batch_size = samples_number;
+
     throw_if(!uses_cuda() || !destination.uses_cuda(),
              "Batch::upload_to_device_batch_async requires CUDA batches.");
     throw_if(current_batch_size > destination.samples_number,
@@ -377,7 +382,10 @@ void Batch::wait_h2d_on_compute_stream()
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
 {
-    return validation_uses_training_pool
+    // Derived rather than cached: setup_batch_pools() fills validation_pool only
+    // when validation does NOT reuse the training pool, so an empty pool is
+    // exactly the condition the removed validation_uses_training_pool flag held.
+    return validation_pool.empty()
         ? training_empty_queue
         : validation_empty_queue;
 }

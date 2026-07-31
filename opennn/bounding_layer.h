@@ -57,7 +57,6 @@ private:
     vector<float> upper_bounds;
 
     Buffer op_storage;
-    Device op_storage_device = Device::CPU;
     bool   op_storage_dirty = true;
 
     BoundOperator bound;

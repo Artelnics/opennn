@@ -54,6 +54,10 @@ public:
 
     void set_cuda_graph(bool enabled) { use_cuda_graph = enabled; }
 
+    void set_shuffle(bool enabled) { shuffle_samples = enabled; }
+
+    void set_batch_pool_size(int size) { batch_pool_size_override = size; }
+
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     Index get_maximum_epochs() const noexcept { return maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }

@@ -63,8 +63,24 @@ vector<TensorSpec> Layer::get_state_specs() const
     return result;
 }
 
+vector<Operator::SlotQuantization> Layer::get_parameter_quantization() const
+{
+    vector<Operator::SlotQuantization> result;
+    for (Operator* op : get_operators())
+    {
+        const size_t n = op->parameter_specs().size();
+        auto quantization = op->parameter_quantization();
+        quantization.resize(n);
+        result.insert(result.end(), quantization.begin(), quantization.end());
+    }
+
+    return result;
+}
+
 void Layer::redistribute_parameters_to_operators()
 {
+    const bool has_scales = parameter_scales.size() == parameters.size();
+
     size_t offset = 0;
     for (Operator* op : get_operators())
     {
@@ -72,6 +88,8 @@ void Layer::redistribute_parameters_to_operators()
         if (n == 0) continue;
         if (offset + n > parameters.size()) break;
         op->link_parameters(span(parameters).subspan(offset, n));
+        if (has_scales)
+            op->link_parameter_scales(span(parameter_scales).subspan(offset, n));
         offset += n;
     }
 }

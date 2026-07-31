@@ -43,7 +43,8 @@ enum class GraphWorkspaceKind
     SharedScratch,
     Bf16Input,
     Bf16Gradient,
-    Bf16ToFp32
+    Bf16ToFp32,
+    Int8Dequant
 };
 
 struct GraphWorkspaceRequirements
@@ -52,6 +53,7 @@ struct GraphWorkspaceRequirements
     Index bf16_input = 0;
     Index bf16_gradient = 0;
     Index bf16_to_fp32 = 0;
+    Index int8_dequant = 0;
 };
 
 struct GraphWorkspaceViews
@@ -64,6 +66,8 @@ struct GraphWorkspaceViews
     Index bf16_gradient_bytes = 0;
     void* bf16_to_fp32 = nullptr;
     Index bf16_to_fp32_bytes = 0;
+    void* int8_dequant = nullptr;
+    Index int8_dequant_bytes = 0;
 };
 
 class CudaGraphWorkspaceScope
@@ -277,6 +281,8 @@ inline ThreadPoolDevice& get_device()
 struct TensorView;
 
 bfloat16* ensure_bf16_gradient_workspace(Index);
+
+bfloat16* ensure_int8_dequant_workspace(Index);
 
 float* ensure_bf16_to_fp32_workspace(Index);
 

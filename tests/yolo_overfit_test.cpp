@@ -423,9 +423,9 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
 
         const Shape input{H, W, 3};
         net->add_layer(std::make_unique<Convolutional>(
-            input, Shape{3, 3, 3, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
+            input, Shape{3, 3, 3, head_ch}, "LeakyReLU", Shape{8, 8}, "Same", true, "stem"));
         const Index stem = net->get_layers_number() - 1;
-        const Shape feat{H, W, head_ch};
+        const Shape feat{grid, grid, head_ch};
 
         // Box branch
         net->add_layer(std::make_unique<Convolutional>(

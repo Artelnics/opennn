@@ -217,3 +217,27 @@ TEST(LanguageDataset, CsvReaderPreservesQuotedSeparators)
 
     remove_language_file(file_path);
 }
+
+TEST(LanguageDataset, CsvReaderAcceptsUnbalancedQuotes)
+{
+    const string file_path = temp_language_file(
+        "opennn_language_stray_quote.txt",
+        "looks great and is strong.\"\tGood\n"
+        "she said \"whoa\tBad\n"
+        "\"hello\tworld\"\tGood\n");
+
+    LanguageDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_separator(Dataset::Separator::Tab);
+    dataset.set_display(false);
+    dataset.set_data_path(file_path);
+
+    ASSERT_NO_THROW(dataset.read_txt());
+    EXPECT_EQ(dataset.get_samples_number(), 3);
+
+    const vector<string>& target_vocabulary = dataset.get_target_vocabulary();
+    EXPECT_NE(ranges::find(target_vocabulary, "good"), target_vocabulary.end());
+    EXPECT_NE(ranges::find(target_vocabulary, "bad"), target_vocabulary.end());
+
+    remove_language_file(file_path);
+}

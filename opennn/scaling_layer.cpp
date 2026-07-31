@@ -60,7 +60,7 @@ void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
                     get_name(), descriptives.size(), new_descriptives.size());
     descriptives = new_descriptives;
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 void Scaling::set_scalers(const vector<string>& scalers_str)
@@ -70,7 +70,7 @@ void Scaling::set_scalers(const vector<string>& scalers_str)
                     get_name(), scalers.size(), scalers_str.size());
     ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 void Scaling::set_scalers(const string& scaler)
@@ -78,7 +78,7 @@ void Scaling::set_scalers(const string& scaler)
     const ScalerMethod method = string_to_scaler_method(scaler);
     ranges::fill(scalers, method);
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 bool Scaling::is_passthrough() const
@@ -108,8 +108,6 @@ float* Scaling::link_states(float* pointer, Device device)
 
 void Scaling::refresh_op_storage(Device device)
 {
-    op_storage_device = device;
-
     const Index features = ssize(descriptives);
     const Index bytes    = 5 * features * Index(sizeof(float));
 
@@ -199,7 +197,7 @@ void Scaling::read_JSON_body(const Json* scaling_layer_element)
         max_range = parse_float(read_json_string(scaling_layer_element, "MaxRange"), "Scaling: MaxRange");
 
     op_storage_dirty = true;
-    refresh_op_storage(op_storage_device);
+    refresh_op_storage(op_storage.device_type);
 }
 
 void Scaling::write_JSON_body(JsonWriter& printer) const

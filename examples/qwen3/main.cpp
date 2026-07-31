@@ -143,7 +143,8 @@ string reasoning_mode_name(const ReasoningMode mode)
 }
 
 size_t estimate_qwen3_draft_bytes(const Qwen3Config& config,
-                                  const Index context_length)
+                                  const Index context_length,
+                                  const bool int8_weights)
 {
     const size_t hidden = size_t(config.hidden);
     const size_t q_dim =
@@ -153,13 +154,19 @@ size_t estimate_qwen3_draft_bytes(const Qwen3Config& config,
     const size_t intermediate = size_t(config.intermediate);
     const size_t layers = size_t(config.layers);
 
-    // Tied embedding/LM-head storage plus all BF16 projection matrices.
+    // Tied embedding/LM-head storage plus all projection matrices
+    // (BF16 by default; INT8 adds one FP32 scale per output channel).
     const size_t matrix_elements =
         size_t(config.vocabulary) * hidden
         + layers * ((q_dim + 2 * kv_dim) * hidden
                     + hidden * q_dim
                     + 3 * intermediate * hidden);
-    const size_t bf16_weights = matrix_elements * sizeof(uint16_t);
+    const size_t scale_channels =
+        size_t(config.vocabulary)
+        + layers * (q_dim + 2 * kv_dim + hidden + 2 * intermediate + hidden);
+    const size_t bf16_weights = int8_weights
+        ? matrix_elements * sizeof(int8_t) + scale_channels * sizeof(float)
+        : matrix_elements * sizeof(uint16_t);
 
     // Two FP32 RMSNorms and two QK norms per block, plus final RMSNorm.
     const size_t fp32_weights =
@@ -192,6 +199,7 @@ int main(int argc, char* argv[])
         //   --temp T | --top-k K | --top-p P                 model defaults
         //   --max N   maximum total reasoning + answer tokens default 640
         //   --cpu | --gpu   compute device                   default gpu (if CUDA)
+        //   --int8 | --bf16   GPU weight precision           default bf16
         //   --data DIR (or a bare path)   data directory
 #ifdef OPENNN_HAS_CUDA
         bool want_gpu = true;
@@ -200,6 +208,7 @@ int main(int argc, char* argv[])
 #endif
         Index max_new = DEFAULT_MAX_NEW;
         Index context_length = DEFAULT_CONTEXT_LENGTH;
+        bool want_int8 = false;
         bool use_draft = false;
         Index draft_tokens = 4;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
@@ -214,6 +223,8 @@ int main(int argc, char* argv[])
             const string a = argv[i];
             if      (a == "--cpu" || a == "cpu")            want_gpu = false;
             else if (a == "--gpu" || a == "gpu")            want_gpu = true;
+            else if (a == "--int8")                         want_int8 = true;
+            else if (a == "--bf16")                         want_int8 = false;
             else if (a == "--auto")                         reasoning_mode = ReasoningMode::Automatic;
             else if (a == "--think")                        reasoning_mode = ReasoningMode::Enabled;
             else if (a == "--no-think")                     reasoning_mode = ReasoningMode::Disabled;
@@ -235,10 +246,12 @@ int main(int argc, char* argv[])
                  "--context must be between 1 and {} tokens.",
                  MODEL_MAX_CONTEXT);
         const string data_dir = find_data_dir(data_arg);
+        throw_if(want_int8 && !want_gpu, "--int8 requires the GPU (CUDA).");
 
 #ifdef OPENNN_HAS_CUDA
         Configuration::instance().set(want_gpu ? Device::CUDA : Device::CPU,
-                                      want_gpu ? Type::BF16 : Type::FP32);
+                                      !want_gpu ? Type::FP32
+                                      : want_int8 ? Type::INT8 : Type::BF16);
 #else
         Configuration::instance().set(Device::CPU, Type::FP32);
 #endif
@@ -279,7 +292,7 @@ int main(int argc, char* argv[])
             constexpr size_t safety_margin =
                 size_t(1024) * 1024 * 1024;
             const size_t model_bytes =
-                estimate_qwen3_draft_bytes(draft_config, context_length);
+                estimate_qwen3_draft_bytes(draft_config, context_length, want_int8);
             const size_t required_bytes = model_bytes + safety_margin;
             const size_t available_bytes = device::available_memory();
             const auto mib = [](size_t bytes)
@@ -344,7 +357,8 @@ int main(int argc, char* argv[])
         };
 
         cout << "\rDevice: "
-             << (want_gpu ? "GPU (CUDA, BF16)" : "CPU (FP32)") << endl;
+             << (!want_gpu ? "CPU (FP32)"
+                 : want_int8 ? "GPU (CUDA, INT8)" : "GPU (CUDA, BF16)") << endl;
         cout << "Context: " << context_length
              << " tokens; prefill block: "
              << min(context_length, ChatSession::PREFILL_BLOCK_SIZE)

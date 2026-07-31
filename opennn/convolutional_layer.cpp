@@ -16,6 +16,62 @@
 namespace opennn
 {
 
+namespace
+{
+
+void validate_convolution_configuration(const Shape& input_shape,
+                                        const Shape& kernel_shape,
+                                        const Shape& stride_shape,
+                                        const string& convolution_type,
+                                        bool batch_normalization,
+                                        bool residual,
+                                        const string& label)
+{
+    throw_if(input_shape.rank != 3,
+             "Convolutional layer '{}': input shape must have 3 dimensions, read {}.",
+             label, input_shape.rank);
+    throw_if(kernel_shape.rank != 4,
+             "Convolutional layer '{}': kernel shape must have 4 dimensions, read {}.",
+             label, kernel_shape.rank);
+    throw_if(stride_shape.rank != 2,
+             "Convolutional layer '{}': stride must have 2 dimensions, read {}.",
+             label, stride_shape.rank);
+
+    throw_if(kernel_shape[0] <= 0 || kernel_shape[1] <= 0
+             || kernel_shape[2] <= 0 || kernel_shape[3] <= 0,
+             "Convolutional layer '{}': every kernel dimension must be positive, read {}.",
+             label, shape_to_string(kernel_shape));
+    throw_if(stride_shape[0] <= 0 || stride_shape[1] <= 0,
+             "Convolutional layer '{}': stride must be positive, read {}.",
+             label, shape_to_string(stride_shape));
+
+    throw_if(kernel_shape[2] != input_shape[2],
+             "Convolutional layer '{}': kernel channels ({}) must match input channels ({}).",
+             label, kernel_shape[2], input_shape[2]);
+    throw_if(stride_shape[0] > input_shape[0] || stride_shape[1] > input_shape[1],
+             "Convolutional layer '{}': stride {} cannot be bigger than input shape {}.",
+             label, shape_to_string(stride_shape), shape_to_string(input_shape));
+
+    throw_if(!contains({"Valid", "Same"}, convolution_type),
+             "Convolutional layer '{}': convolution type must be 'Valid' or 'Same', read '{}'.",
+             label, convolution_type);
+    throw_if(convolution_type == "Valid"
+             && (kernel_shape[0] > input_shape[0] || kernel_shape[1] > input_shape[1]),
+             "Convolutional layer '{}': kernel shape {} cannot be bigger than input shape {} "
+             "with Valid convolution.",
+             label, shape_to_string(kernel_shape), shape_to_string(input_shape));
+    throw_if(convolution_type == "Same"
+             && (kernel_shape[0] % 2 == 0 || kernel_shape[1] % 2 == 0),
+             "Convolutional layer '{}': kernel height and width must be odd with Same convolution, "
+             "read {}.",
+             label, shape_to_string(kernel_shape));
+    throw_if(residual && !batch_normalization,
+             "Convolutional layer '{}': a residual input requires batch normalization.",
+             label);
+}
+
+}
+
 Convolutional::Convolutional(const Shape& new_input_shape,
                              const Shape& new_kernel_shape,
                              const string& new_activation_function,
@@ -152,28 +208,13 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    throw_if(new_kernel_shape.rank != 4, "Kernel shape must be 4");
-
-    throw_if(new_stride_shape.rank != 2, "Stride shape must be 2");
-
-    throw_if(!contains({"Valid", "Same"}, new_convolution_type),
-             "Convolution type must be 'Valid' or 'Same'.");
-
-    throw_if(new_convolution_type == "Valid"
-             && (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1]),
-             "kernel shape cannot be bigger than input shape");
-
-    throw_if(new_kernel_shape[2] != new_input_shape[2],
-             "kernel_channels must match input_channels dimension");
-
-    throw_if(new_stride_shape[0] > new_input_shape[0] || new_stride_shape[1] > new_input_shape[1],
-             "Stride shape cannot be bigger than input shape");
-
-    throw_if(new_stride_shape[0] <= 0 || new_stride_shape[1] <= 0, "Stride must be positive.");
-
-    throw_if(new_convolution_type == "Same"
-             && (new_kernel_shape[0] % 2 == 0 || new_kernel_shape[1] % 2 == 0),
-             "Kernel shape (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
+    validate_convolution_configuration(new_input_shape,
+                                       new_kernel_shape,
+                                       new_stride_shape,
+                                       new_convolution_type,
+                                       new_batch_normalization,
+                                       residual,
+                                       new_label);
 
     input_height    = new_input_shape[0];
     input_width     = new_input_shape[1];
@@ -255,24 +296,41 @@ void Convolutional::set_batch_normalization(bool new_batch_normalization)
 
 void Convolutional::read_JSON_body(const Json* convolutional_layer_element)
 {
-    kernel_height   = read_json_index(convolutional_layer_element, "KernelsHeight");
-    kernel_width    = read_json_index(convolutional_layer_element, "KernelsWidth");
-    kernel_channels = read_json_index(convolutional_layer_element, "KernelsChannels");
-    kernels_number  = read_json_index(convolutional_layer_element, "KernelsNumber");
+    const Index new_kernel_height   = read_json_index(convolutional_layer_element, "KernelsHeight");
+    const Index new_kernel_width    = read_json_index(convolutional_layer_element, "KernelsWidth");
+    const Index new_kernel_channels = read_json_index(convolutional_layer_element, "KernelsChannels");
+    const Index new_kernels_number  = read_json_index(convolutional_layer_element, "KernelsNumber");
 
     const Shape stride_shape = string_to_shape(read_json_string(convolutional_layer_element, "StrideDimensions"));
+    const string convolution_type = read_json_string(convolutional_layer_element, "Convolution");
+    const bool new_batch_normalization = read_json_bool(convolutional_layer_element, "BatchNormalization");
+    const bool new_residual = convolutional_layer_element->has("Residual")
+                           && read_json_bool(convolutional_layer_element, "Residual");
+
+    const Shape kernel_shape{
+        new_kernel_height,
+        new_kernel_width,
+        new_kernel_channels,
+        new_kernels_number
+    };
+
+    validate_convolution_configuration(get_input_shape(),
+                                       kernel_shape,
+                                       stride_shape,
+                                       convolution_type,
+                                       new_batch_normalization,
+                                       new_residual,
+                                       label);
+
+    kernel_height   = new_kernel_height;
+    kernel_width    = new_kernel_width;
+    kernel_channels = new_kernel_channels;
+    kernels_number  = new_kernels_number;
     row_stride      = stride_shape[0];
     column_stride   = stride_shape[1];
-
-    const string convolution_type = read_json_string(convolutional_layer_element, "Convolution");
-    throw_if(!contains({"Valid", "Same"}, convolution_type),
-             "Convolution type must be 'Valid' or 'Same'.");
-    use_padding = (convolution_type == "Same");
-
-    batch_norm.features = read_json_bool(convolutional_layer_element, "BatchNormalization") ? kernels_number : 0;
-
-    residual = convolutional_layer_element->has("Residual")
-            && read_json_bool(convolutional_layer_element, "Residual");
+    use_padding     = (convolution_type == "Same");
+    batch_norm.features = new_batch_normalization ? kernels_number : 0;
+    residual = new_residual;
 }
 
 void Convolutional::write_JSON_body(JsonWriter& printer) const
