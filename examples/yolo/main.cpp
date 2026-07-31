@@ -367,13 +367,22 @@ int main()
             // Detect optional VOC2012 (same probing pattern as voc_root above).
             const std::filesystem::path voc12_root = []() -> std::filesystem::path {
                 if (const char* env = std::getenv("VOC12_ROOT")) return env;
-                for (const char* c : {"/home/alvaromartin/VOCdevkit/VOC2012",
-                                       "/home/artelnics/VOCdevkit/VOC2012",
-                                       "VOCdevkit/VOC2012"})
+                for (const char* c : {
+                        "/home/alvaromartin/VOCdevkit/VOC2012",
+                        "/home/artelnics/VOCdevkit/VOC2012",
+                        "/home/artelnics/VOCdevkit/VOCdevkit/VOC2012",  // tar extracted inside VOCdevkit/
+                        "/home/alvaromartin/VOCdevkit/VOCdevkit/VOC2012",
+                        "VOCdevkit/VOC2012",
+                        "VOCdevkit/VOCdevkit/VOC2012"})
                     if (std::filesystem::is_directory(c)) return c;
                 return {};
             }();
             const bool use_voc12 = !voc12_root.empty();
+            if (!use_voc12)
+                std::cout << "VOC2012 not found — training on VOC2007 only.\n"
+                          << "  Set VOC12_ROOT=/path/to/VOC2012 or place it at ~/VOCdevkit/VOC2012\n"
+                          << "  (if you extracted inside ~/VOCdevkit, move it: "
+                          << "mv ~/VOCdevkit/VOCdevkit/VOC2012 ~/VOCdevkit/VOC2012)\n";
 
             if (use_voc12)
             {
