@@ -781,9 +781,9 @@ int main()
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
         // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
-        // c11 s-size at 640×640: activations ≈ 5GB at batch=16 (fits in 7.7GB FP32).
-        // c11 l-size at 640×640 would need ~14GB at batch=16 — use s-size to avoid OOM.
-        const int batch_size = is_csp53v11 ? 16 : (is_large_backbone ? 4 : 16);
+        // c11 s-size at 640×640: ~8GB activations at batch=16 — exceeds RTX 2080/5060 budget.
+        // batch=8 halves activation memory to ~4GB (fits in 7.7GB with model+gradients).
+        const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : 16);
         adam->set_batch_size(batch_size);
         adam->set_display_period(1);
         adam->set_gradient_clip_norm(10.0f);  // YOLOv8 ref: clip_grad_norm=10.0 (was 0.1 = 100× too tight)
@@ -931,7 +931,7 @@ int main()
         const std::vector<TrainingRound> lr_schedule =
             use_coco                      ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
             (use_voc && is_csp53)         ? std::vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            (use_voc && is_csp53v11)      ? std::vector<TrainingRound>{{2.5e-5f, 5}, {5e-4f, 150}, {1e-4f, 100}, {2e-5f, 50}}  :  // warmup 5ep; batch=16 LR ×2 vs batch=8
+            (use_voc && is_csp53v11)      ? std::vector<TrainingRound>{{2.5e-5f, 5}, {2.5e-4f, 150}, {5e-5f, 100}, {1e-5f, 50}} :  // warmup 5ep; batch=8 baseline LR
             (use_voc && is_darknet53)     ? std::vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
             use_voc                       ? std::vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
             use_raccoon                   ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
