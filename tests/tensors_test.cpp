@@ -20,7 +20,7 @@ TEST(Tensors, Fill)
 
     submatrix.resize(1, 1);
 
-    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
+    fill_tensor_data(matrix, rows_indices, columns_indices, span<float>(submatrix.data(), size_t(submatrix.size())));
 
     EXPECT_LT((submatrix.array() - type(3.1416)).abs().maxCoeff(), type(1e-6));
 }
@@ -51,7 +51,7 @@ TEST(Tensors, FillContiguousColumns)
     ASSERT_TRUE(is_contiguous(columns));
 
     MatrixR submatrix(3, 2);
-    fill_tensor_data(matrix, rows, columns, submatrix.data());
+    fill_tensor_data(matrix, rows, columns, span<float>(submatrix.data(), size_t(submatrix.size())));
 
     EXPECT_NEAR(submatrix(0, 0), type(1),  1e-6);
     EXPECT_NEAR(submatrix(0, 1), type(2),  1e-6);
@@ -75,7 +75,7 @@ TEST(Tensors, FillNonContiguousColumns)
     ASSERT_FALSE(is_contiguous(columns));
 
     MatrixR submatrix(3, 2);
-    fill_tensor_data(matrix, rows, columns, submatrix.data());
+    fill_tensor_data(matrix, rows, columns, span<float>(submatrix.data(), size_t(submatrix.size())));
 
     EXPECT_NEAR(submatrix(0, 0), type(0),  1e-6);
     EXPECT_NEAR(submatrix(0, 1), type(2),  1e-6);
@@ -99,7 +99,7 @@ TEST(Tensors, FillReordersRowsAndColumns)
     ASSERT_FALSE(is_contiguous(columns));
 
     MatrixR submatrix(2, 2);
-    fill_tensor_data(matrix, rows, columns, submatrix.data());
+    fill_tensor_data(matrix, rows, columns, span<float>(submatrix.data(), size_t(submatrix.size())));
 
     EXPECT_NEAR(submatrix(0, 0), type(23), 1e-6);
     EXPECT_NEAR(submatrix(0, 1), type(21), 1e-6);
@@ -119,15 +119,33 @@ TEST(Tensors, FillContiguousHintSelectsPath)
     const vector<Index> columns = { 1, 2 };
 
     MatrixR memcpy_path(3, 2);
-    fill_tensor_data(matrix, rows, columns, memcpy_path.data(), 1);
+    fill_tensor_data(matrix, rows, columns, span<float>(memcpy_path.data(), size_t(memcpy_path.size())), 1);
 
     MatrixR gather_path(3, 2);
-    fill_tensor_data(matrix, rows, columns, gather_path.data(), 0);
+    fill_tensor_data(matrix, rows, columns, span<float>(gather_path.data(), size_t(gather_path.size())), 0);
 
     EXPECT_LT((memcpy_path - gather_path).array().abs().maxCoeff(), type(1e-6));
 
     EXPECT_NEAR(memcpy_path(0, 0), type(1),  1e-6);
     EXPECT_NEAR(memcpy_path(2, 1), type(22), 1e-6);
+}
+
+
+TEST(Tensors, FillThrowsOnUndersizedOutput)
+{
+    MatrixR matrix(3, 4);
+    matrix.setZero();
+
+    const vector<Index> rows = { 0, 1, 2 };
+    const vector<Index> columns = { 1, 2 };
+
+    vector<float> too_small(5);
+
+    EXPECT_THROW(fill_tensor_data(matrix, rows, columns, too_small), runtime_error);
+
+    vector<float> exact(6);
+
+    EXPECT_NO_THROW(fill_tensor_data(matrix, rows, columns, exact));
 }
 
 

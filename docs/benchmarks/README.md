@@ -1,16 +1,35 @@
 # OpenNN benchmarks: OpenNN vs PyTorch vs TensorFlow
 
 This directory holds a **reproducible** benchmark suite comparing OpenNN with
-PyTorch and TensorFlow. It ships the **code and the instructions to run each
-benchmark**, not the results: no measured numbers, result tables, or run
-artifacts are committed. You (or an AI agent) clone the repository, build the
-OpenNN drivers, prepare the data, and run each benchmark to produce your own
-numbers on your own hardware.
+PyTorch and TensorFlow. It ships code, run instructions, immutable result JSON,
+and the historical measurement reports that explain published engineering
+claims. Every result must retain its hardware, framework versions, commit, and
+methodology; reruns create new artifacts rather than overwriting old evidence.
 
-> Why no baked-in numbers? A benchmark result is only meaningful with its
-> hardware, framework versions, and commit. Rather than ship stale numbers, the
-> repository ships the recipe; every run writes its own result JSON under
-> [`results/`](results/) with full provenance.
+> Historical reports are evidence from the machine and commit stated in each
+> document, not measurements of the current checkout. Use the active runners to
+> reproduce or supersede them on current hardware.
+
+## Historical result reports
+
+The detailed reports removed during the July 2026 benchmark cleanup have been
+restored alongside their benchmark folders. The central claim/status matrix is
+[`PRESENTATION_CLAIMS.md`](PRESENTATION_CLAIMS.md), and the machine-readable
+artifacts are under [`results/`](results/).
+
+Headline historical comparisons include:
+
+| Area | OpenNN | PyTorch | TensorFlow |
+|---|---:|---:|---:|
+| ResNet-50 CIFAR-10 training | 8,433 samples/s | 5,268 compiled | — |
+| Transformer bf16 inference, seq 512 | 160,128 tok/s | 84,511 | 101,400 |
+| HIGGS CPU training | 59,372 samples/s | 25,651 | 49,101 |
+| Baseline RAM | 195.2 MB | 516.2 MB | 871.2 MB |
+| Transformer GPU energy to target | 24.1 Wh | 33.2 Wh | 39.8 Wh |
+
+The restored ResNet-50 maximum-batch report records the former 4,752 OpenNN
+batch result as a regression baseline. The current runner uses bounded cuDNN
+workspace policies and must write a new artifact before that number is replaced.
 
 ## What is measured
 

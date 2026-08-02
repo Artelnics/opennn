@@ -8,6 +8,7 @@
 #include "opennn/flatten_layer.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/neural_network.h"
+#include "opennn/back_propagation.h"
 #include "opennn/loss.h"
 
 using namespace opennn;
@@ -155,6 +156,65 @@ TEST(Normalization3dTest, FusedResidualAddForward)
     EXPECT_NEAR(output_data[1], type(-1), 1.0e-4f);
     EXPECT_NEAR(output_data[2], type(1),  1.0e-4f);
     EXPECT_NEAR(output_data[3], type(1),  1.0e-4f);
+}
+
+
+TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
+{
+    const Index samples_number = 3;
+    const Shape input_shape{1, 3};
+
+    TabularDataset dataset(samples_number, input_shape, {2});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                   "residual"),
+        {-1});
+    const Index residual_index = neural_network.get_layers_number() - 1;
+
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                   "branch"),
+        {residual_index});
+    const Index branch_index = neural_network.get_layers_number() - 1;
+
+    auto normalization =
+        make_unique<Normalization3d>(input_shape, "fused_norm");
+    normalization->set_fuse_add(true);
+    neural_network.add_layer(
+        move(normalization),
+        {residual_index, branch_index});
+    const Index normalization_index =
+        neural_network.get_layers_number() - 1;
+
+    neural_network.add_layer(
+        make_unique<Flatten>(input_shape),
+        {normalization_index});
+    neural_network.add_layer(
+        make_unique<opennn::Dense>(
+            neural_network.get_output_shape(), Shape{2}, "Identity"));
+
+    neural_network.compile();
+    neural_network.set_parameters_random();
+
+    Loss loss(&neural_network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+    BackPropagation back_propagation(samples_number, &loss);
+
+    ASSERT_EQ(
+        back_propagation.backward_slots[size_t(normalization_index)].size(),
+        size_t(3));
+    EXPECT_EQ(
+        back_propagation.backward_slots[size_t(normalization_index)][1].data,
+        back_propagation.backward_slots[size_t(normalization_index)][2].data);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(),
+              type(4.0e-3));
 }
 
 

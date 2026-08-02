@@ -352,7 +352,7 @@ void read_int32_batch(const FileReader& reader,
                       const uint64_t record_values,
                       const Index source_offset,
                       const Index values_number,
-                      float* output,
+                      const span<float> output,
                       const Index output_stride,
                       const Index output_offset,
                       const string_view context)
@@ -367,8 +367,17 @@ void read_int32_batch(const FileReader& reader,
           || (output_offset >= 0 && values_number >= 0
            && uint64_t(output_stride) < uint64_t(output_offset) + uint64_t(values_number)),
              "{} output range is invalid.", context);
-    throw_if(!sample_indices.empty() && !output,
-             "{} output pointer is null.", context);
+    if (sample_indices.empty()) return;
+
+    // Largest element written by the loop below, plus one.
+    const Index required_size = (ssize(sample_indices) - 1) * output_stride
+                              + output_offset + values_number;
+
+    throw_if(ssize(output) < required_size,
+             "{} output buffer holds {} values but {} are required.",
+             context, ssize(output), required_size);
+
+    float* const output_data = output.data();
 
     string omp_error;
 
@@ -390,7 +399,7 @@ void read_int32_batch(const FileReader& reader,
                             + uint64_t(source_offset)) * sizeof(int32_t));
 
             for (Index j = 0; j < values_number; ++j)
-                output[i * output_stride + output_offset + j] = float(buffer[size_t(j)]);
+                output_data[i * output_stride + output_offset + j] = float(buffer[size_t(j)]);
         }
         catch (const exception& exception)
         {

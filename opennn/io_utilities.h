@@ -55,7 +55,7 @@ void read_int32_batch(const FileReader&,
                       uint64_t record_values,
                       Index source_offset,
                       Index values_number,
-                      float* output,
+                      span<float> output,
                       Index output_stride,
                       Index output_offset,
                       string_view context);

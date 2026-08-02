@@ -184,9 +184,7 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
         return;
     }
 
-    const TensorView& residual = fuse_add ? forward_propagation.input_views[layer][1] : empty;
-
-    apply_delta_gpu(input, output, residual, mean, inverse_variance, delta, residual_delta);
+    apply_delta_gpu(input, output, mean, inverse_variance, delta, residual_delta);
 }
 
 void BatchNormalizationOperator::apply_inference_cpu(const TensorView& input, TensorView& output)
@@ -301,8 +299,8 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
             fwd_PrevMean, fwd_PrevVar, fwd_Eps, fwd_Mom, fwd_Residual,
             fwd_Y, fwd_Mean, fwd_InvVar, fwd_NextMean, fwd_NextVar;
 
-        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_X, bwd_Scale, bwd_Bias,
-            bwd_Mean, bwd_InvVar, bwd_Residual, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
+        shared_ptr<cudnn_frontend::graph::Tensor_attributes> bwd_DY, bwd_Y, bwd_X, bwd_Scale,
+            bwd_Bias, bwd_Mean, bwd_InvVar, bwd_DPre, bwd_DX, bwd_DScale, bwd_DBias;
 
         int64_t fwd_workspace_bytes = 0;
         int64_t bwd_workspace_bytes = 0;
@@ -319,6 +317,9 @@ struct BatchNormalizationOperator::BatchNormalizationGraphCache
 namespace cudnn_frontend
 {
 using namespace ::cudnn_frontend;
+
+namespace
+{
 
 shared_ptr<graph::Tensor_attributes>
 per_channel_tensor(graph::Graph& graph, const char* name, int64_t channels)
@@ -401,7 +402,7 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
 
 void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache::Entry& entry,
                        int64_t batch, int64_t channels, int64_t spatial,
-                       bool fuse_relu, Type dtype, bool fork_residual = false)
+                       bool fuse_relu, Type dtype, bool fork_residual_delta = false)
 {
     auto graph = new_graph(dtype);
 
@@ -415,24 +416,29 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
 
     if (fuse_relu)
     {
-        entry.bwd_Bias = per_channel_tensor(*graph, "BIAS", channels);
-        auto pre_activation = graph->batchnorm_inference(entry.bwd_X, entry.bwd_Mean, entry.bwd_InvVar,
-                                                         entry.bwd_Scale, entry.bwd_Bias,
-                                                         graph::Batchnorm_inference_attributes());
-
-        if (fork_residual)
+        shared_ptr<graph::Tensor_attributes> relu_reference;
+        if (fork_residual_delta)
         {
-            entry.bwd_Residual = nhwc_tensor(*graph, "RESIDUAL", batch, channels, spatial, 1);
-            pre_activation = graph->pointwise(pre_activation, entry.bwd_Residual,
-                                              graph::Pointwise_attributes()
-                                              .set_mode(PointwiseMode_t::ADD));
+            // For ReLU, the final activated output has the same positive mask
+            // as the pre-activation. Using Y avoids reconstructing BN(X)+R and
+            // removes the backward dependency on the residual values.
+            entry.bwd_Y = nhwc_tensor(*graph, "Y", batch, channels, spatial, 1);
+            relu_reference = entry.bwd_Y;
+        }
+        else
+        {
+            entry.bwd_Bias = per_channel_tensor(*graph, "BIAS", channels);
+            relu_reference =
+                graph->batchnorm_inference(entry.bwd_X, entry.bwd_Mean, entry.bwd_InvVar,
+                                           entry.bwd_Scale, entry.bwd_Bias,
+                                           graph::Batchnorm_inference_attributes());
         }
 
-        delta_in = graph->pointwise(entry.bwd_DY, pre_activation,
+        delta_in = graph->pointwise(entry.bwd_DY, relu_reference,
                                     graph::Pointwise_attributes()
                                     .set_mode(PointwiseMode_t::RELU_BWD));
 
-        if (fork_residual)
+        if (fork_residual_delta)
         {
             set_nhwc_output(delta_in, batch, channels, spatial, 1);
             entry.bwd_DPre = delta_in;
@@ -454,6 +460,8 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
 
     entry.bwd_autotune = finalize(*graph, entry.bwd_workspace_bytes, "batchnorm backward", autotune_enabled());
     entry.bwd = graph;
+}
+
 }
 
 }
@@ -573,7 +581,6 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
 
 void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                                 const TensorView& output,
-                                const TensorView& residual,
                                 const TensorView& mean,
                                 const TensorView& inverse_variance,
                                 TensorView& delta,
@@ -583,7 +590,11 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
     const bool bf16 = input.is_bf16();
     const Type graph_dtype = bf16 ? Type::FP32 : input.type;
-    const bool want_fork = fuse_add && fuse_relu && !residual_delta.empty() && !bf16;
+    const bool want_fork =
+        fuse_add
+        && fuse_relu
+        && !residual_delta.empty()
+        && !bf16;
 
     throw_if(!input.is_fp32() && !bf16,
              "BatchNormalizationOperator: GPU backward requires FP32 or BF16.");
@@ -605,9 +616,8 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
                 }
                 catch (const exception&)
                 {
-                    entry.bwd_Bias     = nullptr;
-                    entry.bwd_Residual = nullptr;
-                    entry.bwd_DPre     = nullptr;
+                    entry.bwd_Y    = nullptr;
+                    entry.bwd_DPre = nullptr;
                 }
 
             if (!entry.bwd)
@@ -639,8 +649,8 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
         if (entry.bwd_Bias)     tensors[entry.bwd_Bias]     = beta.data;
         if (entry.bwd_forked)
         {
-            tensors[entry.bwd_Residual] = residual.data;
-            tensors[entry.bwd_DPre]     = residual_delta.data;
+            tensors[entry.bwd_Y]    = output.data;
+            tensors[entry.bwd_DPre] = residual_delta.data;
         }
         tensors[entry.bwd_X]      = x_ptr;
         tensors[entry.bwd_Scale]  = gamma.data;
@@ -689,7 +699,7 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 { throw runtime_error("apply_inference_gpu requires CUDA."); }
 void BatchNormalizationOperator::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&,
                                     const TensorView&)                                                   { throw runtime_error("apply_training_gpu requires CUDA."); }
-void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&, const TensorView&,
+void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&,
                                     const TensorView&, const TensorView&, TensorView&,
                                     TensorView&) const                                                  { throw runtime_error("apply_delta_gpu requires CUDA."); }
 

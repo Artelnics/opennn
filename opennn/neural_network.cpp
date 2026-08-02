@@ -133,6 +133,21 @@ bool NeuralNetwork::has(LayerType type) const
                           [type](const unique_ptr<Layer>& layer) {return layer->get_type() == type;});
 }
 
+bool NeuralNetwork::supports_compact_cnn_memory_layout() const noexcept
+{
+    return ranges::all_of(
+        layers,
+        [](const unique_ptr<Layer>& layer)
+        {
+            const LayerType type = layer->get_type();
+            return type == LayerType::Scaling
+                || type == LayerType::Convolutional
+                || type == LayerType::Pooling
+                || type == LayerType::Flatten
+                || type == LayerType::Dense;
+        });
+}
+
 vector<string> NeuralNetwork::get_input_feature_names() const
 {
     return get_variable_feature_names(input_variables);

@@ -48,6 +48,8 @@ public:
     {
         return spec == size_t(TransposeScratch) - 1;
     }
+    bool backward_uses_forward_output() const noexcept override { return false; }
+    bool preserves_output_delta_during_backward() const noexcept override { return true; }
 
     void set(Index = 0,
              Index = 0,

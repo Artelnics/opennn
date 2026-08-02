@@ -62,6 +62,9 @@ namespace cudnn_frontend
 {
 using namespace ::cudnn_frontend;
 
+namespace
+{
+
 struct Dims
 {
     int64_t batch, channels, height, width;
@@ -198,6 +201,8 @@ string timing_label(const ConvolutionOperator& op, const char* kind)
     return format("{} {}x{}x{} k{}x{}x{} s{}", kind,
                   op.input_height, op.input_width, op.kernel_channels,
                   op.kernel_height, op.kernel_width, op.kernels_number, op.row_stride);
+}
+
 }
 
 }

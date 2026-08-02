@@ -148,20 +148,20 @@ void normalized_squared_error(const TensorView& input, const TensorView& target,
 {
     if (input.is_cuda())
     {
-        error = sum_squared_diff_cuda(input, target, workspace_device) / (2.0f * (coefficient + EPSILON));
+        error = sum_squared_diff_cuda(input, target, workspace_device) / (coefficient + EPSILON);
         return;
     }
-    error = (input.as_vector() - target.as_vector()).squaredNorm() / (2.0f * (coefficient + EPSILON));
+    error = (input.as_vector() - target.as_vector()).squaredNorm() / (coefficient + EPSILON);
 }
 
 void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, float coefficient, const TensorView& input_delta)
 {
     if (input.is_cuda())
     {
-        scaled_diff_cuda(input, target, 1.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
+        scaled_diff_cuda(input, target, 2.0f / (static_cast<float>(coefficient) + EPSILON), input_delta);
         return;
     }
-    input_delta.as_vector().noalias() = (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
+    input_delta.as_vector().noalias() = 2.0f * (input.as_vector() - target.as_vector()) / (coefficient + EPSILON);
 }
 
 void weighted_squared_error(const TensorView& input, const TensorView& target, float positive_weight, float negative_weight, float& error,

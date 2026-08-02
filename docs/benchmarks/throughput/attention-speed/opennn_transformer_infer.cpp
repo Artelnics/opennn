@@ -9,6 +9,7 @@
 //   usage: opennn_transformer_infer [seq] [d_model] [heads] [ff] [layers] [vocab] [batch] [iters]
 
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -16,6 +17,7 @@
 #include "opennn/scaling_layer.h"
 #include "opennn/configuration.h"
 #include "opennn/random_utilities.h"
+#include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
 
@@ -39,9 +41,13 @@ int main(int argc, char* argv[])
 
         Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
+        const Index sdpa_min_sequence_length =
+            benchmark::configure_transformer_sdpa(transformer);
+
         std::cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
-                  << " batch=" << batch << "\n";
+                  << " batch=" << batch
+                  << " sdpa_min=" << sdpa_min_sequence_length << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         Tensor3 inputs(batch, seq, 1);

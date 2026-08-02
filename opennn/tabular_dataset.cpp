@@ -91,7 +91,7 @@ MatrixR TabularDataset::get_data(const string& sample_role, const string& variab
 MatrixR TabularDataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
 {
     MatrixR this_data(sample_indices.size(), feature_indices.size());
-    fill_tensor_data(data, sample_indices, feature_indices, this_data.data());
+    fill_tensor_data(data, sample_indices, feature_indices, span<float>(this_data.data(), size_t(this_data.size())));
     return this_data;
 }
 
@@ -105,7 +105,8 @@ MatrixR TabularDataset::get_variable_data(Index variable_index) const
 MatrixR TabularDataset::get_variable_data(Index variable_index, const vector<Index>& row_indices) const
 {
     MatrixR variable_data(row_indices.size(), get_feature_indices(variable_index).size());
-    fill_tensor_data(data, row_indices, get_feature_indices(variable_index), variable_data.data());
+    fill_tensor_data(data, row_indices, get_feature_indices(variable_index),
+                     span<float>(variable_data.data(), size_t(variable_data.size())));
     return variable_data;
 }
 
@@ -402,7 +403,9 @@ void TabularDataset::fill_features(const vector<Index>& sample_indices, const ve
     if (storage_mode == StorageMode::BinaryFile)
         fill_from_binary_cache(sample_indices, feature_indices, output, contiguous);
     else
-        fill_tensor_data(data, sample_indices, feature_indices, output, contiguous);
+        fill_tensor_data(data, sample_indices, feature_indices,
+                         span<float>(output, size_t(ssize(sample_indices) * ssize(feature_indices))),
+                         contiguous);
 }
 
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,

@@ -39,7 +39,8 @@ struct ForwardPropagation
 
     ForwardPropagation(Index, NeuralNetwork*,
                        ForwardPropagationMode = ForwardPropagationMode::Training,
-                       InferenceShapePolicy = {});
+                       InferenceShapePolicy = {},
+                       bool inputs_pre_scaled = false);
 
     ~ForwardPropagation();
 
@@ -48,7 +49,8 @@ struct ForwardPropagation
 
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
              ForwardPropagationMode = ForwardPropagationMode::Training,
-             InferenceShapePolicy = {});
+             InferenceShapePolicy = {},
+             bool inputs_pre_scaled = false);
 
     void stage_position(cudaStream_t stream);
 
@@ -62,6 +64,8 @@ struct ForwardPropagation
     TensorView get_last_trainable_layer_outputs() const;
 
     TensorView get_outputs() const;
+
+    void recompute_for_backward(Index layer_index);
 
     void set_cuda_graph(bool);
     bool get_cuda_graph() const noexcept { return use_cuda_graph; }
@@ -94,6 +98,7 @@ struct ForwardPropagation
     vector<vector<TensorView>> capacity_forward_slots;
     vector<tuple<size_t, size_t, size_t>> passthrough_overrides;
     vector<Index> attention_valid_lengths;
+    vector<size_t> recomputable_forward_slots;
 
     InferenceShapePolicy inference_shape_policy;
     Index sequence_capacity = 0;

@@ -171,7 +171,7 @@ bool MultiHeadAttention::should_use_sdpa() const
     if (attention.zero_padded_queries) return false;
 
     const Index shorter = min(query_sequence_length, source_sequence_length);
-    return shorter > sdpa_min_sequence_length;
+    return shorter >= sdpa_min_sequence_length;
 }
 
 void MultiHeadAttention::set_zero_padded_queries(bool new_zero_padded_queries)

@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "opennn/forward_propagation.h"
 #include "opennn/standard_networks.h"
 
 using namespace opennn;
@@ -88,6 +89,36 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(in[15], (vector<Index>{12, 14}));
 
     EXPECT_EQ(in[16], (vector<Index>{15}));
+}
+
+
+TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
+{
+    const Index batch_size = 2;
+    Transformer transformer(4, 4, 16, 16, 8, 2, 16, 1);
+
+    const auto specs = transformer.get_forward_specs(batch_size);
+    const auto& layers = transformer.get_layers();
+
+    Index chronological_bytes = 0;
+    Index maximum_transient_bytes = 0;
+    for (size_t i = 0; i < specs.size(); ++i)
+        for (size_t j = 0; j < specs[i].size(); ++j)
+        {
+            if (specs[i][j].shape.empty()) continue;
+            const Index bytes = get_aligned_bytes(specs[i][j]);
+            if (layers[i]->is_forward_slot_transient(j))
+                maximum_transient_bytes =
+                    max(maximum_transient_bytes, bytes);
+            else
+                chronological_bytes += bytes;
+        }
+
+    chronological_bytes += maximum_transient_bytes;
+
+    ForwardPropagation forward_propagation(batch_size, &transformer);
+
+    EXPECT_LT(forward_propagation.data.bytes, chronological_bytes);
 }
 
 // OpenNN: Open Neural Networks Library.

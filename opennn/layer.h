@@ -147,6 +147,12 @@ public:
     }
 
     virtual bool is_forward_slot_transient(size_t) const { return false; }
+    virtual size_t get_recomputable_forward_slot() const noexcept { return SIZE_MAX; }
+    virtual void recompute_forward_slot(ForwardPropagation&, size_t) {}
+    virtual bool backward_uses_forward_output() const noexcept { return true; }
+    virtual bool backward_uses_input(size_t) const noexcept { return true; }
+    virtual bool preserves_output_delta_during_backward() const noexcept { return false; }
+    virtual bool allows_input_delta_alias() const noexcept { return false; }
 
     virtual Shape get_input_shape() const noexcept { return input_shape; }
 

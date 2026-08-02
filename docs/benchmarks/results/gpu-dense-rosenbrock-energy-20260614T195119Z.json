@@ -1,0 +1,618 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "gpu-dense-rosenbrock-energy",
+  "run_id": "20260614T195119Z",
+  "git_commit": "",
+  "configuration": {
+    "network": "1000->1000(tanh)->1 dense, MSE, Adam, fp32",
+    "batch": 8000,
+    "iters_per_run": 2000,
+    "samples_per_run": 16000000,
+    "runs": 5,
+    "idle_baseline_w": 27.19,
+    "power_source": "nvidia-smi power.draw 20Hz, trapezoidal integration",
+    "note": "GPU energy only (board sensor); sampled power, not a HW joule counter"
+  },
+  "machine": {
+    "torch": "2.6.0+cu124",
+    "tensorflow": "2.21.0",
+    "python": "3.12.3",
+    "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU, 555.85"
+  },
+  "results": {
+    "inference": {
+      "opennn": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 25.8879,
+        "uj_per_sample_total_stdev": 2.8324,
+        "uj_per_sample_active_median": 17.939,
+        "uj_per_sample_active_stdev": 2.0949,
+        "avg_power_w_median": 88.22,
+        "per_run": [
+          {
+            "wall_s": 4.277,
+            "integ_span_s": 4.832,
+            "power_samples": 96,
+            "avg_power_w": 85.2,
+            "active_power_w": 58.01,
+            "energy_total_j": 413.03,
+            "energy_active_j": 281.632,
+            "rc": 0,
+            "j_per_sample_total": 25.8144,
+            "j_per_sample_active": 17.602
+          },
+          {
+            "wall_s": 4.108,
+            "integ_span_s": 4.663,
+            "power_samples": 93,
+            "avg_power_w": 90.54,
+            "active_power_w": 63.34,
+            "energy_total_j": 423.194,
+            "energy_active_j": 296.392,
+            "rc": 0,
+            "j_per_sample_total": 26.4496,
+            "j_per_sample_active": 18.5245
+          },
+          {
+            "wall_s": 4.137,
+            "integ_span_s": 5.818,
+            "power_samples": 93,
+            "avg_power_w": 88.9,
+            "active_power_w": 61.7,
+            "energy_total_j": 528.147,
+            "energy_active_j": 369.937,
+            "rc": 0,
+            "j_per_sample_total": 33.0092,
+            "j_per_sample_active": 23.1211
+          },
+          {
+            "wall_s": 4.136,
+            "integ_span_s": 4.689,
+            "power_samples": 93,
+            "avg_power_w": 87.3,
+            "active_power_w": 60.11,
+            "energy_total_j": 410.922,
+            "energy_active_j": 283.413,
+            "rc": 0,
+            "j_per_sample_total": 25.6826,
+            "j_per_sample_active": 17.7133
+          },
+          {
+            "wall_s": 4.148,
+            "integ_span_s": 4.677,
+            "power_samples": 93,
+            "avg_power_w": 88.22,
+            "active_power_w": 61.03,
+            "energy_total_j": 414.207,
+            "energy_active_j": 287.024,
+            "rc": 0,
+            "j_per_sample_total": 25.8879,
+            "j_per_sample_active": 17.939
+          }
+        ],
+        "raw_tail": [
+          [
+            "mode=resident_inference batch=8000",
+            "step_s=0.00188212",
+            "samples_per_sec=4250531"
+          ],
+          [
+            "mode=resident_inference batch=8000",
+            "step_s=0.00184967",
+            "samples_per_sec=4325087"
+          ],
+          [
+            "mode=resident_inference batch=8000",
+            "step_s=0.00186282",
+            "samples_per_sec=4294559"
+          ],
+          [
+            "mode=resident_inference batch=8000",
+            "step_s=0.00186982",
+            "samples_per_sec=4278485"
+          ],
+          [
+            "mode=resident_inference batch=8000",
+            "step_s=0.00186488",
+            "samples_per_sec=4289817"
+          ]
+        ]
+      },
+      "pytorch": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 43.5198,
+        "uj_per_sample_total_stdev": 2.2274,
+        "uj_per_sample_active_median": 30.6246,
+        "uj_per_sample_active_stdev": 1.3018,
+        "avg_power_w_median": 91.02,
+        "per_run": [
+          {
+            "wall_s": 7.019,
+            "integ_span_s": 7.57,
+            "power_samples": 150,
+            "avg_power_w": 91.02,
+            "active_power_w": 63.83,
+            "energy_total_j": 690.188,
+            "energy_active_j": 484.335,
+            "rc": 0,
+            "j_per_sample_total": 43.1367,
+            "j_per_sample_active": 30.2709
+          },
+          {
+            "wall_s": 7.098,
+            "integ_span_s": 7.654,
+            "power_samples": 152,
+            "avg_power_w": 91.1,
+            "active_power_w": 63.9,
+            "energy_total_j": 698.13,
+            "energy_active_j": 489.993,
+            "rc": 0,
+            "j_per_sample_total": 43.6331,
+            "j_per_sample_active": 30.6246
+          },
+          {
+            "wall_s": 7.267,
+            "integ_span_s": 9.008,
+            "power_samples": 154,
+            "avg_power_w": 84.64,
+            "active_power_w": 57.45,
+            "energy_total_j": 781.729,
+            "energy_active_j": 536.773,
+            "rc": 0,
+            "j_per_sample_total": 48.8581,
+            "j_per_sample_active": 33.5483
+          },
+          {
+            "wall_s": 7.173,
+            "integ_span_s": 7.704,
+            "power_samples": 153,
+            "avg_power_w": 89.21,
+            "active_power_w": 62.02,
+            "energy_total_j": 687.904,
+            "energy_active_j": 478.407,
+            "rc": 0,
+            "j_per_sample_total": 42.994,
+            "j_per_sample_active": 29.9004
+          },
+          {
+            "wall_s": 7.017,
+            "integ_span_s": 7.551,
+            "power_samples": 150,
+            "avg_power_w": 92.12,
+            "active_power_w": 64.93,
+            "energy_total_j": 696.317,
+            "energy_active_j": 490.981,
+            "rc": 0,
+            "j_per_sample_total": 43.5198,
+            "j_per_sample_active": 30.6863
+          }
+        ],
+        "raw_tail": [
+          [
+            "mode=inference batch=8000",
+            "step_s=0.002824",
+            "samples_per_sec=2832497"
+          ],
+          [
+            "mode=inference batch=8000",
+            "step_s=0.002854",
+            "samples_per_sec=2802659"
+          ],
+          [
+            "mode=inference batch=8000",
+            "step_s=0.002876",
+            "samples_per_sec=2781246"
+          ],
+          [
+            "mode=inference batch=8000",
+            "step_s=0.002886",
+            "samples_per_sec=2771902"
+          ],
+          [
+            "mode=inference batch=8000",
+            "step_s=0.002795",
+            "samples_per_sec=2861982"
+          ]
+        ],
+        "energy_ratio_vs_opennn_total": 1.681,
+        "energy_ratio_vs_opennn_active": 1.707
+      },
+      "tensorflow": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 29.8283,
+        "uj_per_sample_total_stdev": 2.9674,
+        "uj_per_sample_active_median": 18.3392,
+        "uj_per_sample_active_stdev": 2.1358,
+        "avg_power_w_median": 67.86,
+        "per_run": [
+          {
+            "wall_s": 6.301,
+            "integ_span_s": 6.831,
+            "power_samples": 135,
+            "avg_power_w": 66.38,
+            "active_power_w": 39.19,
+            "energy_total_j": 453.831,
+            "energy_active_j": 268.074,
+            "rc": 0,
+            "j_per_sample_total": 28.3644,
+            "j_per_sample_active": 16.7546
+          },
+          {
+            "wall_s": 6.342,
+            "integ_span_s": 8.118,
+            "power_samples": 136,
+            "avg_power_w": 66.03,
+            "active_power_w": 38.83,
+            "energy_total_j": 587.772,
+            "energy_active_j": 367.017,
+            "rc": 0,
+            "j_per_sample_total": 36.7358,
+            "j_per_sample_active": 22.9386
+          },
+          {
+            "wall_s": 6.389,
+            "integ_span_s": 6.933,
+            "power_samples": 137,
+            "avg_power_w": 67.86,
+            "active_power_w": 40.66,
+            "energy_total_j": 471.204,
+            "energy_active_j": 282.673,
+            "rc": 0,
+            "j_per_sample_total": 29.4503,
+            "j_per_sample_active": 17.6671
+          },
+          {
+            "wall_s": 6.344,
+            "integ_span_s": 6.888,
+            "power_samples": 136,
+            "avg_power_w": 70.48,
+            "active_power_w": 43.29,
+            "energy_total_j": 485.613,
+            "energy_active_j": 298.306,
+            "rc": 0,
+            "j_per_sample_total": 30.3508,
+            "j_per_sample_active": 18.6441
+          },
+          {
+            "wall_s": 6.215,
+            "integ_span_s": 6.76,
+            "power_samples": 134,
+            "avg_power_w": 70.67,
+            "active_power_w": 43.48,
+            "energy_total_j": 477.253,
+            "energy_active_j": 293.427,
+            "rc": 0,
+            "j_per_sample_total": 29.8283,
+            "j_per_sample_active": 18.3392
+          }
+        ],
+        "raw_tail": [
+          [
+            "I0000 00:00:1781466753.329547    1444 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466760.304552    1590 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466768.494649    1732 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466775.532271    1879 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466782.497545    2022 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ]
+        ],
+        "energy_ratio_vs_opennn_total": 1.152,
+        "energy_ratio_vs_opennn_active": 1.022
+      }
+    },
+    "train": {
+      "opennn": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 64.922,
+        "uj_per_sample_total_stdev": 3.9333,
+        "uj_per_sample_active_median": 46.1009,
+        "uj_per_sample_active_stdev": 2.8051,
+        "avg_power_w_median": 91.88,
+        "per_run": [
+          {
+            "wall_s": 10.79,
+            "integ_span_s": 12.604,
+            "power_samples": 225,
+            "avg_power_w": 91.07,
+            "active_power_w": 63.87,
+            "energy_total_j": 1160.476,
+            "energy_active_j": 817.733,
+            "rc": 0,
+            "j_per_sample_total": 72.5298,
+            "j_per_sample_active": 51.1083
+          },
+          {
+            "wall_s": 10.656,
+            "integ_span_s": 11.189,
+            "power_samples": 221,
+            "avg_power_w": 92.27,
+            "active_power_w": 65.08,
+            "energy_total_j": 1033.455,
+            "energy_active_j": 729.19,
+            "rc": 0,
+            "j_per_sample_total": 64.5909,
+            "j_per_sample_active": 45.5744
+          },
+          {
+            "wall_s": 10.718,
+            "integ_span_s": 11.29,
+            "power_samples": 223,
+            "avg_power_w": 90.95,
+            "active_power_w": 63.75,
+            "energy_total_j": 1027.43,
+            "energy_active_j": 720.418,
+            "rc": 0,
+            "j_per_sample_total": 64.2144,
+            "j_per_sample_active": 45.0261
+          },
+          {
+            "wall_s": 10.696,
+            "integ_span_s": 12.512,
+            "power_samples": 223,
+            "avg_power_w": 91.88,
+            "active_power_w": 64.69,
+            "energy_total_j": 1162.441,
+            "energy_active_j": 822.2,
+            "rc": 0,
+            "j_per_sample_total": 72.6526,
+            "j_per_sample_active": 51.3875
+          },
+          {
+            "wall_s": 10.54,
+            "integ_span_s": 11.074,
+            "power_samples": 219,
+            "avg_power_w": 93.64,
+            "active_power_w": 66.45,
+            "energy_total_j": 1038.752,
+            "energy_active_j": 737.614,
+            "rc": 0,
+            "j_per_sample_total": 64.922,
+            "j_per_sample_active": 46.1009
+          }
+        ],
+        "raw_tail": [
+          [
+            "mode=train samples=8000 batch=8000 steps_per_epoch=1",
+            "epoch_s=0.00476208",
+            "samples_per_sec=1679937"
+          ],
+          [
+            "mode=train samples=8000 batch=8000 steps_per_epoch=1",
+            "epoch_s=0.00473009",
+            "samples_per_sec=1691297"
+          ],
+          [
+            "mode=train samples=8000 batch=8000 steps_per_epoch=1",
+            "epoch_s=0.00477304",
+            "samples_per_sec=1676080"
+          ],
+          [
+            "mode=train samples=8000 batch=8000 steps_per_epoch=1",
+            "epoch_s=0.00468571",
+            "samples_per_sec=1707319"
+          ],
+          [
+            "mode=train samples=8000 batch=8000 steps_per_epoch=1",
+            "epoch_s=0.00472151",
+            "samples_per_sec=1694373"
+          ]
+        ]
+      },
+      "pytorch": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 89.1442,
+        "uj_per_sample_total_stdev": 3.1788,
+        "uj_per_sample_active_median": 62.6937,
+        "uj_per_sample_active_stdev": 2.707,
+        "avg_power_w_median": 91.15,
+        "per_run": [
+          {
+            "wall_s": 15.002,
+            "integ_span_s": 15.563,
+            "power_samples": 309,
+            "avg_power_w": 91.61,
+            "active_power_w": 64.42,
+            "energy_total_j": 1426.307,
+            "energy_active_j": 1003.099,
+            "rc": 0,
+            "j_per_sample_total": 89.1442,
+            "j_per_sample_active": 62.6937
+          },
+          {
+            "wall_s": 14.31,
+            "integ_span_s": 16.097,
+            "power_samples": 295,
+            "avg_power_w": 92.51,
+            "active_power_w": 65.32,
+            "energy_total_j": 1459.554,
+            "energy_active_j": 1021.824,
+            "rc": 0,
+            "j_per_sample_total": 91.2221,
+            "j_per_sample_active": 63.864
+          },
+          {
+            "wall_s": 14.793,
+            "integ_span_s": 15.35,
+            "power_samples": 305,
+            "avg_power_w": 91.15,
+            "active_power_w": 63.96,
+            "energy_total_j": 1399.529,
+            "energy_active_j": 982.113,
+            "rc": 0,
+            "j_per_sample_total": 87.4706,
+            "j_per_sample_active": 61.3821
+          },
+          {
+            "wall_s": 14.951,
+            "integ_span_s": 16.742,
+            "power_samples": 308,
+            "avg_power_w": 87.42,
+            "active_power_w": 60.23,
+            "energy_total_j": 1486.01,
+            "energy_active_j": 1030.741,
+            "rc": 0,
+            "j_per_sample_total": 92.8756,
+            "j_per_sample_active": 64.4213
+          },
+          {
+            "wall_s": 15.216,
+            "integ_span_s": 15.79,
+            "power_samples": 314,
+            "avg_power_w": 84.76,
+            "active_power_w": 57.56,
+            "energy_total_j": 1338.917,
+            "energy_active_j": 909.536,
+            "rc": 0,
+            "j_per_sample_total": 83.6823,
+            "j_per_sample_active": 56.846
+          }
+        ],
+        "raw_tail": [
+          [
+            "mode=train batch=8000",
+            "step_s=0.005961",
+            "samples_per_sec=1342002"
+          ],
+          [
+            "mode=train batch=8000",
+            "step_s=0.006010",
+            "samples_per_sec=1331221"
+          ],
+          [
+            "mode=train batch=8000",
+            "step_s=0.006068",
+            "samples_per_sec=1318483"
+          ],
+          [
+            "mode=train batch=8000",
+            "step_s=0.006291",
+            "samples_per_sec=1271667"
+          ],
+          [
+            "mode=train batch=8000",
+            "step_s=0.006422",
+            "samples_per_sec=1245763"
+          ]
+        ],
+        "energy_ratio_vs_opennn_total": 1.373,
+        "energy_ratio_vs_opennn_active": 1.36
+      },
+      "tensorflow": {
+        "n_ok": 5,
+        "uj_per_sample_total_median": 60.4594,
+        "uj_per_sample_total_stdev": 3.4758,
+        "uj_per_sample_active_median": 38.6147,
+        "uj_per_sample_active_stdev": 2.476,
+        "avg_power_w_median": 74.4,
+        "per_run": [
+          {
+            "wall_s": 12.392,
+            "integ_span_s": 14.224,
+            "power_samples": 257,
+            "avg_power_w": 74.73,
+            "active_power_w": 47.54,
+            "energy_total_j": 1079.129,
+            "energy_active_j": 692.332,
+            "rc": 0,
+            "j_per_sample_total": 67.4456,
+            "j_per_sample_active": 43.2707
+          },
+          {
+            "wall_s": 12.317,
+            "integ_span_s": 12.858,
+            "power_samples": 255,
+            "avg_power_w": 74.4,
+            "active_power_w": 47.2,
+            "energy_total_j": 955.909,
+            "energy_active_j": 606.259,
+            "rc": 0,
+            "j_per_sample_total": 59.7443,
+            "j_per_sample_active": 37.8912
+          },
+          {
+            "wall_s": 12.133,
+            "integ_span_s": 13.914,
+            "power_samples": 251,
+            "avg_power_w": 73.6,
+            "active_power_w": 46.4,
+            "energy_total_j": 1048.737,
+            "energy_active_j": 670.371,
+            "rc": 0,
+            "j_per_sample_total": 65.5461,
+            "j_per_sample_active": 41.8982
+          },
+          {
+            "wall_s": 12.307,
+            "integ_span_s": 12.853,
+            "power_samples": 255,
+            "avg_power_w": 75.32,
+            "active_power_w": 48.13,
+            "energy_total_j": 967.35,
+            "energy_active_j": 617.835,
+            "rc": 0,
+            "j_per_sample_total": 60.4594,
+            "j_per_sample_active": 38.6147
+          },
+          {
+            "wall_s": 12.333,
+            "integ_span_s": 12.864,
+            "power_samples": 255,
+            "avg_power_w": 72.97,
+            "active_power_w": 45.78,
+            "energy_total_j": 938.031,
+            "energy_active_j": 588.217,
+            "rc": 0,
+            "j_per_sample_total": 58.6269,
+            "j_per_sample_active": 36.7636
+          }
+        ],
+        "raw_tail": [
+          [
+            "I0000 00:00:1781466928.614716   22630 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466942.879929   22815 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466955.835546   22979 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466969.830191   23159 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ],
+          [
+            "I0000 00:00:1781466982.759311   23322 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.",
+            "/home/artelnics/benchenv/lib/python3.12/site-packages/keras/src/layers/core/dense.py:107: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)"
+          ]
+        ],
+        "energy_ratio_vs_opennn_total": 0.931,
+        "energy_ratio_vs_opennn_active": 0.838
+      }
+    }
+  }
+}

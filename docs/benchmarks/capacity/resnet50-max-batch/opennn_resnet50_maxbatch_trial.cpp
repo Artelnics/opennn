@@ -4,12 +4,14 @@
 //   grows and binary-searches the batch size around this program so CUDA OOMs
 //   cannot poison later trials.
 //
-//   CUDA graph, sample shuffle and cuDNN conv autotune are all turned off in
-//   code (no environment variables); the prefetch-pool depth is set with the
-//   optional [batch_pool] argument (the pool1 engine passes 1).
+//   CUDA graph and sample shuffle are turned off in code. The prefetch-pool
+//   depth and convolution workspace policy are explicit trial arguments so a
+//   capacity run cannot accidentally inherit the throughput configuration.
 //
-//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32|bf16] [batch_pool] [workspace_mib]
-//          workspace_mib: 0 (default) = AUTO library policy; >0 = explicit conv workspace cap
+//   usage: opennn_resnet50_maxbatch_trial <cifar10_dir> <batch> [fp32|bf16] [batch_pool] [workspace_mib] [recompute]
+//          workspace_mib: positive integer (default 16) = explicit cap
+//                         auto = library auto cap, heur = uncapped heuristic,
+//                         off = uncapped autotune (throughput/debug only)
 
 #include <cmath>
 #include <filesystem>
@@ -141,7 +143,8 @@ int main(int argc, char* argv[])
     const Index batch = argc > 2 ? Index(std::stoll(argv[2])) : 128;
     const std::string precision = argc > 3 ? argv[3] : "fp32";
     const int batch_pool = argc > 4 ? std::stoi(argv[4]) : 0;
-    const std::string workspace_arg = argc > 5 ? argv[5] : "off";
+    const std::string workspace_arg = argc > 5 ? argv[5] : "16";
+    const bool recompute_activations = argc <= 6 || std::stoi(argv[6]) != 0;
 
     try
     {
@@ -164,6 +167,9 @@ int main(int argc, char* argv[])
         else
             device::set_conv_workspace_cap(std::stoll(workspace_arg) * 1024 * 1024);
         std::cout << "workspace_mode=" << workspace_arg << "\n";
+        std::cout << "workspace_cap_mib="
+                  << device::conv_workspace_limit_bytes() / (1024 * 1024) << "\n";
+        std::cout << "conv_autotune=" << (device::conv_autotune_enabled() ? 1 : 0) << "\n";
 
         TempImageTree temp_images;
         const std::filesystem::path trial_data_path =
@@ -178,6 +184,7 @@ int main(int argc, char* argv[])
                        Shape{64, 128, 256, 512},
                        dataset.get_shape("Target"),
                        true);
+        network.set_training_activation_recomputation(recompute_activations);
         memory_debug::record("model", "NeuralNetwork::parameters",
                              network.get_parameters_size() * Index(sizeof(float)),
                              "planned");
@@ -214,6 +221,8 @@ int main(int argc, char* argv[])
                   << " precision=" << precision << "\n";
         std::cout << "storage=ImageDataset BinaryFile cache\n";
         std::cout << "gpu_resident_data=0\n";
+        std::cout << "training_activation_recomputation="
+                  << (recompute_activations ? 1 : 0) << "\n";
         std::cout << "parameters=" << network.get_parameters_size() << "\n";
         std::cout << "training_error=" << training_error << "\n";
         memory_debug::print(std::cout);

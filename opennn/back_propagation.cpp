@@ -82,7 +82,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         TensorSpec spec;
         Index      first_step;
         Index      last_step;
-        Index      byte_offset = -1;
     };
 
     const auto& layers = neural_network->get_layers();
@@ -95,6 +94,26 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         : Type::FP32;
 
     vector<DeltaEntry> delta_entries;
+    vector<bool> aliases_residual_delta(size_t(layers_number), false);
+    Index aliased_residual_delta_bytes = 0;
+
+    for (Index layer_index = first_trainable_layer_index;
+         layer_index <= last_trainable_layer_index;
+         ++layer_index)
+    {
+        const auto& specs = backward_specs[size_t(layer_index)];
+        const auto& sources = source_layers[size_t(layer_index)];
+        const bool aliases = layers[size_t(layer_index)]->allows_input_delta_alias()
+            && specs.size() == 2 && sources.size() == 2
+            && sources[0] >= first_trainable_layer_index
+            && sources[0] < sources[1]
+            && sources[1] <= last_trainable_layer_index
+            && !specs[0].shape.empty() && specs[1].shape == specs[0].shape
+            && specs[1].dtype == specs[0].dtype
+            && layers[size_t(sources[1])]->preserves_output_delta_during_backward();
+        aliases_residual_delta[size_t(layer_index)] = aliases;
+        if (aliases) aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
+    }
 
     const auto is_passthrough = [&](Index layer_index)
     {
@@ -122,6 +141,8 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         {
             const auto& [shape, dtype] = specs[j];
             if (shape.empty()) continue;
+            if (j == 1 && aliases_residual_delta[size_t(layer_index)])
+                continue;
 
             const Index first_step = last_trainable_layer_index - layer_index;
 
@@ -142,22 +163,43 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
         }
     }
 
+    const pair<size_t, size_t> no_consumer_delta{SIZE_MAX, SIZE_MAX};
+    vector<pair<size_t, size_t>> reusable_consumer_deltas(
+        size_t(layers_number),
+        no_consumer_delta);
+
     for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
     {
         const auto& edges = consumer_edges[layer_index];
 
         const bool has_multiple_consumers = edges.size() > 1;
+        const Shape output_shape = layers[layer_index]->get_output_shape();
+        const Shape delta_shape = Shape({batch_size}).append(output_shape);
+        const auto reusable_delta = has_multiple_consumers
+            ? ranges::find_if(
+                  edges,
+                  [&](const auto& edge)
+                  {
+                      const auto [consumer_layer, input_position] = edge;
+                      const auto& specs = backward_specs[consumer_layer];
+                      return input_position < specs.size()
+                          && !specs[input_position].shape.empty()
+                          && specs[input_position].shape == delta_shape;
+                  })
+            : edges.end();
+        if (reusable_delta != edges.end())
+            reusable_consumer_deltas[size_t(layer_index)] = *reusable_delta;
+
         const auto layer_type = layers[layer_index]->get_type();
         const bool is_detached_detection_layer =
             (layer_type == LayerType::Detection || layer_type == LayerType::DetectionV8)
             && edges.empty();
 
-        if (!has_multiple_consumers && !is_detached_detection_layer) continue;
-
-        const Shape output_shape = layers[layer_index]->get_output_shape();
+        if ((!has_multiple_consumers || reusable_delta != edges.end())
+            && !is_detached_detection_layer)
+            continue;
         if (output_shape.empty()) continue;
 
-        const Shape delta_shape = Shape({batch_size}).append(output_shape);
         const Index last_step = last_trainable_layer_index - layer_index;
         const Index first_step = is_detached_detection_layer ? Index(0) : last_step;
 
@@ -171,10 +213,13 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
                                     entry.first_step,
                                     entry.last_step});
 
-    const MemoryPoolPlan pool_plan = plan_memory_pool(lifetime_entries);
-    for (size_t i = 0; i < delta_entries.size(); ++i)
-        delta_entries[i].byte_offset = pool_plan.byte_offsets[i];
-
+    const bool compact_pool_supported =
+        neural_network->supports_compact_cnn_memory_layout();
+    const MemoryPoolPlan pool_plan = plan_memory_pool(
+        lifetime_entries,
+        compact_pool_supported
+            ? MemoryPoolStrategy::Compact
+            : MemoryPoolStrategy::Chronological);
     layer_output_deltas.assign(size_t(layers_number), TensorView{});
     backward_slots.assign(size_t(layers_number), {});
     for (Index i = 0; i < layers_number; ++i)
@@ -183,7 +228,9 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     delta_pool.resize_bytes(pool_plan.peak_bytes, neural_network->get_device());
     delta_pool.setZero();
     memory_debug::record("backward", "BackPropagation::delta_pool", pool_plan.peak_bytes,
-                         format("batch={}", batch_size));
+                         format("batch={},planner={}",
+                                batch_size,
+                                compact_pool_supported ? "compact" : "chronological"));
     memory_debug::record("backward.delta_pool_analysis", "live_bytes_lower_bound",
                          pool_plan.lower_bound_live_bytes,
                          format("batch={},entries={}", batch_size, delta_entries.size()));
@@ -193,9 +240,10 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
 
     uint8_t* const base = delta_pool.as<uint8_t>();
 
-    for (const auto& entry : delta_entries)
+    for (size_t i = 0; i < delta_entries.size(); ++i)
     {
-        const TensorView delta_view(base + entry.byte_offset,
+        const DeltaEntry& entry = delta_entries[i];
+        const TensorView delta_view(base + pool_plan.byte_offsets[i],
                               entry.spec.shape,
                               entry.spec.dtype,
                               delta_pool.device_type);
@@ -206,10 +254,38 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
             backward_slots[entry.layer][entry.slot] = delta_view;
     }
 
+    for (Index layer_index = first_trainable_layer_index;
+         layer_index <= last_trainable_layer_index;
+         ++layer_index)
+        if (aliases_residual_delta[size_t(layer_index)])
+            backward_slots[size_t(layer_index)][2] =
+                backward_slots[size_t(layer_index)][1];
+
+    if (aliased_residual_delta_bytes > 0)
+        memory_debug::record(
+            "backward.delta_alias",
+            "residual_input_delta_bytes",
+            aliased_residual_delta_bytes,
+            format("batch={}", batch_size));
+
     for (Index i = first_trainable_layer_index; i < last_trainable_layer_index; ++i)
     {
         const auto& edges = consumer_edges[i];
-        if (edges.size() != 1) continue;
+        if (edges.empty()) continue;
+
+        if (edges.size() > 1)
+        {
+            const auto [consumer_layer, input_position] =
+                reusable_consumer_deltas[size_t(i)];
+            if (consumer_layer != SIZE_MAX)
+            {
+                const size_t slot = input_position + 1;
+                layer_output_deltas[i] =
+                    backward_slots[consumer_layer][slot];
+            }
+
+            continue;
+        }
 
         size_t consumer_layer = edges.front().first;
         size_t input_position = edges.front().second;
@@ -245,23 +321,33 @@ void BackPropagation::accumulate_output_deltas(size_t layer_index)
     TensorView& destination = layer_output_deltas[layer_index];
     if (!destination.data) return;
 
-    vector<const TensorView*> sources;
-    sources.reserve(edges.size());
-
+    const TensorView* first_source = nullptr;
+    bool destination_is_source = false;
     for (const auto& [consumer_layer, input_position] : edges)
     {
         const TensorView& source = backward_slots[consumer_layer][1 + input_position];
-
         if (source.data && source.size() == destination.size())
-            sources.push_back(&source);
+        {
+            if (!first_source) first_source = &source;
+            destination_is_source |= source.data == destination.data;
+        }
     }
 
-    if (sources.empty())  { destination.setZero(); return; }
-    if (sources.size() == 1) { copy(*sources[0], destination); return; }
+    if (!first_source) { destination.setZero(); return; }
+    if (!destination_is_source) copy(*first_source, destination);
+    for (const auto& [consumer_layer, input_position] : edges)
+    {
+        const TensorView& source = backward_slots[consumer_layer][1 + input_position];
+        if (!source.data || source.size() != destination.size()
+            || source.data == destination.data
+            || (!destination_is_source && &source == first_source))
+            continue;
 
-    add(*sources[0], *sources[1], destination);
-    for (size_t i = 2; i < sources.size(); ++i)
-        add(destination, *sources[i], destination);
+        if (destination.is_cuda())
+            add(destination, source, destination);
+        else
+            destination.as_vector() += source.as_vector();
+    }
 }
 
 TensorView& BackPropagation::get_output_delta()

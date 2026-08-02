@@ -392,5 +392,6 @@ docs/benchmarks/results/*
 # Session-generated benchmark report notes (loose .md at the docs/benchmarks/
 # root); the per-benchmark READMEs and DATA_POLICY.md stay tracked.
 docs/benchmarks/*.md
+!docs/benchmarks/PRESENTATION_CLAIMS.md
 !docs/benchmarks/README.md
 !docs/benchmarks/DATA_POLICY.md

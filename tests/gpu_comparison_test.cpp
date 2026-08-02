@@ -7,7 +7,9 @@
 #include "opennn/dataset.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/time_series_dataset.h"
+#include "opennn/convolutional_layer.h"
 #include "opennn/dense_layer.h"
+#include "opennn/flatten_layer.h"
 #include "opennn/neural_network.h"
 #include "opennn/standard_networks.h"
 #include "opennn/loss.h"
@@ -343,6 +345,71 @@ TEST_F(GpuComparison, ImageClassificationGradient)
     const VectorR gpu_gradient = compute_gradient(gpu_loss);
 
     Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
+}
+
+TEST_F(GpuComparison, ProjectionResidualGradient)
+{
+    constexpr Index samples_number = 4;
+    const Shape input_shape{2, 2, 8};
+
+    TabularDataset dataset(samples_number, input_shape, Shape{1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    const auto build_network = [&](NeuralNetwork& network)
+    {
+        network.add_layer(make_unique<Convolutional>(
+                              input_shape, Shape{1, 1, 8, 64}, "ReLU",
+                              Shape{1, 1}, "Same", true, "stem"),
+                          {-1});
+        network.add_layer(make_unique<Convolutional>(
+                              Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
+                              Shape{1, 1}, "Same", true, "main"),
+                          {0});
+        network.add_layer(make_unique<Convolutional>(
+                              Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "Identity",
+                              Shape{1, 1}, "Same", true, "projection"),
+                          {0});
+
+        auto residual = make_unique<Convolutional>(
+            Shape{2, 2, 64}, Shape{1, 1, 64, 64}, "ReLU",
+            Shape{1, 1}, "Same", true, "residual");
+        residual->set_residual(true);
+        network.add_layer(move(residual), {1, 2});
+
+        network.add_layer(make_unique<Convolutional>(
+                              Shape{2, 2, 64}, Shape{1, 1, 64, 8}, "ReLU",
+                              Shape{1, 1}, "Same", true, "later"),
+                          {3});
+        network.add_layer(make_unique<Flatten>(Shape{2, 2, 8}), {4});
+        network.add_layer(make_unique<opennn::Dense>(
+                              Shape{32}, Shape{1}, "Identity"),
+                          {5});
+        network.compile();
+        network.set_training_activation_recomputation(true);
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    NeuralNetwork cpu_network;
+    build_network(cpu_network);
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    build_network(gpu_network);
+    gpu_network.set_parameters(parameters);
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);

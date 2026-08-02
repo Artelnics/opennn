@@ -39,6 +39,15 @@ public:
 
     Type get_training_type()  const noexcept { return config.training_type; }
 
+    void set_training_activation_recomputation(bool enabled) noexcept
+    {
+        training_activation_recomputation = enabled;
+    }
+    bool get_training_activation_recomputation() const noexcept
+    {
+        return training_activation_recomputation;
+    }
+
     void warn_if_stale_configuration() const;
 
     vector<vector<TensorSpec>> get_parameter_specs() const
@@ -71,6 +80,7 @@ public:
     void compile(Device device);
     bool has(const string&) const;
     bool has(LayerType) const;
+    bool supports_compact_cnn_memory_layout() const noexcept;
 
     bool is_empty() const noexcept { return layers.empty(); }
 
@@ -339,6 +349,8 @@ protected:
     Buffer states;
 
     Configuration::Resolved config;
+
+    bool training_activation_recomputation = false;
 
     mutable bool stale_configuration_warned = false;
 

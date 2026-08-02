@@ -690,22 +690,28 @@ VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
 {
     const Index points_number = points.rows();
 
-    if (points_number <= 1)
+    if (points_number <= 1 || neighbors_number <= 0)
         return VectorR::Ones(points_number);
 
     neighbors_number = min(neighbors_number, points_number - 1);
 
     const MatrixR distances = calculate_distances(points);
 
-    vector<VectorI> neighbors(points_number);
+    vector<vector<Index>> neighbors(points_number);
     VectorR neighbor_distance(points_number);
 
     for (Index i = 0; i < points_number; i++)
     {
         VectorR row = distances.row(i).transpose();
         row(i) = MAX;
-        neighbors[i] = maximal_indices(-row, neighbors_number);
-        neighbor_distance(i) = row(neighbors[i](neighbors_number - 1));
+        const VectorI nearest = maximal_indices(-row, neighbors_number);
+        neighbor_distance(i) = row(nearest(neighbors_number - 1));
+
+        const float tie_tolerance = EPSILON * max(1.0f, abs(neighbor_distance(i)));
+        neighbors[i].reserve(static_cast<size_t>(neighbors_number));
+        for (Index j = 0; j < points_number; ++j)
+            if (j != i && distances(i, j) <= neighbor_distance(i) + tie_tolerance)
+                neighbors[i].push_back(j);
     }
 
     VectorR reachability_density(points_number);
@@ -713,9 +719,11 @@ VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
     for (Index i = 0; i < points_number; i++)
     {
         float reachability_sum = 0.0f;
-        for (Index j = 0; j < neighbors_number; j++)
-            reachability_sum += max(neighbor_distance(neighbors[i](j)), distances(i, neighbors[i](j)));
-        reachability_density(i) = reachability_sum > EPSILON ? float(neighbors_number) / reachability_sum : MAX;
+        for (const Index neighbor : neighbors[i])
+            reachability_sum += max(neighbor_distance(neighbor), distances(i, neighbor));
+        reachability_density(i) = reachability_sum > EPSILON
+            ? float(neighbors[i].size()) / reachability_sum
+            : MAX;
     }
 
     VectorR outlier_factor(points_number);
@@ -723,10 +731,11 @@ VectorR local_outlier_factor(const MatrixR& points, Index neighbors_number)
     for (Index i = 0; i < points_number; i++)
     {
         float density_sum = 0.0f;
-        for (Index j = 0; j < neighbors_number; j++)
-            density_sum += reachability_density(neighbors[i](j));
+        for (const Index neighbor : neighbors[i])
+            density_sum += reachability_density(neighbor);
         outlier_factor(i) = reachability_density(i) > EPSILON
-            ? density_sum / (float(neighbors_number) * reachability_density(i)) : 1.0f;
+            ? density_sum / (float(neighbors[i].size()) * reachability_density(i))
+            : 1.0f;
     }
 
     return outlier_factor;

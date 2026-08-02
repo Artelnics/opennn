@@ -310,3 +310,53 @@ TEST_P(ConvolutionalLayerTest, BackwardGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
+
+TEST(ConvolutionalLayerTest, ProjectionResidualReuseGradientMatchesNumerical)
+{
+    constexpr Index samples_number = 4;
+    const Shape input_shape{2, 2, 2};
+
+    TabularDataset dataset(samples_number, input_shape, Shape{1});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork network;
+    network.add_layer(make_unique<Convolutional>(
+                          input_shape, Shape{1, 1, 2, 3}, "ReLU",
+                          Shape{1, 1}, "Same", true, "stem"),
+                      {-1});
+    network.add_layer(make_unique<Convolutional>(
+                          Shape{2, 2, 3}, Shape{1, 1, 3, 4}, "ReLU",
+                          Shape{1, 1}, "Same", true, "main"),
+                      {0});
+    network.add_layer(make_unique<Convolutional>(
+                          Shape{2, 2, 3}, Shape{1, 1, 3, 4}, "Identity",
+                          Shape{1, 1}, "Same", true, "projection"),
+                      {0});
+
+    auto residual = make_unique<Convolutional>(
+        Shape{2, 2, 4}, Shape{1, 1, 4, 4}, "ReLU",
+        Shape{1, 1}, "Same", true, "residual");
+    residual->set_residual(true);
+    network.add_layer(move(residual), {1, 2});
+
+    network.add_layer(make_unique<Convolutional>(
+                          Shape{2, 2, 4}, Shape{1, 1, 4, 2}, "ReLU",
+                          Shape{1, 1}, "Same", true, "later"),
+                      {3});
+    network.add_layer(make_unique<Flatten>(Shape{2, 2, 2}), {4});
+    network.add_layer(make_unique<opennn::Dense>(
+                          Shape{8}, Shape{1}, "Identity"),
+                      {5});
+    network.compile();
+    network.set_training_activation_recomputation(true);
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(),
+              type(2.0e-3));
+}

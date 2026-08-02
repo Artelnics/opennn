@@ -421,7 +421,7 @@ TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)
 
     const vector<float> original = data;
 
-    image_dataset.augment_inputs(data.data(), 1);
+    image_dataset.augment_inputs(data, 1);
 
     for (Index i = 0; i < pixels; ++i)
         EXPECT_FLOAT_EQ(data[size_t(i)], original[size_t(i)]);

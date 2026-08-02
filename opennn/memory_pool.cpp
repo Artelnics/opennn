@@ -11,7 +11,8 @@
 namespace opennn
 {
 
-MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries)
+MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
+                                MemoryPoolStrategy strategy)
 {
     MemoryPoolPlan plan;
     plan.byte_offsets.assign(entries.size(), Index(-1));
@@ -28,77 +29,131 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries)
         last_execution_step = max(last_execution_step, entry.last_step);
     }
 
-    vector<vector<size_t>> entries_starting_at(size_t(last_execution_step + 1));
-    vector<vector<size_t>> entries_ending_at(size_t(last_execution_step + 1));
-
-    for (size_t entry_index = 0; entry_index < entries.size(); ++entry_index)
+    vector<Index> live_bytes_delta(size_t(last_execution_step + 2), Index(0));
+    for (const MemoryPoolEntry& entry : entries)
     {
-        if (entries[entry_index].bytes == 0) continue;
-        entries_starting_at[size_t(entries[entry_index].first_step)].push_back(entry_index);
-        entries_ending_at[size_t(entries[entry_index].last_step)].push_back(entry_index);
+        live_bytes_delta[size_t(entry.first_step)] += entry.bytes;
+        live_bytes_delta[size_t(entry.last_step + 1)] -= entry.bytes;
     }
 
     Index live_bytes = 0;
-    vector<pair<Index, Index>> free_blocks = {{0, numeric_limits<Index>::max()}};
-
-    for (Index execution_step = 0; execution_step <= last_execution_step; ++execution_step)
+    for (Index step = 0; step <= last_execution_step; ++step)
     {
-        for (const size_t entry_index : entries_starting_at[size_t(execution_step)])
-        {
-            const Index bytes = entries[entry_index].bytes;
-            live_bytes += bytes;
+        live_bytes += live_bytes_delta[size_t(step)];
+        plan.lower_bound_live_bytes =
+            max(plan.lower_bound_live_bytes, live_bytes);
+    }
 
-            auto block = ranges::find_if(free_blocks,
-                                         [bytes](const auto& candidate)
-                                         {
-                                             return candidate.second >= bytes;
-                                         });
-            throw_if(block == free_blocks.end(),
+    vector<size_t> allocation_order(entries.size());
+    iota(allocation_order.begin(), allocation_order.end(), size_t(0));
+    ranges::sort(allocation_order, [&](size_t left, size_t right)
+    {
+        if (strategy == MemoryPoolStrategy::Chronological)
+            return entries[left].first_step != entries[right].first_step
+                ? entries[left].first_step < entries[right].first_step
+                : left < right;
+        if (entries[left].bytes != entries[right].bytes)
+            return entries[left].bytes > entries[right].bytes;
+        if (entries[left].first_step != entries[right].first_step)
+            return entries[left].first_step < entries[right].first_step;
+        if (entries[left].last_step != entries[right].last_step)
+            return entries[left].last_step > entries[right].last_step;
+        return left < right;
+    });
+
+    vector<size_t> placed_entries;
+    placed_entries.reserve(entries.size());
+
+    const auto lifetimes_overlap = [&](size_t left, size_t right)
+    {
+        return entries[left].first_step <= entries[right].last_step
+            && entries[right].first_step <= entries[left].last_step;
+    };
+
+    for (const size_t entry_index : allocation_order)
+    {
+        const Index bytes = entries[entry_index].bytes;
+        if (bytes == 0) continue;
+
+        vector<pair<Index, Index>> occupied_blocks;
+        occupied_blocks.reserve(placed_entries.size());
+        for (const size_t placed_index : placed_entries)
+        {
+            if (!lifetimes_overlap(entry_index, placed_index)) continue;
+            const Index begin = plan.byte_offsets[placed_index];
+            occupied_blocks.push_back(
+                {begin, begin + entries[placed_index].bytes});
+        }
+        ranges::sort(occupied_blocks);
+
+        Index offset = 0;
+        for (const auto& [begin, end] : occupied_blocks)
+        {
+            throw_if(offset > numeric_limits<Index>::max() - bytes,
                      "plan_memory_pool: address space exhausted.");
-
-            plan.byte_offsets[entry_index] = block->first;
-            if (block->second == bytes)
-                free_blocks.erase(block);
-            else
-            {
-                block->first += bytes;
-                block->second -= bytes;
-            }
-
-            plan.peak_bytes = max(plan.peak_bytes,
-                                  plan.byte_offsets[entry_index] + bytes);
+            if (begin >= offset + bytes) break;
+            if (end > offset) offset = end;
         }
 
-        plan.lower_bound_live_bytes = max(plan.lower_bound_live_bytes, live_bytes);
+        throw_if(offset > numeric_limits<Index>::max() - bytes,
+                 "plan_memory_pool: address space exhausted.");
 
-        for (const size_t entry_index : entries_ending_at[size_t(execution_step)])
-        {
-            const Index bytes = entries[entry_index].bytes;
-            live_bytes -= bytes;
-
-            auto block = ranges::lower_bound(free_blocks,
-                                             plan.byte_offsets[entry_index],
-                                             {},
-                                             &pair<Index, Index>::first);
-            block = free_blocks.insert(block, {plan.byte_offsets[entry_index], bytes});
-
-            if (block + 1 != free_blocks.end()
-            && block->first + block->second == (block + 1)->first)
-            {
-                block->second += (block + 1)->second;
-                free_blocks.erase(block + 1);
-            }
-
-            if (block != free_blocks.begin()
-            && (block - 1)->first + (block - 1)->second == block->first)
-            {
-                (block - 1)->second += block->second;
-                free_blocks.erase(block);
-            }
-        }
+        plan.byte_offsets[entry_index] = offset;
+        plan.peak_bytes = max(plan.peak_bytes, offset + bytes);
+        placed_entries.push_back(entry_index);
     }
 
     return plan;
+}
+
+Index find_memory_pool_overlay(const vector<MemoryPoolEntry>& entries,
+                               const MemoryPoolPlan& plan,
+                               const Index bytes,
+                               const Index first_step,
+                               const Index second_step)
+{
+    throw_if(entries.size() != plan.byte_offsets.size(),
+             "find_memory_pool_overlay: entries and offsets must have equal size.");
+    if (bytes <= 0 || bytes > plan.peak_bytes) return Index(-1);
+
+    vector<Index> candidates{0};
+    candidates.reserve(entries.size() * 2 + 1);
+    for (size_t i = 0; i < entries.size(); ++i)
+    {
+        if (entries[i].bytes == 0) continue;
+        candidates.push_back(plan.byte_offsets[i]);
+        candidates.push_back(plan.byte_offsets[i] + entries[i].bytes);
+    }
+    ranges::sort(candidates);
+    candidates.erase(ranges::unique(candidates).begin(), candidates.end());
+
+    for (const Index candidate : candidates)
+    {
+        if (candidate < 0 || candidate > plan.peak_bytes - bytes)
+            continue;
+
+        bool available = true;
+        for (size_t i = 0; i < entries.size(); ++i)
+        {
+            const MemoryPoolEntry& entry = entries[i];
+            const Index begin = plan.byte_offsets[i];
+            const bool overlaps = candidate < begin + entry.bytes
+                && begin < candidate + bytes;
+            const bool live = (entry.first_step <= first_step
+                               && first_step <= entry.last_step)
+                || (entry.first_step <= second_step
+                    && second_step <= entry.last_step);
+            if (overlaps && live)
+            {
+                available = false;
+                break;
+            }
+        }
+
+        if (available) return candidate;
+    }
+
+    return Index(-1);
 }
 
 }

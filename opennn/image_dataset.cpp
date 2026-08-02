@@ -160,7 +160,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
     write_json_footer(printer);
 }
 
-void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
+void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size) const
 {
     if (!augmentation.enabled || batch_size <= 0) return;
 
@@ -168,6 +168,12 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
     const Index width = input_shape[1];
     const Index channels = input_shape[2];
     const Index pixels = height * width * channels;
+
+    throw_if(ssize(input_data) < batch_size * pixels,
+             "ImageDataset::augment_inputs: buffer holds {} values but {} samples x {} pixels = {} are required.",
+             ssize(input_data), batch_size, pixels, batch_size * pixels);
+
+    float* const input_values = input_data.data();
 
     const bool use_rotation = augmentation.rotation_minimum != 0.0f
                            || augmentation.rotation_maximum != 0.0f;
@@ -178,7 +184,7 @@ void ImageDataset::augment_inputs(float* input_data, Index batch_size) const
 
     const auto augment_sample = [&](Index i, Tensor3* scratch_storage)
     {
-        float* sample = input_data + i * pixels;
+        float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
 
         if (augmentation.reflection_axis_x && random_bool(0.5f))
@@ -495,6 +501,8 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index pixels_per_image = Index(pixel_number);
     const Index pixels_per_channel = pixels_per_image / channels;
 
+    const span<float> input_span(input_data, size_t(batch_size * pixels_per_image));
+
     const bool apply_scaling = mode != FillMode::Inference;
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
@@ -520,7 +528,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, input_indices, input_data, contiguous);
+        fill_tensor_data(data, sample_indices, input_indices, input_span, contiguous);
     }
     else
     {
@@ -561,7 +569,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     }
 
     if (apply_augmentation)
-        augment_inputs(input_data, batch_size);
+        augment_inputs(input_span, batch_size);
 
     if (!scale_in_fill)
     {

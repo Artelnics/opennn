@@ -2,12 +2,12 @@
 """Validate the benchmark inventory.
 
 This checks that the benchmark manifest, the per-benchmark README guides, and the
-runner folders stay consistent, and that no benchmark results or build artifacts
-are committed to git. It intentionally does not run any benchmark.
+runner folders stay consistent, and that no generated datasets or build
+artifacts are committed to git. It intentionally does not run any benchmark.
 
-The suite ships guides and code to run each benchmark, not results: a clean
-checkout must contain no measured numbers, result JSON, generated data, or
-compiled binaries.
+Small immutable result JSON files and reviewed result reports may be committed
+as evidence. Raw datasets, transient traces, generated models, and compiled
+binaries must remain outside the repository.
 """
 
 from __future__ import annotations
@@ -137,7 +137,9 @@ def committed_artifact_reason(rel: str) -> str | None:
     name = rel.rsplit("/", 1)[-1]
     lower = name.lower()
     if rel.startswith("results/") and lower.endswith(".json"):
-        return "committed result JSON"
+        return None
+    if rel == "capacity/data-capacity/capacity_results.csv":
+        return None
     if lower.endswith((".csv", ".onnx", ".npy", ".nsys-rep", ".sqlite", ".log")):
         return "generated data/result artifact"
     if lower.endswith(".onnx.data"):
@@ -168,7 +170,7 @@ def validate_no_committed_artifacts() -> tuple[list[str], list[str]]:
     for rel in filter(None, out.split("\0")):
         reason = committed_artifact_reason(rel)
         if reason:
-            add_error(errors, f"{reason} committed (results must stay out of git): {rel}")
+            add_error(errors, f"{reason} committed: {rel}")
 
     return errors, warnings
 

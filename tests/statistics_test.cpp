@@ -558,6 +558,23 @@ TEST(StatisticsTest, MaximalIndices)
 
 }
 
+TEST(StatisticsTest, LocalOutlierFactorIncludesKDistanceTies)
+{
+    MatrixR points(4, 2);
+    points << type(0),  type(0),
+              type(1),  type(0),
+              type(0),  type(1),
+              type(-1), type(0);
+
+    const VectorR factors = local_outlier_factor(points, 2);
+
+    ASSERT_EQ(factors.size(), 4);
+    EXPECT_NEAR(factors(0), type(1.15044665), type(1.0e-5));
+    EXPECT_NEAR(factors(1), type(0.89972815), type(1.0e-5));
+    EXPECT_NEAR(factors(2), type(1.00558361), type(1.0e-5));
+    EXPECT_NEAR(factors(3), type(0.89972815), type(1.0e-5));
+}
+
 
 TEST(StatisticsTest, BoxPlot)
 {

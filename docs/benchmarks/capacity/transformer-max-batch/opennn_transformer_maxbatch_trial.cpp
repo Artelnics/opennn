@@ -23,6 +23,8 @@
 //                                            [layers] [batch] [train_samples]
 //                                            [epochs] [train|infer]
 //   env:   OPENNN_BF16=1  -> bf16 (else fp32)
+//          OPENNN_SDPA_MIN=N
+//              override the default SDPA threshold of 128 tokens
 //          OPENNN_TRANSFORMER_RELEASE_BF16_FP32_MASTER=0
 //              keep the fp32 parameter master in BF16 inference (debug A/B)
 //          OPENNN_TRANSFORMER_INFER_CUDA_GRAPH=1
@@ -47,6 +49,7 @@
 #include "opennn/forward_propagation.h"
 #include "opennn/random_utilities.h"
 #include "opennn/memory_debug.h"
+#include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
 
@@ -95,6 +98,10 @@ int main(int argc, char* argv[])
                                 input_vocab, output_vocab,
                                 d_model, heads, ff, layers);
 
+        const Index sdpa_min_sequence_length =
+            benchmark::configure_transformer_sdpa(transformer);
+
+        std::cout << "sdpa_min_sequence_length=" << sdpa_min_sequence_length << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         if (mode == "infer")
@@ -145,7 +152,8 @@ int main(int argc, char* argv[])
                 }
             }
 
-            ForwardPropagation forward_propagation(batch, &transformer);
+            ForwardPropagation forward_propagation(
+                batch, &transformer, ForwardPropagationMode::Inference);
 
             transformer.calculate_outputs_resident(inputs, forward_propagation, !parameters_uploaded);
             cudaDeviceSynchronize();

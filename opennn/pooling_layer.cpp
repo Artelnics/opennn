@@ -111,8 +111,21 @@ Index Pooling::get_output_width() const
     return (input_width - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
+bool Pooling::is_passthrough() const noexcept
+{
+    return pool_height == 1
+        && pool_width == 1
+        && row_stride == 1
+        && column_stride == 1
+        && padding_height == 0
+        && padding_width == 0;
+}
+
 vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
 {
+    if (is_passthrough())
+        return {};
+
     const Shape out_shape = get_output_shape();
 
     const Shape indices_shape = (pooling_method == PoolingMethod::MaxPooling
@@ -124,6 +137,34 @@ vector<TensorSpec> Pooling::get_forward_specs(Index batch_size) const
         {indices_shape,                           Type::FP32},
         {Shape{batch_size}.append(out_shape), compute_dtype},
     };
+}
+
+vector<TensorSpec> Pooling::get_backward_specs(Index batch_size) const
+{
+    if (is_passthrough())
+        return {};
+
+    return Layer::get_backward_specs(batch_size);
+}
+
+void Pooling::forward_propagate(ForwardPropagation& forward_propagation,
+                                size_t layer,
+                                bool is_training)
+{
+    if (is_passthrough())
+        return;
+
+    Layer::forward_propagate(forward_propagation, layer, is_training);
+}
+
+void Pooling::back_propagate(ForwardPropagation& forward_propagation,
+                             BackPropagation& back_propagation,
+                             size_t layer) const
+{
+    if (is_passthrough())
+        return;
+
+    Layer::back_propagate(forward_propagation, back_propagation, layer);
 }
 
 void Pooling::update_pool_operator()

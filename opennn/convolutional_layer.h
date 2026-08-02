@@ -59,6 +59,13 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
+    bool backward_uses_forward_output() const noexcept override { return get_output_activation() != ActivationFunction::Identity; }
+    bool backward_uses_input(size_t input) const noexcept override { return input != 1 || !residual; }
+    size_t get_recomputable_forward_slot() const noexcept override
+    {
+        return batch_norm.active() ? size_t(0) : SIZE_MAX;
+    }
+    void recompute_forward_slot(ForwardPropagation&, size_t) override;
 
     void set(const Shape& = {0, 0, 0},
              const Shape& = {3, 3, 1, 1},

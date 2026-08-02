@@ -572,9 +572,11 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
                                      Index shift,
                                      const char* context) const
 {
+    const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
+
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, variable_indices, output_data, contiguous);
+        fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
         return;
     }
 
@@ -583,7 +585,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
 
     if (shift > 0)
         for (Index i = 0; i < ssize(sample_indices); ++i)
-            output_data[i * sequence_length] = float(START_INDEX);
+            output[size_t(i * sequence_length)] = float(START_INDEX);
 
     read_int32_batch(cache_reader,
                      sample_indices,
@@ -591,7 +593,7 @@ void LanguageDataset::fill_sequences(const vector<Index>& sample_indices,
                      record_tokens,
                      record_offset,
                      n,
-                     output_data,
+                     output,
                      sequence_length,
                      shift,
                      format("LanguageDataset {}", context));

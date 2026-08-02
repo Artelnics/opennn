@@ -905,7 +905,12 @@ TrainingResult Optimizer::train()
                       validation_batch_size,
                       has_validation);
 
-    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
+    ForwardPropagation training_forward_propagation(
+        training_batch_size,
+        neural_network,
+        ForwardPropagationMode::Training,
+        {},
+        true);
 
     loss->set_normalization_coefficient();
 
@@ -1081,7 +1086,12 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
                                    target_feature_indices, FillMode::Validation);
 
     context.training_forward_propagation =
-        make_unique<ForwardPropagation>(context.training_samples_number, neural_network);
+        make_unique<ForwardPropagation>(
+            context.training_samples_number,
+            neural_network,
+            ForwardPropagationMode::Training,
+            InferenceShapePolicy{},
+            true);
 
     if (context.has_validation
         && context.validation_samples_number != context.training_samples_number)

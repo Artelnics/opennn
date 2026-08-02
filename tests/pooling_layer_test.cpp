@@ -24,9 +24,8 @@ Tensor4 generate_input_tensor_pooling(const MatrixR& data,
                          input_shape[1],
                          input_shape[2]);
 
-    type* tensor_data = input_vector.data();
-
-    fill_tensor_data(data, row_indices, column_indices, tensor_data);
+    fill_tensor_data(data, row_indices, column_indices,
+                     span<float>(input_vector.data(), size_t(input_vector.size())));
 
     return input_vector;
 }
@@ -131,6 +130,41 @@ TEST(PoolingLayerTest, DefaultConstructorDerivedShapes)
     EXPECT_EQ(pooling_layer.get_pooling_method(), PoolingMethod::MaxPooling);
 
     EXPECT_EQ(pooling_layer.get_output_shape(), (Shape{1, 1, 1}));
+}
+
+TEST(PoolingLayerTest, UnitWindowIsPassthrough)
+{
+    constexpr Index batch_size = 2;
+    const Shape input_shape{3, 4, 2};
+
+    Pooling pooling_layer(
+        input_shape, {1, 1}, {1, 1}, {0, 0},
+        "AveragePooling", "identity_pool");
+
+    EXPECT_TRUE(pooling_layer.is_passthrough());
+    EXPECT_TRUE(pooling_layer.get_forward_specs(batch_size).empty());
+    EXPECT_TRUE(pooling_layer.get_backward_specs(batch_size).empty());
+
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Pooling>(
+        input_shape, Shape{1, 1}, Shape{1, 1}, Shape{0, 0},
+        "AveragePooling", "identity_pool"));
+    neural_network.compile();
+
+    Tensor4 inputs(batch_size, input_shape[0], input_shape[1], input_shape[2]);
+    inputs.setRandom();
+
+    ForwardPropagation forward_propagation(
+        batch_size, &neural_network, ForwardPropagationMode::Training);
+    neural_network.forward_propagate(
+        {TensorView(inputs.data(), Shape{batch_size}.append(input_shape))},
+        forward_propagation,
+        true);
+
+    const TensorView outputs = forward_propagation.get_outputs();
+    EXPECT_EQ(outputs.data, inputs.data());
+    EXPECT_EQ(outputs.shape, Shape({batch_size}).append(input_shape));
+    EXPECT_EQ(forward_propagation.data.bytes, 0);
 }
 
 TEST(PoolingLayerTest, JsonRejectsPoolLargerThanPaddedInput)

@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "gpu-resnet50-max-batch",
+  "run_id": "20260801T230143Z",
+  "git_commit": "31c8fa2bc617",
+  "protocol": {
+    "style": "mlperf_inspired",
+    "official_mlperf": false,
+    "benchmark_class": "training_capacity",
+    "division": "closed",
+    "quality_rule": {
+      "metric": "finite_cross_entropy_after_training_step",
+      "target": "finite",
+      "status": "gated"
+    },
+    "measurement_rule": {
+      "warmup": "one warmup/capture step at the tested batch",
+      "runs": "fresh process per batch candidate",
+      "aggregation": "largest successful batch by exponential growth plus binary search"
+    }
+  },
+  "dataset": "cifar10",
+  "configuration": {
+    "dataset_path": "C:\\Users\\Roberto\\opennn-benchmark-data\\cifar10-capacity-smoke",
+    "model": "ResNet-50 v1.5 bottleneck, CIFAR-10 geometry",
+    "input_shape": [
+      32,
+      32,
+      3
+    ],
+    "classes": 10,
+    "precisions": [
+      "fp32"
+    ],
+    "optimizer": "Adam lr=0.001",
+    "loss": "cross-entropy",
+    "vram_reserve_mib": 256,
+    "max_batch_limit": 4400,
+    "engines": [
+      "opennn_pool1"
+    ],
+    "opennn_workspace_modes": [
+      "16"
+    ]
+  },
+  "machine": {
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "driver_version": "610.74",
+      "memory_total_mib": 6144,
+      "memory_used_mib": 0
+    },
+    "versions": {
+      "python": "3.13.14",
+      "torch": "2.10.0+cpu",
+      "torch_cuda": null,
+      "torch_cudnn": null,
+      "cuda_nvcc": "13.2"
+    }
+  },
+  "metrics": {
+    "max_train_batch": {
+      "fp32": {
+        "opennn_batch_pool_1": 4400
+      }
+    },
+    "ratio": {
+      "fp32": {}
+    }
+  },
+  "commands": {
+    "build": "cmake --build build-gpu --target opennn_resnet50_maxbatch_trial",
+    "run": "'C:\\Users\\Roberto\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe' 'C:\\Users\\Roberto\\OneDrive - artelnics.com\\opennn\\docs\\benchmarks\\capacity\\resnet50-max-batch\\run_resnet50_maxbatch.py' --data-dir 'C:\\Users\\Roberto\\opennn-benchmark-data\\cifar10-capacity-smoke' --precision fp32 --engines opennn_pool1 --gpu-index 0 --require-gpu-idle --reserve-mib 256 --start-batch 4400 --max-batch-limit 4400 --timeout-s 300 --opennn-bin '.\\build-resnet-capacity\\bin\\opennn_resnet50_maxbatch_trial.exe' --opennn-workspace-modes 16"
+  },
+  "results": {
+    "fp32": {
+      "opennn_pool1": {
+        "max_batch": 4400,
+        "max_batch_is_lower_bound": true,
+        "boundary_found": false,
+        "search_status": "censored_at_max_batch_limit",
+        "max_trial": {
+          "batch": 4400,
+          "ok": true,
+          "reason": "ok",
+          "elapsed_s": 57.759,
+          "peak_vram_mib": 5775,
+          "vram_cap_mib": 5888,
+          "command": ".\\build-resnet-capacity\\bin\\opennn_resnet50_maxbatch_trial.exe C:\\Users\\Roberto\\opennn-benchmark-data\\cifar10-capacity-smoke 4400 fp32 1 16",
+          "raw_output": "workspace_mode=16\nworkspace_cap_mib=16\nconv_autotune=0\n\n[>                                                 ] 0 %   \n[===========>                                      ] 22 %   \n[======================>                           ] 45 %   \n[==================================>               ] 68 %   \n[=============================================>    ] 90 %   \n[==================================================] 100 %   \nImage dataset cache built in: 0 minutes, 3 seconds, 368 milliseconds.\nengine=opennn\nmodel=ResNet-50-v1.5-CIFAR\nsamples=4400 batch=4400 precision=fp32\nstorage=ImageDataset BinaryFile cache\ngpu_resident_data=0\ntraining_activation_recomputation=1\nparameters=23528528\ntraining_error=5.27551\nRESULT=OK\n",
+          "workspace_mode": "16",
+          "workspace_attempts": [
+            {
+              "workspace_mode": "16",
+              "ok": true,
+              "reason": "ok",
+              "peak_vram_mib": 5775,
+              "elapsed_s": 57.759
+            }
+          ]
+        },
+        "next_batch_trial": null,
+        "peak_vram_mib_at_max": 5775,
+        "all_trials": [
+          {
+            "batch": 4400,
+            "ok": true,
+            "reason": "ok",
+            "elapsed_s": 57.759,
+            "peak_vram_mib": 5775,
+            "vram_cap_mib": 5888,
+            "command": ".\\build-resnet-capacity\\bin\\opennn_resnet50_maxbatch_trial.exe C:\\Users\\Roberto\\opennn-benchmark-data\\cifar10-capacity-smoke 4400 fp32 1 16",
+            "raw_output": "workspace_mode=16\nworkspace_cap_mib=16\nconv_autotune=0\n\n[>                                                 ] 0 %   \n[===========>                                      ] 22 %   \n[======================>                           ] 45 %   \n[==================================>               ] 68 %   \n[=============================================>    ] 90 %   \n[==================================================] 100 %   \nImage dataset cache built in: 0 minutes, 3 seconds, 368 milliseconds.\nengine=opennn\nmodel=ResNet-50-v1.5-CIFAR\nsamples=4400 batch=4400 precision=fp32\nstorage=ImageDataset BinaryFile cache\ngpu_resident_data=0\ntraining_activation_recomputation=1\nparameters=23528528\ntraining_error=5.27551\nRESULT=OK\n",
+            "workspace_mode": "16",
+            "workspace_attempts": [
+              {
+                "workspace_mode": "16",
+                "ok": true,
+                "reason": "ok",
+                "peak_vram_mib": 5775,
+                "elapsed_s": 57.759
+              }
+            ]
+          }
+        ],
+        "ok_trial_count": 1,
+        "median_elapsed_s_ok": 57.759
+      }
+    }
+  }
+}

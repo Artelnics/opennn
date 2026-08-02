@@ -39,6 +39,8 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
+    bool backward_uses_forward_output() const noexcept override { return gated || batch_norm.active() || activation_operator.activation_function != ActivationFunction::Identity; }
+    bool preserves_output_delta_during_backward() const noexcept override { return !backward_uses_forward_output() && !dropout.active(); }
 
     void set(const Shape& = {},
              const Shape& = {},

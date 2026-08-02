@@ -134,7 +134,7 @@ public:
                       FillMode,
                       int contiguous = -1) const override;
 
-    void augment_inputs(float*, Index) const override {}
+    void augment_inputs(span<float>, Index) const override {}
 
     struct AugmentationConfig
     {

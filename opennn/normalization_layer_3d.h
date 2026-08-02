@@ -36,6 +36,8 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
+    bool backward_uses_input(size_t) const noexcept override { return !layer_normalization.fuse_add; }
+    bool allows_input_delta_alias() const noexcept override { return layer_normalization.fuse_add; }
 
     void set(Index = 0, Index = 0, const string& = "normalization_layer_3d");
 

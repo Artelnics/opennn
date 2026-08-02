@@ -8,6 +8,7 @@
 # usage: python prepare_cifar10.py [data_dir]
 
 import os
+import shutil
 import sys
 import tarfile
 import urllib.request
@@ -28,14 +29,30 @@ data_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT
 data_dir.mkdir(parents=True, exist_ok=True)
 
 archive = data_dir / "cifar-10-binary.tar.gz"
+if archive.exists():
+    archive_valid = True
+    try:
+        with tarfile.open(archive) as tar:
+            tar.getmembers()
+    except (tarfile.TarError, EOFError):
+        archive_valid = False
+    if not archive_valid:
+        incomplete_archive = archive
+        archive = data_dir / "cifar-10-binary.complete.tar.gz"
+        print(f"ignoring incomplete archive {incomplete_archive}; "
+              f"downloading to {archive}")
 if not archive.exists():
     print(f"downloading {URL} ...")
     urllib.request.urlretrieve(URL, archive)
 
 extracted = data_dir / "cifar-10-batches-bin"
+expected_batches = [extracted / f"data_batch_{i}.bin" for i in range(1, 6)]
+if extracted.exists() and not all(path.exists() for path in expected_batches):
+    print(f"discarding incomplete extraction {extracted}")
+    shutil.rmtree(extracted)
 if not extracted.exists():
     with tarfile.open(archive) as tar:
-        tar.extractall(data_dir)
+        tar.extractall(data_dir, filter="data")
 
 records = []
 for i in range(1, 6):

@@ -414,6 +414,14 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     Layer::forward_propagate(forward_propagation, layer, is_training);
 }
 
+void Convolutional::recompute_forward_slot(ForwardPropagation& forward_propagation,
+                                           size_t layer)
+{
+    throw_if(!batch_norm.active(),
+             "Convolutional::recompute_forward_slot requires batch normalization.");
+    convolution.forward_propagate(forward_propagation, layer, true);
+}
+
 #ifdef OPENNN_HAS_CUDA
 
 bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propagation, size_t layer)

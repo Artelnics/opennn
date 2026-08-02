@@ -414,8 +414,9 @@ void GeneticAlgorithm::perform_mutation()
 
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
+    const Index first_mutable_individual = min(elitism_size, individuals_number);
 
-    for (Index i = 0; i < individuals_number; ++i)
+    for (Index i = first_mutable_individual; i < individuals_number; ++i)
     {
         VectorB individual = population.row(i);
 

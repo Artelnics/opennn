@@ -143,13 +143,19 @@ Shape string_to_shape(const string& text, const string& separator)
 void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
-                      float* __restrict tensor_data,
+                      const span<float> tensor_span,
                       int contiguous_hint)
 {
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
 
     if (rows_number == 0 || columns_number == 0) return;
+
+    throw_if(ssize(tensor_span) < rows_number * columns_number,
+             "fill_tensor_data: output buffer holds {} values but {}x{} = {} are required.",
+             ssize(tensor_span), rows_number, columns_number, rows_number * columns_number);
+
+    float* __restrict tensor_data = tensor_span.data();
 
     const float* matrix_data = matrix.data();
 

@@ -30,6 +30,7 @@
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/configuration.h"
 #include "opennn/random_utilities.h"
+#include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
 
@@ -72,9 +73,10 @@ int main(int argc, char* argv[])
                                 input_vocab, output_vocab,
                                 d_model, heads, ff, layers);
 
-        if (const char* e = std::getenv("OPENNN_SDPA_MIN"))
-            transformer.set_attention_sdpa_min_sequence_length(Index(std::stoll(e)));
+        const Index sdpa_min_sequence_length =
+            benchmark::configure_transformer_sdpa(transformer);
 
+        std::cout << "sdpa_min_sequence_length=" << sdpa_min_sequence_length << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         TrainingStrategy training_strategy(&transformer, &dataset);

@@ -21,6 +21,7 @@
 #include "opennn/configuration.h"
 #include "opennn/random_utilities.h"
 #include "opennn/profiler.h"
+#include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
 
@@ -46,12 +47,13 @@ int main(int argc, char* argv[])
 
         Transformer transformer(seq, seq, vocab, vocab, d_model, heads, ff, layers);
 
-        if (const char* e = std::getenv("OPENNN_SDPA_MIN"))
-            transformer.set_attention_sdpa_min_sequence_length(Index(std::stoll(e)));
+        const Index sdpa_min_sequence_length =
+            benchmark::configure_transformer_sdpa(transformer);
 
         std::cout << "config seq=" << seq << " d_model=" << d_model << " heads=" << heads
                   << " ff=" << ff << " layers=" << layers << " vocab=" << vocab
-                  << " batch=" << batch << "\n";
+                  << " batch=" << batch
+                  << " sdpa_min=" << sdpa_min_sequence_length << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         Tensor3 host_in(batch, seq, 1), host_ctx(batch, seq, 1);
@@ -74,7 +76,8 @@ int main(int argc, char* argv[])
             TensorView(in_gpu.as<float>(),  {batch, seq, 1}, Type::FP32, Device::CUDA),
             TensorView(ctx_gpu.as<float>(), {batch, seq, 1}, Type::FP32, Device::CUDA)};
 
-        ForwardPropagation forward_propagation(batch, &transformer);
+        ForwardPropagation forward_propagation(
+            batch, &transformer, ForwardPropagationMode::Inference);
 
         transformer.calculate_outputs_resident(gpu_inputs, forward_propagation,            true);
         device::synchronize();

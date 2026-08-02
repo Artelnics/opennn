@@ -326,9 +326,11 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
                                         Index record_offset,
                                         const char* context) const
 {
+    const span<float> output(output_data, size_t(ssize(sample_indices) * sequence_length));
+
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, variable_indices, output_data, contiguous);
+        fill_tensor_data(data, sample_indices, variable_indices, output, contiguous);
         return;
     }
 
@@ -338,7 +340,7 @@ void TextGenerationDataset::fill_blocks(const vector<Index>& sample_indices,
                      uint64_t(sequence_length + 1),
                      record_offset,
                      sequence_length,
-                     output_data,
+                     output,
                      sequence_length,
                      0,
                      format("TextGenerationDataset {}", context));

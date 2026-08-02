@@ -79,5 +79,5 @@ TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
     loss.set_error(Loss::Error::NormalizedSquaredError);
     loss.set_normalization_coefficient();
 
-    EXPECT_NEAR(calculate_numerical_error(loss), 0.6f, 1.0e-6f);
+    EXPECT_NEAR(calculate_numerical_error(loss), 1.2f, 1.0e-6f);
 }

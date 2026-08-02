@@ -89,7 +89,6 @@ private:
                          const TensorView&,
                          const TensorView&,
                          const TensorView&,
-                         const TensorView&,
                          TensorView&,
                          TensorView&) const;
 };

@@ -1,7 +1,9 @@
 # Benchmark Result Artifacts
 
-This directory is the evidence store for benchmark runs. Top-level benchmark
-notes explain the narrative result; result JSON files keep the machine-readable
+This directory is the evidence store for benchmark runs. Immutable reviewed
+JSON artifacts may be committed here; transient traces and generated datasets
+remain ignored. Top-level benchmark notes explain the narrative result; result
+JSON files keep the machine-readable
 run data that supports those notes.
 
 ## Protocol

@@ -118,7 +118,8 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
     {
 
         TensorView& residual_delta = back_propagation.backward_slots[layer][residual_delta_slot];
-        if (residual_delta.data) copy(input_delta, residual_delta);
+        if (residual_delta.data && residual_delta.data != input_delta.data)
+            copy(input_delta, residual_delta);
     }
 }
 

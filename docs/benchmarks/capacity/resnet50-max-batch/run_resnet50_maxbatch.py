@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import statistics
 import subprocess
 import sys
@@ -55,6 +56,17 @@ for site_path in reversed(BENCH_SITE_PACKAGES):
         sys.path.insert(0, site_path)
 
 BENCH_LD_LIBRARY_PATHS = nvidia_library_paths(BENCH_SITE_PACKAGES)
+
+CAPACITY_FAILURE_REASONS = {"oom", "vram_cap_exceeded"}
+OPENNN_ENGINES = {"opennn_pool1", "opennn_default"}
+OOM_PATTERNS = (
+    "out of memory",
+    "cuda_error_out_of_memory",
+    "cuda out of memory",
+    "cudnn_status_alloc_failed",
+    "failed to allocate",
+    "allocation failed",
+)
 
 
 def run_text(cmd, **kwargs):
@@ -132,11 +144,12 @@ def current_gpu_used_mib(gpu_index):
 
 
 class PeakMonitor:
-    def __init__(self, gpu_index, interval_s):
+    def __init__(self, gpu_index, interval_s, cap_mib=None):
         self.gpu_index = gpu_index
         self.interval_s = interval_s
+        self.cap_mib = cap_mib
         self.peak_mib = 0
-        self.samples = []
+        self.cap_exceeded = threading.Event()
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
 
@@ -152,8 +165,9 @@ class PeakMonitor:
         while not self._stop.is_set():
             try:
                 used = current_gpu_used_mib(self.gpu_index)
-                self.samples.append(used)
                 self.peak_mib = max(self.peak_mib, used)
+                if self.cap_mib is not None and used > self.cap_mib:
+                    self.cap_exceeded.set()
             except Exception:
                 pass
             self._stop.wait(self.interval_s)
@@ -201,15 +215,18 @@ def expanded_engines(value):
     return engines
 
 
-def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction, memory_limit_mb):
+def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction,
+                memory_limit_mb, opennn_workspace_mode=None):
     env = {}
-    if engine in {"opennn_pool1", "opennn_default"}:
+    if engine in OPENNN_ENGINES:
         # CUDA graph, shuffle and conv autotune are all set in the benchmark code.
         # The prefetch-pool depth is the 5th positional arg: pool1 -> 1 (fewest
         # device batch copies, largest reachable batch), default -> 0 (library auto).
         # Precision (fp32|bf16) selects Configuration::set(Device::CUDA, ...).
         batch_pool = "1" if engine == "opennn_pool1" else "0"
-        cmd = [opennn_bin, data_dir, str(batch), precision, batch_pool]
+        workspace_mode = opennn_workspace_mode or "16"
+        cmd = [opennn_bin, data_dir, str(batch), precision, batch_pool,
+               workspace_mode]
     elif engine in {"pytorch_compile", "pytorch_eager"}:
         path = "compile" if engine == "pytorch_compile" else "eager"
         cmd = [
@@ -237,7 +254,8 @@ def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction,
     return cmd, env
 
 
-def run_trial(engine, precision, batch, data_dir, args, gpu_info):
+def run_trial(engine, precision, batch, data_dir, args, gpu_info,
+              opennn_workspace_mode=None):
     cap_mib = max(1, gpu_info["memory_total_mib"] - args.reserve_mib)
     memory_fraction = cap_mib / gpu_info["memory_total_mib"]
     cmd, env_over = command_for(
@@ -248,6 +266,7 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info):
         args.opennn_bin,
         memory_fraction,
         cap_mib,
+        opennn_workspace_mode,
     )
     env = dict(os.environ)
     env.update(env_over)
@@ -258,40 +277,101 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info):
         env["LD_LIBRARY_PATH"] = os.pathsep.join(BENCH_LD_LIBRARY_PATHS + [env.get("LD_LIBRARY_PATH", "")])
 
     t0 = time.perf_counter()
-    try:
-        with PeakMonitor(args.gpu_index, args.poll_s) as mon:
-            proc = subprocess.run(cmd, env=env, capture_output=True, text=True,
-                                  timeout=args.timeout_s)
-            peak_mib = mon.peak_mib
-    except subprocess.TimeoutExpired as exc:
-        raw = (exc.stdout or "") + (exc.stderr or "")
-        return {
+    termination_reason = None
+    with PeakMonitor(args.gpu_index, args.poll_s, cap_mib=cap_mib) as mon:
+        proc = subprocess.Popen(
+            cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True)
+        deadline = t0 + args.timeout_s
+        while proc.poll() is None:
+            if mon.cap_exceeded.is_set():
+                termination_reason = "vram_cap_exceeded"
+                proc.terminate()
+                break
+            if time.perf_counter() >= deadline:
+                termination_reason = "timeout"
+                proc.terminate()
+                break
+            time.sleep(min(0.1, args.poll_s))
+
+        try:
+            stdout, stderr = proc.communicate(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+        peak_mib = mon.peak_mib
+
+    raw = stdout + stderr
+    if termination_reason:
+        result = {
             "batch": batch,
             "ok": False,
-            "reason": "timeout",
+            "reason": termination_reason,
             "elapsed_s": round(time.perf_counter() - t0, 3),
-            "peak_vram_mib": None,
-            "command": " ".join(cmd),
+            "peak_vram_mib": peak_mib,
+            "vram_cap_mib": cap_mib,
+            "command": shlex.join(cmd),
             "raw_output": raw[-4000:],
         }
+        if opennn_workspace_mode is not None:
+            result["workspace_mode"] = opennn_workspace_mode
+        return result
 
-    raw = proc.stdout + proc.stderr
     ok = proc.returncode == 0 and "RESULT=OK" in raw and "RESULT=ERROR" not in raw
-    reason = "ok" if ok else f"exit_{proc.returncode}"
+    raw_lower = raw.lower()
+    if ok:
+        reason = "ok"
+    elif any(pattern in raw_lower for pattern in OOM_PATTERNS):
+        reason = "oom"
+    else:
+        reason = f"exit_{proc.returncode}"
     if ok and peak_mib > cap_mib:
         ok = False
         reason = "vram_cap_exceeded"
 
-    return {
+    result = {
         "batch": batch,
         "ok": ok,
         "reason": reason,
         "elapsed_s": round(time.perf_counter() - t0, 3),
         "peak_vram_mib": peak_mib,
         "vram_cap_mib": cap_mib,
-        "command": " ".join(cmd),
+        "command": shlex.join(cmd),
         "raw_output": raw[-4000:],
     }
+    if opennn_workspace_mode is not None:
+        result["workspace_mode"] = opennn_workspace_mode
+    return result
+
+
+def run_opennn_capacity_trial(engine, precision, batch, data_dir, args, gpu_info):
+    """Try bounded cuDNN workspace policies in fresh processes."""
+    attempts = []
+    final = None
+    for workspace_mode in args.opennn_workspace_modes:
+        trial = run_trial(
+            engine,
+            precision,
+            batch,
+            data_dir,
+            args,
+            gpu_info,
+            opennn_workspace_mode=workspace_mode,
+        )
+        attempts.append({
+            "workspace_mode": workspace_mode,
+            "ok": trial["ok"],
+            "reason": trial["reason"],
+            "peak_vram_mib": trial.get("peak_vram_mib"),
+            "elapsed_s": trial["elapsed_s"],
+        })
+        final = trial
+        if trial["ok"]:
+            break
+
+    assert final is not None
+    final["workspace_attempts"] = attempts
+    return final
 
 
 def wait_for_cooldown(gpu_index, threshold_mib, timeout_s=30):
@@ -311,11 +391,18 @@ def search_engine(engine, precision, data_dir, args, gpu_info):
 
     def trial(batch):
         if batch not in cache:
-            cache[batch] = run_trial(engine, precision, batch, data_dir, args, gpu_info)
+            if engine in OPENNN_ENGINES:
+                cache[batch] = run_opennn_capacity_trial(
+                    engine, precision, batch, data_dir, args, gpu_info)
+            else:
+                cache[batch] = run_trial(
+                    engine, precision, batch, data_dir, args, gpu_info)
+            workspace = cache[batch].get("workspace_mode")
             print(f"{engine:16s} {precision:4s} batch={batch:<7d} "
                   f"{'OK' if cache[batch]['ok'] else 'FAIL'} "
                   f"peak={cache[batch].get('peak_vram_mib')} "
-                  f"reason={cache[batch]['reason']}")
+                  f"reason={cache[batch]['reason']}"
+                  + (f" workspace={workspace}" if workspace else ""))
             wait_for_cooldown(args.gpu_index, args.idle_threshold_mib)
         return cache[batch]
 
@@ -353,10 +440,28 @@ def search_engine(engine, precision, data_dir, args, gpu_info):
     if lo + 1 <= args.max_batch_limit:
         fail_next = trial(lo + 1)
 
+    boundary_found = (
+        fail_next is not None
+        and not fail_next["ok"]
+        and fail_next["reason"] in CAPACITY_FAILURE_REASONS
+    )
+    censored_by_limit = lo >= args.max_batch_limit and fail_next is None
+    if boundary_found:
+        search_status = "bounded_by_memory_failure"
+    elif censored_by_limit:
+        search_status = "censored_at_max_batch_limit"
+    elif lo == 0:
+        search_status = "no_passing_batch"
+    else:
+        search_status = "invalid_non_memory_failure"
+
     ok_trials = [t for t in cache.values() if t["ok"]]
     max_trial = cache.get(lo) if lo else None
     return {
         "max_batch": lo,
+        "max_batch_is_lower_bound": not boundary_found,
+        "boundary_found": boundary_found,
+        "search_status": search_status,
         "max_trial": max_trial,
         "next_batch_trial": fail_next,
         "peak_vram_mib_at_max": max_trial.get("peak_vram_mib") if max_trial else None,
@@ -395,9 +500,36 @@ def expanded_precisions(value):
     return [value]
 
 
+def parse_workspace_modes(value):
+    modes = []
+    for item in (part.strip().lower() for part in value.split(",")):
+        if not item:
+            continue
+        if item in {"auto", "heur"}:
+            modes.append(item)
+            continue
+        try:
+            mib = int(item)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError(
+                f"invalid OpenNN workspace mode: {item}") from exc
+        if mib <= 0:
+            raise argparse.ArgumentTypeError(
+                "OpenNN capacity workspace caps must be positive MiB values")
+        modes.append(str(mib))
+    if not modes:
+        raise argparse.ArgumentTypeError("at least one workspace mode is required")
+    return modes
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="cifar10", choices=["cifar10"])
+    ap.add_argument(
+        "--data-dir",
+        default=None,
+        help="prepared CIFAR-10 directory; bypasses automatic preparation",
+    )
     ap.add_argument("--precision", default="both", choices=["fp32", "bf16", "both"])
     ap.add_argument("--engines", default="opennn,pytorch,tensorflow")
     ap.add_argument("--gpu-index", type=int, default=0)
@@ -409,9 +541,15 @@ def main():
     ap.add_argument("--timeout-s", type=int, default=900)
     ap.add_argument("--poll-s", type=float, default=0.05)
     ap.add_argument("--opennn-bin", default=default_opennn_bin())
+    ap.add_argument(
+        "--opennn-workspace-modes",
+        type=parse_workspace_modes,
+        default=parse_workspace_modes("16,32,64,128,256,auto"),
+        help="bounded cuDNN workspace policies tried per OpenNN candidate",
+    )
     args = ap.parse_args()
 
-    data_dir = prepare_dataset(args.dataset)
+    data_dir = os.path.abspath(args.data_dir) if args.data_dir else prepare_dataset(args.dataset)
     gpu_info = parse_gpu_info(args.gpu_index)
 
     if args.require_gpu_idle and gpu_info["memory_used_mib"] > args.idle_threshold_mib:
@@ -427,6 +565,7 @@ def main():
     print(f"OpenNN binary: {args.opennn_bin}")
     print(f"Engines: {', '.join(engines)}")
     print(f"Precisions: {', '.join(precisions)}")
+    print(f"OpenNN workspace modes: {', '.join(args.opennn_workspace_modes)}")
 
     results = {}
     max_batches = {}
@@ -462,6 +601,7 @@ def main():
         },
         "dataset": args.dataset,
         "configuration": {
+            "dataset_path": data_dir,
             "model": "ResNet-50 v1.5 bottleneck, CIFAR-10 geometry",
             "input_shape": [32, 32, 3],
             "classes": 10,
@@ -471,6 +611,7 @@ def main():
             "vram_reserve_mib": args.reserve_mib,
             "max_batch_limit": args.max_batch_limit,
             "engines": engines,
+            "opennn_workspace_modes": args.opennn_workspace_modes,
         },
         "machine": {
             "gpu": gpu_info,
@@ -482,7 +623,7 @@ def main():
         },
         "commands": {
             "build": "cmake --build build-gpu --target opennn_resnet50_maxbatch_trial",
-            "run": "python run_resnet50_maxbatch.py --dataset cifar10 --precision both --engines opennn,pytorch,tensorflow --gpu-index 0 --require-gpu-idle --start-batch 128",
+            "run": shlex.join([sys.executable, os.path.abspath(__file__), *sys.argv[1:]]),
         },
         "results": results,
     }

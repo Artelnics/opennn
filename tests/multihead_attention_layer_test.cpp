@@ -71,6 +71,21 @@ TEST(MultiHeadAttentionTest, GeneralConstructorOutputAndInputShape)
 }
 
 
+#ifdef OPENNN_HAS_CUDA
+TEST(MultiHeadAttentionTest, SdpaMinimumSequenceLengthIsInclusive)
+{
+    MultiHeadAttention attention({128, 64}, 8);
+    attention.set_compute_device(Device::CUDA);
+    attention.set_sdpa_min_sequence_length(128);
+
+    EXPECT_TRUE(attention.should_use_sdpa());
+
+    attention.set_sdpa_min_sequence_length(129);
+    EXPECT_FALSE(attention.should_use_sdpa());
+}
+#endif
+
+
 TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 {
     const Index batch_size = 1;

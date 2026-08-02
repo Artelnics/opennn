@@ -1600,7 +1600,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         reduce_dot_and_accumulate(input.size(),
                                   error == MeanSquaredError
                                       ? 1.0f / static_cast<float>(2 * input.shape[0])
-                                      : 1.0f / (2.0f * (normalization_coefficient + EPSILON)));
+                                      : 1.0f / (normalization_coefficient + EPSILON));
         return true;
 
     case WeightedSquaredError:
@@ -1819,6 +1819,7 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
             PROFILE_SCOPE("bwd:accumulate_output_deltas");
             back_propagation.accumulate_output_deltas(static_cast<size_t>(i));
         }
+        forward_propagation.recompute_for_backward(i);
         PROFILE_SCOPE("bwd:" + layers[i]->get_name());
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }

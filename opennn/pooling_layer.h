@@ -55,7 +55,13 @@ public:
 
     PoolingMethod get_pooling_method() const noexcept { return pooling_method; }
 
+    bool is_passthrough() const noexcept;
+
     vector<TensorSpec> get_forward_specs(Index) const override;
+    vector<TensorSpec> get_backward_specs(Index) const override;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void set(const Shape& = { 0, 0, 0 },
              const Shape& = { 1, 1 },

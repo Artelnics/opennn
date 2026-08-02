@@ -138,7 +138,8 @@ int main(int argc, char* argv[])
         // ForwardPropagation (activation buffers) built ONCE; parameters uploaded
         // on the first resident call only. The forward is captured into a CUDA
         // graph during the two warmup calls and replayed by the timed loop.
-        ForwardPropagation forward_propagation(effective_batch, &network);
+        ForwardPropagation forward_propagation(
+            effective_batch, &network, ForwardPropagationMode::Inference);
         forward_propagation.set_cuda_graph(true);
         std::cout << "cuda_graph=on\n";
 

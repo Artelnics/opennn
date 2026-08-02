@@ -32,6 +32,21 @@ struct MemoryPoolPlan
     }
 };
 
-MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>&);
+enum class MemoryPoolStrategy
+{
+    Chronological,
+    Compact
+};
+
+MemoryPoolPlan plan_memory_pool(
+    const vector<MemoryPoolEntry>&,
+    MemoryPoolStrategy = MemoryPoolStrategy::Chronological);
+
+Index find_memory_pool_overlay(
+    const vector<MemoryPoolEntry>&,
+    const MemoryPoolPlan&,
+    Index bytes,
+    Index first_step,
+    Index second_step);
 
 }
