@@ -32,41 +32,6 @@ atomic_bool conv_autotune_enabled_flag{false};
 thread_local GraphWorkspaceRequirements* active_graph_workspace_requirements = nullptr;
 thread_local const GraphWorkspaceViews* active_graph_workspace_views = nullptr;
 
-Index& workspace_requirement(GraphWorkspaceRequirements& requirements,
-                             GraphWorkspaceKind kind)
-{
-    switch (kind)
-    {
-    case GraphWorkspaceKind::SharedScratch: return requirements.shared_scratch;
-    case GraphWorkspaceKind::Bf16Input:     return requirements.bf16_input;
-    case GraphWorkspaceKind::Bf16Gradient:  return requirements.bf16_gradient;
-    case GraphWorkspaceKind::Bf16ToFp32:    return requirements.bf16_to_fp32;
-    case GraphWorkspaceKind::Int8Dequant:   return requirements.int8_dequant;
-    }
-
-    throw runtime_error("Unknown CUDA graph workspace kind.");
-}
-
-pair<void*, Index> workspace_view(const GraphWorkspaceViews& views,
-                                  GraphWorkspaceKind kind)
-{
-    switch (kind)
-    {
-    case GraphWorkspaceKind::SharedScratch:
-        return {views.shared_scratch, views.shared_scratch_bytes};
-    case GraphWorkspaceKind::Bf16Input:
-        return {views.bf16_input, views.bf16_input_bytes};
-    case GraphWorkspaceKind::Bf16Gradient:
-        return {views.bf16_gradient, views.bf16_gradient_bytes};
-    case GraphWorkspaceKind::Bf16ToFp32:
-        return {views.bf16_to_fp32, views.bf16_to_fp32_bytes};
-    case GraphWorkspaceKind::Int8Dequant:
-        return {views.int8_dequant, views.int8_dequant_bytes};
-    }
-
-    throw runtime_error("Unknown CUDA graph workspace kind.");
-}
-
 void throw_if_auto(Device device_type)
 {
     throw_if(device_type == Device::Auto,
@@ -134,20 +99,20 @@ bool graph_workspace_override(GraphWorkspaceKind kind,
     if (active_graph_workspace_requirements)
     {
         Index& high_water =
-            workspace_requirement(*active_graph_workspace_requirements, kind);
+            (*active_graph_workspace_requirements)[size_t(kind)];
         high_water = max(high_water, minimum_bytes);
     }
 
     if (!active_graph_workspace_views) return false;
 
-    const auto [workspace_pointer, capacity] =
-        workspace_view(*active_graph_workspace_views, kind);
-    throw_if(minimum_bytes > capacity,
+    const GraphWorkspaceView view =
+        (*active_graph_workspace_views)[size_t(kind)];
+    throw_if(minimum_bytes > view.bytes,
              "CUDA graph workspace needs {} bytes, but the stable "
                     "capture buffer has {} bytes.",
-                    minimum_bytes, capacity);
+                    minimum_bytes, view.bytes);
 
-    pointer = workspace_pointer;
+    pointer = view.data;
     return true;
 }
 

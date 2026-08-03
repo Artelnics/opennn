@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <array>
+
 #include "opennn_types.h"
 #include "configuration.h"
 
@@ -44,31 +46,19 @@ enum class GraphWorkspaceKind
     Bf16Input,
     Bf16Gradient,
     Bf16ToFp32,
-    Int8Dequant
+    Int8Dequant,
+    Count
 };
 
-struct GraphWorkspaceRequirements
+using GraphWorkspaceRequirements = std::array<Index, size_t(GraphWorkspaceKind::Count)>;
+
+struct GraphWorkspaceView
 {
-    Index shared_scratch = 0;
-    Index bf16_input = 0;
-    Index bf16_gradient = 0;
-    Index bf16_to_fp32 = 0;
-    Index int8_dequant = 0;
+    void* data = nullptr;
+    Index bytes = 0;
 };
 
-struct GraphWorkspaceViews
-{
-    void* shared_scratch = nullptr;
-    Index shared_scratch_bytes = 0;
-    void* bf16_input = nullptr;
-    Index bf16_input_bytes = 0;
-    void* bf16_gradient = nullptr;
-    Index bf16_gradient_bytes = 0;
-    void* bf16_to_fp32 = nullptr;
-    Index bf16_to_fp32_bytes = 0;
-    void* int8_dequant = nullptr;
-    Index int8_dequant_bytes = 0;
-};
+using GraphWorkspaceViews = std::array<GraphWorkspaceView, size_t(GraphWorkspaceKind::Count)>;
 
 class CudaGraphWorkspaceScope
 {

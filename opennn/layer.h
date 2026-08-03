@@ -101,14 +101,8 @@ inline void check_rank(const Shape& shape, initializer_list<int> allowed,
     if (ranges::any_of(allowed, [&](int r){ return int(shape.rank) == r; })) return;
 
     string allowed_str;
-    auto it = allowed.begin();
-    while (it != allowed.end())
-    {
-        if (!allowed_str.empty())
-            allowed_str += (it + 1 == allowed.end()) ? " or " : ", ";
-        allowed_str += to_string(*it);
-        ++it;
-    }
+    for (int r : allowed)
+        allowed_str += format("{}{}", allowed_str.empty() ? "" : "/", r);
 
     throw runtime_error(format("{} layer supports {} rank {} (got {}).",
                                layer, what, allowed_str, shape.rank));

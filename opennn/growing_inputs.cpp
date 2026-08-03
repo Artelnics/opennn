@@ -8,7 +8,6 @@
 
 #include <map>
 
-#include "registry.h"
 #include "dataset.h"
 #include "tabular_dataset.h"
 #include "time_series_dataset.h"
@@ -354,7 +353,6 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
         set_warm_start(read_json_bool(root_element, "WarmStart"));
 }
 
-REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 
 }
 

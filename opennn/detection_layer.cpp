@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "detection_layer.h"
 #include "enum_map.h"
 #include "json.h"
@@ -78,9 +77,7 @@ void Detection::set(const Shape& new_input_shape,
 
 void Detection::set_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {3}, "Detection", "input");
-    input_shape = new_input_shape;
-    configure_operator();
+    set(new_input_shape, detection.anchors, label);
 }
 
 void Detection::configure_operator()
@@ -102,7 +99,6 @@ void Detection::write_JSON_body(JsonWriter& writer) const
     add_json_field(writer, "ClassActivation", class_activation_map().to_string(detection.class_activation));
 }
 
-REGISTER(Layer, Detection, "Detection")
 
 }
 

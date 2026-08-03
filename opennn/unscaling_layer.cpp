@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "string_utilities.h"
 #include "unscaling_layer.h"
 #include "json.h"
@@ -154,7 +153,6 @@ string Unscaling::write_expression(const vector<string>& input_names,
     return expression;
 }
 
-REGISTER(Layer, Unscaling, "Unscaling")
 
 }
 

@@ -220,6 +220,10 @@ TEST_F(ModelExpressionTest, SavePythonExpression)
     EXPECT_TRUE(contains_token(source, "import numpy as np"));
     EXPECT_TRUE(contains_token(source, "class NeuralNetwork"));
     EXPECT_TRUE(contains_token(source, "def calculate_outputs"));
+    EXPECT_TRUE(contains_token(source, "def calculate_batch_output"));
+    EXPECT_TRUE(contains_token(source, "output = self.calculate_outputs(inputs)"));
+    EXPECT_FALSE(contains_token(source, "perceptron_layer"));
+    EXPECT_FALSE(contains_token(source, "probabilistic_layer"));
     EXPECT_TRUE(contains_token(source, "def main"));
 
     filesystem::remove(path);

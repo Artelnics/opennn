@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "non_max_suppression_layer.h"
 #include "json.h"
 
@@ -54,9 +53,8 @@ void NonMaxSuppression::set(const Shape& new_input_shape,
 
 void NonMaxSuppression::set_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {3}, "NonMaxSuppression", "input");
-    input_shape = new_input_shape;
-    configure_operator();
+    set(new_input_shape, nms.boxes_per_cell, nms.confidence_threshold,
+        nms.iou_threshold, label);
 }
 
 void NonMaxSuppression::configure_operator()
@@ -82,7 +80,6 @@ void NonMaxSuppression::write_JSON_body(JsonWriter& writer) const
     });
 }
 
-REGISTER(Layer, NonMaxSuppression, "NonMaxSuppression")
 
 }
 

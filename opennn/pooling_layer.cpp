@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "pooling_layer.h"
 #include "enum_map.h"
 
@@ -295,7 +294,6 @@ void Pooling::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-REGISTER(Layer, Pooling, "Pooling")
 
 }
 

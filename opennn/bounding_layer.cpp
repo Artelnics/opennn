@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "device_backend.h"
 #include "tensor_types.h"
 #include "bounding_layer.h"
@@ -197,7 +196,6 @@ string Bounding::write_expression(const vector<string>& input_names,
     return buffer.str();
 }
 
-REGISTER(Layer, Bounding, "Bounding")
 
 }
 

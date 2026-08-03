@@ -28,7 +28,7 @@ void ModelSelection::set_default()
 
 void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 {
-    inputs_selection = Registry<InputsSelection>::instance().create(new_inputs_selection);
+    inputs_selection = create_inputs_selection(new_inputs_selection);
 
     inputs_selection->set(training_strategy);
 }

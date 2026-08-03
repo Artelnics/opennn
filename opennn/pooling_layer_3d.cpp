@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "pooling_layer_3d.h"
 
 namespace opennn
@@ -77,7 +76,6 @@ void Pooling3d::write_JSON_body(JsonWriter& printer) const
     add_json_field(printer, "PoolingMethod", pooling_method_to_string(pooling_method));
 }
 
-REGISTER(Layer, Pooling3d, "Pooling3d")
 
 }
 

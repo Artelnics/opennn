@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "c2psa_layer.h"
 #include "json.h"
 
@@ -36,9 +35,7 @@ void C2PSA::set(const Shape& new_input_shape, const string& new_label)
 
 void C2PSA::set_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {3}, "C2PSA", "input");
-    input_shape = new_input_shape;
-    configure_operator();
+    set(new_input_shape, label);
 }
 
 void C2PSA::configure_operator()
@@ -80,7 +77,6 @@ void C2PSA::write_JSON_body(JsonWriter&) const
     // No extra fields beyond input_shape (stored in the network JSON)
 }
 
-REGISTER(Layer, C2PSA, "C2PSA")
 
 }
 

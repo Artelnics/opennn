@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "convolutional_layer.h"
 
 #ifdef OPENNN_HAS_CUDA
@@ -488,7 +487,6 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
 
 #endif
 
-REGISTER(Layer, Convolutional, "Convolutional")
 
 }
 

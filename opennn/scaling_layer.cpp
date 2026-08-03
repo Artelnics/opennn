@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "device_backend.h"
 #include "scaling_layer.h"
 #include "string_utilities.h"
@@ -280,6 +279,5 @@ string Scaling::write_expression(const vector<string>& input_names,
     return expression;
 }
 
-REGISTER(Layer, Scaling, "Scaling")
 
 }

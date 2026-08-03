@@ -112,12 +112,10 @@ struct ForwardPropagation
     device::GraphExecHandle inference_graph_exec;
     vector<const void*> captured_input_pointers;
 
-    device::GraphWorkspaceRequirements inference_graph_workspace_requirements;
-    Buffer inference_graph_shared_scratch{Device::CUDA};
-    Buffer inference_graph_bf16_input{Device::CUDA};
-    Buffer inference_graph_bf16_gradient{Device::CUDA};
-    Buffer inference_graph_bf16_to_fp32{Device::CUDA};
-    Buffer inference_graph_int8_dequant{Device::CUDA};
+    device::GraphWorkspaceRequirements inference_graph_workspace_requirements{};
+    array<Buffer, size_t(device::GraphWorkspaceKind::Count)> inference_graph_workspaces{
+        Buffer{Device::CUDA}, Buffer{Device::CUDA}, Buffer{Device::CUDA},
+        Buffer{Device::CUDA}, Buffer{Device::CUDA}};
 };
 
 }

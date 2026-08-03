@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "dataset.h"
 #include "error_functions.h"
 #include "forward_propagation.h"
@@ -262,7 +261,6 @@ void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-REGISTER(Optimizer, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");
 
 }
 

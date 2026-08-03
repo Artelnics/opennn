@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "concatenation_layer.h"
 #include "json.h"
 
@@ -97,20 +96,6 @@ void Concatenation::read_JSON_body(const Json* root)
 void Concatenation::write_JSON_body(JsonWriter& writer) const
 {
     add_json_field(writer, "InputChannels", vector_to_string(concatenation.input_channels, " "));
-}
-
-REGISTER(Layer, Concatenation, "Concatenation")
-
-namespace
-{
-    const bool Concatenation_legacy_registered = []
-    {
-        Registry<Layer>::instance().register_component("Concatenate", []
-        {
-            return make_unique<Concatenation>();
-        });
-        return true;
-    }();
 }
 
 }

@@ -1732,53 +1732,6 @@ ChatResponse ChatSession::send(
     return response;
 }
 
-void ChatSession::chat(const ChatOptions& options)
-{
-    cout << "Enter prompts. Empty line, 'exit' or 'quit' finishes.\n";
-
-    string prompt;
-    while (true)
-    {
-        cout << "\n> " << flush;
-        if (!getline(cin, prompt)
-            || prompt.empty()
-            || prompt == "exit"
-            || prompt == "quit")
-            break;
-
-        bool reasoning_started = false;
-        bool content_started = false;
-        const ChatResponse response = send(
-            prompt, options,
-            [&](const ChatDelta& delta)
-            {
-                if (delta.channel == GenerationChannel::Reasoning)
-                {
-                    if (!reasoning_started)
-                    {
-                        cout << "Thinking: ";
-                        reasoning_started = true;
-                    }
-                }
-                else if (!content_started)
-                {
-                    if (reasoning_started) cout << "\n";
-                    cout << "Response: ";
-                    content_started = true;
-                }
-                cout << delta.text << flush;
-            });
-
-        if (!content_started)
-        {
-            if (reasoning_started) cout << "\n";
-            cout << "Response: " << response.content;
-        }
-        cout << "\n";
-    }
-    cout << "Bye!\n";
-}
-
 void ChatSession::set_messages(
     const vector<ChatMessage>& messages)
 {

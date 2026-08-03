@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
 
 project(opennn_library VERSION 8.0.1 LANGUAGES CXX)
 
@@ -32,10 +31,11 @@ endif()
 # at link time into one much smaller binary. Default OFF to keep the proven
 # static build; enable with -DOpenNN_BUILD_SHARED=ON.
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
+option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
 if(OpenNN_BUILD_SHARED)
     set(_opennn_lib_type SHARED)
-    # Fallback deps (fetched zlib/libjpeg static archives) get linked into the
-    # shared object, so they must be built as position-independent code too.
+    # Bundled static dependencies get linked into the shared object, so they
+    # must be built as position-independent code too.
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 else()
     set(_opennn_lib_type STATIC)
@@ -69,129 +69,78 @@ target_compile_features(opennn PUBLIC cxx_std_20)
 
 include(FetchContent)
 
-# image_dataset and image_processing are always compiled; they need ZLIB (PNG)
-# and JPEG. Keep system packages preferred, but fetch pinned fallbacks so
-# Windows/CUDA builds do not require a separate install.
-set(_opennn_needs_zlib_dependency OFF)
-set(_opennn_needs_jpeg_dependency OFF)
-set(_opennn_install_zlib_fallback OFF)
-set(_opennn_install_jpeg_fallback OFF)
+# ImageDataset and ImageProcessing always need PNG and JPEG support. Pin zlib
+# for deterministic builds and install its standard CMake package with OpenNN.
+set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(ZLIB_INSTALL ${OpenNN_INSTALL} CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    opennn_zlib
+    URL https://zlib.net/fossils/zlib-1.3.2.tar.gz
+    URL_HASH SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_MakeAvailable(opennn_zlib)
+target_link_libraries(opennn PUBLIC
+    $<BUILD_INTERFACE:ZLIB::ZLIBSTATIC>
+    $<INSTALL_INTERFACE:ZLIB::ZLIBSTATIC>)
 
-find_package(ZLIB QUIET)
-    if(ZLIB_FOUND)
-        target_include_directories(opennn PRIVATE ${ZLIB_INCLUDE_DIRS})
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            # Avoid imported-target absolute paths that can trip GNU make when
-            # sysroot files have epoch-zero mtimes.
-            target_link_libraries(opennn PUBLIC z)
-        elseif(TARGET ZLIB::ZLIB)
-            target_link_libraries(opennn PUBLIC ZLIB::ZLIB)
-            set(_opennn_needs_zlib_dependency ON)
-        else()
-            target_link_libraries(opennn PUBLIC ${ZLIB_LIBRARIES})
-        endif()
-    else()
-        FetchContent_Declare(
-            opennn_zlib
-            URL https://zlib.net/fossils/zlib-1.3.2.tar.gz
-            URL_HASH SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        )
-        FetchContent_MakeAvailable(opennn_zlib)
-        # The fetched fallback lives in the build tree, so the install rules
-        # copy its static archive (renamed to avoid clashing with a system
-        # zlib) into the prefix and the install interface points at that copy.
-        set(_opennn_zlib_installed_name
-            ${CMAKE_STATIC_LIBRARY_PREFIX}opennn_zlib${CMAKE_STATIC_LIBRARY_SUFFIX})
-        target_include_directories(opennn SYSTEM PRIVATE
-            ${opennn_zlib_SOURCE_DIR}
-            ${opennn_zlib_BINARY_DIR})
-        target_link_libraries(opennn PUBLIC
-            $<BUILD_INTERFACE:zlibstatic>
-            $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_LIBDIR}/${_opennn_zlib_installed_name}>)
-        set(_opennn_install_zlib_fallback ON)
-    endif()
-
-    find_package(JPEG QUIET)
-    if(JPEG_FOUND)
-        target_include_directories(opennn PRIVATE ${JPEG_INCLUDE_DIRS})
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            target_link_libraries(opennn PUBLIC jpeg)
-        elseif(TARGET JPEG::JPEG)
-            target_link_libraries(opennn PUBLIC JPEG::JPEG)
-            set(_opennn_needs_jpeg_dependency ON)
-        else()
-            target_link_libraries(opennn PUBLIC ${JPEG_LIBRARIES})
-        endif()
-    else()
-        include(ExternalProject)
-        set(_opennn_jpeg_install_dir
-            ${CMAKE_BINARY_DIR}/_deps/opennn_libjpeg_turbo-install)
-        set(_opennn_jpeg_include_dir
-            ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR})
-        set(_opennn_jpeg_lib_dir
-            ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR})
-        if(MSVC)
-            set(_opennn_jpeg_library ${_opennn_jpeg_lib_dir}/jpeg-static.lib)
-        else()
-            set(_opennn_jpeg_library
-                ${_opennn_jpeg_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}jpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
-        endif()
-
-        file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
-
-        set(_opennn_jpeg_cmake_args
-            -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            -DENABLE_SHARED=OFF
-            -DENABLE_STATIC=ON
-            -DWITH_JAVA=OFF
-            -DWITH_SIMD=OFF
-            -DWITH_TESTS=OFF
-            -DWITH_TURBOJPEG=OFF)
-
-        if(MSVC)
-            list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
-        endif()
-
-        if(OpenNN_BUILD_SHARED)
-            list(APPEND _opennn_jpeg_cmake_args -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
-        endif()
-
-        ExternalProject_Add(
-            opennn_libjpeg_turbo_ep
-            URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.1.4.tar.gz
-            URL_HASH SHA256=3a581ad5a3060cee69487aae0bc71a1f3be94b89f92215e32b43742ec4a5055c
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-            INSTALL_DIR ${_opennn_jpeg_install_dir}
-            CMAKE_ARGS ${_opennn_jpeg_cmake_args}
-            BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
-            INSTALL_COMMAND
-                ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component include
-                COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component lib
-            BUILD_BYPRODUCTS ${_opennn_jpeg_library}
-        )
-        add_library(opennn_jpeg STATIC IMPORTED GLOBAL)
-        add_dependencies(opennn_jpeg opennn_libjpeg_turbo_ep)
-        set_target_properties(opennn_jpeg PROPERTIES
-            IMPORTED_LOCATION ${_opennn_jpeg_library})
-        add_dependencies(opennn opennn_libjpeg_turbo_ep)
-        # Build-tree only fallback, same install treatment as the ZLIB one.
-        set(_opennn_jpeg_installed_name
-            ${CMAKE_STATIC_LIBRARY_PREFIX}opennn_jpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
-        target_include_directories(opennn SYSTEM PRIVATE
-            ${_opennn_jpeg_include_dir})
-        target_link_libraries(opennn PUBLIC
-            $<BUILD_INTERFACE:opennn_jpeg>
-            $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_LIBDIR}/${_opennn_jpeg_installed_name}>)
-        set(_opennn_install_jpeg_fallback ON)
-    endif()
-
-# stdc++fs is only needed on GCC < 9; modern toolchains have std::filesystem
-# in libstdc++ itself and the link library may not exist in the sysroot.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
-    target_link_libraries(opennn PUBLIC stdc++fs)
+# libjpeg-turbo explicitly rejects add_subdirectory()/FetchContent integration,
+# so keep its pinned build isolated as required by upstream.
+include(ExternalProject)
+set(_opennn_jpeg_install_dir
+    ${CMAKE_BINARY_DIR}/_deps/opennn_libjpeg_turbo-install)
+set(_opennn_jpeg_include_dir
+    ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR})
+set(_opennn_jpeg_lib_dir
+    ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR})
+if(MSVC)
+    set(_opennn_jpeg_library ${_opennn_jpeg_lib_dir}/jpeg-static.lib)
+else()
+    set(_opennn_jpeg_library
+        ${_opennn_jpeg_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}jpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
 endif()
+file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
+
+set(_opennn_jpeg_cmake_args
+    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
+    -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
+    -DENABLE_SHARED=OFF
+    -DENABLE_STATIC=ON
+    -DWITH_JAVA=OFF
+    -DWITH_SIMD=OFF
+    -DWITH_TESTS=OFF
+    -DWITH_TOOLS=OFF
+    -DWITH_TURBOJPEG=OFF)
+if(MSVC)
+    list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
+endif()
+if(OpenNN_BUILD_SHARED)
+    list(APPEND _opennn_jpeg_cmake_args -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
+endif()
+
+ExternalProject_Add(
+    opennn_libjpeg_turbo_ep
+    URL https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.1.4.tar.gz
+    URL_HASH SHA256=3a581ad5a3060cee69487aae0bc71a1f3be94b89f92215e32b43742ec4a5055c
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    INSTALL_DIR ${_opennn_jpeg_install_dir}
+    CMAKE_ARGS ${_opennn_jpeg_cmake_args}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config $<CONFIG>
+    INSTALL_COMMAND
+        ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component include
+        COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config $<CONFIG> --component lib
+    BUILD_BYPRODUCTS ${_opennn_jpeg_library})
+add_library(opennn_jpeg STATIC IMPORTED GLOBAL)
+add_dependencies(opennn_jpeg opennn_libjpeg_turbo_ep)
+set_target_properties(opennn_jpeg PROPERTIES
+    IMPORTED_LOCATION ${_opennn_jpeg_library}
+    INTERFACE_INCLUDE_DIRECTORIES ${_opennn_jpeg_include_dir})
+add_dependencies(opennn opennn_libjpeg_turbo_ep)
+target_link_libraries(opennn PUBLIC
+    $<BUILD_INTERFACE:opennn_jpeg>
+    $<INSTALL_INTERFACE:libjpeg-turbo::jpeg-static>)
 
 # Single public include root: the one supported spelling is
 # #include "opennn/foo.h". Library-internal bare includes ("dataset.h")
@@ -228,69 +177,18 @@ if(OpenNN_ENABLE_MKL)
     if(NOT DEFINED MKL_INTERFACE)
         set(MKL_INTERFACE lp64)
     endif()
-    find_package(MKL CONFIG QUIET
+    find_package(MKL CONFIG REQUIRED
         HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
-
-    if(MKL_FOUND)
-        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
-        target_link_libraries(opennn PUBLIC MKL::MKL)
-        message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
-    else()
-        # Manual discovery. Headers and the mkl_rt import library have
-        # platform- and layout-specific names and locations.
-        if(NOT OpenNN_MKL_ROOT)
-            if(WIN32)
-                message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but MKL was not found. "
-                    "Run oneAPI's setvars.bat (sets MKLROOT) or pass -DOpenNN_MKL_ROOT=<mkl>.")
-            else()
-                set(OpenNN_MKL_ROOT "/usr")
-            endif()
-        endif()
-
-        set(_opennn_mkl_include "${OpenNN_MKL_ROOT}/include")
-        if(EXISTS "${_opennn_mkl_include}/mkl/mkl.h")
-            set(_opennn_mkl_include "${_opennn_mkl_include}/mkl")
-        endif()
-
-        # Candidate lib dirs cover oneAPI (lib/), classic (lib/intel64/), and
-        # Debian's multiarch layout.
-        find_library(_opennn_mkl_rt
-            NAMES mkl_rt
-            HINTS "${OpenNN_MKL_ROOT}"
-            PATH_SUFFIXES lib lib/intel64 lib/x86_64-linux-gnu lib/intel64/gcc4.8
-            NO_DEFAULT_PATH)
-
-        if(NOT EXISTS "${_opennn_mkl_include}/mkl.h")
-            message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but mkl.h was not found under "
-                "${OpenNN_MKL_ROOT}. Set OpenNN_MKL_ROOT to the MKL prefix.")
-        endif()
-        if(NOT _opennn_mkl_rt)
-            message(FATAL_ERROR "OpenNN_ENABLE_MKL=ON but the mkl_rt library was not found under "
-                "${OpenNN_MKL_ROOT}. Set OpenNN_MKL_ROOT to the MKL prefix.")
-        endif()
-
-        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
-        target_include_directories(opennn SYSTEM PUBLIC "${_opennn_mkl_include}")
-        target_link_libraries(opennn PUBLIC "${_opennn_mkl_rt}")
-
-        if(NOT WIN32)
-            # mkl_rt dlopen()s its layer libraries at runtime; pthread/m/dl and an
-            # rpath to the lib dir are needed so they resolve. On Windows the
-            # matching mkl_rt.dll must instead be on PATH at run time (it lives in
-            # the oneAPI redist/bin dir, added by setvars.bat).
-            get_filename_component(_opennn_mkl_lib_dir "${_opennn_mkl_rt}" DIRECTORY)
-            target_link_libraries(opennn PUBLIC pthread m dl)
-            target_link_options(opennn PUBLIC "-Wl,-rpath,${_opennn_mkl_lib_dir}")
-        endif()
-        message(STATUS "OpenNN: MKL backend via manual discovery (${_opennn_mkl_rt})")
-    endif()
+    target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+    target_link_libraries(opennn PUBLIC MKL::MKL)
+    message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
 endif()
 
 if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)
     target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
-    # Same epoch-zero mtime workaround as ZLib/JPEG.
+    # Avoid imported-target absolute paths with epoch-zero sysroot mtimes.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_link_options(opennn PUBLIC -fopenmp)
         target_link_libraries(opennn PUBLIC gomp pthread)
@@ -312,20 +210,10 @@ if(OPENNN_HAS_CUDA)
     target_compile_definitions(opennn PUBLIC OPENNN_HAS_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")
     target_sources(opennn PRIVATE ${CUDA_SOURCES})
-    target_link_libraries(opennn PUBLIC CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver)
+    target_link_libraries(opennn PUBLIC
+        CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver
+        CUDNN::cudnn)
     target_compile_options(opennn PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
-    if(HAVE_CUDNN)
-        # Link through an imported target so the exported OpenNNTargets.cmake
-        # references CUDNN::cudnn (resolved on the consumer machine by the
-        # installed FindCUDNN.cmake) instead of a non-relocatable absolute path.
-        if(NOT TARGET CUDNN::cudnn)
-            add_library(CUDNN::cudnn UNKNOWN IMPORTED)
-            set_target_properties(CUDNN::cudnn PROPERTIES
-                IMPORTED_LOCATION "${CUDNN_LIBRARY}"
-                INTERFACE_INCLUDE_DIRECTORIES "${CUDNN_INCLUDE_DIR}")
-        endif()
-        target_link_libraries(opennn PUBLIC CUDNN::cudnn)
-    endif()
 
     if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
         message(FATAL_ERROR
@@ -425,7 +313,6 @@ endif()
 
 # Install rules: library + headers + a relocatable CMake package so external
 # projects can `find_package(OpenNN CONFIG)` and link OpenNN::opennn.
-option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
 
@@ -438,17 +325,12 @@ if(OpenNN_INSTALL)
     install(FILES ${HEADER_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn)
 
-    if(_opennn_install_zlib_fallback)
-        install(FILES $<TARGET_FILE:zlibstatic>
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RENAME ${_opennn_zlib_installed_name})
-    endif()
-
-    if(_opennn_install_jpeg_fallback)
-        install(FILES ${_opennn_jpeg_library}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RENAME ${_opennn_jpeg_installed_name})
-    endif()
+    # ExternalProject installs libjpeg-turbo into the build tree; mirror its
+    # unmodified package into the OpenNN prefix.
+    install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR}/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
     install(EXPORT OpenNNTargets
         FILE OpenNNTargets.cmake
@@ -457,16 +339,10 @@ if(OpenNN_INSTALL)
 
     # Which dependencies the exported target references as imported targets,
     # so OpenNNConfig.cmake only find_dependency()s what it actually needs.
-    set(_opennn_needs_tbb OFF)
-    if(NOT MSVC AND TBB_FOUND)
-        set(_opennn_needs_tbb ON)
-    endif()
     set(_opennn_needs_openmp OFF)
     if(NOT APPLE AND OpenMP_FOUND AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(_opennn_needs_openmp ON)
     endif()
-    set(_opennn_needs_zlib ${_opennn_needs_zlib_dependency})
-    set(_opennn_needs_jpeg ${_opennn_needs_jpeg_dependency})
     set(_opennn_needs_cudnn OFF)
     if(OPENNN_HAS_CUDA AND HAVE_CUDNN)
         set(_opennn_needs_cudnn ON)

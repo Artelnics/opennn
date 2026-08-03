@@ -5,7 +5,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "tensor_types.h"
 #include "tensor_operations.h"
 #include "dataset.h"
@@ -434,7 +433,6 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 
 BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_loss)
 {

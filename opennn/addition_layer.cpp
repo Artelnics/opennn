@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "addition_layer.h"
 
 namespace opennn
@@ -53,7 +52,6 @@ void Addition::write_JSON_body(JsonWriter& printer) const
     add_json_field(printer, "InputsNumber", inputs_number);
 }
 
-REGISTER(Layer, Addition, "Addition")
 
 }
 

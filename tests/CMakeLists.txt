@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
-project(tests)
 
 include(FetchContent)
 
@@ -26,10 +24,6 @@ list(REMOVE_ITEM TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp")
 add_executable(opennn_tests ${TEST_SOURCES})
 
 target_link_libraries(opennn_tests gtest gtest_main opennn)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(opennn_tests stdc++fs)
-endif()
 
 target_precompile_headers(opennn_tests PRIVATE ${PCH_HEADER})
 

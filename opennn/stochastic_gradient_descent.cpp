@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "dataset.h"
 #include "error_functions.h"
 #include "neural_network.h"
@@ -233,7 +232,6 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-REGISTER(Optimizer, StochasticGradientDescent, "StochasticGradientDescent");
 
 }
 

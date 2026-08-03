@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "multihead_attention_layer.h"
 
 namespace opennn
@@ -251,7 +250,6 @@ void MultiHeadAttention::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 
 }
 

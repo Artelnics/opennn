@@ -7,25 +7,9 @@
 
 using namespace opennn;
 
-namespace
+TEST(RegistryTest, AllComponentNamesConstruct)
 {
-
-template<typename T>
-vector<string> sorted_registered_names()
-{
-    vector<string> names = Registry<T>::instance().registered_names();
-    sort(names.begin(), names.end());
-    return names;
-}
-
-}
-
-
-TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
-{
-    register_classes();
-
-    const vector<string> expected_layers = {
+    const vector<string> layer_names = {
         "Activation",
         "Addition",
         "Bounding",
@@ -53,19 +37,37 @@ TEST(RegistryTest, AllRegistrableComponentsAreRegistered)
         "Upsample"
     };
 
-    const vector<string> expected_optimizers = {
+    const vector<string> optimizer_names = {
         "AdaptiveMomentEstimation",
         "LevenbergMarquardt",
         "QuasiNewtonMethod",
         "StochasticGradientDescent"
     };
 
-    const vector<string> expected_inputs_selection = {
+    const vector<string> inputs_selection_names = {
         "GeneticAlgorithm",
         "GrowingInputs"
     };
 
-    EXPECT_EQ(sorted_registered_names<Layer>(), expected_layers);
-    EXPECT_EQ(sorted_registered_names<Optimizer>(), expected_optimizers);
-    EXPECT_EQ(sorted_registered_names<InputsSelection>(), expected_inputs_selection);
+    for (const string& name : layer_names)
+        EXPECT_NE(create_layer(name), nullptr) << name;
+
+    for (const string& name : optimizer_names)
+        EXPECT_NE(create_optimizer(name), nullptr) << name;
+
+    for (const string& name : inputs_selection_names)
+        EXPECT_NE(create_inputs_selection(name), nullptr) << name;
+}
+
+TEST(RegistryTest, AliasesConstructConfiguredComponents)
+{
+    EXPECT_EQ(create_layer("Concatenate")->get_type(), LayerType::Concatenation);
+    EXPECT_EQ(create_layer("RMSNormalization3d")->get_type(), LayerType::RMSNormalization3d);
+}
+
+TEST(RegistryTest, UnknownComponentThrows)
+{
+    EXPECT_THROW(create_layer("Unknown"), runtime_error);
+    EXPECT_THROW(create_optimizer("Unknown"), runtime_error);
+    EXPECT_THROW(create_inputs_selection("Unknown"), runtime_error);
 }

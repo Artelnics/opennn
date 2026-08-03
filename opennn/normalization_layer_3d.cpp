@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "tensor_types.h"
 #include "normalization_layer_3d.h"
 
@@ -129,19 +128,6 @@ void Normalization3d::write_JSON_body(JsonWriter& printer) const
         write_json(printer, {
             {"FuseAdd", layer_normalization.fuse_add}
         });
-}
-
-REGISTER(Layer, Normalization3d, "Normalization3d")
-
-namespace {
-const bool RMSNormalization3d_registered = []() {
-    Registry<Layer>::instance().register_component("RMSNormalization3d", []() -> std::unique_ptr<Layer> {
-        auto layer = std::make_unique<Normalization3d>();
-        layer->set_method(NormalizationMethod::RMS);
-        return layer;
-    });
-    return true;
-}();
 }
 
 }

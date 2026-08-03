@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "flatten_layer.h"
 
 namespace opennn
@@ -27,7 +26,6 @@ void Flatten::set(const Shape& new_input_shape)
     set_label("flatten_layer");
 }
 
-REGISTER(Layer, Flatten, "Flatten")
 
 }
 

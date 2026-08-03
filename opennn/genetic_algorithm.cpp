@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "dataset.h"
 #include "tabular_dataset.h"
 #include "time_series_dataset.h"
@@ -633,7 +632,6 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
         set_folds_number(read_json_index(root, "FoldsNumber"));
 }
 
-REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
 
 }
 

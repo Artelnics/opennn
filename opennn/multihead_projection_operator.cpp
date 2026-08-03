@@ -17,10 +17,9 @@ namespace opennn
 void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
                               Index new_head_dimension, Type new_compute_dtype)
 {
-    input_features = new_input_features;
-    compute_dtype  = new_compute_dtype;
-
-    combination.set(input_features, new_heads_number * new_head_dimension, compute_dtype);
+    CombinationOperator::set(new_input_features,
+                             new_heads_number * new_head_dimension,
+                             new_compute_dtype);
 }
 
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
@@ -41,8 +40,8 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
     const TensorView  scratch_4d  = scratch.reshape({batch_size, seq_len, heads_number, head_dimension});
     const TensorView  input_2d    = input.reshape({rows, input_features});
 
-    linear_forward(input_2d, combination.weights, combination.bias, scratch_2d,
-                   CUBLASLT_EPILOGUE_BIAS, nullptr, combination.weight_scale);
+    linear_forward(input_2d, weights, bias, scratch_2d,
+                   CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
     split_heads(scratch_4d, head_output);
 }
 
@@ -80,7 +79,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
         ? accumulate_input_delta_self
         : accumulate_input_delta_cross;
 
-    linear_backward(scratch_2d, input_2d, combination.weights, combination.weight_gradient, combination.bias_gradient, input_delta_2d, accumulate);
+    linear_backward(scratch_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate);
 }
 
 }

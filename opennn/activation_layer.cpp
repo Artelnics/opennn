@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "activation_layer.h"
 
 namespace opennn
@@ -39,7 +38,6 @@ void Activation::set_input_shape(const Shape& new_input_shape)
     input_shape = new_input_shape;
 }
 
-REGISTER(Layer, Activation, "Activation")
 
 }
 

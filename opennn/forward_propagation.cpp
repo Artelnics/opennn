@@ -787,63 +787,41 @@ void ForwardPropagation::reset_cuda_graph() noexcept
 
 void ForwardPropagation::prepare_cuda_graph_workspaces()
 {
-    const auto grow_and_record = [&](Buffer& buffer, Index required_bytes,
-                                     const char* label)
+    constexpr array<const char*, size_t(device::GraphWorkspaceKind::Count)> labels =
+        {"shared_scratch", "bf16_input", "bf16_gradient", "bf16_to_fp32", "int8_dequant"};
+
+    for (size_t i = 0; i < inference_graph_workspaces.size(); ++i)
     {
+        Buffer& buffer = inference_graph_workspaces[i];
         const Index before = buffer.bytes;
-        buffer.grow_to(required_bytes);
+        buffer.grow_to(inference_graph_workspace_requirements[i]);
         if (buffer.bytes > before)
-            memory_debug::record("forward.graph_workspace", label,
+            memory_debug::record("forward.graph_workspace", labels[i],
                                  buffer.bytes - before,
                                  format("batch={}", batch_size));
-    };
-
-    grow_and_record(inference_graph_shared_scratch,
-                    inference_graph_workspace_requirements.shared_scratch,
-                    "shared_scratch");
-    grow_and_record(inference_graph_bf16_input,
-                    inference_graph_workspace_requirements.bf16_input,
-                    "bf16_input");
-    grow_and_record(inference_graph_bf16_gradient,
-                    inference_graph_workspace_requirements.bf16_gradient,
-                    "bf16_gradient");
-    grow_and_record(inference_graph_bf16_to_fp32,
-                    inference_graph_workspace_requirements.bf16_to_fp32,
-                    "bf16_to_fp32");
-    grow_and_record(inference_graph_int8_dequant,
-                    inference_graph_workspace_requirements.int8_dequant,
-                    "int8_dequant");
+    }
 }
 
 bool ForwardPropagation::cuda_graph_workspaces_need_growth() const noexcept
 {
-    return inference_graph_workspace_requirements.shared_scratch
-               > inference_graph_shared_scratch.bytes
-        || inference_graph_workspace_requirements.bf16_input
-               > inference_graph_bf16_input.bytes
-        || inference_graph_workspace_requirements.bf16_gradient
-               > inference_graph_bf16_gradient.bytes
-        || inference_graph_workspace_requirements.bf16_to_fp32
-               > inference_graph_bf16_to_fp32.bytes
-        || inference_graph_workspace_requirements.int8_dequant
-               > inference_graph_int8_dequant.bytes;
+    for (size_t i = 0; i < inference_graph_workspaces.size(); ++i)
+        if (inference_graph_workspace_requirements[i]
+                > inference_graph_workspaces[i].bytes)
+            return true;
+
+    return false;
 }
 
 device::GraphWorkspaceViews
 ForwardPropagation::get_cuda_graph_workspace_views() const noexcept
 {
-    return {
-        inference_graph_shared_scratch.data,
-        inference_graph_shared_scratch.bytes,
-        inference_graph_bf16_input.data,
-        inference_graph_bf16_input.bytes,
-        inference_graph_bf16_gradient.data,
-        inference_graph_bf16_gradient.bytes,
-        inference_graph_bf16_to_fp32.data,
-        inference_graph_bf16_to_fp32.bytes,
-        inference_graph_int8_dequant.data,
-        inference_graph_int8_dequant.bytes
-    };
+    device::GraphWorkspaceViews views{};
+
+    for (size_t i = 0; i < views.size(); ++i)
+        views[i] = {inference_graph_workspaces[i].data,
+                    inference_graph_workspaces[i].bytes};
+
+    return views;
 }
 
 }

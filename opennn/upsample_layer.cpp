@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "upsample_layer.h"
 #include "json.h"
 
@@ -45,9 +44,7 @@ void Upsample::set(const Shape& new_input_shape,
 
 void Upsample::set_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {3}, "Upsample", "input");
-    input_shape = new_input_shape;
-    configure_operator();
+    set(new_input_shape, upsample.scale_factor, label);
 }
 
 void Upsample::set_scale_factor(Index new_scale_factor)
@@ -73,7 +70,6 @@ void Upsample::write_JSON_body(JsonWriter& writer) const
     add_json_field(writer, "ScaleFactor", upsample.scale_factor);
 }
 
-REGISTER(Layer, Upsample, "Upsample")
 
 }
 

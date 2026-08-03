@@ -5,7 +5,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "dataset.h"
 #include "loss.h"
 #include "quasi_newton_method.h"
@@ -318,7 +317,6 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     return {0.0f, current_loss};
 }
 
-REGISTER(Optimizer, QuasiNewtonMethod, "QuasiNewtonMethod");
 
 }
 

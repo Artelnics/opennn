@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.24)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(OpenNN_Project LANGUAGES CXX)
 
 include(GNUInstallDirs)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/opennn/cmake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
 set(CMAKE_CXX_STANDARD 20)
@@ -70,7 +71,7 @@ if(NOT APPLE)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
-    add_compile_options(-Wno-interference-size)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-interference-size>)
 endif()
 
 # Silence noisy diagnostics that show up mainly through cudnn-frontend and
@@ -110,50 +111,7 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_HAS_CUDA ON CACHE BOOL "")
-
-    find_path(CUDNN_INCLUDE_DIR
-        NAMES cudnn_version.h cudnn.h
-        HINTS ${CUDAToolkit_INCLUDE_DIRS}
-        PATHS /usr/local/cuda/include /usr/include)
-
-    find_library(CUDNN_LIBRARY NAMES cudnn
-                 HINTS ${CUDAToolkit_LIBRARY_DIR}
-                 PATHS /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu)
-
-    if(NOT CUDNN_LIBRARY OR NOT CUDNN_INCLUDE_DIR)
-        message(FATAL_ERROR
-            "cuDNN not found (library: '${CUDNN_LIBRARY}', headers: '${CUDNN_INCLUDE_DIR}'). "
-            "Install cuDNN >= 9.0, or build CPU-only with -DOpenNN_DISABLE_CUDA=ON.")
-    endif()
-
-    set(CUDNN_VERSION_HEADER "${CUDNN_INCLUDE_DIR}/cudnn_version.h")
-    if(NOT EXISTS "${CUDNN_VERSION_HEADER}")
-        set(CUDNN_VERSION_HEADER "${CUDNN_INCLUDE_DIR}/cudnn.h")
-    endif()
-
-    file(STRINGS "${CUDNN_VERSION_HEADER}" CUDNN_VERSION_LINES
-        REGEX "^#define[ \t]+CUDNN_(MAJOR|MINOR|PATCHLEVEL)[ \t]+[0-9]+$")
-
-    foreach(line ${CUDNN_VERSION_LINES})
-        if(line MATCHES "CUDNN_MAJOR[ \t]+([0-9]+)")
-            set(CUDNN_MAJOR_VERSION "${CMAKE_MATCH_1}")
-        elseif(line MATCHES "CUDNN_MINOR[ \t]+([0-9]+)")
-            set(CUDNN_MINOR_VERSION "${CMAKE_MATCH_1}")
-        elseif(line MATCHES "CUDNN_PATCHLEVEL[ \t]+([0-9]+)")
-            set(CUDNN_PATCH_VERSION "${CMAKE_MATCH_1}")
-        endif()
-    endforeach()
-
-    set(CUDNN_VERSION "${CUDNN_MAJOR_VERSION}.${CUDNN_MINOR_VERSION}.${CUDNN_PATCH_VERSION}")
-
-    if(CUDNN_VERSION VERSION_LESS "9.0")
-        message(FATAL_ERROR
-            "cuDNN ${CUDNN_VERSION} found at ${CUDNN_LIBRARY}, but >= 9.0 is required "
-            "(SDPA / Flash Attention). Upgrade cuDNN, or build CPU-only with "
-            "-DOpenNN_DISABLE_CUDA=ON.")
-    endif()
-
-    message(STATUS "Found cuDNN ${CUDNN_VERSION}: ${CUDNN_LIBRARY}")
+    find_package(CUDNN 9.0 REQUIRED)
     set(HAVE_CUDNN ON)
 
     # cuDNN frontend (header-only C++ wrapper for the cuDNN graph API).

@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "tokenizer_layer.h"
 #include "string_utilities.h"
 #include "json.h"
@@ -79,7 +78,6 @@ void Tokenizer::write_JSON_body(JsonWriter& printer) const
     write_json(printer, {{"TokenizerKind", tokenizer->get_kind()}});
 }
 
-REGISTER(Layer, Tokenizer, "Tokenizer")
 
 }
 

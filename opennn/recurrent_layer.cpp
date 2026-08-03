@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "recurrent_layer.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -188,7 +187,6 @@ string Recurrent::write_expression(const vector<string>& feature_names,
     return buffer.str();
 }
 
-REGISTER(Layer, Recurrent, "Recurrent")
 
 }
 

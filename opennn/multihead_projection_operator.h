@@ -14,12 +14,8 @@
 namespace opennn
 {
 
-struct MultiHeadProjectionOperator : Operator
+struct MultiHeadProjectionOperator : CombinationOperator
 {
-    CombinationOperator combination;
-
-    Index input_features = 0;
-
     size_t input_view_index = 0;
 
     size_t scratch_slot = 0;
@@ -30,21 +26,6 @@ struct MultiHeadProjectionOperator : Operator
     bool accumulate_input_delta_cross = false;
 
     void set(Index, Index, Index, Type);
-
-    vector<TensorSpec> parameter_specs() const override { return combination.parameter_specs(); }
-    vector<SlotQuantization> parameter_quantization() const override { return combination.parameter_quantization(); }
-    void link_parameters(span<const TensorView> views) override { combination.link_parameters(views); }
-    void link_gradients (span<const TensorView> views) override { combination.link_gradients(views); }
-    void link_parameter_scales(span<const TensorView> views) override { combination.link_parameter_scales(views); }
-
-    void set_weights_dtype(Type new_weights_dtype) override
-    {
-        weights_dtype = new_weights_dtype;
-        combination.set_weights_dtype(new_weights_dtype);
-    }
-
-    void set_parameters_random() override { combination.set_parameters_random(); }
-    void set_parameters_glorot() override { combination.set_parameters_glorot(); }
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;

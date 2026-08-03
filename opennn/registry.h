@@ -1,80 +1,26 @@
-﻿//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R E G I S T R Y   C L A S S   H E A D E R
+//   R E G I S T R Y   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #pragma once
 
-#include <string>
-#include <functional>
 #include <memory>
-#include <stdexcept>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <format>
+#include <string>
 
 namespace opennn
 {
 
-template<typename T>
-class Registry
-{
-public:
+class Layer;
+class Optimizer;
+class InputsSelection;
 
-    using Creator = std::function<std::unique_ptr<T>()>;
-
-    static Registry& instance()
-    {
-        static Registry registry;
-        return registry;
-    }
-
-    void register_component(const std::string& name, Creator creator)
-    {
-        creators[name] = std::move(creator);
-    }
-
-    std::unique_ptr<T> create(const std::string& name) const
-    {
-        auto it = creators.find(name);
-
-        if (it == creators.end())
-            throw std::runtime_error(std::format("Component not found: {}", name));
-
-        return it->second();
-
-    }
-
-    std::vector<std::string> registered_names() const
-    {
-        std::vector<std::string> names;
-        names.reserve(creators.size());
-
-        for (const auto& [name, creator] : creators)
-            names.push_back(name);
-
-        return names;
-    }
-
-private:
-    std::unordered_map<std::string, Creator> creators;
-};
-
-#define REGISTER(BASE, CLASS, NAME) \
-namespace { \
-    const bool CLASS##_registered = []() { \
-        Registry<BASE>::instance().register_component(NAME, []() { \
-            return std::make_unique<CLASS>(); \
-        }); \
-        return true; \
-    }(); \
-}
-
-void register_classes();
+std::unique_ptr<Layer> create_layer(const std::string& name);
+std::unique_ptr<Optimizer> create_optimizer(const std::string& name);
+std::unique_ptr<InputsSelection> create_inputs_selection(const std::string& name);
 
 }
 

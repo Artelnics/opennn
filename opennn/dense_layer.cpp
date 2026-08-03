@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "dense_layer.h"
 
 namespace opennn
@@ -351,7 +350,6 @@ void Dense::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-REGISTER(Layer, Dense, "Dense")
 
 }
 

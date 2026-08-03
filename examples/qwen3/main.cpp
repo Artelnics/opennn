@@ -23,30 +23,21 @@
 //     cpu | gpu  compute device (default: gpu when built with CUDA, else cpu)
 
 #include <algorithm>
-#include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
-#ifdef _WIN32
-#include <io.h>
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
-
+#include "examples/chat_cli.h"
 #include "opennn/chat.h"
 #include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
 #include "opennn/neural_network.h"
 #include "opennn/tokenizer_operator.h"
 #include "opennn/configuration.h"
-#include "opennn/device_backend.h"
 
 using namespace opennn;
 using namespace std;
@@ -58,38 +49,6 @@ namespace
 constexpr Index MODEL_MAX_CONTEXT = 32768;
 constexpr Index DEFAULT_CONTEXT_LENGTH = MODEL_MAX_CONTEXT;
 constexpr Index DEFAULT_MAX_NEW = 640;
-
-struct ConsoleColors
-{
-    const char* thinking = "";
-    const char* response = "";
-    const char* reset = "";
-};
-
-ConsoleColors console_colors()
-{
-    if (getenv("NO_COLOR")) return {};
-
-    const char* term = getenv("TERM");
-    if (term && string_view(term) == "dumb") return {};
-
-#ifdef _WIN32
-    if (!_isatty(_fileno(stdout))) return {};
-
-    const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD mode = 0;
-    if (output == INVALID_HANDLE_VALUE
-        || !GetConsoleMode(output, &mode)
-        || !SetConsoleMode(
-            output, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-        return {};
-#else
-    if (!isatty(STDOUT_FILENO)) return {};
-#endif
-
-    // Muted mauve-gray for the internal reasoning, bright white for the answer.
-    return {"\033[38;5;102m", "\033[97m", "\033[0m"};
-}
 
 const string MAIN_HF_BASE =
     "https://huggingface.co/Artelnics/qwen3-4b-opennn/resolve/main/";
@@ -131,61 +90,6 @@ struct Qwen3Config
     }
 };
 
-string reasoning_mode_name(const ReasoningMode mode)
-{
-    switch (mode)
-    {
-    case ReasoningMode::Automatic: return "auto";
-    case ReasoningMode::Enabled:   return "thinking";
-    case ReasoningMode::Disabled:  return "non-thinking";
-    }
-    return "unknown";
-}
-
-size_t estimate_qwen3_draft_bytes(const Qwen3Config& config,
-                                  const Index context_length,
-                                  const bool int8_weights)
-{
-    const size_t hidden = size_t(config.hidden);
-    const size_t q_dim =
-        size_t(config.query_heads * config.head_dim);
-    const size_t kv_dim =
-        size_t(config.key_value_heads * config.head_dim);
-    const size_t intermediate = size_t(config.intermediate);
-    const size_t layers = size_t(config.layers);
-
-    // Tied embedding/LM-head storage plus all projection matrices
-    // (BF16 by default; INT8 adds one FP32 scale per output channel).
-    const size_t matrix_elements =
-        size_t(config.vocabulary) * hidden
-        + layers * ((q_dim + 2 * kv_dim) * hidden
-                    + hidden * q_dim
-                    + 3 * intermediate * hidden);
-    const size_t scale_channels =
-        size_t(config.vocabulary)
-        + layers * (q_dim + 2 * kv_dim + hidden + 2 * intermediate + hidden);
-    const size_t bf16_weights = int8_weights
-        ? matrix_elements * sizeof(int8_t) + scale_channels * sizeof(float)
-        : matrix_elements * sizeof(uint16_t);
-
-    // Two FP32 RMSNorms and two QK norms per block, plus final RMSNorm.
-    const size_t fp32_weights =
-        (layers * (2 * hidden + 2 * size_t(config.head_dim)) + hidden)
-        * sizeof(float);
-
-    const size_t kv_cache =
-        layers * size_t(context_length) * kv_dim
-        * 2 /* K + V */ * sizeof(uint16_t);
-
-    // Compact activation arena, RoPE tables, query scratch, sampler and
-    // library workspaces. This is deliberately conservative; the separate
-    // 1-GiB safety margin below is not included here.
-    constexpr size_t compact_runtime_reserve =
-        size_t(512) * 1024 * 1024;
-    return bf16_weights + fp32_weights + kv_cache
-        + compact_runtime_reserve;
-}
-
 }
 
 
@@ -195,7 +99,6 @@ int main(int argc, char* argv[])
     {
         // Options (all optional, so a plain "qwen3" just works):
         //   --auto | --think | --no-think   reasoning mode   default auto
-        //   --show-thinking | --hide-thinking                default show
         //   --temp T | --top-k K | --top-p P                 model defaults
         //   --max N   maximum total reasoning + answer tokens default 640
         //   --cpu | --gpu   compute device                   default gpu (if CUDA)
@@ -212,8 +115,6 @@ int main(int argc, char* argv[])
         bool use_draft = false;
         Index draft_tokens = 4;
         ReasoningMode reasoning_mode = ReasoningMode::Automatic;
-        bool show_thinking = true;
-        const ConsoleColors colors = console_colors();
         optional<float> temperature_override;
         optional<Index> top_k_override;
         optional<float> top_p_override;
@@ -228,8 +129,6 @@ int main(int argc, char* argv[])
             else if (a == "--auto")                         reasoning_mode = ReasoningMode::Automatic;
             else if (a == "--think")                        reasoning_mode = ReasoningMode::Enabled;
             else if (a == "--no-think")                     reasoning_mode = ReasoningMode::Disabled;
-            else if (a == "--show-thinking")                show_thinking = true;
-            else if (a == "--hide-thinking")                show_thinking = false;
             else if (a == "--max"  && i + 1 < argc)         max_new = Index(stol(argv[++i]));
             else if (a == "--context" && i + 1 < argc)      context_length = Index(stol(argv[++i]));
             else if (a == "--temp" && i + 1 < argc)         temperature_override = stof(argv[++i]);
@@ -288,26 +187,6 @@ int main(int argc, char* argv[])
             Qwen3Config draft_config;
             draft_config.load(data_dir + "/qwen3_draft_meta.txt");
 
-#ifdef OPENNN_HAS_CUDA
-            constexpr size_t safety_margin =
-                size_t(1024) * 1024 * 1024;
-            const size_t model_bytes =
-                estimate_qwen3_draft_bytes(draft_config, context_length, want_int8);
-            const size_t required_bytes = model_bytes + safety_margin;
-            const size_t available_bytes = device::available_memory();
-            const auto mib = [](size_t bytes)
-            {
-                return double(bytes) / (1024.0 * 1024.0);
-            };
-            throw_if(required_bytes > available_bytes,
-                     "--draft preflight failed at context {}: {:.0f} MiB "
-                     "additional GPU memory is required (including a 1024 MiB "
-                     "safety margin), but only {:.0f} MiB is available. "
-                     "Reduce --context or run without --draft.",
-                     context_length, mib(required_bytes),
-                     mib(available_bytes));
-#endif
-
             download_if_missing(data_dir + "/" + DRAFT_BF16_WEIGHTS,
                                 DRAFT_HF_BASE + "qwen3_bf16.bin");
             draft_model = make_unique<Qwen3>(
@@ -323,38 +202,18 @@ int main(int argc, char* argv[])
                  << ", greedy only)" << endl;
         }
 
-        const auto make_chat_options = [&]()
-        {
-            SamplingConfig sampling =
-                session.default_sampling(reasoning_mode);
-            if (temperature_override)
-                sampling.temperature = *temperature_override;
-            if (top_k_override)
-                sampling.top_k = *top_k_override;
-            if (top_p_override)
-                sampling.top_p = *top_p_override;
-            sampling.maximum_tokens = max_new;
+        SamplingConfig sampling = session.default_sampling(reasoning_mode);
+        if (temperature_override)
+            sampling.temperature = *temperature_override;
+        if (top_k_override)
+            sampling.top_k = *top_k_override;
+        if (top_p_override)
+            sampling.top_p = *top_p_override;
+        sampling.maximum_tokens = max_new;
 
-            ChatOptions options;
-            options.reasoning_mode = reasoning_mode;
-            options.sampling = sampling;
-            return options;
-        };
-
-        const auto print_settings = [&]()
-        {
-            const ChatOptions options = make_chat_options();
-            const SamplingConfig& sampling = *options.sampling;
-            cout << "Mode: " << reasoning_mode_name(reasoning_mode)
-                 << " (resolved "
-                 << reasoning_mode_name(
-                        session.resolve_reasoning_mode(reasoning_mode))
-                 << "), temperature " << sampling.temperature
-                 << ", top-k " << sampling.top_k
-                 << ", top-p " << sampling.top_p
-                 << ", max " << sampling.maximum_tokens << " tokens."
-                 << endl;
-        };
+        ChatOptions options;
+        options.reasoning_mode = reasoning_mode;
+        options.sampling = sampling;
 
         cout << "\rDevice: "
              << (!want_gpu ? "CPU (FP32)"
@@ -363,92 +222,8 @@ int main(int argc, char* argv[])
              << " tokens; prefill block: "
              << min(context_length, ChatSession::PREFILL_BLOCK_SIZE)
              << " tokens." << endl;
-        print_settings();
 
-        cout << "Commands: :auto, :think, :no-think, :clear. "
-                "Empty line, 'exit' or 'quit' leaves.\n"
-             << endl;
-
-        string line;
-        while (true)
-        {
-            cout << "You:  " << flush;
-            if (!getline(cin, line)) break;
-            if (line == "exit" || line == "quit") break;
-            if (line.empty()) continue;
-
-            if (line == ":auto" || line == ":think"
-                || line == ":no-think")
-            {
-                reasoning_mode = line == ":auto"
-                    ? ReasoningMode::Automatic
-                    : line == ":think"
-                        ? ReasoningMode::Enabled
-                        : ReasoningMode::Disabled;
-                print_settings();
-                continue;
-            }
-            if (line == ":clear")
-            {
-                session.clear();
-                cout << "Conversation cleared." << endl;
-                continue;
-            }
-
-            bool reasoning_started = false;
-            bool content_started = false;
-            const ChatCallback stream = [&](const ChatDelta& delta)
-            {
-                if (delta.channel == GenerationChannel::Reasoning)
-                {
-                    if (!show_thinking) return;
-                    if (!reasoning_started)
-                    {
-                        cout << colors.thinking << "Thinking: " << flush;
-                        reasoning_started = true;
-                    }
-                    cout << delta.text << flush;
-                    return;
-                }
-
-                if (!content_started)
-                {
-                    if (reasoning_started)
-                        cout << colors.reset << "\n";
-                    cout << colors.response << "Qwen: " << flush;
-                    content_started = true;
-                }
-                cout << delta.text << flush;
-            };
-
-            const ChatResponse response =
-                session.send(line, make_chat_options(), stream);
-            if (!content_started)
-            {
-                if (reasoning_started)
-                    cout << colors.reset << "\n";
-                cout << colors.response << "Qwen: " << response.content;
-            }
-            cout << colors.reset << endl;
-
-            const double tokens_per_second =
-                response.generated_tokens > 1
-                    && response.decode_milliseconds > 0.0
-                ? (response.generated_tokens - 1) * 1000.0
-                    / response.decode_milliseconds
-                : 0.0;
-            cerr << "[" << response.prefill_tokens << "/"
-                 << response.prompt_tokens << " prompt tok, prefill "
-                 << fixed << setprecision(0)
-                 << response.prefill_milliseconds << " ms | "
-                 << response.generated_tokens << " generated ("
-                 << response.reasoning_tokens << " reasoning, "
-                 << response.content_tokens << " content), "
-                 << setprecision(1) << tokens_per_second << " tok/s]"
-                 << endl;
-        }
-
-        cout << "Good bye!" << endl;
+        opennn::examples::run_chat_repl(session, options);
         return 0;
     }
     catch (const exception& e)

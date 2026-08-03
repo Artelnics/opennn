@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "tensor_types.h"
 #include "embedding_layer.h"
 
@@ -73,7 +72,6 @@ void Embedding::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-REGISTER(Layer, Embedding, "Embedding")
 
 }
 

@@ -1012,8 +1012,6 @@ void NeuralNetwork::to_JSON(JsonWriter& printer) const
 
 void NeuralNetwork::from_JSON(const JsonDocument& document)
 {
-    [[maybe_unused]] static const bool _layers_registered = []() { register_classes(); return true; }();
-
     const Json* neural_network_element = get_json_root(document, "NeuralNetwork");
 
     const auto read_variables_array = [](const Json* parent, const char* tag,
@@ -1064,11 +1062,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
 
             const string& tag_name = item.object_value[0].first;
 
-            unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
-            throw_if(!layer,
-                     "Layer '{}' not found in Registry. "
-                            "Ensure the layer file is linked and REGISTER macro is used.",
-                            tag_name);
+            unique_ptr<Layer> layer = create_layer(tag_name);
 
             JsonDocument layer_doc;
             layer_doc.root = item;

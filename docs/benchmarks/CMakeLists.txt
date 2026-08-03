@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
 
-project(benchmarks)
 
 # OpenNN benchmark drivers. Each source lives next to its write-up in
 # docs/benchmarks/<benchmark>/ so the code ships with the methodology;

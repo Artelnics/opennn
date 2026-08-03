@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
 
-project(examples)
 
 if(NOT DEFINED OpenNN_BUILD_EXAMPLES)
     option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
@@ -8,25 +6,53 @@ endif()
 
 option(OpenNN_BUILD_BLANK "Build OpenNN blank examples" ON)
 
+function(opennn_example name)
+    set(options COPY_DATA)
+    cmake_parse_arguments(EXAMPLE "${options}" "" "" ${ARGN})
+
+    add_executable(${name} "${CMAKE_CURRENT_SOURCE_DIR}/${name}/main.cpp")
+    target_link_libraries(${name} PRIVATE opennn)
+
+    if(EXAMPLE_COPY_DATA)
+        add_custom_command(TARGET ${name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data"
+                "${CMAKE_BINARY_DIR}/data/${name}"
+        )
+    endif()
+endfunction()
+
 if(OpenNN_BUILD_EXAMPLES)
     if(OpenNN_BUILD_BLANK)
         add_subdirectory(blank)
     endif()
 
-    add_subdirectory(airfoil_self_noise)
-    add_subdirectory(amazon_reviews)
-    add_subdirectory(bert)
-    add_subdirectory(breast_cancer)
-    add_subdirectory(emotion_analysis)
-    add_subdirectory(gpt2)
-    add_subdirectory(qwen3)
+    set(examples_with_data
+        airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
+        iris_plant melanoma_cancer mnist translation
+    )
+
+    foreach(example IN ITEMS
+        airfoil_self_noise amazon_reviews bert breast_cancer emotion_analysis
+        gpt2 qwen3 forecasting_tinyml iris_plant mnist melanoma_cancer translation
+        yolo
+    )
+        if(example IN_LIST examples_with_data)
+            opennn_example(${example} COPY_DATA)
+        else()
+            opennn_example(${example})
+        endif()
+    endforeach()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/beijing_pm25_forecasting/CMakeLists.txt")
         add_subdirectory(beijing_pm25_forecasting)
     endif()
-    add_subdirectory(forecasting_tinyml)
-    add_subdirectory(iris_plant)
-    add_subdirectory(mnist)
-    add_subdirectory(melanoma_cancer)
-    add_subdirectory(translation)
-    add_subdirectory(yolo)
+
+    # REUSE_FROM requires identical compile flags. That holds on MSVC, while
+    # Makefiles/GCC need a target-local PCH generated from the same header.
+    if(MSVC)
+        target_precompile_headers(yolo REUSE_FROM opennn)
+    else()
+        target_precompile_headers(yolo PRIVATE "${CMAKE_SOURCE_DIR}/opennn/pch.h")
+    endif()
 endif()

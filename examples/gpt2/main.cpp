@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 
+#include "examples/chat_cli.h"
 #include "opennn/chat.h"
 #include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
         const bool interactive = prompt.empty() || prompt == "--interactive" || prompt == "-i";
 
         if (interactive)
-            session.chat(options);
+            opennn::examples::run_chat_repl(session, options);
         else
         {
             cout << session.send(prompt, options).content << endl;

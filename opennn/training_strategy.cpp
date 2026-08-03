@@ -40,7 +40,7 @@ void TrainingStrategy::set_loss(const string& new_loss)
 
 void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
 {
-    optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
+    optimizer = create_optimizer(new_optimization_algorithm);
 
     optimizer->set(loss.get());
 }

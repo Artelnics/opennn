@@ -220,8 +220,6 @@ public:
     // would never be accepted and generation would run below baseline speed.
     void attach_draft_model(NeuralNetwork&, Index draft_tokens = 4);
 
-    void chat(const ChatOptions& = {});
-
     void set_messages(const vector<ChatMessage>&);
     const vector<ChatMessage>& get_messages() const noexcept;
     void clear();

@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "detection_v8_layer.h"
 #include "json.h"
 
@@ -45,9 +44,7 @@ void DetectionV8::set(const Shape& new_input_shape, Index reg_max, const string&
 
 void DetectionV8::set_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {3}, "DetectionV8", "input");
-    input_shape = new_input_shape;
-    configure_operator();
+    set(new_input_shape, detection.reg_max, label);
 }
 
 void DetectionV8::configure_operator()
@@ -77,7 +74,6 @@ void DetectionV8::write_JSON_body(JsonWriter& writer) const
     add_json_field(writer, "RegMax",        to_string(detection.reg_max));
 }
 
-REGISTER(Layer, DetectionV8, "DetectionV8")
 
 }
 

@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "tensor_types.h"
 #include "grouped_query_attention_layer.h"
 
@@ -81,7 +80,6 @@ void GroupedQueryAttention::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-REGISTER(Layer, GroupedQueryAttention, "GroupedQueryAttention")
 
 }
 

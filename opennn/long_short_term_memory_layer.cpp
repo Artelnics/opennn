@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
 #include "long_short_term_memory_layer.h"
 
 namespace opennn
@@ -267,7 +266,6 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
     return buf.str();
 }
 
-REGISTER(Layer, LongShortTermMemory, "LongShortTermMemory")
 
 }
 
