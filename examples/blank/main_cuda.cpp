@@ -13,7 +13,6 @@
 #include <vector>
 #include <filesystem>
 
-#include "examples/chat_cli.h"
 #include "opennn/configuration.h"
 #include "opennn/device_backend.h"
 #include "opennn/memory_debug.h"
@@ -164,7 +163,7 @@ int main(int argc, char** argv)
             ChatSession session(transformer);
 
             cout << "\n================ EN -> DE CHAT ================" << endl;
-            opennn::examples::run_chat_repl(session);
+            session.chat();
 
             return 0;
         }
@@ -245,7 +244,7 @@ int main(int argc, char** argv)
         // Type an English sentence and press Enter; empty line or Ctrl+D exits.
         cout << "\n================ EN -> DE CHAT ================" << endl;
         ChatSession session(transformer);
-        opennn::examples::run_chat_repl(session);
+        session.chat();
 
         return 0;
 #endif

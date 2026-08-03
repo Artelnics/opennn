@@ -111,13 +111,6 @@ public:
     const Layer* get_first(const string&) const;
     const Layer* get_first(LayerType) const;
 
-    void set_source_layers(const vector<vector<Index>>&);
-    void set_source_layers(const Index, const vector<Index>&);
-
-    void set_source_layers(const string&, const vector<string>&);
-    void set_source_layers(const string&, initializer_list<string>);
-    void set_source_layers(const string&, const string&);
-
     void set_input_variables(const vector<Variable>& new_input_variables) { input_variables = new_input_variables; }
     void set_output_variables(const vector<Variable>& new_output_variables) { output_variables = new_output_variables; }
 

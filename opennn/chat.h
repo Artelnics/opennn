@@ -209,16 +209,9 @@ public:
                       const ChatOptions& = {},
                       const ChatCallback& = {});
 
-    // Speculative decoding: a smaller draft network proposes tokens that the
-    // main network verifies in batch. Greedy sampling only; the output is the
-    // main network's own greedy generation. The caller keeps ownership of the
-    // draft, which must outlive this session (same convention as the main
-    // network). The draft must be on the same device and compute dtype, cover
-    // at least this session's context length, and use the exact token-to-id
-    // mapping of the session tokenizer — a draft with a different mapping
-    // cannot corrupt the output (every token is verified), but its proposals
-    // would never be accepted and generation would run below baseline speed.
     void attach_draft_model(NeuralNetwork&, Index draft_tokens = 4);
+
+    void chat(const ChatOptions& = {});
 
     void set_messages(const vector<ChatMessage>&);
     const vector<ChatMessage>& get_messages() const noexcept;

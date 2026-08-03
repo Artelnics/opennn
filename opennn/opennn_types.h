@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -136,6 +137,14 @@ namespace opennn {
 
 using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
+
+inline float bfloat16_to_float_host(const uint16_t value)
+{
+    const uint32_t bits = uint32_t(value) << 16;
+    float result;
+    memcpy(&result, &bits, sizeof(result));
+    return result;
+}
 
 using type = float;
 

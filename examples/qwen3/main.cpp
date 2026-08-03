@@ -31,7 +31,6 @@
 #include <string>
 #include <vector>
 
-#include "examples/chat_cli.h"
 #include "opennn/chat.h"
 #include "opennn/io_utilities.h"
 #include "opennn/standard_networks.h"
@@ -223,7 +222,7 @@ int main(int argc, char* argv[])
              << min(context_length, ChatSession::PREFILL_BLOCK_SIZE)
              << " tokens." << endl;
 
-        opennn::examples::run_chat_repl(session, options);
+        session.chat(options);
         return 0;
     }
     catch (const exception& e)

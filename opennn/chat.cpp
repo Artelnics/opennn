@@ -336,18 +336,12 @@ bool GenerationParser::process_pending(const ChatCallback& callback,
             continue;
         }
 
-        bool possible_control = false;
-        if (!spec.reasoning_start.empty())
-            possible_control = is_prefix(pending, spec.reasoning_start);
-        if (!possible_control && !spec.reasoning_end.empty())
-            possible_control = is_prefix(pending, spec.reasoning_end);
-        if (!possible_control)
-            for (const vector<Index>& stop : spec.stop_sequences)
-                if (is_prefix(pending, stop))
-                {
-                    possible_control = true;
-                    break;
-                }
+        const bool possible_control =
+            is_prefix(pending, spec.reasoning_start)
+            || is_prefix(pending, spec.reasoning_end)
+            || ranges::any_of(spec.stop_sequences,
+                              [&](const vector<Index>& stop)
+                              { return is_prefix(pending, stop); });
 
         if (possible_control && !flush) return false;
 
@@ -580,11 +574,8 @@ private:
         }
 
         for (Index i = 0; i < vocabulary; ++i)
-        {
-            const uint32_t bits =
-                uint32_t(bf16_logits[size_t(i)]) << 16;
-            logits[size_t(i)] = bit_cast<float>(bits);
-        }
+            logits[size_t(i)] =
+                bfloat16_to_float_host(bf16_logits[size_t(i)]);
     }
 
     Index sample_host(const SamplingConfig& config,
@@ -905,8 +896,8 @@ void read_classic_distribution(ClassicGenerationState& state,
                            device::get_compute_stream());
         device::synchronize(device::get_compute_stream());
         for (Index i = 0; i < vocabulary; ++i)
-            state.distribution(i) = bit_cast<float>(
-                uint32_t(state.bf16_staging[size_t(i)]) << 16);
+            state.distribution(i) =
+                bfloat16_to_float_host(state.bf16_staging[size_t(i)]);
         return;
     }
 
@@ -1017,7 +1008,7 @@ struct ChatSession::Impl
             // disposable cache contents.
             const Index warmup_tokens = prefill.get_sequence_capacity();
             fill_n(token_window.begin(), size_t(warmup_tokens), 0.0f);
-            run_prefill(warmup_tokens, 0);
+            run_prefill(prefill, prefill_inputs, *network, warmup_tokens, 0);
             stage_token(token_device, 0);
             run_decode(0, 0);
             run_decode(0, 0);
@@ -1061,22 +1052,25 @@ struct ChatSession::Impl
         vector<Index> proposals;
     };
 
-    void run_prefill(Index count, Index past)
+    void run_prefill(ForwardPropagation& propagation,
+                     vector<TensorView>& inputs,
+                     NeuralNetwork& propagated,
+                     Index count, Index past)
     {
         throw_if(count < 1 || past < 0 || past + count > context_length,
                  "ChatSession: prefill [{}, {}) exceeds the {}-token context.",
                  past, past + count, context_length);
 
-        const Index block_capacity = prefill.get_sequence_capacity();
+        const Index block_capacity = propagation.get_sequence_capacity();
         for (Index offset = 0; offset < count; offset += block_capacity)
         {
             const Index block = min(block_capacity, count - offset);
-            prefill.past_length = past + offset;
-            prefill.set_active_sequence_length(block);
-            prefill.set_output_sequence_window(block - 1, 1);
-            prefill_inputs[0] =
+            propagation.past_length = past + offset;
+            propagation.set_active_sequence_length(block);
+            propagation.set_output_sequence_window(block - 1, 1);
+            inputs[0] =
                 TensorView(token_window.data() + offset, {1, block});
-            network->forward_propagate(prefill_inputs, prefill, false);
+            propagated.forward_propagate(inputs, propagation, false);
         }
     }
 
@@ -1087,27 +1081,6 @@ struct ChatSession::Impl
                            device::CopyKind::HostToDevice,
                            device::get_compute_stream());
         device::synchronize(device::get_compute_stream());
-    }
-
-    void run_draft_prefill(Index count, Index past)
-    {
-        throw_if(count < 1 || past < 0 || past + count > context_length,
-                 "ChatSession: draft prefill [{}, {}) exceeds the {}-token context.",
-                 past, past + count, context_length);
-
-        const Index block_capacity =
-            draft->prefill.get_sequence_capacity();
-        for (Index offset = 0; offset < count; offset += block_capacity)
-        {
-            const Index block = min(block_capacity, count - offset);
-            draft->prefill.past_length = past + offset;
-            draft->prefill.set_active_sequence_length(block);
-            draft->prefill.set_output_sequence_window(block - 1, 1);
-            draft->prefill_inputs[0] =
-                TensorView(token_window.data() + offset, {1, block});
-            draft->network->forward_propagate(
-                draft->prefill_inputs, draft->prefill, false);
-        }
     }
 
     ForwardPropagation& run_target_verify(Index count, Index past)
@@ -1152,7 +1125,7 @@ struct ChatSession::Impl
 #endif
 
         token_window[0] = float(token);
-        run_prefill(1, past);
+        run_prefill(prefill, prefill_inputs, *network, 1, past);
         return prefill;
     }
 
@@ -1271,7 +1244,8 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     const Index warmup_tokens =
         impl->draft->prefill.get_sequence_capacity();
     fill_n(impl->token_window.begin(), size_t(warmup_tokens), 0.0f);
-    impl->run_draft_prefill(warmup_tokens, 0);
+    impl->run_prefill(impl->draft->prefill, impl->draft->prefill_inputs,
+                      *impl->draft->network, warmup_tokens, 0);
     Impl::stage_token(impl->draft->token_device, 0);
     impl->run_draft_decode(0);
     impl->run_draft_decode(0);
@@ -1536,7 +1510,8 @@ ChatResponse ChatSession::send(
                                         ssize(prompt) + maximum_tokens)));
     Index next = -1;
     {
-        impl->run_prefill(count, past);
+        impl->run_prefill(impl->prefill, impl->prefill_inputs,
+                          *impl->network, count, past);
         next = impl->sampler->sample_row(
             impl->prefill, 0, sampling, sampling_history);
 
@@ -1544,7 +1519,8 @@ ChatResponse ChatSession::send(
         {
             for (Index i = 0; i < ssize(prompt); ++i)
                 impl->token_window[size_t(i)] = float(prompt[size_t(i)]);
-            impl->run_draft_prefill(ssize(prompt), 0);
+            impl->run_prefill(impl->draft->prefill, impl->draft->prefill_inputs,
+                              *impl->draft->network, ssize(prompt), 0);
         }
     }
     const auto prefill_end = Clock::now();
@@ -1730,6 +1706,53 @@ ChatResponse ChatSession::send(
     });
 
     return response;
+}
+
+void ChatSession::chat(const ChatOptions& options)
+{
+    cout << "Enter prompts. Empty line, 'exit' or 'quit' finishes.\n";
+
+    string prompt;
+    while (true)
+    {
+        cout << "\n> " << flush;
+        if (!getline(cin, prompt)
+            || prompt.empty()
+            || prompt == "exit"
+            || prompt == "quit")
+            break;
+
+        bool reasoning_started = false;
+        bool content_started = false;
+        const ChatResponse response = send(
+            prompt, options,
+            [&](const ChatDelta& delta)
+            {
+                if (delta.channel == GenerationChannel::Reasoning)
+                {
+                    if (!reasoning_started)
+                    {
+                        cout << "Thinking: ";
+                        reasoning_started = true;
+                    }
+                }
+                else if (!content_started)
+                {
+                    if (reasoning_started) cout << "\n";
+                    cout << "Response: ";
+                    content_started = true;
+                }
+                cout << delta.text << flush;
+            });
+
+        if (!content_started)
+        {
+            if (reasoning_started) cout << "\n";
+            cout << "Response: " << response.content;
+        }
+        cout << "\n";
+    }
+    cout << "Bye!\n";
 }
 
 void ChatSession::set_messages(
