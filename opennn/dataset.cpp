@@ -129,26 +129,25 @@ void Dataset::set_storage_mode(StorageMode new_storage_mode)
         data.resize(0, 0);
 }
 
-static const vector<pair<Dataset::StorageMode, string>> storage_mode_map = {
-    {Dataset::StorageMode::Matrix,            "Matrix"},
-    {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
-    {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
-};
+static const EnumMap<Dataset::StorageMode>& storage_mode_map()
+{
+    static const vector<pair<Dataset::StorageMode, string>> entries = {
+        {Dataset::StorageMode::Matrix,            "Matrix"},
+        {Dataset::StorageMode::BinaryFile,        "BinaryFile"},
+        {Dataset::StorageMode::GPUPersistantData, "GPUPersistantData"}
+    };
+    static const EnumMap<Dataset::StorageMode> map{entries};
+    return map;
+}
 
 string Dataset::get_storage_mode_string() const
 {
-    for (const auto& [mode, name] : storage_mode_map)
-        if (mode == storage_mode) return name;
-
-    return "Matrix";
+    return storage_mode_map().to_string(storage_mode);
 }
 
 void Dataset::set_storage_mode(const string& new_storage_mode)
 {
-    for (const auto& [mode, name] : storage_mode_map)
-        if (name == new_storage_mode) { set_storage_mode(mode); return; }
-
-    throw runtime_error(format("Unknown dataset storage mode: {}", new_storage_mode));
+    set_storage_mode(storage_mode_map().from_string(new_storage_mode));
 }
 
 void Dataset::set_data(const MatrixR& new_data)
@@ -587,13 +586,6 @@ void Dataset::set_variable_type(const string& name, const VariableType& new_type
     set_variable_type(get_variable_index(name), new_type);
 }
 
-void Dataset::set_variable_types(const VariableType& new_type)
-{
-    for (auto& variable : variables)
-        variable.type = new_type;
-
-}
-
 void Dataset::set_variable_names(const vector<string>& new_names)
 {
     const Index new_names_size = new_names.size();
@@ -645,17 +637,19 @@ string Dataset::get_separator_name() const
     return {};
 }
 
-static const vector<pair<Dataset::Codification, string>> codification_map = {
-    {Dataset::Codification::UTF8,      "UTF-8"},
-    {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
-};
+static const EnumMap<Dataset::Codification>& codification_map()
+{
+    static const vector<pair<Dataset::Codification, string>> entries = {
+        {Dataset::Codification::UTF8,      "UTF-8"},
+        {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
+    };
+    static const EnumMap<Dataset::Codification> map{entries};
+    return map;
+}
 
 string Dataset::get_codification_string() const
 {
-    for (const auto& [cod, name] : codification_map)
-        if (cod == codification) return name;
-
-    return "UTF-8";
+    return codification_map().to_string(codification);
 }
 
 Index Dataset::get_variable_index(const string& variable_name) const
@@ -733,10 +727,7 @@ void Dataset::set_separator_name(const string& new_separator_name)
 
 void Dataset::set_codification(const string& new_codification_string)
 {
-    for (const auto& [cod, name] : codification_map)
-        if (name == new_codification_string) { codification = cod; return; }
-
-    throw runtime_error(format("Unknown codification: {}.\n", new_codification_string));
+    codification = codification_map().from_string(new_codification_string);
 }
 
 void Dataset::variables_to_JSON(JsonWriter &printer) const

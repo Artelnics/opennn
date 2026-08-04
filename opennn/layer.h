@@ -11,8 +11,6 @@
 #include "tensor_types.h"
 #include "tensor_operations.h"
 #include "operator.h"
-#include "random_utilities.h"
-#include "string_utilities.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -20,8 +18,6 @@
 
 namespace opennn
 {
-
-struct Operator;
 
 enum class LayerType
 {
@@ -121,8 +117,8 @@ public:
 
     LayerType get_type() const noexcept { return layer_type; }
 
-    virtual void set_input_shape(const Shape&);
-    virtual void set_output_shape(const Shape&);
+    virtual void set_input_shape(const Shape&) {}
+    virtual void set_output_shape(const Shape&) {}
 
     void set_label(string new_label) { label = move(new_label); }
 
@@ -232,7 +228,6 @@ protected:
         : layer_type(t), is_trainable(trainable) {}
 
     enum Forward {Input, Output};
-    enum Backward {OutputDelta, InputDelta};
 
     string label = "my_layer";
 

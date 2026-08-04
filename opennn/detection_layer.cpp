@@ -9,6 +9,7 @@
 #include "detection_layer.h"
 #include "enum_map.h"
 #include "json.h"
+#include "string_utilities.h"
 
 namespace opennn
 {

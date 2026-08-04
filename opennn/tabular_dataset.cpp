@@ -12,8 +12,6 @@
 #include "tensor_types.h"
 #include "random_utilities.h"
 
-#include <set>
-
 namespace opennn
 {
 
@@ -126,41 +124,6 @@ VectorI TabularDataset::count_nans_per_variable() const { return data.array().is
 Index TabularDataset::count_rows_with_nan() const { return data.array().isNaN().rowwise().any().count(); }
 
 Index TabularDataset::count_nan() const { return data.array().isNaN().count(); }
-
-void TabularDataset::save_data() const
-{
-    ofstream file(data_path);
-
-    throw_if(!file.is_open(),
-             "Cannot open matrix data file: {}\n", data_path.string());
-
-    file.precision(20);
-
-    const Index samples_number = get_samples_number();
-    const Index features_number = get_features_number();
-
-    const vector<string> feature_names = get_feature_names();
-
-    const string separator_string = get_separator_string();
-
-    if (has_sample_ids)
-        file << "id" << separator_string;
-
-    for (Index j = 0; j < features_number; ++j)
-        file << feature_names[j] << (j == features_number - 1 ? "\n" : separator_string);
-
-    for (Index i = 0; i < samples_number; ++i)
-    {
-        if (has_sample_ids)
-            file << sample_ids[i] << separator_string;
-
-        for (Index j = 0; j < features_number; ++j)
-            file << data(i, j) << (j == features_number - 1 ? "\n" : separator_string);
-    }
-
-    throw_if(!file,
-             "Failed to write matrix data file: {}", data_path.string());
-}
 
 void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 {
@@ -629,58 +592,6 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
             unused_variables.push_back(variable.name);
         }
     }
-
-    return unused_variables;
-}
-
-vector<string> TabularDataset::unuse_least_correlated_variables(const Index inputs_to_keep)
-{
-    vector<string> unused_variables;
-
-    const Index input_variables_number = get_variables_number(VariableRole::Input);
-
-    if (inputs_to_keep <= 0 || input_variables_number <= inputs_to_keep)
-        return unused_variables;
-
-    const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
-
-    const Index target_variables_number = get_variables_number(VariableRole::Target);
-
-    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
-
-    vector<pair<float, Index>> ranking(input_variables_number);
-
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        float best_correlation = -1.0f;
-
-        for (Index j = 0; j < target_variables_number; ++j)
-        {
-            const float correlation_value = correlations(i, j).coefficient;
-
-            if (!isnan(correlation_value))
-                best_correlation = max(best_correlation, abs(correlation_value));
-        }
-
-        ranking[i] = { best_correlation, i };
-    }
-
-    stable_sort(ranking.begin(), ranking.end(),
-                [](const pair<float, Index>& a, const pair<float, Index>& b)
-                { return a.first > b.first; });
-
-    for (Index rank = inputs_to_keep; rank < input_variables_number; ++rank)
-    {
-        Variable& variable = variables[input_variable_indices[ranking[rank].second]];
-
-        if (variable.role == VariableRole::None) continue;
-
-        variable.set_role("None");
-        unused_variables.push_back(variable.name);
-    }
-
-    resize_input_shape(get_features_number(VariableRole::Input));
-    set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
 
     return unused_variables;
 }
@@ -1337,7 +1248,7 @@ static void parse_numeric_token(float* row, Index feature_index,
 
 static void parse_datetime_token(float* row, Index feature_index,
                           string_view token, string_view missing_label,
-                          Index gmt, const DateFormat& date_format)
+                          const DateFormat& date_format)
 {
     if (is_missing_token(token, missing_label))
     {
@@ -1345,7 +1256,7 @@ static void parse_datetime_token(float* row, Index feature_index,
         return;
     }
 
-    const time_t timestamp = date_to_timestamp(token, gmt, date_format);
+    const time_t timestamp = date_to_timestamp(token, 0, date_format);
     throw_if(timestamp == -1, "Date format is unsupported or date is prior to 1970.");
     row[feature_index] = timestamp;
 }
@@ -1621,7 +1532,7 @@ void TabularDataset::read_csv()
                 parse_numeric_token(row, feature_indices[0], token, missing_values_label);
                 break;
             case DateTime:
-                parse_datetime_token(row, feature_indices[0], token, missing_values_label, gmt, date_format);
+                parse_datetime_token(row, feature_indices[0], token, missing_values_label, date_format);
                 break;
             case Categorical:
                 parse_categorical_token(row, feature_indices, token, missing_values_label, category_maps[variable_index]);
@@ -1825,27 +1736,26 @@ void TabularDataset::read_csv()
     split_samples_random();
 }
 
-static const vector<pair<TabularDataset::MissingValuesMethod, string>> missing_values_method_map = {
-    {TabularDataset::MissingValuesMethod::Unuse,         "Unuse"},
-    {TabularDataset::MissingValuesMethod::Mean,          "Mean"},
-    {TabularDataset::MissingValuesMethod::Median,        "Median"},
-    {TabularDataset::MissingValuesMethod::Interpolation, "Interpolation"}
-};
+static const EnumMap<TabularDataset::MissingValuesMethod>& missing_values_method_map()
+{
+    static const vector<pair<TabularDataset::MissingValuesMethod, string>> entries = {
+        {TabularDataset::MissingValuesMethod::Unuse,         "Unuse"},
+        {TabularDataset::MissingValuesMethod::Mean,          "Mean"},
+        {TabularDataset::MissingValuesMethod::Median,        "Median"},
+        {TabularDataset::MissingValuesMethod::Interpolation, "Interpolation"}
+    };
+    static const EnumMap<TabularDataset::MissingValuesMethod> map{entries};
+    return map;
+}
 
 string TabularDataset::get_missing_values_method_string() const
 {
-    for (const auto& [method, name] : missing_values_method_map)
-        if (method == missing_values_method) return name;
-
-    throw runtime_error("Unknown missing values method");
+    return missing_values_method_map().to_string(missing_values_method);
 }
 
 void TabularDataset::set_missing_values_method(const string& new_missing_values_method)
 {
-    for (const auto& [method, name] : missing_values_method_map)
-        if (name == new_missing_values_method) { missing_values_method = method; return; }
-
-    throw runtime_error("Unknown method type.\n");
+    missing_values_method = missing_values_method_map().from_string(new_missing_values_method);
 }
 
 void TabularDataset::missing_values_to_JSON(JsonWriter &printer) const

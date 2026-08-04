@@ -8,6 +8,7 @@
 
 #include "concatenation_layer.h"
 #include "json.h"
+#include "string_utilities.h"
 
 namespace opennn
 {

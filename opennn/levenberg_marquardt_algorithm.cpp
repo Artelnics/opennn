@@ -7,6 +7,7 @@
 
 #include "tensor_types.h"
 #include "tensor_operations.h"
+#include "statistics.h"
 #include "dataset.h"
 #include "loss.h"
 #include "batch.h"

@@ -1367,7 +1367,7 @@ void Optimizer::prefetch_batch(Batch& batch)
 {
     if (!batch.uses_cuda() || !batch.needs_device_copy) return;
 
-    batch.copy_device_async(Backend::get_transfer_stream());
+    batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
 }
 
 void Optimizer::sync_device(bool on_gpu)

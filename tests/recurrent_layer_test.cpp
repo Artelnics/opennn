@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "opennn/random_utilities.h"
 #include "numerical_derivatives.h"
 
 #include "opennn/tensor_types.h"

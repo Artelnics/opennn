@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer.h"
+#include "string_utilities.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "kernel.cuh"

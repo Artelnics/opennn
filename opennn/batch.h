@@ -96,7 +96,6 @@ struct Batch
     int decoder_contiguous = -1;
     int target_contiguous = -1;
 
-    void copy_device_async(cudaStream_t);
     void upload_to_device_batch_async(Batch&, cudaStream_t);
 
     void record_h2d_done(cudaStream_t);

@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "opennn/random_utilities.h"
 #include "opennn/tabular_dataset.h"
 #include "numerical_derivatives.h"
 

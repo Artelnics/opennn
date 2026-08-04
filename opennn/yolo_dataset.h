@@ -134,8 +134,6 @@ public:
                       FillMode,
                       int contiguous = -1) const override;
 
-    void augment_inputs(span<float>, Index) const override {}
-
     struct AugmentationConfig
     {
         float jitter = 0.2f;

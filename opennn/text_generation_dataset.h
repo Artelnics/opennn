@@ -59,7 +59,7 @@ public:
     static constexpr string_view PAD_TOKEN = "[PAD]";
     static constexpr string_view UNK_TOKEN = "[UNK]";
 
-    static constexpr float UNK_INDEX = 1.0f;
+    static constexpr Index UNK_INDEX = 1;
 
     inline static const vector<string> reserved_tokens = {string(PAD_TOKEN), string(UNK_TOKEN)};
 

@@ -286,7 +286,7 @@ vector<Index> TextGenerationDataset::encode_corpus(const vector<string_view>& co
     {
         const auto iterator = vocabulary_views.find(corpus_tokens[size_t(i)]);
         token_indices[size_t(i)] =
-            iterator != vocabulary_views.end() ? iterator->second : Index(UNK_INDEX);
+            iterator != vocabulary_views.end() ? iterator->second : UNK_INDEX;
     }
 
     return token_indices;

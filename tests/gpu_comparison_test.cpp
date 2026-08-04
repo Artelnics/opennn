@@ -50,7 +50,7 @@ VectorR compute_gradient(Loss& loss)
 
     if (neural_network->is_gpu())
     {
-        batch.copy_device_async(Backend::get_transfer_stream());
+        batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
         batch.wait_h2d_complete();
     }
 

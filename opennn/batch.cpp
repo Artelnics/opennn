@@ -226,11 +226,6 @@ Batch::~Batch()
 
 #ifdef OPENNN_HAS_CUDA
 
-void Batch::copy_device_async(cudaStream_t stream)
-{
-    upload_to_device_batch_async(*this, stream);
-}
-
 void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
 {
     const Index current_batch_size = samples_number;
@@ -343,11 +338,6 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 }
 
 #else
-
-void Batch::copy_device_async(cudaStream_t)
-{
-    throw runtime_error("Batch::copy_device_async requires CUDA support.");
-}
 
 void Batch::upload_to_device_batch_async(Batch&, cudaStream_t)
 {

@@ -67,7 +67,6 @@ public:
     void set_variable_scalers(const string&);
     void set_variable_scalers(const vector<string>&);
     void set_default_variable_scalers();
-    void apply_default_variable_roles() { set_default_variable_roles(); }
 
     MissingValuesMethod get_missing_values_method() const { return missing_values_method; }
     string get_missing_values_method_string() const;
@@ -87,7 +86,6 @@ public:
 
     vector<string> unuse_uncorrelated_variables(const float = 0.25f);
     vector<string> unuse_collinear_variables(const float = 0.95f);
-    vector<string> unuse_least_correlated_variables(const Index inputs_to_keep);
 
     vector<Descriptives> calculate_feature_descriptives() const;
     vector<Descriptives> calculate_feature_descriptives(const string&) const;
@@ -127,8 +125,6 @@ public:
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
-    void save_data() const;
-
     void set_binary_variables();
 
     void set_data_random();
@@ -165,8 +161,6 @@ protected:
     Index missing_values_number = 0;
     VectorI variables_missing_values_number;
     Index rows_missing_values_number = 0;
-
-    Index gmt = 0;
 
     void missing_values_to_JSON(JsonWriter&) const;
     void missing_values_from_JSON(const Json*) override;

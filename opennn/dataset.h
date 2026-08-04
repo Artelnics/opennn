@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include "correlations.h"
-#include "statistics.h"
 #include "batch.h"
 #include "tensor_types.h"
 #include "enum_map.h"
@@ -18,8 +16,6 @@
 
 namespace opennn
 {
-
-struct Batch;
 
 enum class SampleRole{Training, Validation, Testing, None};
 
@@ -137,7 +133,7 @@ public:
 
     bool get_display() const noexcept { return display; }
 
-    virtual bool is_empty() const noexcept { return get_samples_number() == 0; }
+    bool is_empty() const noexcept { return get_samples_number() == 0; }
 
     Shape get_input_shape() const noexcept { return input_shape; }
     Shape get_target_shape() const noexcept { return target_shape; }
@@ -168,6 +164,7 @@ public:
     void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
+    void set_default_variable_roles();
 
     void set_variable_roles(const vector<string>&);
 
@@ -185,7 +182,6 @@ public:
     void set_variable_type(const Index, const VariableType&);
     void set_variable_type(const string&, const VariableType&);
 
-    void set_variable_types(const VariableType&);
     void set_variable_names(const vector<string>&);
 
     void set_variables_number(const Index);
@@ -207,7 +203,7 @@ public:
     bool get_has_sample_ids() const { return has_sample_ids; }
     const vector<string>& get_sample_ids() const { return sample_ids; }
 
-    virtual VectorI filter_data(const VectorR&, const VectorR&);
+    VectorI filter_data(const VectorR&, const VectorR&);
 
     bool has_categorical_variables() const
     {
@@ -260,8 +256,6 @@ public:
                              FillMode,
                              int contiguous = -1) const;
 
-    virtual void augment_inputs(span<float>, Index) const {}
-
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               float*,
@@ -294,7 +288,6 @@ protected:
                          const vector<Index>&,
                          FillMode) const;
 
-    void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
     void set_default_variable_roles_implementation(bool);
 

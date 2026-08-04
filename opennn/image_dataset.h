@@ -10,6 +10,7 @@
 
 #include "dataset.h"
 #include "io_utilities.h"
+#include "statistics.h"
 #include "variable.h"
 
 namespace opennn
@@ -66,7 +67,7 @@ public:
                       FillMode,
                       int = -1) const override;
 
-    void augment_inputs(span<float>, Index) const override;
+    void augment_inputs(span<float>, Index) const;
 
 private:
 
