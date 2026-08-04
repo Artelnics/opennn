@@ -427,7 +427,9 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         vector<bool> externally_observable(layers_number, false);
         for (size_t i = 0; i < layers_number; ++i)
-            if (!has_consumers[i] || layers[i]->get_type() == LayerType::Detection)
+            if (!has_consumers[i]
+                || layers[i]->get_type() == LayerType::Detection
+                || layers[i]->get_type() == LayerType::DetectionV8)
                 externally_observable[i] = true;
 
         const auto mark_resolved_output = [&](Index layer_index)
