@@ -1791,10 +1791,20 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
 
     const vector<string> tokens = get_tokens(variables_string, " ");
 
-    variables_missing_values_number.resize(tokens.size());
-    for (size_t i = 0; i < tokens.size(); ++i)
-        if (!tokens[i].empty())
-            variables_missing_values_number(i) = parse_long(tokens[i], "VariablesMissingValuesNumber");
+    vector<Index> counts;
+    counts.reserve(tokens.size());
+
+    for (const string& token : tokens)
+        if (!token.empty())
+            counts.push_back(parse_number<Index>(token, "VariablesMissingValuesNumber", "integer"));
+
+    variables_missing_values_number = VectorI::Zero(ssize(counts));
+
+    for (size_t i = 0; i < counts.size(); ++i)
+        variables_missing_values_number(Index(i)) = counts[i];
+
+    if (variables_missing_values_number.sum() != missing_values_number)
+        variables_missing_values_number.resize(0);
 
     rows_missing_values_number = parse_long(read_json_string_fallback(missing_values_element,
         {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}), "SamplesMissingValuesNumber");

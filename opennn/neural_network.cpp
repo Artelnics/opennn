@@ -1247,19 +1247,40 @@ void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) co
 {
     ofstream file = open_binary_output(file_name);
 
-    const HostParametersGuard guard(*const_cast<NeuralNetwork*>(this));
-
-    write_binary_payload(file, file_name, parameters.as<float>(),
-                         parameters.size_in_floats() * Index(sizeof(float)));
+    if (parameters.device_type == Device::CUDA && parameters.data)
+    {
+        const Index n_bytes = parameters.size_in_floats() * Index(sizeof(float));
+        vector<float> staging(parameters.size_in_floats());
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(staging.data(), parameters.data, n_bytes,
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+        write_binary_payload(file, file_name, staging.data(), n_bytes);
+    }
+    else
+    {
+        write_binary_payload(file, file_name, parameters.as<float>(),
+                             parameters.size_in_floats() * Index(sizeof(float)));
+    }
 }
 
 void NeuralNetwork::save_states_binary(const filesystem::path& file_name) const
 {
     ofstream file = open_binary_output(file_name);
 
-    const HostStatesGuard guard(*const_cast<NeuralNetwork*>(this));
-
-    write_binary_payload(file, file_name, states.data, states.bytes);
+    if (states.device_type == Device::CUDA && states.data)
+    {
+        vector<char> staging(static_cast<size_t>(states.bytes));
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(staging.data(), states.data, states.bytes,
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+        write_binary_payload(file, file_name, staging.data(), states.bytes);
+    }
+    else
+    {
+        write_binary_payload(file, file_name, states.data, states.bytes);
+    }
 }
 
 void NeuralNetwork::load(const filesystem::path& file_name)
@@ -1283,12 +1304,26 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
                                       uintmax_t(parameters_number) * sizeof(float),
                                       "load_parameters_binary");
 
+    if (parameters.device_type == Device::CUDA && parameters.data)
+    {
+        vector<float> staging(static_cast<size_t>(parameters_number));
+        file.read(reinterpret_cast<char*>(staging.data()), parameters_number * Index(sizeof(float)));
+        throw_if(!file, "Error reading binary file: {}", file_name.string());
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(parameters.data, staging.data(),
+                           parameters_number * Index(sizeof(float)),
+                           device::CopyKind::HostToDevice, stream);
+        device::synchronize(stream);
+        cast_parameters_to_bf16();
+    }
+    else
     {
         const HostParametersGuard guard(*this);
         file.read(reinterpret_cast<char*>(parameters.as<float>()), parameters_number * sizeof(float));
+        throw_if(!file, "Error reading binary file: {}", file_name.string());
     }
 
-    throw_if(!file, "Error reading binary file: {}", file_name.string());
+    link_parameters();
 }
 
 void NeuralNetwork::load_parameters_bf16_inference_binary(
@@ -1530,17 +1565,25 @@ void NeuralNetwork::load_states_binary(const filesystem::path& file_name)
     ifstream file = open_binary_input(file_name, uintmax_t(states.bytes),
                                       "load_states_binary");
 
+    if (states.device_type == Device::CUDA && states.data && states.bytes > 0)
+    {
+        vector<char> staging(static_cast<size_t>(states.bytes));
+        file.read(staging.data(), states.bytes);
+        throw_if(!file, "Error reading binary file: {}", file_name.string());
+        cudaStream_t stream = Backend::get_compute_stream();
+        device::copy_async(states.data, staging.data(), states.bytes,
+                           device::CopyKind::HostToDevice, stream);
+        device::synchronize(stream);
+    }
+    else
     {
         const HostStatesGuard guard(*this);
-
         if (states.bytes > 0)
             file.read(reinterpret_cast<char*>(states.data), states.bytes);
-
         if (!guard.was_on_device)
             link_states();
+        throw_if(!file, "Error reading binary file: {}", file_name.string());
     }
-
-    throw_if(!file, "Error reading binary file: {}", file_name.string());
 }
 
 vector<string> NeuralNetwork::get_layer_labels() const

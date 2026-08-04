@@ -1295,19 +1295,30 @@ string ModelExpression::get_expression_php() const
 
     string expression = build_expression();
 
-    vector<string> all_possible_vars = fixed_output_names;
-    all_possible_vars.insert(all_possible_vars.end(), fixed_input_names.begin(), fixed_input_names.end());
-    ranges::sort(all_possible_vars, [](const string& a, const string& b) { return a.length() > b.length(); });
-    for (const string& var_name : all_possible_vars)
+    apply_name_mapping(expression, input_names, fixed_input_names);
+    apply_name_mapping(expression, output_names, fixed_output_names);
+
+    // Final "output = last_intermediate" assignments. The other languages get
+    // them from their emitters; the PHP branch of fix_output_names adds the $.
+    const vector<string> output_assignments = fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
+
+    // PHP variables need the $ sigil: the inputs and outputs, plus every
+    // assignment target of the expression (scaled_*, layer outputs, ...).
+    vector<string> php_vars = fixed_input_names;
+    php_vars.insert(php_vars.end(), fixed_output_names.begin(), fixed_output_names.end());
+
+    for (string_view line_view : get_token_views(expression, '\n'))
+    {
+        const size_t equal_pos = line_view.find('=');
+        if (equal_pos == string_view::npos) continue;
+        const string lhs(trim_view(line_view.substr(0, equal_pos)));
+        if (!lhs.empty() && ranges::find(php_vars, lhs) == php_vars.end())
+            php_vars.push_back(lhs);
+    }
+
+    ranges::sort(php_vars, [](const string& a, const string& b) { return a.length() > b.length(); });
+    for (const string& var_name : php_vars)
         replace_all_word_appearances(expression, var_name, "$" + var_name);
-
-    for (size_t i = 0; i < input_names.size(); ++i)
-        if (input_names[i] != fixed_input_names[i])
-            replace_all_word_appearances(expression, input_names[i], "$" + fixed_input_names[i]);
-
-    for (size_t i = 0; i < output_names.size(); ++i)
-        if (output_names[i] != fixed_output_names[i])
-            replace_all_word_appearances(expression, output_names[i], "$" + fixed_output_names[i]);
 
     vector<string> lines = split_expression_lines(expression);
     for (string& l : lines)
@@ -1316,6 +1327,7 @@ string ModelExpression::get_expression_php() const
         replace_all_appearances(l, "]", "_");
     }
     rename_spaced_var_definitions(lines);
+    lines.insert(lines.end(), output_assignments.begin(), output_assignments.end());
 
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
