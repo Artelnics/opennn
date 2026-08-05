@@ -8,6 +8,7 @@
 
 #include "tabular_dataset.h"
 #include "io_utilities.h"
+#include "string_utilities.h"
 #include "scaling.h"
 #include "tensor_types.h"
 #include "random_utilities.h"

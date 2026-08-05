@@ -54,7 +54,7 @@ static string image_cache_signature(Index samples, Index height, Index width, In
 {
     string signature = to_string(samples) + "|"
         + to_string(height) + "x" + to_string(width) + "x" + to_string(channels) + "|"
-        + to_string(newest_write_time.time_since_epoch().count()) + "|";
+        + to_string(static_cast<long long>(newest_write_time.time_since_epoch().count())) + "|";
     for (const filesystem::path& folder : class_folders)
         signature += folder.filename().string() + ",";
     return signature;
