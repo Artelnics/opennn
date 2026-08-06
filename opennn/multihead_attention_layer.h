@@ -46,7 +46,8 @@ public:
 
     bool is_forward_slot_transient(size_t spec) const override
     {
-        return spec == size_t(TransposeScratch) - 1;
+        return spec == size_t(TransposeScratch) - 1
+            || spec == size_t(SdpaQkvPack) - 1;
     }
     bool backward_uses_forward_output() const noexcept override { return false; }
     bool preserves_output_delta_during_backward() const noexcept override { return true; }
@@ -93,7 +94,7 @@ private:
     MergeOperator               merge;
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
-                  ConcatenatedAttentionOutputs, Value, TransposeScratch, Output};
+                  ConcatenatedAttentionOutputs, Value, TransposeScratch, SdpaQkvPack, Output};
     enum Backward {
         OutputDelta,
         InputQueryDelta,
@@ -102,7 +103,14 @@ private:
         ValueHeadDelta,
         ConcatenatedOutputDelta,
         QueryHeadDelta,
-        KeyHeadDelta
+        KeyHeadDelta,
+        SdpaOutputGradBF16,
+        SdpaQueryGradBF16,
+        SdpaKeyGradBF16,
+        SdpaValueGradBF16,
+        SdpaQueryRematBF16,
+        SdpaKeyRematBF16,
+        SdpaValueRematBF16
     };
 };
 

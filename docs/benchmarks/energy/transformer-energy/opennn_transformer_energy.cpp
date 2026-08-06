@@ -25,6 +25,7 @@
 #include "opennn/adaptive_moment_estimation.h"
 #include "opennn/configuration.h"
 #include "opennn/random_utilities.h"
+#include "docs/benchmarks/transformer_benchmark.h"
 
 using namespace opennn;
 
@@ -105,6 +106,8 @@ int main(int argc, char* argv[])
                                 d_model, heads, ff, layers);
         transformer.set_dropout_rate(0.0f);
 
+        std::cout << "sdpa_min_sequence_length="
+                  << benchmark::configure_transformer_sdpa(transformer) << "\n";
         std::cout << "parameters=" << transformer.get_parameters_size() << "\n";
 
         TrainingStrategy training_strategy(&transformer, &dataset);

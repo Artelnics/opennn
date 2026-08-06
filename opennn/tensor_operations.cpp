@@ -189,7 +189,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(dropout_forward_gpu, (TensorView&, Buffer&, float)) \
     X(dropout_backward_gpu, (TensorView&, const Buffer&, float)) \
     X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&)) \
-    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool)) \
+    X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const TensorView*)) \
     X(layer_normalization_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, TensorView&, TensorView&)) \
     X(layer_normalization_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
     X(rms_normalization_forward_gpu, (const TensorView&, const TensorView&, TensorView&, TensorView&, float)) \
@@ -630,12 +630,17 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 
 void linear_backward(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                      const TensorView& weight_gradient, const TensorView& bias_gradient,
-                     TensorView& input_delta, bool accumulate_input_delta)
+                     TensorView& input_delta, bool accumulate_input_delta,
+                     const TensorView* drelu_mask)
 {
+    throw_if(drelu_mask && (!output_delta.is_cuda() || output_delta.type == Type::BF16
+                            || accumulate_input_delta),
+             "linear_backward: the DRELU fused input-delta path is CUDA fp32, non-accumulating only.");
+
     if (output_delta.is_cuda())
     {
         linear_backward_gpu(output_delta, input, weights, weight_gradient, bias_gradient,
-                            input_delta, accumulate_input_delta);
+                            input_delta, accumulate_input_delta, drelu_mask);
         return;
     }
     linear_backward_cpu(output_delta, input, weights, weight_gradient, bias_gradient,
@@ -1949,7 +1954,8 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
 
 static void linear_backward_gpu(const TensorView& output_delta, const TensorView& input, const TensorView& weights,
                          const TensorView& weight_gradient, const TensorView& bias_gradient,
-                         TensorView& input_delta, bool accumulate_input_delta)
+                         TensorView& input_delta, bool accumulate_input_delta,
+                         const TensorView* drelu_mask)
 {
     const int input_columns  = to_int(input.shape.back());
     const int output_columns = to_int(output_delta.shape.back());
@@ -1992,6 +1998,21 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     }
 
     if (!input_delta.data || input_delta.empty()) return;
+
+    if (drelu_mask)
+    {
+        // dX = (dY · Wᵀ) ⊙ relu-mask, fused into the GEMM epilogue. The mask is
+        // the column-major bitmask the producer layer stored via RELU_AUX_BIAS;
+        // its ld (bits) equals input_columns (% 128 enforced at plan creation).
+        run_lt_matmul_cached(
+            input_columns, total_rows, output_columns,
+            CUBLAS_OP_T, CUBLAS_OP_N,
+            CUBLASLT_EPILOGUE_DRELU,
+            weights.data, output_delta.data, input_delta.data, nullptr,
+            output_delta.cuda_dtype(), input_delta.cuda_dtype(),
+            drelu_mask->data);
+        return;
+    }
 
     multiply(output_delta, false, weights, true, input_delta, 1.0f,
              accumulate_input_delta ? 1.0f : 0.0f);

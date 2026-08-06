@@ -79,6 +79,17 @@ public:
     }
     void set_momentum(float);
 
+    // Cross-layer dReLU fusion (CUDA fp32): a producer Dense whose ReLU is
+    // fused into its forward GEMM can hand its consumer a bitmask so the
+    // consumer's input-delta GEMM applies the derivative in-epilogue.
+    bool try_wire_drelu_fusion(Dense& producer);
+    void reset_drelu_fusion();
+    bool drelu_fusion_wired() const { return combination.drelu_source != nullptr; }
+    bool drelu_fusion_ran() const
+    {
+        return combination.drelu_source && combination.drelu_source->relu_mask_fused_active;
+    }
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
     void on_loaded() override { configure_operators(); }

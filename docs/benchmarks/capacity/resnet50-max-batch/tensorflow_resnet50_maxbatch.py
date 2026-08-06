@@ -5,6 +5,7 @@ import argparse
 import gc
 import os
 import sys
+import time
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
@@ -15,13 +16,11 @@ import tensorflow as tf
 def configure_gpu(memory_limit_mb):
     gpus = tf.config.list_physical_devices("GPU")
     assert gpus, "CUDA GPU required"
-    if memory_limit_mb:
-        tf.config.set_logical_device_configuration(
-            gpus[0],
-            [tf.config.LogicalDeviceConfiguration(memory_limit=memory_limit_mb)],
-        )
-    else:
-        tf.config.experimental.set_memory_growth(gpus[0], True)
+    # A logical limit reserves the requested block plus CUDA-context memory.
+    # The external max-batch runner already terminates a trial at the physical
+    # cap, so pre-reserving that same cap makes even batch=1 exceed it.
+    # Growth mode lets the common nvidia-smi monitor enforce the cap uniformly.
+    tf.config.experimental.set_memory_growth(gpus[0], True)
     return gpus[0].name
 
 
@@ -60,10 +59,20 @@ def build_resnet50(classes):
 def make_batch(data_dir, batch):
     images = np.load(os.path.join(data_dir, "cifar_images.npy"), mmap_mode="r")
     labels = np.load(os.path.join(data_dir, "cifar_labels.npy"), mmap_mode="r")
-    idx = np.arange(batch, dtype=np.int64) % images.shape[0]
+    classes = int(labels.max()) + 1
+    class_indices = [np.flatnonzero(labels == label) for label in range(classes)]
+    positions = np.arange(batch, dtype=np.int64)
+    idx = np.fromiter(
+        (class_indices[int(position % classes)]
+         [int(position // classes)
+          % class_indices[int(position % classes)].size]
+         for position in positions),
+        dtype=np.int64,
+        count=batch,
+    )
     xb = np.asarray(images[idx], dtype=np.float32) / 255.0
     yb = np.asarray(labels[idx], dtype=np.int64)
-    return xb, yb, int(labels.max()) + 1
+    return xb, yb, classes
 
 
 def default_data():
@@ -78,12 +87,16 @@ def main():
     ap.add_argument("--batch", type=int, required=True)
     ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-limit-mb", type=int, default=0)
+    ap.add_argument("--target", type=float, default=None,
+                    help="optional training-loss target")
+    ap.add_argument("--max-steps", type=int, default=20)
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     device_name = configure_gpu(args.memory_limit_mb or None)
     if args.precision == "bf16":
         tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-    tf.random.set_seed(42)
+    tf.keras.utils.set_random_seed(args.seed)
 
     xb_np, yb_np, classes = make_batch(args.data, args.batch)
     with tf.device("/GPU:0"):
@@ -96,8 +109,9 @@ def main():
         model = build_resnet50(classes)
         optimizer = tf.keras.optimizers.Adam(1e-3)
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        use_xla = os.environ.get("TF_XLA", "1") != "0"
 
-        @tf.function(jit_compile=True)
+        @tf.function(jit_compile=use_xla)
         def train_step(x, y):
             with tf.GradientTape() as tape:
                 loss = loss_fn(y, model(x, training=True))
@@ -105,21 +119,42 @@ def main():
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
             return loss
 
-        loss0 = train_step(xb, yb)
-        loss1 = train_step(xb, yb)
-        loss0_value = float(loss0.numpy())
-        loss1_value = float(loss1.numpy())
+        if args.target is None:
+            loss_history = [float(train_step(xb, yb).numpy()),
+                            float(train_step(xb, yb).numpy())]
+        else:
+            print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
+            started = time.perf_counter()
+            loss_history = []
+            for _ in range(args.max_steps):
+                value = float(train_step(xb, yb).numpy())
+                loss_history.append(value)
+                if value <= args.target:
+                    break
+            wall_s = time.perf_counter() - started
+            print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
-    if not np.isfinite(loss1_value):
+    if not np.isfinite(loss_history[-1]):
         raise RuntimeError("loss is not finite")
 
-    print("engine=tensorflow_xla")
-    print("path=xla")
+    print(f"engine=tensorflow_{'xla' if use_xla else 'graph'}")
+    print(f"path={'xla' if use_xla else 'graph'}")
     print(f"device={device_name}")
     print(f"samples={args.batch} batch={args.batch} precision={args.precision} classes={classes}")
     print(f"parameters={model.count_params()}")
-    print(f"loss_warmup={loss0_value:.6g}")
-    print(f"loss_final={loss1_value:.6g}")
+    if args.target is None:
+        print(f"loss_warmup={loss_history[0]:.6g}")
+        print(f"loss_final={loss_history[-1]:.6g}")
+    else:
+        reached = loss_history[-1] <= args.target
+        print(f"target={args.target}")
+        print(f"steps_run={len(loss_history)}")
+        print(f"epochs_run={len(loss_history)}")
+        print(f"final_error={loss_history[-1]:.9g}")
+        print(f"reached_goal={1 if reached else 0}")
+        print("loss_history=" + ",".join(f"{v:.9g}" for v in loss_history))
+        print(f"wall_s={wall_s:.9g}")
+        print(f"samples_per_sec={args.batch * len(loss_history) / wall_s:.9g}")
     print("RESULT=OK")
     return 0
 

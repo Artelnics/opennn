@@ -9,6 +9,7 @@ import argparse
 import gc
 import os
 import sys
+import time
 
 import numpy as np
 import torch
@@ -72,10 +73,20 @@ class ResNet50(nn.Module):
 def make_batch(data_dir, batch):
     images = np.load(os.path.join(data_dir, "cifar_images.npy"), mmap_mode="r")
     labels = np.load(os.path.join(data_dir, "cifar_labels.npy"), mmap_mode="r")
-    idx = np.arange(batch, dtype=np.int64) % images.shape[0]
+    classes = int(labels.max()) + 1
+    class_indices = [np.flatnonzero(labels == label) for label in range(classes)]
+    positions = np.arange(batch, dtype=np.int64)
+    idx = np.fromiter(
+        (class_indices[int(position % classes)]
+         [int(position // classes)
+          % class_indices[int(position % classes)].size]
+         for position in positions),
+        dtype=np.int64,
+        count=batch,
+    )
     xb = np.asarray(images[idx], dtype=np.float32) / 255.0
     yb = np.asarray(labels[idx], dtype=np.int64)
-    return xb, yb, int(labels.max()) + 1
+    return xb, yb, classes
 
 
 def default_data():
@@ -94,13 +105,17 @@ def main():
     # 1 = speed config (cuDNN autotune picks fastest algo, more scratch);
     # 0 = memory config (heuristic, avoids autotune scratch dominating capacity).
     ap.add_argument("--cudnn-benchmark", type=int, default=0)
+    ap.add_argument("--target", type=float, default=None,
+                    help="optional training-loss target")
+    ap.add_argument("--max-steps", type=int, default=20)
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     assert torch.cuda.is_available(), "CUDA GPU required"
     if args.memory_fraction is not None:
         torch.cuda.set_per_process_memory_fraction(args.memory_fraction, device=0)
 
-    torch.manual_seed(42)
+    torch.manual_seed(args.seed)
     torch.backends.cudnn.benchmark = bool(args.cudnn_benchmark)
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
@@ -134,16 +149,38 @@ def main():
         torch.cuda.synchronize()
         return float(loss.detach().cpu())
 
-    loss0 = train_step()
-    loss1 = train_step()
+    if args.target is None:
+        loss_history = [train_step(), train_step()]
+    else:
+        print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
+        started = time.perf_counter()
+        loss_history = []
+        for _ in range(args.max_steps):
+            value = train_step()
+            loss_history.append(value)
+            if value <= args.target:
+                break
+        wall_s = time.perf_counter() - started
+        print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
     print(f"engine=pytorch_{args.path}")
     print(f"path={args.path}")
     print(f"device={torch.cuda.get_device_name(0)}")
     print(f"samples={args.batch} batch={args.batch} precision={args.precision} classes={classes}")
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
-    print(f"loss_warmup={loss0:.6g}")
-    print(f"loss_final={loss1:.6g}")
+    if args.target is None:
+        print(f"loss_warmup={loss_history[0]:.6g}")
+        print(f"loss_final={loss_history[-1]:.6g}")
+    else:
+        reached = loss_history[-1] <= args.target
+        print(f"target={args.target}")
+        print(f"steps_run={len(loss_history)}")
+        print(f"epochs_run={len(loss_history)}")
+        print(f"final_error={loss_history[-1]:.9g}")
+        print(f"reached_goal={1 if reached else 0}")
+        print("loss_history=" + ",".join(f"{v:.9g}" for v in loss_history))
+        print(f"wall_s={wall_s:.9g}")
+        print(f"samples_per_sec={args.batch * len(loss_history) / wall_s:.9g}")
     print("RESULT=OK")
     return 0
 

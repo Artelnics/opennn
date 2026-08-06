@@ -121,25 +121,35 @@ def main():
         starts = list(range(0, n - batch + 1, batch))
 
         def run_epoch():
+            last = None
             if shuffle:
                 # Fresh permutation each epoch, resident on the GPU.
                 perm = tf.random.shuffle(tf.range(n))
                 for s in starts:
                     idx = perm[s:s + batch]
-                    train_step(tf.gather(x, idx), tf.gather(y, idx))
+                    last = train_step(tf.gather(x, idx), tf.gather(y, idx))
             else:
                 for s in starts:
-                    train_step(x[s:s + batch], y[s:s + batch])
+                    last = train_step(x[s:s + batch], y[s:s + batch])
+            return last
 
         print("warmup (XLA compiling)...")
         run_epoch()
         run_epoch()
 
+        # TRAIN_*_UNIX markers delimit the energy-integration window for
+        # run_higgs_dense_energy.py; warmup stays outside it. TF dispatches ops
+        # asynchronously, so materialize the last loss before the end marker.
+        print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
         times = []
+        last_loss = None
         for _ in range(epochs):
             t0 = time.perf_counter()
-            run_epoch()
+            last_loss = run_epoch()
             times.append(time.perf_counter() - t0)
+        if last_loss is not None:
+            float(last_loss)
+        print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
         # Score the test set: whole batch-aligned slice on the GPU, forward-only.
         processed = (xt_np.shape[0] // batch) * batch

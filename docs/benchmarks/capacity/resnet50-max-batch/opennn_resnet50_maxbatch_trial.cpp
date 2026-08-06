@@ -13,8 +13,11 @@
 //                         auto = library auto cap, heur = uncapped heuristic,
 //                         off = uncapped autotune (throughput/debug only)
 
+#include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -80,7 +83,17 @@ collect_cifar_images(const std::filesystem::path& train_dir)
         for (const fs::directory_entry& entry : fs::directory_iterator(class_dir))
             if (entry.is_regular_file() || entry.is_symlink())
                 files.push_back(entry.path());
-        std::ranges::sort(files);
+        std::ranges::sort(files, [](const fs::path& left, const fs::path& right)
+        {
+            const auto sample_index = [](const fs::path& path)
+            {
+                const std::string stem = path.stem().string();
+                const size_t separator = stem.rfind('_');
+                return separator == std::string::npos
+                    ? Index(0) : Index(std::stoll(stem.substr(separator + 1)));
+            };
+            return sample_index(left) < sample_index(right);
+        });
 
         const std::string class_name = class_dir.filename().string();
         for (const fs::path& file : files)
@@ -99,6 +112,15 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
 
     const fs::path train_dir = fs::path(data_dir) / "train";
     const auto samples = collect_cifar_images(train_dir);
+    std::vector<std::vector<std::pair<fs::path, std::string>>> by_class(kClasses);
+    std::vector<std::string> class_names;
+    for (const auto& sample : samples)
+    {
+        if (class_names.empty() || class_names.back() != sample.second)
+            class_names.push_back(sample.second);
+        const auto class_it = std::ranges::find(class_names, sample.second);
+        by_class[size_t(class_it - class_names.begin())].push_back(sample);
+    }
 
     temp.root = fs::temp_directory_path()
               / ("opennn_resnet50_maxbatch_"
@@ -112,7 +134,10 @@ std::filesystem::path make_repeated_image_tree(const std::string& data_dir,
 
     for (Index i = 0; i < batch; ++i)
     {
-        const auto& [source, class_name] = samples[size_t(i % ssize(samples))];
+        const size_t class_index = size_t(i % kClasses);
+        const size_t within_class = size_t(i / kClasses)
+                                  % by_class[class_index].size();
+        const auto& [source, class_name] = by_class[class_index][within_class];
         const fs::path link = temp.root / class_name
             / ("sample_" + std::to_string(static_cast<long long>(i)) + source.extension().string());
 
@@ -154,7 +179,8 @@ int main(int argc, char* argv[])
         throw_if(precision != "fp32" && precision != "bf16",
                  "Precision must be fp32 or bf16.");
 
-        set_seed(42);
+        const char* seed_env = std::getenv("OPENNN_BENCH_SEED");
+        set_seed(seed_env && *seed_env ? std::stoi(seed_env) : 42);
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
@@ -176,6 +202,7 @@ int main(int argc, char* argv[])
             make_repeated_image_tree(data_dir, batch, temp_images);
 
         ImageDataset dataset(trial_data_path);
+        dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         dataset.set_sample_roles("Training");
         dataset.set_display(false);
 
@@ -211,7 +238,33 @@ int main(int argc, char* argv[])
         adam->set_shuffle(false);
         adam->set_batch_pool_size(batch_pool);
 
+        const char* target_env = std::getenv("OPENNN_TARGET_LOSS");
+        const bool target_mode = target_env && *target_env;
+        const float target = target_mode ? std::stof(target_env) : 0.0f;
+        const char* steps_env = std::getenv("OPENNN_MAX_STEPS");
+        const Index max_steps = steps_env && *steps_env
+            ? std::max<Index>(Index(1), Index(std::stoll(steps_env)))
+            : Index(1);
+        if (target_mode)
+        {
+            adam->set_maximum_epochs(max_steps);
+            adam->set_loss_goal(target);
+        }
+
+        const auto unix_now = []
+        {
+            return std::chrono::duration<double>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+        };
+        if (target_mode)
+            std::cout << "TRAIN_START_UNIX=" << std::fixed << std::setprecision(3)
+                      << unix_now() << "\n" << std::defaultfloat;
+        const auto train_start = std::chrono::steady_clock::now();
         const TrainingResult result = training_strategy.train();
+        const auto train_end = std::chrono::steady_clock::now();
+        if (target_mode)
+            std::cout << "TRAIN_END_UNIX=" << std::fixed << std::setprecision(3)
+                      << unix_now() << "\n" << std::defaultfloat;
         const float training_error = result.get_training_error();
         throw_if(!std::isfinite(training_error), "Training error is not finite.");
 
@@ -219,12 +272,30 @@ int main(int argc, char* argv[])
         std::cout << "model=ResNet-50-v1.5-CIFAR\n";
         std::cout << "samples=" << batch << " batch=" << batch
                   << " precision=" << precision << "\n";
-        std::cout << "storage=ImageDataset BinaryFile cache\n";
-        std::cout << "gpu_resident_data=0\n";
+        std::cout << "storage=ImageDataset GPU-persistent cache\n";
+        std::cout << "gpu_resident_data=1\n";
         std::cout << "training_activation_recomputation="
                   << (recompute_activations ? 1 : 0) << "\n";
         std::cout << "parameters=" << network.get_parameters_size() << "\n";
         std::cout << "training_error=" << training_error << "\n";
+        if (target_mode)
+        {
+            const Index steps_run = result.get_epochs_number();
+            const double wall_s =
+                std::chrono::duration<double>(train_end - train_start).count();
+            std::cout << "target=" << target << "\n";
+            std::cout << "steps_run=" << steps_run << "\n";
+            std::cout << "epochs_run=" << steps_run << "\n";
+            std::cout << "final_error=" << training_error << "\n";
+            std::cout << "reached_goal=" << (training_error <= target ? 1 : 0) << "\n";
+            std::cout << "loss_history=";
+            for (Index step = 0; step < result.training_error_history.size(); ++step)
+                std::cout << (step ? "," : "") << result.training_error_history(step);
+            std::cout << "\n";
+            std::cout << "wall_s=" << wall_s << "\n";
+            std::cout << "samples_per_sec="
+                      << double(batch) * double(steps_run) / wall_s << "\n";
+        }
         memory_debug::print(std::cout);
         std::cout << "RESULT=OK\n";
         return 0;

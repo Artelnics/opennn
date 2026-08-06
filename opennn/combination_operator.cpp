@@ -97,7 +97,7 @@ void CombinationOperator::set_parameters_pytorch()
     if (!bias.empty()) set_random_uniform(bias.as_vector(), -limit, limit);
 }
 
-void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     PROFILE_SCOPE("op:combination_fwd");
     TensorView& output = get_output(forward_propagation, layer);
@@ -127,6 +127,31 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     }
 
     const bool relu = (fused_activation == ActivationFunction::ReLU);
+
+    if (relu && emit_relu_mask && is_training && output.is_cuda() && output.is_fp32())
+    {
+        const Index rows = output.size() / output_features;
+        try
+        {
+            relu_mask.ensure<uint8_t>(rows * (output_features / 8));
+            if (relu_mask_view.data != relu_mask.data || relu_mask_view.shape.empty()
+                || relu_mask_view.shape[0] != rows)
+                relu_mask_view = TensorView(relu_mask.data, Shape{rows, output_features / 8},
+                                            Type::INT8, Device::CUDA);
+            linear_forward(get_input(forward_propagation, layer), weights, bias, output,
+                           CUBLASLT_EPILOGUE_RELU_AUX_BIAS, &relu_mask_view, weight_scale);
+            relu_mask_fused_active = true;
+            return;
+        }
+        catch (const runtime_error&)
+        {
+            // RELU_AUX_BIAS unsupported here: permanently fall back to the
+            // unfused path (the consumer reads these flags too).
+            emit_relu_mask = false;
+            relu_mask_fused_active = false;
+        }
+    }
+
     const cublasLtEpilogue_t epilogue = use_bias
         ? (relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS)
         : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);
@@ -144,7 +169,36 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 
     TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
+    // Cross-layer dReLU fusion: input_delta is the producer layer's output
+    // delta, so its ReLU derivative can ride the dgrad GEMM's DRELU epilogue
+    // (mask stored by the producer's RELU_AUX_BIAS forward). The producer's
+    // activation backward skips while relu_mask_fused_active holds.
+    bool recover_unfused = false;
+    if (drelu_source && drelu_source->relu_mask_fused_active
+        && input_delta.data && !input_delta.empty())
+    {
+        try
+        {
+            linear_backward(output_delta, input, weights, weight_gradient, bias_gradient,
+                            input_delta, accumulate_input_delta, &drelu_source->relu_mask_view);
+            return;
+        }
+        catch (const runtime_error&)
+        {
+            // DRELU unsupported here: veto the fusion for good and recover
+            // this step unfused below — `input` IS the producer's ReLU output,
+            // so applying the elementwise derivative here matches exactly what
+            // the producer's activation backward would have done.
+            drelu_source->relu_mask_fused_active = false;
+            drelu_source->emit_relu_mask = false;
+            recover_unfused = true;
+        }
+    }
+
     linear_backward(output_delta, input, weights, weight_gradient, bias_gradient, input_delta, accumulate_input_delta);
+
+    if (recover_unfused)
+        activation_backward(input, input_delta, ActivationFunction::ReLU);
 }
 
 }

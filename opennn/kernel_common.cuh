@@ -124,6 +124,19 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
+// Launch a float4-vectorized kernel of shape (n_vec, n, args...): the kernel
+// processes n_vec float4 packets plus a scalar tail. When aligned is false the
+// whole range runs through the tail loop (n_vec = 0).
+template<typename K, typename... Args>
+static inline void launch_vec4(Index n, bool aligned, K kernel, Args... args)
+{
+    if (n == 0) return;
+    const int total = checked_int(n);
+    const int n_vec = aligned ? total / 4 : 0;
+    OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(vector_work_size(total, n_vec, 4)), block_size, 0,
+                       opennn::device::get_compute_stream()>>>(n_vec, total, args...));
+}
+
 __device__ __forceinline__ float sigmoid_f(float x)
 {
     return 1.0f / (1.0f + expf(-x));

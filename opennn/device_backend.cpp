@@ -869,7 +869,17 @@ namespace
         set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
         set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
-        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS)
+        // Aux-buffer epilogues: GELU stores pre-activation values, the ReLU
+        // pair stores/consumes a column-major bitmask whose ld (in bits) must
+        // be a multiple of 128.
+        if (epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS
+            || epilogue == CUBLASLT_EPILOGUE_DRELU)
+            throw_if(m % 128 != 0,
+                     "cuBLASLt ReLU bitmask epilogue requires m % 128 == 0, got {}.", m);
+
+        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS
+            || epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS
+            || epilogue == CUBLASLT_EPILOGUE_DRELU)
         {
             const int64_t aux_ld = m;
             set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD, aux_ld);

@@ -216,6 +216,29 @@
    ]
   },
   {
+   "id": "gpu-higgs-dense-energy",
+   "folder": "energy/higgs-dense-energy",
+   "readme": "energy/higgs-dense-energy/README.md",
+   "category": "energy",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, GPU energy for fixed-work training of the canonical HIGGS dense classifier (fp32 and bf16)",
+   "metrics": ["energy_total_j", "uj_per_sample_total", "avg_power_w", "train_window_s"],
+   "runner": [
+    "cmake --build build-benchmarks --target opennn_speed",
+    "python docs/benchmarks/energy/higgs-dense-energy/run_higgs_dense_energy.py --train $OPENNN_BENCH_DATA/higgs/higgs_train.csv --test $OPENNN_BENCH_DATA/higgs/higgs_test.csv --epochs 20 --batch 7000 --precision both --runs 3"
+   ]
+  },
+  {
+   "id": "gpu-max-batch-to-target",
+   "folder": "energy/max-batch-to-target",
+   "readme": "energy/max-batch-to-target/README.md",
+   "category": "energy",
+   "comparison": "OpenNN vs PyTorch vs TensorFlow, each engine's maximum training batch to a common loss target",
+   "metrics": ["max_train_batch", "energy_total_j", "train_window_s", "steps_run", "samples_per_sec"],
+   "runner": [
+    "python docs/benchmarks/energy/max-batch-to-target/run_max_batch_to_target.py --help"
+   ]
+  },
+  {
    "id": "application-loc",
    "folder": "footprint/application-loc",
    "readme": "footprint/application-loc/README.md",

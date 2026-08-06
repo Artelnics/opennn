@@ -151,6 +151,7 @@ public:
     void link_parameters();
     void link_states();
     void link_states(Device);
+    void wire_drelu_fusions();
     MatrixR calculate_outputs(const vector<TensorView>&);
 
     TensorView calculate_outputs_resident(const vector<TensorView>&,

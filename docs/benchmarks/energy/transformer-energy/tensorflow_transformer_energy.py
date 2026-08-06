@@ -163,7 +163,7 @@ loss_history = []
 reached = False
 epochs_run = 0
 
-for epoch in range(args.max_epochs + 1):
+for epoch in range(args.max_epochs):
     perm = rng.permutation(n_samples)
     batch_losses = []
     for start in range(0, n_samples, args.batch):
@@ -175,7 +175,7 @@ for epoch in range(args.max_epochs + 1):
     # single host sync per epoch (a per-step float() would stall the pipeline)
     mean_loss = float(tf.add_n(batch_losses)) / len(batch_losses)
     loss_history.append(mean_loss)
-    epochs_run = epoch
+    epochs_run = epoch + 1
     print(f"epoch={epoch} loss={mean_loss:.6f} elapsed={time.perf_counter() - t0:.1f}s",
           flush=True)
     if mean_loss < args.target:
@@ -190,5 +190,5 @@ print(f"epochs={epochs_run}")
 print(f"final_error={loss_history[-1]:.6f}")
 print(f"reached_goal={1 if reached else 0}")
 print(f"wall_s={wall_s:.3f}")
-print(f"samples_per_sec={n_samples * (epochs_run + 1) / wall_s:.2f}")
+print(f"samples_per_sec={n_samples * epochs_run / wall_s:.2f}")
 print("RESULT=OK")

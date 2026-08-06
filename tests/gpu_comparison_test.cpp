@@ -10,6 +10,7 @@
 #include "opennn/convolutional_layer.h"
 #include "opennn/dense_layer.h"
 #include "opennn/flatten_layer.h"
+#include "opennn/multihead_attention_layer.h"
 #include "opennn/neural_network.h"
 #include "opennn/standard_networks.h"
 #include "opennn/loss.h"
@@ -219,6 +220,83 @@ TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+}
+
+// Cross-layer dReLU fusion: with 128-wide ReLU hidden layers the consumer
+// Dense applies the producer's ReLU derivative inside its input-delta GEMM
+// (DRELU epilogue + RELU_AUX_BIAS bitmask) instead of an elementwise pass.
+// The gradient must match the unfused CPU reference exactly as before.
+// The fusion is opt-in (see NeuralNetwork::wire_drelu_fusions), so the test
+// sets OPENNN_DRELU_FUSION for the GPU network's compile; RAII keeps a failed
+// assertion from leaking the variable into sibling tests.
+#ifdef _WIN32
+#define setenv(name, value, overwrite) _putenv_s(name, value)
+#define unsetenv(name) _putenv_s(name, "")
+#endif
+
+namespace
+{
+struct ScopedDreluFusionEnv
+{
+    ScopedDreluFusionEnv()  { setenv("OPENNN_DRELU_FUSION", "1", 1); }
+    ~ScopedDreluFusionEnv() { unsetenv("OPENNN_DRELU_FUSION"); }
+};
+}
+
+TEST_F(GpuComparison, DenseDreluFusedGradient)
+{
+    const ScopedDreluFusionEnv fusion_env;
+
+    const Index samples_number = 6;
+    const Index inputs_number = 4;
+    const Index hidden_number = 128;   // fusion requires hidden % 128 == 0
+    const Index outputs_number = 2;
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    TabularDataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "ReLU"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{hidden_number}, "ReLU"));
+    cpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{hidden_number}, "ReLU"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{hidden_number}, "ReLU"));
+    gpu_network.add_layer(make_unique<opennn::Dense>(Shape{hidden_number}, Shape{outputs_number}, "Identity"));
+    gpu_network.compile();
+    gpu_network.set_parameters(parameters);
+
+    const auto* hidden_2 = dynamic_cast<const opennn::Dense*>(gpu_network.get_layers()[1].get());
+    const auto* output_layer = dynamic_cast<const opennn::Dense*>(gpu_network.get_layers()[2].get());
+    ASSERT_NE(hidden_2, nullptr);
+    ASSERT_NE(output_layer, nullptr);
+    EXPECT_TRUE(hidden_2->drelu_fusion_wired());
+    EXPECT_TRUE(output_layer->drelu_fusion_wired());
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    // The fused path must have actually run (a cuBLASLt fallback would still
+    // produce correct numbers, but we want to know it silently disengaged).
+    EXPECT_TRUE(hidden_2->drelu_fusion_ran());
+    EXPECT_TRUE(output_layer->drelu_fusion_ran());
 
     Configuration::instance().set(Device::CPU, Type::FP32);
 
@@ -798,6 +876,135 @@ TEST_F(GpuComparison, TransformerForward)
     const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
     const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
     EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f);
+}
+
+// The SDPA path derives per-sample valid lengths from the source activation
+// content. Forward arenas are reused across batches, so the device pointer is
+// identical between calls while the padding pattern changes; the lengths must
+// be derived from the current content, never from pointer identity.
+TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
+{
+    if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
+        GTEST_SKIP() << "SDPA is not available in this build.";
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    set_seed(7);
+
+    const Index batch_size = 2;
+    const Index sequence_length = 64;
+    const Index embedding_dimension = 64;
+    const Index heads_number = 4;
+
+    auto attention = make_unique<MultiHeadAttention>(
+        Shape{sequence_length, embedding_dimension}, heads_number);
+    attention->set_sdpa_min_sequence_length(1);
+
+    NeuralNetwork network;
+    network.add_layer(std::move(attention));
+    network.compile();
+    network.set_parameters_random();
+
+    // compile() propagates the CUDA device to the layer and re-evaluates SDPA.
+    ASSERT_TRUE(static_cast<MultiHeadAttention*>(network.get_layer(0).get())->should_use_sdpa());
+
+    const auto make_batch = [&](const std::array<Index, 2>& valid_lengths)
+    {
+        VectorR data(batch_size * sequence_length * embedding_dimension);
+        data.setRandom();
+        for (Index sample = 0; sample < batch_size; ++sample)
+            for (Index row = valid_lengths[size_t(sample)]; row < sequence_length; ++row)
+                data.segment((sample * sequence_length + row) * embedding_dimension,
+                             embedding_dimension).setZero();
+        return data;
+    };
+
+    VectorR batch_short = make_batch({24, 40});
+    VectorR batch_long  = make_batch({64, 56});
+
+    const auto forward_outputs = [&](ForwardPropagation& forward_propagation, VectorR& batch)
+    {
+        vector<TensorView> inputs = {
+            TensorView(batch.data(), {batch_size, sequence_length, embedding_dimension})};
+        network.forward_propagate(inputs, forward_propagation, true);
+
+        const TensorView outputs = forward_propagation.get_outputs();
+        VectorR host(outputs.size());
+        device::copy_async(host.data(), outputs.data,
+                           outputs.size() * Index(sizeof(float)),
+                           device::CopyKind::DeviceToHost,
+                           Backend::get_compute_stream());
+        device::synchronize(Backend::get_compute_stream());
+        return host;
+    };
+
+    // Reusing one ForwardPropagation keeps every device pointer stable across
+    // the two batches, which is exactly the situation that made cached lengths
+    // go stale.
+    ForwardPropagation reused_propagation(batch_size, &network);
+    forward_outputs(reused_propagation, batch_short);
+    const VectorR outputs_after_reuse = forward_outputs(reused_propagation, batch_long);
+
+    // A second propagation alive at the same time is guaranteed to use
+    // different device pointers, so its lengths are freshly derived.
+    ForwardPropagation fresh_propagation(batch_size, &network);
+    const VectorR outputs_fresh = forward_outputs(fresh_propagation, batch_long);
+
+    ASSERT_EQ(outputs_after_reuse.size(), outputs_fresh.size());
+    EXPECT_LT(relative_difference(outputs_fresh, outputs_after_reuse), 1.0e-5f);
+}
+
+// Exercises apply_sdpa_backward with the delta-pool BF16 gradient scratch
+// against the CPU unfused reference. SDPA converts FP32 to BF16 internally,
+// hence the loose tolerance.
+TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
+{
+    if (!AttentionOperator::sdpa_supported(Type::FP32, Device::CUDA))
+        GTEST_SKIP() << "SDPA is not available in this build.";
+
+    const Index samples_number = 4;
+    const Index sequence_length = 64;
+    const Index heads_number = 2;
+    const Index embedding_dimension = 32;
+
+    const Shape input_shape{sequence_length, embedding_dimension};
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    set_seed(11);
+
+    TabularDataset dataset(samples_number, input_shape, {sequence_length * embedding_dimension});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    NeuralNetwork cpu_network;
+    cpu_network.add_layer(make_unique<MultiHeadAttention>(input_shape, heads_number));
+    cpu_network.add_layer(make_unique<Flatten>(cpu_network.get_output_shape()));
+    cpu_network.compile();
+    cpu_network.set_parameters_random();
+    const VectorR parameters = read_host_parameters(cpu_network);
+
+    Loss cpu_loss(&cpu_network, &dataset);
+    cpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    NeuralNetwork gpu_network;
+    auto gpu_attention = make_unique<MultiHeadAttention>(input_shape, heads_number);
+    gpu_attention->set_sdpa_min_sequence_length(1);
+    gpu_network.add_layer(std::move(gpu_attention));
+    gpu_network.add_layer(make_unique<Flatten>(gpu_network.get_output_shape()));
+    gpu_network.compile();
+    gpu_network.set_parameters(parameters);
+
+    ASSERT_TRUE(static_cast<MultiHeadAttention*>(gpu_network.get_layer(0).get())->should_use_sdpa());
+
+    Loss gpu_loss(&gpu_network, &dataset);
+    gpu_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+
+    ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 2.0e-2f);
 }
 
 #ifndef OPENNN_NO_VISION

@@ -159,7 +159,7 @@ loss_history = []
 reached = False
 epochs_run = 0
 
-for epoch in range(args.max_epochs + 1):
+for epoch in range(args.max_epochs):
     perm = torch.randperm(n_samples, generator=gen).to(dev)
     epoch_loss = torch.zeros((), device=dev)
     n_batches = 0
@@ -177,7 +177,7 @@ for epoch in range(args.max_epochs + 1):
 
     mean_loss = float(epoch_loss.item() / n_batches)
     loss_history.append(mean_loss)
-    epochs_run = epoch
+    epochs_run = epoch + 1
     print(f"epoch={epoch} loss={mean_loss:.6f} elapsed={time.perf_counter() - t0:.1f}s",
           flush=True)
     if mean_loss < args.target:
@@ -193,5 +193,5 @@ print(f"epochs={epochs_run}")
 print(f"final_error={loss_history[-1]:.6f}")
 print(f"reached_goal={1 if reached else 0}")
 print(f"wall_s={wall_s:.3f}")
-print(f"samples_per_sec={n_samples * (epochs_run + 1) / wall_s:.2f}")
+print(f"samples_per_sec={n_samples * epochs_run / wall_s:.2f}")
 print("RESULT=OK")

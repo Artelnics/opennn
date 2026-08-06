@@ -133,6 +133,48 @@ TensorSpec AttentionOperator::backward_scratch_spec(Index batch_size) const
             compute_dtype};
 }
 
+// BF16 conversion scratch for the FP32-via-BF16 SDPA backward: dO/dQ/dK/dV
+// plus rematerialized Q/K/V (re-cast from the retained FP32 forward views,
+// which is bit-exact). Declared as backward specs so the delta-pool planner
+// shares one region across all attention layers (each is live only during its
+// own layer's backward step).
+vector<TensorSpec> AttentionOperator::sdpa_gradient_scratch_specs(Index batch_size) const
+{
+    if (!use_sdpa || compute_dtype != Type::FP32)
+        return vector<TensorSpec>(sdpa_scratch_slots_count, {Shape{}, Type::BF16});
+
+    const Shape query_shape  = {batch_size, heads_number, query_sequence_length,  head_dimension};
+    const Shape source_shape = {batch_size, heads_number, source_sequence_length, head_dimension};
+
+    return {
+        {query_shape,  Type::BF16},   // dO
+        {query_shape,  Type::BF16},   // dQ
+        {source_shape, Type::BF16},   // dK
+        {source_shape, Type::BF16},   // dV
+        {query_shape,  Type::BF16},   // Q remat
+        {source_shape, Type::BF16},   // K remat
+        {source_shape, Type::BF16},   // V remat
+    };
+}
+
+// Forward-transient pack holding the BF16 casts of Q, K and V while the SDPA
+// forward graph runs. It aliases the shared transient block (TransposeScratch
+// is only written after the graph finishes, so their live ranges are disjoint).
+TensorSpec AttentionOperator::sdpa_qkv_pack_spec(Index batch_size) const
+{
+    if (!use_sdpa || compute_dtype != Type::FP32)
+        return {Shape{}, Type::BF16};
+
+    const Index query_elements  = batch_size * heads_number * query_sequence_length  * head_dimension;
+    const Index source_elements = batch_size * heads_number * source_sequence_length * head_dimension;
+    const Index bf16_bytes = Index(sizeof(bfloat16));
+
+    const Index pack_bytes = get_aligned_bytes(query_elements * bf16_bytes)
+                           + 2 * get_aligned_bytes(source_elements * bf16_bytes);
+
+    return {{pack_bytes / bf16_bytes}, Type::BF16};
+}
+
 bool AttentionOperator::sdpa_supported(Type dtype, Device device)
 {
 #ifdef OPENNN_HAS_CUDA
@@ -195,17 +237,8 @@ struct AttentionOperator::SDPACache
         int32_t* query_lengths  = nullptr;
         int32_t* source_lengths = nullptr;
 
-        const void* seq_len_source_ptr = nullptr;
-        bfloat16* query = nullptr;
-        bfloat16* key = nullptr;
-        bfloat16* value = nullptr;
         bfloat16* output = nullptr;
-        Index q_elems = 0, kv_elems = 0, o_elems = 0;
-        bfloat16* output_gradient = nullptr;
-        bfloat16* query_gradient = nullptr;
-        bfloat16* key_gradient = nullptr;
-        bfloat16* value_gradient = nullptr;
-        Index do_elems = 0, dq_elems = 0, dkv_elems = 0;
+        Index o_elems = 0;
     };
 
     unordered_map<CacheKey, Entry, CacheKeyHash> entries;
@@ -240,14 +273,7 @@ struct AttentionOperator::SDPACache
         for (auto& [_, e] : entries)
         {
             device::deallocate(Device::CUDA, e.fwd_workspace_buf, 0);
-            device::deallocate(Device::CUDA, e.query, 0);
-            device::deallocate(Device::CUDA, e.key, 0);
-            device::deallocate(Device::CUDA, e.value, 0);
             device::deallocate(Device::CUDA, e.output, 0);
-            device::deallocate(Device::CUDA, e.output_gradient, 0);
-            device::deallocate(Device::CUDA, e.query_gradient, 0);
-            device::deallocate(Device::CUDA, e.key_gradient, 0);
-            device::deallocate(Device::CUDA, e.value_gradient, 0);
             device::deallocate(Device::CUDA, e.bwd_workspace_buf, 0);
             device::deallocate(Device::CUDA, e.stats_buf, 0);
             device::deallocate(Device::CUDA, e.dropout_seed, 0);
@@ -317,9 +343,8 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-    if (source_input.data == entry.seq_len_source_ptr)
-        return;
-
+    // Recompute every batch: forward arenas are reused, so a stable pointer
+    // does not imply the padding pattern is unchanged.
     source_input.dispatch([&](auto tag) {
         using T = decltype(tag);
         attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
@@ -330,7 +355,6 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
                                            entry.query_lengths,
                                            entry.source_lengths);
     });
-    entry.seq_len_source_ptr = source_input.data;
 }
 
 }
@@ -511,7 +535,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     if (use_sdpa && query.is_cuda() && !explicit_lengths)
     {
         apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
-                           attention_out, is_training);
+                           attention_out, forward_slots[sdpa_qkv_pack_slot], is_training);
         return;
     }
 #endif
@@ -541,11 +565,23 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     TensorView& value_delta            = get_output_delta(back_propagation, layer, 3);
 
 #ifdef OPENNN_HAS_CUDA
-    if (output_delta.is_cuda() && use_sdpa)
+    // Mirror the forward dispatch: explicit valid lengths route forward through
+    // the unfused path, so backward must not consume the SDPA cache.
+    const bool sdpa_ran_forward = use_sdpa
+        && forward_propagation.attention_valid_lengths.empty();
+
+    if (output_delta.is_cuda() && sdpa_ran_forward)
     {
+        throw_if(sdpa_gradient_slot == 0,
+                 "AttentionOperator: use_sdpa is set but the owning layer did not "
+                 "assign sdpa_gradient_slot (gradient scratch comes from the delta pool).");
+
+        const auto& slots = back_propagation.backward_slots[layer];
         apply_sdpa_backward(query, key, value, attention_output,
                             output_delta,
-                            query_delta, key_delta, value_delta);
+                            query_delta, key_delta, value_delta,
+                            span<const TensorView>(slots.data() + sdpa_gradient_slot,
+                                                   sdpa_scratch_slots_count));
         return;
     }
 
@@ -827,6 +863,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
                                const TensorView& value,
                                const TensorView& source_input,
                                TensorView& output,
+                               const TensorView& qkv_pack_bf16,
                                bool is_training)
 {
     throw_if(!sdpa_supported(query.type, query.device),
@@ -895,32 +932,29 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
         const Index o_elems  = output.size();
-        if (q_elems > entry.q_elems)
-        {
-            device::deallocate(Device::CUDA, entry.query, 0);
-            entry.query   = static_cast<bfloat16*>(device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16))));
-            entry.q_elems = q_elems;
-        }
-        if (kv_elems > entry.kv_elems)
-        {
-            device::deallocate(Device::CUDA, entry.key, 0);
-            device::deallocate(Device::CUDA, entry.value, 0);
-            entry.key    = static_cast<bfloat16*>(device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16))));
-            entry.value    = static_cast<bfloat16*>(device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16))));
-            entry.kv_elems = kv_elems;
-        }
+
+        throw_if(qkv_pack_bf16.empty(),
+                 "SDPA forward: the transient Q/K/V BF16 pack was not planned "
+                 "(ForwardPropagation::set ran without the SDPA pack spec).");
+
+        bfloat16* const query_bf16 = qkv_pack_bf16.as<bfloat16>();
+        bfloat16* const key_bf16   = query_bf16
+            + get_aligned_bytes(q_elems * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
+        bfloat16* const value_bf16 = key_bf16
+            + get_aligned_bytes(kv_elems * Index(sizeof(bfloat16))) / Index(sizeof(bfloat16));
+
         if (o_elems > entry.o_elems)
         {
             device::deallocate(Device::CUDA, entry.output, 0);
             entry.output   = static_cast<bfloat16*>(device::allocate(Device::CUDA, o_elems * Index(sizeof(bfloat16))));
             entry.o_elems = o_elems;
         }
-        cast_fp32_to_bf16(q_elems,  query.as<float>(), entry.query, cstream);
-        cast_fp32_to_bf16(kv_elems, key.as<float>(),   entry.key, cstream);
-        cast_fp32_to_bf16(kv_elems, value.as<float>(), entry.value, cstream);
-        q_ptr = entry.query;
-        k_ptr = entry.key;
-        v_ptr = entry.value;
+        cast_fp32_to_bf16(q_elems,  query.as<float>(), query_bf16, cstream);
+        cast_fp32_to_bf16(kv_elems, key.as<float>(),   key_bf16, cstream);
+        cast_fp32_to_bf16(kv_elems, value.as<float>(), value_bf16, cstream);
+        q_ptr = query_bf16;
+        k_ptr = key_bf16;
+        v_ptr = value_bf16;
         o_ptr = entry.output;
     }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensor_map;
@@ -1094,7 +1128,8 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                 const TensorView& output_delta,
                                 TensorView& query_delta,
                                 TensorView& key_delta,
-                                TensorView& value_delta) const
+                                TensorView& value_delta,
+                                span<const TensorView> bf16_scratch) const
 {
     throw_if(!sdpa_supported(query.type, query.device) || !sdpa_cache,
              "AttentionOperator: SDPA backward called without a live SDPA "
@@ -1146,42 +1181,39 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bdk = key_delta.data;
     void* bdv = value_delta.data;
     const bool fp32_via_bf16 = query.is_fp32();
+    const TensorView& output_gradient_bf16 = bf16_scratch[0];
+    const TensorView& query_gradient_bf16  = bf16_scratch[1];
+    const TensorView& key_gradient_bf16    = bf16_scratch[2];
+    const TensorView& value_gradient_bf16  = bf16_scratch[3];
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = Backend::get_compute_stream();
-        const Index q_elems  = query.size();
-        const Index kv_elems = key.size();
-        const Index do_elems = output_delta.size();
+        const TensorView& query_bf16 = bf16_scratch[4];
+        const TensorView& key_bf16   = bf16_scratch[5];
+        const TensorView& value_bf16 = bf16_scratch[6];
 
-        bq  = entry.query;
-        bk  = entry.key;
-        bv  = entry.value;
+        throw_if(output_gradient_bf16.empty() || query_gradient_bf16.empty()
+                 || key_gradient_bf16.empty() || value_gradient_bf16.empty()
+                 || query_bf16.empty() || key_bf16.empty() || value_bf16.empty(),
+                 "SDPA backward: BF16 scratch views were not planned "
+                 "(BackPropagation::set ran without the SDPA backward specs).");
+
+        // Rematerialize the BF16 Q/K/V from the retained FP32 forward views:
+        // FP32 -> BF16 rounding is deterministic, so these casts reproduce the
+        // forward-pass tensors bit-exactly.
+        cudaStream_t cstream = Backend::get_compute_stream();
+        cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
+        cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);
+        cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);
+        bq  = query_bf16.data;
+        bk  = key_bf16.data;
+        bv  = value_bf16.data;
         bo  = entry.output;
-        if (do_elems > entry.do_elems)
-        {
-            device::deallocate(Device::CUDA, entry.output_gradient, 0);
-            entry.output_gradient   = static_cast<bfloat16*>(device::allocate(Device::CUDA, do_elems * Index(sizeof(bfloat16))));
-            entry.do_elems = do_elems;
-        }
-        if (q_elems > entry.dq_elems)
-        {
-            device::deallocate(Device::CUDA, entry.query_gradient, 0);
-            entry.query_gradient   = static_cast<bfloat16*>(device::allocate(Device::CUDA, q_elems * Index(sizeof(bfloat16))));
-            entry.dq_elems = q_elems;
-        }
-        if (kv_elems > entry.dkv_elems)
-        {
-            device::deallocate(Device::CUDA, entry.key_gradient, 0);
-            device::deallocate(Device::CUDA, entry.value_gradient, 0);
-            entry.key_gradient    = static_cast<bfloat16*>(device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16))));
-            entry.value_gradient    = static_cast<bfloat16*>(device::allocate(Device::CUDA, kv_elems * Index(sizeof(bfloat16))));
-            entry.dkv_elems = kv_elems;
-        }
-        cast_fp32_to_bf16(do_elems, output_delta.as<float>(), entry.output_gradient, cstream);
-        bdo = entry.output_gradient;
-        bdq = entry.query_gradient;
-        bdk = entry.key_gradient;
-        bdv = entry.value_gradient;
+        cast_fp32_to_bf16(output_delta.size(), output_delta.as<float>(),
+                          output_gradient_bf16.as<bfloat16>(), cstream);
+        bdo = output_gradient_bf16.data;
+        bdq = query_gradient_bf16.data;
+        bdk = key_gradient_bf16.data;
+        bdv = value_gradient_bf16.data;
     }
     unordered_map<shared_ptr<cudnn_frontend::graph::Tensor_attributes>, void*> tensor_map;
     tensor_map[entry.bwd_Q]     = bq;
@@ -1206,9 +1238,9 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
              "SDPA backward execute: {}", status.get_message());
     if (fp32_via_bf16)
     {
-        cast_bf16_to_fp32(query.size(), entry.query_gradient, query_delta.as<float>());
-        cast_bf16_to_fp32(key.size(),   entry.key_gradient, key_delta.as<float>());
-        cast_bf16_to_fp32(value.size(), entry.value_gradient, value_delta.as<float>());
+        cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
+        cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
+        cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
     }
 }
 

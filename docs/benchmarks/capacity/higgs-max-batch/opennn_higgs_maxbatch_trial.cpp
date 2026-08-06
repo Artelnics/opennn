@@ -38,6 +38,7 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -258,7 +259,8 @@ int main(int argc, char* argv[])
 
     try
     {
-        set_seed(0);
+        const char* seed_env = std::getenv("OPENNN_BENCH_SEED");
+        set_seed(seed_env && *seed_env ? std::stoi(seed_env) : 0);
         const bool use_cpu = device == "cpu";
 #ifndef OPENNN_HAS_CUDA
         if (!use_cpu)
@@ -543,12 +545,32 @@ int main(int argc, char* argv[])
         adam->set_gradient_clip_norm(0.0f);
         adam->set_batch_pool_size(1);   // capacity: one device batch copy, not three
 
+        const char* target_env = std::getenv("OPENNN_TARGET_LOSS");
+        const bool target_mode = target_env && *target_env;
+        const float target = target_mode ? std::stof(target_env) : 0.0f;
+        if (target_mode)
+        {
+            adam->set_maximum_epochs(iterations);
+            adam->set_loss_goal(target);
+        }
+
+        const auto unix_now = []
+        {
+            return std::chrono::duration<double>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+        };
+        if (target_mode)
+            std::cout << "TRAIN_START_UNIX=" << std::fixed << std::setprecision(3)
+                      << unix_now() << "\n" << std::defaultfloat;
         const auto t0 = std::chrono::high_resolution_clock::now();
         const TrainingResult result = training_strategy.train();
 #ifdef OPENNN_HAS_CUDA
         if (!use_cpu) cudaDeviceSynchronize();
 #endif
         const auto t1 = std::chrono::high_resolution_clock::now();
+        if (target_mode)
+            std::cout << "TRAIN_END_UNIX=" << std::fixed << std::setprecision(3)
+                      << unix_now() << "\n" << std::defaultfloat;
 
         if (!std::isfinite(result.loss))
             throw std::runtime_error("non-finite loss");
@@ -559,8 +581,22 @@ int main(int argc, char* argv[])
         print_peak_memory();
 
         std::cout << "final_loss=" << result.loss << "\n";
+        if (target_mode)
+        {
+            const Index epochs_run = result.get_epochs_number();
+            const bool reached = result.get_training_error() <= target;
+            std::cout << "target=" << target << "\n";
+            std::cout << "epochs_run=" << epochs_run << "\n";
+            std::cout << "final_error=" << result.get_training_error() << "\n";
+            std::cout << "reached_goal=" << (reached ? 1 : 0) << "\n";
+            std::cout << "loss_history=";
+            for (Index epoch = 0; epoch < result.training_error_history.size(); ++epoch)
+                std::cout << (epoch ? "," : "") << result.training_error_history(epoch);
+            std::cout << "\n";
+        }
         std::cout << "wall_s=" << wall_s << "\n";
-        std::cout << "samples_per_sec=" << double(samples) * double(iterations) / wall_s << "\n";
+        const Index completed = target_mode ? result.get_epochs_number() : iterations;
+        std::cout << "samples_per_sec=" << double(samples) * double(completed) / wall_s << "\n";
         std::cout << "RESULT=OK\n";
         return 0;
     }

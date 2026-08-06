@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -267,11 +268,21 @@ int main(int argc, char* argv[])
         adam->set_maximum_epochs(2);
         training_strategy.train();
 
-        // Timed run.
+        // Timed run. The TRAIN_*_UNIX markers delimit the energy-integration
+        // window for run_higgs_dense_energy.py; warmup stays outside it.
         adam->set_maximum_epochs(epochs);
+        const auto unix_now = []
+        {
+            return std::chrono::duration<double>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+        };
+        std::cout << "TRAIN_START_UNIX=" << std::fixed << std::setprecision(3)
+                  << unix_now() << "\n" << std::defaultfloat;
         const auto t0 = clock_type::now();
         training_strategy.train();
         const auto t1 = clock_type::now();
+        std::cout << "TRAIN_END_UNIX=" << std::fixed << std::setprecision(3)
+                  << unix_now() << "\n" << std::defaultfloat;
 
         const double total_s = std::chrono::duration<double>(t1 - t0).count();
         const double median_epoch_s = total_s / double(epochs);

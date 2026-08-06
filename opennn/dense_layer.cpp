@@ -91,6 +91,10 @@ vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
 
 void Dense::configure_operators()
 {
+    // Any reconfiguration invalidates cross-layer dReLU wiring; the next
+    // NeuralNetwork::compile() re-establishes it when still eligible.
+    reset_drelu_fusion();
+
     if (gated)
     {
         throw_if(batch_norm.active(),
@@ -203,6 +207,40 @@ void Dense::set_batch_normalization(bool enable)
 {
     batch_norm.features = enable ? output_features : 0;
     configure_operators();
+}
+
+// Wire this layer to consume `producer`'s ReLU bitmask in its input-delta
+// GEMM (DRELU epilogue). Both eligibility checks live here; the caller owns
+// only the graph-shape conditions (direct single edge, fan-out of one). The
+// fp32 requirement is owned by the caller's training-type gate.
+bool Dense::try_wire_drelu_fusion(Dense& producer)
+{
+    const bool producer_eligible = !producer.gated
+        && !producer.batch_norm.active() && !producer.dropout.active()
+        && producer.combination.use_bias && !producer.tied_source && producer.is_trainable
+        && producer.activation_operator.activation_function == ActivationFunction::ReLU
+        && producer.output_features > 0 && producer.output_features % 128 == 0;
+
+    const bool consumer_eligible = !gated && !tied_source && is_trainable
+        && !combination.accumulate_input_delta;
+
+    if (!producer_eligible || !consumer_eligible) return false;
+
+    producer.combination.emit_relu_mask = true;
+    producer.activation_operator.backward_fused_by_consumer =
+        &producer.combination.relu_mask_fused_active;
+    combination.drelu_source = &producer.combination;
+    return true;
+}
+
+void Dense::reset_drelu_fusion()
+{
+    combination.emit_relu_mask = false;
+    combination.relu_mask_fused_active = false;
+    combination.relu_mask.resize_bytes(0, Device::CUDA);
+    combination.relu_mask_view = {};
+    combination.drelu_source = nullptr;
+    activation_operator.backward_fused_by_consumer = nullptr;
 }
 
 void Dense::set_gated(bool new_gated)

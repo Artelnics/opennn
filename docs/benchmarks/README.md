@@ -102,6 +102,8 @@ Each folder hosts a training and an inference benchmark for one model. GPU folde
 | Benchmark | What it runs |
 |---|---|
 | [transformer-energy](energy/transformer-energy/README.md) | GPU energy to train a Transformer to a fixed quality target |
+| [higgs-dense-energy](energy/higgs-dense-energy/README.md) | GPU energy for fixed-work training of the HIGGS dense classifier |
+| [max-batch-to-target](energy/max-batch-to-target/README.md) | Maximum training batch, time, and GPU energy to a fixed loss for HIGGS, ResNet-50, and Transformer |
 
 ### footprint/
 | Benchmark | What it runs |

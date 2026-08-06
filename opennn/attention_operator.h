@@ -39,8 +39,22 @@ struct AttentionOperator : Operator
 
     TensorSpec backward_scratch_spec(Index) const;
 
+    // Backward BF16 scratch slots: dO, dQ, dK, dV, then rematerialized Q, K, V.
+    static constexpr size_t sdpa_scratch_slots_count = 7;
+
+    vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
+
+    TensorSpec sdpa_qkv_pack_spec(Index) const;
+
     size_t scratch_slot = 0;
     size_t attention_output_slot = 0;
+
+    // First of the sdpa_scratch_slots_count consecutive backward slots planned
+    // by the owning layer via sdpa_gradient_scratch_specs.
+    size_t sdpa_gradient_slot = 0;
+
+    // Forward-transient slot holding the packed BF16 Q/K/V casts (sdpa_qkv_pack_spec).
+    size_t sdpa_qkv_pack_slot = 0;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
@@ -74,6 +88,7 @@ private:
                             const TensorView&,
                             const TensorView&,
                             TensorView&,
+                            const TensorView&,
                             bool);
 #endif
 
@@ -97,7 +112,8 @@ private:
                              const TensorView&,
                              TensorView&,
                              TensorView&,
-                             TensorView&) const;
+                             TensorView&,
+                             span<const TensorView>) const;
 #endif
 
     static bool get_contiguous_source_lengths(const TensorView&,

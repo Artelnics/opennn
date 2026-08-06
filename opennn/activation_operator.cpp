@@ -45,7 +45,8 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
 
     TensorView& output_delta = get_output_delta(back_propagation, layer);
 
-    if (backward_fused && output_delta.is_cuda())
+    const bool fused_by_consumer = backward_fused_by_consumer && *backward_fused_by_consumer;
+    if ((backward_fused || fused_by_consumer) && output_delta.is_cuda())
         return;
 
     const bool needs_input = activation_needs_input(activation_function);

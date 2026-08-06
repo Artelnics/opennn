@@ -36,6 +36,9 @@ ap.add_argument("--layers", type=int, default=2)
 ap.add_argument("--steps", type=int, default=1)
 ap.add_argument("--warmup", type=int, default=1)
 ap.add_argument("--device", choices=["cuda", "cpu"], default="cuda")
+ap.add_argument("--target", type=float, default=None,
+                help="optional training-loss target; stop after the first step at or below it")
+ap.add_argument("--seed", type=int, default=0)
 args = ap.parse_args()
 
 use_cuda = args.device == "cuda"
@@ -43,7 +46,7 @@ if use_cuda:
     assert tf.config.list_physical_devices("GPU"), "CUDA GPU required"
 else:
     tf.config.set_visible_devices([], "GPU")
-tf.random.set_seed(0)
+tf.random.set_seed(args.seed)
 
 use_bf16 = use_cuda and os.environ.get("TF_BF16") is not None
 if use_bf16:
@@ -63,7 +66,7 @@ logits = L.Dense(1, dtype="float32")(h)
 model = tf.keras.Model(inp, logits)
 print(f"parameters={model.count_params()}")
 
-rng = np.random.default_rng(0)
+rng = np.random.default_rng(args.seed)
 
 # Real HIGGS rows (float32 bin, rows x 29: features then label) when
 # HIGGS_BIN is set; rows repeat modulo beyond the file (np.resize), the same
@@ -95,18 +98,38 @@ if args.mode == "train":
         return loss
 
     last = None
-    for _ in range(args.warmup):
-        last = train_step(x, y)
-    _ = last.numpy()   # force sync after warmup
+    if args.target is None:
+        for _ in range(args.warmup):
+            last = train_step(x, y)
+        _ = last.numpy()   # force sync after warmup
 
+    if args.target is not None:
+        print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
     t0 = time.perf_counter()
+    loss_history = []
+    reached = False
     for _ in range(args.steps):
         last = train_step(x, y)
+        if args.target is not None:
+            loss_value = float(last.numpy())
+            loss_history.append(loss_value)
+            if loss_value <= args.target:
+                reached = True
+                break
     last_host = last.numpy()   # force sync
     wall_s = time.perf_counter() - t0
+    if args.target is not None:
+        print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
     assert np.isfinite(float(last_host)), "non-finite loss"
     print(f"final_loss={float(last_host):.5f}")
+    if args.target is not None:
+        print(f"target={args.target}")
+        print(f"steps_run={len(loss_history)}")
+        print(f"epochs_run={len(loss_history)}")
+        print(f"final_error={loss_history[-1]:.9g}")
+        print(f"reached_goal={1 if reached else 0}")
+        print("loss_history=" + ",".join(f"{v:.9g}" for v in loss_history))
 else:
     @tf.function
     def infer_step(x_b):
@@ -126,7 +149,8 @@ else:
 
     assert np.isfinite(np.asarray(probe_host, dtype=np.float32)).all(), "non-finite outputs"
 
-samples_per_s = args.steps * args.batch / wall_s
+completed_steps = len(loss_history) if args.mode == "train" and args.target is not None else args.steps
+samples_per_s = completed_steps * args.batch / wall_s
 try:   # peak memory for the CPU-capped runs (POSIX only)
     import resource
     print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")

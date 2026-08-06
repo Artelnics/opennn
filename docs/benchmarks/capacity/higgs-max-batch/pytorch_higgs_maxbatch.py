@@ -36,13 +36,16 @@ ap.add_argument("--layers", type=int, default=2)
 ap.add_argument("--steps", type=int, default=1)
 ap.add_argument("--warmup", type=int, default=1)
 ap.add_argument("--device", choices=["cuda", "cpu"], default="cuda")
+ap.add_argument("--target", type=float, default=None,
+                help="optional training-loss target; stop after the first step at or below it")
+ap.add_argument("--seed", type=int, default=0)
 args = ap.parse_args()
 
 use_cuda = args.device == "cuda"
 if use_cuda:
     assert torch.cuda.is_available(), "CUDA GPU required"
 dev = torch.device(args.device)
-torch.manual_seed(0)
+torch.manual_seed(args.seed)
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
@@ -113,19 +116,40 @@ if args.mode == "train":
         opt.step()
         return loss
 
-    for _ in range(args.warmup):
-        step()
-    sync()
+    if args.target is None:
+        for _ in range(args.warmup):
+            step()
+        sync()
 
+    if args.target is not None:
+        print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
     t0 = time.perf_counter()
     last = None
+    loss_history = []
+    reached = False
     for _ in range(args.steps):
         last = step()
+        if args.target is not None:
+            sync()
+            loss_value = float(last.detach().float())
+            loss_history.append(loss_value)
+            if loss_value <= args.target:
+                reached = True
+                break
     sync()
     wall_s = time.perf_counter() - t0
+    if args.target is not None:
+        print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
     assert torch.isfinite(last), "non-finite loss"
     print(f"final_loss={float(last):.5f}")
+    if args.target is not None:
+        print(f"target={args.target}")
+        print(f"steps_run={len(loss_history)}")
+        print(f"epochs_run={len(loss_history)}")
+        print(f"final_error={loss_history[-1]:.9g}")
+        print(f"reached_goal={1 if reached else 0}")
+        print("loss_history=" + ",".join(f"{v:.9g}" for v in loss_history))
 else:
     with torch.inference_mode():
         out = None
@@ -143,7 +167,8 @@ else:
 
         assert torch.isfinite(out.flatten()[:8].float()).all(), "non-finite outputs"
 
-samples_per_s = args.steps * args.batch / wall_s
+completed_steps = len(loss_history) if args.mode == "train" and args.target is not None else args.steps
+samples_per_s = completed_steps * args.batch / wall_s
 try:   # peak memory for the CPU-capped runs (POSIX only)
     import resource
     print(f"peak_rss_mib={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}")

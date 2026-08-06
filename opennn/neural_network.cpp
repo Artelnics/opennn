@@ -100,6 +100,47 @@ void NeuralNetwork::compile(const Device device)
 
     link_states();
 
+    wire_drelu_fusions();
+}
+
+// Pair each eligible fused-ReLU Dense with its single Dense consumer so the
+// consumer's input-delta GEMM applies the ReLU derivative in its DRELU
+// epilogue instead of a separate elementwise pass (CUDA fp32 training only).
+//
+// Opt-in via OPENNN_DRELU_FUSION: on the RTX 3060 Laptop reference machine
+// the epilogue-restricted cuBLASLt kernels measured ~10% SLOWER end-to-end
+// than the float4 elementwise pass they replace (HIGGS dense contract,
+// gpu-higgs-dense-energy-20260805T141928Z vs -135245Z), so the fusion stays
+// off until a GPU where the trade-off flips is measured.
+void NeuralNetwork::wire_drelu_fusions()
+{
+    for (auto& layer : layers)
+        if (auto* dense = dynamic_cast<Dense*>(layer.get()))
+            dense->reset_drelu_fusion();
+
+    if (get_device() != Device::CUDA || get_training_type() != Type::FP32)
+        return;
+
+    if (!env_flag_enabled("OPENNN_DRELU_FUSION"))
+        return;
+
+    vector<Index> consumer_count(layers.size(), 0);
+    for (const auto& layer_sources : source_layers)
+        for (Index s : layer_sources)
+            if (s >= 0) ++consumer_count[size_t(s)];
+
+    for (size_t i = 0; i < source_layers.size(); ++i)
+    {
+        const auto& layer_sources = source_layers[i];
+        if (layer_sources.size() != 1 || layer_sources[0] < 0) continue;
+        if (consumer_count[size_t(layer_sources[0])] != 1) continue;
+
+        auto* consumer = dynamic_cast<Dense*>(layers[i].get());
+        auto* producer = dynamic_cast<Dense*>(layers[size_t(layer_sources[0])].get());
+
+        if (consumer && producer)
+            consumer->try_wire_drelu_fusion(*producer);
+    }
 }
 
 void NeuralNetwork::validate_type(LayerType type) const

@@ -143,11 +143,16 @@ def main():
     run_epoch()
     run_epoch()
 
+    # TRAIN_*_UNIX markers delimit the energy-integration window for
+    # run_higgs_dense_energy.py; warmup stays outside it. run_epoch ends with a
+    # torch.cuda.synchronize(), so the end marker is GPU-complete.
+    print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
     times = []
     for _ in range(epochs):
         t0 = time.perf_counter()
         run_epoch()
         times.append(time.perf_counter() - t0)
+    print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
 
     times.sort()
     median_epoch_s = times[len(times) // 2]

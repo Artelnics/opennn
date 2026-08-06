@@ -1773,6 +1773,27 @@ __global__ void activation_forward_kernel_bf162(const int n2, __nv_bfloat162* __
     }
 }
 
+__global__ void activation_forward_kernel_f4(const int n_vec, const int n, float* __restrict__ data, const int function)
+{
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
+
+    float4* __restrict__ const d4 = reinterpret_cast<float4*>(data);
+    for (Index i = tid; i < n_vec; i += stride)
+    {
+        float4 v = d4[i];
+        v.x = opennn_activation_value(v.x, function);
+        v.y = opennn_activation_value(v.y, function);
+        v.z = opennn_activation_value(v.z, function);
+        v.w = opennn_activation_value(v.w, function);
+        d4[i] = v;
+    }
+
+    const int tail_start = n_vec * 4;
+    for (Index i = tail_start + tid; i < n; i += stride)
+        data[i] = opennn_activation_value(data[i], function);
+}
+
 template<typename T>
 void activation_forward_cuda(const Index n, T* data, const int function)
 {
@@ -1782,6 +1803,12 @@ void activation_forward_cuda(const Index n, T* data, const int function)
             launch_elementwise_strided(n / 2, activation_forward_kernel_bf162, reinterpret_cast<__nv_bfloat162*>(data), function);
             return;
         }
+
+    if constexpr (std::is_same_v<T, float>)
+    {
+        launch_vec4(n, are_float4_aligned(data), activation_forward_kernel_f4, data, function);
+        return;
+    }
 
     launch_elementwise_strided(n, activation_forward_kernel<T>, data, function);
 }
@@ -1806,6 +1833,31 @@ __global__ void activation_backward_kernel_bf162(const int n2, const __nv_bfloat
     }
 }
 
+__global__ void activation_backward_kernel_f4(const int n_vec, const int n,
+                                              const float* __restrict__ outputs,
+                                              float* __restrict__ delta, const int function)
+{
+    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
+    const Index stride = Index(blockDim.x) * gridDim.x;
+
+    const float4* __restrict__ const y4 = reinterpret_cast<const float4*>(outputs);
+    float4* __restrict__ const d4 = reinterpret_cast<float4*>(delta);
+    for (Index i = tid; i < n_vec; i += stride)
+    {
+        const float4 y = y4[i];
+        float4 d = d4[i];
+        d.x = opennn_activation_grad(y.x, d.x, function);
+        d.y = opennn_activation_grad(y.y, d.y, function);
+        d.z = opennn_activation_grad(y.z, d.z, function);
+        d.w = opennn_activation_grad(y.w, d.w, function);
+        d4[i] = d;
+    }
+
+    const int tail_start = n_vec * 4;
+    for (Index i = tail_start + tid; i < n; i += stride)
+        delta[i] = opennn_activation_grad(outputs[i], delta[i], function);
+}
+
 template<typename T>
 void activation_backward_cuda(const Index n, const T* outputs, T* delta, const int function)
 {
@@ -1817,6 +1869,13 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
                                reinterpret_cast<__nv_bfloat162*>(delta), function);
             return;
         }
+
+    if constexpr (std::is_same_v<T, float>)
+    {
+        launch_vec4(n, are_float4_aligned(outputs, delta), activation_backward_kernel_f4,
+                    outputs, delta, function);
+        return;
+    }
 
     launch_elementwise_strided(n, activation_backward_kernel<T>, outputs, delta, function);
 }

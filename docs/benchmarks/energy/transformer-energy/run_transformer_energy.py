@@ -65,19 +65,44 @@ def tf_ld_path():
 TF_LD = tf_ld_path()
 
 
+def engine_batch(engine):
+    return args.batch_map.get(engine, args.batch)
+
+
+def tokens_bin_for_shape(shape):
+    cache_dir = CORPUS + ".cache"
+    legacy = os.path.join(cache_dir, "tokens.bin")
+    if os.path.isfile(legacy):
+        return legacy
+    expected = shape["samples"] * (shape["input_seq"] + shape["decoder_seq"]) * 4
+    candidates = [
+        os.path.join(cache_dir, name)
+        for name in os.listdir(cache_dir)
+        if name.endswith(".bin")
+        and os.path.getsize(os.path.join(cache_dir, name)) == expected
+    ]
+    if len(candidates) != 1:
+        raise RuntimeError(
+            f"expected one {expected}-byte token cache in {cache_dir}, "
+            f"found {candidates}"
+        )
+    return candidates[0]
+
+
 def cmd_env(engine, shape, seed):
-    tokens_bin = CORPUS + ".cache/tokens.bin"
+    tokens_bin = tokens_bin_for_shape(shape)
+    batch = engine_batch(engine)
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = "0"
     common = ["--tokens-bin", tokens_bin,
               "--in-seq", str(shape["input_seq"]), "--dec-seq", str(shape["decoder_seq"]),
               "--in-vocab", str(shape["input_vocab"]), "--out-vocab", str(shape["output_vocab"]),
-              "--target", str(args.target), "--batch", str(args.batch),
+              "--target", str(args.target), "--batch", str(batch),
               "--max-epochs", str(args.max_epochs), "--lr", str(args.lr),
               "--d", str(D), "--h", str(H), "--ff", str(FF), "--layers", str(LAYERS),
               "--seed", str(seed)]
     if engine == "opennn":
-        cmd = [args.opennn_bin, CORPUS, str(args.target), str(args.batch),
+        cmd = [args.opennn_bin, CORPUS, str(args.target), str(batch),
                str(args.max_epochs), str(args.lr), str(D), str(H), str(FF), str(LAYERS),
                str(seed)]
         if args.precision == "bf16":
@@ -334,6 +359,9 @@ def main():
     ap.add_argument("--target", type=float, required=True,
                     help="epoch-mean token CE gate (same for every engine)")
     ap.add_argument("--batch", type=int, default=128)
+    ap.add_argument("--batches", default="",
+                    help="optional per-engine batches, e.g. "
+                         "opennn=32,pytorch=24,tensorflow=20")
     # lr 1e-4: 5e-4 (the ChatGPT example default) parks all three engines on the
     # unigram plateau (~6.77) at batch 128; 1e-4 descends steadily (calibrated).
     ap.add_argument("--lr", type=float, default=1e-4)
@@ -349,6 +377,11 @@ def main():
     ap.add_argument("--timeout-s", type=int, default=7200)
     ap.add_argument("--idle", type=float, default=None, help="override idle W (else measured)")
     args = ap.parse_args()
+    args.batch_map = {}
+    if args.batches:
+        for item in args.batches.split(","):
+            engine, value = item.split("=", 1)
+            args.batch_map[engine.strip()] = int(value)
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -371,6 +404,9 @@ def main():
             "shape": shape,
             "target_epoch_mean_token_ce": args.target,
             "batch": args.batch,
+            "batches_by_engine": {
+                engine: engine_batch(engine) for engine in engines
+            },
             "lr": args.lr,
             "precision": args.precision,
             "max_epochs": args.max_epochs,
@@ -389,7 +425,8 @@ def main():
     }
 
     for eng in engines:
-        print(f"\n=== {eng} ({args.runs} runs, target {args.target}) ===")
+        print(f"\n=== {eng} ({args.runs} runs, target {args.target}, "
+              f"batch {engine_batch(eng)}) ===")
         per_run, fails = [], []
         for r in range(args.runs):
             cooldown(idle_w)

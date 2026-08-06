@@ -153,7 +153,8 @@ void linear_forward(const TensorView&, const TensorView&, const TensorView&,
                     const TensorView& weight_scale = {});
 void linear_backward(const TensorView&, const TensorView&, const TensorView&,
                      const TensorView&, const TensorView&,
-                     TensorView&, bool accumulate_input_delta = false);
+                     TensorView&, bool accumulate_input_delta = false,
+                     const TensorView* drelu_mask = nullptr);
 
 void layer_normalization_forward(const TensorView&, const TensorView&, const TensorView&,
                         TensorView&, TensorView&,

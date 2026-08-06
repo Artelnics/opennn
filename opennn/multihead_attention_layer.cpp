@@ -63,6 +63,7 @@ vector<TensorSpec> MultiHeadAttention::get_forward_specs(Index batch_size) const
         {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype},
         {{batch_size, heads_number, source_sequence_length, head_dimension}, compute_dtype},
         {{batch_size, max_seq, embedding_dimension},                         compute_dtype},
+        attention.sdpa_qkv_pack_spec(batch_size),
         {{batch_size, query_sequence_length, embedding_dimension},           compute_dtype},
     };
 }
@@ -71,7 +72,7 @@ vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) cons
 {
     const Index head_dimension = get_head_dimension();
 
-    return {
+    vector<TensorSpec> specs = {
         {{batch_size, query_sequence_length, embedding_dimension},                  compute_dtype},
         {{batch_size, source_sequence_length, embedding_dimension},                 compute_dtype},
         attention.backward_scratch_spec(batch_size),
@@ -80,6 +81,11 @@ vector<TensorSpec> MultiHeadAttention::get_backward_specs(Index batch_size) cons
         {{batch_size, heads_number, query_sequence_length, head_dimension},         compute_dtype},
         {{batch_size, heads_number, source_sequence_length, head_dimension},        compute_dtype},
     };
+
+    const auto sdpa_scratch = attention.sdpa_gradient_scratch_specs(batch_size);
+    specs.insert(specs.end(), sdpa_scratch.begin(), sdpa_scratch.end());
+
+    return specs;
 }
 
 void MultiHeadAttention::set(Index new_query_sequence_length,
@@ -150,6 +156,8 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.scratch_slot = TransposeScratch;
     attention.attention_output_slot = ConcatenatedAttentionOutputs;
     attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
+    attention.sdpa_gradient_slot = SdpaOutputGradBF16;
+    attention.sdpa_qkv_pack_slot = SdpaQkvPack;
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};
     output_projection.output_slots = {Output};
