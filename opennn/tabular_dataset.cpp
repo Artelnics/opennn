@@ -8,6 +8,7 @@
 
 #include "tabular_dataset.h"
 #include "io_utilities.h"
+#include "string_utilities.h"
 #include "scaling.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
@@ -514,6 +515,58 @@ vector<string> TabularDataset::unuse_uncorrelated_variables(const float minimum_
             variable.set_role("None");
             unused_variables.push_back(variable.name);
         }
+    }
+
+    resize_input_shape(get_features_number(VariableRole::Input));
+    set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
+
+    return unused_variables;
+}
+
+vector<string> TabularDataset::unuse_least_correlated_variables(const Index inputs_to_keep)
+{
+    vector<string> unused_variables;
+
+    const Index input_variables_number = get_variables_number(VariableRole::Input);
+
+    if (inputs_to_keep <= 0 || input_variables_number <= inputs_to_keep)
+        return unused_variables;
+
+    const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
+
+    const Index target_variables_number = get_variables_number(VariableRole::Target);
+
+    const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
+
+    vector<pair<float, Index>> ranking(input_variables_number);
+
+    for (Index i = 0; i < input_variables_number; ++i)
+    {
+        float best_correlation = -1.0f;
+
+        for (Index j = 0; j < target_variables_number; ++j)
+        {
+            const float correlation_value = correlations(i, j).coefficient;
+
+            if (!isnan(correlation_value))
+                best_correlation = max(best_correlation, abs(correlation_value));
+        }
+
+        ranking[i] = { best_correlation, i };
+    }
+
+    stable_sort(ranking.begin(), ranking.end(),
+                [](const pair<float, Index>& a, const pair<float, Index>& b)
+                { return a.first > b.first; });
+
+    for (Index rank = inputs_to_keep; rank < input_variables_number; ++rank)
+    {
+        Variable& variable = variables[input_variable_indices[ranking[rank].second]];
+
+        if (variable.role == VariableRole::None) continue;
+
+        variable.set_role("None");
+        unused_variables.push_back(variable.name);
     }
 
     resize_input_shape(get_features_number(VariableRole::Input));
