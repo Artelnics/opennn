@@ -42,7 +42,6 @@ public:
 
 private:
 
-    InputsSelection* get_inputs_selection() const { return inputs_selection.get(); }
     void set_inputs_selection(const string&);
 
     TrainingStrategy* training_strategy = nullptr;

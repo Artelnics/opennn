@@ -9,6 +9,7 @@
 #pragma once
 
 #include "tensor_types.h"
+#include "memory_pool.h"
 
 #include <utility>
 
@@ -17,14 +18,51 @@ namespace opennn
 
 class Loss;
 class NeuralNetwork;
+struct ForwardPropagation;
 
 struct BackPropagation
 {
-    BackPropagation(const Index = 0, Loss* = nullptr);
+    // One planned delta allocation: which layer/slot it backs and its
+    // lifetime on the backward timeline (step s = backward of layer
+    // last_trainable - s). Produced by build_delta_entries; consumed by the
+    // delta-pool planner and, later, by the joint training-memory plan.
+    struct DeltaEntry
+    {
+        Index      layer;
+        size_t     slot;
+        TensorSpec spec;
+        Index      first_step;
+        Index      last_step;
+    };
+
+    struct DeltaLayout
+    {
+        vector<DeltaEntry> entries;
+        vector<bool> aliases_residual_delta;
+        Index aliased_residual_delta_bytes = 0;
+        vector<pair<size_t, size_t>> reusable_consumer_deltas;
+    };
+
+    BackPropagation(const Index = 0, Loss* = nullptr,
+                    ForwardPropagation* joint_forward = nullptr);
 
     virtual ~BackPropagation() = default;
 
-    void set(const Index = 0, Loss* = nullptr);
+    // When joint_forward carries a joint training-memory plan (its set() was
+    // given the Loss), the delta views bind into the forward arena at the
+    // jointly planned offsets instead of owning a separate delta pool.
+    void set(const Index = 0, Loss* = nullptr,
+             ForwardPropagation* joint_forward = nullptr);
+
+    static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const NeuralNetwork&);
+
+    static DeltaLayout build_delta_entries(const NeuralNetwork&, const Loss&,
+                                           Index batch_size,
+                                           const vector<vector<TensorSpec>>&,
+                                           const vector<vector<pair<size_t, size_t>>>&);
+
+    static vector<MemoryPoolEntry> to_pool_entries(const vector<DeltaEntry>&,
+                                                   Index step_offset = 0);
 
     void accumulate_output_deltas(size_t);
 
@@ -55,6 +93,10 @@ struct BackPropagation
 private:
 
     void setup_delta_pool(const vector<vector<TensorSpec>>&);
+
+    void bind_delta_views(const DeltaLayout&, const vector<Index>& byte_offsets,
+                          uint8_t* base, Device device,
+                          const vector<vector<TensorSpec>>&);
 };
 
 }

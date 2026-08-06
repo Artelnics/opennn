@@ -130,12 +130,21 @@ def run_trial(engine, precision, mode, batch, cap_mib):
     cmd, env = cmd_env(engine, precision, mode, batch)
     on_cpu = args.device == "cpu"
     preexec = rlimit_preexec(int(args.mem_cap_gib * (1 << 30))) if on_cpu else None
+    idle_before = None
     try:
         if on_cpu:
             proc = subprocess.run(cmd, env=env, capture_output=True, text=True,
                                   timeout=args.timeout_s, preexec_fn=preexec)
             peak = None
         else:
+            # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM
+            # counts too. Judge the trial by its delta over the idle level
+            # sampled immediately before it, so external usage cannot fabricate
+            # a capacity boundary (it did: the 20260805 opennn train search).
+            try:
+                idle_before = nvidia_used_mib()
+            except Exception:
+                pass
             with PeakMonitor() as mon:
                 proc = subprocess.run(cmd, env=env, capture_output=True, text=True,
                                       timeout=args.timeout_s)
@@ -144,7 +153,11 @@ def run_trial(engine, precision, mode, batch, cap_mib):
         return {"ok": False, "peak": None, "reason": "timeout"}
     raw = proc.stdout + proc.stderr
     ok = proc.returncode == 0 and "RESULT=OK" in raw
-    if ok and peak and peak > cap_mib:
+    peak_delta = None
+    if peak is not None and idle_before is not None:
+        peak_delta = max(0, peak - idle_before)
+    effective_peak = peak_delta if peak_delta is not None else peak
+    if ok and effective_peak and effective_peak > cap_mib:
         ok, reason = False, "vram_cap"
     else:
         reason = "ok" if ok else f"exit_{proc.returncode}"
@@ -154,6 +167,8 @@ def run_trial(engine, precision, mode, batch, cap_mib):
     if on_cpu and rss:
         peak = int(rss.group(1))   # CPU mode: peak = process RSS high-water mark
     return {"ok": ok, "peak": peak,
+            "idle_before_mib": idle_before,
+            "peak_delta_mib": peak_delta,
             "vm_peak_mib": int(vmp.group(1)) if vmp else None,
             "sps": float(m.group(1)) if m else None,
             "reason": reason, "raw": raw[-1500:]}
@@ -177,7 +192,8 @@ def search_max_batch(engine, precision, mode, cap_mib):
             cache[b] = run_trial(engine, precision, mode, b, cap_mib)
             r = cache[b]
             print(f"  {engine:11s} {precision} {mode:5s} batch={b:<9d} "
-                  f"{'OK ' if r['ok'] else 'FAIL'} peak={r['peak']} MiB reason={r['reason']}")
+                  f"{'OK ' if r['ok'] else 'FAIL'} peak={r['peak']} MiB "
+                  f"delta={r.get('peak_delta_mib')} MiB reason={r['reason']}")
             cooldown()
         return cache[b]["ok"]
     lo, hi = 0, args.start_batch
@@ -193,7 +209,8 @@ def search_max_batch(engine, precision, mode, cap_mib):
         else: right = mid - 1
     fail = lo + 1 if lo + 1 in cache and not cache[lo + 1]["ok"] else None
     best = cache.get(lo, {})
-    return lo, best.get("peak"), fail, best.get("vm_peak_mib")
+    return lo, best.get("peak"), fail, best.get("vm_peak_mib"), \
+        best.get("idle_before_mib"), best.get("peak_delta_mib")
 
 
 def main():
@@ -256,8 +273,10 @@ def main():
         for p in precisions:
             for m in modes:
                 print(f"\n[max-batch] {e} {p} {m}")
-                mb, peak, fail, vm_peak = search_max_batch(e, p, m, cap_mib)
+                mb, peak, fail, vm_peak, idle, delta = search_max_batch(e, p, m, cap_mib)
                 results[(e, p, m)] = {"max_batch": mb, "peak_at_max": peak,
+                                      "idle_before_at_max_mib": idle,
+                                      "peak_delta_at_max_mib": delta,
                                       "next_batch_failed": fail,
                                       "vm_peak_at_max_mib": vm_peak}
 

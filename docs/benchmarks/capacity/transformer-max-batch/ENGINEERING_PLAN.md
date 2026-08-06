@@ -185,9 +185,21 @@ Implementation:
 - Backward: `sdpa_gradient_scratch_specs` grew from 4 to 7 entries (dO, dQ,
   dK, dV plus rematerialized Q, K, V), all delta-pool planned with
   single-step lifetimes; three extra cast kernels per attention layer.
-- The O BF16 copy stays private in `SDPACache` (~140 MiB total): the retained
-  FP32 output lives in merged (B,S,E) layout, so rematerializing O would need
-  a permuting cast, not a plain one. Revisit only if the ~140 MiB matter.
+- O remat IMPLEMENTED (2026-08-07): the private per-entry `SDPACache` O copy
+  is gone. Forward writes the graph's BF16 O into a new section of the
+  transient Q/K/V/O pack; backward rematerializes O by flat-casting the
+  retained merged (B,S,E) output (bit-exact: the FP32 output is the exact
+  image of the graph's BF16 O) into an 8th SDPA scratch slot, and the
+  backward graph declares O with BSHD strides — no permuting kernel needed.
+  Prerequisite planner change: one layer's transient slots are now placed
+  back to back in the shared transient block (block = max per-layer sum, was
+  max individual slot), so the pack's O section and TransposeScratch never
+  alias during the post-graph cast. Measured at OPENNN_SDPA_MIN=128, batch
+  80: arena 3,557.3 -> 3,587.3 (+30 transient), private buffers -63, peak
+  VRAM 4,883 -> 4,853 MiB (-30 net); batches 96/100/104 train OK. ResNet
+  unchanged (bit-identical plan). At lower SDPA thresholds (more attention
+  layers fused) the freed private total grows toward the original ~140 MiB
+  estimate. All SDPA VRAM is now visible to the ledger/arena planner.
 
 No runtime flag: the change is bit-exact and the A/B comparison is done
 against the archived baseline runs; revert the commit if step time or energy
@@ -199,8 +211,39 @@ state).
 
 ## Deferred work
 
-- Joint forward+backward training arena: revisit only if phases 1-2 leave the
-  Transformer memory-bound; measured opportunity today is small.
+- Joint forward+backward training arena: MEASURED (2026-08-06) with the
+  lifetime dump (`memory_debug::record_pool_lifetimes`) and
+  `docs/benchmarks/analysis/analyze_joint_arena.py`, including the
+  recompute-overlay correction (overlays displaced by deltas fall back to
+  the shared transient block):
+  Transformer batch 80: 3,823 -> 3,557 MiB (saves 265 MiB, -6.9%; no
+  recompute, uncorrected).
+  ResNet-50 batch 5,163: 5,032 -> 4,134 MiB (saves 898 MiB, -17.8%; 2 of 52
+  recompute overlays displaced, transient block +40.3 MiB).
+  IMPLEMENTED AND MEASURED (2026-08-06/07). Final architecture: the forward
+  planner is one lifetime-driven path for every layout (the cursor branch
+  was deleted; non-compact nets use the conservative [i, 2L-1-i] bound,
+  which reproduces the cursor footprint exactly);
+  `BackPropagation::build_delta_entries` is a static, self-contained entry
+  builder; `ForwardPropagation::set(..., Loss* joint_loss)` appends the
+  delta entries to its own timeline and first-fit (recompute overlays then
+  see them as occupants — the ordering hazard is structurally gone), storing
+  the delta offsets in `joint_delta_plan`;
+  `BackPropagation::set(..., ForwardPropagation*)` binds its delta views
+  into the forward arena via the shared `bind_delta_views`. Standalone FP/BP
+  degenerate to today's behavior; `Optimizer::train` passes the Loss and the
+  FP. Both test suites fully green with the joint arena live.
+
+  Measured (WSL, RTX 3060, ledger per instance):
+  Transformer batch 80: arena 3,557.3 MiB vs 3,537.3 + 285.5 separate —
+  saving 265 MiB, peak VRAM 5,149 -> 4,883 MiB (analyzer prediction 3,557.4:
+  exact). Batches 96 and 100 train OK (official cap-based max pending the
+  driver rerun; estimate ~93-98 vs 89).
+  ResNet-50 batch 5,163: arena 4,114.5 MiB vs 3,983.6 + 1,048.7 separate —
+  saving 917.8 MiB (better than the corrected 898 prediction; joint plan
+  fragmentation is ZERO, transient block absorbed the 2 displaced recompute
+  overlays at +40 MiB), peak VRAM 4,971 MiB.
+  Remaining: official capacity/energy driver reruns (other machine).
 - Chunked vocabulary projection + cross entropy (~415 MiB upper bound): most
   invasive; only after the above and only with time/energy gates.
 - Fusion work (residual+LayerNorm, dense epilogues, delta accumulation):

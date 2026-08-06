@@ -63,22 +63,12 @@ static void clip_gradient_norm_device(Buffer& gradient, Index gradient_size, flo
 
 #else
 
-static void clip_gradient_norm_device(Buffer&, Index, float)
-{
-    throw runtime_error("clip_gradient_norm_device requires CUDA support.");
-}
+static void clip_gradient_norm_device(Buffer&, Index, float) OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
 
 #endif
 
 namespace
 {
-
-void sync_cuda_for_debug(bool on_gpu)
-{
-    static const bool enabled = env_flag_enabled("OPENNN_CUDA_DEBUG_SYNC");
-    if (on_gpu && enabled)
-        device::synchronize(Backend::get_compute_stream());
-}
 
 Loss::EvaluationResult average_epoch_metrics(Loss::EvaluationResult sums,
                                              Index batches_number,
@@ -905,16 +895,21 @@ TrainingResult Optimizer::train()
                       validation_batch_size,
                       has_validation);
 
+    // Joint training-memory plan: forward activations and backward deltas are
+    // planned into one arena on the unified step timeline (deltas reuse
+    // forward regions whose lifetimes ended).
     ForwardPropagation training_forward_propagation(
         training_batch_size,
         neural_network,
         ForwardPropagationMode::Training,
         {},
-        true);
+        true,
+        loss);
 
     loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_batch_size, loss);
+    BackPropagation training_back_propagation(training_batch_size, loss,
+                                              &training_forward_propagation);
 
     unique_ptr<ForwardPropagation> validation_forward_propagation;
     if (has_validation)
@@ -1372,14 +1367,7 @@ void Optimizer::prefetch_batch(Batch& batch)
 
 void Optimizer::sync_device(bool on_gpu)
 {
-    static const bool sync_each_batch = env_flag_enabled("OPENNN_CUDA_SYNC_EACH_BATCH");
     if (!on_gpu) return;
-
-    if (sync_each_batch)
-    {
-        device::synchronize(Backend::get_compute_stream());
-        return;
-    }
 
     if (!has_recurrent_layers_) return;
 
@@ -1977,7 +1965,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
             PROFILE_SCOPE("step:fwd_total");
             neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, true);
         }
-        sync_cuda_for_debug(on_gpu);
 
         {
             PROFILE_SCOPE("step:bwd_total");
@@ -1995,7 +1982,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 loss->back_propagate(compute_batch, forward_propagation, back_propagation);
             }
         }
-        sync_cuda_for_debug(on_gpu);
 
         if (!use_device_metrics)
         {
@@ -2007,7 +1993,6 @@ Loss::EvaluationResult Optimizer::train_epoch(
             PROFILE_SCOPE("step:optim_total");
             update(back_propagation);
         }
-        sync_cuda_for_debug(on_gpu);
 
         if (post_batch_callback)
             post_batch_callback(neural_network);
@@ -2086,7 +2071,6 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     context.step = [&](Batch& compute_batch, Loss::EvaluationResult& host_result)
     {
         neural_network->forward_propagate(compute_batch.get_inputs(), forward_propagation, false);
-        sync_cuda_for_debug(on_gpu);
 
         if (use_device_metrics)
         {
@@ -2102,7 +2086,6 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
             host_result.error += evaluation_result.error;
             if (tracks_accuracy) host_result.accuracy += evaluation_result.accuracy;
         }
-        sync_cuda_for_debug(on_gpu);
     };
 
     epoch_result = run_epoch_loop(context);

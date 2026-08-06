@@ -39,8 +39,8 @@ struct AttentionOperator : Operator
 
     TensorSpec backward_scratch_spec(Index) const;
 
-    // Backward BF16 scratch slots: dO, dQ, dK, dV, then rematerialized Q, K, V.
-    static constexpr size_t sdpa_scratch_slots_count = 7;
+    // Backward BF16 scratch slots: dO, dQ, dK, dV, then rematerialized Q, K, V, O.
+    static constexpr size_t sdpa_scratch_slots_count = 8;
 
     vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
 
@@ -93,7 +93,6 @@ private:
 #endif
 
     void apply_delta_cpu(const TensorView&,
-                         const TensorView&,
                          const TensorView&,
                          const TensorView&,
                          const TensorView&,

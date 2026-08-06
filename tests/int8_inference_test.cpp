@@ -152,7 +152,11 @@ void write_logical_bf16_parameters(
     output.write(reinterpret_cast<const char*>(bf16.data()),
                  streamsize(bf16.size() * sizeof(uint16_t)));
     ASSERT_TRUE(output.good());
-    filesystem::remove(fp32_path);
+    // Close before removing: Windows refuses to delete a file with an open
+    // handle (sharing violation), which aborted the test via filesystem_error.
+    input.close();
+    error_code remove_error;
+    filesystem::remove(fp32_path, remove_error);
 }
 
 void fake_quantize_parameters(NeuralNetwork& network)

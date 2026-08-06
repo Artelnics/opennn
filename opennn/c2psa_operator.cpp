@@ -15,19 +15,11 @@
 #ifdef OPENNN_HAS_CUDA
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include "kernel.cuh"
 #endif
 
 namespace opennn
 {
-
-// Declared in kernel_c2psa.cu
-#ifdef OPENNN_HAS_CUDA
-void c2psa_split_cuda(const void* x, void* xa, void* cat, int BT, int C, int H, cudaDataType_t dtype);
-void c2psa_fill_cat_left_cuda(const void* attn_v, void* cat, int BT, int C, int H, cudaDataType_t dtype);
-void c2psa_row_softmax_cuda(void* A, int rows, int T, cudaDataType_t dtype);
-void c2psa_softmax_bwd_cuda(const void* A, void* dA, float scale, int rows, int T, cudaDataType_t dtype);
-void c2psa_scatter_dx_cuda(const void* d_xa, const void* d_cat, void* din, int BT, int C, int H, cudaDataType_t dtype);
-#endif
 
 using Eigen::Dynamic;
 using MatF = Eigen::Matrix<float, Dynamic, Dynamic, Eigen::RowMajor>;
@@ -56,20 +48,12 @@ vector<TensorSpec> C2PSAOperator::parameter_specs() const
 
 void C2PSAOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.size() < 4) return;
-    Wq   = views[0];
-    Wk   = views[1];
-    Wv   = views[2];
-    Wout = views[3];
+    link_views(views, {&Wq, &Wk, &Wv, &Wout});
 }
 
 void C2PSAOperator::link_gradients(span<const TensorView> views)
 {
-    if (views.size() < 4) return;
-    dWq   = views[0];
-    dWk   = views[1];
-    dWv   = views[2];
-    dWout = views[3];
+    link_views(views, {&dWq, &dWk, &dWv, &dWout});
 }
 
 void C2PSAOperator::set_parameters_random()

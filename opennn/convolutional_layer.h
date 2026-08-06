@@ -35,8 +35,6 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_input_height() const noexcept { return input_height; }
-    Index get_input_width() const noexcept { return input_width; }
 
     Index get_kernel_height() const noexcept { return kernel_height; }
     Index get_kernel_width() const noexcept { return kernel_width; }
@@ -79,8 +77,6 @@ public:
 
     void on_compute_dtype_changed() override { update_convolution_operator(); }
 
-    void set_row_stride(const Index);
-    void set_column_stride(const Index);
     void set_activation_function(const string&);
     void set_batch_normalization(bool);
 

@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "numerical_derivatives.h"
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -36,37 +37,6 @@ VectorR read_host_parameters(const NeuralNetwork& network)
     return parameters;
 }
 
-VectorR compute_gradient(Loss& loss)
-{
-    NeuralNetwork* neural_network = loss.get_neural_network();
-    Dataset* dataset = loss.get_dataset();
-
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    Batch batch(samples_number, dataset, neural_network->get_config());
-    batch.fill(dataset->get_sample_indices("Training"),
-               dataset->get_feature_indices("Input"),
-               dataset->get_feature_indices("Decoder"),
-               dataset->get_feature_indices("Target"));
-
-    if (neural_network->is_gpu())
-    {
-        batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
-        batch.wait_h2d_complete();
-    }
-
-    ForwardPropagation forward_propagation(samples_number, neural_network);
-    BackPropagation back_propagation(samples_number, &loss);
-
-    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, true);
-    loss.back_propagate(batch, forward_propagation, back_propagation);
-
-    back_propagation.gradient.migrate_to(Device::CPU);
-
-    return Map<const VectorR, AlignedMax>(back_propagation.gradient.as<float>(),
-                                          back_propagation.gradient.size_in_floats());
-}
-
 float relative_difference(const VectorR& reference, const VectorR& other)
 {
     const float max_abs_diff = (reference - other).array().abs().maxCoeff();
@@ -85,12 +55,6 @@ float relative_difference(const MatrixR& reference, const MatrixR& other)
 
 class GpuComparison : public ::testing::Test
 {
-protected:
-
-    void TearDown() override
-    {
-        Configuration::instance().set(Device::CPU, Type::FP32);
-    }
 };
 
 TEST_F(GpuComparison, ApproximationForward)
@@ -113,7 +77,6 @@ TEST_F(GpuComparison, ApproximationForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -137,7 +100,7 @@ TEST_F(GpuComparison, ApproximationGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ApproximationNetwork gpu_network({inputs_number}, {6, 5}, {outputs_number});
@@ -145,9 +108,8 @@ TEST_F(GpuComparison, ApproximationGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -180,7 +142,6 @@ TEST_F(GpuComparison, DenseGeluTanhFusedForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -208,7 +169,7 @@ TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     NeuralNetwork gpu_network;
@@ -219,9 +180,8 @@ TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -272,7 +232,7 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     NeuralNetwork gpu_network;
@@ -291,14 +251,13 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
     // The fused path must have actually run (a cuBLASLt fallback would still
     // produce correct numbers, but we want to know it silently disengaged).
     EXPECT_TRUE(hidden_2->drelu_fusion_ran());
     EXPECT_TRUE(output_layer->drelu_fusion_ran());
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -324,7 +283,6 @@ TEST_F(GpuComparison, ClassificationForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -348,7 +306,7 @@ TEST_F(GpuComparison, ClassificationGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::CrossEntropy);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ClassificationNetwork gpu_network({inputs_number}, {6}, {classes_number});
@@ -356,9 +314,8 @@ TEST_F(GpuComparison, ClassificationGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::CrossEntropy);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -386,7 +343,6 @@ TEST_F(GpuComparison, ImageClassificationForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -412,7 +368,7 @@ TEST_F(GpuComparison, ImageClassificationGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::CrossEntropy);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ImageClassificationNetwork gpu_network({height, width, channels}, {4, 8}, {classes_number});
@@ -420,9 +376,8 @@ TEST_F(GpuComparison, ImageClassificationGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::CrossEntropy);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
@@ -478,7 +433,7 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     NeuralNetwork gpu_network;
@@ -487,7 +442,7 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
@@ -554,7 +509,6 @@ TEST_F(GpuComparison, ResidentInferenceGraphReplay)
             ASSERT_NEAR(reference[j], replayed[j], 1.0e-6f);
     }
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 }
 
 TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
@@ -639,7 +593,6 @@ TEST_F(GpuComparison, ResidentInferenceGraphInvalidation)
     for (size_t j = 0; j < second_reference.size(); ++j)
         ASSERT_NEAR(second_reference[j], replayed[j], 1.0e-6f);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 }
 
 TEST_F(GpuComparison, ForecastingRecurrentForward)
@@ -662,7 +615,6 @@ TEST_F(GpuComparison, ForecastingRecurrentForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -689,7 +641,6 @@ TEST_F(GpuComparison, ForecastingLstmForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -713,7 +664,7 @@ TEST_F(GpuComparison, ForecastingRecurrentGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ForecastingNetwork gpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
@@ -721,9 +672,8 @@ TEST_F(GpuComparison, ForecastingRecurrentGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -746,7 +696,7 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ForecastingLstmNetwork gpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
@@ -754,9 +704,8 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -779,7 +728,7 @@ TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ForecastingLstmNetwork gpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
@@ -787,9 +736,8 @@ TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -812,7 +760,7 @@ TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     ForecastingNetwork gpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
@@ -820,9 +768,8 @@ TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -870,7 +817,6 @@ TEST_F(GpuComparison, TransformerForward)
     gpu_network.set_parameters(parameters);
     const Tensor3 gpu_outputs = gpu_network.calculate_outputs(decoder_inputs, encoder_inputs);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
     const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
@@ -984,7 +930,7 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 
     Loss cpu_loss(&cpu_network, &dataset);
     cpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR cpu_gradient = compute_gradient(cpu_loss);
+    const VectorR cpu_gradient = calculate_gradient(cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
     NeuralNetwork gpu_network;
@@ -999,26 +945,11 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
-    const VectorR gpu_gradient = compute_gradient(gpu_loss);
+    const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 2.0e-2f);
 }
-
-#ifndef OPENNN_NO_VISION
-
-// Raw-kernel parity for the YOLOv8 anchor-free loss: the CPU kernels
-// (yolo_v8_error_kernel / yolo_v8_gradient_kernel) against the CUDA pair
-// (yolo_v8_error_cuda / yolo_v8_gradient_cuda) on identical data. Error
-// accumulation order differs on the GPU (atomicAdd), hence relative tolerance.
-// Phase 5a grid-based kernel superseded by TAL (Phase 5b); CPU functions removed.
-TEST_F(GpuComparison, DISABLED_YoloV8LossParity)
-{
-    GTEST_SKIP() << "Obsolete: yolo_v8_error_kernel removed in Phase 5b (TAL replaces it)";
-}
-
-#endif // OPENNN_NO_VISION
 
 #endif

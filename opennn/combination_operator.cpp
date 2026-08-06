@@ -45,14 +45,8 @@ vector<Operator::SlotQuantization> CombinationOperator::parameter_quantization()
 
 void CombinationOperator::link_parameters(span<const TensorView> views)
 {
-    if (!use_bias)
-    {
-        if (!views.empty()) weights = views[0];
-        return;
-    }
-    if (views.size() < 2) return;
-    bias    = views[0];
-    weights = views[1];
+    if (use_bias) link_views(views, {&bias, &weights});
+    else          link_views(views, {&weights});
 }
 
 void CombinationOperator::link_parameter_scales(span<const TensorView> views)
@@ -63,14 +57,8 @@ void CombinationOperator::link_parameter_scales(span<const TensorView> views)
 
 void CombinationOperator::link_gradients(span<const TensorView> views)
 {
-    if (!use_bias)
-    {
-        if (!views.empty()) weight_gradient = views[0];
-        return;
-    }
-    if (views.size() < 2) return;
-    bias_gradient   = views[0];
-    weight_gradient = views[1];
+    if (use_bias) link_views(views, {&bias_gradient, &weight_gradient});
+    else          link_views(views, {&weight_gradient});
 }
 
 void CombinationOperator::set_parameters_random()

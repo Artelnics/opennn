@@ -1040,30 +1040,15 @@ void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t trans
 namespace opennn
 {
 
-bfloat16* ensure_bf16_gradient_workspace(Index)
-{
-    throw runtime_error("ensure_bf16_gradient_workspace requires CUDA support.");
-}
+bfloat16* ensure_bf16_gradient_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_gradient_workspace)
 
-float* ensure_bf16_to_fp32_workspace(Index)
-{
-    throw runtime_error("ensure_bf16_to_fp32_workspace requires CUDA support.");
-}
+float* ensure_bf16_to_fp32_workspace(Index) OPENNN_CUDA_STUB_BODY(ensure_bf16_to_fp32_workspace)
 
-void* ensure_cudnn_conv_workspace(size_t)
-{
-    throw runtime_error("ensure_cudnn_conv_workspace requires CUDA support.");
-}
+void* ensure_cudnn_conv_workspace(size_t) OPENNN_CUDA_STUB_BODY(ensure_cudnn_conv_workspace)
 
-const void* data_for_gemm_dtype(const TensorView&, Type)
-{
-    throw runtime_error("data_for_gemm_dtype requires CUDA support.");
-}
+const void* data_for_gemm_dtype(const TensorView&, Type) OPENNN_CUDA_STUB_BODY(data_for_gemm_dtype)
 
-const void* bias_for_gemm_bf16(const TensorView&)
-{
-    throw runtime_error("bias_for_gemm_bf16 requires CUDA support.");
-}
+const void* bias_for_gemm_bf16(const TensorView&) OPENNN_CUDA_STUB_BODY(bias_for_gemm_bf16)
 
 void run_lt_matmul_cached(int, int, int,
                           cublasOperation_t,
@@ -1073,10 +1058,7 @@ void run_lt_matmul_cached(int, int, int,
                           const void*,
                           cudaDataType_t,
                           cudaDataType_t,
-                          const void*)
-{
-    throw runtime_error("run_lt_matmul_cached requires CUDA support.");
-}
+                          const void*) OPENNN_CUDA_STUB_BODY(run_lt_matmul_cached)
 
 void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                int, int, int,
@@ -1084,10 +1066,7 @@ void gemm_strided_batched_cuda(cublasOperation_t, cublasOperation_t,
                                const void*, cudaDataType_t, int, long long,
                                void*, cudaDataType_t, int, long long,
                                int,
-                               float, float)
-{
-    throw runtime_error("gemm_strided_batched_cuda requires CUDA support.");
-}
+                               float, float) OPENNN_CUDA_STUB_BODY(gemm_strided_batched_cuda)
 
 }
 

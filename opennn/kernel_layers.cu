@@ -112,22 +112,6 @@ void unscale_cuda(const Index n, const int features,
                        min_range, max_range, output);
 }
 
-template<typename TIn>
-__global__ void diff_to_fp32_kernel(const int n,
-                                    const TIn* __restrict__ input,
-                                    const float* __restrict__ target,
-                                    float* __restrict__ output)
-{
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-        output[i] = static_cast<float>(input[i]) - target[i];
-}
-
-template<typename TIn>
-void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output)
-{
-    launch_elementwise_strided(n, diff_to_fp32_kernel<TIn>, input, target, output);
-}
-
 template<typename TIn, typename TOut>
 __global__ void scaled_diff_kernel(const int n,
                                    const TIn* __restrict__ input,
@@ -254,10 +238,7 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < num_tokens; i += Index(blockDim.x) * gridDim.x)
     {
         const T* token = source_input + i * embedding_dimension;
-        bool is_pad = true;
-        for (int e = 0; e < embedding_dimension; ++e)
-            if (fabsf(static_cast<float>(token[e])) > 1e-7f) { is_pad = false; break; }
-        padding_mask[i] = static_cast<T>(is_pad ? 1.0f : 0.0f);
+        padding_mask[i] = static_cast<T>(token_is_padding(token, embedding_dimension) ? 1.0f : 0.0f);
     }
 }
 
@@ -444,7 +425,7 @@ __global__ void attention_sequence_lengths_kernel(const int batch_size,
         bool nonzero = false;
         const T* token = sequence + s * embedding_dimension;
         for (int e = threadIdx.x; e < embedding_dimension; e += blockDim.x)
-            if (fabsf(static_cast<float>(token[e])) > 1e-7f) { nonzero = true; break; }
+            if (fabsf(static_cast<float>(token[e])) > padding_epsilon) { nonzero = true; break; }
 
         const int token_is_valid = __syncthreads_or(nonzero);
 
@@ -543,14 +524,7 @@ struct PoolingScratch
         bytes = new_bytes;
         return static_cast<float*>(data);
     }
-
-    ~PoolingScratch()
-    {
-        if (data) opennn::device::deallocate(opennn::Device::CUDA, data, bytes);
-    }
 };
-
-PoolingScratch pooling_scratch_;
 
 }
 
@@ -559,7 +533,10 @@ static float* get_pooling_scratch(size_t floats_needed)
     checked_host_condition(
         floats_needed > static_cast<size_t>(std::numeric_limits<Index>::max()),
         "pooling scratch size exceeds Index range.");
-    return pooling_scratch_.ensure(Index(floats_needed));
+    // Immortal on purpose: a static destructor would free device memory after
+    // the CUDA context may already be gone; the driver reclaims it at exit.
+    static PoolingScratch& scratch = *new PoolingScratch();
+    return scratch.ensure(Index(floats_needed));
 }
 
 template<typename T>
@@ -572,9 +549,7 @@ __global__ void pooling_3d_valid_mask_kernel(const int BS, const int S, const in
     if (bs >= BS) return;
 
     const T* token = in + int64_t(bs) * F;
-    bool valid = false;
-    for (int f = 0; f < F; ++f)
-        if (fabsf(static_cast<float>(token[f])) > 1e-7f) { valid = true; break; }
+    const bool valid = !token_is_padding(token, F);
 
     valid_mask[bs] = valid ? 1.0f : 0.0f;
     if (valid) atomicAdd(&counts[bs / S], 1.0f);
@@ -673,38 +648,31 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
     launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
 
-template<typename T>
-__global__ void first_token_3d_forward_kernel(const int n, const int S, const int F, const T* __restrict__ in, T* __restrict__ out)
+// Forward gathers each sample's first-token features; backward scatters the
+// delta back into the first token's slot.
+template<typename T, bool Gather>
+__global__ void first_token_3d_kernel(const int n, const int S, const int F, const T* __restrict__ src, T* __restrict__ dst)
 {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
     {
         const int b = i / F;
         const int h = i % F;
-        out[i] = in[b * S * F + h];
+        const int strided = b * S * F + h;
+        if constexpr (Gather) dst[i] = src[strided];
+        else                  dst[strided] = src[i];
     }
 }
 
 template<typename T>
 void first_token_3d_forward_cuda(const int B, const int S, const int F, const T* in, T* out)
 {
-    launch_elementwise_strided(Index(B) * F, first_token_3d_forward_kernel<T>, S, F, in, out);
-}
-
-template<typename T>
-__global__ void first_token_3d_backward_kernel(const int n, const int S, const int F, const T* __restrict__ delta, T* __restrict__ in_gradient)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int b = i / F;
-        const int h = i % F;
-        in_gradient[b * S * F + h] = delta[i];
-    }
+    launch_elementwise_strided(Index(B) * F, first_token_3d_kernel<T, true>, S, F, in, out);
 }
 
 template<typename T>
 void first_token_3d_backward_cuda(const int B, const int S, const int F, const T* delta, T* in_gradient)
 {
-    launch_elementwise_strided(Index(B) * F, first_token_3d_backward_kernel<T>, S, F, delta, in_gradient);
+    launch_elementwise_strided(Index(B) * F, first_token_3d_kernel<T, false>, S, F, delta, in_gradient);
 }
 
 __device__ __forceinline__ void warp_reduce_sum2(float& a, float& b)
@@ -1882,21 +1850,23 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
     launch_elementwise(n, dropout_backward_kernel<T>, output_delta, input_delta, mask, 1.0f / (1.0f - rate));
 }
 
-template<typename T>
-__global__ void gather_time_slice_kernel(const int batch,
-                                         const int time_steps,
-                                         const int features,
-                                         const int t,
-                                         const T* __restrict__ src,
-                                         T* __restrict__ dst)
+// Gather: dst[b,f] = src[b,t,f]. Scatter: dst[b,t,f] = src[b,f].
+template<typename T, bool Gather>
+__global__ void time_slice_kernel(const int n,
+                                  const int time_steps,
+                                  const int features,
+                                  const int t,
+                                  const T* __restrict__ src,
+                                  T* __restrict__ dst)
 {
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = batch * features;
-    if (idx >= total) return;
-
-    const int b = idx / features;
-    const int f = idx - b * features;
-    dst[idx] = src[(b * time_steps + t) * features + f];
+    for (Index idx = Index(blockIdx.x) * blockDim.x + threadIdx.x; idx < n; idx += Index(blockDim.x) * gridDim.x)
+    {
+        const int b = int(idx) / features;
+        const int f = int(idx) - b * features;
+        const Index strided = (Index(b) * time_steps + t) * features + f;
+        if constexpr (Gather) dst[idx] = src[strided];
+        else                  dst[strided] = src[idx];
+    }
 }
 
 template<typename T>
@@ -1907,32 +1877,8 @@ void gather_time_slice_cuda(const Index batch,
                             const T* src,
                             T* dst)
 {
-    if (batch == 0 || features == 0) return;
-    const int total = checked_int(batch * features);
-    OPENNN_CUDA_LAUNCH(gather_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
-                                  opennn::device::get_compute_stream()>>>(
-        checked_int(batch),
-        checked_int(time_steps),
-        checked_int(features),
-        checked_int(t),
-        src, dst));
-}
-
-template<typename T>
-__global__ void scatter_time_slice_kernel(const int batch,
-                                          const int time_steps,
-                                          const int features,
-                                          const int t,
-                                          const T* __restrict__ src,
-                                          T* __restrict__ dst)
-{
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int total = batch * features;
-    if (idx >= total) return;
-
-    const int b = idx / features;
-    const int f = idx - b * features;
-    dst[(b * time_steps + t) * features + f] = src[idx];
+    launch_elementwise(batch * features, time_slice_kernel<T, true>,
+                       checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
 template<typename T>
@@ -1943,15 +1889,8 @@ void scatter_time_slice_cuda(const Index batch,
                              const T* src,
                              T* dst)
 {
-    if (batch == 0 || features == 0) return;
-    const int total = checked_int(batch * features);
-    OPENNN_CUDA_LAUNCH(scatter_time_slice_kernel<T><<<grid_size_for(total), block_size, 0,
-                                   opennn::device::get_compute_stream()>>>(
-        checked_int(batch),
-        checked_int(time_steps),
-        checked_int(features),
-        checked_int(t),
-        src, dst));
+    launch_elementwise(batch * features, time_slice_kernel<T, false>,
+                       checked_int(time_steps), checked_int(features), checked_int(t), src, dst);
 }
 
 __global__ void scatter_time_slice_fill_kernel(const int batch,
@@ -2585,7 +2524,10 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
-__global__ void concat_forward_slice_kernel(
+// Forward scatters a slice's channels into the concatenated tensor; backward
+// gathers the slice's delta back out of it.
+template<bool Scatter>
+__global__ void concat_slice_kernel(
     const int n,
     const float* __restrict__ src,
     float* __restrict__ dst,
@@ -2598,24 +2540,9 @@ __global__ void concat_forward_slice_kernel(
         const int w  = (i / slice_ch) % W;
         const int h  = (i / slice_ch / W) % H;
         const int b  =  i / slice_ch / W / H;
-        dst[((b * H + h) * W + w) * total_ch + ch_offset + c] = src[i];
-    }
-}
-
-__global__ void concat_backward_slice_kernel(
-    const int n,
-    const float* __restrict__ out_delta,
-    float* __restrict__ in_delta,
-    const int H, const int W,
-    const int slice_ch, const int total_ch, const int ch_offset)
-{
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
-    {
-        const int c  = i % slice_ch;
-        const int w  = (i / slice_ch) % W;
-        const int h  = (i / slice_ch / W) % H;
-        const int b  =  i / slice_ch / W / H;
-        in_delta[i] = out_delta[((b * H + h) * W + w) * total_ch + ch_offset + c];
+        const int strided = ((b * H + h) * W + w) * total_ch + ch_offset + c;
+        if constexpr (Scatter) dst[strided] = src[i];
+        else                   dst[i] = src[strided];
     }
 }
 
@@ -2623,7 +2550,7 @@ void concat_forward_slice_cuda(const int batch, const int H, const int W,
                                const int slice_ch, const int total_ch, const int ch_offset,
                                const float* src, float* dst)
 {
-    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_forward_slice_kernel,
+    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_slice_kernel<true>,
                        src, dst, H, W, slice_ch, total_ch, ch_offset);
 }
 
@@ -2631,7 +2558,7 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
                                 const int slice_ch, const int total_ch, const int ch_offset,
                                 const float* out_delta, float* in_delta)
 {
-    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_backward_slice_kernel,
+    launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_slice_kernel<false>,
                        out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset);
 }
 
@@ -2852,7 +2779,6 @@ void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t*
 }
 
 #define INSTANTIATE(T) \
-    template void diff_to_fp32_cuda<T>(const Index, const T*, const float*, float*); \
     template void embedding_backward_cuda<T>(const Index, const float*, const T*, float*, float*, const int, const int, const int, const bool); \
     template void split_heads_cuda<T>(const Index, const T*, T*, const int, const int, const int); \
     template void merge_heads_cuda<T>(const Index, const T*, T*, const int, const int, const int); \

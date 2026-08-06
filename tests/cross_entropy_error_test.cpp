@@ -64,7 +64,6 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     EXPECT_NEAR(error,0, type(1.0e-1));
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 }
 
 

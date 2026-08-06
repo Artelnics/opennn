@@ -6,6 +6,7 @@
 #include "opennn/normalization_layer_3d.h"
 #include "opennn/dense_layer.h"
 #include "opennn/flatten_layer.h"
+#include "opennn/addition_layer.h"
 #include "opennn/tabular_dataset.h"
 #include "opennn/neural_network.h"
 #include "opennn/back_propagation.h"
@@ -211,10 +212,48 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
         back_propagation.backward_slots[size_t(normalization_index)][1].data,
         back_propagation.backward_slots[size_t(normalization_index)][2].data);
 
+    // The aliased fused path must produce the same gradients as an unfused
+    // reference (explicit Addition + plain LayerNorm) with identical
+    // parameters — the two graphs compute the same function, so this check is
+    // exact. A finite-difference comparison is deliberately NOT used here:
+    // with 3 features and one sequence position the LN curvature makes the
+    // central-difference estimate diverge from the true gradient by far more
+    // than any reasonable tolerance (verified: the FD estimate converges
+    // monotonically to the analytical value as h shrinks).
     const VectorR gradient = calculate_gradient(loss);
-    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(),
-              type(4.0e-3));
+
+    NeuralNetwork reference_network;
+    reference_network.add_layer(
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                   "residual"),
+        {-1});
+    reference_network.add_layer(
+        make_unique<opennn::Dense>(input_shape, Shape{3}, "Identity", false,
+                                   "branch"),
+        {residual_index});
+    reference_network.add_layer(make_unique<Addition>(input_shape),
+                                {residual_index, branch_index});
+    reference_network.add_layer(
+        make_unique<Normalization3d>(input_shape, "plain_norm"), {2});
+    reference_network.add_layer(make_unique<Flatten>(input_shape), {3});
+    reference_network.add_layer(
+        make_unique<opennn::Dense>(
+            reference_network.get_output_shape(), Shape{2}, "Identity"));
+    reference_network.compile();
+
+    const float* parameter_data = neural_network.get_parameters_data();
+    VectorR parameters(neural_network.get_parameters_size());
+    for (Index i = 0; i < parameters.size(); ++i)
+        parameters(i) = parameter_data[i];
+    reference_network.set_parameters(parameters);
+
+    Loss reference_loss(&reference_network, &dataset);
+    reference_loss.set_error(Loss::Error::MeanSquaredError);
+    const VectorR reference_gradient = calculate_gradient(reference_loss);
+
+    ASSERT_EQ(gradient.size(), reference_gradient.size());
+    EXPECT_LT((gradient - reference_gradient).array().abs().maxCoeff(),
+              type(1.0e-6));
 }
 
 

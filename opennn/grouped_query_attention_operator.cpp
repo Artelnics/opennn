@@ -62,11 +62,7 @@ vector<Operator::SlotQuantization> GroupedQueryAttentionOperator::parameter_quan
 
 void GroupedQueryAttentionOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.size() < 4) return;
-    q_proj = views[0];
-    k_proj = views[1];
-    v_proj = views[2];
-    o_proj = views[3];
+    if (!link_views(views, {&q_proj, &k_proj, &v_proj, &o_proj})) return;
 
     const Index elem = Index(type_bytes(q_proj.type));
     qkv_fused = q_proj.type == k_proj.type && k_proj.type == v_proj.type
@@ -347,22 +343,14 @@ gqa_bshd_tensor(cudnn_frontend::graph::Graph& graph, const char* name,
 void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
                     Index q_heads, Index kv_heads, Index head_dim, float scale)
 {
-    auto graph = make_shared<cudnn_frontend::graph::Graph>();
-    graph->set_io_data_type(cudnn_frontend::DataType_t::BFLOAT16)
-         .set_intermediate_data_type(cudnn_frontend::DataType_t::FLOAT)
-         .set_compute_data_type(cudnn_frontend::DataType_t::FLOAT);
+    auto graph = cudnn_frontend::new_graph(Type::BF16);
 
     s.Q = gqa_bshd_tensor(*graph, "Q", q_heads,  max_q,  head_dim);
     s.K = gqa_bshd_tensor(*graph, "K", kv_heads, max_kv, head_dim);
     s.V = gqa_bshd_tensor(*graph, "V", kv_heads, max_kv, head_dim);
 
-    auto seq_scalar = [&](const char* name) {
-        return graph->tensor(cudnn_frontend::graph::Tensor_attributes()
-                             .set_name(name).set_dim({1, 1, 1, 1}).set_stride({1, 1, 1, 1})
-                             .set_data_type(cudnn_frontend::DataType_t::INT32));
-    };
-    s.SeqQ  = seq_scalar("SeqQ");
-    s.SeqKV = seq_scalar("SeqKV");
+    s.SeqQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqQ");
+    s.SeqKV = cudnn_frontend::seq_len_scalar(*graph, "SeqKV");
 
     auto options = cudnn_frontend::graph::SDPA_attributes()
                    .set_name("gqa_prefill")
@@ -380,11 +368,7 @@ void gqa_sdpa_build(GroupedAttentionSDPA& s, Index max_q, Index max_kv,
       .set_stride({q_heads * max_q * head_dim, head_dim, q_heads * head_dim, 1});
     s.O = O;
 
-    cudnnHandle_t handle = Backend::get_cudnn_handle();
-    cudnn_frontend::check_status(graph->validate(), "gqa sdpa validate");
-    cudnn_frontend::check_status(graph->build_operation_graph(handle), "gqa sdpa build_operation_graph");
-    cudnn_frontend::check_status(graph->create_execution_plans({cudnn_frontend::HeurMode_t::A}), "gqa sdpa plans");
-    cudnn_frontend::check_status(graph->build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), "gqa sdpa build_plans");
+    cudnn_frontend::finalize_attention(*graph, "gqa sdpa");
 
     int64_t workspace_bytes = 0;
     graph->get_workspace_size(workspace_bytes);

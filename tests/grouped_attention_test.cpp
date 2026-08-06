@@ -136,6 +136,5 @@ TEST(GroupedAttentionTest, GpuMatchesCpu)
         max_abs = std::max(max_abs, std::abs(double(out_gpu[i]) - double(out_cpu[i])));
     EXPECT_LT(max_abs, 1.0e-4);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 }
 #endif

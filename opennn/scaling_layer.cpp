@@ -108,14 +108,21 @@ float* Scaling::link_states(float* pointer, Device device)
 void Scaling::refresh_op_storage(Device device)
 {
     const Index features = ssize(descriptives);
-    const Index bytes    = 5 * features * Index(sizeof(float));
 
-    const bool needs = op_storage_dirty
-                    || op_storage.bytes       != bytes
-                    || op_storage.device_type != device;
-    if (!needs) return;
+    if (!refresh_feature_storage(op_storage, op_storage_dirty, device, features, 5,
+            [&](float* staging)
+            {
+                for (Index i = 0; i < features; ++i)
+                {
+                    staging[size_t(0 * features + i)] = descriptives[size_t(i)].minimum;
+                    staging[size_t(1 * features + i)] = descriptives[size_t(i)].maximum;
+                    staging[size_t(2 * features + i)] = descriptives[size_t(i)].mean;
+                    staging[size_t(3 * features + i)] = descriptives[size_t(i)].standard_deviation;
+                    staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
+                }
+            }))
+        return;
 
-    op_storage.resize_bytes(bytes, device);
     scale_op.min_range = min_range;
     scale_op.max_range = max_range;
 
@@ -123,29 +130,7 @@ void Scaling::refresh_op_storage(Device device)
     {
         scale_op.minimums = scale_op.maximums = scale_op.means =
             scale_op.standard_deviations = scale_op.scalers = TensorView();
-        op_storage_dirty = false;
         return;
-    }
-
-    vector<float> staging(size_t(5 * features));
-    for (Index i = 0; i < features; ++i)
-    {
-        staging[size_t(0 * features + i)] = descriptives[size_t(i)].minimum;
-        staging[size_t(1 * features + i)] = descriptives[size_t(i)].maximum;
-        staging[size_t(2 * features + i)] = descriptives[size_t(i)].mean;
-        staging[size_t(3 * features + i)] = descriptives[size_t(i)].standard_deviation;
-        staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
-    }
-
-    if (device == Device::CUDA)
-    {
-        opennn::device::copy_async(op_storage.data, staging.data(),
-                                   bytes,
-                                   opennn::device::CopyKind::HostToDevice);
-    }
-    else
-    {
-        memcpy(op_storage.data, staging.data(), size_t(bytes));
     }
 
     float* const base = op_storage.as<float>();
@@ -155,8 +140,6 @@ void Scaling::refresh_op_storage(Device device)
     scale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
     scale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);
     scale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32, device);
-
-    op_storage_dirty = false;
 }
 
 void Scaling::read_JSON_body(const Json* scaling_layer_element)

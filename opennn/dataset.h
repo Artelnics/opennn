@@ -124,11 +124,9 @@ public:
     StorageMode get_storage_mode() const noexcept { return storage_mode; }
     string get_storage_mode_string() const;
 
-    const Separator& get_separator() const noexcept { return separator; }
     string get_separator_string() const;
     string get_separator_name() const;
 
-    const Codification& get_codification() const noexcept { return codification; }
     string get_codification_string() const;
 
     bool get_display() const noexcept { return display; }
@@ -161,7 +159,6 @@ public:
     {
         set_sample_roles(indices, string_to_sample_role(role));
     }
-    void set_variables(const vector<Variable>& new_variables) { variables = new_variables; }
 
     void set_default_variable_names();
     void set_default_variable_roles();

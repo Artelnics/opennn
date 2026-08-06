@@ -47,17 +47,13 @@ vector<TensorSpec> BatchNormalizationOperator::state_specs() const
 
 void BatchNormalizationOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.size() < 2) return;
-    gamma = views[0];
-    beta  = views[1];
-    invalidate_inference_cache();
+    if (link_views(views, {&gamma, &beta}))
+        invalidate_inference_cache();
 }
 
 void BatchNormalizationOperator::link_gradients(span<const TensorView> views)
 {
-    if (views.size() < 2) return;
-    gamma_gradient = views[0];
-    beta_gradient  = views[1];
+    link_views(views, {&gamma_gradient, &beta_gradient});
 }
 
 void BatchNormalizationOperator::link_states(span<const TensorView> views)
@@ -696,12 +692,12 @@ void BatchNormalizationOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 { throw runtime_error("apply_inference_gpu requires CUDA."); }
+void BatchNormalizationOperator::apply_inference_gpu(const TensorView&, TensorView&, const TensorView&)                 OPENNN_CUDA_STUB_BODY(apply_inference_gpu)
 void BatchNormalizationOperator::apply_training_gpu (const TensorView&, TensorView&, TensorView&, TensorView&,
-                                    const TensorView&)                                                   { throw runtime_error("apply_training_gpu requires CUDA."); }
+                                    const TensorView&)                                                   OPENNN_CUDA_STUB_BODY(apply_training_gpu)
 void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&,
                                     const TensorView&, const TensorView&, TensorView&,
-                                    TensorView&) const                                                  { throw runtime_error("apply_delta_gpu requires CUDA."); }
+                                    TensorView&) const                                                  OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

@@ -41,18 +41,12 @@ vector<TensorSpec> RecurrentOperator::parameter_specs() const
 
 void RecurrentOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.size() < 3) return;
-    bias              = views[0];
-    input_weights     = views[1];
-    recurrent_weights = views[2];
+    link_views(views, {&bias, &input_weights, &recurrent_weights});
 }
 
 void RecurrentOperator::link_gradients(span<const TensorView> views)
 {
-    if (views.size() < 3) return;
-    bias_gradient              = views[0];
-    input_weight_gradient      = views[1];
-    recurrent_weight_gradient  = views[2];
+    link_views(views, {&bias_gradient, &input_weight_gradient, &recurrent_weight_gradient});
 }
 
 void RecurrentOperator::set_parameters_random()
@@ -379,34 +373,12 @@ void RecurrentOperator::apply_gpu_cudnn_(const TensorView& input,
     ensure_cudnn_setup_(batch_size, is_training);
     pack_weights_to_cudnn_();
 
-    auto run_forward = [&]() {
-        const CudnnRnnShapeSlot& shape = active_shape();
-        return cudnnRNNForward(
-            Backend::get_cudnn_handle(),
-            rnn_desc,
-            is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
-            shape.seq_dev.as<int32_t>(),
-            shape.x_desc, input.data,
-            shape.y_desc, hidden_states.data,
-            shape.h_desc, nullptr, nullptr,
-            shape.h_desc, nullptr, nullptr,
-            size_t(weight_space_buf.bytes), weight_space_buf.data,
-            size_t(workspace_buf.bytes), workspace_buf.data,
-            is_training ? size_t(reserve_space_buf.bytes) : 0,
-            is_training ? reserve_space_buf.data : nullptr);
-    };
-
-    cudnnStatus_t forward_status = run_forward();
-    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
-    {
-        persist_algo_failed_ = true;
-        rnn_desc.reset();
-        cached_input_features = -1;
-        ensure_cudnn_setup_(batch_size, is_training);
-        pack_weights_to_cudnn_();
-        forward_status = run_forward();
-    }
-    CHECK_CUDNN(forward_status);
+    cudnn_rnn_forward_(is_training, /*has_cell_state*/ false,
+                       input.data, hidden_states.data,
+                       [&] {
+                           ensure_cudnn_setup_(batch_size, is_training);
+                           pack_weights_to_cudnn_();
+                       });
 
     if (return_sequences)
         copy(hidden_states, output);
@@ -444,34 +416,8 @@ void RecurrentOperator::apply_delta_gpu_cudnn_(const TensorView& input,
         dx_data = dx_scratch_buf.data;
     }
 
-    const CudnnRnnShapeSlot& shape = active_shape();
-
-    CHECK_CUDNN(cudnnRNNBackwardData_v8(
-        Backend::get_cudnn_handle(),
-        rnn_desc,
-        shape.seq_dev.as<int32_t>(),
-        shape.y_desc, hidden_states.data, dy_data,
-        shape.x_desc, dx_data,
-        shape.h_desc, nullptr, nullptr, nullptr,
-        shape.h_desc, nullptr, nullptr, nullptr,
-        size_t(weight_space_buf.bytes), weight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
-
-    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
-                           Backend::get_compute_stream());
-
-    CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
-        Backend::get_cudnn_handle(),
-        rnn_desc,
-        CUDNN_WGRAD_MODE_ADD,
-        shape.seq_dev.as<int32_t>(),
-        shape.x_desc, input.data,
-        shape.h_desc, nullptr,
-        shape.y_desc, hidden_states.data,
-        size_t(dweight_space_buf.bytes), dweight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+    cudnn_rnn_backward_(/*has_cell_state*/ false,
+                        input.data, hidden_states.data, dy_data, dx_data);
 
     unpack_gradients_from_cudnn_();
 }
@@ -695,18 +641,12 @@ void RecurrentOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool) const
-{
-    throw runtime_error("apply_gpu requires CUDA.");
-}
+void RecurrentOperator::apply_gpu(const TensorView&, TensorView&, TensorView&, TensorView&, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
 void RecurrentOperator::apply_delta_gpu(const TensorView&, const TensorView&, const TensorView&,
                                   const TensorView&, TensorView&,
                                   TensorView&, TensorView&, TensorView&,
-                                  TensorView&, TensorView&) const
-{
-    throw runtime_error("apply_delta_gpu requires CUDA.");
-}
+                                  TensorView&, TensorView&) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

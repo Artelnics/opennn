@@ -112,7 +112,8 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 void Recurrent::set_activation_function(const string& name)
 {
     const ActivationFunction fn = ActivationOperator::from_string(name);
-    throw_if(fn == ActivationFunction::Softmax || fn == ActivationFunction::LeakyReLU,
+    using enum ActivationFunction;
+    throw_if(fn != Identity && fn != Sigmoid && fn != Tanh && fn != ReLU,
              "Recurrent: unsupported activation (use Tanh, Sigmoid, ReLU or Identity).");
     recurrent_op.activation = fn;
 }

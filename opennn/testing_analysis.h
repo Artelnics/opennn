@@ -69,7 +69,6 @@ public:
     void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
     void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
     void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
-    Index get_batch_size() const { return batch_size; }
     void check() const;
 
     Tensor3 calculate_error_data() const;
@@ -134,6 +133,7 @@ private:
     Dataset* dataset = nullptr;
 
     Index batch_size = 0;
+
 };
 
 }

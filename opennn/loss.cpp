@@ -187,7 +187,7 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     return r;
 }
 
-void check_yolo_loss(const Dataset* dataset, const NeuralNetwork*)
+void check_yolo_loss(const Dataset* dataset)
 {
     throw_if(!dynamic_cast<const YoloDataset*>(dataset),
              "YOLO loss requires YoloDataset.");
@@ -299,7 +299,7 @@ Loss::EvaluationResult yolo_error_cpu(const TensorView& output,
                                       bool sigmoid_classes,
                                       YoloLambdas lam)
 {
-    check_yolo_loss(dataset, neural_network);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index boxes_per_cell = yolo_dataset->get_boxes_per_cell();
     const Index classes_number = yolo_dataset->get_classes_number();
@@ -417,7 +417,7 @@ void yolo_gradient_cpu(const TensorView& output,
                        bool sigmoid_classes,
                        YoloLambdas lam)
 {
-    check_yolo_loss(dataset, neural_network);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index boxes_per_cell = yolo_dataset->get_boxes_per_cell();
     const Index classes_number = yolo_dataset->get_classes_number();
@@ -514,7 +514,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
                                             bool sigmoid_classes,
                                             YoloLambdas lam)
 {
-    check_yolo_loss(dataset, nn);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
     const Index classes_number = yolo_dataset->get_classes_number();
@@ -541,7 +541,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                              bool sigmoid_classes,
                              YoloLambdas lam)
 {
-    check_yolo_loss(dataset, nn);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index boxes_per_head = yolo_dataset->get_boxes_per_head();
     const Index classes_number = yolo_dataset->get_classes_number();
@@ -927,6 +927,11 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             }
                         }
 
+                        // The forward weighs the DFL cross-entropy with
+                        // lam.dfl and the CIoU term with lam.giou (see the
+                        // error kernel's return); the gradient must scale each
+                        // term with its own lambda.
+                        const float dfl_s = lam.dfl * inv_batch;
                         for (Index g = 0; g < 4; ++g)
                         {
                             float*      dlogit = delta + base_o + g * reg_max;
@@ -942,8 +947,8 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 if (i == df) w_tgt += wl;
                                 if (i == dc) w_tgt += wu;
                                 // DFL target gradient + CIoU chain
-                                dlogit[i] = box_s * ((p - w_tgt)
-                                            + d_ciou_dd[g] * p * (float(i) - d_g[g]));
+                                dlogit[i] = dfl_s * (p - w_tgt)
+                                            + box_s * d_ciou_dd[g] * p * (float(i) - d_g[g]);
                             }
                         }
                     }
@@ -994,51 +999,115 @@ static Index get_v8_reg_max(const NeuralNetwork* nn, Index detection_idx)
     return layer ? layer->get_reg_max() : Index(1);
 }
 
-Loss::EvaluationResult yolo_v8_error_cpu_multi(const ForwardPropagation& forward_propagation,
-                                               const TensorView& target_flat,
-                                               const NeuralNetwork* nn,
-                                               const vector<Index>& detection_indices,
-                                               Index classes_number,
-                                               YoloLambdas lam)
+// Runs the host-side TAL/DFL kernels over every v8 detection head, calling
+// fn(head_output, tgt, head_delta, G, reg_max) with host views. The TAL
+// assignment is host-only, so device tensors are staged through host copies
+// and gradient runs write the staged delta back to the device afterwards.
+template<typename HeadFn>
+static void for_each_v8_head(const ForwardPropagation& forward_propagation,
+                             const TensorView& target_flat,
+                             BackPropagation* back_propagation,
+                             const NeuralNetwork* nn,
+                             const vector<Index>& detection_indices,
+                             HeadFn&& fn)
 {
-    const Index batch_size = target_flat.shape[0];
-    const float* const tgt = target_flat.as<float>();
+    const bool on_device = target_flat.is_cuda();
 
-    float total_error = 0.0f;
+    const float* tgt = nullptr;
+    vector<float> tgt_cpu;
+#ifdef OPENNN_HAS_CUDA
+    if (on_device)
+    {
+        tgt_cpu.resize(size_t(target_flat.size()));
+        cudaStreamSynchronize(device::get_compute_stream());
+        cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
+                   size_t(target_flat.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+        tgt = tgt_cpu.data();
+    }
+#endif
+    if (!on_device) tgt = target_flat.as<float>();
+
     for (Index detection_idx : detection_indices)
     {
-        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
-        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
-        const Index G       = hs[0];
+        const TensorView head_view = forward_propagation.forward_slots[size_t(detection_idx)].back();
+        const Index G       = nn->get_layer(detection_idx)->get_output_shape()[0];
         const Index reg_max = get_v8_reg_max(nn, detection_idx);
-        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-        total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
+
+        TensorView head_output = head_view;
+        vector<float> out_cpu;
+        vector<float> delta_cpu;
+        TensorView staged_delta;
+        TensorView* head_delta = nullptr;
+
+#ifdef OPENNN_HAS_CUDA
+        if (on_device)
+        {
+            out_cpu.resize(size_t(head_view.size()));
+            cudaMemcpy(out_cpu.data(), head_view.as<float>(),
+                       size_t(head_view.size()) * sizeof(float), cudaMemcpyDeviceToHost);
+            head_output = TensorView(out_cpu.data(), head_view.shape, Type::FP32);
+        }
+#endif
+        if (back_propagation)
+        {
+            TensorView& device_delta = back_propagation->layer_output_deltas[size_t(detection_idx)];
+            if (on_device)
+            {
+                delta_cpu.assign(size_t(head_view.size()), 0.0f);
+                staged_delta = TensorView(delta_cpu.data(), device_delta.shape, Type::FP32);
+                head_delta = &staged_delta;
+            }
+            else
+                head_delta = &device_delta;
+        }
+
+        fn(head_output, tgt, head_delta, G, reg_max);
+
+#ifdef OPENNN_HAS_CUDA
+        if (back_propagation && on_device)
+            cudaMemcpy(back_propagation->layer_output_deltas[size_t(detection_idx)].as<float>(),
+                       delta_cpu.data(),
+                       size_t(head_view.size()) * sizeof(float), cudaMemcpyHostToDevice);
+#endif
     }
+}
+
+Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_propagation,
+                                           const TensorView& target_flat,
+                                           const NeuralNetwork* nn,
+                                           const vector<Index>& detection_indices,
+                                           Index classes_number,
+                                           YoloLambdas lam)
+{
+    const Index batch_size = target_flat.shape[0];
+
+    float total_error = 0.0f;
+    for_each_v8_head(forward_propagation, target_flat, nullptr, nn, detection_indices,
+        [&](const TensorView& head_output, const float* tgt, TensorView*, Index G, Index reg_max)
+        {
+            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+            total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
+        });
     return {.error = total_error / float(batch_size)};
 }
 
-void yolo_v8_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
-                                const TensorView& target_flat,
-                                BackPropagation& back_propagation,
-                                const NeuralNetwork* nn,
-                                const vector<Index>& detection_indices,
-                                Index classes_number,
-                                YoloLambdas lam)
+void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
+                            const TensorView& target_flat,
+                            BackPropagation& back_propagation,
+                            const NeuralNetwork* nn,
+                            const vector<Index>& detection_indices,
+                            Index classes_number,
+                            YoloLambdas lam)
 {
     const Index batch_size = target_flat.shape[0];
-    const float* const tgt = target_flat.as<float>();
     const float inv_batch = 1.0f / float(batch_size);
 
-    for (Index detection_idx : detection_indices)
-    {
-        const TensorView head_output = forward_propagation.forward_slots[size_t(detection_idx)].back();
-        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
-        const Index G       = hs[0];
-        const Index reg_max = get_v8_reg_max(nn, detection_idx);
-        TensorView& head_delta = back_propagation.layer_output_deltas[size_t(detection_idx)];
-        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-        yolo_v8_gradient_kernel_tal(head_output, tgt, head_delta, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
-    }
+    for_each_v8_head(forward_propagation, target_flat, &back_propagation, nn, detection_indices,
+        [&](const TensorView& head_output, const float* tgt, TensorView* head_delta, Index G, Index reg_max)
+        {
+            const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
+            yolo_v8_gradient_kernel_tal(head_output, tgt, *head_delta, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
+        });
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1104,7 +1173,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                float* error_accum,
                                YoloLambdas lam)
 {
-    check_yolo_loss(dataset, nn);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
 
     const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
@@ -1161,7 +1230,7 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                              Buffer& target_device,
                              YoloLambdas lam)
 {
-    check_yolo_loss(dataset, nn);
+    check_yolo_loss(dataset);
     const auto* yolo_dataset = static_cast<const YoloDataset*>(dataset);
     const Index boxes_per_head = yolo_dataset->get_boxes_per_head() > 0
         ? yolo_dataset->get_boxes_per_head()
@@ -1183,109 +1252,6 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                                sigmoid_classes ? 1 : 0, inv_batch,
                                lam.giou, lam.noobj, lam.cls, lam.focal_gamma, lam.obj_focal_gamma);
         });
-}
-
-void yolo_v8_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
-                                  const TensorView& target_flat,
-                                  const NeuralNetwork* nn,
-                                  const vector<Index>& detection_indices,
-                                  Index classes_number,
-                                  Buffer& target_device,
-                                  float* error_accum,
-                                  YoloLambdas lam)
-{
-    const Index batch_size = target_flat.shape[0];
-
-    cudaMemsetAsync(error_accum, 0, sizeof(float), device::get_compute_stream());
-
-    for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat,
-                           5 + classes_number, target_device,
-        [&](Index, const TensorView& head_output, const TensorView& head_target)
-        {
-            const Index grid_size = head_target.shape[1];
-            yolo_v8_error_cuda(head_output.as<float>(), head_target.as<float>(), error_accum,
-                               to_int(batch_size), to_int(grid_size), to_int(classes_number),
-                               lam.giou, lam.cls, lam.focal_gamma);
-        });
-}
-
-Loss::EvaluationResult yolo_v8_error_gpu_multi(const ForwardPropagation& forward_propagation,
-                                               const TensorView& target_flat,
-                                               const NeuralNetwork* nn,
-                                               const vector<Index>& detection_indices,
-                                               Index classes_number,
-                                               Buffer& target_device,
-                                               Buffer& error_device,
-                                               YoloLambdas lam)
-{
-    const Index batch_size = target_flat.shape[0];
-    const Index tgt_floats = target_flat.size();
-    vector<float> tgt_cpu(static_cast<size_t>(tgt_floats));
-    cudaStreamSynchronize(device::get_compute_stream());
-    cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
-               size_t(tgt_floats) * sizeof(float), cudaMemcpyDeviceToHost);
-    const float* const tgt = tgt_cpu.data();
-
-    float total_error = 0.0f;
-    for (Index detection_idx : detection_indices)
-    {
-        const TensorView head_out_gpu = forward_propagation.forward_slots[size_t(detection_idx)].back();
-        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
-        const Index G             = hs[0];
-        const Index reg_max       = get_v8_reg_max(nn, detection_idx);
-        const Index head_out_floats = head_out_gpu.size();
-
-        vector<float> out_cpu(static_cast<size_t>(head_out_floats));
-        cudaMemcpy(out_cpu.data(), head_out_gpu.as<float>(),
-                   size_t(head_out_floats) * sizeof(float), cudaMemcpyDeviceToHost);
-        TensorView head_output(out_cpu.data(), head_out_gpu.shape, Type::FP32);
-
-        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-        total_error += yolo_v8_error_kernel_tal(head_output, tgt, batch_size, G, classes_number, tal, lam, reg_max);
-    }
-    return {.error = total_error / float(batch_size)};
-}
-
-void yolo_v8_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
-                                const TensorView& target_flat,
-                                BackPropagation& back_propagation,
-                                const NeuralNetwork* nn,
-                                const vector<Index>& detection_indices,
-                                Index classes_number,
-                                Buffer& target_device,
-                                YoloLambdas lam)
-{
-    const Index batch_size = target_flat.shape[0];
-    const Index tgt_floats = target_flat.size();
-    vector<float> tgt_cpu(static_cast<size_t>(tgt_floats));
-    cudaMemcpy(tgt_cpu.data(), target_flat.as<float>(),
-               size_t(tgt_floats) * sizeof(float), cudaMemcpyDeviceToHost);
-    const float* const tgt = tgt_cpu.data();
-    const float inv_batch = 1.0f / float(batch_size);
-
-    for (Index detection_idx : detection_indices)
-    {
-        const TensorView head_out_gpu = forward_propagation.forward_slots[size_t(detection_idx)].back();
-        const Shape hs = nn->get_layer(detection_idx)->get_output_shape();
-        const Index G             = hs[0];
-        const Index reg_max       = get_v8_reg_max(nn, detection_idx);
-        const Index head_out_floats = head_out_gpu.size();
-
-        vector<float> out_cpu(static_cast<size_t>(head_out_floats));
-        cudaMemcpy(out_cpu.data(), head_out_gpu.as<float>(),
-                   size_t(head_out_floats) * sizeof(float), cudaMemcpyDeviceToHost);
-        TensorView head_output(out_cpu.data(), head_out_gpu.shape, Type::FP32);
-
-        TensorView& head_delta_gpu = back_propagation.layer_output_deltas[size_t(detection_idx)];
-        vector<float> delta_cpu(size_t(head_out_floats), 0.0f);
-        TensorView head_delta_cpu(delta_cpu.data(), head_delta_gpu.shape, Type::FP32);
-
-        const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G, classes_number, reg_max);
-        yolo_v8_gradient_kernel_tal(head_output, tgt, head_delta_cpu, batch_size, G, classes_number, tal, inv_batch, lam, reg_max);
-
-        cudaMemcpy(head_delta_gpu.as<float>(), delta_cpu.data(),
-                   size_t(head_out_floats) * sizeof(float), cudaMemcpyHostToDevice);
-    }
 }
 
 #endif
@@ -1404,28 +1370,17 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 
+    // The v8 drivers stage device tensors to the host themselves (the TAL
+    // assignment is host-only), so there is no separate GPU branch here.
     if (yolo_uses_v8(neural_network))
     {
         const vector<Index> v8_indices = yolo_detection_v8_layer_indices(neural_network);
         const auto* yolo_ds = static_cast<const YoloDataset*>(dataset);
-#ifdef OPENNN_HAS_CUDA
-        if (on_gpu)
-        {
-            if (!is_gradient)
-                return yolo_v8_error_gpu_multi(forward_propagation, target, neural_network,
-                                               v8_indices, yolo_ds->get_classes_number(),
-                                               yolo_target_device, errors_device, lam);
-            yolo_v8_gradient_gpu_multi(forward_propagation, target, *back_propagation,
-                                       neural_network, v8_indices, yolo_ds->get_classes_number(),
-                                       yolo_target_device, lam);
-            return {};
-        }
-#endif
         if (!is_gradient)
-            return yolo_v8_error_cpu_multi(forward_propagation, target, neural_network,
-                                           v8_indices, yolo_ds->get_classes_number(), lam);
-        yolo_v8_gradient_cpu_multi(forward_propagation, target, *back_propagation,
-                                   neural_network, v8_indices, yolo_ds->get_classes_number(), lam);
+            return yolo_v8_error_multi(forward_propagation, target, neural_network,
+                                       v8_indices, yolo_ds->get_classes_number(), lam);
+        yolo_v8_gradient_multi(forward_propagation, target, *back_propagation,
+                               neural_network, v8_indices, yolo_ds->get_classes_number(), lam);
         return {};
     }
 
@@ -1464,6 +1419,21 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 
 #endif
 
+// Grows the device error workspace to the size the current error term needs
+// (CrossEntropy3d stages three per-token columns) and returns its pointer.
+float* Loss::ensure_error_workspace(const TensorView& input, Index batch_samples) const
+{
+    const Index workspace_floats = (error == Error::CrossEntropy3d)
+        ? 3 * (input.size() / input.shape.back())
+        : input.size();
+    errors_device.grow_to(workspace_floats * Index(sizeof(float)));
+    if (memory_debug::enabled())
+        memory_debug::record("loss", "Loss::errors_device",
+                             workspace_floats * Index(sizeof(float)),
+                             format("batch={}", batch_samples));
+    return errors_device.as<float>();
+}
+
 Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
                                               const ForwardPropagation& forward_propagation) const
 {
@@ -1473,19 +1443,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
     EvaluationResult result;
 
     float* workspace_device = nullptr;
-    const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
-    if (on_gpu)
-    {
-        const Index workspace_floats = (error == Error::CrossEntropy3d)
-            ? 3 * (input.size() / input.shape.back())
-            : input.size();
-        errors_device.grow_to(workspace_floats * Index(sizeof(float)));
-        if (memory_debug::enabled())
-            memory_debug::record("loss", "Loss::errors_device",
-                                 workspace_floats * Index(sizeof(float)),
-                                 format("batch={}", batch.get_samples_number()));
-        workspace_device = errors_device.as<float>();
-    }
+    const bool device_on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
+    if (device_on_gpu && error != Error::Yolo)  // the Yolo drivers stage on the host
+        workspace_device = ensure_error_workspace(input, batch.get_samples_number());
 
     using enum Error;
     switch (error)
@@ -1549,17 +1509,10 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    const Index workspace_floats = (error == Error::CrossEntropy3d)
-        ? 3 * (input.size() / input.shape.back())
-        : input.size();
-
-    errors_device.grow_to(workspace_floats * Index(sizeof(float)));
+    ensure_error_workspace(input, batch.get_samples_number());
     metric_results_device.grow_to(Index(3 * sizeof(float)));
     if (memory_debug::enabled())
     {
-        memory_debug::record("loss", "Loss::errors_device",
-                             workspace_floats * Index(sizeof(float)),
-                             format("batch={}", batch.get_samples_number()));
         memory_debug::record("loss", "Loss::metric_results_device",
                              Index(3 * sizeof(float)),
                              format("batch={}", batch.get_samples_number()));
@@ -1595,7 +1548,8 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         input.dispatch([&](auto tag)
         {
             using TIn = decltype(tag);
-            diff_to_fp32_cuda<TIn>(input.size(), input.as<TIn>(), target.as_float(), workspace);
+            scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
+                                               1.0f, workspace);
         });
         reduce_dot_and_accumulate(input.size(),
                                   error == MeanSquaredError
@@ -1651,34 +1605,10 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
     }
 
+    // Yolo epoch metrics run on the host (supports_device_epoch_metrics
+    // excludes Error::Yolo): the TAL/DFL loss is host-computed, and a device
+    // accumulator would diverge from the trained loss.
     case Yolo:
-    {
-#ifndef OPENNN_NO_VISION
-
-        const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class,
-                              yolo_focal_gamma, yolo_obj_focal_gamma};
-
-        if (yolo_uses_v8(neural_network))
-        {
-            const auto* yolo_ds = static_cast<const YoloDataset*>(dataset);
-            yolo_v8_error_gpu_accumulate(forward_propagation, target, neural_network,
-                                         yolo_detection_v8_layer_indices(neural_network),
-                                         yolo_ds->get_classes_number(),
-                                         yolo_target_device, results_device, lam);
-        }
-        else
-            yolo_error_gpu_accumulate(forward_propagation, target, dataset, neural_network,
-                                      yolo_detection_layer_indices(neural_network),
-                                      yolo_uses_sigmoid_classes(neural_network),
-                                      yolo_target_device, results_device, lam);
-
-        accumulate_scaled_metric_cuda(results_device, 1.0f / float(target.shape[0]), error_sum_device);
-        return true;
-#else
-        return false;
-#endif
-    }
-
     case MinkowskiError:
         return false;
     }

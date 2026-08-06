@@ -107,7 +107,6 @@ public:
     // Assignment (TAL) happens at loss time using current predictions.
     static constexpr Index MAX_GT_BOXES = 100;
 
-    bool is_v8_mode() const noexcept { return v8_mode; }
     void set_v8_mode(bool enabled);
 
     void set(const filesystem::path&,

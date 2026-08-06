@@ -110,7 +110,8 @@ private:
         SdpaValueGradBF16,
         SdpaQueryRematBF16,
         SdpaKeyRematBF16,
-        SdpaValueRematBF16
+        SdpaValueRematBF16,
+        SdpaOutputRematBF16
     };
 };
 

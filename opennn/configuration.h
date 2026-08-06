@@ -16,6 +16,12 @@ namespace opennn
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16, INT8 };
 
+// Shared by the host operators and the CUDA kernels (kernel_common.cuh derives
+// its integer activation ids from this enum), so the order must stay stable.
+enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
+
+inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
+
 // INT8 is weight-only: activations run in BF16.
 inline Type activation_dtype(Type type) { return type == Type::INT8 ? Type::BF16 : type; }
 

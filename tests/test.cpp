@@ -6,6 +6,7 @@
 
 #include "opennn/configuration.h"
 #include "opennn/device_backend.h"
+#include "opennn/random_utilities.h"
 
 using namespace std;
 using namespace opennn;
@@ -13,12 +14,16 @@ using namespace opennn;
 namespace
 {
 
+// Owns the per-test baseline: CPU/FP32 configuration and a deterministic RNG
+// state, so no test depends on how many random draws its predecessors made.
 class CpuConfigurationListener : public ::testing::EmptyTestEventListener
 {
 public:
     void OnTestStart(const ::testing::TestInfo&) override
     {
         Configuration::instance().set(Device::CPU, Type::FP32);
+
+        set_seed(1);
 
         device::reset_last_error();
     }

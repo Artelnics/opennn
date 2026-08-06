@@ -8,6 +8,11 @@
 #include "opennn_types.h"
 #include "configuration.h"
 
+namespace opennn
+{
+struct MemoryPoolEntry;
+}
+
 namespace opennn::memory_debug
 {
 
@@ -19,6 +24,10 @@ void record(const string&,
             const string&,
             Index,
             const string& note = {});
+
+void record_pool_lifetimes(const string&,
+                           const vector<MemoryPoolEntry>&,
+                           const string&);
 
 void print(ostream&);
 

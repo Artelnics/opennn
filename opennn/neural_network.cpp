@@ -2233,15 +2233,9 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
 
 #else
 
-void NeuralNetwork::copy_parameters_device()
-{
-    throw runtime_error("NeuralNetwork::copy_parameters_device requires CUDA support.");
-}
+void NeuralNetwork::copy_parameters_device() OPENNN_CUDA_STUB_BODY(NeuralNetwork::copy_parameters_device)
 
-void NeuralNetwork::cast_parameters_to_bf16()
-{
-    throw runtime_error("NeuralNetwork::cast_parameters_to_bf16 requires CUDA support.");
-}
+void NeuralNetwork::cast_parameters_to_bf16() OPENNN_CUDA_STUB_BODY(NeuralNetwork::cast_parameters_to_bf16)
 
 void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 {
@@ -2251,20 +2245,14 @@ void NeuralNetwork::upload_parameters_bf16_inference()
 {
 }
 
-void NeuralNetwork::upload_parameters_int8_inference()
-{
-    throw runtime_error("NeuralNetwork::upload_parameters_int8_inference requires CUDA support.");
-}
+void NeuralNetwork::upload_parameters_int8_inference() OPENNN_CUDA_STUB_BODY(NeuralNetwork::upload_parameters_int8_inference)
 
 void NeuralNetwork::copy_parameters_host()
 {
     link_parameters();
 }
 
-void NeuralNetwork::copy_states_device()
-{
-    throw runtime_error("NeuralNetwork::copy_states_device requires CUDA support.");
-}
+void NeuralNetwork::copy_states_device() OPENNN_CUDA_STUB_BODY(NeuralNetwork::copy_states_device)
 
 void NeuralNetwork::copy_states_host()
 {
@@ -2272,17 +2260,11 @@ void NeuralNetwork::copy_states_host()
 }
 
 MatrixR NeuralNetwork::calculate_outputs_device(const vector<TensorView>&,
-                                                ForwardPropagation&)
-{
-    throw runtime_error("NeuralNetwork::calculate_outputs_device requires CUDA support.");
-}
+                                                ForwardPropagation&) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_device)
 
 TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>&,
                                                      ForwardPropagation&,
-                                                     bool)
-{
-    throw runtime_error("NeuralNetwork::calculate_outputs_resident requires CUDA support.");
-}
+                                                     bool) OPENNN_CUDA_STUB_BODY(NeuralNetwork::calculate_outputs_resident)
 
 #endif
 

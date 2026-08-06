@@ -47,10 +47,10 @@ vector<TensorSpec> EmbeddingLookupOperator::state_specs() const
 
 void EmbeddingLookupOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    weights = views[0];
     if (positional_trainable && views.size() > 1)
-        positional_encoding = views[1];
+        link_views(views, {&weights, &positional_encoding});
+    else
+        link_views(views, {&weights});
 }
 
 void EmbeddingLookupOperator::link_parameter_scales(span<const TensorView> views)
@@ -61,10 +61,10 @@ void EmbeddingLookupOperator::link_parameter_scales(span<const TensorView> views
 
 void EmbeddingLookupOperator::link_gradients(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    weight_gradient = views[0];
     if (positional_trainable && views.size() > 1)
-        positional_gradient = views[1];
+        link_views(views, {&weight_gradient, &positional_gradient});
+    else
+        link_views(views, {&weight_gradient});
 }
 
 void EmbeddingLookupOperator::link_states(span<const TensorView> views)

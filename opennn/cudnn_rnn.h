@@ -10,6 +10,8 @@
 
 #include "operator.h"
 
+#include <functional>
+
 namespace opennn
 {
 
@@ -122,6 +124,17 @@ protected:
     mutable bool persist_algo_active_ = false;
 
 #ifdef OPENNN_HAS_CUDA
+    // Shared forward/backward drivers for the vanilla-RNN and LSTM operators.
+    // has_cell_state selects c_desc (LSTM) or h_desc for the second state;
+    // reconfigure re-runs the operator's setup+weight packing when the
+    // persistent algorithm reports NOT_SUPPORTED and the plan is rebuilt.
+    void cudnn_rnn_forward_(bool is_training, bool has_cell_state,
+                            const void* x, void* y,
+                            const function<void()>& reconfigure) const;
+    void cudnn_rnn_backward_(bool has_cell_state,
+                             const void* x, const void* y, const void* dy,
+                             void* dx) const;
+
     void cudnn_setup_(const CudnnRnnConfig&,
                       Index input_features, Index output_features, Index time_steps,
                       Index batch_size, bool for_training) const;

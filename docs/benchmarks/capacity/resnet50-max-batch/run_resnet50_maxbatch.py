@@ -276,9 +276,20 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
     if BENCH_LD_LIBRARY_PATHS:
         env["LD_LIBRARY_PATH"] = os.pathsep.join(BENCH_LD_LIBRARY_PATHS + [env.get("LD_LIBRARY_PATH", "")])
 
+    # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM counts
+    # too. Give the trial its cap as a delta over the idle level sampled
+    # immediately before it, so external usage cannot fabricate a capacity
+    # boundary or kill a healthy trial.
+    idle_before = 0
+    try:
+        idle_before = current_gpu_used_mib(args.gpu_index)
+    except Exception:
+        pass
+
     t0 = time.perf_counter()
     termination_reason = None
-    with PeakMonitor(args.gpu_index, args.poll_s, cap_mib=cap_mib) as mon:
+    with PeakMonitor(args.gpu_index, args.poll_s,
+                     cap_mib=cap_mib + idle_before) as mon:
         proc = subprocess.Popen(
             cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True)
@@ -302,6 +313,7 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
         peak_mib = mon.peak_mib
 
     raw = stdout + stderr
+    peak_delta_mib = max(0, peak_mib - idle_before)
     if termination_reason:
         result = {
             "batch": batch,
@@ -309,6 +321,8 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
             "reason": termination_reason,
             "elapsed_s": round(time.perf_counter() - t0, 3),
             "peak_vram_mib": peak_mib,
+            "idle_before_mib": idle_before,
+            "peak_delta_mib": peak_delta_mib,
             "vram_cap_mib": cap_mib,
             "command": shlex.join(cmd),
             "raw_output": raw[-4000:],
@@ -325,7 +339,7 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
         reason = "oom"
     else:
         reason = f"exit_{proc.returncode}"
-    if ok and peak_mib > cap_mib:
+    if ok and peak_delta_mib > cap_mib:
         ok = False
         reason = "vram_cap_exceeded"
 
@@ -335,6 +349,8 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
         "reason": reason,
         "elapsed_s": round(time.perf_counter() - t0, 3),
         "peak_vram_mib": peak_mib,
+        "idle_before_mib": idle_before,
+        "peak_delta_mib": peak_delta_mib,
         "vram_cap_mib": cap_mib,
         "command": shlex.join(cmd),
         "raw_output": raw[-4000:],

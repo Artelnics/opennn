@@ -103,45 +103,25 @@ float* Bounding::link_states(float* pointer, Device device)
 void Bounding::refresh_op_storage(Device device)
 {
     const Index features = ssize(lower_bounds);
-    const Index bytes    = 2 * features * Index(sizeof(float));
 
-    const bool needs = op_storage_dirty
-                    || op_storage.bytes       != bytes
-                    || op_storage.device_type != device;
-    if (!needs) return;
-
-    op_storage.resize_bytes(bytes, device);
+    if (!refresh_feature_storage(op_storage, op_storage_dirty, device, features, 2,
+            [&](float* staging)
+            {
+                memcpy(staging, lower_bounds.data(), size_t(features) * sizeof(float));
+                memcpy(staging + features, upper_bounds.data(), size_t(features) * sizeof(float));
+            }))
+        return;
 
     if (features == 0)
     {
         bound.lower = bound.upper = TensorView();
-        op_storage_dirty = false;
         return;
-    }
-
-    const Index feature_bytes = features * Index(sizeof(float));
-
-    if (device == Device::CUDA)
-    {
-        opennn::device::copy_async(op_storage.as<float>(), lower_bounds.data(),
-                                   feature_bytes,
-                                   opennn::device::CopyKind::HostToDevice);
-        opennn::device::copy_async(op_storage.as<float>() + features, upper_bounds.data(),
-                                   feature_bytes,
-                                   opennn::device::CopyKind::HostToDevice);
-    }
-    else
-    {
-        memcpy(op_storage.as<float>(), lower_bounds.data(), static_cast<size_t>(feature_bytes));
-        memcpy(op_storage.as<float>() + features, upper_bounds.data(), static_cast<size_t>(feature_bytes));
     }
 
     float* const base = op_storage.as<float>();
     const Shape shape{features};
     bound.lower = TensorView(base, shape, Type::FP32, device);
     bound.upper = TensorView(base + 1 * features, shape, Type::FP32, device);
-
-    op_storage_dirty = false;
 }
 
 void Bounding::read_JSON_body(const Json* root_element)

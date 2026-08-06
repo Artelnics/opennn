@@ -15,10 +15,6 @@
 namespace opennn
 {
 
-enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
-
-inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
-
 inline constexpr float INV_SQRT_2      = 0.70710678118654752440f;
 inline constexpr float INV_SQRT_2_PI   = 0.39894228040143267794f;
 inline constexpr float SQRT_2_OVER_PI  = 0.7978845608028654f;

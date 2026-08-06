@@ -22,20 +22,22 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
-static constexpr int activation_identity  = 0;
-static constexpr int activation_sigmoid   = 1;
-static constexpr int activation_tanh      = 2;
-static constexpr int activation_relu      = 3;
-static constexpr int activation_softmax   = 4;
-static constexpr int activation_leaky_relu = 5;
-static constexpr int activation_gelu      = 6;
-static constexpr int activation_gelu_tanh = 7;
-static constexpr int activation_silu      = 8;
+// Integer ids handed to kernels, derived from the shared enum in
+// configuration.h so host and device can never drift.
+static constexpr int activation_identity   = int(opennn::ActivationFunction::Identity);
+static constexpr int activation_sigmoid    = int(opennn::ActivationFunction::Sigmoid);
+static constexpr int activation_tanh       = int(opennn::ActivationFunction::Tanh);
+static constexpr int activation_relu       = int(opennn::ActivationFunction::ReLU);
+static constexpr int activation_softmax    = int(opennn::ActivationFunction::Softmax);
+static constexpr int activation_leaky_relu = int(opennn::ActivationFunction::LeakyReLU);
+static constexpr int activation_gelu       = int(opennn::ActivationFunction::GELU);
+static constexpr int activation_gelu_tanh  = int(opennn::ActivationFunction::GELUTanh);
+static constexpr int activation_silu       = int(opennn::ActivationFunction::SiLU);
 
 static constexpr int class_activation_softmax = 0;
 static constexpr int class_activation_sigmoid = 1;
 
-static constexpr float leaky_relu_slope = 0.1f;
+static constexpr float leaky_relu_slope = opennn::LEAKY_RELU_SLOPE;
 
 static inline int ceil_div(int a, int b)
 {
@@ -124,22 +126,45 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
+// A null-or-4-byte-aligned pointer can take paired __nv_bfloat162 stores.
+static inline bool is_bfloat162_aligned(const void* ptr)
+{
+    return ptr == nullptr || (reinterpret_cast<std::uintptr_t>(ptr) & 0x3) == 0;
+}
+
 // Launch a float4-vectorized kernel of shape (n_vec, n, args...): the kernel
 // processes n_vec float4 packets plus a scalar tail. When aligned is false the
 // whole range runs through the tail loop (n_vec = 0).
 template<typename K, typename... Args>
-static inline void launch_vec4(Index n, bool aligned, K kernel, Args... args)
+static inline void launch_vec4_on(cudaStream_t stream, Index n, bool aligned, K kernel, Args... args)
 {
     if (n == 0) return;
     const int total = checked_int(n);
     const int n_vec = aligned ? total / 4 : 0;
     OPENNN_CUDA_LAUNCH(kernel<<<grid_size_for(vector_work_size(total, n_vec, 4)), block_size, 0,
-                       opennn::device::get_compute_stream()>>>(n_vec, total, args...));
+                       stream>>>(n_vec, total, args...));
+}
+
+template<typename K, typename... Args>
+static inline void launch_vec4(Index n, bool aligned, K kernel, Args... args)
+{
+    launch_vec4_on(opennn::device::get_compute_stream(), n, aligned, kernel, args...);
 }
 
 __device__ __forceinline__ float sigmoid_f(float x)
 {
     return 1.0f / (1.0f + expf(-x));
+}
+
+// A token row counts as padding when every feature is (near) zero.
+static constexpr float padding_epsilon = 1e-7f;
+
+template<typename T>
+__device__ __forceinline__ bool token_is_padding(const T* token, int features)
+{
+    for (int e = 0; e < features; ++e)
+        if (fabsf(static_cast<float>(token[e])) > padding_epsilon) return false;
+    return true;
 }
 
 __device__ inline void rnn_activation(int activation_id, float z, float& h, float& dh)

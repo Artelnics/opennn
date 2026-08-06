@@ -86,7 +86,9 @@ public:
 
     virtual void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
 
-    const string& get_regularization_method() const { return regularization_to_string(regularization_method); }
+    // By value: the reference-returning form would dangle the moment the
+    // lookup stops being a static table. Used by Neural Designer.
+    string get_regularization_method() const { return regularization_to_string(regularization_method); }
     void set_regularization(const string& new_regularization_method) { regularization_method = string_to_regularization(new_regularization_method); }
     void set_regularization(Regularization new_regularization) { regularization_method = new_regularization; }
     void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
@@ -143,8 +145,6 @@ public:
     const string& get_name() const noexcept { return name; }
     static float calculate_h(const float);
 
-    void print() const {}
-
     void set_yolo_lambda_noobj(float v)     { yolo_lambda_noobj     = v; }
     void set_yolo_lambda_class(float v)     { yolo_lambda_class     = v; }
     void set_yolo_lambda_giou(float v)      { yolo_lambda_giou      = v; }
@@ -160,6 +160,8 @@ private:
     }
 
     void add_regularization(BackPropagation&) const;
+
+    float* ensure_error_workspace(const TensorView&, Index batch_samples) const;
 
     float get_weighted_coefficient(const Batch&) const;
 
@@ -237,18 +239,6 @@ void yolo_gradient_kernel(const TensorView& output,
                           bool sigmoid_classes,
                           float inv_batch,
                           YoloLambdas lam);
-
-float yolo_v8_error_kernel(const TensorView& output,
-                           const TensorView& target,
-                           Index classes_number,
-                           YoloLambdas lam);
-
-void yolo_v8_gradient_kernel(const TensorView& output,
-                             const TensorView& target,
-                             const TensorView& output_delta,
-                             Index classes_number,
-                             float inv_batch,
-                             YoloLambdas lam);
 
 #endif
 

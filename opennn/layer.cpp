@@ -9,6 +9,7 @@
 #include "layer.h"
 
 #include "json.h"
+#include "device_backend.h"
 
 namespace opennn
 {
@@ -124,6 +125,31 @@ float* Layer::link_states(float* pointer, Device device)
                                    &Operator::state_specs,
                                    &Operator::link_states,
                                    device);
+}
+
+bool Layer::refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
+                                    Index features, Index columns,
+                                    const function<void(float*)>& fill)
+{
+    const Index bytes = columns * features * Index(sizeof(float));
+    if (!dirty && storage.bytes == bytes && storage.device_type == device)
+        return false;
+
+    storage.resize_bytes(bytes, device);
+    dirty = false;
+
+    if (features == 0) return true;
+
+    vector<float> staging(size_t(columns * features));
+    fill(staging.data());
+
+    if (device == Device::CUDA)
+        opennn::device::copy_async(storage.data, staging.data(), bytes,
+                                   opennn::device::CopyKind::HostToDevice);
+    else
+        memcpy(storage.data, staging.data(), size_t(bytes));
+
+    return true;
 }
 
 float* Layer::link_gradients(float* pointer, vector<TensorView>& gradient_views, Device device)

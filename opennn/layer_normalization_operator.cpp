@@ -31,26 +31,22 @@ void LayerNormalizationOperator::link_parameters(span<const TensorView> views)
 {
     if (method == NormalizationMethod::RMS)
     {
-        if (!views.empty()) gamma = views[0];
         beta = {};
+        link_views(views, {&gamma});
         return;
     }
-    if (views.size() < 2) return;
-    gamma = views[0];
-    beta  = views[1];
+    link_views(views, {&gamma, &beta});
 }
 
 void LayerNormalizationOperator::link_gradients(span<const TensorView> views)
 {
     if (method == NormalizationMethod::RMS)
     {
-        if (!views.empty()) gamma_gradient = views[0];
         beta_gradient = {};
+        link_views(views, {&gamma_gradient});
         return;
     }
-    if (views.size() < 2) return;
-    gamma_gradient = views[0];
-    beta_gradient  = views[1];
+    link_views(views, {&gamma_gradient, &beta_gradient});
 }
 
 void LayerNormalizationOperator::init_defaults()

@@ -339,10 +339,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
 #else
 
-void Batch::upload_to_device_batch_async(Batch&, cudaStream_t)
-{
-    throw runtime_error("Batch::upload_to_device_batch_async requires CUDA support.");
-}
+void Batch::upload_to_device_batch_async(Batch&, cudaStream_t) OPENNN_CUDA_STUB_BODY(Batch::upload_to_device_batch_async)
 
 #endif
 

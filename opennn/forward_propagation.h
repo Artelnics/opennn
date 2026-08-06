@@ -10,6 +10,7 @@
 
 #include "tensor_types.h"
 #include "device_backend.h"
+#include "back_propagation.h"
 
 #include <tuple>
 
@@ -17,6 +18,7 @@ namespace opennn
 {
 
 class NeuralNetwork;
+class Loss;
 
 enum class ForwardPropagationMode
 {
@@ -49,17 +51,32 @@ struct ForwardPropagation
     ForwardPropagation(Index, NeuralNetwork*,
                        ForwardPropagationMode = ForwardPropagationMode::Training,
                        InferenceShapePolicy = {},
-                       bool inputs_pre_scaled = false);
+                       bool inputs_pre_scaled = false,
+                       Loss* joint_loss = nullptr);
 
     ~ForwardPropagation();
 
     ForwardPropagation(const ForwardPropagation&) = delete;
     ForwardPropagation& operator=(const ForwardPropagation&) = delete;
 
+    // With joint_loss, the backward delta entries are planned into this
+    // arena on the unified step timeline (forward of layer i at step i,
+    // backward at 2L-1-i); BackPropagation::set then binds its delta views
+    // here instead of owning a separate pool.
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
-             bool inputs_pre_scaled = false);
+             bool inputs_pre_scaled = false,
+             Loss* joint_loss = nullptr);
+
+    struct JointDeltaPlan
+    {
+        BackPropagation::DeltaLayout layout;
+        vector<Index> offsets;
+        Index delta_bytes = 0;
+        bool valid = false;
+    };
+    JointDeltaPlan joint_delta_plan;
 
     void stage_position(cudaStream_t stream);
 
@@ -67,7 +84,6 @@ struct ForwardPropagation
     void set_output_sequence_window(Index start, Index count);
 
     Index get_sequence_capacity() const noexcept { return sequence_capacity; }
-    Index get_active_sequence_length() const noexcept { return active_sequence_length; }
     Index get_final_output_capacity() const noexcept { return final_output_capacity; }
 
     TensorView get_last_trainable_layer_outputs() const;
@@ -77,7 +93,6 @@ struct ForwardPropagation
     void recompute_for_backward(Index layer_index);
 
     void set_cuda_graph(bool);
-    bool get_cuda_graph() const noexcept { return use_cuda_graph; }
     void reset_cuda_graph() noexcept;
     void prepare_cuda_graph_workspaces();
     bool cuda_graph_workspaces_need_growth() const noexcept;

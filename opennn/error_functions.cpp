@@ -21,7 +21,8 @@ static float sum_squared_diff_cuda(const TensorView& input, const TensorView& ta
 
     input.dispatch([&](auto tag) {
         using TIn = decltype(tag);
-        diff_to_fp32_cuda<TIn>(input.size(), input.as<TIn>(), target.as_float(), workspace);
+        scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
+                                           1.0f, workspace);
     });
 
     float sum_squared = 0.0f;

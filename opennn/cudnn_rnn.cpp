@@ -315,6 +315,75 @@ void CudnnRnnState::cudnn_unpack_gradients_(int num_linear_layers,
     rnn_copy_regions_cuda(specs, count);
 }
 
+void CudnnRnnState::cudnn_rnn_forward_(bool is_training, bool has_cell_state,
+                                       const void* x, void* y,
+                                       const function<void()>& reconfigure) const
+{
+    auto run_forward = [&]() {
+        const CudnnRnnShapeSlot& shape = active_shape();
+        return cudnnRNNForward(
+            Backend::get_cudnn_handle(),
+            rnn_desc,
+            is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
+            shape.seq_dev.as<int32_t>(),
+            shape.x_desc, x,
+            shape.y_desc, y,
+            shape.h_desc, nullptr, nullptr,
+            has_cell_state ? shape.c_desc : shape.h_desc, nullptr, nullptr,
+            size_t(weight_space_buf.bytes), weight_space_buf.data,
+            size_t(workspace_buf.bytes), workspace_buf.data,
+            is_training ? size_t(reserve_space_buf.bytes) : 0,
+            is_training ? reserve_space_buf.data : nullptr);
+    };
+
+    cudnnStatus_t forward_status = run_forward();
+    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
+    {
+        persist_algo_failed_ = true;
+        rnn_desc.reset();
+        cached_input_features = -1;
+        reconfigure();
+        forward_status = run_forward();
+    }
+    CHECK_CUDNN(forward_status);
+}
+
+void CudnnRnnState::cudnn_rnn_backward_(bool has_cell_state,
+                                        const void* x, const void* y, const void* dy,
+                                        void* dx) const
+{
+    const CudnnRnnShapeSlot& shape = active_shape();
+    const cudnnTensorDescriptor_t second_state_desc =
+        has_cell_state ? shape.c_desc.handle : shape.h_desc.handle;
+
+    CHECK_CUDNN(cudnnRNNBackwardData_v8(
+        Backend::get_cudnn_handle(),
+        rnn_desc,
+        shape.seq_dev.as<int32_t>(),
+        shape.y_desc, y, dy,
+        shape.x_desc, dx,
+        shape.h_desc, nullptr, nullptr, nullptr,
+        second_state_desc, nullptr, nullptr, nullptr,
+        size_t(weight_space_buf.bytes), weight_space_buf.data,
+        size_t(workspace_buf.bytes), workspace_buf.data,
+        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+
+    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
+                           Backend::get_compute_stream());
+
+    CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
+        Backend::get_cudnn_handle(),
+        rnn_desc,
+        CUDNN_WGRAD_MODE_ADD,
+        shape.seq_dev.as<int32_t>(),
+        shape.x_desc, x,
+        shape.h_desc, nullptr,
+        shape.y_desc, y,
+        size_t(dweight_space_buf.bytes), dweight_space_buf.data,
+        size_t(workspace_buf.bytes), workspace_buf.data,
+        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+}
+
 }
 
 #endif

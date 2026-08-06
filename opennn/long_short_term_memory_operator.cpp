@@ -22,14 +22,6 @@ namespace opennn
 namespace
 {
 
-void link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
-{
-    if (views.size() < targets.size()) return;
-
-    size_t index = 0;
-    for (TensorView* target : targets) *target = views[index++];
-}
-
 void zero_if_linked(TensorView& view)
 {
     if (view.data) view.setZero();
@@ -888,33 +880,12 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                                  : static_cast<float*>(y_buf.data);
     y_used_ = y_target;
 
-    auto run_forward = [&]() {
-        return cudnnRNNForward(
-            Backend::get_cudnn_handle(),
-            rnn_desc,
-            is_training ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE,
-            active_shape().seq_dev.as<int32_t>(),
-            active_shape().x_desc, input.data,
-            active_shape().y_desc, y_target,
-            active_shape().h_desc, nullptr, nullptr,
-            active_shape().c_desc, nullptr, nullptr,
-            size_t(weight_space_buf.bytes), weight_space_buf.data,
-            size_t(workspace_buf.bytes), workspace_buf.data,
-            is_training ? size_t(reserve_space_buf.bytes) : 0,
-            is_training ? reserve_space_buf.data : nullptr);
-    };
-
-    cudnnStatus_t forward_status = run_forward();
-    if (forward_status == CUDNN_STATUS_NOT_SUPPORTED && persist_algo_active_)
-    {
-        persist_algo_failed_ = true;
-        rnn_desc.reset();
-        cached_input_features = -1;
-        ensure_cudnn_setup_(batch_size, is_training);
-        pack_weights_to_cudnn_();
-        forward_status = run_forward();
-    }
-    CHECK_CUDNN(forward_status);
+    cudnn_rnn_forward_(is_training, /*has_cell_state*/ true,
+                       input.data, y_target,
+                       [&] {
+                           ensure_cudnn_setup_(batch_size, is_training);
+                           pack_weights_to_cudnn_();
+                       });
 
     if (return_seq) return;
 
@@ -953,8 +924,6 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
     const float* y_data = y_used_ ? y_used_
                                   : static_cast<const float*>(y_buf.data);
 
-    const CudnnRnnShapeSlot& shape = active_shape();
-
     void* dx_data = input_delta.data;
     if (!dx_data || input_delta.empty())
     {
@@ -962,47 +931,17 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
         dx_data = dx_scratch_buf.data;
     }
 
-    CHECK_CUDNN(cudnnRNNBackwardData_v8(
-        Backend::get_cudnn_handle(),
-        rnn_desc,
-        shape.seq_dev.as<int32_t>(),
-        shape.y_desc, y_data, dy_data,
-        shape.x_desc, dx_data,
-        shape.h_desc, nullptr, nullptr, nullptr,
-        shape.c_desc, nullptr, nullptr, nullptr,
-        size_t(weight_space_buf.bytes), weight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
-
-    device::set_zero_async(dweight_space_buf.data, dweight_space_buf.bytes,
-                           Backend::get_compute_stream());
-
-    CHECK_CUDNN(cudnnRNNBackwardWeights_v8(
-        Backend::get_cudnn_handle(),
-        rnn_desc,
-        CUDNN_WGRAD_MODE_ADD,
-        shape.seq_dev.as<int32_t>(),
-        shape.x_desc, input.data,
-        shape.h_desc, nullptr,
-        shape.y_desc, y_data,
-        size_t(dweight_space_buf.bytes), dweight_space_buf.data,
-        size_t(workspace_buf.bytes), workspace_buf.data,
-        size_t(reserve_space_buf.bytes), reserve_space_buf.data));
+    cudnn_rnn_backward_(/*has_cell_state*/ true,
+                        input.data, y_data, dy_data, dx_data);
 
     unpack_gradients_from_cudnn_();
 }
 
 #else
 
-void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool, bool) const
-{
-    throw runtime_error("apply_gpu requires CUDA.");
-}
+void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, bool, bool) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
-void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const
-{
-    throw runtime_error("apply_delta_gpu requires CUDA.");
-}
+void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

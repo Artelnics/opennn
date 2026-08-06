@@ -102,9 +102,6 @@ void gather_window_targets_cuda(const float* matrix, const int* start_rows, floa
                                 const Index matrix_cols, const Index matrix_rows,
                                 const Index col_offset, cudaStream_t stream = nullptr);
 
-template<typename TIn>
-void diff_to_fp32_cuda(const Index n, const TIn* input, const float* target, float* output);
-
 template<typename TIn, typename TOut>
 void scaled_diff_cuda_typed(const Index n, const TIn* input, const float* target,
                             float scale, TOut* output);
@@ -440,17 +437,16 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
                         float lambda_giou, float lambda_noobj, float lambda_class,
                         float focal_gamma, float obj_focal_gamma);
 
-void yolo_v8_error_cuda(const float* output, const float* target, float* error_accumulator,
-                        int batch, int grid, int classes_number,
-                        float lambda_giou, float lambda_class, float focal_gamma);
-
-void yolo_v8_gradient_cuda(const float* output, const float* target, float* delta,
-                           int batch, int grid, int classes_number, float inv_batch,
-                           float lambda_giou, float lambda_class, float focal_gamma);
-
 void yolo_assemble_head_target_cuda(const float* target_flat, float* head_target,
                                     Index batch, Index per_sample_floats,
                                     Index head_offset, Index head_floats);
+
+// kernel_c2psa.cu
+void c2psa_split_cuda(const void* x, void* xa, void* cat, int BT, int C, int H, cudaDataType_t dtype);
+void c2psa_fill_cat_left_cuda(const void* attn_v, void* cat, int BT, int C, int H, cudaDataType_t dtype);
+void c2psa_row_softmax_cuda(void* A, int rows, int T_sz, cudaDataType_t dtype);
+void c2psa_softmax_bwd_cuda(const void* A, void* dA, float scale, int rows, int T_sz, cudaDataType_t dtype);
+void c2psa_scatter_dx_cuda(const void* d_xa, const void* d_cat, void* din, int BT, int C, int H, cudaDataType_t dtype);
 
 #endif
 

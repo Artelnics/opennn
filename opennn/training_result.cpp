@@ -144,16 +144,6 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
     return override_results;
 }
 
-void OptimizerData::print() const
-{
-    cout << "Potential parameters:" << "\n"
-         << potential_parameters << "\n"
-         << "Training direction:" << "\n"
-         << training_direction << "\n"
-         << "Initial learning rate:" << "\n"
-         << initial_learning_rate << "\n";
-}
-
 void OptimizerData::set(const vector<Shape>& slot_shapes, Device device)
 {
     const Index total_bytes = get_aligned_bytes(slot_shapes, Type::FP32);

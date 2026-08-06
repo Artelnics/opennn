@@ -88,7 +88,6 @@ TEST(C2PSA, GpuGradientMatchesNumerical)
     const VectorR analytical = calculate_gradient(*loss);
     const VectorR numerical  = calculate_numerical_gradient(*loss);
 
-    Configuration::instance().set(Device::CPU, Type::FP32);
 
     ASSERT_EQ(analytical.size(), numerical.size());
     const float max_diff = (analytical - numerical).array().abs().maxCoeff();

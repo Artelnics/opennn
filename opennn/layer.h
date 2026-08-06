@@ -187,7 +187,6 @@ public:
     Type get_compute_dtype() const noexcept { return compute_dtype; }
     Device get_compute_device() const noexcept { return compute_device; }
 
-    Type get_weights_dtype() const noexcept { return weights_dtype; }
 
     void set_compute_dtype(Type new_compute_dtype)
     {
@@ -206,6 +205,18 @@ public:
     virtual float* link_states(float*, Device);
 
     float* link_gradients(float*, vector<TensorView>&, Device);
+
+protected:
+
+    // Shared by state-holding non-trainable layers (Scaling, Bounding): keeps
+    // a columns x features FP32 block staged in `storage`. Returns true when
+    // the block was restaged and the caller must rebind its views; fill()
+    // writes the host-side staging (only called when features > 0).
+    static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
+                                        Index features, Index columns,
+                                        const function<void(float*)>& fill);
+
+public:
 
     vector<TensorView>& get_parameter_views() { return parameters; }
     const vector<TensorView>& get_parameter_views() const noexcept { return parameters; }

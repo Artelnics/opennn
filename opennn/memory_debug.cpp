@@ -4,6 +4,7 @@
 //   M E M O R Y   D E B U G   U T I L I T I E S
 
 #include "memory_debug.h"
+#include "memory_pool.h"
 #include "string_utilities.h"
 
 namespace opennn::memory_debug
@@ -71,6 +72,24 @@ void record(const string& category,
 
     entry.bytes += bytes;
     ++entry.count;
+}
+
+// Raw pool-lifetime dump for offline analysis (e.g. the joint-arena study in
+// docs/benchmarks/analysis/analyze_joint_arena.py). One meta row carries the
+// timeline description; one row per entry carries bytes and [first, last].
+void record_pool_lifetimes(const string& category_prefix,
+                           const vector<MemoryPoolEntry>& lifetime_entries,
+                           const string& timeline_note)
+{
+    if (!enabled()) return;
+
+    record(category_prefix + ".lifetime_meta", "timeline", Index(1), timeline_note);
+    for (size_t i = 0; i < lifetime_entries.size(); ++i)
+        record(category_prefix + ".lifetime_entry", format("{}", i),
+               lifetime_entries[i].bytes,
+               format("first={},last={}",
+                      lifetime_entries[i].first_step,
+                      lifetime_entries[i].last_step));
 }
 
 void print(ostream& os)

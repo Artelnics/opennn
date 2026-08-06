@@ -20,6 +20,18 @@ namespace opennn
 class Json;
 class JsonWriter;
 
+// Bind the leading `targets.size()` views to the given members, in order —
+// the standard body for Operator::link_parameters / link_gradients. Returns
+// false (binding nothing) when fewer views than targets were provided.
+inline bool link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
+{
+    if (views.size() < targets.size()) return false;
+
+    size_t index = 0;
+    for (TensorView* target : targets) *target = views[index++];
+    return true;
+}
+
 struct Operator
 {
     virtual ~Operator() = default;

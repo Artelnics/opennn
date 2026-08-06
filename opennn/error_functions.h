@@ -10,9 +10,6 @@
 
 #include "tensor_types.h"
 
-#define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
-#define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
-
 namespace opennn
 {
 

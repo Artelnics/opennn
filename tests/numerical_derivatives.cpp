@@ -10,11 +10,32 @@
 #include "opennn/forward_propagation.h"
 #include "opennn/back_propagation.h"
 #include "opennn/batch.h"
+#include "opennn/device_backend.h"
 
 #include <Eigen/Dense>
 
 namespace opennn
 {
+
+namespace
+{
+
+// Batch::fill only writes host memory; on the GPU the device buffers are
+// populated exclusively by upload_to_device_batch_async. Skipping this step
+// makes every loss/gradient evaluation read uninitialized device targets.
+void upload_batch_if_gpu(Batch& batch, const NeuralNetwork& neural_network)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (!neural_network.is_gpu()) return;
+    batch.upload_to_device_batch_async(batch, Backend::get_transfer_stream());
+    batch.wait_h2d_complete();
+#else
+    (void)batch;
+    (void)neural_network;
+#endif
+}
+
+}
 
 float calculate_numerical_error(Loss& loss)
 {
@@ -33,6 +54,7 @@ float calculate_numerical_error(Loss& loss)
 
     Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+    upload_batch_if_gpu(batch, *neural_network);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
@@ -60,6 +82,7 @@ VectorR calculate_gradient(Loss& loss)
 
     Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+    upload_batch_if_gpu(batch, *neural_network);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation    back_propagation(samples_number, &loss);
@@ -91,6 +114,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     Batch batch(samples_number, dataset, neural_network->get_config());
     batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+    upload_batch_if_gpu(batch, *neural_network);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation    back_propagation(samples_number, &loss);

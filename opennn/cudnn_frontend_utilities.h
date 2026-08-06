@@ -41,8 +41,7 @@ inline int device_sm_version()
 
 inline bool frontend_enabled()
 {
-    static const bool legacy_forced = env_flag_enabled("OPENNN_CONV_LEGACY");
-    return !legacy_forced && device_sm_version() >= 700;
+    return device_sm_version() >= 700;
 }
 
 inline bool bn_frontend_enabled()
@@ -168,6 +167,29 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
     tensor->set_output(true)
            .set_dim({n, c, h, w})
            .set_stride(nhwc_strides(c, h, w));
+}
+
+// Attention (SDPA) graphs: heuristics-only build — no conv workspace cap,
+// no autotune, no FALLBACK heuristics. Shared by both attention operators.
+inline void finalize_attention(graph::Graph& graph, const string& tag)
+{
+    const cudnnHandle_t handle = Backend::get_cudnn_handle();
+
+    check_status(graph.validate(), tag + " validate");
+    check_status(graph.build_operation_graph(handle), tag + " build_operation_graph");
+    check_status(graph.create_execution_plans({HeurMode_t::A}), tag + " create_execution_plans");
+    check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+}
+
+// Per-sample valid-length input for SDPA padding masks (INT32 scalar per row).
+inline shared_ptr<graph::Tensor_attributes>
+seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
+{
+    return graph.tensor(graph::Tensor_attributes()
+                        .set_name(name)
+                        .set_dim({batch, 1, 1, 1})
+                        .set_stride({1, 1, 1, 1})
+                        .set_data_type(DataType_t::INT32));
 }
 
 inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string& tag,

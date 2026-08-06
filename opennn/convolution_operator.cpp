@@ -251,10 +251,10 @@ vector<Operator::SlotQuantization> ConvolutionOperator::parameter_quantization()
 
 void ConvolutionOperator::link_parameters(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    bias    = use_bias ? views[0] : TensorView{};
-    weights = views[use_bias ? 1 : 0];
-    weights_relinked = true;
+    bias = {};
+    const bool linked = use_bias ? link_views(views, {&bias, &weights})
+                                 : link_views(views, {&weights});
+    if (linked) weights_relinked = true;
 }
 
 void ConvolutionOperator::link_parameter_scales(span<const TensorView> views)
@@ -265,9 +265,9 @@ void ConvolutionOperator::link_parameter_scales(span<const TensorView> views)
 
 void ConvolutionOperator::link_gradients(span<const TensorView> views)
 {
-    if (views.empty()) return;
-    bias_gradient   = use_bias ? views[0] : TensorView{};
-    weight_gradient = views[use_bias ? 1 : 0];
+    bias_gradient = {};
+    if (use_bias) link_views(views, {&bias_gradient, &weight_gradient});
+    else          link_views(views, {&weight_gradient});
 }
 
 void ConvolutionOperator::set_parameters_random()
@@ -641,8 +641,8 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&) const                          { throw runtime_error("apply_gpu requires CUDA."); }
-void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const { throw runtime_error("apply_delta_gpu requires CUDA."); }
+void ConvolutionOperator::apply_gpu(const TensorView&, TensorView&) const                          OPENNN_CUDA_STUB_BODY(apply_gpu)
+void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, TensorView&) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 

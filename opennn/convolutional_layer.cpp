@@ -256,24 +256,6 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
     update_convolution_operator();
 }
 
-void Convolutional::set_row_stride(const Index new_stride_row)
-{
-    throw_if(new_stride_row <= 0, "Row stride must be positive.");
-
-    row_stride = new_stride_row;
-
-    update_convolution_operator();
-}
-
-void Convolutional::set_column_stride(const Index new_stride_column)
-{
-    throw_if(new_stride_column <= 0, "Column stride must be positive.");
-
-    column_stride = new_stride_column;
-
-    update_convolution_operator();
-}
-
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
     const ActivationFunction function = ActivationOperator::from_string(new_activation_function);

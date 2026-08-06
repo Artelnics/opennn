@@ -128,6 +128,11 @@ using cudnnRNNDataDescriptor_t     = void*;
 
 #endif
 
+// Non-CUDA stub bodies: `ret f(sig) OPENNN_CUDA_STUB_BODY(f)` for definitions
+// of declared functions, OPENNN_CUDA_STUB for static free-function stubs.
+#define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
+#define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
+
 using namespace std;
 using Eigen::Index;
 

@@ -73,15 +73,9 @@ static void fill_cuda(const TensorView& view, float value)
 
 #else
 
-cudnnTensorDescriptor_t TensorView::get_descriptor() const
-{
-    throw runtime_error("TensorView::get_descriptor requires CUDA support.");
-}
+cudnnTensorDescriptor_t TensorView::get_descriptor() const OPENNN_CUDA_STUB_BODY(TensorView::get_descriptor)
 
-void TensorView::set_descriptor(const Shape&) const
-{
-    throw runtime_error("TensorView::set_descriptor requires CUDA support.");
-}
+void TensorView::set_descriptor(const Shape&) const OPENNN_CUDA_STUB_BODY(TensorView::set_descriptor)
 
 static bool uses_cuda_fill(const TensorView& view)
 {

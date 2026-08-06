@@ -70,14 +70,12 @@ namespace
 
 TEST(BertTest, EmbeddingPlainSaveLoad)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     EXPECT_EQ(embedding_roundtrip_mismatches(                       false,                    false), 0);
     Configuration::instance().set();
 }
 
 TEST(BertTest, EmbeddingLearnedPositionalSaveLoad)
 {
-    Configuration::instance().set(Device::CPU, Type::FP32);
     EXPECT_EQ(embedding_roundtrip_mismatches(                       true,                    true), 0);
     Configuration::instance().set();
 }

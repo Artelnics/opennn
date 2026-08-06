@@ -25,8 +25,6 @@ struct OptimizerData
     OptimizerData() = default;
     virtual ~OptimizerData() = default;
 
-    virtual void print() const;
-
     void set(const vector<Shape>&, Device device = Device::CPU);
 
     Buffer data;

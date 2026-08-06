@@ -117,6 +117,14 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
 
 def run_trial(engine, precision, batch, steps, shape, cap_mib, mode="train"):
     cmd, env = cmd_env(engine, precision, batch, steps, shape, mode)
+    # nvidia-smi reports GLOBAL device memory: desktop/compositor VRAM counts
+    # too. Judge the trial by its delta over the idle level sampled immediately
+    # before it, so external usage cannot fabricate a capacity boundary.
+    idle_before = None
+    try:
+        idle_before = nvidia_used_mib()
+    except Exception:
+        pass
     try:
         with PeakMonitor() as mon:
             proc = subprocess.run(cmd, env=env, capture_output=True, text=True,
@@ -126,13 +134,20 @@ def run_trial(engine, precision, batch, steps, shape, cap_mib, mode="train"):
         return {"ok": False, "peak": None, "sps": None, "reason": "timeout"}
     raw = proc.stdout + proc.stderr
     ok = proc.returncode == 0 and "RESULT=OK" in raw
-    if ok and peak and peak > cap_mib:
+    peak_delta = None
+    if peak is not None and idle_before is not None:
+        peak_delta = max(0, peak - idle_before)
+    effective_peak = peak_delta if peak_delta is not None else peak
+    if ok and effective_peak and effective_peak > cap_mib:
         ok, reason = False, "vram_cap"
     else:
         reason = "ok" if ok else f"exit_{proc.returncode}"
     m = re.search(r"samples_per_sec=([0-9.]+)", raw)
     w = re.search(r"wall_s=([0-9.]+)", raw)
-    return {"ok": ok, "peak": peak, "sps": float(m.group(1)) if m else None,
+    return {"ok": ok, "peak": peak,
+            "idle_before_mib": idle_before,
+            "peak_delta_mib": peak_delta,
+            "sps": float(m.group(1)) if m else None,
             "wall": float(w.group(1)) if w else None,
             "reason": reason, "raw": raw[-1500:]}
 

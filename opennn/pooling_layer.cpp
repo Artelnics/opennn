@@ -221,24 +221,6 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
     update_pool_operator();
 }
 
-void Pooling::set_row_stride(Index new_row_stride)
-{
-    throw_if(new_row_stride <= 0, "Row stride must be positive.");
-
-    row_stride = new_row_stride;
-
-    update_pool_operator();
-}
-
-void Pooling::set_column_stride(Index new_column_stride)
-{
-    throw_if(new_column_stride <= 0, "Column stride must be positive.");
-
-    column_stride = new_column_stride;
-
-    update_pool_operator();
-}
-
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
     pooling_method = string_to_pooling_method(new_pooling_method);

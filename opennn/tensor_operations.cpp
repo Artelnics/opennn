@@ -178,8 +178,7 @@ ActivationFunction activation_function_from_string(const string& name)
 
 #define OPENNN_GPU_OPS(X) \
     X(bound_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&)) \
-    X(scale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&)) \
-    X(unscale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&)) \
+    X(scale_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, float, float, TensorView&, bool)) \
     X(copy_gpu, (const TensorView&, TensorView&)) \
     X(add_gpu, (const TensorView&, const TensorView&, TensorView&)) \
     X(multiply_gpu, (const TensorView&, bool, const TensorView&, bool, TensorView&, float, float)) \
@@ -338,7 +337,7 @@ void scale(const TensorView& input,
     if (input.is_cuda())
     {
         scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                  min_range, max_range, output);
+                  min_range, max_range, output, false);
         return;
     }
     scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
@@ -354,8 +353,8 @@ void unscale(const TensorView& input,
 {
     if (input.is_cuda())
     {
-        unscale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                    min_range, max_range, output);
+        scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, true);
         return;
     }
 
@@ -1718,13 +1717,26 @@ static void scale_gpu(const TensorView& input,
                const TensorView& means, const TensorView& standard_deviations,
                const TensorView& scalers,
                float min_range, float max_range,
-               TensorView& output)
+               TensorView& output, bool inverse)
 {
     const Index features = scalers.size();
 
     visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
         using TIn  = typename decltype(in)::type;
         using TOut = typename decltype(out)::type;
+        if (inverse)
+        {
+            unscale_cuda<TIn, TOut>(output.size(), to_int(features),
+                                    input.as<TIn>(),
+                                    minimums.as_float(),
+                                    maximums.as_float(),
+                                    means.as_float(),
+                                    standard_deviations.as_float(),
+                                    scalers.as_float(),
+                                    min_range, max_range,
+                                    output.as<TOut>());
+            return;
+        }
         scale_cuda<TIn, TOut>(output.size(), to_int(features),
                               input.as<TIn>(),
                               minimums.as_float(),
@@ -1734,30 +1746,6 @@ static void scale_gpu(const TensorView& input,
                               scalers.as_float(),
                               min_range, max_range,
                               output.as<TOut>());
-    });
-}
-
-static void unscale_gpu(const TensorView& input,
-                 const TensorView& minimums, const TensorView& maximums,
-                 const TensorView& means, const TensorView& standard_deviations,
-                 const TensorView& scalers,
-                 float min_range, float max_range,
-                 TensorView& output)
-{
-    const Index features = scalers.size();
-
-    visit_type_pair<Type::FP32, Type::BF16>(input.type, output.type, [&](auto in, auto out) {
-        using TIn  = typename decltype(in)::type;
-        using TOut = typename decltype(out)::type;
-        unscale_cuda<TIn, TOut>(output.size(), to_int(features),
-                                input.as<TIn>(),
-                                minimums.as_float(),
-                                maximums.as_float(),
-                                means.as_float(),
-                                standard_deviations.as_float(),
-                                scalers.as_float(),
-                                min_range, max_range,
-                                output.as<TOut>());
     });
 }
 
