@@ -214,6 +214,11 @@ if(OPENNN_HAS_CUDA)
         CUDA::cudart CUDA::cublas CUDA::cublasLt CUDA::nvrtc CUDA::cuda_driver
         CUDNN::cudnn)
     target_compile_options(opennn PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    if(MSVC)
+        # CUB/CCCL (CUDA >= 12.4) requires the standard-conforming MSVC preprocessor.
+        target_compile_options(opennn PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>)
+    endif()
 
     if(NOT CUDNN_FRONTEND_INCLUDE_DIR)
         message(FATAL_ERROR
