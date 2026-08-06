@@ -15,7 +15,7 @@ namespace opennn
 Upsample::Upsample(const Shape& new_input_shape,
                    Index new_scale_factor,
                    const string& new_label)
-    : Layer(LayerType::Upsample,               false)
+    : Layer(LayerType::Upsample)
 {
     operators = {&upsample};
     set(new_input_shape, new_scale_factor, new_label);
@@ -57,7 +57,6 @@ void Upsample::configure_operator()
 {
     if (input_shape.empty()) return;
     upsample.set(input_shape[0], input_shape[1], input_shape[2], upsample.scale_factor);
-    is_trainable = true;
 }
 
 void Upsample::read_JSON_body(const Json* root)

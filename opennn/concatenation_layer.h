@@ -22,10 +22,9 @@ public:
                   const vector<Index>& per_input_channels = {},
                   const string& = "concatenation_layer");
 
-    Shape get_input_shape() const noexcept override { return input_shape; }
     Shape get_output_shape() const override;
 
-    Index get_inputs_number() const noexcept { return ssize(concatenation.input_channels); }
+    Index get_sources_number() const noexcept { return ssize(concatenation.input_channels); }
 
     vector<TensorSpec> get_backward_specs(Index) const override;
 

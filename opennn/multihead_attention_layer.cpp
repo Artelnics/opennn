@@ -127,27 +127,27 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     {
         proj->input_slots  = {Input};
         proj->scratch_slot = TransposeScratch;
-        proj->input_delta_slots_self = {InputQueryDelta};
+        proj->input_delta_slot_self = InputQueryDelta;
     }
 
     query_projection.output_slots = {Query};
     query_projection.input_view_index = 0;
     query_projection.output_delta_slots = {QueryHeadDelta};
-    query_projection.input_delta_slots_cross = {InputQueryDelta};
+    query_projection.input_delta_slot_cross = InputQueryDelta;
     query_projection.accumulate_input_delta_self  = false;
     query_projection.accumulate_input_delta_cross = false;
 
     key_projection.output_slots = {Key};
     key_projection.input_view_index = 1;
     key_projection.output_delta_slots = {KeyHeadDelta};
-    key_projection.input_delta_slots_cross = {InputSourceDelta};
+    key_projection.input_delta_slot_cross = InputSourceDelta;
     key_projection.accumulate_input_delta_self  = true;
     key_projection.accumulate_input_delta_cross = false;
 
     value_projection.output_slots = {Value};
     value_projection.input_view_index = 1;
     value_projection.output_delta_slots = {ValueHeadDelta};
-    value_projection.input_delta_slots_cross = {InputSourceDelta};
+    value_projection.input_delta_slot_cross = InputSourceDelta;
     value_projection.accumulate_input_delta_self  = true;
     value_projection.accumulate_input_delta_cross = true;
 

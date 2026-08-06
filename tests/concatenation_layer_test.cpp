@@ -31,7 +31,7 @@ TEST_F(ConcatenationLayerTest, Constructor)
     Concatenation concatenation(input_shape, per_input_channels, "concat");
 
     EXPECT_EQ(concatenation.get_input_shape(), input_shape);
-    EXPECT_EQ(concatenation.get_inputs_number(), 2);
+    EXPECT_EQ(concatenation.get_sources_number(), 2);
     EXPECT_EQ(concatenation.get_name(), "Concatenation");
     EXPECT_EQ(concatenation.get_label(), "concat");
 
@@ -47,7 +47,7 @@ TEST_F(ConcatenationLayerTest, OutputChannelsAreSumOfInputChannels)
 {
     Concatenation concatenation(Shape{ 4, 5, 7 }, vector<Index>{ 1, 6, 2 }, "concat");
 
-    EXPECT_EQ(concatenation.get_inputs_number(), 3);
+    EXPECT_EQ(concatenation.get_sources_number(), 3);
 
     const Shape output_shape = concatenation.get_output_shape();
     ASSERT_EQ(output_shape.rank, 3);
@@ -62,7 +62,7 @@ TEST_F(ConcatenationLayerTest, DefaultConstructorHasEmptyOutput)
     Concatenation concatenation;
 
     EXPECT_TRUE(concatenation.get_output_shape().empty());
-    EXPECT_EQ(concatenation.get_inputs_number(), 0);
+    EXPECT_EQ(concatenation.get_sources_number(), 0);
 }
 
 
@@ -219,7 +219,7 @@ TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
     const auto* concatenation = dynamic_cast<const Concatenation*>(loaded.get_layer(Index(0)).get());
     ASSERT_NE(concatenation, nullptr);
     EXPECT_EQ(concatenation->get_name(), "Concatenation");
-    EXPECT_EQ(concatenation->get_inputs_number(), 2);
+    EXPECT_EQ(concatenation->get_sources_number(), 2);
 
     ForwardPropagation forward_after(batch_size, &loaded);
     vector<TensorView> inputs_after = make_inputs();

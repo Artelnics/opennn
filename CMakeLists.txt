@@ -50,6 +50,11 @@ endif()
 
 # Configuración específica para macOS
 if(APPLE)
+    # Apple Clang's libc++ gates std::jthread / <stop_token> (used in batch.h)
+    # behind the experimental library. Enable it for compile AND link.
+    add_compile_options(-fexperimental-library)
+    add_link_options(-fexperimental-library)
+
     find_path(LIBOMP_INCLUDE_DIR omp.h
         PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
     

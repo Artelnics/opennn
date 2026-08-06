@@ -25,7 +25,6 @@ struct LayerNormalizationOperator : Operator
     float epsilon = 1.0e-6f;
 
     bool fuse_add = false;
-    size_t residual_delta_slot = 0;
 
     TensorView gamma;
     TensorView beta;

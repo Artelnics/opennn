@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "c2psa_layer.h"
-#include "json.h"
 
 namespace opennn
 {
@@ -66,17 +65,6 @@ vector<TensorSpec> C2PSA::get_backward_specs(Index batch_size) const
     if (input_shape.empty()) return {};
     return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
 }
-
-void C2PSA::read_JSON_body(const Json* /*root*/)
-{
-    // input_shape is set via set_input_shape from the network topology; no extra fields
-}
-
-void C2PSA::write_JSON_body(JsonWriter&) const
-{
-    // No extra fields beyond input_shape (stored in the network JSON)
-}
-
 
 }
 

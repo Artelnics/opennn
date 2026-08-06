@@ -20,7 +20,6 @@ public:
 
     C2PSA(const Shape& = {}, const string& = "c2psa_layer");
 
-    Shape get_input_shape() const noexcept override { return input_shape; }
     Shape get_output_shape() const override;
 
     void set(const Shape&, const string&);
@@ -28,9 +27,6 @@ public:
 
     vector<TensorSpec> get_forward_specs(Index) const override;
     vector<TensorSpec> get_backward_specs(Index) const override;
-
-    void read_JSON_body(const Json*) override;
-    void write_JSON_body(JsonWriter&) const override;
 
 private:
 

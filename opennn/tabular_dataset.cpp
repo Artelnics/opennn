@@ -8,6 +8,7 @@
 
 #include "tabular_dataset.h"
 #include "io_utilities.h"
+#include "string_utilities.h"
 #include "scaling.h"
 #include "tensor_types.h"
 #include "random_utilities.h"
@@ -18,6 +19,8 @@ namespace opennn
 namespace
 {
 
+constexpr size_t maximum_expanded_data_bytes = size_t(2) * 1024 * 1024 * 1024;
+
 bool looks_like_id_variable(const Variable& variable, const Index samples_number)
 {
     if (!variable.is_categorical() || samples_number == 0)
@@ -25,7 +28,7 @@ bool looks_like_id_variable(const Variable& variable, const Index samples_number
 
     const Index categories_number = ssize(variable.categories);
 
-    if (categories_number == samples_number)
+    if (categories_number * 20 >= samples_number * 19)
         return true;
 
     string name = variable.name;
@@ -1526,6 +1529,36 @@ void TabularDataset::read_csv()
     const vector<vector<Index>> all_feature_indices = get_feature_indices();
     const Index feature_columns_number = all_feature_indices.empty() ? 0 : all_feature_indices.back().back() + 1;
 
+    if (feature_columns_number > 0)
+    {
+        const size_t projected_bytes =
+            size_t(samples_number) * size_t(feature_columns_number) * sizeof(float);
+
+        if (projected_bytes > maximum_expanded_data_bytes)
+        {
+            Index worst_index = 0;
+            Index worst_categories = 0;
+
+            for (Index i = 0; i < variables_number; ++i)
+                if (variables[i].is_categorical() && ssize(variables[i].categories) > worst_categories)
+                {
+                    worst_categories = ssize(variables[i].categories);
+                    worst_index = i;
+                }
+
+            throw runtime_error(format(
+                "Expanding the categorical variables of this file would produce {} feature "
+                "columns for {} samples ({:.1f} GB). The largest contributor is '{}' with {} "
+                "categories. If that column is meant to be numeric, check its number format; "
+                "if it is an identifier, remove it from the file.",
+                feature_columns_number,
+                samples_number,
+                double(projected_bytes) / (1024.0 * 1024.0 * 1024.0),
+                variables[worst_index].name,
+                worst_categories));
+        }
+    }
+
     const bool binary_storage = storage_mode == StorageMode::BinaryFile;
 
     FileWriter cache_writer;
@@ -2073,6 +2106,10 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
 
         const size_t token_index = col_index + id_offset;
 
+        size_t checked_tokens = 0;
+        size_t numeric_tokens = 0;
+        string first_unparseable;
+
         for (size_t i = 0; i < rows_to_check; ++i)
         {
             const vector<string_view>& tokens = sampled_tokens[i];
@@ -2083,7 +2120,14 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
 
             if (is_missing_token(token, missing_values_label)) continue;
 
-            if (variable.is_categorical()) break;
+            ++checked_tokens;
+
+            if (is_numeric_string(token))
+                ++numeric_tokens;
+            else if (first_unparseable.empty())
+                first_unparseable = string(token);
+
+            if (variable.is_categorical()) continue;
 
             if (is_numeric_string(token))
             {
@@ -2101,6 +2145,16 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
 
         if (variable.type == VariableType::None)
             variable.type = VariableType::Numeric;
+
+        if (variable.type == VariableType::Categorical
+            && checked_tokens > 0
+            && numeric_tokens * 10 >= checked_tokens * 9)
+            cout << "Warning: variable '" << variable.name << "' was classified as categorical, "
+                 << "but " << numeric_tokens << " of its " << checked_tokens
+                 << " sampled values are numeric. First value that failed to parse: '"
+                 << first_unparseable << "'. Check the number format (thousands separators, "
+                 << "decimal commas); otherwise this column expands into one column per "
+                 << "distinct value.\n";
     }
 
     DateFormat date_format = Auto;

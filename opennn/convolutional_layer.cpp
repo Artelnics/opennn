@@ -452,17 +452,14 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
                           batch_norm.gamma.as<float>(), batch_norm.beta.as<float>(),
                           batch_norm.running_mean.as<float>(),
                           batch_norm.running_variance.as<float>(),
-                          EPSILON, convolution.is_pointwise(),
+                          EPSILON,
                           folded_parameters.as<float>(),
                           folded_parameters.as<float>() + weight_count);
         folded_dirty = false;
     }
 
     const TensorView folded_weights(folded_parameters.data,
-        convolution.is_pointwise()
-            ? Shape{kernel_channels, kernels_number}
-            : Shape{kernels_number, kernel_height, kernel_width, kernel_channels},
-        Type::FP32, Device::CUDA);
+        Shape{kernel_channels, kernels_number}, Type::FP32, Device::CUDA);
 
     const TensorView folded_bias(folded_parameters.as<float>() + weight_count,
                                  Shape{kernels_number}, Type::FP32, Device::CUDA);

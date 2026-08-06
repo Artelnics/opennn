@@ -28,10 +28,6 @@ struct DropoutOperator : Operator
 
     void to_JSON(JsonWriter&) const override;
     void from_JSON(const Json*) override;
-
-    DropoutOperator() = default;
-    DropoutOperator(DropoutOperator&&) noexcept = default;
-    DropoutOperator& operator=(DropoutOperator&&) noexcept = default;
 };
 
 }

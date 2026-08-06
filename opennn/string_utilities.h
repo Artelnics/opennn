@@ -13,9 +13,50 @@
 #include <charconv>
 #include <cctype>
 #include <initializer_list>
+#ifdef __APPLE__
+#include <cstdlib>
+#include <cerrno>
+#include <type_traits>
+#endif
 
 namespace opennn
 {
+
+#ifdef __APPLE__
+    // Apple Clang's libc++ leaves std::from_chars for floating-point types
+    // deleted. This opennn-scoped shim intercepts the unqualified from_chars()
+    // calls across opennn: integral parses forward to std::from_chars, floating
+    // parses fall back to strtod/strtof on a NUL-terminated copy (C locale).
+    template <typename T>
+    inline from_chars_result from_chars(const char* first, const char* last, T& value)
+    {
+        if constexpr (is_floating_point_v<T>)
+        {
+            const string buffer(first, last);
+            char* parse_end = nullptr;
+            errno = 0;
+
+            if constexpr (is_same_v<T, float>)
+                value = strtof(buffer.c_str(), &parse_end);
+            else
+                value = static_cast<T>(strtod(buffer.c_str(), &parse_end));
+
+            if (parse_end == buffer.c_str())
+                return {first, errc::invalid_argument};
+
+            const size_t consumed = static_cast<size_t>(parse_end - buffer.c_str());
+
+            if (errno == ERANGE)
+                return {first + consumed, errc::result_out_of_range};
+
+            return {first + consumed, errc{}};
+        }
+        else
+        {
+            return std::from_chars(first, last, value);
+        }
+    }
+#endif
 
     struct TransparentStringHash
     {

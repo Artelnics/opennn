@@ -131,6 +131,11 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                  || new_shape_policy.final_output_capacity > 0),
              "ForwardPropagation::set: compact capacities are inference-only.");
 
+    throw_if(new_mode != ForwardPropagationMode::Inference
+             && !new_shape_policy.retained_output_layers.empty(),
+             "ForwardPropagation::set: retained outputs are inference-only; "
+             "training keeps every activation alive for the backward pass.");
+
     reset_cuda_graph();
 
     batch_size = new_batch_size;
@@ -448,6 +453,15 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
         mark_resolved_output(Index(layers_number) - 1);
         mark_resolved_output(neural_network->get_last_trainable_layer_index());
+
+        for (const Index retained : inference_shape_policy.retained_output_layers)
+        {
+            throw_if(retained < 0 || size_t(retained) >= layers_number,
+                     "ForwardPropagation::set: retained output layer {} is out "
+                     "of range (network has {} layers).",
+                     retained, layers_number);
+            mark_resolved_output(retained);
+        }
 
         vector<pair<size_t, size_t>> pooled_slots;
         vector<MemoryPoolEntry> lifetime_entries;

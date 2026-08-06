@@ -114,10 +114,9 @@ void LayerNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
                         stds, normalized, gamma, gamma_gradient, beta_gradient,
                         input_delta);
 
-    if (fuse_add && residual_delta_slot)
+    if (fuse_add)
     {
-
-        TensorView& residual_delta = back_propagation.backward_slots[layer][residual_delta_slot];
+        TensorView& residual_delta = back_propagation.backward_slots[layer][2];
         if (residual_delta.data && residual_delta.data != input_delta.data)
             copy(input_delta, residual_delta);
     }

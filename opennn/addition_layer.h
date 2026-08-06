@@ -27,7 +27,7 @@ public:
     void set(const Shape&, const string&, Index);
     void set_input_shape(const Shape& shape) override { set(shape, label, inputs_number); }
 
-    Index get_inputs_number() const noexcept { return inputs_number; }
+    Index get_sources_number() const noexcept { return inputs_number; }
 
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;

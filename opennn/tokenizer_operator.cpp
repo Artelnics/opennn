@@ -363,13 +363,6 @@ vector<uint32_t> utf8_to_codepoints(string_view text)
     return codepoints;
 }
 
-string codepoint_to_utf8(uint32_t codepoint)
-{
-    string out;
-    append_utf8(out, codepoint);
-    return out;
-}
-
 bool is_whitespace(uint32_t cp)
 {
     return cp == ' ' || cp == '\t' || cp == '\n' || cp == '\r' || cp == 0x00A0;

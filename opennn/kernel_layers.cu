@@ -1,5 +1,6 @@
 ﻿#include "kernel_common.cuh"
 #include <curand_kernel.h>
+#include <cub/block/block_reduce.cuh>
 
 template<typename TIn, typename TOut>
 __global__ void bounding_kernel(const int n, const int features,
@@ -226,23 +227,6 @@ __global__ void swap_heads_scalar_kernel(const int n, const T* __restrict__ in, 
 }
 
 template<typename T>
-__global__ void swap_heads_vec_kernel(const int n_vec, const T* __restrict__ in, T* __restrict__ out, const int P, const int Q, const int D_vec)
-{
-    const float4* const in_v  = reinterpret_cast<const float4*>(in);
-    float4* const       out_v = reinterpret_cast<float4*>(out);
-
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n_vec; i += Index(blockDim.x) * gridDim.x)
-    {
-        const int d = i % D_vec;
-        const int q = (i / D_vec) % Q;
-        const int p = (i / (D_vec * Q)) % P;
-        const int b = i / (D_vec * Q * P);
-
-        out_v[((int64_t(b) * Q + q) * P + p) * D_vec + d] = in_v[i];
-    }
-}
-
-template<typename T>
 void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int H, const int D)
 {
     if (n == 0) return;
@@ -250,7 +234,9 @@ void split_heads_cuda(const Index n, const T* in, T* out, const int S, const int
     if ((static_cast<size_t>(D) * sizeof(T)) % 16 == 0 && are_float4_aligned(in, out))
     {
         const int vec_width = static_cast<int>(16 / sizeof(T));
-        launch_elementwise_strided(n / vec_width, swap_heads_vec_kernel<T>, in, out, S, H, D / vec_width);
+        launch_elementwise_strided(n / vec_width, swap_heads_scalar_kernel<float4>,
+                                   reinterpret_cast<const float4*>(in), reinterpret_cast<float4*>(out),
+                                   S, H, D / vec_width);
     }
     else
         launch_elementwise_strided(n, swap_heads_scalar_kernel<T>, in, out, S, H, D);
@@ -274,8 +260,6 @@ __global__ void padding_mask_kernel(const int num_tokens, const T* __restrict__ 
         padding_mask[i] = static_cast<T>(is_pad ? 1.0f : 0.0f);
     }
 }
-
-static inline int layernorm_threads(int D);
 
 template<typename T, int MAX_ELEMS>
 __global__ void masked_softmax_rows_kernel(const int rows, const int source_sequence_length,
@@ -878,6 +862,7 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        epsilon, apply_relu ? 1 : 0, y);
 }
 
+// Folds BN into pointwise (1x1) conv weights, transposing to {kernel_size, kernels} GEMM layout.
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
                                     const float* __restrict__ weights,
                                     const float* __restrict__ gamma,
@@ -885,7 +870,6 @@ __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, co
                                     const float* __restrict__ mean,
                                     const float* __restrict__ variance,
                                     const float epsilon,
-                                    const int transpose,
                                     float* __restrict__ folded_weights,
                                     float* __restrict__ folded_bias)
 {
@@ -895,11 +879,7 @@ __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, co
         const int k = int(i / kernel_size);
         const int r = int(i % kernel_size);
         const float scale = gamma[k] * rsqrtf(variance[k] + epsilon);
-        const float value = weights[i] * scale;
-        if (transpose)
-            folded_weights[Index(r) * kernels + k] = value;
-        else
-            folded_weights[i] = value;
+        folded_weights[Index(r) * kernels + k] = weights[i] * scale;
         if (r == 0)
             folded_bias[k] = beta[k] - mean[k] * scale;
     }
@@ -909,12 +889,12 @@ void conv_bn_fold_cuda(const Index kernels, const Index kernel_size,
                        const float* weights,
                        const float* gamma, const float* beta,
                        const float* mean, const float* variance,
-                       const float epsilon, const bool transpose,
+                       const float epsilon,
                        float* folded_weights, float* folded_bias)
 {
     launch_elementwise_strided(kernels * kernel_size, conv_bn_fold_kernel,
                        checked_int(kernel_size), checked_int(kernels), weights,
-                       gamma, beta, mean, variance, epsilon, transpose ? 1 : 0,
+                       gamma, beta, mean, variance, epsilon,
                        folded_weights, folded_bias);
 }
 
@@ -1506,35 +1486,19 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
-__device__ __forceinline__ void warp_argmax(float& v, int& i)
-{
-    #pragma unroll
-    for (int offset = 16; offset > 0; offset >>= 1)
-    {
-        const float ov = __shfl_xor_sync(0xffffffffu, v, offset);
-        const int   oi = __shfl_xor_sync(0xffffffffu, i, offset);
-        if (ov > v || (ov == v && oi < i)) { v = ov; i = oi; }
-    }
-}
+// Both sampling kernels launch with exactly SAMPLING_BLOCK_THREADS threads.
+constexpr int SAMPLING_BLOCK_THREADS = 256;
+using BlockArgMaxReduce = cub::BlockReduce<cub::KeyValuePair<int, float>, SAMPLING_BLOCK_THREADS>;
 
-__device__ __forceinline__ void block_argmax(float& v, int& i, float* sm_v, int* sm_i)
+// cub::ArgMax resolves ties toward the lower index; broadcast the winner to all threads.
+__device__ __forceinline__ void block_argmax(float& v, int& i,
+                                             typename BlockArgMaxReduce::TempStorage& temp,
+                                             cub::KeyValuePair<int, float>& winner)
 {
-    warp_argmax(v, i);
-    const int lane = threadIdx.x & 31;
-    const int warp = threadIdx.x >> 5;
-    if (lane == 0) { sm_v[warp] = v; sm_i[warp] = i; }
+    const auto best = BlockArgMaxReduce(temp).Reduce(cub::KeyValuePair<int, float>(i, v), cub::ArgMax());
+    if (threadIdx.x == 0) winner = best;
     __syncthreads();
-
-    if (threadIdx.x < 32)
-    {
-        const int warps = (blockDim.x + 31) >> 5;
-        v = threadIdx.x < warps ? sm_v[threadIdx.x] : -1e30f;
-        i = threadIdx.x < warps ? sm_i[threadIdx.x] : 0x7fffffff;
-        warp_argmax(v, i);
-        if (threadIdx.x == 0) { sm_v[0] = v; sm_i[0] = i; }
-    }
-    __syncthreads();
-    v = sm_v[0]; i = sm_i[0];
+    v = winner.value; i = winner.key;
     __syncthreads();
 }
 
@@ -1555,8 +1519,8 @@ __global__ void logits_top_candidates_kernel(const int n, const int k, const T* 
         v[cnt] = static_cast<float>(logits[i]); vi[cnt] = i; ++cnt;
     }
 
-    __shared__ float sm_v[32];
-    __shared__ int   sm_i[32];
+    __shared__ typename BlockArgMaxReduce::TempStorage sm_argmax;
+    __shared__ cub::KeyValuePair<int, float> sm_winner;
 
     for (int round = 0; round < k; ++round)
     {
@@ -1566,7 +1530,7 @@ __global__ void logits_top_candidates_kernel(const int n, const int k, const T* 
             if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
 
         float wv = best; int wi = besti;
-        block_argmax(wv, wi, sm_v, sm_i);
+        block_argmax(wv, wi, sm_argmax, sm_winner);
 
         if (threadIdx.x == 0) out[blockIdx.x * k + round] = make_float2(wv, __int_as_float(wi));
         if (slot >= 0 && besti == wi) v[slot] = -1e30f;
@@ -1592,8 +1556,8 @@ __global__ void sample_from_candidates_kernel(const int m, const int k,
         v[cnt] = c.x; vi[cnt] = __float_as_int(c.y); ++cnt;
     }
 
-    __shared__ float sm_v[32];
-    __shared__ int   sm_i[32];
+    __shared__ typename BlockArgMaxReduce::TempStorage sm_argmax;
+    __shared__ cub::KeyValuePair<int, float> sm_winner;
     __shared__ float top_v[32];
     __shared__ int   top_i[32];
 
@@ -1605,7 +1569,7 @@ __global__ void sample_from_candidates_kernel(const int m, const int k,
             if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
 
         float wv = best; int wi = besti;
-        block_argmax(wv, wi, sm_v, sm_i);
+        block_argmax(wv, wi, sm_argmax, sm_winner);
 
         if (threadIdx.x == 0) { top_v[round] = wv; top_i[round] = wi; }
         if (slot >= 0 && besti == wi) v[slot] = -1e30f;

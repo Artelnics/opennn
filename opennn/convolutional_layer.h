@@ -94,10 +94,10 @@ public:
 
 private:
 
+#ifdef OPENNN_HAS_CUDA
     Buffer folded_parameters;
     bool   folded_dirty = true;
 
-#ifdef OPENNN_HAS_CUDA
     bool forward_propagate_folded(ForwardPropagation&, size_t);
 #endif
 

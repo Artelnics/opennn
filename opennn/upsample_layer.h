@@ -22,7 +22,6 @@ public:
              Index scale_factor = 2,
              const string& = "upsample_layer");
 
-    Shape get_input_shape() const noexcept override { return input_shape; }
     Shape get_output_shape() const override;
 
     void set(const Shape&, Index, const string&);

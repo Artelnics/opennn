@@ -27,10 +27,19 @@ enum class ForwardPropagationMode
 // Optional inference-only capacity policy. A zero value preserves the network
 // shapes verbatim, which is the historical behaviour used by training and by
 // the public calculate_outputs APIs.
+//
+// retained_output_layers lists layers whose outputs must survive until the end
+// of the activation pool plan. By default the pool recycles an output's bytes
+// after its last consumer, which is only valid within a single forward pass;
+// callers that run partial layer ranges and read a producer's output on a
+// later pass (e.g. sequence-to-sequence decoding, which prefills the encoder
+// once and then re-runs only the decoder per token) must retain that output
+// here or it will be overwritten.
 struct InferenceShapePolicy
 {
     Index sequence_capacity = 0;
     Index final_output_capacity = 0;
+    vector<Index> retained_output_layers;
 };
 
 struct ForwardPropagation

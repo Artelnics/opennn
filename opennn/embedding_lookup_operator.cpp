@@ -127,16 +127,11 @@ void EmbeddingLookupOperator::forward_propagate(ForwardPropagation& forward_prop
     TensorView& output        = get_output(forward_propagation, layer);
 
     if (export_valid_lengths)
-        compute_valid_lengths(indices, forward_propagation.attention_valid_lengths);
+        compute_token_valid_lengths(indices, sequence_length, forward_propagation.attention_valid_lengths);
 
     embedding_lookup_forward(indices, weights, positional_encoding, output,
                              sequence_length, embedding_dimension, vocabulary_size,
                              scale_embedding, add_positional_encoding, weight_scale);
-}
-
-void EmbeddingLookupOperator::compute_valid_lengths(const TensorView& indices, vector<Index>& valid_lengths) const
-{
-    compute_token_valid_lengths(indices, sequence_length, valid_lengths);
 }
 
 void EmbeddingLookupOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const

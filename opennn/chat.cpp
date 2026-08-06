@@ -747,6 +747,10 @@ struct ClassicGenerationState
     Index decoder_embedding = -1;
     Index decoder_first = -1;
     Index output_projection = -1;
+
+    // Outputs produced by the encoder prefill and read by every incremental
+    // decoder pass; the inference pool must not recycle their storage.
+    vector<Index> retained_outputs;
 };
 
 void prepare_classic_network(NeuralNetwork& network)
@@ -779,8 +783,10 @@ void allocate_classic_buffers(ClassicGenerationState& state,
                                          {batch_size, state.input_length},
                                          Type::FP32, Device::CUDA);
 
+    InferenceShapePolicy shape_policy;
+    shape_policy.retained_output_layers = state.retained_outputs;
     state.propagation = make_unique<ForwardPropagation>(
-        batch_size, &network, ForwardPropagationMode::Inference);
+        batch_size, &network, ForwardPropagationMode::Inference, shape_policy);
     state.target = Tensor2(batch_size, state.sequence_length);
     state.history.reserve(size_t(state.sequence_length));
 
@@ -839,6 +845,17 @@ make_sequence_to_sequence_state(Transformer& network)
                     != "decoder_self_attention_1"
              || layers.back()->get_label() != "output_projection",
              "ChatSession: unsupported Transformer decoder layout.");
+
+    // Every output produced by the encoder prefill range and consumed by the
+    // per-token decoder range must survive across decode passes.
+    const auto& source_layers = network.get_source_layers();
+    for (Index i = state->decoder_first; i <= state->output_projection; ++i)
+        for (const Index source : source_layers[size_t(i)])
+            if (source >= state->encoder_embedding
+                && source <= state->encoder_last
+                && ranges::find(state->retained_outputs, source)
+                       == state->retained_outputs.end())
+                state->retained_outputs.push_back(source);
 
     allocate_classic_buffers(*state, network);
     state->source = Tensor2(1, state->input_length);
@@ -950,7 +967,10 @@ struct ChatSession::Impl
                          ? Index(0)
                          : new_network.get_output_shape().back()),
           prefill(1, &new_network, ForwardPropagationMode::Inference,
-                  {min(context_length, ChatSession::PREFILL_BLOCK_SIZE), 1})
+                  {.sequence_capacity =
+                       min(context_length, ChatSession::PREFILL_BLOCK_SIZE),
+                   .final_output_capacity = 1,
+                   .retained_output_layers = {}})
     {
         throw_if(!chat_template,
                  "ChatSession: chat template is not set.");
@@ -978,7 +998,10 @@ struct ChatSession::Impl
                 prefill.get_sequence_capacity() * Index(sizeof(float)),
                 Device::CUDA);
             decode.set(1, network, &prefill.data,
-                       ForwardPropagationMode::Inference, {1, 1});
+                       ForwardPropagationMode::Inference,
+                       {.sequence_capacity = 1,
+                        .final_output_capacity = 1,
+                        .retained_output_layers = {}});
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
             const cudaStream_t stream = device::get_compute_stream();
@@ -1198,8 +1221,11 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
 
     draft->prefill.set(1, &draft_network, nullptr,
                        ForwardPropagationMode::Inference,
-                       {min(impl->context_length,
-                            ChatSession::PREFILL_BLOCK_SIZE), 1});
+                       {.sequence_capacity =
+                            min(impl->context_length,
+                                ChatSession::PREFILL_BLOCK_SIZE),
+                        .final_output_capacity = 1,
+                        .retained_output_layers = {}});
     draft->token_device.resize_bytes(Index(sizeof(float)), Device::CUDA);
     draft->prefill_inputs.resize(1);
     draft->prefill.device_input_buffers.resize(1);
@@ -1209,14 +1235,19 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
         draft->prefill.get_sequence_capacity() * Index(sizeof(float)),
         Device::CUDA);
     draft->decode.set(1, &draft_network, &draft->prefill.data,
-                      ForwardPropagationMode::Inference, {1, 1});
+                      ForwardPropagationMode::Inference,
+                      {.sequence_capacity = 1,
+                       .final_output_capacity = 1,
+                       .retained_output_layers = {}});
     draft->decode.set_active_sequence_length(1);
     draft->decode.set_cuda_graph(true);
 
     const Index verify_capacity = draft_tokens + 1;
     draft->target_verify.set(
         1, impl->network, nullptr, ForwardPropagationMode::Inference,
-        {verify_capacity, verify_capacity});
+        {.sequence_capacity = verify_capacity,
+         .final_output_capacity = verify_capacity,
+         .retained_output_layers = {}});
     draft->target_verify_inputs.resize(1);
     draft->target_verify.device_input_buffers.resize(1);
     draft->target_verify.device_input_views.resize(1);

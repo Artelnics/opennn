@@ -589,6 +589,72 @@ TEST(ChatSessionTest, SequenceToSequenceUsesCommonSendApi)
     Configuration::instance().set();
 }
 
+TEST(ChatSessionTest, SequenceToSequenceGreedyMatchesFullForwardReference)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP();
+
+    set_seed(16);
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+
+    const Index input_length = 4;
+    const Index decoder_length = 5;
+
+    Transformer network(input_length, decoder_length, 12, 14, 8, 2, 16, 1);
+    network.set_input_vocabulary({
+        "[PAD]", "[UNK]", "[START]", "[END]",
+        "hello", "world", "small", "source",
+        "red", "green", "blue", "cyan"
+    });
+    network.set_target_vocabulary({
+        "[PAD]", "[UNK]", "[START]", "[END]",
+        "hola", "mundo", "small", "target",
+        "rojo", "verde", "azul", "cian", "gris", "negro"
+    });
+    network.set_parameters_random();
+
+    Tensor3 encoder_inputs(1, input_length, 1);
+    encoder_inputs.setZero();
+    const vector<Index> source_ids =
+        network.get_input_tokenizer()->encode_sequence(
+            "hello world", input_length);
+    for (Index i = 0; i < ssize(source_ids); ++i)
+        encoder_inputs(0, i, 0) = float(source_ids[size_t(i)]);
+
+    Tensor3 decoder_inputs(1, decoder_length, 1);
+    decoder_inputs.setZero();
+    decoder_inputs(0, 0, 0) = float(TokenizerOperator::START_INDEX);
+
+    vector<Index> expected_ids;
+    for (Index position = 1; position < decoder_length; ++position)
+    {
+        const Tensor3 logits =
+            network.calculate_outputs(decoder_inputs, encoder_inputs);
+
+        Index best = 0;
+        for (Index v = 0; v < logits.dimension(2); ++v)
+            if (logits(0, position - 1, v) > logits(0, position - 1, best))
+                best = v;
+
+        if (best == TokenizerOperator::END_INDEX) break;
+        decoder_inputs(0, position, 0) = float(best);
+        if (best != 0) expected_ids.push_back(best);
+    }
+
+    ASSERT_GE(ssize(expected_ids), 2);
+
+    ChatSession session(network);
+    ChatOptions options;
+    options.sampling = SamplingConfig{};
+    options.sampling->temperature = 0.0f;
+
+    const ChatResponse response = session.send("hello world", options);
+
+    EXPECT_EQ(response.content,
+              network.get_target_tokenizer()->decode(expected_ids));
+
+    Configuration::instance().set();
+}
+
 TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();

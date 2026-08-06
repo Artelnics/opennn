@@ -43,11 +43,13 @@ struct PoolOperator : Operator
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
+#ifdef OPENNN_HAS_CUDA
     cudnnPoolingDescriptor_t get_pooling_descriptor() const;
 
 private:
 
     mutable shared_ptr<cudnnPoolingStruct> pooling_descriptor;
+#endif
 };
 
 }

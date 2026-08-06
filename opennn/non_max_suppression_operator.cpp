@@ -10,7 +10,6 @@
 #include "tensor_operations.h"
 #include "device_backend.h"
 #include "forward_propagation.h"
-#include "back_propagation.h"
 
 #include <algorithm>
 
