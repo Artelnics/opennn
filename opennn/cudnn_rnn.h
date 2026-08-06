@@ -13,6 +13,70 @@
 namespace opennn
 {
 
+template<typename Handle>
+struct CudnnDescriptor
+{
+    Handle handle = nullptr;
+#ifdef OPENNN_HAS_CUDA
+    cudnnStatus_t (*deleter)(Handle) = nullptr;
+#else
+    void (*deleter)(Handle) = nullptr;
+#endif
+
+    CudnnDescriptor() = default;
+
+    CudnnDescriptor(CudnnDescriptor&& other) noexcept
+        : handle(other.handle), deleter(other.deleter)
+    {
+        other.handle = nullptr;
+        other.deleter = nullptr;
+    }
+
+    CudnnDescriptor& operator=(CudnnDescriptor&& other) noexcept
+    {
+        if (this != &other)
+        {
+            reset();
+            handle = other.handle;
+            deleter = other.deleter;
+            other.handle = nullptr;
+            other.deleter = nullptr;
+        }
+        return *this;
+    }
+
+    CudnnDescriptor(const CudnnDescriptor&) = delete;
+    CudnnDescriptor& operator=(const CudnnDescriptor&) = delete;
+
+    ~CudnnDescriptor() { reset(); }
+
+    void reset()
+    {
+        if (handle && deleter) deleter(handle);
+        handle = nullptr;
+        deleter = nullptr;
+    }
+
+    operator Handle() const { return handle; }
+    explicit operator bool() const { return handle != nullptr; }
+};
+
+inline constexpr int RNN_SHAPE_SLOTS = 3;
+
+struct CudnnRnnShapeSlot
+{
+    Index batch = -1;
+    Index time  = -1;
+    int   stamp = 0;
+    bool  training_ready = false;
+    CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
+    CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
+    CudnnDescriptor<cudnnTensorDescriptor_t>  c_desc;
+    Buffer seq_host{Device::CPU};
+    Buffer seq_dev {Device::CUDA};
+};
+
 inline constexpr int RNN_MAX_LINEAR_LAYERS = 8;
 
 #ifdef OPENNN_HAS_CUDA

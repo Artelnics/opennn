@@ -69,7 +69,7 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
 
     merge_heads(head_delta, scratch_4d);
 
-    TensorView& input_delta    = backward_slots[(self_attention ? input_delta_slots_self : input_delta_slots_cross)[0]];
+    TensorView& input_delta    = backward_slots[self_attention ? input_delta_slot_self : input_delta_slot_cross];
 
     TensorView  input_delta_2d = input_delta.empty()
         ? TensorView{}

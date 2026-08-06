@@ -20,8 +20,8 @@ struct MultiHeadProjectionOperator : CombinationOperator
 
     size_t scratch_slot = 0;
 
-    vector<size_t> input_delta_slots_self;
-    vector<size_t> input_delta_slots_cross;
+    size_t input_delta_slot_self  = 0;
+    size_t input_delta_slot_cross = 0;
     bool accumulate_input_delta_self  = false;
     bool accumulate_input_delta_cross = false;
 

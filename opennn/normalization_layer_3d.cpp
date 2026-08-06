@@ -83,8 +83,7 @@ void Normalization3d::set_fuse_add(bool on)
 
     layer_normalization.fuse_add = on;
 
-    layer_normalization.input_delta_slots   = on ? vector<size_t>{1, 2} : vector<size_t>{1};
-    layer_normalization.residual_delta_slot = on ? 2 : 0;
+    layer_normalization.input_delta_slots = on ? vector<size_t>{1, 2} : vector<size_t>{1};
 }
 
 void Normalization3d::set(Index new_sequence_length,

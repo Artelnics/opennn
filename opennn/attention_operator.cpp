@@ -263,11 +263,6 @@ namespace
 
 float attention_scale(Index head_dim) { return 1.0f / sqrt(float(head_dim)); }
 
-auto sdpa_check = [](auto s, const string& what) {
-    throw_if(s.is_bad(),
-             "SDPA {}: {}", what, s.get_message());
-};
-
 shared_ptr<cudnn_frontend::graph::Tensor_attributes>
 bhsd_input(cudnn_frontend::graph::Graph& graph, const char* name, int64_t B, int64_t H, int64_t S, int64_t D)
 {
@@ -301,10 +296,10 @@ void build_sdpa_graph_common(cudnn_frontend::graph::Graph& graph, Type dtype)
 }
 void finalize_sdpa_graph(cudnn_frontend::graph::Graph& graph, cudnnHandle_t handle, const string& tag)
 {
-    sdpa_check(graph.validate(),                                                tag + " validate");
-    sdpa_check(graph.build_operation_graph(handle),                             tag + " build_operation_graph");
-    sdpa_check(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A}),               tag + " create_execution_plans");
-    sdpa_check(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
+    cudnn_frontend::check_status(graph.validate(),                                                tag + " validate");
+    cudnn_frontend::check_status(graph.build_operation_graph(handle),                             tag + " build_operation_graph");
+    cudnn_frontend::check_status(graph.create_execution_plans({cudnn_frontend::HeurMode_t::A}),               tag + " create_execution_plans");
+    cudnn_frontend::check_status(graph.build_plans(handle, cudnn_frontend::BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 }
 
 void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
@@ -496,7 +491,7 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 {
     auto& forward_slots = forward_propagation.forward_slots[layer];
 
-    const auto& src_views = get_inputs(forward_propagation, layer, 3);
+    const auto& src_views = get_inputs(forward_propagation, layer);
     const TensorView& source_input = src_views[min(size_t{1}, src_views.size() - 1)];
 
     const TensorView& query = get_input(forward_propagation, layer);

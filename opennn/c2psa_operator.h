@@ -32,19 +32,8 @@ struct C2PSAOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 private:
-    // CPU scratch retained across forward→backward for the GPU training path.
-    // Single-threaded network computation makes this safe.
-    mutable vector<float> cpu_x, cpu_xa, cpu_Q, cpu_K, cpu_V, cpu_A, cpu_cat, cpu_out;
-    mutable vector<float> cpu_Wq, cpu_Wk, cpu_Wv, cpu_Wout;
-
     // GPU scratch: attn_v + backward temporaries in one flat allocation.
-    mutable Buffer gpu_scratch;
-
-    void run_fwd_cpu(Index B, float scale) const;
-    void run_bwd_cpu(const float* dout, float* din,
-                     float* dWq_out, float* dWk_out,
-                     float* dWv_out, float* dWout_out,
-                     Index B, float scale) const;
+    Buffer gpu_scratch;
 };
 
 }

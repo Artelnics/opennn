@@ -89,147 +89,6 @@ void C2PSAOperator::set_parameters_glorot()
     set_random_uniform(Wout.as_vector(), -lout, lout);
 }
 
-// Pure CPU forward: all pointers are host memory.
-// Writes results into cpu_xa, cpu_Q, cpu_K, cpu_V, cpu_A, cpu_cat, cpu_out.
-void C2PSAOperator::run_fwd_cpu(Index B, float scale) const
-{
-    const Index tokens = Index(h) * Index(w);
-    const Index C      = channels;
-    const Index half_c = C / 2;
-
-    MapC Wq_m  (cpu_Wq  .data(), half_c, half_c);
-    MapC Wk_m  (cpu_Wk  .data(), half_c, half_c);
-    MapC Wv_m  (cpu_Wv  .data(), half_c, half_c);
-    MapC Wout_m(cpu_Wout.data(), C, C);
-
-    // Step 1: gather first C/2 channels → xa [B, tokens, C/2]
-    for (Index b = 0; b < B; ++b)
-    {
-        MapC x_b (cpu_x .data() + b * tokens * C,      tokens, C);
-        MapM xa_b(cpu_xa.data() + b * tokens * half_c, tokens, half_c);
-        xa_b = x_b.leftCols(half_c);
-    }
-
-    // Step 2: Q/K/V projections
-    for (Index b = 0; b < B; ++b)
-    {
-        MapC xa_b(cpu_xa.data() + b * tokens * half_c, tokens, half_c);
-        MapM Q_b (cpu_Q .data() + b * tokens * half_c, tokens, half_c);
-        MapM K_b (cpu_K .data() + b * tokens * half_c, tokens, half_c);
-        MapM V_b (cpu_V .data() + b * tokens * half_c, tokens, half_c);
-        Q_b.noalias() = xa_b * Wq_m;
-        K_b.noalias() = xa_b * Wk_m;
-        V_b.noalias() = xa_b * Wv_m;
-    }
-
-    // Step 3: SDPA (scores → softmax → @V) + concat identity path
-    for (Index b = 0; b < B; ++b)
-    {
-        MapC Q_b(cpu_Q.data() + b * tokens * half_c, tokens, half_c);
-        MapC K_b(cpu_K.data() + b * tokens * half_c, tokens, half_c);
-        MapC V_b(cpu_V.data() + b * tokens * half_c, tokens, half_c);
-        float* A_b_ptr = cpu_A.data() + b * tokens * tokens;
-        MapM   A_b(A_b_ptr, tokens, tokens);
-
-        A_b.noalias() = Q_b * K_b.transpose() * scale;
-
-        for (Index i = 0; i < tokens; ++i)
-        {
-            Eigen::Map<Eigen::ArrayXf> row(A_b_ptr + i * tokens, tokens);
-            row -= row.maxCoeff();
-            row  = row.exp();
-            row /= row.sum();
-        }
-
-        MapM cat_b(cpu_cat.data() + b * tokens * C, tokens, C);
-        cat_b.leftCols(half_c).noalias() = A_b * V_b;
-
-        MapC x_b(cpu_x.data() + b * tokens * C, tokens, C);
-        cat_b.rightCols(half_c) = x_b.rightCols(half_c);
-    }
-
-    // Step 4: output projection
-    MapC cat_m(cpu_cat.data(), B * tokens, C);
-    MapM out_m(cpu_out.data(), B * tokens, C);
-    out_m.noalias() = cat_m * Wout_m;
-}
-
-// Pure CPU backward: reads saved cpu_xa/Q/K/V/A/cat/Wq/Wk/Wv/Wout.
-// Writes into din (input delta) and dWq_out/dWk_out/dWv_out/dWout_out.
-void C2PSAOperator::run_bwd_cpu(const float* dout, float* din,
-                                 float* dWq_out, float* dWk_out,
-                                 float* dWv_out, float* dWout_out,
-                                 Index B, float scale) const
-{
-    const Index tokens = Index(h) * Index(w);
-    const Index C      = channels;
-    const Index half_c = C / 2;
-
-    MapC Wq_m  (cpu_Wq  .data(), half_c, half_c);
-    MapC Wk_m  (cpu_Wk  .data(), half_c, half_c);
-    MapC Wv_m  (cpu_Wv  .data(), half_c, half_c);
-    MapC Wout_m(cpu_Wout.data(), C, C);
-    MapM dWq_m  (dWq_out,  half_c, half_c);
-    MapM dWk_m  (dWk_out,  half_c, half_c);
-    MapM dWv_m  (dWv_out,  half_c, half_c);
-    MapM dWout_m(dWout_out, C, C);
-
-    MapC cat_m (cpu_cat.data(), B * tokens, C);
-    MapC dout_m(dout,           B * tokens, C);
-
-    // dL/dWout += concat.T @ delta_out
-    dWout_m.noalias() += cat_m.transpose() * dout_m;
-
-    // delta_concat = delta_out @ Wout.T
-    MatF d_concat(B * tokens, C);
-    d_concat.noalias() = dout_m * Wout_m.transpose();
-
-    for (Index b = 0; b < B; ++b)
-    {
-        MapC Q_b (cpu_Q .data() + b * tokens * half_c, tokens, half_c);
-        MapC K_b (cpu_K .data() + b * tokens * half_c, tokens, half_c);
-        MapC V_b (cpu_V .data() + b * tokens * half_c, tokens, half_c);
-        MapC A_b (cpu_A .data() + b * tokens * tokens,  tokens, tokens);
-        MapC xa_b(cpu_xa.data() + b * tokens * half_c, tokens, half_c);
-
-        MatF d_ao = d_concat.block(b * tokens, 0, tokens, half_c);
-
-        MatF dV(tokens, half_c);
-        dV.noalias() = A_b.transpose() * d_ao;
-
-        MatF dA(tokens, tokens);
-        dA.noalias() = d_ao * V_b.transpose();
-
-        // Softmax backward: dA_ij = A_ij * (dA_ij - sum_k A_ik * dA_ik)
-        for (Index i = 0; i < tokens; ++i)
-        {
-            float dot = 0.0f;
-            for (Index j = 0; j < tokens; ++j)
-                dot += A_b(i, j) * dA(i, j);
-            for (Index j = 0; j < tokens; ++j)
-                dA(i, j) = A_b(i, j) * (dA(i, j) - dot);
-        }
-        dA *= scale;
-
-        MatF dQ(tokens, half_c), dK(tokens, half_c);
-        dQ.noalias() = dA            * K_b;
-        dK.noalias() = dA.transpose() * Q_b;
-
-        dWq_m.noalias() += xa_b.transpose() * dQ;
-        dWk_m.noalias() += xa_b.transpose() * dK;
-        dWv_m.noalias() += xa_b.transpose() * dV;
-
-        if (din)
-        {
-            MapM din_m(din, B * tokens, C);
-            din_m.block(b * tokens, 0, tokens, half_c).noalias() =
-                dQ * Wq_m.transpose() + dK * Wk_m.transpose() + dV * Wv_m.transpose();
-            din_m.block(b * tokens, half_c, tokens, half_c) =
-                d_concat.block(b * tokens, half_c, tokens, half_c);
-        }
-    }
-}
-
 void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool)
 {
     const TensorView& x = get_input(fp, layer);
@@ -240,19 +99,6 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     const Index C      = channels;
     const Index half_c = C / 2;
     const float scale  = 1.0f / sqrtf(float(half_c));
-
-    const size_t xsz   = size_t(B) * tokens * C;
-    const size_t hasz  = size_t(B) * tokens * half_c;
-    const size_t Asz   = size_t(B) * tokens * tokens;
-    const size_t wqsz  = size_t(half_c) * half_c;
-    const size_t woutsz = size_t(C) * C;
-
-    cpu_x  .resize(xsz);   cpu_xa .resize(hasz);
-    cpu_Q  .resize(hasz);  cpu_K  .resize(hasz);
-    cpu_V  .resize(hasz);  cpu_A  .resize(Asz);
-    cpu_cat.resize(xsz);   cpu_out.resize(xsz);
-    cpu_Wq .resize(wqsz);  cpu_Wk .resize(wqsz);
-    cpu_Wv .resize(wqsz);  cpu_Wout.resize(woutsz);
 
 #ifdef OPENNN_HAS_CUDA
     if (x.device == Device::CUDA)
@@ -336,29 +182,53 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     }
 #endif
 
-    // CPU path: point cpu_* pointers at the live forward_slot buffers instead.
-    TensorView& xa_tv  = fp.forward_slots[layer][1];
-    TensorView& Q_tv   = fp.forward_slots[layer][2];
-    TensorView& K_tv   = fp.forward_slots[layer][3];
-    TensorView& A_tv   = fp.forward_slots[layer][4];
-    TensorView& V_tv   = fp.forward_slots[layer][5];
-    TensorView& cat_tv = fp.forward_slots[layer][6];
+    // CPU path: compute directly in the live forward slots.
+    const float* x_ptr = x.as<float>();
+    float* xa  = fp.forward_slots[layer][1].as<float>();
+    float* Q   = fp.forward_slots[layer][2].as<float>();
+    float* K   = fp.forward_slots[layer][3].as<float>();
+    float* A   = fp.forward_slots[layer][4].as<float>();
+    float* V   = fp.forward_slots[layer][5].as<float>();
+    float* cat = fp.forward_slots[layer][6].as<float>();
 
-    std::copy_n(x.as<float>(), xsz, cpu_x.data());
-    std::copy_n(Wq  .as<float>(), wqsz,   cpu_Wq  .data());
-    std::copy_n(Wk  .as<float>(), wqsz,   cpu_Wk  .data());
-    std::copy_n(Wv  .as<float>(), wqsz,   cpu_Wv  .data());
-    std::copy_n(Wout.as<float>(), woutsz, cpu_Wout.data());
+    MapC Wq_m  (Wq  .as<float>(), half_c, half_c);
+    MapC Wk_m  (Wk  .as<float>(), half_c, half_c);
+    MapC Wv_m  (Wv  .as<float>(), half_c, half_c);
+    MapC Wout_m(Wout.as<float>(), C, C);
 
-    run_fwd_cpu(B, scale);
+    for (Index b = 0; b < B; ++b)
+    {
+        MapC x_b (x_ptr + b * tokens * C,     tokens, C);
+        MapM xa_b(xa   + b * tokens * half_c, tokens, half_c);
+        xa_b = x_b.leftCols(half_c);
 
-    std::copy_n(cpu_xa .data(), hasz, xa_tv .as<float>());
-    std::copy_n(cpu_Q  .data(), hasz, Q_tv  .as<float>());
-    std::copy_n(cpu_K  .data(), hasz, K_tv  .as<float>());
-    std::copy_n(cpu_A  .data(), Asz,  A_tv  .as<float>());
-    std::copy_n(cpu_V  .data(), hasz, V_tv  .as<float>());
-    std::copy_n(cpu_cat.data(), xsz,  cat_tv.as<float>());
-    std::copy_n(cpu_out.data(), xsz,  output.as<float>());
+        MapM Q_b(Q + b * tokens * half_c, tokens, half_c);
+        MapM K_b(K + b * tokens * half_c, tokens, half_c);
+        MapM V_b(V + b * tokens * half_c, tokens, half_c);
+        Q_b.noalias() = xa_b * Wq_m;
+        K_b.noalias() = xa_b * Wk_m;
+        V_b.noalias() = xa_b * Wv_m;
+
+        float* A_b_ptr = A + b * tokens * tokens;
+        MapM   A_b(A_b_ptr, tokens, tokens);
+        A_b.noalias() = Q_b * K_b.transpose() * scale;
+
+        for (Index i = 0; i < tokens; ++i)
+        {
+            Eigen::Map<Eigen::ArrayXf> row(A_b_ptr + i * tokens, tokens);
+            row -= row.maxCoeff();
+            row  = row.exp();
+            row /= row.sum();
+        }
+
+        MapM cat_b(cat + b * tokens * C, tokens, C);
+        cat_b.leftCols(half_c).noalias() = A_b * V_b;
+        cat_b.rightCols(half_c) = x_b.rightCols(half_c);
+    }
+
+    MapC cat_m(cat, B * tokens, C);
+    MapM out_m(output.as<float>(), B * tokens, C);
+    out_m.noalias() = cat_m * Wout_m;
 }
 
 void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const
@@ -372,10 +242,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
     const TensorView& delta_out = get_output_delta(bp, layer);
     TensorView&       delta_in  = get_input_delta(bp, layer);
-
-    const size_t xsz    = size_t(B) * tokens * C;
-    const size_t wqsz   = size_t(half_c) * half_c;
-    const size_t woutsz = size_t(C) * C;
 
 #ifdef OPENNN_HAS_CUDA
     if (x.device == Device::CUDA)
@@ -517,43 +383,80 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     }
 #endif
 
-    // CPU path: scratch is already in the forward_slots.
-    const TensorView& xa_flat  = fp.forward_slots[layer][1];
-    const TensorView& Q_slot   = fp.forward_slots[layer][2];
-    const TensorView& K_slot   = fp.forward_slots[layer][3];
-    const TensorView& A_slot   = fp.forward_slots[layer][4];
-    const TensorView& V_slot   = fp.forward_slots[layer][5];
-    const TensorView& cat_slot = fp.forward_slots[layer][6];
+    // CPU path: read the live forward slots and accumulate into the live gradients.
+    const float* xa  = fp.forward_slots[layer][1].as<float>();
+    const float* Q   = fp.forward_slots[layer][2].as<float>();
+    const float* K   = fp.forward_slots[layer][3].as<float>();
+    const float* A   = fp.forward_slots[layer][4].as<float>();
+    const float* V   = fp.forward_slots[layer][5].as<float>();
+    const float* cat = fp.forward_slots[layer][6].as<float>();
 
-    const size_t hasz = size_t(B) * tokens * half_c;
-    const size_t Asz  = size_t(B) * tokens * tokens;
+    const float* dout = delta_out.as<float>();
+    float*       din  = delta_in.data ? delta_in.as<float>() : nullptr;
 
-    // Re-use cpu_ member vectors (already correct size from forward).
-    std::copy_n(xa_flat .as<float>(), hasz, cpu_xa .data());
-    std::copy_n(Q_slot  .as<float>(), hasz, cpu_Q  .data());
-    std::copy_n(K_slot  .as<float>(), hasz, cpu_K  .data());
-    std::copy_n(A_slot  .as<float>(), Asz,  cpu_A  .data());
-    std::copy_n(V_slot  .as<float>(), hasz, cpu_V  .data());
-    std::copy_n(cat_slot.as<float>(), xsz,  cpu_cat.data());
-    // cpu_Wq/Wk/Wv/Wout were populated in forward and unchanged since.
-
-    vector<float> dWq_acc(wqsz, 0.f), dWk_acc(wqsz, 0.f);
-    vector<float> dWv_acc(wqsz, 0.f), dWout_acc(woutsz, 0.f);
-
-    run_bwd_cpu(delta_out.as<float>(), delta_in.data ? delta_in.as<float>() : nullptr,
-                dWq_acc.data(), dWk_acc.data(),
-                dWv_acc.data(), dWout_acc.data(),
-                B, scale);
-
-    // Accumulate into the live gradient TensorViews.
+    MapC Wq_m  (Wq  .as<float>(), half_c, half_c);
+    MapC Wk_m  (Wk  .as<float>(), half_c, half_c);
+    MapC Wv_m  (Wv  .as<float>(), half_c, half_c);
+    MapC Wout_m(Wout.as<float>(), C, C);
     MapM dWq_m  (dWq  .as<float>(), half_c, half_c);
     MapM dWk_m  (dWk  .as<float>(), half_c, half_c);
     MapM dWv_m  (dWv  .as<float>(), half_c, half_c);
     MapM dWout_m(dWout.as<float>(), C, C);
-    dWq_m   += MapC(dWq_acc  .data(), half_c, half_c);
-    dWk_m   += MapC(dWk_acc  .data(), half_c, half_c);
-    dWv_m   += MapC(dWv_acc  .data(), half_c, half_c);
-    dWout_m += MapC(dWout_acc.data(), C, C);
+
+    MapC cat_m (cat,  B * tokens, C);
+    MapC dout_m(dout, B * tokens, C);
+
+    // dL/dWout += concat.T @ delta_out
+    dWout_m.noalias() += cat_m.transpose() * dout_m;
+
+    // delta_concat = delta_out @ Wout.T
+    MatF d_concat(B * tokens, C);
+    d_concat.noalias() = dout_m * Wout_m.transpose();
+
+    for (Index b = 0; b < B; ++b)
+    {
+        MapC Q_b (Q  + b * tokens * half_c, tokens, half_c);
+        MapC K_b (K  + b * tokens * half_c, tokens, half_c);
+        MapC V_b (V  + b * tokens * half_c, tokens, half_c);
+        MapC A_b (A  + b * tokens * tokens, tokens, tokens);
+        MapC xa_b(xa + b * tokens * half_c, tokens, half_c);
+
+        MatF d_ao = d_concat.block(b * tokens, 0, tokens, half_c);
+
+        MatF dV(tokens, half_c);
+        dV.noalias() = A_b.transpose() * d_ao;
+
+        MatF dA(tokens, tokens);
+        dA.noalias() = d_ao * V_b.transpose();
+
+        // Softmax backward: dA_ij = A_ij * (dA_ij - sum_k A_ik * dA_ik)
+        for (Index i = 0; i < tokens; ++i)
+        {
+            float dot = 0.0f;
+            for (Index j = 0; j < tokens; ++j)
+                dot += A_b(i, j) * dA(i, j);
+            for (Index j = 0; j < tokens; ++j)
+                dA(i, j) = A_b(i, j) * (dA(i, j) - dot);
+        }
+        dA *= scale;
+
+        MatF dQ(tokens, half_c), dK(tokens, half_c);
+        dQ.noalias() = dA            * K_b;
+        dK.noalias() = dA.transpose() * Q_b;
+
+        dWq_m.noalias() += xa_b.transpose() * dQ;
+        dWk_m.noalias() += xa_b.transpose() * dK;
+        dWv_m.noalias() += xa_b.transpose() * dV;
+
+        if (din)
+        {
+            MapM din_m(din, B * tokens, C);
+            din_m.block(b * tokens, 0, tokens, half_c).noalias() =
+                dQ * Wq_m.transpose() + dK * Wk_m.transpose() + dV * Wv_m.transpose();
+            din_m.block(b * tokens, half_c, tokens, half_c) =
+                d_concat.block(b * tokens, half_c, tokens, half_c);
+        }
+    }
 }
 
 } // namespace opennn

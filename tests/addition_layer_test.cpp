@@ -17,7 +17,7 @@ TEST(AdditionLayerTest, DefaultConstructor)
     Addition addition_layer;
 
     EXPECT_EQ(addition_layer.get_name(), "Addition");
-    EXPECT_EQ(addition_layer.get_inputs_number(), 2);
+    EXPECT_EQ(addition_layer.get_sources_number(), 2);
 }
 
 
@@ -29,7 +29,7 @@ TEST(AdditionLayerTest, GeneralConstructor)
 
     EXPECT_EQ(addition_layer.get_name(), "Addition");
     EXPECT_EQ(addition_layer.get_label(), "residual_add");
-    EXPECT_EQ(addition_layer.get_inputs_number(), 3);
+    EXPECT_EQ(addition_layer.get_sources_number(), 3);
     EXPECT_EQ(addition_layer.get_input_shape(), input_shape);
     EXPECT_EQ(addition_layer.get_output_shape(), input_shape);
 }

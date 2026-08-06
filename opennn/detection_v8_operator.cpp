@@ -49,6 +49,7 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
     const Index batch_size = input.shape[0];
     const Index box_ch     = 4 * reg_max;
     const Index channels   = box_ch + classes_number;
+    const Index sig_start  = reg_max > 1 ? box_ch : 0;
 
     const float* src = input.as<float>();
     float*       dst = output.as<float>();
@@ -60,18 +61,10 @@ void DetectionV8Operator::forward_propagate(ForwardPropagation& forward_propagat
             {
                 const Index base = ((b * grid_size + row) * grid_width + col) * channels;
 
-                if (reg_max > 1)
-                {
-                    for (Index ch = 0; ch < box_ch; ++ch)
-                        dst[base + ch] = src[base + ch];  // DFL: pass-through box logits
-                    for (Index ch = box_ch; ch < channels; ++ch)
-                        dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
-                }
-                else
-                {
-                    for (Index ch = 0; ch < channels; ++ch)
-                        dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
-                }
+                for (Index ch = 0; ch < sig_start; ++ch)
+                    dst[base + ch] = src[base + ch];  // DFL: pass-through box logits
+                for (Index ch = sig_start; ch < channels; ++ch)
+                    dst[base + ch] = 1.0f / (1.0f + expf(-src[base + ch]));
             }
 }
 
@@ -98,6 +91,7 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
     const Index batch_size = output.shape[0];
     const Index box_ch     = 4 * reg_max;
     const Index channels   = box_ch + classes_number;
+    const Index sig_start  = reg_max > 1 ? box_ch : 0;
 
     const float* out      = output.as<float>();
     const float* delta    = output_delta.as<float>();
@@ -110,23 +104,12 @@ void DetectionV8Operator::back_propagate(ForwardPropagation& forward_propagation
             {
                 const Index base = ((b * grid_size + row) * grid_width + col) * channels;
 
-                if (reg_max > 1)
+                for (Index ch = 0; ch < sig_start; ++ch)
+                    in_delta[base + ch] = delta[base + ch];  // DFL: identity (loss wrote dL/d(logit))
+                for (Index ch = sig_start; ch < channels; ++ch)
                 {
-                    for (Index ch = 0; ch < box_ch; ++ch)
-                        in_delta[base + ch] = delta[base + ch];  // DFL: identity (loss wrote dL/d(logit))
-                    for (Index ch = box_ch; ch < channels; ++ch)
-                    {
-                        const float s = out[base + ch];
-                        in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
-                    }
-                }
-                else
-                {
-                    for (Index ch = 0; ch < channels; ++ch)
-                    {
-                        const float s = out[base + ch];
-                        in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
-                    }
+                    const float s = out[base + ch];
+                    in_delta[base + ch] = delta[base + ch] * s * (1.0f - s);
                 }
             }
 }

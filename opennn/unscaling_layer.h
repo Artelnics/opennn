@@ -19,9 +19,6 @@ public:
 
     Unscaling(const Shape& = {0}, const string& = "unscaling_layer");
 
-    Shape get_input_shape()  const noexcept override { return { Index(scalers.size()) }; }
-    Shape get_output_shape() const noexcept override { return { Index(scalers.size()) }; }
-
     void set(Index = 0, const string& = "unscaling_layer");
 
     void set_input_shape(const Shape&) override;

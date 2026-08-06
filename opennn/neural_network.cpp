@@ -342,8 +342,8 @@ static void validate_source_arity(const Layer& layer,
                                   Index layer_index)
 {
     if (const auto* addition = dynamic_cast<const Addition*>(&layer);
-        addition && ssize(sources) != addition->get_inputs_number())
-        throw runtime_error(format("NeuralNetwork: Addition layer {} expects {} sources, got {}.", layer_index, addition->get_inputs_number(), sources.size()));
+        addition && ssize(sources) != addition->get_sources_number())
+        throw runtime_error(format("NeuralNetwork: Addition layer {} expects {} sources, got {}.", layer_index, addition->get_sources_number(), sources.size()));
 
     if (const auto* convolutional = dynamic_cast<const Convolutional*>(&layer);
         convolutional && convolutional->get_residual() && ssize(sources) != 2)

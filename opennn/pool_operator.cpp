@@ -32,7 +32,9 @@ void PoolOperator::set(Index input_h, Index input_w, Index input_c,
     padding_width   = padding_w;
     method          = new_method;
 
+#ifdef OPENNN_HAS_CUDA
     pooling_descriptor.reset();
+#endif
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -56,13 +58,6 @@ cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
     }
 
     return pooling_descriptor.get();
-}
-
-#else
-
-cudnnPoolingDescriptor_t PoolOperator::get_pooling_descriptor() const
-{
-    throw runtime_error("PoolOperator::get_pooling_descriptor requires CUDA support.");
 }
 
 #endif

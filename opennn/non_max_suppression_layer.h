@@ -26,8 +26,6 @@ public:
 
     Shape get_output_shape() const override;
 
-    vector<TensorSpec> get_backward_specs(Index) const override { return {}; }
-
     void set(const Shape&,
              Index,
              float,

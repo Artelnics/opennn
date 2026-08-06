@@ -48,7 +48,6 @@ struct EmbeddingLookupOperator : Operator
 
     void init_positional_encoding();
     void init_trainable_positional();
-    void compute_valid_lengths(const TensorView& indices, vector<Index>& valid_lengths) const;
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
