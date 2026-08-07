@@ -1558,7 +1558,6 @@ ChatResponse ChatSession::send(
 
     const auto decode_start = Clock::now();
 
-    // Emits one accepted token; false means generation must stop.
     const auto emit = [&](Index token)
     {
         ++response.generated_tokens;

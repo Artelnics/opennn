@@ -25,7 +25,7 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
     : Layer(LayerType::MultiHeadAttention)
 {
     operators = {&value_projection, &key_projection, &query_projection,
-                 &attention, &merge, &output_projection};
+                 &attention, &output_projection};
 
     throw_if(new_query_dimensions[1] != new_source_dimensions[1],
              "embedding dimension must be the same for query and source.");
@@ -158,16 +158,13 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
     attention.output_delta_slots = {AttentionWeightDelta, QueryHeadDelta, KeyHeadDelta, ValueHeadDelta};
     attention.sdpa_gradient_slot = SdpaOutputGradBF16;
     attention.sdpa_qkv_pack_slot = SdpaQkvPack;
+    attention.merged_output_delta_slot = ConcatenatedOutputDelta;
 
     output_projection.input_slots  = {ConcatenatedAttentionOutputs};
     output_projection.output_slots = {Output};
     output_projection.output_delta_slots = {OutputDelta};
     output_projection.input_delta_slots  = {ConcatenatedOutputDelta};
 
-    merge.set(heads_number, query_sequence_length, head_dimension, compute_dtype);
-    merge.input_slots  = {TransposeScratch};
-    merge.output_slots = {ConcatenatedAttentionOutputs};
-    merge.output_delta_slots = {ConcatenatedOutputDelta};
 }
 
 bool MultiHeadAttention::should_use_sdpa() const

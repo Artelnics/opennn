@@ -140,7 +140,9 @@ void build_forward(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims
 
     set_nhwc_output(entry.fwd_Y, d.batch, d.kernels, d.output_height, d.output_width);
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "forward", autotune_enabled());
+    entry.fwd_autotune = finalize(
+        *graph, entry.fwd_workspace_bytes, "forward",
+        device::conv_autotune_enabled());
     entry.fwd = graph;
 }
 
@@ -157,7 +159,9 @@ void build_wgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                    .set_dim({d.kernels, d.channels, d.kernel_height, d.kernel_width})
                    .set_stride(krsc_strides(d));
 
-    entry.wgrad_autotune = finalize(*graph, entry.wgrad_workspace_bytes, "wgrad", autotune_enabled());
+    entry.wgrad_autotune = finalize(
+        *graph, entry.wgrad_workspace_bytes, "wgrad",
+        device::conv_autotune_enabled());
     entry.wgrad = graph;
 }
 
@@ -176,7 +180,9 @@ void build_bgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                    .set_dim({1, d.kernels, 1, 1})
                    .set_stride({d.kernels, 1, d.kernels, d.kernels});
 
-    entry.bgrad_autotune = finalize(*graph, entry.bgrad_workspace_bytes, "bgrad", autotune_enabled());
+    entry.bgrad_autotune = finalize(
+        *graph, entry.bgrad_workspace_bytes, "bgrad",
+        device::conv_autotune_enabled());
     entry.bgrad = graph;
 }
 
@@ -191,7 +197,9 @@ void build_dgrad(ConvolutionOperator::ConvGraphCache::Entry& entry, const Dims& 
                                        conv_attributes<graph::Conv_dgrad_attributes>(d));
     set_nhwc_output(entry.dgrad_DX, d.batch, d.channels, d.height, d.width);
 
-    entry.dgrad_autotune = finalize(*graph, entry.dgrad_workspace_bytes, "dgrad", autotune_enabled());
+    entry.dgrad_autotune = finalize(
+        *graph, entry.dgrad_workspace_bytes, "dgrad",
+        device::conv_autotune_enabled());
     entry.dgrad = graph;
 }
 

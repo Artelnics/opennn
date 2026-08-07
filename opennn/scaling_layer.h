@@ -10,11 +10,27 @@
 
 #include "statistics.h"
 #include "layer.h"
-#include "scale_operator.h"
+#include "operator.h"
 #include "variable.h"
 
 namespace opennn
 {
+
+struct ScaleOperator : Operator
+{
+    bool invert = false;
+
+    float min_range = -1.0f;
+    float max_range = 1.0f;
+
+    TensorView minimums;
+    TensorView maximums;
+    TensorView means;
+    TensorView standard_deviations;
+    TensorView scalers;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+};
 
 class Scaling : public Layer
 {

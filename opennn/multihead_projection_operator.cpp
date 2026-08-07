@@ -24,6 +24,14 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
 
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
+    // This overrides CombinationOperator::forward_propagate instead of
+    // extending it, so the base class's alternative paths are not inherited.
+    // They are unused by attention today; fail loudly rather than ignore them.
+    throw_if(tied_transposed || transposed_inference_active
+             || fused_activation != ActivationFunction::Identity,
+             "MultiHeadProjectionOperator: tied, transposed and fused-activation "
+             "projections are not supported.");
+
     auto& forward_slots = forward_propagation.forward_slots[layer];
     const auto& input_views = get_inputs(forward_propagation, layer);
     const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];

@@ -42,16 +42,6 @@ void set_random_uniform_linked(initializer_list<const TensorView*> views, float 
     for (const TensorView* view : views) set_random_uniform(view->as_vector(), min, max);
 }
 
-inline float lstm_activate(ActivationFunction function, float x)
-{
-    return activation_forward_value(function, x);
-}
-
-inline float lstm_derivative_from_output(ActivationFunction function, float y)
-{
-    return activation_derivative_from_output_value(function, y);
-}
-
 }
 
 void LongShortTermMemoryOperator::set(Index new_input_features,
@@ -307,10 +297,14 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                     }
                     else
                     {
-                        f = lstm_activate(recurrent_activation_function, Zrow[h]);
-                        i = lstm_activate(recurrent_activation_function, Zrow[H + h]);
-                        g = lstm_activate(activation_function, Zrow[2 * H + h]);
-                        o = lstm_activate(recurrent_activation_function, Zrow[3 * H + h]);
+                        f = activation_forward_value(
+                            recurrent_activation_function, Zrow[h]);
+                        i = activation_forward_value(
+                            recurrent_activation_function, Zrow[H + h]);
+                        g = activation_forward_value(
+                            activation_function, Zrow[2 * H + h]);
+                        o = activation_forward_value(
+                            recurrent_activation_function, Zrow[3 * H + h]);
                         c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
                         a = activation_forward_value(activation_function, c);
                     }
@@ -584,10 +578,18 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
                                    * activation_derivative_from_output_value(activation_function, a)
                                    + dc_next(b, h);
 
-                    Drow[3 * H + h] = dh * a * lstm_derivative_from_output(recurrent_activation_function, o);
-                    Drow[h]         = dc * (c_prev ? c_prev[h] : 0.0f) * lstm_derivative_from_output(recurrent_activation_function, f);
-                    Drow[H + h]     = dc * g * lstm_derivative_from_output(recurrent_activation_function, i);
-                    Drow[2 * H + h] = dc * i * lstm_derivative_from_output(activation_function, g);
+                    Drow[3 * H + h] = dh * a
+                        * activation_derivative_from_output_value(
+                            recurrent_activation_function, o);
+                    Drow[h] = dc * (c_prev ? c_prev[h] : 0.0f)
+                        * activation_derivative_from_output_value(
+                            recurrent_activation_function, f);
+                    Drow[H + h] = dc * g
+                        * activation_derivative_from_output_value(
+                            recurrent_activation_function, i);
+                    Drow[2 * H + h] = dc * i
+                        * activation_derivative_from_output_value(
+                            activation_function, g);
                     dc_next(b, h)   = dc * f;
                 }
             }

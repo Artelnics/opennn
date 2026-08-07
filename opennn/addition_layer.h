@@ -9,10 +9,16 @@
 #pragma once
 
 #include "layer.h"
-#include "add_operator.h"
+#include "operator.h"
 
 namespace opennn
 {
+
+struct AdditionOperator : Operator
+{
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+};
 
 class Addition final : public Layer
 {

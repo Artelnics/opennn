@@ -49,6 +49,10 @@ struct AttentionOperator : Operator
     size_t scratch_slot = 0;
     size_t attention_output_slot = 0;
 
+    // Backward slot holding the merged (batch, sequence, heads * head_dim)
+    // delta that split_output_delta scatters back into per-head layout.
+    size_t merged_output_delta_slot = 0;
+
     // First of the sdpa_scratch_slots_count consecutive backward slots planned
     // by the owning layer via sdpa_gradient_scratch_specs.
     size_t sdpa_gradient_slot = 0;
@@ -58,6 +62,9 @@ struct AttentionOperator : Operator
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+    void merge_output_heads(ForwardPropagation&, size_t) const;
+    void split_output_delta(ForwardPropagation&, BackPropagation&, size_t) const;
 
     AttentionOperator();
     ~AttentionOperator() override;

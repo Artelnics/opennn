@@ -437,7 +437,9 @@ void build_bn_forward(BatchNormalizationOperator::BatchNormalizationGraphCache::
     entry.fwd_NextMean = next_mean;
     entry.fwd_NextVar  = next_var;
 
-    entry.fwd_autotune = finalize(*graph, entry.fwd_workspace_bytes, "batchnorm forward", autotune_enabled());
+    entry.fwd_autotune = finalize(
+        *graph, entry.fwd_workspace_bytes, "batchnorm forward",
+        device::conv_autotune_enabled());
     entry.fwd = graph;
 }
 
@@ -499,7 +501,9 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
     entry.bwd_DScale = dscale;
     entry.bwd_DBias  = dbias;
 
-    entry.bwd_autotune = finalize(*graph, entry.bwd_workspace_bytes, "batchnorm backward", autotune_enabled());
+    entry.bwd_autotune = finalize(
+        *graph, entry.bwd_workspace_bytes, "batchnorm backward",
+        device::conv_autotune_enabled());
     entry.bwd = graph;
 }
 

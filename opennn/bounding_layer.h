@@ -9,10 +9,22 @@
 #pragma once
 
 #include "layer.h"
-#include "bound_operator.h"
+#include "operator.h"
 
 namespace opennn
 {
+
+struct BoundOperator : Operator
+{
+    enum class Method { NoBounding, Bounding };
+
+    Method method = Method::Bounding;
+
+    TensorView lower;
+    TensorView upper;
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+};
 
 class Bounding final : public Layer
 {

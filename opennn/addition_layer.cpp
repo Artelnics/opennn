@@ -7,9 +7,34 @@
 //   artelnics@artelnics.com
 
 #include "addition_layer.h"
+#include "tensor_operations.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
+
+void AdditionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+{
+    const vector<TensorView>& inputs = get_inputs(forward_propagation, layer);
+    TensorView& output               = get_output(forward_propagation, layer);
+
+    copy(inputs[0], output);
+    for (size_t i = 1; i < inputs.size(); ++i)
+        add(output, inputs[i], output);
+}
+
+void AdditionOperator::back_propagate(ForwardPropagation&, BackPropagation& back_propagation, size_t layer) const
+{
+    const TensorView& output_delta = get_output_delta(back_propagation, layer);
+
+    for (size_t i = 0; i < input_delta_slots.size(); ++i)
+    {
+        TensorView& input_delta = get_input_delta(back_propagation, layer, i);
+        if (!input_delta.empty())
+            copy(output_delta, input_delta);
+    }
+}
 
 Addition::Addition(const Shape& new_input_shape, const string& new_name, Index new_inputs_number)
     : Layer(LayerType::Addition)

@@ -504,20 +504,53 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
 
 #ifdef OPENNN_HAS_CUDA
     if (use_sdpa && query.is_cuda() && !explicit_lengths)
-    {
         apply_sdpa_forward(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                            attention_out, forward_slots[sdpa_qkv_pack_slot], is_training);
-        return;
-    }
+    else
 #endif
     apply_unfused(query, get_input(forward_propagation, layer, 1), get_input(forward_propagation, layer, 2), source_input,
                   get_output(forward_propagation, layer), get_output(forward_propagation, layer, 1),
                   attention_out, forward_slots[scratch_slot].as<float>(), is_training,
                   explicit_lengths);
+
+    merge_output_heads(forward_propagation, layer);
+}
+
+// Attention works in (batch, heads, sequence, head_dim); its consumer, the
+// output projection, reads (batch, sequence, heads * head_dim). The two
+// permutations below are the forward and backward halves of that relayout.
+void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
+{
+    const Index batch_size = forward_propagation.batch_size;
+    auto& forward_slots = forward_propagation.forward_slots[layer];
+
+    const TensorView heads = forward_slots[scratch_slot].reshape(
+        {batch_size, heads_number, query_sequence_length, head_dimension});
+    TensorView merged = forward_slots[attention_output_slot].reshape(
+        {batch_size, query_sequence_length, heads_number, head_dimension});
+
+    merge_heads(heads, merged);
+}
+
+void AttentionOperator::split_output_delta(ForwardPropagation& forward_propagation,
+                                           BackPropagation& back_propagation,
+                                           size_t layer) const
+{
+    const Index batch_size = forward_propagation.batch_size;
+
+    const TensorView merged_delta =
+        back_propagation.backward_slots[layer][merged_output_delta_slot].reshape(
+            {batch_size, query_sequence_length, heads_number, head_dimension});
+    TensorView heads_delta = forward_propagation.forward_slots[layer][scratch_slot].reshape(
+        {batch_size, heads_number, query_sequence_length, head_dimension});
+
+    split_heads(merged_delta, heads_delta);
 }
 
 void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
+    split_output_delta(forward_propagation, back_propagation, layer);
+
     auto& forward_slots = forward_propagation.forward_slots[layer];
 
     const TensorView& query             = get_input(forward_propagation, layer);

@@ -166,7 +166,6 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
     }
 #endif
 
-    // CPU path: compute directly in the live forward slots.
     const float* x_ptr = x.as<float>();
     float* xa  = fp.forward_slots[layer][1].as<float>();
     float* Q   = fp.forward_slots[layer][2].as<float>();
@@ -367,7 +366,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     }
 #endif
 
-    // CPU path: read the live forward slots and accumulate into the live gradients.
     const float* xa  = fp.forward_slots[layer][1].as<float>();
     const float* Q   = fp.forward_slots[layer][2].as<float>();
     const float* K   = fp.forward_slots[layer][3].as<float>();

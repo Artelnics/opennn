@@ -49,8 +49,6 @@ inline bool bn_frontend_enabled()
     return frontend_enabled() && device_sm_version() >= 800;
 }
 
-inline bool autotune_enabled() { return device::conv_autotune_enabled(); }
-
 inline bool graph_timing_enabled()
 {
     static const bool enabled = env_flag_enabled("OPENNN_GRAPH_TIMING");
@@ -169,8 +167,6 @@ inline void set_nhwc_output(shared_ptr<graph::Tensor_attributes>& tensor,
            .set_stride(nhwc_strides(c, h, w));
 }
 
-// Attention (SDPA) graphs: heuristics-only build — no conv workspace cap,
-// no autotune, no FALLBACK heuristics. Shared by both attention operators.
 inline void finalize_attention(graph::Graph& graph, const string& tag)
 {
     const cudnnHandle_t handle = Backend::get_cudnn_handle();
@@ -181,7 +177,6 @@ inline void finalize_attention(graph::Graph& graph, const string& tag)
     check_status(graph.build_plans(handle, BuildPlanPolicy_t::HEURISTICS_CHOICE), tag + " build_plans");
 }
 
-// Per-sample valid-length input for SDPA padding masks (INT32 scalar per row).
 inline shared_ptr<graph::Tensor_attributes>
 seq_len_scalar(graph::Graph& graph, const char* name, int64_t batch = 1)
 {

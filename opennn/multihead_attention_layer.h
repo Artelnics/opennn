@@ -11,7 +11,6 @@
 #include "layer.h"
 #include "attention_operator.h"
 #include "combination_operator.h"
-#include "merge_operator.h"
 #include "multihead_projection_operator.h"
 
 namespace opennn
@@ -94,7 +93,6 @@ private:
     MultiHeadProjectionOperator value_projection;
     CombinationOperator         output_projection;
     AttentionOperator           attention;
-    MergeOperator               merge;
 
     enum Forward {Input, Query, Key, AttentionWeights, AttentionWeightsDropped,
                   ConcatenatedAttentionOutputs, Value, TransposeScratch, SdpaQkvPack, Output};

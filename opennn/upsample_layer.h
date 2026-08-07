@@ -9,10 +9,23 @@
 #pragma once
 
 #include "layer.h"
-#include "upsample_operator.h"
+#include "operator.h"
 
 namespace opennn
 {
+
+struct UpsampleOperator : Operator
+{
+    Index input_height = 0;
+    Index input_width = 0;
+    Index channels = 0;
+    Index scale_factor = 2;
+
+    void set(Index, Index, Index, Index);
+
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+};
 
 class Upsample final : public Layer
 {

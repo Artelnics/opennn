@@ -11,9 +11,26 @@
 #include "bounding_layer.h"
 #include "string_utilities.h"
 #include "json.h"
+#include "tensor_operations.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
+
+void BoundOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+{
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
+
+    if (method == Method::NoBounding || !lower.data)
+    {
+        copy(input, output);
+        return;
+    }
+
+    bound(input, lower, upper, output);
+}
 
 Bounding::Bounding(const Shape& new_output_shape, const string& new_name)
     : Layer(LayerType::Bounding, false)

@@ -1,12 +1,6 @@
 #include "kernel_common.cuh"
 #include "device_backend.h"
 
-// ---------------------------------------------------------------------------
-// C2PSA forward helpers. Arithmetic accumulates in float; loads/stores use
-// static_cast, which rounds float -> __nv_bfloat16 to nearest-even like the
-// rest of the kernels.
-// ---------------------------------------------------------------------------
-
 // Extract left half of x[B*T, C] into xa[B*T, H].
 // Simultaneously fill the right half of cat[B*T, C] with the identity path
 // (right half of x), so cat[:, H:] = x[:, H:].
@@ -66,10 +60,6 @@ __global__ void c2psa_row_softmax_kernel(const int rows, T* __restrict__ A, int 
     for (int j = 0; j < T_sz; ++j) p[j] = static_cast<T>(static_cast<float>(p[j]) * inv);
 }
 
-// ---------------------------------------------------------------------------
-// C2PSA backward helpers
-// ---------------------------------------------------------------------------
-
 // Softmax backward in-place, float accumulation:
 //   dA[i,j] = A[i,j] * (dA[i,j] - dot(A[i,:], dA[i,:])) * scale
 template<typename T>
@@ -109,10 +99,6 @@ __global__ void c2psa_scatter_dx_kernel(
         din[i] = (col < H) ? d_xa[row * H + col] : d_cat[i];
     }
 }
-
-// ---------------------------------------------------------------------------
-// C++ wrappers called from c2psa_operator.cpp — dispatch on cudaDataType_t.
-// ---------------------------------------------------------------------------
 
 template<typename F>
 static void c2psa_dispatch(cudaDataType_t dtype, F&& f)

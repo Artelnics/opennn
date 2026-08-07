@@ -10,9 +10,31 @@
 #include "scaling_layer.h"
 #include "string_utilities.h"
 #include "json.h"
+#include "tensor_operations.h"
+#include "forward_propagation.h"
+#include "back_propagation.h"
 
 namespace opennn
 {
+
+void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+{
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
+
+    if (!minimums.data)
+    {
+        copy(input, output);
+        return;
+    }
+
+    if (invert)
+        unscale(input, minimums, maximums, means, standard_deviations, scalers,
+                min_range, max_range, output);
+    else
+        scale(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output);
+}
 
 Scaling::Scaling(const Shape& new_input_shape)
     : Scaling(LayerType::Scaling)
