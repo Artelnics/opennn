@@ -17,7 +17,6 @@ TEST(SamplingConfig, Defaults)
     EXPECT_EQ(config.maximum_tokens, Index(0));
 }
 
-
 TEST(SamplingConfig, Assignment)
 {
     SamplingConfig config;
@@ -35,7 +34,6 @@ TEST(SamplingConfig, Assignment)
     EXPECT_EQ(config.maximum_tokens, Index(16));
 }
 
-
 TEST(SampleToken, GreedyReturnsArgmax)
 {
     VectorR probabilities(4);
@@ -46,7 +44,6 @@ TEST(SampleToken, GreedyReturnsArgmax)
 
     EXPECT_EQ(sample_token(probabilities, config, {}), Index(2));
 }
-
 
 TEST(SampleToken, TopKOneKeepsOnlyArgmax)
 {
@@ -59,7 +56,6 @@ TEST(SampleToken, TopKOneKeepsOnlyArgmax)
 
     EXPECT_EQ(sample_token(probabilities, config, {}), Index(1));
 }
-
 
 TEST(SampleToken, LargeTopKAndTopPCompose)
 {
@@ -74,7 +70,6 @@ TEST(SampleToken, LargeTopKAndTopPCompose)
     EXPECT_EQ(sample_token(probabilities, config, {}), vocabulary_size - 1);
 }
 
-
 TEST(SampleToken, TopPKeepsDominantToken)
 {
     VectorR probabilities(3);
@@ -86,7 +81,6 @@ TEST(SampleToken, TopPKeepsDominantToken)
 
     EXPECT_EQ(sample_token(probabilities, config, {}), Index(0));
 }
-
 
 TEST(SampleToken, RepetitionPenaltyDemotesHistoryToken)
 {
@@ -100,7 +94,6 @@ TEST(SampleToken, RepetitionPenaltyDemotesHistoryToken)
 
     EXPECT_EQ(sample_token(probabilities, config, {Index(0)}), Index(1));
 }
-
 
 TEST(SampleToken, DegenerateDistributionFallsBackToArgmax)
 {
@@ -116,7 +109,6 @@ TEST(SampleToken, DegenerateDistributionFallsBackToArgmax)
     EXPECT_LT(sampled, Index(3));
 }
 
-
 TEST(TokenizerLayer, IdentityPassthroughShape)
 {
     Tokenizer tokenizer_layer(Shape{7});
@@ -127,7 +119,6 @@ TEST(TokenizerLayer, IdentityPassthroughShape)
     EXPECT_TRUE(tokenizer_layer.get_forward_specs(1).empty());
     EXPECT_EQ(tokenizer_layer.get_label(), "tokenizer");
 }
-
 
 TEST(TokenizerLayer, VocabularyRoundTrip)
 {
@@ -151,7 +142,6 @@ TEST(TokenizerLayer, VocabularyRoundTrip)
     EXPECT_EQ(tokenizer_layer.get_tokenizer()->get_kind(), "WordLevel");
 }
 
-
 TEST(TokenizerLayer, SetTokenizerRegistersOperator)
 {
     Tokenizer tokenizer_layer(Shape{4});
@@ -163,7 +153,6 @@ TEST(TokenizerLayer, SetTokenizerRegistersOperator)
     ASSERT_EQ(tokenizer_layer.get_operators().size(), size_t(1));
     EXPECT_EQ(tokenizer_layer.get_operators()[0], tokenizer_layer.get_tokenizer());
 }
-
 
 TEST(TokenizerOperatorTest, BytePairCloneKeepsVocabularyAndMerges)
 {
@@ -184,7 +173,6 @@ TEST(TokenizerOperatorTest, BytePairCloneKeepsVocabularyAndMerges)
     EXPECT_EQ(cloned->encode("ab"), (vector<Index>{3}));
 }
 
-
 TEST(TokenizerOperatorTest, FactoryCreatesEachKind)
 {
     EXPECT_EQ(make_tokenizer_operator("WordLevel")->get_kind(), "WordLevel");
@@ -193,7 +181,6 @@ TEST(TokenizerOperatorTest, FactoryCreatesEachKind)
     EXPECT_EQ(make_tokenizer_operator("Qwen3")->get_kind(), "Qwen3");
     EXPECT_THROW(make_tokenizer_operator("Unknown"), runtime_error);
 }
-
 
 TEST(TransformerInference, DimensionGettersSurviveTokenizerLayers)
 {
@@ -220,7 +207,6 @@ TEST(TransformerInference, DimensionGettersSurviveTokenizerLayers)
     EXPECT_EQ(transformer.is_gpu(), false);
 }
 
-
 TEST(TransformerInference, ParametersNumberUnchangedByTokenizerLayers)
 {
     Transformer transformer(6, 5, 30, 40, 8, 2, 16, 2);
@@ -231,7 +217,6 @@ TEST(TransformerInference, ParametersNumberUnchangedByTokenizerLayers)
 
     EXPECT_EQ(generation_network.get_parameters_number(), Index(2050));
 }
-
 
 TEST(TransformerInference, NetworkVocabularySetters)
 {
@@ -253,7 +238,6 @@ TEST(TransformerInference, NetworkVocabularySetters)
     EXPECT_EQ(transformer.get_input_tokenizer()->get_kind(), "WordLevel");
 }
 
-
 TEST(TransformerInference, SequenceToSequenceSessionRequiresGpu)
 {
     Transformer transformer(5, 4, 12, 14, 8, 2, 16, 1);
@@ -269,7 +253,6 @@ TEST(TransformerInference, SequenceToSequenceSessionRequiresGpu)
         },
         runtime_error);
 }
-
 
 TEST(TransformerInference, DecoderOnlySessionRequiresGpu)
 {

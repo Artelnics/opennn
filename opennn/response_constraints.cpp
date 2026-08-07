@@ -67,10 +67,10 @@ struct Lexer
                     && (isdigit(static_cast<unsigned char>(source[position])) || source[position] == '.'))
                     ++position;
 
-                if (position < source.size() && (source[position] == 'e' || source[position] == 'E'))
+                if (position < source.size() && is_one_of(source[position], 'e', 'E'))
                 {
                     ++position;
-                    if (position < source.size() && (source[position] == '+' || source[position] == '-'))
+                    if (position < source.size() && is_one_of(source[position], '+', '-'))
                         ++position;
                     while (position < source.size() && isdigit(static_cast<unsigned char>(source[position])))
                         ++position;

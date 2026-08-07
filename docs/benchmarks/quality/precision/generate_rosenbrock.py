@@ -13,13 +13,11 @@ VARIABLES = 10
 SAMPLES = 10000
 SEED = 1234
 
-
 def rosenbrock(x):
     total = 0.0
     for i in range(len(x) - 1):
         total += (1.0 - x[i]) ** 2 + 100.0 * (x[i + 1] - x[i] * x[i]) ** 2
     return total
-
 
 def main():
     rng = random.Random(SEED)
@@ -44,7 +42,6 @@ def main():
     with open("rosenbrock.csv", "w", newline="") as f:
         csv.writer(f).writerows(rows)
     print(f"wrote rosenbrock.csv ({SAMPLES} samples, {VARIABLES} inputs)")
-
 
 if __name__ == "__main__":
     main()

@@ -51,8 +51,6 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>&,
                                                  float confidence_threshold = 0.25f,
                                                  float iou_threshold = 0.45f);
 
-
-
 vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
                                                      Index,
                                                      Index,
@@ -101,9 +99,6 @@ public:
     Index get_boxes_per_head() const noexcept { return boxes_per_head; }
     void set_multi_scale_heads(const vector<Index>&,
                                const vector<vector<array<float, 2>>>&);
-
-
-
 
     static constexpr Index MAX_GT_BOXES = 100;
 
@@ -154,9 +149,6 @@ public:
     static Index load_darknet_backbone(NeuralNetwork&,
                                        const filesystem::path&,
                                        Index);
-
-
-
 
     static Index load_darknet_backbone_v11(NeuralNetwork&,
                                            const filesystem::path&);

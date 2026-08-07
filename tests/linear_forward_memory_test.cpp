@@ -34,7 +34,6 @@ long vm_data_bytes()
 }
 #endif
 
-
 TEST(LinearForwardMemoryTest, SteadyStateForwardAllocatesNoLargeTemporaries)
 {
 #ifndef __linux__

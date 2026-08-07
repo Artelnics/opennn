@@ -12,7 +12,6 @@
 
 using namespace opennn;
 
-
 struct ConvolutionalLayerConfig {
     Shape input_shape;
     Shape kernel_shape;
@@ -22,7 +21,6 @@ struct ConvolutionalLayerConfig {
     bool batch_normalization;
     string test_name;
 };
-
 
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
 
@@ -82,7 +80,6 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
                                                                               }
                                                                               ));
 
-
 TEST_P(ConvolutionalLayerTest, Constructor) {
 
     ConvolutionalLayerConfig parameters = GetParam();
@@ -105,7 +102,6 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_activation_function(), ActivationOperator::from_string(parameters.activation_function));
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
 }
-
 
 TEST_P(ConvolutionalLayerTest, OutputShapeDerivedFromConfig) {
 
@@ -177,7 +173,6 @@ TEST(ConvolutionalLayerTest, JsonAcceptsValidConfiguration)
     EXPECT_TRUE(layer.get_batch_normalization());
     EXPECT_TRUE(layer.get_residual());
 }
-
 
 TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 {
@@ -264,7 +259,6 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
             EXPECT_GE(output_data[i], type(0));
     }
 }
-
 
 TEST_P(ConvolutionalLayerTest, BackwardGradientMatchesNumerical)
 {

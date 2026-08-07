@@ -38,7 +38,6 @@ PY = os.environ.get("BENCH_PYTHON", "python3")
 GEN = os.path.join(HERE, "generate_rosenbrock.py")
 CSV = os.path.join(HERE, "rosenbrock.csv")
 
-
 def repo_root():
     try:
         root = subprocess.run(["git", "-C", HERE, "rev-parse", "--show-toplevel"],
@@ -47,9 +46,7 @@ def repo_root():
         root = ""
     return root or os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 
-
 REPO_ROOT = repo_root()
-
 
 def find_opennn_bin():
     """Locate the opennn_precision binary without hardcoding a machine path."""
@@ -71,9 +68,6 @@ def find_opennn_bin():
                 return candidate, True
     return os.path.join(REPO_ROOT, "build", "bin", names[0]), False
 
-
-
-
 ENGINE_CONFIGS = {
     "opennn": [
         ("OpenNN-LM", "LevenbergMarquardt", 1000, "pred_opennn.txt"),
@@ -91,11 +85,9 @@ ENGINE_CONFIGS = {
     ],
 }
 
-
 def ensure_data():
     if not os.path.exists(CSV):
         subprocess.run([PY, GEN], cwd=HERE, check=True)
-
 
 def engine_cmd(engine, opennn_bin, optimizer, seed, epochs):
     if engine == "opennn":
@@ -105,7 +97,6 @@ def engine_cmd(engine, opennn_bin, optimizer, seed, epochs):
     if engine == "tensorflow":
         return [PY, os.path.join(HERE, "tensorflow_precision.py"), str(seed)]
     raise ValueError(engine)
-
 
 def run_once(cmd):
 
@@ -120,14 +111,12 @@ def run_once(cmd):
             fields[k.strip()] = v.strip()
     return fields, out.returncode, out.stdout + out.stderr
 
-
 def score_mse(pred_file):
     """Full-dataset MSE via score.py's logic, computed identically per engine."""
     pred_path = os.path.join(HERE, pred_file)
     if not os.path.exists(pred_path):
         return None
     return score.mse(CSV, pred_path)
-
 
 def versions():
     v = {"python": sys.version.split()[0]}
@@ -147,7 +136,6 @@ def versions():
         pass
     return v
 
-
 def git_commit():
     try:
         c = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -155,7 +143,6 @@ def git_commit():
         return c or "unknown"
     except Exception:
         return "unknown"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -246,7 +233,6 @@ def main():
         json.dump(result, f, indent=2)
         f.write("\n")
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

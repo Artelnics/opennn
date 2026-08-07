@@ -13,7 +13,6 @@ import math
 import sys
 import types
 
-
 def install_shims() -> None:
     numpy_shim = types.ModuleType("numpy")
     numpy_shim.exp = math.exp
@@ -24,7 +23,6 @@ def install_shims() -> None:
     numpy_shim.where = lambda condition, a, b: a if condition else b
     sys.modules.setdefault("numpy", numpy_shim)
     sys.modules.setdefault("pandas", types.ModuleType("pandas"))
-
 
 def main() -> None:
     if len(sys.argv) < 5:
@@ -64,7 +62,6 @@ def main() -> None:
     if max_diff > tolerance or agree != rows:
         sys.exit("FAIL: Python export does not match the reference")
     print("PARITY OK")
-
 
 if __name__ == "__main__":
     main()

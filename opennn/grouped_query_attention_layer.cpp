@@ -98,7 +98,6 @@ void GroupedQueryAttentionOperator::link_parameter_scales(span<const TensorView>
         ? TensorView(q_scale.data, Shape{q_dim() + 2 * kv_dim()}, Type::FP32, q_scale.device)
         : TensorView{};
 
-
     if (q_proj.is_int8() && !scales_fused)
         qkv_fused = false;
 }
@@ -290,10 +289,6 @@ struct GroupedAttentionScratch
     float theta = 0.0f;
     Type dtype = Type::FP32;
 };
-
-
-
-
 
 GroupedAttentionScratch& gqa_scratch(Index sequence, Index q_dim, Index kv_dim,
                                      Index head_dim, float theta, Type dtype)
@@ -699,7 +694,6 @@ void GroupedQueryAttention::write_JSON_body(JsonWriter& printer) const
         {"QKNorm",        use_qk_norm}
     });
 }
-
 
 }
 

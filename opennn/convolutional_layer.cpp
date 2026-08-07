@@ -467,7 +467,6 @@ bool Convolutional::forward_propagate_folded(ForwardPropagation& forward_propaga
 
 #endif
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

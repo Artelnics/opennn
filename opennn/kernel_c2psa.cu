@@ -1,9 +1,6 @@
 #include "kernel_common.cuh"
 #include "device_backend.h"
 
-
-
-
 template<typename T>
 __global__ void c2psa_split_kernel(
     const int n,
@@ -21,7 +18,6 @@ __global__ void c2psa_split_kernel(
     }
 }
 
-
 template<typename T>
 __global__ void c2psa_fill_cat_left_kernel(
     const int n,
@@ -36,8 +32,6 @@ __global__ void c2psa_fill_cat_left_kernel(
         cat[row * C + col] = attn_v[i];
     }
 }
-
-
 
 template<typename T>
 __global__ void c2psa_row_softmax_kernel(const int rows, T* __restrict__ A, int T_sz)
@@ -60,8 +54,6 @@ __global__ void c2psa_row_softmax_kernel(const int rows, T* __restrict__ A, int 
     for (int j = 0; j < T_sz; ++j) p[j] = static_cast<T>(static_cast<float>(p[j]) * inv);
 }
 
-
-
 template<typename T>
 __global__ void c2psa_softmax_bwd_kernel(
     const int rows,
@@ -80,9 +72,6 @@ __global__ void c2psa_softmax_bwd_kernel(
     for (int j = 0; j < T_sz; ++j)
         dAp[j] = static_cast<T>(static_cast<float>(Ap[j]) * (static_cast<float>(dAp[j]) - dot) * scale);
 }
-
-
-
 
 template<typename T>
 __global__ void c2psa_scatter_dx_kernel(

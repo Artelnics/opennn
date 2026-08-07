@@ -41,14 +41,12 @@ STANFORD_BASE = "https://nlp.stanford.edu/projects/nmt/data/wmt14.en-de"
 TRAIN_EN_URL = f"{STANFORD_BASE}/train.en"
 TRAIN_DE_URL = f"{STANFORD_BASE}/train.de"
 
-
 def default_out():
     root = os.environ.get("OPENNN_BENCH_DATA")
     if not root:
         sys.exit("Set OPENNN_BENCH_DATA (large files live outside the repo; "
                  "see docs/benchmarks/DATA_POLICY.md) or pass --out.")
     return os.path.join(root, "wmt14", "wmt14_en_de_pairs.txt")
-
 
 def download(url, dest):
     if os.path.exists(dest) and os.path.getsize(dest) > 0:
@@ -66,7 +64,6 @@ def download(url, dest):
     urllib.request.urlretrieve(url, tmp, hook)
     os.replace(tmp, dest)
     print(f"  done ({os.path.getsize(dest) / 1e6:.0f} MB)")
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -135,7 +132,6 @@ def main():
     print(f"metadata: {metadata_path}")
     print("\nrun the benchmark against it with:")
     print(f"  python run_transformer_maxbatch.py --corpus {out} ...")
-
 
 if __name__ == "__main__":
     main()

@@ -163,11 +163,11 @@ bool BertDataset::load_cache(const filesystem::path& bert_cache_path)
     int64_t labels_number = 0;
 
     if (!file.read(magic.data(), magic.size())
-        || !read_binary_value(file, version)
-        || !read_binary_value(file, stored_sequence_length)
-        || !read_binary_value(file, samples_number)
-        || !read_binary_value(file, labels_number)
-        || magic != BERT_CACHE_MAGIC
+        || !read_binary_values(file, version, stored_sequence_length, samples_number,
+                               labels_number))
+        return false;
+
+    if (magic != BERT_CACHE_MAGIC
         || version != BERT_CACHE_VERSION
         || stored_sequence_length != sequence_length
         || samples_number < 0

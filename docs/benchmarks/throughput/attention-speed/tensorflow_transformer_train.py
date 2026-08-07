@@ -47,10 +47,6 @@ use_bf16 = os.environ.get("TF_BF16") is not None
 if use_bf16:
     tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
 
-
-
-
-
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()
     for line in open(path, encoding="utf-8"):
@@ -67,14 +63,12 @@ def read_corpus(path):
     vocab_size = len(vocab) + 4
     return len(in_lens), input_seq, decoder_seq, vocab_size
 
-
 samples, input_seq, decoder_seq, vocab = read_corpus(corpus)
 print(f"precision={'bf16' if use_bf16 else 'fp32'} samples={samples} "
       f"input_seq={input_seq} decoder_seq={decoder_seq} input_vocab={vocab} output_vocab={vocab} "
       f"d_model={d_model} heads={heads} ff={ff} layers={layers} batch={batch} epochs={epochs}")
 
 K = tf.keras.layers
-
 
 def sinusoidal_pe(length, depth):
     pos = np.arange(length)[:, None]
@@ -85,14 +79,12 @@ def sinusoidal_pe(length, depth):
     pe[:, 1::2] = np.cos(angle[:, 1::2])
     return tf.constant(pe[None])
 
-
 def encoder_layer(x):
     a = K.MultiHeadAttention(num_heads=heads, key_dim=d_model // heads)(x, x)
     x = K.LayerNormalization()(x + a)
     h = K.Dense(ff, activation="relu")(x)
     h = K.Dense(d_model)(h)
     return K.LayerNormalization()(x + h)
-
 
 def decoder_layer(x, mem, causal_mask):
     a = K.MultiHeadAttention(num_heads=heads, key_dim=d_model // heads)(
@@ -103,7 +95,6 @@ def decoder_layer(x, mem, causal_mask):
     h = K.Dense(ff, activation="relu")(x)
     h = K.Dense(d_model)(h)
     return K.LayerNormalization()(x + h)
-
 
 def build():
     src = K.Input(shape=(input_seq,), dtype="int32")
@@ -120,18 +111,13 @@ def build():
     for _ in range(layers):
         t = decoder_layer(t, s, causal)
 
-
     out = K.Dense(vocab, dtype="float32")(t)
     return tf.keras.Model([src, tgt], out)
-
 
 with tf.device("/GPU:0"):
     model = build()
     params = model.count_params()
     print(f"parameters={params}")
-
-
-
 
     src = tf.random.uniform((samples, input_seq), 0, vocab, dtype=tf.int32)
     dec = tf.random.uniform((samples, decoder_seq), 0, vocab, dtype=tf.int32)
@@ -159,8 +145,6 @@ with tf.device("/GPU:0"):
             i = b * batch
             last = train_step(src[i:i + batch], dec[i:i + batch], tgt[i:i + batch])
         return float(last)
-
-
 
     run_epoch()
 

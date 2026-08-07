@@ -42,7 +42,6 @@ assert torch.cuda.is_available(), "CUDA GPU required"
 dev = torch.device("cuda")
 torch.manual_seed(0)
 
-
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cudnn.benchmark = True
@@ -54,7 +53,6 @@ print(f"precision={'bf16' if use_bf16 else 'fp32'} mode={args.mode} "
       f"out_vocab={args.out_vocab} in_seq={args.in_seq} dec_seq={args.dec_seq} "
       f"d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers} "
       f"batch={args.batch} steps={args.steps} compile={use_compile}")
-
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len):
@@ -68,7 +66,6 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, : x.size(1)]
-
 
 class Seq2SeqTransformer(nn.Module):
     def __init__(self):
@@ -88,7 +85,6 @@ class Seq2SeqTransformer(nn.Module):
         t = self.pos(self.tgt_emb(tgt) * self.scale)
         return self.out(self.transformer(s, t))
 
-
 model = Seq2SeqTransformer().to(dev)
 model.train(args.mode == "train")
 print(f"parameters={sum(p.numel() for p in model.parameters())}")
@@ -99,7 +95,6 @@ if use_compile:
 
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
-
 
 pool = max(8, args.warmup + args.steps)
 src = torch.randint(0, args.in_vocab, (pool, args.batch, args.in_seq), device=dev)
@@ -136,7 +131,6 @@ if args.mode == "train":
     wall_s = time.perf_counter() - t0
     print(f"final_loss={float(last):.5f}")
 else:
-
 
     def forward(i):
         j = i % pool

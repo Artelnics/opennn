@@ -28,19 +28,16 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
 
-
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
 
-
 def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
-
 
 def run(args: argparse.Namespace) -> None:
     import tensorflow as tf
@@ -82,9 +79,6 @@ def run(args: argparse.Namespace) -> None:
         for start, end in batches(x_np.shape[0], args.batch):
             train_step(x[start:end], y[start:end])
 
-
-
-
     def eval_log_loss() -> float:
         preds = []
         for start, end in batches(xt_np.shape[0], args.batch):
@@ -123,7 +117,6 @@ def run(args: argparse.Namespace) -> None:
     print(f"time_to_target_s={train_s:.6f}")
     print(f"RESULT={'OK' if reached else 'DID_NOT_CONVERGE'}")
 
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", type=Path, required=True)
@@ -136,10 +129,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--threads", type=int, default=0)
     return parser.parse_args()
 
-
 def main() -> None:
     run(parse_args())
-
 
 if __name__ == "__main__":
     try:

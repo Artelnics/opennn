@@ -29,7 +29,6 @@ dev = torch.device("cuda")
 torch.manual_seed(0)
 torch.backends.cuda.matmul.allow_tf32 = True
 
-
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len):
         super().__init__()
@@ -42,7 +41,6 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, : x.size(1)]
-
 
 class Seq2SeqTransformer(nn.Module):
     def __init__(self):
@@ -61,9 +59,7 @@ class Seq2SeqTransformer(nn.Module):
         s = self.pos(self.src_emb(src) * self.scale)
         t = self.pos(self.tgt_emb(tgt) * self.scale)
 
-
         return torch.softmax(self.out(self.transformer(s, t)), dim=-1)
-
 
 model = Seq2SeqTransformer().to(dev).eval()
 params = sum(p.numel() for p in model.parameters())
@@ -73,13 +69,10 @@ print(f"parameters={params}")
 src = torch.randint(0, vocab, (batch, seq), device=dev)
 tgt = torch.randint(0, vocab, (batch, seq), device=dev)
 
-
 import os
 use_bf16 = os.environ.get("PT_BF16") is not None
 print(f"precision={'bf16' if use_bf16 else 'fp32'}")
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 else torch.autocast("cuda", enabled=False)
-
-
 
 use_graph = os.environ.get("PT_NOGRAPH") is None
 

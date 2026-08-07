@@ -17,8 +17,6 @@
 
 #define OPENNN_EXPORT_NO_MAIN
 
-
-
 #ifndef NN_MODEL_FILE
 #define NN_MODEL_FILE "iris_model.c"
 #endif
@@ -84,7 +82,6 @@ int main(void)
     }
 
     uart_puts("END\n");
-
 
     cli();
     sleep_enable();

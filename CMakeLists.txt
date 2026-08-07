@@ -20,9 +20,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-march=native>)
     if(WIN32)
 
-
-
-
         add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-mno-avx>)
     endif()
 elseif(MSVC)
@@ -30,8 +27,6 @@ elseif(MSVC)
 endif()
 
 include(CheckIPOSupported)
-
-
 
 if(MSVC)
     set(_opennn_lto_default OFF)
@@ -48,9 +43,7 @@ else()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 endif()
 
-
 if(APPLE)
-
 
     add_compile_options(-fexperimental-library)
     add_link_options(-fexperimental-library)
@@ -79,9 +72,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-interference-size>)
 endif()
 
-
-
-
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(
         $<$<COMPILE_LANGUAGE:CXX>:-Wno-switch-enum>
@@ -97,17 +87,10 @@ endif()
 
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if toolkit is found" OFF)
 
-
-
-
-
 include(CheckLanguage)
 check_language(CUDA)
 
 if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
-
-
-
 
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         set(CMAKE_CUDA_ARCHITECTURES "native" CACHE STRING
@@ -118,9 +101,6 @@ if(CMAKE_CUDA_COMPILER AND NOT OpenNN_DISABLE_CUDA)
     set(OPENNN_HAS_CUDA ON CACHE BOOL "")
     find_package(CUDNN 9.0 REQUIRED)
     set(HAVE_CUDNN ON)
-
-
-
 
     include(FetchContent)
     FetchContent_Declare(
@@ -150,12 +130,7 @@ set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
-
-
 set(EIGEN_BUILD_CMAKE_PACKAGE ON CACHE BOOL "" FORCE)
-
-
-
 
 find_package(Eigen3 5.0 CONFIG QUIET)
 
@@ -180,14 +155,10 @@ if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-
 option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
 if(OpenNN_BUILD_BENCHMARKS)
     add_subdirectory(docs/benchmarks)
 endif()
-
-
-
 
 option(OpenNN_CHECK_HEADERS "Add a ctest that compiles each opennn header in isolation" OFF)
 if(OpenNN_CHECK_HEADERS AND NOT MSVC)

@@ -14,7 +14,6 @@
 
 using namespace opennn;
 
-
 TEST(Normalization3dTest, DefaultConstructor)
 {
     Normalization3d normalization_3d;
@@ -24,7 +23,6 @@ TEST(Normalization3dTest, DefaultConstructor)
     EXPECT_EQ(normalization_3d.get_output_shape().rank, 2);
     EXPECT_EQ(normalization_3d.get_output_shape()[0], 0);
 }
-
 
 TEST(Normalization3dTest, GeneralConstructor)
 {
@@ -42,7 +40,6 @@ TEST(Normalization3dTest, GeneralConstructor)
     EXPECT_EQ(normalization_3d.get_output_shape()[0], sequence_length);
     EXPECT_EQ(normalization_3d.get_output_shape()[1], embedding_dimension);
 }
-
 
 TEST(Normalization3dTest, ForwardMatchesHandComputedLayerNorm)
 {
@@ -75,7 +72,6 @@ TEST(Normalization3dTest, ForwardMatchesHandComputedLayerNorm)
     EXPECT_NEAR(output_data[2], type(0.5)  * inv_std, 1.0e-4f);
     EXPECT_NEAR(output_data[3], type(1.5)  * inv_std, 1.0e-4f);
 }
-
 
 TEST(Normalization3dTest, BackwardGradientMatchesNumerical)
 {
@@ -114,7 +110,6 @@ TEST(Normalization3dTest, BackwardGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(2.0e-3));
 }
-
 
 TEST(Normalization3dTest, FusedResidualAddForward)
 {
@@ -158,7 +153,6 @@ TEST(Normalization3dTest, FusedResidualAddForward)
     EXPECT_NEAR(output_data[2], type(1),  1.0e-4f);
     EXPECT_NEAR(output_data[3], type(1),  1.0e-4f);
 }
-
 
 TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
 {
@@ -212,14 +206,6 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
         back_propagation.backward_slots[size_t(normalization_index)][1].data,
         back_propagation.backward_slots[size_t(normalization_index)][2].data);
 
-
-
-
-
-
-
-
-
     const VectorR gradient = calculate_gradient(loss);
 
     NeuralNetwork reference_network;
@@ -256,7 +242,6 @@ TEST(Normalization3dTest, FusedResidualAddAliasesSafeBranchDelta)
               type(1.0e-6));
 }
 
-
 TEST(Normalization3dTest, RMSGeneralConstructor)
 {
     const Index sequence_length = 15;
@@ -273,7 +258,6 @@ TEST(Normalization3dTest, RMSGeneralConstructor)
     EXPECT_EQ(rms_normalization_3d.get_parameters_number(), embedding_dimension);
 }
 
-
 TEST(Normalization3dTest, RMSFuseAddRejected)
 {
     Normalization3d rms_normalization_3d({2, 4}, "norm");
@@ -281,8 +265,6 @@ TEST(Normalization3dTest, RMSFuseAddRejected)
 
     EXPECT_ANY_THROW(rms_normalization_3d.set_fuse_add(true));
 }
-
-
 
 TEST(Normalization3dTest, RMSForwardMatchesHandComputedRMSNorm)
 {
@@ -318,7 +300,6 @@ TEST(Normalization3dTest, RMSForwardMatchesHandComputedRMSNorm)
     EXPECT_NEAR(output_data[2], type(3) * inv_rms, 1.0e-4f);
     EXPECT_NEAR(output_data[3], type(4) * inv_rms, 1.0e-4f);
 }
-
 
 TEST(Normalization3dTest, RMSBackwardGradientMatchesNumerical)
 {
@@ -359,7 +340,6 @@ TEST(Normalization3dTest, RMSBackwardGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(2.0e-3));
 }
-
 
 TEST(Normalization3dTest, RMSSaveLoadRoundTrip)
 {
@@ -414,7 +394,6 @@ TEST(Normalization3dTest, RMSSaveLoadRoundTrip)
     filesystem::remove(path, file_error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), file_error);
 }
-
 
 TEST(Normalization3dTest, FusedResidualAddGradientMatchesNumerical)
 {

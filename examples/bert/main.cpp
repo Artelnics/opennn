@@ -60,14 +60,10 @@ int main(int argc, char* argv[])
         download_if_missing(vocab_path, vocabulary_url);
         download_if_missing(weights_path, weights_url);
 
-
-
         BertDataset dataset(text_path, vocab_path, sequence_length);
         const Index labels = dataset.get_features_number("Target");
         cout << "Samples: " << dataset.get_samples_number()
              << "  seq: " << sequence_length << "  labels: " << labels << endl;
-
-
 
         BertForSequenceClassification model(sequence_length, vocabulary_size, hidden_size,
                                             heads_number, intermediate, layers_number, labels);
@@ -76,8 +72,6 @@ int main(int argc, char* argv[])
 
         cout << "Loading pretrained weights..." << endl;
         model.load_parameters_binary(weights_path);
-
-
 
         TrainingStrategy training_strategy(&model, &dataset);
         training_strategy.set_loss("CrossEntropy");

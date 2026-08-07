@@ -19,7 +19,6 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
-
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
@@ -31,7 +30,6 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
     EXPECT_EQ(loss.get_neural_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
-
 
 TEST(MinkowskiErrorTest, BackPropagate)
 {

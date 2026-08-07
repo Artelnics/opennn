@@ -534,7 +534,6 @@ static float* get_pooling_scratch(size_t floats_needed)
         floats_needed > static_cast<size_t>(std::numeric_limits<Index>::max()),
         "pooling scratch size exceeds Index range.");
 
-
     static PoolingScratch& scratch = *new PoolingScratch();
     return scratch.ensure(Index(floats_needed));
 }
@@ -647,8 +646,6 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
     launch_elementwise_strided(n, average_pooling_3d_backward_kernel<T>, delta, in_gradient, S, F, valid_mask, counts);
 }
-
-
 
 template<typename T, bool Gather>
 __global__ void first_token_3d_kernel(const int n, const int S, const int F, const T* __restrict__ src, T* __restrict__ dst)
@@ -829,7 +826,6 @@ void batchnorm_inference_cuda(const Index total, const Index channels,
                        x, residual, gamma, beta, mean, variance,
                        epsilon, apply_relu ? 1 : 0, y);
 }
-
 
 __global__ void conv_bn_fold_kernel(const Index total, const int kernel_size, const int kernels,
                                     const float* __restrict__ weights,
@@ -1454,10 +1450,8 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
-
 constexpr int SAMPLING_BLOCK_THREADS = 256;
 using BlockArgMaxReduce = cub::BlockReduce<cub::KeyValuePair<int, float>, SAMPLING_BLOCK_THREADS>;
-
 
 __device__ __forceinline__ void block_argmax(float& v, int& i,
                                              typename BlockArgMaxReduce::TempStorage& temp,
@@ -1849,7 +1843,6 @@ void dropout_backward_cuda(const Index n, const T* output_delta, T* input_delta,
 {
     launch_elementwise(n, dropout_backward_kernel<T>, output_delta, input_delta, mask, 1.0f / (1.0f - rate));
 }
-
 
 template<typename T, bool Gather>
 __global__ void time_slice_kernel(const int n,
@@ -2524,8 +2517,6 @@ void upsample_backward_cuda(const int batch, const int in_h, const int in_w, con
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
 
-
-
 template<bool Scatter>
 __global__ void concat_slice_kernel(
     const int n,
@@ -2561,10 +2552,6 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
     launch_elementwise_strided(Index(batch) * H * W * slice_ch, concat_slice_kernel<false>,
                        out_delta, in_delta, H, W, slice_ch, total_ch, ch_offset);
 }
-
-
-
-
 
 template<typename T, int WARPS_PER_ROW>
 __global__ void w8a16_linear_out_major_kernel(
@@ -2704,10 +2691,6 @@ void w8a16_linear_cuda(const int m, const int in_features, const int out_feature
                 m, in_features, out_features, x, w, scales, bias, y)));
 }
 
-
-
-
-
 template<typename T, bool SCALE_BY_ROW>
 __global__ void w8_dequant_kernel(const int rows,
                                   const int row_length,
@@ -2829,8 +2812,6 @@ void embedding_forward_w8_cuda(const Index n, const float* inputs, const int8_t*
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
-
 
 template void transpose_2d_cuda<int8_t>(const Index, const Index, const int8_t*, int8_t*);
 

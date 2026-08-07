@@ -43,7 +43,6 @@ OUTPUT_COLUMNS = (
     + ["pm2_5"]
 )
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -69,7 +68,6 @@ def parse_args():
     )
     return parser.parse_args()
 
-
 def download(url, destination):
     print(f"download_url={url}")
     request = urllib.request.Request(
@@ -84,7 +82,6 @@ def download(url, destination):
                     break
                 handle.write(chunk)
     return destination
-
 
 def extract_csv_from_zip(zip_path, output_dir):
     with zipfile.ZipFile(zip_path) as archive:
@@ -106,7 +103,6 @@ def extract_csv_from_zip(zip_path, output_dir):
                 target.write(chunk)
         return destination
 
-
 def ensure_raw_csv(args, output_dir):
     if args.raw_path:
         raw_path = args.raw_path.expanduser().resolve()
@@ -127,7 +123,6 @@ def ensure_raw_csv(args, output_dir):
 
     return download(source_url, raw_csv)
 
-
 def parse_float(value):
     text = value.strip()
     if not text or text.upper() == "NA":
@@ -137,7 +132,6 @@ def parse_float(value):
     if not math.isfinite(number):
         return None
     return number
-
 
 def interpolate(values, column_name):
     known = [index for index, value in enumerate(values) if value is not None]
@@ -169,12 +163,10 @@ def interpolate(values, column_name):
 
     return filled, missing
 
-
 def format_number(value):
     if abs(value - round(value)) < 1e-9:
         return str(int(round(value)))
     return f"{value:.9g}"
-
 
 def read_raw_rows(raw_csv):
     with open(raw_csv, newline="", encoding="utf-8-sig") as handle:
@@ -185,7 +177,6 @@ def read_raw_rows(raw_csv):
         if missing:
             raise RuntimeError(f"Missing expected columns in {raw_csv}: {', '.join(missing)}")
         return list(reader)
-
 
 def prepare(raw_csv, output_csv):
     rows = read_raw_rows(raw_csv)
@@ -222,7 +213,6 @@ def prepare(raw_csv, output_csv):
         "unknown_wind_rows": unknown_wind_rows,
     }
 
-
 def main():
     args = parse_args()
     output_dir = args.output_dir.expanduser().resolve()
@@ -238,7 +228,6 @@ def main():
     print(f"output_rows={stats['output_rows']}")
     print(f"missing_interpolated={stats['missing_interpolated']}")
     print(f"unknown_wind_rows={stats['unknown_wind_rows']}")
-
 
 if __name__ == "__main__":
     try:

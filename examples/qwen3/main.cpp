@@ -44,7 +44,6 @@ using namespace std;
 namespace
 {
 
-
 constexpr Index MODEL_MAX_CONTEXT = 32768;
 constexpr Index DEFAULT_CONTEXT_LENGTH = MODEL_MAX_CONTEXT;
 constexpr Index DEFAULT_MAX_NEW = 640;
@@ -71,13 +70,11 @@ string find_data_dir(const string& override_dir)
     return "../data";
 }
 
-
 struct Qwen3Config
 {
     Index hidden = 0, layers = 0, query_heads = 0, key_value_heads = 0,
           head_dim = 0, intermediate = 0, vocabulary = 0;
     float rope_theta = 1000000.0f, rms_epsilon = 1.0e-6f;
-
 
     void load(const string& path)
     {
@@ -91,17 +88,10 @@ struct Qwen3Config
 
 }
 
-
 int main(int argc, char* argv[])
 {
     try
     {
-
-
-
-
-
-
 
 #ifdef OPENNN_HAS_CUDA
         bool want_gpu = true;

@@ -23,9 +23,6 @@ struct ForwardPropagation;
 struct BackPropagation
 {
 
-
-
-
     struct DeltaEntry
     {
         Index      layer;
@@ -47,9 +44,6 @@ struct BackPropagation
                     ForwardPropagation* joint_forward = nullptr);
 
     virtual ~BackPropagation() = default;
-
-
-
 
     void set(const Index = 0, Loss* = nullptr,
              ForwardPropagation* joint_forward = nullptr);

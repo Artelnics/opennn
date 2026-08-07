@@ -20,7 +20,6 @@ import ctypes
 import ctypes.wintypes as wt
 import sys
 
-
 def _mem_counters():
     class PMC(ctypes.Structure):
         _fields_ = [
@@ -41,7 +40,6 @@ def _mem_counters():
     kernel32 = ctypes.windll.kernel32
     handle = kernel32.GetCurrentProcess()
 
-
     get_mem = getattr(kernel32, "K32GetProcessMemoryInfo", None)
     if get_mem is None:
         get_mem = ctypes.WinDLL("psapi").GetProcessMemoryInfo
@@ -52,14 +50,11 @@ def _mem_counters():
     mb = 1024.0 * 1024.0
     return (pmc.PeakWorkingSetSize / mb, pmc.WorkingSetSize / mb)
 
-
 def peak_working_set_mb():
     return _mem_counters()[0]
 
-
 def current_working_set_mb():
     return _mem_counters()[1]
-
 
 def main():
     if len(sys.argv) < 2:
@@ -67,8 +62,6 @@ def main():
         return 2
 
     csv_path = sys.argv[1]
-
-
 
     read_dtype = sys.argv[2] if len(sys.argv) > 2 else "float64"
 
@@ -81,17 +74,11 @@ def main():
 
         np_read = np.float32 if read_dtype == "float32" else np.float64
 
-
-
         frame = pd.read_csv(csv_path, header=None, dtype=np_read)
         print(f"read_dtype={read_dtype}")
         print(f"loaded_samples={len(frame)}")
 
-
-
         input_variables = frame.shape[1] - 1
-
-
 
         values = torch.from_numpy(frame.to_numpy(dtype=np.float32))
         del frame
@@ -109,7 +96,6 @@ def main():
         )
         loss_fn = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters())
-
 
         batch_size = 1000
         n = inputs.shape[0]
@@ -136,7 +122,6 @@ def main():
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=ERROR")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

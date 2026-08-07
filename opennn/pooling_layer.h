@@ -80,7 +80,6 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-
     Index get_pool_height() const noexcept { return pool_height; }
     Index get_pool_width() const noexcept { return pool_width; }
 

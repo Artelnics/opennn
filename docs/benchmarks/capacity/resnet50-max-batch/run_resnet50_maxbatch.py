@@ -24,11 +24,9 @@ REPO_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 RESNET_SPEED_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "throughput", "resnet50"))
 
-
 BENCH_DATA_ROOT = os.environ.get(
     "OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
-
 
 def existing_python_sites():
     candidates = [
@@ -36,7 +34,6 @@ def existing_python_sites():
         Path.home() / ".venvs" / "ml" / "lib" / "python3.12" / "site-packages",
     ]
     return [str(path) for path in candidates if path.exists()]
-
 
 def nvidia_library_paths(site_packages):
     paths = []
@@ -48,7 +45,6 @@ def nvidia_library_paths(site_packages):
     if Path("/usr/lib/wsl/lib").exists():
         paths.insert(0, "/usr/lib/wsl/lib")
     return paths
-
 
 BENCH_SITE_PACKAGES = existing_python_sites()
 for site_path in reversed(BENCH_SITE_PACKAGES):
@@ -68,10 +64,8 @@ OOM_PATTERNS = (
     "allocation failed",
 )
 
-
 def run_text(cmd, **kwargs):
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
-
 
 def git_commit():
     try:
@@ -79,7 +73,6 @@ def git_commit():
         return (out.stdout.strip() or "unknown")[:12]
     except Exception:
         return "unknown"
-
 
 def default_opennn_bin():
     env_bin = os.environ.get("OPENNN_RESNET50_MAXBATCH_BIN")
@@ -98,7 +91,6 @@ def default_opennn_bin():
             return candidate
     return candidates[2]
 
-
 def prepare_dataset(dataset):
     if dataset != "cifar10":
         raise ValueError("Only cifar10 is supported for this benchmark.")
@@ -113,7 +105,6 @@ def prepare_dataset(dataset):
     subprocess.run([PY, os.path.join(RESNET_SPEED_DIR, "prepare_cifar10.py"), data_dir],
                    check=True)
     return data_dir
-
 
 def parse_gpu_info(gpu_index):
     query = "name,driver_version,memory.total,memory.used"
@@ -132,7 +123,6 @@ def parse_gpu_info(gpu_index):
         "memory_used_mib": int(float(used)),
     }
 
-
 def current_gpu_used_mib(gpu_index):
     out = run_text([
         "nvidia-smi",
@@ -141,7 +131,6 @@ def current_gpu_used_mib(gpu_index):
         "--format=csv,noheader,nounits",
     ], check=True).stdout.strip().splitlines()[0]
     return int(float(out.strip()))
-
 
 class PeakMonitor:
     def __init__(self, gpu_index, interval_s, cap_mib=None):
@@ -172,7 +161,6 @@ class PeakMonitor:
                 pass
             self._stop.wait(self.interval_s)
 
-
 def versions():
     result = {"python": sys.version.split()[0]}
     try:
@@ -199,7 +187,6 @@ def versions():
         pass
     return result
 
-
 def expanded_engines(value):
     engines = []
     for item in [x.strip() for x in value.split(",") if x.strip()]:
@@ -214,14 +201,10 @@ def expanded_engines(value):
             raise ValueError(f"Unknown engine: {item}")
     return engines
 
-
 def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction,
                 memory_limit_mb, opennn_workspace_mode=None):
     env = {}
     if engine in OPENNN_ENGINES:
-
-
-
 
         batch_pool = "1" if engine == "opennn_pool1" else "0"
         workspace_mode = opennn_workspace_mode or "16"
@@ -253,7 +236,6 @@ def command_for(engine, precision, data_dir, batch, opennn_bin, memory_fraction,
         raise ValueError(engine)
     return cmd, env
 
-
 def run_trial(engine, precision, batch, data_dir, args, gpu_info,
               opennn_workspace_mode=None):
     cap_mib = max(1, gpu_info["memory_total_mib"] - args.reserve_mib)
@@ -275,10 +257,6 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
         env["PYTHONPATH"] = os.pathsep.join(BENCH_SITE_PACKAGES + [env.get("PYTHONPATH", "")])
     if BENCH_LD_LIBRARY_PATHS:
         env["LD_LIBRARY_PATH"] = os.pathsep.join(BENCH_LD_LIBRARY_PATHS + [env.get("LD_LIBRARY_PATH", "")])
-
-
-
-
 
     idle_before = 0
     try:
@@ -359,7 +337,6 @@ def run_trial(engine, precision, batch, data_dir, args, gpu_info,
         result["workspace_mode"] = opennn_workspace_mode
     return result
 
-
 def run_opennn_capacity_trial(engine, precision, batch, data_dir, args, gpu_info):
     """Try bounded cuDNN workspace policies in fresh processes."""
     attempts = []
@@ -389,7 +366,6 @@ def run_opennn_capacity_trial(engine, precision, batch, data_dir, args, gpu_info
     final["workspace_attempts"] = attempts
     return final
 
-
 def wait_for_cooldown(gpu_index, threshold_mib, timeout_s=30):
     start = time.time()
     while time.time() - start < timeout_s:
@@ -400,7 +376,6 @@ def wait_for_cooldown(gpu_index, threshold_mib, timeout_s=30):
             return False
         time.sleep(0.5)
     return False
-
 
 def search_engine(engine, precision, data_dir, args, gpu_info):
     cache = {}
@@ -487,7 +462,6 @@ def search_engine(engine, precision, data_dir, args, gpu_info):
         if ok_trials else None,
     }
 
-
 def summarize(results):
     metrics = {}
     if "opennn_pool1" in results:
@@ -509,12 +483,10 @@ def summarize(results):
                 ratios[f"opennn_vs_{key}"] = round(opennn / value, 3)
     return metrics, ratios
 
-
 def expanded_precisions(value):
     if value == "both":
         return ["fp32", "bf16"]
     return [value]
-
 
 def parse_workspace_modes(value):
     modes = []
@@ -536,7 +508,6 @@ def parse_workspace_modes(value):
     if not modes:
         raise argparse.ArgumentTypeError("at least one workspace mode is required")
     return modes
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -649,7 +620,6 @@ def main():
         json.dump(artifact, f, indent=2)
     print(json.dumps({"max_train_batch": max_batches, "ratio": ratios}, indent=2))
     print(f"wrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

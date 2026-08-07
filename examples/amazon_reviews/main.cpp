@@ -27,16 +27,13 @@ int main()
 
         Configuration::instance().set(Device::Auto, Type::Auto);
 
-
         const Index embedding_dimension = 64;
         const Index heads_number = 4;
-
 
         LanguageDataset language_dataset("../data/amazon_reviews/amazon_cells_labelled.txt");
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_features_number("Target");
-
 
         TextClassificationNetwork text_classification_network(
             {input_vocabulary_size, input_sequence_length, embedding_dimension},
@@ -44,7 +41,6 @@ int main()
             {targets_number});
 
         text_classification_network.set_tokenizer(language_dataset.get_input_tokenizer().clone());
-
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
@@ -57,7 +53,6 @@ int main()
 
         cout << "Training network..." << endl;
         training_strategy.train();
-
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
         cout << "Confusion Matrix:" << endl;

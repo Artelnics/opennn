@@ -76,7 +76,6 @@ void Pooling3d::write_JSON_body(JsonWriter& printer) const
     add_json_field(printer, "PoolingMethod", pooling_method_to_string(pooling_method));
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

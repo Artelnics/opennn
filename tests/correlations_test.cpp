@@ -1,7 +1,6 @@
 
 #include "pch.h"
 
-
 #include "opennn/correlations.h"
 #include "opennn/tensor_types.h"
 #include "opennn/statistics.h"
@@ -46,7 +45,6 @@ TEST_F(CorrelationsTest, SpearmanCorrelation)
 
 }
 
-
 TEST_F(CorrelationsTest, LinearCorrelation)
 {
     VectorR x(10);
@@ -60,7 +58,6 @@ TEST_F(CorrelationsTest, LinearCorrelation)
     y << type(10), type(9), type(8),type(7),type(6),type(5),type(4),type(3),type(2),type(1);
 
     EXPECT_NEAR(linear_correlation(x, y).coefficient, type(- 1), EPSILON);
-    
 
     x.setRandom();
     y.setRandom();
@@ -69,7 +66,6 @@ TEST_F(CorrelationsTest, LinearCorrelation)
     EXPECT_NE(linear_correlation(x, y).coefficient, type( 0));
     EXPECT_NE(linear_correlation(x, y).coefficient, type( 1));
 }
-
 
 TEST_F(CorrelationsTest, LogisticCorrelation)
 {
@@ -84,7 +80,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     EXPECT_LE(abs(correlation.coefficient), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
-
     Index size = 10;
 
     x.resize(size);
@@ -95,13 +90,11 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-
     EXPECT_GE(correlation.coefficient, type(0.9));
     EXPECT_LE(correlation.coefficient, type(1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
     EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
-
 
     size = 100;
 
@@ -121,12 +114,10 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-
     EXPECT_LE(correlation.coefficient, type(1));
 
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
-
 
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
@@ -134,9 +125,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation(x, y);
 
-
     EXPECT_LE(abs(correlation.coefficient), type(1));
-
 
     y.setConstant(type(0));
 
@@ -149,8 +138,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation(x, y);
-
-
 
     size = 100;
 
@@ -174,10 +161,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
 
-
-
-
-
     for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
@@ -185,7 +168,6 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     correlation = logistic_correlation(x, y);
 
     EXPECT_GE(abs(correlation.coefficient), type(-0.95));
-
 
     y.setConstant(type(0));
 
@@ -202,7 +184,6 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
     Index size;
     Correlation correlation;
     type solution;
-
 
     size = 10;
 
@@ -231,7 +212,6 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     Index size;
     Correlation correlation;
 
-
     size = 10;
 
     x.resize(size);
@@ -248,7 +228,6 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
     EXPECT_NEAR(correlation.intercept, type(1), EPSILON);
     EXPECT_NEAR(correlation.slope, type(0.5), EPSILON);
-
 
     size = 5;
 
@@ -277,7 +256,6 @@ TEST_F(CorrelationsTest, PowerCorrelation)
     Index size;
     Correlation correlation;
 
-
     size = 10;
 
     x.resize(size);
@@ -290,7 +268,6 @@ TEST_F(CorrelationsTest, PowerCorrelation)
     }
 
     correlation = power_correlation(x, y);
-
 
     EXPECT_NEAR(correlation.coefficient, type(1), EPSILON);
     EXPECT_NEAR(correlation.intercept, type(1), EPSILON);

@@ -341,7 +341,6 @@ void read_int32_batch(const FileReader& reader,
              "{} output range is invalid.", context);
     if (sample_indices.empty()) return;
 
-
     const Index required_size = (ssize(sample_indices) - 1) * output_stride
                               + output_offset + values_number;
 

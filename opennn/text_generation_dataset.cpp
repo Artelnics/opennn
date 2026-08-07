@@ -209,12 +209,11 @@ bool TextGenerationDataset::load_cache_metadata(const filesystem::path& metadata
     uint64_t vocabulary_size = 0;
 
     if (!file.read(magic.data(), magic.size())
-        || !read_binary_value(file, version)
-        || !read_binary_value(file, stored_sequence_length)
-        || !read_binary_value(file, samples_number)
-        || !read_binary_value(file, fingerprint)
-        || !read_binary_value(file, vocabulary_size)
-        || magic != TEXT_CACHE_MAGIC
+        || !read_binary_values(file, version, stored_sequence_length, samples_number,
+                               fingerprint, vocabulary_size))
+        return false;
+
+    if (magic != TEXT_CACHE_MAGIC
         || version != TEXT_CACHE_VERSION
         || stored_sequence_length != sequence_length
         || samples_number <= 0

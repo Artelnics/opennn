@@ -13,7 +13,6 @@
 
 using namespace opennn;
 
-
 Tensor4 generate_input_tensor_pooling(const MatrixR& data,
                                       const vector<Index>& row_indices,
                                       const vector<Index>& column_indices,
@@ -273,7 +272,6 @@ TEST(PoolingLayerTest, StridePaddingForwardValues)
     for (Index i = 0; i < 4; ++i)
         EXPECT_NEAR(average_data[i], expected_average[i], 1.0e-4f);
 }
-
 
 struct Pooling3dConfig {
     Shape input_shape;

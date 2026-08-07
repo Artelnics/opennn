@@ -3,18 +3,15 @@ from shutil import copy2
 
 from docx import Document
 
-
 BASE = Path(r"C:\Users\Roberto\OneDrive - artelnics.com\DIPCAN\subsanacion_tecnica")
 DOCX = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO.docx"
 BACKUP = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO_pre_recuento_radiomica.bak.docx"
-
 
 def paragraph_starting(doc, prefix):
     matches = [p for p in doc.paragraphs if p.text.startswith(prefix)]
     if len(matches) != 1:
         raise RuntimeError(f"Expected one paragraph starting with {prefix!r}; found {len(matches)}")
     return matches[0]
-
 
 def main():
     copy2(DOCX, BACKUP)
@@ -71,7 +68,6 @@ def main():
     doc.save(DOCX)
     print(DOCX)
     print(BACKUP)
-
 
 if __name__ == "__main__":
     main()

@@ -659,9 +659,6 @@ TEST(ChatSessionTest, ReusesCudaGraphAcrossFiveTurns)
 {
     if (!device::has_cuda_device()) GTEST_SKIP();
 
-
-
-
     set_seed(42);
 
     Configuration::instance().set(Device::CUDA, Type::BF16);

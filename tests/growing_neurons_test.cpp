@@ -8,12 +8,10 @@
 
 using namespace opennn;
 
-
 TEST(GrowingNeuronsTest, DefaultConstructor)
 {
     GrowingNeurons growing_neurons;
 }
-
 
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
@@ -21,7 +19,6 @@ TEST(GrowingNeuronsTest, GeneralConstructor)
 
     GrowingNeurons growing_neurons(&training_strategy);
 }
-
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
@@ -109,7 +106,6 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
     EXPECT_EQ(*results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumNeurons);
 }
 
-
 TEST(GrowingNeuronsTest, StopByTime)
 {
     MatrixR data(21, 2);
@@ -153,7 +149,6 @@ TEST(GrowingNeuronsTest, StopByTime)
     EXPECT_EQ(*results.stopping_condition, GrowingNeurons::StoppingCondition::MaximumTime);
 }
 
-
 TEST(GrowingNeuronsTest, OptimalNeuronsFound)
 {
 
@@ -184,7 +179,6 @@ TEST(GrowingNeuronsTest, OptimalNeuronsFound)
     EXPECT_LE(results.optimal_neurons_number, 5);
 }
 
-
 TEST(GrowingNeuronsTest, NeuronsIncrement)
 {
     MatrixR data(21, 2);
@@ -209,15 +203,11 @@ TEST(GrowingNeuronsTest, NeuronsIncrement)
 
     NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
-
     EXPECT_EQ(results.optimal_neurons_number % 2, 1);
 }
 
-
-
 TEST(GrowingNeuronsTest, CrossValidationKeepsPersistentRoles)
 {
-
 
     const Index samples = 40;
 
@@ -246,7 +236,6 @@ TEST(GrowingNeuronsTest, CrossValidationKeepsPersistentRoles)
     NeuronsSelectionResult results = growing_neurons.perform_neurons_selection();
 
     EXPECT_GE(results.optimal_neurons_number, 1);
-
 
     EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
 }

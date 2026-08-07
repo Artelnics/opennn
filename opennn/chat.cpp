@@ -183,7 +183,6 @@ Index sample_token(VectorR& probabilities,
         }
     }
 
-
     const float total = probabilities.sum();
     if (total <= 0.0f) return maximal_index(original);
 
@@ -743,8 +742,6 @@ struct ClassicGenerationState
     Index decoder_first = -1;
     Index output_projection = -1;
 
-
-
     vector<Index> retained_outputs;
 };
 
@@ -753,7 +750,6 @@ void prepare_classic_network(NeuralNetwork& network)
     throw_if(!network.is_gpu() || !device::is_cuda_build(),
              "ChatSession: classic text generation requires CUDA.");
     network.copy_parameters_device();
-
 
     network.release_bf16_fp32_parameter_master_for_inference();
     network.link_parameters();
@@ -843,8 +839,6 @@ make_sequence_to_sequence_state(Transformer& network)
                     != "decoder_self_attention_1"
              || layers.back()->get_label() != "output_projection",
              "ChatSession: unsupported Transformer decoder layout.");
-
-
 
     const auto& source_layers = network.get_source_layers();
     for (Index i = state->decoder_first; i <= state->output_projection; ++i)
@@ -1018,8 +1012,6 @@ struct ChatSession::Impl
 #ifdef OPENNN_HAS_CUDA
         if (gpu)
         {
-
-
 
             const Index warmup_tokens = prefill.get_sequence_capacity();
             fill_n(token_window.begin(), size_t(warmup_tokens), 0.0f);
@@ -1261,8 +1253,6 @@ void ChatSession::attach_draft_model(NeuralNetwork& draft_network, Index draft_t
     draft->proposals.reserve(size_t(draft_tokens));
 
     impl->draft = move(draft);
-
-
 
     const Index warmup_tokens =
         impl->draft->prefill.get_sequence_capacity();
@@ -1609,7 +1599,6 @@ ChatResponse ChatSession::send(
 
             {
 
-
                 proposals.clear();
                 for (Index i = draft_cache; i < cache_length; ++i)
                 {
@@ -1721,10 +1710,7 @@ void ChatSession::chat(const ChatOptions& options)
     while (true)
     {
         cout << "\n> " << flush;
-        if (!getline(cin, prompt)
-            || prompt.empty()
-            || prompt == "exit"
-            || prompt == "quit")
+        if (!getline(cin, prompt) || contains({"", "exit", "quit"}, prompt))
             break;
 
         bool reasoning_started = false;

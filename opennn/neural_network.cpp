@@ -103,15 +103,6 @@ void NeuralNetwork::compile(const Device device)
     wire_drelu_fusions();
 }
 
-
-
-
-
-
-
-
-
-
 void NeuralNetwork::wire_drelu_fusions()
 {
     for (auto& layer : layers)
@@ -180,11 +171,8 @@ bool NeuralNetwork::supports_compact_cnn_memory_layout() const noexcept
         [](const unique_ptr<Layer>& layer)
         {
             const LayerType type = layer->get_type();
-            return type == LayerType::Scaling
-                || type == LayerType::Convolutional
-                || type == LayerType::Pooling
-                || type == LayerType::Flatten
-                || type == LayerType::Dense;
+            return is_one_of(type, LayerType::Scaling, LayerType::Convolutional,
+                             LayerType::Pooling, LayerType::Flatten, LayerType::Dense);
         });
 }
 
@@ -715,9 +703,13 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     {
         NeuralNetwork* self = const_cast<NeuralNetwork*>(this);
 
-        if (parameters.device_type != Device::CUDA
-            || (config.training_type == Type::BF16 && !parameters.empty() && parameters_bf16_mirror.empty())
-            || (config.training_type == Type::INT8 && !parameters.empty() && parameters_int8_storage.empty()))
+        const bool needs_parameter_device_copy =
+            parameters.device_type != Device::CUDA
+            || (!parameters.empty()
+                && ((config.training_type == Type::BF16 && parameters_bf16_mirror.empty())
+                    || (config.training_type == Type::INT8 && parameters_int8_storage.empty())));
+
+        if (needs_parameter_device_copy)
             self->copy_parameters_device();
 
         self->copy_states_device();
@@ -735,8 +727,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             for (size_t layer_index = 0; layer_index < source_layers.size(); ++layer_index)
                 for (const Index source : source_layers[layer_index])
                     if (source == external_source
-                        && (layers[layer_index]->get_type() == LayerType::Embedding
-                            || layers[layer_index]->get_type() == LayerType::Tokenizer))
+                        && is_one_of(layers[layer_index]->get_type(),
+                                     LayerType::Embedding, LayerType::Tokenizer))
                         return true;
 
             return false;
@@ -1286,8 +1278,6 @@ NeuralNetwork::ParameterSlotTotals NeuralNetwork::for_each_parameter_slot(
 void NeuralNetwork::save_parameters_binary(const filesystem::path& file_name) const
 {
 
-
-
     throw_if(!parameters.owns,
              "NeuralNetwork::save_parameters_binary: the fp32 parameter master "
              "was released for quantized inference; reload the model before saving.");
@@ -1393,8 +1383,7 @@ void NeuralNetwork::load_parameters_bf16_inference_binary(
 #ifdef OPENNN_HAS_CUDA
     const bool direct_cuda =
         config.device == Device::CUDA
-        && (config.training_type == Type::BF16
-            || config.training_type == Type::INT8);
+        && is_one_of(config.training_type, Type::BF16, Type::INT8);
     if (config.device == Device::CUDA)
         throw_if(!direct_cuda,
                  "NeuralNetwork::load_parameters_bf16_inference_binary: "
@@ -1836,12 +1825,14 @@ void NeuralNetwork::cast_parameters_to_bf16()
 
 void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 {
-    if (config.training_type != Type::BF16
-        || parameters.device_type != Device::CUDA
-        || parameters.empty()
-        || parameters_bf16_mirror.empty()
-        || !parameters.owns)
-        return;
+    const bool can_release_parameter_master =
+        config.training_type == Type::BF16
+        && parameters.device_type == Device::CUDA
+        && !parameters.empty()
+        && !parameters_bf16_mirror.empty()
+        && parameters.owns;
+
+    if (!can_release_parameter_master) return;
 
     const auto specs = get_parameter_specs();
 
@@ -1902,12 +1893,14 @@ void NeuralNetwork::release_bf16_fp32_parameter_master_for_inference()
 void NeuralNetwork::upload_parameters_bf16_inference()
 {
 #ifdef OPENNN_HAS_CUDA
-    if (config.device != Device::CUDA
-        || (config.training_type != Type::BF16
-            && config.training_type != Type::INT8)
-        || parameters.empty()
-        || parameters.device_type != Device::CPU
-        || !parameters.owns)
+    const bool can_upload_low_precision_parameters =
+        config.device == Device::CUDA
+        && is_one_of(config.training_type, Type::BF16, Type::INT8)
+        && !parameters.empty()
+        && parameters.device_type == Device::CPU
+        && parameters.owns;
+
+    if (!can_upload_low_precision_parameters)
     {
         copy_parameters_device();
         return;
@@ -2018,12 +2011,13 @@ void NeuralNetwork::activate_transposed_inference_weights()
         device::synchronize(stream);
     };
 
+    const bool int8_training = get_training_type() == Type::INT8;
+
     for (const auto& layer : layers)
     {
+        const bool has_tied_weight = bool(layer->get_tied_weight().source);
 
-
-
-        if (get_training_type() == Type::INT8 && !layer->get_tied_weight().source)
+        if (int8_training && !has_tied_weight)
             for (Operator* op : layer->get_operators())
             {
                 auto* combination = dynamic_cast<CombinationOperator*>(op);
@@ -2041,10 +2035,11 @@ void NeuralNetwork::activate_transposed_inference_weights()
                 combination->transposed_inference_active = true;
             }
 
+        if (has_tied_weight) continue;
+
         auto* dense = dynamic_cast<Dense*>(layer.get());
         if (!dense || !dense->get_transposed_inference()
-            || dense->get_gated() || dense->get_use_bias()
-            || layer->get_tied_weight().source) continue;
+            || dense->get_gated() || dense->get_use_bias()) continue;
 
         const TensorView& weight = layer->get_parameter_views().back();
         if (!weight.is_cuda() || weight.get_rank() != 2 || weight.is_int8()) continue;
@@ -2231,10 +2226,6 @@ TensorView NeuralNetwork::calculate_outputs_resident(const vector<TensorView>& g
                     "unavailable (" << capture_error.what() << "); continuing eager.\n";
         }
     }
-
-
-
-
 
     if (forward_propagation.inference_graph_exec)
         release_matmul_thread_workspaces();

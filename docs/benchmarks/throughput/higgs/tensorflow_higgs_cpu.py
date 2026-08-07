@@ -16,22 +16,18 @@ import numpy as np
 
 from metrics import binary_metrics
 
-
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
 
-
 def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
 
-
 def run_tensorflow(args: argparse.Namespace) -> None:
-
 
     if args.threads:
         os.environ.setdefault("OMP_NUM_THREADS", str(args.threads))
@@ -132,7 +128,6 @@ def run_tensorflow(args: argparse.Namespace) -> None:
     print(f"samples_per_sec={processed / median_pass_s:.0f}")
     print("RESULT=OK")
 
-
 def print_common(engine: str, args: argparse.Namespace, samples: int) -> None:
     print(f"engine={engine}")
     print(f"mode={args.mode}")
@@ -146,7 +141,6 @@ def print_common(engine: str, args: argparse.Namespace, samples: int) -> None:
         print(f"epochs={args.epochs}")
     else:
         print(f"reps={args.reps}")
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -166,11 +160,9 @@ def parse_args() -> argparse.Namespace:
         parser.error("--train is required in train mode")
     return args
 
-
 def main() -> None:
     args = parse_args()
     run_tensorflow(args)
-
 
 if __name__ == "__main__":
     try:

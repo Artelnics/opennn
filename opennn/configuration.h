@@ -16,12 +16,9 @@ namespace opennn
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16, INT8 };
 
-
-
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
 inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
-
 
 inline Type activation_dtype(Type type) { return type == Type::INT8 ? Type::BF16 : type; }
 

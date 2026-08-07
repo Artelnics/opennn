@@ -35,7 +35,6 @@ if DEV == "cpu" and not ALLOW_CPU:
 PHASE = "GPU" if DEV == "cuda" else "CPU"
 SEEDS = [0, 1, 2, 3, 4]
 
-
 class Net(nn.Module):
     def __init__(self, kind, n_feat, hidden, out):
         super().__init__()
@@ -48,7 +47,6 @@ class Net(nn.Module):
     def forward(self, x):
         out, _ = self.rnn(x)
         return self.head(out[:, -1, :])
-
 
 def train_eval_once(kind, sc, data, seed):
     sid, past, future, hidden, lr, batch, max_ep, patience, multi = sc
@@ -111,7 +109,6 @@ def train_eval_once(kind, sc, data, seed):
         "n": n,
     }
 
-
 def run(kind, sc, data):
     sid = sc[0]
     rmses, times, epochs_l, spss = [], [], [], []
@@ -136,7 +133,6 @@ def run(kind, sc, data):
           f"train_windows={n} device={DEV}")
     sys.stdout.flush()
 
-
 def main():
     want = [a for a in sys.argv[1:] if a != "--allow-cpu"] or [s[0] for s in SCENARIOS]
     for sc in SCENARIOS:
@@ -145,7 +141,6 @@ def main():
         data = make_windows(sc[1], sc[2], sc[8])
         for kind in ("Recurrent", "LSTM"):
             run(kind, sc, data)
-
 
 if __name__ == "__main__":
     main()

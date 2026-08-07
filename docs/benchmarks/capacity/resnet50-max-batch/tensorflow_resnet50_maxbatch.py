@@ -12,20 +12,14 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 import numpy as np
 import tensorflow as tf
 
-
 def configure_gpu(memory_limit_mb):
     gpus = tf.config.list_physical_devices("GPU")
     assert gpus, "CUDA GPU required"
 
-
-
-
     tf.config.experimental.set_memory_growth(gpus[0], True)
     return gpus[0].name
 
-
 K = tf.keras.layers
-
 
 def bottleneck(x, mid, stride):
     out = mid * 4
@@ -41,7 +35,6 @@ def bottleneck(x, mid, stride):
     y = K.BatchNormalization()(y)
     return K.ReLU()(y + shortcut)
 
-
 def build_resnet50(classes):
     inp = K.Input(shape=(32, 32, 3))
     x = K.Conv2D(64, 7, strides=2, padding="same", use_bias=False)(inp)
@@ -54,7 +47,6 @@ def build_resnet50(classes):
     x = K.GlobalAveragePooling2D()(x)
     out = K.Dense(classes, dtype="float32")(x)
     return tf.keras.Model(inp, out)
-
 
 def make_batch(data_dir, batch):
     images = np.load(os.path.join(data_dir, "cifar_images.npy"), mmap_mode="r")
@@ -74,12 +66,10 @@ def make_batch(data_dir, batch):
     yb = np.asarray(labels[idx], dtype=np.int64)
     return xb, yb, classes
 
-
 def default_data():
     root = os.environ.get("OPENNN_BENCH_DATA",
                           os.path.expanduser("~/opennn-benchmark-data"))
     return os.path.join(root, "cifar10")
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -157,7 +147,6 @@ def main():
         print(f"samples_per_sec={args.batch * len(loss_history) / wall_s:.9g}")
     print("RESULT=OK")
     return 0
-
 
 if __name__ == "__main__":
     try:

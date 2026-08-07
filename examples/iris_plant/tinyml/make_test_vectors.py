@@ -9,7 +9,6 @@ Usage: make_test_vectors.py <reference.csv> <test_vectors.h> <n_inputs> <n_outpu
 
 import sys
 
-
 def main() -> None:
     if len(sys.argv) != 5:
         sys.exit(__doc__)
@@ -49,7 +48,6 @@ def main() -> None:
         header.write("};\n")
 
     print(f"Wrote {header_path}: {len(rows)} vectors, {n_inputs} inputs, {n_outputs} outputs")
-
 
 if __name__ == "__main__":
     main()

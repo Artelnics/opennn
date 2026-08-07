@@ -18,8 +18,6 @@
 
 set -e
 
-
-
 TINYML_DIR="${TINYML_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 BUILD="${BUILD:-$HOME/opennn-build}"
 RUN_DIR="$BUILD/bin"
@@ -27,7 +25,6 @@ WORK="${WORK:-$HOME/tinyml-iris}"
 
 N_INPUTS=4
 N_OUTPUTS=3
-
 
 . <(tr -d '\r' < "$TINYML_DIR/tinyml_common.sh")
 discover_tinyml_toolchains
@@ -44,7 +41,6 @@ fi
 
 echo "=== 2. Generate test vectors header ==="
 python3 "$TINYML_DIR/make_test_vectors.py" "$WORK/iris_reference.csv" "$WORK/test_vectors.h" $N_INPUTS $N_OUTPUTS
-
 
 FAILED=0
 for VARIANT in expression tables; do

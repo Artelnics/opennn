@@ -147,11 +147,6 @@ void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
 TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
 {
 
-
-
-
-
-
     YoloLossFixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
@@ -161,8 +156,6 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     YoloDataset dataset;
     dataset.set_display(false);
     dataset.set(f.images_dir, f.labels_dir, Shape{f.H, f.W, 3}, f.grid, f.B, f.anchors);
-
-
 
     YoloDataset::AugmentationConfig no_aug;
     no_aug.enabled = false;
@@ -183,10 +176,6 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
 
 TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
 {
-
-
-
-
 
     YoloLossFixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -211,8 +200,6 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
 
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
-
-
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
@@ -260,8 +247,6 @@ void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
 TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
 {
 
-
-
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
@@ -293,9 +278,6 @@ TEST(YoloLoss, V8NoObjectGradientMatchesNumericalGradient)
 TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
 {
 
-
-
-
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
     write_bmp_24(f.images_dir / "b.bmp", f.W, f.H,  50, 200, 100);
@@ -326,9 +308,6 @@ TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
 
 TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
 {
-
-
-
 
     YoloLossV8Fixture f;
     write_bmp_24(f.images_dir / "a.bmp", f.W, f.H, 200, 100, 50);
@@ -381,8 +360,6 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
 
-
-
 TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
 {
     YoloLossV8Fixture f;
@@ -412,8 +389,6 @@ TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
 }
-
-
 
 TEST(YoloLoss, V8DFLGradientMatchesNumerical)
 {

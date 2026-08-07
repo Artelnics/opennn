@@ -267,7 +267,6 @@ void Detection::write_JSON_body(JsonWriter& writer) const
     add_json_field(writer, "ClassActivation", class_activation_map().to_string(detection.class_activation));
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

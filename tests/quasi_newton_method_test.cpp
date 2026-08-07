@@ -49,7 +49,6 @@ TEST_F(QuasiNewtonMethodTest, DefaultConstructor)
     EXPECT_EQ(quasi_newton_method.get_loss() == nullptr, true);
 }
 
-
 TEST_F(QuasiNewtonMethodTest, GeneralConstructor)
 {
     Loss loss;
@@ -57,7 +56,6 @@ TEST_F(QuasiNewtonMethodTest, GeneralConstructor)
 
     EXPECT_TRUE(quasi_newton_method.get_loss() != nullptr);
 }
-
 
 TEST_F(QuasiNewtonMethodTest, BFGS_Update)
 {
@@ -89,7 +87,6 @@ TEST_F(QuasiNewtonMethodTest, BFGS_Update)
         EXPECT_FALSE(isnan(numerical_inverse_hessian(i)));
 }
 
-
 TEST_F(QuasiNewtonMethodTest, TrainApproximationCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -120,7 +117,6 @@ TEST_F(QuasiNewtonMethodTest, TrainApproximationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 TEST_F(QuasiNewtonMethodTest, TrainClassificationCPU)
 {
@@ -155,7 +151,6 @@ TEST_F(QuasiNewtonMethodTest, TrainClassificationCPU)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(QuasiNewtonMethodTest, MinimumLossDecreaseConverges)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -179,7 +174,6 @@ TEST_F(QuasiNewtonMethodTest, MinimumLossDecreaseConverges)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(QuasiNewtonMethodTest, StoppingMaximumEpochs)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -201,7 +195,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingMaximumEpochs)
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
-
 
 TEST_F(QuasiNewtonMethodTest, StoppingLossGoal)
 {
@@ -228,7 +221,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingLossGoal)
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-
 TEST_F(QuasiNewtonMethodTest, StoppingMaximumTime)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -253,7 +245,6 @@ TEST_F(QuasiNewtonMethodTest, StoppingMaximumTime)
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
-
 
 TEST_F(QuasiNewtonMethodTest, Determinism)
 {

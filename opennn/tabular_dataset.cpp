@@ -240,25 +240,16 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
         throw_if(row < 0 || row >= rows_number,
                  "Binary data row index is out of range.");
 
+    thread_local vector<float> row_buffer;
+    if (!contiguous) row_buffer.resize(size_t(columns_number));
+
     for (Index i = 0; i < ssize(sample_indices); ++i)
     {
         const Index row = sample_indices[size_t(i)];
         float* const dst = output + i * features_number;
 
-        if (contiguous)
+        if (!contiguous)
         {
-            const uint64_t offset =
-                (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
-            cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
-
-            for (Index j = 0; j < features_number; ++j)
-                if (isnan(dst[j])) dst[j] = cache_feature_replacement[size_t(first_column + j)];
-        }
-        else
-        {
-            thread_local vector<float> row_buffer;
-            row_buffer.resize(size_t(columns_number));
-
             const uint64_t offset = uint64_t(row) * uint64_t(columns_number) * sizeof(float);
             cache_reader.read_at(row_buffer.data(), size_t(columns_number) * sizeof(float), offset);
 
@@ -268,7 +259,15 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
                 const float value = row_buffer[size_t(column)];
                 dst[j] = isnan(value) ? cache_feature_replacement[size_t(column)] : value;
             }
+            continue;
         }
+
+        const uint64_t offset =
+            (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
+        cache_reader.read_at(dst, size_t(features_number) * sizeof(float), offset);
+
+        for (Index j = 0; j < features_number; ++j)
+            if (isnan(dst[j])) dst[j] = cache_feature_replacement[size_t(first_column + j)];
     }
 
     if (cache_feature_transforms.empty()) return;
@@ -415,7 +414,7 @@ void TabularDataset::infer_variable_types_from_data()
                 variable.categories = { "0", "1" };
             }
         }
-        else if ((variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
+        else if (is_one_of(variable.type, VariableType::Binary, VariableType::Categorical)
               && variable.get_categories_number() == 1)
             variable.set(variable.name, "None", VariableType::Constant);
 
@@ -577,10 +576,6 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
     return unused_variables;
 }
 
-
-
-
-
 vector<string> TabularDataset::unuse_collinear_variables(const float maximum_correlation)
 {
     const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
@@ -599,13 +594,12 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
             if (i == j) continue;
 
             const float abs_r = abs(correlations(i, j).coefficient);
-            if (!isnan(abs_r))
-            {
-                if (abs_r >= maximum_correlation)
-                    high_corr_counts[i]++;
+            if (isnan(abs_r)) continue;
 
-                sum_of_abs_corr += abs_r;
-            }
+            if (abs_r >= maximum_correlation)
+                high_corr_counts[i]++;
+
+            sum_of_abs_corr += abs_r;
         }
 
         if (input_variables_number > 1)
@@ -622,15 +616,13 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
 
             const float r = correlations(i, j).coefficient;
 
-            if (!isnan(r) && abs(r) >= maximum_correlation)
-            {
-                const Index index_to_flag_for_removal =
-                    (high_corr_counts[i] > high_corr_counts[j]) ? i :
-                        (high_corr_counts[j] > high_corr_counts[i]) ? j :
-                        (mean_abs_corr[i] >= mean_abs_corr[j]) ? i : j;
+            if (isnan(r) || !(abs(r) >= maximum_correlation)) continue;
 
-                to_be_removed[index_to_flag_for_removal] = true;
-            }
+            const Index index_to_remove =
+                tie(high_corr_counts[i], mean_abs_corr[i])
+                    >= tie(high_corr_counts[j], mean_abs_corr[j]) ? i : j;
+
+            to_be_removed[index_to_remove] = true;
         }
     }
 
@@ -641,11 +633,10 @@ vector<string> TabularDataset::unuse_collinear_variables(const float maximum_cor
 
         Variable& variable = variables[input_variable_indices[i]];
 
-        if (variable.role != VariableRole::None)
-        {
-            variable.set_role("None");
-            unused_variables.push_back(variable.name);
-        }
+        if (variable.role == VariableRole::None) continue;
+
+        variable.set_role("None");
+        unused_variables.push_back(variable.name);
     }
 
     return unused_variables;
@@ -757,7 +748,7 @@ vector<BoxPlot> TabularDataset::calculate_variables_box_plots() const
     {
         const Variable& variable = variables[i];
 
-        if ((variable.type == VariableType::Numeric || variable.type == VariableType::Binary || variable.type == VariableType::Integer)
+        if (is_one_of(variable.type, VariableType::Numeric, VariableType::Binary, VariableType::Integer)
             && variable.role != VariableRole::None)
             box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
 
@@ -977,23 +968,32 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
 
     case MinimumMaximum:
         if (unscale)
+        {
             column.array() = (column.array() - min_range) / (max_range - min_range)
                            * (desc.maximum - desc.minimum) + desc.minimum;
-        else if (desc.maximum - desc.minimum < EPSILON)
+            break;
+        }
+
+        if (desc.maximum - desc.minimum < EPSILON)
             column.setZero();
         else
             column.array() = scale_minimum_maximum_formula(column.array(), desc, min_range, max_range);
         break;
 
     case MeanStandardDeviation:
-        if (unscale && desc.standard_deviation < EPSILON)
+        if (!unscale)
+        {
+            if (desc.standard_deviation > EPSILON)
+                column.array() = scale_mean_standard_deviation_formula(column.array(), desc);
+            else
+                column.setZero();
+            break;
+        }
+
+        if (desc.standard_deviation < EPSILON)
             column.setConstant(desc.mean);
-        else if (unscale)
-            column.array() = desc.mean + column.array() * desc.standard_deviation;
-        else if (desc.standard_deviation > EPSILON)
-            column.array() = scale_mean_standard_deviation_formula(column.array(), desc);
         else
-            column.setZero();
+            column.array() = desc.mean + column.array() * desc.standard_deviation;
         break;
 
     case StandardDeviation:
@@ -1003,8 +1003,12 @@ void TabularDataset::apply_scaler(Index feature_index, const string& scaler, con
         break;
 
     case Logarithm:
-        if (unscale) column.array() = column.array().exp();
-        else         column.array() = column.array().max(EPSILON).log();
+        if (unscale)
+        {
+            column.array() = column.array().exp();
+            break;
+        }
+        column.array() = column.array().max(EPSILON).log();
         break;
 
     case ImageMinMax:
@@ -1218,7 +1222,8 @@ vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float clean
             continue;
         }
 
-        if (variable.is_categorical() || variable.is_binary() || variable.type == VariableType::DateTime)
+        if (is_one_of(variable.type, VariableType::Categorical, VariableType::Binary,
+                      VariableType::DateTime))
         {
             feature_index += variable.get_feature_count();
             ++used_feature_index;
@@ -1811,7 +1816,7 @@ void TabularDataset::read_csv()
                 variable.categories = { "0", "1" };
             }
         }
-        else if ((variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
+        else if (is_one_of(variable.type, VariableType::Binary, VariableType::Categorical)
               && variable.get_categories_number() == 1)
             variable.set(variable.name, "None", VariableType::Constant);
     }
@@ -2120,25 +2125,29 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
 
             ++checked_tokens;
 
-            if (is_numeric_string(token))
+            const bool numeric = is_numeric_string(token);
+            if (numeric)
                 ++numeric_tokens;
             else if (first_unparseable.empty())
                 first_unparseable = string(token);
 
             if (variable.is_categorical()) continue;
 
-            if (is_numeric_string(token))
+            if (numeric)
             {
                 if (variable.type == VariableType::None)
                     variable.type = VariableType::Numeric;
+                continue;
             }
-            else if (is_date_time_string(token))
+
+            if (is_date_time_string(token))
             {
                 if (variable.type == VariableType::None)
                     variable.type = VariableType::DateTime;
+                continue;
             }
-            else
-                variable.type = VariableType::Categorical;
+
+            variable.type = VariableType::Categorical;
         }
 
         if (variable.type == VariableType::None)
@@ -2185,10 +2194,9 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
                                                     has_sample_ids, missing_values_label, has_quotes);
     }
 
-    const bool any_categorical = ranges::any_of(variables,
-        [](const Variable& v) { return v.is_categorical(); });
-
-    if (!any_categorical) return date_format;
+    if (ranges::none_of(variables,
+        [](const Variable& variable) { return variable.is_categorical(); }))
+        return date_format;
 
     vector<unordered_set<string>> unique_categories(variables_number);
     const Index n_lines = ssize(sample_lines);
@@ -2206,9 +2214,13 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
             for (Index col_index = 0; col_index < variables_number; ++col_index)
             {
                 if (!variables[col_index].is_categorical()) continue;
+
                 const size_t token_index = col_index + id_offset;
-                if (token_index < cat_tokens.size() && !is_missing_token(cat_tokens[token_index], missing_values_label))
-                    local[col_index].emplace(cat_tokens[token_index]);
+                if (token_index >= cat_tokens.size()
+                    || is_missing_token(cat_tokens[token_index], missing_values_label))
+                    continue;
+
+                local[col_index].emplace(cat_tokens[token_index]);
             }
         }
 
@@ -2218,13 +2230,14 @@ DateFormat TabularDataset::infer_column_types(const vector<string_view>& sample_
     }
 
     for (Index col_index = 0; col_index < variables_number; ++col_index)
-        if (variables[col_index].is_categorical())
-        {
-            auto& categories = variables[col_index].categories;
-            categories.assign(unique_categories[col_index].begin(),
-                              unique_categories[col_index].end());
-            ranges::sort(categories);
-        }
+    {
+        if (!variables[col_index].is_categorical()) continue;
+
+        auto& categories = variables[col_index].categories;
+        categories.assign(unique_categories[col_index].begin(),
+                          unique_categories[col_index].end());
+        ranges::sort(categories);
+    }
 
     return date_format;
 }
@@ -2264,7 +2277,7 @@ void TabularDataset::set_variable_scalers(const vector<string>& new_scalers)
 void TabularDataset::set_default_variable_scalers()
 {
     for (Variable& variable : variables)
-        variable.scaler = (variable.type == VariableType::Numeric || variable.type == VariableType::Integer)
+        variable.scaler = is_one_of(variable.type, VariableType::Numeric, VariableType::Integer)
                                   ? ScalerMethod::MeanStandardDeviation
                                   : ScalerMethod::MinimumMaximum;
 }

@@ -21,7 +21,6 @@ protected:
     const Shape input_shape{ height, width, channels };
 };
 
-
 TEST_F(UpsampleOperatoreratorTest, Constructor)
 {
     Upsample upsample_layer(input_shape, scale_factor);
@@ -31,7 +30,6 @@ TEST_F(UpsampleOperatoreratorTest, Constructor)
     EXPECT_EQ(upsample_layer.get_output_shape(),
               Shape({ height * scale_factor, width * scale_factor, channels }));
 }
-
 
 TEST_F(UpsampleOperatoreratorTest, OutputShapeDependsOnScaleFactor)
 {
@@ -44,7 +42,6 @@ TEST_F(UpsampleOperatoreratorTest, OutputShapeDependsOnScaleFactor)
     EXPECT_EQ(upsample_layer.get_output_shape(), input_shape);
 }
 
-
 TEST_F(UpsampleOperatoreratorTest, EmptyInputShapeGivesEmptyOutputShape)
 {
     Upsample upsample_layer;
@@ -52,7 +49,6 @@ TEST_F(UpsampleOperatoreratorTest, EmptyInputShapeGivesEmptyOutputShape)
     EXPECT_TRUE(upsample_layer.get_input_shape().empty());
     EXPECT_TRUE(upsample_layer.get_output_shape().empty());
 }
-
 
 TEST_F(UpsampleOperatoreratorTest, ForwardOutputShape)
 {
@@ -79,7 +75,6 @@ TEST_F(UpsampleOperatoreratorTest, ForwardOutputShape)
     EXPECT_EQ(output_view.shape[3], channels);
 }
 
-
 TEST_F(UpsampleOperatoreratorTest, ForwardConstantReplication)
 {
     const Index batch_size = 1;
@@ -101,7 +96,6 @@ TEST_F(UpsampleOperatoreratorTest, ForwardConstantReplication)
     for (Index i = 0; i < output_view.size(); ++i)
         EXPECT_NEAR(output_view.as<type>()[i], 2.5f, 1e-6f);
 }
-
 
 TEST_F(UpsampleOperatoreratorTest, ForwardPixelReplication)
 {
@@ -140,7 +134,6 @@ TEST_F(UpsampleOperatoreratorTest, ForwardPixelReplication)
             }
 }
 
-
 TEST_F(UpsampleOperatoreratorTest, ForwardBatchIndependence)
 {
     const Index batch_size = 2;
@@ -178,7 +171,6 @@ TEST_F(UpsampleOperatoreratorTest, ForwardBatchIndependence)
     EXPECT_NEAR(second_sum, 7.0f * scale_factor * width * scale_factor * channels, 1e-4f);
 }
 
-
 TEST_F(UpsampleOperatoreratorTest, ScaleFactorOneIsIdentity)
 {
     const Index batch_size = 1;
@@ -209,7 +201,6 @@ TEST_F(UpsampleOperatoreratorTest, ScaleFactorOneIsIdentity)
     for (Index i = 0; i < output_view.size(); ++i)
         EXPECT_NEAR(dst[i], src[i], 1e-6f);
 }
-
 
 TEST_F(UpsampleOperatoreratorTest, BackPropagateDeltaAccumulation)
 {

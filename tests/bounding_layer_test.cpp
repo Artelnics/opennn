@@ -15,7 +15,6 @@ TEST(BoundingTest, Constructor)
     EXPECT_EQ(bounding_layer.get_output_shape(), Shape{0});
 }
 
-
 TEST(BoundingTest, GeneralConstructor)
 {
     const Index features = 4;
@@ -28,7 +27,6 @@ TEST(BoundingTest, GeneralConstructor)
     EXPECT_EQ(bounding_layer.get_output_shape(), Shape{features});
     EXPECT_EQ(bounding_layer.get_bounding_method(), Bounding::BoundingMethod::Bounding);
 }
-
 
 TEST(BoundingTest, ForwardPropagate)
 {
@@ -71,7 +69,6 @@ TEST(BoundingTest, ForwardPropagate)
 
     EXPECT_EQ(layer->get_output_shape(), Shape{ columns_number });
 }
-
 
 TEST(BoundingTest, NoBoundingModePassThrough)
 {

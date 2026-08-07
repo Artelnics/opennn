@@ -28,7 +28,6 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 UCI_PAGE = "https://archive.ics.uci.edu/dataset/280/higgs"
 UCI_ZIP_URL = "https://archive.ics.uci.edu/static/public/280/higgs.zip"
 LEGACY_GZ_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz"
@@ -39,7 +38,6 @@ DEFAULT_BENCH_DATA = Path(
     os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data"))
 )
 DEFAULT_OUT = DEFAULT_BENCH_DATA / "higgs"
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -80,12 +78,10 @@ def parse_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
-
 def open_higgs(path: Path):
     if path.suffix == ".gz":
         return gzip.open(path, "rt", newline="")
     return open(path, "rt", newline="")
-
 
 def download_raw(out_dir: Path) -> Path:
     raw_dir = out_dir / "raw"
@@ -110,7 +106,6 @@ def download_raw(out_dir: Path) -> Path:
 
     return gz_path
 
-
 def read_features_and_label(row: list[str], line_number: int) -> tuple[list[float], float]:
     if len(row) != FEATURES + 1:
         raise ValueError(
@@ -119,7 +114,6 @@ def read_features_and_label(row: list[str], line_number: int) -> tuple[list[floa
     label = float(row[0])
     features = [float(value) for value in row[1:]]
     return features, label
-
 
 def training_stats(raw_path: Path, train_rows: int) -> tuple[list[float], list[float]]:
     sums = [0.0] * FEATURES
@@ -148,10 +142,8 @@ def training_stats(raw_path: Path, train_rows: int) -> tuple[list[float], list[f
         stds.append(std if std > 1.0e-12 else 1.0)
     return means, stds
 
-
 def transform(features: list[float], means: list[float], stds: list[float]) -> list[float]:
     return [(value - means[i]) / stds[i] for i, value in enumerate(features)]
-
 
 def write_split(
     raw_path: Path,
@@ -216,7 +208,6 @@ def write_split(
         "normalized": normalize,
     }
 
-
 def main() -> int:
     args = parse_args()
     raw_path = args.raw
@@ -262,7 +253,6 @@ def main() -> int:
 
     print(f"wrote {metadata_path}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

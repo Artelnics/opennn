@@ -31,7 +31,6 @@ RESULTS_DIR = HERE.parent.parent / "results"
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 IMAGE_EXTENSIONS = {".bmp", ".png", ".jpg", ".jpeg"}
 
-
 def env_gpu_index():
     value = os.environ.get("BENCH_GPU_INDEX")
     if value is None or value == "":
@@ -40,7 +39,6 @@ def env_gpu_index():
         return int(value)
     except ValueError:
         return None
-
 
 def default_opennn_bin():
     env_bin = os.environ.get("OPENNN_RESNET_BIN")
@@ -59,7 +57,6 @@ def default_opennn_bin():
             return str(candidate)
     return str(candidates[0])
 
-
 def command_output(command):
     try:
         out = subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL)
@@ -67,14 +64,11 @@ def command_output(command):
     except Exception:
         return None
 
-
 def git_commit():
     return command_output(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"]) or "unknown"
 
-
 def versions():
     return versions_for_gpu(None)
-
 
 def versions_for_gpu(gpu_index):
     gpu_command = [
@@ -97,11 +91,9 @@ def versions_for_gpu(gpu_index):
         pass
     return data
 
-
 def train_dir_for(data_path):
     path = Path(data_path).expanduser()
     return path / "train" if (path / "train").is_dir() else path
-
 
 def validate_imagenet_tree(data_path):
     train_dir = train_dir_for(data_path)
@@ -126,7 +118,6 @@ def validate_imagenet_tree(data_path):
 
     return train_dir, len(classes)
 
-
 def parse_scalar(raw, name, cast=float):
     match = re.search(rf"(?:^|\s){re.escape(name)}=([0-9.]+)", raw, re.MULTILINE)
     if not match:
@@ -136,10 +127,8 @@ def parse_scalar(raw, name, cast=float):
     except ValueError:
         return None
 
-
 def quote_command(cmd):
     return " ".join(shlex.quote(str(part)) for part in cmd)
-
 
 def current_gpu_memory_mib(gpu_index):
     command = [
@@ -158,7 +147,6 @@ def current_gpu_memory_mib(gpu_index):
     except ValueError:
         return None
 
-
 def gpu_compute_processes(gpu_index):
     command = [
         "nvidia-smi",
@@ -170,14 +158,12 @@ def gpu_compute_processes(gpu_index):
     raw = command_output(command)
     return raw or ""
 
-
 def monitor_gpu(stop_event, samples, interval_s, gpu_index):
     while not stop_event.is_set():
         value = current_gpu_memory_mib(gpu_index)
         if value is not None:
             samples.append(value)
         stop_event.wait(interval_s)
-
 
 def run_process(cmd, env_overrides, timeout_s, poll_s, gpu_index):
     env = dict(os.environ)
@@ -211,7 +197,6 @@ def run_process(cmd, env_overrides, timeout_s, poll_s, gpu_index):
         "raw_output": raw,
     }
 
-
 def engine_command(engine, train_dir, data_arg, epochs, batch, precision, workers,
                    image_size, opennn_bin, cuda_graph, gpu_index, opennn_cache_dir):
     env = {}
@@ -220,11 +205,8 @@ def engine_command(engine, train_dir, data_arg, epochs, batch, precision, worker
 
     if engine == "opennn":
 
-
-
         cmd = [opennn_bin, str(train_dir), str(epochs), str(batch), precision,
                str(image_size), "1" if cuda_graph else "0"]
-
 
         if opennn_cache_dir:
             cmd.append(str(opennn_cache_dir))
@@ -248,7 +230,6 @@ def engine_command(engine, train_dir, data_arg, epochs, batch, precision, worker
         raise ValueError(engine)
     return cmd, env
 
-
 def summarize_runs(runs):
     ok = [r for r in runs if r.get("samples_per_sec") is not None]
     summary = {
@@ -271,7 +252,6 @@ def summarize_runs(runs):
         tail = runs[-1]["raw_output"][-1200:] if runs else ""
         summary["error_tail"] = tail
     return summary
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -387,7 +367,6 @@ def main():
             json.dump(result, handle, indent=2)
             handle.write("\n")
         print(f"\nwrote {output}")
-
 
 if __name__ == "__main__":
     main()

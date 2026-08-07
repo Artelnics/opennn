@@ -232,7 +232,6 @@ void StochasticGradientDescent::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

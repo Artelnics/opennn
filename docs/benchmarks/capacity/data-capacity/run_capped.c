@@ -42,7 +42,6 @@ int wmain(int argc, wchar_t** argv)
         return 1;
     }
 
-
     wchar_t cmdline[32768];
     cmdline[0] = L'\0';
     for (int i = 2; i < argc; i++)
@@ -64,7 +63,6 @@ int wmain(int argc, wchar_t** argv)
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
     memset(&pi, 0, sizeof(pi));
-
 
     if (!CreateProcessW(NULL, cmdline, NULL, NULL, TRUE,
                         CREATE_SUSPENDED, NULL, NULL, &si, &pi))

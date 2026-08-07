@@ -21,7 +21,6 @@ void fill_logits(Tensor3& logits)
 
 }
 
-
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
     NeuralNetwork neural_network;
@@ -33,7 +32,6 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
     EXPECT_TRUE(loss.get_neural_network() != nullptr);
     EXPECT_TRUE(loss.get_dataset() != nullptr);
 }
-
 
 TEST(CrossEntropyError3DTest, ForwardIgnoresPaddingAndCountsTokens)
 {
@@ -66,7 +64,6 @@ TEST(CrossEntropyError3DTest, ForwardIgnoresPaddingAndCountsTokens)
     const float accuracy = float(correct_tokens) / float(active_tokens);
     EXPECT_NEAR(accuracy, 0.5f, 1.0e-6f);
 }
-
 
 TEST(CrossEntropyError3DTest, GradientMatchesFormulaAndZerosPadding)
 {
@@ -104,7 +101,6 @@ TEST(CrossEntropyError3DTest, GradientMatchesFormulaAndZerosPadding)
     EXPECT_NEAR(gradients(0, 2, 2), type(0.10),  1.0e-5);
     EXPECT_NEAR(gradients(0, 2, 3), type(0.30),  1.0e-5);
 }
-
 
 TEST(CrossEntropyError3DTest, AllPaddingGivesZeroLossAndGradient)
 {

@@ -15,7 +15,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -43,7 +42,6 @@ class Bottleneck(nn.Module):
         y = self.bn3(self.conv3(y))
         return self.relu(y + identity)
 
-
 class ResNet50(nn.Module):
     def __init__(self, classes=10):
         super().__init__()
@@ -69,7 +67,6 @@ class ResNet50(nn.Module):
         x = torch.flatten(self.avgpool(x), 1)
         return self.fc(x)
 
-
 def make_batch(data_dir, batch):
     images = np.load(os.path.join(data_dir, "cifar_images.npy"), mmap_mode="r")
     labels = np.load(os.path.join(data_dir, "cifar_labels.npy"), mmap_mode="r")
@@ -88,12 +85,10 @@ def make_batch(data_dir, batch):
     yb = np.asarray(labels[idx], dtype=np.int64)
     return xb, yb, classes
 
-
 def default_data():
     root = os.environ.get("OPENNN_BENCH_DATA",
                           os.path.expanduser("~/opennn-benchmark-data"))
     return os.path.join(root, "cifar10")
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -102,7 +97,6 @@ def main():
     ap.add_argument("--path", choices=["compile", "eager"], default="compile")
     ap.add_argument("--precision", choices=["fp32", "bf16"], default="fp32")
     ap.add_argument("--memory-fraction", type=float, default=None)
-
 
     ap.add_argument("--cudnn-benchmark", type=int, default=0)
     ap.add_argument("--target", type=float, default=None,
@@ -183,7 +177,6 @@ def main():
         print(f"samples_per_sec={args.batch * len(loss_history) / wall_s:.9g}")
     print("RESULT=OK")
     return 0
-
 
 if __name__ == "__main__":
     try:

@@ -19,10 +19,8 @@ from pathlib import Path
 
 ALPACA_URL = "https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json"
 
-
 def data_root() -> Path:
     return Path(os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data")))
-
 
 def load_alpaca(raw: str | None) -> list[dict]:
     if raw:
@@ -30,7 +28,6 @@ def load_alpaca(raw: str | None) -> list[dict]:
     print(f"Downloading Stanford Alpaca from {ALPACA_URL} ...", file=sys.stderr)
     with urllib.request.urlopen(ALPACA_URL) as resp:
         return json.loads(resp.read().decode("utf-8"))
-
 
 def to_pairs(records: list[dict]):
     for r in records:
@@ -43,7 +40,6 @@ def to_pairs(records: list[dict]):
         response = " ".join(response.split())
         if prompt and response:
             yield prompt, response
-
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
@@ -69,7 +65,6 @@ def main() -> int:
     (out_dir / "chat_metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"Wrote {n} prompt/response pairs to {out_file}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

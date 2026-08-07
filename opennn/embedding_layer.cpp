@@ -72,7 +72,6 @@ void Embedding::write_JSON_body(JsonWriter& printer) const
     });
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

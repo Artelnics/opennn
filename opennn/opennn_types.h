@@ -128,8 +128,6 @@ using cudnnRNNDataDescriptor_t     = void*;
 
 #endif
 
-
-
 #define OPENNN_CUDA_STUB_BODY(name) { throw runtime_error(#name " requires CUDA support."); }
 #define OPENNN_CUDA_STUB(ret, name, sig) static ret name sig OPENNN_CUDA_STUB_BODY(name)
 
@@ -150,10 +148,6 @@ inline float bfloat16_to_float_host(const uint16_t value)
     memcpy(&result, &bits, sizeof(result));
     return result;
 }
-
-
-
-
 
 inline void truncate_floats_to_bfloat16_host(const Index count,
                                              const float* source,
@@ -183,6 +177,12 @@ inline void throw_if(bool condition, format_string<Args...> message, Args&&... a
 {
     if (condition)
         throw runtime_error(format(message, forward<Args>(args)...));
+}
+
+template <typename T, typename... Candidates>
+constexpr bool is_one_of(const T& value, const Candidates&... candidates)
+{
+    return ((value == candidates) || ...);
 }
 
 constexpr float EPSILON = numeric_limits<float>::epsilon();

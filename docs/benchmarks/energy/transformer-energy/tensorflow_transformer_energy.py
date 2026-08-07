@@ -68,7 +68,6 @@ print(f"precision={'bf16' if use_bf16 else 'fp32'} xla={use_xla} "
       f"lr={args.lr} d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers}",
       flush=True)
 
-
 def positional_encoding(length, depth):
     pos = np.arange(length)[:, None]
     i = np.arange(depth)[None, :]
@@ -78,20 +77,16 @@ def positional_encoding(length, depth):
     pe[:, 1::2] = np.cos(angle[:, 1::2])
     return tf.constant(pe[None], dtype=tf.float32)
 
-
 L = tf.keras.layers
-
 
 def ffn(x, d, ff):
     h = L.Dense(ff, activation="relu")(x)
     return L.Dense(d)(h)
 
-
 def build_model():
     d, h, ff_dim, n = args.d, args.h, args.ff, args.layers
     src = L.Input(shape=(args.in_seq,), dtype="int32", name="src")
     dec = L.Input(shape=(args.dec_seq,), dtype="int32", name="dec")
-
 
     src_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(src)
     dec_keys = L.Lambda(lambda t: tf.not_equal(t, 0)[:, None, :])(dec)
@@ -117,14 +112,10 @@ def build_model():
         y = L.LayerNormalization()(y + ca)
         y = L.LayerNormalization()(y + ffn(y, d, ff_dim))
 
-
     logits = L.Dense(args.out_vocab, dtype="float32")(y)
     return tf.keras.Model([src, dec], logits)
 
-
 model = build_model()
-
-
 
 for layer in model.layers:
     if isinstance(layer, L.Embedding):
@@ -138,7 +129,6 @@ opt = tf.keras.optimizers.Adam(args.lr)
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,
                                                         reduction="none")
 
-
 @tf.function(jit_compile=use_xla)
 def train_step(src_b, dec_b, tgt_b):
     with tf.GradientTape() as tape:
@@ -151,10 +141,7 @@ def train_step(src_b, dec_b, tgt_b):
     opt.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
-
 rng = np.random.default_rng(args.seed)
-
-
 
 print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 t0 = time.perf_counter()
@@ -171,7 +158,6 @@ for epoch in range(args.max_epochs):
         batch_losses.append(train_step(tf.gather(src_all, idx),
                                        tf.gather(dec_all, idx),
                                        tf.gather(tgt_all, idx)))
-
 
     mean_loss = float(tf.add_n(batch_losses)) / len(batch_losses)
     loss_history.append(mean_loss)

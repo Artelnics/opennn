@@ -434,7 +434,6 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-
 BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_loss)
 {
     set(new_samples_number, new_loss);

@@ -30,7 +30,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 HERE = Path(__file__).resolve().parent
 RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 DEFAULT_BENCH_DATA = Path(
@@ -41,7 +40,6 @@ KEY_VALUE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
 PY = os.environ.get("BENCH_PYTHON", "python3")
 
 QUALITY_KEYS = ("test_accuracy", "test_log_loss", "test_roc_auc")
-
 
 def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     try:
@@ -55,14 +53,11 @@ def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     except Exception:
         return ""
 
-
 def repo_root() -> Path:
     root = run_text(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"])
     return Path(root).resolve() if root else HERE.parents[3]
 
-
 REPO_ROOT = repo_root()
-
 
 def parse_scalar(text: str) -> Any:
     value = text.strip()
@@ -76,7 +71,6 @@ def parse_scalar(text: str) -> Any:
     except ValueError:
         return value
 
-
 def parse_metrics(raw: str) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     for line in raw.splitlines():
@@ -84,7 +78,6 @@ def parse_metrics(raw: str) -> dict[str, Any]:
         if match:
             metrics[match.group(1)] = parse_scalar(match.group(2))
     return metrics
-
 
 def file_info(path: Path) -> dict[str, Any]:
     info: dict[str, Any] = {"path": str(path)}
@@ -94,7 +87,6 @@ def file_info(path: Path) -> dict[str, Any]:
     else:
         info["exists"] = False
     return info
-
 
 def git_metadata() -> dict[str, Any]:
     commit = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
@@ -109,7 +101,6 @@ def git_metadata() -> dict[str, Any]:
         "status_short_sample": status_lines[:50],
         "status_short_truncated": len(status_lines) > 50,
     }
-
 
 def framework_versions() -> dict[str, Any]:
     code = r"""
@@ -135,10 +126,8 @@ print(json.dumps(info))
     except Exception as exc:
         return {"version_error": str(exc), "python": PY, "platform": platform.platform()}
 
-
 def candidate_names(base: str) -> list[str]:
     return [base, base + ".exe"] if os.name != "nt" else [base + ".exe", base]
-
 
 def find_opennn_accuracy() -> tuple[str, bool]:
     override = os.environ.get("OPENNN_ACCURACY_BIN")
@@ -158,11 +147,9 @@ def find_opennn_accuracy() -> tuple[str, bool]:
     fallback = REPO_ROOT / "build-benchmarks" / "bin" / candidate_names("opennn_accuracy")[0]
     return str(fallback), False
 
-
 def display_command(cmd: list[str], env_over: dict[str, str]) -> str:
     env_bits = [f"{key}={value}" for key, value in sorted(env_over.items())]
     return " ".join(env_bits + [shlex.join(cmd)])
-
 
 def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
     env = {"CUDA_VISIBLE_DEVICES": "", "TF_CPP_MIN_LOG_LEVEL": "2"}
@@ -199,7 +186,6 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[s
         cmd += ["--threads", str(args.threads)]
     return cmd, env
 
-
 def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, Any]:
     env = dict(os.environ)
     env.update(env_over)
@@ -213,7 +199,6 @@ def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, 
         "stderr": out.stderr,
         "raw_output": raw,
     }
-
 
 def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
     ok = [
@@ -242,7 +227,6 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
             summary["last_output_tail"] = runs[-1].get("raw_output", "")[-2000:]
     return summary
 
-
 def parity_summary(results: dict[str, Any]) -> dict[str, Any]:
     parity: dict[str, Any] = {}
     for key in QUALITY_KEYS:
@@ -256,7 +240,6 @@ def parity_summary(results: dict[str, Any]) -> dict[str, Any]:
         if len(values) >= 2:
             parity[f"{key}_spread"] = round(max(values) - min(values), 6)
     return parity
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -272,7 +255,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
-
 
 def main() -> None:
     args = parse_args()
@@ -388,7 +370,6 @@ def main() -> None:
     result["parity"] = parity_summary(result["results"])
     out_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(f"wrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

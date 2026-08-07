@@ -131,10 +131,6 @@ double calculate_auc(const std::vector<std::pair<float, int>>& scored)
          / (double(positives) * double(negatives));
 }
 
-
-
-
-
 BinaryMetrics evaluate(NeuralNetwork& network,
                        const std::string& test_path,
                        Index batch)
@@ -225,8 +221,6 @@ int main(int argc, char* argv[])
         const Type training_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, training_type);
 
-
-
         TabularDataset dataset(train_path, ",", false, false);
         dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
         dataset.set_sample_roles("Training");
@@ -263,12 +257,8 @@ int main(int argc, char* argv[])
         adam->set_display_period(1000000);
         adam->set_gradient_clip_norm(0.0f);
 
-
-
         adam->set_maximum_epochs(2);
         training_strategy.train();
-
-
 
         adam->set_maximum_epochs(epochs);
         const auto unix_now = []

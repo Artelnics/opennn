@@ -180,8 +180,6 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
     for (Index i = 0; i < expected.size(); ++i)
         EXPECT_NEAR(expected.as<float>()[i], actual.as<float>()[i], 1.0e-6f);
 
-
-
     const TensorView expected_leaf = training_layout.forward_slots[3].back();
     const TensorView actual_leaf = inference_layout.forward_slots[3].back();
     ASSERT_EQ(expected_leaf.size(), actual_leaf.size());
@@ -191,8 +189,6 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
                     1.0e-6f);
 
     EXPECT_LT(inference_layout.data.bytes, training_layout.data.bytes);
-
-
 
     EXPECT_EQ(inference_layout.forward_slots[0].back().data,
               inference_layout.forward_slots[4].back().data);
@@ -258,8 +254,6 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
                 expected_persistent_bytes += get_aligned_bytes(specs[layer][slot]);
 
     EXPECT_EQ(layout.data.bytes, expected_persistent_bytes);
-
-
 
     EXPECT_EQ(layout.forward_slots[0][1].data,
               layout.forward_slots[1][2].data);

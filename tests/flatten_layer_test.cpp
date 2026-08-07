@@ -25,7 +25,6 @@ protected:
     }
 };
 
-
 TEST_F(FlattenLayerTest, DefaultConstructor)
 {
     Flatten default_flatten;
@@ -34,14 +33,12 @@ TEST_F(FlattenLayerTest, DefaultConstructor)
     EXPECT_EQ(default_flatten.get_output_shape(), Shape{ 0 });
 }
 
-
 TEST_F(FlattenLayerTest, Constructor)
 {
     EXPECT_EQ(flatten_layer->get_input_shape(), input_shape);
     EXPECT_EQ(flatten_layer->get_output_shape(), Shape{ height * width * channels });
     EXPECT_EQ(flatten_layer->get_name(), "Flatten");
 }
-
 
 TEST_F(FlattenLayerTest, ForwardPropagate)
 {
@@ -68,7 +65,6 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     for(Index i = 0; i < output_view.size(); ++i)
         EXPECT_NEAR(output_view.as<type>()[i], 1.23f, 1e-6f);
 }
-
 
 TEST_F(FlattenLayerTest, FlattenBackwardGradientMatchesNumerical)
 {

@@ -11,7 +11,6 @@
 
 using namespace opennn;
 
-
 TEST(GroupedQueryAttentionTest, GeneralConstructor)
 {
     GroupedQueryAttention attention({16, 32}, 4, 2, 8, 1000000.0f, 1.0e-6f, true, "attn");
@@ -28,12 +27,8 @@ TEST(GroupedQueryAttentionTest, GeneralConstructor)
     EXPECT_EQ(attention.get_output_shape()[1], 32);
 }
 
-
 namespace
 {
-
-
-
 
 float layer_vs_recipe_max_diff(bool use_qk_norm)
 {
@@ -60,7 +55,6 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
     nq.resize(head_dim); nk.resize(head_dim);
     for (auto& x : nq) x = 1.0f + nd(rng);
     for (auto& x : nk) x = 1.0f + nd(rng);
-
 
     auto& views = neural_network.get_layer(Index(0))->get_parameter_views();
     EXPECT_EQ(views.size(), use_qk_norm ? size_t(6) : size_t(4));
@@ -117,21 +111,15 @@ float layer_vs_recipe_max_diff(bool use_qk_norm)
 
 }
 
-
 TEST(GroupedQueryAttentionTest, ForwardMatchesFreeOpRecipe)
 {
     EXPECT_LT(layer_vs_recipe_max_diff( true), 1.0e-5f);
 }
 
-
 TEST(GroupedQueryAttentionTest, ForwardWithoutQKNormMatchesFreeOpRecipe)
 {
     EXPECT_LT(layer_vs_recipe_max_diff( false), 1.0e-5f);
 }
-
-
-
-
 
 TEST(GroupedQueryAttentionTest, PrefillAfterDecodeRestartsCache)
 {

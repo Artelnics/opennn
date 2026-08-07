@@ -129,9 +129,6 @@ public:
     Index get_first_trainable_layer_index() const;
     Index get_last_trainable_layer_index() const;
 
-
-
-
     void invalidate_trainable_layer_cache() { first_trainable_cache_ = -1; last_trainable_cache_ = -1; }
 
     Index get_inputs_number() const;
@@ -178,7 +175,6 @@ public:
     void load(const filesystem::path&);
     void load_parameters_binary(const filesystem::path&);
 
-
     void load_parameters_bf16_inference_binary(const filesystem::path&);
     void load_states_binary(const filesystem::path&);
 
@@ -203,8 +199,6 @@ public:
     void release_bf16_fp32_parameter_master_for_inference();
 
     void upload_parameters_bf16_inference();
-
-
 
     void upload_parameters_int8_inference();
 
@@ -274,9 +268,6 @@ private:
     void initialize_parameters(void (Operator::*)());
 
     void activate_transposed_inference_weights();
-
-
-
 
     struct ParameterSlot
     {

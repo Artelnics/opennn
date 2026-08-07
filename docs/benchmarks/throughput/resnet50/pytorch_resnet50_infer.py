@@ -39,7 +39,6 @@ if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -65,7 +64,6 @@ class Bottleneck(nn.Module):
         y = self.relu(self.bn2(self.conv2(y)))
         y = self.bn3(self.conv3(y))
         return self.relu(y + identity)
-
 
 class ResNet50(nn.Module):
     def __init__(self, classes=10):
@@ -93,7 +91,6 @@ class ResNet50(nn.Module):
         x = torch.flatten(self.avgpool(x), 1)
         return self.fc(x)
 
-
 x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
@@ -112,16 +109,10 @@ print(f"parameters={sum(p.numel() for p in model.parameters())}")
 if fast:
     model = model.to(memory_format=torch.channels_last)
 
-
-
     model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 
-
 xb = x[:batch].clone()
-
-
-
 
 use_graph = os.environ.get("PT_NOGRAPH") is None and not fast
 
@@ -153,7 +144,6 @@ else:
             out = model(xb)
         torch.cuda.synchronize()
         return out
-
 
 run_forward()
 run_forward()

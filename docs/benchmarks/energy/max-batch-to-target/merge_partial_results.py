@@ -7,14 +7,12 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -131,7 +129,6 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
     print(output)
-
 
 if __name__ == "__main__":
     main()

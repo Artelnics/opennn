@@ -68,15 +68,12 @@ int main(int argc, char* argv[])
         const filesystem::path data_directory = "../data/gpt2";
         const filesystem::path weights_path = data_directory / "gpt2-small-seq256.bin";
 
-
         Configuration::instance().set(Device::CUDA, want_int8 ? Type::INT8 : Type::FP32);
 
         download_files_if_missing(data_directory, base_url, data_files);
 
         auto tokenizer = make_unique<BytePairTokenizer>(
             data_directory / "vocab.json", data_directory / "merges.txt");
-
-
 
         TextGenerationNetwork model(sequence_length, vocabulary_size, hidden_size,
                                     heads_number, intermediate, layers_number,
@@ -96,7 +93,6 @@ int main(int argc, char* argv[])
         ChatSession session(model);
         ChatOptions options;
         options.sampling = sampling;
-
 
         const bool interactive = prompt.empty() || prompt == "--interactive" || prompt == "-i";
 

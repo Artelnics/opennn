@@ -22,13 +22,11 @@ import time
 import numpy as np
 import torch
 
-
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
 
     x = np.ascontiguousarray(data[:, :-1])
     return x
-
 
 def main():
     test_csv = sys.argv[1] if len(sys.argv) > 1 else "higgs_test.csv"
@@ -81,17 +79,11 @@ def main():
     model = torch.nn.Sequential(*layers).to(device).eval()
     print(f"parameters={sum(p.numel() for p in model.parameters())}")
 
-
-
     x = torch.from_numpy(x_np[:processed]).to(device).contiguous()
     n_batches = processed // batch
 
     ctx = (torch.autocast(device_type="cuda", dtype=torch.bfloat16)
            if use_autocast else contextlib.nullcontext())
-
-
-
-
 
     use_graph = os.environ.get("PT_NOGRAPH") is None
 
@@ -120,7 +112,6 @@ def main():
                 for s in range(0, processed, batch):
                     model(x[s:s + batch])
 
-
     run_pass()
     run_pass()
     torch.cuda.synchronize()
@@ -142,7 +133,6 @@ def main():
     print(f"ms_per_batch={ms_per_batch:.6f}")
     print(f"peak_vram_mb={torch.cuda.max_memory_allocated() / 1e6:.0f}")
     print("RESULT=OK")
-
 
 if __name__ == "__main__":
     try:

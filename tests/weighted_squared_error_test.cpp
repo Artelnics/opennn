@@ -17,7 +17,6 @@ TEST(WeightedSquaredErrorTest, DefaultConstructor)
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
-
 TEST(WeightedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
@@ -29,7 +28,6 @@ TEST(WeightedSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(loss.get_neural_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
-
 
 TEST(WeightedSquaredErrorTest, BackPropagate)
 {
@@ -51,7 +49,6 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     EXPECT_LT((analytical_gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-2));
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.

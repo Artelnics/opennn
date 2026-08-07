@@ -284,50 +284,61 @@ struct Parser
         {
             const char c = s[position++];
             if (c == '"') return out;
-            if (c == '\\')
+
+            if (c != '\\')
             {
-                if (position >= s.size()) fail("bad escape");
-                const char e = s[position++];
-                switch (e)
+                out.push_back(c);
+                continue;
+            }
+
+            if (position >= s.size()) fail("bad escape");
+
+            const char e = s[position++];
+            switch (e)
+            {
+            case '"':  out.push_back('"');  break;
+            case '\\': out.push_back('\\'); break;
+            case '/':  out.push_back('/');  break;
+            case 'n':  out.push_back('\n'); break;
+            case 'r':  out.push_back('\r'); break;
+            case 't':  out.push_back('\t'); break;
+            case 'b':  out.push_back('\b'); break;
+            case 'f':  out.push_back('\f'); break;
+            case 'u':
+            {
+                if (position + 4 > s.size()) fail("bad \\u");
+
+                unsigned code = 0;
+                for (int i = 0; i < 4; ++i)
                 {
-                case '"':  out.push_back('"');  break;
-                case '\\': out.push_back('\\'); break;
-                case '/':  out.push_back('/');  break;
-                case 'n':  out.push_back('\n'); break;
-                case 'r':  out.push_back('\r'); break;
-                case 't':  out.push_back('\t'); break;
-                case 'b':  out.push_back('\b'); break;
-                case 'f':  out.push_back('\f'); break;
-                case 'u': {
-                    if (position + 4 > s.size()) fail("bad \\u");
-                    unsigned code = 0;
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        const char h = s[position++];
-                        code <<= 4;
-                        if (h >= '0' && h <= '9')      code |= unsigned(h - '0');
-                        else if (h >= 'a' && h <= 'f') code |= unsigned(h - 'a' + 10);
-                        else if (h >= 'A' && h <= 'F') code |= unsigned(h - 'A' + 10);
-                        else fail("bad hex in \\u");
-                    }
-                    if (code < 0x80) out.push_back(char(code));
-                    else if (code < 0x800)
-                    {
-                        out.push_back(char(0xC0 | (code >> 6)));
-                        out.push_back(char(0x80 | (code & 0x3F)));
-                    }
-                    else
-                    {
-                        out.push_back(char(0xE0 | (code >> 12)));
-                        out.push_back(char(0x80 | ((code >> 6) & 0x3F)));
-                        out.push_back(char(0x80 | (code & 0x3F)));
-                    }
+                    const char h = s[position++];
+                    code <<= 4;
+                    if (h >= '0' && h <= '9')      code |= unsigned(h - '0');
+                    else if (h >= 'a' && h <= 'f') code |= unsigned(h - 'a' + 10);
+                    else if (h >= 'A' && h <= 'F') code |= unsigned(h - 'A' + 10);
+                    else fail("bad hex in \\u");
+                }
+
+                if (code < 0x80)
+                {
+                    out.push_back(char(code));
                     break;
                 }
-                default: fail("bad escape");
+
+                if (code < 0x800)
+                {
+                    out.push_back(char(0xC0 | (code >> 6)));
+                    out.push_back(char(0x80 | (code & 0x3F)));
+                    break;
                 }
+
+                out.push_back(char(0xE0 | (code >> 12)));
+                out.push_back(char(0x80 | ((code >> 6) & 0x3F)));
+                out.push_back(char(0x80 | (code & 0x3F)));
+                break;
             }
-            else out.push_back(c);
+            default: fail("bad escape");
+            }
         }
         fail("unterminated string");
     }
@@ -339,10 +350,10 @@ struct Parser
         if (position < s.size() && s[position] == '-') ++position;
         while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position;
         if (position < s.size() && s[position] == '.') { ++position; while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position; }
-        if (position < s.size() && (s[position] == 'e' || s[position] == 'E'))
+        if (position < s.size() && is_one_of(s[position], 'e', 'E'))
         {
             ++position;
-            if (position < s.size() && (s[position] == '+' || s[position] == '-')) ++position;
+            if (position < s.size() && is_one_of(s[position], '+', '-')) ++position;
             while (position < s.size() && isdigit(static_cast<unsigned char>(s[position]))) ++position;
         }
         Json j;

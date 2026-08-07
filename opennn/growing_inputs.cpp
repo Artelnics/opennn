@@ -353,7 +353,6 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
         set_warm_start(read_json_bool(root_element, "WarmStart"));
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

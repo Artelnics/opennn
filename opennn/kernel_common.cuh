@@ -22,8 +22,6 @@ cudaStream_t get_compute_stream();
 
 static constexpr int block_size = 256;
 
-
-
 static constexpr int activation_identity   = int(opennn::ActivationFunction::Identity);
 static constexpr int activation_sigmoid    = int(opennn::ActivationFunction::Sigmoid);
 static constexpr int activation_tanh       = int(opennn::ActivationFunction::Tanh);
@@ -126,14 +124,10 @@ static inline bool are_float4_aligned(const Ptrs*... ptrs)
     return (is_float4_aligned(ptrs) && ...);
 }
 
-
 static inline bool is_bfloat162_aligned(const void* ptr)
 {
     return ptr == nullptr || (reinterpret_cast<std::uintptr_t>(ptr) & 0x3) == 0;
 }
-
-
-
 
 template<typename K, typename... Args>
 static inline void launch_vec4_on(cudaStream_t stream, Index n, bool aligned, K kernel, Args... args)
@@ -155,7 +149,6 @@ __device__ __forceinline__ float sigmoid_f(float x)
 {
     return 1.0f / (1.0f + expf(-x));
 }
-
 
 static constexpr float padding_epsilon = 1e-7f;
 

@@ -19,10 +19,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "benchmark_manifest.json"
-
 
 ADMIN_DOCS = {
     "README.md",
@@ -39,21 +37,17 @@ REQUIRED_FIELDS = {
     "runner",
 }
 
-
 def load_manifest() -> dict[str, Any]:
     try:
         return json.loads(MANIFEST.read_text())
     except Exception as exc:
         raise SystemExit(f"ERROR: cannot read {MANIFEST}: {exc}") from exc
 
-
 def add_error(errors: list[str], message: str) -> None:
     errors.append(f"ERROR: {message}")
 
-
 def add_warning(warnings: list[str], message: str) -> None:
     warnings.append(f"WARNING: {message}")
-
 
 def validate_manifest(data: dict[str, Any]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
@@ -106,7 +100,6 @@ def validate_manifest(data: dict[str, Any]) -> tuple[list[str], list[str]]:
 
     return errors, warnings
 
-
 def validate_runner_readmes(strict: bool) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -131,7 +124,6 @@ def validate_runner_readmes(strict: bool) -> tuple[list[str], list[str]]:
 
     return errors, warnings
 
-
 def committed_artifact_reason(rel: str) -> str | None:
     """Classify a git-tracked path that should never be committed."""
     name = rel.rsplit("/", 1)[-1]
@@ -149,7 +141,6 @@ def committed_artifact_reason(rel: str) -> str | None:
     if "." not in name and name.startswith("opennn_"):
         return "compiled benchmark executable"
     return None
-
 
 def validate_no_committed_artifacts() -> tuple[list[str], list[str]]:
     errors: list[str] = []
@@ -174,13 +165,11 @@ def validate_no_committed_artifacts() -> tuple[list[str], list[str]]:
 
     return errors, warnings
 
-
 import re
 
 BENCH_BUCKETS = {"quality", "throughput", "capacity", "energy", "footprint"}
 _MACHINE_PATH = re.compile(r"/home/[A-Za-z0-9_.-]+/|/Users/[A-Za-z0-9_.-]+/|[A-Za-z]:\\\\|/Documents/datasets")
 _DATA_SUFFIXES = (".csv", ".npy", ".bmp", ".png", ".jpg", ".jpeg", ".onnx", ".zip", ".gz", ".tar")
-
 
 def validate_benchmark_ids(data: dict[str, Any]) -> tuple[list[str], list[str]]:
     """Every run_*.py's emitted benchmark_id must equal a manifest id."""
@@ -204,7 +193,6 @@ def validate_benchmark_ids(data: dict[str, Any]) -> tuple[list[str], list[str]]:
                 add_error(errors, f"{rel}: benchmark_id {value!r} is not a manifest id")
     return errors, warnings
 
-
 def validate_no_data_in_benchmark_folders() -> tuple[list[str], list[str]]:
     """Datasets must live under $OPENNN_BENCH_DATA, never inside a benchmark folder."""
     errors: list[str] = []
@@ -220,7 +208,6 @@ def validate_no_data_in_benchmark_folders() -> tuple[list[str], list[str]]:
             if name.endswith(_DATA_SUFFIXES) or name.startswith("cifar_") or name.endswith("_pairs.txt"):
                 add_warning(warnings, f"data file inside a benchmark folder (datasets belong under $OPENNN_BENCH_DATA): {path.relative_to(ROOT)}")
     return errors, warnings
-
 
 def validate_no_hardcoded_paths() -> tuple[list[str], list[str]]:
     """No absolute machine-specific paths in runnable sources."""
@@ -239,7 +226,6 @@ def validate_no_hardcoded_paths() -> tuple[list[str], list[str]]:
         if hit:
             add_error(errors, f"{rel}: hardcoded machine path {hit.group(0)!r}")
     return errors, warnings
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -274,7 +260,6 @@ def main() -> int:
 
     print(f"OK: benchmark inventory valid ({len(warnings)} warning(s))")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

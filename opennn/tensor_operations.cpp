@@ -161,9 +161,8 @@ const EnumMap<ActivationFunction>& activation_function_map()
 
 bool activation_needs_input(ActivationFunction function)
 {
-    return function == ActivationFunction::GELU
-        || function == ActivationFunction::GELUTanh
-        || function == ActivationFunction::SiLU;
+    return is_one_of(function, ActivationFunction::GELU,
+                     ActivationFunction::GELUTanh, ActivationFunction::SiLU);
 }
 
 const string& activation_function_to_string(ActivationFunction function)
@@ -534,8 +533,7 @@ void activation_forward(TensorView& output, ActivationFunction function)
 
 void activation_backward(const TensorView& outputs, TensorView& delta, ActivationFunction function)
 {
-    if (function == ActivationFunction::Identity
-        || function == ActivationFunction::Softmax
+    if (is_one_of(function, ActivationFunction::Identity, ActivationFunction::Softmax)
         || outputs.empty()) return;
 
     if (outputs.is_cuda()) { activation_backward_gpu(outputs, delta, function); return; }
@@ -1161,12 +1159,7 @@ void qk_norm_forward(const TensorView& input, const TensorView& weight, TensorVi
 
 #ifdef OPENNN_HAS_CUDA
 
-
-
-
 constexpr Index int8_dequant_budget_bytes = Index(32) * 1024 * 1024;
-
-
 
 static void w8a16_linear_rows(Index rows, Index in_features, Index out_features,
                               bool weights_out_major,
@@ -1203,11 +1196,6 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
             return;
         }
 
-
-
-
-
-
         const Index tile_rows = min(out_features,
             max(Index(1), int8_dequant_budget_bytes / (in_features * Index(sizeof(bfloat16)))));
         bfloat16* dequantized = ensure_int8_dequant_workspace(tile_rows * in_features);
@@ -1233,7 +1221,6 @@ void tied_lm_head_forward(const TensorView& input, const TensorView& embed_weigh
     output.as_flat_matrix().noalias() =
         input.as_flat_matrix() * embed_weight.as_matrix().transpose();
 }
-
 
 static void embedding_lookup_forward_cpu(const TensorView& indices, const TensorView& weights,
                                   const TensorView& positional_encoding, TensorView& output,
@@ -1916,10 +1903,6 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
         throw_if(weight_scale.empty() || !input.is_bf16() || !output.is_bf16(),
                  "linear_forward: INT8 weights require BF16 activations and a per-channel scale vector.");
 
-
-
-
-
         const bool gemv_path = (total_rows <= W8A16_MAX_M
                                 || weights.byte_size() > int8_dequant_budget_bytes)
             && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
@@ -2025,8 +2008,6 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     if (drelu_mask)
     {
-
-
 
         run_lt_matmul_cached(
             input_columns, total_rows, output_columns,

@@ -27,17 +27,14 @@ int main()
 
         Configuration::instance().set(Device::Auto, Type::Auto);
 
-
         ImageDataset image_dataset("../data/melanoma_cancer");
 
         image_dataset.split_samples_random(0.8, 0.0, 0.2);
-
 
         ImageClassificationNetwork image_classification_network(
             image_dataset.get_shape("Input"),
             { 32, 64, 16 },
             image_dataset.get_shape("Target"));
-
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
@@ -47,7 +44,6 @@ int main()
         adam->set_maximum_epochs(50);
 
         training_strategy.train();
-
 
         TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
 

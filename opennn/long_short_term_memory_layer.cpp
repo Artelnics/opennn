@@ -1202,7 +1202,6 @@ string LongShortTermMemory::write_expression(const vector<string>& feature_names
     return buf.str();
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

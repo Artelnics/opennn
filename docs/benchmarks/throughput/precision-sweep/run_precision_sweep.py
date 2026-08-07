@@ -44,17 +44,11 @@ RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 ATTN = os.path.normpath(os.path.join(HERE, "..", "attention-speed"))
 CORPUS = os.path.join(ATTN, "corpus_sweep.txt")
 
-
-
-
-
 HIGGS_BIN = os.environ.get(
     "OPENNN_HIGGS_MAXBATCH_BIN",
     os.path.normpath(os.path.join(
         HERE, "..", "..", "..", "..",
         "build-benchmarks", "bin", "opennn_higgs_maxbatch_trial")))
-
-
 
 CELLS = {
     ("transformer", "inference"): (
@@ -66,21 +60,16 @@ CELLS = {
                       CORPUS, "512", "8", "2048", "6", "32", "12"],
         "samples_per_sec"),
 
-
-
     ("dense", "inference"): (
         lambda bf16: [HIGGS_BIN,
                       "infer", "8000", "4096", "2", "100", "cuda", "8000"],
         "samples_per_sec"),
-
-
 
     ("dense", "training"): (
         lambda bf16: [HIGGS_BIN,
                       "train", "2000", "4096", "2", "100", "cuda", "2000"],
         "samples_per_sec"),
 }
-
 
 def run_once(cmd, metric, bf16):
     env = dict(os.environ)
@@ -96,7 +85,6 @@ def run_once(cmd, metric, bf16):
                 pass
     return val, out.stdout + out.stderr
 
-
 def versions():
     v = {"python": sys.version.split()[0]}
     try:
@@ -107,7 +95,6 @@ def versions():
         pass
     return v
 
-
 def git_commit():
     try:
         c = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -115,7 +102,6 @@ def git_commit():
         return c or "unknown"
     except Exception:
         return "unknown"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -177,7 +163,6 @@ def main():
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

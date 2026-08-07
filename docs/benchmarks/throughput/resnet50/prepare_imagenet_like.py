@@ -36,7 +36,6 @@ classes = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
 size = int(sys.argv[3]) if len(sys.argv) > 3 else 224
 data_dir.mkdir(parents=True, exist_ok=True)
 
-
 archive = data_dir / "cifar-10-binary.tar.gz"
 if not archive.exists():
     print(f"downloading {URL} ...")
@@ -53,8 +52,6 @@ for i in range(1, 6):
 batch = np.concatenate(records)
 images = batch[:, 1:].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
 n = images.shape[0]
-
-
 
 labels = np.arange(n, dtype=np.int64) % classes
 print(f"{n} images -> {classes} classes ({n // classes} per class), {size}x{size}")

@@ -37,13 +37,11 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "higgs"))
 from metrics import binary_metrics, parse_optional_float, passes_quality_gate
 
-
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
-
 
 def main():
     train_csv = sys.argv[1] if len(sys.argv) > 1 else "higgs_train.csv"
@@ -86,14 +84,8 @@ def main():
     print(f"activation={activation}")
     print(f"precision={precision} autocast={use_autocast} tf32={allow_tf32} shuffle={shuffle}")
 
-
     x = torch.from_numpy(x_np).to(device).contiguous()
     y = torch.from_numpy(y_np).to(device).contiguous()
-
-
-
-
-
 
     act_layer = torch.nn.ReLU if activation == "relu" else torch.nn.Tanh
     layers = []
@@ -128,7 +120,6 @@ def main():
         model.train()
         if shuffle:
 
-
             perm = torch.randperm(n, device=device)
             for s in starts:
                 idx = perm[s:s + batch]
@@ -138,13 +129,9 @@ def main():
                 train_step(x[s:s + batch], y[s:s + batch])
         torch.cuda.synchronize()
 
-
     print("warmup...")
     run_epoch()
     run_epoch()
-
-
-
 
     print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
     times = []
@@ -158,7 +145,6 @@ def main():
     median_epoch_s = times[len(times) // 2]
     samples_per_sec = samples / median_epoch_s
 
-
     processed = (xt_np.shape[0] // batch) * batch
     xt = torch.from_numpy(xt_np[:processed]).to(device).contiguous()
     model.eval()
@@ -167,7 +153,6 @@ def main():
         for s in range(0, processed, batch):
             with ctx:
                 logits = model(xt[s:s + batch])
-
 
             probs = torch.sigmoid(logits.float())
             preds.append(probs.cpu().numpy())
@@ -186,7 +171,6 @@ def main():
         print(f"quality_gate={'PASS' if gate else 'FAIL'}")
 
     print("RESULT=OK")
-
 
 if __name__ == "__main__":
     try:

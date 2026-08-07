@@ -20,7 +20,6 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
-
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
@@ -32,7 +31,6 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(loss.get_neural_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
-
 
 TEST(NormalizedSquaredErrorTest, BackPropagate)
 {
@@ -59,7 +57,6 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     EXPECT_GE(error, 0);
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
-
 
 TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
 {

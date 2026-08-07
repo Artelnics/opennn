@@ -239,7 +239,6 @@ void NonMaxSuppression::write_JSON_body(JsonWriter& writer) const
     });
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

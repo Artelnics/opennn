@@ -38,11 +38,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 
-
 def default_data_root():
     return os.environ.get(
         "OPENNN_BENCH_DATA", os.path.expanduser("~/opennn-benchmark-data"))
-
 
 def default_opennn_bin():
     env_bin = os.environ.get("OPENNN_RESNET_INFER_BIN")
@@ -61,9 +59,7 @@ def default_opennn_bin():
             return candidate
     return candidates[0]
 
-
 OPENNN_BIN = default_opennn_bin()
-
 
 def tensorflow_library_dirs(py):
     """nvidia wheel lib dirs bundled in the venv; TF needs them on
@@ -79,13 +75,11 @@ def tensorflow_library_dirs(py):
                 libs.append(p)
     return libs
 
-
 def engine_cmd(engine, data_dir, batch, runs, bf16):
     """Return (cmd, env_overrides). OpenNN reads <data_dir>/train (BMPs); the
     Python engines read <data_dir>/ (npy)."""
     env = {}
     if engine == "opennn":
-
 
         cmd = [OPENNN_BIN, os.path.join(data_dir, "train"),
                str(batch), str(runs), "bf16" if bf16 else "fp32"]
@@ -109,7 +103,6 @@ def engine_cmd(engine, data_dir, batch, runs, bf16):
         raise ValueError(engine)
     return cmd, env
 
-
 def run_once(cmd, env_over):
     env = dict(os.environ)
     env.update(env_over)
@@ -128,7 +121,6 @@ def run_once(cmd, env_over):
             except ValueError:
                 pass
     return sps, mpb, out.stdout + out.stderr
-
 
 def versions():
     v = {"python": sys.version.split()[0]}
@@ -150,7 +142,6 @@ def versions():
         pass
     return v
 
-
 def git_commit():
     try:
         c = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -158,7 +149,6 @@ def git_commit():
         return c or "unknown"
     except Exception:
         return "unknown"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -241,7 +231,6 @@ def main():
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

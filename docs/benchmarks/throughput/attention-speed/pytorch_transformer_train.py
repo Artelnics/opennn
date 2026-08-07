@@ -32,10 +32,6 @@ dev = torch.device("cuda")
 torch.manual_seed(0)
 torch.backends.cuda.matmul.allow_tf32 = True
 
-
-
-
-
 def read_corpus(path):
     in_lens, tgt_lens, vocab = [], [], set()
     for line in open(path, encoding="utf-8"):
@@ -52,12 +48,10 @@ def read_corpus(path):
     vocab_size = len(vocab) + 4
     return len(in_lens), input_seq, decoder_seq, vocab_size
 
-
 samples, input_seq, decoder_seq, vocab = read_corpus(corpus)
 print(f"precision={'bf16' if os.environ.get('PT_BF16') else 'fp32'} samples={samples} "
       f"input_seq={input_seq} decoder_seq={decoder_seq} input_vocab={vocab} output_vocab={vocab} "
       f"d_model={d_model} heads={heads} ff={ff} layers={layers} batch={batch} epochs={epochs}")
-
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len):
@@ -71,7 +65,6 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, : x.size(1)]
-
 
 class Seq2SeqTransformer(nn.Module):
     def __init__(self):
@@ -91,13 +84,9 @@ class Seq2SeqTransformer(nn.Module):
         t = self.pos(self.tgt_emb(tgt) * self.scale)
         return self.out(self.transformer(s, t))
 
-
 model = Seq2SeqTransformer().to(dev).train()
 params = sum(p.numel() for p in model.parameters())
 print(f"parameters={params}")
-
-
-
 
 src = torch.randint(0, vocab, (samples, input_seq), device=dev)
 dec = torch.randint(0, vocab, (samples, decoder_seq), device=dev)
@@ -113,7 +102,6 @@ ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 else torch.autoca
 
 n_batches = samples // batch
 
-
 def run_epoch():
     for b in range(n_batches):
         i = b * batch
@@ -125,8 +113,6 @@ def run_epoch():
         loss.backward()
         opt.step()
     return float(loss.detach())
-
-
 
 run_epoch()
 torch.cuda.synchronize()

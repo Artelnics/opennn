@@ -9,10 +9,6 @@
 
 using namespace opennn;
 
-
-
-
-
 TEST(RopeTest, ForwardMatchesHandComputed)
 {
     const Index batch = 1, seq = 2, head_dim = 4, rotary_dim = 4;
@@ -32,20 +28,16 @@ TEST(RopeTest, ForwardMatchesHandComputed)
 
     rotary_forward(in_view, cos_view, sin_view, out_view, head_dim, rotary_dim, 0);
 
-
     EXPECT_NEAR(output[0], 1.0f, 1.0e-5f);
     EXPECT_NEAR(output[1], 2.0f, 1.0e-5f);
     EXPECT_NEAR(output[2], 3.0f, 1.0e-5f);
     EXPECT_NEAR(output[3], 4.0f, 1.0e-5f);
-
 
     EXPECT_NEAR(output[4], std::cos(1.0f), 1.0e-5f);
     EXPECT_NEAR(output[5], 0.0f,           1.0e-5f);
     EXPECT_NEAR(output[6], std::sin(1.0f), 1.0e-5f);
     EXPECT_NEAR(output[7], 0.0f,           1.0e-5f);
 }
-
-
 
 TEST(RopeTest, PreservesNorm)
 {
@@ -81,9 +73,6 @@ TEST(RopeTest, PreservesNorm)
             EXPECT_NEAR(std::sqrt(norm_out), std::sqrt(norm_in), 1.0e-4f);
         }
 }
-
-
-
 
 TEST(RopeTest, BackwardIsInverseRotation)
 {

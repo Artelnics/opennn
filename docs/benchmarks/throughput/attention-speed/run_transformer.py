@@ -30,7 +30,6 @@ RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 OPENNN_BIN = os.path.join(HERE, "opennn_transformer_resident")
 
-
 def tensorflow_library_dirs(py):
     """TF loads its CUDA runtime from the nvidia-*-cu1x pip wheels; their lib/
     dirs must be on LD_LIBRARY_PATH or TF sees no GPU. Resolve them in the
@@ -54,7 +53,6 @@ def tensorflow_library_dirs(py):
         return json.loads(lines[-1]) if lines else []
     except Exception:
         return []
-
 
 def engine_cmd(engine, cfg, bf16):
     seq, d, h, ff, L, vocab, batch, iters = cfg
@@ -81,7 +79,6 @@ def engine_cmd(engine, cfg, bf16):
         raise ValueError(engine)
     return cmd, env
 
-
 def run_once(cmd, env_over):
     env = dict(os.environ)
     env.update(env_over)
@@ -94,7 +91,6 @@ def run_once(cmd, env_over):
             except ValueError:
                 pass
     return tok, out.stdout + out.stderr
-
 
 def versions():
     v = {"python": sys.version.split()[0]}
@@ -116,7 +112,6 @@ def versions():
         pass
     return v
 
-
 def git_commit():
     try:
         c = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -124,7 +119,6 @@ def git_commit():
         return c or "unknown"
     except Exception:
         return "unknown"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -198,7 +192,6 @@ def main():
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

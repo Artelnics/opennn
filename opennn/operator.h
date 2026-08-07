@@ -20,9 +20,6 @@ namespace opennn
 class Json;
 class JsonWriter;
 
-
-
-
 inline bool link_views(span<const TensorView> views, initializer_list<TensorView*> targets)
 {
     if (views.size() < targets.size()) return false;
@@ -38,8 +35,6 @@ struct Operator
 
     virtual vector<TensorSpec> parameter_specs() const { return {}; }
     virtual vector<TensorSpec> state_specs()     const { return {}; }
-
-
 
     struct SlotQuantization { Index channels = 0; int axis = 0; };
     virtual vector<SlotQuantization> parameter_quantization() const { return {}; }

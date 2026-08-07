@@ -14,8 +14,6 @@ using namespace opennn;
 namespace
 {
 
-
-
 class CpuConfigurationListener : public ::testing::EmptyTestEventListener
 {
 public:

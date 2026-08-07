@@ -29,7 +29,6 @@ TEST(MeanSquaredErrorTest, DefaultConstructor)
     EXPECT_EQ(loss.get_dataset(), nullptr);
 }
 
-
 TEST(MeanSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
@@ -39,7 +38,6 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
     EXPECT_NE(loss.get_neural_network(), nullptr);
     EXPECT_NE(loss.get_dataset(), nullptr);
 }
-
 
 TEST(MeanSquaredErrorTest, BackPropagateDense2d)
 {
@@ -68,7 +66,6 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-
 TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
 {
     const Index samples_number = random_integer(2, 10);
@@ -95,7 +92,6 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
-
 
 TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
 {
@@ -128,7 +124,6 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
-
 
 TEST(MeanSquaredErrorTest, BackPropagatePooling)
 {
@@ -164,7 +159,6 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
-
 
 TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 {
@@ -203,7 +197,6 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 
     EXPECT_LT(max_abs_diff / gradient_scale, type(2.0e-2));
 }
-
 
 TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
 {

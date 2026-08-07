@@ -24,7 +24,6 @@ Transformer batch 80:  separate pools 3,823 MiB -> joint 3,557 MiB (-6.9%).
 import re
 import sys
 
-
 def parse(path):
     fwd, bwd, recompute = [], [], []
     L = last_trainable = None
@@ -58,7 +57,6 @@ def parse(path):
         if m: transient = float(m.group(2)) / int(m.group(1))
     return fwd, bwd, recompute, L, last_trainable, fwd_pool, delta_pool, transient
 
-
 def first_fit(entries, order):
     """entries: list of (mib, first, last). order: index permutation.
     Returns (peak, offsets)."""
@@ -81,7 +79,6 @@ def first_fit(entries, order):
         placed.append(idx)
     return peak, offsets
 
-
 def overlay_fits(entries, offsets, peak, size, instants):
     """Mirror of find_memory_pool_overlay: is there a byte range inside the
     plan where no entry live at either instant overlaps?"""
@@ -103,7 +100,6 @@ def overlay_fits(entries, offsets, peak, size, instants):
             return True
     return False
 
-
 def lower_bound(entries):
     events = {}
     for size, first, last in entries:
@@ -115,15 +111,12 @@ def lower_bound(entries):
         peak = max(peak, live)
     return peak
 
-
 def compact_order(entries):
     return sorted(range(len(entries)),
                   key=lambda i: (-entries[i][0], entries[i][1], -entries[i][2], i))
 
-
 def chrono_order(entries):
     return sorted(range(len(entries)), key=lambda i: (entries[i][1], i))
-
 
 def main():
     path = sys.argv[1]
@@ -136,13 +129,11 @@ def main():
     print(f"ledger: forward data={fwd_pool} MiB (incl transient={transient}), "
           f"delta pool={delta_pool} MiB")
 
-
     fwd_peak, _ = first_fit(fwd, compact_order(fwd))
     bwd_peak_c, _ = first_fit(bwd, compact_order(bwd))
     bwd_peak_h, _ = first_fit(bwd, chrono_order(bwd))
     print(f"replica: forward pool peak={fwd_peak:.2f} MiB, "
           f"delta pool peak compact={bwd_peak_c:.2f} / chrono={bwd_peak_h:.2f} MiB")
-
 
     offset = (2 * L - 1) - last_trainable
     joint = list(fwd) + [(s, f + offset, l + offset) for (s, f, l) in bwd]
@@ -156,10 +147,6 @@ def main():
     best, best_offsets = (jc, offsets_c) if jc <= jh else (jh, offsets_h)
     print(f"joint lower bound = {lb:.2f} MiB")
     print(f"joint first-fit: compact={jc:.2f} MiB, chrono={jh:.2f} MiB")
-
-
-
-
 
     correction = 0.0
     if recompute:
@@ -180,7 +167,6 @@ def main():
     print(f"current separate pools = {current:.2f} MiB")
     print(f"saving = {current - best:.2f} MiB "
           f"({100.0 * (current - best) / current:.1f}% of the pooled memory)")
-
 
 if __name__ == "__main__":
     main()

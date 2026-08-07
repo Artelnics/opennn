@@ -8,14 +8,12 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as stream:
         for chunk in iter(lambda: stream.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -59,7 +57,6 @@ def main():
         json.dump(merged, stream, indent=2)
     print(output)
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

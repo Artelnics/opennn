@@ -5,18 +5,15 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.text.paragraph import Paragraph
 
-
 BASE = Path(r"C:\Users\Roberto\OneDrive - artelnics.com\DIPCAN\subsanacion_tecnica")
 DOCX = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO.docx"
 BACKUP = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO_pre_finalizacion.bak.docx"
-
 
 def find_one(doc, prefix):
     matches = [p for p in doc.paragraphs if p.text.startswith(prefix)]
     if len(matches) != 1:
         raise RuntimeError(f"Expected one paragraph starting with {prefix!r}; found {len(matches)}")
     return matches[0]
-
 
 def insert_after(paragraph, text, style="Normal"):
     new_p = OxmlElement("w:p")
@@ -25,7 +22,6 @@ def insert_after(paragraph, text, style="Normal"):
     result.style = style
     result.add_run(text)
     return result
-
 
 def main():
     copy2(DOCX, BACKUP)
@@ -78,7 +74,6 @@ def main():
     doc.save(DOCX)
     print(DOCX)
     print(BACKUP)
-
 
 if __name__ == "__main__":
     main()

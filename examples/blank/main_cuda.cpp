@@ -46,25 +46,12 @@ int main(int argc, char** argv)
     try
     {
 
-
-
-
-
-
-
-
-
-
-
-
 #if 0
         cout << "OpenNN. ImageNet (Imagenette) ResNet-50 GPU FP32 benchmark." << endl;
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
         Backend::instance();
         set_seed(42);
-
-
 
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/imagenette";
@@ -80,8 +67,6 @@ int main(int argc, char** argv)
              << " test="           << dataset.get_samples_number("Testing")
              << " input="          << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2]
              << " classes="        << target_shape[0] << endl;
-
-
 
         ResNet network(input_shape,
                        {3, 4, 6, 3},
@@ -128,17 +113,6 @@ true);
         return 0;
 #endif
 
-
-
-
-
-
-
-
-
-
-
-
 #if 0
         cout << "OpenNN. EN->DE Transformer GPU FP32 benchmark." << endl;
 
@@ -148,8 +122,6 @@ true);
 
         const filesystem::path dataset_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de.cap60.txt";
-
-
 
         const filesystem::path model_path =
             "/home/artelnics/Documents/datasets/wmt14_en_de/wmt14_en_de_model.json";
@@ -178,7 +150,6 @@ true);
 
         if (decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
-
 
         const Index embedding_dimension    = 512;
         const Index heads_number           = 8;
@@ -233,14 +204,10 @@ true);
             cout << "Saved parameters (binary) to " << parameters_path << endl;
         }
 
-
-
         transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
         transformer.save(model_path);
         cout << "Saved self-contained model to " << model_path << endl;
-
-
 
         cout << "\n================ EN -> DE CHAT ================" << endl;
         ChatSession session(transformer);

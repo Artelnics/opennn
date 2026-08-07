@@ -16,7 +16,6 @@ TEST(NeuralNetworkTest, DefaultConstructor)
     EXPECT_EQ(neural_network.get_layers_number(), 0);
 }
 
-
 TEST(NeuralNetworkTest, ApproximationConstructor)
 {
     ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
@@ -29,7 +28,6 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
 
-
 TEST(NeuralNetworkTest, ClassificationConstructor)
 {
     ClassificationNetwork neural_network({ 1 }, { 4 }, { 2 });
@@ -39,7 +37,6 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense");
 }
-
 
 TEST(NeuralNetworkTest, AproximationConstructor)
 {
@@ -53,7 +50,6 @@ TEST(NeuralNetworkTest, AproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
 
-
 TEST(NeuralNetworkTest, ForecastingConstructor)
 {
     ForecastingNetwork neural_network({ 1,1 }, { 4 }, { 2 });
@@ -65,7 +61,6 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
-
 
 TEST(NeuralNetworkTest, AutoAssociationConstructor)
 {
@@ -79,7 +74,6 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense");
     EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Unscaling");
 }
-
 
 TEST(NeuralNetworkTest, ImageClassificationConstructor)
 {
@@ -104,14 +98,12 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     EXPECT_EQ(neural_network.get_layer(5)->get_label(), "classification_layer");
 }
 
-
 TEST(NeuralNetworkTest, ForwardPropagate)
 {
     const Index samples_number = 5;
     const Index inputs_number = 2;
     const Index outputs_number = 1;
     const Index neurons_number = 1;
-
 
     ApproximationNetwork neural_network_aproximation({inputs_number}, {neurons_number}, {outputs_number});
     neural_network_aproximation.set_parameters_random();
@@ -128,7 +120,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     EXPECT_EQ(result.rows(), samples_number);
     EXPECT_EQ(result.cols(), outputs_number);
 
-
     ClassificationNetwork neural_network_classification({inputs_number}, {neurons_number}, {outputs_number});
 
     MatrixR result_classification = neural_network_classification.calculate_outputs(input_data);
@@ -136,7 +127,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     EXPECT_EQ(result_classification.rows(), samples_number);
     EXPECT_EQ(result_classification.cols(), outputs_number);
 }
-
 
 TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 {
@@ -148,5 +138,4 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
     EXPECT_EQ(outputs.size(), 0);
 }
-
 

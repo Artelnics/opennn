@@ -51,7 +51,6 @@ print(f"precision={'bf16' if use_bf16 else 'fp32'} mode={args.mode} "
       f"d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers} "
       f"batch={args.batch} steps={args.steps} xla=False")
 
-
 def positional_encoding(length, depth):
     pos = np.arange(length)[:, None]
     i = np.arange(depth)[None, :]
@@ -61,14 +60,11 @@ def positional_encoding(length, depth):
     pe[:, 1::2] = np.cos(angle[:, 1::2])
     return tf.constant(pe[None], dtype=tf.float32)
 
-
 L = tf.keras.layers
-
 
 def ffn(x, d, ff):
     h = L.Dense(ff, activation="relu")(x)
     return L.Dense(d)(h)
-
 
 def build_model():
     d, h, ff, n = args.d, args.h, args.ff, args.layers
@@ -93,10 +89,8 @@ def build_model():
         y = L.LayerNormalization()(y + ca)
         y = L.LayerNormalization()(y + ffn(y, d, ff))
 
-
     logits = L.Dense(args.out_vocab, dtype="float32")(y)
     return tf.keras.Model([src, dec], logits)
-
 
 model = build_model()
 print(f"parameters={model.count_params()}")
@@ -137,7 +131,6 @@ if args.mode == "train":
     wall_s = time.perf_counter() - t0
     print(f"final_loss={float(last):.5f}")
 else:
-
 
     @tf.function
     def infer_step(src_b, dec_b):

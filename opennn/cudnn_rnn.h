@@ -125,9 +125,6 @@ protected:
 
 #ifdef OPENNN_HAS_CUDA
 
-
-
-
     void cudnn_rnn_forward_(bool is_training, bool has_cell_state,
                             const void* x, void* y,
                             const function<void()>& reconfigure) const;

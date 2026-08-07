@@ -10,7 +10,6 @@ VARIABLES = 100
 SAMPLES = 200
 SEED = 42
 
-
 def main():
     rng = random.Random(SEED)
 
@@ -22,7 +21,6 @@ def main():
     with open("sum.csv", "w", newline="") as f:
         csv.writer(f, delimiter=";").writerows(rows)
     print(f"wrote sum.csv ({SAMPLES} samples, {VARIABLES} inputs)")
-
 
 if __name__ == "__main__":
     main()

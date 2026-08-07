@@ -26,7 +26,6 @@ namespace opennn
         return (x - d.mean) / d.standard_deviation;
     }
 
-
     inline float scale_value(ScalerMethod method, const Descriptives& desc, float value,
                              float min_range = -1.0f, float max_range = 1.0f)
     {
@@ -50,7 +49,6 @@ namespace opennn
 
         return value;
     }
-
 
     inline pair<float, float> scaling_affine(ScalerMethod scaler,
                                              const Descriptives& descriptives,

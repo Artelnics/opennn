@@ -21,11 +21,9 @@ import numpy as np
 
 from metrics import binary_metrics
 
-
 def bench_data_dir() -> Path:
     root = os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data"))
     return Path(root) / "higgs"
-
 
 def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
@@ -33,12 +31,10 @@ def load_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
 
-
 def batches(n: int, batch: int):
     stop = (n // batch) * batch
     for start in range(0, stop, batch):
         yield start, start + batch
-
 
 def run(args: argparse.Namespace) -> None:
     import torch
@@ -94,7 +90,6 @@ def run(args: argparse.Namespace) -> None:
         print(f"{key}={value:.9g}")
     print("RESULT=OK")
 
-
 def parse_args() -> argparse.Namespace:
     data_dir = bench_data_dir()
     parser = argparse.ArgumentParser()
@@ -107,10 +102,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--threads", type=int, default=0)
     return parser.parse_args()
 
-
 def main() -> None:
     run(parse_args())
-
 
 if __name__ == "__main__":
     try:

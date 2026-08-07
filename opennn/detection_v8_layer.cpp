@@ -178,7 +178,6 @@ void DetectionV8::write_JSON_body(JsonWriter& writer) const
     add_json_field(writer, "RegMax",        to_string(detection.reg_max));
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

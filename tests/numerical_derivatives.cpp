@@ -20,9 +20,6 @@ namespace opennn
 namespace
 {
 
-
-
-
 void upload_batch_if_gpu(Batch& batch, const NeuralNetwork& neural_network)
 {
 #ifdef OPENNN_HAS_CUDA

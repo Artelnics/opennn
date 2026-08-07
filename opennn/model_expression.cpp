@@ -43,7 +43,6 @@ static constexpr const char* php_header =
 static constexpr const char* php_subheader = R"HTML(
 -->
 
-
 <html lang = "en">
 
 <head>
@@ -794,7 +793,7 @@ string ModelExpression::get_expression_c_embedded() const
         const string table_prefix = format("nn_layer_{}", i);
         const bool is_last = (i == layers_number - 1);
 
-        if (layer_type == LayerType::Scaling || layer_type == LayerType::Unscaling)
+        if (is_one_of(layer_type, LayerType::Scaling, LayerType::Unscaling))
         {
             const Scaling* scaling = static_cast<const Scaling*>(layers[i].get());
             const vector<Descriptives>& descriptives = scaling->get_descriptives();
@@ -1298,11 +1297,7 @@ string ModelExpression::get_expression_php() const
     apply_name_mapping(expression, input_names, fixed_input_names);
     apply_name_mapping(expression, output_names, fixed_output_names);
 
-
-
     const vector<string> output_assignments = fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
-
-
 
     vector<string> php_vars = fixed_input_names;
     php_vars.insert(php_vars.end(), fixed_output_names.begin(), fixed_output_names.end());

@@ -84,11 +84,6 @@ TEST(ForwardPropagationRetainedOutputsTest,
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-
-
-
-
-
     Transformer network(4, 5, 12, 14, 8, 2, 16, 1);
     const Seq2SeqLayout layout = find_layout(network);
 
@@ -298,8 +293,6 @@ TEST(ForwardPropagationRetainedOutputsTest, OutputWindowMatchesFullForwardForEve
     }
 
     const Tensor3 reference = network.calculate_outputs(decoder_inputs, encoder_inputs);
-
-
 
     InferenceShapePolicy policy;
     policy.sequence_capacity = decoder_length;

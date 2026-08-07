@@ -20,8 +20,6 @@ namespace opennn
 namespace
 {
 
-
-
 vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
                                      const vector<vector<TensorSpec>>& backward_specs,
                                      Index batch_size)
@@ -99,8 +97,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
-
-
     if (joint_forward && joint_forward->joint_delta_plan.valid)
     {
         const auto& joint = joint_forward->joint_delta_plan;
@@ -121,11 +117,14 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
     const vector<vector<pair<size_t, size_t>>>& consumer_edges)
 {
     const auto& layers = network.get_layers();
-    const Index layers_number = network.get_layers_number();
     const Index first_trainable_layer_index = network.get_first_trainable_layer_index();
     const Index last_trainable_layer_index = network.get_last_trainable_layer_index();
     const auto& source_layers = network.get_source_layers();
-
+    const auto is_trainable_layer = [&](Index layer_index)
+    {
+        return layer_index >= first_trainable_layer_index
+            && layer_index <= last_trainable_layer_index;
+    };
 
     const Type compute_dtype = network.is_gpu()
         ? activation_dtype(network.get_training_type())
@@ -134,25 +133,34 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
     DeltaLayout layout;
     vector<DeltaEntry>& delta_entries = layout.entries;
     vector<bool>& aliases_residual_delta = layout.aliases_residual_delta;
-    aliases_residual_delta.assign(size_t(layers_number), false);
-    Index& aliased_residual_delta_bytes = layout.aliased_residual_delta_bytes;
+    aliases_residual_delta.assign(layers.size(), false);
 
     for (Index layer_index = first_trainable_layer_index;
          layer_index <= last_trainable_layer_index;
          ++layer_index)
     {
-        const auto& specs = backward_specs[size_t(layer_index)];
-        const auto& sources = source_layers[size_t(layer_index)];
-        const bool aliases = layers[size_t(layer_index)]->allows_input_delta_alias()
-            && specs.size() == 2 && sources.size() == 2
-            && sources[0] >= first_trainable_layer_index
-            && sources[0] < sources[1]
-            && sources[1] <= last_trainable_layer_index
-            && !specs[0].shape.empty() && specs[1].shape == specs[0].shape
-            && specs[1].dtype == specs[0].dtype
-            && layers[size_t(sources[1])]->preserves_output_delta_during_backward();
-        aliases_residual_delta[size_t(layer_index)] = aliases;
-        if (aliases) aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
+        const size_t index = size_t(layer_index);
+        const auto& specs = backward_specs[index];
+        const auto& sources = source_layers[index];
+
+        if (!layers[index]->allows_input_delta_alias()
+            || specs.size() != 2
+            || sources.size() != 2)
+            continue;
+
+        if (!is_trainable_layer(sources[0])
+            || !is_trainable_layer(sources[1])
+            || sources[0] >= sources[1])
+            continue;
+
+        if (specs[0].shape.empty() || specs[1] != specs[0])
+            continue;
+
+        if (!layers[size_t(sources[1])]->preserves_output_delta_during_backward())
+            continue;
+
+        aliases_residual_delta[index] = true;
+        layout.aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
     }
 
     const vector<bool> passthrough =
@@ -169,77 +177,76 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_entries(
 
     const Index loss_delta_consumer = resolve_through_passthrough(last_trainable_layer_index);
 
-    if (output_delta_shape.size() != 0 && !loss_function.output_delta_overwrites_outputs())
+    if (output_delta_shape.size() > 0 && !loss_function.output_delta_overwrites_outputs())
         delta_entries.push_back({last_trainable_layer_index, 0, {output_delta_shape, compute_dtype}, 0,
                                  last_trainable_layer_index - loss_delta_consumer});
 
     for (Index layer_index = first_trainable_layer_index; layer_index <= last_trainable_layer_index; ++layer_index)
     {
-        const auto& specs = backward_specs[layer_index];
-        const auto& sources = source_layers[layer_index];
+        const size_t index = size_t(layer_index);
+        const auto& specs = backward_specs[index];
+        const auto& sources = source_layers[index];
 
-        for (size_t j = 0; j < specs.size(); ++j)
+        for (size_t slot = 0; slot < specs.size(); ++slot)
         {
-            const auto& [shape, dtype] = specs[j];
-            if (shape.empty()) continue;
-            if (j == 1 && aliases_residual_delta[size_t(layer_index)])
+            const auto& [shape, dtype] = specs[slot];
+            if (shape.empty() || (slot == 1 && aliases_residual_delta[index]))
                 continue;
 
             const Index first_step = last_trainable_layer_index - layer_index;
+            Index last_step = first_step;
 
-            const Index source_layer = resolve_through_passthrough(
-                (j < sources.size()) ? sources[j] : Index(-1));
+            if (slot < sources.size())
+            {
+                const Index source_layer = resolve_through_passthrough(sources[slot]);
+                if (!is_trainable_layer(source_layer)) continue;
+                last_step = last_trainable_layer_index - source_layer;
+            }
 
-            const bool source_layer_is_trainable = source_layer >= first_trainable_layer_index
-                                                && source_layer <= last_trainable_layer_index;
-
-            const bool is_input_delta = j < sources.size();
-            if (is_input_delta && !source_layer_is_trainable) continue;
-
-            const Index last_step = source_layer_is_trainable ? last_trainable_layer_index - source_layer : first_step;
-
-            delta_entries.push_back({layer_index, j + 1, {shape, dtype}, first_step, last_step});
+            delta_entries.push_back({layer_index, slot + 1, {shape, dtype}, first_step, last_step});
         }
     }
 
     const pair<size_t, size_t> no_consumer_delta{SIZE_MAX, SIZE_MAX};
     vector<pair<size_t, size_t>>& reusable_consumer_deltas = layout.reusable_consumer_deltas;
-    reusable_consumer_deltas.assign(size_t(layers_number), no_consumer_delta);
+    reusable_consumer_deltas.assign(layers.size(), no_consumer_delta);
 
     for (Index layer_index = first_trainable_layer_index; layer_index < last_trainable_layer_index; ++layer_index)
     {
-        const auto& edges = consumer_edges[layer_index];
+        const size_t index = size_t(layer_index);
+        const auto& edges = consumer_edges[index];
+        const bool detached_detection =
+            edges.empty()
+            && is_one_of(layers[index]->get_type(),
+                         LayerType::Detection, LayerType::DetectionV8);
 
-        const bool has_multiple_consumers = edges.size() > 1;
-        const Shape output_shape = layers[layer_index]->get_output_shape();
+        if (!detached_detection && edges.size() <= 1) continue;
+
+        const Shape output_shape = layers[index]->get_output_shape();
         const Shape delta_shape = Shape({batch_size}).append(output_shape);
-        const auto reusable_delta = has_multiple_consumers
-            ? ranges::find_if(
-                  edges,
-                  [&](const auto& edge)
-                  {
-                      const auto [consumer_layer, input_position] = edge;
-                      const auto& specs = backward_specs[consumer_layer];
-                      return input_position < specs.size()
-                          && !specs[input_position].shape.empty()
-                          && specs[input_position].shape == delta_shape;
-                  })
-            : edges.end();
-        if (reusable_delta != edges.end())
-            reusable_consumer_deltas[size_t(layer_index)] = *reusable_delta;
 
-        const auto layer_type = layers[layer_index]->get_type();
-        const bool is_detached_detection_layer =
-            (layer_type == LayerType::Detection || layer_type == LayerType::DetectionV8)
-            && edges.empty();
+        if (!detached_detection)
+        {
+            const auto reusable_delta = ranges::find_if(edges, [&](const auto& edge)
+            {
+                const auto [consumer_layer, input_position] = edge;
+                const auto& specs = backward_specs[consumer_layer];
+                return input_position < specs.size()
+                    && !specs[input_position].shape.empty()
+                    && specs[input_position].shape == delta_shape;
+            });
 
-        if ((!has_multiple_consumers || reusable_delta != edges.end())
-            && !is_detached_detection_layer)
-            continue;
+            if (reusable_delta != edges.end())
+            {
+                reusable_consumer_deltas[index] = *reusable_delta;
+                continue;
+            }
+        }
+
         if (output_shape.empty()) continue;
 
         const Index last_step = last_trainable_layer_index - layer_index;
-        const Index first_step = is_detached_detection_layer ? Index(0) : last_step;
+        const Index first_step = detached_detection ? Index(0) : last_step;
 
         delta_entries.push_back({layer_index, 0, {delta_shape, compute_dtype}, first_step, last_step});
     }
@@ -270,7 +277,6 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     const vector<DeltaEntry>& delta_entries = layout.entries;
 
     const vector<MemoryPoolEntry> lifetime_entries = to_pool_entries(delta_entries);
-
 
     memory_debug::record_pool_lifetimes(
         "backward", lifetime_entries,
@@ -364,13 +370,11 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
         {
             const auto [consumer_layer, input_position] =
                 reusable_consumer_deltas[size_t(i)];
-            if (consumer_layer != SIZE_MAX)
-            {
-                const size_t slot = input_position + 1;
-                layer_output_deltas[i] =
-                    backward_slots[consumer_layer][slot];
-            }
+            if (consumer_layer == SIZE_MAX) continue;
 
+            const size_t slot = input_position + 1;
+            layer_output_deltas[i] =
+                backward_slots[consumer_layer][slot];
             continue;
         }
 
@@ -386,17 +390,16 @@ void BackPropagation::bind_delta_views(const DeltaLayout& layout,
         const size_t slot = input_position + 1;
         const auto& consumer_deltas = backward_slots[consumer_layer];
 
-        TensorView delta_view;
         if (slot < consumer_deltas.size() && !consumer_deltas[slot].empty())
-            delta_view = consumer_deltas[slot];
+            layer_output_deltas[i] = consumer_deltas[slot];
         else if (passthrough[consumer_layer]
                  && !layer_output_deltas[consumer_layer].empty())
-            delta_view = layer_output_deltas[consumer_layer];
+            layer_output_deltas[i] = layer_output_deltas[consumer_layer];
         else
             continue;
 
-        delta_view.shape = Shape{batch_size}.append(layers[i]->get_output_shape());
-        layer_output_deltas[i] = delta_view;
+        layer_output_deltas[i].shape =
+            Shape{batch_size}.append(layers[i]->get_output_shape());
     }
 }
 

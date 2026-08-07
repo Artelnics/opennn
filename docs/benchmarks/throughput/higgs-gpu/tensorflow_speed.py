@@ -39,13 +39,11 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "higgs"))
 from metrics import binary_metrics, parse_optional_float, passes_quality_gate
 
-
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
     x = np.ascontiguousarray(data[:, :-1])
     y = np.ascontiguousarray(data[:, -1:].astype(np.float32))
     return x, y
-
 
 def main():
     train_csv = sys.argv[1] if len(sys.argv) > 1 else "higgs_train.csv"
@@ -137,9 +135,6 @@ def main():
         run_epoch()
         run_epoch()
 
-
-
-
         print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
         times = []
         last_loss = None
@@ -150,7 +145,6 @@ def main():
         if last_loss is not None:
             float(last_loss)
         print(f"TRAIN_END_UNIX={time.time():.3f}", flush=True)
-
 
         processed = (xt_np.shape[0] // batch) * batch
         xt = tf.constant(xt_np[:processed])
@@ -176,7 +170,6 @@ def main():
         print(f"quality_gate={'PASS' if gate else 'FAIL'}")
 
     print("RESULT=OK")
-
 
 if __name__ == "__main__":
     try:

@@ -53,8 +53,6 @@ int main(int argc, char* argv[])
         const Index timed_runs = argc > 3 ? Index(std::stoll(argv[3])) : 5;
         const std::string precision = argc > 4 ? argv[4] : "fp32";
 
-
-
         const Index image_size_arg = argc > 5 ? Index(std::stoll(argv[5])) : 0;
         const Index image_size = image_size_arg < 0 ? -image_size_arg : image_size_arg;
         const bool force_resident = image_size_arg < 0;
@@ -66,16 +64,8 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
-
-
-
-
         device::set_conv_autotune(true);
         device::set_conv_workspace_cap(0);
-
-
-
-
 
         if (!cache_dir.empty())
             std::cerr << "note: custom cache dir ignored (OpenNN caches in "
@@ -87,9 +77,6 @@ int main(int argc, char* argv[])
                 : std::make_unique<ImageDataset>(data_path);
         ImageDataset& dataset = *dataset_ptr;
         dataset.set_sample_roles("Training");
-
-
-
 
         const bool gpu_resident = (image_size == 0) || force_resident;
         if (gpu_resident)
@@ -115,9 +102,6 @@ true);
         std::cout << "layers=" << network.get_layers_number()
                   << " parameters=" << network.get_parameters_size() << "\n";
 
-
-
-
         const vector<Index> input_feature_indices = dataset.get_feature_indices("Input");
         const vector<Index> decoder_feature_indices = dataset.get_feature_indices("Decoder");
         const vector<Index> target_feature_indices = dataset.get_feature_indices("Target");
@@ -135,9 +119,6 @@ true);
 
         const vector<TensorView>& inputs = batch_data.get_inputs();
 
-
-
-
         ForwardPropagation forward_propagation(
             effective_batch, &network, ForwardPropagationMode::Inference);
         forward_propagation.set_cuda_graph(true);
@@ -147,8 +128,6 @@ true);
 #ifdef OPENNN_HAS_CUDA
         device::synchronize();
 #endif
-
-
 
         network.calculate_outputs_resident(inputs, forward_propagation, false);
 #ifdef OPENNN_HAS_CUDA
@@ -168,7 +147,6 @@ true);
             times.push_back(std::chrono::duration<double>(t1 - t0).count());
         }
 
-
         const TensorView outputs = forward_propagation.get_outputs();
 #ifdef OPENNN_HAS_CUDA
         float probe[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -180,10 +158,6 @@ true);
             if (!std::isfinite(probe[i]))
                 throw std::runtime_error("non-finite outputs");
 #endif
-
-
-
-
 
         if (const char* profile_env = std::getenv("OPENNN_PROFILE");
             profile_env && profile_env[0] == '1')

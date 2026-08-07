@@ -378,8 +378,7 @@ void Dataset::set_default_variable_roles_implementation(bool forecasting)
         {
             Variable& variable = variables[i];
 
-            if (variable.type == VariableType::Constant
-            ||  variable.type == VariableType::DateTime)
+            if (is_one_of(variable.type, VariableType::Constant, VariableType::DateTime))
             {
                 variable.set_role("None");
             }
@@ -607,10 +606,9 @@ void Dataset::set_variables_number(const Index new_size)
 void Dataset::set_variable_roles(VariableRole variable_role)
 {
     for (Variable& variable : variables)
-        variable.role =
-            (variable.type == VariableType::Constant || variable.type == VariableType::DateTime)
-                ? VariableRole::None
-                : variable_role;
+        variable.role = is_one_of(variable.type, VariableType::Constant, VariableType::DateTime)
+                      ? VariableRole::None
+                      : variable_role;
 
 }
 

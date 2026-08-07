@@ -9,11 +9,6 @@
 
 using namespace opennn;
 
-
-
-
-
-
 TEST(YoloLossCheck, GradientMatchesFiniteDifferences)
 {
     constexpr int gc_grid = 2;
@@ -26,13 +21,8 @@ TEST(YoloLossCheck, GradientMatchesFiniteDifferences)
     std::vector<float> gc_tgt(gc_N, 0.0f);
     std::vector<float> gc_grad(gc_N, 0.0f);
 
-
-
-
-
     for (int i = 0; i < gc_N; ++i)
         gc_out[i] = 0.5f;
-
 
     gc_out[0] = 0.52f;
     gc_out[1] = 0.53f;
@@ -42,7 +32,6 @@ TEST(YoloLossCheck, GradientMatchesFiniteDifferences)
     gc_out[5] = 0.80f;
     gc_out[6] = 0.15f;
     gc_out[7] = 0.05f;
-
 
     gc_tgt[0] = 0.5f;
     gc_tgt[1] = 0.5f;
@@ -89,24 +78,13 @@ true, gc_lam);
     EXPECT_LT(max_rel_err, 1e-2f);
 }
 
-
-
-
-
 TEST(YoloLossCheck, ForwardMatchesExpectedValues)
 {
-
-
 
     constexpr int ev_grid = 1;
     constexpr int ev_bpc  = 1;
     constexpr int ev_ncls = 2;
     constexpr int ev_vpb  = 5 + ev_ncls;
-
-
-
-
-
 
     const float ev_cx=0.5f, ev_cy=0.5f, ev_w=0.4f, ev_h=0.3f;
     const float ev_conf=0.7f, ev_p0=0.8f, ev_p1=0.2f;
@@ -122,9 +100,6 @@ TEST(YoloLossCheck, ForwardMatchesExpectedValues)
 
     const float EPSILON_LOCAL = 1e-7f;
 
-
-
-
     const float expA = 0.0f
         + (-std::log(ev_conf + EPSILON_LOCAL))
         + ev_lam.cls * (-std::log(ev_p0 + EPSILON_LOCAL) - std::log(1.0f - ev_p1 + EPSILON_LOCAL));
@@ -137,12 +112,6 @@ TEST(YoloLossCheck, ForwardMatchesExpectedValues)
 true, ev_lam);
     const float errA = std::abs(gotA - expA);
 
-
-
-
-
-
-
     const float ev_px=0.1f, ev_gx=0.9f, ev_py=0.5f, ev_gy=0.5f;
     const float ev_pw=0.1f, ev_gw=0.1f, ev_ph=0.1f, ev_gh=0.1f;
 
@@ -152,12 +121,6 @@ true, ev_lam);
     ev_out_B[4]=0.5f; ev_out_B[5]=0.6f; ev_out_B[6]=0.4f;
     ev_tgt_B[0]=ev_gx; ev_tgt_B[1]=ev_gy; ev_tgt_B[2]=ev_gw; ev_tgt_B[3]=ev_gh;
     ev_tgt_B[4]=1.0f; ev_tgt_B[5]=1.0f; ev_tgt_B[6]=0.0f;
-
-
-
-
-
-
 
     const float ev_enc=0.09f, ev_uni=0.02f;
     const float ev_giou = 0.0f - (ev_enc - ev_uni) / ev_enc;
@@ -179,9 +142,6 @@ true, ev_lam);
 true, ev_lam);
     const float errB = std::abs(gotB - expB);
 
-
-
-
     std::vector<float> ev_out_C = ev_out_A;
     ev_out_C[4] = 0.1f;
     std::vector<float> ev_grad_C(ev_vpb, 0.0f);
@@ -193,8 +153,6 @@ true, ev_lam);
     const float ev_raw_logit_grad_obj = ev_grad_C[4] * ev_out_C[4] * (1.0f - ev_out_C[4]);
 
     const float errC = (ev_raw_logit_grad_obj < 0.0f) ? 0.0f : 1.0f;
-
-
 
     std::vector<float> ev_out_D(ev_vpb, 0.0f);
     std::vector<float> ev_tgt_D(ev_vpb, 0.0f);

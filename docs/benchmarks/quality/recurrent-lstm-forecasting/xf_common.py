@@ -18,14 +18,12 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 CSV = os.path.join(HERE, "data", "beijing_pm25_forecasting.csv")
 
-
 SCENARIOS = [
     ("B1", 24, 1, 32, 0.003, 128, 120, 20, False),
     ("B2", 48, 1, 48, 0.003, 128, 100, 20, False),
     ("B3", 72, 24, 64, 0.002, 128, 80, 20, True),
     ("B4", 168, 24, 64, 0.001, 128, 60, 15, True),
 ]
-
 
 def _load_columns():
     rows = []
@@ -36,7 +34,6 @@ def _load_columns():
             rows.append([float(x) for x in line])
     data = np.asarray(rows, dtype=np.float32)
     return data
-
 
 def make_windows(past, future, multi_target):
     """Return (Xtr,Ytr, Xva,Yva, Xte,Yte, y_mean,y_std) as float32 numpy.
@@ -50,7 +47,6 @@ def make_windows(past, future, multi_target):
     T, n_feat = data.shape
     target_col = n_feat - 1
 
-
     n_train = int(0.6 * T)
     n_val = int(0.2 * T)
 
@@ -63,7 +59,6 @@ def make_windows(past, future, multi_target):
     f_out = future if multi_target else 1
 
     def build(lo, hi):
-
 
         Xs, Ys = [], []
         for s in range(lo, hi - past - future + 1):

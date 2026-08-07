@@ -39,7 +39,6 @@ struct AttentionOperator : Operator
 
     TensorSpec backward_scratch_spec(Index) const;
 
-
     static constexpr size_t sdpa_scratch_slots_count = 8;
 
     vector<TensorSpec> sdpa_gradient_scratch_specs(Index) const;
@@ -49,14 +48,9 @@ struct AttentionOperator : Operator
     size_t scratch_slot = 0;
     size_t attention_output_slot = 0;
 
-
-
     size_t merged_output_delta_slot = 0;
 
-
-
     size_t sdpa_gradient_slot = 0;
-
 
     size_t sdpa_qkv_pack_slot = 0;
 

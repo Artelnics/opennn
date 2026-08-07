@@ -22,7 +22,6 @@ WORK="${WORK:-$HOME/tinyml-forecasting}"
 N_INPUTS=12
 N_OUTPUTS=1
 
-
 . <(tr -d '\r' < "$HARNESS_DIR/tinyml_common.sh")
 discover_tinyml_toolchains
 ARM_HARNESS_DIR="$HARNESS_DIR/arm"

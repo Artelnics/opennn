@@ -6,20 +6,8 @@
 using namespace opennn;
 using namespace std;
 
-
-
-
-
-
-
 namespace
 {
-
-
-
-
-
-
 
 BytePairTokenizer make_tokenizer()
 {

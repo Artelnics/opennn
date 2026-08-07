@@ -25,8 +25,6 @@ void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_
 void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
 
-
-
     throw_if(tied_transposed || transposed_inference_active
              || fused_activation != ActivationFunction::Identity,
              "MultiHeadProjectionOperator: tied, transposed and fused-activation "

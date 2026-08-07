@@ -1,5 +1,4 @@
 
-
 if(NOT DEFINED OpenNN_BUILD_EXAMPLES)
     option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 endif()
@@ -47,8 +46,6 @@ if(OpenNN_BUILD_EXAMPLES)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/beijing_pm25_forecasting/CMakeLists.txt")
         add_subdirectory(beijing_pm25_forecasting)
     endif()
-
-
 
     if(MSVC)
         target_precompile_headers(yolo REUSE_FROM opennn)

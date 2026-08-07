@@ -46,7 +46,6 @@ protected:
     }
 };
 
-
 TEST_F(ModelExpressionTest, BuildExpressionNotEmpty)
 {
     const ModelExpression model_expression(neural_network.get());
@@ -55,7 +54,6 @@ TEST_F(ModelExpressionTest, BuildExpressionNotEmpty)
 
     EXPECT_FALSE(expression.empty());
 }
-
 
 TEST_F(ModelExpressionTest, BuildExpressionContainsVariableNames)
 {
@@ -67,7 +65,6 @@ TEST_F(ModelExpressionTest, BuildExpressionContainsVariableNames)
     EXPECT_TRUE(contains_token(expression, "beta"));
     EXPECT_TRUE(contains_token(expression, "gamma"));
 }
-
 
 TEST_F(ModelExpressionTest, BuildExpressionContainsScalingAndActivations)
 {
@@ -81,7 +78,6 @@ TEST_F(ModelExpressionTest, BuildExpressionContainsScalingAndActivations)
     EXPECT_TRUE(contains_token(expression, "Identity"));
 }
 
-
 TEST_F(ModelExpressionTest, BuildExpressionHasOneLinePerNonInputNeuron)
 {
     const ModelExpression model_expression(neural_network.get());
@@ -92,7 +88,6 @@ TEST_F(ModelExpressionTest, BuildExpressionHasOneLinePerNonInputNeuron)
 
     EXPECT_GT(assignments, 0);
 }
-
 
 TEST_F(ModelExpressionTest, SaveCExpression)
 {
@@ -115,7 +110,6 @@ TEST_F(ModelExpressionTest, SaveCExpression)
 
     filesystem::remove(path);
 }
-
 
 TEST_F(ModelExpressionTest, SaveCEmbeddedExpression)
 {
@@ -142,7 +136,6 @@ TEST_F(ModelExpressionTest, SaveCEmbeddedExpression)
     filesystem::remove(path);
 }
 
-
 TEST(ModelExpressionForecastingTest, SaveCEmbeddedLstm)
 {
     ForecastingLstmNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
@@ -167,7 +160,6 @@ TEST(ModelExpressionForecastingTest, SaveCEmbeddedLstm)
     filesystem::remove(path);
 }
 
-
 TEST(ModelExpressionForecastingTest, SaveCEmbeddedRecurrent)
 {
     ForecastingNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
@@ -189,7 +181,6 @@ TEST(ModelExpressionForecastingTest, SaveCEmbeddedRecurrent)
     filesystem::remove(path);
 }
 
-
 TEST(ModelExpressionForecastingTest, ExpressionCoversAllTimeSteps)
 {
     ForecastingLstmNetwork network(Shape{4, 2}, Shape{3}, Shape{1});
@@ -201,7 +192,6 @@ TEST(ModelExpressionForecastingTest, ExpressionCoversAllTimeSteps)
     EXPECT_TRUE(contains_token(expression, "input_0_t0"));
     EXPECT_TRUE(contains_token(expression, "input_1_t3"));
 }
-
 
 TEST_F(ModelExpressionTest, SavePythonExpression)
 {
@@ -229,7 +219,6 @@ TEST_F(ModelExpressionTest, SavePythonExpression)
     filesystem::remove(path);
 }
 
-
 TEST_F(ModelExpressionTest, SaveJavaScriptExpression)
 {
     const ModelExpression model_expression(neural_network.get());
@@ -250,7 +239,6 @@ TEST_F(ModelExpressionTest, SaveJavaScriptExpression)
 
     filesystem::remove(path);
 }
-
 
 TEST_F(ModelExpressionTest, SavePhpExpression)
 {
@@ -273,7 +261,6 @@ TEST_F(ModelExpressionTest, SavePhpExpression)
     filesystem::remove(path);
 }
 
-
 TEST_F(ModelExpressionTest, SaveThrowsOnUnwritablePath)
 {
     const ModelExpression model_expression(neural_network.get());
@@ -282,9 +269,6 @@ TEST_F(ModelExpressionTest, SaveThrowsOnUnwritablePath)
 
     EXPECT_ANY_THROW(model_expression.save(path, ModelExpression::ProgrammingLanguage::C));
 }
-
-
-
 
 class ModelExpressionSoftmaxTest : public ::testing::Test
 {
@@ -318,14 +302,12 @@ protected:
     }
 };
 
-
 TEST_F(ModelExpressionSoftmaxTest, BuildExpressionContainsSoftmax)
 {
     const ModelExpression model_expression(neural_network.get());
 
     EXPECT_TRUE(contains_token(model_expression.build_expression(), "Softmax"));
 }
-
 
 TEST_F(ModelExpressionSoftmaxTest, SaveCExpressionContainsSoftmaxBlock)
 {
@@ -340,7 +322,6 @@ TEST_F(ModelExpressionSoftmaxTest, SaveCExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "for(int i = 0; i < 3; ++i) out[i] /= sum;"));
 }
 
-
 TEST_F(ModelExpressionSoftmaxTest, SaveCEmbeddedExpressionContainsSoftmaxBlock)
 {
     const string source =
@@ -351,7 +332,6 @@ TEST_F(ModelExpressionSoftmaxTest, SaveCEmbeddedExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "values[i] = expf(values[i] - max_value); sum += values[i];"));
     EXPECT_TRUE(contains_token(source, "for (int i = 0; i < n; ++i) values[i] /= sum;"));
 }
-
 
 TEST_F(ModelExpressionSoftmaxTest, SaveJavaScriptExpressionContainsSoftmaxBlock)
 {
@@ -366,7 +346,6 @@ TEST_F(ModelExpressionSoftmaxTest, SaveJavaScriptExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "for(var i = 0; i < out.length; ++i) out[i] /= sum;"));
 }
 
-
 TEST_F(ModelExpressionSoftmaxTest, SavePythonExpressionContainsSoftmaxBlock)
 {
     const string source =
@@ -378,7 +357,6 @@ TEST_F(ModelExpressionSoftmaxTest, SavePythonExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "sum_val = np.sum(outputs)"));
     EXPECT_TRUE(contains_token(source, "outputs = [x / sum_val for x in outputs]"));
 }
-
 
 TEST_F(ModelExpressionSoftmaxTest, SavePhpExpressionContainsSoftmaxBlock)
 {

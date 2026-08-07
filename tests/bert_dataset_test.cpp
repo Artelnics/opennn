@@ -53,7 +53,6 @@ namespace
     }
 }
 
-
 TEST(BertDatasetTest, TokenizesAndWiresRoles)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -85,7 +84,6 @@ TEST(BertDatasetTest, TokenizesAndWiresRoles)
     clean_up(vocab_path, text_path, seq);
     Configuration::instance().set();
 }
-
 
 TEST(BertDatasetTest, FeedsBertClassifierForward)
 {
@@ -135,7 +133,6 @@ TEST(BertDatasetTest, FeedsBertClassifierForward)
     Configuration::instance().set();
 }
 
-
 TEST(BertDatasetTest, BertClassifierGradientOnCpu)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -163,7 +160,6 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     clean_up(vocab_path, text_path, seq);
     Configuration::instance().set();
 }
-
 
 TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
 {

@@ -6,7 +6,6 @@ import math
 
 import numpy as np
 
-
 def roc_auc(y_true: np.ndarray, scores: np.ndarray) -> float:
     y = np.asarray(y_true, dtype=np.float64).reshape(-1)
     s = np.asarray(scores, dtype=np.float64).reshape(-1)
@@ -32,7 +31,6 @@ def roc_auc(y_true: np.ndarray, scores: np.ndarray) -> float:
     sum_pos_ranks = float(ranks[positives].sum())
     return (sum_pos_ranks - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg)
 
-
 def binary_metrics(y_true: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
     y = np.asarray(y_true, dtype=np.float64).reshape(-1)
     p = np.asarray(probabilities, dtype=np.float64).reshape(-1)
@@ -47,7 +45,6 @@ def binary_metrics(y_true: np.ndarray, probabilities: np.ndarray) -> dict[str, f
         "test_log_loss": log_loss,
         "test_roc_auc": auc,
     }
-
 
 def passes_quality_gate(
     metrics: dict[str, float],
@@ -64,7 +61,6 @@ def passes_quality_gate(
         if math.isnan(auc) or auc < min_auc:
             return False
     return True
-
 
 def parse_optional_float(value: str | None) -> float | None:
     if value is None or value == "" or value.lower() in {"none", "nan"}:

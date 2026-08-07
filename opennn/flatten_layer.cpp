@@ -26,7 +26,6 @@ void Flatten::set(const Shape& new_input_shape)
     set_label("flatten_layer");
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

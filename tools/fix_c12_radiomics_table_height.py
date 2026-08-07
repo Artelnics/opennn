@@ -3,10 +3,8 @@ from pathlib import Path
 from docx import Document
 from docx.oxml.ns import qn
 
-
 BASE = Path(r"C:\Users\Roberto\OneDrive - artelnics.com\DIPCAN\subsanacion_tecnica")
 DOCX = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO.docx"
-
 
 def main():
     doc = Document(DOCX)
@@ -21,7 +19,6 @@ def main():
             tr_pr.remove(tr_height)
     doc.save(DOCX)
     print(DOCX)
-
 
 if __name__ == "__main__":
     main()

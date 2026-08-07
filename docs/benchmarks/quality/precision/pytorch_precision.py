@@ -26,7 +26,6 @@ which = sys.argv[2] if len(sys.argv) > 2 else "Adam"
 epochs = int(sys.argv[3]) if len(sys.argv) > 3 else (10000 if which == "Adam" else 1000)
 torch.manual_seed(seed)
 
-
 def load(path):
     rows = []
     with open(path, newline="") as f:
@@ -34,7 +33,6 @@ def load(path):
             rows.append([float(x) for x in r])
     data = torch.tensor(rows, dtype=torch.float32)
     return data[:, :-1], data[:, -1:]
-
 
 x, y = load("rosenbrock.csv")
 

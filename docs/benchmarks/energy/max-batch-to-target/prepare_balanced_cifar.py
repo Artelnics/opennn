@@ -14,14 +14,12 @@ CLASSES = [
     "dog", "frog", "horse", "ship", "truck",
 ]
 
-
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as stream:
         for chunk in iter(lambda: stream.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -74,7 +72,6 @@ def main():
         json.dumps(metadata, indent=2), encoding="utf-8")
     print(json.dumps(metadata, indent=2))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

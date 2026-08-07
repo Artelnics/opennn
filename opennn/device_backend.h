@@ -50,8 +50,6 @@ enum class GraphWorkspaceKind
     Count
 };
 
-
-
 inline constexpr std::array<const char*, size_t(GraphWorkspaceKind::Count)>
 graph_workspace_labels = {"shared_scratch", "bf16_input", "bf16_gradient",
                           "bf16_to_fp32", "int8_dequant"};
@@ -92,8 +90,6 @@ void set_conv_autotune(bool) noexcept;
 class CudaAllocationGrowthGuard
 {
 public:
-
-
 
     explicit CudaAllocationGrowthGuard(bool,
                                        bool forbid_matmul_plan_creation = true);
@@ -283,9 +279,6 @@ bfloat16* ensure_int8_dequant_workspace(Index);
 float* ensure_bf16_to_fp32_workspace(Index);
 
 void* ensure_cudnn_conv_workspace(size_t);
-
-
-
 
 void release_matmul_thread_workspaces();
 

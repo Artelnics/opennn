@@ -30,7 +30,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, DefaultConstructor)
     EXPECT_EQ(levenberg_marquardt_algorithm.get_loss() == nullptr, true);
 }
 
-
 TEST_F(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 {
     Loss loss;
@@ -38,7 +37,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 
     EXPECT_TRUE(levenberg_marquardt_algorithm.get_loss() != nullptr);
 }
-
 
 TEST_F(LevenbergMarquardtAlgorithmTest, TrainApproximationCPU)
 {
@@ -75,7 +73,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, TrainApproximationCPU)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(LevenbergMarquardtAlgorithmTest, DampingParametersConverge)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -101,7 +98,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, DampingParametersConverge)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumEpochs)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -124,7 +120,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumEpochs)
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
-
 
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingLossGoal)
 {
@@ -152,7 +147,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingLossGoal)
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-
 TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumTime)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -178,7 +172,6 @@ TEST_F(LevenbergMarquardtAlgorithmTest, StoppingMaximumTime)
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
-
 
 TEST_F(LevenbergMarquardtAlgorithmTest, Determinism)
 {

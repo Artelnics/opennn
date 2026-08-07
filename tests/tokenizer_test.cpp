@@ -57,8 +57,6 @@ namespace
     }
 }
 
-
-
 TEST(WordLevelTokenizer, TokenizeLowercasesAndSeparatesWordsAndPunctuation)
 {
     WordLevelTokenizer tokenizer;
@@ -143,8 +141,6 @@ TEST(WordLevelTokenizer, EncodeSequenceAddsConfiguredFraming)
 
     EXPECT_EQ(tokenizer.encode_sequence("hello", 4), (vector<Index>{2, 4, 3}));
 }
-
-
 
 TEST(WordPieceTokenizer, GreedyLongestMatchSubwords)
 {

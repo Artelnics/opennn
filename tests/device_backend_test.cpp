@@ -5,7 +5,6 @@
 
 using namespace opennn;
 
-
 TEST(DeviceBackendTest, IsCudaBuildMatchesBuild)
 {
 #ifdef OPENNN_HAS_CUDA
@@ -14,7 +13,6 @@ TEST(DeviceBackendTest, IsCudaBuildMatchesBuild)
     EXPECT_FALSE(device::is_cuda_build());
 #endif
 }
-
 
 TEST(DeviceBackendTest, HasCudaDeviceMatchesBuild)
 {
@@ -25,7 +23,6 @@ TEST(DeviceBackendTest, HasCudaDeviceMatchesBuild)
 #endif
 }
 
-
 TEST(DeviceBackendTest, ComputeCapabilityMatchesBuild)
 {
     if (device::has_cuda_device())
@@ -34,7 +31,6 @@ TEST(DeviceBackendTest, ComputeCapabilityMatchesBuild)
         EXPECT_EQ(device::cuda_compute_capability(), -1);
 }
 
-
 TEST(DeviceBackendTest, AvailableMemoryMatchesBuild)
 {
     if (device::has_cuda_device())
@@ -42,7 +38,6 @@ TEST(DeviceBackendTest, AvailableMemoryMatchesBuild)
     else
         EXPECT_THROW(device::available_memory(), runtime_error);
 }
-
 
 TEST(DeviceBackendTest, AllocationGrowthFlagRoundTrips)
 {
@@ -56,7 +51,6 @@ TEST(DeviceBackendTest, AllocationGrowthFlagRoundTrips)
 
     device::set_cuda_allocation_growth_forbidden(previous);
 }
-
 
 TEST(DeviceBackendTest, GrowthGuardMatchesBuild)
 {
@@ -74,24 +68,20 @@ TEST(DeviceBackendTest, GrowthGuardMatchesBuild)
     device::set_cuda_allocation_growth_forbidden(previous);
 }
 
-
 TEST(DeviceBackendTest, AllocateZeroBytesReturnsNull)
 {
     EXPECT_EQ(device::allocate(Device::CPU, 0), nullptr);
 }
-
 
 TEST(DeviceBackendTest, AllocateNegativeBytesThrows)
 {
     EXPECT_THROW(device::allocate(Device::CPU, -1), runtime_error);
 }
 
-
 TEST(DeviceBackendTest, AllocateAutoDeviceThrows)
 {
     EXPECT_THROW(device::allocate(Device::Auto, 16), runtime_error);
 }
-
 
 TEST(DeviceBackendTest, AllocateAndDeallocateHostMemory)
 {
@@ -109,12 +99,10 @@ TEST(DeviceBackendTest, AllocateAndDeallocateHostMemory)
     device::deallocate(Device::CPU, pointer, byte_count);
 }
 
-
 TEST(DeviceBackendTest, DeallocateNullIsSafe)
 {
     EXPECT_NO_THROW(device::deallocate(Device::CPU, nullptr, 0));
 }
-
 
 TEST(DeviceBackendTest, SetZeroNegativeThrows)
 {
@@ -122,13 +110,11 @@ TEST(DeviceBackendTest, SetZeroNegativeThrows)
     EXPECT_THROW(device::set_zero(&value, -1, Device::CPU), runtime_error);
 }
 
-
 TEST(DeviceBackendTest, SetZeroAutoDeviceThrows)
 {
     int value = 7;
     EXPECT_THROW(device::set_zero(&value, sizeof(value), Device::Auto), runtime_error);
 }
-
 
 TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
 {
@@ -168,7 +154,6 @@ TEST(DeviceBackendTest, SetZeroAsyncClearsHostBuffer)
 #endif
 }
 
-
 TEST(DeviceBackendTest, CopyHostToHostCopiesBytes)
 {
     const Index count = 5;
@@ -183,7 +168,6 @@ TEST(DeviceBackendTest, CopyHostToHostCopiesBytes)
     for (Index i = 0; i < count; i++)
         EXPECT_FLOAT_EQ(destination[static_cast<size_t>(i)], source[static_cast<size_t>(i)]);
 }
-
 
 TEST(DeviceBackendTest, CopyCpuToCpuCopiesBytes)
 {
@@ -200,7 +184,6 @@ TEST(DeviceBackendTest, CopyCpuToCpuCopiesBytes)
         EXPECT_EQ(destination[static_cast<size_t>(i)], source[static_cast<size_t>(i)]);
 }
 
-
 TEST(DeviceBackendTest, CopyNegativeBytesThrows)
 {
     int source = 1;
@@ -209,7 +192,6 @@ TEST(DeviceBackendTest, CopyNegativeBytesThrows)
                                     device::CopyKind::HostToHost, nullptr),
                  runtime_error);
 }
-
 
 TEST(DeviceBackendTest, CopyDeviceKindMatchesBuild)
 {
@@ -245,7 +227,6 @@ TEST(DeviceBackendTest, CopyDeviceKindMatchesBuild)
 #endif
 }
 
-
 TEST(DeviceBackendTest, CopyZeroBytesIsNoOp)
 {
     int source = 99;
@@ -255,13 +236,11 @@ TEST(DeviceBackendTest, CopyZeroBytesIsNoOp)
     EXPECT_EQ(destination, 7);
 }
 
-
 TEST(DeviceBackendTest, SynchronizeAndCheckLastErrorAreNoOps)
 {
     EXPECT_NO_THROW(device::synchronize(nullptr));
     EXPECT_NO_THROW(device::check_last_error());
 }
-
 
 TEST(DeviceBackendTest, CreateStreamMatchesBuild)
 {
@@ -275,7 +254,6 @@ TEST(DeviceBackendTest, CreateStreamMatchesBuild)
     EXPECT_NO_THROW(device::destroy_stream(stream));
 }
 
-
 TEST(DeviceBackendTest, CreateEventMatchesBuild)
 {
     cudaEvent_t event = device::create_event();
@@ -288,13 +266,11 @@ TEST(DeviceBackendTest, CreateEventMatchesBuild)
     EXPECT_NO_THROW(device::destroy_event(event));
 }
 
-
 TEST(DeviceBackendTest, EventOperationsTolerateNull)
 {
     EXPECT_NO_THROW(device::synchronize_event(nullptr));
     EXPECT_NO_THROW(device::stream_wait_event(nullptr, nullptr));
 }
-
 
 TEST(DeviceBackendTest, PinnedHostAllocationRoundTrips)
 {
@@ -308,18 +284,15 @@ TEST(DeviceBackendTest, PinnedHostAllocationRoundTrips)
     EXPECT_NO_THROW(device::deallocate_pinned_host(pointer));
 }
 
-
 TEST(DeviceBackendTest, PinnedHostZeroBytesReturnsNull)
 {
     EXPECT_EQ(device::allocate_pinned_host(0), nullptr);
 }
 
-
 TEST(DeviceBackendTest, PinnedHostNegativeBytesThrows)
 {
     EXPECT_THROW(device::allocate_pinned_host(-8), runtime_error);
 }
-
 
 TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
 {
@@ -331,14 +304,12 @@ TEST(DeviceBackendTest, ComputeStreamMatchesBuild)
         EXPECT_EQ(Backend::get_compute_stream(), nullptr);
 }
 
-
 TEST(DeviceBackendTest, BackendProvidesThreadPoolDevice)
 {
     ThreadPoolDevice* thread_pool_device = Backend::instance().get_thread_pool_device();
     EXPECT_NE(thread_pool_device, nullptr);
     EXPECT_GT(thread_pool_device->numThreads(), 0);
 }
-
 
 TEST(DeviceBackendTest, GetDeviceReturnsBackendThreadPoolDevice)
 {

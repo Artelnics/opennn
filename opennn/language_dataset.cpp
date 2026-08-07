@@ -257,14 +257,11 @@ bool LanguageDataset::load_cache_metadata(const filesystem::path& metadata_path)
     uint64_t target_vocabulary_size = 0;
 
     if (!file.read(magic.data(), magic.size())
-        || !read_binary_value(file, version)
-        || !read_binary_value(file, input_length)
-        || !read_binary_value(file, target_length)
-        || !read_binary_value(file, samples_number)
-        || !read_binary_value(file, has_decoder)
-        || !read_binary_value(file, input_vocabulary_size)
-        || !read_binary_value(file, target_vocabulary_size)
-        || magic != LANGUAGE_CACHE_MAGIC
+        || !read_binary_values(file, version, input_length, target_length, samples_number,
+                               has_decoder, input_vocabulary_size, target_vocabulary_size))
+        return false;
+
+    if (magic != LANGUAGE_CACHE_MAGIC
         || version != LANGUAGE_CACHE_VERSION
         || input_length <= 0
         || target_length <= 0

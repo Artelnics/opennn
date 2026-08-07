@@ -10,14 +10,12 @@
 
 using namespace opennn;
 
-
 TEST(Dense2dTest, DefaultConstructor)
 {
     opennn::Dense dense_layer;
 
     EXPECT_EQ(dense_layer.get_name(), "Dense");
 }
-
 
 TEST(Dense2dTest, GeneralConstructor)
 {
@@ -29,7 +27,6 @@ TEST(Dense2dTest, GeneralConstructor)
     EXPECT_EQ(dense_layer.get_output_shape()[0], 3);
     EXPECT_GE(dense_layer.get_parameters_number(), 33);
 }
-
 
 TEST(Dense2dTest, ForwardValuesMatchHandComputed)
 {
@@ -68,7 +65,6 @@ TEST(Dense2dTest, ForwardValuesMatchHandComputed)
     EXPECT_NEAR(result(1, 1), type(7.0),  1.0e-5f);
 }
 
-
 TEST(Dense2dTest, BackwardGradientMatchesNumerical)
 {
     const Index samples_number = 5;
@@ -96,7 +92,6 @@ TEST(Dense2dTest, BackwardGradientMatchesNumerical)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-
 TEST(Dense3dTest, GeneralConstructor)
 {
     const Index sequence_length = 5;
@@ -115,7 +110,6 @@ TEST(Dense3dTest, GeneralConstructor)
 
     EXPECT_GE(dense_layer.get_parameters_number(), input_embedding * output_embedding + output_embedding);
 }
-
 
 TEST(Dense3dTest, SequenceForwardValuesMatchHandComputed)
 {
@@ -169,7 +163,6 @@ TEST(Dense3dTest, SequenceForwardValuesMatchHandComputed)
     EXPECT_NEAR(output_data[6], type(1.5),  1.0e-5f);
     EXPECT_NEAR(output_data[7], type(-5.0), 1.0e-5f);
 }
-
 
 TEST(Dense, BatchNormForwardOrGradient)
 {

@@ -166,7 +166,6 @@ TEST_F(AdaptiveMomentEstimationTest, DefaultConstructor)
     EXPECT_EQ(adaptive_moment_estimation.get_loss() == nullptr, true);
 }
 
-
 TEST_F(AdaptiveMomentEstimationTest, GeneralConstructor)
 {
     Loss loss;
@@ -174,7 +173,6 @@ TEST_F(AdaptiveMomentEstimationTest, GeneralConstructor)
 
     EXPECT_TRUE(adaptive_moment_estimation.get_loss() != nullptr);
 }
-
 
 TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
 {
@@ -206,7 +204,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
@@ -240,7 +237,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
     EXPECT_LT(error_long, error_short);
 }
 #endif
-
 
 TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
 {
@@ -276,7 +272,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
@@ -315,7 +310,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
 }
 #endif
 
-
 static void expect_forecasting_training_reduces_error()
 {
     set_seed(3);
@@ -341,13 +335,11 @@ static void expect_forecasting_training_reduces_error()
     EXPECT_LT(error_after, error_before);
 }
 
-
 TEST_F(AdaptiveMomentEstimationTest, TrainForecastingCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
     expect_forecasting_training_reduces_error();
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainForecastingGPU)
@@ -356,7 +348,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainForecastingGPU)
     expect_forecasting_training_reduces_error();
 }
 #endif
-
 
 TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
 {
@@ -392,7 +383,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
@@ -430,7 +420,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
     EXPECT_LT(error_long, error_short);
 }
 #endif
-
 
 TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
 {
@@ -482,7 +471,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
@@ -537,7 +525,6 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
 }
 #endif
 
-
 TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -575,7 +562,6 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
     EXPECT_FLOAT_EQ(frozen_after, frozen_before);
 }
 
-
 TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -601,7 +587,6 @@ TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -622,7 +607,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
-
 
 TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
 {
@@ -649,7 +633,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-
 TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -673,7 +656,6 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
-
 
 TEST_F(AdaptiveMomentEstimationTest, Determinism)
 {

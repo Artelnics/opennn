@@ -154,7 +154,6 @@ string Unscaling::write_expression(const vector<string>& input_names,
     return expression;
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

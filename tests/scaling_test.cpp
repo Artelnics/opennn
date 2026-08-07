@@ -28,7 +28,6 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
     EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), EPSILON);
 }
 
-
 TEST(ScalingTest, ScaleDataMinimumMaximum)
 {
     Index samples_number = 10 + rand() % 10;
@@ -48,7 +47,6 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
     EXPECT_NEAR(matrix_descriptives[0].minimum, type(-1.0), EPSILON);
     EXPECT_NEAR(matrix_descriptives[0].maximum, type(1.0), EPSILON);
 }
-
 
 TEST(ScalingTest, ScaleDataNoScaling2d)
 {   
@@ -71,7 +69,6 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
     EXPECT_LT((matrix - scaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
-
 TEST(ScalingTest, ScaleDataStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
@@ -89,7 +86,6 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 
     EXPECT_NEAR(abs(matrix_descriptives[0].standard_deviation), type(1), EPSILON);
 }
-
 
 TEST(ScalingTest, ScaleDataLogarithmic)
 {
@@ -119,7 +115,6 @@ TEST(ScalingTest, ScaleDataLogarithmic)
     EXPECT_LT((scaled_matrix - solution_matrix).array().abs().maxCoeff(), type(1e-4));
 }
 
-
 TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
@@ -145,7 +140,6 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
     EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
-
 TEST(ScalingTest, UnscaleDataMinimumMaximum)
 {
     Index samples_number = 1 + rand() % 10;
@@ -169,7 +163,6 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
-
 
 TEST(ScalingTest, UnscaleDataNoScaling2d)
 {
@@ -195,7 +188,6 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
     EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), EPSILON);
 }
 
-
 TEST(ScalingTest, UnscaleDataStandardDeviation)
 {
     Index samples_number = 2 + rand() % 10;
@@ -218,7 +210,6 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), type(1e-4));
 }
-
 
 TEST(ScalingTest, UnscaleDataLogarithmic)
 {
@@ -246,7 +237,6 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
     EXPECT_LT((matrix - unscaled_matrix).array().abs().maxCoeff(), type(1e-4));
 }
 
-
 TEST(ScalingTest, ScaleLogarithmicClampsNonPositiveValues)
 {
     MatrixR matrix(3, 1);
@@ -266,7 +256,6 @@ TEST(ScalingTest, ScaleLogarithmicClampsNonPositiveValues)
 
     EXPECT_TRUE(scaled.array().isFinite().all());
 }
-
 
 TEST(ScalingTest, UnscaleStandardDeviationZeroDeviationIsNoOp)
 {
@@ -291,7 +280,6 @@ TEST(ScalingTest, UnscaleStandardDeviationZeroDeviationIsNoOp)
     EXPECT_TRUE(unscaled.array().isFinite().all());
 }
 
-
 TEST(ScalingTest, ScaleValueMinimumMaximumUsesMinusOneOneRange)
 {
     Descriptives descriptives;
@@ -309,7 +297,6 @@ TEST(ScalingTest, ScaleValueMinimumMaximumUsesMinusOneOneRange)
     EXPECT_NEAR(scale_value(ScalerMethod::MinimumMaximum, constant, type(3)), type(0), 1e-6);
 }
 
-
 TEST(ScalingTest, ScaleValueGuardsDegenerateDeviationToZero)
 {
     Descriptives descriptives;
@@ -325,7 +312,6 @@ TEST(ScalingTest, ScaleValueGuardsDegenerateDeviationToZero)
     EXPECT_NEAR(scale_value(ScalerMethod::StandardDeviation, descriptives, type(7)), type(3.5), 1e-6);
     EXPECT_NEAR(scale_value(ScalerMethod::None, descriptives, type(7)), type(7), 1e-6);
 }
-
 
 TEST(ScalingTest, ScalingAffineAddsEpsilonToDenominators)
 {

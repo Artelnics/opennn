@@ -5,11 +5,9 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.text.paragraph import Paragraph
 
-
 BASE = Path(r"C:\Users\Roberto\OneDrive - artelnics.com\DIPCAN\subsanacion_tecnica")
 DOCX = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO.docx"
 BACKUP = BASE / "Anexo C12. Desarrollo y validación clínica de algoritmos_NUEVO_pre_comentarios_Quibim.bak.docx"
-
 
 REPLACEMENTS = {
     "Por ello, planteamos un modelo que predice si existe una mutación en un gen a partir de valores extraídos de imágenes radiómicas.": (
@@ -63,7 +61,6 @@ REPLACEMENTS = {
     ),
 }
 
-
 ADC_TEXT = (
     "Cuando las secuencias DWI disponían de un valor b bajo y otro alto, así como de los metadatos "
     "necesarios, también se calcularon cinco características relacionadas con el coeficiente de difusión "
@@ -85,12 +82,9 @@ CLINICAL_BENEFIT_TEXT = (
     "durante la atención del paciente."
 )
 
-
 def replace_paragraph(paragraph, new_text):
 
-
     paragraph.text = new_text
-
 
 def insert_after(paragraph, text, style=None):
     new_p = OxmlElement("w:p")
@@ -100,7 +94,6 @@ def insert_after(paragraph, text, style=None):
         new_para.style = style
     new_para.add_run(text)
     return new_para
-
 
 def main():
     copy2(DOCX, BACKUP)
@@ -141,7 +134,6 @@ def main():
     print(DOCX)
     print(BACKUP)
     print(f"Replacements: {len(applied)}; inserted paragraphs: 3")
-
 
 if __name__ == "__main__":
     main()

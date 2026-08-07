@@ -12,10 +12,6 @@
 
 using namespace opennn;
 
-
-
-
-
 static constexpr Index H_GRID  = 2;
 static constexpr Index W_GRID  = 2;
 static constexpr Index CHAN    = 8;
@@ -51,10 +47,6 @@ struct C2PSANet
     }
 };
 
-
-
-
-
 TEST(C2PSA, CpuGradientMatchesNumerical)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -71,10 +63,6 @@ TEST(C2PSA, CpuGradientMatchesNumerical)
         << "Max element-wise diff (CPU): " << max_diff;
 }
 
-
-
-
-
 TEST(C2PSA, GpuGradientMatchesNumerical)
 {
     if (!opennn::device::has_cuda_device())
@@ -88,16 +76,11 @@ TEST(C2PSA, GpuGradientMatchesNumerical)
     const VectorR analytical = calculate_gradient(*loss);
     const VectorR numerical  = calculate_numerical_gradient(*loss);
 
-
     ASSERT_EQ(analytical.size(), numerical.size());
     const float max_diff = (analytical - numerical).array().abs().maxCoeff();
     EXPECT_LT(max_diff, 1e-3f)
         << "Max element-wise diff (CUDA): " << max_diff;
 }
-
-
-
-
 
 TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
 {
@@ -106,11 +89,9 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
 
     const Index batch_size = SAMPLES;
 
-
     C2PSANet net;
     const vector<Index> training_idx = net.dataset.get_sample_indices("Training");
     const vector<Index> input_idx    = net.dataset.get_feature_indices("Input");
-
 
     Configuration::instance().set(Device::CPU, Type::FP32);
     {
@@ -122,7 +103,6 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
         const Index n = out.size();
         vector<float> cpu_out(n);
         std::copy_n(out.as<float>(), n, cpu_out.data());
-
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
         Batch batch_gpu(batch_size, &net.dataset, net.nn.get_config());

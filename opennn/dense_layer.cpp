@@ -92,7 +92,6 @@ vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
 void Dense::configure_operators()
 {
 
-
     reset_drelu_fusion();
 
     if (gated)
@@ -208,10 +207,6 @@ void Dense::set_batch_normalization(bool enable)
     batch_norm.features = enable ? output_features : 0;
     configure_operators();
 }
-
-
-
-
 
 bool Dense::try_wire_drelu_fusion(Dense& producer)
 {
@@ -387,7 +382,6 @@ void Dense::write_JSON_body(JsonWriter& printer) const
         {"Gated", gated}
     });
 }
-
 
 }
 

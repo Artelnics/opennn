@@ -32,7 +32,6 @@ void set_identity_projections(Layer* layer, Index embedding_dimension)
 
 }
 
-
 TEST(MultiHeadAttentionTest, DefaultConstructors)
 {
     MultiHeadAttention mha_self;
@@ -40,7 +39,6 @@ TEST(MultiHeadAttentionTest, DefaultConstructors)
     EXPECT_EQ(mha_self.get_source_sequence_length(), 0);
     EXPECT_EQ(mha_self.get_embedding_dimension(), 0);
 }
-
 
 TEST(MultiHeadAttentionTest, GeneralConstructors)
 {
@@ -57,7 +55,6 @@ TEST(MultiHeadAttentionTest, GeneralConstructors)
     EXPECT_EQ(mha_cross.get_heads_number(), 2);
 }
 
-
 TEST(MultiHeadAttentionTest, GeneralConstructorOutputAndInputShape)
 {
     MultiHeadAttention mha_self({ 10, 32 }, 4);
@@ -69,7 +66,6 @@ TEST(MultiHeadAttentionTest, GeneralConstructorOutputAndInputShape)
     EXPECT_EQ(mha_cross.get_output_shape(), (Shape{ 5, 16 }));
     EXPECT_EQ(mha_cross.get_source_sequence_length(), 8);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST(MultiHeadAttentionTest, SdpaMinimumSequenceLengthIsInclusive)
@@ -84,7 +80,6 @@ TEST(MultiHeadAttentionTest, SdpaMinimumSequenceLengthIsInclusive)
     EXPECT_FALSE(attention.should_use_sdpa());
 }
 #endif
-
 
 TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
 {
@@ -127,7 +122,6 @@ TEST(MultiHeadAttentionTest, ForwardSelfAttentionMatchesHandComputed)
     EXPECT_NEAR(output_data[3], high, 1.0e-5f);
 }
 
-
 TEST(MultiHeadAttentionTest, CausalMaskForward)
 {
     const Index batch_size = 1;
@@ -166,7 +160,6 @@ TEST(MultiHeadAttentionTest, CausalMaskForward)
     EXPECT_NEAR(output_data[2], low,  1.0e-5f);
     EXPECT_NEAR(output_data[3], high, 1.0e-5f);
 }
-
 
 TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
 {
@@ -217,7 +210,6 @@ TEST(MultiHeadAttentionTest, CrossAttentionForwardOrGradient)
     EXPECT_NEAR(output_data[0], high, 1.0e-5f);
     EXPECT_NEAR(output_data[1], low,  1.0e-5f);
 }
-
 
 TEST(MultiHeadAttentionTest, BackwardGradientMatchesNumerical)
 {

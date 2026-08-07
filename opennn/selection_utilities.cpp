@@ -141,18 +141,17 @@ void seed_parameters_from_snapshot(NeuralNetwork* neural_network,
 
             const Index columns = min(destination.cols(), source.cols());
 
-            if (Index(i) == first_trainable
-                && ssize(input_row_map) == destination.rows())
-            {
-                for (Index row = 0; row < destination.rows(); ++row)
-                    if (input_row_map[row] >= 0 && input_row_map[row] < source.rows())
-                        destination.row(row).head(columns) = source.row(input_row_map[row]).head(columns);
-            }
-            else
+            if (Index(i) != first_trainable
+                || ssize(input_row_map) != destination.rows())
             {
                 const Index rows = min(destination.rows(), source.rows());
                 destination.topLeftCorner(rows, columns) = source.topLeftCorner(rows, columns);
+                continue;
             }
+
+            for (Index row = 0; row < destination.rows(); ++row)
+                if (input_row_map[row] >= 0 && input_row_map[row] < source.rows())
+                    destination.row(row).head(columns) = source.row(input_row_map[row]).head(columns);
         }
     }
 

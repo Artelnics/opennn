@@ -43,7 +43,6 @@ TEST(ActivationsTest, DefaultConstructor)
     EXPECT_EQ(activation_layer.get_output_activation(), ActivationFunction::ReLU);
 }
 
-
 TEST(ActivationsTest, GeneralConstructor)
 {
     const Shape input_shape{ 5 };
@@ -55,7 +54,6 @@ TEST(ActivationsTest, GeneralConstructor)
     EXPECT_EQ(activation_layer.get_label(), "act");
     EXPECT_EQ(activation_layer.get_output_activation(), ActivationFunction::Tanh);
 }
-
 
 TEST(ActivationsTest, ForwardPropagateReLU)
 {
@@ -90,7 +88,6 @@ TEST(ActivationsTest, ForwardPropagateReLU)
         EXPECT_NEAR(output_data[i], expected.data()[i], 1e-6f);
 }
 
-
 TEST(ActivationsTest, ForwardPropagateTanh)
 {
     const Index batch_size = 2;
@@ -120,7 +117,6 @@ TEST(ActivationsTest, ForwardPropagateTanh)
         EXPECT_NEAR(output_data[i], std::tanh(input_data.data()[i]), 1e-6f);
 }
 
-
 TEST(ActivationsTest, ForwardPropagateSigmoid)
 {
     const Index batch_size = 1;
@@ -149,7 +145,6 @@ TEST(ActivationsTest, ForwardPropagateSigmoid)
         EXPECT_NEAR(output_data[i], expected, 1e-6f);
     }
 }
-
 
 TEST(ActivationsTest, ForwardPropagateSoftmax)
 {
@@ -199,7 +194,6 @@ TEST(ActivationsTest, ForwardPropagateSoftmax)
     }
 }
 
-
 TEST(ActivationsTest, BackwardGradientMatchesNumerical)
 {
     const Index samples_number = 5;
@@ -236,7 +230,6 @@ TEST(ActivationsTest, BackwardGradientMatchesNumerical)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-
 TEST(ActivationsTest, LeakyReLUForwardPassesPositiveAndScalesNegative)
 {
     VectorR buffer(5);
@@ -251,7 +244,6 @@ TEST(ActivationsTest, LeakyReLUForwardPassesPositiveAndScalesNegative)
     EXPECT_FLOAT_EQ(buffer[3],  0.5f);
     EXPECT_FLOAT_EQ(buffer[4],  2.0f);
 }
-
 
 TEST(ActivationsTest, LeakyReLUBackwardGatesByOutputSign)
 {
@@ -272,7 +264,6 @@ TEST(ActivationsTest, LeakyReLUBackwardGatesByOutputSign)
     EXPECT_FLOAT_EQ(delta[4], 5.0f);
 }
 
-
 TEST(ActivationsTest, GeluForwardClosedForm)
 {
     VectorR x(11);
@@ -285,7 +276,6 @@ TEST(ActivationsTest, GeluForwardClosedForm)
     for (Index i = 0; i < x.size(); ++i)
         EXPECT_NEAR(y[i], float(gelu_ref(x[i])), 1e-5f);
 }
-
 
 TEST(ActivationsTest, GeluBackwardMatchesFiniteDifference)
 {
@@ -306,7 +296,6 @@ TEST(ActivationsTest, GeluBackwardMatchesFiniteDifference)
     }
 }
 
-
 TEST(ActivationsTest, GeluTanhForwardClosedForm)
 {
     VectorR x(11);
@@ -319,7 +308,6 @@ TEST(ActivationsTest, GeluTanhForwardClosedForm)
     for (Index i = 0; i < x.size(); ++i)
         EXPECT_NEAR(y[i], float(gelu_tanh_ref(x[i])), 1e-5f);
 }
-
 
 TEST(ActivationsTest, GeluTanhBackwardMatchesFiniteDifference)
 {
@@ -340,12 +328,10 @@ TEST(ActivationsTest, GeluTanhBackwardMatchesFiniteDifference)
     }
 }
 
-
 TEST(ActivationsTest, GeluTanhFromString)
 {
     EXPECT_EQ(ActivationFunction::GELUTanh, ActivationOperator::from_string("GELUTanh"));
 }
-
 
 TEST(ActivationsTest, GeluActivationLayerForward)
 {
@@ -373,7 +359,6 @@ TEST(ActivationsTest, GeluActivationLayerForward)
 
     Configuration::instance().set();
 }
-
 
 TEST(ActivationsTest, GeluGradientCheckThroughActivationLayer)
 {
@@ -406,7 +391,6 @@ TEST(ActivationsTest, GeluGradientCheckThroughActivationLayer)
     Configuration::instance().set();
 }
 
-
 TEST(ActivationsTest, GeluDenseFusedGradientCheck)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -437,12 +421,10 @@ TEST(ActivationsTest, GeluDenseFusedGradientCheck)
     Configuration::instance().set();
 }
 
-
 TEST(ActivationsTest, GeluDenseFusedRejectsBatchNorm)
 {
     EXPECT_THROW(opennn::Dense(Shape{4}, Shape{5}, "GELU", true), std::exception);
 }
-
 
 TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
 {
@@ -453,7 +435,6 @@ TEST(ActivationsTest, ConvolutionalRejectsInputDerivativeActivations)
     Convolutional convolutional(Shape{8, 8, 1}, Shape{3, 3, 1, 2}, "ReLU");
     EXPECT_THROW(convolutional.set_activation_function("SiLU"), std::exception);
 }
-
 
 TEST(ActivationsTest, GeluTanhDenseGradientCheck)
 {
@@ -485,7 +466,6 @@ TEST(ActivationsTest, GeluTanhDenseGradientCheck)
     Configuration::instance().set();
 }
 
-
 TEST(ActivationsTest, SiluForwardClosedForm)
 {
     VectorR x(11);
@@ -498,7 +478,6 @@ TEST(ActivationsTest, SiluForwardClosedForm)
     for (Index i = 0; i < x.size(); ++i)
         EXPECT_NEAR(y[i], float(silu_ref(x[i])), 1e-5f);
 }
-
 
 TEST(ActivationsTest, SiluBackwardMatchesFiniteDifference)
 {
@@ -519,12 +498,10 @@ TEST(ActivationsTest, SiluBackwardMatchesFiniteDifference)
     }
 }
 
-
 TEST(ActivationsTest, SiluFromString)
 {
     EXPECT_EQ(ActivationFunction::SiLU, ActivationOperator::from_string("SiLU"));
 }
-
 
 TEST(ActivationsTest, SiluActivationLayerForward)
 {
@@ -552,7 +529,6 @@ TEST(ActivationsTest, SiluActivationLayerForward)
 
     Configuration::instance().set();
 }
-
 
 TEST(ActivationsTest, SiluGradientCheckThroughActivationLayer)
 {
@@ -584,7 +560,6 @@ TEST(ActivationsTest, SiluGradientCheckThroughActivationLayer)
 
     Configuration::instance().set();
 }
-
 
 TEST(ActivationsTest, SiluDenseFusedGradientCheck)
 {

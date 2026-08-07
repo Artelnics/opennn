@@ -7,9 +7,7 @@
 #include <cmath>
 #include <iostream>
 
-
 using namespace opennn;
-
 
 struct EmbeddingLayerConfig {
     Index batch_size;
@@ -30,7 +28,6 @@ INSTANTIATE_TEST_SUITE_P(EmbeddingLayerTests, EmbeddingLayerTest, ::testing::Val
                                                                       EmbeddingLayerConfig{ 2, 12, 8, 32, true, true, "ScaledAndPositionalEncoding" }
                                                                       ));
 
-
 TEST(Embedding, DefaultConstructor)
 {
     Embedding embedding_layer;
@@ -39,7 +36,6 @@ TEST(Embedding, DefaultConstructor)
     EXPECT_EQ(embedding_layer.get_sequence_length(), 0);
     EXPECT_EQ(embedding_layer.get_embedding_dimension(), 0);
 }
-
 
 TEST(Embedding, GeneralConstructor)
 {
@@ -54,7 +50,6 @@ TEST(Embedding, GeneralConstructor)
     EXPECT_EQ(embedding_layer.get_input_shape(), (Shape{input_shape[1]}));
     EXPECT_EQ(embedding_layer.get_output_shape(), (Shape{input_shape[1], embedding_dimension}));
 }
-
 
 TEST_P(EmbeddingLayerTest, ForwardPropagate)
 {
@@ -88,7 +83,6 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     EXPECT_EQ(output_view.shape[1], parameters.sequence_length);
     EXPECT_EQ(output_view.shape[2], parameters.embedding_dimension);
 }
-
 
 TEST(Embedding, ForwardValuesMatchExpected)
 {
@@ -135,7 +129,6 @@ TEST(Embedding, ForwardValuesMatchExpected)
     EXPECT_NEAR(output[4], 8.0f, 1.0e-5f);
     EXPECT_NEAR(output[5], 9.0f, 1.0e-5f);
 }
-
 
 TEST(Embedding, ScaleEmbeddingForwardValues)
 {
@@ -184,7 +177,6 @@ TEST(Embedding, ScaleEmbeddingForwardValues)
     EXPECT_NEAR(output[6], 7.0f * scale, 1.0e-4f);
     EXPECT_NEAR(output[7], 8.0f * scale, 1.0e-4f);
 }
-
 
 TEST(Embedding, PositionalEncodingForwardValues)
 {

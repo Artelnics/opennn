@@ -43,7 +43,6 @@ print(f"precision={'bf16' if use_bf16 else 'fp32'}")
 
 K = tf.keras.layers
 
-
 def sinusoidal_pe(length, depth):
     pos = np.arange(length)[:, None]
     i = np.arange(depth)[None, :]
@@ -53,14 +52,12 @@ def sinusoidal_pe(length, depth):
     pe[:, 1::2] = np.cos(angle[:, 1::2])
     return tf.constant(pe[None])
 
-
 def encoder_layer(x, pe_unused):
     a = K.MultiHeadAttention(num_heads=heads, key_dim=d_model // heads)(x, x)
     x = K.LayerNormalization()(x + a)
     h = K.Dense(ff, activation="relu")(x)
     h = K.Dense(d_model)(h)
     return K.LayerNormalization()(x + h)
-
 
 def decoder_layer(x, mem):
     a = K.MultiHeadAttention(num_heads=heads, key_dim=d_model // heads)(x, x)
@@ -70,7 +67,6 @@ def decoder_layer(x, mem):
     h = K.Dense(ff, activation="relu")(x)
     h = K.Dense(d_model)(h)
     return K.LayerNormalization()(x + h)
-
 
 def build():
     src = K.Input(shape=(seq,), dtype="int32")
@@ -86,10 +82,8 @@ def build():
     for _ in range(layers):
         t = decoder_layer(t, s)
 
-
     out = K.Dense(vocab, activation="softmax")(t)
     return tf.keras.Model([src, tgt], out)
-
 
 with tf.device("/GPU:0"):
     model = build()

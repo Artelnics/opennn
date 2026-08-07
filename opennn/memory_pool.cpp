@@ -14,8 +14,6 @@ namespace opennn
 namespace
 {
 
-
-
 Index lowest_free_offset(const vector<pair<Index, Index>>& occupied, Index bytes)
 {
     Index offset = 0;
@@ -143,7 +141,6 @@ Index find_memory_pool_overlay(const vector<MemoryPoolEntry>& entries,
         occupied.push_back({plan.byte_offsets[i], plan.byte_offsets[i] + entry.bytes});
     }
     ranges::sort(occupied);
-
 
     const Index offset = lowest_free_offset(occupied, bytes);
     return offset + bytes <= plan.peak_bytes ? offset : Index(-1);

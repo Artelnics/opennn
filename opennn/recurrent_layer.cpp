@@ -333,8 +333,7 @@ static void require_same_recurrent_dtype(const TensorView& reference,
 
 bool RecurrentOperator::cudnn_rnn_eligible_(const TensorView& reference) const
 {
-    return (activation == ActivationFunction::Tanh
-            || activation == ActivationFunction::ReLU)
+    return is_one_of(activation, ActivationFunction::Tanh, ActivationFunction::ReLU)
         && reference.is_fp32();
 }
 
@@ -824,7 +823,6 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 
     return buffer.str();
 }
-
 
 }
 

@@ -15,7 +15,6 @@ TEST(TrainingStrategy, DefaultConstructor)
     EXPECT_EQ(training_strategy.get_dataset(), nullptr);
 }
 
-
 TEST(TrainingStrategy, GeneralConstructor)
 {
     TabularDataset dataset(10, {2}, {1});
@@ -28,7 +27,6 @@ TEST(TrainingStrategy, GeneralConstructor)
     EXPECT_EQ(training_strategy_1.get_neural_network(), &neural_network);
     EXPECT_EQ(training_strategy_1.get_dataset(), &dataset);
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.

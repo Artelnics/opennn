@@ -69,9 +69,6 @@ void record(const string& category,
     ++entry.count;
 }
 
-
-
-
 void record_pool_lifetimes(const string& category_prefix,
                            const vector<MemoryPoolEntry>& lifetime_entries,
                            const string& timeline_note)

@@ -8,13 +8,6 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 list(FILTER CPP_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 list(FILTER HEADER_FILES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.h$")
 
-
-
-
-
-
-
-
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
@@ -25,16 +18,10 @@ if(NOT OpenNN_BUILD_VISION)
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
-
-
-
-
-
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
 if(OpenNN_BUILD_SHARED)
     set(_opennn_lib_type SHARED)
-
 
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 else()
@@ -50,8 +37,6 @@ if(OpenNN_BUILD_SHARED)
         SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
 
-
-
 if(OpenNN_BUILD_SHARED AND WIN32)
     set_target_properties(opennn PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
@@ -59,17 +44,12 @@ endif()
 if(NOT OpenNN_BUILD_VISION)
     target_compile_definitions(opennn PUBLIC OPENNN_NO_VISION)
 
-
-
-
     set_target_properties(opennn PROPERTIES OUTPUT_NAME "opennn_core")
 endif()
 
 target_compile_features(opennn PUBLIC cxx_std_20)
 
 include(FetchContent)
-
-
 
 set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
@@ -84,8 +64,6 @@ FetchContent_MakeAvailable(opennn_zlib)
 target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:ZLIB::ZLIBSTATIC>
     $<INSTALL_INTERFACE:ZLIB::ZLIBSTATIC>)
-
-
 
 include(ExternalProject)
 set(_opennn_jpeg_install_dir
@@ -142,19 +120,30 @@ target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:opennn_jpeg>
     $<INSTALL_INTERFACE:libjpeg-turbo::jpeg-static>)
 
-
-
-
-
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
+# Parallel std algorithms. MSVC implements them in its own runtime; libstdc++
+# declares them (so __cpp_lib_parallel_algorithm is defined either way) but
+# resolves them through TBB at link time. Only advertise them when they will
+# actually link, so parallel_algorithms.h can fall back to the serial calls.
+if(MSVC)
+    target_compile_definitions(opennn PUBLIC OPENNN_HAS_PARALLEL_ALGORITHMS)
+else()
+    find_package(TBB QUIET)
+    if(TBB_FOUND)
+        target_compile_definitions(opennn PUBLIC OPENNN_HAS_PARALLEL_ALGORITHMS)
+        target_link_libraries(opennn PUBLIC TBB::tbb)
+        message(STATUS "OpenNN: parallel std algorithms enabled (TBB found).")
+    else()
+        message(STATUS "OpenNN: TBB not found, std algorithms run serially.")
+    endif()
+endif()
+
 if(OpenNN_ENABLE_MKL)
-
-
 
     if(NOT OpenNN_MKL_ROOT)
         if(DEFINED ENV{MKLROOT})
@@ -163,13 +152,6 @@ if(OpenNN_ENABLE_MKL)
             set(OpenNN_MKL_ROOT "$ENV{ONEAPI_ROOT}/mkl/latest")
         endif()
     endif()
-
-
-
-
-
-
-
 
     if(NOT DEFINED MKL_LINK)
         set(MKL_LINK sdl)
@@ -227,23 +209,10 @@ if(OPENNN_HAS_CUDA)
             "and set CUDNN_FRONTEND_INCLUDE_DIR.")
     endif()
 
-
-
     target_include_directories(opennn SYSTEM PRIVATE ${CUDNN_FRONTEND_INCLUDE_DIR})
-
-
-
 
     target_compile_definitions(opennn PRIVATE HAVE_CUDNN_FRONTEND)
 endif()
-
-
-
-
-
-
-
-
 
 if(MSVC)
     target_compile_options(opennn PUBLIC
@@ -267,35 +236,18 @@ else()
     )
 endif()
 
-
-
-
-
 target_compile_definitions(opennn PUBLIC
     $<$<NOT:$<CONFIG:Debug>>:EIGEN_NO_DEBUG>
 )
-
-
-
-
 
 target_compile_definitions(opennn PUBLIC
     EIGEN_MAX_ALIGN_BYTES=64
     EIGEN_USE_THREADS
 )
 
-
-
-
-
-
 target_precompile_headers(opennn PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
 )
-
-
-
-
 
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
@@ -306,17 +258,11 @@ if(MSVC AND OPENNN_HAS_CUDA)
     )
 endif()
 
-
-
-
-
 if(NOT MSVC)
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:Debug>>>:-fno-math-errno -fno-trapping-math>
     )
 endif()
-
-
 
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
@@ -330,8 +276,6 @@ if(OpenNN_INSTALL)
     install(FILES ${HEADER_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn)
 
-
-
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR}/
@@ -342,8 +286,6 @@ if(OpenNN_INSTALL)
         NAMESPACE OpenNN::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 
-
-
     set(_opennn_needs_openmp OFF)
     if(NOT APPLE AND OpenMP_FOUND AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(_opennn_needs_openmp ON)
@@ -352,7 +294,6 @@ if(OpenNN_INSTALL)
     if(OPENNN_HAS_CUDA AND HAVE_CUDNN)
         set(_opennn_needs_cudnn ON)
     endif()
-
 
     set(_opennn_needs_mkl OFF)
     if(OpenNN_ENABLE_MKL AND MKL_FOUND)

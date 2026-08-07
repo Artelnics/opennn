@@ -9,12 +9,10 @@
 
 using namespace opennn;
 
-
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
     GeneticAlgorithm genetic_algorithm;
 }
-
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)
 {
@@ -22,7 +20,6 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 }
-
 
 TEST(GeneticAlgorithmTest, InputSelection)
 {
@@ -65,7 +62,6 @@ TEST(GeneticAlgorithmTest, InputSelection)
     ASSERT_EQ(results.optimal_inputs.size(), inputs_number);
     EXPECT_TRUE(results.optimal_inputs(0));
 }
-
 
 TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
 {
@@ -111,7 +107,6 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
     EXPECT_TRUE(results.optimal_inputs(0));
 }
 
-
 TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
 {
     set_seed(0);
@@ -154,7 +149,6 @@ TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
     EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
 }
 
-
 TEST(GeneticAlgorithmTest, RequiresValidation)
 {
     const Index samples_number = 20;
@@ -171,7 +165,6 @@ TEST(GeneticAlgorithmTest, RequiresValidation)
 
     EXPECT_THROW(genetic_algorithm.perform_input_selection(), runtime_error);
 }
-
 
 TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
 {

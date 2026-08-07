@@ -36,7 +36,6 @@ if bf16:
 
 K = tf.keras.layers
 
-
 def bottleneck(x, mid, stride, name):
     out = mid * 4
     shortcut = x
@@ -50,7 +49,6 @@ def bottleneck(x, mid, stride, name):
     y = K.Conv2D(out, 1, use_bias=False)(y)
     y = K.BatchNormalization()(y)
     return K.ReLU()(y + shortcut)
-
 
 def build_resnet50(classes, hw):
     inp = K.Input(shape=(hw, hw, 3))
@@ -67,7 +65,6 @@ def build_resnet50(classes, hw):
 
     out = K.Dense(classes, dtype="float32")(x)
     return tf.keras.Model(inp, out)
-
 
 x = np.load(f"{data_dir}/cifar_images.npy").astype("float32") / 255.0
 y = np.load(f"{data_dir}/cifar_labels.npy").astype("int64")

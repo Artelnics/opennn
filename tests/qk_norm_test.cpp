@@ -8,9 +8,6 @@
 
 using namespace opennn;
 
-
-
-
 TEST(QKNormTest, PerHeadUnitRootMeanSquare)
 {
     const Index heads = 2, head_dim = 4;
@@ -39,8 +36,6 @@ TEST(QKNormTest, PerHeadUnitRootMeanSquare)
     }
 }
 
-
-
 TEST(QKNormTest, WeightScalesOutput)
 {
     const Index head_dim = 4;
@@ -54,7 +49,6 @@ TEST(QKNormTest, WeightScalesOutput)
     TensorView w(weight.data(), {head_dim});
     TensorView out(output.data(), {1, 1, head_dim});
     qk_norm_forward(in, w, out, head_dim, eps);
-
 
     const float rms = std::sqrt(7.5f);
     for (Index d = 0; d < head_dim; ++d)

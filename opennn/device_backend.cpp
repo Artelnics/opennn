@@ -867,9 +867,6 @@ namespace
         set_desc(CUBLASLT_MATMUL_DESC_EPILOGUE, epilogue);
         set_desc(CUBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, out_dtype);
 
-
-
-
         if (epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS
             || epilogue == CUBLASLT_EPILOGUE_DRELU)
             throw_if(m % 128 != 0,
@@ -982,8 +979,6 @@ const void* data_for_gemm_dtype(const TensorView& input, Type target_type)
 
 const void* bias_for_gemm_bf16(const TensorView& bias)
 {
-
-
 
     bfloat16* dst = ensure_bf16_gradient_workspace(bias.size());
     cast_fp32_to_bf16(bias.size(), bias.as<float>(), dst);

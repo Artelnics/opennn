@@ -51,11 +51,9 @@ torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 torch.backends.cudnn.benchmark = True
 
-
 def sync():
     if use_cuda:
         torch.cuda.synchronize()
-
 
 use_bf16 = use_cuda and os.environ.get("PT_BF16") is not None
 use_compile = os.environ.get("PT_COMPILE") is not None
@@ -80,9 +78,6 @@ if use_compile:
 
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
-
-
-
 
 higgs_bin = os.environ.get("HIGGS_BIN")
 if higgs_bin:

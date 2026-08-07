@@ -8,12 +8,10 @@
 
 using namespace opennn;
 
-
 TEST(ModelSelectionTest, DefaultConstructor)
 {
     ModelSelection model_selection;
 }
-
 
 TEST(ModelSelectionTest, GeneralConstructor)
 {

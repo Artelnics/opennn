@@ -184,7 +184,6 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
     for (const char c : line)
     {
 
-
         if (c == '"' && (in_quote || scratch.size() == field_start))
         {
             in_quote = !in_quote;

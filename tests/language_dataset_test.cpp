@@ -35,7 +35,6 @@ namespace
         "broken charger useless device\tBad\n";
 }
 
-
 TEST(LanguageDataset, DefaultConstructorIsEmpty)
 {
     LanguageDataset dataset;
@@ -46,7 +45,6 @@ TEST(LanguageDataset, DefaultConstructorIsEmpty)
     EXPECT_EQ(dataset.get_maximum_input_sequence_length(), 0);
     EXPECT_EQ(dataset.get_maximum_target_sequence_length(), 0);
 }
-
 
 TEST(LanguageDataset, ReservedTokenConstants)
 {
@@ -65,7 +63,6 @@ TEST(LanguageDataset, ReservedTokenConstants)
     EXPECT_FLOAT_EQ(LanguageDataset::START_INDEX, 2.0f);
     EXPECT_FLOAT_EQ(LanguageDataset::END_INDEX, 3.0f);
 }
-
 
 TEST(LanguageDataset, ReadTxtBuildsVocabularyAndSequences)
 {
@@ -88,7 +85,6 @@ TEST(LanguageDataset, ReadTxtBuildsVocabularyAndSequences)
 
     remove_language_file(file_path);
 }
-
 
 TEST(LanguageDataset, ReadTxtInputVocabularyContainsReservedTokens)
 {
@@ -116,7 +112,6 @@ TEST(LanguageDataset, ReadTxtInputVocabularyContainsReservedTokens)
 
     remove_language_file(file_path);
 }
-
 
 TEST(LanguageDataset, ReadTxtMatrixShapesAndStartToken)
 {
@@ -153,7 +148,6 @@ TEST(LanguageDataset, ReadTxtMatrixShapesAndStartToken)
     remove_language_file(file_path);
 }
 
-
 TEST(LanguageDataset, ReadTxtTargetDistribution)
 {
     const string file_path = temp_language_file("opennn_language_distribution.txt", sentiment_content);
@@ -175,7 +169,6 @@ TEST(LanguageDataset, ReadTxtTargetDistribution)
 
     remove_language_file(file_path);
 }
-
 
 TEST(LanguageDataset, ConstructorWithPathReadsFile)
 {

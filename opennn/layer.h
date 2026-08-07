@@ -138,11 +138,6 @@ public:
         return {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
     }
 
-
-
-
-
-
     virtual ForwardSlotKind get_forward_slot_kind(size_t) const
     {
         return ForwardSlotKind::Pooled;
@@ -197,7 +192,6 @@ public:
     Type get_compute_dtype() const noexcept { return compute_dtype; }
     Device get_compute_device() const noexcept { return compute_device; }
 
-
     void set_compute_dtype(Type new_compute_dtype)
     {
         weights_dtype = new_compute_dtype;
@@ -217,10 +211,6 @@ public:
     float* link_gradients(float*, vector<TensorView>&, Device);
 
 protected:
-
-
-
-
 
     static bool refresh_feature_storage(Buffer& storage, bool& dirty, Device device,
                                         Index features, Index columns,

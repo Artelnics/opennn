@@ -31,10 +31,6 @@ namespace opennn
 namespace
 {
 
-
-
-
-
 struct Fp32Staging
 {
     Fp32Staging(Index count, Index slices)
@@ -462,8 +458,6 @@ void build_bn_backward(BatchNormalizationOperator::BatchNormalizationGraphCache:
         shared_ptr<graph::Tensor_attributes> relu_reference;
         if (fork_residual_delta)
         {
-
-
 
             entry.bwd_Y = nhwc_tensor(*graph, "Y", batch, channels, spatial, 1);
             relu_reference = entry.bwd_Y;

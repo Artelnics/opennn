@@ -37,7 +37,6 @@ using namespace opennn;
 
 namespace {
 
-
 struct Image24
 {
     int width = 0;
@@ -159,9 +158,6 @@ void draw_rect_outline(Image24& img,
     }
 }
 
-
-
-
 void write_synthetic_bmp(const std::filesystem::path& path,
                          int width, int height,
                          std::array<uint8_t, 3> background,
@@ -263,20 +259,7 @@ int main()
 
         set_seed(42);
 
-
-
         Configuration::instance().set(Device::CUDA, Type::FP32);
-
-
-
-
-
-
-
-
-
-
-
 
         const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
 
@@ -284,24 +267,13 @@ int main()
         const bool use_raccoon = false;
         const bool use_coco    = false;
 
-
-
-
-
-
         const bool use_panet   = false;
-
-
-
 
         const bool use_csp     = false;
 
-
         const bool use_c11     = true;
 
-
         const bool use_sppf    = false;
-
 
         const bool use_v8      = true;
 
@@ -331,18 +303,13 @@ int main()
         }();
         const std::string voc_image_set = "trainval";
 
-
-
         const std::vector<std::string> voc_class_filter = {};
-
-
 
         const std::filesystem::path data_dir = use_voc     ? "yolo_voc_data"
                                              : use_raccoon ? "yolo_raccoon_data"
                                              : use_coco   ? "yolo_coco_data"
                                              :               "yolo_data";
         std::filesystem::create_directories(data_dir);
-
 
         const std::filesystem::path log_path = data_dir / "training_log.txt";
         std::ofstream log_file(log_path, std::ios::app);
@@ -387,8 +354,6 @@ int main()
             if (use_voc12)
             {
 
-
-
                 const auto labels07 = data_dir / "voc07_labels";
                 const auto labels12 = data_dir / "voc12_labels";
                 YoloDataset::convert_voc_to_yolo(voc_root,   voc_image_set, labels07, voc_class_filter);
@@ -396,7 +361,6 @@ int main()
 
                 labels_dir = data_dir / (voc_class_filter.empty() ? "voc_combined_labels" : "voc_combined_labels_filtered");
                 std::filesystem::create_directories(labels_dir);
-
 
                 auto link_dir = [](const std::filesystem::path& src,
                                    const std::filesystem::path& dst_dir,
@@ -415,7 +379,6 @@ int main()
                 };
                 link_dir(labels07, labels_dir, "07_");
                 link_dir(labels12, labels_dir, "12_");
-
 
                 images_dir = data_dir / "voc_combined_images";
                 std::filesystem::create_directories(images_dir);
@@ -449,9 +412,6 @@ int main()
                           << " VOC2007 samples to YOLO format in " << labels_dir << "\n";
             }
 
-
-
-
             if (!voc_class_filter.empty())
             {
                 const std::filesystem::path filtered_images_dir = data_dir / "voc_images_filtered";
@@ -479,13 +439,9 @@ int main()
                 std::cout << "Filtered to " << linked << " images containing the requested classes.\n";
             }
 
-
-
             grid_size = use_v8 ? 20 : 13;
             boxes_per_cell = 3;
             input_shape = use_v8 ? Shape{640, 640, 3} : Shape{416, 416, 3};
-
-
 
             anchors = {
                 {0.024f, 0.034f}, {0.055f, 0.065f}, {0.089f, 0.139f},
@@ -493,9 +449,6 @@ int main()
         }
         else if (use_coco)
         {
-
-
-
 
             labels_dir = "/home/alvaromartin/coco_mini_data/train2017_labels";
             images_dir = data_dir / "labeled_images";
@@ -515,8 +468,6 @@ int main()
                 }
             }
 
-
-
             grid_size      = 13;
             boxes_per_cell = 3;
             input_shape    = Shape{416, 416, 3};
@@ -527,7 +478,6 @@ int main()
         }
         else if (use_raccoon)
         {
-
 
             images_dir = "/home/artelnics/Documents/opennn/raccoon_dataset/images";
             labels_dir = "/home/artelnics/Documents/opennn/raccoon_data/labels";
@@ -545,15 +495,11 @@ int main()
             labels_dir = data_dir / "labels";
             generate_synthetic_dataset(images_dir, labels_dir, 256);
 
-
             grid_size      = 4;
             boxes_per_cell = 2;
             input_shape    = Shape{128, 128, 3};
             anchors        = {{0.25f, 0.25f}, {0.5f, 0.5f}};
         }
-
-
-
 
         const bool is_v3std     = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
         const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
@@ -565,7 +511,6 @@ int main()
             if (is_v3std)
             {
 
-
                 if (use_voc)
                 {
                     anchors = {
@@ -574,7 +519,6 @@ int main()
                 }
                 else if (!use_coco)
                 {
-
 
                     anchors = {
                         {0.08f, 0.08f}, {0.15f, 0.15f}, {0.25f, 0.25f},
@@ -586,8 +530,6 @@ int main()
 
                 if (use_voc)
                 {
-
-
 
                     anchors = {
                         {0.024f, 0.031f}, {0.038f, 0.072f}, {0.079f, 0.055f},
@@ -605,9 +547,6 @@ int main()
             boxes_per_cell = 3;
         }
 
-
-
-
         const std::vector<std::array<float, 2>> ctor_anchors = use_v8
             ? std::vector<std::array<float, 2>>{}
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
@@ -617,9 +556,6 @@ int main()
 
         YoloDataset dataset(images_dir, labels_dir, input_shape,
                             grid_size, ctor_bpc, ctor_anchors);
-
-
-
 
         if (head_style == YoloNetwork::HeadStyle::FPNv8)
         {
@@ -673,12 +609,10 @@ int main()
             aug.hue         = 0.1f;
             aug.enabled     = true;
 
-
             aug.mosaic      = use_voc || use_coco;
         }
         else
         {
-
 
             aug.jitter      = 0.2f;
             aug.flip        = true;
@@ -690,29 +624,14 @@ int main()
         dataset.set_augmentation(aug);
         dataset.set_storage_mode(Dataset::StorageMode::Matrix);
 
-
-
-
-
-
-
         const double train_frac = use_raccoon ? 0.8 : (use_voc ? 0.85 : 0.7);
         const double val_frac   = use_raccoon ? 0.2 : (use_voc ? 0.15 : 0.3);
         dataset.split_samples_random(train_frac, val_frac, 0.0);
-
-
-
-
-
-
 
         const std::vector<std::array<float, 2>>& network_anchors = use_v8
             ? anchors
             : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
-
-
-
 
         const auto model_size = is_csp53v11
             ? YoloNetwork::ModelSize::s
@@ -752,10 +671,6 @@ int main()
                   << ", layers=" << yolo_network.get_layers_number()
                   << ", parameters=" << yolo_network.get_parameters_number() << "\n";
 
-
-
-
-
         if (head_style != YoloNetwork::HeadStyle::FPN && head_style != YoloNetwork::HeadStyle::PANet
         &&  head_style != YoloNetwork::HeadStyle::FPNv8)
         {
@@ -767,12 +682,9 @@ int main()
                                "non_max_suppression_layer");
         }
 
-
-
         TrainingStrategy training_strategy(&yolo_network, &dataset);
         training_strategy.set_loss("Yolo");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-
 
         training_strategy.get_loss()->set_regularization("L2");
 
@@ -788,22 +700,12 @@ int main()
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
             training_strategy.get_optimization_algorithm());
 
-
-
-
-
         const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : 16);
         adam->set_batch_size(batch_size);
         adam->set_display_period(1);
         adam->set_gradient_clip_norm(10.0f);
         adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
         adam->set_validation_period(5);
-
-
-
-
-
-
 
         const bool resume_training = true;
 
@@ -835,8 +737,6 @@ int main()
         &&   std::filesystem::exists(legacy_weights))
             weights_path = legacy_weights;
 
-
-
         std::filesystem::path states_path = weights_path;
         states_path.replace_extension(".states.bin");
 
@@ -848,8 +748,6 @@ int main()
                 yolo_network.load_states_binary(states_path);
             std::cout << "\nLoaded weights from \"" << weights_path.string() << "\".\n";
         }
-
-
 
         const bool needs_darknet_backbone =
             (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
@@ -875,8 +773,6 @@ int main()
                 Index loaded = 0;
                 if (isv11)
                 {
-
-
 
                     loaded = YoloDataset::load_darknet_backbone_v11(yolo_network, darknet_weights);
                 }
@@ -905,9 +801,6 @@ int main()
             }
         }
 
-
-
-
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
             const std::string prefix = (backbone == YoloNetwork::Backbone::Darknet53)      ? "dn53_"  :
@@ -921,21 +814,7 @@ int main()
             std::cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (" << prefix << "*).\n";
         };
 
-
-
-
-
-
-
-
-
-
-
         struct TrainingRound { float lr; int epochs; };
-
-
-
-
 
         const std::vector<TrainingRound> lr_schedule =
             use_coco                      ? std::vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
@@ -946,8 +825,6 @@ int main()
             use_raccoon                   ? std::vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
                                             std::vector<TrainingRound>{{1e-3f, 200}};
 
-
-
         const std::filesystem::path epochs_file =
             data_dir / (weights_filename.substr(0, weights_filename.size() - 4) + "_epochs.txt");
         int epochs_done = 0;
@@ -957,11 +834,6 @@ int main()
             ef >> epochs_done;
         }
         std::cout << "Epochs completed so far: " << epochs_done << "\n";
-
-
-
-
-
 
         const std::filesystem::path ema_weights_path = [&] {
             auto p = weights_path;
@@ -992,9 +864,6 @@ int main()
             ema_updated_this_run = true;
         };
 
-
-
-
         adam->post_best_callback = [&](Index epoch, float val_error) {
             yolo_network.save_parameters_binary(weights_path);
             yolo_network.save_states_binary(states_path);
@@ -1016,8 +885,6 @@ int main()
         if (resume_training || !std::filesystem::exists(weights_path))
         {
 
-
-
             {
                 const float* live = yolo_network.get_parameters_data();
                 std::copy(live, live + n_params, ema_params.begin());
@@ -1038,7 +905,6 @@ int main()
                 const int round_end = cumulative + rnd.epochs;
                 if (epochs_done >= round_end) { cumulative = round_end; continue; }
 
-
                 if (backbone_frozen && cumulative >= 5) {
                     set_backbone_trainable(true);
                     backbone_frozen = false;
@@ -1047,9 +913,6 @@ int main()
                 const int to_run = round_end - epochs_done;
                 adam->set_learning_rate(rnd.lr);
                 adam->set_maximum_epochs(to_run);
-
-
-
 
                 {
                     const float* live = yolo_network.get_parameters_data();
@@ -1068,7 +931,6 @@ int main()
                 { std::ofstream ef(epochs_file); ef << epochs_done; }
                 std::cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
 
-
                 {
                     VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
                     yolo_network.set_parameters(ema_vec);
@@ -1083,21 +945,11 @@ int main()
             std::cout << "Training complete (" << epochs_done << " total epochs).\n";
         }
 
-
-
-
-
         const bool is_fpn = (head_style == YoloNetwork::HeadStyle::FPN ||
                               head_style == YoloNetwork::HeadStyle::PANet ||
                               head_style == YoloNetwork::HeadStyle::FPNv8);
 
-
-
-
-
-
         const std::filesystem::path output_dir = data_dir / "annotated";
-
 
         if (std::filesystem::exists(output_dir))
             for (const auto& entry : std::filesystem::directory_iterator(output_dir))
@@ -1114,12 +966,6 @@ int main()
             { 30, 200,  30},
             {220,  40,  40},
         }};
-
-
-
-
-
-
 
         const std::vector<Index> selection_indices = dataset.get_sample_indices("Validation");
         const Index num_classes = dataset.get_classes_number();
@@ -1149,7 +995,6 @@ int main()
         else
         {
 
-
             for (Index k = 0; k < max_vis; ++k)
             {
                 const Index pos = k * Index(selection_indices.size()) / max_vis;
@@ -1172,8 +1017,6 @@ int main()
 
             if (is_fpn)
             {
-
-
 
                 ForwardPropagation forward_propagation(
 1, &yolo_network,
@@ -1214,8 +1057,6 @@ int main()
 #endif
                     fpn_heads.push_back({ data_ptr, head_shape[0], boxes_per_head, classes_n });
                 }
-
-
 
                 {
                     float max_score = 0.f;
@@ -1301,7 +1142,6 @@ input_shape[1]);
             std::filesystem::path label_path = labels_dir / image_path.filename();
             label_path.replace_extension(".txt");
 
-
             struct GtBox { int cls; float cx, cy, w, h; };
             std::vector<GtBox> gt_boxes;
             {
@@ -1316,8 +1156,6 @@ input_shape[1]);
             const float gt_cy    = gt_boxes.empty() ? 0.5f  : gt_boxes[0].cy;
             const float gt_w     = gt_boxes.empty() ? 0.0f  : gt_boxes[0].w;
             const float gt_h     = gt_boxes.empty() ? 0.0f  : gt_boxes[0].h;
-
-
 
             const int canvas_W = int(input_shape[1]);
             const int canvas_H = int(input_shape[0]);
@@ -1371,7 +1209,6 @@ input_shape[1]);
                 }
             }
 
-
             auto lb_px = [&](float cx, float cy, float w, float h,
                               int& x0, int& y0, int& x1, int& y1)
             {
@@ -1385,10 +1222,8 @@ input_shape[1]);
                 y1 = int(std::round(cy_px + hh)) - 1;
             };
 
-
             int gt_x0, gt_y0, gt_x1, gt_y1;
             lb_px(gt_cx, gt_cy, gt_w, gt_h, gt_x0, gt_y0, gt_x1, gt_y1);
-
 
             for (const auto& gb : gt_boxes)
             {
@@ -1405,9 +1240,6 @@ input_shape[1]);
                 (gt_class >= 0 && size_t(gt_class) < class_names.size())
                     ? class_names[size_t(gt_class)] : std::to_string(gt_class);
 
-
-
-
             const int gt_col_cell = std::min(int(grid_size) - 1,
                                               std::max(0, int(gt_cx * float(grid_size))));
             const int gt_row_cell = std::min(int(grid_size) - 1,
@@ -1419,7 +1251,6 @@ input_shape[1]);
                       << "  GT   : class=" << gt_class_name
                       << " box=(" << gt_x0 << "," << gt_y0 << ")-("
                       << gt_x1 << "," << gt_y1 << ")\n";
-
 
             auto iou_with_gt = [&](int x0, int y0, int x1, int y1) -> float
             {
@@ -1433,8 +1264,6 @@ input_shape[1]);
                 const float b = float(gt_x1 - gt_x0) * float(gt_y1 - gt_y0);
                 return inter / std::max(a + b - inter, 1e-6f);
             };
-
-
 
             const std::array<std::array<uint8_t, 3>, 3> rank_colors{{
                 {220,  40,  40},
@@ -1489,7 +1318,6 @@ input_shape[1]);
                           << x1 << "," << y1 << ")\n";
             }
 
-
             std::cout << "  GT cell: (col=" << gt_col_cell << ", row=" << gt_row_cell << ")\n";
             int gt_cell_hits = 0;
             for (Index r = 0; r < Index(detections.size()); ++r)
@@ -1535,8 +1363,6 @@ input_shape[1]);
                           << " (iou=" << best_iou_value << ")\n";
             }
 
-
-
             const std::string class_label =
                 (gt_class >= 0 && size_t(gt_class) < class_names.size())
                     ? class_names[size_t(gt_class)] : std::to_string(gt_class);
@@ -1551,8 +1377,6 @@ input_shape[1]);
         std::cout << "\nLegend: green = GT, red = top-1, orange = top-2, "
                   << "yellow = top-3, cyan = best-IoU-vs-GT (if outside top-3).\n";
 
-
-
         if (ema_updated_this_run)
         {
             VectorR ema_vec = Eigen::Map<const VectorR>(ema_params.data(), n_params);
@@ -1564,11 +1388,6 @@ input_shape[1]);
             std::cout << "Using live (best-epoch checkpoint) weights for final mAP evaluation.\n";
         }
 
-
-
-
-
-
         {
             std::cout << "\nComputing VOC mAP@0.5 on "
                       << selection_indices.size() << " validation images...\n";
@@ -1578,8 +1397,6 @@ input_shape[1]);
 
             const int N_cls = int(dataset.get_classes_number());
             const int N_val = int(selection_indices.size());
-
-
 
             auto read_image_dims = [](const std::filesystem::path& p) -> std::pair<int,int> {
                 std::ifstream f(p, std::ios::binary);
@@ -1624,10 +1441,6 @@ input_shape[1]);
                 return {0, 0};
             };
 
-
-
-
-
             std::vector<std::vector<GtBox>> val_gt(N_val);
             for (int k = 0; k < N_val; ++k)
             {
@@ -1635,7 +1448,6 @@ input_shape[1]);
                 const std::filesystem::path img_path = dataset.get_image_path(s);
                 std::filesystem::path lbl = labels_dir / img_path.filename();
                 lbl.replace_extension(".txt");
-
 
                 const auto [orig_H, orig_W] = read_image_dims(img_path);
                 float lb_scale = 1.0f, lb_off_x = 0.0f, lb_off_y = 0.0f;
@@ -1659,7 +1471,6 @@ input_shape[1]);
                     val_gt[k].push_back({c, lb_cx, lb_cy, lb_w, lb_h});
                 }
             }
-
 
             std::vector<std::vector<Pred>> cls_preds(N_cls);
             for (int k = 0; k < N_val; ++k)
@@ -1735,7 +1546,6 @@ input_shape[1]);
                 }
             }
 
-
             auto iou_box = [](float cx1, float cy1, float w1, float h1,
                               float cx2, float cy2, float w2, float h2) -> float
             {
@@ -1790,7 +1600,6 @@ input_shape[1]);
                     prec.push_back(cum_tp / (cum_tp + cum_fp));
                     rec .push_back(cum_tp / float(n_gt));
                 }
-
 
                 float ap = 0.f;
                 for (int ri = 0; ri <= 10; ++ri)

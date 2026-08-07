@@ -104,9 +104,6 @@ int main(int argc, char* argv[])
         const Type inference_type = (precision == "bf16") ? Type::BF16 : Type::FP32;
         Configuration::instance().set(Device::CUDA, inference_type);
 
-
-
-
         TabularDataset dataset(test_path, ",", false, false);
         dataset.set_sample_roles("Testing");
         const MatrixR& all = dataset.get_data();
@@ -138,10 +135,6 @@ int main(int argc, char* argv[])
 
         const Index batches = processed / batch;
 
-
-
-
-
         Buffer inputs_device(Device::CUDA);
         const Index input_bytes =
             get_aligned_bytes(processed * inputs_number, Type::FP32);
@@ -156,11 +149,6 @@ int main(int argc, char* argv[])
                            stream);
         cudaStreamSynchronize(stream);
 #endif
-
-
-
-
-
 
         ForwardPropagation forward_propagation(batch, network.get());
         forward_propagation.set_cuda_graph(true);
@@ -194,8 +182,6 @@ int main(int argc, char* argv[])
             }
         };
 
-
-
         run_pass();
 #ifdef OPENNN_HAS_CUDA
         cudaDeviceSynchronize();
@@ -213,8 +199,6 @@ int main(int argc, char* argv[])
             const auto t1 = clock_type::now();
             times.push_back(std::chrono::duration<double>(t1 - t0).count());
         }
-
-
 
 #ifdef OPENNN_HAS_CUDA
         if (last_outputs)

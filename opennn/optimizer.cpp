@@ -895,9 +895,6 @@ TrainingResult Optimizer::train()
                       validation_batch_size,
                       has_validation);
 
-
-
-
     ForwardPropagation training_forward_propagation(
         training_batch_size,
         neural_network,

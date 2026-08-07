@@ -284,5 +284,4 @@ string Scaling::write_expression(const vector<string>& input_names,
     return expression;
 }
 
-
 }

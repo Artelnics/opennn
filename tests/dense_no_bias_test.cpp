@@ -9,8 +9,6 @@
 
 using namespace opennn;
 
-
-
 TEST(DenseNoBiasTest, ParameterCountExcludesBias)
 {
     NeuralNetwork with_bias;
@@ -26,10 +24,6 @@ TEST(DenseNoBiasTest, ParameterCountExcludesBias)
     EXPECT_EQ(with_bias.get_parameters_number(), 4 * 3 + 3);
     EXPECT_EQ(without_bias.get_parameters_number(), 4 * 3);
 }
-
-
-
-
 
 TEST(DenseNoBiasTest, ForwardIsPureMatmul)
 {
@@ -55,7 +49,6 @@ TEST(DenseNoBiasTest, ForwardIsPureMatmul)
     EXPECT_NEAR(output[1], type(3), 1.0e-5f);
     EXPECT_NEAR(output[2], type(3), 1.0e-5f);
 }
-
 
 TEST(DenseNoBiasTest, GradientMatchesNumerical)
 {

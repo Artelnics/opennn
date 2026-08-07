@@ -26,9 +26,6 @@ struct ActivationOperator : Operator
     bool forward_fused = false;
     bool backward_fused = false;
 
-
-
-
     const bool* backward_fused_by_consumer = nullptr;
 
     void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }

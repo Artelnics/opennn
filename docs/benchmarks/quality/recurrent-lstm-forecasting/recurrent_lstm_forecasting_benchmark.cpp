@@ -496,7 +496,6 @@ ScenarioVerdict run_scenario(const Scenario& s)
     return v;
 }
 
-
 void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
 {
     std::cout << "\n\n";
@@ -537,7 +536,6 @@ void print_phase_summary(const vector<ScenarioVerdict>& vs, const string& phase)
         print_metric_line(phase, v.id, v.lstm, v.winner);
     }
 }
-
 
 void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
                             const vector<ScenarioVerdict>& gpu_vs)
@@ -584,7 +582,6 @@ void print_combined_summary(const vector<ScenarioVerdict>& cpu_vs,
     }
     std::cout << "\nSpeedup = CPU mean time / GPU mean time. Both networks use cuDNN RNN\n"
                  "on GPU (CUDNN_RNN_TANH / CUDNN_LSTM).\n";
-
 
     std::cout << "\n";
     std::cout << "===============================================================================================\n";

@@ -48,8 +48,6 @@ CORPUS = os.environ.get(
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_energy")
 D, H, FF, LAYERS = 512, 8, 2048, 6
 
-
-
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -61,13 +59,10 @@ def tf_ld_path():
                 libs.append(p)
     return os.pathsep.join(libs)
 
-
 TF_LD = tf_ld_path()
-
 
 def engine_batch(engine):
     return args.batch_map.get(engine, args.batch)
-
 
 def tokens_bin_for_shape(shape):
     cache_dir = CORPUS + ".cache"
@@ -87,7 +82,6 @@ def tokens_bin_for_shape(shape):
             f"found {candidates}"
         )
     return candidates[0]
-
 
 def cmd_env(engine, shape, seed):
     tokens_bin = tokens_bin_for_shape(shape)
@@ -129,7 +123,6 @@ def cmd_env(engine, shape, seed):
         raise ValueError(engine)
     return cmd, env
 
-
 def parse_power_csv(path):
     """(seconds-of-day, watts) samples from an nvidia-smi timestamp,power log,
     unwrapped past midnight so time is monotonic."""
@@ -153,7 +146,6 @@ def parse_power_csv(path):
             samples.append((sec + offset, w))
     return samples
 
-
 def unix_to_trace_time(unix_ts, samples):
     """Map a unix timestamp onto the trace's (unwrapped) seconds-of-day axis."""
     dt = datetime.fromtimestamp(unix_ts)
@@ -161,7 +153,6 @@ def unix_to_trace_time(unix_ts, samples):
     if samples and sod < samples[0][0] - 43200:
         sod += 86400
     return sod
-
 
 def integrate(samples, idle_w, t_lo=None, t_hi=None):
     """Trapezoidal ∫power dt, optionally restricted to [t_lo, t_hi];
@@ -183,7 +174,6 @@ def integrate(samples, idle_w, t_lo=None, t_hi=None):
     avg_w = sumw / len(samples) if samples else 0.0
     return e_total, e_active, avg_w, span, len(samples)
 
-
 def measure_idle(seconds=5.0):
     try:
         out = subprocess.run(
@@ -194,7 +184,6 @@ def measure_idle(seconds=5.0):
         out = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
     vals = [float(x) for x in out.split() if re.fullmatch(r"[0-9.]+", x)]
     return sum(vals) / len(vals) if vals else 30.0
-
 
 def gpu_state():
     fields = ("clocks.current.sm,clocks.max.sm,clocks.current.memory,"
@@ -215,12 +204,10 @@ def gpu_state():
     except Exception:
         return {"error": "nvidia-smi gpu-state query failed"}
 
-
 def parse_marker(pattern, text, cast=float):
 
     m = re.search(pattern, text, re.MULTILINE)
     return cast(m.group(1)) if m else None
-
 
 def run_one(engine, shape, idle_w, trace_path, seed):
     cmd, env = cmd_env(engine, shape, seed)
@@ -290,7 +277,6 @@ def run_one(engine, shape, idle_w, trace_path, seed):
           and m.get("energy_total_j") is not None)
     return ok, m, out
 
-
 def cooldown(idle_w, seconds=20, mib_threshold=1200):
     """Wait for VRAM to drain and power to settle back near idle."""
     deadline = time.time() + seconds
@@ -307,7 +293,6 @@ def cooldown(idle_w, seconds=20, mib_threshold=1200):
             return
         time.sleep(1.0)
 
-
 def derive_shape():
     cmd = [args.opennn_bin, CORPUS, "probe"]
 
@@ -323,7 +308,6 @@ def derive_shape():
     print(f"model shape: {shape}")
     return shape
 
-
 def git_commit():
     try:
         r = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -331,7 +315,6 @@ def git_commit():
         return r.stdout.strip()[:12] or "unknown"
     except Exception:
         return "unknown"
-
 
 def versions():
     v = {"python": sys.version.split()[0]}
@@ -352,7 +335,6 @@ def versions():
         pass
     return v
 
-
 def main():
     global args
     ap = argparse.ArgumentParser()
@@ -362,7 +344,6 @@ def main():
     ap.add_argument("--batches", default="",
                     help="optional per-engine batches, e.g. "
                          "opennn=32,pytorch=24,tensorflow=20")
-
 
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--max-epochs", type=int, default=20)
@@ -477,7 +458,6 @@ def main():
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

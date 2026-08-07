@@ -13,9 +13,6 @@
 
 using namespace opennn;
 
-
-
-
 TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
 {
     const Index batch = 1, seq = 3, q_heads = 1, kv_heads = 1, head_dim = 4;
@@ -42,9 +39,6 @@ TEST(GroupedAttentionTest, CausalFirstPositionEqualsValue)
     for (Index d = 0; d < head_dim; ++d)
         EXPECT_NEAR(output[size_t(d)], value[size_t(d)], 1.0e-6f);
 }
-
-
-
 
 TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
 {
@@ -84,7 +78,6 @@ TEST(GroupedAttentionTest, GroupedHeadsShareKeyValue)
             EXPECT_NEAR(head0, head1, 1.0e-6f);
         }
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 

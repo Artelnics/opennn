@@ -344,21 +344,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
     MatrixMap targets(target_data, batch_size, targets_number);
 
-    if (multi_target)
-    {
-        #pragma omp parallel for schedule(static)
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < target_columns; ++j)
-                for (Index k = 0; k < future_time_steps; ++k)
-                {
-                    const Index target_row = sample_indices[i] + past_time_steps + k;
-                    targets(i, j * future_time_steps + k) =
-                        (target_row < total_rows_in_data)
-                            ? data(target_row, target_indices[j])
-                            : 0.0f;
-                }
-    }
-    else
+    if (!multi_target)
     {
         #pragma omp parallel for schedule(static)
         for (Index i = 0; i < batch_size; ++i)
@@ -369,7 +355,20 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                     ? data(target_row, target_indices[j])
                     : 0.0f;
         }
+        return;
     }
+
+    #pragma omp parallel for schedule(static)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < target_columns; ++j)
+            for (Index k = 0; k < future_time_steps; ++k)
+            {
+                const Index target_row = sample_indices[i] + past_time_steps + k;
+                targets(i, j * future_time_steps + k) =
+                    (target_row < total_rows_in_data)
+                    ? data(target_row, target_indices[j])
+                    : 0.0f;
+            }
 }
 
 void TimeSeriesDataset::fill_batch(Batch& batch,

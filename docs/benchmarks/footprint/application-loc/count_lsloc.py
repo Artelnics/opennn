@@ -14,14 +14,12 @@ import json
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent
 FILES = {
     "opennn_cpp": ROOT / "opennn_iris.cpp",
     "pytorch_python": ROOT / "pytorch_iris.py",
     "tensorflow_python": ROOT / "tensorflow_iris.py",
 }
-
 
 def strip_cpp_comment(line: str, in_block: bool) -> tuple[str, bool]:
     out = []
@@ -42,7 +40,6 @@ def strip_cpp_comment(line: str, in_block: bool) -> tuple[str, bool]:
             out.append(line[i])
             i += 1
     return "".join(out), in_block
-
 
 def count_cpp_lsloc(path: Path) -> int:
     count = 0
@@ -78,12 +75,10 @@ def count_cpp_lsloc(path: Path) -> int:
 
     return count
 
-
 def count_python_lsloc(path: Path) -> int:
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source)
     return sum(1 for node in ast.walk(tree) if isinstance(node, ast.stmt))
-
 
 def main() -> None:
     results = {
@@ -93,7 +88,6 @@ def main() -> None:
     }
 
     print(json.dumps(results, indent=2, sort_keys=True))
-
 
 if __name__ == "__main__":
     main()

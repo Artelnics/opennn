@@ -32,14 +32,12 @@ vector<NamedColumn> make_named_columns(const vector<string>& names)
     return out;
 }
 
-
 float lookup_coeff(const vector<pair<Index, float>>& terms, Index column)
 {
     for (const auto& [col, coeff] : terms)
         if (col == column) return coeff;
     return float(0);
 }
-
 
 struct MinimalApproximation
 {
@@ -103,8 +101,6 @@ struct MinimalApproximation
 
 }
 
-
-
 TEST(FormulaExpression, LinearSumIsAffine)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -119,7 +115,6 @@ TEST(FormulaExpression, LinearSumIsAffine)
     EXPECT_NEAR(f.affine_constant, float(-3), float(1e-6));
 }
 
-
 TEST(FormulaExpression, UnaryNegationFlipsCoefficients)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -129,7 +124,6 @@ TEST(FormulaExpression, UnaryNegationFlipsCoefficients)
     EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(-1), float(1e-6));
     EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 1), float(1), float(1e-6));
 }
-
 
 TEST(FormulaExpression, ConstantScalingDistributesOverSum)
 {
@@ -141,7 +135,6 @@ TEST(FormulaExpression, ConstantScalingDistributesOverSum)
     EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 1), float(3), float(1e-6));
 }
 
-
 TEST(FormulaExpression, DivisionByConstantIsAffine)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
@@ -151,7 +144,6 @@ TEST(FormulaExpression, DivisionByConstantIsAffine)
     EXPECT_NEAR(lookup_coeff(f.affine_input_terms, 0), float(0.25), float(1e-6));
 }
 
-
 TEST(FormulaExpression, ProductOfVariablesIsNonlinear)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -159,7 +151,6 @@ TEST(FormulaExpression, ProductOfVariablesIsNonlinear)
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
 }
-
 
 TEST(FormulaExpression, DivisionByVariableIsNonlinear)
 {
@@ -169,7 +160,6 @@ TEST(FormulaExpression, DivisionByVariableIsNonlinear)
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
 }
 
-
 TEST(FormulaExpression, SqrtFunctionIsNonlinear)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
@@ -178,7 +168,6 @@ TEST(FormulaExpression, SqrtFunctionIsNonlinear)
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
 }
 
-
 TEST(FormulaExpression, PowerWithNonUnitExponentIsNonlinear)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
@@ -186,7 +175,6 @@ TEST(FormulaExpression, PowerWithNonUnitExponentIsNonlinear)
 
     EXPECT_EQ(f.shape, FormulaShape::Nonlinear);
 }
-
 
 TEST(FormulaExpression, ScopeInputsOnly)
 {
@@ -199,7 +187,6 @@ TEST(FormulaExpression, ScopeInputsOnly)
     EXPECT_TRUE(f.output_indices.empty());
 }
 
-
 TEST(FormulaExpression, ScopeOutputsOnly)
 {
     const CompiledFormula f = compile_formula("y1",
@@ -211,7 +198,6 @@ TEST(FormulaExpression, ScopeOutputsOnly)
     EXPECT_EQ(f.output_indices.size(), 1u);
 }
 
-
 TEST(FormulaExpression, ScopeMixed)
 {
     const CompiledFormula f = compile_formula("x1 + y1",
@@ -220,8 +206,6 @@ TEST(FormulaExpression, ScopeMixed)
 
     EXPECT_EQ(f.scope, FormulaScope::Mixed);
 }
-
-
 
 TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
 {
@@ -234,7 +218,6 @@ TEST(FormulaExpression, EvaluateAffineRespectsSignedCoefficients)
     EXPECT_NEAR(f.evaluate(in, out), float(8), float(1e-5));
 }
 
-
 TEST(FormulaExpression, EvaluateNonlinearExpression)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -245,7 +228,6 @@ TEST(FormulaExpression, EvaluateNonlinearExpression)
 
     EXPECT_NEAR(f.evaluate(in, out), float(12), float(1e-5));
 }
-
 
 TEST(FormulaExpression, EvaluateUsesOutputsForMixedScope)
 {
@@ -258,7 +240,6 @@ TEST(FormulaExpression, EvaluateUsesOutputsForMixedScope)
 
     EXPECT_NEAR(f.evaluate(in, out), float(9), float(1e-5));
 }
-
 
 TEST(FormulaExpression, ParenthesesOverridePrecedence)
 {
@@ -274,7 +255,6 @@ TEST(FormulaExpression, ParenthesesOverridePrecedence)
     EXPECT_NEAR(b.evaluate(in, out), float(16), float(1e-5));
 }
 
-
 TEST(FormulaExpression, MinMaxFunctions)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -289,15 +269,12 @@ TEST(FormulaExpression, MinMaxFunctions)
     EXPECT_EQ(fmin.shape, FormulaShape::Nonlinear);
 }
 
-
-
 TEST(FormulaExpression, UnknownIdentifierThrows)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
 
     EXPECT_THROW(compile_formula("x1 + z9", inputs, {}), runtime_error);
 }
-
 
 TEST(FormulaExpression, UnknownFunctionThrows)
 {
@@ -306,19 +283,16 @@ TEST(FormulaExpression, UnknownFunctionThrows)
     EXPECT_THROW(compile_formula("bogus(x1)", inputs, {}), runtime_error);
 }
 
-
 TEST(FormulaExpression, EmptyExpressionThrows)
 {
     EXPECT_THROW(compile_formula("", {}, {}), runtime_error);
 }
-
 
 TEST(FormulaExpression, ExpressionWithoutVariablesThrows)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
     EXPECT_THROW(compile_formula("1 + 2", inputs, {}), runtime_error);
 }
-
 
 TEST(FormulaExpression, WrongFunctionArityThrows)
 {
@@ -328,15 +302,12 @@ TEST(FormulaExpression, WrongFunctionArityThrows)
     EXPECT_THROW(compile_formula("min(x1)", inputs, {}), runtime_error);
 }
 
-
 TEST(FormulaExpression, MismatchedParenthesesThrow)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1" });
 
     EXPECT_THROW(compile_formula("(x1 + 1", inputs, {}), runtime_error);
 }
-
-
 
 TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
 {
@@ -365,7 +336,6 @@ TEST(ResponseOptimizationFormula, AffineInputConstraintFiltersResults)
     }
 }
 
-
 TEST(ResponseOptimizationFormula, AffineEqualityLandsOnHyperplane)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -393,7 +363,6 @@ TEST(ResponseOptimizationFormula, AffineEqualityLandsOnHyperplane)
     }
 }
 
-
 TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -419,8 +388,6 @@ TEST(ResponseOptimizationFormula, NonlinearInputConstraintFilters)
         EXPECT_LE(r2, float(4) + float(1e-2));
     }
 }
-
-
 
 TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock)
 {
@@ -461,7 +428,6 @@ TEST(RepairBlockDecomposition, DisjointAffineBlockStaysExactBesideNonlinearBlock
             << " (it must be projected, not dragged through Gauss-Newton)";
 }
 
-
 TEST(ResponseOptimizationFormula, DisjointAffineAndNonlinearBlocksCoexist)
 {
     MinimalApproximation setup({ "x0", "x1", "x2", "x3" }, { "y" },
@@ -488,7 +454,6 @@ TEST(ResponseOptimizationFormula, DisjointAffineAndNonlinearBlocksCoexist)
     }
 }
 
-
 TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -513,8 +478,6 @@ TEST(ResponseOptimizationFormula, CallbackConstraintFilters)
         EXPECT_LE(abs(results(i, 0) - results(i, 1)), float(1) + float(1e-3));
 }
 
-
-
 TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -524,7 +487,6 @@ TEST(NonSmoothExpand, SmoothExpressionIsSingleBranch)
     ASSERT_EQ(branches[0].size(), size_t(1));
     EXPECT_EQ(branches[0][0].compiled.shape, FormulaShape::Affine);
 }
-
 
 TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
 {
@@ -537,7 +499,6 @@ TEST(NonSmoothExpand, MinGreaterEqualIsAndIntersection)
         EXPECT_EQ(c.comparison_operator, ComparisonOperator::GreaterEqualTo);
 }
 
-
 TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -546,7 +507,6 @@ TEST(NonSmoothExpand, MaxLessEqualIsAndIntersection)
     ASSERT_EQ(branches.size(), size_t(1));
     EXPECT_EQ(branches[0].size(), size_t(2));
 }
-
 
 TEST(NonSmoothExpand, AbsLessEqualIsInterval)
 {
@@ -560,7 +520,6 @@ TEST(NonSmoothExpand, AbsLessEqualIsInterval)
     EXPECT_NEAR(branches[0][0].up_bound, float(1), float(1e-6));
 }
 
-
 TEST(NonSmoothExpand, OrCasesBranch)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
@@ -570,14 +529,12 @@ TEST(NonSmoothExpand, OrCasesBranch)
     EXPECT_EQ(expand_constraint("abs(x1 - x2)", ComparisonOperator::GreaterEqualTo, float(1), float(0), inputs, {}).size(), size_t(2));
 }
 
-
 TEST(NonSmoothExpand, NestedYieldsRegionProduct)
 {
     const vector<NamedColumn> inputs = make_named_columns({ "x1", "x2" });
     const auto branches = expand_constraint("max(x1, abs(x2))", ComparisonOperator::LessEqualTo, float(0), float(1), inputs, {});
     EXPECT_EQ(branches.size(), size_t(4));
 }
-
 
 TEST(ResponseOptimizationNonSmooth, MinGreaterEqualKeepsBothAboveBound)
 {
@@ -599,7 +556,6 @@ TEST(ResponseOptimizationNonSmooth, MinGreaterEqualKeepsBothAboveBound)
     }
 }
 
-
 TEST(ResponseOptimizationNonSmooth, MaxGreaterEqualBranchesIntoUnion)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
@@ -617,7 +573,6 @@ TEST(ResponseOptimizationNonSmooth, MaxGreaterEqualBranchesIntoUnion)
         EXPECT_TRUE(results(i, 0) >= float(3) - float(1e-2) || results(i, 1) >= float(3) - float(1e-2));
 }
 
-
 TEST(ResponseOptimizationNonSmooth, AbsGreaterEqualBranchesBySign)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" }, float(-5), float(5), float(-1), float(1));
@@ -634,7 +589,6 @@ TEST(ResponseOptimizationNonSmooth, AbsGreaterEqualBranchesBySign)
     for (Index i = 0; i < results.rows(); ++i)
         EXPECT_GE(abs(results(i, 0) - results(i, 1)), float(2) - float(1e-2));
 }
-
 
 TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
 {
@@ -656,7 +610,6 @@ TEST(ResponseOptimizationNonSmooth, NestedMaxAbsStaysInsideBox)
     }
 }
 
-
 TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -676,7 +629,6 @@ TEST(ResponseOptimizationFormula, InfeasibleConstraintThrows)
 
     EXPECT_THROW(opt.perform_response_optimization(), runtime_error);
 }
-
 
 TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
 {
@@ -701,7 +653,6 @@ TEST(ResponseOptimizationFormula, NoFormulaConstraintsPreservesBaseline)
         EXPECT_LE(results(i, 1), float(10) + float(1e-3));
     }
 }
-
 
 TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
 {
@@ -732,7 +683,6 @@ TEST(ResponseOptimizationFormula, ConstraintAndObjectiveOnSameVariable)
         << "best x1 = " << results(0, 0) << " (should approach the lower bound 2)";
 }
 
-
 TEST(ResponseOptimizationClear, ClearObjectivesResetsObjectivesAndFixedValues)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" });
@@ -749,8 +699,6 @@ TEST(ResponseOptimizationClear, ClearObjectivesResetsObjectivesAndFixedValues)
     opt.set_objective("y", ResponseOptimization::Sense::Minimize);
     EXPECT_EQ(opt.get_objectives_number(), 1);
 }
-
-
 
 namespace
 {
@@ -770,7 +718,6 @@ float reachable_output_median(ResponseOptimization& opt, Index output_column, In
 }
 
 }
-
 
 TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
 {
@@ -794,7 +741,6 @@ TEST(ResponseOptimizationFixed, FixedInputIsConvertedToBox)
         EXPECT_NEAR(results(i, 0), float(3), float(1e-2))
             << "row " << i << " x1=" << results(i, 0) << " (should be pinned to 3)";
 }
-
 
 TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
 {
@@ -823,7 +769,6 @@ TEST(ResponseOptimizationFixed, FixedOutputPureInverseSolve)
             << "row " << i << " y=" << results(i, 2) << " target=" << target;
 }
 
-
 TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y1", "y2" },
@@ -851,7 +796,6 @@ TEST(ResponseOptimizationFixed, FixedMixedWithOptimizingStaysSingleObjective)
         EXPECT_NEAR(results(i, 3), target, float(5e-2))
             << "row " << i << " y2=" << results(i, 3) << " target=" << target;
 }
-
 
 TEST(ResponseOptimizationFixed, MultipleFixedOutputsRemainSingleObjective)
 {
@@ -886,7 +830,6 @@ TEST(ResponseOptimizationFixed, MultipleFixedOutputsRemainSingleObjective)
     }
 }
 
-
 TEST(ResponseOptimizationInteger, IntegerVariableYieldsIntegralResults)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -915,7 +858,6 @@ TEST(ResponseOptimizationInteger, IntegerVariableYieldsIntegralResults)
     }
 }
 
-
 TEST(ResponseOptimizationInteger, IntegerBoxConstraintStaysIntegral)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -943,7 +885,6 @@ TEST(ResponseOptimizationInteger, IntegerBoxConstraintStaysIntegral)
         EXPECT_LE(results(i, 0), float(8) + float(1e-3));
     }
 }
-
 
 TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
 {
@@ -976,7 +917,6 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterAffineRepair)
     }
 }
 
-
 TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -1004,8 +944,6 @@ TEST(ResponseOptimizationInteger, IntegerStaysIntegralAfterOutputRepair)
         EXPECT_NEAR(results(i, 0), round(results(i, 0)), float(1e-3))
             << "integer x1 not integral after output repair at row " << i;
 }
-
-
 
 TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
 {
@@ -1073,8 +1011,6 @@ TEST(MixedIntegerProjector, FixedBinariesHoldWhileContinuousReproject)
         EXPECT_NEAR(points(r, 3), float(0), float(1e-3)) << "w3 not zeroed at row " << r;
     }
 }
-
-
 
 namespace
 {
@@ -1172,8 +1108,6 @@ TEST(MixedIntegerCarry, PureIntegerKnapsackWiredIntoSolve)
     }
 }
 
-
-
 TEST(MixedIntegerKHot, DrawsExactlyKHonoringPins)
 {
     const Index count = 8, k = 3;
@@ -1217,8 +1151,6 @@ TEST(MixedIntegerKHot, ReportsInfeasiblePins)
         EXPECT_FALSE(draw_k_hot(count, 1, force_on, force_off, out));
     }
 }
-
-
 
 TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
 {
@@ -1279,7 +1211,6 @@ TEST(MixedIntegerPortfolio, BuyInBudgetCardinalityYieldsFeasiblePoints)
     }
 }
 
-
 TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
 {
     const int A = 31;
@@ -1331,7 +1262,6 @@ TEST(MixedIntegerPortfolio, Port1ScaleBuyInBudgetCardinalityIsFeasible)
     }
 }
 
-
 TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
 {
     const int A = 6;
@@ -1382,8 +1312,6 @@ TEST(MixedIntegerPortfolio, ExploreExploitRatioPreservesFeasibility)
     }
 }
 
-
-
 TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
 {
     const int A = 6;
@@ -1418,7 +1346,6 @@ TEST(ContinuousCardinality, SelectsExactlyKNonzeroRestZero)
         EXPECT_GE(zero, A - K)    << "fewer than A-K zeroed variables at row " << r;
     }
 }
-
 
 TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
 {
@@ -1459,7 +1386,6 @@ TEST(IntegerCardinality, ExactlyKActiveIntegersRestZero)
     }
 }
 
-
 TEST(BinaryCardinality, FreeModeIsAtMostK)
 {
     const int A = 6;
@@ -1496,8 +1422,6 @@ TEST(BinaryCardinality, FreeModeIsAtMostK)
         EXPECT_LE(ones, K) << "more than K ones under free/at-most-K mode at row " << r;
     }
 }
-
-
 
 TEST(SingleVariablePromotion, AffineConstraintBecomesBox)
 {
@@ -1554,8 +1478,6 @@ TEST(SingleVariablePromotion, IntegerPromotionRespectsLattice)
     }
 }
 
-
-
 TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -1580,7 +1502,6 @@ TEST(ResponseOptimizationAllowedSet, FreeInputIsDrawnFromTheSet)
     }
 }
 
-
 TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -1604,7 +1525,6 @@ TEST(ResponseOptimizationAllowedSet, FormulaMembershipBranchesToEachValue)
         EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {3,7}";
     }
 }
-
 
 TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleValue)
 {
@@ -1631,7 +1551,6 @@ TEST(ResponseOptimizationAllowedSet, EntangledInputBranchesAndSkipsInfeasibleVal
         EXPECT_LE(results(i, 0) + results(i, 1), float(5) + float(1e-2));
     }
 }
-
 
 TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBudget)
 {
@@ -1660,7 +1579,6 @@ TEST(ResponseOptimizationAllowedSet, BudgetedPruningPreservesMembershipWithinBud
     }
 }
 
-
 TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
 {
     MinimalApproximation setup({ "x1", "x2" }, { "y" },
@@ -1686,8 +1604,6 @@ TEST(ResponseOptimizationAllowedSet, ExhaustiveSwitchPreservesMembership)
         EXPECT_LT(distance, float(5e-2)) << "x1+x2 = " << sum << " is not in {2,4,6,8}";
     }
 }
-
-
 
 TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
 {
@@ -1731,7 +1647,6 @@ TEST(ResponseOptimizationCategory, OneHotForwardRespectsAllowedSet)
         EXPECT_TRUE(one_hot) << "row " << i << " a=" << a << " c=" << c;
     }
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

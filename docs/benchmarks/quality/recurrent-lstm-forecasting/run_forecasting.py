@@ -46,7 +46,6 @@ PROTOCOL = {
     },
 }
 
-
 def env_gpu_index():
     value = os.environ.get("BENCH_GPU_INDEX")
     if value is None or value == "":
@@ -56,9 +55,7 @@ def env_gpu_index():
     except ValueError:
         return None
 
-
 BINARY_NAME = "recurrent_lstm_forecasting_benchmark"
-
 
 def default_binary():
     env_bin = os.environ.get("OPENNN_FORECASTING_BIN") or os.environ.get("OPENNN_NO2_FORECASTING_BIN")
@@ -77,17 +74,14 @@ def default_binary():
             return str(candidate)
     return str(candidates[0])
 
-
 def command_output(command):
     try:
         return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
     except Exception:
         return None
 
-
 def git_commit():
     return command_output(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"]) or "unknown"
-
 
 def versions(gpu_index):
     gpu_command = [
@@ -104,10 +98,8 @@ def versions(gpu_index):
         "gpu": command_output(gpu_command),
     }
 
-
 def quote_command(command):
     return " ".join(shlex.quote(str(part)) for part in command)
-
 
 def count_csv_rows(path):
     try:
@@ -116,13 +108,11 @@ def count_csv_rows(path):
     except OSError:
         return None
 
-
 def prepare_command(data_dir, raw_path):
     command = [sys.executable, str(PREP_SCRIPT), "--output-dir", str(data_dir)]
     if raw_path:
         command.extend(["--raw-path", str(raw_path)])
     return command
-
 
 def ensure_prepared_data(data_dir, raw_path, no_prepare):
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -144,7 +134,6 @@ def ensure_prepared_data(data_dir, raw_path, no_prepare):
         raise SystemExit(f"Preparation did not create {prepared_csv}")
     return prepared_csv, True
 
-
 def parse_value(value):
     try:
         number = float(value)
@@ -157,7 +146,6 @@ def parse_value(value):
         return int(number)
     return number
 
-
 def parse_key_values(line):
     fields = {}
     for token in line.split()[1:]:
@@ -166,7 +154,6 @@ def parse_key_values(line):
         key, value = token.split("=", 1)
         fields[key] = parse_value(value)
     return fields
-
 
 def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
     """Merge METRIC/SPEEDUP lines from one engine's output into metrics/speedups.
@@ -202,7 +189,6 @@ def parse_metrics(raw, metrics, speedups, default_engine="opennn"):
                 continue
             speedups.setdefault(scenario, {})[net] = fields
 
-
 PYTHON_ENGINES = {
     "pytorch": {"script": HERE / "pytorch_forecasting.py",
                 "version": "import torch; print(torch.__version__)"},
@@ -210,10 +196,8 @@ PYTHON_ENGINES = {
                    "version": "import tensorflow as tf; print(tf.__version__)"},
 }
 
-
 def python_engine_version(snippet):
     return command_output([sys.executable, "-c", snippet])
-
 
 def run_python_engine(name, gpu_index, force_cpu, timeout):
     """Run a PyTorch/TensorFlow engine script from HERE (so xf_common finds
@@ -246,7 +230,6 @@ def run_python_engine(name, gpu_index, force_cpu, timeout):
                   f"{HERE / 'requirements-gpu.txt'}", file=sys.stderr)
     return proc.stdout + proc.stderr
 
-
 def device_check(metrics):
     """Per engine/phase device summary parsed from METRIC lines, flagging any
     GPU phase that actually ran on cpu (device mismatch)."""
@@ -265,7 +248,6 @@ def device_check(metrics):
             if phase == "GPU" and "cpu" in devices:
                 entry["mismatch"] = True
     return summary
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -416,7 +398,6 @@ def main():
     if opennn_returncode != 0:
         print(raw[-2000:], file=sys.stderr)
         raise SystemExit(opennn_returncode)
-
 
 if __name__ == "__main__":
     main()

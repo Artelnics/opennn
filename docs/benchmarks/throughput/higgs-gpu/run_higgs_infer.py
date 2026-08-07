@@ -33,7 +33,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 HERE = Path(__file__).resolve().parent
 RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 DEFAULT_BENCH_DATA = Path(
@@ -43,7 +42,6 @@ DEFAULT_HIGGS_DIR = DEFAULT_BENCH_DATA / "higgs"
 DEFAULT_TEST = DEFAULT_HIGGS_DIR / "higgs_test.csv"
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 KEY_VALUE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
-
 
 def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     try:
@@ -57,14 +55,11 @@ def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     except Exception:
         return ""
 
-
 def repo_root() -> Path:
     root = run_text(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"])
     return Path(root).resolve() if root else HERE.parents[3]
 
-
 REPO_ROOT = repo_root()
-
 
 def git_metadata() -> dict[str, Any]:
     commit = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
@@ -77,10 +72,8 @@ def git_metadata() -> dict[str, Any]:
         "status_short": status.splitlines(),
     }
 
-
 def candidate_names(base: str) -> list[str]:
     return [base + ".exe", base] if os.name == "nt" else [base, base + ".exe"]
-
 
 def find_opennn_higgs_infer() -> tuple[str, bool]:
     for env_name in ("OPENNN_HIGGS_INFER_BIN", "OPENNN_BIN"):
@@ -110,9 +103,7 @@ def find_opennn_higgs_infer() -> tuple[str, bool]:
     fallback = REPO_ROOT / "build-benchmarks" / "bin" / candidate_names("opennn_higgs_infer")[0]
     return str(fallback), False
 
-
 OPENNN_BIN, OPENNN_BIN_FOUND = find_opennn_higgs_infer()
-
 
 def python_json(py: str, code: str) -> dict[str, Any]:
     try:
@@ -121,7 +112,6 @@ def python_json(py: str, code: str) -> dict[str, Any]:
         return json.loads(lines[-1]) if lines else {}
     except Exception:
         return {}
-
 
 def framework_versions() -> dict[str, Any]:
     code = r"""
@@ -173,7 +163,6 @@ print(json.dumps(info, default=str))
         info["nvidia_smi"] = smi
     return info
 
-
 def tensorflow_library_dirs(py: str) -> list[str]:
     override = os.environ.get("TF_NV_LIBS")
     if override:
@@ -198,7 +187,6 @@ print(json.dumps(roots))
     except Exception:
         return []
 
-
 def prepend_env_path(env: dict[str, str], key: str, values: list[str]) -> None:
     existing = os.environ.get(key, "")
     pieces = [value for value in values if value]
@@ -206,7 +194,6 @@ def prepend_env_path(env: dict[str, str], key: str, values: list[str]) -> None:
         pieces.append(existing)
     if pieces:
         env[key] = os.pathsep.join(pieces)
-
 
 def parse_scalar(text: str) -> Any:
     value = text.strip()
@@ -220,7 +207,6 @@ def parse_scalar(text: str) -> Any:
     except ValueError:
         return value
 
-
 def parse_metrics(raw: str) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     for line in raw.splitlines():
@@ -228,7 +214,6 @@ def parse_metrics(raw: str) -> dict[str, Any]:
         if match:
             metrics[match.group(1)] = parse_scalar(match.group(2))
     return metrics
-
 
 def numeric_values(runs: list[dict[str, Any]], key: str) -> list[float]:
     values: list[float] = []
@@ -238,14 +223,12 @@ def numeric_values(runs: list[dict[str, Any]], key: str) -> list[float]:
             values.append(float(value))
     return values
 
-
 def add_stat(summary: dict[str, Any], runs: list[dict[str, Any]], key: str) -> None:
     values = numeric_values(runs, key)
     if not values:
         return
     summary[f"{key}_median"] = round(statistics.median(values), 6)
     summary[f"{key}_stdev"] = round(statistics.pstdev(values), 6) if len(values) > 1 else 0.0
-
 
 def summarize_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
     ok_runs = [
@@ -276,7 +259,6 @@ def summarize_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
             summary["last_output_tail"] = raw[-1000:]
     return summary
 
-
 def file_info(path: Path) -> dict[str, Any]:
     info: dict[str, Any] = {"path": str(path)}
     if path.exists():
@@ -286,7 +268,6 @@ def file_info(path: Path) -> dict[str, Any]:
         info["exists"] = False
     return info
 
-
 def load_higgs_metadata(test_path: Path) -> dict[str, Any] | None:
     for candidate in (test_path.parent / "higgs_metadata.json", HERE.parent / "higgs" / "data" / "higgs_metadata.json"):
         if candidate.exists():
@@ -295,7 +276,6 @@ def load_higgs_metadata(test_path: Path) -> dict[str, Any] | None:
             except Exception:
                 return {"metadata_error": f"could not read {candidate}"}
     return None
-
 
 def engine_cmd(
     engine: str,
@@ -351,11 +331,9 @@ def engine_cmd(
         raise ValueError(engine)
     return cmd, env
 
-
 def display_command(cmd: list[str], env_over: dict[str, str]) -> str:
     env_bits = [f"{key}={value}" for key, value in sorted(env_over.items())]
     return " ".join(env_bits + [shlex.join(cmd)])
-
 
 def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, Any]:
     env = dict(os.environ)
@@ -382,7 +360,6 @@ def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, 
             "raw_output": str(exc),
         }
 
-
 def metrics_summary(results: dict[str, Any]) -> dict[str, Any]:
     metrics: dict[str, Any] = {
         "samples_per_sec": {},
@@ -405,7 +382,6 @@ def metrics_summary(results: dict[str, Any]) -> dict[str, Any]:
                     metrics["speedup"][f"{precision}_opennn_vs_{competitor}"] = round(opennn / value, 3)
     return metrics
 
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -425,7 +401,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--output", default=None, help="optional explicit result JSON path")
     return parser.parse_args()
-
 
 def main() -> None:
     args = parse_args()
@@ -521,7 +496,6 @@ def main() -> None:
     result["metrics"] = metrics_summary(result["results"])
     out_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

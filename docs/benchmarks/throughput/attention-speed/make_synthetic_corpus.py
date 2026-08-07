@@ -21,13 +21,11 @@ Usage:
 """
 import sys
 
-
 def lcg(seed):
     state = seed & 0xFFFFFFFF
     while True:
         state = (1103515245 * state + 12345) & 0x7FFFFFFF
         yield state
-
 
 def main():
     if len(sys.argv) < 5:
@@ -38,7 +36,6 @@ def main():
     n_samples = int(sys.argv[4])
     seed = int(sys.argv[5]) if len(sys.argv) > 5 else 1234
 
-
     in_tokens = seq_len - 2
     tgt_tokens = seq_len - 1
     if in_tokens < 1 or tgt_tokens < 1:
@@ -46,8 +43,6 @@ def main():
 
     pool = [f"w{i}" for i in range(vocab)]
     rng = lcg(seed)
-
-
 
     per_line = in_tokens + tgt_tokens
     total = n_samples * per_line
@@ -64,7 +59,6 @@ def main():
     print(f"wrote {n_samples} samples to {out_path}: "
           f"vocab={vocab} seq_len={seq_len} "
           f"(in_tokens={in_tokens} tgt_tokens={tgt_tokens})")
-
 
 if __name__ == "__main__":
     main()

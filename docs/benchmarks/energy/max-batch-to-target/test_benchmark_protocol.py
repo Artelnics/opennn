@@ -6,13 +6,11 @@ import types
 import unittest
 from pathlib import Path
 
-
 HERE = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location(
     "run_max_batch_to_target", HERE / "run_max_batch_to_target.py")
 RUNNER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RUNNER)
-
 
 class CommandProtocolTest(unittest.TestCase):
     def test_resnet_tensorflow_honors_graph_mode(self):
@@ -51,7 +49,6 @@ class CommandProtocolTest(unittest.TestCase):
         _, env = RUNNER.command_for(
             args, "tensorflow", 1562, capacity, "tensorflow_xla", 42)
         self.assertEqual(env["TF_XLA"], "1")
-
 
 if __name__ == "__main__":
     unittest.main()

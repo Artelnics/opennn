@@ -33,7 +33,6 @@ if (-not (Test-Path $HiggsCsv)) {
     throw "HIGGS training CSV not found at '$HiggsCsv'. Set OPENNN_BENCH_DATA and run ../../throughput/higgs/prepare_higgs.py first (see ../DATA_POLICY.md)."
 }
 
-
 $valuesPerRow = 29
 
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null

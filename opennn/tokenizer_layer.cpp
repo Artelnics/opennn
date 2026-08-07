@@ -78,7 +78,6 @@ void Tokenizer::write_JSON_body(JsonWriter& printer) const
     write_json(printer, {{"TokenizerKind", tokenizer->get_kind()}});
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

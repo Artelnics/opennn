@@ -35,23 +35,12 @@
 namespace opennn
 {
 
-static bool same_specs(const vector<vector<TensorSpec>>& a, const vector<vector<TensorSpec>>& b)
-{
-    return ranges::equal(a, b, [](const auto& x, const auto& y)
-    {
-        return ranges::equal(x, y, [](const TensorSpec& s, const TensorSpec& t)
-        {
-            return s.shape == t.shape && s.dtype == t.dtype;
-        });
-    });
-}
-
 static void recompile_if_specs_changed(NeuralNetwork& network,
                                        const vector<vector<TensorSpec>>& forward_before,
                                        const vector<vector<TensorSpec>>& backward_before)
 {
-    if (same_specs(forward_before, network.get_forward_specs(1))
-        && same_specs(backward_before, network.get_backward_specs(1)))
+    if (forward_before == network.get_forward_specs(1)
+        && backward_before == network.get_backward_specs(1))
         return;
 
     VectorR parameters_snapshot;
@@ -609,10 +598,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     else if (backbone == Backbone::CSPDarknet53v11)
     {
 
-
-
-
-
         auto add_c3k2_block = [&](Index input_index, Index ch, const string& prefix) -> Index {
             const Index mid = ch / 2;
             Index x = add_conv(input_index, Shape{3, 3, ch, mid},  act,        stride, true, prefix + "_c1");
@@ -644,8 +629,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             return add_conv(cat, Shape{1, 1, 2 * branch_ch, out_ch}, act, stride, true, prefix + "_merge");
         };
 
-
-
         auto scale_ch = [&](Index base) -> Index {
             float w = model_size == ModelSize::n ? 0.25f
                     : model_size == ModelSize::s ? 0.50f
@@ -661,7 +644,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     :                              1.00f;
             return max(Index(1), Index(std::round(float(base) * d)));
         };
-
 
         const vector<pair<Index, Index>> stages = {
             {scale_ch(64),   scale_d(1)},
@@ -712,7 +694,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 add_layer(make_unique<DetectionV8>(get_layer(cat)->get_output_shape(), reg_max, name + "_det"), {cat});
             };
 
-
             const Index c5_ch = get_layer(c5_index)->get_output_shape()[2];
             const Index c4_ch = get_layer(c4_index)->get_output_shape()[2];
             const Index c3_ch = get_layer(c3_index)->get_output_shape()[2];
@@ -738,7 +719,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 return {p5n, p4n, add_yolo_neck(get_layers_number() - 1, p3_small + c3_ch, p3_small, c3_ch, pfx + "neck_p3")};
             };
 
-
             add_layer(make_unique<C2PSA>(get_layer(c5_index)->get_output_shape(), "c11_c2psa"), {c5_index});
             const Index c2psa_index = get_layers_number() - 1;
             const auto [p5n, p4n, p3n] = build_fpn_trunk_c11(c2psa_index, "c11_");
@@ -752,7 +732,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             compile();
             set_parameters_random();
             {
-
 
                 static constexpr float PRIOR_BIAS = -4.5951f;
                 for (const auto& layer : get_layers())
@@ -940,7 +919,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             auto add_det_head_v8 = [&](Index feat_idx, const string& name) {
                 const Index in_ch = get_layer(feat_idx)->get_output_shape()[2];
 
-
                 Index box = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},        act,        stride, true,  name+"_box_c1");
                 box       = add_conv(box,      Shape{3,3,head_ch,head_ch},      act,        stride, true,  name+"_box_c2");
                 box       = add_conv(box,      Shape{1,1,head_ch,box_ch},       "Identity", stride, false, name+"_box_out");
@@ -948,7 +926,6 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 Index cls = add_conv(feat_idx, Shape{3,3,in_ch,head_ch},               act,        stride, true,  name+"_cls_c1");
                 cls       = add_conv(cls,      Shape{3,3,head_ch,head_ch},             act,        stride, true,  name+"_cls_c2");
                 cls       = add_conv(cls,      Shape{1,1,head_ch,classes_number},      "Identity", stride, false, name+"_cls_out");
-
 
                 const Shape hw = get_layer(box)->get_output_shape();
                 add_layer(make_unique<Concatenation>(hw, vector<Index>{box_ch, classes_number}, name+"_cat"),

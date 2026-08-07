@@ -80,9 +80,6 @@ std::vector<float> logits_row(const ForwardPropagation& forward_propagation, Ind
     return row;
 }
 
-
-
-
 float multi_turn_max_logit_diff(const Dims& d, bool bf16_upload = false)
 {
     Qwen3 used(d.seq, d.vocab, d.hidden, d.layers, d.q_heads, d.kv_heads, d.head_dim, d.intermediate, 1000000.0f, 1.0e-6f);
@@ -288,14 +285,12 @@ void write_logical_bf16_parameters(
                  streamsize(bf16.size() * sizeof(uint16_t)));
     ASSERT_TRUE(output.good());
 
-
     input.close();
     error_code remove_error;
     filesystem::remove(fp32_path, remove_error);
 }
 
 }
-
 
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheCpu)
 {
@@ -402,7 +397,6 @@ TEST(Qwen3NetworkTest, DirectLogicalBf16WeightsMatchRoundedCpu)
     Configuration::instance().set();
 }
 
-
 #ifdef OPENNN_HAS_CUDA
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpu)
 {
@@ -411,9 +405,6 @@ TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpu)
     EXPECT_LT(multi_turn_max_logit_diff(TINY), 1.0e-2f);
     Configuration::instance().set();
 }
-
-
-
 
 TEST(Qwen3NetworkTest, MultiTurnPrefillRestartsCacheGpuBf16Upload)
 {
@@ -473,11 +464,6 @@ TEST(Qwen3NetworkTest, ChunkedPrefillAndDecodeEqualFullPassGpuBf16)
     Configuration::instance().set();
 }
 
-
-
-
-
-
 TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
@@ -485,11 +471,6 @@ TEST(Qwen3NetworkTest, MultiTurnGrowingPrefillGpu)
     EXPECT_LT(multi_turn_max_logit_diff(d, false), 1.0e-3f);
     Configuration::instance().set();
 }
-
-
-
-
-
 
 TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
 {
@@ -553,9 +534,6 @@ TEST(Qwen3NetworkTest, DecodeGraphSurvivesFiveSuffixPrefillsGpu)
         const TensorView graph_view = decode_token(token);
         const vector<float> graph_logits = logits_row(decode, 0);
         ASSERT_EQ(graph_view.data, decode.get_outputs().data);
-
-
-
 
         --position;
         decode.past_length = position;

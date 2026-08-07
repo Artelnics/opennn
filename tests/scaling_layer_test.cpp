@@ -14,7 +14,6 @@ TEST(ScalingLayerTest, DefaultConstructor)
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{0});
 }
 
-
 TEST(ScalingLayerTest, GeneralConstructor)
 {
     Scaling scaling_layer_2d({1});
@@ -23,7 +22,6 @@ TEST(ScalingLayerTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_output_shape(), Shape{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling");
 }
-
 
 TEST(ScalingLayerTest, ForwardPropagate)
 {
@@ -75,7 +73,6 @@ TEST(ScalingLayerTest, ForwardPropagate)
     }
 }
 
-
 TEST(ScalingLayerTest, ForwardPropagateScalesValues)
 {
     const Index samples_number = 3;
@@ -125,7 +122,6 @@ TEST(ScalingLayerTest, ForwardPropagateScalesValues)
         EXPECT_NEAR(output_view.as<type>()[2], type(1), TOLERANCE);
     }
 }
-
 
 TEST(ScalingLayerTest, ForwardPropagateScalerModes)
 {

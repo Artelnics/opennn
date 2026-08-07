@@ -42,8 +42,6 @@ VENV_PY = os.environ.get("BENCH_PYTHON", "python3")
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_higgs_maxbatch_trial")
 RESULTS_DIR = os.path.join(REPO, "docs", "benchmarks", "results")
 
-
-
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -56,13 +54,11 @@ def tf_ld_path():
     return os.pathsep.join(libs)
 TF_LD = tf_ld_path()
 
-
 def nvidia_used_mib():
     out = subprocess.run(["nvidia-smi", "--query-gpu=memory.used",
                           "--format=csv,noheader,nounits"],
                          capture_output=True, text=True)
     return int(out.stdout.strip().splitlines()[0])
-
 
 class PeakMonitor:
     def __init__(self, interval=0.05):
@@ -76,7 +72,6 @@ class PeakMonitor:
             try: self.peak = max(self.peak, nvidia_used_mib())
             except Exception: pass
             self._stop.wait(self.interval)
-
 
 def cmd_env(engine, precision, mode, batch):
     on_cpu = args.device == "cpu"
@@ -114,17 +109,12 @@ def cmd_env(engine, precision, mode, batch):
         raise ValueError(engine)
     return cmd, env
 
-
 def rlimit_preexec(cap_bytes):
-
-
-
 
     def fn():
         import resource
         resource.setrlimit(resource.RLIMIT_DATA, (cap_bytes, cap_bytes))
     return fn
-
 
 def run_trial(engine, precision, mode, batch, cap_mib):
     cmd, env = cmd_env(engine, precision, mode, batch)
@@ -137,9 +127,6 @@ def run_trial(engine, precision, mode, batch, cap_mib):
                                   timeout=args.timeout_s, preexec_fn=preexec)
             peak = None
         else:
-
-
-
 
             try:
                 idle_before = nvidia_used_mib()
@@ -173,7 +160,6 @@ def run_trial(engine, precision, mode, batch, cap_mib):
             "sps": float(m.group(1)) if m else None,
             "reason": reason, "raw": raw[-1500:]}
 
-
 def cooldown(threshold=1200, timeout=30):
     if args.device == "cpu":
         return
@@ -183,7 +169,6 @@ def cooldown(threshold=1200, timeout=30):
             if nvidia_used_mib() <= threshold: return
         except Exception: return
         time.sleep(0.5)
-
 
 def search_max_batch(engine, precision, mode, cap_mib):
     cache = {}
@@ -202,7 +187,6 @@ def search_max_batch(engine, precision, mode, cap_mib):
     left, right = lo + 1, min(hi - 1, args.max_limit)
     while left <= right:
 
-
         if right - left + 1 < args.min_step: break
         mid = (left + right) // 2
         if trial(mid): lo, left = mid, mid + 1
@@ -211,7 +195,6 @@ def search_max_batch(engine, precision, mode, cap_mib):
     best = cache.get(lo, {})
     return lo, best.get("peak"), fail, best.get("vm_peak_mib"), \
         best.get("idle_before_mib"), best.get("peak_delta_mib")
-
 
 def main():
     global args
@@ -328,7 +311,6 @@ def main():
         with open(path, "w") as f:
             json.dump(artifact, f, indent=1)
         print(f"\nresult JSON written to {path}")
-
 
 if __name__ == "__main__":
     main()

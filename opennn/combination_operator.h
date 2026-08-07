@@ -26,18 +26,8 @@ struct CombinationOperator : Operator
 
     bool  tied_transposed = false;
 
-
-
     bool  transposed_inference_preferred = false;
     bool  transposed_inference_active    = false;
-
-
-
-
-
-
-
-
 
     mutable bool emit_relu_mask = false;
     mutable bool relu_mask_fused_active = false;

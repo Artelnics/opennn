@@ -13,7 +13,6 @@
 #include "opennn/forward_propagation.h"
 #include "opennn/back_propagation.h"
 
-
 using namespace opennn;
 
 TEST(CrossEntropyError2d, DefaultConstructor)
@@ -66,7 +65,6 @@ TEST(CrossEntropyError2d, BackPropagate)
 
 }
 
-
 TEST(CrossEntropyError2d, CalculateError)
 {
     TabularDataset dataset(5, { 3 }, { 1 });
@@ -106,7 +104,6 @@ TEST(CrossEntropyError2d, CalculateError)
     EXPECT_FALSE(std::isnan(error));
     EXPECT_GE(error, type(0));
 }
-
 
 TEST(CrossEntropyError2d, get_name)
 {

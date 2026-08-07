@@ -13,7 +13,6 @@ TEST(TimeSeriesDataset, DefaultConstructor)
     EXPECT_EQ(time_series_data_set.get_samples_number(), 0);
 }
 
-
 TEST(TimeSeriesDataset, GeneralConstructor)
 {
     Shape input_shape = { 1 };
@@ -24,7 +23,6 @@ TEST(TimeSeriesDataset, GeneralConstructor)
     EXPECT_EQ(time_series_data_set_3.get_variables_number(), 2);
     EXPECT_EQ(time_series_data_set_3.get_samples_number(), 1);
 }
-
 
 TEST(TimeSeriesDataset, Autocorrelations)
 {
@@ -50,7 +48,6 @@ TEST(TimeSeriesDataset, Autocorrelations)
     EXPECT_EQ(autocorrelations.cols(), 1);
 }
 
-
 TEST(TimeSeriesDataset, CrossCorrelations)
 {
 
@@ -64,7 +61,6 @@ TEST(TimeSeriesDataset, CrossCorrelations)
     Tensor3 cross_correlations;
 
     MatrixR data;
-
 
     lags_number = 6;
 
@@ -134,7 +130,6 @@ TEST(TimeSeriesDataset, test_transform_time_series)
 
 }
 
-
 TEST(TimeSeriesDataset, test_set_steps_ahead_number)
 {
 
@@ -159,7 +154,6 @@ TEST(TimeSeriesDataset, test_set_steps_ahead_number)
 
 }
 
-
 TEST(TimeSeriesDataset, test_set_lags_number)
 {
 
@@ -183,7 +177,6 @@ TEST(TimeSeriesDataset, test_set_lags_number)
     EXPECT_EQ(dataset.get_future_time_steps(), 2);
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.

@@ -20,10 +20,6 @@ namespace opennn
 namespace
 {
 
-
-
-
-
 float clamp_unit(const float value)
 {
     return min(1.0f, max(0.0f, value));
@@ -790,8 +786,6 @@ void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
     }
 }
 
-
-
 static void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
                                    Index classes_number,
                                    float* target)
@@ -1032,6 +1026,13 @@ YoloDetection unwarp_candidate(const float* candidate, const LetterboxUnwarp& un
     return detection;
 }
 
+bool valid_decode_dimensions(Index original_height, Index original_width,
+                             Index network_height, Index network_width)
+{
+    return original_height > 0 && original_width > 0
+        && network_height > 0 && network_width > 0;
+}
+
 vector<YoloDetection> nms_and_unwarp(vector<array<float, 6>>& candidates,
                                      Index original_height, Index original_width,
                                      Index network_height, Index network_width,
@@ -1075,8 +1076,7 @@ vector<YoloDetection> decode_yolo_fpn_detections(const vector<YoloFpnHead>& head
                                                  float confidence_threshold,
                                                  float iou_threshold)
 {
-    if (original_height <= 0 || original_width <= 0
-    ||  network_height  <= 0 || network_width  <= 0)
+    if (!valid_decode_dimensions(original_height, original_width, network_height, network_width))
         throw runtime_error("decode_yolo_fpn_detections: dimensions must be positive.");
 
     vector<array<float, 6>> candidates;
@@ -1147,8 +1147,7 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>& h
                                                      float iou_threshold,
                                                      Index reg_max)
 {
-    if (original_height <= 0 || original_width <= 0
-    ||  network_height  <= 0 || network_width  <= 0)
+    if (!valid_decode_dimensions(original_height, original_width, network_height, network_width))
         throw runtime_error("decode_yolo_v8_fpn_detections: dimensions must be positive.");
 
     const Index box_ch = 4 * max(reg_max, Index(1));
@@ -1216,8 +1215,7 @@ vector<YoloDetection> decode_yolo_detections(const float* nms_output,
                                              Index network_height,
                                              Index network_width)
 {
-    if (original_height <= 0 || original_width <= 0
-    ||  network_height  <= 0 || network_width  <= 0)
+    if (!valid_decode_dimensions(original_height, original_width, network_height, network_width))
         throw runtime_error("decode_yolo_detections: dimensions must be positive.");
 
     const LetterboxUnwarp unwarp = make_letterbox_unwarp(original_height, original_width,
@@ -2107,17 +2105,6 @@ Index YoloDataset::load_darknet_backbone(NeuralNetwork& network,
     return loaded;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
                                               const filesystem::path& weights_path)
 {
@@ -2136,8 +2123,6 @@ Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
          << " revision=" << header[2]
          << " seen=" << seen << "\n";
 
-
-
     static const pair<const char*, size_t> targets[] = {
         {"c11_stem",    0},
         {"c11_s1_down", 0},
@@ -2146,7 +2131,6 @@ Index YoloDataset::load_darknet_backbone_v11(NeuralNetwork& network,
         {"c11_s4_down", 811520},
         {"c11_s5_down", 3228672},
     };
-
 
     map<string, Convolutional*> label_to_conv;
     for (const auto& layer : network.get_layers())

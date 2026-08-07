@@ -20,7 +20,6 @@ void create_temp_csv_file(const string& file_path, const string& content)
 
 }
 
-
 TEST(TabularDataset, DefaultConstructor)
 {
     TabularDataset dataset;
@@ -28,7 +27,6 @@ TEST(TabularDataset, DefaultConstructor)
     EXPECT_EQ(dataset.get_variables_number(), 0);
     EXPECT_EQ(dataset.get_samples_number(), 0);
 }
-
 
 TEST(TabularDataset, DimensionsConstructor)
 {
@@ -39,7 +37,6 @@ TEST(TabularDataset, DimensionsConstructor)
     EXPECT_EQ(dataset.get_variables_number("Input"), 1);
     EXPECT_EQ(dataset.get_variables_number("Target"), 1);
 }
-
 
 TEST(TabularDataset, VariableDescriptivesZero)
 {
@@ -55,7 +52,6 @@ TEST(TabularDataset, VariableDescriptivesZero)
     EXPECT_NEAR(variable_descriptives[0].mean, 0, EPSILON);
     EXPECT_NEAR(variable_descriptives[0].standard_deviation, 0, EPSILON);
 }
-
 
 TEST(TabularDataset, VariableDescriptives)
 {
@@ -84,7 +80,6 @@ TEST(TabularDataset, VariableDescriptives)
     EXPECT_NEAR(variable_descriptives[2].maximum, type(2), EPSILON);
 }
 
-
 TEST(TabularDataset, RawVariableDistributions)
 {
     TabularDataset dataset(3, { 2 }, { 1 });
@@ -110,7 +105,6 @@ TEST(TabularDataset, RawVariableDistributions)
     EXPECT_NEAR(histograms[2].centers(0), 1, EPSILON);
 }
 
-
 TEST(TabularDataset, ScaleData)
 {
     TabularDataset dataset(2, { 1 }, { 1 });
@@ -132,7 +126,6 @@ TEST(TabularDataset, ScaleData)
     EXPECT_NEAR(scaled_data_minmax(1, 1), type(1.0), EPSILON);
 }
 
-
 TEST(TabularDataset, UnuseConstantRawVariables)
 {
     TabularDataset dataset(3, { 2 }, { 1 });
@@ -147,7 +140,6 @@ TEST(TabularDataset, UnuseConstantRawVariables)
 
     EXPECT_GE(dataset.get_variables_number(), 0);
 }
-
 
 TEST(TabularDataset, CalculateTargetDistribution)
 {
@@ -211,7 +203,6 @@ TEST(TabularDataset, CalculateTargetDistribution)
     EXPECT_EQ(target_distribution_2[1], 2);
     EXPECT_EQ(target_distribution_2[2], 2);
 }
-
 
 TEST(TabularDataset, ReadCSV_Basic)
 {
@@ -344,7 +335,6 @@ TEST(TabularDataset, ReadCSV_RejectsNumericHeader)
     remove(temp_csv_file_path.c_str());
 }
 
-
 TEST(TabularDataset, ReadCSV_SpaceSeparator)
 {
     const string temp_csv_file_path = "temp_data_space_sep.csv";
@@ -387,7 +377,6 @@ TEST(TabularDataset, ReadCSV_SpaceSeparator)
     remove(temp_csv_file_path.c_str());
 }
 
-
 TEST(TabularDataset, ReadCSV_WithSampleIDs)
 {
     const string temp_csv_file_path = "temp_data_sample_ids.csv";
@@ -427,7 +416,6 @@ TEST(TabularDataset, ReadCSV_WithSampleIDs)
     remove(temp_csv_file_path.c_str());
 }
 
-
 TEST(TabularDataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
 {
     const string temp_csv_file_path = "temp_data_emptylines.csv";
@@ -459,7 +447,6 @@ TEST(TabularDataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
 
     remove(temp_csv_file_path.c_str());
 }
-
 
 TEST(TabularDataset, InputTargetVariableCorrelations)
 {
@@ -560,7 +547,6 @@ TEST(TabularDataset, InputTargetVariableCorrelations)
         EXPECT_EQ(input_target_raw_variable_correlations(i).form, Correlation::Form::Identity);
     }
 }
-
 
 TEST(TabularDataset, InputVariableCorrelations)
 {
@@ -700,7 +686,6 @@ TEST(TabularDataset, InputVariableCorrelations)
     EXPECT_EQ(input_correlations(2,2).form, Correlation::Form::Identity);
 }
 
-
 TEST(TabularDataset, UnuseUncorrelatedVariables)
 {
     MatrixR data;
@@ -735,7 +720,6 @@ TEST(TabularDataset, UnuseUncorrelatedVariables)
     EXPECT_EQ(raw_vars[3].role, VariableRole::Target);
 }
 
-
 TEST(TabularDataset, TargetDistributionBinaryCountsUnusedSamples)
 {
     TabularDataset dataset(4, { 2 }, { 1 });
@@ -759,7 +743,6 @@ TEST(TabularDataset, TargetDistributionBinaryCountsUnusedSamples)
     EXPECT_EQ(distribution(0) + distribution(1), dataset.get_samples_number());
 }
 
-
 TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)
 {
     TabularDataset dataset(3, { 2 }, { 1 });
@@ -781,7 +764,6 @@ TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)
 
     EXPECT_EQ(dataset.get_missing_values_number(), 1);
 }
-
 
 TEST(TabularDataset, BinaryFileStorageStreamsCsvToCache)
 {

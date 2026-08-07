@@ -20,7 +20,6 @@ TEST(ImageProcessingTest, IsSupportedImageFile)
     EXPECT_FALSE(is_supported_image_file("archive.gif"));
 }
 
-
 TEST(ImageProcessingTest, ResizeIdentitySameSize)
 {
     const Index height = 3;
@@ -43,7 +42,6 @@ TEST(ImageProcessingTest, ResizeIdentitySameSize)
             EXPECT_NEAR(output(y, x, 0), input(y, x, 0), 1e-5f);
 }
 
-
 TEST(ImageProcessingTest, ResizeConstantPreservesValue)
 {
     const Index in_height = 2;
@@ -63,7 +61,6 @@ TEST(ImageProcessingTest, ResizeConstantPreservesValue)
         EXPECT_NEAR(output.data()[i], 7.5f, 1e-5f);
 }
 
-
 TEST(ImageProcessingTest, ResizeKeepsTopLeftCorner)
 {
     const Index in_height = 4;
@@ -78,7 +75,6 @@ TEST(ImageProcessingTest, ResizeKeepsTopLeftCorner)
 
     EXPECT_NEAR(output(0, 0, 0), 100.0f, 1e-5f);
 }
-
 
 TEST(ImageProcessingTest, ResizeUpsampleMidpointInterpolation)
 {
@@ -98,7 +94,6 @@ TEST(ImageProcessingTest, ResizeUpsampleMidpointInterpolation)
     EXPECT_NEAR(output(0, 1, 0), 6.6666667f, 1e-4f);
     EXPECT_NEAR(output(0, 2, 0), 10.0f, 1e-5f);
 }
-
 
 TEST(ImageProcessingTest, ReflectHorizontalSwapsColumns)
 {
@@ -122,7 +117,6 @@ TEST(ImageProcessingTest, ReflectHorizontalSwapsColumns)
     }
 }
 
-
 TEST(ImageProcessingTest, ReflectHorizontalTwiceIsIdentity)
 {
     const Index height = 3;
@@ -142,7 +136,6 @@ TEST(ImageProcessingTest, ReflectHorizontalTwiceIsIdentity)
     for (Index i = 0; i < image.size(); ++i)
         EXPECT_NEAR(image.data()[i], original.data()[i], 1e-6f);
 }
-
 
 TEST(ImageProcessingTest, ReflectVerticalSwapsRows)
 {
@@ -166,7 +159,6 @@ TEST(ImageProcessingTest, ReflectVerticalSwapsRows)
     }
 }
 
-
 TEST(ImageProcessingTest, ReflectVerticalTwiceIsIdentity)
 {
     const Index height = 4;
@@ -187,7 +179,6 @@ TEST(ImageProcessingTest, ReflectVerticalTwiceIsIdentity)
         EXPECT_NEAR(image.data()[i], original.data()[i], 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, TranslateXPositiveShift)
 {
     const Index height = 1;
@@ -206,7 +197,6 @@ TEST(ImageProcessingTest, TranslateXPositiveShift)
     EXPECT_NEAR(image(0, 2, 0), 2.0f, 1e-6f);
     EXPECT_NEAR(image(0, 3, 0), 3.0f, 1e-6f);
 }
-
 
 TEST(ImageProcessingTest, TranslateXNegativeShift)
 {
@@ -227,7 +217,6 @@ TEST(ImageProcessingTest, TranslateXNegativeShift)
     EXPECT_NEAR(image(0, 3, 0), 0.0f, 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, TranslateXZeroShiftUnchanged)
 {
     const Index height = 2;
@@ -247,7 +236,6 @@ TEST(ImageProcessingTest, TranslateXZeroShiftUnchanged)
         EXPECT_NEAR(image.data()[i], original.data()[i], 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, TranslateXShiftBeyondWidthClearsImage)
 {
     const Index height = 2;
@@ -263,7 +251,6 @@ TEST(ImageProcessingTest, TranslateXShiftBeyondWidthClearsImage)
     for (Index i = 0; i < image.size(); ++i)
         EXPECT_NEAR(image.data()[i], 0.0f, 1e-6f);
 }
-
 
 TEST(ImageProcessingTest, TranslateXPreservesChannels)
 {
@@ -292,7 +279,6 @@ TEST(ImageProcessingTest, TranslateXPreservesChannels)
     EXPECT_NEAR(image(0, 2, 2), 6.0f, 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, TranslateYPositiveShift)
 {
     const Index height = 4;
@@ -311,7 +297,6 @@ TEST(ImageProcessingTest, TranslateYPositiveShift)
     EXPECT_NEAR(image(2, 0, 0), 2.0f, 1e-6f);
     EXPECT_NEAR(image(3, 0, 0), 3.0f, 1e-6f);
 }
-
 
 TEST(ImageProcessingTest, TranslateYNegativeShift)
 {
@@ -332,7 +317,6 @@ TEST(ImageProcessingTest, TranslateYNegativeShift)
     EXPECT_NEAR(image(3, 0, 0), 0.0f, 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, TranslateYShiftBeyondHeightClearsImage)
 {
     const Index height = 3;
@@ -348,7 +332,6 @@ TEST(ImageProcessingTest, TranslateYShiftBeyondHeightClearsImage)
     for (Index i = 0; i < image.size(); ++i)
         EXPECT_NEAR(image.data()[i], 0.0f, 1e-6f);
 }
-
 
 TEST(ImageProcessingTest, RotateZeroIsIdentity)
 {
@@ -372,7 +355,6 @@ TEST(ImageProcessingTest, RotateZeroIsIdentity)
         EXPECT_NEAR(output.data()[i], input.data()[i], 1e-6f);
 }
 
-
 TEST(ImageProcessingTest, RotateFullCircleApproximatesInput)
 {
     const Index height = 5;
@@ -392,7 +374,6 @@ TEST(ImageProcessingTest, RotateFullCircleApproximatesInput)
 
     EXPECT_NEAR(output(2, 2, 0), 3.0f, 1e-4f);
 }
-
 
 TEST(ImageProcessingTest, RotateOutOfBoundsFillsZero)
 {

@@ -10,7 +10,6 @@ import math
 
 import numpy as np
 
-
 def roc_auc(y_true: np.ndarray, scores: np.ndarray) -> float:
     y = np.asarray(y_true, dtype=np.float64).reshape(-1)
     s = np.asarray(scores, dtype=np.float64).reshape(-1)
@@ -35,7 +34,6 @@ def roc_auc(y_true: np.ndarray, scores: np.ndarray) -> float:
 
     sum_pos_ranks = float(ranks[positives].sum())
     return (sum_pos_ranks - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg)
-
 
 def binary_metrics(y_true: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
     y = np.asarray(y_true, dtype=np.float64).reshape(-1)

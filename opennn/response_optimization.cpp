@@ -585,7 +585,7 @@ Lattice ResponseOptimization::build_input_lattice(const vector<Variable>& variab
         {
             scalar_column_of[variables[i].name] = feature;
 
-            if (variables[i].type == VariableType::Binary || variables[i].type == VariableType::Integer)
+            if (is_one_of(variables[i].type, VariableType::Binary, VariableType::Integer))
             {
                 lattice.columns.push_back(feature);
                 lattice.min.push_back(ceil(input_domain.inferior_frontier(feature)));
@@ -856,7 +856,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 throw_if(floor(original_domain.superior_frontier(current_feature_index)) < ceil(original_domain.inferior_frontier(current_feature_index)),
                          "ResponseOptimization: integer variable '" + name + "' has no integer value within its range.");
 
-            const float explore_fraction = (type == VariableType::Binary || type == VariableType::Integer)
+            const float explore_fraction = is_one_of(type, VariableType::Binary, VariableType::Integer)
                                           ? discrete_explore : continuous_explore;
             const Index explore_count = llround(explore_fraction * effective_evaluations);
 
@@ -1440,8 +1440,8 @@ vector<char> ResponseOptimization::discrete_column_mask(const vector<Variable>& 
     for (size_t i = 0; i < variables.size(); ++i)
     {
         const VariableType type = variables[i].type;
-        if (type == VariableType::Binary || type == VariableType::Integer
-            || type == VariableType::Categorical || dimensions[i] > 1)
+        if (is_one_of(type, VariableType::Binary, VariableType::Integer, VariableType::Categorical)
+            || dimensions[i] > 1)
             for (Index j = 0; j < dimensions[i]; ++j)
                 mask[feature + j] = 1;
         feature += dimensions[i];

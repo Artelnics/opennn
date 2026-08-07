@@ -7,15 +7,12 @@
 #include "opennn/dense_layer.h"
 #include "opennn/standard_networks.h"
 
-
 using namespace opennn;
-
 
 TEST(GrowingInputsTest, DefaultConstructor)
 {
     GrowingInputs growing_inputs;
 }
-
 
 TEST(GrowingInputsTest, GeneralConstructor)
 {
@@ -41,7 +38,6 @@ TEST(GrowingInputsTest, InputSelection)
     InputsSelectionResult input_selection_results = growing_inputs.perform_input_selection();
     EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], 0);
 }
-
 
 TEST(GrowingInputsTest, InputSelectionKnownResult)
 {
@@ -73,7 +69,6 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
 }
-
 
 TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 {

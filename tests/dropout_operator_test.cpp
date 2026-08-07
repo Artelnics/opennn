@@ -8,7 +8,6 @@
 
 using namespace opennn;
 
-
 TEST(DropoutOperatoreratorTest, ActiveFlagReflectsRate)
 {
     DropoutOperator dropout;
@@ -22,7 +21,6 @@ TEST(DropoutOperatoreratorTest, ActiveFlagReflectsRate)
     EXPECT_FALSE(dropout.active());
 }
 
-
 TEST(DropoutOperatoreratorTest, SetRateRejectsOutOfRange)
 {
     DropoutOperator dropout;
@@ -33,7 +31,6 @@ TEST(DropoutOperatoreratorTest, SetRateRejectsOutOfRange)
 
     EXPECT_NO_THROW(dropout.set_rate(0.999f));
 }
-
 
 TEST(DropoutForwardTest, ZeroRateIsIdentity)
 {
@@ -51,7 +48,6 @@ TEST(DropoutForwardTest, ZeroRateIsIdentity)
 
     EXPECT_TRUE(mask.empty());
 }
-
 
 TEST(DropoutForwardTest, MaskValuesAreZeroOrKeepScale)
 {
@@ -83,7 +79,6 @@ TEST(DropoutForwardTest, MaskValuesAreZeroOrKeepScale)
     }
 }
 
-
 TEST(DropoutForwardTest, InvertedScalingPreservesMeanApproximately)
 {
     set_seed(7u);
@@ -107,7 +102,6 @@ TEST(DropoutForwardTest, InvertedScalingPreservesMeanApproximately)
 
     EXPECT_NEAR(output_mean, input_value, 0.05f);
 }
-
 
 TEST(DropoutForwardTest, DroppedFractionMatchesRate)
 {
@@ -133,7 +127,6 @@ TEST(DropoutForwardTest, DroppedFractionMatchesRate)
 
     EXPECT_NEAR(dropped_fraction, rate, 0.02f);
 }
-
 
 TEST(DropoutBackwardTest, AppliesSameMaskAsForward)
 {
@@ -164,7 +157,6 @@ TEST(DropoutBackwardTest, AppliesSameMaskAsForward)
         EXPECT_FLOAT_EQ(delta[i], 3.0f * mask_snapshot[i]);
 }
 
-
 TEST(DropoutBackwardTest, ZeroRateLeavesDeltaUnchanged)
 {
     VectorR delta(4);
@@ -179,7 +171,6 @@ TEST(DropoutBackwardTest, ZeroRateLeavesDeltaUnchanged)
     for (Index i = 0; i < delta.size(); ++i)
         EXPECT_FLOAT_EQ(delta[i], original[i]);
 }
-
 
 TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
 {
@@ -223,7 +214,6 @@ TEST(DropoutLayerTest, InferencePassIsIdentityWithDropout)
         for (Index c = 0; c < dropout_output.cols(); ++c)
             EXPECT_NEAR(dropout_output(r, c), reference_output(r, c), 1e-5f);
 }
-
 
 TEST(DropoutLayerTest, TrainingPassDiffersFromInference)
 {

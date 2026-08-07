@@ -134,7 +134,6 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
         catch (const runtime_error&)
         {
 
-
             emit_relu_mask = false;
             relu_mask_fused_active = false;
         }
@@ -157,10 +156,6 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
 
     TensorView& input_delta = slot_or(backward_slots, input_delta_slots, 0);
 
-
-
-
-
     bool recover_unfused = false;
     if (drelu_source && drelu_source->relu_mask_fused_active
         && input_delta.data && !input_delta.empty())
@@ -173,9 +168,6 @@ void CombinationOperator::back_propagate(ForwardPropagation& forward_propagation
         }
         catch (const runtime_error&)
         {
-
-
-
 
             drelu_source->relu_mask_fused_active = false;
             drelu_source->emit_relu_mask = false;

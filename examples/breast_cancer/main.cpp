@@ -27,14 +27,11 @@ int main()
 
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-
         TabularDataset dataset("../data/breast_cancer/breast_cancer.csv", ";", true, false);
 
         const Index neurons_number = 3;
 
-
         ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
-
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
@@ -47,7 +44,6 @@ int main()
         sgd->set_maximum_epochs(1000);
 
         training_strategy.train();
-
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
 
@@ -66,7 +62,6 @@ int main()
         return 1;
     }
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

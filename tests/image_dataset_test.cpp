@@ -146,7 +146,6 @@ struct ImageFixtureThreeClasses
 
 }
 
-
 TEST(ImageDataset, DefaultConstructorIsEmpty)
 {
     ImageDataset image_dataset;
@@ -155,7 +154,6 @@ TEST(ImageDataset, DefaultConstructorIsEmpty)
     EXPECT_EQ(image_dataset.get_variables_number(), 0);
     EXPECT_TRUE(image_dataset.is_empty());
 }
-
 
 TEST(ImageDataset, ConstructFromPathTwoClasses)
 {
@@ -182,7 +180,6 @@ TEST(ImageDataset, ConstructFromPathTwoClasses)
     EXPECT_EQ(image_dataset.get_features_number("Input"), 3 * 4 * 3);
 }
 
-
 TEST(ImageDataset, StorageModeIsBinaryFileWhenConstructed)
 {
     ImageFixture fixture(2, 2, 1);
@@ -191,7 +188,6 @@ TEST(ImageDataset, StorageModeIsBinaryFileWhenConstructed)
 
     EXPECT_EQ(image_dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
 }
-
 
 TEST(ImageDataset, TargetDistributionTwoClasses)
 {
@@ -205,7 +201,6 @@ TEST(ImageDataset, TargetDistributionTwoClasses)
     EXPECT_EQ(distribution(0), 3);
     EXPECT_EQ(distribution(1), 3);
 }
-
 
 TEST(ImageDataset, ThreeClassesUseCategoricalTargets)
 {
@@ -226,7 +221,6 @@ TEST(ImageDataset, ThreeClassesUseCategoricalTargets)
     EXPECT_EQ(distribution(2), 2);
 }
 
-
 TEST(ImageDataset, FillTargetsBinary)
 {
     ImageFixture fixture(2, 2, 2);
@@ -246,7 +240,6 @@ TEST(ImageDataset, FillTargetsBinary)
     EXPECT_FLOAT_EQ(targets[2], 1.0f);
     EXPECT_FLOAT_EQ(targets[3], 1.0f);
 }
-
 
 TEST(ImageDataset, FillTargetsOneHotThreeClasses)
 {
@@ -274,7 +267,6 @@ TEST(ImageDataset, FillTargetsOneHotThreeClasses)
     EXPECT_FLOAT_EQ(targets[7], 0.0f);
     EXPECT_FLOAT_EQ(targets[8], 1.0f);
 }
-
 
 TEST(ImageDataset, FillInputsDefaultScalingFromCache)
 {
@@ -305,7 +297,6 @@ TEST(ImageDataset, FillInputsDefaultScalingFromCache)
     EXPECT_GT(maximum, 0.5f);
 }
 
-
 TEST(ImageDataset, FillInputsRawWhenNotTraining)
 {
     ImageFixture fixture(2, 2, 1);
@@ -332,7 +323,6 @@ TEST(ImageDataset, FillInputsRawWhenNotTraining)
 
     EXPECT_GT(maximum, 1.0f);
 }
-
 
 TEST(ImageDataset, SetInputScalingMinimumMaximum)
 {
@@ -372,7 +362,6 @@ TEST(ImageDataset, SetInputScalingMinimumMaximum)
     }
 }
 
-
 TEST(ImageDataset, SetInputScalingChannelMismatchThrows)
 {
     ImageFixture fixture(2, 2, 1);
@@ -384,7 +373,6 @@ TEST(ImageDataset, SetInputScalingChannelMismatchThrows)
 
     EXPECT_ANY_THROW(image_dataset.set_input_scaling(descriptives, scalers, 0.0f, 1.0f));
 }
-
 
 TEST(ImageDataset, SetAugmentationDisablesDeviceResidency)
 {
@@ -398,7 +386,6 @@ TEST(ImageDataset, SetAugmentationDisablesDeviceResidency)
 
     EXPECT_NO_THROW(image_dataset.set_augmentation(augmentation));
 }
-
 
 TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)
 {
@@ -426,7 +413,6 @@ TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)
     for (Index i = 0; i < pixels; ++i)
         EXPECT_FLOAT_EQ(data[size_t(i)], original[size_t(i)]);
 }
-
 
 TEST(ImageDataset, ConstructFromPathSingleClassThrows)
 {

@@ -67,7 +67,6 @@ print(f"precision={'bf16' if use_bf16 else 'fp32'} compile={use_compile} "
       f"lr={args.lr} d_model={args.d} heads={args.h} ff={args.ff} layers={args.layers}",
       flush=True)
 
-
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len):
         super().__init__()
@@ -80,7 +79,6 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, : x.size(1)]
-
 
 class Seq2SeqTransformer(nn.Module):
     def __init__(self):
@@ -104,11 +102,7 @@ class Seq2SeqTransformer(nn.Module):
                              memory_key_padding_mask=src_pad)
         return self.out(y)
 
-
 model = Seq2SeqTransformer().to(dev).train()
-
-
-
 
 with torch.no_grad():
     for name, p in model.named_parameters():
@@ -116,7 +110,6 @@ with torch.no_grad():
             nn.init.xavier_uniform_(p)
         elif "bias" in name:
             nn.init.zeros_(p)
-
 
     for m in model.modules():
         if isinstance(m, nn.MultiheadAttention):
@@ -128,13 +121,11 @@ with torch.no_grad():
 
 print(f"parameters={sum(p.numel() for p in model.parameters())}", flush=True)
 
-
 ADAM_EPS = 1.1920929e-07
 try:
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, eps=ADAM_EPS, fused=True)
 except (RuntimeError, ValueError):
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, eps=ADAM_EPS)
-
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=0)
 
@@ -145,12 +136,9 @@ if use_compile:
 ctx = torch.autocast("cuda", dtype=torch.bfloat16) if use_bf16 \
     else torch.autocast("cuda", enabled=False)
 
-
 causal = torch.triu(torch.ones(args.dec_seq, args.dec_seq, dtype=torch.bool, device=dev),
                     diagonal=1)
 gen = torch.Generator(device="cpu").manual_seed(args.seed)
-
-
 
 print(f"TRAIN_START_UNIX={time.time():.3f}", flush=True)
 t0 = time.perf_counter()

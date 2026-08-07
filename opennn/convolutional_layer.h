@@ -35,7 +35,6 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-
     Index get_kernel_height() const noexcept { return kernel_height; }
     Index get_kernel_width() const noexcept { return kernel_width; }
     Index get_kernel_channels() const noexcept { return kernel_channels; }

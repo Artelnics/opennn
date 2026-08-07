@@ -24,11 +24,9 @@ DEFAULT_BENCH_DATA = Path(
     os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data")))
 DEFAULT_OUT = DEFAULT_BENCH_DATA / "imagenet_smoke"
 
-
 def train_dir_for(path):
     path = Path(path).expanduser()
     return path / "train" if (path / "train").is_dir() else path
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -71,7 +69,6 @@ def main():
             written += 1
 
     print(f"wrote {written} images under {output_train}")
-
 
 if __name__ == "__main__":
     main()

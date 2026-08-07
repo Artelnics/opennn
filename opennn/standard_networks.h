@@ -103,8 +103,6 @@ public:
 
     enum class BodyActivation { ReLU, LeakyReLU };
 
-
-
     enum class ModelSize { n, s, m, l, x };
 
     YoloNetwork(const Shape&,

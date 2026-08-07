@@ -13,7 +13,6 @@ TEST(Transformer, ConstructorCreatesNetwork)
     EXPECT_EQ(transformer.get_layers_number(), 17);
 }
 
-
 TEST(Transformer, GeneralConstructor)
 {
     const Index input_sequence_length = 5;
@@ -90,7 +89,6 @@ TEST(Transformer, GeneralConstructor)
 
     EXPECT_EQ(in[16], (vector<Index>{15}));
 }
-
 
 TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
 {

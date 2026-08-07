@@ -501,22 +501,24 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool apply_scaling = mode != FillMode::Inference;
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
-    const bool use_default_scaling = apply_scaling && !has_scaling;
     const bool apply_augmentation = mode == FillMode::Training && augmentation.enabled;
 
     const auto scale_sample = [&](float* sample)
     {
-        if (apply_scaling && has_scaling)
-        {
-            const Map<const Array<float, 1, Dynamic>> scale_row(input_scale.data(), 1, channels);
-            const Map<const Array<float, 1, Dynamic>> offset_row(input_offset.data(), 1, channels);
+        if (!apply_scaling) return;
 
-            Map<MatrixR> image_pixels(sample, pixels_per_channel, channels);
-            image_pixels.array().rowwise() *= scale_row;
-            image_pixels.array().rowwise() += offset_row;
-        }
-        else if (use_default_scaling)
+        if (!has_scaling)
+        {
             Map<Array<float, Dynamic, 1>>(sample, pixels_per_image) *= 1.0f / 255.0f;
+            return;
+        }
+
+        const Map<const Array<float, 1, Dynamic>> scale_row(input_scale.data(), 1, channels);
+        const Map<const Array<float, 1, Dynamic>> offset_row(input_offset.data(), 1, channels);
+
+        Map<MatrixR> image_pixels(sample, pixels_per_channel, channels);
+        image_pixels.array().rowwise() *= scale_row;
+        image_pixels.array().rowwise() += offset_row;
     };
 
     const bool scale_in_fill = !apply_augmentation && storage_mode != StorageMode::Matrix;
@@ -555,7 +557,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             {
                 #pragma omp critical
                 { omp_error = e.what(); }
-                continue;
             }
         }
 

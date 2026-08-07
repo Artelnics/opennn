@@ -25,7 +25,6 @@ TEST(Tensors, Fill)
     EXPECT_LT((submatrix.array() - type(3.1416)).abs().maxCoeff(), type(1e-6));
 }
 
-
 TEST(Tensors, IsContiguous)
 {
     EXPECT_TRUE(is_contiguous(vector<Index>{ 0, 1, 2, 3 }));
@@ -36,7 +35,6 @@ TEST(Tensors, IsContiguous)
     EXPECT_FALSE(is_contiguous(vector<Index>{ 0, 1, 3 }));
     EXPECT_FALSE(is_contiguous(vector<Index>{ 3, 2, 1 }));
 }
-
 
 TEST(Tensors, FillContiguousColumns)
 {
@@ -61,7 +59,6 @@ TEST(Tensors, FillContiguousColumns)
     EXPECT_NEAR(submatrix(2, 1), type(22), 1e-6);
 }
 
-
 TEST(Tensors, FillNonContiguousColumns)
 {
     MatrixR matrix(3, 4);
@@ -85,7 +82,6 @@ TEST(Tensors, FillNonContiguousColumns)
     EXPECT_NEAR(submatrix(2, 1), type(22), 1e-6);
 }
 
-
 TEST(Tensors, FillReordersRowsAndColumns)
 {
     MatrixR matrix(3, 4);
@@ -106,7 +102,6 @@ TEST(Tensors, FillReordersRowsAndColumns)
     EXPECT_NEAR(submatrix(1, 0), type(3),  1e-6);
     EXPECT_NEAR(submatrix(1, 1), type(1),  1e-6);
 }
-
 
 TEST(Tensors, FillContiguousHintSelectsPath)
 {
@@ -130,7 +125,6 @@ TEST(Tensors, FillContiguousHintSelectsPath)
     EXPECT_NEAR(memcpy_path(2, 1), type(22), 1e-6);
 }
 
-
 TEST(Tensors, FillThrowsOnUndersizedOutput)
 {
     MatrixR matrix(3, 4);
@@ -148,7 +142,6 @@ TEST(Tensors, FillThrowsOnUndersizedOutput)
     EXPECT_NO_THROW(fill_tensor_data(matrix, rows, columns, exact));
 }
 
-
 TEST(Shape, DefaultIsEmpty)
 {
     Shape shape;
@@ -157,7 +150,6 @@ TEST(Shape, DefaultIsEmpty)
     EXPECT_EQ(shape.rank, 0u);
     EXPECT_EQ(shape.size(), 0);
 }
-
 
 TEST(Shape, InitializerListConstructor)
 {
@@ -172,7 +164,6 @@ TEST(Shape, InitializerListConstructor)
     EXPECT_EQ(shape.size(), 24);
 }
 
-
 TEST(Shape, FillConstructor)
 {
     Shape shape(size_t(3), Index(5));
@@ -183,14 +174,12 @@ TEST(Shape, FillConstructor)
     EXPECT_EQ(shape.size(), 125);
 }
 
-
 TEST(Shape, Equality)
 {
     EXPECT_EQ((Shape{ 2, 3 }), (Shape{ 2, 3 }));
     EXPECT_NE((Shape{ 2, 3 }), (Shape{ 2, 4 }));
     EXPECT_NE((Shape{ 2, 3 }), (Shape{ 2, 3, 1 }));
 }
-
 
 TEST(Shape, PushBackCapsAtMaxRank)
 {
@@ -210,7 +199,6 @@ TEST(Shape, PushBackCapsAtMaxRank)
     EXPECT_EQ(shape[3], 4);
 }
 
-
 TEST(Shape, ClearResetsRank)
 {
     Shape shape{ 2, 3, 4 };
@@ -220,7 +208,6 @@ TEST(Shape, ClearResetsRank)
     EXPECT_TRUE(shape.empty());
     EXPECT_EQ(shape.size(), 0);
 }
-
 
 TEST(Shape, AppendCapsAtMaxRank)
 {
@@ -232,7 +219,6 @@ TEST(Shape, AppendCapsAtMaxRank)
     EXPECT_EQ(shape[3], 4);
 }
 
-
 TEST(Shape, DimOrZero)
 {
     Shape shape{ 7, 8 };
@@ -242,14 +228,12 @@ TEST(Shape, DimOrZero)
     EXPECT_EQ(shape.dim_or_zero(2), 0);
 }
 
-
 TEST(Shape, BackThrowsOnEmpty)
 {
     Shape shape;
 
     EXPECT_THROW(shape.back(), runtime_error);
 }
-
 
 TEST(Buffer, DefaultIsEmpty)
 {
@@ -260,7 +244,6 @@ TEST(Buffer, DefaultIsEmpty)
     EXPECT_EQ(buffer.size_in_floats(), 0);
     EXPECT_EQ(buffer.data, nullptr);
 }
-
 
 TEST(Buffer, ResizeBytesAllocatesAligned)
 {
@@ -274,7 +257,6 @@ TEST(Buffer, ResizeBytesAllocatesAligned)
     ASSERT_NE(buffer.data, nullptr);
     EXPECT_TRUE(is_aligned(buffer.data));
 }
-
 
 TEST(Buffer, SetZero)
 {
@@ -291,7 +273,6 @@ TEST(Buffer, SetZero)
         EXPECT_EQ(data[i], type(0));
 }
 
-
 TEST(Buffer, EnsureReturnsTypedPointer)
 {
     Buffer buffer;
@@ -304,7 +285,6 @@ TEST(Buffer, EnsureReturnsTypedPointer)
     data[0] = type(7);
     EXPECT_NEAR(buffer.as<float>()[0], type(7), 1e-6);
 }
-
 
 TEST(Buffer, GrowToOnlyGrows)
 {
@@ -319,7 +299,6 @@ TEST(Buffer, GrowToOnlyGrows)
     EXPECT_EQ(buffer.bytes, 64);
 }
 
-
 TEST(Buffer, ResizeToZeroFrees)
 {
     Buffer buffer;
@@ -331,7 +310,6 @@ TEST(Buffer, ResizeToZeroFrees)
     EXPECT_TRUE(buffer.empty());
     EXPECT_EQ(buffer.data, nullptr);
 }
-
 
 TEST(Buffer, MoveTransfersOwnership)
 {
@@ -349,7 +327,6 @@ TEST(Buffer, MoveTransfersOwnership)
     EXPECT_NEAR(dest.as<float>()[0], type(42), 1e-6);
 }
 
-
 TEST(TensorView, DefaultIsEmpty)
 {
     TensorView view;
@@ -359,7 +336,6 @@ TEST(TensorView, DefaultIsEmpty)
     EXPECT_EQ(view.size(), 0);
     EXPECT_FALSE(view.is_cuda());
 }
-
 
 TEST(TensorView, AsMatrixMapsRowMajor)
 {
@@ -383,7 +359,6 @@ TEST(TensorView, AsMatrixMapsRowMajor)
     EXPECT_NEAR(matrix(1, 2), type(6), 1e-6);
 }
 
-
 TEST(TensorView, AsFlatMatrixCollapsesLeadingDimensions)
 {
     Tensor3 storage(2, 3, 4);
@@ -396,7 +371,6 @@ TEST(TensorView, AsFlatMatrixCollapsesLeadingDimensions)
     EXPECT_EQ(flat.rows(), 6);
     EXPECT_EQ(flat.cols(), 4);
 }
-
 
 TEST(TensorView, AsVectorFlattens)
 {
@@ -413,7 +387,6 @@ TEST(TensorView, AsVectorFlattens)
     EXPECT_NEAR(vector(3), type(4), 1e-6);
 }
 
-
 TEST(TensorView, ReshapePreservesDataPointer)
 {
     Tensor2 storage(2, 3);
@@ -428,7 +401,6 @@ TEST(TensorView, ReshapePreservesDataPointer)
     EXPECT_EQ(reshaped.size(), 6);
     EXPECT_EQ(reshaped.as<type>(), view.as<type>());
 }
-
 
 TEST(TensorView, WriteThroughViewModifiesBuffer)
 {
@@ -446,7 +418,6 @@ TEST(TensorView, WriteThroughViewModifiesBuffer)
     EXPECT_NEAR(storage(1, 1), type(7), 1e-6);
 }
 
-
 TEST(Type, TypeBytes)
 {
     EXPECT_EQ(type_bytes(Type::FP32), 4);
@@ -457,7 +428,6 @@ TEST(Type, TypeBytes)
     EXPECT_THROW(type_bytes(Type::Auto), runtime_error);
 }
 
-
 TEST(Shape, ToStringRoundTrip)
 {
     const Shape original{ 2, 3, 4 };
@@ -467,13 +437,11 @@ TEST(Shape, ToStringRoundTrip)
     EXPECT_EQ(string_to_shape(shape_to_string(single)), single);
 }
 
-
 TEST(Shape, ToStringCustomSeparator)
 {
     EXPECT_EQ(shape_to_string(Shape{ 2, 3 }, "x"), "2x3x");
     EXPECT_EQ(string_to_shape("2x3", "x"), (Shape{ 2, 3 }));
 }
-
 
 TEST(Shape, ToStringEmptyThrows)
 {

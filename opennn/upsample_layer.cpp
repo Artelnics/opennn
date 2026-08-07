@@ -18,7 +18,6 @@
 namespace opennn
 {
 
-
 void UpsampleOperator::set(Index in_h, Index in_w, Index ch, Index scale)
 {
     throw_if(scale < 1,
@@ -163,7 +162,6 @@ void Upsample::write_JSON_body(JsonWriter& writer) const
 {
     add_json_field(writer, "ScaleFactor", upsample.scale_factor);
 }
-
 
 }
 

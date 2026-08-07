@@ -9,7 +9,6 @@
 
 using namespace opennn;
 
-
 TEST(Dataset, SetDataAndDimensions)
 {
     TabularDataset tabular(3, { 2 }, { 1 });
@@ -35,7 +34,6 @@ TEST(Dataset, SetDataAndDimensions)
     EXPECT_EQ(dataset.get_variables_number(), 3);
 }
 
-
 TEST(Dataset, SetDataConstant)
 {
     TabularDataset tabular(2, { 1 }, { 1 });
@@ -50,7 +48,6 @@ TEST(Dataset, SetDataConstant)
             EXPECT_NEAR(stored(i, j), type(5), EPSILON);
 }
 
-
 TEST(Dataset, SampleRoles)
 {
     TabularDataset tabular(10, { 2 }, { 1 });
@@ -63,7 +60,6 @@ TEST(Dataset, SampleRoles)
     EXPECT_EQ(dataset.get_used_samples_number(), 10);
     EXPECT_EQ(ssize(dataset.get_sample_indices("Training")), 10);
 }
-
 
 TEST(Dataset, SetSampleRoleIndividual)
 {
@@ -83,7 +79,6 @@ TEST(Dataset, SetSampleRoleIndividual)
     ASSERT_EQ(ssize(testing_indices), 1);
     EXPECT_EQ(testing_indices[0], 0);
 }
-
 
 TEST(Dataset, SetVariableIndices)
 {
@@ -106,7 +101,6 @@ TEST(Dataset, SetVariableIndices)
     EXPECT_EQ(variables[3].role, VariableRole::Target);
 }
 
-
 TEST(Dataset, Shapes)
 {
     TabularDataset tabular(3, { 2 }, { 1 });
@@ -121,7 +115,6 @@ TEST(Dataset, Shapes)
     EXPECT_EQ(dataset.get_shape("Input")[0], 2);
     EXPECT_EQ(dataset.get_shape("Target")[0], 1);
 }
-
 
 TEST(Dataset, SplitSamplesSequential)
 {
@@ -141,7 +134,6 @@ TEST(Dataset, SplitSamplesSequential)
             + dataset.get_samples_number("Testing"),
               dataset.get_samples_number());
 }
-
 
 TEST(Dataset, BatchFill)
 {
@@ -194,7 +186,6 @@ TEST(Dataset, BatchFill)
             EXPECT_NEAR(targets(i, j), target_data(i, j), 1e-6);
 }
 
-
 TEST(Variable, ConstructorResolvesStrings)
 {
     Variable variable("price", "Input", VariableType::Numeric, "MinimumMaximum");
@@ -208,7 +199,6 @@ TEST(Variable, ConstructorResolvesStrings)
     EXPECT_EQ(variable.get_scaler(), "MinimumMaximum");
 }
 
-
 TEST(Variable, SetRoleAndScalerFromString)
 {
     Variable variable;
@@ -219,7 +209,6 @@ TEST(Variable, SetRoleAndScalerFromString)
     EXPECT_EQ(variable.get_role_type(), VariableRole::Target);
     EXPECT_EQ(variable.get_scaler_type(), ScalerMethod::StandardDeviation);
 }
-
 
 TEST(Variable, TypeStringRoundTrip)
 {
@@ -232,7 +221,6 @@ TEST(Variable, TypeStringRoundTrip)
     for (const VariableType variable_type : types)
         EXPECT_EQ(string_to_variable_type(variable_type_to_string(variable_type)), variable_type);
 }
-
 
 TEST(Variable, ScalerStringRoundTrip)
 {

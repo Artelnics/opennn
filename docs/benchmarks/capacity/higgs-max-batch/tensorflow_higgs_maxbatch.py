@@ -68,9 +68,6 @@ print(f"parameters={model.count_params()}")
 
 rng = np.random.default_rng(args.seed)
 
-
-
-
 higgs_bin = os.environ.get("HIGGS_BIN")
 if higgs_bin:
     raw = np.fromfile(higgs_bin, dtype=np.float32).reshape(-1, INPUTS + 1)

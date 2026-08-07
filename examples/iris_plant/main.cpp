@@ -25,17 +25,14 @@ int main()
 
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-
         TabularDataset dataset("../data/iris_plant/iris_plant_original.csv", ";", true, false);
 
         const Index inputs_number = dataset.get_features_number("Input");
         const Index targets_number = dataset.get_features_number("Target");
 
-
         const Index neurons_number = 16;
 
         ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
-
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
@@ -46,11 +43,9 @@ int main()
 
         training_strategy.train();
 
-
         TestingAnalysis testing_analysis(&classification_network, &dataset);
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
-
 
         MatrixR input_vector(1, 4);
         input_vector << 5.1, 3.5, 1.4, 0.2;
@@ -59,14 +54,12 @@ int main()
 
         cout << "Class probabilities: " << output_tensor << endl;
 
-
         classification_network.save("iris_model.json");
 
         const ModelExpression model_expression(&classification_network);
         model_expression.save("iris_model.c", ModelExpression::ProgrammingLanguage::C);
         model_expression.save("iris_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
         model_expression.save("iris_model.py", ModelExpression::ProgrammingLanguage::Python);
-
 
         MatrixR reference_inputs(9, 4);
         reference_inputs << 5.1, 3.5, 1.4, 0.2,

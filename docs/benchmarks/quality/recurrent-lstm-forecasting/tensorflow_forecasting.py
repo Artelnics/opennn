@@ -35,7 +35,6 @@ PHASE = "GPU" if GPU else "CPU"
 DEV = "cuda" if GPU else "cpu"
 SEEDS = [0, 1, 2, 3, 4]
 
-
 def build(kind, n_feat, past, hidden, out):
     inp = tf.keras.layers.Input(shape=(past, n_feat))
     if kind == "Recurrent":
@@ -44,7 +43,6 @@ def build(kind, n_feat, past, hidden, out):
         h = tf.keras.layers.LSTM(hidden)(inp)
     y = tf.keras.layers.Dense(out)(h)
     return tf.keras.Model(inp, y)
-
 
 def train_eval_once(kind, sc, data, seed):
     sid, past, future, hidden, lr, batch, max_ep, patience, multi = sc
@@ -76,7 +74,6 @@ def train_eval_once(kind, sc, data, seed):
         "n": n,
     }
 
-
 def run(kind, sc, data):
     sid = sc[0]
     rmses, times, epochs_l, spss = [], [], [], []
@@ -101,7 +98,6 @@ def run(kind, sc, data):
           f"train_windows={n} device={DEV}")
     sys.stdout.flush()
 
-
 def main():
     want = [a for a in sys.argv[1:] if a != "--allow-cpu"] or [s[0] for s in SCENARIOS]
     for sc in SCENARIOS:
@@ -110,7 +106,6 @@ def main():
         data = make_windows(sc[1], sc[2], sc[8])
         for kind in ("Recurrent", "LSTM"):
             run(kind, sc, data)
-
 
 if __name__ == "__main__":
     main()

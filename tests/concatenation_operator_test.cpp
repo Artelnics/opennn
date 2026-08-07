@@ -9,7 +9,6 @@
 
 using namespace opennn;
 
-
 static ConcatenationOperator make_operator(Index, Index, const vector<Index>& per_input_channels)
 {
     ConcatenationOperator op;
@@ -22,7 +21,6 @@ static ConcatenationOperator make_operator(Index, Index, const vector<Index>& pe
     return op;
 }
 
-
 TEST(ConcatenationOperatoreratorTest, SetStoresGeometry)
 {
     ConcatenationOperator op;
@@ -32,7 +30,6 @@ TEST(ConcatenationOperatoreratorTest, SetStoresGeometry)
     EXPECT_EQ(op.input_channels[0], 2);
     EXPECT_EQ(op.input_channels[1], 3);
 }
-
 
 TEST(ConcatenationOperatoreratorTest, ForwardConcatenatesChannels)
 {
@@ -80,7 +77,6 @@ TEST(ConcatenationOperatoreratorTest, ForwardConcatenatesChannels)
     EXPECT_NEAR(output.data()[9], input_b.data()[5], 1e-6f);
 }
 
-
 TEST(ConcatenationOperatoreratorTest, ForwardSpatialLayout)
 {
     const Index batch_size = 1;
@@ -120,7 +116,6 @@ TEST(ConcatenationOperatoreratorTest, ForwardSpatialLayout)
         EXPECT_NEAR(output.data()[spatial * total_channels + 1], input_b.data()[spatial], 1e-6f);
     }
 }
-
 
 TEST(ConcatenationOperatoreratorTest, BackwardSplitsDelta)
 {
@@ -170,7 +165,6 @@ TEST(ConcatenationOperatoreratorTest, BackwardSplitsDelta)
     EXPECT_NEAR(delta_b.data()[4], output_delta.data()[8], 1e-6f);
     EXPECT_NEAR(delta_b.data()[5], output_delta.data()[9], 1e-6f);
 }
-
 
 TEST(ConcatenationOperatoreratorTest, BackwardSkipsEmptyInputDelta)
 {

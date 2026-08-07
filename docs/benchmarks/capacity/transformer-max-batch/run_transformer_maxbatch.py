@@ -38,7 +38,6 @@ CORPUS = DEFAULT_CORPUS
 DEFAULT_BIN = os.path.join(REPO, "build", "bin", "opennn_transformer_maxbatch_trial")
 D, H, FF, LAYERS = 512, 8, 2048, 6
 
-
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(VENV_PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -51,13 +50,11 @@ def tf_ld_path():
     return os.pathsep.join(libs)
 TF_LD = tf_ld_path()
 
-
 def nvidia_used_mib():
     out = subprocess.run(["nvidia-smi", "--query-gpu=memory.used",
                           "--format=csv,noheader,nounits"],
                          capture_output=True, text=True)
     return int(out.stdout.strip().splitlines()[0])
-
 
 class PeakMonitor:
     def __init__(self, interval=0.05):
@@ -72,7 +69,6 @@ class PeakMonitor:
             except Exception: pass
             self._stop.wait(self.interval)
 
-
 def cmd_env(engine, precision, batch, steps, shape, mode="train"):
     ivoc, ovoc, iseq, dseq, _ = shape
     env = dict(os.environ)
@@ -83,7 +79,6 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
             cmd = [args.opennn_bin, CORPUS, str(D), str(H), str(FF), str(LAYERS),
                    str(batch), str(steps * batch), "0", "train"]
         else:
-
 
             cmd = [args.opennn_bin, CORPUS, str(D), str(H), str(FF), str(LAYERS),
                    str(batch), str(batch), str(steps), "infer"]
@@ -114,11 +109,8 @@ def cmd_env(engine, precision, batch, steps, shape, mode="train"):
         raise ValueError(engine)
     return cmd, env
 
-
 def run_trial(engine, precision, batch, steps, shape, cap_mib, mode="train"):
     cmd, env = cmd_env(engine, precision, batch, steps, shape, mode)
-
-
 
     idle_before = None
     try:
@@ -151,7 +143,6 @@ def run_trial(engine, precision, batch, steps, shape, cap_mib, mode="train"):
             "wall": float(w.group(1)) if w else None,
             "reason": reason, "raw": raw[-1500:]}
 
-
 def cooldown(threshold=1200, timeout=30):
     start = time.time()
     while time.time() - start < timeout:
@@ -159,7 +150,6 @@ def cooldown(threshold=1200, timeout=30):
             if nvidia_used_mib() <= threshold: return
         except Exception: return
         time.sleep(0.5)
-
 
 def search_max_batch(engine, precision, shape, cap_mib, mode="train"):
     cache = {}
@@ -181,15 +171,7 @@ def search_max_batch(engine, precision, shape, cap_mib, mode="train"):
         else: right = mid - 1
     return lo, cache.get(lo, {}).get("peak")
 
-
 def measure_speed(engine, precision, batch, shape, cap_mib, mode="train"):
-
-
-
-
-
-
-
 
     long_steps = args.speed_steps * 4
     if engine == "opennn" and mode == "train":
@@ -204,7 +186,6 @@ def measure_speed(engine, precision, batch, shape, cap_mib, mode="train"):
     cooldown()
     return r["sps"] if r["ok"] else None
 
-
 def derive_shape():
 
     cmd, env = cmd_env("opennn", "fp32", 8, 1, (0, 0, 0, 0, 0))
@@ -214,7 +195,6 @@ def derive_shape():
     print(f"model shape: in_vocab={shape[0]} out_vocab={shape[1]} "
           f"in_seq={shape[2]} dec_seq={shape[3]}")
     return shape
-
 
 def main():
     global args, CORPUS
@@ -302,7 +282,6 @@ def main():
         with open(args.result_json, "w") as f:
             json.dump(artifact, f, indent=1)
         print(f"\nresult JSON written to {args.result_json}")
-
 
 if __name__ == "__main__":
     main()

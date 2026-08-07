@@ -23,12 +23,10 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 import numpy as np
 import tensorflow as tf
 
-
 def load_csv(path):
     data = np.loadtxt(path, delimiter=",", dtype=np.float32)
 
     return np.ascontiguousarray(data[:, :-1])
-
 
 def main():
     test_csv = sys.argv[1] if len(sys.argv) > 1 else "higgs_test.csv"
@@ -116,7 +114,6 @@ def main():
     print(f"samples_per_sec={samples_per_sec:.0f}")
     print(f"ms_per_batch={ms_per_batch:.6f}")
     print("RESULT=OK")
-
 
 if __name__ == "__main__":
     try:

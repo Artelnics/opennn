@@ -20,7 +20,6 @@ TEST(RecurrentLayerTest, DefaultConstructor)
     EXPECT_EQ(recurrent_layer.get_outputs_number(), 0);
 }
 
-
 TEST(RecurrentLayerTest, GeneralConstructor)
 {
     const Index inputs_number = random_integer(1, 10);
@@ -35,7 +34,6 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     EXPECT_EQ(recurrent_layer.get_input_shape(), Shape({ time_steps, inputs_number }));
     EXPECT_EQ(recurrent_layer.get_output_shape(), Shape({ neurons_number }));
 }
-
 
 TEST(RecurrentLayerTest, ForwardPropagateValues)
 {
@@ -101,7 +99,6 @@ TEST(RecurrentLayerTest, ForwardPropagateValues)
     }
 }
 
-
 TEST(RecurrentLayerTest, ReturnSequences)
 {
     const Index samples_number = 1;
@@ -146,7 +143,6 @@ TEST(RecurrentLayerTest, ReturnSequences)
             EXPECT_NEAR(output_data[t * outputs_number + j], h, 1.0e-5f);
     }
 }
-
 
 TEST(RecurrentLayerTest, BackwardGradientMatchesNumerical)
 {

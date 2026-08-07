@@ -85,16 +85,9 @@ public:
 
     static float get_elapsed_time(const time_t&);
 
-
-
     function<void(Index, NeuralNetwork*)> post_epoch_callback;
 
-
-
     function<void(NeuralNetwork*)> post_batch_callback;
-
-
-
 
     function<void(Index, float)> post_best_callback;
 

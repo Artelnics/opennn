@@ -317,7 +317,6 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     return {0.0f, current_loss};
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

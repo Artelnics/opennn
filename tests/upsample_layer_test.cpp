@@ -21,7 +21,6 @@ protected:
     const Shape input_shape{ height, width, channels };
 };
 
-
 TEST_F(UpsampleLayerTest, Constructor)
 {
     Upsample upsample_layer(input_shape, scale_factor, "upsample_test");
@@ -36,7 +35,6 @@ TEST_F(UpsampleLayerTest, Constructor)
     EXPECT_EQ(output_shape[1], width * scale_factor);
     EXPECT_EQ(output_shape[2], channels);
 }
-
 
 TEST_F(UpsampleLayerTest, GeneralConstructorLabel)
 {
@@ -54,14 +52,12 @@ TEST_F(UpsampleLayerTest, GeneralConstructorLabel)
     EXPECT_EQ(output_shape[2], channels);
 }
 
-
 TEST_F(UpsampleLayerTest, EmptyInputShapeOutputEmpty)
 {
     Upsample upsample_layer;
 
     EXPECT_TRUE(upsample_layer.get_output_shape().empty());
 }
-
 
 TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
 {
@@ -108,7 +104,6 @@ TEST_F(UpsampleLayerTest, ForwardPropagateNearestNeighborReplication)
             EXPECT_NEAR(out[oh * out_w + ow], expected[oh][ow], 1e-6f);
 }
 
-
 TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
 {
     const Index batch_size = 1;
@@ -148,7 +143,6 @@ TEST_F(UpsampleLayerTest, ForwardPropagateChannelsPreserved)
         EXPECT_NEAR(out[s * ch + 2], 30.0f, 1e-6f);
     }
 }
-
 
 TEST_F(UpsampleLayerTest, UpsampleBackwardGradientMatchesNumerical)
 {

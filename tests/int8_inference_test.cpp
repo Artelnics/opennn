@@ -153,7 +153,6 @@ void write_logical_bf16_parameters(
                  streamsize(bf16.size() * sizeof(uint16_t)));
     ASSERT_TRUE(output.good());
 
-
     input.close();
     error_code remove_error;
     filesystem::remove(fp32_path, remove_error);
@@ -201,14 +200,12 @@ void fake_quantize_parameters(NeuralNetwork& network)
 
 }
 
-
 TEST(Int8InferenceTest, Int8CpuConfigurationThrows)
 {
     Configuration::instance().set(Device::CPU, Type::INT8);
     EXPECT_THROW(make_qwen(TINY), std::exception);
     Configuration::instance().set();
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 

@@ -17,7 +17,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 HERE = Path(__file__).resolve().parent
 RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 DEFAULT_BENCH_DATA = Path(
@@ -26,7 +25,6 @@ DEFAULT_BENCH_DATA = Path(
 DEFAULT_HIGGS_DIR = DEFAULT_BENCH_DATA / "higgs"
 KEY_VALUE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
 PY = os.environ.get("BENCH_PYTHON", "python3")
-
 
 def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     try:
@@ -40,14 +38,11 @@ def run_text(cmd: list[str], cwd: Path | None = None) -> str:
     except Exception:
         return ""
 
-
 def repo_root() -> Path:
     root = run_text(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"])
     return Path(root).resolve() if root else HERE.parents[2]
 
-
 REPO_ROOT = repo_root()
-
 
 def parse_scalar(text: str) -> Any:
     value = text.strip()
@@ -61,7 +56,6 @@ def parse_scalar(text: str) -> Any:
     except ValueError:
         return value
 
-
 def parse_metrics(raw: str) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     for line in raw.splitlines():
@@ -69,7 +63,6 @@ def parse_metrics(raw: str) -> dict[str, Any]:
         if match:
             metrics[match.group(1)] = parse_scalar(match.group(2))
     return metrics
-
 
 def file_info(path: Path) -> dict[str, Any]:
     info: dict[str, Any] = {"path": str(path)}
@@ -79,7 +72,6 @@ def file_info(path: Path) -> dict[str, Any]:
     else:
         info["exists"] = False
     return info
-
 
 def git_metadata() -> dict[str, Any]:
     commit = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
@@ -94,7 +86,6 @@ def git_metadata() -> dict[str, Any]:
         "status_short_sample": status_lines[:50],
         "status_short_truncated": len(status_lines) > 50,
     }
-
 
 def framework_versions() -> dict[str, Any]:
     code = r"""
@@ -120,18 +111,14 @@ print(json.dumps(info))
     except Exception as exc:
         return {"version_error": str(exc), "python": PY, "platform": platform.platform()}
 
-
 def candidate_names(base: str) -> list[str]:
     return [base, base + ".exe"] if os.name != "nt" else [base + ".exe", base]
-
 
 def find_opennn_higgs_cpu() -> tuple[str, bool]:
     override = os.environ.get("OPENNN_HIGGS_CPU_BIN")
     if override:
         return override, Path(override).exists()
     dirs = [
-
-
 
         REPO_ROOT / "build-mkl" / "bin",
         REPO_ROOT / "build-mkl" / "bin" / "Release",
@@ -149,7 +136,6 @@ def find_opennn_higgs_cpu() -> tuple[str, bool]:
     fallback = REPO_ROOT / "build-benchmarks" / "bin" / candidate_names("opennn_higgs_cpu")[0]
     return str(fallback), False
 
-
 def binary_dependencies(path: str) -> str:
     binary = Path(path)
     if not binary.exists():
@@ -159,7 +145,6 @@ def binary_dependencies(path: str) -> str:
     if sys.platform == "darwin":
         return run_text(["otool", "-L", str(binary)])
     return ""
-
 
 def opennn_binary_info(path: str, found: bool) -> dict[str, Any]:
     info = file_info(Path(path))
@@ -171,7 +156,6 @@ def opennn_binary_info(path: str, found: bool) -> dict[str, Any]:
         info["mkl_linked"] = any("mkl" in line.lower() for line in dep_lines)
         info["tbb_linked"] = any("tbb" in line.lower() for line in dep_lines)
     return info
-
 
 def benchmark_environment(args: argparse.Namespace) -> dict[str, Any]:
     keys = [
@@ -189,7 +173,6 @@ def benchmark_environment(args: argparse.Namespace) -> dict[str, Any]:
         "threads_argument": args.threads or None,
         "env": {key: os.environ.get(key) for key in keys if key in os.environ},
     }
-
 
 def protocol_metadata(args: argparse.Namespace) -> dict[str, Any]:
     if args.mode == "train":
@@ -217,17 +200,13 @@ def protocol_metadata(args: argparse.Namespace) -> dict[str, Any]:
         },
     }
 
-
 def display_command(cmd: list[str], env_over: dict[str, str]) -> str:
     env_bits = [f"{key}={value}" for key, value in sorted(env_over.items())]
     return " ".join(env_bits + [shlex.join(cmd)])
 
-
 def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[str, str]]:
     env = {"CUDA_VISIBLE_DEVICES": "", "TF_CPP_MIN_LOG_LEVEL": "2"}
     if args.threads:
-
-
 
         env["OMP_NUM_THREADS"] = str(args.threads)
         if engine in ("opennn", "pytorch"):
@@ -293,7 +272,6 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> tuple[list[str], dict[s
         cmd += ["--threads", str(args.threads)]
     return cmd, env
 
-
 def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, Any]:
     env = dict(os.environ)
     env.update(env_over)
@@ -307,7 +285,6 @@ def run_once(cmd: list[str], env_over: dict[str, str], index: int) -> dict[str, 
         "stderr": out.stderr,
         "raw_output": raw,
     }
-
 
 def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
     ok = [
@@ -343,7 +320,6 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
             summary["last_output_tail"] = runs[-1].get("raw_output", "")[-2000:]
     return summary
 
-
 def metrics_summary(results: dict[str, Any]) -> dict[str, Any]:
     speed = {
         engine: data.get("samples_per_sec_median")
@@ -361,7 +337,6 @@ def metrics_summary(results: dict[str, Any]) -> dict[str, Any]:
                 metrics["speedup"][f"opennn_vs_{engine}"] = round(base / value, 3)
                 metrics["energy_proxy"][engine] = round(base / value, 3)
     return metrics
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -381,7 +356,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
-
 
 def main() -> None:
     args = parse_args()
@@ -474,7 +448,6 @@ def main() -> None:
     result["metrics"] = metrics_summary(result["results"])
     out_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(f"wrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

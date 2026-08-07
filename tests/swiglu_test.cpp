@@ -16,7 +16,6 @@ using namespace opennn;
 
 static float silu(float x) { return x / (1.0f + std::exp(-x)); }
 
-
 TEST(SiLUTest, ActivationForwardMatchesSilu)
 {
     const Index features = 4;
@@ -41,7 +40,6 @@ TEST(SiLUTest, ActivationForwardMatchesSilu)
     EXPECT_NEAR(output[2], silu(1.0f),  1.0e-5f);
     EXPECT_NEAR(output[3], silu(2.0f),  1.0e-5f);
 }
-
 
 TEST(SiLUTest, ActivationGradientMatchesNumerical)
 {
@@ -70,7 +68,6 @@ TEST(SiLUTest, ActivationGradientMatchesNumerical)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(2.0e-3));
 }
-
 
 TEST(GatedDenseTest, ForwardMatchesHandComputed)
 {
@@ -117,11 +114,8 @@ TEST(GatedDenseTest, ForwardMatchesHandComputed)
     }
 }
 
-
 namespace
 {
-
-
 
 float gated_dense_max_gradient_error(bool use_bias)
 {
@@ -162,18 +156,15 @@ float gated_dense_max_gradient_error(bool use_bias)
 
 }
 
-
 TEST(GatedDenseTest, GradientMatchesNumerical)
 {
     EXPECT_LT(gated_dense_max_gradient_error( false), type(2.0e-3));
 }
 
-
 TEST(GatedDenseTest, GradientMatchesNumericalWithBias)
 {
     EXPECT_LT(gated_dense_max_gradient_error( true), type(2.0e-3));
 }
-
 
 TEST(GatedDenseTest, SaveLoadRoundTrip)
 {

@@ -18,7 +18,6 @@ TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
     EXPECT_EQ(lstm_layer.get_outputs_number(), 0);
 }
 
-
 TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
 {
     const Index inputs_number   = random_integer(1, 10);
@@ -35,7 +34,6 @@ TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
     EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ neurons_number }));
 }
 
-
 TEST(LongShortTermMemoryLayerTest, ReturnSequencesOutputShape)
 {
     const Index inputs_number  = 4;
@@ -51,7 +49,6 @@ TEST(LongShortTermMemoryLayerTest, ReturnSequencesOutputShape)
     EXPECT_TRUE(lstm_layer.get_return_sequences());
     EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ time_steps, neurons_number }));
 }
-
 
 TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
 {
@@ -92,7 +89,6 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
             << "cell activation=" << act;
     }
 }
-
 
 TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
 {
@@ -175,7 +171,6 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
     }
 }
 
-
 TEST(LongShortTermMemoryLayerTest, BackPropagate)
 {
     const Index samples_number = 4;
@@ -206,7 +201,6 @@ TEST(LongShortTermMemoryLayerTest, BackPropagate)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
-
 
 TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
 {
@@ -242,7 +236,6 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-
 TEST(LongShortTermMemoryLayerTest, UnsupportedActivationThrows)
 {
     LongShortTermMemory lstm_layer(Shape{3, 4}, Shape{5});
@@ -250,7 +243,6 @@ TEST(LongShortTermMemoryLayerTest, UnsupportedActivationThrows)
     EXPECT_THROW(lstm_layer.set_activation_function("Softmax"), std::runtime_error);
     EXPECT_THROW(lstm_layer.set_recurrent_activation_function("Softmax"), std::runtime_error);
 }
-
 
 TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
 {

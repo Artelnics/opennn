@@ -102,7 +102,6 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         void* cat_gpu  = fp.forward_slots[layer][6].data;
         void* out_gpu  = output.data;
 
-
         const Index scratch_needed = (Index(BT) * H
                                     + Index(BT) * C_int
                                     + Index(BT) * T
@@ -110,9 +109,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
         gpu_scratch.resize_bytes(scratch_needed, Device::CUDA);
         void* attn_v_gpu = gpu_scratch.data;
 
-
         c2psa_split_cuda(x.data, xa_gpu, cat_gpu, BT, C_int, H, dtype);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
@@ -120,20 +117,17 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             xa_gpu,  dtype, H, 0LL,
             Q_gpu,   dtype, H, 0LL, 1);
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
             Wk.data, dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             K_gpu,   dtype, H, 0LL, 1);
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, BT, H,
             Wv.data, dtype, H, 0LL,
             xa_gpu,  dtype, H, 0LL,
             V_gpu,   dtype, H, 0LL, 1);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             T, T, H,
@@ -142,9 +136,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             Attn_gpu, dtype, T, (long long)T * T,
             int(B), scale);
 
-
         c2psa_row_softmax_cuda(Attn_gpu, BT, T, dtype);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
@@ -153,9 +145,7 @@ void C2PSAOperator::forward_propagate(ForwardPropagation& fp, size_t layer, bool
             attn_v_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-
         c2psa_fill_cat_left_cuda(attn_v_gpu, cat_gpu, BT, C_int, H, dtype);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             C_int, BT, C_int,
@@ -236,15 +226,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const cudaDataType_t dtype = x.cuda_dtype();
         const Index esz  = (dtype == CUDA_R_32F) ? sizeof(float) : sizeof(uint16_t);
 
-
         const void* xa_gpu   = fp.forward_slots[layer][1].data;
         const void* Q_gpu    = fp.forward_slots[layer][2].data;
         const void* K_gpu    = fp.forward_slots[layer][3].data;
         const void* Attn_gpu = fp.forward_slots[layer][4].data;
         const void* V_gpu    = fp.forward_slots[layer][5].data;
         const void* cat_gpu  = fp.forward_slots[layer][6].data;
-
-
 
         uint8_t* scratch = static_cast<uint8_t*>(gpu_scratch.data);
         void* compact_d_ao = scratch;
@@ -258,13 +245,11 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
         const void* d_out_gpu = delta_out.data;
         void*       din_gpu   = delta_in.data;
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             C_int, BT, C_int,
             Wout.data, dtype, C_int, 0LL,
             d_out_gpu, dtype, C_int, 0LL,
             d_cat_gpu, dtype, C_int, 0LL, 1);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             C_int, C_int, BT,
@@ -273,11 +258,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWout.data, dtype, C_int, 0LL,
             1, 1.0f, 1.0f);
 
-
-
-
         c2psa_split_cuda(d_cat_gpu, compact_d_ao, d_cat_gpu, BT, C_int, H, dtype);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, T, T,
@@ -286,7 +267,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dV_gpu,       dtype, H, (long long)T * H,
             int(B));
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_T, CUBLAS_OP_N,
             T, T, H,
             V_gpu,        dtype, H, (long long)T * H,
@@ -294,9 +274,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             d_A_gpu,      dtype, T, (long long)T * T,
             int(B));
 
-
         c2psa_softmax_bwd_cuda(Attn_gpu, d_A_gpu, scale, BT, T, dtype);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_N,
             H, T, T,
@@ -305,14 +283,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dQ_gpu,  dtype, H, (long long)T * H,
             int(B));
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, T, T,
             Q_gpu,   dtype, H, (long long)T * H,
             d_A_gpu, dtype, T, (long long)T * T,
             dK_gpu,  dtype, H, (long long)T * H,
             int(B));
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
@@ -321,14 +297,12 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
             dWq.data, dtype, H, 0LL,
             1, 1.0f, 1.0f);
 
-
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
             dK_gpu,   dtype, H, 0LL,
             xa_gpu,   dtype, H, 0LL,
             dWk.data, dtype, H, 0LL,
             1, 1.0f, 1.0f);
-
 
         gemm_strided_batched_cuda(CUBLAS_OP_N, CUBLAS_OP_T,
             H, H, BT,
@@ -359,7 +333,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
                 d_xa_gpu, dtype, H, 0LL,
                 1, 1.0f, 1.0f);
 
-
             c2psa_scatter_dx_cuda(d_xa_gpu, d_cat_gpu, din_gpu, BT, C_int, H, dtype);
         }
         return;
@@ -388,9 +361,7 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
     MapC cat_m (cat,  B * tokens, C);
     MapC dout_m(dout, B * tokens, C);
 
-
     dWout_m.noalias() += cat_m.transpose() * dout_m;
-
 
     MatF d_concat(B * tokens, C);
     d_concat.noalias() = dout_m * Wout_m.transpose();
@@ -410,7 +381,6 @@ void C2PSAOperator::back_propagate(ForwardPropagation& fp, BackPropagation& bp, 
 
         MatF dA(tokens, tokens);
         dA.noalias() = d_ao * V_b.transpose();
-
 
         for (Index i = 0; i < tokens; ++i)
         {

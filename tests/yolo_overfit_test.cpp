@@ -81,15 +81,6 @@ struct TempDir
 TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 {
 
-
-
-
-
-
-
-
-
-
     TempDir dir;
     const std::filesystem::path images_dir = dir.path / "images";
     const std::filesystem::path labels_dir = dir.path / "labels";
@@ -131,7 +122,6 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         return net;
     };
 
-
     float error_short;
     {
         YoloDataset ds;
@@ -147,7 +137,6 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         adam.set_display(false);
         error_short = adam.train().get_training_error();
     }
-
 
     float error_long;
     {
@@ -165,11 +154,9 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         error_long = adam.train().get_training_error();
     }
 
-
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease: short=" << error_short << " long=" << error_long
         << " — systematic bug in YOLO loss/gradient/optimizer chain.";
-
 
     EXPECT_LT(error_long, error_short * 0.95f)
         << "Loss barely decreased (" << error_short << " → " << error_long
@@ -178,11 +165,6 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 
 TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
 {
-
-
-
-
-
 
     TempDir dir;
     const auto images_dir = dir.path / "images";
@@ -209,10 +191,8 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     auto build_sppf_net = [&]() {
         auto net = std::make_unique<NeuralNetwork>();
 
-
         net->add_layer(std::make_unique<Convolutional>(
             Shape{H, W, 3}, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "conv_stem"));
-
 
         const Shape feat{H, W, ch};
         const Index stem_idx = net->get_layers_number() - 1;
@@ -227,12 +207,10 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
                                                   "MaxPooling", "sppf_p3"), {p2_idx});
         const Index p3_idx = net->get_layers_number() - 1;
 
-
         net->add_layer(std::make_unique<Concatenation>(feat,
                                                         std::vector<Index>{ch, ch, ch, ch}, "sppf_cat"),
                        {stem_idx, p1_idx, p2_idx, p3_idx});
         const Index cat_idx = net->get_layers_number() - 1;
-
 
         net->add_layer(std::make_unique<Convolutional>(
             Shape{H, W, 4*ch}, Shape{1,1, 4*ch, ch}, "LeakyReLU", Shape{1,1}, "Same", true, "sppf_out"), {cat_idx});
@@ -274,11 +252,6 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
 TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 {
 
-
-
-
-
-
     TempDir dir;
     const auto images_dir = dir.path / "images";
     const auto labels_dir = dir.path / "labels";
@@ -303,18 +276,14 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 
     YoloDataset::AugmentationConfig no_aug; no_aug.enabled = false;
 
-
-
     auto build_csp_net = [&]() {
         auto net = std::make_unique<NeuralNetwork>();
-
 
         const Shape input{H, W, 3};
         net->add_layer(std::make_unique<Convolutional>(
             input, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "stem"));
         const Index stem = net->get_layers_number() - 1;
         const Shape feat{H, W, ch};
-
 
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, half}, "Identity", Shape{1, 1}, "Same", true, "csp_s1"), {stem});
@@ -323,7 +292,6 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, half}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_s2"), {stem});
         const Index b2_start = net->get_layers_number() - 1;
-
 
         const Shape hfeat{H, W, half};
         net->add_layer(std::make_unique<Convolutional>(
@@ -337,14 +305,12 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         net->add_layer(std::make_unique<Activation>(hfeat, "LeakyReLU", "csp_b1_act"), {add});
         const Index branch2 = net->get_layers_number() - 1;
 
-
         net->add_layer(std::make_unique<Concatenation>(hfeat, std::vector<Index>{half, half}, "csp_cat"),
                        {branch1, branch2});
         const Index cat = net->get_layers_number() - 1;
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "csp_merge"), {cat});
         const Index merge = net->get_layers_number() - 1;
-
 
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, ch, logit_ch}, "Identity", Shape{1, 1}, "Same", false, "logits"), {merge});
@@ -384,16 +350,6 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
 TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
 {
 
-
-
-
-
-
-
-
-
-
-
     TempDir dir;
     const auto images_dir = dir.path / "images";
     const auto labels_dir = dir.path / "labels";
@@ -404,7 +360,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     write_bmp_24(images_dir / "b.bmp", 32, 32,  50, 200,  50);
     write_bmp_24(images_dir / "c.bmp", 32, 32,  50,  50, 200);
     write_bmp_24(images_dir / "d.bmp", 32, 32, 200, 200,  50);
-
 
     { std::ofstream f(labels_dir / "a.txt"); f << "0 0.375 0.375 0.18 0.18\n"; }
     { std::ofstream f(labels_dir / "b.txt"); f << "0 0.125 0.125 0.15 0.15\n"; }
@@ -427,7 +382,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         const Index stem = net->get_layers_number() - 1;
         const Shape feat{grid, grid, head_ch};
 
-
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "box_c1"), {stem});
         const Index bc1 = net->get_layers_number() - 1;
@@ -438,7 +392,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
             feat, Shape{1, 1, head_ch, 4}, "Identity", Shape{1, 1}, "Same", false, "box_out"), {bc2});
         const Index box_out = net->get_layers_number() - 1;
 
-
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{3, 3, head_ch, head_ch}, "LeakyReLU", Shape{1, 1}, "Same", true, "cls_c1"), {stem});
         const Index cc1 = net->get_layers_number() - 1;
@@ -448,7 +401,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         net->add_layer(std::make_unique<Convolutional>(
             feat, Shape{1, 1, head_ch, C}, "Identity", Shape{1, 1}, "Same", false, "cls_out"), {cc2});
         const Index cls_out = net->get_layers_number() - 1;
-
 
         const Shape box_shape{grid, grid, 4};
         net->add_layer(std::make_unique<Concatenation>(box_shape, std::vector<Index>{4, C}, "cat"),

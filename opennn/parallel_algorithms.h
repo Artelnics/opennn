@@ -12,7 +12,11 @@
 
 #include "opennn_types.h"
 
+// Only pulled in when the toolchain can actually link the parallel
+// backend; see the OPENNN_HAS_PARALLEL_ALGORITHMS block in CMakeLists.
+#if defined(OPENNN_HAS_PARALLEL_ALGORITHMS)
 #include <execution>
+#endif
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -35,7 +39,7 @@ inline bool use_parallel_algorithm(ptrdiff_t size) noexcept
 template<typename Iterator, typename Compare = less<>>
 void sort_parallel_if_large(Iterator first, Iterator last, Compare compare = {})
 {
-#if defined(__cpp_lib_parallel_algorithm)
+#if defined(OPENNN_HAS_PARALLEL_ALGORITHMS) && defined(__cpp_lib_parallel_algorithm)
     if (use_parallel_algorithm(last - first))
         sort(execution::par, first, last, compare);
     else
@@ -46,7 +50,7 @@ void sort_parallel_if_large(Iterator first, Iterator last, Compare compare = {})
 template<typename Iterator, typename Compare = less<>>
 void stable_sort_parallel_if_large(Iterator first, Iterator last, Compare compare = {})
 {
-#if defined(__cpp_lib_parallel_algorithm)
+#if defined(OPENNN_HAS_PARALLEL_ALGORITHMS) && defined(__cpp_lib_parallel_algorithm)
     if (use_parallel_algorithm(last - first))
         stable_sort(execution::par, first, last, compare);
     else
@@ -58,7 +62,7 @@ template<typename Iterator, typename Compare = less<>>
 void nth_element_parallel_if_large(Iterator first, Iterator nth, Iterator last,
                                    Compare compare = {})
 {
-#if defined(__cpp_lib_parallel_algorithm)
+#if defined(OPENNN_HAS_PARALLEL_ALGORITHMS) && defined(__cpp_lib_parallel_algorithm)
     if (use_parallel_algorithm(last - first))
         nth_element(execution::par, first, nth, last, compare);
     else

@@ -21,7 +21,6 @@ try:
 except ImportError:
     resource = None
 
-
 def current_rss_mb() -> float:
     if platform.system() == "Linux":
         with open("/proc/self/status", encoding="utf-8") as status:
@@ -66,7 +65,6 @@ def current_rss_mb() -> float:
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return rss / (1024.0 if platform.system() == "Linux" else 1024.0 * 1024.0)
 
-
 def current_process_vram_mb() -> float | None:
     try:
         output = subprocess.check_output(
@@ -100,7 +98,6 @@ def current_process_vram_mb() -> float | None:
 
     return total if found else None
 
-
 def gpu_used_memory_mb() -> float | None:
     try:
         output = subprocess.check_output(
@@ -122,11 +119,9 @@ def gpu_used_memory_mb() -> float | None:
             continue
     return None
 
-
 vram_before_mb = gpu_used_memory_mb()
 
 import tensorflow as tf
-
 
 tf.random.set_seed(42)
 

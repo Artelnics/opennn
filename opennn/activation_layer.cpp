@@ -38,7 +38,6 @@ void Activation::set_input_shape(const Shape& new_input_shape)
     input_shape = new_input_shape;
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

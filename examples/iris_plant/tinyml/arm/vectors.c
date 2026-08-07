@@ -8,7 +8,6 @@
 
 extern void _start(void);
 
-
 #define STACK_TOP 0x20400000u
 
 __attribute__((section(".vectors"), used))

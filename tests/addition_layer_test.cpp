@@ -11,7 +11,6 @@
 
 using namespace opennn;
 
-
 TEST(AdditionLayerTest, DefaultConstructor)
 {
     Addition addition_layer;
@@ -19,7 +18,6 @@ TEST(AdditionLayerTest, DefaultConstructor)
     EXPECT_EQ(addition_layer.get_name(), "Addition");
     EXPECT_EQ(addition_layer.get_sources_number(), 2);
 }
-
 
 TEST(AdditionLayerTest, GeneralConstructor)
 {
@@ -34,7 +32,6 @@ TEST(AdditionLayerTest, GeneralConstructor)
     EXPECT_EQ(addition_layer.get_output_shape(), input_shape);
 }
 
-
 TEST(AdditionLayerTest, OutputShapeMatchesInputShapeRank3)
 {
     const Shape input_shape{5, 5, 8};
@@ -44,7 +41,6 @@ TEST(AdditionLayerTest, OutputShapeMatchesInputShapeRank3)
     EXPECT_EQ(addition_layer.get_output_shape(), input_shape);
     EXPECT_EQ(addition_layer.get_output_shape().size(), 5 * 5 * 8);
 }
-
 
 TEST(AdditionLayerTest, BackwardSpecsCountMatchesInputsNumber)
 {
@@ -66,7 +62,6 @@ TEST(AdditionLayerTest, BackwardSpecsCountMatchesInputsNumber)
         EXPECT_EQ(shape[2], 2);
     }
 }
-
 
 TEST(AdditionLayerTest, ForwardPropagateSumsTwoInputs)
 {
@@ -113,7 +108,6 @@ TEST(AdditionLayerTest, ForwardPropagateSumsTwoInputs)
         EXPECT_NEAR(output_data[i], input_a.data()[i] + input_b.data()[i], 1.0e-5f);
 }
 
-
 TEST(AdditionLayerTest, ForwardPropagateSumsThreeInputs)
 {
     const Index batch_size = 2;
@@ -153,7 +147,6 @@ TEST(AdditionLayerTest, ForwardPropagateSumsThreeInputs)
     for (Index i = 0; i < total; ++i)
         EXPECT_NEAR(output_data[i], 7.0f, 1.0e-5f);
 }
-
 
 TEST(AdditionLayerTest, ResidualBackwardGradientMatchesNumerical)
 {

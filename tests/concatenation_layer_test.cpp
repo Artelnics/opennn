@@ -25,7 +25,6 @@ protected:
     const vector<Index> per_input_channels{ channels_a, channels_b };
 };
 
-
 TEST_F(ConcatenationLayerTest, Constructor)
 {
     Concatenation concatenation(input_shape, per_input_channels, "concat");
@@ -42,7 +41,6 @@ TEST_F(ConcatenationLayerTest, Constructor)
     EXPECT_EQ(output_shape[2], channels_a + channels_b);
 }
 
-
 TEST_F(ConcatenationLayerTest, OutputChannelsAreSumOfInputChannels)
 {
     Concatenation concatenation(Shape{ 4, 5, 7 }, vector<Index>{ 1, 6, 2 }, "concat");
@@ -56,7 +54,6 @@ TEST_F(ConcatenationLayerTest, OutputChannelsAreSumOfInputChannels)
     EXPECT_EQ(output_shape[2], 9);
 }
 
-
 TEST_F(ConcatenationLayerTest, DefaultConstructorHasEmptyOutput)
 {
     Concatenation concatenation;
@@ -64,7 +61,6 @@ TEST_F(ConcatenationLayerTest, DefaultConstructorHasEmptyOutput)
     EXPECT_TRUE(concatenation.get_output_shape().empty());
     EXPECT_EQ(concatenation.get_sources_number(), 0);
 }
-
 
 TEST_F(ConcatenationLayerTest, ForwardPropagateConcatenatesAlongChannels)
 {
@@ -120,7 +116,6 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateConcatenatesAlongChannels)
             }
 }
 
-
 TEST_F(ConcatenationLayerTest, ForwardPropagateThreeInputs)
 {
     const Index batch_size = 1;
@@ -167,7 +162,6 @@ TEST_F(ConcatenationLayerTest, ForwardPropagateThreeInputs)
             EXPECT_NEAR(output_data[out_base + 3], 30.0f, 1e-6f);
         }
 }
-
 
 TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
 {
@@ -234,7 +228,6 @@ TEST_F(ConcatenationLayerTest, LegacyConcatenateTagLoads)
     filesystem::remove(path, file_error);
     filesystem::remove(filesystem::path(path).replace_extension(".bin"), file_error);
 }
-
 
 TEST_F(ConcatenationLayerTest, ConcatBackwardGradientMatchesNumerical)
 {

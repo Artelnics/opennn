@@ -14,13 +14,6 @@
 namespace opennn
 {
 
-
-
-
-
-
-
-
 struct DetectionV8Operator : Operator
 {
     Index grid_size      = 0;

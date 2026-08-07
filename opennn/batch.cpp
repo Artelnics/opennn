@@ -60,12 +60,6 @@ void Batch::set(const Index new_samples_number,
     input_views_cache.clear();
     target_view_cache = {};
 
-
-
-
-
-
-
     const bool on_gpu = new_config.device == Device::CUDA && device::is_cuda_build();
     const Device batch_device = on_gpu ? Device::CUDA : Device::CPU;
     input_is_bf16 = on_gpu
@@ -153,7 +147,7 @@ void Batch::set(const Index new_samples_number,
     const bool needs_fp32_staging = input_is_bf16
         && !host_bf16_input_cast
         && !new_prefetch_only
-        && !(dataset && dataset->is_device_resident());
+        && !dataset->is_device_resident();
     const Index fp32_staging_bytes = needs_fp32_staging
         ? samples_number * input.features_number * Index(sizeof(float))
         : Index(0);
@@ -162,22 +156,18 @@ void Batch::set(const Index new_samples_number,
                          format("samples={}", samples_number));
 
     const bool may_use_device_gather = on_gpu
-        && dataset
         && (dataset->is_device_resident()
             || dataset->get_storage_mode() == Dataset::StorageMode::GPUPersistantData);
+
+    const Index gather_indices_bytes =
+        may_use_device_gather ? samples_number * Index(sizeof(int)) : Index(0);
+    gather_indices_host.resize_bytes(gather_indices_bytes, Device::CPU);
+    gather_indices_device.resize_bytes(gather_indices_bytes, Device::CUDA);
+
     if (may_use_device_gather)
-    {
-        gather_indices_host.resize_bytes(samples_number * Index(sizeof(int)), Device::CPU);
-        gather_indices_device.resize_bytes(samples_number * Index(sizeof(int)), Device::CUDA);
         memory_debug::record("batch.device", "Batch::gather_indices_device",
-                              samples_number * Index(sizeof(int)),
+                              gather_indices_bytes,
                               format("samples={}", samples_number));
-    }
-    else
-    {
-        gather_indices_host.resize_bytes(0, Device::CPU);
-        gather_indices_device.resize_bytes(0, Device::CUDA);
-    }
 
     if (on_gpu && !input.shape.empty() && input.buffer.data)
     {
@@ -365,8 +355,6 @@ void Batch::wait_h2d_on_compute_stream()
 
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
 {
-
-
 
     return validation_pool.empty()
         ? training_empty_queue

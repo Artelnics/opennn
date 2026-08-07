@@ -47,7 +47,6 @@ RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 BENCH_DATA = Path(os.environ.get("OPENNN_BENCH_DATA", str(Path.home() / "opennn-benchmark-data")))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 
-
 def repo_root() -> Path:
     try:
         r = subprocess.run(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"],
@@ -58,9 +57,7 @@ def repo_root() -> Path:
         pass
     return HERE.parents[3]
 
-
 REPO_ROOT = repo_root()
-
 
 def find_opennn_speed() -> tuple[str, bool]:
     for env_name in ("OPENNN_SPEED_BIN", "OPENNN_BIN"):
@@ -86,10 +83,7 @@ def find_opennn_speed() -> tuple[str, bool]:
                 return str(candidate), True
     return str(REPO_ROOT / "build-benchmarks" / "bin" / names[0]), False
 
-
 OPENNN_BIN, OPENNN_BIN_FOUND = find_opennn_speed()
-
-
 
 def tensorflow_library_dirs(py: str) -> list[str]:
     override = os.environ.get("TF_NV_LIBS")
@@ -109,10 +103,8 @@ def tensorflow_library_dirs(py: str) -> list[str]:
     except Exception:
         return []
 
-
 def threshold(value):
     return "none" if value in (None, "") else str(value)
-
 
 def cmd_env(engine: str, precision: str):
     thresholds = [threshold(args.min_accuracy), threshold(args.max_log_loss), threshold(args.min_auc)]
@@ -140,7 +132,6 @@ def cmd_env(engine: str, precision: str):
         raise ValueError(engine)
     return cmd, env
 
-
 def parse_trace_csv(path):
     """(seconds-of-day, watts, sm_mhz) samples from an nvidia-smi
     timestamp,power.draw,clocks.sm log, unwrapped past midnight."""
@@ -165,14 +156,12 @@ def parse_trace_csv(path):
             samples.append((sec + offset, w, clk))
     return samples
 
-
 def unix_to_trace_time(unix_ts, samples):
     dt = datetime.fromtimestamp(unix_ts)
     sod = dt.hour * 3600 + dt.minute * 60 + dt.second + dt.microsecond / 1e6
     if samples and sod < samples[0][0] - 43200:
         sod += 86400
     return sod
-
 
 def integrate(samples, idle_w, t_lo=None, t_hi=None):
     """Trapezoidal integral of power dt over [t_lo, t_hi];
@@ -197,7 +186,6 @@ def integrate(samples, idle_w, t_lo=None, t_hi=None):
     clk_median = statistics.median(clocks) if clocks else None
     return e_total, e_active, avg_w, clk_median, span, len(samples)
 
-
 def measure_idle(seconds=5.0):
     try:
         out = subprocess.run(
@@ -208,7 +196,6 @@ def measure_idle(seconds=5.0):
         out = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
     vals = [float(x) for x in out.split() if re.fullmatch(r"[0-9.]+", x)]
     return sum(vals) / len(vals) if vals else 30.0
-
 
 def gpu_state():
     fields = ("clocks.current.sm,clocks.max.sm,clocks.current.memory,"
@@ -229,11 +216,9 @@ def gpu_state():
     except Exception:
         return {"error": "nvidia-smi gpu-state query failed"}
 
-
 def parse_marker(pattern, text, cast=float):
     m = re.search(pattern, text, re.MULTILINE)
     return cast(m.group(1)) if m else None
-
 
 def run_one(engine, precision, idle_w, trace_path):
     cmd, env = cmd_env(engine, precision)
@@ -300,9 +285,6 @@ def run_one(engine, precision, idle_w, trace_path):
     m["process_energy_total_j"] = round(et, 1)
     m["process_energy_active_j"] = round(ea, 1)
 
-
-
-
     sparse_trace = (m.get("train_window_s") or 0) > 0 and (
         m.get("window_power_samples", 0) / m["train_window_s"] < 5.0)
     if sparse_trace:
@@ -311,7 +293,6 @@ def run_one(engine, precision, idle_w, trace_path):
     ok = ("RESULT=OK" in out and m.get("energy_total_j") is not None
           and m.get("quality_gate") != "FAIL" and not sparse_trace)
     return ok, m, out
-
 
 def cooldown(idle_w, seconds=20, mib_threshold=1200):
     """Wait for VRAM to drain and power to settle back near idle."""
@@ -329,7 +310,6 @@ def cooldown(idle_w, seconds=20, mib_threshold=1200):
             return
         time.sleep(1.0)
 
-
 def git_metadata():
     def g(*a):
         try:
@@ -343,7 +323,6 @@ def git_metadata():
             "branch": g("rev-parse", "--abbrev-ref", "HEAD") or "unknown",
             "dirty": bool(status),
             "status_short": status.splitlines()}
-
 
 def versions():
     v = {"python": sys.version.split()[0], "bench_python": PY}
@@ -363,7 +342,6 @@ def versions():
     except Exception:
         pass
     return v
-
 
 def main():
     global args
@@ -491,7 +469,6 @@ def main():
     out_path = RESULTS_DIR / f"gpu-higgs-dense-energy-{run_id}.json"
     out_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

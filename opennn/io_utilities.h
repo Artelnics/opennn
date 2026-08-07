@@ -88,6 +88,12 @@ bool read_binary_value(istream& stream, T& value)
     return bool(stream.read(reinterpret_cast<char*>(&value), sizeof(value)));
 }
 
+template <typename... Values>
+bool read_binary_values(istream& stream, Values&... values)
+{
+    return (read_binary_value(stream, values) && ...);
+}
+
 template <typename T>
 void write_binary_value(FileWriter& writer, const T& value)
 {

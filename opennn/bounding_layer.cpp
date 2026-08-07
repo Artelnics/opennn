@@ -193,7 +193,6 @@ string Bounding::write_expression(const vector<string>& input_names,
     return buffer.str();
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

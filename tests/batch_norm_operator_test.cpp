@@ -10,7 +10,6 @@
 
 using namespace opennn;
 
-
 TEST(BatchNormalizationOperatoreratorTest, DefaultIsInactive)
 {
     BatchNormalizationOperator batch_norm;
@@ -20,7 +19,6 @@ TEST(BatchNormalizationOperatoreratorTest, DefaultIsInactive)
     EXPECT_TRUE(batch_norm.parameter_specs().empty());
     EXPECT_TRUE(batch_norm.state_specs().empty());
 }
-
 
 TEST(BatchNormalizationOperatoreratorTest, SetActivatesAndStoresMomentum)
 {
@@ -32,7 +30,6 @@ TEST(BatchNormalizationOperatoreratorTest, SetActivatesAndStoresMomentum)
     EXPECT_FLOAT_EQ(batch_norm.momentum, 0.25f);
 }
 
-
 TEST(BatchNormalizationOperatoreratorTest, SetRejectsInvalidMomentum)
 {
     BatchNormalizationOperator batch_norm;
@@ -40,7 +37,6 @@ TEST(BatchNormalizationOperatoreratorTest, SetRejectsInvalidMomentum)
     EXPECT_ANY_THROW(batch_norm.set(4, 1.0f));
     EXPECT_ANY_THROW(batch_norm.set(4, -0.1f));
 }
-
 
 TEST(BatchNormalizationOperatoreratorTest, ParameterAndStateSpecsMatchFeatures)
 {
@@ -62,7 +58,6 @@ TEST(BatchNormalizationOperatoreratorTest, ParameterAndStateSpecsMatchFeatures)
 
     EXPECT_EQ(parameter_specs[0].dtype, Type::FP32);
 }
-
 
 TEST(BatchNormalizationOperatoreratorTest, LinkAndInitDefaults)
 {
@@ -102,7 +97,6 @@ TEST(BatchNormalizationOperatoreratorTest, LinkAndInitDefaults)
     EXPECT_FLOAT_EQ(running_variance_storage.maxCoeff(), 1.0f);
 }
 
-
 TEST(BatchNormalizationOperatoreratorTest, DenseEnablesBatchNormalization)
 {
     opennn::Dense dense({6}, {4}, "Identity", true);
@@ -110,14 +104,12 @@ TEST(BatchNormalizationOperatoreratorTest, DenseEnablesBatchNormalization)
     EXPECT_TRUE(dense.get_batch_normalization());
 }
 
-
 TEST(BatchNormalizationOperatoreratorTest, DenseDisabledByDefault)
 {
     opennn::Dense dense({6}, {4}, "Identity");
 
     EXPECT_FALSE(dense.get_batch_normalization());
 }
-
 
 TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
 {
@@ -156,7 +148,6 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardTrainingNormalizesPerFeature)
     EXPECT_LT((feature_variance.array() - 1.0f).abs().maxCoeff(), 1.0e-3f);
 }
 
-
 TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics)
 {
     const Index batch_size = 8;
@@ -185,7 +176,6 @@ TEST(BatchNormalizationOperatoreratorTest, ForwardInferenceUsesRunningStatistics
     EXPECT_TRUE(output.allFinite());
 }
 
-
 TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
 {
     const Index batch_size = 5;
@@ -213,7 +203,6 @@ TEST(BatchNormalizationOperatoreratorTest, InferenceIsDeterministicAcrossRows)
             EXPECT_NEAR(output(row, column), reference, 1.0e-5f);
     }
 }
-
 
 TEST(BatchNormalizationOperatoreratorTest, GradientMatchesFiniteDifferences)
 {

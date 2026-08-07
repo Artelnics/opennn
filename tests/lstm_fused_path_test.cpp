@@ -16,18 +16,7 @@
 
 using namespace opennn;
 
-
-
-
-
-
-
-
-
-
 namespace {
-
-
 
 vector<double> reference_constant_outputs(const Index features,
                                           const Index neurons,
@@ -52,7 +41,6 @@ vector<double> reference_constant_outputs(const Index features,
 
     return outputs;
 }
-
 
 void check_constant_forward(const Index neurons, const string& cell_activation)
 {
@@ -101,9 +89,6 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
         << "H=" << neurons << " cell activation=" << cell_activation;
 }
 
-
-
-
 void set_varied_parameters(NeuralNetwork& neural_network)
 {
     float* parameters = neural_network.get_parameters_data();
@@ -112,8 +97,6 @@ void set_varied_parameters(NeuralNetwork& neural_network)
     for (Index i = 0; i < parameters_number; ++i)
         parameters[i] = 0.05f * std::sin(0.7f * float(i) + 0.3f);
 }
-
-
 
 void check_gradient(const Index neurons, const bool return_sequences)
 {
@@ -150,7 +133,6 @@ void check_gradient(const Index neurons, const bool return_sequences)
 
 }
 
-
 TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
 {
     check_constant_forward(64, "Tanh");
@@ -162,10 +144,8 @@ TEST(LstmFusedPath, ForwardMatchesAcrossBoundary)
     check_gradient(96, false);
 }
 
-
 TEST(LstmFusedPath, ScalarAndFusedAgree)
 {
-
 
     check_constant_forward(63, "Tanh");
     check_constant_forward(64, "Tanh");
@@ -173,17 +153,6 @@ TEST(LstmFusedPath, ScalarAndFusedAgree)
     check_gradient(63, false);
     check_gradient(64, false);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
 {

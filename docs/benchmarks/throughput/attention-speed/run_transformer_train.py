@@ -33,9 +33,6 @@ RESULTS_DIR = os.path.normpath(os.path.join(HERE, "..", "..", "results"))
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 OPENNN_BIN = os.path.join(HERE, "opennn_transformer_train")
 
-
-
-
 def tf_ld_path():
     site = os.path.join(os.path.dirname(os.path.dirname(PY)),
                         "lib", "python3.12", "site-packages", "nvidia")
@@ -47,9 +44,7 @@ def tf_ld_path():
                 libs.append(p)
     return os.pathsep.join(libs)
 
-
 TF_LD = tf_ld_path()
-
 
 def ensure_corpus(path, vocab, seq_len, samples):
     """Generate the synthetic training corpus once if it is missing."""
@@ -57,7 +52,6 @@ def ensure_corpus(path, vocab, seq_len, samples):
         return
     gen = os.path.join(HERE, "make_synthetic_corpus.py")
     subprocess.run([PY, gen, path, str(vocab), str(seq_len), str(samples)], check=True)
-
 
 def engine_cmd(engine, corpus, cfg, bf16):
     d, h, ff, L, batch, epochs = cfg
@@ -81,7 +75,6 @@ def engine_cmd(engine, corpus, cfg, bf16):
         raise ValueError(engine)
     return cmd, env
 
-
 def run_once(cmd, env_over):
     env = dict(os.environ)
     env.update(env_over)
@@ -95,7 +88,6 @@ def run_once(cmd, env_over):
                 except ValueError:
                     pass
     return metrics, out.stdout + out.stderr
-
 
 def versions():
     v = {"python": sys.version.split()[0]}
@@ -117,7 +109,6 @@ def versions():
         pass
     return v
 
-
 def git_commit():
     try:
         c = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
@@ -125,7 +116,6 @@ def git_commit():
         return c or "unknown"
     except Exception:
         return "unknown"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -223,7 +213,6 @@ def main():
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

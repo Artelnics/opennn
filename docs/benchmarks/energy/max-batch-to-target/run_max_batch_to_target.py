@@ -27,14 +27,12 @@ RESULTS = BENCHMARKS / "results"
 CAPACITY = BENCHMARKS / "capacity"
 TRANSFORMER_ENERGY = BENCHMARKS / "energy" / "transformer-energy"
 
-
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as stream:
         for chunk in iter(lambda: stream.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
 
 def transformer_tokens_bin(corpus, shape):
     """Return the exact OpenNN token cache shared by all three engines."""
@@ -67,7 +65,6 @@ def transformer_tokens_bin(corpus, shape):
         )
     return candidates[0]
 
-
 def capture(command, timeout=15):
     try:
         result = subprocess.run(command, capture_output=True, text=True,
@@ -75,7 +72,6 @@ def capture(command, timeout=15):
         return result.stdout.strip() or result.stderr.strip() or None
     except Exception:
         return None
-
 
 def git_metadata():
     status = capture(["git", "-C", str(REPO), "status", "--short"]) or ""
@@ -87,14 +83,12 @@ def git_metadata():
         "status_short": status.splitlines(),
     }
 
-
 def gpu_metadata():
     query = ("name,driver_version,memory.total,power.limit,"
              "clocks.max.sm,compute_cap")
     raw = capture(["nvidia-smi", f"--query-gpu={query}",
                    "--format=csv,noheader,nounits"])
     return {"nvidia_smi": raw}
-
 
 def framework_versions(python):
     versions = {"python": capture([python, "--version"])}
@@ -106,7 +100,6 @@ def framework_versions(python):
         if value:
             versions[module] = value.splitlines()[-1]
     return versions
-
 
 def tensorflow_library_dirs(python):
     code = (
@@ -124,7 +117,6 @@ def tensorflow_library_dirs(python):
     except (ValueError, IndexError):
         return []
 
-
 def measure_idle(seconds=5.0):
     try:
         proc = subprocess.run(
@@ -136,7 +128,6 @@ def measure_idle(seconds=5.0):
         raw = exc.stdout.decode() if isinstance(exc.stdout, bytes) else (exc.stdout or "")
     values = [float(value) for value in re.findall(r"(?m)^([0-9.]+)", raw)]
     return statistics.median(values) if values else 30.0
-
 
 def cooldown(idle_w, timeout=30):
     deadline = time.time() + timeout
@@ -152,7 +143,6 @@ def cooldown(idle_w, timeout=30):
         except (AttributeError, ValueError):
             return
         time.sleep(1)
-
 
 def parse_trace(path):
     samples = []
@@ -176,7 +166,6 @@ def parse_trace(path):
             samples.append((seconds + offset, watts, clock))
     return samples
 
-
 def unix_to_trace_time(timestamp, samples):
     stamp = datetime.fromtimestamp(timestamp)
     seconds = (stamp.hour * 3600 + stamp.minute * 60 + stamp.second
@@ -184,7 +173,6 @@ def unix_to_trace_time(timestamp, samples):
     if samples and seconds < samples[0][0] - 43200:
         seconds += 86400
     return seconds
-
 
 def integrate(samples, idle_w, low, high):
     window = [sample for sample in samples if low <= sample[0] <= high]
@@ -207,11 +195,9 @@ def integrate(samples, idle_w, low, high):
         "median_sm_clock_mhz": statistics.median(clocks) if clocks else None,
     }
 
-
 def marker(pattern, text, cast=float):
     match = re.search(pattern, text, re.MULTILINE)
     return cast(match.group(1)) if match else None
-
 
 def capacity_batches(path, workload, precision, engines):
     with open(path, encoding="utf-8") as stream:
@@ -258,7 +244,6 @@ def capacity_batches(path, workload, precision, engines):
         }
     return selected, artifact
 
-
 def common_environment(args, engine):
     env = dict(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = "0"
@@ -272,7 +257,6 @@ def common_environment(args, engine):
         env["LD_LIBRARY_PATH"] = os.pathsep.join(
             libs + [env.get("LD_LIBRARY_PATH", "")])
     return env
-
 
 def command_for(args, engine, batch, capacity_artifact, selected_path, seed):
     env = common_environment(args, engine)
@@ -380,7 +364,6 @@ def command_for(args, engine, batch, capacity_artifact, selected_path, seed):
         ]
     return command, env
 
-
 def run_one(args, engine, batch, capacity_artifact, selected_path,
             seed, idle_w, log_path, trace_path):
     command, env = command_for(
@@ -457,7 +440,6 @@ def run_one(args, engine, batch, capacity_artifact, selected_path,
         metrics["output_tail"] = output[-3000:]
     return metrics
 
-
 def aggregate(per_run):
     successful = [run for run in per_run if run["ok"]]
     result = {
@@ -474,7 +456,6 @@ def aggregate(per_run):
             result[f"{key}_stdev"] = round(
                 statistics.pstdev(values), 6) if len(values) > 1 else 0.0
     return result
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -510,7 +491,6 @@ def parse_args():
     parser.add_argument("--timeout-s", type=int, default=7200)
     parser.add_argument("--run-id", default="")
     return parser.parse_args()
-
 
 def main():
     args = parse_args()
@@ -657,7 +637,6 @@ def main():
     print(f"\nwrote {output_path}")
     print(f"evidence {evidence_dir}")
     return 0 if all(value["n_ok"] for value in artifact["results"].values()) else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

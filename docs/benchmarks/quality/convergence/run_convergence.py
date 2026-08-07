@@ -39,7 +39,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 HERE = Path(__file__).resolve().parent
 RESULTS_DIR = (HERE.parent.parent / "results").resolve()
 DEFAULT_BENCH_DATA = Path(
@@ -48,25 +47,20 @@ DEFAULT_BENCH_DATA = Path(
 DEFAULT_HIGGS_DIR = DEFAULT_BENCH_DATA / "higgs"
 PY = os.environ.get("BENCH_PYTHON", sys.executable)
 
-
 def run_text(cmd: list[str]) -> str:
     try:
         return subprocess.run(cmd, capture_output=True, text=True, check=False).stdout.strip()
     except Exception:
         return ""
 
-
 def repo_root() -> Path:
     root = run_text(["git", "-C", str(HERE), "rev-parse", "--show-toplevel"])
     return Path(root).resolve() if root else HERE.parents[3]
 
-
 REPO_ROOT = repo_root()
-
 
 def candidate_names(base: str) -> list[str]:
     return [base, base + ".exe"] if os.name != "nt" else [base + ".exe", base]
-
 
 def find_opennn_bin() -> tuple[str, bool]:
     override = os.environ.get("OPENNN_CONVERGENCE_BIN")
@@ -85,7 +79,6 @@ def find_opennn_bin() -> tuple[str, bool]:
                 return str(candidate), True
     fallback = REPO_ROOT / "build-benchmarks" / "bin" / candidate_names("opennn_convergence")[0]
     return str(fallback), False
-
 
 def engine_cmd(engine: str, args: argparse.Namespace) -> list[str]:
     if engine == "opennn":
@@ -116,7 +109,6 @@ def engine_cmd(engine: str, args: argparse.Namespace) -> list[str]:
         cmd += ["--threads", str(args.threads)]
     return cmd
 
-
 def run_once(cmd: list[str]) -> tuple[dict[str, str], str]:
     env = dict(os.environ)
     env.setdefault("CUDA_VISIBLE_DEVICES", "")
@@ -130,7 +122,6 @@ def run_once(cmd: list[str]) -> tuple[dict[str, str], str]:
             fields[key.strip()] = value.strip()
     return fields, raw
 
-
 def file_info(path: Path) -> dict[str, Any]:
     info: dict[str, Any] = {"path": str(path)}
     if path.exists():
@@ -139,7 +130,6 @@ def file_info(path: Path) -> dict[str, Any]:
     else:
         info["exists"] = False
     return info
-
 
 def versions() -> dict[str, Any]:
     v: dict[str, Any] = {"python": sys.version.split()[0], "platform": platform.platform()}
@@ -161,7 +151,6 @@ def versions() -> dict[str, Any]:
         v["version_error"] = str(exc)
     return v
 
-
 def git_metadata() -> dict[str, Any]:
     commit = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
     branch = run_text(["git", "-C", str(REPO_ROOT), "rev-parse", "--abbrev-ref", "HEAD"])
@@ -173,7 +162,6 @@ def git_metadata() -> dict[str, Any]:
         "dirty": bool(status_lines),
         "status_short_count": len(status_lines),
     }
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -191,7 +179,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
-
 
 def main() -> None:
     args = parse_args()
@@ -325,7 +312,6 @@ def main() -> None:
             print(f"  -> 0/{args.runs} converged")
         result["results"][engine] = entry
 
-
     base = result["results"].get("opennn", {}).get("time_to_target_s_median")
     if base:
         for engine in ("pytorch", "tensorflow"):
@@ -335,7 +321,6 @@ def main() -> None:
 
     out_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(f"\nwrote {out_path}")
-
 
 if __name__ == "__main__":
     main()

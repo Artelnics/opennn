@@ -218,6 +218,8 @@ struct TensorSpec
 {
     Shape shape;
     Type  dtype = Type::FP32;
+
+    bool operator==(const TensorSpec&) const noexcept = default;
 };
 
 inline Index get_aligned_size(const vector<TensorSpec>& specs)

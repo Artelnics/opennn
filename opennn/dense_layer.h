@@ -42,8 +42,6 @@ public:
     bool backward_uses_forward_output() const noexcept override { return gated || batch_norm.active() || activation_operator.activation_function != ActivationFunction::Identity; }
     bool preserves_output_delta_during_backward() const noexcept override { return !backward_uses_forward_output() && !dropout.active(); }
 
-
-
     ForwardSlotKind get_forward_slot_kind(size_t spec) const override
     {
         return !gated && spec == size_t(ActivationView) - 1
@@ -87,9 +85,6 @@ public:
             configure_operators();
     }
     void set_momentum(float);
-
-
-
 
     bool try_wire_drelu_fusion(Dense& producer);
     void reset_drelu_fusion();

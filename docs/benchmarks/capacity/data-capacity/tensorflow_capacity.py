@@ -24,7 +24,6 @@ import sys
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
-
 def _mem_counters():
     class PMC(ctypes.Structure):
         _fields_ = [
@@ -51,14 +50,11 @@ def _mem_counters():
     mb = 1024.0 * 1024.0
     return (pmc.PeakWorkingSetSize / mb, pmc.WorkingSetSize / mb)
 
-
 def peak_working_set_mb():
     return _mem_counters()[0]
 
-
 def current_working_set_mb():
     return _mem_counters()[1]
-
 
 def main():
     if len(sys.argv) < 2:
@@ -76,11 +72,9 @@ def main():
         tf.random.set_seed(42)
         np_read = np.float32 if read_dtype == "float32" else np.float64
 
-
         frame = pd.read_csv(csv_path, header=None, dtype=np_read)
         print(f"read_dtype={read_dtype}")
         print(f"loaded_samples={len(frame)}")
-
 
         input_variables = frame.shape[1] - 1
 
@@ -127,7 +121,6 @@ def main():
         print(f"peak_mb={peak_working_set_mb():.3f}")
         print("RESULT=ERROR")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

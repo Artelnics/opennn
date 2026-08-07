@@ -632,7 +632,6 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
         set_folds_number(read_json_index(root, "FoldsNumber"));
 }
 
-
 }
 
 // OpenNN: Open Neural Networks Library.

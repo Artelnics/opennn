@@ -12,8 +12,6 @@
 #include <string>
 #include <cstring>
 
-
-
 #include "opennn/chat.h"
 #include "opennn/training_strategy.h"
 #include "opennn/language_dataset.h"
@@ -32,8 +30,6 @@ int main()
 
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-
-
         LanguageDataset language_dataset("../data/translation/ES-EN-small.txt");
 
         const Index input_vocabulary_size  = language_dataset.get_input_vocabulary_size();
@@ -45,8 +41,6 @@ int main()
 
         if(decoder_sequence_length != target_sequence_length)
             throw runtime_error("Decoder and target sequence lengths must match.");
-
-
 
         const Index embedding_dimension = 256;
         const Index heads_number = 8;
@@ -61,8 +55,6 @@ int main()
                                 heads_number,
                                 feed_forward_dimension,
                                 layers_number);
-
-
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
@@ -82,8 +74,6 @@ int main()
         cout << "\nTraining on GPU..." << endl;
         training_strategy.train();
 
-
-
         cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
 
         const vector<string> test_sources =
@@ -94,11 +84,9 @@ int main()
                 "yo veo el gato"
             };
 
-
         transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
         transformer.set_target_vocabulary(language_dataset.get_target_vocabulary());
         ChatSession session(transformer);
-
 
         for(Index i = 0; i < static_cast<Index>(test_sources.size()); i++)
         {

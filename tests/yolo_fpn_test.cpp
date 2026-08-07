@@ -332,8 +332,6 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
         << " num=" << numerical_gradient(worst_idx);
 }
 
-
-
 TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
 {
     const Shape input_shape{320, 320, 3};

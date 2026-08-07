@@ -1,5 +1,4 @@
 
-
 # OpenNN benchmark drivers. Each source lives next to its write-up in
 # docs/benchmarks/<benchmark>/ so the code ships with the methodology;
 # binaries land in build/bin alongside the examples.
@@ -35,7 +34,6 @@ add_executable(opennn_resnet50_speed
 add_executable(opennn_resnet50_infer
     throughput/resnet50/opennn_resnet50_infer.cpp)
 
-
 add_executable(opennn_transformer_infer
     throughput/attention-speed/opennn_transformer_infer.cpp)
 
@@ -47,8 +45,6 @@ add_executable(opennn_string_processing
 
 add_executable(opennn_resnet50_maxbatch_trial
     capacity/resnet50-max-batch/opennn_resnet50_maxbatch_trial.cpp)
-
-
 
 if(OPENNN_HAS_CUDA)
     add_executable(opennn_transformer_resident
@@ -64,7 +60,6 @@ if(OPENNN_HAS_CUDA)
         energy/transformer-energy/opennn_transformer_energy.cpp)
 endif()
 
-
 add_executable(opennn_accuracy
     quality/accuracy/opennn_accuracy.cpp)
 
@@ -74,13 +69,11 @@ add_executable(opennn_convergence
 add_executable(opennn_precision
     quality/precision/opennn_precision.cpp)
 
-
 add_executable(opennn_startup
     footprint/startup/opennn_startup.cpp)
 
 add_executable(opennn_export
     footprint/export/opennn_export.cpp)
-
 
 add_executable(recurrent_lstm_forecasting_benchmark
     quality/recurrent-lstm-forecasting/recurrent_lstm_forecasting_benchmark.cpp)

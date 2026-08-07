@@ -37,7 +37,6 @@ if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -63,7 +62,6 @@ class Bottleneck(nn.Module):
         y = self.relu(self.bn2(self.conv2(y)))
         y = self.bn3(self.conv3(y))
         return self.relu(y + identity)
-
 
 class ResNet50(nn.Module):
     def __init__(self, classes=10):
@@ -91,7 +89,6 @@ class ResNet50(nn.Module):
         x = torch.flatten(self.avgpool(x), 1)
         return self.fc(x)
 
-
 x = (torch.from_numpy(np.load(f"{data_dir}/cifar_images.npy"))
      .permute(0, 3, 1, 2).div(255.0).contiguous().cuda())
 y = torch.from_numpy(np.load(f"{data_dir}/cifar_labels.npy")).cuda()
@@ -114,7 +111,6 @@ loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 starts = list(range(0, n - batch + 1, batch))
 
-
 def run_epoch():
     model.train()
     perm = torch.randperm(n, device="cuda")
@@ -126,7 +122,6 @@ def run_epoch():
         loss.backward()
         optimizer.step()
     torch.cuda.synchronize()
-
 
 run_epoch()
 run_epoch()

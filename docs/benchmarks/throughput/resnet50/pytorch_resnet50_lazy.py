@@ -38,7 +38,6 @@ if fast:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -65,7 +64,6 @@ class Bottleneck(nn.Module):
         y = self.bn3(self.conv3(y))
         return self.relu(y + identity)
 
-
 class ResNet50(nn.Module):
     def __init__(self, classes=1000):
         super().__init__()
@@ -87,10 +85,6 @@ class ResNet50(nn.Module):
         x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
         x = self.stages(x)
         return self.fc(torch.flatten(self.avgpool(x), 1))
-
-
-
-
 
 class ImageFolder(Dataset):
     EXTENSIONS = {".bmp", ".png", ".jpg", ".jpeg"}
@@ -120,7 +114,6 @@ class ImageFolder(Dataset):
             pixels = np.asarray(image, dtype=np.float32) / 255.0
         return torch.from_numpy(pixels).permute(2, 0, 1).contiguous(), label
 
-
 dataset = ImageFolder(data_dir, image_size)
 classes = len(dataset.classes)
 n = len(dataset)
@@ -141,7 +134,6 @@ if fast:
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-
 def run_epoch():
     model.train()
     for xb, yb in loader:
@@ -156,7 +148,6 @@ def run_epoch():
         loss.backward()
         optimizer.step()
     torch.cuda.synchronize()
-
 
 run_epoch()
 

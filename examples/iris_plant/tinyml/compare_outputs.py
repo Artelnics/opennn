@@ -20,7 +20,6 @@ import sys
 ANSI_ESCAPES = re.compile(r"\x1b\[[0-9;]*m")
 HEX_FLOAT = re.compile(r"\b[0-9a-fA-F]{8}\b")
 
-
 def parse_csv(path: str) -> list[list[float]]:
     rows = []
     with open(path) as csv_file:
@@ -29,7 +28,6 @@ def parse_csv(path: str) -> list[list[float]]:
             if line:
                 rows.append([float(x) for x in line.split(";")])
     return rows
-
 
 def parse_harness(path: str) -> list[list[float]]:
     """Extract hex-encoded float rows between BEGIN and END markers.
@@ -54,10 +52,8 @@ def parse_harness(path: str) -> list[list[float]]:
                                  for tok in tokens])
     return rows
 
-
 def max_abs_diff(a: list[list[float]], b: list[list[float]]) -> float:
     return max(abs(x - y) for row_a, row_b in zip(a, b) for x, y in zip(row_a, row_b))
-
 
 def main() -> None:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -110,7 +106,6 @@ def main() -> None:
     if failures:
         sys.exit(f"FAIL: {failures} parity check(s) above tolerance")
     print("PARITY OK")
-
 
 if __name__ == "__main__":
     main()

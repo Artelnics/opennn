@@ -26,17 +26,6 @@ enum class ForwardPropagationMode
     Inference
 };
 
-
-
-
-
-
-
-
-
-
-
-
 struct InferenceShapePolicy
 {
     Index sequence_capacity = 0;
@@ -59,17 +48,11 @@ struct ForwardPropagation
     ForwardPropagation(const ForwardPropagation&) = delete;
     ForwardPropagation& operator=(const ForwardPropagation&) = delete;
 
-
-
-
-
     void set(Index, NeuralNetwork*, Buffer* external_storage = nullptr,
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
              Loss* joint_loss = nullptr);
-
-
 
     Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
                           const vector<vector<Index>>& slot_offsets,
@@ -87,12 +70,6 @@ struct ForwardPropagation
     void stage_position(cudaStream_t stream);
 
     void set_active_sequence_length(Index length);
-
-
-
-
-
-
 
     void set_output_sequence_window(Index start, Index count);
     void gather_output_window();
@@ -143,8 +120,6 @@ struct ForwardPropagation
     Index active_sequence_length = 0;
     Index final_output_capacity = 0;
     Index final_output_layer = -1;
-
-
 
     Buffer output_window_input;
     Index output_window_start = 0;

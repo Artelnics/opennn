@@ -578,7 +578,6 @@ vector<Index> yolo_detection_v8_layer_indices(const NeuralNetwork* nn)
     return result;
 }
 
-
 static constexpr float TAL_ALPHA = 0.5f;
 static constexpr float TAL_BETA  = 6.0f;
 static constexpr Index TAL_TOP_K = 10;
@@ -597,7 +596,6 @@ static float iou_cxcywh(float cx1, float cy1, float w1, float h1,
     return inter / (w1*h1 + w2*h2 - inter + 1e-7f);
 }
 
-
 static float dfl_decode(const float* logits, Index reg_max)
 {
     float max_l = *max_element(logits, logits + reg_max);
@@ -607,7 +605,6 @@ static float dfl_decode(const float* logits, Index reg_max)
     for (Index i = 0; i < reg_max; ++i) d += float(i) * expf(logits[i] - max_l) / sum;
     return d;
 }
-
 
 static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, Index row, Index G,
                             float& pred_cx, float& pred_cy, float& pred_w, float& pred_h)
@@ -624,8 +621,6 @@ static void dfl_decode_box(const float* box_logits, Index reg_max, Index col, In
     pred_w  = (d_l + d_r) * inv_g;
     pred_h  = (d_t + d_b) * inv_g;
 }
-
-
 
 static TalResult tal_assign_head(const TensorView& output,
                                   const float* gt_list,
@@ -711,9 +706,6 @@ static TalResult tal_assign_head(const TensorView& output,
     return res;
 }
 
-
-
-
 static float yolo_v8_error_kernel_tal(const TensorView& output,
                                        const float* gt_list,
                                        Index batch_size, Index G, Index C,
@@ -761,7 +753,6 @@ static float yolo_v8_error_kernel_tal(const TensorView& output,
                     const float ob[4] = {pred_cx, pred_cy, pred_w, pred_h};
                     const float tb[4] = {gr[0], gr[1], gr[2], gr[3]};
                     coord_loss += 1.0f - yolo_loss_giou_forward(ob, tb).giou;
-
 
                     if (reg_max > 1)
                     {
@@ -876,16 +867,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                     if (reg_max > 1)
                     {
 
-
-
-
-
-
-
-
-
-
-
                         const float gt_cx = gr[0], gt_cy = gr[1];
                         const float gt_w  = gr[2], gt_h  = gr[3];
                         const float cell_cx = (float(col) + 0.5f) * inv_g;
@@ -898,7 +879,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             clamp(((gt_cy + gt_h*0.5f) - cell_cy) * float(G), 0.0f, rm1)
                         };
 
-
                         const float cx_g = clamp(gr_res.cx_gradient, -grad_clip, grad_clip);
                         const float cy_g = clamp(gr_res.cy_gradient, -grad_clip, grad_clip);
                         const float w_g  = clamp(gr_res.w_gradient,  -grad_clip, grad_clip);
@@ -909,7 +889,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                             cx_g * (inv_g * 0.5f)  + w_g * inv_g,
                             cy_g * (inv_g * 0.5f)  + h_g * inv_g,
                         };
-
 
                         float d_g[4] = {};
                         vector<float> all_probs(size_t(4 * reg_max));
@@ -926,10 +905,6 @@ static void yolo_v8_gradient_kernel_tal(const TensorView& output,
                                 d_g[g] += float(i) * p;
                             }
                         }
-
-
-
-
 
                         const float dfl_s = lam.dfl * inv_batch;
                         for (Index g = 0; g < 4; ++g)
@@ -998,10 +973,6 @@ static Index get_v8_reg_max(const NeuralNetwork* nn, Index detection_idx)
     const auto* layer = dynamic_cast<const DetectionV8*>(nn->get_layer(detection_idx).get());
     return layer ? layer->get_reg_max() : Index(1);
 }
-
-
-
-
 
 template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
@@ -1370,8 +1341,6 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const bool on_gpu = device::is_cuda_build() && neural_network && neural_network->is_gpu();
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
 
-
-
     if (yolo_uses_v8(neural_network))
     {
         const vector<Index> v8_indices = yolo_detection_v8_layer_indices(neural_network);
@@ -1418,8 +1387,6 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 }
 
 #endif
-
-
 
 float* Loss::ensure_error_workspace(const TensorView& input, Index batch_samples) const
 {
@@ -1604,9 +1571,6 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         accumulate_cross_entropy_3d_metrics_cuda(results_device, error_sum_device, accuracy_sum_device);
         return true;
     }
-
-
-
 
     case Yolo:
     case MinkowskiError:

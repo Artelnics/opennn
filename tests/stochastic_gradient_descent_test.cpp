@@ -166,7 +166,6 @@ TEST_F(StochasticGradientDescentTest, DefaultConstructor)
     EXPECT_TRUE(stochastic_gradient_descent.get_loss() == nullptr);
 }
 
-
 TEST_F(StochasticGradientDescentTest, GeneralConstructor)
 {
     Loss loss;
@@ -174,7 +173,6 @@ TEST_F(StochasticGradientDescentTest, GeneralConstructor)
 
     EXPECT_TRUE(stochastic_gradient_descent.get_loss() != nullptr);
 }
-
 
 TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
 {
@@ -208,7 +206,6 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
@@ -245,7 +242,6 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
 }
 #endif
 
-
 TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -280,7 +276,6 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
@@ -319,7 +314,6 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
 }
 #endif
 
-
 TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -356,7 +350,6 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
@@ -397,7 +390,6 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
 }
 #endif
 
-
 TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -432,7 +424,6 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
@@ -470,7 +461,6 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
     EXPECT_LT(error_long, error_short);
 }
 #endif
-
 
 TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
 {
@@ -524,7 +514,6 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 #ifdef OPENNN_HAS_CUDA
 TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
@@ -581,7 +570,6 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
 }
 #endif
 
-
 TEST_F(StochasticGradientDescentTest, MomentumConverges)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -605,7 +593,6 @@ TEST_F(StochasticGradientDescentTest, MomentumConverges)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 TEST_F(StochasticGradientDescentTest, NesterovConverges)
 {
@@ -632,7 +619,6 @@ TEST_F(StochasticGradientDescentTest, NesterovConverges)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -656,7 +642,6 @@ TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
 
     EXPECT_LT(error_long, error_short);
 }
-
 
 TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
 {
@@ -682,7 +667,6 @@ TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
     EXPECT_LT(error_long, error_short);
 }
 
-
 TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -703,7 +687,6 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
-
 
 TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
 {
@@ -730,7 +713,6 @@ TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-
 TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);
@@ -754,7 +736,6 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
-
 
 TEST_F(StochasticGradientDescentTest, Determinism)
 {

@@ -26,13 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #define LINE_MAX_BYTES 4096
-
-
-
-
 
 int main(int argc, char** argv)
 {
@@ -55,9 +49,6 @@ int main(int argc, char** argv)
     FILE* in = fopen(in_path, "rb");
     if (!in) { perror("fopen(input)"); return 1; }
 
-
-
-
     size_t cap = 1 << 20;
     size_t rows = 0;
     char** lines = (char**)malloc(cap * sizeof(char*));
@@ -68,8 +59,6 @@ int main(int argc, char** argv)
     {
         size_t len = strlen(line);
         if (len == 0) continue;
-
-
 
         if (line[len - 1] != '\n' && !feof(in))
         {
@@ -92,8 +81,6 @@ int main(int argc, char** argv)
     fclose(in);
 
     if (rows == 0) { fprintf(stderr, "input has no rows: %s\n", in_path); return 1; }
-
-
 
     char* last = lines[rows - 1];
     size_t last_len = strlen(last);

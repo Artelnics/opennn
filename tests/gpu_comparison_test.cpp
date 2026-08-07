@@ -77,7 +77,6 @@ TEST_F(GpuComparison, ApproximationForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
@@ -110,7 +109,6 @@ TEST_F(GpuComparison, ApproximationGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
@@ -141,7 +139,6 @@ TEST_F(GpuComparison, DenseGeluTanhFusedForward)
     gpu_network.compile();
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
-
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -182,17 +179,9 @@ TEST_F(GpuComparison, DenseGeluTanhFusedGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
-
-
-
-
-
-
-
 
 #ifdef _WIN32
 #define setenv(name, value, overwrite) _putenv_s(name, value)
@@ -253,11 +242,8 @@ TEST_F(GpuComparison, DenseDreluFusedGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
-
     EXPECT_TRUE(hidden_2->drelu_fusion_ran());
     EXPECT_TRUE(output_layer->drelu_fusion_ran());
-
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -282,7 +268,6 @@ TEST_F(GpuComparison, ClassificationForward)
     ClassificationNetwork gpu_network({inputs_number}, {6}, {classes_number});
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
-
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -316,7 +301,6 @@ TEST_F(GpuComparison, ClassificationGradient)
     gpu_loss.set_error(Loss::Error::CrossEntropy);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
@@ -342,7 +326,6 @@ TEST_F(GpuComparison, ImageClassificationForward)
     ImageClassificationNetwork gpu_network({height, width, channels}, {4, 8}, {classes_number});
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
-
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -377,7 +360,6 @@ TEST_F(GpuComparison, ImageClassificationGradient)
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::CrossEntropy);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
@@ -447,7 +429,6 @@ TEST_F(GpuComparison, ProjectionResidualGradient)
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
 }
-
 
 TEST_F(GpuComparison, ResidentInferenceGraphReplay)
 {
@@ -615,7 +596,6 @@ TEST_F(GpuComparison, ForecastingRecurrentForward)
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
 
-
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
     EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f);
@@ -640,7 +620,6 @@ TEST_F(GpuComparison, ForecastingLstmForward)
     ForecastingLstmNetwork gpu_network({past, features}, {6, 5}, {1});
     gpu_network.set_parameters(parameters);
     const MatrixR gpu_outputs = gpu_network.calculate_outputs(inputs);
-
 
     ASSERT_EQ(cpu_outputs.rows(), gpu_outputs.rows());
     ASSERT_EQ(cpu_outputs.cols(), gpu_outputs.cols());
@@ -674,7 +653,6 @@ TEST_F(GpuComparison, ForecastingRecurrentGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
@@ -705,7 +683,6 @@ TEST_F(GpuComparison, ForecastingLstmGradient)
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -738,7 +715,6 @@ TEST_F(GpuComparison, ForecastingLstmFusedGradient)
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 
-
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
 }
@@ -769,7 +745,6 @@ TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
@@ -817,16 +792,11 @@ TEST_F(GpuComparison, TransformerForward)
     gpu_network.set_parameters(parameters);
     const Tensor3 gpu_outputs = gpu_network.calculate_outputs(decoder_inputs, encoder_inputs);
 
-
     ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
     const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
     const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
     EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f);
 }
-
-
-
-
 
 TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
 {
@@ -849,7 +819,6 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     network.add_layer(std::move(attention));
     network.compile();
     network.set_parameters_random();
-
 
     ASSERT_TRUE(static_cast<MultiHeadAttention*>(network.get_layer(0).get())->should_use_sdpa());
 
@@ -883,14 +852,9 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
         return host;
     };
 
-
-
-
     ForwardPropagation reused_propagation(batch_size, &network);
     forward_outputs(reused_propagation, batch_short);
     const VectorR outputs_after_reuse = forward_outputs(reused_propagation, batch_long);
-
-
 
     ForwardPropagation fresh_propagation(batch_size, &network);
     const VectorR outputs_fresh = forward_outputs(fresh_propagation, batch_long);
@@ -898,9 +862,6 @@ TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)
     ASSERT_EQ(outputs_after_reuse.size(), outputs_fresh.size());
     EXPECT_LT(relative_difference(outputs_fresh, outputs_after_reuse), 1.0e-5f);
 }
-
-
-
 
 TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
 {
@@ -946,7 +907,6 @@ TEST_F(GpuComparison, SdpaAttentionBackwardGradient)
     Loss gpu_loss(&gpu_network, &dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
-
 
     ASSERT_EQ(cpu_gradient.size(), gpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 2.0e-2f);

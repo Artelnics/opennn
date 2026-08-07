@@ -15,7 +15,6 @@ import tensorflow as tf
 seed = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 tf.keras.utils.set_random_seed(seed)
 
-
 def load(path):
     rows = []
     with open(path, newline="") as f:
@@ -23,7 +22,6 @@ def load(path):
             rows.append([float(v) for v in r])
     data = np.array(rows, dtype=np.float32)
     return data[:, :-1], data[:, -1:]
-
 
 x, y = load("rosenbrock.csv")
 

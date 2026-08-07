@@ -133,13 +133,6 @@ TensorSpec AttentionOperator::backward_scratch_spec(Index batch_size) const
             compute_dtype};
 }
 
-
-
-
-
-
-
-
 vector<TensorSpec> AttentionOperator::sdpa_gradient_scratch_specs(Index batch_size) const
 {
     if (!use_sdpa || compute_dtype != Type::FP32)
@@ -160,11 +153,6 @@ vector<TensorSpec> AttentionOperator::sdpa_gradient_scratch_specs(Index batch_si
     };
 }
 
-
-
-
-
-
 TensorSpec AttentionOperator::sdpa_qkv_pack_spec(Index batch_size) const
 {
     if (!use_sdpa || compute_dtype != Type::FP32)
@@ -183,7 +171,7 @@ TensorSpec AttentionOperator::sdpa_qkv_pack_spec(Index batch_size) const
 bool AttentionOperator::sdpa_supported(Type dtype, Device device)
 {
 #ifdef OPENNN_HAS_CUDA
-    return device == Device::CUDA && (dtype == Type::BF16 || dtype == Type::FP32);
+    return device == Device::CUDA && is_one_of(dtype, Type::BF16, Type::FP32);
 #else
     (void)dtype; (void)device;
     return false;
@@ -315,8 +303,6 @@ void refresh_sdpa_sequence_lengths(AttentionOperator::SDPACache::Entry& entry,
     throw_if(!ok,
              "SDPA padding mask: source_input must be a rank-3 CUDA tensor with supported dtype.");
 
-
-
     source_input.dispatch([&](auto tag) {
         using T = decltype(tag);
         attention_sequence_lengths_cuda<T>(to_int(k.batch_size),
@@ -418,9 +404,6 @@ static void build_sdpa_backward_graph(AttentionOperator::SDPACache::Entry& entry
     entry.bwd_SeqLenQ  = cudnn_frontend::seq_len_scalar(*graph, "SeqLenQ_bwd",  k.batch_size);
     entry.bwd_SeqLenKV = cudnn_frontend::seq_len_scalar(*graph, "SeqLenKV_bwd", k.batch_size);
 
-
-
-
     entry.bwd_O = graph->tensor(cudnn_frontend::graph::Tensor_attributes()
                                 .set_name("O_bwd")
                                 .set_dim({k.batch_size, k.heads, k.q_seq, k.head_dim})
@@ -516,9 +499,6 @@ void AttentionOperator::forward_propagate(ForwardPropagation& forward_propagatio
     merge_output_heads(forward_propagation, layer);
 }
 
-
-
-
 void AttentionOperator::merge_output_heads(ForwardPropagation& forward_propagation, size_t layer) const
 {
     const Index batch_size = forward_propagation.batch_size;
@@ -568,7 +548,6 @@ void AttentionOperator::back_propagate(ForwardPropagation& forward_propagation, 
     TensorView& value_delta            = get_output_delta(back_propagation, layer, 3);
 
 #ifdef OPENNN_HAS_CUDA
-
 
     const bool sdpa_ran_forward = use_sdpa
         && forward_propagation.attention_valid_lengths.empty();
@@ -681,7 +660,8 @@ void AttentionOperator::apply_unfused(const TensorView& query,
                               bool is_training,
                               const vector<Index>* explicit_lengths)
 {
-    if (!query.is_cuda()
+    const bool use_cpu_fast_path =
+        !query.is_cuda()
         && !use_causal_mask
         && !dropout.active()
         && query.is_fp32()
@@ -690,7 +670,9 @@ void AttentionOperator::apply_unfused(const TensorView& query,
         && attention_weights.is_fp32()
         && output.is_fp32()
         && source_input.shape.rank == 3
-        && attention_weights.shape.rank == 4)
+        && attention_weights.shape.rank == 4;
+
+    if (use_cpu_fast_path)
     {
         vector<Index> valid_lengths;
         bool has_padding = false;
@@ -1009,12 +991,15 @@ void AttentionOperator::apply_delta_cpu(const TensorView& query,
                                 TensorView& key_delta,
                                 TensorView& value_delta) const
 {
-    if (!query.is_cuda()
+    const bool use_cpu_fast_path =
+        !query.is_cuda()
         && !use_causal_mask
         && !dropout.active()
         && compute_dtype == Type::FP32
         && attention_weights.shape.rank == 4
-        && attention_weight_delta.shape.rank == 4)
+        && attention_weight_delta.shape.rank == 4;
+
+    if (use_cpu_fast_path)
     {
         const Index batch_size = query.shape[0];
         const Index source_length = key.shape[2];
@@ -1154,9 +1139,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
     void* bk  = key.data;
     void* bv  = value.data;
 
-
-
-
     void* bo  = attention_output.data;
     void* bdo = output_delta.data;
     void* bdq = query_delta.data;
@@ -1180,9 +1162,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  || output_bf16.empty(),
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
-
-
-
 
         cudaStream_t cstream = Backend::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
