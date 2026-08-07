@@ -22,7 +22,7 @@ vector<string> make_vocabulary(const unordered_map<string_view, size_t>&,
                                Index maximum_size,
                                Index minimum_frequency);
 
-inline size_t utf8_sequence_length(unsigned char lead)
+inline constexpr size_t utf8_sequence_length(unsigned char lead) noexcept
 {
     if ((lead & 0xE0) == 0xC0) return 2;
     if ((lead & 0xF0) == 0xE0) return 3;
@@ -30,7 +30,7 @@ inline size_t utf8_sequence_length(unsigned char lead)
     return 1;
 }
 
-inline bool is_utf8_continuation(unsigned char byte)
+inline constexpr bool is_utf8_continuation(unsigned char byte) noexcept
 {
     return (byte & 0xC0) == 0x80;
 }
@@ -108,7 +108,7 @@ class WordPieceTokenizer : public TokenizerOperator
 {
 public:
 
-    WordPieceTokenizer();
+    WordPieceTokenizer() = default;
     explicit WordPieceTokenizer(const vector<string>& vocabulary);
 
     void load_vocabulary(const filesystem::path& vocabulary_file);

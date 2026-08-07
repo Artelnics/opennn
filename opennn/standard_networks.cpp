@@ -635,14 +635,14 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     : model_size == ModelSize::m ? 0.75f
                     : model_size == ModelSize::x ? 1.25f
                     :                              1.00f;
-            return max(Index(8), Index(std::round(float(base) * w / 8.f) * 8));
+            return max(Index(8), Index(round(float(base) * w / 8.f) * 8));
         };
         auto scale_d = [&](Index base) -> Index {
             float d = model_size == ModelSize::n ? 0.33f
                     : model_size == ModelSize::s ? 0.33f
                     : model_size == ModelSize::m ? 0.67f
                     :                              1.00f;
-            return max(Index(1), Index(std::round(float(base) * d)));
+            return max(Index(1), Index(round(float(base) * d)));
         };
 
         const vector<pair<Index, Index>> stages = {
@@ -653,7 +653,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
             {scale_ch(1024), scale_d(4)},
         };
 
-        const Index stem_ch = max(Index(8), Index(std::round(32.f * (
+        const Index stem_ch = max(Index(8), Index(round(32.f * (
             model_size == ModelSize::n ? 0.25f :
             model_size == ModelSize::s ? 0.50f :
             model_size == ModelSize::m ? 0.75f :
@@ -741,7 +741,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     auto& views = conv->get_parameter_views();
                     if (views.empty() || views[0].empty()) continue;
                     float* b = views[0].as<float>();
-                    std::fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
+                    fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
                 }
             }
             return;
@@ -954,7 +954,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                     auto& views = conv->get_parameter_views();
                     if (views.empty() || views[0].empty()) continue;
                     float* b = views[0].as<float>();
-                    std::fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
+                    fill(b, b + conv->get_kernels_number(), PRIOR_BIAS);
                 }
             }
             return;

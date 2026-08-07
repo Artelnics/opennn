@@ -18,7 +18,7 @@ namespace opennn
 static bool persist_env_enabled(const char* env_var)
 {
     static const bool enabled = [env_var]() {
-        const char* env = std::getenv(env_var);
+        const char* env = getenv(env_var);
         return !(env && string(env) == "0");
     }();
     return enabled;
@@ -39,7 +39,7 @@ void CudnnRnnState::cudnn_setup_(const CudnnRnnConfig& config,
                                  batch_size, for_training);
             return;
         }
-        catch (const std::exception&)
+        catch (const exception&)
         {
             persist_algo_failed_ = true;
             rnn_desc.reset();

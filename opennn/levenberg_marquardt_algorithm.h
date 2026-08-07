@@ -25,8 +25,6 @@ struct BackPropagationLM
 
     Index samples_number = 0;
 
-    Loss* loss_pointer = nullptr;
-
     float error;
     float regularization = 0.0f;
     float loss = 0.0f;

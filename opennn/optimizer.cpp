@@ -1027,7 +1027,7 @@ TrainingResult Optimizer::train()
             if (check_stopping_condition(results, epoch, elapsed_time,
                                          results.training_error_history(epoch),
                                          validation_failures,
-                                         training_back_propagation.loss,
+                                         training_back_propagation.loss_value,
                                          has_validation))
                 break;
         }
@@ -1878,7 +1878,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                     Type::FP32,
                                     neural_network->get_device());
         back_propagation.regularization = loss->calculate_regularization(parameters);
-        back_propagation.loss = epoch_result.error + back_propagation.regularization;
+        back_propagation.loss_value = epoch_result.error + back_propagation.regularization;
     };
 
     const bool use_device_metrics = on_gpu && loss->supports_device_epoch_metrics();

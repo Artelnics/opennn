@@ -35,7 +35,7 @@ constexpr bool is_cuda_build() noexcept
 bool has_cuda_device() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();
-std::string gpu_info_string() noexcept;
+string gpu_info_string() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool) noexcept;
 bool cuda_matmul_plan_creation_forbidden() noexcept;
@@ -156,11 +156,11 @@ void stream_wait_event(cudaStream_t, cudaEvent_t);
 void destroy_graph(cudaGraph_t) noexcept;
 void destroy_graph_exec(cudaGraphExec_t) noexcept;
 
-struct GraphDeleter     { void operator()(std::remove_pointer_t<cudaGraph_t>* graph)    const noexcept { destroy_graph(graph); } };
-struct GraphExecDeleter { void operator()(std::remove_pointer_t<cudaGraphExec_t>* exec) const noexcept { destroy_graph_exec(exec); } };
+struct GraphDeleter     { void operator()(remove_pointer_t<cudaGraph_t>* graph)    const noexcept { destroy_graph(graph); } };
+struct GraphExecDeleter { void operator()(remove_pointer_t<cudaGraphExec_t>* exec) const noexcept { destroy_graph_exec(exec); } };
 
-using GraphHandle     = std::unique_ptr<std::remove_pointer_t<cudaGraph_t>,     GraphDeleter>;
-using GraphExecHandle = std::unique_ptr<std::remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
+using GraphHandle     = unique_ptr<remove_pointer_t<cudaGraph_t>,     GraphDeleter>;
+using GraphExecHandle = unique_ptr<remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
 
 class StreamCapture
 {

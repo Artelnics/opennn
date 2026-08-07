@@ -345,10 +345,10 @@ void NeuralNetwork::clear()
 void NeuralNetwork::steal_from(NeuralNetwork& src)
 {
     clear();
-    layers           = std::move(src.layers);
-    source_layers    = std::move(src.source_layers);
-    input_variables  = std::move(src.input_variables);
-    output_variables = std::move(src.output_variables);
+    layers           = move(src.layers);
+    source_layers    = move(src.source_layers);
+    input_variables  = move(src.input_variables);
+    output_variables = move(src.output_variables);
     first_trainable_cache_ = src.first_trainable_cache_;
     last_trainable_cache_  = src.last_trainable_cache_;
     src.first_trainable_cache_ = -1;
@@ -1109,6 +1109,7 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
     const Index elements_to_copy = min(parameters.size_in_floats(), json_parameters.size());
 
     const HostParametersGuard guard(*this);
+    // Qualified: opennn::copy is the tensor-view overload.
     std::copy(json_parameters.data(), json_parameters.data() + elements_to_copy, parameters.as<float>());
 }
 

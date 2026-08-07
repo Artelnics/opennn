@@ -90,10 +90,10 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        const ForwardPropagationMode new_mode,
                                        const InferenceShapePolicy new_shape_policy,
                                        const bool new_inputs_pre_scaled,
-                                       Loss* joint_loss)
+                                       Loss* loss)
 {
     set(new_batch_size, new_neural_network, nullptr, new_mode,
-        new_shape_policy, new_inputs_pre_scaled, joint_loss);
+        new_shape_policy, new_inputs_pre_scaled, loss);
 }
 
 ForwardPropagation::~ForwardPropagation()
@@ -125,15 +125,19 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                              const ForwardPropagationMode new_mode,
                              const InferenceShapePolicy new_shape_policy,
                              const bool new_inputs_pre_scaled,
-                             Loss* joint_loss)
+                             Loss* loss)
 {
     throw_if(!new_neural_network, "neural network is not set.");
-    throw_if(new_mode != ForwardPropagationMode::Inference
-             && (new_shape_policy.sequence_capacity > 0
-                 || new_shape_policy.final_output_capacity > 0),
+    const bool is_training = new_mode == ForwardPropagationMode::Training;
+    const Index requested_sequence_capacity = new_shape_policy.sequence_capacity;
+    const Index requested_output_capacity = new_shape_policy.final_output_capacity;
+
+    throw_if(is_training
+             && (requested_sequence_capacity > 0
+                 || requested_output_capacity > 0),
              "ForwardPropagation::set: compact capacities are inference-only.");
 
-    throw_if(new_mode != ForwardPropagationMode::Inference
+    throw_if(is_training
              && !new_shape_policy.retained_output_layers.empty(),
              "ForwardPropagation::set: retained outputs are inference-only; "
              "training keeps every activation alive for the backward pass.");
@@ -148,6 +152,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
+    const Device network_device = neural_network->get_device();
     device_input_buffers.clear();
     device_input_views.clear();
     host_bf16_input_scratch.clear();
@@ -167,25 +172,24 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
              "ForwardPropagation::set: source layers size ({}) does not match layers number ({}).",
                     source_layers.size(), layers_number);
 
-    if (mode == ForwardPropagationMode::Training && inputs_pre_scaled)
+    if (is_training && inputs_pre_scaled)
         for (size_t i = 0;
              i < layers_number && layers[i]->get_type() == LayerType::Scaling;
              ++i)
-
             forward_specs[i].clear();
 
     const Shape model_input_shape = neural_network->get_input_shape();
     const Index model_sequence_capacity =
         model_input_shape.empty() ? Index(0) : model_input_shape[0];
-    sequence_capacity = new_shape_policy.sequence_capacity > 0
-        ? new_shape_policy.sequence_capacity
+    sequence_capacity = requested_sequence_capacity > 0
+        ? requested_sequence_capacity
         : model_sequence_capacity;
-    throw_if(new_shape_policy.sequence_capacity > model_sequence_capacity,
+    throw_if(requested_sequence_capacity > model_sequence_capacity,
              "ForwardPropagation::set: sequence capacity {} exceeds the "
              "network capacity {}.",
-             new_shape_policy.sequence_capacity, model_sequence_capacity);
+             requested_sequence_capacity, model_sequence_capacity);
 
-    if (new_shape_policy.sequence_capacity > 0)
+    if (requested_sequence_capacity > 0)
         for (auto& layer_specs : forward_specs)
             for (TensorSpec& spec : layer_specs)
                 if (spec.shape.rank >= 2
@@ -193,18 +197,18 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                     spec.shape[1] = sequence_capacity;
 
     final_output_layer = -1;
-    for (Index i = Index(layers_number) - 1; i >= 0; --i)
-        if (!forward_specs[size_t(i)].empty())
+    for (size_t i = layers_number; i-- > 0;)
+        if (!forward_specs[i].empty())
         {
-            final_output_layer = i;
+            final_output_layer = Index(i);
             break;
         }
 
-    final_output_capacity = new_shape_policy.final_output_capacity > 0
-        ? new_shape_policy.final_output_capacity
+    final_output_capacity = requested_output_capacity > 0
+        ? requested_output_capacity
         : sequence_capacity;
-    throw_if(new_shape_policy.final_output_capacity > 0
-             && new_shape_policy.sequence_capacity <= 0,
+    throw_if(requested_output_capacity > 0
+             && requested_sequence_capacity <= 0,
              "ForwardPropagation::set: final_output_capacity requires an "
              "explicit sequence_capacity.");
     throw_if(final_output_capacity > sequence_capacity,
@@ -212,8 +216,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
              "sequence capacity {}.",
              final_output_capacity, sequence_capacity);
 
-    if (new_shape_policy.final_output_capacity > 0
-        && final_output_layer >= 0)
+    if (requested_output_capacity > 0 && final_output_layer >= 0)
     {
         TensorSpec& output_spec =
             forward_specs[size_t(final_output_layer)].back();
@@ -223,8 +226,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                  "sequence dimension compatible with compact inference.");
         output_spec.shape[1] = final_output_capacity;
     }
-
-    const bool is_training = mode == ForwardPropagationMode::Training;
 
     recomputable_forward_slots.assign(layers_number, SIZE_MAX);
     if (is_training && neural_network->get_training_activation_recomputation())
@@ -257,10 +258,11 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const size_t early_release_outputs =
         ranges::count_if(output_release_steps,
                          [](const Index step) { return step >= 0; });
+    const bool has_early_release = early_release_outputs > 0;
 
     const bool recompute_overlay_allowed =
         neural_network->supports_compact_cnn_memory_layout()
-        || early_release_outputs > 0;
+        || has_early_release;
 
     vector<vector<Index>> slot_offsets(layers_number);
     vector<vector<Index>> transient_slot_offsets(layers_number);
@@ -269,54 +271,36 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     for (size_t i = 0; i < layers_number; ++i)
     {
-        slot_offsets[i].assign(forward_specs[i].size(), Index(-1));
-        transient_slot_offsets[i].assign(forward_specs[i].size(), Index(-1));
-        throw_if(recomputable_forward_slots[i] != SIZE_MAX
-                 && recomputable_forward_slots[i] >= forward_specs[i].size(),
+        const auto& specs = forward_specs[i];
+        auto& offsets = slot_offsets[i];
+        auto& transient_offsets = transient_slot_offsets[i];
+        const size_t recomputable_slot = recomputable_forward_slots[i];
+
+        offsets.assign(specs.size(), Index(-1));
+        transient_offsets.assign(specs.size(), Index(-1));
+        throw_if(recomputable_slot != SIZE_MAX
+                 && recomputable_slot >= specs.size(),
                  "ForwardPropagation::set: invalid recomputable slot for layer {}.",
                  i);
 
-        for (size_t j = 0; j < forward_specs[i].size(); ++j)
+        for (size_t j = 0; j < specs.size(); ++j)
         {
-            const auto& spec = forward_specs[i][j];
+            const auto& spec = specs[j];
             if (spec.shape.empty()) continue;
 
             const Index bytes = get_aligned_bytes(spec);
             logical_total_bytes += bytes;
             if (is_transient_slot(i, j))
-                throw_if(j + 1 == forward_specs[i].size(),
+                throw_if(j + 1 == specs.size(),
                          "ForwardPropagation::set: a layer output cannot be a transient slot.");
             else
                 logical_persistent_bytes += bytes;
         }
     }
 
-    Index activation_pool_bytes = 0;
-    Index lower_bound_live_bytes = 0;
-    Index fragmentation_bytes = 0;
     Index transient_block_bytes = 0;
     size_t overlaid_recompute_slots = 0;
     Index overlaid_scratch_bytes = 0;
-
-    const auto place_transient_slots = [&]() -> Index
-    {
-        Index block_bytes = 0;
-        for (size_t i = 0; i < layers_number; ++i)
-        {
-            Index layer_bytes = 0;
-            for (size_t j = 0; j < forward_specs[i].size(); ++j)
-                if (is_transient_slot(i, j)
-                    && !forward_specs[i][j].shape.empty()
-                    && transient_slot_offsets[i][j] < 0)
-                {
-                    transient_slot_offsets[i][j] =
-                        activation_pool_bytes + layer_bytes;
-                    layer_bytes += get_aligned_bytes(forward_specs[i][j]);
-                }
-            block_bytes = max(block_bytes, layer_bytes);
-        }
-        return block_bytes;
-    };
 
     vector<pair<size_t, size_t>> pooled_slots;
     vector<MemoryPoolEntry> pooled_lifetimes;
@@ -336,21 +320,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             }
     };
 
-    const auto apply_pool_plan = [&](const MemoryPoolPlan& plan)
-    {
-        for (size_t i = 0; i < pooled_slots.size(); ++i)
-            slot_offsets[pooled_slots[i].first][pooled_slots[i].second] =
-                plan.byte_offsets[i];
-
-        activation_pool_bytes  = plan.peak_bytes;
-        lower_bound_live_bytes = plan.lower_bound_live_bytes;
-        fragmentation_bytes    = plan.fragmentation_bytes();
-    };
+    const Index backward_base = is_training
+        ? 2 * Index(layers_number) - 1
+        : 0;
+    size_t forward_entry_count = 0;
 
     if (is_training)
     {
-
-        const Index backward_base = Index(2 * layers_number - 1);
         collect_pooled_slots([&](size_t i, bool is_output)
         {
             return is_output && output_release_steps[i] >= 0
@@ -363,12 +339,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             format("layers={},batch={}", layers_number, batch_size));
 
         joint_delta_plan = {};
-        const size_t forward_entry_count = pooled_lifetimes.size();
-        if (joint_loss)
+        forward_entry_count = pooled_lifetimes.size();
+        if (loss)
         {
             const auto backward_specs = neural_network->get_backward_specs(batch_size);
             joint_delta_plan.layout = BackPropagation::build_delta_entries(
-                *neural_network, *joint_loss, batch_size, backward_specs,
+                *neural_network, *loss, batch_size, backward_specs,
                 BackPropagation::make_consumer_edges(*neural_network));
             const Index delta_step_offset =
                 backward_base - neural_network->get_last_trainable_layer_index();
@@ -379,16 +355,80 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                 pooled_lifetimes.push_back(entry);
             }
         }
+    }
+    else
+    {
+        const Index final_step = layers_number == 0 ? 0 : Index(layers_number - 1);
+        vector<Index> last_consumers(layers_number);
+        vector<bool> has_consumers(layers_number, false);
+        iota(last_consumers.begin(), last_consumers.end(), Index(0));
 
-        const MemoryPoolPlan persistent_plan = plan_memory_pool(
-            pooled_lifetimes,
-            early_release_outputs > 0
-                ? MemoryPoolStrategy::Compact
-                : MemoryPoolStrategy::Chronological);
+        for (size_t consumer = 0; consumer < layers_number; ++consumer)
+            for (const Index source_layer : source_layers[consumer])
+            {
+                const Index producer = resolve_producer(
+                    forward_specs, source_layers, source_layer);
+                if (producer < 0) continue;
 
-        apply_pool_plan(persistent_plan);
+                has_consumers[size_t(producer)] = true;
+                last_consumers[size_t(producer)] =
+                    max(last_consumers[size_t(producer)], Index(consumer));
+            }
 
-        if (joint_loss)
+        vector<bool> externally_observable(layers_number, false);
+        for (size_t i = 0; i < layers_number; ++i)
+            externally_observable[i] =
+                !has_consumers[i]
+                || is_one_of(layers[i]->get_type(),
+                             LayerType::Detection, LayerType::DetectionV8);
+
+        const auto mark_resolved_output = [&](Index layer_index)
+        {
+            if (layer_index < 0 || size_t(layer_index) >= layers_number) return;
+
+            const Index producer =
+                resolve_producer(forward_specs, source_layers, layer_index);
+            if (producer >= 0) externally_observable[size_t(producer)] = true;
+        };
+
+        mark_resolved_output(Index(layers_number) - 1);
+        mark_resolved_output(neural_network->get_last_trainable_layer_index());
+
+        for (const Index retained : inference_shape_policy.retained_output_layers)
+        {
+            throw_if(retained < 0 || size_t(retained) >= layers_number,
+                     "ForwardPropagation::set: retained output layer {} is out "
+                     "of range (network has {} layers).",
+                     retained, layers_number);
+            mark_resolved_output(retained);
+        }
+
+        collect_pooled_slots([&](size_t i, bool is_output)
+        {
+            if (!is_output) return Index(i);
+            return externally_observable[i] ? final_step : last_consumers[i];
+        });
+    }
+
+    const MemoryPoolStrategy pool_strategy = is_training && !has_early_release
+        ? MemoryPoolStrategy::Chronological
+        : MemoryPoolStrategy::Compact;
+    const MemoryPoolPlan persistent_plan =
+        plan_memory_pool(pooled_lifetimes, pool_strategy);
+
+    for (size_t i = 0; i < pooled_slots.size(); ++i)
+    {
+        const auto [layer, slot] = pooled_slots[i];
+        slot_offsets[layer][slot] = persistent_plan.byte_offsets[i];
+    }
+
+    const Index activation_pool_bytes = persistent_plan.peak_bytes;
+    const Index lower_bound_live_bytes = persistent_plan.lower_bound_live_bytes;
+    const Index fragmentation_bytes = persistent_plan.fragmentation_bytes();
+
+    if (is_training)
+    {
+        if (loss)
         {
             joint_delta_plan.offsets.assign(
                 persistent_plan.byte_offsets.begin() + forward_entry_count,
@@ -426,9 +466,26 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                        i, backward_step, overlay_offset >= 0 ? 1 : 0));
         }
 
-        transient_block_bytes = place_transient_slots();
+        for (size_t i = 0; i < layers_number; ++i)
+        {
+            const auto& specs = forward_specs[i];
+            auto& offsets = transient_slot_offsets[i];
+            Index layer_bytes = 0;
 
-        if (early_release_outputs > 0)
+            for (size_t j = 0; j < specs.size(); ++j)
+            {
+                if (!is_transient_slot(i, j)
+                    || specs[j].shape.empty()
+                    || offsets[j] >= 0)
+                    continue;
+
+                offsets[j] = activation_pool_bytes + layer_bytes;
+                layer_bytes += get_aligned_bytes(specs[j]);
+            }
+            transient_block_bytes = max(transient_block_bytes, layer_bytes);
+        }
+
+        if (has_early_release)
         {
             memory_debug::record(
                 "forward.training_lifetime_reuse",
@@ -446,71 +503,15 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                        double(lower_bound_live_bytes) / (1024.0 * 1024.0)));
         }
     }
-    else
-    {
-        const Index final_step = layers_number == 0 ? 0 : Index(layers_number - 1);
-        vector<Index> last_consumers(layers_number);
-        vector<bool> has_consumers(layers_number, false);
-        for (size_t i = 0; i < layers_number; ++i)
-            last_consumers[i] = Index(i);
-
-        for (size_t consumer = 0; consumer < layers_number; ++consumer)
-            for (const Index source_layer : source_layers[consumer])
-            {
-                const Index producer = resolve_producer(
-                    forward_specs, source_layers, source_layer);
-                if (producer < 0) continue;
-
-                has_consumers[size_t(producer)] = true;
-                last_consumers[size_t(producer)] =
-                    max(last_consumers[size_t(producer)], Index(consumer));
-            }
-
-        vector<bool> externally_observable(layers_number, false);
-        for (size_t i = 0; i < layers_number; ++i)
-            if (!has_consumers[i]
-                || is_one_of(layers[i]->get_type(), LayerType::Detection, LayerType::DetectionV8))
-                externally_observable[i] = true;
-
-        const auto mark_resolved_output = [&](Index layer_index)
-        {
-            if (layer_index < 0 || size_t(layer_index) >= layers_number) return;
-
-            const Index producer =
-                resolve_producer(forward_specs, source_layers, layer_index);
-            if (producer >= 0) externally_observable[size_t(producer)] = true;
-        };
-
-        mark_resolved_output(Index(layers_number) - 1);
-        mark_resolved_output(neural_network->get_last_trainable_layer_index());
-
-        for (const Index retained : inference_shape_policy.retained_output_layers)
-        {
-            throw_if(retained < 0 || size_t(retained) >= layers_number,
-                     "ForwardPropagation::set: retained output layer {} is out "
-                     "of range (network has {} layers).",
-                     retained, layers_number);
-            mark_resolved_output(retained);
-        }
-
-        collect_pooled_slots([&](size_t i, bool is_output)
-        {
-            if (!is_output) return Index(i);
-            return externally_observable[i] ? final_step : last_consumers[i];
-        });
-
-        apply_pool_plan(plan_memory_pool(pooled_lifetimes, MemoryPoolStrategy::Compact));
-
-    }
 
     const Index total_bytes = activation_pool_bytes + transient_block_bytes;
 
     if (external_storage
-        && external_storage->device_type == neural_network->get_device()
+        && external_storage->device_type == network_device
         && external_storage->bytes >= total_bytes)
         data.set_view(external_storage->data, total_bytes, external_storage->device_type);
     else
-        data.resize_bytes(total_bytes, neural_network->get_device());
+        data.resize_bytes(total_bytes, network_device);
     data.setZero();
 
     memory_debug::record(data.owns ? "forward" : "forward.aliased",
@@ -530,6 +531,12 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                              format("batch={},layers={}",
                                     batch_size,
                                     overlaid_recompute_slots));
+
+    const size_t recomputed_layers = is_training
+        ? ranges::count_if(recomputable_forward_slots,
+                           [](size_t slot) { return slot != SIZE_MAX; })
+        : 0;
+
     if (!is_training)
     {
         memory_debug::record("forward.inference_pool_analysis", "logical_persistent_bytes",
@@ -545,12 +552,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
                              logical_total_bytes - activation_pool_bytes,
                              format("batch={}", batch_size));
     }
-    else if (ranges::any_of(recomputable_forward_slots,
-                            [](size_t slot) { return slot != SIZE_MAX; }))
+    else if (recomputed_layers > 0)
     {
-        const size_t recomputed_layers = ranges::count_if(
-            recomputable_forward_slots,
-            [](size_t slot) { return slot != SIZE_MAX; });
         memory_debug::record("forward.training_recomputation",
                              "logical_forward_bytes",
                              logical_total_bytes,
@@ -574,11 +577,11 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     capacity_forward_slots = forward_slots;
     active_sequence_length = sequence_capacity;
 
-    if (new_shape_policy.sequence_capacity > 0)
+    if (requested_sequence_capacity > 0)
     {
         set_active_sequence_length(sequence_capacity);
-        const Index count = min(final_output_capacity, sequence_capacity);
-        set_output_sequence_window(sequence_capacity - count, count);
+        set_output_sequence_window(sequence_capacity - final_output_capacity,
+                                   final_output_capacity);
     }
 }
 

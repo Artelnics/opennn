@@ -19,8 +19,8 @@ bool bf16_host_input_cast_enabled() noexcept
 {
     static const bool enabled = []
     {
-        const char* flag = std::getenv("OPENNN_BF16_HOST_INPUT_CAST");
-        return !flag || std::string(flag) != "0";
+        const char* flag = getenv("OPENNN_BF16_HOST_INPUT_CAST");
+        return !flag || string(flag) != "0";
     }();
 
     return enabled;

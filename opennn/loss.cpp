@@ -1315,7 +1315,7 @@ void Loss::back_propagate(const Batch& batch,
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     back_propagation.regularization = 0.0f;
-    back_propagation.loss = back_propagation.error;
+    back_propagation.loss_value = back_propagation.error;
 
     add_regularization(back_propagation);
 
@@ -1612,7 +1612,7 @@ bool Loss::back_propagate_device_metrics(const Batch& batch,
     back_propagation.accuracy = 0.0f;
     back_propagation.active_tokens_count = 0;
     back_propagation.regularization = 0.0f;
-    back_propagation.loss = 0.0f;
+    back_propagation.loss_value = 0.0f;
 
     back_propagate_layers(forward_propagation, back_propagation);
     add_regularization_gradient(back_propagation);
@@ -1731,7 +1731,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
                                 neural_network->get_parameters_device());
 
     back_propagation.regularization = calculate_regularization(parameters);
-    back_propagation.loss += back_propagation.regularization;
+    back_propagation.loss_value += back_propagation.regularization;
 }
 
 float Loss::calculate_regularization(const VectorR& parameters_vec) const

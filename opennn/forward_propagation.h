@@ -41,7 +41,7 @@ struct ForwardPropagation
                        ForwardPropagationMode = ForwardPropagationMode::Training,
                        InferenceShapePolicy = {},
                        bool inputs_pre_scaled = false,
-                       Loss* joint_loss = nullptr);
+                       Loss* loss = nullptr);
 
     ~ForwardPropagation();
 
@@ -52,7 +52,7 @@ struct ForwardPropagation
              ForwardPropagationMode = ForwardPropagationMode::Training,
              InferenceShapePolicy = {},
              bool inputs_pre_scaled = false,
-             Loss* joint_loss = nullptr);
+             Loss* loss = nullptr);
 
     Index bind_slot_views(const vector<vector<TensorSpec>>& forward_specs,
                           const vector<vector<Index>>& slot_offsets,

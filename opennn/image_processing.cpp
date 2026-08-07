@@ -736,12 +736,12 @@ static void shift_and_zero(float* data, bool forward,
     if (forward)
     {
         memmove(data + fill_size, data, size_t(move_size) * sizeof(float));
-        std::fill(data, data + fill_size, 0.0f);
+        fill(data, data + fill_size, 0.0f);
     }
     else
     {
         memmove(data, data + fill_size, size_t(move_size) * sizeof(float));
-        std::fill(data + move_size, data + total_size, 0.0f);
+        fill(data + move_size, data + total_size, 0.0f);
     }
 }
 
@@ -757,7 +757,7 @@ void translate_image_x(TensorMap3& image, Index shift)
 
     if (abs(shift) >= width)
     {
-        std::fill(data, data + height * row_size, 0.0f);
+        fill(data, data + height * row_size, 0.0f);
         return;
     }
 
@@ -782,7 +782,7 @@ void translate_image_y(TensorMap3& image, Index shift)
 
     if (abs(shift) >= height)
     {
-        std::fill(data, data + pixels, 0.0f);
+        fill(data, data + pixels, 0.0f);
         return;
     }
 

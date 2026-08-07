@@ -288,12 +288,12 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
                     float f, i, g, o, a, c;
                     if (standard_gates)
                     {
-                        f = 1.0f / (1.0f + std::exp(-Zrow[h]));
-                        i = 1.0f / (1.0f + std::exp(-Zrow[H + h]));
-                        g = std::tanh(Zrow[2 * H + h]);
-                        o = 1.0f / (1.0f + std::exp(-Zrow[3 * H + h]));
+                        f = 1.0f / (1.0f + exp(-Zrow[h]));
+                        i = 1.0f / (1.0f + exp(-Zrow[H + h]));
+                        g = tanh(Zrow[2 * H + h]);
+                        o = 1.0f / (1.0f + exp(-Zrow[3 * H + h]));
                         c = f * (c_prev ? c_prev[h] : 0.0f) + i * g;
-                        a = std::tanh(c);
+                        a = tanh(c);
                     }
                     else
                     {

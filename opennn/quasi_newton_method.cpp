@@ -128,12 +128,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         ? ((old_learning_rate > 0.0f) ? old_learning_rate : first_learning_rate)
         : 1.0f;
 
-    tie(learning_rate, back_propagation.loss) = calculate_directional_point(
+    tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        back_propagation.loss);
+        back_propagation.loss_value);
 
     if (learning_rate == 0.0f && !is_gradient_direction)
     {
@@ -143,12 +143,12 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         training_direction = -gradient;
         training_slope = gradient.dot(training_direction);
 
-        tie(learning_rate, back_propagation.loss) = calculate_directional_point(
+        tie(learning_rate, back_propagation.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
             back_propagation,
             optimization_data,
-            back_propagation.loss);
+            back_propagation.loss_value);
     }
 
     if (abs(learning_rate) > 0.0f)
@@ -233,7 +233,7 @@ TrainingResult QuasiNewtonMethod::train()
                           training_back_propagation,
                           optimization_data);
 
-        return {training_error, training_back_propagation.error, training_back_propagation.loss};
+        return {training_error, training_back_propagation.error, training_back_propagation.loss_value};
     };
 
     hooks.validation_error = [&]

@@ -76,14 +76,11 @@ vector<string> make_vocabulary(const unordered_map<string_view, size_t>& token_c
 
     for (const auto& [token, count] : sorted_tokens)
     {
-        if (count < size_t(minimum_frequency))
-            continue;
+        if (result.size() >= size_t(maximum_size)) break;
 
-        if (ranges::find(reserved, token) != reserved.end())
+        if (count < size_t(minimum_frequency)
+            || ranges::find(reserved, token) != reserved.end())
             continue;
-
-        if (result.size() >= size_t(maximum_size))
-            break;
 
         result.emplace_back(token);
     }
@@ -179,14 +176,12 @@ vector<Index> TokenizerOperator::encode_sequence(const vector<string>& tokens, I
     const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
     ids.reserve(min(size_t(sequence_length), tokens.size() + framing_tokens));
 
-    if (start_id >= 0 && ssize(ids) < sequence_length)
-        ids.push_back(start_id);
+    if (start_id >= 0) ids.push_back(start_id);
 
     for (const string& token : tokens)
     {
         if (ssize(ids) >= sequence_length) break;
-        const auto it = vocabulary_map.find(token);
-        ids.push_back(it != vocabulary_map.end() ? it->second : unk_id);
+        ids.push_back(token_to_id(token));
     }
 
     if (end_id >= 0 && ssize(ids) < sequence_length)
@@ -204,8 +199,7 @@ vector<Index> TokenizerOperator::encode_sequence(string_view text, Index sequenc
     const size_t framing_tokens = size_t(start_id >= 0) + size_t(end_id >= 0);
     ids.reserve(min(size_t(sequence_length), encoded.size() + framing_tokens));
 
-    if (start_id >= 0 && ssize(ids) < sequence_length)
-        ids.push_back(start_id);
+    if (start_id >= 0) ids.push_back(start_id);
 
     for (const Index id : encoded)
     {
@@ -291,16 +285,8 @@ WordLevelTokenizer::WordLevelTokenizer(vector<string> new_reserved_tokens)
 vector<string> WordLevelTokenizer::tokenize(string_view text) const
 {
     const string lowered = ascii_lowercase(text);
-
     const vector<string_view> views = tokenize_views(lowered);
-
-    vector<string> tokens;
-    tokens.reserve(views.size());
-
-    for (const string_view view : views)
-        tokens.emplace_back(view);
-
-    return tokens;
+    return vector<string>(views.begin(), views.end());
 }
 
 vector<Index> WordLevelTokenizer::encode(string_view text) const
@@ -341,9 +327,8 @@ optional<uint32_t> next_utf8_codepoint(string_view text, size_t& position)
         const unsigned char continuation = static_cast<unsigned char>(text[start + k]);
         if (!is_utf8_continuation(continuation))
         {
-            codepoint = lead;
             ++position;
-            return codepoint;
+            return lead;
         }
         codepoint = (codepoint << 6) | (continuation & 0x3F);
     }
@@ -469,25 +454,15 @@ bool is_ascii_digit(uint32_t cp) { return cp >= '0' && cp <= '9'; }
 
 bool is_letter(uint32_t cp)
 {
-    if ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z')) return true;
-    if (cp < 0x80) return false;
-    if (cp == 0x00D7 || cp == 0x00F7) return false;
-    if (cp >= 0x00C0 && cp <= 0x024F) return true;
-    if (cp >= 0x0370 && cp <= 0x03FF) return true;
-    if (cp >= 0x0400 && cp <= 0x04FF) return true;
-    return !is_whitespace(cp) && !is_punctuation(cp);
+    if (cp < 0x80)
+        return (cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z');
+
+    return cp != 0x00D7 && cp != 0x00F7 && !is_whitespace(cp);
 }
 
-}
-
-WordPieceTokenizer::WordPieceTokenizer()
-{
-    reserved_tokens.clear();
-    unk_id = 0;
 }
 
 WordPieceTokenizer::WordPieceTokenizer(const vector<string>& new_vocabulary)
-    : WordPieceTokenizer()
 {
     set_vocabulary(new_vocabulary);
 }
@@ -497,8 +472,8 @@ void WordPieceTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
     TokenizerOperator::set_vocabulary(new_vocabulary);
 
     const auto it = vocabulary_map.find(unk_token);
-    if (it == vocabulary_map.end())
-        throw runtime_error("WordPieceTokenizer: vocabulary is missing " + unk_token);
+    throw_if(it == vocabulary_map.end(),
+             "WordPieceTokenizer: vocabulary is missing " + unk_token);
     unk_id = it->second;
 
     const auto cls = vocabulary_map.find("[CLS]");
@@ -510,8 +485,8 @@ void WordPieceTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
 void WordPieceTokenizer::load_vocabulary(const filesystem::path& vocabulary_file)
 {
     ifstream file(vocabulary_file);
-    if (!file.is_open())
-        throw runtime_error("Cannot open vocabulary file: " + vocabulary_file.string());
+    throw_if(!file.is_open(),
+             "Cannot open vocabulary file: " + vocabulary_file.string());
 
     vector<string> loaded_vocabulary;
     string line;
@@ -597,7 +572,6 @@ void WordPieceTokenizer::wordpiece(const string& word,
     while (start < characters)
     {
         size_t end = characters;
-        bool   found = false;
 
         while (start < end)
         {
@@ -610,14 +584,13 @@ void WordPieceTokenizer::wordpiece(const string& word,
             {
                 if (tokens) tokens->push_back(candidate);
                 if (ids) ids->push_back(match->second);
-                found = true;
                 break;
             }
 
             --end;
         }
 
-        if (!found)
+        if (start == end)
         {
             if (tokens) tokens->resize(token_start);
             if (ids) ids->resize(id_start);
@@ -675,7 +648,6 @@ uint64_t WordPieceTokenizer::fingerprint() const
 BytePairTokenizer::BytePairTokenizer()
 {
     reserved_tokens = {string(PAD_TOKEN)};
-    unk_id = 0;
 
     array<bool, 256> is_direct{};
     auto mark = [&](int lo, int hi) { for (int b = lo; b <= hi; ++b) is_direct[b] = true; };
@@ -707,7 +679,6 @@ void BytePairTokenizer::set_vocabulary(const vector<string>& new_vocabulary)
 void BytePairTokenizer::load(const filesystem::path& vocabulary_json,
                              const filesystem::path& merges_txt)
 {
-
     const Json parsed = Json::parse(read_text_file(vocabulary_json));
     throw_if(!parsed.is_object(), "vocab.json is not a JSON object.");
 
@@ -758,8 +729,8 @@ vector<string> BytePairTokenizer::get_merges() const
     vector<string> merges;
     merges.reserve(ranked.size());
 
-    for (auto& [rank, merge_line] : ranked)
-        merges.push_back(move(merge_line));
+    for (auto& ranked_merge : ranked)
+        merges.push_back(move(ranked_merge.second));
 
     return merges;
 }
@@ -771,9 +742,9 @@ void BytePairTokenizer::set_merges(const vector<string>& merges)
     int rank = 0;
     for (const string& merge_line : merges)
     {
-        if (merge_line.empty() || merge_line[0] == '#') continue;
-
-        if (merge_line.find(' ') == string::npos) continue;
+        if (merge_line.empty() || merge_line[0] == '#'
+            || merge_line.find(' ') == string::npos)
+            continue;
 
         merge_ranks.emplace(merge_line, rank++);
     }
@@ -829,9 +800,7 @@ void BytePairTokenizer::from_JSON(const Json* element)
 
     if (element->has("Merges"))
         set_merges(read_json_strings(element, "Merges"));
-    set_special_tokens(element->has("SpecialTokens")
-        ? read_json_strings(element, "SpecialTokens")
-        : vector<string>{});
+    set_special_tokens(read_json_strings(element, "SpecialTokens"));
 }
 
 uint64_t BytePairTokenizer::fingerprint() const
@@ -871,11 +840,10 @@ vector<string> BytePairTokenizer::bpe(const string& token) const
             pair_key.append(symbols[i + 1]);
 
             const auto it = merge_ranks.find(pair_key);
-            if (it != merge_ranks.end() && it->second < best_rank)
-            {
-                best_rank = it->second;
-                best_index = i;
-            }
+            if (it == merge_ranks.end() || it->second >= best_rank) continue;
+
+            best_rank = it->second;
+            best_index = i;
         }
 
         if (best_rank == numeric_limits<int>::max()) break;
@@ -893,7 +861,7 @@ namespace
 struct PreTokenizeRun
 {
     explicit PreTokenizeRun(string_view text)
-        : cps(utf8_to_codepoints(text)), n(cps.size())
+        : cps(utf8_to_codepoints(text))
     {
     }
 
@@ -907,10 +875,10 @@ struct PreTokenizeRun
 
     bool try_contraction(size_t& i)
     {
-        if (cps[i] != '\'' || i + 1 >= n) return false;
+        if (cps[i] != '\'' || i + 1 >= cps.size()) return false;
         const uint32_t d = to_lower_ascii(cps[i + 1]);
         if (d == 's' || d == 't' || d == 'm' || d == 'd') { emit(i, i + 2); i += 2; return true; }
-        if (i + 2 < n)
+        if (i + 2 < cps.size())
         {
             const uint32_t e = to_lower_ascii(cps[i + 2]);
             if ((d == 'r' && e == 'e') || (d == 'v' && e == 'e') || (d == 'l' && e == 'l'))
@@ -922,7 +890,6 @@ struct PreTokenizeRun
     void emit_single(size_t& i) { emit(i, i + 1); ++i; }
 
     vector<uint32_t> cps;
-    size_t n;
     vector<string> pieces;
 };
 
@@ -930,10 +897,9 @@ struct PreTokenizeRun
 
 vector<string> BytePairTokenizer::pre_tokenize(string_view text) const
 {
-
     PreTokenizeRun run(text);
     const vector<uint32_t>& cps = run.cps;
-    const size_t n = run.n;
+    const size_t n = cps.size();
     size_t i = 0;
 
     while (i < n)
@@ -1000,15 +966,15 @@ void BytePairTokenizer::tokenize_into(string_view text,
             const vector<string>* subwords = nullptr;
             vector<string> uncached;
 
-            if (cache.size() < maximum_cache_entries)
+            const auto cached = cache.find(byte_unicode);
+            if (cached != cache.end())
             {
-                auto [iterator, inserted] = cache.try_emplace(byte_unicode);
-                if (inserted) iterator->second = bpe(iterator->first);
-                subwords = &iterator->second;
+                subwords = &cached->second;
             }
-            else if (const auto iterator = cache.find(byte_unicode);
-                     iterator != cache.end())
+            else if (cache.size() < maximum_cache_entries)
             {
+                auto iterator = cache.try_emplace(byte_unicode).first;
+                iterator->second = bpe(iterator->first);
                 subwords = &iterator->second;
             }
             else
@@ -1031,15 +997,13 @@ void BytePairTokenizer::tokenize_into(string_view text,
         for (const string& special : special_strings)
         {
             const size_t found = text.find(special, position);
-            if (found != string::npos && found < special_position)
-            {
-                special_position = found;
-                matched_special = &special;
-            }
+            if (found >= special_position) continue;
+
+            special_position = found;
+            matched_special = &special;
         }
 
-        const size_t segment_end =
-            special_position == string::npos ? text.size() : special_position;
+        const size_t segment_end = min(special_position, text.size());
 
         if (segment_end > position)
             append_segment(text.substr(position, segment_end - position));
@@ -1084,7 +1048,7 @@ string BytePairTokenizer::decode_token(Index id) const
     while (const optional<uint32_t> codepoint = next_utf8_codepoint(token, position))
     {
         const auto it = byte_decoder.find(*codepoint);
-        if (it != byte_decoder.end()) bytes += static_cast<char>(it->second);
+        if (it != byte_decoder.end()) bytes.push_back(static_cast<char>(it->second));
     }
 
     return bytes;
@@ -1144,11 +1108,11 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
 {
     PreTokenizeRun run(text);
     const vector<uint32_t>& cps = run.cps;
-    const size_t n = run.n;
+    const size_t n = cps.size();
     size_t i = 0;
 
     auto is_crlf  = [](uint32_t c) { return c == '\r' || c == '\n'; };
-    auto is_other = [&](uint32_t c) { return !is_whitespace(c) && !is_letter(c) && !is_ascii_digit(c); };
+    auto is_other = [](uint32_t c) { return !is_whitespace(c) && !is_letter(c) && !is_ascii_digit(c); };
 
     while (i < n)
     {
@@ -1156,35 +1120,52 @@ vector<string> Qwen3Tokenizer::pre_tokenize(string_view text) const
 
         if (run.try_contraction(i)) continue;
 
+        size_t run_start = string::npos;
+        if (is_letter(c))
+            run_start = i;
+        else if (!is_crlf(c) && !is_ascii_digit(c)
+                 && i + 1 < n && is_letter(cps[i + 1]))
+            run_start = i + 1;
+
+        if (run_start != string::npos)
         {
-            size_t run_start = string::npos;
-            if (is_letter(c)) run_start = i;
-            else if (!is_crlf(c) && !is_ascii_digit(c) && i + 1 < n && is_letter(cps[i + 1])) run_start = i + 1;
-            if (run_start != string::npos)
-            {
-                size_t j = run_start; while (j < n && is_letter(cps[j])) ++j;
-                run.emit(i, j); i = j; continue;
-            }
+            size_t j = run_start;
+            while (j < n && is_letter(cps[j])) ++j;
+            run.emit(i, j);
+            i = j;
+            continue;
         }
 
-        if (is_ascii_digit(c)) { run.emit_single(i); continue; }
-
+        if (is_ascii_digit(c))
         {
-            const size_t other_start = (c == ' ') ? i + 1 : i;
-            if (other_start < n && is_other(cps[other_start]))
-            {
-                size_t j = other_start; while (j < n && is_other(cps[j])) ++j;
-                while (j < n && is_crlf(cps[j])) ++j;
-                run.emit(i, j); i = j; continue;
-            }
+            run.emit_single(i);
+            continue;
+        }
+
+        const size_t other_start = c == ' ' ? i + 1 : i;
+        if (other_start < n && is_other(cps[other_start]))
+        {
+            size_t j = other_start;
+            while (j < n && is_other(cps[j])) ++j;
+            while (j < n && is_crlf(cps[j])) ++j;
+            run.emit(i, j);
+            i = j;
+            continue;
         }
 
         if (is_whitespace(c))
         {
             size_t j = i; while (j < n && is_whitespace(cps[j])) ++j;
-            size_t last_newline = string::npos;
-            for (size_t k = i; k < j; ++k) if (is_crlf(cps[k])) last_newline = k;
-            if (last_newline != string::npos) { run.emit(i, last_newline + 1); i = last_newline + 1; continue; }
+            size_t newline_end = j;
+            while (newline_end > i && !is_crlf(cps[newline_end - 1]))
+                --newline_end;
+
+            if (newline_end > i)
+            {
+                run.emit(i, newline_end);
+                i = newline_end;
+                continue;
+            }
             const size_t end = (j < n && j - i > 1) ? j - 1 : j;
             run.emit(i, end); i = end; continue;
         }

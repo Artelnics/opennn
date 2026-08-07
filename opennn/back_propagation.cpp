@@ -34,9 +34,9 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 }
 
 BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss,
-                                 ForwardPropagation* joint_forward)
+                                 ForwardPropagation* forward_propagation)
 {
-    set(new_batch_size, new_loss, joint_forward);
+    set(new_batch_size, new_loss, forward_propagation);
 }
 
 vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
@@ -58,14 +58,14 @@ vector<vector<pair<size_t, size_t>>> BackPropagation::make_consumer_edges(
 }
 
 void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
-                          ForwardPropagation* joint_forward)
+                          ForwardPropagation* forward_propagation)
 {
     batch_size = new_batch_size;
-    loss_pointer = new_loss;
+    loss = new_loss;
 
-    throw_if(!loss_pointer, "loss is not set.");
+    throw_if(!loss, "loss is not set.");
 
-    neural_network = loss_pointer->get_neural_network();
+    neural_network = loss->get_neural_network();
 
     throw_if(!neural_network, "neural network is not set.");
 
@@ -75,7 +75,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     error = 0.0f;
     accuracy = 0.0f;
     regularization = 0.0f;
-    loss = 0.0f;
+    loss_value = 0.0f;
 
     const auto& layers = neural_network->get_layers();
     const size_t layers_number = layers.size();
@@ -97,13 +97,13 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss,
     for (size_t i = 0; i < layers_number; ++i)
         pointer = layers[i]->link_gradients(pointer, gradient_views[i], gradient.device_type);
 
-    if (joint_forward && joint_forward->joint_delta_plan.valid)
+    if (forward_propagation && forward_propagation->joint_delta_plan.valid)
     {
-        const auto& joint = joint_forward->joint_delta_plan;
+        const auto& joint = forward_propagation->joint_delta_plan;
         delta_pool.resize_bytes(0, neural_network->get_device());
         bind_delta_views(joint.layout, joint.offsets,
-                         joint_forward->data.as<uint8_t>(),
-                         joint_forward->data.device_type,
+                         forward_propagation->data.as<uint8_t>(),
+                         forward_propagation->data.device_type,
                          backward_specs);
         return;
     }
@@ -273,7 +273,7 @@ void BackPropagation::setup_delta_pool(const vector<vector<TensorSpec>>& backwar
     const Index layers_number = neural_network->get_layers_number();
 
     const DeltaLayout layout = build_delta_entries(
-        *neural_network, *loss_pointer, batch_size, backward_specs, consumer_edges);
+        *neural_network, *loss, batch_size, backward_specs, consumer_edges);
     const vector<DeltaEntry>& delta_entries = layout.entries;
 
     const vector<MemoryPoolEntry> lifetime_entries = to_pool_entries(delta_entries);

@@ -101,7 +101,7 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
     for (Index f = 0; f < k; ++f)
     {
         const vector<Index>& validation_indices = fold_partition[size_t(f)];
-        const std::set<Index> validation_set(validation_indices.begin(), validation_indices.end());
+        const set<Index> validation_set(validation_indices.begin(), validation_indices.end());
 
         vector<Index> training_indices;
         training_indices.reserve(development.size());

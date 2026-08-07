@@ -168,7 +168,7 @@ void Dataset::set_data(MatrixR&& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
-    data = std::move(new_data);
+    data = move(new_data);
     set_storage_mode(StorageMode::Matrix);
 }
 
@@ -248,10 +248,10 @@ VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
         {
             const type value = data(sample_index, used_feature_indices[size_t(i)]);
 
-            if (std::isnan(value)) continue;
+            if (isnan(value)) continue;
 
-            if (std::abs(value - minimums(i)) <= EPSILON
-             || std::abs(value - maximums(i)) <= EPSILON)
+            if (abs(value - minimums(i)) <= EPSILON
+             || abs(value - maximums(i)) <= EPSILON)
                 continue;
 
             if (minimums(i) == maximums(i))

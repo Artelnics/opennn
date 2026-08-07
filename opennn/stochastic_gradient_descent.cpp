@@ -173,7 +173,7 @@ void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_da
     current_learning_rate = initial_learning_rate;
 
 #ifdef OPENNN_HAS_CUDA
-    if (on_gpu)
+    if (on_gpu && use_cuda_graph)
     {
         optimizer_data.graph_effective_lr.resize_bytes(Index(sizeof(float)), Device::CUDA);
         optimizer_data.graph_effective_lr.setZero();

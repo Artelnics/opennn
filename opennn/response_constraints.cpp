@@ -494,8 +494,8 @@ AffineForm analyze_affine(const Ast& node)
 }
 
 void collect_variable_references(const Ast& node,
-                                 std::set<Index>& input_references,
-                                 std::set<Index>& output_references)
+                                 set<Index>& input_references,
+                                 set<Index>& output_references)
 {
     if (node.kind == Ast::Kind::Input)  { input_references.insert(node.index);  return; }
     if (node.kind == Ast::Kind::Output) { output_references.insert(node.index); return; }
@@ -874,8 +874,8 @@ CompiledFormula compile_ast(const Ast& ast)
 
     CompiledFormula result;
 
-    std::set<Index> input_references;
-    std::set<Index> output_references;
+    set<Index> input_references;
+    set<Index> output_references;
     collect_variable_references(ast, input_references, output_references);
 
     throw_if(input_references.empty() && output_references.empty(),
@@ -1845,7 +1845,7 @@ void repair_mixed_integer_inputs(MatrixR& inputs,
     for (size_t c = 0; c < lattice.columns.size(); ++c)
         snap_to_lattice(inputs, lattice.columns[c], lattice.min[c], lattice.max[c]);
 
-    std::set<Index> cardinality_set;
+    set<Index> cardinality_set;
     for (const vector<Index>& group : cardinality_columns)
         cardinality_set.insert(group.begin(), group.end());
 

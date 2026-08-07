@@ -120,8 +120,8 @@ namespace
 
 struct GroupedAttentionCpuScratch
 {
-    std::vector<float> cos, sin;
-    std::vector<float> q, k, v, qr, kr, attn;
+    vector<float> cos, sin;
+    vector<float> q, k, v, qr, kr, attn;
     Index table_len = -1, head_dim = 0;
     float theta = 0.0f;
 
@@ -143,7 +143,7 @@ GroupedAttentionCpuScratch& gqa_cpu_scratch()
     return scratch;
 }
 
-float* grown(std::vector<float>& buffer, size_t n)
+float* grown(vector<float>& buffer, size_t n)
 {
     if (buffer.size() < n) buffer.resize(n);
     return buffer.data();
@@ -171,7 +171,7 @@ void GroupedQueryAttentionOperator::forward_propagate(ForwardPropagation& forwar
     const Index seq   = input.shape[1];
     const Index qd    = q_dim();
     const Index kd    = kv_dim();
-    const float scale = 1.0f / std::sqrt(float(head_dim));
+    const float scale = 1.0f / sqrt(float(head_dim));
 
     const Index table_len = sequence_length;
     throw_if(seq < 1 || forward_propagation.past_length < 0
@@ -393,7 +393,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     const Index seq = input.shape[1];
     const Index qd  = q_dim();
     const Index kd  = kv_dim();
-    const float scale = 1.0f / std::sqrt(float(head_dim));
+    const float scale = 1.0f / sqrt(float(head_dim));
     cudaStream_t stream = device::get_compute_stream();
 
     const Type  act  = input.type;
@@ -414,14 +414,14 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
             || s.head_dim != head_dim || s.theta != rope_theta;
         if (geometry_changed)
         {
-            std::vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
+            vector<float> cos_h(size_t(table_len) * head_dim), sin_h(size_t(table_len) * head_dim);
             { TensorView cv(cos_h.data(), {table_len, head_dim}), sv(sin_h.data(), {table_len, head_dim});
               rotary_build_tables(cv, sv, table_len, head_dim, rope_theta); }
 
-            auto upload = [&](const std::vector<float>& host) {
+            auto upload = [&](const vector<float>& host) {
                 Buffer b(Device::CPU);
                 b.resize_bytes(Index(host.size()) * Index(sizeof(float)), Device::CPU);
-                std::memcpy(b.data, host.data(), host.size() * sizeof(float));
+                memcpy(b.data, host.data(), host.size() * sizeof(float));
                 b.migrate_to(Device::CUDA, stream);
                 return b;
             };

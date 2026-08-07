@@ -123,7 +123,7 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
     }
 
 #ifdef OPENNN_HAS_CUDA
-    if (on_gpu)
+    if (on_gpu && use_cuda_graph)
     {
         optimization_data.graph_step.resize_bytes(Index(sizeof(int)), Device::CUDA);
         optimization_data.graph_step.setZero();

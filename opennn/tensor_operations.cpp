@@ -2195,7 +2195,7 @@ static bool grouped_attention_gemm_gpu(const int batch, const int query_seq, con
     if (group < 1 || group * n_kv_heads != n_query_heads || key_seq <= 0 || head_dim <= 0)
         return false;
 
-    constexpr bool is_fp32 = std::is_same_v<T, float>;
+    constexpr bool is_fp32 = is_same_v<T, float>;
     const cudaDataType_t dtype = is_fp32 ? CUDA_R_32F : CUDA_R_16BF;
 
     const Index q_elems  = Index(query_seq) * n_query_heads * head_dim;

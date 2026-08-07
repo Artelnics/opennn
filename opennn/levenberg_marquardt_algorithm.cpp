@@ -441,7 +441,6 @@ BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_l
 
 void BackPropagationLM::set(const Index new_samples_number, Loss* new_loss)
 {
-    loss_pointer = new_loss;
     samples_number = new_samples_number;
     error = 0.0f;
     regularization = 0.0f;

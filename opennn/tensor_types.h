@@ -389,9 +389,9 @@ struct TensorView
     Shape shape;
 
     Type type = Type::FP32;
-    Device device = Device::CPU;
+    Device device = Device::CPU;TensorView
 
-    TensorView(void* new_data = nullptr, const Shape& new_shape = {},
+    (void* new_data = nullptr, const Shape& new_shape = {},
                Type new_dtype = Type::FP32,
                Device new_device = Device::CPU) noexcept
         : data(new_data), shape(new_shape), type(new_dtype), device(new_device) {}

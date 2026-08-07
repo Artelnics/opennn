@@ -50,7 +50,7 @@ namespace opennn
         }
         else
         {
-            return std::from_chars(first, last, value);
+            return from_chars(first, last, value);
         }
     }
 #endif

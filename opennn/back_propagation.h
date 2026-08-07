@@ -41,12 +41,12 @@ struct BackPropagation
     };
 
     BackPropagation(const Index = 0, Loss* = nullptr,
-                    ForwardPropagation* joint_forward = nullptr);
+                    ForwardPropagation* forward_propagation = nullptr);
 
     virtual ~BackPropagation() = default;
 
     void set(const Index = 0, Loss* = nullptr,
-             ForwardPropagation* joint_forward = nullptr);
+             ForwardPropagation* forward_propagation = nullptr);
 
     static vector<vector<pair<size_t, size_t>>> make_consumer_edges(const NeuralNetwork&);
 
@@ -76,12 +76,12 @@ struct BackPropagation
 
     Index batch_size = 0;
 
-    Loss* loss_pointer = nullptr;
+    Loss* loss = nullptr;
 
     float error = 0.0f;
     float accuracy = 0.0f;
     float regularization = 0.0f;
-    float loss = 0.0f;
+    float loss_value = 0.0f;
     Index active_tokens_count = 0;
 
 private:

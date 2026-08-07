@@ -1444,7 +1444,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
             rgb.chip(0, 2) = image.chip(0, 2);
             rgb.chip(1, 2) = image.chip(0, 2);
             rgb.chip(2, 2) = image.chip(0, 2);
-            image = std::move(rgb);
+            image = move(rgb);
         }
         throw_if(image.dimension(2) != input_shape[2],
                  "YoloDataset: channel mismatch in {} (got {} channels, expected {})",

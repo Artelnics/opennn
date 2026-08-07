@@ -53,11 +53,11 @@ void* allocate_cuda(Index byte_count)
     void* device_pointer = nullptr;
     const cudaError_t cuda_err = cudaMalloc(&device_pointer, static_cast<size_t>(byte_count));
     if (cuda_err != cudaSuccess)
-        throw std::runtime_error(
-            std::string("CUDA Error: ") + std::to_string(static_cast<int>(cuda_err)) +
-            " in " + std::string(__FILE__) + ":" + std::to_string(__LINE__) +
-            " — cudaMalloc(" + std::to_string(byte_count) + " bytes = " +
-            std::to_string(byte_count / Index(1024*1024)) + " MiB)");
+        throw runtime_error(
+            string("CUDA Error: ") + to_string(static_cast<int>(cuda_err)) +
+            " in " + string(__FILE__) + ":" + to_string(__LINE__) +
+            " — cudaMalloc(" + to_string(byte_count) + " bytes = " +
+            to_string(byte_count / Index(1024*1024)) + " MiB)");
     return device_pointer;
 #else
     (void)byte_count;
@@ -167,7 +167,7 @@ size_t available_memory()
 #endif
 }
 
-std::string gpu_info_string() noexcept
+string gpu_info_string() noexcept
 {
 #ifdef OPENNN_HAS_CUDA
     cudaDeviceProp p{};
@@ -176,7 +176,7 @@ std::string gpu_info_string() noexcept
     cudaMemGetInfo(&free_b, &total_b);
     int ver = 0;
     cudaRuntimeGetVersion(&ver);
-    return std::format("{:<32s}  {:.0f} MB total / {:.0f} MB free  CC {}.{}  CUDA {:d}.{:d}",
+    return format("{:<32s}  {:.0f} MB total / {:.0f} MB free  CC {}.{}  CUDA {:d}.{:d}",
                        p.name,
                        total_b / 1048576.0,
                        free_b  / 1048576.0,
@@ -601,8 +601,8 @@ namespace opennn
 Backend::Backend()
 {
 
-    const char* const threads_env = std::getenv("OPENNN_THREADS");
-    set_threads_number(threads_env ? std::atoi(threads_env) : 0);
+    const char* const threads_env = getenv("OPENNN_THREADS");
+    set_threads_number(threads_env ? atoi(threads_env) : 0);
 
 #ifdef OPENNN_HAS_CUDA
     int device_count = 0;
